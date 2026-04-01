@@ -44,6 +44,8 @@ public class SupplyRequestConfiguration : IEntityTypeConfiguration<SupplyRequest
         builder.Property(p => p.ApprovedBy)
             .HasMaxLength(50);
 
+        builder.Property(p => p.WarehouseLocationId);
+
         builder.Property(p => p.Version)
             .IsConcurrencyToken();
 

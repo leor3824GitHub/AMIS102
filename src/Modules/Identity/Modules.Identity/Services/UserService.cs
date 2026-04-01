@@ -49,7 +49,7 @@ internal sealed class UserService(
     public Task<int> GetCountAsync(CancellationToken cancellationToken)
         => profileService.GetCountAsync(cancellationToken);
 
-    public Task UpdateAsync(string userId, string firstName, string lastName, string phoneNumber, FileUploadRequest image, bool deleteCurrentImage)
+    public Task UpdateAsync(string userId, string firstName, string lastName, string phoneNumber, FileUploadRequest? image, bool deleteCurrentImage)
         => profileService.UpdateAsync(userId, firstName, lastName, phoneNumber, image, deleteCurrentImage);
 
     public Task<bool> ExistsWithEmailAsync(string email, string? exceptId = null)

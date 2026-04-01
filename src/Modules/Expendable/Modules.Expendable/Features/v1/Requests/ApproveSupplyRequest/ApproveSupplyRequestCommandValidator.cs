@@ -10,6 +10,9 @@ public sealed class ApproveSupplyRequestCommandValidator : AbstractValidator<App
         RuleFor(x => x.Id)
             .NotEmpty().WithMessage("Request ID is required");
 
+        RuleFor(x => x.WarehouseLocationId)
+            .NotEmpty().WithMessage("Warehouse location is required when approving a supply request");
+
         RuleFor(x => x.ApprovedQuantities)
             .NotNull().WithMessage("Approved quantities are required")
             .NotEmpty().WithMessage("At least one item must be approved");

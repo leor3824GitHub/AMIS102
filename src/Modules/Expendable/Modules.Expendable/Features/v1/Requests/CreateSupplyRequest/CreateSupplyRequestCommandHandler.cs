@@ -19,6 +19,8 @@ public sealed class CreateSupplyRequestCommandHandler : ICommandHandler<CreateSu
 
     public async ValueTask<SupplyRequestDto> Handle(CreateSupplyRequestCommand command, CancellationToken cancellationToken)
     {
+        var neededByUtc = command.NeededByDate?.ToUniversalTime();
+
         // Generate request number (simplified - use your own logic)
         var requestNumber = $"REQ-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..8]}";
 
@@ -28,7 +30,7 @@ public sealed class CreateSupplyRequestCommandHandler : ICommandHandler<CreateSu
             _currentUser.GetUserId().ToString(),
             command.DepartmentId,
             command.BusinessJustification,
-            command.NeededByDate);
+            neededByUtc);
 
         request.CreatedBy = _currentUser.GetUserId().ToString();
 

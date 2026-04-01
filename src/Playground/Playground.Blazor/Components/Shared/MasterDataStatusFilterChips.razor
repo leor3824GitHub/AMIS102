@@ -1,0 +1,21 @@
+<MudChipSet T="string"
+            SelectedValue="Value"
+            SelectedValueChanged="OnSelectedValueChanged"
+            CheckMark="true"
+            Variant="Variant.Text"
+            Color="Color.Primary">
+    <MudChip T="string" Value="@("All")" Default="true">All</MudChip>
+    <MudChip T="string" Value="@("Active")" Color="Color.Success">Active</MudChip>
+    <MudChip T="string" Value="@("Inactive")" Color="Color.Error">Inactive</MudChip>
+</MudChipSet>
+
+@code {
+    [Parameter] public string Value { get; set; } = "All";
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+
+    private async Task OnSelectedValueChanged(string value)
+    {
+        var normalized = string.IsNullOrWhiteSpace(value) ? "All" : value;
+        await ValueChanged.InvokeAsync(normalized);
+    }
+}

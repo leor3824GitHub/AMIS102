@@ -1,0 +1,447 @@
+@page "/expendable/reports/employee"
+@using FSH.Framework.Blazor.UI.Components.Cards
+@using FSH.Modules.Expendable.Contracts.v1.Requests
+@using FSH.Playground.Blazor.ApiClient
+@using System.Globalization
+@using System.Text
+@inherits ComponentBase
+@inject IReportsClient ReportsClient
+@inject ILookupClient LookupClient
+@inject ISnackbar Snackbar
+@inject NavigationManager NavigationManager
+
+<FshPageHeader Title="Employee Issuance History" Description="Office supplies issued per employee">
+</FshPageHeader>
+
+<div class="mt-4">
+    <MudCard Class="mb-4">
+        <MudCardContent>
+            <MudGrid Spacing="2" AlignItems="AlignItems.Center">
+                <MudItem xs="12" sm="4">
+                    <MudAutocomplete T="EmployeeReferenceDto"
+                                     Value="_selectedEmployee"
+                                     ValueChanged="OnEmployeeChanged"
+                                     SearchFunc="SearchEmployees"
+                                     Label="Employee"
+                                     Variant="Variant.Outlined"
+                                     Clearable="true"
+                                     CoerceValue="true"
+                                     ToStringFunc="FormatEmployee"
+                                     Placeholder="Search by name or employee number" />
+                </MudItem>
+                <MudItem xs="12" sm="3">
+                    <MudDatePicker @bind-Date="_filterFrom" Label="From" Variant="Variant.Outlined"
+                                   DateFormat="yyyy-MM-dd" Clearable="true" />
+                </MudItem>
+                <MudItem xs="12" sm="3">
+                    <MudDatePicker @bind-Date="_filterTo" Label="To" Variant="Variant.Outlined"
+                                   DateFormat="yyyy-MM-dd" Clearable="true" />
+                </MudItem>
+                <MudItem xs="12" sm="2">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                               OnClick="OnFilterClicked">
+                        Filter
+                    </MudButton>
+                </MudItem>
+                <MudItem xs="12" sm="2">
+                    <MudButton Variant="Variant.Outlined" Color="Color.Default" FullWidth="true"
+                               OnClick="OnClearFiltersClicked">
+                        Clear
+                    </MudButton>
+                </MudItem>
+                <MudItem xs="12" sm="2">
+                    <MudButton Variant="Variant.Outlined" Color="Color.Secondary" FullWidth="true"
+                               StartIcon="@Icons.Material.Filled.Download"
+                               OnClick="ExportCsvAsync">
+                        Export CSV
+                    </MudButton>
+                </MudItem>
+            </MudGrid>
+        </MudCardContent>
+    </MudCard>
+
+    <MudTable @ref="_table" T="EmployeeIssuanceDto"
+              ServerData="@(async (s, ct) => await LoadHistory(s, ct))"
+              Hover="true" Striped="true" Dense="true" Loading="@_loading"
+              LoadingProgressColor="Color.Primary">
+        <HeaderContent>
+            <MudTh>Request No.</MudTh>
+            <MudTh>Employee</MudTh>
+            <MudTh>Department</MudTh>
+            <MudTh>Fulfilled On</MudTh>
+            <MudTh>Items</MudTh>
+            <MudTh>Total Value</MudTh>
+            <MudTh></MudTh>
+        </HeaderContent>
+        <RowTemplate Context="issuance">
+            <MudTd DataLabel="Request No."><code>@issuance.RequestNumber</code></MudTd>
+            <MudTd DataLabel="Employee">@GetEmployeeDisplay(issuance.EmployeeId)</MudTd>
+            <MudTd DataLabel="Department">@GetDepartmentDisplay(issuance.DepartmentId)</MudTd>
+            <MudTd DataLabel="Fulfilled On">@issuance.FulfilledOnUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</MudTd>
+            <MudTd DataLabel="Items">@issuance.Items.Count</MudTd>
+            <MudTd DataLabel="Total Value">₱@issuance.TotalValue.ToString("N2")</MudTd>
+            <MudTd>
+                <MudIconButton Icon="@Icons.Material.Filled.ExpandMore" Size="Size.Small"
+                               OnClick="@(() => ToggleExpand(issuance.RequestId))" />
+            </MudTd>
+        </RowTemplate>
+        <ChildRowContent Context="issuance">
+            @if (_expandedRows.Contains(issuance.RequestId))
+            {
+                <MudTr>
+                    <td colspan="7" class="pa-0">
+                        <MudTable Items="@issuance.Items" T="IssuanceItemDto"
+                                  Dense="true" Hover="false" Elevation="0" Class="ml-8 mb-2">
+                            <HeaderContent>
+                                <MudTh>Product</MudTh>
+                                <MudTh>Code</MudTh>
+                                <MudTh>Qty</MudTh>
+                                <MudTh>Unit Price</MudTh>
+                                <MudTh>Total</MudTh>
+                            </HeaderContent>
+                            <RowTemplate Context="item">
+                                <MudTd DataLabel="Product">@item.ProductName</MudTd>
+                                <MudTd DataLabel="Code">@item.ProductCode</MudTd>
+                                <MudTd DataLabel="Qty">@item.QuantityIssued</MudTd>
+                                <MudTd DataLabel="Unit Price">₱@item.UnitPrice.ToString("N4")</MudTd>
+                                <MudTd DataLabel="Total">₱@item.TotalValue.ToString("N2")</MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                    </td>
+                </MudTr>
+            }
+        </ChildRowContent>
+        <NoRecordsContent>
+            <MudText Typo="Typo.body2" Class="pa-4">No issuance records found for the selected filters.</MudText>
+        </NoRecordsContent>
+        <PagerContent>
+            <MudTablePager />
+        </PagerContent>
+    </MudTable>
+</div>
+
+@code {
+    private MudTable<EmployeeIssuanceDto>? _table;
+    private bool _loading;
+    private EmployeeReferenceDto? _selectedEmployee;
+    private DateTime? _filterFrom;
+    private DateTime? _filterTo;
+    private readonly HashSet<Guid> _expandedRows = [];
+    private readonly Dictionary<string, EmployeeReferenceDto> _employeeCache = [];
+    private readonly Dictionary<Guid, string> _departmentCache = [];
+    private const int ApiPageSizeLimit = 200;
+
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "preset")]
+    public string? Preset { get; set; }
+
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "from")]
+    public string? QueryFrom { get; set; }
+
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "to")]
+    public string? QueryTo { get; set; }
+
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "employeeId")]
+    public string? QueryEmployeeId { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var departments = await LookupClient.DepartmentsAsync(isActive: true, pageNumber: 1, pageSize: 500);
+            foreach (var department in departments.Items ?? [])
+            {
+                _departmentCache[department.Id] = department.Name;
+            }
+
+            await ApplyQueryFiltersAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load departments: {ex.Message}", Severity.Warning);
+        }
+    }
+
+    private async Task ApplyQueryFiltersAsync()
+    {
+        if (TryParseQueryDate(QueryFrom, out var fromDate))
+        {
+            _filterFrom = fromDate.Date;
+        }
+
+        if (TryParseQueryDate(QueryTo, out var toDate))
+        {
+            _filterTo = toDate.Date;
+        }
+
+        if (!_filterFrom.HasValue && !_filterTo.HasValue)
+        {
+            if (string.Equals(Preset, "today", StringComparison.OrdinalIgnoreCase))
+            {
+                var today = DateTime.UtcNow.Date;
+                _filterFrom = today;
+                _filterTo = today;
+            }
+            else if (string.Equals(Preset, "this-week", StringComparison.OrdinalIgnoreCase))
+            {
+                var today = DateTime.UtcNow.Date;
+                var daysFromMonday = ((int)today.DayOfWeek + 6) % 7;
+                _filterFrom = today.AddDays(-daysFromMonday);
+                _filterTo = today;
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(QueryEmployeeId) && Guid.TryParse(QueryEmployeeId, out var employeeId))
+        {
+            try
+            {
+                var employee = await LookupClient.EmployeesGetAsync(employeeId);
+                _selectedEmployee = employee;
+                _employeeCache[employee.Id.ToString()] = employee;
+            }
+            catch
+            {
+                Snackbar.Add("Employee in query filter was not found.", Severity.Warning);
+            }
+        }
+    }
+
+    private async Task<TableData<EmployeeIssuanceDto>> LoadHistory(TableState state, CancellationToken ct)
+    {
+        _loading = true;
+        try
+        {
+            if (!IsDateRangeValid())
+            {
+                return new TableData<EmployeeIssuanceDto> { Items = [], TotalItems = 0 };
+            }
+
+            var from = _filterFrom.HasValue ? new DateTimeOffset(_filterFrom.Value, TimeSpan.Zero) : (DateTimeOffset?)null;
+            var to = _filterTo.HasValue ? new DateTimeOffset(_filterTo.Value, TimeSpan.Zero) : (DateTimeOffset?)null;
+
+            var result = await ReportsClient.GetEmployeeIssuanceHistoryAsync(
+                employeeId: _selectedEmployee?.Id.ToString(),
+                from: from,
+                toDate: to,
+                pageNumber: state.Page + 1,
+                pageSize: state.PageSize,
+                cancellationToken: ct);
+
+            return new TableData<EmployeeIssuanceDto>
+            {
+                Items = result.Items ?? [],
+                TotalItems = (int)result.TotalCount
+            };
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load history: {ex.Message}", Severity.Error);
+            return new TableData<EmployeeIssuanceDto> { Items = [], TotalItems = 0 };
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void ToggleExpand(Guid requestId)
+    {
+        if (!_expandedRows.Remove(requestId))
+            _expandedRows.Add(requestId);
+    }
+
+    private async Task<IEnumerable<EmployeeReferenceDto>> SearchEmployees(string value, CancellationToken ct)
+    {
+        var result = await LookupClient.EmployeesGetAsync(
+            keyword: string.IsNullOrWhiteSpace(value) ? null : value,
+            isActive: true,
+            pageNumber: 1,
+            pageSize: 20,
+            cancellationToken: ct);
+
+        var items = result.Items?.ToList() ?? [];
+        foreach (var employee in items)
+        {
+            _employeeCache[employee.Id.ToString()] = employee;
+        }
+
+        return items;
+    }
+
+    private async Task OnEmployeeChanged(EmployeeReferenceDto? employee)
+    {
+        _selectedEmployee = employee;
+        if (_table is not null)
+        {
+            await _table.ReloadServerData();
+        }
+    }
+
+    private async Task OnFilterClicked()
+    {
+        if (!IsDateRangeValid())
+        {
+            return;
+        }
+
+        if (_table is not null)
+        {
+            await _table.ReloadServerData();
+        }
+    }
+
+    private async Task OnClearFiltersClicked()
+    {
+        _selectedEmployee = null;
+        _filterFrom = null;
+        _filterTo = null;
+        _expandedRows.Clear();
+
+        if (_table is not null)
+        {
+            await _table.ReloadServerData();
+        }
+    }
+
+    private bool IsDateRangeValid()
+    {
+        if (_filterFrom.HasValue && _filterTo.HasValue && _filterFrom.Value.Date > _filterTo.Value.Date)
+        {
+            Snackbar.Add("Invalid date range: From date cannot be later than To date.", Severity.Warning);
+            return false;
+        }
+
+        return true;
+    }
+
+    private string GetDepartmentDisplay(string departmentId)
+    {
+        if (Guid.TryParse(departmentId, out var id) && _departmentCache.TryGetValue(id, out var name))
+        {
+            return name;
+        }
+
+        return departmentId;
+    }
+
+    private async Task ExportCsvAsync()
+    {
+        try
+        {
+            if (!IsDateRangeValid())
+            {
+                return;
+            }
+
+            var items = new List<EmployeeIssuanceDto>();
+            var page = 1;
+
+            while (true)
+            {
+                var from = _filterFrom.HasValue ? new DateTimeOffset(_filterFrom.Value, TimeSpan.Zero) : (DateTimeOffset?)null;
+                var to = _filterTo.HasValue ? new DateTimeOffset(_filterTo.Value, TimeSpan.Zero) : (DateTimeOffset?)null;
+
+                var result = await ReportsClient.GetEmployeeIssuanceHistoryAsync(
+                    employeeId: _selectedEmployee?.Id.ToString(),
+                    from: from,
+                    toDate: to,
+                    pageNumber: page,
+                    pageSize: ApiPageSizeLimit);
+
+                var pageItems = result.Items?.ToList() ?? [];
+                if (pageItems.Count == 0)
+                {
+                    break;
+                }
+
+                items.AddRange(pageItems);
+                if (pageItems.Count < ApiPageSizeLimit)
+                {
+                    break;
+                }
+
+                page++;
+            }
+
+            if (items.Count == 0)
+            {
+                Snackbar.Add("No issuance history to export for the current filters.", Severity.Info);
+                return;
+            }
+
+            var bytes = BuildCsv(items);
+            var dataUrl = $"data:text/csv;base64,{Convert.ToBase64String(bytes)}";
+            NavigationManager.NavigateTo(dataUrl, true);
+            Snackbar.Add($"Exported {items.Count} issuance rows.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"CSV export failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private byte[] BuildCsv(IEnumerable<EmployeeIssuanceDto> items)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine("RequestId,RequestNumber,EmployeeId,Employee,DepartmentId,Department,FulfilledOnUtc,ItemsCount,TotalValue");
+
+        foreach (var item in items)
+        {
+            sb.AppendLine(string.Join(",",
+                Quote(item.RequestId.ToString()),
+                Quote(item.RequestNumber),
+                Quote(item.EmployeeId),
+                Quote(GetEmployeeDisplay(item.EmployeeId)),
+                Quote(item.DepartmentId),
+                Quote(GetDepartmentDisplay(item.DepartmentId)),
+                Quote(item.FulfilledOnUtc.ToString("o")),
+                Quote(item.Items.Count.ToString()),
+                Quote(item.TotalValue.ToString("N2"))));
+        }
+
+        return Encoding.UTF8.GetBytes(sb.ToString());
+    }
+
+    private static string Quote(string? value)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            return "\"\"";
+        }
+
+        return $"\"{value.Replace("\"", "\"\"")}\"";
+    }
+
+    private static bool TryParseQueryDate(string? value, out DateTime date)
+    {
+        return DateTime.TryParseExact(
+            value,
+            "yyyy-MM-dd",
+            CultureInfo.InvariantCulture,
+            DateTimeStyles.None,
+            out date);
+    }
+
+    private static string FormatEmployee(EmployeeReferenceDto? employee)
+    {
+        if (employee is null)
+        {
+            return string.Empty;
+        }
+
+        return $"{employee.EmployeeNumber} - {employee.FirstName} {employee.LastName}";
+    }
+
+    private string GetEmployeeDisplay(string employeeId)
+    {
+        if (_employeeCache.TryGetValue(employeeId, out var employee))
+        {
+            return FormatEmployee(employee);
+        }
+
+        return employeeId;
+    }
+}

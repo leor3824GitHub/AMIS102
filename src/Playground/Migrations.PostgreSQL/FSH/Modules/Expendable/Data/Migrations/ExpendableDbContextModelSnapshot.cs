@@ -430,14 +430,11 @@ namespace FSH.Modules.Expendable.Data.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
+                    b.Property<Guid?>("ParentProductId")
+                        .HasColumnType("uuid");
+
                     b.Property<int>("ReorderQuantity")
                         .HasColumnType("integer");
-
-                        b.Property<Guid?>("ParentProductId")
-                            .HasColumnType("uuid");
-
-                        b.Property<string>("VariantName")
-                            .HasColumnType("text");
 
                     b.Property<string>("SKU")
                         .IsRequired()
@@ -464,36 +461,28 @@ namespace FSH.Modules.Expendable.Data.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)");
 
+                    b.Property<string>("VariantName")
+                        .HasColumnType("text");
+
                     b.Property<byte[]>("Version")
                         .IsConcurrencyToken()
                         .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("bytea");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ParentProductId");
 
                     b.HasIndex("TenantId", "SKU")
                         .IsUnique();
 
                     b.HasIndex("TenantId", "Status");
 
-                        b.HasIndex("TenantId", "ParentProductId");
-
                     b.ToTable("Products", "expendable");
 
                     b.HasAnnotation("Finbuckle:MultiTenant", true);
                 });
-
-                modelBuilder.Entity("FSH.Modules.Expendable.Domain.Products.Product", b =>
-                    {
-                        b.HasOne("FSH.Modules.Expendable.Domain.Products.Product", "ParentProduct")
-                            .WithMany("Variants")
-                            .HasForeignKey("ParentProductId")
-                            .OnDelete(DeleteBehavior.Restrict);
-
-                        b.Navigation("ParentProduct");
-
-                        b.Navigation("Variants");
-                    });
 
             modelBuilder.Entity("FSH.Modules.Expendable.Domain.Purchases.Purchase", b =>
                 {
@@ -750,6 +739,9 @@ namespace FSH.Modules.Expendable.Data.Migrations
                         .IsRequired()
                         .HasColumnType("bytea");
 
+                    b.Property<Guid?>("WarehouseLocationId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
 
                     b.HasIndex("TenantId", "DepartmentId");
@@ -946,6 +938,16 @@ namespace FSH.Modules.Expendable.Data.Migrations
                     b.Navigation("Batches");
                 });
 
+            modelBuilder.Entity("FSH.Modules.Expendable.Domain.Products.Product", b =>
+                {
+                    b.HasOne("FSH.Modules.Expendable.Domain.Products.Product", "ParentProduct")
+                        .WithMany("Variants")
+                        .HasForeignKey("ParentProductId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("ParentProduct");
+                });
+
             modelBuilder.Entity("FSH.Modules.Expendable.Domain.Purchases.Purchase", b =>
                 {
                     b.OwnsMany("FSH.Modules.Expendable.Domain.Purchases.PurchaseLineItem", "LineItems", b1 =>
@@ -1036,6 +1038,8 @@ namespace FSH.Modules.Expendable.Data.Migrations
 
                             b1.Property<int>("FulfilledQuantity");
 
+                            b1.Property<decimal>("FulfilledValue");
+
                             b1.Property<string>("Notes");
 
                             b1.Property<Guid>("ProductId");
@@ -1098,6 +1102,11 @@ namespace FSH.Modules.Expendable.Data.Migrations
                         });
 
                     b.Navigation("Batches");
+                });
+
+            modelBuilder.Entity("FSH.Modules.Expendable.Domain.Products.Product", b =>
+                {
+                    b.Navigation("Variants");
                 });
 #pragma warning restore 612, 618
         }

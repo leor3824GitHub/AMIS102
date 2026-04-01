@@ -5,6 +5,8 @@
 @inject ISnackbar Snackbar
 @inject IMaster_dataClient MasterDataClient
 @inject ILookupClient LookupClient
+@inject IIdentityClient IdentityClient
+@inject IUsersClient UsersClient
 
 <FshPageHeader Title="Employees" Description="Manage employee profiles">
     <ActionContent>
@@ -71,6 +73,16 @@
                                          Required="true"
                                          Placeholder="Search position..."
                                          Clearable="true" />
+
+                        <MudAutocomplete T="UserDto"
+                                         Label="Linked Login Account"
+                                         @bind-Value="_form.IdentityUser"
+                                         SearchFunc="@SearchIdentityUsers"
+                                         ToStringFunc="@(u => u == null ? string.Empty : $"{u.FirstName} {u.LastName} ({u.Email})")"
+                                         CoerceValue="true"
+                                         Clearable="true"
+                                         Placeholder="Search by name or email..."
+                                         HelperText="@(_form.IdentityUser != null ? $"Linked: {_form.IdentityUser.FirstName} {_form.IdentityUser.LastName}" : "No account linked")" />
                         
                         <MudCheckBox @bind-Value="_form.IsActive" Label="Active" />
 
@@ -93,7 +105,10 @@
         <MudItem xs="12" sm="6" md="8">
             <MudCard Class="fsh-card">
                 <MudCardContent>
-                    <MudText Typo="Typo.h6" Class="mb-3">Employees List</MudText>
+                    <MudStack Row="true" Spacing="1" Class="mb-3" AlignItems="AlignItems.Center">
+                        <MudText Typo="Typo.h6" Class="flex-grow-1">Employees List</MudText>
+                        <MasterDataStatusFilterChips Value="_statusFilter" ValueChanged="OnStatusFilterChanged" />
+                    </MudStack>
 
                     @if (_employees.Any())
                     {
@@ -148,12 +163,14 @@
     private EmployeeForm _form = new();
     private EmployeeReferenceDto? EditingEmployee { get; set; }
     private List<EmployeeReferenceDto> _employees = new();
+    private List<EmployeeReferenceDto> _allEmployees = new();
     private List<OfficeReferenceDto> _offices = new();
     private List<DepartmentReferenceDto> _departments = new();
     private List<PositionReferenceDto> _positions = new();
     private bool _initialized = false;
     private bool _isLoading = false;
     private string _searchKeyword = string.Empty;
+    private string _statusFilter = "All";
 
     public class EmployeeForm
     {
@@ -161,6 +178,10 @@
         public string FirstName { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;
         public string? WorkEmail { get; set; }
+        public UserDto? IdentityUser { get; set; }
+        
+        // Derived from IdentityUser for API submission
+        public string? IdentityUserId => IdentityUser?.Id.ToString();
         
         // These hold the object references for the Autocomplete
         public OfficeReferenceDto? Office { get; set; }
@@ -168,6 +189,23 @@
         public PositionReferenceDto? Position { get; set; }
         
         public bool IsActive { get; set; } = true;
+    }
+
+    private async Task<IEnumerable<UserDto>> SearchIdentityUsers(string value, CancellationToken token)
+    {
+        try
+        {
+            var result = await UsersClient.SearchAsync(
+                search: string.IsNullOrWhiteSpace(value) ? null : value,
+                pageSize: 20,
+                cancellationToken: token);
+            return result?.Items ?? Enumerable.Empty<UserDto>();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"User search failed: {ex.Message}", Severity.Warning);
+            return Enumerable.Empty<UserDto>();
+        }
     }
 
     // Search Functions for Autocompletes
@@ -209,7 +247,8 @@
         {
             _isLoading = true;
             var response = await LookupClient.EmployeesGetAsync(pageSize: 100);
-            _employees = response?.Items?.ToList() ?? new();
+            _allEmployees = response?.Items?.ToList() ?? new();
+            ApplyLocalFilters();
         }
         catch (Exception ex)
         {
@@ -257,14 +296,38 @@
         try
         {
             _isLoading = true;
-            var response = await LookupClient.EmployeesGetAsync(keyword: _searchKeyword, pageSize: 100);
-            _employees = response?.Items?.ToList() ?? new();
+            var keyword = string.IsNullOrWhiteSpace(_searchKeyword) ? null : _searchKeyword;
+            var response = await LookupClient.EmployeesGetAsync(keyword: keyword, pageSize: 100);
+            _allEmployees = response?.Items?.ToList() ?? new();
+            ApplyLocalFilters();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Search failed: {ex.Message}", Severity.Error);
         }
         finally
         {
             _isLoading = false;
             StateHasChanged();
         }
+    }
+
+    private Task OnStatusFilterChanged(string status)
+    {
+        _statusFilter = string.IsNullOrWhiteSpace(status) ? "All" : status;
+        ApplyLocalFilters();
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+    private void ApplyLocalFilters()
+    {
+        _employees = _statusFilter switch
+        {
+            "Active" => _allEmployees.Where(x => x.IsActive).ToList(),
+            "Inactive" => _allEmployees.Where(x => !x.IsActive).ToList(),
+            _ => _allEmployees.ToList()
+        };
     }
 
     private async Task SaveEmployee()
@@ -289,6 +352,7 @@
                     FirstName = _form.FirstName,
                     LastName = _form.LastName,
                     WorkEmail = _form.WorkEmail,
+                    IdentityUserId = string.IsNullOrWhiteSpace(_form.IdentityUserId) ? null : _form.IdentityUserId.Trim(),
                     OfficeId = _form.Office.Id,
                     DepartmentId = _form.Department.Id,
                     PositionId = _form.Position.Id,
@@ -305,6 +369,7 @@
                     FirstName = _form.FirstName,
                     LastName = _form.LastName,
                     WorkEmail = _form.WorkEmail,
+                    IdentityUserId = string.IsNullOrWhiteSpace(_form.IdentityUserId) ? null : _form.IdentityUserId.Trim(),
                     OfficeId = _form.Office.Id,
                     DepartmentId = _form.Department.Id,
                     PositionId = _form.Position.Id,
@@ -320,15 +385,22 @@
         catch (Exception ex) { Snackbar.Add($"Error: {ex.Message}", Severity.Error); }
     }
 
-    private void EditEmployee(EmployeeReferenceDto employee)
+    private async Task EditEmployee(EmployeeReferenceDto employee)
     {
         EditingEmployee = employee;
+        UserDto? linkedUser = null;
+        if (!string.IsNullOrWhiteSpace(employee.IdentityUserId) && Guid.TryParse(employee.IdentityUserId, out var identityGuid))
+        {
+            try { linkedUser = await IdentityClient.UsersGetAsync(identityGuid); }
+            catch (Exception ex) { Snackbar.Add($"Could not load linked account: {ex.Message}", Severity.Warning); }
+        }
         _form = new EmployeeForm
         {
             EmployeeNumber = employee.EmployeeNumber,
             FirstName = employee.FirstName,
             LastName = employee.LastName,
             WorkEmail = employee.WorkEmail,
+            IdentityUser = linkedUser,
             IsActive = employee.IsActive,
             // Find the object in the list so the autocomplete shows the name
             Office = _offices.FirstOrDefault(o => o.Id == employee.OfficeId),

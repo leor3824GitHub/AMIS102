@@ -22,6 +22,7 @@ public record SupplyRequestDto(
     string? RejectionReason,
     string? ApprovedBy,
     DateTimeOffset? ApprovedOnUtc,
+    Guid? WarehouseLocationId,
     List<SupplyRequestItemDto> Items,
     DateTimeOffset CreatedOnUtc,
     string? CreatedBy);
@@ -45,7 +46,8 @@ public record SubmitSupplyRequestCommand(Guid Id) : ICommand<Unit>;
 
 public record ApproveSupplyRequestCommand(
     Guid Id,
-    Dictionary<Guid, int> ApprovedQuantities) : ICommand<Unit>;
+    Dictionary<Guid, int> ApprovedQuantities,
+    Guid WarehouseLocationId) : ICommand<Unit>;
 
 public record RejectSupplyRequestCommand(
     Guid Id,
@@ -75,4 +77,91 @@ public sealed record GetEmployeeSupplyRequestsQuery : IPagedQuery, IQuery<PagedR
     public string? Sort { get; set; }
 }
 
+// ============= FULFILL =============
 
+/// <summary>Supply officer fulfills an approved supply request — issues from warehouse and records per-employee receipt</summary>
+public record FulfillSupplyRequestCommand(
+    Guid SupplyRequestId,
+    Guid? WarehouseLocationId = null,
+    string? Notes = null
+) : ICommand<FulfillSupplyRequestResponse>;
+
+public record FulfillmentItemResultDto(
+    Guid ProductId,
+    string ProductName,
+    string ProductCode,
+    int QuantityIssued,
+    decimal UnitPrice,
+    decimal TotalValue
+);
+
+public record FulfillSupplyRequestResponse(
+    Guid SupplyRequestId,
+    string RequestNumber,
+    string EmployeeId,
+    string DepartmentId,
+    DateTimeOffset FulfilledOnUtc,
+    List<FulfillmentItemResultDto> Items,
+    decimal TotalIssuedValue
+);
+
+// ============= DEPARTMENT ISSUANCE REPORT =============
+
+/// <summary>Aggregated issuance report grouped by department — for supply officer reporting</summary>
+public sealed class GetDepartmentIssuanceReportQuery : IPagedQuery, IQuery<PagedResponse<DepartmentIssuanceSummaryDto>>
+{
+    public string? DepartmentId { get; set; }
+    public DateTimeOffset? From { get; set; }
+    public DateTimeOffset? To { get; set; }
+    public int? PageNumber { get; set; }
+    public int? PageSize { get; set; }
+    public string? Sort { get; set; }
+}
+
+public record DepartmentIssuanceSummaryDto(
+    string DepartmentId,
+    int TotalRequestsFulfilled,
+    int TotalItemsIssued,
+    decimal TotalValue,
+    List<DepartmentProductBreakdownDto> Products
+);
+
+public record DepartmentProductBreakdownDto(
+    Guid ProductId,
+    string ProductName,
+    string ProductCode,
+    int TotalQuantityIssued,
+    decimal TotalValue
+);
+
+// ============= EMPLOYEE ISSUANCE HISTORY =============
+
+/// <summary>Per-employee issuance history — what was issued, when, and from which request</summary>
+public sealed class GetEmployeeIssuanceHistoryQuery : IPagedQuery, IQuery<PagedResponse<EmployeeIssuanceDto>>
+{
+    public string? EmployeeId { get; set; }
+    public DateTimeOffset? From { get; set; }
+    public DateTimeOffset? To { get; set; }
+    public int? PageNumber { get; set; }
+    public int? PageSize { get; set; }
+    public string? Sort { get; set; }
+}
+
+public record EmployeeIssuanceDto(
+    Guid RequestId,
+    string RequestNumber,
+    string EmployeeId,
+    string DepartmentId,
+    DateTimeOffset FulfilledOnUtc,
+    List<IssuanceItemDto> Items,
+    decimal TotalValue
+);
+
+public record IssuanceItemDto(
+    Guid ProductId,
+    string ProductName,
+    string ProductCode,
+    int QuantityIssued,
+    decimal UnitPrice,
+    decimal TotalValue
+);

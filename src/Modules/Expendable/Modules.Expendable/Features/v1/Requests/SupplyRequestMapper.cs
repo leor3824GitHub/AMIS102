@@ -18,6 +18,7 @@ internal static class SupplyRequestMapper
             request.RejectionReason,
             request.ApprovedBy,
             request.ApprovedOnUtc,
+            request.WarehouseLocationId,
             request.Items.Select(x => new SupplyRequestItemDto(
                 x.ProductId,
                 x.RequestedQuantity,

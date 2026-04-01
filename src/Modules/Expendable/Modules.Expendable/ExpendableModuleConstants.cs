@@ -21,6 +21,8 @@ public static class ExpendableModuleConstants
             public const string Delete = "Permissions.Expendable.Products.Delete";
             public const string Activate = "Permissions.Expendable.Products.Activate";
             public const string Deactivate = "Permissions.Expendable.Products.Deactivate";
+            public const string Discontinue = "Permissions.Expendable.Products.Discontinue";
+            public const string MarkOutOfStock = "Permissions.Expendable.Products.MarkOutOfStock";
         }
 
         public static class Purchases
@@ -41,6 +43,7 @@ public static class ExpendableModuleConstants
             public const string Delete = "Permissions.Expendable.SupplyRequests.Delete";
             public const string Approve = "Permissions.Expendable.SupplyRequests.Approve";
             public const string Reject = "Permissions.Expendable.SupplyRequests.Reject";
+            public const string Fulfill = "Permissions.Expendable.SupplyRequests.Fulfill";
         }
 
         public static class ShoppingCarts

@@ -56,7 +56,10 @@
         <MudItem xs="12" md="8">
             <MudCard Class="fsh-card">
                 <MudCardContent>
-                    <MudText Typo="Typo.h6" Class="mb-3">Suppliers List</MudText>
+                    <MudStack Row="true" Spacing="1" Class="mb-3" AlignItems="AlignItems.Center">
+                        <MudText Typo="Typo.h6" Class="flex-grow-1">Suppliers List</MudText>
+                        <MasterDataStatusFilterChips Value="_statusFilter" ValueChanged="OnStatusFilterChanged" />
+                    </MudStack>
 
                     @if (_suppliers.Any())
                     {
@@ -109,9 +112,11 @@
     private SupplierForm _form = new();
     private SupplierDto? EditingSupplier;
     private List<SupplierDto> _suppliers = new();
+    private List<SupplierDto> _allSuppliers = new();
     private bool _initialized = false;
     private bool _isLoading = false;
     private string _searchKeyword = string.Empty;
+    private string _statusFilter = "All";
 
     public class SupplierForm
     {
@@ -138,7 +143,8 @@
         {
             _isLoading = true;
             var response = await MasterDataService.GetSuppliersAsync(pageSize: 100);
-            _suppliers = response?.Items?.ToList() ?? new();
+            _allSuppliers = response?.Items?.ToList() ?? new();
+            ApplyLocalFilters();
             StateHasChanged();
         }
         catch (Exception ex)
@@ -159,23 +165,8 @@
         {
             _isLoading = true;
             var response = await MasterDataService.GetSuppliersAsync(keyword: _searchKeyword, pageSize: 100);
-            var allSuppliers = response?.Items?.ToList() ?? new();
-
-            if (string.IsNullOrWhiteSpace(_searchKeyword))
-            {
-                _suppliers = allSuppliers;
-            }
-            else
-            {
-                var searchTerm = _searchKeyword.ToLower();
-                _suppliers = allSuppliers
-                    .Where(s =>
-                        s.Code.ToLower().Contains(searchTerm) ||
-                        s.Name.ToLower().Contains(searchTerm) ||
-                        (s.ContactPerson?.ToLower().Contains(searchTerm) ?? false) ||
-                        (s.Email?.ToLower().Contains(searchTerm) ?? false))
-                    .ToList();
-            }
+            _allSuppliers = response?.Items?.ToList() ?? new();
+            ApplyLocalFilters();
 
             if (_suppliers.Count == 0 && !string.IsNullOrWhiteSpace(_searchKeyword))
             {
@@ -283,5 +274,23 @@
         {
             Snackbar.Add($"Failed to delete supplier: {ex.Message}", Severity.Error);
         }
+    }
+
+    private Task OnStatusFilterChanged(string status)
+    {
+        _statusFilter = string.IsNullOrWhiteSpace(status) ? "All" : status;
+        ApplyLocalFilters();
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+    private void ApplyLocalFilters()
+    {
+        _suppliers = _statusFilter switch
+        {
+            "Active" => _allSuppliers.Where(x => x.IsActive).ToList(),
+            "Inactive" => _allSuppliers.Where(x => !x.IsActive).ToList(),
+            _ => _allSuppliers.ToList()
+        };
     }
 }

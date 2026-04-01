@@ -26,7 +26,7 @@ public interface IUserProfileService
     /// <summary>
     /// Updates a user's profile.
     /// </summary>
-    Task UpdateAsync(string userId, string firstName, string lastName, string phoneNumber, FileUploadRequest image, bool deleteCurrentImage);
+    Task UpdateAsync(string userId, string firstName, string lastName, string phoneNumber, FileUploadRequest? image, bool deleteCurrentImage);
 
     /// <summary>
     /// Checks if a user exists with the given email.

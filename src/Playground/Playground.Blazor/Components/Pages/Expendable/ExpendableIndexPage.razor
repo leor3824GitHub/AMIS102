@@ -1,7 +1,12 @@
 @page "/expendable"
 @using FSH.Framework.Blazor.UI.Components.Cards
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
 @inherits ComponentBase
 @inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IEmployeesClient EmployeesClient
+@inject ISnackbar Snackbar
 
 <FshPageHeader Title="Expendable Module" Description="Employee shopping and supply request system">
 </FshPageHeader>
@@ -103,5 +108,152 @@
                 </MudCardContent>
             </MudCard>
         </MudItem>
+
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard Class="h-full">
+                <MudCardContent>
+                    <MudStack Spacing="3" AlignItems="AlignItems.Center">
+                        <MudIcon Icon="@Icons.Material.Filled.Assessment" Size="Size.Large" Color="Color.Info" />
+                        <MudText Typo="Typo.h6">Department Report</MudText>
+                        <MudText Typo="Typo.body2" Align="Align.Center">Issuance summary per department</MudText>
+                        <MudStack Row="true" Spacing="1" Justify="Justify.Center" Class="w-full">
+                            <MudButton Variant="Variant.Outlined" Color="Color.Info" Size="Size.Small"
+                                       OnClick="@(() => Navigation.NavigateTo("/expendable/reports/department?preset=today"))">
+                                Today
+                            </MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Info" Size="Size.Small"
+                                       OnClick="@(() => Navigation.NavigateTo("/expendable/reports/department?preset=this-week"))">
+                                This Week
+                            </MudButton>
+                        </MudStack>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" FullWidth="true"
+                                   Disabled="@_resolvingMyDepartment"
+                                   OnClick="OpenMyDepartmentReportAsync">
+                            @(_resolvingMyDepartment ? "Opening..." : "My Department")
+                        </MudButton>
+                        <MudButton Variant="Variant.Filled" Color="Color.Info" FullWidth="true"
+                                   OnClick="@(() => Navigation.NavigateTo("/expendable/reports/department"))">
+                            View
+                        </MudButton>
+                    </MudStack>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard Class="h-full">
+                <MudCardContent>
+                    <MudStack Spacing="3" AlignItems="AlignItems.Center">
+                        <MudIcon Icon="@Icons.Material.Filled.History" Size="Size.Large" Color="Color.Tertiary" />
+                        <MudText Typo="Typo.h6">Employee History</MudText>
+                        <MudText Typo="Typo.body2" Align="Align.Center">Issuance history per employee</MudText>
+                        <MudStack Row="true" Spacing="1" Justify="Justify.Center" Class="w-full">
+                            <MudButton Variant="Variant.Outlined" Color="Color.Tertiary" Size="Size.Small"
+                                       OnClick="@(() => Navigation.NavigateTo("/expendable/reports/employee?preset=today"))">
+                                Today
+                            </MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Tertiary" Size="Size.Small"
+                                       OnClick="@(() => Navigation.NavigateTo("/expendable/reports/employee?preset=this-week"))">
+                                This Week
+                            </MudButton>
+                        </MudStack>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" FullWidth="true"
+                                   Disabled="@_resolvingMyHistory"
+                                   OnClick="OpenMyHistoryReportAsync">
+                            @(_resolvingMyHistory ? "Opening..." : "My History")
+                        </MudButton>
+                        <MudButton Variant="Variant.Filled" Color="Color.Tertiary" FullWidth="true"
+                                   OnClick="@(() => Navigation.NavigateTo("/expendable/reports/employee"))">
+                            View
+                        </MudButton>
+                    </MudStack>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
     </MudGrid>
 </div>
+
+@code {
+    private bool _resolvingMyDepartment;
+    private bool _resolvingMyHistory;
+
+    private async Task OpenMyDepartmentReportAsync()
+    {
+        if (_resolvingMyDepartment)
+        {
+            return;
+        }
+
+        _resolvingMyDepartment = true;
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var identityUserId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrWhiteSpace(identityUserId))
+            {
+                Snackbar.Add("Unable to resolve current identity. Please sign in again.", Severity.Warning);
+                return;
+            }
+
+            var employee = await EmployeesClient.ByIdentityAsync(identityUserId);
+            if (employee.DepartmentId == Guid.Empty)
+            {
+                Snackbar.Add("No department is mapped to your employee profile.", Severity.Warning);
+                return;
+            }
+
+            var target = $"/expendable/reports/department?departmentId={employee.DepartmentId}&preset=this-week";
+            Navigation.NavigateTo(target);
+        }
+        catch (ApiException ex) when (ex.StatusCode == 404)
+        {
+            Snackbar.Add("No employee profile found for the current account.", Severity.Warning);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Unable to open My Department report: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _resolvingMyDepartment = false;
+        }
+    }
+
+    private async Task OpenMyHistoryReportAsync()
+    {
+        if (_resolvingMyHistory)
+        {
+            return;
+        }
+
+        _resolvingMyHistory = true;
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var identityUserId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrWhiteSpace(identityUserId))
+            {
+                Snackbar.Add("Unable to resolve current identity. Please sign in again.", Severity.Warning);
+                return;
+            }
+
+            var employee = await EmployeesClient.ByIdentityAsync(identityUserId);
+            var target = $"/expendable/reports/employee?employeeId={employee.Id}&preset=this-week";
+            Navigation.NavigateTo(target);
+        }
+        catch (ApiException ex) when (ex.StatusCode == 404)
+        {
+            Snackbar.Add("No employee profile found for the current account.", Severity.Warning);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Unable to open My History report: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _resolvingMyHistory = false;
+        }
+    }
+}

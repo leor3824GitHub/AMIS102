@@ -22,7 +22,7 @@ public sealed class UpdateUserCommandHandler : ICommandHandler<UpdateUserCommand
             command.FirstName ?? string.Empty,
             command.LastName ?? string.Empty,
             command.PhoneNumber ?? string.Empty,
-            command.Image!,
+            command.Image,
             command.DeleteCurrentImage).ConfigureAwait(false);
 
         return Unit.Value;

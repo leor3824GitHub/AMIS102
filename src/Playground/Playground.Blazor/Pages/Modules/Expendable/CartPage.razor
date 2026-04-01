@@ -1,12 +1,16 @@
 @page "/expendable/cart"
 @using MudBlazor
 @using FSH.Playground.Blazor.ApiClient
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
 @inject IEmployeeClient _employeeClient
+@inject IEmployeesClient _employeesClient
 @inject ICartClient _cartClient
 @inject IProductsClient _productsClient
 @inject ILookupClient _lookupClient
 @inject IInventoryClient _inventoryClient
 @inject IWarehouseClient _warehouseClient
+@inject AuthenticationStateProvider _authenticationStateProvider
 @inject NavigationManager _navigationManager
 @inject ISnackbar _snackbar
 
@@ -162,7 +166,7 @@
 
 @code {
     private EmployeeShoppingCartDto? _cart;
-    private string _currentEmployeeId = "test-employee"; 
+    private string _currentEmployeeId = string.Empty;
     private Guid _selectedDepartmentId = Guid.Empty;
     private string? _businessJustification = "";
     private DateTime? _neededByDate = DateTime.Today.AddDays(1);
@@ -184,7 +188,7 @@
     {
         _loading = true;
         try {
-            await Task.WhenAll(LoadProducts(), LoadDepartments());
+            await Task.WhenAll(ResolveCurrentEmployeeContext(), LoadProducts(), LoadDepartments());
             await LoadCart();
             await LoadInventoryBalancesAsync();
         } finally {
@@ -192,8 +196,41 @@
         }
     }
 
+    private async Task ResolveCurrentEmployeeContext()
+    {
+        try
+        {
+            var authState = await _authenticationStateProvider.GetAuthenticationStateAsync();
+            var identityUserId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrWhiteSpace(identityUserId))
+            {
+                _snackbar.Add("Unable to resolve signed-in user identity.", Severity.Warning);
+                return;
+            }
+
+            var employee = await _employeesClient.ByIdentityAsync(identityUserId);
+            _currentEmployeeId = employee.Id.ToString();
+            _selectedDepartmentId = employee.DepartmentId;
+        }
+        catch (ApiException ex) when (ex.StatusCode == 404)
+        {
+            _snackbar.Add("No employee profile linked to this user. Please contact an administrator.", Severity.Warning);
+        }
+        catch (Exception ex)
+        {
+            _snackbar.Add($"Failed to resolve employee context: {ex.Message}", Severity.Error);
+        }
+    }
+
     private async Task LoadCart()
     {
+        if (string.IsNullOrWhiteSpace(_currentEmployeeId))
+        {
+            _cart = null;
+            return;
+        }
+
         _cart = await _employeeClient.CartAsync(_currentEmployeeId);
     }
 
@@ -277,7 +314,9 @@
                 CartId = _cart.Id,
                 DepartmentId = _selectedDepartmentId.ToString(),
                 BusinessJustification = _businessJustification,
-                NeededByDate = _neededByDate.HasValue ? new DateTimeOffset(_neededByDate.Value) : null
+                NeededByDate = _neededByDate.HasValue
+                    ? new DateTimeOffset(DateTime.SpecifyKind(_neededByDate.Value.Date, DateTimeKind.Utc))
+                    : null
             };
             await _cartClient.ConvertToRequestAsync(_cart.Id, command);
             _snackbar.Add("Request submitted successfully!", Severity.Success);

@@ -1,20 +1,529 @@
 @page "/expendable/requests"
 @using FSH.Framework.Blazor.UI.Components.Cards
+@using FSH.Playground.Blazor.ApiClient
 @inherits ComponentBase
 @inject ISnackbar Snackbar
+@inject IExpendableClient ExpendableClient
+@inject ISupply_requestsClient SupplyRequestsClient
+@inject IInventoryClient InventoryClient
+@inject ILookupClient LookupClient
 
-<FshPageHeader Title="Supply Requests" Description="Manage employee supply requests">
-    <ActionContent>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add">
-            New Request
-        </MudButton>
-    </ActionContent>
-</FshPageHeader>
+<FshPageHeader Title="Supply Requests" Description="Supply officer — approve, fulfill, and track employee supply requests" />
 
 <div class="mt-4">
-    <MudCard>
-        <MudCardContent>
-            <MudText Typo="Typo.body1">Supply Requests module - API integration coming soon</MudText>
-        </MudCardContent>
-    </MudCard>
+    <MudTabs Elevation="1" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-4"
+             @bind-ActivePanelIndex="_activeTab">
+
+        <!-- ===== PENDING APPROVAL ===== -->
+        <MudTabPanel Text="Pending Approval" Icon="@Icons.Material.Filled.HourglassTop" BadgeData="@_pendingCount" BadgeColor="Color.Warning">
+            <MudTable @ref="_pendingTable" T="SupplyRequestDto"
+                      ServerData="@(async (s, ct) => await LoadRequests(s, ct, "Submitted"))"
+                      Dense="true" Hover="true" Striped="true">
+                <HeaderContent>
+                    <MudTh>Request #</MudTh>
+                    <MudTh>Employee</MudTh>
+                    <MudTh>Department</MudTh>
+                    <MudTh>Date</MudTh>
+                    <MudTh>Items</MudTh>
+                    <MudTh>Actions</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd><MudText Typo="Typo.body2" Style="font-weight:500">@context.RequestNumber</MudText></MudTd>
+                    <MudTd>@GetEmployeeName(context.EmployeeId)</MudTd>
+                    <MudTd>@GetDepartmentName(context.DepartmentId)</MudTd>
+                    <MudTd>@context.RequestDate.ToString("MMM d, yyyy")</MudTd>
+                    <MudTd>@context.Items.Count item(s)</MudTd>
+                    <MudTd>
+                        <MudStack Row="true" Spacing="1">
+                            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Success"
+                                       StartIcon="@Icons.Material.Filled.CheckCircle"
+                                       OnClick="@(() => OpenApproveDialog(context))">Approve</MudButton>
+                            <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Error"
+                                       StartIcon="@Icons.Material.Filled.Cancel"
+                                       OnClick="@(() => OpenRejectDialog(context))">Reject</MudButton>
+                        </MudStack>
+                    </MudTd>
+                </RowTemplate>
+                <NoRecordsContent><MudText Class="my-4">No pending requests.</MudText></NoRecordsContent>
+                <PagerContent><MudTablePager /></PagerContent>
+            </MudTable>
+        </MudTabPanel>
+
+        <!-- ===== APPROVED — AWAITING ISSUE ===== -->
+        <MudTabPanel Text="Approved — Awaiting Issue" Icon="@Icons.Material.Filled.Inventory" BadgeData="@_approvedCount" BadgeColor="Color.Info">
+            <MudTable @ref="_approvedTable" T="SupplyRequestDto"
+                      ServerData="@(async (s, ct) => await LoadRequests(s, ct, "Approved"))"
+                      Dense="true" Hover="true" Striped="true">
+                <HeaderContent>
+                    <MudTh>Request #</MudTh>
+                    <MudTh>Employee</MudTh>
+                    <MudTh>Department</MudTh>
+                    <MudTh>Date</MudTh>
+                    <MudTh>Items</MudTh>
+                    <MudTh>Actions</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd><MudText Typo="Typo.body2" Style="font-weight:500">@context.RequestNumber</MudText></MudTd>
+                    <MudTd>@GetEmployeeName(context.EmployeeId)</MudTd>
+                    <MudTd>@GetDepartmentName(context.DepartmentId)</MudTd>
+                    <MudTd>@context.RequestDate.ToString("MMM d, yyyy")</MudTd>
+                    <MudTd>@context.Items.Count item(s)</MudTd>
+                    <MudTd>
+                        <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary"
+                                   StartIcon="@Icons.Material.Filled.LocalShipping"
+                                   OnClick="@(() => OpenFulfillDialog(context))">Issue</MudButton>
+                    </MudTd>
+                </RowTemplate>
+                <NoRecordsContent><MudText Class="my-4">No approved requests awaiting issuance.</MudText></NoRecordsContent>
+                <PagerContent><MudTablePager /></PagerContent>
+            </MudTable>
+        </MudTabPanel>
+
+        <!-- ===== FULFILLED ===== -->
+        <MudTabPanel Text="Fulfilled" Icon="@Icons.Material.Filled.TaskAlt">
+            <MudTable @ref="_fulfilledTable" T="SupplyRequestDto"
+                      ServerData="@(async (s, ct) => await LoadRequests(s, ct, "Fulfilled"))"
+                      Dense="true" Hover="true" Striped="true">
+                <HeaderContent>
+                    <MudTh>Request #</MudTh>
+                    <MudTh>Employee</MudTh>
+                    <MudTh>Department</MudTh>
+                    <MudTh>Date Issued</MudTh>
+                    <MudTh>Items</MudTh>
+                    <MudTh>Status</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd><MudText Typo="Typo.body2" Style="font-weight:500">@context.RequestNumber</MudText></MudTd>
+                    <MudTd>@GetEmployeeName(context.EmployeeId)</MudTd>
+                    <MudTd>@GetDepartmentName(context.DepartmentId)</MudTd>
+                    <MudTd>@(context.ApprovedOnUtc?.ToString("MMM d, yyyy") ?? "-")</MudTd>
+                    <MudTd>@context.Items.Count item(s)</MudTd>
+                    <MudTd>
+                        <MudChip T="string" Size="Size.Small" Color="Color.Success" Icon="@Icons.Material.Filled.Done">
+                            Issued
+                        </MudChip>
+                    </MudTd>
+                </RowTemplate>
+                <NoRecordsContent><MudText Class="my-4">No fulfilled requests yet.</MudText></NoRecordsContent>
+                <PagerContent><MudTablePager /></PagerContent>
+            </MudTable>
+        </MudTabPanel>
+
+        <!-- ===== REJECTED ===== -->
+        <MudTabPanel Text="Rejected" Icon="@Icons.Material.Filled.Block">
+            <MudTable @ref="_rejectedTable" T="SupplyRequestDto"
+                      ServerData="@(async (s, ct) => await LoadRequests(s, ct, "Rejected"))"
+                      Dense="true" Hover="true" Striped="true">
+                <HeaderContent>
+                    <MudTh>Request #</MudTh>
+                    <MudTh>Employee</MudTh>
+                    <MudTh>Department</MudTh>
+                    <MudTh>Date</MudTh>
+                    <MudTh>Items</MudTh>
+                    <MudTh>Reason</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd><MudText Typo="Typo.body2" Style="font-weight:500">@context.RequestNumber</MudText></MudTd>
+                    <MudTd>@GetEmployeeName(context.EmployeeId)</MudTd>
+                    <MudTd>@GetDepartmentName(context.DepartmentId)</MudTd>
+                    <MudTd>@context.RequestDate.ToString("MMM d, yyyy")</MudTd>
+                    <MudTd>@context.Items.Count item(s)</MudTd>
+                    <MudTd><MudText Typo="Typo.caption" Color="Color.Error">@context.RejectionReason</MudText></MudTd>
+                </RowTemplate>
+                <NoRecordsContent><MudText Class="my-4">No rejected requests.</MudText></NoRecordsContent>
+                <PagerContent><MudTablePager /></PagerContent>
+            </MudTable>
+        </MudTabPanel>
+
+    </MudTabs>
 </div>
+
+<!-- ===== APPROVE DIALOG ===== -->
+@if (_showApproveDialog && _approveDialog != null)
+{
+    <MudOverlay Visible="true" DarkBackground="true" AutoClose="false" ZIndex="1400">
+        <MudPaper Class="pa-4" Elevation="24" Style="width: min(900px, 95vw); max-height: 90vh; overflow: auto;">
+            <MudText Typo="Typo.h6" Class="mb-3">
+                <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Class="mr-2" />
+                Approve Request — @_approveDialog.RequestNumber
+            </MudText>
+
+            <MudStack Spacing="3">
+                <MudGrid>
+                    <MudItem xs="6">
+                        <MudText Typo="Typo.caption" Color="Color.Tertiary">Employee</MudText>
+                        <MudText Typo="Typo.body2">@GetEmployeeName(_approveDialog.EmployeeId)</MudText>
+                    </MudItem>
+                    <MudItem xs="6">
+                        <MudText Typo="Typo.caption" Color="Color.Tertiary">Department</MudText>
+                        <MudText Typo="Typo.body2">@GetDepartmentName(_approveDialog.DepartmentId)</MudText>
+                    </MudItem>
+                </MudGrid>
+
+                @if (_warehouses.Count > 0)
+                {
+                    <MudSelect T="Guid" @bind-Value="_approveWarehouseId" Label="Issue From Warehouse" Required="true"
+                               Variant="Variant.Outlined" HelperText="Select the warehouse to reserve and issue stock from">
+                        @foreach (var wh in _warehouses)
+                        {
+                            <MudSelectItem T="Guid" Value="@wh.Id">@wh.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                }
+                else
+                {
+                    <MudTextField @bind-Value="_approveWarehouseIdText" Label="Warehouse Location ID"
+                                  Placeholder="Enter warehouse GUID" Variant="Variant.Outlined"
+                                  HelperText="No warehouses found — paste the warehouse ID directly" />
+                }
+
+                <MudText Typo="Typo.subtitle2">Approve Quantities per Item</MudText>
+                <MudTable Items="@_approveDialog.Items" Dense="true" Elevation="0">
+                    <HeaderContent>
+                        <MudTh>Product</MudTh>
+                        <MudTh>Requested</MudTh>
+                        <MudTh>Approve Qty</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>
+                            <MudText Typo="Typo.body2">@GetProductName(context.ProductId)</MudText>
+                        </MudTd>
+                        <MudTd>@context.RequestedQuantity</MudTd>
+                        <MudTd>
+                            <MudNumericField T="int"
+                                            Value="@GetApproveQty(context.ProductId)"
+                                            ValueChanged="@(v => SetApproveQty(context.ProductId, v))"
+                                            Min="0" Max="@context.RequestedQuantity"
+                                            Style="width: 100px" Dense="true" Margin="Margin.Dense" />
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+
+                <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2">
+                    <MudButton OnClick="@(() => _showApproveDialog = false)">Cancel</MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Success"
+                               OnClick="SubmitApproval" Disabled="@_isActioning">
+                        @if (_isActioning) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" /> }
+                        Approve &amp; Reserve Stock
+                    </MudButton>
+                </MudStack>
+            </MudStack>
+        </MudPaper>
+    </MudOverlay>
+}
+
+<!-- ===== REJECT DIALOG ===== -->
+@if (_showRejectDialog && _rejectDialog != null)
+{
+    <MudOverlay Visible="true" DarkBackground="true" AutoClose="false" ZIndex="1400">
+        <MudPaper Class="pa-4" Elevation="24" Style="width: min(560px, 95vw);">
+            <MudText Typo="Typo.h6" Class="mb-3">
+                <MudIcon Icon="@Icons.Material.Filled.Cancel" Color="Color.Error" Class="mr-2" />
+                Reject Request — @_rejectDialog.RequestNumber
+            </MudText>
+            <MudTextField @bind-Value="_rejectReason" Label="Reason for Rejection" Lines="3"
+                          Placeholder="Enter reason..." Variant="Variant.Outlined" />
+            <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2" Class="mt-3">
+                <MudButton OnClick="@(() => _showRejectDialog = false)">Cancel</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Error"
+                           OnClick="SubmitRejection" Disabled="@_isActioning">
+                    @if (_isActioning) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" /> }
+                    Reject Request
+                </MudButton>
+            </MudStack>
+        </MudPaper>
+    </MudOverlay>
+}
+
+<!-- ===== FULFILL DIALOG ===== -->
+@if (_fulfillDialog != null)
+{
+    <MudDialog @bind-IsVisible="_showFulfillDialog" Options="@(new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true })">
+        <TitleContent>
+            <MudText Typo="Typo.h6">
+                <MudIcon Icon="@Icons.Material.Filled.LocalShipping" Color="Color.Primary" Class="mr-2" />
+                Issue Supplies — @_fulfillDialog.RequestNumber
+            </MudText>
+        </TitleContent>
+        <DialogContent>
+            <MudStack Spacing="2">
+                <MudAlert Severity="Severity.Info" Dense="true">
+                    Stock was reserved at approval. Confirming will deduct from warehouse and record receipt in the employee's inventory.
+                </MudAlert>
+                <MudGrid>
+                    <MudItem xs="6">
+                        <MudText Typo="Typo.caption" Color="Color.Tertiary">Employee</MudText>
+                        <MudText Typo="Typo.body2">@GetEmployeeName(_fulfillDialog.EmployeeId)</MudText>
+                    </MudItem>
+                    <MudItem xs="6">
+                        <MudText Typo="Typo.caption" Color="Color.Tertiary">Department</MudText>
+                        <MudText Typo="Typo.body2">@GetDepartmentName(_fulfillDialog.DepartmentId)</MudText>
+                    </MudItem>
+                </MudGrid>
+                <MudDivider />
+                @foreach (var item in _fulfillDialog.Items.Where(i => i.ApprovedQuantity > 0))
+                {
+                    <MudStack Row="true" Justify="Justify.SpaceBetween">
+                        <MudText Typo="Typo.body2">@GetProductName(item.ProductId)</MudText>
+                        <MudChip T="string" Size="Size.Small" Color="Color.Primary">@item.ApprovedQuantity units</MudChip>
+                    </MudStack>
+                }
+            </MudStack>
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="@(() => _showFulfillDialog = false)">Cancel</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                       OnClick="SubmitFulfillment" Disabled="@_isActioning">
+                @if (_isActioning) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" /> }
+                Confirm Issue
+            </MudButton>
+        </DialogActions>
+    </MudDialog>
+}
+
+@code {
+    private MudTable<SupplyRequestDto>? _pendingTable;
+    private MudTable<SupplyRequestDto>? _approvedTable;
+    private MudTable<SupplyRequestDto>? _fulfilledTable;
+    private MudTable<SupplyRequestDto>? _rejectedTable;
+    private int _activeTab;
+    private int _pendingCount;
+    private int _approvedCount;
+
+    private List<(Guid Id, string Name)> _warehouses = [];
+    private Dictionary<Guid, string> _productNames = [];
+    private Dictionary<Guid, string> _employeeNames = [];
+    private Dictionary<Guid, string> _departmentNames = [];
+
+    private bool _showApproveDialog;
+    private bool _showRejectDialog;
+    private bool _showFulfillDialog;
+    private bool _isActioning;
+
+    private SupplyRequestDto? _approveDialog;
+    private SupplyRequestDto? _rejectDialog;
+    private SupplyRequestDto? _fulfillDialog;
+
+    private Guid _approveWarehouseId;
+    private string _approveWarehouseIdText = string.Empty;
+    private Dictionary<Guid, int> _approveQuantities = [];
+    private string _rejectReason = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.WhenAll(LoadWarehouses(), LoadEmployees(), LoadDepartments());
+    }
+
+    private async Task LoadEmployees()
+    {
+        try
+        {
+            var result = await LookupClient.EmployeesGetAsync(pageSize: 1000, isActive: true);
+            _employeeNames = result?.Items?.ToDictionary(
+                e => e.Id,
+                e => $"{e.FirstName} {e.LastName}") ?? [];
+        }
+        catch { _employeeNames = []; }
+    }
+
+    private async Task LoadDepartments()
+    {
+        try
+        {
+            var result = await LookupClient.DepartmentsAsync(pageSize: 1000, isActive: true);
+            _departmentNames = result?.Items?.ToDictionary(d => d.Id, d => d.Name) ?? [];
+        }
+        catch { _departmentNames = []; }
+    }
+
+    private async Task<TableData<SupplyRequestDto>> LoadRequests(TableState state, CancellationToken cancellationToken, string status)
+    {
+        try
+        {
+            var response = await SupplyRequestsClient.SearchAsync(new SearchSupplyRequestsQuery
+            {
+                Status = status,
+                PageNumber = state.Page + 1,
+                PageSize = state.PageSize
+            });
+
+            var items = response?.Items?.ToList() ?? [];
+
+            if (status == "Submitted") _pendingCount = (int)(response?.TotalCount ?? 0);
+            if (status == "Approved") _approvedCount = (int)(response?.TotalCount ?? 0);
+
+            // Pre-load product names for items not yet cached
+            var unknown = items
+                .SelectMany(r => r.Items.Select(i => i.ProductId))
+                .Where(id => !_productNames.ContainsKey(id))
+                .Distinct().ToList();
+            await Task.WhenAll(unknown.Select(LoadProductName));
+            StateHasChanged();
+
+            return new TableData<SupplyRequestDto> { Items = items, TotalItems = (int)(response?.TotalCount ?? 0) };
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load requests: {ex.Message}", Severity.Error);
+            return new TableData<SupplyRequestDto> { Items = [], TotalItems = 0 };
+        }
+    }
+
+    private async Task LoadWarehouses()
+    {
+        try
+        {
+            var result = await InventoryClient.SearchAsync(new SearchProductInventoryQuery { PageSize = 100 });
+            _warehouses = result?.Items?
+                .Where(i => i.WarehouseLocationId != default && !string.IsNullOrEmpty(i.WarehouseLocationName))
+                .GroupBy(i => i.WarehouseLocationId)
+                .Select(g => (g.Key, g.First().WarehouseLocationName))
+                .ToList() ?? [];
+        }
+        catch { _warehouses = []; }
+    }
+
+    private async Task LoadProductName(Guid productId)
+    {
+        try
+        {
+            var product = await ExpendableClient.ProductsGetAsync(productId);
+            if (product != null) _productNames[productId] = product.Name;
+        }
+        catch { _productNames[productId] = productId.ToString()[..8] + "…"; }
+    }
+
+    private string GetProductName(Guid productId) =>
+        _productNames.TryGetValue(productId, out var name) ? name : productId.ToString()[..8] + "…";
+
+    private string GetEmployeeName(string employeeId)
+    {
+        if (string.IsNullOrWhiteSpace(employeeId) || !Guid.TryParse(employeeId, out var id))
+            return employeeId ?? "Unknown";
+        return _employeeNames.TryGetValue(id, out var name) ? name : id.ToString()[..8] + "…";
+    }
+
+    private string GetDepartmentName(string departmentId)
+    {
+        if (string.IsNullOrWhiteSpace(departmentId) || !Guid.TryParse(departmentId, out var id))
+            return departmentId ?? "Unknown";
+        return _departmentNames.TryGetValue(id, out var name) ? name : id.ToString()[..8] + "…";
+    }
+
+    // ===== APPROVE =====
+
+    private void OpenApproveDialog(SupplyRequestDto request)
+    {
+        _approveDialog = request;
+        _approveQuantities = request.Items.ToDictionary(i => i.ProductId, i => i.RequestedQuantity);
+        _approveWarehouseId = _warehouses.Count > 0 ? _warehouses[0].Id : Guid.Empty;
+        _showApproveDialog = true;
+    }
+
+    private int GetApproveQty(Guid productId) =>
+        _approveQuantities.TryGetValue(productId, out var qty) ? qty : 0;
+
+    private void SetApproveQty(Guid productId, int value) =>
+        _approveQuantities[productId] = value;
+
+    private async Task SubmitApproval()
+    {
+        if (_approveDialog == null) return;
+
+        var warehouseId = _approveWarehouseId != Guid.Empty
+            ? _approveWarehouseId
+            : Guid.TryParse(_approveWarehouseIdText, out var parsed) ? parsed : Guid.Empty;
+
+        if (warehouseId == Guid.Empty)
+        {
+            Snackbar.Add("Please select or enter a warehouse.", Severity.Warning);
+            return;
+        }
+        if (_approveQuantities.All(kvp => kvp.Value == 0))
+        {
+            Snackbar.Add("Approve at least one item with quantity > 0.", Severity.Warning);
+            return;
+        }
+
+        _isActioning = true;
+        try
+        {
+            var command = new ApproveSupplyRequestCommand
+            {
+                ApprovedQuantities = _approveQuantities.ToDictionary(kvp => kvp.Key.ToString(), kvp => kvp.Value),
+                WarehouseLocationId = warehouseId
+            };
+            await SupplyRequestsClient.ApproveAsync(_approveDialog.Id, command);
+            Snackbar.Add($"Request {_approveDialog.RequestNumber} approved — stock reserved.", Severity.Success);
+            _showApproveDialog = false;
+            await ReloadAllTables();
+        }
+        catch (Exception ex) { Snackbar.Add($"Approval failed: {ex.Message}", Severity.Error); }
+        finally { _isActioning = false; }
+    }
+
+    // ===== REJECT =====
+
+    private void OpenRejectDialog(SupplyRequestDto request)
+    {
+        _rejectDialog = request;
+        _rejectReason = string.Empty;
+        _showRejectDialog = true;
+    }
+
+    private async Task SubmitRejection()
+    {
+        if (_rejectDialog == null) return;
+
+        if (string.IsNullOrWhiteSpace(_rejectReason))
+        {
+            Snackbar.Add("Rejection reason is required.", Severity.Warning);
+            return;
+        }
+
+        _isActioning = true;
+        try
+        {
+            await SupplyRequestsClient.RejectAsync(_rejectDialog.Id, new RejectSupplyRequestCommand { Reason = _rejectReason });
+            Snackbar.Add($"Request {_rejectDialog.RequestNumber} rejected.", Severity.Info);
+            _showRejectDialog = false;
+            await ReloadAllTables();
+        }
+        catch (Exception ex) { Snackbar.Add($"Rejection failed: {ex.Message}", Severity.Error); }
+        finally { _isActioning = false; }
+    }
+
+    // ===== FULFILL =====
+
+    private void OpenFulfillDialog(SupplyRequestDto request)
+    {
+        _fulfillDialog = request;
+        _showFulfillDialog = true;
+    }
+
+    private async Task SubmitFulfillment()
+    {
+        if (_fulfillDialog == null) return;
+        _isActioning = true;
+        try
+        {
+            // WarehouseLocationId stored at approval — pass null so server uses stored value
+            await SupplyRequestsClient.FulfillAsync(_fulfillDialog.Id);
+            Snackbar.Add($"Supplies issued for {_fulfillDialog.RequestNumber}.", Severity.Success);
+            _showFulfillDialog = false;
+            await ReloadAllTables();
+        }
+        catch (Exception ex) { Snackbar.Add($"Issuance failed: {ex.Message}", Severity.Error); }
+        finally { _isActioning = false; }
+    }
+
+    private async Task ReloadAllTables()
+    {
+        var tasks = new List<Task>();
+        if (_pendingTable is not null) tasks.Add(_pendingTable.ReloadServerData());
+        if (_approvedTable is not null) tasks.Add(_approvedTable.ReloadServerData());
+        if (_fulfilledTable is not null) tasks.Add(_fulfilledTable.ReloadServerData());
+        if (_rejectedTable is not null) tasks.Add(_rejectedTable.ReloadServerData());
+        await Task.WhenAll(tasks);
+    }
+}

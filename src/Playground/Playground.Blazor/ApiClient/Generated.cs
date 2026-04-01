@@ -7164,7 +7164,7 @@ namespace FSH.Playground.Blazor.ApiClient
         /// </summary>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task<PagedResponseOfProductDto> ProductsGetAsync(string keyword = null, string status = null, System.Guid? parentProductId = null, int? pageNumber = null, int? pageSize = null, string sort = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+        System.Threading.Tasks.Task<PagedResponseOfProductDto> ProductsGetAsync(string keyword = null, string status = null, System.Guid? parentProductId = null, string categoryId = null, string supplierId = null, int? pageNumber = null, int? pageSize = null, string sort = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <summary>
@@ -7357,7 +7357,7 @@ namespace FSH.Playground.Blazor.ApiClient
         /// </summary>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<PagedResponseOfProductDto> ProductsGetAsync(string keyword = null, string status = null, System.Guid? parentProductId = null, int? pageNumber = null, int? pageSize = null, string sort = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+        public virtual async System.Threading.Tasks.Task<PagedResponseOfProductDto> ProductsGetAsync(string keyword = null, string status = null, System.Guid? parentProductId = null, string categoryId = null, string supplierId = null, int? pageNumber = null, int? pageSize = null, string sort = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
         {
             var client_ = _httpClient;
             var disposeClient_ = false;
@@ -7384,6 +7384,14 @@ namespace FSH.Playground.Blazor.ApiClient
                     if (parentProductId != null)
                     {
                         urlBuilder_.Append(System.Uri.EscapeDataString("ParentProductId")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(parentProductId, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
+                    }
+                    if (categoryId != null)
+                    {
+                        urlBuilder_.Append(System.Uri.EscapeDataString("CategoryId")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(categoryId, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
+                    }
+                    if (supplierId != null)
+                    {
+                        urlBuilder_.Append(System.Uri.EscapeDataString("SupplierId")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(supplierId, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
                     }
                     if (pageNumber != null)
                     {
@@ -21201,6 +21209,12 @@ namespace FSH.Playground.Blazor.ApiClient
 
         [System.Text.Json.Serialization.JsonPropertyName("parentProductId")]
         public System.Guid? ParentProductId { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("categoryId")]
+        public string CategoryId { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("supplierId")]
+        public string SupplierId { get; set; }
 
         [System.Text.Json.Serialization.JsonPropertyName("pageNumber")]
         [System.ComponentModel.DataAnnotations.RegularExpression(@"^-?(?:0|[1-9]\d*)$")]

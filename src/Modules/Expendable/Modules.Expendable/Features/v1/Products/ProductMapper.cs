@@ -25,5 +25,20 @@ internal static class ProductMapper
             product.CreatedBy,
             product.LastModifiedOnUtc,
             product.LastModifiedBy);
+
+    internal static ProductCatalogCardDto ToCatalogCardDto(this Product product, int quantityAvailable) =>
+        new(
+            product.Id,
+            product.SKU,
+            product.Name,
+            product.UnitPrice,
+            product.UnitOfMeasure,
+            quantityAvailable,
+            quantityAvailable > 0,
+            product.Status.ToString(),
+            product.CategoryId,
+            product.ImageUrl,
+            product.ParentProductId,
+            product.VariantName);
 }
 

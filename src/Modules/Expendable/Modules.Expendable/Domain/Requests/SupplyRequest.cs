@@ -21,6 +21,7 @@ public class SupplyRequestItem
     public int RequestedQuantity { get; set; }
     public int ApprovedQuantity { get; set; }
     public int FulfilledQuantity { get; set; }
+    public decimal FulfilledValue { get; set; }
     public string? Notes { get; set; }
 
     public SupplyRequestItem(Guid productId, int requestedQuantity, string? notes = null)
@@ -29,6 +30,7 @@ public class SupplyRequestItem
         RequestedQuantity = requestedQuantity;
         ApprovedQuantity = 0;
         FulfilledQuantity = 0;
+        FulfilledValue = 0;
         Notes = notes;
     }
 }
@@ -46,6 +48,7 @@ public class SupplyRequest : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
     public string? RejectionReason { get; set; }
     public string? ApprovedBy { get; set; }
     public DateTimeOffset? ApprovedOnUtc { get; set; }
+    public Guid? WarehouseLocationId { get; set; }
     public byte[] Version { get; set; } = [];
 
     private readonly List<SupplyRequestItem> _items = [];
@@ -123,8 +126,8 @@ public class SupplyRequest : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
     }
 
-    /// <summary>Approve the supply request</summary>
-    public void Approve(string approvedBy, Dictionary<Guid, int> approvedQuantities)
+    /// <summary>Approve the supply request, recording the issuing warehouse location</summary>
+    public void Approve(string approvedBy, Dictionary<Guid, int> approvedQuantities, Guid warehouseLocationId)
     {
         if (Status != SupplyRequestStatus.Submitted)
             throw new InvalidOperationException("Only submitted requests can be approved.");
@@ -143,6 +146,7 @@ public class SupplyRequest : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
         Status = SupplyRequestStatus.Approved;
         ApprovedBy = approvedBy;
         ApprovedOnUtc = DateTimeOffset.UtcNow;
+        WarehouseLocationId = warehouseLocationId;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
     }
 
@@ -162,6 +166,25 @@ public class SupplyRequest : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
     {
         if (Status != SupplyRequestStatus.Approved)
             throw new InvalidOperationException("Only approved requests can be marked as fulfilled.");
+
+        Status = SupplyRequestStatus.Fulfilled;
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;
+    }
+
+    /// <summary>Record fulfillment with quantities and values per item, then mark as fulfilled</summary>
+    public void Fulfill(Dictionary<Guid, (int Quantity, decimal Value)> fulfillmentDetails)
+    {
+        if (Status != SupplyRequestStatus.Approved)
+            throw new InvalidOperationException("Only approved requests can be fulfilled.");
+
+        foreach (var item in _items)
+        {
+            if (fulfillmentDetails.TryGetValue(item.ProductId, out var detail))
+            {
+                item.FulfilledQuantity = detail.Quantity;
+                item.FulfilledValue = detail.Value;
+            }
+        }
 
         Status = SupplyRequestStatus.Fulfilled;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;

@@ -112,6 +112,9 @@ internal static class ApiClientRegistration
         services.AddTransient<IRejectedClient>(sp =>
             new RejectedClient(ResolveClient(sp)));
 
+        services.AddTransient<IReportsClient>(sp =>
+            new ReportsClient(ResolveClient(sp)));
+
         // Master Data module clients (NSwag-generated)
         services.AddTransient<ILookupClient>(sp =>
             new LookupClient(ResolveClient(sp)));

@@ -1,0 +1,391 @@
+@page "/expendable/reports/department"
+@using FSH.Framework.Blazor.UI.Components.Cards
+@using FSH.Modules.Expendable.Contracts.v1.Requests
+@using FSH.Playground.Blazor.ApiClient
+@using System.Globalization
+@using System.Text
+@inherits ComponentBase
+@inject IReportsClient ReportsClient
+@inject ILookupClient LookupClient
+@inject ISnackbar Snackbar
+@inject NavigationManager NavigationManager
+
+<FshPageHeader Title="Department Issuance Report" Description="Summary of office supplies issued per department">
+</FshPageHeader>
+
+<div class="mt-4">
+    <MudCard Class="mb-4">
+        <MudCardContent>
+            <MudGrid Spacing="2" AlignItems="AlignItems.Center">
+                <MudItem xs="12" sm="4">
+                    <MudSelect T="Guid?" Value="_selectedDepartmentId" ValueChanged="OnDepartmentChanged"
+                               Label="Department" Variant="Variant.Outlined" Clearable="true">
+                        @foreach (var dept in _departments)
+                        {
+                            <MudSelectItem Value="@((Guid?)dept.Id)">@dept.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" sm="3">
+                    <MudDatePicker @bind-Date="_filterFrom" Label="From" Variant="Variant.Outlined"
+                                   DateFormat="yyyy-MM-dd" Clearable="true" />
+                </MudItem>
+                <MudItem xs="12" sm="3">
+                    <MudDatePicker @bind-Date="_filterTo" Label="To" Variant="Variant.Outlined"
+                                   DateFormat="yyyy-MM-dd" Clearable="true" />
+                </MudItem>
+                <MudItem xs="12" sm="2">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                               OnClick="OnFilterClicked">
+                        Filter
+                    </MudButton>
+                </MudItem>
+                <MudItem xs="12" sm="2">
+                    <MudButton Variant="Variant.Outlined" Color="Color.Default" FullWidth="true"
+                               OnClick="OnClearFiltersClicked">
+                        Clear
+                    </MudButton>
+                </MudItem>
+                <MudItem xs="12" sm="2">
+                    <MudButton Variant="Variant.Outlined" Color="Color.Secondary" FullWidth="true"
+                               StartIcon="@Icons.Material.Filled.Download"
+                               OnClick="ExportCsvAsync">
+                        Export CSV
+                    </MudButton>
+                </MudItem>
+            </MudGrid>
+        </MudCardContent>
+    </MudCard>
+
+    <MudTable @ref="_table" T="DepartmentIssuanceSummaryDto"
+              ServerData="@(async (s, ct) => await LoadReport(s, ct))"
+              Hover="true" Striped="true" Dense="true" Loading="@_loading"
+              LoadingProgressColor="Color.Primary">
+        <HeaderContent>
+            <MudTh>Department</MudTh>
+            <MudTh>Requests Fulfilled</MudTh>
+            <MudTh>Total Items Issued</MudTh>
+            <MudTh>Total Value</MudTh>
+            <MudTh></MudTh>
+        </HeaderContent>
+        <RowTemplate Context="summary">
+            <MudTd DataLabel="Department"><strong>@GetDepartmentDisplay(summary.DepartmentId)</strong></MudTd>
+            <MudTd DataLabel="Requests Fulfilled">@summary.TotalRequestsFulfilled</MudTd>
+            <MudTd DataLabel="Total Items Issued">@summary.TotalItemsIssued</MudTd>
+            <MudTd DataLabel="Total Value">₱@summary.TotalValue.ToString("N2")</MudTd>
+            <MudTd>
+                <MudIconButton Icon="@Icons.Material.Filled.ExpandMore" Size="Size.Small"
+                               OnClick="@(() => ToggleExpand(summary.DepartmentId))" />
+            </MudTd>
+        </RowTemplate>
+        <ChildRowContent Context="summary">
+            @if (_expandedDepartments.Contains(summary.DepartmentId))
+            {
+                <MudTr>
+                    <td colspan="5" class="pa-0">
+                        <MudTable Items="@summary.Products" T="DepartmentProductBreakdownDto"
+                                  Dense="true" Hover="false" Elevation="0" Class="ml-8 mb-2">
+                            <HeaderContent>
+                                <MudTh>Product</MudTh>
+                                <MudTh>Code</MudTh>
+                                <MudTh>Qty Issued</MudTh>
+                                <MudTh>Total Value</MudTh>
+                            </HeaderContent>
+                            <RowTemplate Context="item">
+                                <MudTd DataLabel="Product">@item.ProductName</MudTd>
+                                <MudTd DataLabel="Code">@item.ProductCode</MudTd>
+                                <MudTd DataLabel="Qty Issued">@item.TotalQuantityIssued</MudTd>
+                                <MudTd DataLabel="Total Value">₱@item.TotalValue.ToString("N2")</MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                    </td>
+                </MudTr>
+            }
+        </ChildRowContent>
+        <NoRecordsContent>
+            <MudText Typo="Typo.body2" Class="pa-4">No fulfilled supply requests found for the selected filters.</MudText>
+        </NoRecordsContent>
+        <PagerContent>
+            <MudTablePager />
+        </PagerContent>
+    </MudTable>
+</div>
+
+@code {
+    private MudTable<DepartmentIssuanceSummaryDto>? _table;
+    private bool _loading;
+    private List<DepartmentReferenceDto> _departments = [];
+    private Guid? _selectedDepartmentId;
+    private DateTime? _filterFrom;
+    private DateTime? _filterTo;
+    private readonly HashSet<string> _expandedDepartments = [];
+    private const int ApiPageSizeLimit = 200;
+
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "preset")]
+    public string? Preset { get; set; }
+
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "from")]
+    public string? QueryFrom { get; set; }
+
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "to")]
+    public string? QueryTo { get; set; }
+
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "departmentId")]
+    public string? QueryDepartmentId { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var result = await LookupClient.DepartmentsAsync(isActive: true, pageNumber: 1, pageSize: 200);
+            _departments = result.Items?.ToList() ?? [];
+            ApplyQueryFilters();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load departments: {ex.Message}", Severity.Warning);
+            _departments = [];
+        }
+    }
+
+    private void ApplyQueryFilters()
+    {
+        if (!string.IsNullOrWhiteSpace(QueryDepartmentId) && Guid.TryParse(QueryDepartmentId, out var departmentId))
+        {
+            _selectedDepartmentId = departmentId;
+        }
+
+        if (TryParseQueryDate(QueryFrom, out var fromDate))
+        {
+            _filterFrom = fromDate.Date;
+        }
+
+        if (TryParseQueryDate(QueryTo, out var toDate))
+        {
+            _filterTo = toDate.Date;
+        }
+
+        if (_filterFrom.HasValue || _filterTo.HasValue)
+        {
+            return;
+        }
+
+        if (string.Equals(Preset, "today", StringComparison.OrdinalIgnoreCase))
+        {
+            var today = DateTime.UtcNow.Date;
+            _filterFrom = today;
+            _filterTo = today;
+            return;
+        }
+
+        if (string.Equals(Preset, "this-week", StringComparison.OrdinalIgnoreCase))
+        {
+            var today = DateTime.UtcNow.Date;
+            var daysFromMonday = ((int)today.DayOfWeek + 6) % 7;
+            _filterFrom = today.AddDays(-daysFromMonday);
+            _filterTo = today;
+        }
+    }
+
+    private async Task<TableData<DepartmentIssuanceSummaryDto>> LoadReport(TableState state, CancellationToken ct)
+    {
+        _loading = true;
+        try
+        {
+            if (!IsDateRangeValid())
+            {
+                return new TableData<DepartmentIssuanceSummaryDto> { Items = [], TotalItems = 0 };
+            }
+
+            var from = _filterFrom.HasValue ? new DateTimeOffset(_filterFrom.Value, TimeSpan.Zero) : (DateTimeOffset?)null;
+            var to = _filterTo.HasValue ? new DateTimeOffset(_filterTo.Value, TimeSpan.Zero) : (DateTimeOffset?)null;
+
+            var result = await ReportsClient.GetDepartmentIssuanceReportAsync(
+                departmentId: _selectedDepartmentId?.ToString(),
+                from: from,
+                toDate: to,
+                pageNumber: state.Page + 1,
+                pageSize: state.PageSize,
+                cancellationToken: ct);
+
+            return new TableData<DepartmentIssuanceSummaryDto>
+            {
+                Items = result.Items ?? [],
+                TotalItems = (int)result.TotalCount
+            };
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load report: {ex.Message}", Severity.Error);
+            return new TableData<DepartmentIssuanceSummaryDto> { Items = [], TotalItems = 0 };
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void ToggleExpand(string departmentId)
+    {
+        if (!_expandedDepartments.Remove(departmentId))
+            _expandedDepartments.Add(departmentId);
+    }
+
+    private async Task OnDepartmentChanged(Guid? departmentId)
+    {
+        _selectedDepartmentId = departmentId;
+        if (_table is not null)
+        {
+            await _table.ReloadServerData();
+        }
+    }
+
+    private async Task OnFilterClicked()
+    {
+        if (!IsDateRangeValid())
+        {
+            return;
+        }
+
+        if (_table is not null)
+        {
+            await _table.ReloadServerData();
+        }
+    }
+
+    private async Task OnClearFiltersClicked()
+    {
+        _selectedDepartmentId = null;
+        _filterFrom = null;
+        _filterTo = null;
+        _expandedDepartments.Clear();
+
+        if (_table is not null)
+        {
+            await _table.ReloadServerData();
+        }
+    }
+
+    private bool IsDateRangeValid()
+    {
+        if (_filterFrom.HasValue && _filterTo.HasValue && _filterFrom.Value.Date > _filterTo.Value.Date)
+        {
+            Snackbar.Add("Invalid date range: From date cannot be later than To date.", Severity.Warning);
+            return false;
+        }
+
+        return true;
+    }
+
+    private async Task ExportCsvAsync()
+    {
+        try
+        {
+            if (!IsDateRangeValid())
+            {
+                return;
+            }
+
+            var items = new List<DepartmentIssuanceSummaryDto>();
+            var page = 1;
+
+            while (true)
+            {
+                var from = _filterFrom.HasValue ? new DateTimeOffset(_filterFrom.Value, TimeSpan.Zero) : (DateTimeOffset?)null;
+                var to = _filterTo.HasValue ? new DateTimeOffset(_filterTo.Value, TimeSpan.Zero) : (DateTimeOffset?)null;
+
+                var result = await ReportsClient.GetDepartmentIssuanceReportAsync(
+                    departmentId: _selectedDepartmentId?.ToString(),
+                    from: from,
+                    toDate: to,
+                    pageNumber: page,
+                    pageSize: ApiPageSizeLimit);
+
+                var pageItems = result.Items?.ToList() ?? [];
+                if (pageItems.Count == 0)
+                {
+                    break;
+                }
+
+                items.AddRange(pageItems);
+                if (pageItems.Count < ApiPageSizeLimit)
+                {
+                    break;
+                }
+
+                page++;
+            }
+
+            if (items.Count == 0)
+            {
+                Snackbar.Add("No report data to export for the current filters.", Severity.Info);
+                return;
+            }
+
+            var bytes = BuildCsv(items);
+            var dataUrl = $"data:text/csv;base64,{Convert.ToBase64String(bytes)}";
+            NavigationManager.NavigateTo(dataUrl, true);
+            Snackbar.Add($"Exported {items.Count} department rows.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"CSV export failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private byte[] BuildCsv(IEnumerable<DepartmentIssuanceSummaryDto> items)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine("DepartmentId,DepartmentName,RequestsFulfilled,TotalItemsIssued,TotalValue");
+
+        foreach (var item in items)
+        {
+            sb.AppendLine(string.Join(",",
+                Quote(item.DepartmentId),
+                Quote(GetDepartmentDisplay(item.DepartmentId)),
+                Quote(item.TotalRequestsFulfilled.ToString()),
+                Quote(item.TotalItemsIssued.ToString()),
+                Quote(item.TotalValue.ToString("N2"))));
+        }
+
+        return Encoding.UTF8.GetBytes(sb.ToString());
+    }
+
+    private static string Quote(string? value)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            return "\"\"";
+        }
+
+        return $"\"{value.Replace("\"", "\"\"")}\"";
+    }
+
+    private static bool TryParseQueryDate(string? value, out DateTime date)
+    {
+        return DateTime.TryParseExact(
+            value,
+            "yyyy-MM-dd",
+            CultureInfo.InvariantCulture,
+            DateTimeStyles.None,
+            out date);
+    }
+
+    private string GetDepartmentDisplay(string departmentId)
+    {
+        if (Guid.TryParse(departmentId, out var id))
+        {
+            var match = _departments.FirstOrDefault(d => d.Id == id);
+            if (match != null)
+            {
+                return match.Name;
+            }
+        }
+
+        return departmentId;
+    }
+}

@@ -1,6 +1,8 @@
+using FSH.Framework.Caching;
 using FSH.Framework.Core.Context;
 using FSH.Modules.Expendable.Contracts.v1.Requests;
 using FSH.Modules.Expendable.Data;
+using FSH.Modules.Expendable.Domain.Requests;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
@@ -37,11 +39,13 @@ public sealed class CancelSupplyRequestCommandHandler : ICommandHandler<CancelSu
 {
     private readonly ExpendableDbContext _dbContext;
     private readonly ICurrentUser _currentUser;
+    private readonly ICacheService _cache;
 
-    public CancelSupplyRequestCommandHandler(ExpendableDbContext dbContext, ICurrentUser currentUser)
+    public CancelSupplyRequestCommandHandler(ExpendableDbContext dbContext, ICurrentUser currentUser, ICacheService cache)
     {
         _dbContext = dbContext;
         _currentUser = currentUser;
+        _cache = cache;
     }
 
     public async ValueTask<Unit> Handle(CancelSupplyRequestCommand command, CancellationToken cancellationToken)
@@ -51,8 +55,40 @@ public sealed class CancelSupplyRequestCommandHandler : ICommandHandler<CancelSu
             .ConfigureAwait(false)
             ?? throw new InvalidOperationException($"Supply request {command.Id} not found.");
 
+        var wasApproved = request.Status == SupplyRequestStatus.Approved;
+        var warehouseLocationId = request.WarehouseLocationId;
+
         request.Cancel();
         request.LastModifiedBy = _currentUser.GetUserId().ToString();
+
+        // Release warehouse reservations if cancelling an approved request
+        if (wasApproved && warehouseLocationId.HasValue)
+        {
+            var approvedProductIds = request.Items
+                .Where(i => i.ApprovedQuantity > 0)
+                .Select(i => i.ProductId)
+                .ToList();
+
+            if (approvedProductIds.Count > 0)
+            {
+                var inventories = await _dbContext.ProductInventories
+                    .Where(pi => approvedProductIds.Contains(pi.ProductId)
+                              && pi.WarehouseLocationId == warehouseLocationId.Value)
+                    .ToListAsync(cancellationToken)
+                    .ConfigureAwait(false);
+
+                foreach (var item in request.Items.Where(i => i.ApprovedQuantity > 0))
+                {
+                    var inventory = inventories.FirstOrDefault(pi => pi.ProductId == item.ProductId);
+                    if (inventory == null) continue;
+
+                    inventory.CancelReservation(item.ApprovedQuantity);
+
+                    await _cache.RemoveItemAsync($"inventory:{item.ProductId}:{warehouseLocationId}", cancellationToken);
+                    await _cache.RemoveItemAsync($"inventory:{inventory.Id}", cancellationToken);
+                }
+            }
+        }
 
         await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 

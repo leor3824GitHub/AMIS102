@@ -3,11 +3,15 @@
 @using MudBlazor
 @using FSH.Playground.Blazor.ApiClient
 @using FSH.Playground.Blazor.Services
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
 @inject IProductsClient _productsClient
 @inject IEmployeeClient _employeeClient
+@inject IEmployeesClient _employeesClient
 @inject ICartClient _cartClient
 @inject IInventoryClient _inventoryClient
 @inject IWarehouseClient _warehouseClient
+@inject AuthenticationStateProvider _authenticationStateProvider
 @inject NavigationManager _navigationManager
 @inject MasterDataService MasterDataService
 @inject ISnackbar _snackbar
@@ -217,7 +221,7 @@
     private List<CategoryDto> _categories = new();
     private string _selectedCategory = "All"; // holds either "All" or Category.Id.ToString()
 
-    private string _currentEmployeeId = "test-employee"; // TODO: Get from authentication context
+    private string _currentEmployeeId = string.Empty;
 
     private int GetProductBalance(ProductDto product)
     {
@@ -263,10 +267,37 @@
     {
         _isLoading = true; // Start loading state
         await LoadCategories(); // MUST call this to see chips!
+        await ResolveCurrentEmployeeContext();
         await GetOrCreateCart();
         await LoadProductBalancesAsync();
         await LoadProducts();
         _isLoading = false;
+    }
+
+    private async Task ResolveCurrentEmployeeContext()
+    {
+        try
+        {
+            var authState = await _authenticationStateProvider.GetAuthenticationStateAsync();
+            var identityUserId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrWhiteSpace(identityUserId))
+            {
+                _snackbar.Add("Unable to resolve signed-in user identity.", Severity.Warning);
+                return;
+            }
+
+            var employee = await _employeesClient.ByIdentityAsync(identityUserId);
+            _currentEmployeeId = employee.Id.ToString();
+        }
+        catch (ApiException ex) when (ex.StatusCode == 404)
+        {
+            _snackbar.Add("No employee profile linked to this user. Please contact an administrator.", Severity.Warning);
+        }
+        catch (Exception ex)
+        {
+            _snackbar.Add($"Failed to resolve employee context: {ex.Message}", Severity.Error);
+        }
     }
 
     private async Task LoadProducts()
@@ -357,6 +388,13 @@
     {
         try
         {
+            if (string.IsNullOrWhiteSpace(_currentEmployeeId))
+            {
+                _currentCartId = null;
+                _cartItemCount = 0;
+                return;
+            }
+
             var cart = await _employeeClient.CartAsync(_currentEmployeeId);
             _currentCartId = cart.Id;
             _cartItemCount = cart.Items?.Count ?? 0;

@@ -23,6 +23,8 @@ public sealed class ConvertCartToSupplyRequestCommandHandler : ICommandHandler<C
 
     public async ValueTask<SupplyRequestDto> Handle(ConvertCartToSupplyRequestCommand command, CancellationToken cancellationToken)
     {
+        var neededByUtc = command.NeededByDate?.ToUniversalTime();
+
         await using var transaction = await _dbContext.Database
             .BeginTransactionAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -40,7 +42,7 @@ public sealed class ConvertCartToSupplyRequestCommandHandler : ICommandHandler<C
             _currentUser.GetUserId().ToString(),
             command.DepartmentId,
             command.BusinessJustification,
-            command.NeededByDate);
+            neededByUtc);
 
         request.CreatedBy = _currentUser.GetUserId().ToString();
 
@@ -49,6 +51,10 @@ public sealed class ConvertCartToSupplyRequestCommandHandler : ICommandHandler<C
         {
             request.AddItem(item.ProductId, item.Quantity);
         }
+
+        // Cart checkout should create a request that is immediately visible for approval.
+        request.Submit();
+        request.LastModifiedBy = _currentUser.GetUserId().ToString();
 
         _dbContext.SupplyRequests.Add(request);
         cart.ConvertToRequest(request.Id);

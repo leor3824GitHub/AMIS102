@@ -23,6 +23,20 @@ public record ProductDto(
     DateTimeOffset? LastModifiedOnUtc,
     string? LastModifiedBy);
 
+public record ProductCatalogCardDto(
+    Guid Id,
+    string SKU,
+    string Name,
+    decimal UnitPrice,
+    string UnitOfMeasure,
+    int QuantityAvailable,
+    bool IsInStock,
+    string Status,
+    string? CategoryId,
+    string? ImageUrl,
+    Guid? ParentProductId,
+    string? VariantName);
+
 public record CreateProductCommand(
     string SKU,
     string Name,
@@ -66,6 +80,8 @@ public sealed class SearchProductsQuery : IPagedQuery, IQuery<PagedResponse<Prod
     public string? Keyword { get; set; }
     public string? Status { get; set; }
     public Guid? ParentProductId { get; set; }
+    public string? CategoryId { get; set; }
+    public string? SupplierId { get; set; }
     public int? PageNumber { get; set; }
     public int? PageSize { get; set; }
     public string? Sort { get; set; }
@@ -73,6 +89,16 @@ public sealed class SearchProductsQuery : IPagedQuery, IQuery<PagedResponse<Prod
 
 public sealed class ListActiveProductsQuery : IPagedQuery, IQuery<PagedResponse<ProductDto>>
 {
+    public int? PageNumber { get; set; }
+    public int? PageSize { get; set; }
+    public string? Sort { get; set; }
+}
+
+public sealed class GetProductCatalogCardsQuery : IPagedQuery, IQuery<PagedResponse<ProductCatalogCardDto>>
+{
+    public string? Keyword { get; set; }
+    public string? CategoryId { get; set; }
+    public bool InStockOnly { get; set; }
     public int? PageNumber { get; set; }
     public int? PageSize { get; set; }
     public string? Sort { get; set; }

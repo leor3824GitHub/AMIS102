@@ -35,15 +35,14 @@ public sealed class CreateProductCommandHandlerTests
     {
         // Arrange
         var validator = new CreateProductCommandValidator();
-        var command = _fixture.Build<CreateProductCommand>()
-            .With(c => c.SKU, "TEST-SKU-001")
-            .With(c => c.Name, "Test Product")
-            .With(c => c.Description, "Test Description")
-            .With(c => c.UnitPrice, 99.99m)
-            .With(c => c.UnitOfMeasure, "Each")
-            .With(c => c.MinimumStockLevel, 10)
-            .With(c => c.ReorderQuantity, 50)
-            .Create();
+        var command = new CreateProductCommand(
+            SKU: "TEST-SKU-001",
+            Name: "Test Product",
+            Description: "Test Description",
+            UnitPrice: 99.99m,
+            UnitOfMeasure: "Each",
+            MinimumStockLevel: 10,
+            ReorderQuantity: 50);
 
         // Act
         var result = validator.Validate(command);
@@ -259,6 +258,86 @@ public sealed class CreateProductCommandHandlerTests
         // Assert
         result.IsValid.ShouldBeFalse();
         result.Errors.ShouldContain(e => e.PropertyName == nameof(command.ReorderQuantity));
+    }
+
+    /// <summary>
+    /// Test: CreateProduct with ParentProductId set but no VariantName should fail validation
+    /// </summary>
+    [Fact]
+    public void CreateProductCommandValidator_WithParentProductId_AndEmptyVariantName_ShouldFail()
+    {
+        // Arrange
+        var validator = new CreateProductCommandValidator();
+        var command = _fixture.Build<CreateProductCommand>()
+            .With(c => c.SKU, "VARIANT-SKU-001")
+            .With(c => c.Name, "Test Variant Product")
+            .With(c => c.Description, "Test Description")
+            .With(c => c.UnitPrice, 99.99m)
+            .With(c => c.UnitOfMeasure, "Each")
+            .With(c => c.MinimumStockLevel, 10)
+            .With(c => c.ReorderQuantity, 50)
+            .With(c => c.ParentProductId, Guid.NewGuid())
+            .With(c => c.VariantName, string.Empty) // Empty variant name with parent set
+            .Create();
+
+        // Act
+        var result = validator.Validate(command);
+
+        // Assert
+        result.IsValid.ShouldBeFalse();
+        result.Errors.ShouldContain(e => e.PropertyName == nameof(command.VariantName));
+    }
+
+    /// <summary>
+    /// Test: CreateProduct with ParentProductId set and valid VariantName should pass validation
+    /// </summary>
+    [Fact]
+    public void CreateProductCommandValidator_WithParentProductId_AndValidVariantName_ShouldPass()
+    {
+        // Arrange
+        var validator = new CreateProductCommandValidator();
+        var command = new CreateProductCommand(
+            SKU: "VARIANT-SKU-001",
+            Name: "Test Variant Product",
+            Description: "Test Description",
+            UnitPrice: 99.99m,
+            UnitOfMeasure: "Each",
+            MinimumStockLevel: 10,
+            ReorderQuantity: 50,
+            ParentProductId: Guid.NewGuid(),
+            VariantName: "Red / Large");
+
+        // Act
+        var result = validator.Validate(command);
+
+        // Assert
+        result.IsValid.ShouldBeTrue();
+        result.Errors.ShouldBeEmpty();
+    }
+
+    /// <summary>
+    /// Test: CreateProduct without ParentProductId should not require VariantName
+    /// </summary>
+    [Fact]
+    public void CreateProductCommandValidator_WithoutParentProductId_AndNoVariantName_ShouldPass()
+    {
+        // Arrange
+        var validator = new CreateProductCommandValidator();
+        var command = new CreateProductCommand(
+            SKU: "BASE-SKU-001",
+            Name: "Base Product",
+            Description: "Test Description",
+            UnitPrice: 99.99m,
+            UnitOfMeasure: "Each",
+            MinimumStockLevel: 10,
+            ReorderQuantity: 50); // ParentProductId defaults to null — VariantName rule does not apply
+
+        // Act
+        var result = validator.Validate(command);
+
+        // Assert
+        result.IsValid.ShouldBeTrue();
+        result.Errors.ShouldBeEmpty();
     }
 }
 

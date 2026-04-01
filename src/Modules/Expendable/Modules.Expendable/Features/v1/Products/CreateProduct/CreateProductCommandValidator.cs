@@ -50,5 +50,10 @@ public sealed class CreateProductCommandValidator : AbstractValidator<CreateProd
             .MaximumLength(10_000_000).WithMessage("Image data URL exceeds maximum size")
             .Must(url => url == null || IsValidImageUrl(url))
             .WithMessage("Image URL must be a valid URL or data URL");
+
+        RuleFor(x => x.VariantName)
+            .NotEmpty()
+            .When(x => x.ParentProductId.HasValue)
+            .WithMessage("Variant name is required when creating a product variant.");
     }
 }

@@ -24,8 +24,16 @@ public sealed class GetEmployeeReferenceByIdentityUserIdQueryHandler(MasterDataD
 {
     public async ValueTask<EmployeeReferenceDto?> Handle(GetEmployeeReferenceByIdentityUserIdQuery query, CancellationToken cancellationToken)
     {
-        return await MasterDataLookupQueryBuilder.BuildEmployeeReferenceQuery(dbContext)
-            .FirstOrDefaultAsync(x => x.IdentityUserId == query.IdentityUserId, cancellationToken)
+        if (string.IsNullOrWhiteSpace(query.IdentityUserId))
+        {
+            return null;
+        }
+
+        var identityUserId = query.IdentityUserId.Trim();
+
+        return await MasterDataLookupQueryBuilder.BuildEmployeeReferenceQuery(
+                dbContext, employeeFilter: e => e.IdentityUserId == identityUserId)
+            .FirstOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false);
     }
 }
@@ -37,7 +45,11 @@ public sealed class SearchEmployeeReferencesQueryHandler(MasterDataDbContext dbC
     {
         try
         {
+            logger.LogDebug("SearchEmployeeReferencesQueryHandler: Received query with Keyword={Keyword}, IsActive={IsActive}, PageNumber={PageNumber}, PageSize={PageSize}",
+                query.Keyword, query.IsActive, query.PageNumber, query.PageSize);
+
             var employeeQuery = MasterDataLookupQueryBuilder.BuildEmployeeReferenceQuery(dbContext);
+            logger.LogDebug("Query builder executed successfully");
 
             if (!string.IsNullOrWhiteSpace(query.Keyword))
             {
@@ -49,39 +61,47 @@ public sealed class SearchEmployeeReferencesQueryHandler(MasterDataDbContext dbC
                     x.OfficeName.Contains(query.Keyword) ||
                     x.DepartmentName.Contains(query.Keyword) ||
                     x.PositionName.Contains(query.Keyword));
+                logger.LogDebug("Keyword filter applied: {Keyword}", query.Keyword);
             }
 
             if (!string.IsNullOrWhiteSpace(query.IdentityUserId))
             {
                 employeeQuery = employeeQuery.Where(x => x.IdentityUserId == query.IdentityUserId);
+                logger.LogDebug("IdentityUserId filter applied: {IdentityUserId}", query.IdentityUserId);
             }
 
             if (query.OfficeId.HasValue)
             {
                 employeeQuery = employeeQuery.Where(x => x.OfficeId == query.OfficeId.Value);
+                logger.LogDebug("OfficeId filter applied: {OfficeId}", query.OfficeId);
             }
 
             if (query.DepartmentId.HasValue)
             {
                 employeeQuery = employeeQuery.Where(x => x.DepartmentId == query.DepartmentId.Value);
+                logger.LogDebug("DepartmentId filter applied: {DepartmentId}", query.DepartmentId);
             }
 
             if (query.PositionId.HasValue)
             {
                 employeeQuery = employeeQuery.Where(x => x.PositionId == query.PositionId.Value);
+                logger.LogDebug("PositionId filter applied: {PositionId}", query.PositionId);
             }
 
             if (query.IsActive.HasValue)
             {
                 employeeQuery = employeeQuery.Where(x => x.IsActive == query.IsActive.Value);
+                logger.LogDebug("IsActive filter applied: {IsActive}", query.IsActive);
             }
 
-            return await employeeQuery.ToPagedResponseAsync(query, cancellationToken).ConfigureAwait(false);
+            var result = await employeeQuery.ToPagedResponseAsync(query, cancellationToken).ConfigureAwait(false);
+            logger.LogDebug("Query executed successfully, returned {Count} items", result.Items?.Count ?? 0);
+            return result;
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error in SearchEmployeeReferencesQueryHandler: {ErrorMessage}. Query: Keyword={Keyword}, OfficeId={OfficeId}, DepartmentId={DepartmentId}, PositionId={PositionId}, IsActive={IsActive}",
-                ex.Message, query.Keyword, query.OfficeId, query.DepartmentId, query.PositionId, query.IsActive);
+            logger.LogError(ex, "Error in SearchEmployeeReferencesQueryHandler: {ErrorMessage}. Query: Keyword={Keyword}, OfficeId={OfficeId}, DepartmentId={DepartmentId}, PositionId={PositionId}, IsActive={IsActive}, PageNumber={PageNumber}, PageSize={PageSize}",
+                ex.Message, query.Keyword, query.OfficeId, query.DepartmentId, query.PositionId, query.IsActive, query.PageNumber, query.PageSize);
             throw;
         }
     }
@@ -257,39 +277,40 @@ public sealed class GetUnitOfMeasureReferenceByIdQueryHandler(MasterDataDbContex
 
 internal static class MasterDataLookupQueryBuilder
 {
-    internal static IQueryable<EmployeeReferenceDto> BuildEmployeeReferenceQuery(MasterDataDbContext dbContext)
+    internal static IQueryable<EmployeeReferenceDto> BuildEmployeeReferenceQuery(
+        MasterDataDbContext dbContext,
+        System.Linq.Expressions.Expression<Func<FSH.Modules.MasterData.Domain.EmployeeProfile, bool>>? employeeFilter = null)
     {
-        return
-            from employee in dbContext.Employees.AsNoTracking()
-            join officeRef in dbContext.Offices.AsNoTracking() on employee.OfficeId equals officeRef.Id into officeGroup
-            from office in officeGroup.DefaultIfEmpty()
-            join departmentRef in dbContext.Departments.AsNoTracking() on employee.DepartmentId equals departmentRef.Id into departmentGroup
-            from department in departmentGroup.DefaultIfEmpty()
-            join positionRef in dbContext.Positions.AsNoTracking() on employee.PositionId equals positionRef.Id into positionGroup
-            from position in positionGroup.DefaultIfEmpty()
-            join unitOfMeasureRef in dbContext.UnitOfMeasures.AsNoTracking() on employee.DefaultUnitOfMeasureId equals unitOfMeasureRef.Id into uomGroup
-            from uom in uomGroup.DefaultIfEmpty()
-            orderby employee.LastName, employee.FirstName, employee.EmployeeNumber
-            select new EmployeeReferenceDto(
+        var employees = dbContext.Employees.AsNoTracking();
+        if (employeeFilter is not null)
+        {
+            employees = employees.Where(employeeFilter);
+        }
+
+        return employees
+            .OrderBy(employee => employee.LastName)
+            .ThenBy(employee => employee.FirstName)
+            .ThenBy(employee => employee.EmployeeNumber)
+            .Select(employee => new EmployeeReferenceDto(
                 employee.Id,
                 employee.EmployeeNumber ?? string.Empty,
                 employee.IdentityUserId,
                 employee.FirstName ?? string.Empty,
                 employee.LastName ?? string.Empty,
                 employee.WorkEmail,
-                office != null ? office.Id : Guid.Empty,
-                office != null ? office.Code : string.Empty,
-                office != null ? office.Name : string.Empty,
-                department != null ? department.Id : Guid.Empty,
-                department != null ? department.Code : string.Empty,
-                department != null ? department.Name : string.Empty,
-                position != null ? position.Id : Guid.Empty,
-                position != null ? position.Code : string.Empty,
-                position != null ? position.Name : string.Empty,
+                employee.OfficeId,
+                employee.Office != null ? employee.Office.Code : string.Empty,
+                employee.Office != null ? employee.Office.Name : string.Empty,
+                employee.DepartmentId,
+                employee.Department != null ? employee.Department.Code : string.Empty,
+                employee.Department != null ? employee.Department.Name : string.Empty,
+                employee.PositionId,
+                employee.Position != null ? employee.Position.Code : string.Empty,
+                employee.Position != null ? employee.Position.Name : string.Empty,
                 employee.DefaultUnitOfMeasureId,
-                uom != null ? uom.Code : null,
-                uom != null ? uom.Name : null,
-                employee.IsActive);
+                employee.DefaultUnitOfMeasure != null ? employee.DefaultUnitOfMeasure.Code : null,
+                employee.DefaultUnitOfMeasure != null ? employee.DefaultUnitOfMeasure.Name : null,
+                employee.IsActive));
     }
 }
 

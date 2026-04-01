@@ -14,8 +14,11 @@ using FSH.Modules.Expendable.Features.v1.Products.CreateProduct;
 using FSH.Modules.Expendable.Features.v1.Products.UpdateProduct;
 using FSH.Modules.Expendable.Features.v1.Products.ActivateProduct;
 using FSH.Modules.Expendable.Features.v1.Products.DeactivateProduct;
+using FSH.Modules.Expendable.Features.v1.Products.DiscontinueProduct;
+using FSH.Modules.Expendable.Features.v1.Products.MarkOutOfStock;
 using FSH.Modules.Expendable.Features.v1.Products.DeleteProduct;
 using FSH.Modules.Expendable.Features.v1.Products.GetProduct;
+using FSH.Modules.Expendable.Features.v1.Products.GetProductCatalogCards;
 using FSH.Modules.Expendable.Features.v1.Products.ListActiveProducts;
 using FSH.Modules.Expendable.Features.v1.Products.SearchProducts;
 using FSH.Modules.Expendable.Features.v1.Purchases.CreatePurchaseOrder;
@@ -35,6 +38,9 @@ using FSH.Modules.Expendable.Features.v1.Requests.GetSupplyRequest;
 using FSH.Modules.Expendable.Features.v1.Requests.SearchSupplyRequests;
 using FSH.Modules.Expendable.Features.v1.Requests.RejectSupplyRequest;
 using FSH.Modules.Expendable.Features.v1.Requests.GetEmployeeSupplyRequests;
+using FSH.Modules.Expendable.Features.v1.Requests.FulfillSupplyRequest;
+using FSH.Modules.Expendable.Features.v1.Reports.GetDepartmentIssuanceReport;
+using FSH.Modules.Expendable.Features.v1.Reports.GetEmployeeIssuanceHistory;
 using FSH.Modules.Expendable.Features.v1.Cart.GetOrCreateCart;
 using FSH.Modules.Expendable.Features.v1.Cart.AddToCart;
 using FSH.Modules.Expendable.Features.v1.Cart.GetCart;
@@ -77,6 +83,8 @@ public class ExpendableModule : IModule
         new("Delete Expendable Products", "Delete", "Expendable.Products"),
         new("Activate Expendable Products", "Activate", "Expendable.Products"),
         new("Deactivate Expendable Products", "Deactivate", "Expendable.Products"),
+        new("Discontinue Expendable Products", "Discontinue", "Expendable.Products"),
+        new("Mark Expendable Products Out Of Stock", "MarkOutOfStock", "Expendable.Products"),
 
         new("View Expendable Purchases", "View", "Expendable.Purchases", IsBasic: true),
         new("Create Expendable Purchases", "Create", "Expendable.Purchases"),
@@ -91,6 +99,7 @@ public class ExpendableModule : IModule
         new("Delete Expendable Supply Requests", "Delete", "Expendable.SupplyRequests"),
         new("Approve Expendable Supply Requests", "Approve", "Expendable.SupplyRequests"),
         new("Reject Expendable Supply Requests", "Reject", "Expendable.SupplyRequests"),
+        new("Fulfill Expendable Supply Requests", "Fulfill", "Expendable.SupplyRequests"),
 
         new("View Expendable Shopping Carts", "View", "Expendable.ShoppingCarts", IsBasic: true),
         new("Create Expendable Shopping Carts", "Create", "Expendable.ShoppingCarts"),
@@ -143,14 +152,18 @@ public class ExpendableModule : IModule
         var supplyRequestsGroup = moduleGroup.MapGroup("/supply-requests");
         var cartGroup = moduleGroup.MapGroup("/cart");
         var warehouseGroup = moduleGroup.MapGroup("/warehouse");
+        var reportsGroup = moduleGroup.MapGroup("/reports");
 
         // Product Endpoints - Vertical Slices
         CreateProductEndpoint.Map(productsGroup);
         UpdateProductEndpoint.Map(productsGroup);
         ActivateProductEndpoint.Map(productsGroup);
         DeactivateProductEndpoint.Map(productsGroup);
+        DiscontinueProductEndpoint.Map(productsGroup);
+        MarkOutOfStockEndpoint.Map(productsGroup);
         DeleteProductEndpoint.Map(productsGroup);
         GetProductEndpoint.Map(productsGroup);
+        GetProductCatalogCardsEndpoint.Map(productsGroup);
         ListActiveProductsEndpoint.Map(productsGroup);
         SearchProductsEndpoint.Map(productsGroup);
 
@@ -173,6 +186,7 @@ public class ExpendableModule : IModule
         SubmitSupplyRequestEndpoint.Map(supplyRequestsGroup);
         ApproveSupplyRequestEndpoint.Map(supplyRequestsGroup);
         RejectSupplyRequestEndpoint.Map(supplyRequestsGroup);
+        FulfillSupplyRequestEndpoint.Map(supplyRequestsGroup);
         GetSupplyRequestEndpoint.Map(supplyRequestsGroup);
         GetEmployeeSupplyRequestsEndpoint.Map(supplyRequestsGroup);
         SearchSupplyRequestsEndpoint.Map(supplyRequestsGroup);
@@ -197,5 +211,9 @@ public class ExpendableModule : IModule
         GetWarehouseStockLevelsEndpoint.Map(warehouseGroup);
         GetRejectedInventoryEndpoint.Map(warehouseGroup);
         GetPendingInspectionsEndpoint.Map(warehouseGroup);
+
+        // Issuance Reports
+        GetDepartmentIssuanceReportEndpoint.Map(reportsGroup);
+        GetEmployeeIssuanceHistoryEndpoint.Map(reportsGroup);
     }
 }

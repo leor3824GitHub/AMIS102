@@ -70,14 +70,14 @@ internal sealed class UserProfileService(
         return result;
     }
 
-    public async Task UpdateAsync(string userId, string firstName, string lastName, string phoneNumber, FileUploadRequest image, bool deleteCurrentImage)
+    public async Task UpdateAsync(string userId, string firstName, string lastName, string phoneNumber, FileUploadRequest? image, bool deleteCurrentImage)
     {
         var user = await userManager.FindByIdAsync(userId);
 
         _ = user ?? throw new NotFoundException("user not found");
 
         Uri imageUri = user.ImageUrl ?? null!;
-        if (image.Data != null || deleteCurrentImage)
+        if ((image?.Data != null && image.Data.Count > 0) || deleteCurrentImage)
         {
             var imageString = await storageService.UploadAsync<FshUser>(image, FileType.Image);
             user.ImageUrl = new Uri(imageString, UriKind.RelativeOrAbsolute);

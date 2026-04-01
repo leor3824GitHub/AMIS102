@@ -41,6 +41,16 @@ public sealed class SearchProductsQueryHandler : IQueryHandler<SearchProductsQue
             productQuery = productQuery.Where(p => p.ParentProductId == query.ParentProductId);
         }
 
+        if (!string.IsNullOrWhiteSpace(query.CategoryId))
+        {
+            productQuery = productQuery.Where(p => p.CategoryId == query.CategoryId);
+        }
+
+        if (!string.IsNullOrWhiteSpace(query.SupplierId))
+        {
+            productQuery = productQuery.Where(p => p.SupplierId == query.SupplierId);
+        }
+
         productQuery = productQuery.OrderBy(p => p.Name);
 
         var projected = productQuery.Select(p => p.ToProductDto());
