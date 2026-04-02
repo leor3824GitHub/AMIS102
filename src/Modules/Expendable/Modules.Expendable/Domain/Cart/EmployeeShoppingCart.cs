@@ -75,7 +75,7 @@ public class EmployeeShoppingCart : AggregateRoot<Guid>, IHasTenant, IAuditableE
         };
     }
 
-    /// <summary>Add an item to the cart</summary>
+    /// <summary>Add an item to the cart. Items with the same product AND unit price are merged; different prices create separate rows.</summary>
     public void AddItem(Guid productId, int quantity, decimal unitPrice)
     {
         if (Status != CartStatus.Active)
@@ -84,7 +84,7 @@ public class EmployeeShoppingCart : AggregateRoot<Guid>, IHasTenant, IAuditableE
         if (quantity <= 0)
             throw new InvalidOperationException("Quantity must be greater than zero.");
 
-        var existingItem = _items.FirstOrDefault(x => x.ProductId == productId);
+        var existingItem = _items.FirstOrDefault(x => x.ProductId == productId && x.UnitPrice == unitPrice);
         if (existingItem != null)
         {
             existingItem.UpdateQuantity(existingItem.Quantity + quantity);
@@ -93,6 +93,20 @@ public class EmployeeShoppingCart : AggregateRoot<Guid>, IHasTenant, IAuditableE
         {
             _items.Add(new CartItem(productId, quantity, unitPrice));
         }
+
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;
+    }
+
+    /// <summary>Remove items from the cart. If unitPrice is specified, only that price batch is removed; otherwise all batches for the product are removed.</summary>
+    public void RemoveItem(Guid productId, decimal? unitPrice = null)
+    {
+        if (Status != CartStatus.Active)
+            throw new InvalidOperationException("Cannot modify an inactive cart.");
+
+        if (unitPrice.HasValue)
+            _items.RemoveAll(x => x.ProductId == productId && x.UnitPrice == unitPrice.Value);
+        else
+            _items.RemoveAll(x => x.ProductId == productId);
 
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
     }
@@ -112,16 +126,6 @@ public class EmployeeShoppingCart : AggregateRoot<Guid>, IHasTenant, IAuditableE
         else
             item.UpdateQuantity(newQuantity);
 
-        LastModifiedOnUtc = DateTimeOffset.UtcNow;
-    }
-
-    /// <summary>Remove an item from the cart</summary>
-    public void RemoveItem(Guid productId)
-    {
-        if (Status != CartStatus.Active)
-            throw new InvalidOperationException("Cannot modify an inactive cart.");
-
-        _items.RemoveAll(x => x.ProductId == productId);
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
     }
 

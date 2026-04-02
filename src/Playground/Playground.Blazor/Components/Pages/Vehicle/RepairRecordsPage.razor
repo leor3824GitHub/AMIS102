@@ -1,0 +1,214 @@
+@page "/vehicle/repairs"
+@using FSH.Modules.Vehicle.Contracts.v1.Repairs
+@inject IVehicleClient VehicleClient
+@inject ISnackbar Snackbar
+
+<FshPageHeader Title="Repair Records" Description="Track repair jobs and status" />
+
+<div class="mt-4">
+    <MudStack Row="true" Spacing="1" Class="mb-3">
+        <MudChip T="string" Variant="Variant.Outlined" Color="Color.Primary">Total: @_repairs.Count</MudChip>
+        <MudChip T="string" Variant="Variant.Outlined" Color="Color.Warning">Pending: @_repairs.Count(r => r.Status == "Pending")</MudChip>
+        <MudChip T="string" Variant="Variant.Outlined" Color="Color.Info">In Progress: @_repairs.Count(r => r.Status == "InProgress")</MudChip>
+        <MudChip T="string" Variant="Variant.Outlined" Color="Color.Success">Completed: @_repairs.Count(r => r.Status == "Completed")</MudChip>
+        <MudChip T="string" Variant="Variant.Outlined" Color="Color.Error">Cancelled: @_repairs.Count(r => r.Status == "Cancelled")</MudChip>
+    </MudStack>
+
+    <MudGrid Spacing="2">
+        <MudItem xs="12" md="4">
+            <MudCard Class="fsh-card">
+                <MudCardContent>
+                    <MudText Typo="Typo.h6" Class="mb-2">Create Repair</MudText>
+                    <MudStack Spacing="2">
+                        <MudTextField @bind-Value="_create.VehicleIdText" Label="Vehicle Id" Required="true" />
+                        <MudDatePicker @bind-Date="_create.RepairDate" Label="Repair Date" />
+                        <MudTextField @bind-Value="_create.Description" Label="Description" Required="true" />
+                        <MudNumericField @bind-Value="_create.Cost" Label="Cost" Min="0" />
+                        <MudTextField @bind-Value="_create.VendorName" Label="Vendor" />
+                        <MudTextField @bind-Value="_create.PartsUsed" Label="Parts Used" />
+                        <MudTextField @bind-Value="_create.Notes" Label="Notes" Lines="2" />
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Create">Create</MudButton>
+                    </MudStack>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        <MudItem xs="12" md="8">
+            <MudCard Class="fsh-card">
+                <MudCardContent>
+                    <MudStack Row="true" Spacing="2" Class="mb-2">
+                        <MudTextField @bind-Value="_query.Keyword" Label="Search" Placeholder="description or notes"
+                                      Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" />
+                        <MudTextField @bind-Value="_query.VehicleIdText" Label="Vehicle Id" />
+                        <MudSelect T="string" @bind-Value="_query.Status" Label="Status" Dense="true" Clearable="true">
+                            <MudSelectItem Value="@("Pending")">Pending</MudSelectItem>
+                            <MudSelectItem Value="@("InProgress")">In Progress</MudSelectItem>
+                            <MudSelectItem Value="@("Completed")">Completed</MudSelectItem>
+                            <MudSelectItem Value="@("Cancelled")">Cancelled</MudSelectItem>
+                        </MudSelect>
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Load">Search</MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Default" OnClick="ClearFilters">Clear</MudButton>
+                    </MudStack>
+
+                    <MudTable Items="_repairs" Dense="true" Hover="true" Striped="true">
+                        <HeaderContent>
+                            <MudTh>Date</MudTh>
+                            <MudTh>Description</MudTh>
+                            <MudTh>Status</MudTh>
+                            <MudTh>Cost</MudTh>
+                            <MudTh>Actions</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd>@context.RepairDate.ToString("yyyy-MM-dd")</MudTd>
+                            <MudTd>@context.Description</MudTd>
+                            <MudTd><MudChip T="string" Size="Size.Small" Color="@StatusColor(context.Status)">@DisplayStatus(context.Status)</MudChip></MudTd>
+                            <MudTd>@context.Cost.ToString("N2")</MudTd>
+                            <MudTd>
+                                <MudStack Row="true" Spacing="1">
+                                    @if (context.Status == "Pending")
+                                    {
+                                        <MudIconButton Icon="@Icons.Material.Filled.PlayArrow" Color="Color.Info" Size="Size.Small" OnClick="@(() => Start(context.Id))" />
+                                    }
+                                    @if (context.Status == "InProgress")
+                                    {
+                                        <MudIconButton Icon="@Icons.Material.Filled.Done" Color="Color.Success" Size="Size.Small" OnClick="@(() => Complete(context.Id))" />
+                                    }
+                                    @if (context.Status != "Completed" && context.Status != "Cancelled")
+                                    {
+                                        <MudIconButton Icon="@Icons.Material.Filled.Cancel" Color="Color.Warning" Size="Size.Small" OnClick="@(() => Cancel(context.Id))" />
+                                    }
+                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => Delete(context.Id))" />
+                                </MudStack>
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+</div>
+
+@code {
+    private readonly List<RepairRecordDto> _repairs = [];
+
+    private RepairQueryModel _query = new();
+    private CreateRepairModel _create = new();
+
+    protected override async Task OnInitializedAsync() => await Load();
+
+    private async Task Load()
+    {
+        try
+        {
+            var result = await VehicleClient.SearchRepairsAsync(new SearchRepairRecordsQuery
+            {
+                VehicleId = ParseGuid(_query.VehicleIdText),
+                Status = _query.Status,
+                Keyword = _query.Keyword,
+                PageNumber = 1,
+                PageSize = 100
+            });
+
+            _repairs.Clear();
+            _repairs.AddRange(result.Items ?? []);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load repairs: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task Create()
+    {
+        var vehicleId = ParseGuid(_create.VehicleIdText);
+        if (vehicleId is null || string.IsNullOrWhiteSpace(_create.Description))
+        {
+            Snackbar.Add("Vehicle Id and description are required.", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            await VehicleClient.CreateRepairAsync(new CreateRepairRecordCommand(
+                vehicleId.Value,
+                new DateTimeOffset(_create.RepairDate ?? DateTime.Today),
+                _create.Description,
+                _create.Cost,
+                _create.VendorName,
+                null,
+                _create.PartsUsed,
+                _create.Notes));
+
+            Snackbar.Add("Repair record created.", Severity.Success);
+            _create = new();
+            await Load();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Create failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task Start(Guid id) => await Do(async () => await VehicleClient.StartRepairAsync(id), "Repair started.");
+    private async Task Cancel(Guid id) => await Do(async () => await VehicleClient.CancelRepairAsync(id), "Repair cancelled.");
+    private async Task Delete(Guid id) => await Do(async () => await VehicleClient.DeleteRepairAsync(id), "Repair deleted.");
+
+    private async Task Complete(Guid id)
+    {
+        await Do(async () => await VehicleClient.CompleteRepairAsync(id, new CompleteRepairCommand(id, DateTimeOffset.UtcNow)), "Repair completed.");
+    }
+
+    private async Task Do(Func<Task> action, string success)
+    {
+        try
+        {
+            await action();
+            Snackbar.Add(success, Severity.Success);
+            await Load();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private static Guid? ParseGuid(string? text) => Guid.TryParse(text, out var value) ? value : null;
+
+    private void ClearFilters()
+    {
+        _query = new();
+    }
+
+    private static Color StatusColor(string status) => status switch
+    {
+        "Pending" => Color.Warning,
+        "InProgress" => Color.Info,
+        "Completed" => Color.Success,
+        "Cancelled" => Color.Error,
+        _ => Color.Default
+    };
+
+    private static string DisplayStatus(string status) => status switch
+    {
+        "InProgress" => "In Progress",
+        _ => status
+    };
+
+    private sealed class RepairQueryModel
+    {
+        public string? VehicleIdText { get; set; }
+        public string? Status { get; set; }
+        public string? Keyword { get; set; }
+    }
+
+    private sealed class CreateRepairModel
+    {
+        public string? VehicleIdText { get; set; }
+        public DateTime? RepairDate { get; set; } = DateTime.Today;
+        public string Description { get; set; } = string.Empty;
+        public decimal Cost { get; set; }
+        public string? VendorName { get; set; }
+        public string? PartsUsed { get; set; }
+        public string? Notes { get; set; }
+    }
+}

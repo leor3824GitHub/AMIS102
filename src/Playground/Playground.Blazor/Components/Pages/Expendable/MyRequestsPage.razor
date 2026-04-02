@@ -1,0 +1,706 @@
+@page "/expendable/my-requests"
+@using FSH.Framework.Blazor.UI.Components.Cards
+@using FSH.Playground.Blazor.ApiClient
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
+@using EmployeeIssuanceDto = FSH.Modules.Expendable.Contracts.v1.Requests.EmployeeIssuanceDto
+@using IssuanceItemDto = FSH.Modules.Expendable.Contracts.v1.Requests.IssuanceItemDto
+@inherits ComponentBase
+@inject ISnackbar Snackbar
+@inject IEmployeeClient EmployeeClient
+@inject IEmployeesClient EmployeesClient
+@inject IExpendableClient ExpendableClient
+@inject ISupply_requestsClient SupplyRequestsClient
+@inject IProductsClient ProductsClient
+@inject IReportsClient ReportsClient
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<FshPageHeader Title="My Requests" Description="View your supply request status and item issuance history" />
+
+@if (_loadingEmployee)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="mt-4" />
+}
+else if (_employee is null)
+{
+    <MudAlert Severity="Severity.Info" Class="mt-4">
+        <MudText Typo="Typo.body1"><strong>No employee profile linked to your account.</strong></MudText>
+        <MudText Typo="Typo.body2" Class="mt-1">
+            This page is for employees to track their supply requests and received items.
+            If you believe this is an error, please contact your administrator to link your account to an employee profile.
+        </MudText>
+    </MudAlert>
+}
+else
+{
+    <div class="mt-4">
+        <MudTabs Elevation="1" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-4"
+                 @bind-ActivePanelIndex="_activeTab">
+
+            <!-- ===== MY REQUESTS ===== -->
+            <MudTabPanel Text="My Requests" Icon="@Icons.Material.Filled.Description">
+
+                <!-- Status filter chips -->
+                <MudPaper Class="pa-3 mb-3" Elevation="0" Outlined="true">
+                    <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+                        @foreach (var status in _statusFilters)
+                        {
+                            <MudChip T="string"
+                                     Color="@(_requestsStatusFilter == status ? Color.Primary : Color.Default)"
+                                     Variant="@(_requestsStatusFilter == status ? Variant.Filled : Variant.Outlined)"
+                                     OnClick="@(() => SetRequestsStatusFilter(status))"
+                                     Size="Size.Small">
+                                @(status ?? "All")
+                            </MudChip>
+                        }
+                    </MudStack>
+                </MudPaper>
+
+                <MudTable @ref="_requestsTable" T="SupplyRequestDto"
+                          ServerData="@(async (s, ct) => await LoadMyRequests(s, ct))"
+                          Dense="true" Hover="true" Striped="true">
+                    <HeaderContent>
+                        <MudTh>Request #</MudTh>
+                        <MudTh>Date</MudTh>
+                        <MudTh>Needed By</MudTh>
+                        <MudTh>Status</MudTh>
+                        <MudTh>Items</MudTh>
+                        <MudTh></MudTh>
+                    </HeaderContent>
+                    <RowTemplate Context="req">
+                        <MudTd DataLabel="Request #">
+                            <MudText Typo="Typo.body2" Style="font-weight:500">@req.RequestNumber</MudText>
+                        </MudTd>
+                        <MudTd DataLabel="Date">@req.RequestDate.ToLocalTime().ToString("MMM d, yyyy")</MudTd>
+                        <MudTd DataLabel="Needed By">
+                            @(req.NeededByDate.HasValue ? req.NeededByDate.Value.ToLocalTime().ToString("MMM d, yyyy") : "—")
+                        </MudTd>
+                        <MudTd DataLabel="Status">
+                            <MudChip T="string" Size="Size.Small" Color="@GetStatusColor(req.Status)"
+                                     Variant="Variant.Filled">
+                                @req.Status
+                            </MudChip>
+                        </MudTd>
+                        <MudTd DataLabel="Items">@req.Items.Count item(s)</MudTd>
+                        <MudTd>
+                            <MudStack Row="true" Spacing="0">
+                                @if (req.Status == "Draft")
+                                {
+                                    <MudIconButton Icon="@Icons.Material.Filled.EditNote"
+                                                   Color="Color.Primary" Size="Size.Small"
+                                                   Title="Edit draft"
+                                                   OnClick="@(() => OpenEditDialog(req))" />
+                                }
+                                @if (req.Status is "Draft" or "Submitted" or "Approved")
+                                {
+                                    <MudIconButton Icon="@Icons.Material.Filled.Cancel"
+                                                   Color="Color.Error" Size="Size.Small"
+                                                   Title="Cancel request"
+                                                   OnClick="@(() => OpenCancelDialog(req))" />
+                                }
+                                <MudIconButton Icon="@(_expandedRequests.Contains(req.Id) ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)"
+                                               Size="Size.Small"
+                                               OnClick="@(() => ToggleRequestExpand(req))" />
+                            </MudStack>
+                        </MudTd>
+                    </RowTemplate>
+                    <ChildRowContent Context="req">
+                        @if (_expandedRequests.Contains(req.Id))
+                        {
+                            <MudTr>
+                                <td colspan="6" class="pa-0">
+                                    <div class="px-8 pb-3">
+                                        @if (!string.IsNullOrWhiteSpace(req.BusinessJustification))
+                                        {
+                                            <MudText Typo="Typo.caption" Class="mb-2 mt-2">
+                                                <strong>Justification:</strong> @req.BusinessJustification
+                                            </MudText>
+                                        }
+                                        @if (!string.IsNullOrWhiteSpace(req.RejectionReason))
+                                        {
+                                            <MudAlert Severity="Severity.Error" Dense="true" Class="mb-2">
+                                                <strong>Rejection Reason:</strong> @req.RejectionReason
+                                            </MudAlert>
+                                        }
+                                        <MudTable Items="@req.Items" T="SupplyRequestItemDto"
+                                                  Dense="true" Hover="false" Elevation="0">
+                                            <HeaderContent>
+                                                <MudTh>Product</MudTh>
+                                                <MudTh>Requested</MudTh>
+                                                <MudTh>Approved</MudTh>
+                                                <MudTh>Fulfilled</MudTh>
+                                                <MudTh>Notes</MudTh>
+                                            </HeaderContent>
+                                            <RowTemplate Context="item">
+                                                <MudTd DataLabel="Product">@GetProductName(item.ProductId)</MudTd>
+                                                <MudTd DataLabel="Requested">@item.RequestedQuantity</MudTd>
+                                                <MudTd DataLabel="Approved">
+                                                    @if (item.ApprovedQuantity > 0)
+                                                    {
+                                                        <MudChip T="string" Size="Size.Small" Color="Color.Success"
+                                                                 Variant="Variant.Outlined">@item.ApprovedQuantity</MudChip>
+                                                    }
+                                                    else
+                                                    {
+                                                        <MudText Typo="Typo.body2" Color="Color.Default">—</MudText>
+                                                    }
+                                                </MudTd>
+                                                <MudTd DataLabel="Fulfilled">
+                                                    @if (item.FulfilledQuantity > 0)
+                                                    {
+                                                        <MudChip T="string" Size="Size.Small" Color="Color.Primary"
+                                                                 Variant="Variant.Filled">@item.FulfilledQuantity</MudChip>
+                                                    }
+                                                    else
+                                                    {
+                                                        <MudText Typo="Typo.body2" Color="Color.Default">—</MudText>
+                                                    }
+                                                </MudTd>
+                                                <MudTd DataLabel="Notes">@(item.Notes ?? "—")</MudTd>
+                                            </RowTemplate>
+                                        </MudTable>
+                                    </div>
+                                </td>
+                            </MudTr>
+                        }
+                    </ChildRowContent>
+                    <NoRecordsContent>
+                        <MudText Class="my-4">No supply requests found.</MudText>
+                    </NoRecordsContent>
+                    <PagerContent><MudTablePager /></PagerContent>
+                </MudTable>
+            </MudTabPanel>
+
+            <!-- ===== RECEIVED ITEMS HISTORY ===== -->
+            <MudTabPanel Text="Items Received" Icon="@Icons.Material.Filled.Inventory">
+
+                <MudPaper Class="pa-3 mb-3" Elevation="0" Outlined="true">
+                    <MudGrid Spacing="2" AlignItems="AlignItems.Center">
+                        <MudItem xs="12" sm="4">
+                            <MudDatePicker @bind-Date="_historyFrom" Label="From" Variant="Variant.Outlined"
+                                           DateFormat="yyyy-MM-dd" Clearable="true" />
+                        </MudItem>
+                        <MudItem xs="12" sm="4">
+                            <MudDatePicker @bind-Date="_historyTo" Label="To" Variant="Variant.Outlined"
+                                           DateFormat="yyyy-MM-dd" Clearable="true" />
+                        </MudItem>
+                        <MudItem xs="12" sm="2">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                                       OnClick="ApplyHistoryFilter">
+                                Filter
+                            </MudButton>
+                        </MudItem>
+                        <MudItem xs="12" sm="2">
+                            <MudButton Variant="Variant.Outlined" Color="Color.Default" FullWidth="true"
+                                       OnClick="ClearHistoryFilter">
+                                Clear
+                            </MudButton>
+                        </MudItem>
+                    </MudGrid>
+                </MudPaper>
+
+                <MudTable @ref="_historyTable" T="EmployeeIssuanceDto"
+                          ServerData="@(async (s, ct) => await LoadIssuanceHistory(s, ct))"
+                          Dense="true" Hover="true" Striped="true">
+                    <HeaderContent>
+                        <MudTh>Request #</MudTh>
+                        <MudTh>Fulfilled On</MudTh>
+                        <MudTh>Items</MudTh>
+                        <MudTh>Total Value</MudTh>
+                        <MudTh></MudTh>
+                    </HeaderContent>
+                    <RowTemplate Context="issuance">
+                        <MudTd DataLabel="Request #"><code>@issuance.RequestNumber</code></MudTd>
+                        <MudTd DataLabel="Fulfilled On">
+                            @issuance.FulfilledOnUtc.ToLocalTime().ToString("MMM d, yyyy HH:mm")
+                        </MudTd>
+                        <MudTd DataLabel="Items">@issuance.Items.Count item(s)</MudTd>
+                        <MudTd DataLabel="Total Value">₱@issuance.TotalValue.ToString("N2")</MudTd>
+                        <MudTd>
+                            <MudIconButton Icon="@(_expandedHistory.Contains(issuance.RequestId) ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)"
+                                           Size="Size.Small"
+                                           OnClick="@(() => ToggleHistoryExpand(issuance.RequestId))" />
+                        </MudTd>
+                    </RowTemplate>
+                    <ChildRowContent Context="issuance">
+                        @if (_expandedHistory.Contains(issuance.RequestId))
+                        {
+                            <MudTr>
+                                <td colspan="5" class="pa-0">
+                                    <MudTable Items="@issuance.Items" T="IssuanceItemDto"
+                                              Dense="true" Hover="false" Elevation="0" Class="ml-8 mb-2">
+                                        <HeaderContent>
+                                            <MudTh>Product</MudTh>
+                                            <MudTh>Code</MudTh>
+                                            <MudTh>Qty</MudTh>
+                                            <MudTh>Unit Price</MudTh>
+                                            <MudTh>Total</MudTh>
+                                        </HeaderContent>
+                                        <RowTemplate Context="item">
+                                            <MudTd DataLabel="Product">@item.ProductName</MudTd>
+                                            <MudTd DataLabel="Code"><code>@item.ProductCode</code></MudTd>
+                                            <MudTd DataLabel="Qty">@item.QuantityIssued</MudTd>
+                                            <MudTd DataLabel="Unit Price">₱@item.UnitPrice.ToString("N4")</MudTd>
+                                            <MudTd DataLabel="Total">₱@item.TotalValue.ToString("N2")</MudTd>
+                                        </RowTemplate>
+                                    </MudTable>
+                                </td>
+                            </MudTr>
+                        }
+                    </ChildRowContent>
+                    <NoRecordsContent>
+                        <MudText Class="my-4">No items received yet.</MudText>
+                    </NoRecordsContent>
+                    <PagerContent><MudTablePager /></PagerContent>
+                </MudTable>
+            </MudTabPanel>
+
+        </MudTabs>
+    </div>
+}
+
+<!-- ===== EDIT DRAFT DIALOG ===== -->
+@if (_showEditDialog && _editDialog != null)
+{
+    <MudOverlay Visible="true" DarkBackground="true" AutoClose="false" ZIndex="1400">
+        <MudPaper Class="pa-4" Elevation="24" Style="width: min(680px, 95vw); max-height: 90vh; overflow-y: auto;">
+            <MudText Typo="Typo.h6" Class="mb-3">
+                <MudIcon Icon="@Icons.Material.Filled.EditNote" Color="Color.Primary" Class="mr-2" />
+                Edit Draft — @_editDialog.RequestNumber
+            </MudText>
+
+            <!-- Current Items -->
+            <MudText Typo="Typo.subtitle2" Class="mb-1">Current Items</MudText>
+            @{ var editItems = _editDialog.Items ?? []; }
+            @if (!editItems.Any())
+            {
+                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-3">No items yet. Add products below.</MudText>
+            }
+            else
+            {
+                <MudTable Items="@editItems" T="SupplyRequestItemDto" Dense="true" Elevation="0" Class="mb-3">
+                    <HeaderContent>
+                        <MudTh>Product</MudTh>
+                        <MudTh Style="text-align:center;">Qty</MudTh>
+                        <MudTh>Notes</MudTh>
+                        <MudTh></MudTh>
+                    </HeaderContent>
+                    <RowTemplate Context="item">
+                        <MudTd DataLabel="Product">@GetProductName(item.ProductId)</MudTd>
+                        <MudTd DataLabel="Qty" Style="text-align:center;">@item.RequestedQuantity</MudTd>
+                        <MudTd DataLabel="Notes">@(item.Notes ?? "—")</MudTd>
+                        <MudTd>
+                            <MudIconButton Icon="@Icons.Material.Filled.DeleteOutline" Color="Color.Error"
+                                           Size="Size.Small" Disabled="_isEditActioning"
+                                           OnClick="@(() => RemoveItemFromDraft(item.ProductId))" />
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+            }
+
+            <MudDivider Class="mb-3" />
+
+            <!-- Add Product -->
+            <MudText Typo="Typo.subtitle2" Class="mb-2">Add Product</MudText>
+            <MudGrid Spacing="2">
+                <MudItem xs="12" sm="6">
+                    <MudSelect T="Guid" @bind-Value="_addProductId" Label="Product" Variant="Variant.Outlined"
+                               Dense="true" AnchorOrigin="Origin.BottomCenter">
+                        <MudSelectItem Value="Guid.Empty">Select product…</MudSelectItem>
+                        @foreach (var p in _availableProducts)
+                        {
+                            <MudSelectItem Value="@p.Id">@p.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="6" sm="3">
+                    <MudNumericField @bind-Value="_addQuantity" Label="Qty" Min="1"
+                                     Variant="Variant.Outlined" Dense="true" />
+                </MudItem>
+                <MudItem xs="6" sm="3" Class="d-flex align-end">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                               Disabled="@(_addProductId == Guid.Empty || _isEditActioning)"
+                               OnClick="AddItemToDraft">
+                        Add
+                    </MudButton>
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="_addNotes" Label="Notes (optional)"
+                                  Variant="Variant.Outlined" Dense="true" />
+                </MudItem>
+            </MudGrid>
+
+            <MudDivider Class="mt-3 mb-3" />
+
+            <MudStack Row="true" Justify="Justify.SpaceBetween">
+                <MudButton OnClick="@(() => _showEditDialog = false)" Disabled="_isEditActioning">
+                    Close
+                </MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Success"
+                           StartIcon="@Icons.Material.Filled.Send"
+                           Disabled="@(_isEditActioning || !editItems.Any())"
+                           OnClick="SubmitDraft">
+                    @if (_isEditActioning)
+                    {
+                        <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                    }
+                    Submit Request
+                </MudButton>
+            </MudStack>
+        </MudPaper>
+    </MudOverlay>
+}
+
+<!-- ===== CANCEL DIALOG ===== -->
+@if (_showCancelDialog && _cancelDialog != null)
+{
+    <MudOverlay Visible="true" DarkBackground="true" AutoClose="false" ZIndex="1400">
+        <MudPaper Class="pa-4" Elevation="24" Style="width: min(480px, 95vw);">
+            <MudText Typo="Typo.h6" Class="mb-3">
+                <MudIcon Icon="@Icons.Material.Filled.Cancel" Color="Color.Error" Class="mr-2" />
+                Cancel Request — @_cancelDialog.RequestNumber
+            </MudText>
+            <MudAlert Severity="Severity.Warning" Dense="true" Class="mb-3">
+                @if (_cancelDialog.Status == "Approved")
+                {
+                    <span>This request is already approved. Cancelling will release the reserved warehouse stock.</span>
+                }
+                else
+                {
+                    <span>Are you sure you want to cancel this request? This action cannot be undone.</span>
+                }
+            </MudAlert>
+            <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2">
+                <MudButton OnClick="@(() => _showCancelDialog = false)" Disabled="_isCancelling">Keep Request</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Error"
+                           StartIcon="@Icons.Material.Filled.Cancel"
+                           OnClick="SubmitCancel" Disabled="@_isCancelling">
+                    @if (_isCancelling) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" /> }
+                    Yes, Cancel It
+                </MudButton>
+            </MudStack>
+        </MudPaper>
+    </MudOverlay>
+}
+
+@code {
+    // Employee
+    private bool _loadingEmployee = true;
+    private EmployeeReferenceDto? _employee;
+    private string? _identityUserId;
+
+    // Tabs
+    private int _activeTab;
+
+    // My Requests tab
+    private MudTable<SupplyRequestDto>? _requestsTable;
+    private string? _requestsStatusFilter;
+    private readonly HashSet<Guid> _expandedRequests = [];
+    private readonly Dictionary<Guid, string> _productNames = [];
+
+    private static readonly string?[] _statusFilters =
+        [null, "Draft", "Submitted", "Approved", "Fulfilled", "Rejected", "Cancelled"];
+
+    // Edit Draft dialog
+    private bool _showEditDialog;
+    private SupplyRequestDto? _editDialog;
+
+    // Cancel dialog
+    private bool _showCancelDialog;
+    private SupplyRequestDto? _cancelDialog;
+    private bool _isCancelling;
+    private List<ProductDto> _availableProducts = [];
+    private Guid _addProductId = Guid.Empty;
+    private int _addQuantity = 1;
+    private string? _addNotes;
+    private bool _isEditActioning;
+
+    // Received Items tab
+    private MudTable<EmployeeIssuanceDto>? _historyTable;
+    private DateTime? _historyFrom;
+    private DateTime? _historyTo;
+    private readonly HashSet<Guid> _expandedHistory = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var identityUserId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (!string.IsNullOrWhiteSpace(identityUserId))
+            {
+                _identityUserId = identityUserId;
+                _employee = await EmployeesClient.ByIdentityAsync(identityUserId);
+            }
+        }
+        catch (ApiException ex) when (ex.StatusCode == 404)
+        {
+            // No employee profile linked — not an error, just show the info message
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Could not load employee profile: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loadingEmployee = false;
+        }
+    }
+
+    private async Task<TableData<SupplyRequestDto>> LoadMyRequests(TableState state, CancellationToken ct)
+    {
+        if (_identityUserId is null)
+            return new TableData<SupplyRequestDto> { Items = [], TotalItems = 0 };
+
+        try
+        {
+            var result = await EmployeeClient.RequestsAsync(
+                employeeIdPath: _identityUserId,
+                pageNumber: state.Page + 1,
+                pageSize: state.PageSize,
+                cancellationToken: ct);
+
+            var items = (result.Items ?? []).ToList();
+
+            // Apply status filter client-side (API doesn't support status filter on this endpoint)
+            if (!string.IsNullOrWhiteSpace(_requestsStatusFilter))
+                items = items.Where(r => r.Status == _requestsStatusFilter).ToList();
+
+            // Lazy-load product names for items we haven't seen yet
+            var unknownIds = items
+                .SelectMany(r => r.Items)
+                .Select(i => i.ProductId)
+                .Distinct()
+                .Where(id => !_productNames.ContainsKey(id))
+                .ToList();
+
+            foreach (var id in unknownIds)
+                await LoadProductName(id);
+
+            return new TableData<SupplyRequestDto>
+            {
+                Items = items,
+                TotalItems = string.IsNullOrWhiteSpace(_requestsStatusFilter)
+                    ? (int)result.TotalCount
+                    : items.Count
+            };
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load requests: {ex.Message}", Severity.Error);
+            return new TableData<SupplyRequestDto> { Items = [], TotalItems = 0 };
+        }
+    }
+
+    private async Task<TableData<EmployeeIssuanceDto>> LoadIssuanceHistory(TableState state, CancellationToken ct)
+    {
+        if (_identityUserId is null)
+            return new TableData<EmployeeIssuanceDto> { Items = [], TotalItems = 0 };
+
+        try
+        {
+            var from = _historyFrom.HasValue ? new DateTimeOffset(_historyFrom.Value, TimeSpan.Zero) : (DateTimeOffset?)null;
+            var to = _historyTo.HasValue ? new DateTimeOffset(_historyTo.Value, TimeSpan.Zero) : (DateTimeOffset?)null;
+
+            var result = await ReportsClient.GetEmployeeIssuanceHistoryAsync(
+                employeeId: _identityUserId,
+                from: from,
+                toDate: to,
+                pageNumber: state.Page + 1,
+                pageSize: state.PageSize,
+                cancellationToken: ct);
+
+            return new TableData<EmployeeIssuanceDto>
+            {
+                Items = result.Items ?? [],
+                TotalItems = (int)result.TotalCount
+            };
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load history: {ex.Message}", Severity.Error);
+            return new TableData<EmployeeIssuanceDto> { Items = [], TotalItems = 0 };
+        }
+    }
+
+    private async Task SetRequestsStatusFilter(string? status)
+    {
+        _requestsStatusFilter = status;
+        _expandedRequests.Clear();
+        if (_requestsTable is not null)
+            await _requestsTable.ReloadServerData();
+    }
+
+    private void ToggleRequestExpand(SupplyRequestDto req)
+    {
+        if (!_expandedRequests.Remove(req.Id))
+            _expandedRequests.Add(req.Id);
+    }
+
+    private void ToggleHistoryExpand(Guid requestId)
+    {
+        if (!_expandedHistory.Remove(requestId))
+            _expandedHistory.Add(requestId);
+    }
+
+    private async Task ApplyHistoryFilter()
+    {
+        _expandedHistory.Clear();
+        if (_historyTable is not null)
+            await _historyTable.ReloadServerData();
+    }
+
+    private async Task ClearHistoryFilter()
+    {
+        _historyFrom = null;
+        _historyTo = null;
+        _expandedHistory.Clear();
+        if (_historyTable is not null)
+            await _historyTable.ReloadServerData();
+    }
+
+    // ===== EDIT DRAFT =====
+
+    private async Task OpenEditDialog(SupplyRequestDto req)
+    {
+        _editDialog = req;
+        _addProductId = Guid.Empty;
+        _addQuantity = 1;
+        _addNotes = null;
+
+        if (!_availableProducts.Any())
+        {
+            try
+            {
+                var result = await ProductsClient.ActiveAsync(1, 1000);
+                _availableProducts = result.Items?.ToList() ?? [];
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Failed to load products: {ex.Message}", Severity.Warning);
+            }
+        }
+
+        _showEditDialog = true;
+    }
+
+    private async Task RemoveItemFromDraft(Guid productId)
+    {
+        if (_editDialog is null || _isEditActioning) return;
+        _isEditActioning = true;
+        try
+        {
+            await SupplyRequestsClient.ItemsDeleteAsync(_editDialog.Id, productId);
+            await ReloadEditDialog();
+            Snackbar.Add("Item removed.", Severity.Info);
+        }
+        catch (Exception ex) { Snackbar.Add($"Remove failed: {ex.Message}", Severity.Error); }
+        finally { _isEditActioning = false; }
+    }
+
+    private async Task AddItemToDraft()
+    {
+        if (_editDialog is null || _addProductId == Guid.Empty || _isEditActioning) return;
+        _isEditActioning = true;
+        try
+        {
+            await SupplyRequestsClient.ItemsPostAsync(_editDialog.Id, new AddSupplyRequestItemCommand
+            {
+                RequestId = _editDialog.Id,
+                ProductId = _addProductId,
+                Quantity = _addQuantity,
+                Notes = string.IsNullOrWhiteSpace(_addNotes) ? null : _addNotes
+            });
+            _addProductId = Guid.Empty;
+            _addQuantity = 1;
+            _addNotes = null;
+            await ReloadEditDialog();
+            Snackbar.Add("Item added.", Severity.Success);
+        }
+        catch (Exception ex) { Snackbar.Add($"Add failed: {ex.Message}", Severity.Error); }
+        finally { _isEditActioning = false; }
+    }
+
+    private async Task SubmitDraft()
+    {
+        if (_editDialog is null || _isEditActioning) return;
+        _isEditActioning = true;
+        try
+        {
+            await SupplyRequestsClient.SubmitAsync(_editDialog.Id);
+            Snackbar.Add($"{_editDialog.RequestNumber} submitted for approval.", Severity.Success);
+            _showEditDialog = false;
+            if (_requestsTable is not null) await _requestsTable.ReloadServerData();
+        }
+        catch (Exception ex) { Snackbar.Add($"Submit failed: {ex.Message}", Severity.Error); }
+        finally { _isEditActioning = false; }
+    }
+
+    private async Task ReloadEditDialog()
+    {
+        if (_editDialog is null) return;
+        try
+        {
+            var updated = await ExpendableClient.SupplyRequestsGetAsync(_editDialog.Id);
+            if (updated is not null)
+            {
+                _editDialog = updated;
+                // Lazy-load any new product names
+                var unknownIds = (updated.Items ?? [])
+                    .Select(i => i.ProductId)
+                    .Where(id => !_productNames.ContainsKey(id))
+                    .ToList();
+                foreach (var id in unknownIds) await LoadProductName(id);
+            }
+        }
+        catch { /* keep stale data if reload fails */ }
+    }
+
+    private async Task LoadProductName(Guid productId)
+    {
+        try
+        {
+            var product = await ExpendableClient.ProductsGetAsync(productId);
+            if (product != null) _productNames[productId] = product.Name;
+        }
+        catch { _productNames[productId] = productId.ToString()[..8] + "…"; }
+    }
+
+    private string GetProductName(Guid productId) =>
+        _productNames.TryGetValue(productId, out var name) ? name : productId.ToString()[..8] + "…";
+
+    // ===== CANCEL =====
+
+    private void OpenCancelDialog(SupplyRequestDto req)
+    {
+        _cancelDialog = req;
+        _showCancelDialog = true;
+    }
+
+    private async Task SubmitCancel()
+    {
+        if (_cancelDialog is null || _isCancelling) return;
+        _isCancelling = true;
+        try
+        {
+            await SupplyRequestsClient.CancelAsync(_cancelDialog.Id);
+            Snackbar.Add($"{_cancelDialog.RequestNumber} has been cancelled.", Severity.Info);
+            _showCancelDialog = false;
+            if (_requestsTable is not null) await _requestsTable.ReloadServerData();
+        }
+        catch (Exception ex) { Snackbar.Add($"Cancel failed: {ex.Message}", Severity.Error); }
+        finally { _isCancelling = false; }
+    }
+
+    private static Color GetStatusColor(string status) => status switch
+    {
+        "Draft"     => Color.Default,
+        "Submitted" => Color.Warning,
+        "Approved"  => Color.Info,
+        "Fulfilled" => Color.Success,
+        "Rejected"  => Color.Error,
+        "Cancelled" => Color.Default,
+        _           => Color.Default
+    };
+}

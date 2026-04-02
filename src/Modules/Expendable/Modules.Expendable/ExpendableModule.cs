@@ -39,6 +39,7 @@ using FSH.Modules.Expendable.Features.v1.Requests.SearchSupplyRequests;
 using FSH.Modules.Expendable.Features.v1.Requests.RejectSupplyRequest;
 using FSH.Modules.Expendable.Features.v1.Requests.GetEmployeeSupplyRequests;
 using FSH.Modules.Expendable.Features.v1.Requests.FulfillSupplyRequest;
+using FSH.Modules.Expendable.Features.v1.Requests.CancelSupplyRequest;
 using FSH.Modules.Expendable.Features.v1.Reports.GetDepartmentIssuanceReport;
 using FSH.Modules.Expendable.Features.v1.Reports.GetEmployeeIssuanceHistory;
 using FSH.Modules.Expendable.Features.v1.Cart.GetOrCreateCart;
@@ -100,6 +101,7 @@ public class ExpendableModule : IModule
         new("Approve Expendable Supply Requests", "Approve", "Expendable.SupplyRequests"),
         new("Reject Expendable Supply Requests", "Reject", "Expendable.SupplyRequests"),
         new("Fulfill Expendable Supply Requests", "Fulfill", "Expendable.SupplyRequests"),
+        new("Cancel Expendable Supply Requests", "Cancel", "Expendable.SupplyRequests", IsBasic: true),
 
         new("View Expendable Shopping Carts", "View", "Expendable.ShoppingCarts", IsBasic: true),
         new("Create Expendable Shopping Carts", "Create", "Expendable.ShoppingCarts"),
@@ -187,6 +189,7 @@ public class ExpendableModule : IModule
         ApproveSupplyRequestEndpoint.Map(supplyRequestsGroup);
         RejectSupplyRequestEndpoint.Map(supplyRequestsGroup);
         FulfillSupplyRequestEndpoint.Map(supplyRequestsGroup);
+        CancelSupplyRequestEndpoint.Map(supplyRequestsGroup);
         GetSupplyRequestEndpoint.Map(supplyRequestsGroup);
         GetEmployeeSupplyRequestsEndpoint.Map(supplyRequestsGroup);
         SearchSupplyRequestsEndpoint.Map(supplyRequestsGroup);

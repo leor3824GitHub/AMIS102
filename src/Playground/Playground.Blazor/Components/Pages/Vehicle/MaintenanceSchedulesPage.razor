@@ -1,0 +1,259 @@
+@page "/vehicle/maintenance/schedules"
+@implements IDisposable
+@using FSH.Modules.Vehicle.Contracts.v1.Maintenance
+@inject IVehicleClient VehicleClient
+@inject ISnackbar Snackbar
+
+<FshPageHeader Title="Maintenance Schedules" Description="Plan and manage recurring maintenance" />
+
+<div class="mt-4">
+    <MudStack Row="true" Spacing="1" Class="mb-3">
+        <MudChip T="string" Variant="Variant.Outlined" Color="Color.Primary">Total: @_items.Count</MudChip>
+        <MudChip T="string" Variant="Variant.Outlined" Color="Color.Success">Active: @_items.Count(s => s.IsActive)</MudChip>
+        <MudChip T="string" Variant="Variant.Outlined" Color="Color.Default">Inactive: @_items.Count(s => !s.IsActive)</MudChip>
+        <MudChip T="string" Variant="Variant.Outlined" Color="Color.Error">Overdue: @_items.Count(IsOverdue)</MudChip>
+    </MudStack>
+
+    <MudGrid Spacing="2">
+        <MudItem xs="12" md="4">
+            <MudCard Class="fsh-card">
+                <MudCardContent>
+                    <MudText Typo="Typo.h6" Class="mb-2">Create Schedule</MudText>
+                    <MudStack Spacing="2">
+                        <MudTextField @bind-Value="_create.VehicleIdText" Label="Vehicle Id" Required="true" />
+                        <MudTextField @bind-Value="_create.MaintenanceType" Label="Maintenance Type" Required="true" />
+                        <MudTextField @bind-Value="_create.Description" Label="Description" />
+                        <MudNumericField @bind-Value="_create.IntervalDays" Label="Interval Days" Min="0" />
+                        <MudNumericField @bind-Value="_create.IntervalMileage" Label="Interval Mileage" Min="0" />
+                        <MudDatePicker @bind-Date="_create.InitialDueDate" Label="Initial Due Date" />
+                        <MudNumericField @bind-Value="_create.InitialDueMileage" Label="Initial Due Mileage" Min="0" />
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Create" Disabled="_busy">Create</MudButton>
+                    </MudStack>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        <MudItem xs="12" md="8">
+            <MudCard Class="fsh-card">
+                <MudCardContent>
+                    <MudStack Row="true" Spacing="2" Class="mb-2">
+                        <MudTextField @bind-Value="_query.VehicleIdText" Label="Vehicle Id" />
+                        <MudTextField @bind-Value="_query.MaintenanceType" Label="Type" />
+                        <MudSelect T="bool?" @bind-Value="_query.IsActive" Label="Active" Dense="true" Clearable="true">
+                            <MudSelectItem Value="true">Active</MudSelectItem>
+                            <MudSelectItem Value="false">Inactive</MudSelectItem>
+                        </MudSelect>
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Load" StartIcon="@Icons.Material.Filled.Search" Disabled="_busy">Search</MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Default" OnClick="ClearFilters" Disabled="_busy">Clear</MudButton>
+                    </MudStack>
+
+                    <MudTable Items="_items" Dense="true" Hover="true" Striped="true" RowClassFunc="@( (row, _) => IsOverdue(row) ? "overdue-row" : string.Empty)">
+                        <HeaderContent>
+                            <MudTh>Type</MudTh>
+                            <MudTh>Due Date</MudTh>
+                            <MudTh>Due Mileage</MudTh>
+                            <MudTh>Active</MudTh>
+                            <MudTh>Actions</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd>@context.MaintenanceType</MudTd>
+                            <MudTd>
+                                @if (context.DueDate is not null)
+                                {
+                                    <MudChip T="string" Size="Size.Small" Color="@(IsOverdue(context) ? Color.Error : Color.Default)">
+                                        @context.DueDate.Value.ToString("yyyy-MM-dd")
+                                    </MudChip>
+                                }
+                                else
+                                {
+                                    <MudText>-</MudText>
+                                }
+                            </MudTd>
+                            <MudTd>@(context.DueMileage?.ToString() ?? "-")</MudTd>
+                            <MudTd><MudChip T="string" Size="Size.Small" Color="@(context.IsActive ? Color.Success : Color.Default)">@(context.IsActive ? "Active" : "Inactive")</MudChip></MudTd>
+                            <MudTd>
+                                <MudStack Row="true" Spacing="1">
+                                    @if (context.IsActive)
+                                    {
+                                        <MudIconButton Icon="@Icons.Material.Filled.PauseCircle" Color="Color.Warning" Size="Size.Small"
+                                                       OnClick="@(() => Deactivate(context.Id))" Disabled="_busy" />
+                                    }
+                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
+                                                   OnClick="@(() => Delete(context.Id))" Disabled="_busy" />
+                                </MudStack>
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+</div>
+
+<style>
+    .overdue-row {
+        background-color: rgba(244, 67, 54, 0.08);
+    }
+</style>
+
+@code {
+    private readonly List<MaintenanceScheduleDto> _items = [];
+    private ScheduleQueryModel _query = new();
+    private CreateScheduleModel _create = new();
+    private readonly CancellationTokenSource _cts = new();
+    private bool _disposed;
+    private bool _busy;
+
+    protected override async Task OnInitializedAsync() => await Load();
+
+    private async Task Load()
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        try
+        {
+            _busy = true;
+            var items = await VehicleClient.SearchMaintenanceSchedulesAsync(new MaintenanceScheduleSearchRequest(
+                _query.MaintenanceType,
+                ParseGuid(_query.VehicleIdText),
+                _query.IsActive), _cts.Token);
+
+            _items.Clear();
+            _items.AddRange(items);
+        }
+        catch (OperationCanceledException)
+        {
+            // Ignore canceled requests during navigation/dispose.
+        }
+        catch (Exception ex)
+        {
+            if (!_disposed)
+            {
+                Snackbar.Add($"Failed to load schedules: {ex.Message}", Severity.Error);
+            }
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task Create()
+    {
+        var vehicleId = ParseGuid(_create.VehicleIdText);
+        if (vehicleId is null || string.IsNullOrWhiteSpace(_create.MaintenanceType))
+        {
+            Snackbar.Add("Vehicle Id and maintenance type are required.", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            _busy = true;
+            await VehicleClient.CreateMaintenanceScheduleAsync(new CreateMaintenanceScheduleRequest(
+                vehicleId.Value,
+                _create.MaintenanceType,
+                _create.Description,
+                _create.IntervalDays,
+                _create.IntervalMileage,
+                ToDateOnly(_create.InitialDueDate),
+                _create.InitialDueMileage), _cts.Token);
+
+            if (_disposed)
+            {
+                return;
+            }
+
+            Snackbar.Add("Schedule created.", Severity.Success);
+            _create = new();
+            await Load();
+        }
+        catch (OperationCanceledException)
+        {
+            // Ignore canceled requests during navigation/dispose.
+        }
+        catch (Exception ex)
+        {
+            if (!_disposed)
+            {
+                Snackbar.Add($"Create failed: {ex.Message}", Severity.Error);
+            }
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task Deactivate(Guid id) => await Do(async () => await VehicleClient.DeactivateMaintenanceScheduleAsync(id), "Schedule deactivated.");
+    private async Task Delete(Guid id) => await Do(async () => await VehicleClient.DeleteMaintenanceScheduleAsync(id), "Schedule deleted.");
+
+    private async Task Do(Func<Task> action, string success)
+    {
+        try
+        {
+            _busy = true;
+            await action();
+
+            if (_disposed)
+            {
+                return;
+            }
+
+            Snackbar.Add(success, Severity.Success);
+            await Load();
+        }
+        catch (OperationCanceledException)
+        {
+            // Ignore canceled requests during navigation/dispose.
+        }
+        catch (Exception ex)
+        {
+            if (!_disposed)
+            {
+                Snackbar.Add(ex.Message, Severity.Error);
+            }
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private static Guid? ParseGuid(string? text) => Guid.TryParse(text, out var value) ? value : null;
+    private static DateOnly? ToDateOnly(DateTime? date) => date.HasValue ? DateOnly.FromDateTime(date.Value) : null;
+    private static bool IsOverdue(MaintenanceScheduleDto schedule) => schedule.DueDate.HasValue && schedule.DueDate.Value < DateOnly.FromDateTime(DateTime.Today);
+
+    private void ClearFilters()
+    {
+        _query = new();
+    }
+
+    public void Dispose()
+    {
+        _disposed = true;
+        _cts.Cancel();
+        _cts.Dispose();
+    }
+
+    private sealed class ScheduleQueryModel
+    {
+        public string? VehicleIdText { get; set; }
+        public string? MaintenanceType { get; set; }
+        public bool? IsActive { get; set; }
+    }
+
+    private sealed class CreateScheduleModel
+    {
+        public string? VehicleIdText { get; set; }
+        public string MaintenanceType { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public int? IntervalDays { get; set; }
+        public int? IntervalMileage { get; set; }
+        public DateTime? InitialDueDate { get; set; }
+        public int? InitialDueMileage { get; set; }
+    }
+}

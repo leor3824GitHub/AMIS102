@@ -1,19 +1,588 @@
 @page "/expendable/warehouse"
 @using FSH.Framework.Blazor.UI.Components.Cards
+@using FSH.Playground.Blazor.ApiClient
 @inherits ComponentBase
 @inject ISnackbar Snackbar
+@inject IInventoryClient InventoryClient
+@inject IRejectedClient RejectedClient
 
-<FshPageHeader Title="Warehouse" Description="Manage inventory and warehouse operations">
-    <ActionContent>
-        <MudButton Variant="Variant.Text" Color="Color.Default">Pending Inspections</MudButton>
-        <MudButton Variant="Variant.Text" Color="Color.Default">Stock Levels</MudButton>
-    </ActionContent>
-</FshPageHeader>
+<FshPageHeader Title="Warehouse" Description="Inventory stock levels and rejected item disposition" />
 
 <div class="mt-4">
-    <MudCard>
-        <MudCardContent>
-            <MudText Typo="Typo.body1">Warehouse & Inventory - API integration coming soon</MudText>
-        </MudCardContent>
-    </MudCard>
+    <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-4">
+
+        <!-- ===== INVENTORY TAB ===== -->
+        <MudTabPanel Text="Inventory" Icon="@Icons.Material.Filled.Inventory2">
+
+            <!-- Filters -->
+            <MudPaper Class="pa-3 mb-3" Elevation="1">
+                <MudGrid Spacing="2" AlignItems="AlignItems.Center">
+                    <MudItem xs="12" sm="5">
+                        <MudAutocomplete T="WarehouseOption"
+                                         Label="Warehouse"
+                                         Value="_invWarehouse"
+                                         SearchFunc="@SearchWarehouses"
+                                         ToStringFunc="@(w => w?.Name ?? string.Empty)"
+                                         CoerceValue="true"
+                                         Clearable="true"
+                                         Placeholder="All warehouses"
+                                         Variant="Variant.Outlined"
+                                         Margin="Margin.Dense"
+                                         ValueChanged="@(async (WarehouseOption? w) => { _invWarehouse = w; await (_invTable?.ReloadServerData() ?? Task.CompletedTask); })" />
+                    </MudItem>
+                    <MudItem xs="12" sm="5">
+                        <MudTextField @bind-Value="_invSearch" Placeholder="Search by product name..."
+                                      Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
+                                      Variant="Variant.Outlined" Margin="Margin.Dense"
+                                      DebounceInterval="400" OnDebounceIntervalElapsed="() => _invTable?.ReloadServerData()" />
+                    </MudItem>
+                    <MudItem xs="12" sm="2">
+                        <MudButton Variant="Variant.Outlined" Color="Color.Default" FullWidth="true"
+                                   OnClick="ClearInvFilters">Clear</MudButton>
+                    </MudItem>
+                </MudGrid>
+            </MudPaper>
+
+            <MudTable @ref="_invTable" T="ProductInventoryDto" ServerData="@LoadInventory"
+                      Dense="true" Hover="true" Striped="true" Elevation="2">
+                <HeaderContent>
+                    <MudTh>Code</MudTh>
+                    <MudTh>Product</MudTh>
+                    <MudTh>Warehouse</MudTh>
+                    <MudTh Style="text-align:center">On Hand</MudTh>
+                    <MudTh Style="text-align:center">Available</MudTh>
+                    <MudTh Style="text-align:center">Reserved</MudTh>
+                    <MudTh Style="text-align:center">Issued</MudTh>
+                    <MudTh Style="text-align:right">Total Value</MudTh>
+                    <MudTh>Status</MudTh>
+                    <MudTh>Actions</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>
+                        <MudText Typo="Typo.caption" Style="font-family:monospace">@context.ProductCode</MudText>
+                    </MudTd>
+                    <MudTd>@context.ProductName</MudTd>
+                    <MudTd>
+                        <MudText Typo="Typo.body2">@context.WarehouseLocationName</MudText>
+                    </MudTd>
+                    <MudTd Style="text-align:center">
+                        <MudChip T="string" Size="Size.Small" Color="@(context.QuantityOnHand > 0 ? Color.Primary : Color.Default)">
+                            @context.QuantityOnHand
+                        </MudChip>
+                    </MudTd>
+                    <MudTd Style="text-align:center">@context.QuantityAvailable</MudTd>
+                    <MudTd Style="text-align:center">
+                        @if (context.QuantityReserved > 0)
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Warning">@context.QuantityReserved</MudChip>
+                        }
+                        else { <MudText>0</MudText> }
+                    </MudTd>
+                    <MudTd Style="text-align:center">@context.QuantityIssued</MudTd>
+                    <MudTd Style="text-align:right">$@context.TotalValue.ToString("F2")</MudTd>
+                    <MudTd>
+                        @{
+                            var (sc, si) = context.Status switch
+                            {
+                                "Active"       => (Color.Success, Icons.Material.Filled.CheckCircle),
+                                "Discontinued" => (Color.Warning, Icons.Material.Filled.Block),
+                                "Archived"     => (Color.Default, Icons.Material.Filled.Archive),
+                                _              => (Color.Default, Icons.Material.Filled.Help),
+                            };
+                        }
+                        <MudChip T="string" Size="Size.Small" Color="@sc" Icon="@si">@context.Status</MudChip>
+                    </MudTd>
+                    <MudTd>
+                        <MudIconButton Icon="@Icons.Material.Filled.Layers" Size="Size.Small"
+                                       Title="View FIFO Batches" OnClick="@(() => OpenBatchesDialog(context))" />
+                    </MudTd>
+                </RowTemplate>
+                <NoRecordsContent><MudText Class="my-4">No inventory records found.</MudText></NoRecordsContent>
+                <PagerContent><MudTablePager /></PagerContent>
+            </MudTable>
+        </MudTabPanel>
+
+        <!-- ===== REJECTED ITEMS TAB ===== -->
+        <MudTabPanel Text="Rejected Items" Icon="@Icons.Material.Filled.ReportProblem">
+
+            <!-- Filters -->
+            <MudPaper Class="pa-3 mb-3" Elevation="1">
+                <MudStack Row="true" Spacing="2" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center">
+                    <MudText Typo="Typo.body2" Class="mr-1"><b>Status:</b></MudText>
+                    @foreach (var (label, value, color) in _rejectedStatusOptions)
+                    {
+                        <MudChip T="string" Size="Size.Small"
+                                 Color="@(_rejectedStatus == value ? color : Color.Default)"
+                                 Variant="@(_rejectedStatus == value ? Variant.Filled : Variant.Outlined)"
+                                 OnClick="@(() => SetRejectedStatusFilter(value))">
+                            @label
+                        </MudChip>
+                    }
+                    <MudSpacer />
+                    <MudAutocomplete T="WarehouseOption"
+                                     Label="Warehouse"
+                                     Style="max-width:240px"
+                                     Value="_rejWarehouse"
+                                     SearchFunc="@SearchWarehouses"
+                                     ToStringFunc="@(w => w?.Name ?? string.Empty)"
+                                     CoerceValue="true"
+                                     Clearable="true"
+                                     Placeholder="All warehouses"
+                                     Variant="Variant.Outlined"
+                                     Margin="Margin.Dense"
+                                     ValueChanged="@(async (WarehouseOption? w) => { _rejWarehouse = w; await (_rejTable?.ReloadServerData() ?? Task.CompletedTask); })" />
+                </MudStack>
+            </MudPaper>
+
+            <MudTable @ref="_rejTable" T="RejectedInventoryDto" ServerData="@LoadRejected"
+                      Dense="true" Hover="true" Striped="true" Elevation="2">
+                <HeaderContent>
+                    <MudTh>Code</MudTh>
+                    <MudTh>Product</MudTh>
+                    <MudTh>Warehouse</MudTh>
+                    <MudTh Style="text-align:center">Qty</MudTh>
+                    <MudTh Style="text-align:right">Unit Price</MudTh>
+                    <MudTh Style="text-align:right">Total Value</MudTh>
+                    <MudTh>Reason</MudTh>
+                    <MudTh>Date</MudTh>
+                    <MudTh>Status</MudTh>
+                    <MudTh>Actions</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>
+                        <MudText Typo="Typo.caption" Style="font-family:monospace">@context.ProductCode</MudText>
+                    </MudTd>
+                    <MudTd>@context.ProductName</MudTd>
+                    <MudTd>@context.WarehouseLocationName</MudTd>
+                    <MudTd Style="text-align:center">
+                        <MudChip T="string" Size="Size.Small" Color="Color.Error">@context.QuantityRejected</MudChip>
+                    </MudTd>
+                    <MudTd Style="text-align:right">$@context.UnitPrice.ToString("F2")</MudTd>
+                    <MudTd Style="text-align:right">$@context.TotalValue.ToString("F2")</MudTd>
+                    <MudTd>
+                        <MudTooltip Text="@context.RejectionReason">
+                            <MudText Typo="Typo.body2" Style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+                                @context.RejectionReason
+                            </MudText>
+                        </MudTooltip>
+                    </MudTd>
+                    <MudTd>@context.RejectionDate.ToString("MMM d, yyyy")</MudTd>
+                    <MudTd>
+                        @{
+                            var (rs, rc) = context.Status switch
+                            {
+                                "Pending"  => (Icons.Material.Filled.HourglassBottom, Color.Warning),
+                                "Returned" => (Icons.Material.Filled.Undo, Color.Info),
+                                "Disposed" => (Icons.Material.Filled.DeleteForever, Color.Default),
+                                _          => (Icons.Material.Filled.Help, Color.Default),
+                            };
+                        }
+                        <MudChip T="string" Size="Size.Small" Color="@rc" Icon="@rs">@context.Status</MudChip>
+                    </MudTd>
+                    <MudTd>
+                        @if (context.Status == "Pending")
+                        {
+                            <MudStack Row="true" Spacing="1">
+                                <MudIconButton Icon="@Icons.Material.Filled.Undo" Size="Size.Small" Color="Color.Info"
+                                               Title="Mark as Returned" OnClick="@(() => OpenReturnDialog(context))" />
+                                <MudIconButton Icon="@Icons.Material.Filled.DeleteForever" Size="Size.Small" Color="Color.Error"
+                                               Title="Mark as Disposed" OnClick="@(() => OpenDisposeDialog(context))" />
+                            </MudStack>
+                        }
+                        else if (!string.IsNullOrWhiteSpace(context.DispositionNotes))
+                        {
+                            <MudTooltip Text="@context.DispositionNotes">
+                                <MudIcon Icon="@Icons.Material.Filled.Notes" Size="Size.Small" Color="Color.Secondary" />
+                            </MudTooltip>
+                        }
+                    </MudTd>
+                </RowTemplate>
+                <NoRecordsContent><MudText Class="my-4">No rejected inventory found.</MudText></NoRecordsContent>
+                <PagerContent><MudTablePager /></PagerContent>
+            </MudTable>
+        </MudTabPanel>
+
+    </MudTabs>
 </div>
+
+<!-- ===== BATCHES DETAIL DIALOG ===== -->
+@if (_showBatchesDialog && _batchesItem != null)
+{
+    <MudOverlay Visible="true" DarkBackground="true" AutoClose="false" ZIndex="1400">
+        <MudPaper Class="pa-5" Elevation="24" Style="width: min(760px, 95vw); max-height: 90vh; overflow-y: auto;">
+            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Start" Class="mb-3">
+                <div>
+                    <MudText Typo="Typo.h6">@_batchesItem.ProductName</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                        @_batchesItem.ProductCode — @_batchesItem.WarehouseLocationName
+                    </MudText>
+                </div>
+                <MudChip T="string" Size="Size.Small" Color="Color.Primary">@_batchesItem.QuantityOnHand on hand</MudChip>
+            </MudStack>
+
+            <!-- Summary row -->
+            <MudGrid Spacing="2" Class="mb-4">
+                <MudItem xs="6" sm="3">
+                    <MudPaper Class="pa-2 text-center" Outlined="true">
+                        <MudText Typo="Typo.caption" Color="Color.Tertiary">Available</MudText>
+                        <MudText Typo="Typo.h6" Color="Color.Success">@_batchesItem.QuantityAvailable</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="6" sm="3">
+                    <MudPaper Class="pa-2 text-center" Outlined="true">
+                        <MudText Typo="Typo.caption" Color="Color.Tertiary">Reserved</MudText>
+                        <MudText Typo="Typo.h6" Color="Color.Warning">@_batchesItem.QuantityReserved</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="6" sm="3">
+                    <MudPaper Class="pa-2 text-center" Outlined="true">
+                        <MudText Typo="Typo.caption" Color="Color.Tertiary">Issued</MudText>
+                        <MudText Typo="Typo.h6">@_batchesItem.QuantityIssued</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="6" sm="3">
+                    <MudPaper Class="pa-2 text-center" Outlined="true">
+                        <MudText Typo="Typo.caption" Color="Color.Tertiary">Total Value</MudText>
+                        <MudText Typo="Typo.h6">$@_batchesItem.TotalValue.ToString("F2")</MudText>
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+
+            <MudText Typo="Typo.subtitle2" Class="mb-2">FIFO Batches</MudText>
+            @if (_batchesItem.Batches.Any())
+            {
+                <MudTable Items="@_batchesItem.Batches" Dense="true" Elevation="0" Outlined="true" Class="mb-4">
+                    <HeaderContent>
+                        <MudTh>Purchase</MudTh>
+                        <MudTh Style="text-align:center">Available</MudTh>
+                        <MudTh Style="text-align:center">Issued</MudTh>
+                        <MudTh Style="text-align:center">Remaining</MudTh>
+                        <MudTh Style="text-align:right">Unit Price</MudTh>
+                        <MudTh Style="text-align:right">Batch Value</MudTh>
+                        <MudTh>Received</MudTh>
+                        <MudTh>Inspected</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>
+                            <MudText Typo="Typo.caption" Style="font-family:monospace">
+                                @context.PurchaseId.ToString()[..8]…
+                            </MudText>
+                        </MudTd>
+                        <MudTd Style="text-align:center">@context.QuantityAvailable</MudTd>
+                        <MudTd Style="text-align:center">@context.QuantityIssued</MudTd>
+                        <MudTd Style="text-align:center">
+                            @if (context.QuantityRemaining > 0)
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Success">@context.QuantityRemaining</MudChip>
+                            }
+                            else { <MudText Typo="Typo.body2" Color="Color.Secondary">0</MudText> }
+                        </MudTd>
+                        <MudTd Style="text-align:right">$@context.UnitPrice.ToString("F2")</MudTd>
+                        <MudTd Style="text-align:right">$@context.TotalValue.ToString("F2")</MudTd>
+                        <MudTd>@context.ReceivedDate.ToString("MMM d, yyyy")</MudTd>
+                        <MudTd>
+                            @if (context.InspectionDate.HasValue)
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Info">
+                                    @context.InspectionDate.Value.ToString("MMM d")
+                                </MudChip>
+                            }
+                            else { <MudText Typo="Typo.caption" Color="Color.Secondary">Pending</MudText> }
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+            }
+            else
+            {
+                <MudAlert Severity="Severity.Info" Class="mb-4">No FIFO batches recorded yet.</MudAlert>
+            }
+
+            <MudStack Row="true" Justify="Justify.FlexEnd">
+                <MudButton Variant="Variant.Outlined" OnClick="@(() => _showBatchesDialog = false)">Close</MudButton>
+            </MudStack>
+        </MudPaper>
+    </MudOverlay>
+}
+
+<!-- ===== RETURN DIALOG ===== -->
+@if (_showReturnDialog && _actionRejected != null)
+{
+    <MudOverlay Visible="true" DarkBackground="true" AutoClose="false" ZIndex="1400">
+        <MudPaper Class="pa-5" Elevation="24" Style="width: min(460px, 95vw);">
+            <MudText Typo="Typo.h6" Class="mb-1">
+                <MudIcon Icon="@Icons.Material.Filled.Undo" Class="mr-2" Color="Color.Info" />
+                Return to Supplier
+            </MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+                @_actionRejected.ProductName — @_actionRejected.QuantityRejected rejected unit(s)
+            </MudText>
+            <MudStack Spacing="3">
+                <MudNumericField T="int?" @bind-Value="_returnQty"
+                                 Label="Quantity to Return (leave blank for all)"
+                                 Min="1" Max="@_actionRejected.QuantityRejected"
+                                 Variant="Variant.Outlined"
+                                 Placeholder="@_actionRejected.QuantityRejected.ToString()" />
+                <MudTextField @bind-Value="_returnNotes" Label="Notes" Lines="2"
+                              Variant="Variant.Outlined" Placeholder="Optional notes..." />
+                <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2" Class="mt-1">
+                    <MudButton OnClick="@(() => _showReturnDialog = false)">Cancel</MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Info"
+                               StartIcon="@Icons.Material.Filled.Undo"
+                               OnClick="SubmitReturn" Disabled="@_isActioning">
+                        @if (_isActioning) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" /> }
+                        Mark Returned
+                    </MudButton>
+                </MudStack>
+            </MudStack>
+        </MudPaper>
+    </MudOverlay>
+}
+
+<!-- ===== DISPOSE DIALOG ===== -->
+@if (_showDisposeDialog && _actionRejected != null)
+{
+    <MudOverlay Visible="true" DarkBackground="true" AutoClose="false" ZIndex="1400">
+        <MudPaper Class="pa-5" Elevation="24" Style="width: min(460px, 95vw);">
+            <MudText Typo="Typo.h6" Class="mb-1">
+                <MudIcon Icon="@Icons.Material.Filled.DeleteForever" Class="mr-2" Color="Color.Error" />
+                Dispose Rejected Inventory
+            </MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+                @_actionRejected.ProductName — @_actionRejected.QuantityRejected rejected unit(s)
+            </MudText>
+            <MudStack Spacing="3">
+                <MudSelect T="string" @bind-Value="_disposeMethod" Label="Disposal Method"
+                           Required="true" Variant="Variant.Outlined">
+                    <MudSelectItem Value="@("Scrapped")">Scrapped</MudSelectItem>
+                    <MudSelectItem Value="@("Donated")">Donated</MudSelectItem>
+                    <MudSelectItem Value="@("Destroyed")">Destroyed</MudSelectItem>
+                    <MudSelectItem Value="@("WrittenOff")">Written Off</MudSelectItem>
+                    <MudSelectItem Value="@("Other")">Other</MudSelectItem>
+                </MudSelect>
+                <MudTextField @bind-Value="_disposeNotes" Label="Notes" Lines="2"
+                              Variant="Variant.Outlined" Placeholder="Optional notes..." />
+                <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2" Class="mt-1">
+                    <MudButton OnClick="@(() => _showDisposeDialog = false)">Cancel</MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Error"
+                               StartIcon="@Icons.Material.Filled.DeleteForever"
+                               OnClick="SubmitDispose"
+                               Disabled="@(_isActioning || string.IsNullOrWhiteSpace(_disposeMethod))">
+                        @if (_isActioning) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" /> }
+                        Confirm Disposal
+                    </MudButton>
+                </MudStack>
+            </MudStack>
+        </MudPaper>
+    </MudOverlay>
+}
+
+@code {
+    private record WarehouseOption(Guid Id, string Name);
+
+    // ===== STATE =====
+    private List<WarehouseOption> _warehouses = [];
+
+    // Inventory tab
+    private MudTable<ProductInventoryDto>? _invTable;
+    private WarehouseOption? _invWarehouse;
+    private string _invSearch = string.Empty;
+
+    // Rejected tab
+    private MudTable<RejectedInventoryDto>? _rejTable;
+    private WarehouseOption? _rejWarehouse;
+    private string? _rejectedStatus = null;
+
+    private static readonly (string Label, string? Value, Color Color)[] _rejectedStatusOptions =
+    [
+        ("All", null, Color.Default),
+        ("Pending", "Pending", Color.Warning),
+        ("Returned", "Returned", Color.Info),
+        ("Disposed", "Disposed", Color.Default),
+    ];
+
+    // Batches dialog
+    private bool _showBatchesDialog;
+    private ProductInventoryDto? _batchesItem;
+
+    // Return dialog
+    private bool _showReturnDialog;
+    private RejectedInventoryDto? _actionRejected;
+    private int? _returnQty;
+    private string _returnNotes = string.Empty;
+
+    // Dispose dialog
+    private bool _showDisposeDialog;
+    private string _disposeMethod = string.Empty;
+    private string _disposeNotes = string.Empty;
+
+    private bool _isActioning;
+
+    // ===== LIFECYCLE =====
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadWarehouses();
+    }
+
+    private async Task LoadWarehouses()
+    {
+        try
+        {
+            var result = await InventoryClient.SearchAsync(new SearchProductInventoryQuery { PageSize = 1000 });
+            _warehouses = result?.Items?
+                .Where(i => i.WarehouseLocationId != default)
+                .GroupBy(i => i.WarehouseLocationId)
+                .Select(g =>
+                {
+                    var name = g.First().WarehouseLocationName;
+                    var display = string.IsNullOrWhiteSpace(name)
+                        ? $"Warehouse {g.Key.ToString()[..8]}…"
+                        : name;
+                    return new WarehouseOption(g.Key, display);
+                })
+                .ToList() ?? [];
+        }
+        catch { _warehouses = []; }
+    }
+
+    // ===== AUTOCOMPLETE =====
+
+    private Task<IEnumerable<WarehouseOption>> SearchWarehouses(string value, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return Task.FromResult(_warehouses.AsEnumerable());
+        return Task.FromResult(
+            _warehouses.Where(w => w.Name.Contains(value, StringComparison.OrdinalIgnoreCase)));
+    }
+
+    // ===== INVENTORY TABLE =====
+
+    private async Task<TableData<ProductInventoryDto>> LoadInventory(TableState state, CancellationToken ct)
+    {
+        try
+        {
+            var result = await InventoryClient.SearchAsync(new SearchProductInventoryQuery
+            {
+                WarehouseLocationId = _invWarehouse?.Id,
+                ProductName = string.IsNullOrWhiteSpace(_invSearch) ? null : _invSearch,
+                PageNumber = state.Page + 1,
+                PageSize = state.PageSize
+            }, ct);
+
+            return new TableData<ProductInventoryDto>
+            {
+                Items = result?.Items?.ToList() ?? [],
+                TotalItems = (int)(result?.TotalCount ?? 0)
+            };
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load inventory: {ex.Message}", Severity.Error);
+            return new TableData<ProductInventoryDto> { Items = [], TotalItems = 0 };
+        }
+    }
+
+    private void ClearInvFilters()
+    {
+        _invWarehouse = null;
+        _invSearch = string.Empty;
+        _invTable?.ReloadServerData();
+    }
+
+    // ===== REJECTED TABLE =====
+
+    private async Task<TableData<RejectedInventoryDto>> LoadRejected(TableState state, CancellationToken ct)
+    {
+        try
+        {
+            var result = await RejectedClient.SearchAsync(new GetRejectedInventoryQuery
+            {
+                WarehouseLocationId = _rejWarehouse?.Id,
+                Status = _rejectedStatus,
+                PageNumber = state.Page + 1,
+                PageSize = state.PageSize
+            }, ct);
+
+            return new TableData<RejectedInventoryDto>
+            {
+                Items = result?.Items?.ToList() ?? [],
+                TotalItems = (int)(result?.TotalCount ?? 0)
+            };
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load rejected inventory: {ex.Message}", Severity.Error);
+            return new TableData<RejectedInventoryDto> { Items = [], TotalItems = 0 };
+        }
+    }
+
+    private void SetRejectedStatusFilter(string? status)
+    {
+        _rejectedStatus = status;
+        _rejTable?.ReloadServerData();
+    }
+
+    // ===== DIALOGS =====
+
+    private void OpenBatchesDialog(ProductInventoryDto item)
+    {
+        _batchesItem = item;
+        _showBatchesDialog = true;
+    }
+
+    private void OpenReturnDialog(RejectedInventoryDto item)
+    {
+        _actionRejected = item;
+        _returnQty = null;
+        _returnNotes = string.Empty;
+        _showReturnDialog = true;
+    }
+
+    private void OpenDisposeDialog(RejectedInventoryDto item)
+    {
+        _actionRejected = item;
+        _disposeMethod = string.Empty;
+        _disposeNotes = string.Empty;
+        _showDisposeDialog = true;
+    }
+
+    private async Task SubmitReturn()
+    {
+        if (_actionRejected == null) return;
+        _isActioning = true;
+        try
+        {
+            await RejectedClient.ReturnAsync(_actionRejected.Id, new MarkRejectedInventoryReturnedCommand
+            {
+                RejectedInventoryId = _actionRejected.Id,
+                QuantityReturned = _returnQty,
+                Notes = string.IsNullOrWhiteSpace(_returnNotes) ? null : _returnNotes
+            });
+            Snackbar.Add($"{_actionRejected.ProductName} marked as returned.", Severity.Success);
+            _showReturnDialog = false;
+            _rejTable?.ReloadServerData();
+        }
+        catch (Exception ex) { Snackbar.Add($"Failed: {ex.Message}", Severity.Error); }
+        finally { _isActioning = false; }
+    }
+
+    private async Task SubmitDispose()
+    {
+        if (_actionRejected == null || string.IsNullOrWhiteSpace(_disposeMethod)) return;
+        _isActioning = true;
+        try
+        {
+            await RejectedClient.DisposeAsync(_actionRejected.Id, new MarkRejectedInventoryDisposedCommand
+            {
+                RejectedInventoryId = _actionRejected.Id,
+                DisposalMethod = _disposeMethod,
+                Notes = string.IsNullOrWhiteSpace(_disposeNotes) ? null : _disposeNotes
+            });
+            Snackbar.Add($"{_actionRejected.ProductName} marked as disposed.", Severity.Success);
+            _showDisposeDialog = false;
+            _rejTable?.ReloadServerData();
+        }
+        catch (Exception ex) { Snackbar.Add($"Failed: {ex.Message}", Severity.Error); }
+        finally { _isActioning = false; }
+    }
+}

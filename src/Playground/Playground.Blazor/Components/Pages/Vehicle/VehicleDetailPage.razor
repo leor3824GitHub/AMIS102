@@ -1,0 +1,441 @@
+@page "/vehicle/vehicles/{Id:guid}"
+@using FSH.Framework.Shared.Persistence
+@using FSH.Modules.Vehicle.Contracts.v1.Maintenance
+@using FSH.Modules.Vehicle.Contracts.v1.Repairs
+@using FSH.Modules.Vehicle.Contracts.v1.Vehicles
+@using FSH.Playground.Blazor.ApiClient
+@inject IVehicleClient VehicleClient
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+
+<FshPageHeader Title="Vehicle Details" Description="View and update a specific vehicle" />
+
+@if (_vehicle is null)
+{
+    <MudAlert Severity="Severity.Warning" Class="mt-4">Vehicle not found.</MudAlert>
+}
+else
+{
+    <div class="mt-4">
+        <MudGrid Spacing="2">
+            <MudItem xs="12" md="4">
+                <MudCard Class="fsh-card">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6">@_vehicle.PlateNumber</MudText>
+                        <MudText Typo="Typo.subtitle2">@_vehicle.Make @_vehicle.Model (@_vehicle.Year)</MudText>
+                        <MudStack Row="true" Spacing="1" Class="mt-2">
+                            <MudChip T="string" Color="Color.Primary" Size="Size.Small">@_vehicle.Type</MudChip>
+                            <MudChip T="string" Color="@StatusColor(_vehicle.Status)" Size="Size.Small">@DisplayVehicleStatus(_vehicle.Status)</MudChip>
+                        </MudStack>
+                        <MudDivider Class="my-3" />
+                        <MudText Typo="Typo.caption">Assigned Department</MudText>
+                        <MudText Typo="Typo.body2">@(_vehicle.AssignedDepartment ?? "-")</MudText>
+                        <MudText Typo="Typo.caption" Class="mt-2">Assigned Driver</MudText>
+                        <MudText Typo="Typo.body2">@(_vehicle.AssignedDriver ?? "-")</MudText>
+                        <MudText Typo="Typo.caption" Class="mt-2">Odometer</MudText>
+                        <MudText Typo="Typo.body2">@_vehicle.Odometer km</MudText>
+
+                        <MudDivider Class="my-3" />
+                        <MudStack Row="true" Spacing="1">
+                            @if (_vehicle.Status == "Active")
+                            {
+                                <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Warning" OnClick="Retire">Retire</MudButton>
+                                <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Error" OnClick="Decommission">Decommission</MudButton>
+                            }
+                            else if (_vehicle.Status is "Retired" or "Decommissioned")
+                            {
+                                <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Success" OnClick="Reactivate">Reactivate</MudButton>
+                            }
+                            <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Error" OnClick="Delete">Delete</MudButton>
+                        </MudStack>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" md="8">
+                <MudTabs Rounded="true" PanelClass="pa-4">
+                    <MudTabPanel Text="Update Vehicle">
+                        <MudStack Spacing="2">
+                            <MudGrid>
+                                <MudItem xs="12" sm="6"><MudTextField @bind-Value="_edit.PlateNumber" Label="Plate" /></MudItem>
+                                <MudItem xs="12" sm="6">
+                                    <MudSelect T="string" @bind-Value="_edit.Type" Label="Type">
+                                        @foreach (var vehicleType in VehicleTypes)
+                                        {
+                                            <MudSelectItem Value="@vehicleType">@vehicleType</MudSelectItem>
+                                        }
+                                    </MudSelect>
+                                </MudItem>
+                                <MudItem xs="12" sm="6"><MudTextField @bind-Value="_edit.Make" Label="Make" /></MudItem>
+                                <MudItem xs="12" sm="6"><MudTextField @bind-Value="_edit.Model" Label="Model" /></MudItem>
+                                <MudItem xs="12" sm="6"><MudNumericField @bind-Value="_edit.Year" Label="Year" Min="1900" Max="2100" /></MudItem>
+                                <MudItem xs="12"><MudTextField @bind-Value="_edit.Notes" Label="Notes" Lines="2" /></MudItem>
+                            </MudGrid>
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveVehicle">Save</MudButton>
+                        </MudStack>
+                    </MudTabPanel>
+
+                    <MudTabPanel Text="Assignment/Odometer">
+                        <MudGrid>
+                            <MudItem xs="12" sm="6"><MudTextField @bind-Value="_assignment.DepartmentName" Label="Department Name" /></MudItem>
+                            <MudItem xs="12" sm="6"><MudTextField @bind-Value="_assignment.DriverName" Label="Driver Name" /></MudItem>
+                            <MudItem xs="12" sm="6"><MudTextField @bind-Value="_assignment.DepartmentIdText" Label="Department Id (optional)" /></MudItem>
+                            <MudItem xs="12" sm="6"><MudTextField @bind-Value="_assignment.DriverIdText" Label="Driver Id (optional)" /></MudItem>
+                        </MudGrid>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" Class="mt-2" OnClick="AssignVehicle">Update Assignment</MudButton>
+
+                        <MudDivider Class="my-3" />
+                        <MudNumericField @bind-Value="_newOdometer" Label="New Odometer" Min="0" />
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-2" OnClick="UpdateOdometer">Update Odometer</MudButton>
+                    </MudTabPanel>
+
+                    <MudTabPanel Text="Recent Records">
+                        <MudText Typo="Typo.subtitle2" Class="mb-2">Repairs</MudText>
+                        <MudSimpleTable Dense="true">
+                            <thead><tr><th>Date</th><th>Description</th><th>Status</th></tr></thead>
+                            <tbody>
+                                @foreach (var row in _repairs.Take(5))
+                                {
+                                    <tr>
+                                        <td>@row.RepairDate.ToString("yyyy-MM-dd")</td>
+                                        <td>@row.Description</td>
+                                        <td><MudChip T="string" Size="Size.Small" Color="@RepairStatusColor(row.Status)">@row.Status</MudChip></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </MudSimpleTable>
+
+                        <MudText Typo="Typo.subtitle2" Class="mb-2 mt-4">Schedules</MudText>
+                        <MudSimpleTable Dense="true">
+                            <thead><tr><th>Type</th><th>Due Date</th><th>Active</th></tr></thead>
+                            <tbody>
+                                @foreach (var row in _schedules.Take(5))
+                                {
+                                    <tr>
+                                        <td>@row.MaintenanceType</td>
+                                        <td>@(row.DueDate?.ToString("yyyy-MM-dd") ?? "-")</td>
+                                        <td>
+                                            <MudChip T="string" Size="Size.Small" Color="@(row.IsActive ? Color.Success : Color.Default)">
+                                                @(row.IsActive ? "Active" : "Inactive")
+                                            </MudChip>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </MudSimpleTable>
+
+                        <MudText Typo="Typo.subtitle2" Class="mb-2 mt-4">Logs</MudText>
+                        <MudSimpleTable Dense="true">
+                            <thead><tr><th>Date</th><th>Type</th><th>Cost</th></tr></thead>
+                            <tbody>
+                                @foreach (var row in _logs.Take(5))
+                                {
+                                    <tr><td>@row.PerformedDate.ToString("yyyy-MM-dd")</td><td>@row.MaintenanceType</td><td>@(row.Cost?.ToString("N2") ?? "-")</td></tr>
+                                }
+                            </tbody>
+                        </MudSimpleTable>
+                    </MudTabPanel>
+                </MudTabs>
+            </MudItem>
+        </MudGrid>
+
+        <MudStack Row="true" Spacing="1" Class="mt-3">
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Build" OnClick="@(() => Navigation.NavigateTo("/vehicle/repairs"))">Open Repairs</MudButton>
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.EventRepeat" OnClick="@(() => Navigation.NavigateTo("/vehicle/maintenance/schedules"))">Open Schedules</MudButton>
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.History" OnClick="@(() => Navigation.NavigateTo("/vehicle/maintenance/logs"))">Open Logs</MudButton>
+        </MudStack>
+    </div>
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    private VehicleDto? _vehicle;
+    private VehicleEditModel _edit = new();
+    private AssignmentModel _assignment = new();
+    private int _newOdometer;
+
+    private List<RepairRecordDto> _repairs = [];
+    private List<MaintenanceScheduleDto> _schedules = [];
+    private List<MaintenanceLogDto> _logs = [];
+
+    protected override async Task OnParametersSetAsync() => await Load();
+
+    private async Task Load()
+    {
+        try
+        {
+            _vehicle = await VehicleClient.GetVehicleAsync(Id);
+            if (_vehicle is null)
+            {
+                return;
+            }
+
+            _edit = new VehicleEditModel
+            {
+                PlateNumber = _vehicle.PlateNumber,
+                Make = _vehicle.Make,
+                Model = _vehicle.Model,
+                Year = _vehicle.Year,
+                Type = _vehicle.Type,
+                Notes = _vehicle.Notes
+            };
+
+            _newOdometer = _vehicle.Odometer;
+
+            var repairs = await VehicleClient.SearchRepairsAsync(new SearchRepairRecordsQuery { VehicleId = Id, PageNumber = 1, PageSize = 5 });
+            _repairs = repairs.Items?.ToList() ?? [];
+            _schedules = await VehicleClient.SearchMaintenanceSchedulesAsync(new MaintenanceScheduleSearchRequest(null, Id, null));
+            _logs = await VehicleClient.SearchMaintenanceLogsAsync(new MaintenanceLogSearchRequest(null, Id, null, null, null));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Load failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task SaveVehicle()
+    {
+        if (_vehicle is null)
+        {
+            return;
+        }
+
+        try
+        {
+            await VehicleClient.UpdateVehicleAsync(_vehicle.Id, new UpdateVehicleCommand(
+                _vehicle.Id,
+                _edit.PlateNumber,
+                _edit.Make,
+                _edit.Model,
+                _edit.Year,
+                _edit.Type,
+                _edit.Notes));
+
+            Snackbar.Add("Vehicle updated.", Severity.Success);
+            await Load();
+        }
+        catch (ApiException apiEx) when (apiEx.StatusCode == StatusCodes.Status400BadRequest)
+        {
+            ShowValidationMessages(apiEx.Response, "Vehicle update failed validation.");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Update failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task AssignVehicle()
+    {
+        if (_vehicle is null)
+        {
+            return;
+        }
+
+        if (HasPartialAssignment(_assignment.DepartmentIdText, _assignment.DepartmentName))
+        {
+            Snackbar.Add("Department ID and name must both be provided or both left blank.", Severity.Warning);
+            return;
+        }
+
+        if (HasPartialAssignment(_assignment.DriverIdText, _assignment.DriverName))
+        {
+            Snackbar.Add("Driver ID and name must both be provided or both left blank.", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            await VehicleClient.AssignVehicleAsync(_vehicle.Id, new AssignVehicleCommand(
+                _vehicle.Id,
+                ParseGuid(_assignment.DepartmentIdText),
+                EmptyToNull(_assignment.DepartmentName),
+                ParseGuid(_assignment.DriverIdText),
+                EmptyToNull(_assignment.DriverName)));
+
+            Snackbar.Add("Assignment updated.", Severity.Success);
+            await Load();
+        }
+        catch (ApiException apiEx) when (apiEx.StatusCode == StatusCodes.Status400BadRequest)
+        {
+            ShowValidationMessages(apiEx.Response, "Assignment update failed validation.");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Assignment failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task UpdateOdometer()
+    {
+        if (_vehicle is null)
+        {
+            return;
+        }
+
+        try
+        {
+            await VehicleClient.UpdateOdometerAsync(_vehicle.Id, new UpdateOdometerCommand(_vehicle.Id, _newOdometer));
+            Snackbar.Add("Odometer updated.", Severity.Success);
+            await Load();
+        }
+        catch (ApiException apiEx) when (apiEx.StatusCode == StatusCodes.Status400BadRequest)
+        {
+            ShowValidationMessages(apiEx.Response, "Odometer update failed validation.");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Odometer update failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task Retire()
+    {
+        if (_vehicle is null) return;
+        await Do(async () => await VehicleClient.RetireVehicleAsync(_vehicle.Id), "Vehicle retired.");
+    }
+
+    private async Task Reactivate()
+    {
+        if (_vehicle is null) return;
+        await Do(async () => await VehicleClient.ReactivateVehicleAsync(_vehicle.Id), "Vehicle reactivated.");
+    }
+
+    private async Task Decommission()
+    {
+        if (_vehicle is null) return;
+        await Do(async () => await VehicleClient.DecommissionVehicleAsync(_vehicle.Id), "Vehicle decommissioned.");
+    }
+
+    private async Task Delete()
+    {
+        if (_vehicle is null) return;
+        await Do(async () => await VehicleClient.DeleteVehicleAsync(_vehicle.Id), "Vehicle deleted.", navigateBack: true);
+    }
+
+    private async Task Do(Func<Task> action, string success, bool navigateBack = false)
+    {
+        try
+        {
+            await action();
+            Snackbar.Add(success, Severity.Success);
+            if (navigateBack)
+            {
+                Navigation.NavigateTo("/vehicle/vehicles");
+                return;
+            }
+
+            await Load();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private static Guid? ParseGuid(string? text) => Guid.TryParse(text, out var id) ? id : null;
+    private static string? EmptyToNull(string? value) => string.IsNullOrWhiteSpace(value) ? null : value;
+    private static bool HasPartialAssignment(string? idText, string? name) =>
+        Guid.TryParse(idText, out _) != !string.IsNullOrWhiteSpace(name);
+
+    private static Color StatusColor(string status) => status switch
+    {
+        "Active" => Color.Success,
+        "UnderRepair" => Color.Warning,
+        "Retired" => Color.Info,
+        "Decommissioned" => Color.Error,
+        _ => Color.Default
+    };
+
+    private static Color RepairStatusColor(string status) => status switch
+    {
+        "Pending" => Color.Warning,
+        "InProgress" => Color.Info,
+        "Completed" => Color.Success,
+        "Cancelled" => Color.Error,
+        _ => Color.Default
+    };
+
+    private static string DisplayVehicleStatus(string status) => status switch
+    {
+        "UnderRepair" => "Under Repair",
+        _ => status
+    };
+
+    private void ShowValidationMessages(string? response, string fallbackMessage)
+    {
+        var messages = ExtractValidationMessages(response);
+        if (messages.Count == 0)
+        {
+            Snackbar.Add(fallbackMessage, Severity.Warning);
+            return;
+        }
+
+        foreach (var message in messages)
+        {
+            Snackbar.Add(message, Severity.Warning);
+        }
+    }
+
+    private static List<string> ExtractValidationMessages(string? response)
+    {
+        if (string.IsNullOrWhiteSpace(response))
+        {
+            return [];
+        }
+
+        try
+        {
+            using var json = System.Text.Json.JsonDocument.Parse(response);
+            if (!json.RootElement.TryGetProperty("errors", out var errorsElement) ||
+                errorsElement.ValueKind != System.Text.Json.JsonValueKind.Object)
+            {
+                return [];
+            }
+
+            var messages = new List<string>();
+            foreach (var property in errorsElement.EnumerateObject())
+            {
+                if (property.Value.ValueKind != System.Text.Json.JsonValueKind.Array)
+                {
+                    continue;
+                }
+
+                foreach (var errorItem in property.Value.EnumerateArray())
+                {
+                    var message = errorItem.GetString();
+                    if (!string.IsNullOrWhiteSpace(message))
+                    {
+                        messages.Add(message);
+                    }
+                }
+            }
+
+            return messages;
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    private static readonly string[] VehicleTypes = ["Other", "Sedan", "SUV", "Van", "Truck", "Motorcycle", "Bus", "PickUp", "MPV", "Hatchback", "Crossover", "Wagon", "Minibus"];
+
+    private sealed class VehicleEditModel
+    {
+        public string PlateNumber { get; set; } = string.Empty;
+        public string Make { get; set; } = string.Empty;
+        public string Model { get; set; } = string.Empty;
+        public int Year { get; set; }
+        public string Type { get; set; } = string.Empty;
+        public string? Notes { get; set; }
+    }
+
+    private sealed class AssignmentModel
+    {
+        public string? DepartmentName { get; set; }
+        public string? DriverName { get; set; }
+        public string? DepartmentIdText { get; set; }
+        public string? DriverIdText { get; set; }
+    }
+}

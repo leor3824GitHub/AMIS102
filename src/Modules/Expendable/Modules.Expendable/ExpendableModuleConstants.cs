@@ -44,6 +44,7 @@ public static class ExpendableModuleConstants
             public const string Approve = "Permissions.Expendable.SupplyRequests.Approve";
             public const string Reject = "Permissions.Expendable.SupplyRequests.Reject";
             public const string Fulfill = "Permissions.Expendable.SupplyRequests.Fulfill";
+            public const string Cancel = "Permissions.Expendable.SupplyRequests.Cancel";
         }
 
         public static class ShoppingCarts

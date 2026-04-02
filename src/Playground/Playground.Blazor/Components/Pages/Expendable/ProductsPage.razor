@@ -237,7 +237,7 @@
                                                        OnClick="@(() => ChangeStatus(context, "discontinue"))" />
                                     }
                                     <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
-                                                   Color="Color.Primary" OnClick="@(() => EditProduct(context))" />
+                                                   Color="Color.Primary" OnClick="@(async () => await EditProduct(context))" />
                                     <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
                                                    Color="Color.Error" OnClick="@(() => DeleteProduct(context.Id))" />
                                 </MudStack>
@@ -549,8 +549,18 @@
         }
     }
 
-    private void EditProduct(ProductDto product)
+    private async Task EditProduct(ProductDto product)
     {
+        // Ensure lookup data is loaded before populating the form
+        if (_unitOfMeasures.Count == 0)
+            await LoadUnitOfMeasures();
+        if (_categories.Count == 0)
+            await LoadCategories();
+        if (_suppliers.Count == 0)
+            await LoadSuppliers();
+        if (_parentProducts.Count == 0)
+            await LoadParentProducts();
+        
         EditingProduct = product;
         _selectedUnitOfMeasure = _unitOfMeasures.FirstOrDefault(x => x.Code == product.UnitOfMeasure);
 

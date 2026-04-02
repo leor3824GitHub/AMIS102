@@ -238,7 +238,14 @@ internal sealed class TokenRefreshService : ITokenRefreshService, IDisposable
 
         var newClaims = new List<Claim>
         {
-            new(ClaimTypes.NameIdentifier, jwtToken.Subject ?? user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.NewGuid().ToString()),
+            new(ClaimTypes.NameIdentifier,
+                jwtToken.Subject
+                ?? jwtToken.Claims.FirstOrDefault(c =>
+                        c.Type == ClaimTypes.NameIdentifier ||
+                        c.Type == "nameid" ||
+                        c.Type == "sub")?.Value
+                ?? user.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                ?? Guid.NewGuid().ToString()),
             new(ClaimTypes.Email, user.FindFirst(ClaimTypes.Email)?.Value ?? string.Empty),
             new("access_token", response.Token),
             new("refresh_token", response.RefreshToken),

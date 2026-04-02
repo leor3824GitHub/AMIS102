@@ -160,22 +160,16 @@
                     </MudItem>
                 </MudGrid>
 
-                @if (_warehouses.Count > 0)
-                {
-                    <MudSelect T="Guid" @bind-Value="_approveWarehouseId" Label="Issue From Warehouse" Required="true"
-                               Variant="Variant.Outlined" HelperText="Select the warehouse to reserve and issue stock from">
-                        @foreach (var wh in _warehouses)
-                        {
-                            <MudSelectItem T="Guid" Value="@wh.Id">@wh.Name</MudSelectItem>
-                        }
-                    </MudSelect>
-                }
-                else
-                {
-                    <MudTextField @bind-Value="_approveWarehouseIdText" Label="Warehouse Location ID"
-                                  Placeholder="Enter warehouse GUID" Variant="Variant.Outlined"
-                                  HelperText="No warehouses found — paste the warehouse ID directly" />
-                }
+                <MudAutocomplete T="WarehouseOption"
+                                 Label="Issue From Warehouse"
+                                 @bind-Value="_selectedWarehouse"
+                                 SearchFunc="@SearchWarehouses"
+                                 ToStringFunc="@(wh => wh?.Name ?? string.Empty)"
+                                 CoerceValue="true"
+                                 Clearable="true"
+                                 Variant="Variant.Outlined"
+                                 Placeholder="@(_warehouses.Count == 0 ? "No warehouses in inventory yet" : "Search by warehouse name...")"
+                                 HelperText="@(_warehouses.Count == 0 ? "Receive stock via Purchase Orders to populate warehouse list" : $"{_warehouses.Count} warehouse(s) available")" />
 
                 <MudText Typo="Typo.subtitle2">Approve Quantities per Item</MudText>
                 <MudTable Items="@_approveDialog.Items" Dense="true" Elevation="0">
@@ -236,16 +230,14 @@
 }
 
 <!-- ===== FULFILL DIALOG ===== -->
-@if (_fulfillDialog != null)
+@if (_showFulfillDialog && _fulfillDialog != null)
 {
-    <MudDialog @bind-IsVisible="_showFulfillDialog" Options="@(new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true })">
-        <TitleContent>
-            <MudText Typo="Typo.h6">
+    <MudOverlay Visible="true" DarkBackground="true" AutoClose="false" ZIndex="1400">
+        <MudPaper Class="pa-4" Elevation="24" Style="width: min(560px, 95vw);">
+            <MudText Typo="Typo.h6" Class="mb-3">
                 <MudIcon Icon="@Icons.Material.Filled.LocalShipping" Color="Color.Primary" Class="mr-2" />
                 Issue Supplies — @_fulfillDialog.RequestNumber
             </MudText>
-        </TitleContent>
-        <DialogContent>
             <MudStack Spacing="2">
                 <MudAlert Severity="Severity.Info" Dense="true">
                     Stock was reserved at approval. Confirming will deduct from warehouse and record receipt in the employee's inventory.
@@ -268,17 +260,17 @@
                         <MudChip T="string" Size="Size.Small" Color="Color.Primary">@item.ApprovedQuantity units</MudChip>
                     </MudStack>
                 }
+                <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2" Class="mt-3">
+                    <MudButton OnClick="@(() => _showFulfillDialog = false)">Cancel</MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                               OnClick="SubmitFulfillment" Disabled="@_isActioning">
+                        @if (_isActioning) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" /> }
+                        Confirm Issue
+                    </MudButton>
+                </MudStack>
             </MudStack>
-        </DialogContent>
-        <DialogActions>
-            <MudButton OnClick="@(() => _showFulfillDialog = false)">Cancel</MudButton>
-            <MudButton Variant="Variant.Filled" Color="Color.Primary"
-                       OnClick="SubmitFulfillment" Disabled="@_isActioning">
-                @if (_isActioning) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" /> }
-                Confirm Issue
-            </MudButton>
-        </DialogActions>
-    </MudDialog>
+        </MudPaper>
+    </MudOverlay>
 }
 
 @code {
@@ -290,7 +282,8 @@
     private int _pendingCount;
     private int _approvedCount;
 
-    private List<(Guid Id, string Name)> _warehouses = [];
+    private record WarehouseOption(Guid Id, string Name);
+    private List<WarehouseOption> _warehouses = [];
     private Dictionary<Guid, string> _productNames = [];
     private Dictionary<Guid, string> _employeeNames = [];
     private Dictionary<Guid, string> _departmentNames = [];
@@ -304,8 +297,7 @@
     private SupplyRequestDto? _rejectDialog;
     private SupplyRequestDto? _fulfillDialog;
 
-    private Guid _approveWarehouseId;
-    private string _approveWarehouseIdText = string.Empty;
+    private WarehouseOption? _selectedWarehouse;
     private Dictionary<Guid, int> _approveQuantities = [];
     private string _rejectReason = string.Empty;
 
@@ -373,14 +365,29 @@
     {
         try
         {
-            var result = await InventoryClient.SearchAsync(new SearchProductInventoryQuery { PageSize = 100 });
+            var result = await InventoryClient.SearchAsync(new SearchProductInventoryQuery { PageSize = 1000 });
             _warehouses = result?.Items?
-                .Where(i => i.WarehouseLocationId != default && !string.IsNullOrEmpty(i.WarehouseLocationName))
+                .Where(i => i.WarehouseLocationId != default)
                 .GroupBy(i => i.WarehouseLocationId)
-                .Select(g => (g.Key, g.First().WarehouseLocationName))
+                .Select(g =>
+                {
+                    var name = g.First().WarehouseLocationName;
+                    var display = string.IsNullOrWhiteSpace(name)
+                        ? $"Warehouse {g.Key.ToString()[..8]}…"
+                        : name;
+                    return new WarehouseOption(g.Key, display);
+                })
                 .ToList() ?? [];
         }
         catch { _warehouses = []; }
+    }
+
+    private Task<IEnumerable<WarehouseOption>> SearchWarehouses(string value, CancellationToken token)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return Task.FromResult(_warehouses.AsEnumerable());
+        return Task.FromResult(
+            _warehouses.Where(w => w.Name.Contains(value, StringComparison.OrdinalIgnoreCase)));
     }
 
     private async Task LoadProductName(Guid productId)
@@ -416,7 +423,7 @@
     {
         _approveDialog = request;
         _approveQuantities = request.Items.ToDictionary(i => i.ProductId, i => i.RequestedQuantity);
-        _approveWarehouseId = _warehouses.Count > 0 ? _warehouses[0].Id : Guid.Empty;
+        _selectedWarehouse = _warehouses.Count > 0 ? _warehouses[0] : null;
         _showApproveDialog = true;
     }
 
@@ -430,9 +437,7 @@
     {
         if (_approveDialog == null) return;
 
-        var warehouseId = _approveWarehouseId != Guid.Empty
-            ? _approveWarehouseId
-            : Guid.TryParse(_approveWarehouseIdText, out var parsed) ? parsed : Guid.Empty;
+        var warehouseId = _selectedWarehouse?.Id ?? Guid.Empty;
 
         if (warehouseId == Guid.Empty)
         {

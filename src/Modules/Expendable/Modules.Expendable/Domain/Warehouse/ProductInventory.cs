@@ -186,6 +186,11 @@ public class ProductInventory : AggregateRoot<Guid>
             }
         }
 
+        if (remaining > 0)
+            throw new InvalidOperationException(
+                $"Inventory data inconsistency: could only issue {quantityToIssue - remaining} of {quantityToIssue} from FIFO batches for product {ProductId}. " +
+                "Reserved quantity exceeds actual batch stock.");
+
         RecalculateValue();
         LastIssueDate = DateTimeOffset.UtcNow;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
@@ -232,7 +237,7 @@ public class InventoryBatch
 
     // Pricing
     public decimal UnitPrice { get; private set; }
-    public decimal TotalValue => QuantityAvailable * UnitPrice;
+    public decimal TotalValue => QuantityRemaining * UnitPrice;
 
     // Dates
     public DateTimeOffset ReceivedDate { get; private set; }

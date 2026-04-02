@@ -83,7 +83,74 @@
                                 </HeaderContent>
                                 <RowTemplate>
                                     <MudTd DataLabel="Product">
-                                        <MudText Typo="Typo.body2" Class="product-cell-text">@GetProductName(context.ProductId)</MudText>
+                                        <MudButton Variant="Variant.Text" Size="Size.Small"
+                                                   Style="text-transform:none; font-weight:500; padding:0; min-width:0; text-align:left; justify-content:flex-start;"
+                                                   EndIcon="@(HasMultiplePrices(context.ProductId) ? Icons.Material.Filled.Sell : null)"
+                                                   IconColor="Color.Warning"
+                                                   Title="Click to view stock details"
+                                                   OnClick="@(() => TogglePopover(context.ProductId))">
+                                            @GetProductName(context.ProductId)
+                                        </MudButton>
+                                        @if (_popoverProductId == context.ProductId)
+                                        {
+                                            <MudPaper Elevation="8" Class="pa-3 mt-1" Style="min-width:320px; max-width:420px; z-index:1000; position:relative;">
+                                                @{
+                                                    var inv = GetInventory(context.ProductId);
+                                                }
+                                                @if (inv is null)
+                                                {
+                                                    <MudText Typo="Typo.caption" Color="Color.Secondary">No inventory data available.</MudText>
+                                                }
+                                                else
+                                                {
+                                                    <MudStack Spacing="1">
+                                                        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                                                            <MudText Typo="Typo.subtitle2">@inv.WarehouseLocationName</MudText>
+                                                            <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small"
+                                                                           OnClick="@(() => _popoverProductId = null)" />
+                                                        </MudStack>
+                                                        <MudDivider />
+                                                        <MudGrid Spacing="1" Class="mt-1">
+                                                            <MudItem xs="4"><MudText Typo="Typo.caption" Color="Color.Tertiary">Available</MudText><MudText Typo="Typo.body2"><b>@inv.QuantityAvailable</b></MudText></MudItem>
+                                                            <MudItem xs="4"><MudText Typo="Typo.caption" Color="Color.Tertiary">Reserved</MudText><MudText Typo="Typo.body2" Color="Color.Warning"><b>@inv.QuantityReserved</b></MudText></MudItem>
+                                                            <MudItem xs="4"><MudText Typo="Typo.caption" Color="Color.Tertiary">On Hand</MudText><MudText Typo="Typo.body2"><b>@inv.QuantityOnHand</b></MudText></MudItem>
+                                                        </MudGrid>
+                                                        @if (inv.Batches?.Count > 0)
+                                                        {
+                                                            <MudDivider Class="mt-2" />
+                                                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Class="mt-1">
+                                                                <MudText Typo="Typo.caption" Color="Color.Tertiary">FIFO BATCHES</MudText>
+                                                                @if (HasMultiplePrices(context.ProductId))
+                                                                {
+                                                                    <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Outlined">multiple prices</MudChip>
+                                                                }
+                                                            </MudStack>
+                                                            <MudSimpleTable Dense="true" Elevation="0" Style="font-size:11px;">
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th>Received</th>
+                                                                        <th style="text-align:right">Remaining</th>
+                                                                        <th style="text-align:right">Unit Price</th>
+                                                                        <th style="text-align:right">Value</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    @foreach (var batch in inv.Batches.Where(b => b.QuantityRemaining > 0).OrderBy(b => b.ReceivedDate))
+                                                                    {
+                                                                        <tr>
+                                                                            <td>@batch.ReceivedDate.ToLocalTime().ToString("MMM d")</td>
+                                                                            <td style="text-align:right">@batch.QuantityRemaining</td>
+                                                                            <td style="text-align:right">₱@batch.UnitPrice.ToString("N4")</td>
+                                                                            <td style="text-align:right">₱@batch.TotalValue.ToString("N2")</td>
+                                                                        </tr>
+                                                                    }
+                                                                </tbody>
+                                                            </MudSimpleTable>
+                                                        }
+                                                    </MudStack>
+                                                }
+                                            </MudPaper>
+                                        }
                                     </MudTd>
                                     <MudTd DataLabel="Price" Style="text-align:right;">$@context.UnitPrice.ToString("F2")</MudTd>
                                     <MudTd DataLabel="In Stock" Style="text-align:right;">
@@ -176,7 +243,12 @@
     
     private Dictionary<Guid, string> _productNameCache = new();
     private Dictionary<Guid, int> _productBalances = new();
+    private Dictionary<Guid, ProductInventoryDto> _productInventories = new();
     private List<DepartmentReferenceDto> _departmentList = new();
+
+    // Popover state
+    private Guid? _popoverProductId;
+    private bool _popoverOpen => _popoverProductId.HasValue;
     
     private List<BreadcrumbItem> _breadcrumbs = new()
     {
@@ -328,8 +400,31 @@
 
     private async Task LoadInventoryBalancesAsync()
     {
-        var stock = await _warehouseClient.StockLevelsAsync(Guid.Empty, 1, 1000); 
-        _productBalances = stock.Items?.ToDictionary(x => x.ProductId, x => x.QuantityAvailable) ?? new();
+        try
+        {
+            var inventoryList = await _inventoryClient.SearchAsync(new SearchProductInventoryQuery
+            {
+                PageNumber = 1,
+                PageSize = 1000
+            });
+
+            if (inventoryList.Items != null)
+            {
+                // Cache full inventory DTOs (with batches) keyed by ProductId
+                _productInventories = inventoryList.Items
+                    .GroupBy(i => i.ProductId)
+                    .ToDictionary(g => g.Key, g => g.First());
+
+                _productBalances = inventoryList.Items
+                    .GroupBy(x => x.ProductId)
+                    .ToDictionary(g => g.Key, g => g.Sum(i => i.QuantityAvailable));
+            }
+        }
+        catch
+        {
+            _productBalances.Clear();
+            _productInventories.Clear();
+        }
     }
 
     private async Task LoadProducts()
@@ -347,5 +442,15 @@
 
     private string GetProductName(Guid id) => _productNameCache.TryGetValue(id, out var name) ? name : "Unknown Product";
     private int GetProductBalance(Guid id) => _productBalances.TryGetValue(id, out var b) ? b : 0;
+    private ProductInventoryDto? GetInventory(Guid id) => _productInventories.TryGetValue(id, out var inv) ? inv : null;
+    private bool HasMultiplePrices(Guid id)
+    {
+        var inv = GetInventory(id);
+        if (inv?.Batches == null) return false;
+        var activeBatches = inv.Batches.Where(b => b.QuantityRemaining > 0).ToList();
+        return activeBatches.Select(b => b.UnitPrice).Distinct().Count() > 1;
+    }
+    private void TogglePopover(Guid productId) =>
+        _popoverProductId = _popoverProductId == productId ? null : productId;
     private void ClearCartConfirm() => _showClearConfirmDialog = true;
 }

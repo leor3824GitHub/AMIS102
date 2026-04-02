@@ -1,0 +1,174 @@
+@page "/vehicle/maintenance/logs"
+@using FSH.Modules.Vehicle.Contracts.v1.Maintenance
+@inject IVehicleClient VehicleClient
+@inject ISnackbar Snackbar
+
+<FshPageHeader Title="Maintenance Logs" Description="Record completed maintenance activities" />
+
+<div class="mt-4">
+    <MudGrid Spacing="2">
+        <MudItem xs="12" md="4">
+            <MudCard Class="fsh-card">
+                <MudCardContent>
+                    <MudText Typo="Typo.h6" Class="mb-2">Log Maintenance</MudText>
+                    <MudStack Spacing="2">
+                        <MudTextField @bind-Value="_create.VehicleIdText" Label="Vehicle Id" Required="true" />
+                        <MudTextField @bind-Value="_create.ScheduleIdText" Label="Schedule Id (optional)" />
+                        <MudTextField @bind-Value="_create.MaintenanceType" Label="Type" Required="true" />
+                        <MudDatePicker @bind-Date="_create.PerformedDate" Label="Performed Date" />
+                        <MudNumericField @bind-Value="_create.OdometerAtService" Label="Odometer" Min="0" />
+                        <MudNumericField @bind-Value="_create.Cost" Label="Cost" Min="0" />
+                        <MudTextField @bind-Value="_create.PerformedBy" Label="Performed By" />
+                        <MudTextField @bind-Value="_create.Description" Label="Description" />
+                        <MudTextField @bind-Value="_create.Notes" Label="Notes" Lines="2" />
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Create">Log</MudButton>
+                    </MudStack>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        <MudItem xs="12" md="8">
+            <MudCard Class="fsh-card">
+                <MudCardContent>
+                    <MudStack Row="true" Spacing="2" Class="mb-2">
+                        <MudTextField @bind-Value="_query.VehicleIdText" Label="Vehicle Id" />
+                        <MudTextField @bind-Value="_query.ScheduleIdText" Label="Schedule Id" />
+                        <MudTextField @bind-Value="_query.MaintenanceType" Label="Type" />
+                        <MudDatePicker @bind-Date="_query.FromDate" Label="From" />
+                        <MudDatePicker @bind-Date="_query.ToDate" Label="To" />
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Load" StartIcon="@Icons.Material.Filled.Search">Search</MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Default" OnClick="ClearFilters">Clear</MudButton>
+                    </MudStack>
+
+                    <MudTable Items="_items" Dense="true" Hover="true" Striped="true">
+                        <HeaderContent>
+                            <MudTh>Date</MudTh>
+                            <MudTh>Type</MudTh>
+                            <MudTh>Vehicle</MudTh>
+                            <MudTh>Odometer</MudTh>
+                            <MudTh>Performed By</MudTh>
+                            <MudTh>Cost</MudTh>
+                            <MudTh>Actions</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd>@context.PerformedDate.ToString("yyyy-MM-dd")</MudTd>
+                            <MudTd>@context.MaintenanceType</MudTd>
+                            <MudTd>@context.VehicleId</MudTd>
+                            <MudTd>@(context.OdometerAtService?.ToString() ?? "-")</MudTd>
+                            <MudTd>@(string.IsNullOrWhiteSpace(context.PerformedBy) ? "-" : context.PerformedBy)</MudTd>
+                            <MudTd>@(context.Cost?.ToString("N2") ?? "-")</MudTd>
+                            <MudTd>
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
+                                               OnClick="@(() => Delete(context.Id))" />
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+</div>
+
+@code {
+    private readonly List<MaintenanceLogDto> _items = [];
+    private LogQueryModel _query = new();
+    private CreateLogModel _create = new();
+
+    protected override async Task OnInitializedAsync() => await Load();
+
+    private async Task Load()
+    {
+        try
+        {
+            var items = await VehicleClient.SearchMaintenanceLogsAsync(new MaintenanceLogSearchRequest(
+                _query.MaintenanceType,
+                ParseGuid(_query.VehicleIdText),
+                ParseGuid(_query.ScheduleIdText),
+                ToDateOnly(_query.FromDate),
+                ToDateOnly(_query.ToDate)));
+
+            _items.Clear();
+            _items.AddRange(items);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load maintenance logs: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task Create()
+    {
+        var vehicleId = ParseGuid(_create.VehicleIdText);
+        if (vehicleId is null || string.IsNullOrWhiteSpace(_create.MaintenanceType))
+        {
+            Snackbar.Add("Vehicle Id and type are required.", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            await VehicleClient.LogMaintenanceCompletionAsync(new LogMaintenanceCompletionRequest(
+                vehicleId.Value,
+                ParseGuid(_create.ScheduleIdText),
+                _create.MaintenanceType,
+                ToDateOnly(_create.PerformedDate) ?? DateOnly.FromDateTime(DateTime.Today),
+                _create.OdometerAtService,
+                _create.Description,
+                _create.Cost,
+                _create.PerformedBy,
+                _create.Notes));
+
+            Snackbar.Add("Maintenance log created.", Severity.Success);
+            _create = new();
+            await Load();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Create failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task Delete(Guid id)
+    {
+        try
+        {
+            await VehicleClient.DeleteMaintenanceLogAsync(id);
+            Snackbar.Add("Log deleted.", Severity.Success);
+            await Load();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private static Guid? ParseGuid(string? text) => Guid.TryParse(text, out var value) ? value : null;
+    private static DateOnly? ToDateOnly(DateTime? date) => date.HasValue ? DateOnly.FromDateTime(date.Value) : null;
+
+    private void ClearFilters()
+    {
+        _query = new();
+    }
+
+    private sealed class LogQueryModel
+    {
+        public string? VehicleIdText { get; set; }
+        public string? ScheduleIdText { get; set; }
+        public string? MaintenanceType { get; set; }
+        public DateTime? FromDate { get; set; }
+        public DateTime? ToDate { get; set; }
+    }
+
+    private sealed class CreateLogModel
+    {
+        public string? VehicleIdText { get; set; }
+        public string? ScheduleIdText { get; set; }
+        public string MaintenanceType { get; set; } = string.Empty;
+        public DateTime? PerformedDate { get; set; } = DateTime.Today;
+        public int? OdometerAtService { get; set; }
+        public decimal? Cost { get; set; }
+        public string? PerformedBy { get; set; }
+        public string? Description { get; set; }
+        public string? Notes { get; set; }
+    }
+}

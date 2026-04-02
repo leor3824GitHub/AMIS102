@@ -1,0 +1,105 @@
+@page "/vehicle/maintenance/due"
+@using FSH.Modules.Vehicle.Contracts.v1.Maintenance
+@inject IVehicleClient VehicleClient
+@inject ISnackbar Snackbar
+
+<FshPageHeader Title="Maintenance Due" Description="View upcoming and overdue schedules" />
+
+<div class="mt-4">
+    <MudGrid Class="mb-3" Spacing="2">
+        <MudItem xs="6" sm="3">
+            <MudPaper Class="pa-3 fsh-card"><MudText Typo="Typo.caption">Total Due</MudText><MudText Typo="Typo.h6">@_items.Count</MudText></MudPaper>
+        </MudItem>
+        <MudItem xs="6" sm="3">
+            <MudPaper Class="pa-3 fsh-card"><MudText Typo="Typo.caption">Overdue</MudText><MudText Typo="Typo.h6">@_items.Count(IsOverdue)</MudText></MudPaper>
+        </MudItem>
+        <MudItem xs="6" sm="3">
+            <MudPaper Class="pa-3 fsh-card"><MudText Typo="Typo.caption">Upcoming</MudText><MudText Typo="Typo.h6">@_items.Count(x => !IsOverdue(x))</MudText></MudPaper>
+        </MudItem>
+        <MudItem xs="6" sm="3">
+            <MudPaper Class="pa-3 fsh-card"><MudText Typo="Typo.caption">Window</MudText><MudText Typo="Typo.h6">@_daysAhead days</MudText></MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    <MudCard Class="fsh-card">
+        <MudCardContent>
+            <MudStack Row="true" Spacing="2" Class="mb-3">
+                <MudTextField @bind-Value="_vehicleIdText" Label="Vehicle Id (optional)" />
+                <MudNumericField @bind-Value="_daysAhead" Label="Days Ahead" Min="1" Max="365" />
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Load" StartIcon="@Icons.Material.Filled.Search">Load Due</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Default" OnClick="Clear">Clear</MudButton>
+            </MudStack>
+
+            @if (_items.Count == 0)
+            {
+                <MudAlert Severity="Severity.Info">No due schedules found for the selected window.</MudAlert>
+            }
+            else
+            {
+                <MudTable Items="_items" Dense="true" Hover="true" Striped="true">
+                    <HeaderContent>
+                        <MudTh>Vehicle Id</MudTh>
+                        <MudTh>Type</MudTh>
+                        <MudTh>Due Date</MudTh>
+                        <MudTh>Due Mileage</MudTh>
+                        <MudTh>Status</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>@context.VehicleId</MudTd>
+                        <MudTd>@context.MaintenanceType</MudTd>
+                        <MudTd>@(context.DueDate?.ToString("yyyy-MM-dd") ?? "-")</MudTd>
+                        <MudTd>@(context.DueMileage?.ToString() ?? "-")</MudTd>
+                        <MudTd>
+                            @if (IsOverdue(context))
+                            {
+                                <MudChip T="string" Color="Color.Error" Size="Size.Small">Overdue</MudChip>
+                            }
+                            else
+                            {
+                                <MudChip T="string" Color="Color.Warning" Size="Size.Small">Upcoming</MudChip>
+                            }
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+            }
+        </MudCardContent>
+    </MudCard>
+</div>
+
+@code {
+    private readonly List<MaintenanceScheduleDto> _items = [];
+    private string? _vehicleIdText;
+    private int _daysAhead = 30;
+
+    protected override async Task OnInitializedAsync() => await Load();
+
+    private async Task Load()
+    {
+        try
+        {
+            var items = await VehicleClient.GetDueMaintenanceSchedulesAsync(new DueMaintenanceScheduleSearchRequest(
+                ParseGuid(_vehicleIdText),
+                _daysAhead));
+
+            _items.Clear();
+            _items.AddRange(items);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load due schedules: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private static bool IsOverdue(MaintenanceScheduleDto item)
+    {
+        return item.DueDate.HasValue && item.DueDate.Value < DateOnly.FromDateTime(DateTime.Today);
+    }
+
+    private void Clear()
+    {
+        _vehicleIdText = null;
+        _daysAhead = 30;
+    }
+
+    private static Guid? ParseGuid(string? text) => Guid.TryParse(text, out var value) ? value : null;
+}

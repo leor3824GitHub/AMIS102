@@ -1,20 +1,1057 @@
 @page "/expendable/purchases"
 @using FSH.Framework.Blazor.UI.Components.Cards
+@using FSH.Playground.Blazor.ApiClient
 @inherits ComponentBase
 @inject ISnackbar Snackbar
+@inject IExpendableClient ExpendableClient
+@inject IPurchasesClient PurchasesClient
+@inject IMaster_dataClient MasterDataClient
+@inject IInventoryClient InventoryClient
 
-<FshPageHeader Title="Purchase Orders" Description="Manage purchase orders">
+<FshPageHeader Title="Purchase Orders" Description="Create, manage, and receive supply purchase orders">
     <ActionContent>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+                   OnClick="OpenCreateDialog">
             New Purchase Order
         </MudButton>
     </ActionContent>
 </FshPageHeader>
 
 <div class="mt-4">
-    <MudCard>
-        <MudCardContent>
-            <MudText Typo="Typo.body1">Purchase Orders module - API integration coming soon</MudText>
-        </MudCardContent>
-    </MudCard>
+    <!-- Status Filter Chips -->
+    <MudPaper Class="pa-3 mb-3" Elevation="1">
+        <MudStack Row="true" Spacing="2" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center">
+            <MudText Typo="Typo.body2" Class="mr-2"><b>Status:</b></MudText>
+            @foreach (var (label, value, color) in _statusOptions)
+            {
+                <MudChip T="string" Color="@(_selectedStatus == value ? color : Color.Default)"
+                         Variant="@(_selectedStatus == value ? Variant.Filled : Variant.Outlined)"
+                         OnClick="@(() => SetStatusFilter(value))"
+                         Size="Size.Small">
+                    @label
+                </MudChip>
+            }
+            <MudSpacer />
+            <MudTextField @bind-Value="_poSearch" Placeholder="Search PO#..." Margin="Margin.Dense"
+                          Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
+                          Style="max-width: 220px"
+                          DebounceInterval="400" OnDebounceIntervalElapsed="() => _table?.ReloadServerData()" />
+        </MudStack>
+    </MudPaper>
+
+    <MudTable @ref="_table" T="PurchaseDto" ServerData="@LoadPurchases" Dense="true" Hover="true" Striped="true" Elevation="2">
+        <HeaderContent>
+            <MudTh>PO Number</MudTh>
+            <MudTh>Supplier</MudTh>
+            <MudTh>Order Date</MudTh>
+            <MudTh>Expected Delivery</MudTh>
+            <MudTh Style="text-align:right">Total</MudTh>
+            <MudTh Style="text-align:center">Items</MudTh>
+            <MudTh>Status</MudTh>
+            <MudTh>Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>
+                <MudText Typo="Typo.body2" Style="font-weight:500">@context.PurchaseOrderNumber</MudText>
+            </MudTd>
+            <MudTd>@GetSupplierName(context.SupplierId)</MudTd>
+            <MudTd>@context.OrderDate.ToString("MMM d, yyyy")</MudTd>
+            <MudTd>@(context.ExpectedDeliveryDate?.ToString("MMM d, yyyy") ?? "—")</MudTd>
+            <MudTd Style="text-align:right">$@context.TotalAmount.ToString("F2")</MudTd>
+            <MudTd Style="text-align:center">@context.LineItems.Count</MudTd>
+            <MudTd>@RenderStatusChip(context.Status)</MudTd>
+            <MudTd>
+                <MudStack Row="true" Spacing="1">
+                    <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" Title="View Details"
+                                   OnClick="@(() => OpenDetailDialog(context))" />
+                    @if (context.Status == "Draft")
+                    {
+                        <MudIconButton Icon="@Icons.Material.Filled.PlaylistAdd" Size="Size.Small" Color="Color.Primary"
+                                       Title="Manage Line Items" OnClick="@(() => OpenLineItemsDialog(context))" />
+                        <MudIconButton Icon="@Icons.Material.Filled.Send" Size="Size.Small" Color="Color.Info"
+                                       Title="Submit for Approval" OnClick="@(() => ConfirmAction(context, "Submit"))" />
+                        <MudIconButton Icon="@Icons.Material.Filled.Cancel" Size="Size.Small" Color="Color.Error"
+                                       Title="Cancel" OnClick="@(() => ConfirmAction(context, "Cancel"))" />
+                    }
+                    @if (context.Status == "Submitted")
+                    {
+                        <MudIconButton Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small" Color="Color.Success"
+                                       Title="Approve" OnClick="@(() => ConfirmAction(context, "Approve"))" />
+                        <MudIconButton Icon="@Icons.Material.Filled.Cancel" Size="Size.Small" Color="Color.Error"
+                                       Title="Cancel" OnClick="@(() => ConfirmAction(context, "Cancel"))" />
+                    }
+                    @if (context.Status is "Approved" or "PartiallyReceived")
+                    {
+                        <MudIconButton Icon="@Icons.Material.Filled.MoveToInbox" Size="Size.Small" Color="Color.Warning"
+                                       Title="Record Receipt" OnClick="@(() => OpenReceiptDialog(context))" />
+                        <MudIconButton Icon="@Icons.Material.Filled.Cancel" Size="Size.Small" Color="Color.Error"
+                                       Title="Cancel" OnClick="@(() => ConfirmAction(context, "Cancel"))" />
+                    }
+                    @if (context.Status is "PartiallyReceived" or "FullyReceived"
+                         && context.LineItems.Any(li => li.QuantityInspection > 0))
+                    {
+                        <MudIconButton Icon="@Icons.Material.Filled.FactCheck" Size="Size.Small" Color="Color.Secondary"
+                                       Title="Record Inspection" OnClick="@(() => OpenInspectionDialog(context))" />
+                    }
+                </MudStack>
+            </MudTd>
+        </RowTemplate>
+        <NoRecordsContent><MudText Class="my-4">No purchase orders found.</MudText></NoRecordsContent>
+        <PagerContent><MudTablePager /></PagerContent>
+    </MudTable>
 </div>
+
+<!-- ===== CREATE DIALOG ===== -->
+@if (_showCreateDialog)
+{
+    <MudOverlay Visible="true" DarkBackground="true" AutoClose="false" ZIndex="1400">
+        <MudPaper Class="pa-5" Elevation="24" Style="width: min(560px, 95vw); max-height: 90vh; overflow-y: auto;">
+            <MudText Typo="Typo.h6" Class="mb-4">
+                <MudIcon Icon="@Icons.Material.Filled.ShoppingCart" Class="mr-2" Color="Color.Primary" />
+                New Purchase Order
+            </MudText>
+            <MudStack Spacing="3">
+                <MudAutocomplete T="SupplierDto"
+                                 Label="Supplier"
+                                 @bind-Value="_createSupplier"
+                                 SearchFunc="@SearchSuppliers"
+                                 ToStringFunc="@(s => s == null ? string.Empty : $"{s.Name} ({s.Code})")"
+                                 CoerceValue="true"
+                                 Clearable="true"
+                                 Required="true"
+                                 Placeholder="Search supplier..."
+                                 Variant="Variant.Outlined" />
+
+                <MudAutocomplete T="WarehouseOption"
+                                 Label="Existing Warehouse"
+                                 Value="_createWarehouseExisting"
+                                 SearchFunc="@SearchWarehouses"
+                                 ToStringFunc="@(w => w?.Name ?? string.Empty)"
+                                 CoerceValue="true"
+                                 Clearable="true"
+                                 Placeholder="@(_warehouses.Count == 0 ? "No warehouses yet" : "Search existing warehouse...")"
+                                 HelperText="Select existing, or leave blank and enter a new name below"
+                                 Variant="Variant.Outlined"
+                                 ValueChanged="@(w => { _createWarehouseExisting = w; _createNewWarehouseName = w?.Name ?? string.Empty; })" />
+
+                @if (_createWarehouseExisting == null)
+                {
+                    <MudTextField @bind-Value="_createNewWarehouseName"
+                                  Label="New Warehouse Name"
+                                  Placeholder="e.g. Main Warehouse, Supply Room..."
+                                  HelperText="A new warehouse location will be registered with this name"
+                                  Variant="Variant.Outlined" />
+                }
+
+                <MudDatePicker @bind-Date="_createExpectedDelivery"
+                               Label="Expected Delivery Date"
+                               Placeholder="Select date..."
+                               Editable="true"
+                               Variant="Variant.Outlined"
+                               MinDate="DateTime.Today" />
+
+                <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2" Class="mt-2">
+                    <MudButton OnClick="@(() => _showCreateDialog = false)">Cancel</MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                               OnClick="CreatePurchaseOrder" Disabled="@_isActioning">
+                        @if (_isActioning) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" /> }
+                        Create PO
+                    </MudButton>
+                </MudStack>
+            </MudStack>
+        </MudPaper>
+    </MudOverlay>
+}
+
+<!-- ===== LINE ITEMS DIALOG ===== -->
+@if (_showLineItemsDialog && _editingPO != null)
+{
+    <MudOverlay Visible="true" DarkBackground="true" AutoClose="false" ZIndex="1400">
+        <MudPaper Class="pa-5" Elevation="24" Style="width: min(780px, 95vw); max-height: 90vh; overflow-y: auto;">
+            <MudText Typo="Typo.h6" Class="mb-1">
+                <MudIcon Icon="@Icons.Material.Filled.PlaylistAdd" Class="mr-2" Color="Color.Primary" />
+                Line Items — @_editingPO.PurchaseOrderNumber
+            </MudText>
+            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-4">
+                Supplier: @GetSupplierName(_editingPO.SupplierId)
+            </MudText>
+
+            <!-- Current Line Items -->
+            @if (_editingPO.LineItems.Any())
+            {
+                <MudTable Items="@_editingPO.LineItems" Dense="true" Elevation="0" Outlined="true" Class="mb-4">
+                    <HeaderContent>
+                        <MudTh>Product</MudTh>
+                        <MudTh Style="text-align:right">Qty</MudTh>
+                        <MudTh Style="text-align:right">Unit Price</MudTh>
+                        <MudTh Style="text-align:right">Line Total</MudTh>
+                        <MudTh Style="text-align:center">Remove</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>@GetProductName(context.ProductId)</MudTd>
+                        <MudTd Style="text-align:right">@context.Quantity</MudTd>
+                        <MudTd Style="text-align:right">$@context.UnitPrice.ToString("F2")</MudTd>
+                        <MudTd Style="text-align:right">$@((context.Quantity * context.UnitPrice).ToString("F2"))</MudTd>
+                        <MudTd Style="text-align:center">
+                            <MudIconButton Icon="@Icons.Material.Filled.DeleteOutline" Size="Size.Small" Color="Color.Error"
+                                           OnClick="@(() => RemoveLineItem(_editingPO, context.ProductId))" />
+                        </MudTd>
+                    </RowTemplate>
+                    <FooterContent>
+                        <MudTd colspan="3"><MudText Typo="Typo.body2"><b>Total</b></MudText></MudTd>
+                        <MudTd Style="text-align:right">
+                            <MudText Typo="Typo.body2"><b>$@_editingPO.TotalAmount.ToString("F2")</b></MudText>
+                        </MudTd>
+                        <MudTd />
+                    </FooterContent>
+                </MudTable>
+            }
+            else
+            {
+                <MudAlert Severity="Severity.Info" Class="mb-4">No items yet. Add products below.</MudAlert>
+            }
+
+            <!-- Add Product -->
+            <MudText Typo="Typo.subtitle2" Class="mb-2">Add Product</MudText>
+            <MudGrid Spacing="2" Class="mb-3">
+                <MudItem xs="12" sm="5">
+                    <MudAutocomplete T="ProductDto"
+                                     Label="Product"
+                                     Value="_addProduct"
+                                     SearchFunc="@SearchProducts"
+                                     ToStringFunc="@(p => p == null ? string.Empty : $"{p.Name} ({p.Sku})")"
+                                     CoerceValue="true"
+                                     Clearable="true"
+                                     Placeholder="Search product..."
+                                     Variant="Variant.Outlined"
+                                     Dense="true"
+                                     ValueChanged="@(p => { _addProduct = p; if (p != null) _addUnitPrice = (decimal)p.UnitPrice; })" />
+                </MudItem>
+                <MudItem xs="6" sm="3">
+                    <MudNumericField T="int" @bind-Value="_addQuantity" Label="Quantity" Min="1"
+                                     Variant="Variant.Outlined" Dense="true" />
+                </MudItem>
+                <MudItem xs="6" sm="2">
+                    <MudNumericField T="decimal" @bind-Value="_addUnitPrice" Label="Unit Price" Min="0"
+                                     Variant="Variant.Outlined" Dense="true" Format="F2" />
+                </MudItem>
+                <MudItem xs="12" sm="2" Class="d-flex align-end">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                               OnClick="AddLineItem" Disabled="@(_addProduct == null || _addQuantity <= 0 || _isActioning)">
+                        Add
+                    </MudButton>
+                </MudItem>
+            </MudGrid>
+
+            <MudStack Row="true" Justify="Justify.SpaceBetween" Class="mt-2">
+                <MudButton OnClick="@(() => _showLineItemsDialog = false)">Close</MudButton>
+                @if (_editingPO.LineItems.Any())
+                {
+                    <MudButton Variant="Variant.Filled" Color="Color.Info"
+                               StartIcon="@Icons.Material.Filled.Send"
+                               OnClick="@(() => ConfirmAction(_editingPO, "Submit"))"
+                               Disabled="@_isActioning">
+                        Submit for Approval
+                    </MudButton>
+                }
+            </MudStack>
+        </MudPaper>
+    </MudOverlay>
+}
+
+<!-- ===== RECORD RECEIPT DIALOG ===== -->
+@if (_showReceiptDialog && _receiptPO != null)
+{
+    <MudOverlay Visible="true" DarkBackground="true" AutoClose="false" ZIndex="1400">
+        <MudPaper Class="pa-5" Elevation="24" Style="width: min(700px, 95vw); max-height: 90vh; overflow-y: auto;">
+            <MudText Typo="Typo.h6" Class="mb-1">
+                <MudIcon Icon="@Icons.Material.Filled.MoveToInbox" Class="mr-2" Color="Color.Warning" />
+                Record Receipt — @_receiptPO.PurchaseOrderNumber
+            </MudText>
+            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-4">
+                Enter received and rejected quantities for each line item.
+            </MudText>
+
+            <MudTable Items="@_receiptPO.LineItems.Where(i => i.ReceivedQuantity < i.Quantity)" Dense="true" Elevation="0" Outlined="true" Class="mb-3">
+                <HeaderContent>
+                    <MudTh>Product</MudTh>
+                    <MudTh Style="text-align:center">Ordered</MudTh>
+                    <MudTh Style="text-align:center">Already Received</MudTh>
+                    <MudTh Style="text-align:center">Received Now</MudTh>
+                    <MudTh Style="text-align:center">Rejected</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>@GetProductName(context.ProductId)</MudTd>
+                    <MudTd Style="text-align:center">@context.Quantity</MudTd>
+                    <MudTd Style="text-align:center">@context.ReceivedQuantity</MudTd>
+                    <MudTd Style="text-align:center">
+                        <MudNumericField T="int"
+                                         Value="@GetReceiptQty(context.ProductId)"
+                                         ValueChanged="@(v => SetReceiptQty(context.ProductId, v))"
+                                         Min="0" Max="@(context.Quantity - context.ReceivedQuantity)"
+                                         Style="width:80px" Dense="true" Margin="Margin.Dense"
+                                         Variant="Variant.Outlined" />
+                    </MudTd>
+                    <MudTd Style="text-align:center">
+                        <MudNumericField T="int"
+                                         Value="@GetRejectedQty(context.ProductId)"
+                                         ValueChanged="@(v => SetRejectedQty(context.ProductId, v))"
+                                         Min="0" Max="@GetReceiptQty(context.ProductId)"
+                                         Style="width:80px" Dense="true" Margin="Margin.Dense"
+                                         Variant="Variant.Outlined" />
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+
+            <MudTextField @bind-Value="_receiptNotes" Label="Receiving Notes" Lines="2"
+                          Variant="Variant.Outlined" Placeholder="Optional notes..." Class="mb-3" />
+
+            <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2">
+                <MudButton OnClick="@(() => _showReceiptDialog = false)">Cancel</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Warning"
+                           StartIcon="@Icons.Material.Filled.MoveToInbox"
+                           OnClick="SubmitReceipt" Disabled="@_isActioning">
+                    @if (_isActioning) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" /> }
+                    Record Receipt
+                </MudButton>
+            </MudStack>
+        </MudPaper>
+    </MudOverlay>
+}
+
+<!-- ===== VIEW DETAILS DIALOG ===== -->
+@if (_showDetailDialog && _detailPO != null)
+{
+    <MudOverlay Visible="true" DarkBackground="true" AutoClose="false" ZIndex="1400">
+        <MudPaper Class="pa-5" Elevation="24" Style="width: min(720px, 95vw); max-height: 90vh; overflow-y: auto;">
+            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Start" Class="mb-4">
+                <div>
+                    <MudText Typo="Typo.h6">@_detailPO.PurchaseOrderNumber</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                        Created @_detailPO.CreatedOnUtc.ToString("MMM d, yyyy h:mm tt")
+                    </MudText>
+                </div>
+                @RenderStatusChip(_detailPO.Status)
+            </MudStack>
+
+            <MudGrid Spacing="2" Class="mb-4">
+                <MudItem xs="6">
+                    <MudText Typo="Typo.caption" Color="Color.Tertiary">Supplier</MudText>
+                    <MudText Typo="Typo.body2">@GetSupplierName(_detailPO.SupplierId)</MudText>
+                </MudItem>
+                <MudItem xs="6">
+                    <MudText Typo="Typo.caption" Color="Color.Tertiary">Order Date</MudText>
+                    <MudText Typo="Typo.body2">@_detailPO.OrderDate.ToString("MMM d, yyyy")</MudText>
+                </MudItem>
+                <MudItem xs="6">
+                    <MudText Typo="Typo.caption" Color="Color.Tertiary">Expected Delivery</MudText>
+                    <MudText Typo="Typo.body2">@(_detailPO.ExpectedDeliveryDate?.ToString("MMM d, yyyy") ?? "—")</MudText>
+                </MudItem>
+                <MudItem xs="6">
+                    <MudText Typo="Typo.caption" Color="Color.Tertiary">Delivery Date</MudText>
+                    <MudText Typo="Typo.body2">@(_detailPO.DeliveryDate?.ToString("MMM d, yyyy") ?? "—")</MudText>
+                </MudItem>
+                @if (!string.IsNullOrWhiteSpace(_detailPO.ReceivingNotes))
+                {
+                    <MudItem xs="12">
+                        <MudText Typo="Typo.caption" Color="Color.Tertiary">Notes</MudText>
+                        <MudText Typo="Typo.body2">@_detailPO.ReceivingNotes</MudText>
+                    </MudItem>
+                }
+            </MudGrid>
+
+            <MudText Typo="Typo.subtitle2" Class="mb-2">Line Items</MudText>
+            <MudTable Items="@_detailPO.LineItems" Dense="true" Elevation="0" Outlined="true" Class="mb-4">
+                <HeaderContent>
+                    <MudTh>Product</MudTh>
+                    <MudTh Style="text-align:right">Qty</MudTh>
+                    <MudTh Style="text-align:right">Unit Price</MudTh>
+                    <MudTh Style="text-align:right">Total</MudTh>
+                    <MudTh Style="text-align:center">Received</MudTh>
+                    <MudTh Style="text-align:center">Rejected</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>@GetProductName(context.ProductId)</MudTd>
+                    <MudTd Style="text-align:right">@context.Quantity</MudTd>
+                    <MudTd Style="text-align:right">$@context.UnitPrice.ToString("F2")</MudTd>
+                    <MudTd Style="text-align:right">$@((context.Quantity * context.UnitPrice).ToString("F2"))</MudTd>
+                    <MudTd Style="text-align:center">
+                        @if (context.ReceivedQuantity == context.Quantity)
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Success">@context.ReceivedQuantity</MudChip>
+                        }
+                        else
+                        {
+                            <MudText>@context.ReceivedQuantity / @context.Quantity</MudText>
+                        }
+                    </MudTd>
+                    <MudTd Style="text-align:center">
+                        @if (context.RejectedQuantity > 0)
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Error">@context.RejectedQuantity</MudChip>
+                        }
+                        else { <MudText>—</MudText> }
+                    </MudTd>
+                </RowTemplate>
+                <FooterContent>
+                    <MudTd colspan="3"><b>Total</b></MudTd>
+                    <MudTd Style="text-align:right"><b>$@_detailPO.TotalAmount.ToString("F2")</b></MudTd>
+                    <MudTd colspan="2" />
+                </FooterContent>
+            </MudTable>
+
+            <MudStack Row="true" Justify="Justify.FlexEnd">
+                <MudButton Variant="Variant.Outlined" OnClick="@(() => _showDetailDialog = false)">Close</MudButton>
+            </MudStack>
+        </MudPaper>
+    </MudOverlay>
+}
+
+<!-- ===== INSPECTION DIALOG ===== -->
+@if (_showInspectionDialog && _inspectionPO != null)
+{
+    <MudOverlay Visible="true" DarkBackground="true" AutoClose="false" ZIndex="1400">
+        <MudPaper Class="pa-5" Elevation="24" Style="width: min(720px, 95vw); max-height: 90vh; overflow-y: auto;">
+            <MudText Typo="Typo.h6" Class="mb-1">
+                <MudIcon Icon="@Icons.Material.Filled.FactCheck" Class="mr-2" Color="Color.Secondary" />
+                Record Inspection — @_inspectionPO.PurchaseOrderNumber
+            </MudText>
+            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-4">
+                Enter accepted and rejected quantities for each received line item. Accepted items go to warehouse inventory.
+            </MudText>
+
+            <MudTable Items="@_inspectionPO.LineItems.Where(i => i.QuantityInspection > 0)" Dense="true" Elevation="0" Outlined="true" Class="mb-3">
+                <HeaderContent>
+                    <MudTh>Product</MudTh>
+                    <MudTh Style="text-align:center">Pending</MudTh>
+                    <MudTh Style="text-align:center">Accepted</MudTh>
+                    <MudTh Style="text-align:center">Rejected</MudTh>
+                    <MudTh>Rejection Reason</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>@GetProductName(context.ProductId)</MudTd>
+                    <MudTd Style="text-align:center">
+                        <MudChip T="string" Size="Size.Small" Color="Color.Warning">@context.QuantityInspection</MudChip>
+                    </MudTd>
+                    <MudTd Style="text-align:center">
+                        <MudNumericField T="int"
+                                         Value="@GetInspectAccepted(context.ProductId, context.QuantityInspection)"
+                                         ValueChanged="@(v => SetInspectAccepted(context.ProductId, v, context.QuantityInspection))"
+                                         Min="0" Max="@context.QuantityInspection"
+                                         Style="width:80px" Dense="true" Margin="Margin.Dense" Variant="Variant.Outlined" />
+                    </MudTd>
+                    <MudTd Style="text-align:center">
+                        <MudNumericField T="int"
+                                         Value="@GetInspectRejected(context.ProductId, context.QuantityInspection)"
+                                         Min="0" Max="@context.QuantityInspection"
+                                         Style="width:80px" Dense="true" Margin="Margin.Dense" Variant="Variant.Outlined"
+                                         ReadOnly="true" />
+                    </MudTd>
+                    <MudTd>
+                        @if (GetInspectRejected(context.ProductId, context.QuantityInspection) > 0)
+                        {
+                            <MudTextField Value="@GetInspectRejectionReason(context.ProductId)"
+                                          ValueChanged="@((string v) => SetInspectRejectionReason(context.ProductId, v))"
+                                          Placeholder="Required" Dense="true" Margin="Margin.Dense" Variant="Variant.Outlined" />
+                        }
+                        else { <MudText Typo="Typo.caption" Color="Color.Secondary">—</MudText> }
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+
+            <MudTextField @bind-Value="_inspectionNotes" Label="Inspection Notes" Lines="2"
+                          Variant="Variant.Outlined" Placeholder="Optional notes..." Class="mb-3" />
+
+            <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2">
+                <MudButton OnClick="@(() => _showInspectionDialog = false)">Cancel</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Secondary"
+                           StartIcon="@Icons.Material.Filled.FactCheck"
+                           OnClick="SubmitInspection" Disabled="@_isActioning">
+                    @if (_isActioning) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" /> }
+                    Record Inspection
+                </MudButton>
+            </MudStack>
+        </MudPaper>
+    </MudOverlay>
+}
+
+<!-- ===== CONFIRM ACTION DIALOG ===== -->
+@if (_showConfirmDialog && _confirmTarget != null)
+{
+    <MudOverlay Visible="true" DarkBackground="true" AutoClose="false" ZIndex="1500">
+        <MudPaper Class="pa-5" Elevation="24" Style="width: min(440px, 95vw);">
+            <MudText Typo="Typo.h6" Class="mb-3">@_confirmTitle</MudText>
+            <MudText Class="mb-4">@_confirmMessage</MudText>
+            <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2">
+                <MudButton OnClick="@(() => _showConfirmDialog = false)">Cancel</MudButton>
+                <MudButton Variant="Variant.Filled" Color="@_confirmColor"
+                           OnClick="ExecuteConfirmedAction" Disabled="@_isActioning">
+                    @if (_isActioning) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" /> }
+                    @_confirmAction
+                </MudButton>
+            </MudStack>
+        </MudPaper>
+    </MudOverlay>
+}
+
+@code {
+    private record WarehouseOption(Guid Id, string Name);
+
+    // ===== STATE =====
+    private MudTable<PurchaseDto>? _table;
+    private bool _isActioning;
+    private string? _selectedStatus = null;
+    private string _poSearch = string.Empty;
+
+    private Dictionary<string, string> _supplierNames = [];
+    private Dictionary<Guid, string> _productNames = [];
+    private List<WarehouseOption> _warehouses = [];
+    private List<SupplierDto> _suppliers = [];
+
+    private static readonly (string Label, string? Value, Color Color)[] _statusOptions =
+    [
+        ("All", null, Color.Default),
+        ("Draft", "Draft", Color.Default),
+        ("Submitted", "Submitted", Color.Info),
+        ("Approved", "Approved", Color.Success),
+        ("Partially Received", "PartiallyReceived", Color.Warning),
+        ("Fully Received", "FullyReceived", Color.Success),
+        ("Cancelled", "Cancelled", Color.Error),
+    ];
+
+    // ===== CREATE DIALOG =====
+    private bool _showCreateDialog;
+    private SupplierDto? _createSupplier;
+    private WarehouseOption? _createWarehouseExisting;
+    private string _createNewWarehouseName = string.Empty;
+    private DateTime? _createExpectedDelivery;
+
+    // ===== LINE ITEMS DIALOG =====
+    private bool _showLineItemsDialog;
+    private PurchaseDto? _editingPO;
+    private ProductDto? _addProduct;
+    private int _addQuantity = 1;
+    private decimal _addUnitPrice;
+
+    // ===== RECEIPT DIALOG =====
+    private bool _showReceiptDialog;
+    private PurchaseDto? _receiptPO;
+    private Dictionary<Guid, int> _receiptQuantities = [];
+    private Dictionary<Guid, int> _rejectedQuantities = [];
+    private string _receiptNotes = string.Empty;
+
+    // ===== DETAIL DIALOG =====
+    private bool _showDetailDialog;
+    private PurchaseDto? _detailPO;
+
+    // ===== INSPECTION DIALOG =====
+    private bool _showInspectionDialog;
+    private PurchaseDto? _inspectionPO;
+    private Dictionary<Guid, int> _inspectAccepted = [];
+    private Dictionary<Guid, string> _inspectRejectionReasons = [];
+    private string _inspectionNotes = string.Empty;
+
+    // ===== CONFIRM DIALOG =====
+    private bool _showConfirmDialog;
+    private PurchaseDto? _confirmTarget;
+    private string _confirmAction = string.Empty;
+    private string _confirmTitle = string.Empty;
+    private string _confirmMessage = string.Empty;
+    private Color _confirmColor = Color.Primary;
+
+    // ===== LIFECYCLE =====
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.WhenAll(LoadSuppliers(), LoadWarehouses());
+    }
+
+    private async Task LoadSuppliers()
+    {
+        try
+        {
+            var result = await MasterDataClient.SuppliersGetAsync(pageSize: 1000);
+            _suppliers = result?.Items?.ToList() ?? [];
+            _supplierNames = _suppliers.ToDictionary(s => s.Id.ToString(), s => s.Name);
+        }
+        catch { _suppliers = []; _supplierNames = []; }
+    }
+
+    private async Task LoadWarehouses()
+    {
+        try
+        {
+            var result = await InventoryClient.SearchAsync(new SearchProductInventoryQuery { PageSize = 1000 });
+            _warehouses = result?.Items?
+                .Where(i => i.WarehouseLocationId != default)
+                .GroupBy(i => i.WarehouseLocationId)
+                .Select(g =>
+                {
+                    var name = g.First().WarehouseLocationName;
+                    var display = string.IsNullOrWhiteSpace(name)
+                        ? $"Warehouse {g.Key.ToString()[..8]}…"
+                        : name;
+                    return new WarehouseOption(g.Key, display);
+                })
+                .ToList() ?? [];
+        }
+        catch { _warehouses = []; }
+    }
+
+    // ===== TABLE DATA =====
+
+    private async Task<TableData<PurchaseDto>> LoadPurchases(TableState state, CancellationToken ct)
+    {
+        try
+        {
+            var result = await PurchasesClient.SearchAsync(new SearchPurchasesQuery
+            {
+                Status = _selectedStatus,
+                PoNumber = string.IsNullOrWhiteSpace(_poSearch) ? null : _poSearch,
+                PageNumber = state.Page + 1,
+                PageSize = state.PageSize
+            }, ct);
+
+            var items = result?.Items?.ToList() ?? [];
+
+            // Pre-load product names for any new items
+            var unknownProducts = items
+                .SelectMany(po => po.LineItems.Select(li => li.ProductId))
+                .Where(id => !_productNames.ContainsKey(id))
+                .Distinct().ToList();
+            await Task.WhenAll(unknownProducts.Select(LoadProductName));
+            StateHasChanged();
+
+            return new TableData<PurchaseDto> { Items = items, TotalItems = (int)(result?.TotalCount ?? 0) };
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load purchase orders: {ex.Message}", Severity.Error);
+            return new TableData<PurchaseDto> { Items = [], TotalItems = 0 };
+        }
+    }
+
+    private async Task LoadProductName(Guid productId)
+    {
+        try
+        {
+            var product = await ExpendableClient.ProductsGetAsync(productId);
+            if (product != null) _productNames[productId] = $"{product.Name} ({product.Sku})";
+        }
+        catch { _productNames[productId] = productId.ToString()[..8] + "…"; }
+    }
+
+    private void SetStatusFilter(string? status)
+    {
+        _selectedStatus = status;
+        _table?.ReloadServerData();
+    }
+
+    // ===== LOOKUP HELPERS =====
+
+    private string GetSupplierName(string supplierId) =>
+        _supplierNames.TryGetValue(supplierId, out var name) ? name : supplierId[..Math.Min(8, supplierId.Length)] + "…";
+
+    private string GetProductName(Guid productId) =>
+        _productNames.TryGetValue(productId, out var name) ? name : productId.ToString()[..8] + "…";
+
+    // ===== AUTOCOMPLETE SEARCH FUNCS =====
+
+    private Task<IEnumerable<SupplierDto>> SearchSuppliers(string value, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return Task.FromResult(_suppliers.AsEnumerable());
+        return Task.FromResult(
+            _suppliers.Where(s =>
+                s.Name.Contains(value, StringComparison.OrdinalIgnoreCase) ||
+                s.Code.Contains(value, StringComparison.OrdinalIgnoreCase)));
+    }
+
+    private Task<IEnumerable<WarehouseOption>> SearchWarehouses(string value, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return Task.FromResult(_warehouses.AsEnumerable());
+        return Task.FromResult(
+            _warehouses.Where(w => w.Name.Contains(value, StringComparison.OrdinalIgnoreCase)));
+    }
+
+    private async Task<IEnumerable<ProductDto>> SearchProducts(string value, CancellationToken ct)
+    {
+        try
+        {
+            var result = await ExpendableClient.ProductsGetAsync(
+                keyword: string.IsNullOrWhiteSpace(value) ? null : value,
+                status: "Active",
+                pageSize: 30,
+                cancellationToken: ct);
+            return result?.Items ?? Enumerable.Empty<ProductDto>();
+        }
+        catch { return Enumerable.Empty<ProductDto>(); }
+    }
+
+    // ===== STATUS CHIP RENDER =====
+
+    private RenderFragment RenderStatusChip(string status) => __builder =>
+    {
+        var (color, icon) = status switch
+        {
+            "Draft"             => (Color.Default, Icons.Material.Filled.Edit),
+            "Submitted"         => (Color.Info, Icons.Material.Filled.Send),
+            "Approved"          => (Color.Success, Icons.Material.Filled.CheckCircle),
+            "PartiallyReceived" => (Color.Warning, Icons.Material.Filled.HourglassBottom),
+            "FullyReceived"     => (Color.Success, Icons.Material.Filled.Inventory),
+            "Cancelled"         => (Color.Error, Icons.Material.Filled.Cancel),
+            _                   => (Color.Default, Icons.Material.Filled.Help),
+        };
+        __builder.OpenComponent<MudChip<string>>(0);
+        __builder.AddAttribute(1, "Size", Size.Small);
+        __builder.AddAttribute(2, "Color", color);
+        __builder.AddAttribute(3, "Icon", icon);
+        __builder.AddAttribute(4, "ChildContent", (RenderFragment)(b => b.AddContent(5, status)));
+        __builder.CloseComponent();
+    };
+
+    // ===== DIALOGS =====
+
+    private void OpenCreateDialog()
+    {
+        _createSupplier = null;
+        _createWarehouseExisting = _warehouses.Count > 0 ? _warehouses[0] : null;
+        _createNewWarehouseName = _warehouses.Count > 0 ? _warehouses[0].Name : string.Empty;
+        _createExpectedDelivery = null;
+        _showCreateDialog = true;
+    }
+
+    private async Task CreatePurchaseOrder()
+    {
+        if (_createSupplier == null)
+        {
+            Snackbar.Add("Please select a supplier.", Severity.Warning);
+            return;
+        }
+
+        Guid warehouseId;
+        string warehouseName;
+        if (_createWarehouseExisting != null)
+        {
+            warehouseId = _createWarehouseExisting.Id;
+            warehouseName = _createWarehouseExisting.Name;
+        }
+        else if (!string.IsNullOrWhiteSpace(_createNewWarehouseName))
+        {
+            warehouseId = Guid.NewGuid();
+            warehouseName = _createNewWarehouseName.Trim();
+        }
+        else
+        {
+            Snackbar.Add("Please select an existing warehouse or enter a new warehouse name.", Severity.Warning);
+            return;
+        }
+
+        _isActioning = true;
+        try
+        {
+            var po = await ExpendableClient.PurchasesPostAsync(new CreatePurchaseOrderCommand
+            {
+                SupplierId = _createSupplier.Id.ToString(),
+                SupplierName = _createSupplier.Name,
+                WarehouseLocationId = warehouseId,
+                WarehouseLocationName = warehouseName,
+                ExpectedDeliveryDate = _createExpectedDelivery.HasValue
+                    ? new DateTimeOffset(DateTime.SpecifyKind(_createExpectedDelivery.Value.Date, DateTimeKind.Utc))
+                    : null
+            });
+
+            Snackbar.Add($"Purchase order {po.PurchaseOrderNumber} created.", Severity.Success);
+            _showCreateDialog = false;
+            await _table!.ReloadServerData();
+
+            // Open line items dialog immediately
+            _editingPO = po;
+            _addProduct = null;
+            _addQuantity = 1;
+            _addUnitPrice = 0;
+            _showLineItemsDialog = true;
+        }
+        catch (Exception ex) { Snackbar.Add($"Failed to create purchase order: {ex.Message}", Severity.Error); }
+        finally { _isActioning = false; }
+    }
+
+    private async Task OpenLineItemsDialog(PurchaseDto po)
+    {
+        // Refresh to get latest line items
+        try
+        {
+            var fresh = await ExpendableClient.PurchasesGetAsync(po.Id);
+            _editingPO = fresh ?? po;
+        }
+        catch { _editingPO = po; }
+
+        // Pre-load product names for current line items
+        var unknownProducts = _editingPO!.LineItems
+            .Select(li => li.ProductId)
+            .Where(id => !_productNames.ContainsKey(id))
+            .Distinct().ToList();
+        await Task.WhenAll(unknownProducts.Select(LoadProductName));
+
+        _addProduct = null;
+        _addQuantity = 1;
+        _addUnitPrice = 0;
+        _showLineItemsDialog = true;
+    }
+
+    private async Task AddLineItem()
+    {
+        if (_editingPO == null || _addProduct == null) return;
+        _isActioning = true;
+        try
+        {
+            await PurchasesClient.ItemsPostAsync(_editingPO.Id, new AddPurchaseLineItemCommand
+            {
+                PurchaseId = _editingPO.Id,
+                ProductId = _addProduct.Id,
+                ProductCode = _addProduct.Sku,
+                ProductName = _addProduct.Name,
+                Quantity = _addQuantity,
+                UnitPrice = (double)_addUnitPrice
+            });
+
+            // Cache product name
+            _productNames[_addProduct.Id] = $"{_addProduct.Name} ({_addProduct.Sku})";
+
+            Snackbar.Add($"Added {_addProduct.Name}.", Severity.Success);
+            _addProduct = null;
+            _addQuantity = 1;
+            _addUnitPrice = 0;
+
+            // Refresh the editing PO
+            var fresh = await ExpendableClient.PurchasesGetAsync(_editingPO.Id);
+            if (fresh != null) _editingPO = fresh;
+            await _table!.ReloadServerData();
+        }
+        catch (Exception ex) { Snackbar.Add($"Failed to add item: {ex.Message}", Severity.Error); }
+        finally { _isActioning = false; }
+    }
+
+    private async Task RemoveLineItem(PurchaseDto po, Guid productId)
+    {
+        _isActioning = true;
+        try
+        {
+            await PurchasesClient.ItemsDeleteAsync(po.Id, productId);
+            Snackbar.Add("Item removed.", Severity.Info);
+
+            var fresh = await ExpendableClient.PurchasesGetAsync(po.Id);
+            if (fresh != null) _editingPO = fresh;
+            await _table!.ReloadServerData();
+        }
+        catch (Exception ex) { Snackbar.Add($"Failed to remove item: {ex.Message}", Severity.Error); }
+        finally { _isActioning = false; }
+    }
+
+    private void OpenReceiptDialog(PurchaseDto po)
+    {
+        _receiptPO = po;
+        _receiptQuantities = po.LineItems.ToDictionary(i => i.ProductId, i => i.Quantity - i.ReceivedQuantity);
+        _rejectedQuantities = po.LineItems.ToDictionary(i => i.ProductId, _ => 0);
+        _receiptNotes = string.Empty;
+        _showReceiptDialog = true;
+    }
+
+    private int GetReceiptQty(Guid productId) =>
+        _receiptQuantities.TryGetValue(productId, out var qty) ? qty : 0;
+
+    private void SetReceiptQty(Guid productId, int value) =>
+        _receiptQuantities[productId] = value;
+
+    private int GetRejectedQty(Guid productId) =>
+        _rejectedQuantities.TryGetValue(productId, out var qty) ? qty : 0;
+
+    private void SetRejectedQty(Guid productId, int value) =>
+        _rejectedQuantities[productId] = value;
+
+    private async Task SubmitReceipt()
+    {
+        if (_receiptPO == null) return;
+        _isActioning = true;
+        try
+        {
+            var itemsToReceive = _receiptPO.LineItems
+                .Where(i => i.ReceivedQuantity < i.Quantity && GetReceiptQty(i.ProductId) > 0)
+                .ToList();
+
+            foreach (var i in itemsToReceive)
+            {
+                await PurchasesClient.ReceiptAsync(_receiptPO.Id, new RecordPurchaseReceiptCommand
+                {
+                    PurchaseId = _receiptPO.Id,
+                    ProductId = i.ProductId,
+                    ReceivedQuantity = GetReceiptQty(i.ProductId),
+                    RejectedQuantity = GetRejectedQty(i.ProductId),
+                    ReceivingNotes = string.IsNullOrWhiteSpace(_receiptNotes) ? null : _receiptNotes
+                });
+            }
+            Snackbar.Add("Receipt recorded successfully.", Severity.Success);
+            _showReceiptDialog = false;
+            await _table!.ReloadServerData();
+            await LoadWarehouses(); // Refresh warehouse list (new inventory entries)
+        }
+        catch (Exception ex) { Snackbar.Add($"Failed to record receipt: {ex.Message}", Severity.Error); }
+        finally { _isActioning = false; }
+    }
+
+    private async Task OpenDetailDialog(PurchaseDto po)
+    {
+        try
+        {
+            var fresh = await ExpendableClient.PurchasesGetAsync(po.Id);
+            _detailPO = fresh ?? po;
+        }
+        catch { _detailPO = po; }
+
+        var unknownProducts = _detailPO!.LineItems
+            .Select(li => li.ProductId)
+            .Where(id => !_productNames.ContainsKey(id))
+            .Distinct().ToList();
+        await Task.WhenAll(unknownProducts.Select(LoadProductName));
+
+        _showDetailDialog = true;
+    }
+
+    // ===== CONFIRM DIALOG ACTIONS =====
+
+    private void ConfirmAction(PurchaseDto po, string action)
+    {
+        _confirmTarget = po;
+        _confirmAction = action;
+        (_confirmTitle, _confirmMessage, _confirmColor) = action switch
+        {
+            "Submit" => ("Submit Purchase Order",
+                $"Submit {po.PurchaseOrderNumber} for approval? This cannot be undone.",
+                Color.Info),
+            "Approve" => ("Approve Purchase Order",
+                $"Approve {po.PurchaseOrderNumber}? Stock can be received once approved.",
+                Color.Success),
+            "Cancel" => ("Cancel Purchase Order",
+                $"Cancel {po.PurchaseOrderNumber}? This action cannot be undone.",
+                Color.Error),
+            _ => ("Confirm", "Are you sure?", Color.Primary)
+        };
+        _showConfirmDialog = true;
+    }
+
+    private async Task ExecuteConfirmedAction()
+    {
+        if (_confirmTarget == null) return;
+        _isActioning = true;
+        try
+        {
+            switch (_confirmAction)
+            {
+                case "Submit":
+                    await PurchasesClient.SubmitAsync(_confirmTarget.Id);
+                    Snackbar.Add($"{_confirmTarget.PurchaseOrderNumber} submitted for approval.", Severity.Info);
+                    break;
+                case "Approve":
+                    await PurchasesClient.ApproveAsync(_confirmTarget.Id);
+                    Snackbar.Add($"{_confirmTarget.PurchaseOrderNumber} approved.", Severity.Success);
+                    break;
+                case "Cancel":
+                    await PurchasesClient.CancelAsync(_confirmTarget.Id);
+                    Snackbar.Add($"{_confirmTarget.PurchaseOrderNumber} cancelled.", Severity.Warning);
+                    break;
+            }
+            _showConfirmDialog = false;
+            _showLineItemsDialog = false;
+            await _table!.ReloadServerData();
+        }
+        catch (Exception ex) { Snackbar.Add($"{_confirmAction} failed: {ex.Message}", Severity.Error); }
+        finally { _isActioning = false; }
+    }
+
+    // ===== INSPECTION DIALOG =====
+
+    private async Task OpenInspectionDialog(PurchaseDto po)
+    {
+        try
+        {
+            var fresh = await ExpendableClient.PurchasesGetAsync(po.Id);
+            _inspectionPO = fresh ?? po;
+        }
+        catch { _inspectionPO = po; }
+
+        // Pre-load product names
+        var unknownProducts = _inspectionPO!.LineItems
+            .Select(li => li.ProductId)
+            .Where(id => !_productNames.ContainsKey(id))
+            .Distinct().ToList();
+        await Task.WhenAll(unknownProducts.Select(LoadProductName));
+
+        // Default all accepted
+        _inspectAccepted = _inspectionPO.LineItems
+            .Where(li => li.QuantityInspection > 0)
+            .ToDictionary(li => li.ProductId, li => li.QuantityInspection);
+        _inspectRejectionReasons = [];
+        _inspectionNotes = string.Empty;
+        _showInspectionDialog = true;
+    }
+
+    private int GetInspectAccepted(Guid productId, int maxQty) =>
+        _inspectAccepted.TryGetValue(productId, out var v) ? v : maxQty;
+
+    private int GetInspectRejected(Guid productId, int maxQty) =>
+        maxQty - GetInspectAccepted(productId, maxQty);
+
+    private string GetInspectRejectionReason(Guid productId) =>
+        _inspectRejectionReasons.TryGetValue(productId, out var r) ? r : string.Empty;
+
+    private void SetInspectAccepted(Guid productId, int value, int maxQty)
+    {
+        _inspectAccepted[productId] = Math.Clamp(value, 0, maxQty);
+    }
+
+    private void SetInspectRejectionReason(Guid productId, string value) =>
+        _inspectRejectionReasons[productId] = value;
+
+    private async Task SubmitInspection()
+    {
+        if (_inspectionPO == null) return;
+
+        var pendingItems = _inspectionPO.LineItems.Where(li => li.QuantityInspection > 0).ToList();
+
+        // Validate rejection reasons
+        foreach (var item in pendingItems)
+        {
+            var rejected = GetInspectRejected(item.ProductId, item.QuantityInspection);
+            if (rejected > 0 && string.IsNullOrWhiteSpace(GetInspectRejectionReason(item.ProductId)))
+            {
+                Snackbar.Add($"Please enter a rejection reason for {GetProductName(item.ProductId)}.", Severity.Warning);
+                return;
+            }
+        }
+
+        _isActioning = true;
+        try
+        {
+            foreach (var item in pendingItems)
+            {
+                var accepted = GetInspectAccepted(item.ProductId, item.QuantityInspection);
+                var rejected = GetInspectRejected(item.ProductId, item.QuantityInspection);
+                await PurchasesClient.InspectAsync(_inspectionPO.Id, new RecordInspectionCommand
+                {
+                    PurchaseId = _inspectionPO.Id,
+                    ProductId = item.ProductId,
+                    QuantityAccepted = accepted,
+                    QuantityRejected = rejected,
+                    RejectionReason = rejected > 0 ? GetInspectRejectionReason(item.ProductId) : string.Empty,
+                    Notes = string.IsNullOrWhiteSpace(_inspectionNotes) ? null : _inspectionNotes
+                });
+            }
+            Snackbar.Add("Inspection recorded. Items are now in warehouse inventory.", Severity.Success);
+            _showInspectionDialog = false;
+            await _table!.ReloadServerData();
+        }
+        catch (Exception ex) { Snackbar.Add($"Inspection failed: {ex.Message}", Severity.Error); }
+        finally { _isActioning = false; }
+    }
+}

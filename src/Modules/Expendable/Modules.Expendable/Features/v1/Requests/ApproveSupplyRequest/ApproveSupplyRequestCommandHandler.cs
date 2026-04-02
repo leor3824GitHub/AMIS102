@@ -1,5 +1,7 @@
+using System.Net;
 using FSH.Framework.Caching;
 using FSH.Framework.Core.Context;
+using FSH.Framework.Core.Exceptions;
 using FSH.Modules.Expendable.Contracts.v1.Requests;
 using FSH.Modules.Expendable.Data;
 using Mediator;
@@ -25,10 +27,17 @@ public sealed class ApproveSupplyRequestCommandHandler : ICommandHandler<Approve
         var request = await _dbContext.SupplyRequests
             .FirstOrDefaultAsync(r => r.Id == command.Id, cancellationToken)
             .ConfigureAwait(false)
-            ?? throw new InvalidOperationException($"Supply request {command.Id} not found.");
+            ?? throw new NotFoundException($"Supply request {command.Id} not found.");
 
-        // Approve items and store the warehouse location on the request
-        request.Approve(_currentUser.GetUserId().ToString(), command.ApprovedQuantities, command.WarehouseLocationId);
+        try
+        {
+            request.Approve(_currentUser.GetUserId().ToString(), command.ApprovedQuantities, command.WarehouseLocationId);
+        }
+        catch (InvalidOperationException ex)
+        {
+            throw new CustomException(ex.Message, (IEnumerable<string>?)null, HttpStatusCode.Conflict);
+        }
+
         request.LastModifiedBy = _currentUser.GetUserId().ToString();
 
         // Auto-reserve approved quantities from the specified warehouse
@@ -48,11 +57,20 @@ public sealed class ApproveSupplyRequestCommandHandler : ICommandHandler<Approve
             foreach (var (productId, approvedQty) in command.ApprovedQuantities.Where(kvp => kvp.Value > 0))
             {
                 var inventory = productInventories.FirstOrDefault(pi => pi.ProductId == productId)
-                    ?? throw new InvalidOperationException(
-                        $"No warehouse inventory found for product {productId} at warehouse {command.WarehouseLocationId}. " +
-                        "Ensure the product has been received and inspected at this warehouse.");
+                    ?? throw new CustomException(
+                        "No inventory found for one or more products at the selected warehouse. " +
+                        "Ensure items have been received and inspected before approving.",
+                        errors: null,
+                        statusCode: HttpStatusCode.Conflict);
 
-                inventory.ReserveForAllocation(approvedQty);
+                try
+                {
+                    inventory.ReserveForAllocation(approvedQty);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    throw new CustomException(ex.Message, (IEnumerable<string>?)null, HttpStatusCode.Conflict);
+                }
 
                 await _cache.RemoveItemAsync($"inventory:{productId}:{command.WarehouseLocationId}", cancellationToken);
                 await _cache.RemoveItemAsync($"inventory:{inventory.Id}", cancellationToken);

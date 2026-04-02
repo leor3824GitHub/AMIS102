@@ -1,0 +1,313 @@
+@page "/vehicle/vehicles"
+@using FSH.Playground.Blazor.ApiClient
+@using FSH.Modules.Vehicle.Contracts.v1.Vehicles
+@inject IVehicleClient VehicleClient
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+
+<FshPageHeader Title="Vehicles" Description="Manage vehicle records and lifecycle">
+    <ActionContent>
+        <MudStack Row="true" Spacing="2" Style="width:100%; max-width: 700px;">
+            <MudTextField @bind-Value="_query.Keyword" Label="Search" Placeholder="Plate, make, model"
+                          Variant="Variant.Outlined" Size="Size.Small" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" />
+            <MudSelect T="string" @bind-Value="_query.Status" Label="Status" Dense="true" Clearable="true">
+                <MudSelectItem Value="@("Active")">Active</MudSelectItem>
+                <MudSelectItem Value="@("UnderRepair")">Under Repair</MudSelectItem>
+                <MudSelectItem Value="@("Retired")">Retired</MudSelectItem>
+                <MudSelectItem Value="@("Decommissioned")">Decommissioned</MudSelectItem>
+            </MudSelect>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="LoadVehicles" Disabled="_busy">
+                @if (_busy)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                }
+                Search
+            </MudButton>
+            <MudButton Variant="Variant.Outlined" Color="Color.Default" OnClick="ClearFilters" Disabled="_busy">Clear</MudButton>
+        </MudStack>
+    </ActionContent>
+</FshPageHeader>
+
+<div class="mt-4">
+    <MudStack Row="true" Spacing="1" Class="mb-3">
+        <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined">Total: @_vehicles.Count</MudChip>
+        <MudChip T="string" Color="Color.Success" Variant="Variant.Outlined">Active: @_vehicles.Count(v => v.Status == "Active")</MudChip>
+        <MudChip T="string" Color="Color.Warning" Variant="Variant.Outlined">Under Repair: @_vehicles.Count(v => v.Status == "UnderRepair")</MudChip>
+        <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">Retired: @_vehicles.Count(v => v.Status == "Retired")</MudChip>
+        <MudChip T="string" Color="Color.Error" Variant="Variant.Outlined">Decommissioned: @_vehicles.Count(v => v.Status == "Decommissioned")</MudChip>
+    </MudStack>
+
+    <MudGrid Spacing="2">
+        <MudItem xs="12" md="4">
+            <MudCard Class="fsh-card">
+                <MudCardContent>
+                    <MudText Typo="Typo.h6" Class="mb-3">Create Vehicle</MudText>
+                    <MudStack Spacing="2">
+                        <MudTextField @bind-Value="_create.PlateNumber" Label="Plate Number" Required="true" />
+                        <MudTextField @bind-Value="_create.Make" Label="Make" Required="true" />
+                        <MudTextField @bind-Value="_create.Model" Label="Model" Required="true" />
+                        <MudNumericField @bind-Value="_create.Year" Label="Year" Min="1900" Max="2100" Required="true" />
+                        <MudSelect T="string" @bind-Value="_create.Type" Label="Type" Required="true">
+                            @foreach (var vehicleType in VehicleTypes)
+                            {
+                                <MudSelectItem Value="@vehicleType">@vehicleType</MudSelectItem>
+                            }
+                        </MudSelect>
+                        <MudNumericField @bind-Value="_create.Odometer" Label="Initial Odometer" Min="0" />
+                        <MudTextField @bind-Value="_create.Notes" Label="Notes" Lines="2" />
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CreateVehicle" Disabled="_busy">Create</MudButton>
+                    </MudStack>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        <MudItem xs="12" md="8">
+            <MudCard Class="fsh-card">
+                <MudCardContent>
+                    <MudText Typo="Typo.h6" Class="mb-2">Vehicle List</MudText>
+                    @if (_vehicles.Count == 0)
+                    {
+                        <MudAlert Severity="Severity.Info">No vehicles found.</MudAlert>
+                    }
+                    else
+                    {
+                        <MudTable Items="_vehicles" Dense="true" Hover="true" Striped="true">
+                            <HeaderContent>
+                                <MudTh>Plate</MudTh>
+                                <MudTh>Vehicle</MudTh>
+                                <MudTh>Status</MudTh>
+                                <MudTh>Odometer</MudTh>
+                                <MudTh>Actions</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd>@context.PlateNumber</MudTd>
+                                <MudTd>@context.Make @context.Model (@context.Year)</MudTd>
+                                <MudTd>
+                                    <MudChip T="string" Size="Size.Small" Color="@StatusColor(context.Status)">@DisplayStatus(context.Status)</MudChip>
+                                </MudTd>
+                                <MudTd>@context.Odometer</MudTd>
+                                <MudTd>
+                                    <MudStack Row="true" Spacing="1">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Primary"
+                                                       Size="Size.Small" OnClick="@(() => GoDetail(context.Id))" />
+                                        @if (context.Status == "Active")
+                                        {
+                                            <MudIconButton Icon="@Icons.Material.Filled.RemoveCircle" Color="Color.Warning"
+                                                           Size="Size.Small" OnClick="@(() => Retire(context.Id))" />
+                                            <MudIconButton Icon="@Icons.Material.Filled.Block" Color="Color.Error"
+                                                           Size="Size.Small" OnClick="@(() => Decommission(context.Id))" />
+                                        }
+                                        else if (context.Status is "Retired" or "Decommissioned")
+                                        {
+                                            <MudIconButton Icon="@Icons.Material.Filled.RestartAlt" Color="Color.Success"
+                                                           Size="Size.Small" OnClick="@(() => Reactivate(context.Id))" />
+                                        }
+                                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error"
+                                                       Size="Size.Small" OnClick="@(() => Delete(context.Id))" />
+                                    </MudStack>
+                                </MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                    }
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+</div>
+
+@code {
+    private readonly SearchVehiclesQuery _query = new() { PageNumber = 1, PageSize = 100 };
+    private readonly List<VehicleDto> _vehicles = [];
+    private bool _busy;
+
+    private CreateVehicleModel _create = new();
+
+    protected override async Task OnInitializedAsync() => await LoadVehicles();
+
+    private async Task LoadVehicles()
+    {
+        try
+        {
+            _busy = true;
+            var result = await VehicleClient.SearchVehiclesAsync(_query);
+            _vehicles.Clear();
+            _vehicles.AddRange(result.Items ?? []);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load vehicles: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task CreateVehicle()
+    {
+        if (string.IsNullOrWhiteSpace(_create.PlateNumber) || string.IsNullOrWhiteSpace(_create.Make) || string.IsNullOrWhiteSpace(_create.Model) || string.IsNullOrWhiteSpace(_create.Type))
+        {
+            Snackbar.Add("Plate number, make, model, and type are required.", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            _busy = true;
+            await VehicleClient.CreateVehicleAsync(new CreateVehicleCommand(
+                _create.PlateNumber,
+                _create.Make,
+                _create.Model,
+                _create.Year,
+                _create.Type,
+                _create.Odometer,
+                _create.Notes));
+
+            Snackbar.Add("Vehicle created.", Severity.Success);
+            _create = new();
+            await LoadVehicles();
+        }
+        catch (ApiException apiEx) when (apiEx.StatusCode == StatusCodes.Status400BadRequest)
+        {
+            var validationMessages = ExtractValidationMessages(apiEx.Response);
+            if (validationMessages.Count > 0)
+            {
+                foreach (var message in validationMessages)
+                {
+                    Snackbar.Add(message, Severity.Warning);
+                }
+            }
+            else
+            {
+                Snackbar.Add("Vehicle creation failed validation. Please check your inputs and try again.", Severity.Warning);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Create failed: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void GoDetail(Guid id) => Navigation.NavigateTo($"/vehicle/vehicles/{id}");
+
+    private void ClearFilters()
+    {
+        _query.Keyword = null;
+        _query.Status = null;
+        _query.Type = null;
+    }
+
+    private async Task Retire(Guid id)
+    {
+        await RunAction(async () => await VehicleClient.RetireVehicleAsync(id), "Vehicle retired.");
+    }
+
+    private async Task Reactivate(Guid id)
+    {
+        await RunAction(async () => await VehicleClient.ReactivateVehicleAsync(id), "Vehicle reactivated.");
+    }
+
+    private async Task Decommission(Guid id)
+    {
+        await RunAction(async () => await VehicleClient.DecommissionVehicleAsync(id), "Vehicle decommissioned.");
+    }
+
+    private async Task Delete(Guid id)
+    {
+        await RunAction(async () => await VehicleClient.DeleteVehicleAsync(id), "Vehicle deleted.");
+    }
+
+    private async Task RunAction(Func<Task> action, string success)
+    {
+        try
+        {
+            _busy = true;
+            await action();
+            Snackbar.Add(success, Severity.Success);
+            await LoadVehicles();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private static Color StatusColor(string status) => status switch
+    {
+        "Active" => Color.Success,
+        "UnderRepair" => Color.Warning,
+        "Retired" => Color.Info,
+        "Decommissioned" => Color.Error,
+        _ => Color.Default
+    };
+
+    private static string DisplayStatus(string status) => status switch
+    {
+        "UnderRepair" => "Under Repair",
+        _ => status
+    };
+
+    private static readonly string[] VehicleTypes = ["Other", "Sedan", "SUV", "Van", "Truck", "Motorcycle", "Bus", "PickUp", "MPV", "Hatchback", "Crossover", "Wagon", "Minibus"];
+
+    private static List<string> ExtractValidationMessages(string? response)
+    {
+        if (string.IsNullOrWhiteSpace(response))
+        {
+            return [];
+        }
+
+        try
+        {
+            using var json = System.Text.Json.JsonDocument.Parse(response);
+            if (!json.RootElement.TryGetProperty("errors", out var errorsElement) ||
+                errorsElement.ValueKind != System.Text.Json.JsonValueKind.Object)
+            {
+                return [];
+            }
+
+            var messages = new List<string>();
+            foreach (var property in errorsElement.EnumerateObject())
+            {
+                if (property.Value.ValueKind != System.Text.Json.JsonValueKind.Array)
+                {
+                    continue;
+                }
+
+                foreach (var errorItem in property.Value.EnumerateArray())
+                {
+                    var message = errorItem.GetString();
+                    if (!string.IsNullOrWhiteSpace(message))
+                    {
+                        messages.Add(message);
+                    }
+                }
+            }
+
+            return messages;
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    private sealed class CreateVehicleModel
+    {
+        public string PlateNumber { get; set; } = string.Empty;
+        public string Make { get; set; } = string.Empty;
+        public string Model { get; set; } = string.Empty;
+        public int Year { get; set; } = DateTime.UtcNow.Year;
+        public string Type { get; set; } = "Sedan";
+        public int Odometer { get; set; }
+        public string? Notes { get; set; }
+    }
+}

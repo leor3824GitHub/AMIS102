@@ -55,7 +55,7 @@ public sealed class GetDepartmentIssuanceReportQueryHandler
         var products = await _dbContext.Products
             .AsNoTracking()
             .Where(p => productIds.Contains(p.Id))
-            .Select(p => new { p.Id, p.Name, p.SKU })
+            .Select(p => new { p.Id, p.Name, p.SKU, p.UnitOfMeasure, p.UnitPrice })
             .ToDictionaryAsync(p => p.Id, cancellationToken);
 
         // Aggregate by department
@@ -81,12 +81,16 @@ public sealed class GetDepartmentIssuanceReportQueryHandler
                 .Select(productGroup =>
                 {
                     var product = products.GetValueOrDefault(productGroup.Key);
+                    var totalQty = productGroup.Sum(i => i.FulfilledQuantity);
+                    var totalVal = productGroup.Sum(i => i.FulfilledValue);
                     return new DepartmentProductBreakdownDto(
                         productGroup.Key,
                         product?.Name ?? "Unknown",
                         product?.SKU ?? string.Empty,
-                        productGroup.Sum(i => i.FulfilledQuantity),
-                        productGroup.Sum(i => i.FulfilledValue)
+                        totalQty,
+                        totalVal,
+                        product?.UnitOfMeasure ?? string.Empty,
+                        product?.UnitPrice ?? (totalQty > 0 ? totalVal / totalQty : 0m)
                     );
                 })
                 .OrderBy(p => p.ProductName)

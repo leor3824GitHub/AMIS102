@@ -1,9 +1,13 @@
+using System.Collections.ObjectModel;
+using System.Net;
 using FSH.Framework.Caching;
 using FSH.Framework.Core.Context;
+using FSH.Framework.Core.Exceptions;
 using FSH.Modules.Expendable.Contracts.v1.Requests;
 using FSH.Modules.Expendable.Data;
 using FSH.Modules.Expendable.Domain.Inventory;
 using FSH.Modules.Expendable.Domain.Requests;
+using FSH.Modules.Expendable.Domain.Warehouse;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
@@ -70,7 +74,15 @@ public sealed class FulfillSupplyRequestCommandHandler : ICommandHandler<Fulfill
                     "Ensure the product has been received and inspected at this warehouse.");
 
             // Issue from warehouse FIFO batches
-            var issuedBatches = productInventory.IssueFromBatches(item.ApprovedQuantity);
+            Collection<IssuedBatchDetail> issuedBatches;
+            try
+            {
+                issuedBatches = productInventory.IssueFromBatches(item.ApprovedQuantity);
+            }
+            catch (InvalidOperationException ex)
+            {
+                throw new CustomException(ex.Message, ex, HttpStatusCode.Conflict);
+            }
             var totalValue = issuedBatches.Sum(b => b.TotalValue);
             var unitPrice = item.ApprovedQuantity > 0 ? Math.Round(totalValue / item.ApprovedQuantity, 4) : 0m;
 

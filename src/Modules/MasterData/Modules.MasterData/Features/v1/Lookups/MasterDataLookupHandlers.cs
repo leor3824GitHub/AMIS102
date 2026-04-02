@@ -45,58 +45,16 @@ public sealed class SearchEmployeeReferencesQueryHandler(MasterDataDbContext dbC
     {
         try
         {
-            logger.LogDebug("SearchEmployeeReferencesQueryHandler: Received query with Keyword={Keyword}, IsActive={IsActive}, PageNumber={PageNumber}, PageSize={PageSize}",
-                query.Keyword, query.IsActive, query.PageNumber, query.PageSize);
+            var employeeQuery = MasterDataLookupQueryBuilder.BuildEmployeeReferenceQuery(
+                dbContext,
+                keyword: query.Keyword,
+                identityUserId: query.IdentityUserId,
+                officeId: query.OfficeId,
+                departmentId: query.DepartmentId,
+                positionId: query.PositionId,
+                isActive: query.IsActive);
 
-            var employeeQuery = MasterDataLookupQueryBuilder.BuildEmployeeReferenceQuery(dbContext);
-            logger.LogDebug("Query builder executed successfully");
-
-            if (!string.IsNullOrWhiteSpace(query.Keyword))
-            {
-                employeeQuery = employeeQuery.Where(x =>
-                    x.EmployeeNumber.Contains(query.Keyword) ||
-                    x.FirstName.Contains(query.Keyword) ||
-                    x.LastName.Contains(query.Keyword) ||
-                    (x.WorkEmail != null && x.WorkEmail.Contains(query.Keyword)) ||
-                    x.OfficeName.Contains(query.Keyword) ||
-                    x.DepartmentName.Contains(query.Keyword) ||
-                    x.PositionName.Contains(query.Keyword));
-                logger.LogDebug("Keyword filter applied: {Keyword}", query.Keyword);
-            }
-
-            if (!string.IsNullOrWhiteSpace(query.IdentityUserId))
-            {
-                employeeQuery = employeeQuery.Where(x => x.IdentityUserId == query.IdentityUserId);
-                logger.LogDebug("IdentityUserId filter applied: {IdentityUserId}", query.IdentityUserId);
-            }
-
-            if (query.OfficeId.HasValue)
-            {
-                employeeQuery = employeeQuery.Where(x => x.OfficeId == query.OfficeId.Value);
-                logger.LogDebug("OfficeId filter applied: {OfficeId}", query.OfficeId);
-            }
-
-            if (query.DepartmentId.HasValue)
-            {
-                employeeQuery = employeeQuery.Where(x => x.DepartmentId == query.DepartmentId.Value);
-                logger.LogDebug("DepartmentId filter applied: {DepartmentId}", query.DepartmentId);
-            }
-
-            if (query.PositionId.HasValue)
-            {
-                employeeQuery = employeeQuery.Where(x => x.PositionId == query.PositionId.Value);
-                logger.LogDebug("PositionId filter applied: {PositionId}", query.PositionId);
-            }
-
-            if (query.IsActive.HasValue)
-            {
-                employeeQuery = employeeQuery.Where(x => x.IsActive == query.IsActive.Value);
-                logger.LogDebug("IsActive filter applied: {IsActive}", query.IsActive);
-            }
-
-            var result = await employeeQuery.ToPagedResponseAsync(query, cancellationToken).ConfigureAwait(false);
-            logger.LogDebug("Query executed successfully, returned {Count} items", result.Items?.Count ?? 0);
-            return result;
+            return await employeeQuery.ToPagedResponseAsync(query, cancellationToken).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -279,13 +237,43 @@ internal static class MasterDataLookupQueryBuilder
 {
     internal static IQueryable<EmployeeReferenceDto> BuildEmployeeReferenceQuery(
         MasterDataDbContext dbContext,
-        System.Linq.Expressions.Expression<Func<FSH.Modules.MasterData.Domain.EmployeeProfile, bool>>? employeeFilter = null)
+        System.Linq.Expressions.Expression<Func<FSH.Modules.MasterData.Domain.EmployeeProfile, bool>>? employeeFilter = null,
+        string? keyword = null,
+        string? identityUserId = null,
+        Guid? officeId = null,
+        Guid? departmentId = null,
+        Guid? positionId = null,
+        bool? isActive = null)
     {
         var employees = dbContext.Employees.AsNoTracking();
+
         if (employeeFilter is not null)
-        {
             employees = employees.Where(employeeFilter);
-        }
+
+        if (!string.IsNullOrWhiteSpace(identityUserId))
+            employees = employees.Where(e => e.IdentityUserId == identityUserId);
+
+        if (officeId.HasValue)
+            employees = employees.Where(e => e.OfficeId == officeId.Value);
+
+        if (departmentId.HasValue)
+            employees = employees.Where(e => e.DepartmentId == departmentId.Value);
+
+        if (positionId.HasValue)
+            employees = employees.Where(e => e.PositionId == positionId.Value);
+
+        if (isActive.HasValue)
+            employees = employees.Where(e => e.IsActive == isActive.Value);
+
+        if (!string.IsNullOrWhiteSpace(keyword))
+            employees = employees.Where(e =>
+                e.EmployeeNumber.Contains(keyword) ||
+                e.FirstName.Contains(keyword) ||
+                e.LastName.Contains(keyword) ||
+                (e.WorkEmail != null && e.WorkEmail.Contains(keyword)) ||
+                (e.Office != null && (e.Office.Code.Contains(keyword) || e.Office.Name.Contains(keyword))) ||
+                (e.Department != null && (e.Department.Code.Contains(keyword) || e.Department.Name.Contains(keyword))) ||
+                (e.Position != null && (e.Position.Code.Contains(keyword) || e.Position.Name.Contains(keyword))));
 
         return employees
             .OrderBy(employee => employee.LastName)

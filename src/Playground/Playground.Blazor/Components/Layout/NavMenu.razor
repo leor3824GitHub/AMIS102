@@ -38,58 +38,75 @@
             Audit Logs
         </MudNavLink>
 
-        <MudNavLink Href="/expendable" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Inventory2">
-            Expendable
-        </MudNavLink>
-        <MudNavLink Href="/expendable/shopping" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.ShoppingBag"
-                    Class="ml-4">
-            Shop
-        </MudNavLink>
-        <MudNavLink Href="/expendable/cart" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.ShoppingCart"
-                Class="ml-4">
-            Basket
-        </MudNavLink>
-        <MudNavLink Href="/expendable/products" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Label"
-                    Class="ml-4">
-            Products
-        </MudNavLink>
-        <MudNavLink Href="/expendable/purchases" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.ReceiptLong"
-                    Class="ml-4">
-            Purchases
-        </MudNavLink>
-        <MudNavLink Href="/expendable/requests" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Description"
-                    Class="ml-4">
-            Supply Requests
-        </MudNavLink>
-        <MudNavLink Href="/expendable/warehouse" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Warehouse"
-                    Class="ml-4">
-            Warehouse
-        </MudNavLink>
+        <MudNavGroup Title="Expendable" Icon="@Icons.Material.Outlined.Inventory2" @bind-Expanded="_expendableExpanded">
+            <MudNavLink Href="/expendable/my-requests" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Inbox">
+                My Requests
+            </MudNavLink>
+            <MudNavLink Href="/expendable/shopping" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.ShoppingBag">
+                Shop
+            </MudNavLink>
+            <MudNavLink Href="/expendable/cart" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.ShoppingCart">
+                Basket
+            </MudNavLink>
+            <MudNavLink Href="/expendable/products" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Label">
+                Products
+            </MudNavLink>
+            <MudNavLink Href="/expendable/purchases" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.ReceiptLong">
+                Purchases
+            </MudNavLink>
+            <MudNavLink Href="/expendable/requests" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Description">
+                Supply Requests
+            </MudNavLink>
+            <MudNavLink Href="/expendable/warehouse" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Warehouse">
+                Warehouse
+            </MudNavLink>
+            <MudNavLink Href="/expendable/reports/department" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Assessment">
+                Issuance Report
+            </MudNavLink>
+        </MudNavGroup>
+
+        <MudNavGroup Title="Vehicle" Icon="@Icons.Material.Outlined.DirectionsCar" @bind-Expanded="_vehicleExpanded">
+            <MudNavLink Href="/vehicle/vehicles" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.DirectionsCarFilled">
+                Vehicles
+            </MudNavLink>
+            <MudNavLink Href="/vehicle/repairs" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Build">
+                Repairs
+            </MudNavLink>
+            <MudNavLink Href="/vehicle/maintenance/schedules" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.EventRepeat">
+                Maintenance Schedules
+            </MudNavLink>
+            <MudNavLink Href="/vehicle/maintenance/due" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.WarningAmber">
+                Maintenance Due
+            </MudNavLink>
+            <MudNavLink Href="/vehicle/maintenance/logs" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.HistoryEdu">
+                Maintenance Logs
+            </MudNavLink>
+        </MudNavGroup>
 
         <!-- Master Data Section -->
-        <div class="fsh-nav-section-title">Master Data</div>
-
-        <MudNavLink Href="/master-data/departments" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Business">
-            Departments
-        </MudNavLink>
-        <MudNavLink Href="/master-data/offices" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.LocationCity">
-            Offices
-        </MudNavLink>
-        <MudNavLink Href="/master-data/positions" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.WorkOutline">
-            Positions
-        </MudNavLink>
-        <MudNavLink Href="/master-data/employees" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Person3">
-            Employees
-        </MudNavLink>
-        <MudNavLink Href="/master-data/unit-of-measures" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Straighten">
-            Units of Measure
-        </MudNavLink>
-        <MudNavLink Href="/masterdata/suppliers" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.LocalShipping">
-            Suppliers
-        </MudNavLink>
-        <MudNavLink Href="/masterdata/categories" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Category">
-            Categories
-        </MudNavLink>
+        <MudNavGroup Title="Master Data" Icon="@Icons.Material.Outlined.Dataset" HideExpandIcon="false" @bind-Expanded="_masterDataExpanded">
+            <MudNavLink Href="/master-data/departments" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Business">
+                Departments
+            </MudNavLink>
+            <MudNavLink Href="/master-data/offices" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.LocationCity">
+                Offices
+            </MudNavLink>
+            <MudNavLink Href="/master-data/positions" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.WorkOutline">
+                Positions
+            </MudNavLink>
+            <MudNavLink Href="/master-data/employees" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Person3">
+                Employees
+            </MudNavLink>
+            <MudNavLink Href="/master-data/unit-of-measures" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Straighten">
+                Units of Measure
+            </MudNavLink>
+            <MudNavLink Href="/masterdata/suppliers" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.LocalShipping">
+                Suppliers
+            </MudNavLink>
+            <MudNavLink Href="/masterdata/categories" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Category">
+                Categories
+            </MudNavLink>
+        </MudNavGroup>
 
         <!-- Communication Section -->
         <div class="fsh-nav-section-title">Communication</div>
@@ -137,9 +154,17 @@
 
 @code {
     private bool _isRootTenantAdmin;
+    private bool _expendableExpanded;
+    private bool _vehicleExpanded;
+    private bool _masterDataExpanded;
 
     protected override async Task OnInitializedAsync()
     {
+        var uri = Navigation.Uri;
+        _expendableExpanded = uri.Contains("/expendable", StringComparison.OrdinalIgnoreCase);
+        _vehicleExpanded = uri.Contains("/vehicle", StringComparison.OrdinalIgnoreCase);
+        _masterDataExpanded = uri.Contains("/master-data", StringComparison.OrdinalIgnoreCase)
+                           || uri.Contains("/masterdata", StringComparison.OrdinalIgnoreCase);
         await CheckRootTenantAdmin();
     }
 

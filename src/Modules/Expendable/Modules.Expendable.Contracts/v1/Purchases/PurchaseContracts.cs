@@ -8,7 +8,8 @@ public record PurchaseLineItemDto(
     int Quantity,
     decimal UnitPrice,
     int ReceivedQuantity,
-    int RejectedQuantity);
+    int RejectedQuantity,
+    int QuantityInspection);
 
 public record PurchaseDto(
     Guid Id,

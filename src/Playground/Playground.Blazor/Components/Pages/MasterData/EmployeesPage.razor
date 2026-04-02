@@ -121,6 +121,7 @@
                                     <th>Office</th>
                                     <th>Department</th>
                                     <th>Position</th>
+                                    <th>Linked Account</th>
                                     <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
@@ -135,6 +136,21 @@
                                         <td>@(GetOfficeName(employee.OfficeId))</td>
                                         <td>@(GetDepartmentName(employee.DepartmentId))</td>
                                         <td>@(GetPositionName(employee.PositionId))</td>
+                                        <td>
+                                            @if (!string.IsNullOrWhiteSpace(employee.IdentityUserId))
+                                            {
+                                                <MudTooltip Text="@GetLinkedAccountDisplay(employee.IdentityUserId)">
+                                                    <MudChip T="string" Size="Size.Small" Color="Color.Success"
+                                                             Icon="@Icons.Material.Filled.Link" Variant="Variant.Outlined">
+                                                        @GetLinkedAccountDisplay(employee.IdentityUserId)
+                                                    </MudChip>
+                                                </MudTooltip>
+                                            }
+                                            else
+                                            {
+                                                <MudText Typo="Typo.body2" Color="Color.Default">—</MudText>
+                                            }
+                                        </td>
                                         <td><MudChip T="string" Size="Size.Small" Color="@(employee.IsActive ? Color.Success : Color.Default)">@(employee.IsActive ? "Active" : "Inactive")</MudChip></td>
                                         <td>
                                             <MudStack Row="true" Spacing="1">
@@ -164,6 +180,7 @@
     private EmployeeReferenceDto? EditingEmployee { get; set; }
     private List<EmployeeReferenceDto> _employees = new();
     private List<EmployeeReferenceDto> _allEmployees = new();
+    private readonly Dictionary<string, string> _linkedAccountDisplays = [];
     private List<OfficeReferenceDto> _offices = new();
     private List<DepartmentReferenceDto> _departments = new();
     private List<PositionReferenceDto> _positions = new();
@@ -259,7 +276,38 @@
             _isLoading = false;
             StateHasChanged();
         }
+
+        await LoadLinkedAccountDisplaysAsync();
     }
+
+    private async Task LoadLinkedAccountDisplaysAsync()
+    {
+        var linkedIds = _allEmployees
+            .Where(e => !string.IsNullOrWhiteSpace(e.IdentityUserId))
+            .Select(e => e.IdentityUserId!)
+            .Distinct()
+            .Where(id => !_linkedAccountDisplays.ContainsKey(id))
+            .ToList();
+
+        foreach (var identityUserId in linkedIds)
+        {
+            if (!Guid.TryParse(identityUserId, out var identityGuid)) continue;
+            try
+            {
+                var user = await IdentityClient.UsersGetAsync(identityGuid);
+                _linkedAccountDisplays[identityUserId] = $"{user.FirstName} {user.LastName} ({user.Email})".Trim();
+            }
+            catch
+            {
+                _linkedAccountDisplays[identityUserId] = identityUserId[..8] + "…";
+            }
+        }
+
+        StateHasChanged();
+    }
+
+    private string GetLinkedAccountDisplay(string identityUserId) =>
+        _linkedAccountDisplays.TryGetValue(identityUserId, out var display) ? display : "Linked";
 
     private async Task LoadOffices()
     {

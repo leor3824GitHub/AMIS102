@@ -1,0 +1,44 @@
+using FluentValidation.Results;
+using FSH.Framework.Core.Context;
+using FSH.Modules.Vehicle.Contracts.v1.Repairs;
+using FSH.Modules.Vehicle.Data;
+using FSH.Modules.Vehicle.Domain.Repairs;
+using Mediator;
+using Microsoft.EntityFrameworkCore;
+
+namespace FSH.Modules.Vehicle.Features.v1.Repairs.StartRepair;
+
+public sealed class StartRepairCommandHandler(VehicleDbContext db, ICurrentUser currentUser)
+    : ICommandHandler<StartRepairCommand, Unit>
+{
+    public async ValueTask<Unit> Handle(StartRepairCommand cmd, CancellationToken ct)
+    {
+        var record = await db.RepairRecords.FirstOrDefaultAsync(r => r.Id == cmd.Id, ct).ConfigureAwait(false)
+            ?? throw new FluentValidation.ValidationException(
+            [new ValidationFailure(nameof(cmd.Id), "Repair record not found.")]);
+
+        if (record.Status != RepairStatus.Pending)
+            throw new FluentValidation.ValidationException(
+            [new ValidationFailure(nameof(cmd.Id), "Only pending repairs can be started.")]);
+
+        record.StartRepair();
+        record.LastModifiedBy = currentUser.GetUserId().ToString();
+
+        // Mark the vehicle as under repair
+        var vehicle = await db.Vehicles.FirstOrDefaultAsync(v => v.Id == record.VehicleId, ct).ConfigureAwait(false)
+            ?? throw new FluentValidation.ValidationException(
+            [new ValidationFailure(nameof(cmd.Id), "Vehicle not found for this repair record.")]);
+
+        try
+        {
+            vehicle.MarkUnderRepair();
+        }
+        catch (InvalidOperationException ex)
+        {
+            throw new FluentValidation.ValidationException([new ValidationFailure(nameof(cmd.Id), ex.Message)]);
+        }
+
+        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        return Unit.Value;
+    }
+}

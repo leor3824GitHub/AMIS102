@@ -56,9 +56,16 @@ internal static class SimpleBffAuth
                 var jwtHandler = new JwtSecurityTokenHandler();
                 var jwtToken = jwtHandler.ReadJwtToken(token.AccessToken);
 
+                var userId = jwtToken.Subject
+                    ?? jwtToken.Claims.FirstOrDefault(c =>
+                            c.Type == ClaimTypes.NameIdentifier ||
+                            c.Type == "nameid" ||
+                            c.Type == "sub")?.Value
+                    ?? Guid.NewGuid().ToString();
+
                 var claims = new List<Claim>
                 {
-                    new(ClaimTypes.NameIdentifier, jwtToken.Subject ?? Guid.NewGuid().ToString()),
+                    new(ClaimTypes.NameIdentifier, userId),
                     new(ClaimTypes.Email, email),
                     new("access_token", token.AccessToken), // Store JWT for API calls
                     new("refresh_token", token.RefreshToken), // Store refresh token for token renewal

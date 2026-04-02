@@ -31,6 +31,20 @@ public static class SupplyRequestClientExtensions
             ?? throw new InvalidOperationException("Null response from fulfill endpoint.");
     }
 
+    /// <summary>Cancel a supply request (Draft, Submitted, or Approved — not yet Fulfilled)</summary>
+    public static async Task CancelAsync(
+        this ISupply_requestsClient client,
+        System.Guid id,
+        CancellationToken cancellationToken = default)
+    {
+        var httpClient = GetHttpClient(client);
+        var response = await httpClient.PutAsync(
+            $"api/v1/expendable/supply-requests/{id}/cancel",
+            null,
+            cancellationToken);
+        response.EnsureSuccessStatusCode();
+    }
+
     private static HttpClient GetHttpClient(ISupply_requestsClient client)
     {
         if (client is not Supply_requestsClient impl)

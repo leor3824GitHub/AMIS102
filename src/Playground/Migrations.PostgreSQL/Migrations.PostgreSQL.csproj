@@ -20,6 +20,7 @@
 	  <ProjectReference Include="..\..\Modules\Identity\Modules.Identity\Modules.Identity.csproj" />
 	  <ProjectReference Include="..\..\Modules\MasterData\Modules.MasterData\Modules.MasterData.csproj" />
 	  <ProjectReference Include="..\..\Modules\Multitenancy\Modules.Multitenancy\Modules.Multitenancy.csproj" />
+	  <ProjectReference Include="..\..\Modules\Vehicle\Modules.Vehicle\Modules.Vehicle.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

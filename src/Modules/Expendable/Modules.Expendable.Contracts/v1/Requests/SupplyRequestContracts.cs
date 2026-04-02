@@ -131,7 +131,9 @@ public record DepartmentProductBreakdownDto(
     string ProductName,
     string ProductCode,
     int TotalQuantityIssued,
-    decimal TotalValue
+    decimal TotalValue,
+    string Unit,
+    decimal UnitCost
 );
 
 // ============= EMPLOYEE ISSUANCE HISTORY =============

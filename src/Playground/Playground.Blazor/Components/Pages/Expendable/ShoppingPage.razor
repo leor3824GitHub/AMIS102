@@ -29,18 +29,30 @@
             </div>
         </MudItem>
         
-    <MudItem xs="12" Class="mb-4">
-        <MudChipSet T="string" 
-                    SelectedValue="_selectedCategory" 
-                    SelectedValueChanged="OnCategoryChanged" 
-                    CheckMark="true" 
-                    Variant="Variant.Text" 
+    <MudItem xs="12" Class="mb-2">
+        <MudChipSet T="string"
+                    SelectedValue="_selectedCategory"
+                    SelectedValueChanged="OnCategoryChanged"
+                    CheckMark="true"
+                    Variant="Variant.Text"
                     Color="Color.Primary">
-           <MudChip Value="@("All")" Default="true">All Categories</MudChip> 
+           <MudChip Value="@("All")" Default="true">All Categories</MudChip>
     @foreach (var cat in _categories)
     {
         <MudChip Value="@cat.Id.ToString()">@cat.Name</MudChip>
     }
+        </MudChipSet>
+    </MudItem>
+    <MudItem xs="12" Class="mb-4">
+        <MudChipSet T="string"
+                    SelectedValue="_stockFilter"
+                    SelectedValueChanged="OnStockFilterChanged"
+                    CheckMark="true"
+                    Variant="Variant.Text"
+                    Color="Color.Secondary">
+            <MudChip Value="@("All")" Default="true">All Stock</MudChip>
+            <MudChip Value="@("InStock")" Color="Color.Success">In Stock</MudChip>
+            <MudChip Value="@("OutOfStock")" Color="Color.Error">Out of Stock</MudChip>
         </MudChipSet>
     </MudItem>
         <!-- Search Box -->
@@ -79,9 +91,15 @@
                                             <MudText Typo="Typo.h6" Color="Color.Primary" Class="mb-0">
                                                 @($"${product.UnitPrice:F2}")
                                             </MudText>
-                                            <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                                Balance: @GetProductBalance(product)
-                                            </MudText>
+                                            @{var bal = GetProductBalance(product);}
+                                            @if (bal <= 0)
+                                            {
+                                                <MudChip T="string" Size="Size.Small" Color="Color.Error" Class="pa-0 mt-1">Out of Stock</MudChip>
+                                            }
+                                            else
+                                            {
+                                                <MudText Typo="Typo.caption" Color="Color.Secondary">Balance: @bal</MudText>
+                                            }
                                         </MudItem>
                                     </MudGrid>
                                 </MudCardContent>
@@ -220,6 +238,7 @@
 
     private List<CategoryDto> _categories = new();
     private string _selectedCategory = "All"; // holds either "All" or Category.Id.ToString()
+    private string _stockFilter = "All"; // "All", "InStock", "OutOfStock"
 
     private string _currentEmployeeId = string.Empty;
 
@@ -320,14 +339,17 @@
         // We compare the ProductDto.CategoryId (string) to our _selectedCategory (string)
         if (_selectedCategory != "All")
         {
-            _products = allItems
+            allItems = allItems
                 .Where(p => string.Equals(p.CategoryId, _selectedCategory, StringComparison.OrdinalIgnoreCase))
                 .ToList();
         }
-        else
+
+        _products = _stockFilter switch
         {
-            _products = allItems;
-        }
+            "InStock"    => allItems.Where(p => GetProductBalance(p) > 0).ToList(),
+            "OutOfStock" => allItems.Where(p => GetProductBalance(p) <= 0).ToList(),
+            _            => allItems
+        };
     }
     catch (Exception ex)
     {
@@ -342,10 +364,13 @@
 }
     private async Task OnCategoryChanged(string category)
     {
-       // If null (deselected), default to "All"
         _selectedCategory = string.IsNullOrEmpty(category) ? "All" : category;
-        
-        // Refresh the list with the new filter
+        await LoadProducts();
+    }
+
+    private async Task OnStockFilterChanged(string filter)
+    {
+        _stockFilter = string.IsNullOrEmpty(filter) ? "All" : filter;
         await LoadProducts();
     }
 

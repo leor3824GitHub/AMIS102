@@ -21,7 +21,8 @@ internal static class PurchaseMapper
                 x.Quantity,
                 x.UnitPrice,
                 x.ReceivedQuantity,
-                x.RejectedQuantity)).ToList(),
+                x.RejectedQuantity,
+                x.QuantityInspection)).ToList(),
             purchase.CreatedOnUtc,
             purchase.CreatedBy);
 }
