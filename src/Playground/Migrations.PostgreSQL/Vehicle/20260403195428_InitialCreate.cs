@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace FSH.Playground.Migrations.PostgreSQL.Vehicle
 {
     /// <inheritdoc />
-    public partial class InitialVehicleSchema : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -30,7 +30,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.Vehicle
                     Cost = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: true),
                     PerformedBy = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
                     Notes = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
-                    Version = table.Column<byte[]>(type: "bytea", rowVersion: true, nullable: false),
+                    Version = table.Column<byte[]>(type: "bytea", nullable: false),
                     CreatedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     CreatedBy = table.Column<string>(type: "text", nullable: true),
                     LastModifiedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
@@ -61,7 +61,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.Vehicle
                     LastDoneDate = table.Column<DateOnly>(type: "date", nullable: true),
                     LastDoneMileage = table.Column<int>(type: "integer", nullable: true),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
-                    Version = table.Column<byte[]>(type: "bytea", rowVersion: true, nullable: false),
+                    Version = table.Column<byte[]>(type: "bytea", nullable: false),
                     CreatedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     CreatedBy = table.Column<string>(type: "text", nullable: true),
                     LastModifiedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
@@ -92,7 +92,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.Vehicle
                     Status = table.Column<int>(type: "integer", nullable: false),
                     CompletedDate = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     Notes = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
-                    Version = table.Column<byte[]>(type: "bytea", rowVersion: true, nullable: false),
+                    Version = table.Column<byte[]>(type: "bytea", nullable: false),
                     CreatedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     CreatedBy = table.Column<string>(type: "text", nullable: true),
                     LastModifiedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
@@ -120,12 +120,20 @@ namespace FSH.Playground.Migrations.PostgreSQL.Vehicle
                     Type = table.Column<int>(type: "integer", nullable: false),
                     Status = table.Column<int>(type: "integer", nullable: false),
                     Odometer = table.Column<int>(type: "integer", nullable: false),
+                    MotorNumber = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    ChassisNumber = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    NumberOfCylinders = table.Column<int>(type: "integer", nullable: true),
+                    EngineDisplacementCC = table.Column<int>(type: "integer", nullable: true),
+                    FuelType = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    VehicleUse = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    AcquisitionCost = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: true),
                     AssignedDepartmentId = table.Column<Guid>(type: "uuid", nullable: true),
                     AssignedDepartment = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
                     AssignedDriverId = table.Column<Guid>(type: "uuid", nullable: true),
                     AssignedDriver = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
+                    AccountableOfficerTitle = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
                     Notes = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
-                    Version = table.Column<byte[]>(type: "bytea", rowVersion: true, nullable: false),
+                    Version = table.Column<byte[]>(type: "bytea", nullable: false),
                     CreatedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     CreatedBy = table.Column<string>(type: "text", nullable: true),
                     LastModifiedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),

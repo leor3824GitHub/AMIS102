@@ -1,16 +1,12 @@
-using System;
+﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
-
-#pragma warning disable CA1707 // Generated migration class naming with timestamp/underscore.
-#pragma warning disable S101 // Generated migration class naming.
-#pragma warning disable CA1861 // Generated migration constant arrays.
 
 #nullable disable
 
-namespace FSH.Modules.Expendable.Data.Migrations
+namespace FSH.Playground.Migrations.PostgreSQL.Expendable
 {
     /// <inheritdoc />
-    public partial class _20260307_InitialExpendable : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -30,7 +26,7 @@ namespace FSH.Modules.Expendable.Data.Migrations
                     TotalQuantityReceived = table.Column<int>(type: "integer", nullable: false),
                     TotalQuantityConsumed = table.Column<int>(type: "integer", nullable: false),
                     LastInventoryDate = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    Version = table.Column<byte[]>(type: "bytea", rowVersion: true, nullable: false),
+                    Version = table.Column<byte[]>(type: "bytea", nullable: false),
                     CreatedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     CreatedBy = table.Column<string>(type: "text", nullable: true),
                     LastModifiedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
@@ -52,7 +48,7 @@ namespace FSH.Modules.Expendable.Data.Migrations
                     Status = table.Column<int>(type: "integer", nullable: false),
                     ConvertedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     ConvertedToRequestId = table.Column<Guid>(type: "uuid", nullable: true),
-                    Version = table.Column<byte[]>(type: "bytea", rowVersion: true, nullable: false),
+                    Version = table.Column<byte[]>(type: "bytea", nullable: false),
                     CreatedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     CreatedBy = table.Column<string>(type: "text", nullable: true),
                     LastModifiedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
@@ -129,6 +125,42 @@ namespace FSH.Modules.Expendable.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "ProductInventory",
+                schema: "expendable",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    ProductId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ProductCode = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    ProductName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    WarehouseLocationId = table.Column<Guid>(type: "uuid", nullable: false),
+                    WarehouseLocationName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    QuantityAvailable = table.Column<int>(type: "integer", nullable: false),
+                    QuantityReserved = table.Column<int>(type: "integer", nullable: false),
+                    QuantityIssued = table.Column<int>(type: "integer", nullable: false),
+                    TotalValue = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
+                    ReservedValue = table.Column<decimal>(type: "numeric", nullable: false),
+                    FirstReceiptDate = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    LastReceiptDate = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    LastIssueDate = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    Status = table.Column<int>(type: "integer", nullable: false),
+                    Version = table.Column<byte[]>(type: "bytea", nullable: false),
+                    CreatedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    LastModifiedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    LastModifiedBy = table.Column<string>(type: "text", nullable: true),
+                    DeletedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    DeletedBy = table.Column<string>(type: "text", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                    Batches = table.Column<string>(type: "jsonb", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ProductInventory", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Products",
                 schema: "expendable",
                 columns: table => new
@@ -145,6 +177,9 @@ namespace FSH.Modules.Expendable.Data.Migrations
                     Status = table.Column<int>(type: "integer", nullable: false),
                     CategoryId = table.Column<string>(type: "text", nullable: true),
                     SupplierId = table.Column<string>(type: "text", nullable: true),
+                    ParentProductId = table.Column<Guid>(type: "uuid", nullable: true),
+                    VariantName = table.Column<string>(type: "text", nullable: true),
+                    ImageUrl = table.Column<string>(type: "character varying(10000000)", maxLength: 10000000, nullable: true),
                     Version = table.Column<byte[]>(type: "bytea", rowVersion: true, nullable: false),
                     CreatedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     CreatedBy = table.Column<string>(type: "text", nullable: true),
@@ -157,6 +192,45 @@ namespace FSH.Modules.Expendable.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Products", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Products_Products_ParentProductId",
+                        column: x => x.ParentProductId,
+                        principalSchema: "expendable",
+                        principalTable: "Products",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "PurchaseInspection",
+                schema: "expendable",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    PurchaseId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ProductId = table.Column<Guid>(type: "uuid", nullable: false),
+                    QuantityReceivedForInspection = table.Column<int>(type: "integer", nullable: false),
+                    QuantityAccepted = table.Column<int>(type: "integer", nullable: false),
+                    QuantityRejected = table.Column<int>(type: "integer", nullable: false),
+                    InspectedBy = table.Column<Guid>(type: "uuid", nullable: false),
+                    InspectionDate = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    Notes = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
+                    RejectionReason = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    Status = table.Column<int>(type: "integer", nullable: false),
+                    WarehouseLocationId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CreatedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    LastModifiedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    LastModifiedBy = table.Column<string>(type: "text", nullable: true),
+                    DeletedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    DeletedBy = table.Column<string>(type: "text", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                    Defects = table.Column<string>(type: "jsonb", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PurchaseInspection", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -168,13 +242,17 @@ namespace FSH.Modules.Expendable.Data.Migrations
                     TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     PurchaseOrderNumber = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     SupplierId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    SupplierName = table.Column<string>(type: "text", nullable: false),
+                    WarehouseLocationId = table.Column<Guid>(type: "uuid", nullable: false),
+                    WarehouseLocationName = table.Column<string>(type: "text", nullable: false),
                     OrderDate = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     ExpectedDeliveryDate = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     DeliveryDate = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    ReceiptDate = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     Status = table.Column<int>(type: "integer", nullable: false),
                     TotalAmount = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
                     ReceivingNotes = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
-                    Version = table.Column<byte[]>(type: "bytea", rowVersion: true, nullable: false),
+                    Version = table.Column<byte[]>(type: "bytea", nullable: false),
                     CreatedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     CreatedBy = table.Column<string>(type: "text", nullable: true),
                     LastModifiedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
@@ -187,6 +265,42 @@ namespace FSH.Modules.Expendable.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Purchases", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "RejectedInventory",
+                schema: "expendable",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    PurchaseId = table.Column<Guid>(type: "uuid", nullable: false),
+                    PurchaseInspectionId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ProductId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ProductCode = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    ProductName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    WarehouseLocationId = table.Column<Guid>(type: "uuid", nullable: false),
+                    WarehouseLocationName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    QuantityRejected = table.Column<int>(type: "integer", nullable: false),
+                    UnitPrice = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
+                    RejectionReason = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    Notes = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
+                    RejectionDate = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    Status = table.Column<int>(type: "integer", nullable: false),
+                    DispositionDate = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    DispositionNotes = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
+                    Version = table.Column<byte[]>(type: "bytea", nullable: false),
+                    CreatedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    LastModifiedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    LastModifiedBy = table.Column<string>(type: "text", nullable: true),
+                    DeletedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    DeletedBy = table.Column<string>(type: "text", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RejectedInventory", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -206,7 +320,8 @@ namespace FSH.Modules.Expendable.Data.Migrations
                     RejectionReason = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     ApprovedBy = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
                     ApprovedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    Version = table.Column<byte[]>(type: "bytea", rowVersion: true, nullable: false),
+                    WarehouseLocationId = table.Column<Guid>(type: "uuid", nullable: true),
+                    Version = table.Column<byte[]>(type: "bytea", nullable: false),
                     CreatedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     CreatedBy = table.Column<string>(type: "text", nullable: true),
                     LastModifiedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
@@ -291,6 +406,37 @@ namespace FSH.Modules.Expendable.Data.Migrations
                 columns: new[] { "TenantId", "ProductId" });
 
             migrationBuilder.CreateIndex(
+                name: "IX_ProductInventory_TenantId_ProductId",
+                schema: "expendable",
+                table: "ProductInventory",
+                columns: new[] { "TenantId", "ProductId" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ProductInventory_TenantId_ProductId_WarehouseLocationId",
+                schema: "expendable",
+                table: "ProductInventory",
+                columns: new[] { "TenantId", "ProductId", "WarehouseLocationId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ProductInventory_TenantId_Status",
+                schema: "expendable",
+                table: "ProductInventory",
+                columns: new[] { "TenantId", "Status" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ProductInventory_TenantId_WarehouseLocationId",
+                schema: "expendable",
+                table: "ProductInventory",
+                columns: new[] { "TenantId", "WarehouseLocationId" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Products_ParentProductId",
+                schema: "expendable",
+                table: "Products",
+                column: "ParentProductId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Products_TenantId_SKU",
                 schema: "expendable",
                 table: "Products",
@@ -301,6 +447,18 @@ namespace FSH.Modules.Expendable.Data.Migrations
                 name: "IX_Products_TenantId_Status",
                 schema: "expendable",
                 table: "Products",
+                columns: new[] { "TenantId", "Status" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PurchaseInspection_TenantId_PurchaseId",
+                schema: "expendable",
+                table: "PurchaseInspection",
+                columns: new[] { "TenantId", "PurchaseId" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PurchaseInspection_TenantId_Status",
+                schema: "expendable",
+                table: "PurchaseInspection",
                 columns: new[] { "TenantId", "Status" });
 
             migrationBuilder.CreateIndex(
@@ -321,6 +479,30 @@ namespace FSH.Modules.Expendable.Data.Migrations
                 schema: "expendable",
                 table: "Purchases",
                 columns: new[] { "TenantId", "SupplierId" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_RejectedInventory_TenantId_PurchaseId",
+                schema: "expendable",
+                table: "RejectedInventory",
+                columns: new[] { "TenantId", "PurchaseId" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_RejectedInventory_TenantId_PurchaseInspectionId",
+                schema: "expendable",
+                table: "RejectedInventory",
+                columns: new[] { "TenantId", "PurchaseInspectionId" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_RejectedInventory_TenantId_Status",
+                schema: "expendable",
+                table: "RejectedInventory",
+                columns: new[] { "TenantId", "Status" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_RejectedInventory_TenantId_WarehouseLocationId",
+                schema: "expendable",
+                table: "RejectedInventory",
+                columns: new[] { "TenantId", "WarehouseLocationId" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_SupplyRequests_TenantId_DepartmentId",
@@ -372,11 +554,23 @@ namespace FSH.Modules.Expendable.Data.Migrations
                 schema: "expendable");
 
             migrationBuilder.DropTable(
+                name: "ProductInventory",
+                schema: "expendable");
+
+            migrationBuilder.DropTable(
                 name: "Products",
                 schema: "expendable");
 
             migrationBuilder.DropTable(
+                name: "PurchaseInspection",
+                schema: "expendable");
+
+            migrationBuilder.DropTable(
                 name: "Purchases",
+                schema: "expendable");
+
+            migrationBuilder.DropTable(
+                name: "RejectedInventory",
                 schema: "expendable");
 
             migrationBuilder.DropTable(
@@ -389,9 +583,3 @@ namespace FSH.Modules.Expendable.Data.Migrations
         }
     }
 }
-
-#pragma warning restore CA1861
-#pragma warning restore S101
-#pragma warning restore CA1707
-
-

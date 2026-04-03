@@ -35,7 +35,10 @@ public sealed class TenantProvisioningService : ITenantProvisioningService
 
     public async Task<TenantProvisioning> StartAsync(string tenantId, CancellationToken cancellationToken)
     {
+        // Try the configured store first (may be Redis-backed), then fall back to the
+        // database directly so that a fresh/empty cache on first startup doesn't block provisioning.
         var tenant = await _tenantStore.GetAsync(tenantId).ConfigureAwait(false)
+            ?? await _dbContext.TenantInfo.FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken).ConfigureAwait(false)
             ?? throw new NotFoundException($"Tenant {tenantId} not found for provisioning.");
 
         var existing = await GetLatestAsync(tenantId, cancellationToken).ConfigureAwait(false);

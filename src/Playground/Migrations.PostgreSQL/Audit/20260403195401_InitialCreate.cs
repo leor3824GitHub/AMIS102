@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace FSH.Playground.Migrations.PostgreSQL.Audit
 {
     /// <inheritdoc />
-    public partial class AddAudits : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -24,7 +24,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.Audit
                     ReceivedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     EventType = table.Column<int>(type: "integer", nullable: false),
                     Severity = table.Column<byte>(type: "smallint", nullable: false),
-                    TenantId = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    TenantId = table.Column<string>(type: "text", nullable: false),
                     UserId = table.Column<string>(type: "text", nullable: true),
                     UserName = table.Column<string>(type: "text", nullable: true),
                     TraceId = table.Column<string>(type: "text", nullable: true),

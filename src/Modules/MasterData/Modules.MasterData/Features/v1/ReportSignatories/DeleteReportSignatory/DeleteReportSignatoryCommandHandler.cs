@@ -16,9 +16,7 @@ public sealed class DeleteReportSignatoryCommandHandler(MasterDataDbContext db, 
             .ConfigureAwait(false)
             ?? throw new InvalidOperationException($"Report signatory {command.Id} not found.");
 
-        entity.IsDeleted = true;
-        entity.DeletedOnUtc = DateTimeOffset.UtcNow;
-        entity.DeletedBy = currentUser.GetUserId().ToString();
+        entity.Delete(currentUser.GetUserId().ToString());
 
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 

@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using FSH.Framework.Core.Domain;
 
 namespace FSH.Modules.MasterData.Domain;
@@ -33,9 +34,12 @@ public sealed class ReportSignatory : AggregateRoot<Guid>, IHasTenant, IAuditabl
             Name = name,
             Title = title,
             IsActive = true,
-            CreatedOnUtc = DateTimeOffset.UtcNow
+            CreatedOnUtc = DateTimeOffset.UtcNow,
+            Version = NewVersion()
         };
     }
+
+    private static byte[] NewVersion() => RandomNumberGenerator.GetBytes(8);
 
     public void Update(string reportType, int sortOrder, string label, string name, string title, bool isActive)
     {
@@ -46,5 +50,21 @@ public sealed class ReportSignatory : AggregateRoot<Guid>, IHasTenant, IAuditabl
         Title = title;
         IsActive = isActive;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        Version = NewVersion();
+    }
+
+    public void SetActive(bool isActive)
+    {
+        IsActive = isActive;
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        Version = NewVersion();
+    }
+
+    public void Delete(string deletedBy)
+    {
+        IsDeleted = true;
+        DeletedOnUtc = DateTimeOffset.UtcNow;
+        DeletedBy = deletedBy;
+        Version = NewVersion();
     }
 }

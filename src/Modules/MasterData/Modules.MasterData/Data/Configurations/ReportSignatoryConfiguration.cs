@@ -24,6 +24,6 @@ public sealed class ReportSignatoryConfiguration : IEntityTypeConfiguration<Repo
         builder.HasIndex(x => new { x.TenantId, x.ReportType, x.SortOrder }).IsUnique();
         builder.HasIndex(x => new { x.TenantId, x.ReportType });
 
-        builder.HasQueryFilter(x => !x.IsDeleted);
+        builder.HasQueryFilter("SoftDelete", x => !x.IsDeleted);
     }
 }

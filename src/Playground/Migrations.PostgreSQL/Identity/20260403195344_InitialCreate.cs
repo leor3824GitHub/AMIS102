@@ -7,13 +7,37 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FSH.Playground.Migrations.PostgreSQL.Identity
 {
     /// <inheritdoc />
-    public partial class Initial : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.EnsureSchema(
                 name: "identity");
+
+            migrationBuilder.CreateTable(
+                name: "Groups",
+                schema: "identity",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
+                    Description = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: true),
+                    IsDefault = table.Column<bool>(type: "boolean", nullable: false),
+                    IsSystemGroup = table.Column<bool>(type: "boolean", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
+                    CreatedBy = table.Column<string>(type: "character varying(450)", maxLength: 450, nullable: true),
+                    ModifiedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    ModifiedBy = table.Column<string>(type: "character varying(450)", maxLength: 450, nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
+                    DeletedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    DeletedBy = table.Column<string>(type: "character varying(450)", maxLength: 450, nullable: true),
+                    TenantId = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Groups", x => x.Id);
+                });
 
             migrationBuilder.CreateTable(
                 name: "InboxMessages",
@@ -105,6 +129,34 @@ namespace FSH.Playground.Migrations.PostgreSQL.Identity
                 });
 
             migrationBuilder.CreateTable(
+                name: "GroupRoles",
+                schema: "identity",
+                columns: table => new
+                {
+                    GroupId = table.Column<Guid>(type: "uuid", nullable: false),
+                    RoleId = table.Column<string>(type: "character varying(450)", maxLength: 450, nullable: false),
+                    TenantId = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_GroupRoles", x => new { x.GroupId, x.RoleId });
+                    table.ForeignKey(
+                        name: "FK_GroupRoles_Groups_GroupId",
+                        column: x => x.GroupId,
+                        principalSchema: "identity",
+                        principalTable: "Groups",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_GroupRoles_Roles_RoleId",
+                        column: x => x.RoleId,
+                        principalSchema: "identity",
+                        principalTable: "Roles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "RoleClaims",
                 schema: "identity",
                 columns: table => new
@@ -178,6 +230,36 @@ namespace FSH.Playground.Migrations.PostgreSQL.Identity
                 });
 
             migrationBuilder.CreateTable(
+                name: "UserGroups",
+                schema: "identity",
+                columns: table => new
+                {
+                    UserId = table.Column<string>(type: "character varying(450)", maxLength: 450, nullable: false),
+                    GroupId = table.Column<Guid>(type: "uuid", nullable: false),
+                    AddedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
+                    AddedBy = table.Column<string>(type: "character varying(450)", maxLength: 450, nullable: true),
+                    TenantId = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserGroups", x => new { x.UserId, x.GroupId });
+                    table.ForeignKey(
+                        name: "FK_UserGroups_Groups_GroupId",
+                        column: x => x.GroupId,
+                        principalSchema: "identity",
+                        principalTable: "Groups",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_UserGroups_Users_UserId",
+                        column: x => x.UserId,
+                        principalSchema: "identity",
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "UserLogins",
                 schema: "identity",
                 columns: table => new
@@ -229,6 +311,41 @@ namespace FSH.Playground.Migrations.PostgreSQL.Identity
                 });
 
             migrationBuilder.CreateTable(
+                name: "UserSessions",
+                schema: "identity",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<string>(type: "character varying(450)", maxLength: 450, nullable: false),
+                    RefreshTokenHash = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
+                    IpAddress = table.Column<string>(type: "character varying(45)", maxLength: 45, nullable: false),
+                    UserAgent = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: false),
+                    DeviceType = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    Browser = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    BrowserVersion = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    OperatingSystem = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    OsVersion = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
+                    LastActivityAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    ExpiresAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    IsRevoked = table.Column<bool>(type: "boolean", nullable: false),
+                    RevokedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    RevokedBy = table.Column<string>(type: "character varying(450)", maxLength: 450, nullable: true),
+                    RevokedReason = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserSessions", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_UserSessions_Users_UserId",
+                        column: x => x.UserId,
+                        principalSchema: "identity",
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "UserTokens",
                 schema: "identity",
                 columns: table => new
@@ -250,6 +367,36 @@ namespace FSH.Playground.Migrations.PostgreSQL.Identity
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_GroupRoles_GroupId",
+                schema: "identity",
+                table: "GroupRoles",
+                column: "GroupId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_GroupRoles_RoleId",
+                schema: "identity",
+                table: "GroupRoles",
+                column: "RoleId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Groups_IsDefault",
+                schema: "identity",
+                table: "Groups",
+                column: "IsDefault");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Groups_IsDeleted",
+                schema: "identity",
+                table: "Groups",
+                column: "IsDeleted");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Groups_Name",
+                schema: "identity",
+                table: "Groups",
+                column: "Name");
 
             migrationBuilder.CreateIndex(
                 name: "IX_PasswordHistory_UserId",
@@ -283,6 +430,18 @@ namespace FSH.Playground.Migrations.PostgreSQL.Identity
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_UserGroups_GroupId",
+                schema: "identity",
+                table: "UserGroups",
+                column: "GroupId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserGroups_UserId",
+                schema: "identity",
+                table: "UserGroups",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_UserLogins_UserId",
                 schema: "identity",
                 table: "UserLogins",
@@ -306,11 +465,33 @@ namespace FSH.Playground.Migrations.PostgreSQL.Identity
                 table: "Users",
                 columns: new[] { "NormalizedUserName", "TenantId" },
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserSessions_RefreshTokenHash",
+                schema: "identity",
+                table: "UserSessions",
+                column: "RefreshTokenHash");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserSessions_UserId",
+                schema: "identity",
+                table: "UserSessions",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserSessions_UserId_IsRevoked",
+                schema: "identity",
+                table: "UserSessions",
+                columns: new[] { "UserId", "IsRevoked" });
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "GroupRoles",
+                schema: "identity");
+
             migrationBuilder.DropTable(
                 name: "InboxMessages",
                 schema: "identity");
@@ -332,6 +513,10 @@ namespace FSH.Playground.Migrations.PostgreSQL.Identity
                 schema: "identity");
 
             migrationBuilder.DropTable(
+                name: "UserGroups",
+                schema: "identity");
+
+            migrationBuilder.DropTable(
                 name: "UserLogins",
                 schema: "identity");
 
@@ -340,7 +525,15 @@ namespace FSH.Playground.Migrations.PostgreSQL.Identity
                 schema: "identity");
 
             migrationBuilder.DropTable(
+                name: "UserSessions",
+                schema: "identity");
+
+            migrationBuilder.DropTable(
                 name: "UserTokens",
+                schema: "identity");
+
+            migrationBuilder.DropTable(
+                name: "Groups",
                 schema: "identity");
 
             migrationBuilder.DropTable(

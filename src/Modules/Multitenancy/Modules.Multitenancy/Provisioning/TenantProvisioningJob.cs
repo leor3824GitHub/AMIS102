@@ -4,7 +4,9 @@ using FSH.Framework.Core.Exceptions;
 using FSH.Framework.Persistence;
 using FSH.Framework.Shared.Multitenancy;
 using FSH.Modules.Multitenancy.Contracts;
+using FSH.Modules.Multitenancy.Data;
 using FSH.Modules.Multitenancy.Services;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace FSH.Modules.Multitenancy.Provisioning;
@@ -15,6 +17,7 @@ public sealed class TenantProvisioningJob
     private readonly IMultiTenantStore<AppTenantInfo> _tenantStore;
     private readonly IMultiTenantContextSetter _tenantContextSetter;
     private readonly ITenantService _tenantService;
+    private readonly TenantDbContext _dbContext;
     private readonly ILogger<TenantProvisioningJob> _logger;
 
     public TenantProvisioningJob(
@@ -22,18 +25,21 @@ public sealed class TenantProvisioningJob
         IMultiTenantStore<AppTenantInfo> tenantStore,
         IMultiTenantContextSetter tenantContextSetter,
         ITenantService tenantService,
+        TenantDbContext dbContext,
         ILogger<TenantProvisioningJob> logger)
     {
         _provisioningService = provisioningService;
         _tenantStore = tenantStore;
         _tenantContextSetter = tenantContextSetter;
         _tenantService = tenantService;
+        _dbContext = dbContext;
         _logger = logger;
     }
 
     public async Task RunAsync(string tenantId, string correlationId)
     {
         var tenant = await _tenantStore.GetAsync(tenantId).ConfigureAwait(false)
+            ?? await _dbContext.TenantInfo.FirstOrDefaultAsync(t => t.Id == tenantId).ConfigureAwait(false)
             ?? throw new NotFoundException($"Tenant {tenantId} not found during provisioning.");
 
         var currentStep = TenantProvisioningStepName.Database;

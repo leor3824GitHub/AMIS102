@@ -1,8 +1,10 @@
 @page "/master-data/report-signatories"
 @using FSH.Modules.MasterData.Contracts.v1.ReportSignatories
 @using FSH.Playground.Blazor.ApiClient
+@using MudBlazor
 @inject IReportSignatoryClient SignatoryClient
 @inject ISnackbar Snackbar
+@inject IDialogService MudDialog
 
 <FshPageHeader Title="Report Signatories" Description="Configure signature blocks for printed government reports" />
 
@@ -18,19 +20,24 @@
                     <MudSelectItem Value="@("PhysicalCount")">Physical Count</MudSelectItem>
                 </MudSelect>
                 <MudNumericField T="int" @bind-Value="_form.SortOrder" Label="Sort Order" Variant="Variant.Outlined"
-                                 Min="1" HelperText="Determines left-to-right column position" />
-                <MudTextField @bind-Value="_form.Label" Label="Label" Variant="Variant.Outlined"
-                              Placeholder="e.g. PREPARED BY:" HelperText="Header shown above the name" />
-                <MudTextField @bind-Value="_form.Name" Label="Name" Variant="Variant.Outlined"
-                              Placeholder="e.g. ROEL D. CAPERIG" />
-                <MudTextField @bind-Value="_form.Title" Label="Title / Designation" Variant="Variant.Outlined"
-                              Placeholder="e.g. Procurement Mngt. Officer IV" />
+                                 Min="1" Required="true" HelperText="Determines left-to-right column position" />
+                <MudTextField @bind-Value="_form.Label" Label="Label" Variant="Variant.Outlined" Required="true"
+                              Placeholder="e.g. PREPARED BY:" HelperText="Header shown above the name (max 80 chars)" 
+                              CharacterCounter="true" MaxLength="80" />
+                <MudTextField @bind-Value="_form.Name" Label="Name" Variant="Variant.Outlined" Required="true"
+                              Placeholder="e.g. ROEL D. CAPERIG" CharacterCounter="true" MaxLength="160" />
+                <MudTextField @bind-Value="_form.Title" Label="Title / Designation" Variant="Variant.Outlined" Required="true"
+                              Placeholder="e.g. Procurement Mngt. Officer IV" CharacterCounter="true" MaxLength="200" />
                 @if (_editing is not null)
                 {
                     <MudCheckBox @bind-Value="_form.IsActive" Label="Active" />
                 }
                 <MudStack Row="true" Spacing="2" Class="mt-1">
                     <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync" Disabled="_busy">
+                        @if (_busy)
+                        {
+                            <MudProgressCircular Size="Size.Small" Class="mr-2" />
+                        }
                         @(_editing is null ? "Add" : "Save")
                     </MudButton>
                     @if (_editing is not null)
@@ -88,9 +95,9 @@
                                 <td>
                                     <MudStack Row="true" Spacing="0">
                                         <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small"
-                                                       OnClick="() => StartEdit(s)" />
+                                                       OnClick="() => StartEdit(s)" Disabled="_busy" />
                                         <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small"
-                                                       Color="Color.Error" OnClick="() => DeleteAsync(s)" />
+                                                       Color="Color.Error" OnClick="() => ConfirmDeleteAsync(s)" Disabled="_busy" />
                                     </MudStack>
                                 </td>
                             </tr>
@@ -113,8 +120,6 @@
     private List<ReportSignatoryDto> _signatories = [];
     private ReportSignatoryDto? _editing;
 
-    private FormModel _form = new();
-
     private sealed class FormModel
     {
         public string ReportType { get; set; } = "VehicleInventory";
@@ -124,6 +129,8 @@
         public string Title { get; set; } = string.Empty;
         public bool IsActive { get; set; } = true;
     }
+
+    private FormModel _form = new();
 
     private IEnumerable<ReportSignatoryDto> FilteredSignatories =>
         string.IsNullOrEmpty(_filter)
@@ -137,9 +144,8 @@
         _loading = true;
         try
         {
-            var vi = await SignatoryClient.GetReportSignatoriesAsync("VehicleInventory");
-            var pc = await SignatoryClient.GetReportSignatoriesAsync("PhysicalCount");
-            _signatories = [.. vi, .. pc];
+            // Load all signatories in one call by using "All" filter
+            _signatories = await SignatoryClient.GetReportSignatoriesAsync("All");
         }
         catch (Exception ex)
         {
@@ -156,6 +162,12 @@
         if (string.IsNullOrWhiteSpace(_form.Label) || string.IsNullOrWhiteSpace(_form.Name) || string.IsNullOrWhiteSpace(_form.Title))
         {
             Snackbar.Add("Label, Name, and Title are required.", Severity.Warning);
+            return;
+        }
+
+        if (_form.Label.Length > 80 || _form.Name.Length > 160 || _form.Title.Length > 200)
+        {
+            Snackbar.Add("Field length exceeded. Check constraints.", Severity.Warning);
             return;
         }
 
@@ -208,6 +220,20 @@
     {
         _editing = null;
         _form = new FormModel();
+        UpdateNextSortOrder();
+    }
+
+    private async Task ConfirmDeleteAsync(ReportSignatoryDto s)
+    {
+        var result = await MudDialog.ShowMessageBox(
+            "Delete Signatory",
+            $"Are you sure you want to delete '{s.Name}'? This cannot be undone.",
+            yesText: "Delete", cancelText: "Cancel");
+
+        if (result ?? false)
+        {
+            await DeleteAsync(s);
+        }
     }
 
     private async Task DeleteAsync(ReportSignatoryDto s)
@@ -218,6 +244,7 @@
             await SignatoryClient.DeleteAsync(s.Id);
             _signatories.Remove(s);
             Snackbar.Add("Signatory deleted.", Severity.Success);
+            UpdateNextSortOrder();
         }
         catch (Exception ex)
         {
@@ -227,6 +254,13 @@
         {
             _busy = false;
         }
+    }
+
+    private void UpdateNextSortOrder()
+    {
+        // Auto-set next sort order based on current report type
+        var forCurrentType = _signatories.Where(s => s.ReportType == _form.ReportType).ToList();
+        _form.SortOrder = (forCurrentType.Max(s => (int?)s.SortOrder) ?? 0) + 1;
     }
 
     private static string ReportLabel(string reportType) => reportType switch

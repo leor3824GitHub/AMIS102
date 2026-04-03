@@ -3,7 +3,6 @@ using System;
 using FSH.Modules.Expendable.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,11 +11,9 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FSH.Playground.Migrations.PostgreSQL.Expendable
 {
     [DbContext(typeof(ExpendableDbContext))]
-    [Migration("20260309071757_Expendable_ModelSync")]
-    partial class Expendable_ModelSync
+    partial class ExpendableDbContextModelSnapshot : ModelSnapshot
     {
-        /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -145,7 +142,6 @@ namespace FSH.Playground.Migrations.PostgreSQL.Expendable
                     b.Property<byte[]>("Version")
                         .IsConcurrencyToken()
                         .IsRequired()
-                        .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("bytea");
 
                     b.HasKey("Id");
@@ -202,7 +198,6 @@ namespace FSH.Playground.Migrations.PostgreSQL.Expendable
                     b.Property<byte[]>("Version")
                         .IsConcurrencyToken()
                         .IsRequired()
-                        .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("bytea");
 
                     b.HasKey("Id");
@@ -361,7 +356,6 @@ namespace FSH.Playground.Migrations.PostgreSQL.Expendable
                     b.Property<byte[]>("Version")
                         .IsConcurrencyToken()
                         .IsRequired()
-                        .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("bytea");
 
                     b.Property<Guid>("WarehouseLocationId")
@@ -413,6 +407,10 @@ namespace FSH.Playground.Migrations.PostgreSQL.Expendable
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
 
+                    b.Property<string>("ImageUrl")
+                        .HasMaxLength(10000000)
+                        .HasColumnType("character varying(10000000)");
+
                     b.Property<bool>("IsDeleted")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
@@ -431,6 +429,9 @@ namespace FSH.Playground.Migrations.PostgreSQL.Expendable
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
+
+                    b.Property<Guid?>("ParentProductId")
+                        .HasColumnType("uuid");
 
                     b.Property<int>("ReorderQuantity")
                         .HasColumnType("integer");
@@ -460,6 +461,9 @@ namespace FSH.Playground.Migrations.PostgreSQL.Expendable
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)");
 
+                    b.Property<string>("VariantName")
+                        .HasColumnType("text");
+
                     b.Property<byte[]>("Version")
                         .IsConcurrencyToken()
                         .IsRequired()
@@ -467,6 +471,8 @@ namespace FSH.Playground.Migrations.PostgreSQL.Expendable
                         .HasColumnType("bytea");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ParentProductId");
 
                     b.HasIndex("TenantId", "SKU")
                         .IsUnique();
@@ -552,7 +558,6 @@ namespace FSH.Playground.Migrations.PostgreSQL.Expendable
                     b.Property<byte[]>("Version")
                         .IsConcurrencyToken()
                         .IsRequired()
-                        .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("bytea");
 
                     b.Property<Guid>("WarehouseLocationId")
@@ -732,8 +737,10 @@ namespace FSH.Playground.Migrations.PostgreSQL.Expendable
                     b.Property<byte[]>("Version")
                         .IsConcurrencyToken()
                         .IsRequired()
-                        .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("bytea");
+
+                    b.Property<Guid?>("WarehouseLocationId")
+                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
@@ -829,7 +836,6 @@ namespace FSH.Playground.Migrations.PostgreSQL.Expendable
                     b.Property<byte[]>("Version")
                         .IsConcurrencyToken()
                         .IsRequired()
-                        .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("bytea");
 
                     b.Property<Guid>("WarehouseLocationId")
@@ -932,6 +938,16 @@ namespace FSH.Playground.Migrations.PostgreSQL.Expendable
                     b.Navigation("Batches");
                 });
 
+            modelBuilder.Entity("FSH.Modules.Expendable.Domain.Products.Product", b =>
+                {
+                    b.HasOne("FSH.Modules.Expendable.Domain.Products.Product", "ParentProduct")
+                        .WithMany("Variants")
+                        .HasForeignKey("ParentProductId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("ParentProduct");
+                });
+
             modelBuilder.Entity("FSH.Modules.Expendable.Domain.Purchases.Purchase", b =>
                 {
                     b.OwnsMany("FSH.Modules.Expendable.Domain.Purchases.PurchaseLineItem", "LineItems", b1 =>
@@ -1022,6 +1038,8 @@ namespace FSH.Playground.Migrations.PostgreSQL.Expendable
 
                             b1.Property<int>("FulfilledQuantity");
 
+                            b1.Property<decimal>("FulfilledValue");
+
                             b1.Property<string>("Notes");
 
                             b1.Property<Guid>("ProductId");
@@ -1084,6 +1102,11 @@ namespace FSH.Playground.Migrations.PostgreSQL.Expendable
                         });
 
                     b.Navigation("Batches");
+                });
+
+            modelBuilder.Entity("FSH.Modules.Expendable.Domain.Products.Product", b =>
+                {
+                    b.Navigation("Variants");
                 });
 #pragma warning restore 612, 618
         }
