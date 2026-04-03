@@ -14,6 +14,7 @@ using FSH.Modules.Vehicle.Features.v1.Vehicles.ReactivateVehicle;
 using FSH.Modules.Vehicle.Features.v1.Vehicles.DeleteVehicle;
 using FSH.Modules.Vehicle.Features.v1.Vehicles.GetVehicle;
 using FSH.Modules.Vehicle.Features.v1.Vehicles.SearchVehicles;
+using FSH.Modules.Vehicle.Features.v1.Vehicles.GetMotorVehicleInventory;
 using FSH.Modules.Vehicle.Features.v1.Repairs.CreateRepairRecord;
 using FSH.Modules.Vehicle.Features.v1.Repairs.UpdateRepairRecord;
 using FSH.Modules.Vehicle.Features.v1.Repairs.StartRepair;
@@ -109,6 +110,7 @@ public class VehicleModule : IModule
         DeleteVehicleEndpoint.Map(vehiclesGroup);
         GetVehicleEndpoint.Map(vehiclesGroup);
         SearchVehiclesEndpoint.Map(vehiclesGroup);
+        GetMotorVehicleInventoryEndpoint.Map(vehiclesGroup);
 
         // Repair endpoints
         CreateRepairRecordEndpoint.Map(repairsGroup);

@@ -32,7 +32,9 @@ public sealed class UpdateVehicleCommandHandler(VehicleDbContext db, ICurrentUse
             throw new FluentValidation.ValidationException(
             [new ValidationFailure(nameof(cmd.Type), $"Invalid vehicle type '{cmd.Type}'.")]);
 
-        vehicle.Update(cmd.PlateNumber, cmd.Make, cmd.Model, cmd.Year, vehicleType, cmd.Notes);
+        vehicle.Update(cmd.PlateNumber, cmd.Make, cmd.Model, cmd.Year, vehicleType, cmd.Notes,
+            cmd.MotorNumber, cmd.ChassisNumber, cmd.NumberOfCylinders,
+            cmd.EngineDisplacementCC, cmd.FuelType, cmd.VehicleUse, cmd.AcquisitionCost);
         vehicle.LastModifiedBy = currentUser.GetUserId().ToString();
         await db.SaveChangesAsync(ct).ConfigureAwait(false);
         return vehicle.ToDto();

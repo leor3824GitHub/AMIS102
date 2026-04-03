@@ -1,0 +1,245 @@
+@page "/master-data/report-signatories"
+@using FSH.Modules.MasterData.Contracts.v1.ReportSignatories
+@using FSH.Playground.Blazor.ApiClient
+@inject IReportSignatoryClient SignatoryClient
+@inject ISnackbar Snackbar
+
+<FshPageHeader Title="Report Signatories" Description="Configure signature blocks for printed government reports" />
+
+<MudGrid Spacing="3" Class="mt-2">
+
+    <!-- Form -->
+    <MudItem xs="12" md="4">
+        <MudPaper Elevation="1" Class="pa-4">
+            <MudText Typo="Typo.h6" Class="mb-3">@(_editing is null ? "Add Signatory" : "Edit Signatory")</MudText>
+            <MudStack Spacing="3">
+                <MudSelect T="string" @bind-Value="_form.ReportType" Label="Report Type" Variant="Variant.Outlined" Required="true">
+                    <MudSelectItem Value="@("VehicleInventory")">Vehicle Inventory</MudSelectItem>
+                    <MudSelectItem Value="@("PhysicalCount")">Physical Count</MudSelectItem>
+                </MudSelect>
+                <MudNumericField T="int" @bind-Value="_form.SortOrder" Label="Sort Order" Variant="Variant.Outlined"
+                                 Min="1" HelperText="Determines left-to-right column position" />
+                <MudTextField @bind-Value="_form.Label" Label="Label" Variant="Variant.Outlined"
+                              Placeholder="e.g. PREPARED BY:" HelperText="Header shown above the name" />
+                <MudTextField @bind-Value="_form.Name" Label="Name" Variant="Variant.Outlined"
+                              Placeholder="e.g. ROEL D. CAPERIG" />
+                <MudTextField @bind-Value="_form.Title" Label="Title / Designation" Variant="Variant.Outlined"
+                              Placeholder="e.g. Procurement Mngt. Officer IV" />
+                @if (_editing is not null)
+                {
+                    <MudCheckBox @bind-Value="_form.IsActive" Label="Active" />
+                }
+                <MudStack Row="true" Spacing="2" Class="mt-1">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync" Disabled="_busy">
+                        @(_editing is null ? "Add" : "Save")
+                    </MudButton>
+                    @if (_editing is not null)
+                    {
+                        <MudButton Variant="Variant.Outlined" OnClick="CancelEdit" Disabled="_busy">Cancel</MudButton>
+                    }
+                </MudStack>
+            </MudStack>
+        </MudPaper>
+    </MudItem>
+
+    <!-- Table -->
+    <MudItem xs="12" md="8">
+        <MudPaper Elevation="1" Class="pa-4">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3">
+                <MudText Typo="Typo.h6" Style="flex:1">Configured Signatories</MudText>
+                <MudSelect T="string" @bind-Value="_filter" Label="Filter by Report" Variant="Variant.Outlined"
+                           Dense="true" Style="width:180px" Clearable="true">
+                    <MudSelectItem Value="@("VehicleInventory")">Vehicle Inventory</MudSelectItem>
+                    <MudSelectItem Value="@("PhysicalCount")">Physical Count</MudSelectItem>
+                </MudSelect>
+            </MudStack>
+
+            @if (_loading)
+            {
+                <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+            }
+            else
+            {
+                <MudSimpleTable Dense="true" Striped="true" Bordered="true">
+                    <thead>
+                        <tr>
+                            <th>Report</th>
+                            <th style="width:50px">Order</th>
+                            <th>Label</th>
+                            <th>Name</th>
+                            <th>Title</th>
+                            <th style="width:60px">Active</th>
+                            <th style="width:90px"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var s in FilteredSignatories)
+                        {
+                            <tr>
+                                <td><MudChip T="string" Size="Size.Small" Color="@ReportColor(s.ReportType)">@ReportLabel(s.ReportType)</MudChip></td>
+                                <td style="text-align:center">@s.SortOrder</td>
+                                <td><small>@s.Label</small></td>
+                                <td><strong>@s.Name</strong></td>
+                                <td><small>@s.Title</small></td>
+                                <td style="text-align:center">
+                                    @if (s.IsActive) { <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Small" /> }
+                                    else { <MudIcon Icon="@Icons.Material.Filled.Cancel" Color="Color.Default" Size="Size.Small" /> }
+                                </td>
+                                <td>
+                                    <MudStack Row="true" Spacing="0">
+                                        <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small"
+                                                       OnClick="() => StartEdit(s)" />
+                                        <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small"
+                                                       Color="Color.Error" OnClick="() => DeleteAsync(s)" />
+                                    </MudStack>
+                                </td>
+                            </tr>
+                        }
+                        @if (!FilteredSignatories.Any())
+                        {
+                            <tr><td colspan="7" style="text-align:center;color:#999">No signatories found.</td></tr>
+                        }
+                    </tbody>
+                </MudSimpleTable>
+            }
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private bool _loading;
+    private bool _busy;
+    private string? _filter;
+    private List<ReportSignatoryDto> _signatories = [];
+    private ReportSignatoryDto? _editing;
+
+    private FormModel _form = new();
+
+    private sealed class FormModel
+    {
+        public string ReportType { get; set; } = "VehicleInventory";
+        public int SortOrder { get; set; } = 1;
+        public string Label { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string Title { get; set; } = string.Empty;
+        public bool IsActive { get; set; } = true;
+    }
+
+    private IEnumerable<ReportSignatoryDto> FilteredSignatories =>
+        string.IsNullOrEmpty(_filter)
+            ? _signatories.OrderBy(s => s.ReportType).ThenBy(s => s.SortOrder)
+            : _signatories.Where(s => s.ReportType == _filter).OrderBy(s => s.SortOrder);
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        try
+        {
+            var vi = await SignatoryClient.GetReportSignatoriesAsync("VehicleInventory");
+            var pc = await SignatoryClient.GetReportSignatoriesAsync("PhysicalCount");
+            _signatories = [.. vi, .. pc];
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load signatories: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_form.Label) || string.IsNullOrWhiteSpace(_form.Name) || string.IsNullOrWhiteSpace(_form.Title))
+        {
+            Snackbar.Add("Label, Name, and Title are required.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            if (_editing is null)
+            {
+                var created = await SignatoryClient.CreateAsync(new CreateReportSignatoryCommand(
+                    _form.ReportType, _form.SortOrder, _form.Label, _form.Name, _form.Title));
+                _signatories.Add(created);
+                Snackbar.Add("Signatory added.", Severity.Success);
+            }
+            else
+            {
+                var updated = await SignatoryClient.UpdateAsync(_editing.Id, new UpdateReportSignatoryCommand(
+                    _editing.Id, _form.ReportType, _form.SortOrder, _form.Label, _form.Name, _form.Title, _form.IsActive));
+                var idx = _signatories.FindIndex(s => s.Id == updated.Id);
+                if (idx >= 0) _signatories[idx] = updated;
+                Snackbar.Add("Signatory updated.", Severity.Success);
+            }
+
+            CancelEdit();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void StartEdit(ReportSignatoryDto s)
+    {
+        _editing = s;
+        _form = new FormModel
+        {
+            ReportType = s.ReportType,
+            SortOrder = s.SortOrder,
+            Label = s.Label,
+            Name = s.Name,
+            Title = s.Title,
+            IsActive = s.IsActive
+        };
+    }
+
+    private void CancelEdit()
+    {
+        _editing = null;
+        _form = new FormModel();
+    }
+
+    private async Task DeleteAsync(ReportSignatoryDto s)
+    {
+        _busy = true;
+        try
+        {
+            await SignatoryClient.DeleteAsync(s.Id);
+            _signatories.Remove(s);
+            Snackbar.Add("Signatory deleted.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Delete failed: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private static string ReportLabel(string reportType) => reportType switch
+    {
+        "VehicleInventory" => "Vehicle",
+        "PhysicalCount" => "Physical Count",
+        _ => reportType
+    };
+
+    private static Color ReportColor(string reportType) => reportType switch
+    {
+        "VehicleInventory" => Color.Info,
+        "PhysicalCount" => Color.Success,
+        _ => Color.Default
+    };
+}

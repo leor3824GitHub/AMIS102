@@ -26,24 +26,27 @@ internal sealed class ExpendableDbInitializer(
         try
         {
             await context.Database.ExecuteSqlRawAsync("CREATE EXTENSION IF NOT EXISTS pgcrypto;", cancellationToken).ConfigureAwait(false);
-            await context.Database.ExecuteSqlRawAsync("UPDATE expendable.\"Products\" SET \"Version\" = gen_random_bytes(8) WHERE \"Version\" IS NULL;", cancellationToken).ConfigureAwait(false);
-            await context.Database.ExecuteSqlRawAsync("ALTER TABLE expendable.\"Products\" ALTER COLUMN \"Version\" SET DEFAULT gen_random_bytes(8);", cancellationToken).ConfigureAwait(false);
-            logger.LogInformation("[{Tenant}] ensured product Version defaults.", context.TenantInfo?.Identifier);
+            // Backfill empty/null Version bytes for all concurrency-token columns so EF WHERE checks always match
+            foreach (var table in new[] { "Products", "ProductInventory", "SupplyRequests", "EmployeeInventory", "Purchases", "RejectedInventory" })
+            {
+                await context.Database.ExecuteSqlRawAsync(
+                    $"UPDATE expendable.\"{table}\" SET \"Version\" = gen_random_bytes(8) WHERE \"Version\" IS NULL OR \"Version\" = '\\x';",
+                    cancellationToken).ConfigureAwait(false);
+                await context.Database.ExecuteSqlRawAsync(
+                    $"ALTER TABLE expendable.\"{table}\" ALTER COLUMN \"Version\" SET DEFAULT gen_random_bytes(8);",
+                    cancellationToken).ConfigureAwait(false);
+            }
+            logger.LogInformation("[{Tenant}] ensured Version defaults for all expendable tables.", context.TenantInfo?.Identifier);
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "[{Tenant}] could not ensure Product.Version defaults (non-fatal).", context.TenantInfo?.Identifier);
+            logger.LogWarning(ex, "[{Tenant}] could not ensure Version defaults (non-fatal).", context.TenantInfo?.Identifier);
         }
     }
 
     public async Task SeedAsync(CancellationToken cancellationToken)
     {
-        // Product seeding can be disabled via environment variable to avoid duplicates during provisioning.
-        // Set DISABLE_EXPENDABLE_PRODUCT_SEEDING=true or SEED_PRODUCTS=false to skip seeding.
-        var disableSeeding = Environment.GetEnvironmentVariable("DISABLE_EXPENDABLE_PRODUCT_SEEDING");
-        var seedProducts = Environment.GetEnvironmentVariable("SEED_PRODUCTS");
-        if ((disableSeeding != null && disableSeeding.Equals("true", StringComparison.OrdinalIgnoreCase)) ||
-            (seedProducts != null && seedProducts.Equals("false", StringComparison.OrdinalIgnoreCase)))
+        if (bool.Parse(Environment.GetEnvironmentVariable("DISABLE_EXPENDABLE_SEEDING") ?? "false"))
         {
             logger.LogInformation("[{Tenant}] product seeding disabled by environment variable.", context.TenantInfo?.Identifier);
             return;
@@ -57,16 +60,16 @@ internal sealed class ExpendableDbInitializer(
 
             var products = new[]
             {
-                Product.Create(tenantId, "PRD-001", "Bond Paper A4", "High quality A4 bond paper, 80gsm", 5.50m, "PCS", 10, 50),
-                Product.Create(tenantId, "PRD-002", "Ink Cartridge Black", "Black ink cartridge for model X", 12.99m, "PCS", 5, 20),
-                Product.Create(tenantId, "PRD-003", "Stapler", "Standard office stapler", 7.25m, "PCS", 5, 15),
-                Product.Create(tenantId, "PRD-004", "Notebook A5", "Ruled A5 notebook, 80 pages", 3.75m, "PCS", 20, 100),
-                Product.Create(tenantId, "PRD-005", "Ballpoint Pen (Blue)", "Smooth-writing blue ballpoint pen", 0.99m, "PCS", 50, 200),
-                Product.Create(tenantId, "PRD-006", "Calculator", "Basic desktop calculator", 15.00m, "PCS", 5, 25),
-                Product.Create(tenantId, "PRD-007", "Packing Tape", "Clear packing tape 48mm x 50m", 4.50m, "PCS", 30, 120),
-                Product.Create(tenantId, "PRD-008", "USB Flash Drive 32GB", "32GB USB-A flash drive", 9.99m, "PCS", 10, 40),
-                Product.Create(tenantId, "PRD-009", "Desk Lamp", "LED desk lamp with adjustable arm", 29.99m, "PCS", 3, 10),
-                Product.Create(tenantId, "PRD-010", "Whiteboard Marker (Black)", "Dry erase marker, black", 1.25m, "PCS", 40, 160),
+                Product.Create(tenantId, "PRD-001", "Bond Paper A4", "High quality A4 bond paper, 80gsm", 5.50m, "UOM-RIM", 10, 50),
+                Product.Create(tenantId, "PRD-002", "Ink Cartridge Black", "Black ink cartridge for model X", 12.99m, "UOM-PCS", 5, 20),
+                Product.Create(tenantId, "PRD-003", "Stapler", "Standard office stapler", 7.25m, "UOM-PCS", 5, 15),
+                Product.Create(tenantId, "PRD-004", "Notebook A5", "Ruled A5 notebook, 80 pages", 3.75m, "UOM-PCS", 20, 100),
+                Product.Create(tenantId, "PRD-005", "Ballpoint Pen (Blue)", "Smooth-writing blue ballpoint pen", 0.99m, "UOM-PCS", 50, 200),
+                Product.Create(tenantId, "PRD-006", "Calculator", "Basic desktop calculator", 15.00m, "UOM-PCS", 5, 25),
+                Product.Create(tenantId, "PRD-007", "Packing Tape", "Clear packing tape 48mm x 50m", 4.50m, "UOM-BOX", 30, 120),
+                Product.Create(tenantId, "PRD-008", "USB Flash Drive 32GB", "32GB USB-A flash drive", 9.99m, "UOM-PCS", 10, 40),
+                Product.Create(tenantId, "PRD-009", "Desk Lamp", "LED desk lamp with adjustable arm", 29.99m, "UOM-PCS", 3, 10),
+                Product.Create(tenantId, "PRD-010", "Whiteboard Marker (Black)", "Dry erase marker, black", 1.25m, "UOM-PCS", 40, 160),
             };
 
             for (int i = 0; i < products.Length; i++)

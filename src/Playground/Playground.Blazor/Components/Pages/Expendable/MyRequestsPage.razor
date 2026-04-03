@@ -233,14 +233,14 @@ else
                                             <MudTh>Product</MudTh>
                                             <MudTh>Code</MudTh>
                                             <MudTh>Qty</MudTh>
-                                            <MudTh>Unit Price</MudTh>
+                                            <MudTh>Avg Cost</MudTh>
                                             <MudTh>Total</MudTh>
                                         </HeaderContent>
                                         <RowTemplate Context="item">
                                             <MudTd DataLabel="Product">@item.ProductName</MudTd>
                                             <MudTd DataLabel="Code"><code>@item.ProductCode</code></MudTd>
                                             <MudTd DataLabel="Qty">@item.QuantityIssued</MudTd>
-                                            <MudTd DataLabel="Unit Price">₱@item.UnitPrice.ToString("N4")</MudTd>
+                                            <MudTd DataLabel="Avg Cost">₱@item.UnitPrice.ToString("N4")</MudTd>
                                             <MudTd DataLabel="Total">₱@item.TotalValue.ToString("N2")</MudTd>
                                         </RowTemplate>
                                     </MudTable>

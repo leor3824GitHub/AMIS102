@@ -1,4 +1,5 @@
 using FSH.Framework.Core.Domain;
+using System.Security.Cryptography;
 
 namespace FSH.Modules.Vehicle.Domain.Maintenance;
 
@@ -44,9 +45,12 @@ public class MaintenanceLog : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
             Cost = cost,
             PerformedBy = performedBy,
             Notes = notes,
-            CreatedOnUtc = DateTimeOffset.UtcNow
+            CreatedOnUtc = DateTimeOffset.UtcNow,
+            Version = NewVersion()
         };
     }
+
+    private static byte[] NewVersion() => RandomNumberGenerator.GetBytes(8);
 
     public void Update(string maintenanceType, DateOnly performedDate, int? odometerAtService,
         string? description, decimal? cost, string? performedBy, string? notes)
@@ -59,6 +63,7 @@ public class MaintenanceLog : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
         PerformedBy = performedBy;
         Notes = notes;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        Version = NewVersion();
     }
 
     public void SoftDelete(string? deletedBy = null)
@@ -66,5 +71,6 @@ public class MaintenanceLog : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
         IsDeleted = true;
         DeletedOnUtc = DateTimeOffset.UtcNow;
         DeletedBy = deletedBy;
+        Version = NewVersion();
     }
 }

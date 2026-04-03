@@ -92,7 +92,6 @@ namespace FSH.Playground.Migrations.PostgreSQL.Vehicle
                     b.Property<byte[]>("Version")
                         .IsConcurrencyToken()
                         .IsRequired()
-                        .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("bytea");
 
                     b.HasKey("Id");
@@ -178,7 +177,6 @@ namespace FSH.Playground.Migrations.PostgreSQL.Vehicle
                     b.Property<byte[]>("Version")
                         .IsConcurrencyToken()
                         .IsRequired()
-                        .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("bytea");
 
                     b.HasKey("Id");
@@ -266,7 +264,6 @@ namespace FSH.Playground.Migrations.PostgreSQL.Vehicle
                     b.Property<byte[]>("Version")
                         .IsConcurrencyToken()
                         .IsRequired()
-                        .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("bytea");
 
                     b.HasKey("Id");
@@ -286,6 +283,14 @@ namespace FSH.Playground.Migrations.PostgreSQL.Vehicle
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("AccountableOfficerTitle")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<decimal?>("AcquisitionCost")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
                     b.Property<string>("AssignedDepartment")
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
@@ -300,6 +305,10 @@ namespace FSH.Playground.Migrations.PostgreSQL.Vehicle
                     b.Property<Guid?>("AssignedDriverId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("ChassisNumber")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<string>("CreatedBy")
                         .HasColumnType("text");
 
@@ -311,6 +320,13 @@ namespace FSH.Playground.Migrations.PostgreSQL.Vehicle
 
                     b.Property<DateTimeOffset?>("DeletedOnUtc")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("EngineDisplacementCC")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("FuelType")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<bool>("IsDeleted")
                         .ValueGeneratedOnAdd()
@@ -333,9 +349,16 @@ namespace FSH.Playground.Migrations.PostgreSQL.Vehicle
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<string>("MotorNumber")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<string>("Notes")
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
+
+                    b.Property<int?>("NumberOfCylinders")
+                        .HasColumnType("integer");
 
                     b.Property<int>("Odometer")
                         .HasColumnType("integer");
@@ -356,10 +379,13 @@ namespace FSH.Playground.Migrations.PostgreSQL.Vehicle
                     b.Property<int>("Type")
                         .HasColumnType("integer");
 
+                    b.Property<string>("VehicleUse")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<byte[]>("Version")
                         .IsConcurrencyToken()
                         .IsRequired()
-                        .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("bytea");
 
                     b.Property<int>("Year")

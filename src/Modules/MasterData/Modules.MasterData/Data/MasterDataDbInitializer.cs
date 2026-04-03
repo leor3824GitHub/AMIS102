@@ -283,6 +283,31 @@ internal sealed class MasterDataDbInitializer(
             await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
 
+        // Report Signatories
+        if (!await context.ReportSignatories.AnyAsync(cancellationToken).ConfigureAwait(false))
+        {
+            var tenantId = context.TenantInfo?.Identifier ?? MultitenancyConstants.Root.Id;
+
+            var signatories = new[]
+            {
+                // Vehicle Inventory Report
+                Domain.ReportSignatory.Create(tenantId, "VehicleInventory", 1, "PREPARED BY:", "Roel D. Caperig", "Procurement Mngt. Officer IV"),
+                Domain.ReportSignatory.Create(tenantId, "VehicleInventory", 2, "CERTIFIED CORRECT:", "Hyde Beth M. Pascual", "Supervising Administrative Officer"),
+                Domain.ReportSignatory.Create(tenantId, "VehicleInventory", 3, "NOTED:", "Leo V. Damole", "Regional Manager II"),
+
+                // Physical Count Report
+                Domain.ReportSignatory.Create(tenantId, "PhysicalCount", 1, "CERTIFIED CORRECT / MEMBER:", "Roel D. Caperig", "Procurement Mngt. Officer IV"),
+                Domain.ReportSignatory.Create(tenantId, "PhysicalCount", 2, "MEMBER:", "", "SAO"),
+                Domain.ReportSignatory.Create(tenantId, "PhysicalCount", 3, "APPROVED BY:", "", "Regional Manager II"),
+                Domain.ReportSignatory.Create(tenantId, "PhysicalCount", 4, "MEMBER:", "", "Acting Accountant IV"),
+                Domain.ReportSignatory.Create(tenantId, "PhysicalCount", 5, "CHAIRPERSON:", "", "Assistant Regional Manager II"),
+                Domain.ReportSignatory.Create(tenantId, "PhysicalCount", 6, "VERIFIED BY:", "", "State Auditor IV / Audit Team Leader"),
+            };
+
+            await context.ReportSignatories.AddRangeAsync(signatories, cancellationToken).ConfigureAwait(false);
+            await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        }
+
         logger.LogInformation("[{Tenant}] seeded master data.", context.TenantInfo?.Identifier);
     }
 }

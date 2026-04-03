@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text;
@@ -6,6 +7,7 @@ using System.Threading.Tasks;
 using System.Globalization;
 using FSH.Framework.Shared.Persistence;
 using FSH.Modules.Expendable.Contracts.v1.Requests;
+using FSH.Modules.Expendable.Contracts.v1.Warehouse;
 
 namespace FSH.Playground.Blazor.ApiClient;
 
@@ -25,6 +27,14 @@ public interface IReportsClient
         System.DateTimeOffset? toDate = null,
         int? pageNumber = null,
         int? pageSize = null,
+        CancellationToken cancellationToken = default);
+
+    Task<List<PhysicalCountItemDto>> GetPhysicalCountReportAsync(
+        Guid? warehouseLocationId = null,
+        CancellationToken cancellationToken = default);
+
+    Task<StockCardDto?> GetStockCardAsync(
+        Guid productId,
         CancellationToken cancellationToken = default);
 }
 
@@ -81,6 +91,29 @@ public sealed class ReportsClient : IReportsClient
             url, cancellationToken);
 
         return response ?? new PagedResponse<EmployeeIssuanceDto> { Items = [] };
+    }
+
+    public async Task<StockCardDto?> GetStockCardAsync(
+        Guid productId,
+        CancellationToken cancellationToken = default)
+    {
+        return await _httpClient.GetFromJsonAsync<StockCardDto>(
+            $"api/v1/expendable/reports/stock-card/{productId}", cancellationToken);
+    }
+
+    public async Task<List<PhysicalCountItemDto>> GetPhysicalCountReportAsync(
+        Guid? warehouseLocationId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var url = BuildUrl("api/v1/expendable/reports/physical-count", new()
+        {
+            ["warehouseLocationId"] = warehouseLocationId?.ToString()
+        });
+
+        var response = await _httpClient.GetFromJsonAsync<List<PhysicalCountItemDto>>(
+            url, cancellationToken);
+
+        return response ?? [];
     }
 
     private static string BuildUrl(string basePath, Dictionary<string, string?> queryParams)

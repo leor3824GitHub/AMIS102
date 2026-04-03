@@ -1,5 +1,6 @@
 @page "/vehicle/maintenance/logs"
 @using FSH.Modules.Vehicle.Contracts.v1.Maintenance
+@using FSH.Modules.Vehicle.Contracts.v1.Vehicles
 @inject IVehicleClient VehicleClient
 @inject ISnackbar Snackbar
 
@@ -12,7 +13,9 @@
                 <MudCardContent>
                     <MudText Typo="Typo.h6" Class="mb-2">Log Maintenance</MudText>
                     <MudStack Spacing="2">
-                        <MudTextField @bind-Value="_create.VehicleIdText" Label="Vehicle Id" Required="true" />
+                        <MudAutocomplete T="VehicleDto" @bind-Value="_create.SelectedVehicle" Label="Vehicle *"
+                                         SearchFunc="@SearchVehicles" ToStringFunc="@(v => v == null ? null : $"{v.PlateNumber} - {v.Make} {v.Model} ({v.Year})")"
+                                         Required="true" />
                         <MudTextField @bind-Value="_create.ScheduleIdText" Label="Schedule Id (optional)" />
                         <MudTextField @bind-Value="_create.MaintenanceType" Label="Type" Required="true" />
                         <MudDatePicker @bind-Date="_create.PerformedDate" Label="Performed Date" />
@@ -31,7 +34,9 @@
             <MudCard Class="fsh-card">
                 <MudCardContent>
                     <MudStack Row="true" Spacing="2" Class="mb-2">
-                        <MudTextField @bind-Value="_query.VehicleIdText" Label="Vehicle Id" />
+                        <MudAutocomplete T="VehicleDto" @bind-Value="_query.SelectedVehicle" Label="Vehicle"
+                                         SearchFunc="@SearchVehicles" ToStringFunc="@(v => v == null ? null : $"{v.PlateNumber} - {v.Make} {v.Model} ({v.Year})")"
+                                         Clearable="true" />
                         <MudTextField @bind-Value="_query.ScheduleIdText" Label="Schedule Id" />
                         <MudTextField @bind-Value="_query.MaintenanceType" Label="Type" />
                         <MudDatePicker @bind-Date="_query.FromDate" Label="From" />
@@ -71,10 +76,47 @@
 
 @code {
     private readonly List<MaintenanceLogDto> _items = [];
+    private List<VehicleDto> _vehicles = [];
     private LogQueryModel _query = new();
     private CreateLogModel _create = new();
 
-    protected override async Task OnInitializedAsync() => await Load();
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadVehicles();
+        await Load();
+    }
+
+    private async Task LoadVehicles()
+    {
+        try
+        {
+            var result = await VehicleClient.SearchVehiclesAsync(new SearchVehiclesQuery
+            {
+                PageNumber = 1,
+                PageSize = 1000
+            });
+
+            _vehicles.Clear();
+            _vehicles.AddRange(result.Items ?? []);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load vehicles: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task<IEnumerable<VehicleDto>> SearchVehicles(string value, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return _vehicles;
+
+        var searchValue = value.ToLowerInvariant();
+        return _vehicles.Where(v =>
+            v.PlateNumber.Contains(searchValue, StringComparison.OrdinalIgnoreCase) ||
+            v.Make.Contains(searchValue, StringComparison.OrdinalIgnoreCase) ||
+            v.Model.Contains(searchValue, StringComparison.OrdinalIgnoreCase) ||
+            v.Year.ToString().Contains(searchValue)).ToList();
+    }
 
     private async Task Load()
     {
@@ -82,7 +124,7 @@
         {
             var items = await VehicleClient.SearchMaintenanceLogsAsync(new MaintenanceLogSearchRequest(
                 _query.MaintenanceType,
-                ParseGuid(_query.VehicleIdText),
+                _query.SelectedVehicle?.Id,
                 ParseGuid(_query.ScheduleIdText),
                 ToDateOnly(_query.FromDate),
                 ToDateOnly(_query.ToDate)));
@@ -98,17 +140,16 @@
 
     private async Task Create()
     {
-        var vehicleId = ParseGuid(_create.VehicleIdText);
-        if (vehicleId is null || string.IsNullOrWhiteSpace(_create.MaintenanceType))
+        if (_create.SelectedVehicle is null || string.IsNullOrWhiteSpace(_create.MaintenanceType))
         {
-            Snackbar.Add("Vehicle Id and type are required.", Severity.Warning);
+            Snackbar.Add("Vehicle and type are required.", Severity.Warning);
             return;
         }
 
         try
         {
             await VehicleClient.LogMaintenanceCompletionAsync(new LogMaintenanceCompletionRequest(
-                vehicleId.Value,
+                _create.SelectedVehicle.Id,
                 ParseGuid(_create.ScheduleIdText),
                 _create.MaintenanceType,
                 ToDateOnly(_create.PerformedDate) ?? DateOnly.FromDateTime(DateTime.Today),
@@ -152,7 +193,7 @@
 
     private sealed class LogQueryModel
     {
-        public string? VehicleIdText { get; set; }
+        public VehicleDto? SelectedVehicle { get; set; }
         public string? ScheduleIdText { get; set; }
         public string? MaintenanceType { get; set; }
         public DateTime? FromDate { get; set; }
@@ -161,7 +202,7 @@
 
     private sealed class CreateLogModel
     {
-        public string? VehicleIdText { get; set; }
+        public VehicleDto? SelectedVehicle { get; set; }
         public string? ScheduleIdText { get; set; }
         public string MaintenanceType { get; set; } = string.Empty;
         public DateTime? PerformedDate { get; set; } = DateTime.Today;

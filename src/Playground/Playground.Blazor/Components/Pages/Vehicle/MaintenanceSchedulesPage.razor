@@ -1,6 +1,7 @@
 @page "/vehicle/maintenance/schedules"
 @implements IDisposable
 @using FSH.Modules.Vehicle.Contracts.v1.Maintenance
+@using FSH.Modules.Vehicle.Contracts.v1.Vehicles
 @inject IVehicleClient VehicleClient
 @inject ISnackbar Snackbar
 
@@ -20,7 +21,9 @@
                 <MudCardContent>
                     <MudText Typo="Typo.h6" Class="mb-2">Create Schedule</MudText>
                     <MudStack Spacing="2">
-                        <MudTextField @bind-Value="_create.VehicleIdText" Label="Vehicle Id" Required="true" />
+                        <MudAutocomplete T="VehicleDto" @bind-Value="_create.SelectedVehicle" Label="Vehicle *"
+                                         SearchFunc="@SearchVehicles" ToStringFunc="@(v => v == null ? null : $"{v.PlateNumber} - {v.Make} {v.Model} ({v.Year})")"
+                                         Required="true" />
                         <MudTextField @bind-Value="_create.MaintenanceType" Label="Maintenance Type" Required="true" />
                         <MudTextField @bind-Value="_create.Description" Label="Description" />
                         <MudNumericField @bind-Value="_create.IntervalDays" Label="Interval Days" Min="0" />
@@ -37,11 +40,13 @@
             <MudCard Class="fsh-card">
                 <MudCardContent>
                     <MudStack Row="true" Spacing="2" Class="mb-2">
-                        <MudTextField @bind-Value="_query.VehicleIdText" Label="Vehicle Id" />
+                        <MudAutocomplete T="VehicleDto" @bind-Value="_query.SelectedVehicle" Label="Vehicle"
+                                         SearchFunc="@SearchVehicles" ToStringFunc="@(v => v == null ? null : $"{v.PlateNumber} - {v.Make} {v.Model} ({v.Year})")"
+                                         Clearable="true" />
                         <MudTextField @bind-Value="_query.MaintenanceType" Label="Type" />
-                        <MudSelect T="bool?" @bind-Value="_query.IsActive" Label="Active" Dense="true" Clearable="true">
-                            <MudSelectItem Value="true">Active</MudSelectItem>
-                            <MudSelectItem Value="false">Inactive</MudSelectItem>
+                        <MudSelect T="bool?" @bind-Value="_query.IsActive" Label="Status" Dense="true" Clearable="true">
+                            <MudSelectItem T="bool?" Value="@((bool?)true)">Active</MudSelectItem>
+                            <MudSelectItem T="bool?" Value="@((bool?)false)">Inactive</MudSelectItem>
                         </MudSelect>
                         <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Load" StartIcon="@Icons.Material.Filled.Search" Disabled="_busy">Search</MudButton>
                         <MudButton Variant="Variant.Outlined" Color="Color.Default" OnClick="ClearFilters" Disabled="_busy">Clear</MudButton>
@@ -98,13 +103,50 @@
 
 @code {
     private readonly List<MaintenanceScheduleDto> _items = [];
+    private List<VehicleDto> _vehicles = [];
     private ScheduleQueryModel _query = new();
     private CreateScheduleModel _create = new();
     private readonly CancellationTokenSource _cts = new();
     private bool _disposed;
     private bool _busy;
 
-    protected override async Task OnInitializedAsync() => await Load();
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadVehicles();
+        await Load();
+    }
+
+    private async Task LoadVehicles()
+    {
+        try
+        {
+            var result = await VehicleClient.SearchVehiclesAsync(new SearchVehiclesQuery
+            {
+                PageNumber = 1,
+                PageSize = 1000
+            });
+
+            _vehicles.Clear();
+            _vehicles.AddRange(result.Items ?? []);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load vehicles: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task<IEnumerable<VehicleDto>> SearchVehicles(string value, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return _vehicles;
+
+        var searchValue = value.ToLowerInvariant();
+        return _vehicles.Where(v =>
+            v.PlateNumber.Contains(searchValue, StringComparison.OrdinalIgnoreCase) ||
+            v.Make.Contains(searchValue, StringComparison.OrdinalIgnoreCase) ||
+            v.Model.Contains(searchValue, StringComparison.OrdinalIgnoreCase) ||
+            v.Year.ToString().Contains(searchValue)).ToList();
+    }
 
     private async Task Load()
     {
@@ -118,7 +160,7 @@
             _busy = true;
             var items = await VehicleClient.SearchMaintenanceSchedulesAsync(new MaintenanceScheduleSearchRequest(
                 _query.MaintenanceType,
-                ParseGuid(_query.VehicleIdText),
+                _query.SelectedVehicle?.Id,
                 _query.IsActive), _cts.Token);
 
             _items.Clear();
@@ -143,10 +185,9 @@
 
     private async Task Create()
     {
-        var vehicleId = ParseGuid(_create.VehicleIdText);
-        if (vehicleId is null || string.IsNullOrWhiteSpace(_create.MaintenanceType))
+        if (_create.SelectedVehicle is null || string.IsNullOrWhiteSpace(_create.MaintenanceType))
         {
-            Snackbar.Add("Vehicle Id and maintenance type are required.", Severity.Warning);
+            Snackbar.Add("Vehicle and maintenance type are required.", Severity.Warning);
             return;
         }
 
@@ -154,7 +195,7 @@
         {
             _busy = true;
             await VehicleClient.CreateMaintenanceScheduleAsync(new CreateMaintenanceScheduleRequest(
-                vehicleId.Value,
+                _create.SelectedVehicle.Id,
                 _create.MaintenanceType,
                 _create.Description,
                 _create.IntervalDays,
@@ -241,14 +282,14 @@
 
     private sealed class ScheduleQueryModel
     {
-        public string? VehicleIdText { get; set; }
+        public VehicleDto? SelectedVehicle { get; set; }
         public string? MaintenanceType { get; set; }
         public bool? IsActive { get; set; }
     }
 
     private sealed class CreateScheduleModel
     {
-        public string? VehicleIdText { get; set; }
+        public VehicleDto? SelectedVehicle { get; set; }
         public string MaintenanceType { get; set; } = string.Empty;
         public string? Description { get; set; }
         public int? IntervalDays { get; set; }

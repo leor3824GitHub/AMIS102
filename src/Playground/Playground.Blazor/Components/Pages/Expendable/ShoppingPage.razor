@@ -89,7 +89,7 @@
                                         </MudItem>
                                         <MudItem xs="12" sm="5" Class="text-sm-right">
                                             <MudText Typo="Typo.h6" Color="Color.Primary" Class="mb-0">
-                                                @($"${product.UnitPrice:F2}")
+                                                @($"${GetDisplayedPrice(product):F2}")
                                             </MudText>
                                             @{var bal = GetProductBalance(product);}
                                             @if (bal <= 0)
@@ -154,7 +154,7 @@
                     </MudItem>
                     <MudItem xs="12" sm="6">
                         <MudText Typo="Typo.caption" Color="Color.Default">SKU: @_selectedProduct.Sku</MudText>
-                        <MudText Typo="Typo.h5" Class="my-3">@($"${_selectedProduct.UnitPrice:F2}")</MudText>
+                        <MudText Typo="Typo.h5" Class="my-3">@($"${GetDisplayedPrice(_selectedProduct):F2}")</MudText>
                         <MudText Typo="Typo.body2" Class="mb-4">@_selectedProduct.Description</MudText>
                         
                         <MudStack>
@@ -198,13 +198,13 @@
                     </MudItem>
                     <MudItem xs="12" sm="8">
                         <MudText Typo="Typo.body2"><strong>@_selectedProductForCart.Name</strong></MudText>
-                        <MudText Typo="Typo.caption" Color="Color.Default">Price: @($"${_selectedProductForCart.UnitPrice:F2}")</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Default">Price: @($"${GetDisplayedPrice(_selectedProductForCart):F2}")</MudText>
                         <MudNumericField @bind-Value="_cartQuantity"
                                         Label="Quantity"
                                         Min="1"
                                         Class="my-3" />
                         <MudText Typo="Typo.h6">
-                            Subtotal: @($"${(_selectedProductForCart.UnitPrice * _cartQuantity):F2}")
+                            Subtotal: @($"${(GetDisplayedPrice(_selectedProductForCart) * _cartQuantity):F2}")
                         </MudText>
                     </MudItem>
                 </MudGrid>
@@ -228,6 +228,7 @@
     private int _cartItemCount = 0;
     private Guid? _warehouseLocationId = null;
     private Dictionary<Guid, int> _productBalances = new();
+    private Dictionary<Guid, decimal> _productAveragePrices = new();
 
     private bool _showProductDetailsDialog = false;
     private ProductDto? _selectedProduct;
@@ -245,6 +246,17 @@
     private int GetProductBalance(ProductDto product)
     {
         return _productBalances.TryGetValue(product.Id, out var balance) ? balance : 0;
+    }
+
+    private decimal GetDisplayedPrice(ProductDto? product)
+    {
+        if (product is null)
+            return 0m;
+
+        if (_productAveragePrices.TryGetValue(product.Id, out var averagePrice) && averagePrice > 0)
+            return averagePrice;
+
+        return (decimal)product.UnitPrice;
     }
 
     private Guid? _currentCartId;
@@ -394,10 +406,12 @@
             {
                 var stockLevels = await _warehouseClient.StockLevelsAsync(_warehouseLocationId.Value, pageNumber: 1, pageSize: 1000);
                 _productBalances = stockLevels.Items?.ToDictionary(i => i.ProductId, i => i.QuantityAvailable) ?? new Dictionary<Guid, int>();
+                _productAveragePrices = stockLevels.Items?.ToDictionary(i => i.ProductId, i => (decimal)i.AverageUnitPrice) ?? new Dictionary<Guid, decimal>();
             }
             else
             {
                 _productBalances.Clear();
+                _productAveragePrices.Clear();
             }
         }
         catch (Exception ex)
@@ -405,6 +419,7 @@
             // fallback: show product minimum stock level as balance
             _snackbar.Add($"Unable to load warehouse balance; fallback to product minimum stock: {ex.Message}", Severity.Warning);
             _productBalances.Clear();
+            _productAveragePrices.Clear();
         }
     }
 
@@ -472,7 +487,7 @@
                 CartId = _currentCartId.Value,
                 ProductId = product.Id,
                 Quantity = 1,
-                UnitPrice = product.UnitPrice
+                UnitPrice = (double)GetDisplayedPrice(product)
             };
 
             await _cartClient.ItemsPostAsync(_currentCartId.Value, command);
@@ -497,7 +512,7 @@
                 CartId = _currentCartId.Value,
                 ProductId = _selectedProductForCart.Id,
                 Quantity = _cartQuantity,
-                UnitPrice = _selectedProductForCart.UnitPrice
+                UnitPrice = (double)GetDisplayedPrice(_selectedProductForCart)
             };
 
             await _cartClient.ItemsPostAsync(_currentCartId.Value, command);

@@ -56,19 +56,11 @@ public sealed record IssueFromProductInventoryCommand(
     int QuantityToIssue
 ) : ICommand<IssueFromProductInventoryResponse>;
 
-public record IssuedBatchDetailDto(
-    Guid PurchaseId,
-    Guid ProductId,
-    int QuantityIssued,
-    decimal UnitPrice,
-    decimal TotalValue
-);
-
 public record IssueFromProductInventoryResponse(
     Guid ProductInventoryId,
     int QuantityIssued,
-    decimal TotalIssuedValue,
-    List<IssuedBatchDetailDto> BatchDetails
+    decimal AverageUnitPrice,
+    decimal TotalIssuedValue
 );
 
 /// <summary>Mark rejected inventory as returned to supplier</summary>
@@ -156,25 +148,12 @@ public record ProductInventoryDto(
     int QuantityOnHand,
     int QuantityIssued,
     decimal TotalValue,
+    decimal ReservedValue,
+    decimal AverageUnitPrice,
     string Status,
-    List<InventoryBatchDto> Batches,
     DateTimeOffset? FirstReceiptDate,
     DateTimeOffset? LastReceiptDate,
     DateTimeOffset? LastIssueDate
-);
-
-public record InventoryBatchDto(
-    Guid PurchaseId,
-    Guid ProductId,
-    int QuantityAvailable,
-    int QuantityIssued,
-    int QuantityRemaining,
-    decimal UnitPrice,
-    decimal TotalValue,
-    DateTimeOffset ReceivedDate,
-    DateTimeOffset? InspectionDate,
-    DateTimeOffset? FirstIssueDate,
-    int Version
 );
 
 public record RejectedInventoryDto(
@@ -208,5 +187,37 @@ public record PurchaseInspectionDto(
     string? Notes,
     DateTimeOffset InspectionDate,
     List<InspectionDefectDto> Defects
+);
+
+// ============= STOCK CARD REPORT =============
+
+/// <summary>Complete stock card ledger for a single product — receipts + issuances with running balance</summary>
+public sealed record GetStockCardQuery(Guid ProductId) : IQuery<StockCardDto?>;
+
+public record StockCardDto(
+    Guid ProductId,
+    string ProductCode,
+    string ProductName,
+    string UnitOfMeasure,
+    List<StockCardLineDto> Lines
+);
+
+public record StockCardLineDto(
+    DateTimeOffset Date,
+    string Reference,
+    string TransactionType,     // "Receipt" or "Issue"
+    string? Office,             // Department/employee for issuances
+    // Beginning Balance (Receipt column)
+    int ReceiptQty,
+    decimal ReceiptUnitCost,
+    decimal ReceiptTotalCost,
+    // Issuance column
+    int IssueQty,
+    decimal IssueUnitCost,
+    decimal IssueTotalCost,
+    // Ending Balance (running balance)
+    int BalanceQty,
+    decimal BalanceUnitCost,
+    decimal BalanceTotalCost
 );
 

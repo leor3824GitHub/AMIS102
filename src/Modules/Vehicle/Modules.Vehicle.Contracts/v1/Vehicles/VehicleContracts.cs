@@ -16,7 +16,16 @@ public record VehicleDto(
     string? AssignedDepartment,
     Guid? AssignedDriverId,
     string? AssignedDriver,
+    string? AccountableOfficerTitle,
     string? Notes,
+    // Technical specifications
+    string? MotorNumber,
+    string? ChassisNumber,
+    int? NumberOfCylinders,
+    int? EngineDisplacementCC,
+    string? FuelType,
+    string? VehicleUse,
+    decimal? AcquisitionCost,
     DateTimeOffset CreatedOnUtc,
     string? CreatedBy,
     DateTimeOffset? LastModifiedOnUtc,
@@ -29,7 +38,14 @@ public record CreateVehicleCommand(
     int Year,
     string Type,
     int Odometer = 0,
-    string? Notes = null) : ICommand<VehicleDto>;
+    string? Notes = null,
+    string? MotorNumber = null,
+    string? ChassisNumber = null,
+    int? NumberOfCylinders = null,
+    int? EngineDisplacementCC = null,
+    string? FuelType = null,
+    string? VehicleUse = null,
+    decimal? AcquisitionCost = null) : ICommand<VehicleDto>;
 
 public record UpdateVehicleCommand(
     Guid Id,
@@ -38,14 +54,22 @@ public record UpdateVehicleCommand(
     string Model,
     int Year,
     string Type,
-    string? Notes) : ICommand<VehicleDto>;
+    string? Notes,
+    string? MotorNumber = null,
+    string? ChassisNumber = null,
+    int? NumberOfCylinders = null,
+    int? EngineDisplacementCC = null,
+    string? FuelType = null,
+    string? VehicleUse = null,
+    decimal? AcquisitionCost = null) : ICommand<VehicleDto>;
 
 public record AssignVehicleCommand(
     Guid Id,
     Guid? DepartmentId,
     string? DepartmentName,
     Guid? DriverId,
-    string? DriverName) : ICommand<Unit>;
+    string? DriverName,
+    string? AccountableOfficerTitle = null) : ICommand<Unit>;
 
 public record UpdateOdometerCommand(Guid Id, int Reading) : ICommand<Unit>;
 
@@ -69,3 +93,29 @@ public sealed class SearchVehiclesQuery : IPagedQuery, IQuery<PagedResponse<Vehi
     public int? PageSize { get; set; }
     public string? Sort { get; set; }
 }
+
+// ============= MOTOR VEHICLE INVENTORY REPORT =============
+
+/// <summary>Inventory of Motor Vehicles report — all vehicles with full specifications and accountable officers</summary>
+public sealed record GetMotorVehicleInventoryQuery : IQuery<List<MotorVehicleInventoryItemDto>>
+{
+    public string? Status { get; init; }  // optional filter: Active, Retired, etc.
+}
+
+public record MotorVehicleInventoryItemDto(
+    int Qty,
+    string Description,         // Make + Model
+    string? MotorNumber,
+    string? ChassisNumber,
+    string? VehicleClassification, // e.g. PICK-UP VEHICLE, VAN TYPE VEHICLE
+    string PlateNumber,
+    string? VehicleUse,         // e.g. GOV'T-UV
+    int? NumberOfCylinders,
+    int? EngineDisplacementCC,
+    string? FuelType,
+    int Year,
+    decimal? AcquisitionCost,
+    string RunningCondition,    // derived from Status
+    string? AccountableOfficer, // AssignedDriver
+    string? AccountableOfficerTitle
+);

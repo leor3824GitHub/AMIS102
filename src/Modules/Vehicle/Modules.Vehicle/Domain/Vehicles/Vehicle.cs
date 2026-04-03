@@ -1,4 +1,5 @@
 using FSH.Framework.Core.Domain;
+using System.Security.Cryptography;
 
 namespace FSH.Modules.Vehicle.Domain.Vehicles;
 
@@ -38,10 +39,20 @@ public class Vehicle : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
     public VehicleStatus Status { get; private set; } = VehicleStatus.Active;
     public int Odometer { get; private set; }
 
+    // Technical specifications (for motor vehicle inventory report)
+    public string? MotorNumber { get; private set; }
+    public string? ChassisNumber { get; private set; }
+    public int? NumberOfCylinders { get; private set; }
+    public int? EngineDisplacementCC { get; private set; }
+    public string? FuelType { get; private set; }       // Diesel, Gasoline, Electric, Hybrid
+    public string? VehicleUse { get; private set; }     // e.g. GOV'T-UV, GOV'T-MPV
+    public decimal? AcquisitionCost { get; private set; }
+
     public Guid? AssignedDepartmentId { get; private set; }
     public string? AssignedDepartment { get; private set; }
     public Guid? AssignedDriverId { get; private set; }
     public string? AssignedDriver { get; private set; }
+    public string? AccountableOfficerTitle { get; private set; }  // Driver designation, e.g. Truck Driver
 
     public string? Notes { get; set; }
     public byte[] Version { get; set; } = [];
@@ -58,7 +69,10 @@ public class Vehicle : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
     public string? DeletedBy { get; set; }
 
     public static Vehicle Create(string tenantId, string plateNumber, string make, string model,
-        int year, VehicleType type, int odometer = 0, string? notes = null)
+        int year, VehicleType type, int odometer = 0, string? notes = null,
+        string? motorNumber = null, string? chassisNumber = null,
+        int? numberOfCylinders = null, int? engineDisplacementCC = null,
+        string? fuelType = null, string? vehicleUse = null, decimal? acquisitionCost = null)
     {
         return new Vehicle
         {
@@ -72,11 +86,24 @@ public class Vehicle : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
             Status = VehicleStatus.Active,
             Odometer = odometer,
             Notes = notes,
-            CreatedOnUtc = DateTimeOffset.UtcNow
+            MotorNumber = motorNumber,
+            ChassisNumber = chassisNumber,
+            NumberOfCylinders = numberOfCylinders,
+            EngineDisplacementCC = engineDisplacementCC,
+            FuelType = fuelType,
+            VehicleUse = vehicleUse,
+            AcquisitionCost = acquisitionCost,
+            CreatedOnUtc = DateTimeOffset.UtcNow,
+            Version = NewVersion()
         };
     }
 
-    public void Update(string plateNumber, string make, string model, int year, VehicleType type, string? notes)
+    private static byte[] NewVersion() => RandomNumberGenerator.GetBytes(8);
+
+    public void Update(string plateNumber, string make, string model, int year, VehicleType type, string? notes,
+        string? motorNumber = null, string? chassisNumber = null,
+        int? numberOfCylinders = null, int? engineDisplacementCC = null,
+        string? fuelType = null, string? vehicleUse = null, decimal? acquisitionCost = null)
     {
         PlateNumber = plateNumber.ToUpperInvariant();
         Make = make;
@@ -84,10 +111,19 @@ public class Vehicle : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
         Year = year;
         Type = type;
         Notes = notes;
+        MotorNumber = motorNumber;
+        ChassisNumber = chassisNumber;
+        NumberOfCylinders = numberOfCylinders;
+        EngineDisplacementCC = engineDisplacementCC;
+        FuelType = fuelType;
+        VehicleUse = vehicleUse;
+        AcquisitionCost = acquisitionCost;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        Version = NewVersion();
     }
 
-    public void AssignTo(Guid? departmentId, string? departmentName, Guid? driverId, string? driverName)
+    public void AssignTo(Guid? departmentId, string? departmentName, Guid? driverId, string? driverName,
+        string? accountableOfficerTitle = null)
     {
         ValidateAssignmentPair(departmentId, departmentName, "department");
         ValidateAssignmentPair(driverId, driverName, "driver");
@@ -96,7 +132,9 @@ public class Vehicle : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
         AssignedDepartment = departmentName;
         AssignedDriverId = driverId;
         AssignedDriver = driverName;
+        AccountableOfficerTitle = accountableOfficerTitle;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        Version = NewVersion();
     }
 
     public void UpdateOdometer(int reading)
@@ -106,6 +144,7 @@ public class Vehicle : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 
         Odometer = reading;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        Version = NewVersion();
     }
 
     public void MarkUnderRepair()
@@ -118,6 +157,7 @@ public class Vehicle : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 
         Status = VehicleStatus.UnderRepair;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        Version = NewVersion();
     }
 
     public void Reactivate()
@@ -130,6 +170,7 @@ public class Vehicle : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 
         Status = VehicleStatus.Active;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        Version = NewVersion();
     }
 
     public void Retire()
@@ -142,6 +183,7 @@ public class Vehicle : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 
         Status = VehicleStatus.Retired;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        Version = NewVersion();
     }
 
     public void Decommission()
@@ -154,6 +196,7 @@ public class Vehicle : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 
         Status = VehicleStatus.Decommissioned;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        Version = NewVersion();
     }
 
     public void SoftDelete(string? deletedBy = null)
@@ -161,6 +204,7 @@ public class Vehicle : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
         IsDeleted = true;
         DeletedOnUtc = DateTimeOffset.UtcNow;
         DeletedBy = deletedBy;
+        Version = NewVersion();
     }
 
     private static void ValidateAssignmentPair(Guid? id, string? name, string label)

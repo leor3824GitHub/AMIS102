@@ -12,7 +12,7 @@ public static class IssueFromProductInventoryEndpoint
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapPut("/inventory/{inventoryId:guid}/issue", IssueInventory)
             .WithName(nameof(IssueFromProductInventoryCommand))
-            .WithSummary("Issue product from inventory")
+            .WithSummary("Issue product from reserved inventory using moving-average valuation")
             .Produces<IssueFromProductInventoryResponse>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status404NotFound)

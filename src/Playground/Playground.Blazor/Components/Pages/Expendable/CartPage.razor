@@ -75,7 +75,7 @@
                             <MudTable Items="_cart.Items.OrderBy(i => GetProductName(i.ProductId))" Hover="true" Breakpoint="Breakpoint.Sm" Striped="true" Dense="true" Elevation="0" Class="cart-table">
                                 <HeaderContent>
                                     <MudTh>Product</MudTh>
-                                    <MudTh Style="text-align:right;">Price</MudTh>
+                                    <MudTh Style="text-align:right;">Avg Cost</MudTh>
                                     <MudTh Style="text-align:right;">In Stock</MudTh>
                                     <MudTh Style="text-align:center;">Qty</MudTh>
                                     <MudTh Style="text-align:right;">Subtotal</MudTh>
@@ -85,8 +85,6 @@
                                     <MudTd DataLabel="Product">
                                         <MudButton Variant="Variant.Text" Size="Size.Small"
                                                    Style="text-transform:none; font-weight:500; padding:0; min-width:0; text-align:left; justify-content:flex-start;"
-                                                   EndIcon="@(HasMultiplePrices(context.ProductId) ? Icons.Material.Filled.Sell : null)"
-                                                   IconColor="Color.Warning"
                                                    Title="Click to view stock details"
                                                    OnClick="@(() => TogglePopover(context.ProductId))">
                                             @GetProductName(context.ProductId)
@@ -115,44 +113,12 @@
                                                             <MudItem xs="4"><MudText Typo="Typo.caption" Color="Color.Tertiary">Reserved</MudText><MudText Typo="Typo.body2" Color="Color.Warning"><b>@inv.QuantityReserved</b></MudText></MudItem>
                                                             <MudItem xs="4"><MudText Typo="Typo.caption" Color="Color.Tertiary">On Hand</MudText><MudText Typo="Typo.body2"><b>@inv.QuantityOnHand</b></MudText></MudItem>
                                                         </MudGrid>
-                                                        @if (inv.Batches?.Count > 0)
-                                                        {
-                                                            <MudDivider Class="mt-2" />
-                                                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Class="mt-1">
-                                                                <MudText Typo="Typo.caption" Color="Color.Tertiary">FIFO BATCHES</MudText>
-                                                                @if (HasMultiplePrices(context.ProductId))
-                                                                {
-                                                                    <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Outlined">multiple prices</MudChip>
-                                                                }
-                                                            </MudStack>
-                                                            <MudSimpleTable Dense="true" Elevation="0" Style="font-size:11px;">
-                                                                <thead>
-                                                                    <tr>
-                                                                        <th>Received</th>
-                                                                        <th style="text-align:right">Remaining</th>
-                                                                        <th style="text-align:right">Unit Price</th>
-                                                                        <th style="text-align:right">Value</th>
-                                                                    </tr>
-                                                                </thead>
-                                                                <tbody>
-                                                                    @foreach (var batch in inv.Batches.Where(b => b.QuantityRemaining > 0).OrderBy(b => b.ReceivedDate))
-                                                                    {
-                                                                        <tr>
-                                                                            <td>@batch.ReceivedDate.ToLocalTime().ToString("MMM d")</td>
-                                                                            <td style="text-align:right">@batch.QuantityRemaining</td>
-                                                                            <td style="text-align:right">₱@batch.UnitPrice.ToString("N4")</td>
-                                                                            <td style="text-align:right">₱@batch.TotalValue.ToString("N2")</td>
-                                                                        </tr>
-                                                                    }
-                                                                </tbody>
-                                                            </MudSimpleTable>
-                                                        }
                                                     </MudStack>
                                                 }
                                             </MudPaper>
                                         }
                                     </MudTd>
-                                    <MudTd DataLabel="Price" Style="text-align:right;">$@context.UnitPrice.ToString("F2")</MudTd>
+                                    <MudTd DataLabel="Avg Cost" Style="text-align:right;">$@context.UnitPrice.ToString("F2")</MudTd>
                                     <MudTd DataLabel="In Stock" Style="text-align:right;">
                                         @{
                                             var balance = GetProductBalance(context.ProductId);
@@ -163,9 +129,9 @@
                                     </MudTd>
                                     <MudTd DataLabel="Qty" Style="text-align:center;">
                                         <div class="qty-input mx-auto">
-                                            <MudNumericField T="int" Value="context.Quantity" 
+                                            <MudNumericField T="int" Value="context.Quantity"
                                                             ValueChanged="@((v) => UpdateQuantity(context.ProductId, v))"
-                                                            Variant="Variant.Outlined" Margin="Margin.Dense" Min="1" 
+                                                            Variant="Variant.Outlined" Margin="Margin.Dense" Min="1"
                                                             Disabled="_isUpdating" />
                                         </div>
                                     </MudTd>
@@ -308,42 +274,33 @@
 
     private async Task UpdateQuantity(Guid productId, int newQty)
     {
-       if (_cart == null || _isUpdating) return;
-
+        if (_cart == null || _isUpdating) return;
         var item = _cart.Items.FirstOrDefault(x => x.ProductId == productId);
         if (item == null || newQty == item.Quantity) return;
+        if (newQty <= 0) { await RemoveItem(productId); return; }
 
         _isUpdating = true;
         try
         {
-            // Optimistic UI Update: Optional, but makes the app feel faster
-            // item.Quantity = newQty; 
-
-            // Use the API
+            // Replace the product line with the requested quantity.
             await _cartClient.ItemsDeleteAsync(_cart.Id, productId);
-            
-            if (newQty > 0) 
+
+            await _cartClient.ItemsPostAsync(_cart.Id, new AddToCartCommand
             {
-                await _cartClient.ItemsPostAsync(_cart.Id, new AddToCartCommand
-                {
-                    CartId = _cart.Id,
-                    ProductId = productId,
-                    Quantity = newQty,
-                    UnitPrice = item.UnitPrice
-                });
-                _snackbar.Add("Basket updated", Severity.Info);
-            }
-            else 
-            {
-                _snackbar.Add("Item removed", Severity.Warning);
-            }
-            
+                CartId = _cart.Id,
+                ProductId = productId,
+                Quantity = newQty,
+                UnitPrice = item.UnitPrice
+            });
+
+            _snackbar.Add("Basket updated", Severity.Info);
+
             await LoadCart();
         }
         catch (Exception ex)
         {
             _snackbar.Add($"Update failed: {ex.Message}", Severity.Error);
-            await LoadCart(); // Revert UI state on failure
+            await LoadCart();
         }
         finally
         {
@@ -353,8 +310,20 @@
 
     private async Task RemoveItem(Guid productId)
     {
-       var item = _cart?.Items.FirstOrDefault(x => x.ProductId == productId);
-        if (item != null) await UpdateQuantity(productId, item.Quantity - 1);
+        if (_cart == null || _isUpdating) return;
+        _isUpdating = true;
+        try
+        {
+            await _cartClient.ItemsDeleteAsync(_cart.Id, productId);
+            _snackbar.Add("Item removed", Severity.Warning);
+            await LoadCart();
+        }
+        catch (Exception ex)
+        {
+            _snackbar.Add($"Remove failed: {ex.Message}", Severity.Error);
+            await LoadCart();
+        }
+        finally { _isUpdating = false; }
     }
 
     private async Task ClearCartAsync()
@@ -443,13 +412,6 @@
     private string GetProductName(Guid id) => _productNameCache.TryGetValue(id, out var name) ? name : "Unknown Product";
     private int GetProductBalance(Guid id) => _productBalances.TryGetValue(id, out var b) ? b : 0;
     private ProductInventoryDto? GetInventory(Guid id) => _productInventories.TryGetValue(id, out var inv) ? inv : null;
-    private bool HasMultiplePrices(Guid id)
-    {
-        var inv = GetInventory(id);
-        if (inv?.Batches == null) return false;
-        var activeBatches = inv.Batches.Where(b => b.QuantityRemaining > 0).ToList();
-        return activeBatches.Select(b => b.UnitPrice).Distinct().Count() > 1;
-    }
     private void TogglePopover(Guid productId) =>
         _popoverProductId = _popoverProductId == productId ? null : productId;
     private void ClearCartConfirm() => _showClearConfirmDialog = true;

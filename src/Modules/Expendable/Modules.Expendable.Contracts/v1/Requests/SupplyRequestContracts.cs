@@ -167,3 +167,24 @@ public record IssuanceItemDto(
     decimal UnitPrice,
     decimal TotalValue
 );
+
+// ============= PHYSICAL COUNT REPORT =============
+
+/// <summary>Physical count report — all products with system balance vs on-hand count</summary>
+public sealed class GetPhysicalCountReportQuery : IQuery<List<PhysicalCountItemDto>>
+{
+    public Guid? WarehouseLocationId { get; set; }
+}
+
+public record PhysicalCountItemDto(
+    int ArticleNumber,
+    string Description,
+    string StockNo,
+    string UnitOfMeasure,
+    decimal UnitValue,
+    int BalancePerCard,
+    int OnHandPerCount,
+    int ShortageQuantity,
+    decimal ShortageValue,
+    string? Remarks
+);

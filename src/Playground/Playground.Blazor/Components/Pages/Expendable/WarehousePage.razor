@@ -53,6 +53,7 @@
                     <MudTh Style="text-align:center">Available</MudTh>
                     <MudTh Style="text-align:center">Reserved</MudTh>
                     <MudTh Style="text-align:center">Issued</MudTh>
+                    <MudTh Style="text-align:right">Avg Cost</MudTh>
                     <MudTh Style="text-align:right">Total Value</MudTh>
                     <MudTh>Status</MudTh>
                     <MudTh>Actions</MudTh>
@@ -79,6 +80,7 @@
                         else { <MudText>0</MudText> }
                     </MudTd>
                     <MudTd Style="text-align:center">@context.QuantityIssued</MudTd>
+                    <MudTd Style="text-align:right">$@context.AverageUnitPrice.ToString("F4")</MudTd>
                     <MudTd Style="text-align:right">$@context.TotalValue.ToString("F2")</MudTd>
                     <MudTd>
                         @{
@@ -93,8 +95,7 @@
                         <MudChip T="string" Size="Size.Small" Color="@sc" Icon="@si">@context.Status</MudChip>
                     </MudTd>
                     <MudTd>
-                        <MudIconButton Icon="@Icons.Material.Filled.Layers" Size="Size.Small"
-                                       Title="View FIFO Batches" OnClick="@(() => OpenBatchesDialog(context))" />
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">N/A</MudText>
                     </MudTd>
                 </RowTemplate>
                 <NoRecordsContent><MudText Class="my-4">No inventory records found.</MudText></NoRecordsContent>
@@ -205,105 +206,6 @@
     </MudTabs>
 </div>
 
-<!-- ===== BATCHES DETAIL DIALOG ===== -->
-@if (_showBatchesDialog && _batchesItem != null)
-{
-    <MudOverlay Visible="true" DarkBackground="true" AutoClose="false" ZIndex="1400">
-        <MudPaper Class="pa-5" Elevation="24" Style="width: min(760px, 95vw); max-height: 90vh; overflow-y: auto;">
-            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Start" Class="mb-3">
-                <div>
-                    <MudText Typo="Typo.h6">@_batchesItem.ProductName</MudText>
-                    <MudText Typo="Typo.caption" Color="Color.Secondary">
-                        @_batchesItem.ProductCode — @_batchesItem.WarehouseLocationName
-                    </MudText>
-                </div>
-                <MudChip T="string" Size="Size.Small" Color="Color.Primary">@_batchesItem.QuantityOnHand on hand</MudChip>
-            </MudStack>
-
-            <!-- Summary row -->
-            <MudGrid Spacing="2" Class="mb-4">
-                <MudItem xs="6" sm="3">
-                    <MudPaper Class="pa-2 text-center" Outlined="true">
-                        <MudText Typo="Typo.caption" Color="Color.Tertiary">Available</MudText>
-                        <MudText Typo="Typo.h6" Color="Color.Success">@_batchesItem.QuantityAvailable</MudText>
-                    </MudPaper>
-                </MudItem>
-                <MudItem xs="6" sm="3">
-                    <MudPaper Class="pa-2 text-center" Outlined="true">
-                        <MudText Typo="Typo.caption" Color="Color.Tertiary">Reserved</MudText>
-                        <MudText Typo="Typo.h6" Color="Color.Warning">@_batchesItem.QuantityReserved</MudText>
-                    </MudPaper>
-                </MudItem>
-                <MudItem xs="6" sm="3">
-                    <MudPaper Class="pa-2 text-center" Outlined="true">
-                        <MudText Typo="Typo.caption" Color="Color.Tertiary">Issued</MudText>
-                        <MudText Typo="Typo.h6">@_batchesItem.QuantityIssued</MudText>
-                    </MudPaper>
-                </MudItem>
-                <MudItem xs="6" sm="3">
-                    <MudPaper Class="pa-2 text-center" Outlined="true">
-                        <MudText Typo="Typo.caption" Color="Color.Tertiary">Total Value</MudText>
-                        <MudText Typo="Typo.h6">$@_batchesItem.TotalValue.ToString("F2")</MudText>
-                    </MudPaper>
-                </MudItem>
-            </MudGrid>
-
-            <MudText Typo="Typo.subtitle2" Class="mb-2">FIFO Batches</MudText>
-            @if (_batchesItem.Batches.Any())
-            {
-                <MudTable Items="@_batchesItem.Batches" Dense="true" Elevation="0" Outlined="true" Class="mb-4">
-                    <HeaderContent>
-                        <MudTh>Purchase</MudTh>
-                        <MudTh Style="text-align:center">Available</MudTh>
-                        <MudTh Style="text-align:center">Issued</MudTh>
-                        <MudTh Style="text-align:center">Remaining</MudTh>
-                        <MudTh Style="text-align:right">Unit Price</MudTh>
-                        <MudTh Style="text-align:right">Batch Value</MudTh>
-                        <MudTh>Received</MudTh>
-                        <MudTh>Inspected</MudTh>
-                    </HeaderContent>
-                    <RowTemplate>
-                        <MudTd>
-                            <MudText Typo="Typo.caption" Style="font-family:monospace">
-                                @context.PurchaseId.ToString()[..8]…
-                            </MudText>
-                        </MudTd>
-                        <MudTd Style="text-align:center">@context.QuantityAvailable</MudTd>
-                        <MudTd Style="text-align:center">@context.QuantityIssued</MudTd>
-                        <MudTd Style="text-align:center">
-                            @if (context.QuantityRemaining > 0)
-                            {
-                                <MudChip T="string" Size="Size.Small" Color="Color.Success">@context.QuantityRemaining</MudChip>
-                            }
-                            else { <MudText Typo="Typo.body2" Color="Color.Secondary">0</MudText> }
-                        </MudTd>
-                        <MudTd Style="text-align:right">$@context.UnitPrice.ToString("F2")</MudTd>
-                        <MudTd Style="text-align:right">$@context.TotalValue.ToString("F2")</MudTd>
-                        <MudTd>@context.ReceivedDate.ToString("MMM d, yyyy")</MudTd>
-                        <MudTd>
-                            @if (context.InspectionDate.HasValue)
-                            {
-                                <MudChip T="string" Size="Size.Small" Color="Color.Info">
-                                    @context.InspectionDate.Value.ToString("MMM d")
-                                </MudChip>
-                            }
-                            else { <MudText Typo="Typo.caption" Color="Color.Secondary">Pending</MudText> }
-                        </MudTd>
-                    </RowTemplate>
-                </MudTable>
-            }
-            else
-            {
-                <MudAlert Severity="Severity.Info" Class="mb-4">No FIFO batches recorded yet.</MudAlert>
-            }
-
-            <MudStack Row="true" Justify="Justify.FlexEnd">
-                <MudButton Variant="Variant.Outlined" OnClick="@(() => _showBatchesDialog = false)">Close</MudButton>
-            </MudStack>
-        </MudPaper>
-    </MudOverlay>
-}
-
 <!-- ===== RETURN DIALOG ===== -->
 @if (_showReturnDialog && _actionRejected != null)
 {
@@ -399,10 +301,6 @@
         ("Returned", "Returned", Color.Info),
         ("Disposed", "Disposed", Color.Default),
     ];
-
-    // Batches dialog
-    private bool _showBatchesDialog;
-    private ProductInventoryDto? _batchesItem;
 
     // Return dialog
     private bool _showReturnDialog;
@@ -523,12 +421,6 @@
     }
 
     // ===== DIALOGS =====
-
-    private void OpenBatchesDialog(ProductInventoryDto item)
-    {
-        _batchesItem = item;
-        _showBatchesDialog = true;
-    }
 
     private void OpenReturnDialog(RejectedInventoryDto item)
     {

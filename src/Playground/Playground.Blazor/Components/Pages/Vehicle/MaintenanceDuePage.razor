@@ -1,5 +1,6 @@
 @page "/vehicle/maintenance/due"
 @using FSH.Modules.Vehicle.Contracts.v1.Maintenance
+@using FSH.Modules.Vehicle.Contracts.v1.Vehicles
 @inject IVehicleClient VehicleClient
 @inject ISnackbar Snackbar
 
@@ -24,7 +25,9 @@
     <MudCard Class="fsh-card">
         <MudCardContent>
             <MudStack Row="true" Spacing="2" Class="mb-3">
-                <MudTextField @bind-Value="_vehicleIdText" Label="Vehicle Id (optional)" />
+                <MudAutocomplete T="VehicleDto" @bind-Value="_selectedVehicle" Label="Vehicle (optional)"
+                                 SearchFunc="@SearchVehicles" ToStringFunc="@(v => v == null ? null : $"{v.PlateNumber} - {v.Make} {v.Model} ({v.Year})")"
+                                 Clearable="true" />
                 <MudNumericField @bind-Value="_daysAhead" Label="Days Ahead" Min="1" Max="365" />
                 <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Load" StartIcon="@Icons.Material.Filled.Search">Load Due</MudButton>
                 <MudButton Variant="Variant.Outlined" Color="Color.Default" OnClick="Clear">Clear</MudButton>
@@ -68,17 +71,54 @@
 
 @code {
     private readonly List<MaintenanceScheduleDto> _items = [];
-    private string? _vehicleIdText;
+    private List<VehicleDto> _vehicles = [];
+    private VehicleDto? _selectedVehicle;
     private int _daysAhead = 30;
 
-    protected override async Task OnInitializedAsync() => await Load();
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadVehicles();
+        await Load();
+    }
+
+    private async Task LoadVehicles()
+    {
+        try
+        {
+            var result = await VehicleClient.SearchVehiclesAsync(new SearchVehiclesQuery
+            {
+                PageNumber = 1,
+                PageSize = 1000
+            });
+
+            _vehicles.Clear();
+            _vehicles.AddRange(result.Items ?? []);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load vehicles: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task<IEnumerable<VehicleDto>> SearchVehicles(string value, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return _vehicles;
+
+        var searchValue = value.ToLowerInvariant();
+        return _vehicles.Where(v =>
+            v.PlateNumber.Contains(searchValue, StringComparison.OrdinalIgnoreCase) ||
+            v.Make.Contains(searchValue, StringComparison.OrdinalIgnoreCase) ||
+            v.Model.Contains(searchValue, StringComparison.OrdinalIgnoreCase) ||
+            v.Year.ToString().Contains(searchValue)).ToList();
+    }
 
     private async Task Load()
     {
         try
         {
             var items = await VehicleClient.GetDueMaintenanceSchedulesAsync(new DueMaintenanceScheduleSearchRequest(
-                ParseGuid(_vehicleIdText),
+                _selectedVehicle?.Id,
                 _daysAhead));
 
             _items.Clear();
@@ -97,9 +137,7 @@
 
     private void Clear()
     {
-        _vehicleIdText = null;
+        _selectedVehicle = null;
         _daysAhead = 30;
     }
-
-    private static Guid? ParseGuid(string? text) => Guid.TryParse(text, out var value) ? value : null;
 }

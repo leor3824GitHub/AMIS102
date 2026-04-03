@@ -33,6 +33,10 @@ using FSH.Modules.MasterData.Features.v1.Categories.DeleteCategory;
 using FSH.Modules.MasterData.Features.v1.Categories.GetCategories;
 using FSH.Modules.MasterData.Features.v1.Categories.GetCategoryById;
 using FSH.Modules.MasterData.Features.v1.Categories.UpdateCategory;
+using FSH.Modules.MasterData.Features.v1.ReportSignatories.GetReportSignatories;
+using FSH.Modules.MasterData.Features.v1.ReportSignatories.CreateReportSignatory;
+using FSH.Modules.MasterData.Features.v1.ReportSignatories.UpdateReportSignatory;
+using FSH.Modules.MasterData.Features.v1.ReportSignatories.DeleteReportSignatory;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -80,7 +84,12 @@ public class MasterDataModule : IModule
         new("View Categories", "View", "MasterData.Categories"),
         new("Create Categories", "Create", "MasterData.Categories"),
         new("Update Categories", "Update", "MasterData.Categories"),
-        new("Delete Categories", "Delete", "MasterData.Categories")
+        new("Delete Categories", "Delete", "MasterData.Categories"),
+
+        new("View Report Signatories", "View", "MasterData.ReportSignatories", IsBasic: true),
+        new("Create Report Signatories", "Create", "MasterData.ReportSignatories"),
+        new("Update Report Signatories", "Update", "MasterData.ReportSignatories"),
+        new("Delete Report Signatories", "Delete", "MasterData.ReportSignatories")
     ];
 
     public void ConfigureServices(IHostApplicationBuilder builder)
@@ -117,6 +126,7 @@ public class MasterDataModule : IModule
         var unitOfMeasuresGroup = moduleGroup.MapGroup("/unit-of-measures");
         var suppliersGroup = moduleGroup.MapGroup("/suppliers");
         var categoriesGroup = moduleGroup.MapGroup("/categories");
+        var reportSignatoriesGroup = moduleGroup.MapGroup("/report-signatories");
 
         MasterDataLookupEndpoint.Map(lookupGroup);
         CreateEmployeeEndpoint.Map(employeesGroup);
@@ -148,6 +158,10 @@ public class MasterDataModule : IModule
         GetCategoryByIdEndpoint.Map(categoriesGroup);
         UpdateCategoryEndpoint.Map(categoriesGroup);
         DeleteCategoryEndpoint.Map(categoriesGroup);
+        GetReportSignatoriesEndpoint.Map(reportSignatoriesGroup);
+        CreateReportSignatoryEndpoint.Map(reportSignatoriesGroup);
+        UpdateReportSignatoryEndpoint.Map(reportSignatoriesGroup);
+        DeleteReportSignatoryEndpoint.Map(reportSignatoriesGroup);
     }
 }
 

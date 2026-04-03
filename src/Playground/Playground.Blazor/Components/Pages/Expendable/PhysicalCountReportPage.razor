@@ -1,0 +1,332 @@
+@page "/expendable/reports/physical-count"
+@using FSH.Modules.Expendable.Contracts.v1.Requests
+@using FSH.Modules.MasterData.Contracts.v1.ReportSignatories
+@using FSH.Playground.Blazor.ApiClient
+@using System.Globalization
+@using System.Text
+@inherits ComponentBase
+@inject IReportsClient ReportsClient
+@inject IReportSignatoryClient SignatoryClient
+@inject ISnackbar Snackbar
+@inject IJSRuntime JS
+
+<style>
+    .pci-page {
+        background: white;
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 0;
+        font-family: Arial, sans-serif;
+        font-size: 11px;
+        color: #000;
+    }
+
+    .pci-title-block {
+        text-align: center;
+        margin-bottom: 6px;
+    }
+
+    .pci-title {
+        font-size: 13px;
+        font-weight: bold;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+    }
+
+    .pci-subtitle {
+        font-size: 12px;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+
+    .pci-asof {
+        font-size: 11px;
+        margin-top: 2px;
+    }
+
+    .pci-accountability {
+        margin: 8px 0;
+        font-size: 11px;
+        line-height: 1.5;
+    }
+
+    .pci-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 10.5px;
+    }
+
+    .pci-table th,
+    .pci-table td {
+        border: 1px solid #333;
+        padding: 2px 4px;
+    }
+
+    .pci-table th {
+        background: #f0f0f0;
+        text-align: center;
+        font-weight: bold;
+        vertical-align: middle;
+    }
+
+    .pci-table td.num { text-align: right; }
+    .pci-table td.center { text-align: center; }
+    .pci-table td.dash { text-align: center; color: #555; }
+
+    .pci-signature-block {
+        margin-top: 24px;
+        font-size: 11px;
+    }
+
+    .pci-signature-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 16px;
+        margin-top: 8px;
+    }
+
+    .pci-signer {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .pci-signer-name {
+        font-weight: bold;
+        text-decoration: underline;
+        margin-top: 20px;
+    }
+
+    .pci-signer-title {
+        font-size: 10px;
+    }
+
+    @@media print {
+        .no-print { display: none !important; }
+        .pci-page { max-width: 100%; }
+        body { margin: 0; }
+        .mud-main-content, .mud-nav-menu, .mud-drawer { display: none !important; }
+    }
+</style>
+
+<div class="no-print">
+    <MudPaper Class="pa-4 mb-4" Elevation="1">
+        <MudGrid Spacing="2" AlignItems="AlignItems.Center">
+            <MudItem xs="12" sm="4">
+                <MudDatePicker @bind-Date="_asOfDate" Label="As of Date" Variant="Variant.Outlined"
+                               DateFormat="yyyy-MM-dd" Clearable="false" />
+            </MudItem>
+            <MudItem xs="12" sm="4">
+                <MudTextField @bind-Value="_accountablePerson" Label="Accountable Person" Variant="Variant.Outlined" />
+            </MudItem>
+            <MudItem xs="12" sm="4">
+                <MudTextField @bind-Value="_designation" Label="Designation" Variant="Variant.Outlined" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudStack Row="true" Spacing="2">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="LoadReportAsync"
+                               StartIcon="@Icons.Material.Filled.Refresh" Disabled="_loading">
+                        Generate Report
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="PrintReport"
+                               StartIcon="@Icons.Material.Filled.Print" Disabled="_loading || _items.Count == 0">
+                        Print
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Default" OnClick="ExportCsvAsync"
+                               StartIcon="@Icons.Material.Filled.Download" Disabled="_loading || _items.Count == 0">
+                        Export CSV
+                    </MudButton>
+                </MudStack>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    @if (_loading)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="mb-4" />
+    }
+</div>
+
+@if (_items.Count > 0)
+{
+    <div class="pci-page" id="print-area">
+
+        <div class="pci-title-block">
+            <div class="pci-title">Report on the Physical Count of Inventories</div>
+            <div class="pci-subtitle">Office Supplies Inventory</div>
+            <div class="pci-asof">As of @_asOfDate?.ToString("MMMM d, yyyy", CultureInfo.InvariantCulture)</div>
+        </div>
+
+        <div class="pci-accountability">
+            For which <strong>@_accountablePerson.ToUpperInvariant()</strong>,
+            <strong>@_designation</strong>, of <strong>@_entityName</strong> is accountable,
+            having assumed such accountability on <strong>@_assumedAccountabilityDate</strong>.
+        </div>
+
+        <table class="pci-table">
+            <thead>
+                <tr>
+                    <th rowspan="2" style="width:36px">Article</th>
+                    <th rowspan="2">Description</th>
+                    <th rowspan="2" style="width:54px">Stock No.</th>
+                    <th rowspan="2" style="width:50px">Unit of Measure</th>
+                    <th rowspan="2" style="width:72px">Unit Value</th>
+                    <th colspan="2" style="background:#e8e8e8">Balance Per Card / On Hand Per Count</th>
+                    <th colspan="2">Shortage / Overage</th>
+                    <th rowspan="2" style="width:72px">Remarks</th>
+                </tr>
+                <tr>
+                    <th style="width:72px">Balance Per Card (Qty)</th>
+                    <th style="width:72px">On Hand Per Count (Qty)</th>
+                    <th style="width:56px">Quantity</th>
+                    <th style="width:72px">Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in _items)
+                {
+                    <tr>
+                        <td class="center">@item.ArticleNumber</td>
+                        <td>@item.Description</td>
+                        <td class="center">@item.StockNo</td>
+                        <td class="center">@item.UnitOfMeasure</td>
+                        <td class="num">@(item.UnitValue > 0 ? item.UnitValue.ToString("N2") : "-")</td>
+                        <td class="num">@(item.BalancePerCard > 0 ? item.BalancePerCard.ToString() : "-")</td>
+                        <td class="num">@(item.OnHandPerCount > 0 ? item.OnHandPerCount.ToString() : "-")</td>
+                        <td class="center">@(item.ShortageQuantity != 0 ? item.ShortageQuantity.ToString() : "-")</td>
+                        <td class="num">@(item.ShortageValue > 0 ? item.ShortageValue.ToString("N2") : "-")</td>
+                        <td>@item.Remarks</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <div class="pci-signature-block">
+            @{
+                var activeSignatories = _signatories.Where(s => s.IsActive).OrderBy(s => s.SortOrder).ToList();
+                var row1 = activeSignatories.Take(3).ToList();
+                var row2 = activeSignatories.Skip(3).ToList();
+            }
+            @if (activeSignatories.Count > 0)
+            {
+                @if (row1.Count > 0)
+                {
+                    <div class="pci-signature-grid">
+                        @foreach (var sig in row1)
+                        {
+                            <div class="pci-signer">
+                                <div style="font-size:10px;margin-bottom:4px">@sig.Label</div>
+                                <div class="pci-signer-name">@(string.IsNullOrWhiteSpace(sig.Name) ? "\u00A0" : sig.Name.ToUpperInvariant())</div>
+                                <div class="pci-signer-title">@sig.Title</div>
+                            </div>
+                        }
+                    </div>
+                }
+                @if (row2.Count > 0)
+                {
+                    <div class="pci-signature-grid" style="margin-top:16px">
+                        @foreach (var sig in row2)
+                        {
+                            <div class="pci-signer">
+                                <div style="font-size:10px;margin-bottom:4px">@sig.Label</div>
+                                <div class="pci-signer-name">@(string.IsNullOrWhiteSpace(sig.Name) ? "\u00A0" : sig.Name.ToUpperInvariant())</div>
+                                <div class="pci-signer-title">@sig.Title</div>
+                            </div>
+                        }
+                    </div>
+                }
+                <div style="margin-top:8px; font-size:10px; font-style:italic">
+                    (Signature over Printed Name of Inventory Committee Chair and Members)
+                </div>
+            }
+            else
+            {
+                <div class="no-print" style="color:orange;font-size:11px;margin-top:8px">
+                    No signatories configured. Go to Master Data &rarr; Report Signatories to set them up.
+                </div>
+            }
+        </div>
+
+    </div>
+}
+else if (!_loading)
+{
+    <MudText Typo="Typo.body2" Class="mt-4 ml-2 no-print" Color="Color.Secondary">
+        No products found. Click Generate Report to load data.
+    </MudText>
+}
+
+@code {
+    private bool _loading;
+    private List<PhysicalCountItemDto> _items = [];
+    private List<ReportSignatoryDto> _signatories = [];
+    private DateTime? _asOfDate = DateTime.Today;
+    private string _accountablePerson = "Roel D. Caperig";
+    private string _designation = "Procurement Management Officer IV";
+    private string _entityName = "National Food Authority-Caraga Regional Office";
+    private string _assumedAccountabilityDate = "December 09, 2021";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadReportAsync();
+    }
+
+    private async Task LoadReportAsync()
+    {
+        _loading = true;
+        _items = [];
+        try
+        {
+            _items = await ReportsClient.GetPhysicalCountReportAsync();
+
+            try
+            {
+                _signatories = await SignatoryClient.GetReportSignatoriesAsync("PhysicalCount");
+            }
+            catch
+            {
+                Snackbar.Add("Could not load report signatories.", Severity.Warning);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load report: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task PrintReport() => await JS.InvokeVoidAsync("print");
+
+    private async Task ExportCsvAsync()
+    {
+        if (_items.Count == 0) return;
+
+        var sb = new StringBuilder();
+        sb.AppendLine("Article,Description,Stock No.,Unit of Measure,Unit Value,Balance Per Card (Qty),On Hand Per Count (Qty),Shortage Qty,Shortage Value,Remarks");
+
+        foreach (var item in _items)
+        {
+            sb.AppendLine(string.Join(",",
+                item.ArticleNumber,
+                Quote(item.Description),
+                Quote(item.StockNo),
+                Quote(item.UnitOfMeasure),
+                item.UnitValue.ToString("N2"),
+                item.BalancePerCard > 0 ? item.BalancePerCard.ToString() : "",
+                item.OnHandPerCount > 0 ? item.OnHandPerCount.ToString() : "",
+                item.ShortageQuantity != 0 ? item.ShortageQuantity.ToString() : "",
+                item.ShortageValue > 0 ? item.ShortageValue.ToString("N2") : "",
+                Quote(item.Remarks ?? "")));
+        }
+
+        var dataUrl = $"data:text/csv;base64,{Convert.ToBase64String(Encoding.UTF8.GetBytes(sb.ToString()))}";
+        await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+        Snackbar.Add("CSV export ready.", Severity.Success);
+    }
+
+    private static string Quote(string? v) =>
+        string.IsNullOrEmpty(v) ? "\"\"" : $"\"{v.Replace("\"", "\"\"")}\"";
+}

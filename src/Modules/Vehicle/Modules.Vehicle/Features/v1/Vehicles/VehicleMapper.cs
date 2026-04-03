@@ -10,7 +10,11 @@ internal static class VehicleMapper
             v.Type.ToString(), v.Status.ToString(), v.Odometer,
             v.AssignedDepartmentId, v.AssignedDepartment,
             v.AssignedDriverId, v.AssignedDriver,
+            v.AccountableOfficerTitle,
             v.Notes,
+            v.MotorNumber, v.ChassisNumber,
+            v.NumberOfCylinders, v.EngineDisplacementCC,
+            v.FuelType, v.VehicleUse, v.AcquisitionCost,
             v.CreatedOnUtc, v.CreatedBy,
             v.LastModifiedOnUtc, v.LastModifiedBy);
 }

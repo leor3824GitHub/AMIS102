@@ -42,6 +42,8 @@ using FSH.Modules.Expendable.Features.v1.Requests.FulfillSupplyRequest;
 using FSH.Modules.Expendable.Features.v1.Requests.CancelSupplyRequest;
 using FSH.Modules.Expendable.Features.v1.Reports.GetDepartmentIssuanceReport;
 using FSH.Modules.Expendable.Features.v1.Reports.GetEmployeeIssuanceHistory;
+using FSH.Modules.Expendable.Features.v1.Reports.GetPhysicalCountReport;
+using FSH.Modules.Expendable.Features.v1.Reports.GetStockCard;
 using FSH.Modules.Expendable.Features.v1.Cart.GetOrCreateCart;
 using FSH.Modules.Expendable.Features.v1.Cart.AddToCart;
 using FSH.Modules.Expendable.Features.v1.Cart.GetCart;
@@ -218,5 +220,7 @@ public class ExpendableModule : IModule
         // Issuance Reports
         GetDepartmentIssuanceReportEndpoint.Map(reportsGroup);
         GetEmployeeIssuanceHistoryEndpoint.Map(reportsGroup);
+        GetPhysicalCountReportEndpoint.Map(reportsGroup);
+        GetStockCardEndpoint.Map(reportsGroup);
     }
 }

@@ -1,0 +1,333 @@
+@page "/vehicle/reports/inventory"
+@using FSH.Modules.Vehicle.Contracts.v1.Vehicles
+@using FSH.Modules.MasterData.Contracts.v1.ReportSignatories
+@using FSH.Playground.Blazor.ApiClient
+@using System.Globalization
+@using System.Text
+@inherits ComponentBase
+@inject IVehicleClient VehicleClient
+@inject IReportSignatoryClient SignatoryClient
+@inject ISnackbar Snackbar
+@inject IJSRuntime JS
+
+<style>
+    .vir-page {
+        background: white;
+        max-width: 1150px;
+        margin: 0 auto;
+        padding: 0;
+        font-family: Arial, sans-serif;
+        font-size: 11px;
+        color: #000;
+    }
+
+    .vir-title-block {
+        text-align: center;
+        margin-bottom: 10px;
+    }
+
+    .vir-title-block div {
+        font-size: 12px;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        line-height: 1.5;
+    }
+
+    .vir-report-title {
+        font-size: 13px !important;
+        text-decoration: underline;
+        margin-top: 6px;
+    }
+
+    .vir-asof {
+        font-weight: normal !important;
+        font-style: italic;
+        font-size: 11px !important;
+        margin-top: 2px;
+    }
+
+    .vir-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 10.5px;
+    }
+
+    .vir-table th,
+    .vir-table td {
+        border: 1px solid #333;
+        padding: 3px 5px;
+        vertical-align: top;
+    }
+
+    .vir-table th {
+        background: #f0f0f0;
+        text-align: center;
+        font-weight: bold;
+        vertical-align: middle;
+    }
+
+    .vir-table td.ctr { text-align: center; }
+    .vir-table td.num { text-align: right; }
+    .vir-table td.desc { font-size: 10px; line-height: 1.4; }
+
+    .vir-table .spec-group th { background: #dde4f0; }
+    .vir-table .acq-group th  { background: #d8f0d8; }
+
+    .vir-signature-section {
+        margin-top: 20px;
+        font-size: 11px;
+    }
+
+    .vir-signature-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 0 16px;
+    }
+
+    .vir-signer-label { font-weight: bold; margin-bottom: 20px; }
+    .vir-signer-name  { font-weight: bold; text-decoration: underline; }
+    .vir-signer-title { font-size: 10px; }
+
+    @@media print {
+        .no-print { display: none !important; }
+        .vir-page { max-width: 100%; }
+        body { margin: 0; }
+        .mud-main-content, .mud-nav-menu, .mud-drawer { display: none !important; }
+    }
+</style>
+
+<div class="no-print">
+    <MudPaper Class="pa-4 mb-4" Elevation="1">
+        <MudGrid Spacing="2" AlignItems="AlignItems.Center">
+            <MudItem xs="12" sm="4">
+                <MudDatePicker @bind-Date="_asOfDate" Label="As of Date" Variant="Variant.Outlined"
+                               DateFormat="yyyy-MM-dd" />
+            </MudItem>
+            <MudItem xs="12" sm="4">
+                <MudSelect T="string" @bind-Value="_statusFilter" Label="Status Filter" Variant="Variant.Outlined" Clearable="true">
+                    <MudSelectItem Value="@("Active")">Active</MudSelectItem>
+                    <MudSelectItem Value="@("UnderRepair")">Under Repair</MudSelectItem>
+                    <MudSelectItem Value="@("Retired")">Retired</MudSelectItem>
+                    <MudSelectItem Value="@("Decommissioned")">Decommissioned</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="4">
+                <MudStack Row="true" Spacing="2">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="LoadReportAsync"
+                               StartIcon="@Icons.Material.Filled.Refresh" Disabled="_loading">
+                        Generate
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="PrintReport"
+                               StartIcon="@Icons.Material.Filled.Print"
+                               Disabled="_loading || _items.Count == 0">
+                        Print
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Default" OnClick="ExportCsvAsync"
+                               StartIcon="@Icons.Material.Filled.Download"
+                               Disabled="_loading || _items.Count == 0">
+                        CSV
+                    </MudButton>
+                </MudStack>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    @if (_loading)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="mb-4" />
+    }
+</div>
+
+@if (_items.Count > 0)
+{
+    <div class="vir-page" id="print-area">
+
+        <!-- Header -->
+        <div class="vir-title-block">
+            <div>NATIONAL FOOD AUTHORITY</div>
+            <div>CARAGA REGION</div>
+            <div>BUTUAN CITY</div>
+            <div class="vir-report-title">INVENTORY OF MOTOR VEHICLES</div>
+            <div class="vir-asof">as of @_asOfDate?.ToString("MMMM d, yyyy", CultureInfo.InvariantCulture)</div>
+        </div>
+
+        <!-- Table -->
+        <table class="vir-table">
+            <thead>
+                <tr>
+                    <th rowspan="3" style="width:32px">QTY</th>
+                    <th rowspan="3">DESCRIPTION</th>
+                    <th rowspan="3" style="width:60px">PLATE<br/>NUMBER</th>
+                    <th colspan="3" class="spec-group" style="background:#dde4f0">SPECIFICATION</th>
+                    <th colspan="3" class="acq-group" style="background:#d8f0d8">ACQUISITION</th>
+                    <th rowspan="3" style="width:80px">RUNNING<br/>CONDITION</th>
+                    <th rowspan="3" style="width:100px">ACCOUNTABLE<br/>OFFICER</th>
+                </tr>
+                <tr>
+                    <th rowspan="2" style="width:70px;background:#dde4f0">VEHICLE TYPE<br/>/ USE</th>
+                    <th rowspan="2" style="width:36px;background:#dde4f0">NO.<br/>CYL</th>
+                    <th rowspan="2" style="width:60px;background:#dde4f0">ENGINE<br/>DISPLACEMENT</th>
+                    <th rowspan="2" style="width:54px;background:#d8f0d8">FUEL<br/>TYPE</th>
+                    <th rowspan="2" style="width:40px;background:#d8f0d8">YEAR</th>
+                    <th rowspan="2" style="width:90px;background:#d8f0d8">COST</th>
+                </tr>
+                <tr></tr>
+            </thead>
+            <tbody>
+                @foreach (var item in _items)
+                {
+                    <tr>
+                        <td class="ctr">@item.Qty</td>
+                        <td class="desc">
+                            <strong>@item.Description.ToUpperInvariant()</strong>
+                            @if (!string.IsNullOrWhiteSpace(item.MotorNumber))
+                            {
+                                <br />@($"MOTOR NO. {item.MotorNumber}")
+                            }
+                            @if (!string.IsNullOrWhiteSpace(item.ChassisNumber))
+                            {
+                                <br />@($"CHASSIS NO. {item.ChassisNumber}")
+                            }
+                            @if (!string.IsNullOrWhiteSpace(item.VehicleClassification))
+                            {
+                                <br />@item.VehicleClassification.ToUpperInvariant()
+                            }
+                        </td>
+                        <td class="ctr">@item.PlateNumber</td>
+                        <td class="ctr">@(item.VehicleUse ?? "—")</td>
+                        <td class="ctr">@(item.NumberOfCylinders?.ToString() ?? "—")</td>
+                        <td class="ctr">@(item.EngineDisplacementCC?.ToString() ?? "—")</td>
+                        <td class="ctr">@(item.FuelType?.ToUpperInvariant() ?? "—")</td>
+                        <td class="ctr">@item.Year</td>
+                        <td class="num">@(item.AcquisitionCost.HasValue ? item.AcquisitionCost.Value.ToString("N2") : "—")</td>
+                        <td class="ctr" style="font-size:10px">@item.RunningCondition</td>
+                        <td class="desc">
+                            @if (!string.IsNullOrWhiteSpace(item.AccountableOfficer))
+                            {
+                                <strong>@item.AccountableOfficer.ToUpperInvariant()</strong>
+                                @if (!string.IsNullOrWhiteSpace(item.AccountableOfficerTitle))
+                                {
+                                    <br />@item.AccountableOfficerTitle
+                                }
+                            }
+                            else
+                            {
+                                <span style="color:#999">—</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <!-- Signature Block -->
+        <div class="vir-signature-section">
+            @if (_signatories.Count > 0)
+            {
+                <div class="vir-signature-grid">
+                    @foreach (var sig in _signatories.Where(s => s.IsActive).OrderBy(s => s.SortOrder))
+                    {
+                        <div>
+                            <div class="vir-signer-label">@sig.Label</div>
+                            <div style="margin-top:24px">
+                                <div class="vir-signer-name">@sig.Name.ToUpperInvariant()</div>
+                                <div class="vir-signer-title">@sig.Title</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="no-print" style="color:orange;font-size:11px;margin-top:8px">
+                    No signatories configured. Go to Master Data &rarr; Report Signatories to set them up.
+                </div>
+            }
+        </div>
+
+    </div>
+}
+else if (!_loading)
+{
+    <MudText Typo="Typo.body2" Class="mt-4 ml-2 no-print" Color="Color.Secondary">
+        No vehicles found. Click Generate to load the report.
+    </MudText>
+}
+
+@code {
+    private bool _loading;
+    private List<MotorVehicleInventoryItemDto> _items = [];
+    private List<ReportSignatoryDto> _signatories = [];
+    private DateTime? _asOfDate = DateTime.Today;
+    private string? _statusFilter;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadReportAsync();
+    }
+
+    private async Task LoadReportAsync()
+    {
+        _loading = true;
+        _items = [];
+        try
+        {
+            _items = await VehicleClient.GetMotorVehicleInventoryAsync(_statusFilter);
+
+            try
+            {
+                _signatories = await SignatoryClient.GetReportSignatoriesAsync("VehicleInventory");
+            }
+            catch
+            {
+                Snackbar.Add("Could not load report signatories.", Severity.Warning);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load report: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task PrintReport() => await JS.InvokeVoidAsync("print");
+
+    private async Task ExportCsvAsync()
+    {
+        if (_items.Count == 0) return;
+
+        var sb = new StringBuilder();
+        sb.AppendLine("QTY,Description,Motor No.,Chassis No.,Classification,Plate Number,Vehicle Use,No. Cyl,Engine Displacement,Fuel Type,Year,Acquisition Cost,Running Condition,Accountable Officer,Title");
+
+        foreach (var item in _items)
+        {
+            sb.AppendLine(string.Join(",",
+                item.Qty,
+                Quote(item.Description),
+                Quote(item.MotorNumber ?? ""),
+                Quote(item.ChassisNumber ?? ""),
+                Quote(item.VehicleClassification ?? ""),
+                Quote(item.PlateNumber),
+                Quote(item.VehicleUse ?? ""),
+                item.NumberOfCylinders?.ToString() ?? "",
+                item.EngineDisplacementCC?.ToString() ?? "",
+                Quote(item.FuelType ?? ""),
+                item.Year,
+                item.AcquisitionCost.HasValue ? item.AcquisitionCost.Value.ToString("N2") : "",
+                Quote(item.RunningCondition),
+                Quote(item.AccountableOfficer ?? ""),
+                Quote(item.AccountableOfficerTitle ?? "")));
+        }
+
+        var dataUrl = $"data:text/csv;base64,{Convert.ToBase64String(Encoding.UTF8.GetBytes(sb.ToString()))}";
+        await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+        Snackbar.Add("CSV export ready.", Severity.Success);
+    }
+
+    private static string Quote(string? v) =>
+        string.IsNullOrEmpty(v) ? "\"\"" : $"\"{v.Replace("\"", "\"\"")}\"";
+}

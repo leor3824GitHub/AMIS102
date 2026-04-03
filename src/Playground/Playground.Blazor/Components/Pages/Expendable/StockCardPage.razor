@@ -1,0 +1,384 @@
+@page "/expendable/reports/stock-card"
+@using FSH.Modules.Expendable.Contracts.v1.Warehouse
+@using FSH.Playground.Blazor.ApiClient
+@using System.Globalization
+@using System.Text
+@inherits ComponentBase
+@inject IReportsClient ReportsClient
+@inject IProductsClient ProductsClient
+@inject ILookupClient LookupClient
+@inject ISnackbar Snackbar
+@inject IJSRuntime JS
+
+<style>
+    .sc-page {
+        background: white;
+        max-width: 1050px;
+        margin: 0 auto;
+        padding: 0;
+        font-family: Arial, sans-serif;
+        font-size: 11px;
+        color: #000;
+    }
+
+    .sc-header-block {
+        border: 1px solid #333;
+        padding: 6px 10px;
+        margin-bottom: 8px;
+    }
+
+    .sc-header-title {
+        text-align: center;
+        font-size: 12px;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 4px;
+    }
+
+    .sc-header-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2px 20px;
+        font-size: 11px;
+    }
+
+    .sc-header-grid span { font-weight: bold; }
+
+    .sc-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 10.5px;
+    }
+
+    .sc-table th,
+    .sc-table td {
+        border: 1px solid #333;
+        padding: 2px 5px;
+        vertical-align: middle;
+    }
+
+    .sc-table th {
+        background: #e8e8e8;
+        text-align: center;
+        font-weight: bold;
+    }
+
+    .sc-table td.num  { text-align: right; }
+    .sc-table td.ctr  { text-align: center; }
+    .sc-table td.dash { text-align: center; color: #777; }
+    .sc-table td.type-receipt { background: #f0f7ff; }
+    .sc-table td.type-issue   { background: #fff8f0; }
+
+    .sc-summary {
+        margin-top: 8px;
+        display: flex;
+        gap: 24px;
+        font-size: 11px;
+        font-weight: bold;
+    }
+
+    .sc-summary-box {
+        border: 1px solid #999;
+        padding: 4px 12px;
+        min-width: 120px;
+        text-align: center;
+    }
+
+    @@media print {
+        .no-print { display: none !important; }
+        .sc-page { max-width: 100%; }
+        body { margin: 0; }
+        .mud-main-content, .mud-nav-menu, .mud-drawer { display: none !important; }
+    }
+</style>
+
+<div class="no-print">
+    <MudPaper Class="pa-4 mb-4" Elevation="1">
+        <MudGrid Spacing="2" AlignItems="AlignItems.Center">
+            <MudItem xs="12" sm="8">
+                <MudAutocomplete T="ProductDto"
+                                 Label="Select Product"
+                                 Value="_selectedProduct"
+                                 ValueChanged="OnProductSelected"
+                                 SearchFunc="SearchProductsAsync"
+                                 ToStringFunc="@(p => p == null ? string.Empty : $"{p.Sku} — {p.Name}")"
+                                 CoerceValue="true"
+                                 Clearable="true"
+                                 Placeholder="Type to search products..."
+                                 Variant="Variant.Outlined"
+                                 MinCharacters="1"
+                                 ResetValueOnEmptyText="true" />
+            </MudItem>
+            <MudItem xs="12" sm="4">
+                <MudStack Row="true" Spacing="2">
+                    <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="PrintReport"
+                               StartIcon="@Icons.Material.Filled.Print"
+                               Disabled="_loading || _stockCard is null">
+                        Print
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Default" OnClick="ExportCsvAsync"
+                               StartIcon="@Icons.Material.Filled.Download"
+                               Disabled="_loading || _stockCard is null">
+                        Export CSV
+                    </MudButton>
+                </MudStack>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    @if (_loading)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="mb-4" />
+    }
+</div>
+
+@if (_stockCard is not null)
+{
+    <div class="sc-page" id="print-area">
+
+        <!-- Header -->
+        <div class="sc-header-block">
+            <div class="sc-header-title">Stock Card</div>
+            <div class="sc-header-grid">
+                <div><span>Entity Name: </span>National Food Authority</div>
+                <div><span>Fund Cluster: </span>General Operating Fund</div>
+                <div><span>Item: </span>@_stockCard.ProductName</div>
+                <div><span>Stock No.: </span>@_stockCard.ProductCode</div>
+                <div><span>Unit of Measurement: </span>@_stockCard.UnitOfMeasure</div>
+                <div><span>Re-order Point: </span>—</div>
+            </div>
+        </div>
+
+        <!-- Ledger Table -->
+        <table class="sc-table">
+            <thead>
+                <tr>
+                    <!-- Column 1: Product Identity -->
+                    <th rowspan="2" style="width:72px">Date</th>
+                    <th rowspan="2" style="width:100px">Reference<br/>(PO / RIS No.)</th>
+                    <th rowspan="2" style="width:80px">Office /<br/>Department</th>
+                    <!-- Column 2: Beginning Balance (Receipts) -->
+                    <th colspan="3" style="background:#dde8ff">Beginning Balance / Receipts</th>
+                    <!-- Column 3: Issuance -->
+                    <th colspan="3" style="background:#ffe8cc">Issuance</th>
+                    <!-- Column 4: Ending Balance -->
+                    <th colspan="3" style="background:#d8f0d8">Ending Balance</th>
+                </tr>
+                <tr>
+                    <th style="width:44px;background:#dde8ff">Qty</th>
+                    <th style="width:68px;background:#dde8ff">Unit Cost</th>
+                    <th style="width:78px;background:#dde8ff">Total Cost</th>
+                    <th style="width:44px;background:#ffe8cc">Qty</th>
+                    <th style="width:68px;background:#ffe8cc">Unit Cost</th>
+                    <th style="width:78px;background:#ffe8cc">Total Cost</th>
+                    <th style="width:44px;background:#d8f0d8">Qty</th>
+                    <th style="width:68px;background:#d8f0d8">Unit Cost</th>
+                    <th style="width:78px;background:#d8f0d8">Total Cost</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (_stockCard.Lines.Count == 0)
+                {
+                    <tr>
+                        <td colspan="12" class="ctr" style="padding:12px;color:#777">
+                            No transactions found for this product.
+                        </td>
+                    </tr>
+                }
+                @foreach (var line in _stockCard.Lines)
+                {
+                    var isReceipt = line.TransactionType == "Receipt";
+                    var rowClass = isReceipt ? "type-receipt" : "type-issue";
+                    <tr>
+                        <!-- Column 1: Product Identity -->
+                        <td class="ctr @rowClass">@line.Date.LocalDateTime.ToString("MM/dd/yyyy")</td>
+                        <td class="@rowClass">@line.Reference</td>
+                        <td class="@rowClass" style="font-size:10px">@FormatOffice(line.Office)</td>
+                        <!-- Column 2: Beginning Balance / Receipts -->
+                        @if (isReceipt)
+                        {
+                            <td class="num" style="background:#dde8ff">@line.ReceiptQty</td>
+                            <td class="num" style="background:#dde8ff">@line.ReceiptUnitCost.ToString("N2")</td>
+                            <td class="num" style="background:#dde8ff">@line.ReceiptTotalCost.ToString("N2")</td>
+                        }
+                        else
+                        {
+                            <td class="dash" style="background:#dde8ff">—</td>
+                            <td class="dash" style="background:#dde8ff">—</td>
+                            <td class="dash" style="background:#dde8ff">—</td>
+                        }
+                        <!-- Column 3: Issuance -->
+                        @if (!isReceipt)
+                        {
+                            <td class="num" style="background:#ffe8cc">@line.IssueQty</td>
+                            <td class="num" style="background:#ffe8cc">@line.IssueUnitCost.ToString("N2")</td>
+                            <td class="num" style="background:#ffe8cc">@line.IssueTotalCost.ToString("N2")</td>
+                        }
+                        else
+                        {
+                            <td class="dash" style="background:#ffe8cc">—</td>
+                            <td class="dash" style="background:#ffe8cc">—</td>
+                            <td class="dash" style="background:#ffe8cc">—</td>
+                        }
+                        <!-- Column 4: Ending Balance -->
+                        <td class="num" style="background:#d8f0d8">@line.BalanceQty</td>
+                        <td class="num" style="background:#d8f0d8">@line.BalanceUnitCost.ToString("N4")</td>
+                        <td class="num" style="background:#d8f0d8">@line.BalanceTotalCost.ToString("N2")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <!-- Summary Totals -->
+        @if (_stockCard.Lines.Count > 0)
+        {
+            var lastLine = _stockCard.Lines[^1];
+            var totalReceipts = _stockCard.Lines.Where(l => l.TransactionType == "Receipt").Sum(l => l.ReceiptQty);
+            var totalIssued = _stockCard.Lines.Where(l => l.TransactionType == "Issue").Sum(l => l.IssueQty);
+            <div class="sc-summary no-print">
+                <div class="sc-summary-box">
+                    <div style="font-size:10px;font-weight:normal">Total Received</div>
+                    <div>@totalReceipts @_stockCard.UnitOfMeasure</div>
+                </div>
+                <div class="sc-summary-box">
+                    <div style="font-size:10px;font-weight:normal">Total Issued</div>
+                    <div>@totalIssued @_stockCard.UnitOfMeasure</div>
+                </div>
+                <div class="sc-summary-box">
+                    <div style="font-size:10px;font-weight:normal">Balance On Hand</div>
+                    <div>@lastLine.BalanceQty @_stockCard.UnitOfMeasure</div>
+                </div>
+                <div class="sc-summary-box">
+                    <div style="font-size:10px;font-weight:normal">Balance Value</div>
+                    <div>₱ @lastLine.BalanceTotalCost.ToString("N2")</div>
+                </div>
+            </div>
+        }
+
+    </div>
+}
+else if (!_loading && _selectedProduct is not null)
+{
+    <MudText Typo="Typo.body2" Class="mt-4 ml-2 no-print" Color="Color.Secondary">
+        No stock card data found for this product.
+    </MudText>
+}
+else if (!_loading)
+{
+    <MudText Typo="Typo.body2" Class="mt-4 ml-2 no-print" Color="Color.Secondary">
+        Search and select a product above to view its stock card.
+    </MudText>
+}
+
+@code {
+    private bool _loading;
+    private ProductDto? _selectedProduct;
+    private StockCardDto? _stockCard;
+    private Dictionary<Guid, string> _departmentNames = [];
+
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "productId")]
+    public string? QueryProductId { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var depts = await LookupClient.DepartmentsAsync(isActive: true, pageNumber: 1, pageSize: 500);
+            _departmentNames = (depts.Items ?? [])
+                .ToDictionary(d => d.Id, d => d.Name);
+        }
+        catch { /* non-critical */ }
+
+        if (!string.IsNullOrWhiteSpace(QueryProductId) && Guid.TryParse(QueryProductId, out var id))
+            await LoadStockCardAsync(id);
+    }
+
+    private async Task<IEnumerable<ProductDto>> SearchProductsAsync(string text, CancellationToken ct)
+    {
+        try
+        {
+            var result = await ProductsClient.SearchAsync(new SearchProductsQuery
+            {
+                Keyword = text,
+                PageNumber = 1,
+                PageSize = 30
+            }, ct);
+            return result.Items ?? [];
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    private async Task OnProductSelected(ProductDto? product)
+    {
+        _selectedProduct = product;
+        _stockCard = null;
+
+        if (product is not null)
+            await LoadStockCardAsync(product.Id);
+    }
+
+    private async Task LoadStockCardAsync(Guid productId)
+    {
+        _loading = true;
+        try
+        {
+            _stockCard = await ReportsClient.GetStockCardAsync(productId);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load stock card: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task PrintReport() => await JS.InvokeVoidAsync("print");
+
+    private async Task ExportCsvAsync()
+    {
+        if (_stockCard is null) return;
+
+        var sb = new StringBuilder();
+        sb.AppendLine($"Stock Card — {_stockCard.ProductCode} {_stockCard.ProductName} ({_stockCard.UnitOfMeasure})");
+        sb.AppendLine("Date,Reference,Office/Dept,Receipt Qty,Receipt Unit Cost,Receipt Total,Issue Qty,Issue Unit Cost,Issue Total,Balance Qty,Balance Unit Cost,Balance Total");
+
+        foreach (var line in _stockCard.Lines)
+        {
+            sb.AppendLine(string.Join(",",
+                line.Date.LocalDateTime.ToString("yyyy-MM-dd"),
+                Quote(line.Reference),
+                Quote(FormatOffice(line.Office)),
+                line.ReceiptQty > 0 ? line.ReceiptQty.ToString() : "",
+                line.ReceiptQty > 0 ? line.ReceiptUnitCost.ToString("N4") : "",
+                line.ReceiptQty > 0 ? line.ReceiptTotalCost.ToString("N2") : "",
+                line.IssueQty > 0 ? line.IssueQty.ToString() : "",
+                line.IssueQty > 0 ? line.IssueUnitCost.ToString("N4") : "",
+                line.IssueQty > 0 ? line.IssueTotalCost.ToString("N2") : "",
+                line.BalanceQty,
+                line.BalanceUnitCost.ToString("N4"),
+                line.BalanceTotalCost.ToString("N2")));
+        }
+
+        var dataUrl = $"data:text/csv;base64,{Convert.ToBase64String(Encoding.UTF8.GetBytes(sb.ToString()))}";
+        await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+        Snackbar.Add("CSV export ready.", Severity.Success);
+    }
+
+    private string FormatOffice(string? departmentId)
+    {
+        if (string.IsNullOrWhiteSpace(departmentId)) return string.Empty;
+        if (Guid.TryParse(departmentId, out var id) && _departmentNames.TryGetValue(id, out var name))
+            return name;
+        return departmentId;
+    }
+
+    private static string Quote(string? v) =>
+        string.IsNullOrEmpty(v) ? "\"\"" : $"\"{v.Replace("\"", "\"\"")}\"";
+}

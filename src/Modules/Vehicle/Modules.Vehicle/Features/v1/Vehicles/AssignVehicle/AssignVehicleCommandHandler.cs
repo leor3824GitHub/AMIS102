@@ -16,7 +16,7 @@ public sealed class AssignVehicleCommandHandler(VehicleDbContext db, ICurrentUse
             ?? throw new FluentValidation.ValidationException(
             [new ValidationFailure(nameof(cmd.Id), "Vehicle not found.")]);
 
-        vehicle.AssignTo(cmd.DepartmentId, cmd.DepartmentName, cmd.DriverId, cmd.DriverName);
+        vehicle.AssignTo(cmd.DepartmentId, cmd.DepartmentName, cmd.DriverId, cmd.DriverName, cmd.AccountableOfficerTitle);
         vehicle.LastModifiedBy = currentUser.GetUserId().ToString();
         await db.SaveChangesAsync(ct).ConfigureAwait(false);
         return Unit.Value;

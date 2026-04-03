@@ -45,6 +45,9 @@ internal interface IVehicleClient
     Task<MaintenanceLogDto?> GetMaintenanceLogAsync(Guid logId, CancellationToken cancellationToken = default);
     Task<MaintenanceLogDto> UpdateMaintenanceLogAsync(Guid logId, UpdateMaintenanceLogRequest request, CancellationToken cancellationToken = default);
     Task DeleteMaintenanceLogAsync(Guid logId, CancellationToken cancellationToken = default);
+
+    Task<List<MotorVehicleInventoryItemDto>> GetMotorVehicleInventoryAsync(
+        string? status = null, CancellationToken cancellationToken = default);
 }
 
 internal sealed class VehicleClient : IVehicleClient
@@ -198,6 +201,17 @@ internal sealed class VehicleClient : IVehicleClient
     {
         using var response = await _httpClient.DeleteAsync(new Uri($"api/v1/vehicle/maintenance/logs/{logId}", UriKind.Relative), cancellationToken);
         response.EnsureSuccessStatusCode();
+    }
+
+    public async Task<List<MotorVehicleInventoryItemDto>> GetMotorVehicleInventoryAsync(
+        string? status = null, CancellationToken cancellationToken = default)
+    {
+        var url = BuildUrl("api/v1/vehicle/vehicles/inventory-report", new Dictionary<string, string?>
+        {
+            ["status"] = status
+        });
+        var result = await _httpClient.GetFromJsonAsync<List<MotorVehicleInventoryItemDto>>(url, cancellationToken);
+        return result ?? [];
     }
 
     private async Task<T> PostJsonAsync<T>(string url, object body, CancellationToken cancellationToken)

@@ -8,7 +8,7 @@ namespace FSH.Modules.Expendable.Data.Configurations;
 /// <summary>
 /// Configuration for ProductInventory aggregate - central warehouse stock ledger.
 /// Each product maintains separate inventory per warehouse location.
-/// InventoryBatches are stored as JSON-owned collection for FIFO tracking.
+/// Inventory batches are stored as JSON-owned collection for receipt traceability.
 /// </summary>
 public class ProductInventoryConfiguration : IEntityTypeConfiguration<ProductInventory>
 {

@@ -1,4 +1,5 @@
 using FSH.Framework.Core.Domain;
+using System.Security.Cryptography;
 
 namespace FSH.Modules.Vehicle.Domain.Repairs;
 
@@ -53,9 +54,12 @@ public class RepairRecord : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
             PartsUsed = partsUsed,
             Notes = notes,
             Status = RepairStatus.Pending,
-            CreatedOnUtc = DateTimeOffset.UtcNow
+            CreatedOnUtc = DateTimeOffset.UtcNow,
+            Version = NewVersion()
         };
     }
+
+    private static byte[] NewVersion() => RandomNumberGenerator.GetBytes(8);
 
     public void UpdateDetails(DateTimeOffset repairDate, string description, decimal cost,
         string? vendorName, string? vendorContact, string? partsUsed, string? notes)
@@ -68,12 +72,14 @@ public class RepairRecord : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
         PartsUsed = partsUsed;
         Notes = notes;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        Version = NewVersion();
     }
 
     public void StartRepair()
     {
         Status = RepairStatus.InProgress;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        Version = NewVersion();
     }
 
     public void Complete(DateTimeOffset completedDate)
@@ -81,12 +87,14 @@ public class RepairRecord : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
         Status = RepairStatus.Completed;
         CompletedDate = completedDate;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        Version = NewVersion();
     }
 
     public void Cancel()
     {
         Status = RepairStatus.Cancelled;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        Version = NewVersion();
     }
 
     public void SoftDelete(string? deletedBy = null)
@@ -94,5 +102,6 @@ public class RepairRecord : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
         IsDeleted = true;
         DeletedOnUtc = DateTimeOffset.UtcNow;
         DeletedBy = deletedBy;
+        Version = NewVersion();
     }
 }

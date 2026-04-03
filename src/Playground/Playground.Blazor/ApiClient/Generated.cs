@@ -19374,107 +19374,6 @@ namespace FSH.Playground.Blazor.ApiClient
     }
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.6.3.0 (NJsonSchema v11.5.2.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class InventoryBatchDto
-    {
-
-        [System.Text.Json.Serialization.JsonPropertyName("purchaseId")]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public System.Guid PurchaseId { get; set; }
-
-        [System.Text.Json.Serialization.JsonPropertyName("productId")]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public System.Guid ProductId { get; set; }
-
-        [System.Text.Json.Serialization.JsonPropertyName("quantityAvailable")]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        [System.ComponentModel.DataAnnotations.RegularExpression(@"^-?(?:0|[1-9]\d*)$")]
-        public int QuantityAvailable { get; set; }
-
-        [System.Text.Json.Serialization.JsonPropertyName("quantityIssued")]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        [System.ComponentModel.DataAnnotations.RegularExpression(@"^-?(?:0|[1-9]\d*)$")]
-        public int QuantityIssued { get; set; }
-
-        [System.Text.Json.Serialization.JsonPropertyName("quantityRemaining")]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        [System.ComponentModel.DataAnnotations.RegularExpression(@"^-?(?:0|[1-9]\d*)$")]
-        public int QuantityRemaining { get; set; }
-
-        [System.Text.Json.Serialization.JsonPropertyName("unitPrice")]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        [System.ComponentModel.DataAnnotations.RegularExpression(@"^-?(?:0|[1-9]\d*)(?:\.\d+)?$")]
-        public double UnitPrice { get; set; }
-
-        [System.Text.Json.Serialization.JsonPropertyName("totalValue")]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        [System.ComponentModel.DataAnnotations.RegularExpression(@"^-?(?:0|[1-9]\d*)(?:\.\d+)?$")]
-        public double TotalValue { get; set; }
-
-        [System.Text.Json.Serialization.JsonPropertyName("receivedDate")]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public System.DateTimeOffset ReceivedDate { get; set; }
-
-        [System.Text.Json.Serialization.JsonPropertyName("inspectionDate")]
-        public System.DateTimeOffset? InspectionDate { get; set; }
-
-        [System.Text.Json.Serialization.JsonPropertyName("firstIssueDate")]
-        public System.DateTimeOffset? FirstIssueDate { get; set; }
-
-        [System.Text.Json.Serialization.JsonPropertyName("version")]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        [System.ComponentModel.DataAnnotations.RegularExpression(@"^-?(?:0|[1-9]\d*)$")]
-        public int Version { get; set; }
-
-        private System.Collections.Generic.IDictionary<string, object> _additionalProperties;
-
-        [System.Text.Json.Serialization.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-        {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
-        }
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.6.3.0 (NJsonSchema v11.5.2.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class IssuedBatchDetailDto
-    {
-
-        [System.Text.Json.Serialization.JsonPropertyName("purchaseId")]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public System.Guid PurchaseId { get; set; }
-
-        [System.Text.Json.Serialization.JsonPropertyName("productId")]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public System.Guid ProductId { get; set; }
-
-        [System.Text.Json.Serialization.JsonPropertyName("quantityIssued")]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        [System.ComponentModel.DataAnnotations.RegularExpression(@"^-?(?:0|[1-9]\d*)$")]
-        public int QuantityIssued { get; set; }
-
-        [System.Text.Json.Serialization.JsonPropertyName("unitPrice")]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        [System.ComponentModel.DataAnnotations.RegularExpression(@"^-?(?:0|[1-9]\d*)(?:\.\d+)?$")]
-        public double UnitPrice { get; set; }
-
-        [System.Text.Json.Serialization.JsonPropertyName("totalValue")]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        [System.ComponentModel.DataAnnotations.RegularExpression(@"^-?(?:0|[1-9]\d*)(?:\.\d+)?$")]
-        public double TotalValue { get; set; }
-
-        private System.Collections.Generic.IDictionary<string, object> _additionalProperties;
-
-        [System.Text.Json.Serialization.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-        {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
-        }
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.6.3.0 (NJsonSchema v11.5.2.0 (Newtonsoft.Json v13.0.0.0))")]
     public partial class IssueFromProductInventoryCommand
     {
 
@@ -19511,14 +19410,15 @@ namespace FSH.Playground.Blazor.ApiClient
         [System.ComponentModel.DataAnnotations.RegularExpression(@"^-?(?:0|[1-9]\d*)$")]
         public int QuantityIssued { get; set; }
 
+        [System.Text.Json.Serialization.JsonPropertyName("averageUnitPrice")]
+        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+        [System.ComponentModel.DataAnnotations.RegularExpression(@"^-?(?:0|[1-9]\d*)(?:\.\d+)?$")]
+        public double AverageUnitPrice { get; set; }
+
         [System.Text.Json.Serialization.JsonPropertyName("totalIssuedValue")]
         [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
         [System.ComponentModel.DataAnnotations.RegularExpression(@"^-?(?:0|[1-9]\d*)(?:\.\d+)?$")]
         public double TotalIssuedValue { get; set; }
-
-        [System.Text.Json.Serialization.JsonPropertyName("batchDetails")]
-        [System.ComponentModel.DataAnnotations.Required]
-        public System.Collections.Generic.ICollection<IssuedBatchDetailDto> BatchDetails { get; set; } = new System.Collections.ObjectModel.Collection<IssuedBatchDetailDto>();
 
         private System.Collections.Generic.IDictionary<string, object> _additionalProperties;
 
@@ -20535,13 +20435,19 @@ namespace FSH.Playground.Blazor.ApiClient
         [System.ComponentModel.DataAnnotations.RegularExpression(@"^-?(?:0|[1-9]\d*)(?:\.\d+)?$")]
         public double TotalValue { get; set; }
 
+        [System.Text.Json.Serialization.JsonPropertyName("reservedValue")]
+        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+        [System.ComponentModel.DataAnnotations.RegularExpression(@"^-?(?:0|[1-9]\d*)(?:\.\d+)?$")]
+        public double ReservedValue { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("averageUnitPrice")]
+        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+        [System.ComponentModel.DataAnnotations.RegularExpression(@"^-?(?:0|[1-9]\d*)(?:\.\d+)?$")]
+        public double AverageUnitPrice { get; set; }
+
         [System.Text.Json.Serialization.JsonPropertyName("status")]
         [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
         public string Status { get; set; }
-
-        [System.Text.Json.Serialization.JsonPropertyName("batches")]
-        [System.ComponentModel.DataAnnotations.Required]
-        public System.Collections.Generic.ICollection<InventoryBatchDto> Batches { get; set; } = new System.Collections.ObjectModel.Collection<InventoryBatchDto>();
 
         [System.Text.Json.Serialization.JsonPropertyName("firstReceiptDate")]
         public System.DateTimeOffset? FirstReceiptDate { get; set; }

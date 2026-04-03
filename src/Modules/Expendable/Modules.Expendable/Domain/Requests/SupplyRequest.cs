@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using FSH.Framework.Core.Domain;
 
 namespace FSH.Modules.Expendable.Domain.Requests;
@@ -80,9 +81,12 @@ public class SupplyRequest : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
             NeededByDate = neededBy,
             BusinessJustification = businessJustification,
             Status = SupplyRequestStatus.Draft,
+            Version = NewVersion(),
             CreatedOnUtc = DateTimeOffset.UtcNow
         };
     }
+
+    private static byte[] NewVersion() => RandomNumberGenerator.GetBytes(8);
 
     /// <summary>Add a supply item to the request</summary>
     public void AddItem(Guid productId, int quantity, string? notes = null)
@@ -101,6 +105,7 @@ public class SupplyRequest : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
         }
 
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        Version = NewVersion();
     }
 
     /// <summary>Remove an item from the request</summary>
@@ -111,6 +116,7 @@ public class SupplyRequest : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 
         _items.RemoveAll(x => x.ProductId == productId);
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        Version = NewVersion();
     }
 
     /// <summary>Submit the supply request</summary>
@@ -124,6 +130,7 @@ public class SupplyRequest : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 
         Status = SupplyRequestStatus.Submitted;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        Version = NewVersion();
     }
 
     /// <summary>Approve the supply request, recording the issuing warehouse location</summary>
@@ -148,6 +155,7 @@ public class SupplyRequest : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
         ApprovedOnUtc = DateTimeOffset.UtcNow;
         WarehouseLocationId = warehouseLocationId;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        Version = NewVersion();
     }
 
     /// <summary>Reject the supply request</summary>
@@ -159,6 +167,7 @@ public class SupplyRequest : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
         Status = SupplyRequestStatus.Rejected;
         RejectionReason = reason;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        Version = NewVersion();
     }
 
     /// <summary>Mark as fulfilled</summary>
@@ -169,6 +178,7 @@ public class SupplyRequest : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 
         Status = SupplyRequestStatus.Fulfilled;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        Version = NewVersion();
     }
 
     /// <summary>Record fulfillment with quantities and values per item, then mark as fulfilled</summary>
@@ -188,6 +198,7 @@ public class SupplyRequest : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 
         Status = SupplyRequestStatus.Fulfilled;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        Version = NewVersion();
     }
 
     /// <summary>Cancel the request</summary>
@@ -198,6 +209,7 @@ public class SupplyRequest : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 
         Status = SupplyRequestStatus.Cancelled;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        Version = NewVersion();
     }
 
     /// <summary>Soft delete the request</summary>

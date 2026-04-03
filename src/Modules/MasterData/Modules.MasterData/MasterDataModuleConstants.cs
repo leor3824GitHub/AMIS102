@@ -66,5 +66,13 @@ public static class MasterDataModuleConstants
             public const string Update = "Permissions.MasterData.Categories.Update";
             public const string Delete = "Permissions.MasterData.Categories.Delete";
         }
+
+        public static class ReportSignatories
+        {
+            public const string View = "Permissions.MasterData.ReportSignatories.View";
+            public const string Create = "Permissions.MasterData.ReportSignatories.Create";
+            public const string Update = "Permissions.MasterData.ReportSignatories.Update";
+            public const string Delete = "Permissions.MasterData.ReportSignatories.Delete";
+        }
     }
 }

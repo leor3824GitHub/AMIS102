@@ -20,20 +20,9 @@ internal static class WarehouseMapper
             inventory.QuantityOnHand,
             inventory.QuantityIssued,
             inventory.TotalValue,
+            inventory.ReservedValue,
+            inventory.AverageUnitPrice,
             inventory.Status.ToString(),
-            inventory.Batches.Select(b => new InventoryBatchDto(
-                b.PurchaseId,
-                b.ProductId,
-                b.QuantityAvailable,
-                b.QuantityIssued,
-                b.QuantityRemaining,
-                b.UnitPrice,
-                b.TotalValue,
-                b.ReceivedDate,
-                b.InspectionDate,
-                b.FirstIssueDate,
-                b.Version
-            )).ToList(),
             inventory.FirstReceiptDate,
             inventory.LastReceiptDate,
             inventory.LastIssueDate

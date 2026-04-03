@@ -31,7 +31,9 @@ public sealed class CreateVehicleCommandHandler(VehicleDbContext db, ICurrentUse
             [new ValidationFailure(nameof(cmd.Type), $"Invalid vehicle type '{cmd.Type}'.")]);
 
         var vehicle = VehicleEntity.Create(tenantId, cmd.PlateNumber, cmd.Make, cmd.Model,
-            cmd.Year, vehicleType, cmd.Odometer, cmd.Notes);
+            cmd.Year, vehicleType, cmd.Odometer, cmd.Notes,
+            cmd.MotorNumber, cmd.ChassisNumber, cmd.NumberOfCylinders,
+            cmd.EngineDisplacementCC, cmd.FuelType, cmd.VehicleUse, cmd.AcquisitionCost);
         vehicle.CreatedBy = currentUser.GetUserId().ToString();
 
         db.Vehicles.Add(vehicle);

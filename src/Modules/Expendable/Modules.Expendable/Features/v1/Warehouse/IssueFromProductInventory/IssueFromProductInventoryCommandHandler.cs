@@ -23,7 +23,7 @@ public sealed class IssueFromProductInventoryCommandHandler : ICommandHandler<Is
             .FirstOrDefaultAsync(pi => pi.Id == command.ProductInventoryId, cancellationToken)
             ?? throw new InvalidOperationException($"ProductInventory {command.ProductInventoryId} not found");
 
-        var issuedDetails = inventory.IssueFromBatches(command.QuantityToIssue);
+        var issued = inventory.IssueReservedStock(command.QuantityToIssue);
 
         await _dbContext.SaveChangesAsync(cancellationToken);
         await _cache.RemoveItemAsync($"inventory:{inventory.ProductId}:{inventory.WarehouseLocationId}", cancellationToken);
@@ -32,14 +32,8 @@ public sealed class IssueFromProductInventoryCommandHandler : ICommandHandler<Is
         var response = new IssueFromProductInventoryResponse(
             inventory.Id,
             command.QuantityToIssue,
-            issuedDetails.Sum(d => d.TotalValue),
-            issuedDetails.Select(d => new IssuedBatchDetailDto(
-                d.PurchaseId,
-                d.ProductId,
-                d.QuantityIssued,
-                d.UnitPrice,
-                d.TotalValue
-            )).ToList()
+            issued.UnitPrice,
+            issued.TotalValue
         );
 
         return response;

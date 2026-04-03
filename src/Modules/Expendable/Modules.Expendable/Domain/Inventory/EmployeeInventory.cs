@@ -1,8 +1,9 @@
+using System.Security.Cryptography;
 using FSH.Framework.Core.Domain;
 
 namespace FSH.Modules.Expendable.Domain.Inventory;
 
-/// <summary>Inventory batch for FIFO tracking</summary>
+/// <summary>Inventory batch for receipt traceability</summary>
 public class InventoryBatch
 {
     public Guid Id { get; set; }
@@ -73,9 +74,12 @@ public class EmployeeInventory : AggregateRoot<Guid>, IHasTenant, IAuditableEnti
             TotalQuantityReceived = 0,
             TotalQuantityConsumed = 0,
             LastInventoryDate = DateTimeOffset.UtcNow,
+            Version = NewVersion(),
             CreatedOnUtc = DateTimeOffset.UtcNow
         };
     }
+
+    private static byte[] NewVersion() => RandomNumberGenerator.GetBytes(8);
 
     /// <summary>Receive inventory (adds a new batch)</summary>
     public void ReceiveInventory(int quantity, string? batchNumber = null, DateTimeOffset? expiryDate = null)
@@ -85,9 +89,10 @@ public class EmployeeInventory : AggregateRoot<Guid>, IHasTenant, IAuditableEnti
         TotalQuantityReceived += quantity;
         LastInventoryDate = DateTimeOffset.UtcNow;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        Version = NewVersion();
     }
 
-    /// <summary>Consume inventory using FIFO principle</summary>
+    /// <summary>Consume inventory from available employee stock</summary>
     public int ConsumeInventory(int quantity)
     {
         if (quantity <= 0)
@@ -110,6 +115,7 @@ public class EmployeeInventory : AggregateRoot<Guid>, IHasTenant, IAuditableEnti
         TotalQuantityConsumed += quantity;
         LastInventoryDate = DateTimeOffset.UtcNow;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        Version = NewVersion();
         return quantity;
     }
 

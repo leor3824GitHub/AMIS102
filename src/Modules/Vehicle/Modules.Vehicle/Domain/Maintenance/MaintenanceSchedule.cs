@@ -1,4 +1,5 @@
 using FSH.Framework.Core.Domain;
+using System.Security.Cryptography;
 
 namespace FSH.Modules.Vehicle.Domain.Maintenance;
 
@@ -44,9 +45,12 @@ public class MaintenanceSchedule : AggregateRoot<Guid>, IHasTenant, IAuditableEn
             DueDate = initialDueDate,
             DueMileage = initialDueMileage,
             IsActive = true,
-            CreatedOnUtc = DateTimeOffset.UtcNow
+            CreatedOnUtc = DateTimeOffset.UtcNow,
+            Version = NewVersion()
         };
     }
+
+    private static byte[] NewVersion() => RandomNumberGenerator.GetBytes(8);
 
     public void Update(string maintenanceType, string? description,
         int? intervalDays, int? intervalMileage, DateOnly? dueDate, int? dueMileage)
@@ -58,6 +62,7 @@ public class MaintenanceSchedule : AggregateRoot<Guid>, IHasTenant, IAuditableEn
         DueDate = dueDate;
         DueMileage = dueMileage;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        Version = NewVersion();
     }
 
     /// <summary>Records a completed maintenance and advances the next due date/mileage.</summary>
@@ -73,18 +78,21 @@ public class MaintenanceSchedule : AggregateRoot<Guid>, IHasTenant, IAuditableEn
             DueMileage = doneMileage.Value + IntervalMileage.Value;
 
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        Version = NewVersion();
     }
 
     public void Activate()
     {
         IsActive = true;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        Version = NewVersion();
     }
 
     public void Deactivate()
     {
         IsActive = false;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        Version = NewVersion();
     }
 
     public void SoftDelete(string? deletedBy = null)
@@ -92,5 +100,6 @@ public class MaintenanceSchedule : AggregateRoot<Guid>, IHasTenant, IAuditableEn
         IsDeleted = true;
         DeletedOnUtc = DateTimeOffset.UtcNow;
         DeletedBy = deletedBy;
+        Version = NewVersion();
     }
 }

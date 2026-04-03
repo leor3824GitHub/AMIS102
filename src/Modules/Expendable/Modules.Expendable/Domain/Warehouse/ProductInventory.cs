@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Security.Cryptography;
 using FSH.Framework.Core.Domain;
 
 namespace FSH.Modules.Expendable.Domain.Warehouse;
@@ -28,10 +29,13 @@ public class ProductInventory : AggregateRoot<Guid>
     public int QuantityOnHand => QuantityAvailable + QuantityReserved;  // Total in warehouse
 
     // Value Tracking (for cost accounting)
-    public decimal TotalValue { get; private set; }        // Sum of all batches' value
-    public decimal ReservedValue { get; private set; }     // Value of reserved stock
+    public decimal TotalValue { get; private set; }        // Moving-average inventory value
+    public decimal ReservedValue { get; private set; }     // Reserved quantity valued at moving-average cost
+    public decimal AverageUnitPrice => QuantityOnHand > 0
+        ? Math.Round(TotalValue / QuantityOnHand, 4)
+        : 0m;
 
-    // FIFO Batches (from multiple Purchase Orders)
+    // Purchase receipt batches retained for traceability
     public Collection<InventoryBatch> Batches { get; private set; } = new Collection<InventoryBatch>();
 
     // System Dates
@@ -89,9 +93,12 @@ public class ProductInventory : AggregateRoot<Guid>
             TotalValue = 0,
             ReservedValue = 0,
             Status = ProductInventoryStatus.Active,
+            Version = NewVersion(),
             CreatedOnUtc = DateTimeOffset.UtcNow
         };
     }
+
+    private static byte[] NewVersion() => RandomNumberGenerator.GetBytes(8);
 
     /// <summary>Receive inspected stock into warehouse</summary>
     public void ReceiveFromPurchase(
@@ -109,12 +116,14 @@ public class ProductInventory : AggregateRoot<Guid>
         Batches.Add(batch);
 
         QuantityAvailable += quantityAccepted;
-        RecalculateValue();
+        TotalValue = Math.Round(TotalValue + (quantityAccepted * unitPrice), 2, MidpointRounding.AwayFromZero);
+        RecalculateReservedValue();
 
         if (FirstReceiptDate == null)
             FirstReceiptDate = DateTimeOffset.UtcNow;
         LastReceiptDate = DateTimeOffset.UtcNow;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        Version = NewVersion();
     }
 
     /// <summary>Reserve stock for a supply request (allocation)</summary>
@@ -131,6 +140,7 @@ public class ProductInventory : AggregateRoot<Guid>
 
         RecalculateReservedValue();
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        Version = NewVersion();
     }
 
     /// <summary>Cancel a reservation (if supply request is rejected)</summary>
@@ -147,10 +157,11 @@ public class ProductInventory : AggregateRoot<Guid>
 
         RecalculateReservedValue();
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        Version = NewVersion();
     }
 
-    /// <summary>Issue reserved stock to employee (FIFO batches)</summary>
-    public Collection<IssuedBatchDetail> IssueFromBatches(int quantityToIssue)
+    /// <summary>Issue reserved stock to employee using moving-average valuation.</summary>
+    public IssuanceDetail IssueReservedStock(int quantityToIssue)
     {
         if (quantityToIssue <= 0)
             throw new ArgumentException("Quantity must be greater than 0");
@@ -158,44 +169,28 @@ public class ProductInventory : AggregateRoot<Guid>
             throw new InvalidOperationException(
                 $"Insufficient reserved stock. Reserved: {QuantityReserved}, Requested to issue: {quantityToIssue}");
 
-        var issuedDetails = new Collection<IssuedBatchDetail>();
-        var remaining = quantityToIssue;
+        var averageUnitPrice = AverageUnitPrice;
+        var totalIssuedValue = Math.Round(quantityToIssue * averageUnitPrice, 2, MidpointRounding.AwayFromZero);
 
-        // FIFO: Issue from oldest batch first
-        foreach (var batch in Batches.OrderBy(b => b.ReceivedDate))
-        {
-            if (remaining <= 0) break;
+        QuantityReserved -= quantityToIssue;
+        QuantityIssued += quantityToIssue;
 
-            var canIssueFromBatch = Math.Min(batch.QuantityAvailable - batch.QuantityIssued, remaining);
-            if (canIssueFromBatch > 0)
-            {
-                batch.MarkIssued(canIssueFromBatch);
-
-                issuedDetails.Add(new IssuedBatchDetail
-                {
-                    PurchaseId = batch.PurchaseId,
-                    ProductId = batch.ProductId,
-                    QuantityIssued = canIssueFromBatch,
-                    UnitPrice = batch.UnitPrice,
-                    TotalValue = canIssueFromBatch * batch.UnitPrice
-                });
-
-                QuantityReserved -= canIssueFromBatch;
-                QuantityIssued += canIssueFromBatch;
-                remaining -= canIssueFromBatch;
-            }
-        }
-
-        if (remaining > 0)
-            throw new InvalidOperationException(
-                $"Inventory data inconsistency: could only issue {quantityToIssue - remaining} of {quantityToIssue} from FIFO batches for product {ProductId}. " +
-                "Reserved quantity exceeds actual batch stock.");
-
-        RecalculateValue();
+        TotalValue = Math.Round(
+            Math.Max(0m, TotalValue - totalIssuedValue),
+            2,
+            MidpointRounding.AwayFromZero);
+        RecalculateReservedValue();
         LastIssueDate = DateTimeOffset.UtcNow;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        Version = NewVersion();
 
-        return issuedDetails;
+        return new IssuanceDetail
+        {
+            ProductId = ProductId,
+            QuantityIssued = quantityToIssue,
+            UnitPrice = averageUnitPrice,
+            TotalValue = totalIssuedValue
+        };
     }
 
     /// <summary>Get available stock for allocation (not reserved)</summary>
@@ -211,20 +206,13 @@ public class ProductInventory : AggregateRoot<Guid>
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
     }
 
-    private void RecalculateValue()
-    {
-        TotalValue = Batches.Sum(b => b.TotalValue);
-    }
-
     private void RecalculateReservedValue()
     {
-        ReservedValue = Batches
-            .Where(b => b.QuantityAvailable > b.QuantityIssued)
-            .Sum(b => (Math.Min(b.QuantityAvailable - b.QuantityIssued, QuantityReserved)) * b.UnitPrice);
+        ReservedValue = Math.Round(QuantityReserved * AverageUnitPrice, 2, MidpointRounding.AwayFromZero);
     }
 }
 
-/// <summary>FIFO Batch: Tracks items from a specific purchase at a specific price</summary>
+/// <summary>Receipt batch: Tracks items from a specific purchase at a specific price</summary>
 public class InventoryBatch
 {
     public Guid PurchaseId { get; private set; }
@@ -289,10 +277,9 @@ public class InventoryBatch
     }
 }
 
-/// <summary>Details of quantities issued from each batch (for audit trail)</summary>
-public class IssuedBatchDetail
+/// <summary>Aggregate issuance details for moving-average valuation.</summary>
+public class IssuanceDetail
 {
-    public Guid PurchaseId { get; set; }
     public Guid ProductId { get; set; }
     public int QuantityIssued { get; set; }
     public decimal UnitPrice { get; set; }

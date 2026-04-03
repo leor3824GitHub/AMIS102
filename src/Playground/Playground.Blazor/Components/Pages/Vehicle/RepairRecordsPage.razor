@@ -1,5 +1,6 @@
 @page "/vehicle/repairs"
 @using FSH.Modules.Vehicle.Contracts.v1.Repairs
+@using FSH.Modules.Vehicle.Contracts.v1.Vehicles
 @inject IVehicleClient VehicleClient
 @inject ISnackbar Snackbar
 
@@ -20,7 +21,9 @@
                 <MudCardContent>
                     <MudText Typo="Typo.h6" Class="mb-2">Create Repair</MudText>
                     <MudStack Spacing="2">
-                        <MudTextField @bind-Value="_create.VehicleIdText" Label="Vehicle Id" Required="true" />
+                        <MudAutocomplete T="VehicleDto" @bind-Value="_create.SelectedVehicle" Label="Vehicle *"
+                                         SearchFunc="@SearchVehicles" ToStringFunc="@(v => v == null ? null : $"{v.PlateNumber} - {v.Make} {v.Model} ({v.Year})")"
+                                         Required="true" />
                         <MudDatePicker @bind-Date="_create.RepairDate" Label="Repair Date" />
                         <MudTextField @bind-Value="_create.Description" Label="Description" Required="true" />
                         <MudNumericField @bind-Value="_create.Cost" Label="Cost" Min="0" />
@@ -90,11 +93,48 @@
 
 @code {
     private readonly List<RepairRecordDto> _repairs = [];
+    private List<VehicleDto> _vehicles = [];
 
     private RepairQueryModel _query = new();
     private CreateRepairModel _create = new();
 
-    protected override async Task OnInitializedAsync() => await Load();
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadVehicles();
+        await Load();
+    }
+
+    private async Task LoadVehicles()
+    {
+        try
+        {
+            var result = await VehicleClient.SearchVehiclesAsync(new SearchVehiclesQuery
+            {
+                PageNumber = 1,
+                PageSize = 1000
+            });
+
+            _vehicles.Clear();
+            _vehicles.AddRange(result.Items ?? []);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load vehicles: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task<IEnumerable<VehicleDto>> SearchVehicles(string value, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return _vehicles;
+
+        var searchValue = value.ToLowerInvariant();
+        return _vehicles.Where(v =>
+            v.PlateNumber.Contains(searchValue, StringComparison.OrdinalIgnoreCase) ||
+            v.Make.Contains(searchValue, StringComparison.OrdinalIgnoreCase) ||
+            v.Model.Contains(searchValue, StringComparison.OrdinalIgnoreCase) ||
+            v.Year.ToString().Contains(searchValue)).ToList();
+    }
 
     private async Task Load()
     {
@@ -120,17 +160,16 @@
 
     private async Task Create()
     {
-        var vehicleId = ParseGuid(_create.VehicleIdText);
-        if (vehicleId is null || string.IsNullOrWhiteSpace(_create.Description))
+        if (_create.SelectedVehicle is null || string.IsNullOrWhiteSpace(_create.Description))
         {
-            Snackbar.Add("Vehicle Id and description are required.", Severity.Warning);
+            Snackbar.Add("Vehicle and description are required.", Severity.Warning);
             return;
         }
 
         try
         {
             await VehicleClient.CreateRepairAsync(new CreateRepairRecordCommand(
-                vehicleId.Value,
+                _create.SelectedVehicle.Id,
                 new DateTimeOffset(_create.RepairDate ?? DateTime.Today),
                 _create.Description,
                 _create.Cost,
@@ -203,7 +242,7 @@
 
     private sealed class CreateRepairModel
     {
-        public string? VehicleIdText { get; set; }
+        public VehicleDto? SelectedVehicle { get; set; }
         public DateTime? RepairDate { get; set; } = DateTime.Today;
         public string Description { get; set; } = string.Empty;
         public decimal Cost { get; set; }

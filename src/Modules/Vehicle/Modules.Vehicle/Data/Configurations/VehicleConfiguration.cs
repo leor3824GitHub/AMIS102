@@ -22,6 +22,15 @@ public class VehicleConfiguration : IEntityTypeConfiguration<VehicleEntity>
         builder.Property(v => v.Notes).HasMaxLength(2000);
         builder.Property(v => v.AssignedDepartment).HasMaxLength(255);
         builder.Property(v => v.AssignedDriver).HasMaxLength(255);
+        builder.Property(v => v.AccountableOfficerTitle).HasMaxLength(255);
+
+        // Technical specification fields
+        builder.Property(v => v.MotorNumber).HasMaxLength(100);
+        builder.Property(v => v.ChassisNumber).HasMaxLength(100);
+        builder.Property(v => v.FuelType).HasMaxLength(50);
+        builder.Property(v => v.VehicleUse).HasMaxLength(100);
+        builder.Property(v => v.AcquisitionCost).HasPrecision(18, 2);
+
         builder.Property(v => v.Version).IsConcurrencyToken();
         builder.Property(v => v.IsDeleted).HasDefaultValue(false);
 

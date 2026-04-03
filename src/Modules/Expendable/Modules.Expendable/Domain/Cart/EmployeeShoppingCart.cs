@@ -75,7 +75,7 @@ public class EmployeeShoppingCart : AggregateRoot<Guid>, IHasTenant, IAuditableE
         };
     }
 
-    /// <summary>Add an item to the cart. Items with the same product AND unit price are merged; different prices create separate rows.</summary>
+    /// <summary>Add an item to the cart.</summary>
     public void AddItem(Guid productId, int quantity, decimal unitPrice)
     {
         if (Status != CartStatus.Active)
@@ -97,16 +97,13 @@ public class EmployeeShoppingCart : AggregateRoot<Guid>, IHasTenant, IAuditableE
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
     }
 
-    /// <summary>Remove items from the cart. If unitPrice is specified, only that price batch is removed; otherwise all batches for the product are removed.</summary>
-    public void RemoveItem(Guid productId, decimal? unitPrice = null)
+    /// <summary>Remove all rows for a product from the cart.</summary>
+    public void RemoveItem(Guid productId)
     {
         if (Status != CartStatus.Active)
             throw new InvalidOperationException("Cannot modify an inactive cart.");
 
-        if (unitPrice.HasValue)
-            _items.RemoveAll(x => x.ProductId == productId && x.UnitPrice == unitPrice.Value);
-        else
-            _items.RemoveAll(x => x.ProductId == productId);
+        _items.RemoveAll(x => x.ProductId == productId);
 
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
     }
