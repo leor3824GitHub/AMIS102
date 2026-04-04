@@ -27,6 +27,8 @@ public class VehicleConfiguration : IEntityTypeConfiguration<VehicleEntity>
         // Technical specification fields
         builder.Property(v => v.MotorNumber).HasMaxLength(100);
         builder.Property(v => v.ChassisNumber).HasMaxLength(100);
+        builder.Property(v => v.NumberOfCylinders);
+        builder.Property(v => v.EngineDisplacementCC);
         builder.Property(v => v.FuelType).HasMaxLength(50);
         builder.Property(v => v.VehicleUse).HasMaxLength(100);
         builder.Property(v => v.AcquisitionCost).HasPrecision(18, 2);

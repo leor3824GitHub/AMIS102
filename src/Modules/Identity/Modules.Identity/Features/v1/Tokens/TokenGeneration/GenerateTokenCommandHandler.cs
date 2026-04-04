@@ -120,9 +120,11 @@ public sealed class GenerateTokenCommandHandler
             expiresUtc: token.AccessTokenExpiresAt,
             ct: cancellationToken);
 
-        // 4) Enqueue integration event for token generation (sample event for testing eventing)
+        // 4) Enqueue integration events
         var tenantId = _multiTenantContextAccessor.MultiTenantContext?.TenantInfo?.Id;
         var correlationId = Guid.NewGuid().ToString();
+        var firstName = claims.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value ?? string.Empty;
+        var lastName = claims.FirstOrDefault(c => c.Type == ClaimTypes.Surname)?.Value ?? string.Empty;
 
         var integrationEvent = new TokenGeneratedIntegrationEvent(
             Id: Guid.NewGuid(),
@@ -139,6 +141,20 @@ public sealed class GenerateTokenCommandHandler
             AccessTokenExpiresAtUtc: token.AccessTokenExpiresAt);
 
         await _outboxStore.AddAsync(integrationEvent, cancellationToken).ConfigureAwait(false);
+
+        // Notify other modules (e.g. MasterData) so they can auto-link records on login
+        var loggedInEvent = new UserLoggedInIntegrationEvent(
+            Id: Guid.NewGuid(),
+            OccurredOnUtc: DateTime.UtcNow,
+            TenantId: tenantId,
+            CorrelationId: correlationId,
+            Source: "Identity",
+            UserId: subject,
+            Email: request.Email,
+            FirstName: firstName,
+            LastName: lastName);
+
+        await _outboxStore.AddAsync(loggedInEvent, cancellationToken).ConfigureAwait(false);
 
         return token;
     }

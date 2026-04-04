@@ -249,7 +249,7 @@ internal sealed class MasterDataDbInitializer(
                 EmployeeProfile.Create(tenantId, "EMP-008", "Carla",     "Mendoza",   Off("OFF-HQ"),     Dep("DPT-HR"),    Pos("POS-MGR"),    null, "c.mendoza@company.example"),
                 EmployeeProfile.Create(tenantId, "EMP-009", "Dennis",    "Ocampo",    Off("OFF-HQ"),     Dep("DPT-HR"),    Pos("POS-SPEC"),   null, "d.ocampo@company.example"),
                 // IT
-                EmployeeProfile.Create(tenantId, "EMP-010", "Roel",      "Caperig",   Off("OFF-IT"),     Dep("DPT-IT"),    Pos("POS-SR-ENG"), null, "roel.caperig@company.example"),
+                EmployeeProfile.Create(tenantId, "EMP-010", "Roel",      "Caperig",   Off("OFF-IT"),     Dep("DPT-IT"),    Pos("POS-SR-ENG"), null, "admin@root.com"),
                 EmployeeProfile.Create(tenantId, "EMP-011", "Nina",      "Bautista",  Off("OFF-IT"),     Dep("DPT-IT"),    Pos("POS-ENG"),    null, "n.bautista@company.example"),
                 EmployeeProfile.Create(tenantId, "EMP-012", "Marco",     "Tan",       Off("OFF-IT"),     Dep("DPT-IT"),    Pos("POS-JR-ENG"), null, "m.tan@company.example"),
                 // Purchasing

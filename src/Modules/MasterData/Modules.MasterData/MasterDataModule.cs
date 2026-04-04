@@ -37,6 +37,7 @@ using FSH.Modules.MasterData.Features.v1.ReportSignatories.GetReportSignatories;
 using FSH.Modules.MasterData.Features.v1.ReportSignatories.CreateReportSignatory;
 using FSH.Modules.MasterData.Features.v1.ReportSignatories.UpdateReportSignatory;
 using FSH.Modules.MasterData.Features.v1.ReportSignatories.DeleteReportSignatory;
+using FSH.Framework.Eventing;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -102,6 +103,7 @@ public class MasterDataModule : IModule
         services.AddHeroDbContext<MasterDataDbContext>();
         services.AddScoped<IDbInitializer, MasterDataDbInitializer>();
         services.AddHostedService<FSH.Modules.MasterData.Provisioning.MasterDataDbInitializerHostedService>();
+        services.AddIntegrationEventHandlers(typeof(MasterDataModule).Assembly);
     }
 
     public void MapEndpoints(IEndpointRouteBuilder endpoints)

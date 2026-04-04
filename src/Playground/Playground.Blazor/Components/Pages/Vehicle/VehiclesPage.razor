@@ -54,6 +54,18 @@
                             }
                         </MudSelect>
                         <MudNumericField @bind-Value="_create.Odometer" Label="Initial Odometer" Min="0" />
+                        
+                        <MudDivider Class="my-2" />
+                        <MudText Typo="Typo.caption" Class="font-weight-bold">Technical Specifications</MudText>
+                        
+                        <MudTextField @bind-Value="_create.MotorNumber" Label="Motor Number" />
+                        <MudTextField @bind-Value="_create.ChassisNumber" Label="Chassis Number" />
+                        <MudNumericField @bind-Value="_create.NumberOfCylinders" Label="No. of Cylinders" Min="1" />
+                        <MudNumericField @bind-Value="_create.EngineDisplacementCC" Label="Engine Displacement (CC)" Min="0" />
+                        <MudTextField @bind-Value="_create.FuelType" Label="Fuel Type" Placeholder="e.g., Diesel, Gasoline, Hybrid" />
+                        <MudTextField @bind-Value="_create.VehicleUse" Label="Vehicle Use" Placeholder="e.g., GOV'T-UV, GOV'T-MPV" />
+                        <MudNumericField @bind-Value="_create.AcquisitionCost" Label="Acquisition Cost" Min="0" Format="F2" />
+                        
                         <MudTextField @bind-Value="_create.Notes" Label="Notes" Lines="2" />
                         <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CreateVehicle" Disabled="_busy">Create</MudButton>
                     </MudStack>
@@ -162,7 +174,14 @@
                 _create.Year,
                 _create.Type,
                 _create.Odometer,
-                _create.Notes));
+                _create.Notes,
+                _create.MotorNumber,
+                _create.ChassisNumber,
+                _create.NumberOfCylinders,
+                _create.EngineDisplacementCC,
+                _create.FuelType,
+                _create.VehicleUse,
+                _create.AcquisitionCost));
 
             Snackbar.Add("Vehicle created.", Severity.Success);
             _create = new();
@@ -309,5 +328,12 @@
         public string Type { get; set; } = "Sedan";
         public int Odometer { get; set; }
         public string? Notes { get; set; }
+        public string? MotorNumber { get; set; }
+        public string? ChassisNumber { get; set; }
+        public int? NumberOfCylinders { get; set; }
+        public int? EngineDisplacementCC { get; set; }
+        public string? FuelType { get; set; }
+        public string? VehicleUse { get; set; }
+        public decimal? AcquisitionCost { get; set; }
     }
 }

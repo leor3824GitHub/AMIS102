@@ -22,6 +22,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\..\..\BuildingBlocks\Caching\Caching.csproj" />
+		<ProjectReference Include="..\..\..\BuildingBlocks\Eventing\Eventing.csproj" />
 		<ProjectReference Include="..\..\..\BuildingBlocks\Persistence\Persistence.csproj" />
 		<ProjectReference Include="..\..\..\BuildingBlocks\Web\Web.csproj" />
 		<ProjectReference Include="..\Modules.MasterData.Contracts\Modules.MasterData.Contracts.csproj" />

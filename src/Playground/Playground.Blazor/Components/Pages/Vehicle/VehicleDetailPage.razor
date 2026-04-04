@@ -36,6 +36,21 @@ else
                         <MudText Typo="Typo.body2">@_vehicle.Odometer km</MudText>
 
                         <MudDivider Class="my-3" />
+                        <MudText Typo="Typo.caption" Class="font-weight-bold">Technical Specifications</MudText>
+                        <MudText Typo="Typo.caption">Motor Number</MudText>
+                        <MudText Typo="Typo.body2">@(_vehicle.MotorNumber ?? "-")</MudText>
+                        <MudText Typo="Typo.caption" Class="mt-2">Chassis Number</MudText>
+                        <MudText Typo="Typo.body2">@(_vehicle.ChassisNumber ?? "-")</MudText>
+                        <MudText Typo="Typo.caption" Class="mt-2">No. of Cylinders</MudText>
+                        <MudText Typo="Typo.body2">@(_vehicle.NumberOfCylinders?.ToString() ?? "-")</MudText>
+                        <MudText Typo="Typo.caption" Class="mt-2">Engine Displacement (CC)</MudText>
+                        <MudText Typo="Typo.body2">@(_vehicle.EngineDisplacementCC?.ToString() ?? "-")</MudText>
+                        <MudText Typo="Typo.caption" Class="mt-2">Fuel Type</MudText>
+                        <MudText Typo="Typo.body2">@(_vehicle.FuelType ?? "-")</MudText>
+                        <MudText Typo="Typo.caption" Class="mt-2">Vehicle Use</MudText>
+                        <MudText Typo="Typo.body2">@(_vehicle.VehicleUse ?? "-")</MudText>
+                        <MudText Typo="Typo.caption" Class="mt-2">Acquisition Cost</MudText>
+                        <MudText Typo="Typo.body2">@(_vehicle.AcquisitionCost?.ToString("N2") ?? "-")</MudText>
                         <MudStack Row="true" Spacing="1">
                             @if (_vehicle.Status == "Active")
                             {
@@ -70,6 +85,17 @@ else
                                 <MudItem xs="12" sm="6"><MudTextField @bind-Value="_edit.Model" Label="Model" /></MudItem>
                                 <MudItem xs="12" sm="6"><MudNumericField @bind-Value="_edit.Year" Label="Year" Min="1900" Max="2100" /></MudItem>
                                 <MudItem xs="12"><MudTextField @bind-Value="_edit.Notes" Label="Notes" Lines="2" /></MudItem>
+                                
+                                <MudItem xs="12"><MudDivider Class="my-2" /></MudItem>
+                                <MudItem xs="12"><MudText Typo="Typo.caption" Class="font-weight-bold">Technical Specifications</MudText></MudItem>
+                                
+                                <MudItem xs="12" sm="6"><MudTextField @bind-Value="_edit.MotorNumber" Label="Motor Number" /></MudItem>
+                                <MudItem xs="12" sm="6"><MudTextField @bind-Value="_edit.ChassisNumber" Label="Chassis Number" /></MudItem>
+                                <MudItem xs="12" sm="6"><MudNumericField @bind-Value="_edit.NumberOfCylinders" Label="No. of Cylinders" Min="1" /></MudItem>
+                                <MudItem xs="12" sm="6"><MudNumericField @bind-Value="_edit.EngineDisplacementCC" Label="Engine Displacement (CC)" Min="0" /></MudItem>
+                                <MudItem xs="12" sm="6"><MudTextField @bind-Value="_edit.FuelType" Label="Fuel Type" Placeholder="e.g., Diesel, Gasoline, Hybrid" /></MudItem>
+                                <MudItem xs="12" sm="6"><MudTextField @bind-Value="_edit.VehicleUse" Label="Vehicle Use" Placeholder="e.g., GOV'T-UV, GOV'T-MPV" /></MudItem>
+                                <MudItem xs="12" sm="6"><MudNumericField @bind-Value="_edit.AcquisitionCost" Label="Acquisition Cost" Min="0" Format="F2" /></MudItem>
                             </MudGrid>
                             <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveVehicle">Save</MudButton>
                         </MudStack>
@@ -178,7 +204,14 @@ else
                 Model = _vehicle.Model,
                 Year = _vehicle.Year,
                 Type = _vehicle.Type,
-                Notes = _vehicle.Notes
+                Notes = _vehicle.Notes,
+                MotorNumber = _vehicle.MotorNumber,
+                ChassisNumber = _vehicle.ChassisNumber,
+                NumberOfCylinders = _vehicle.NumberOfCylinders,
+                EngineDisplacementCC = _vehicle.EngineDisplacementCC,
+                FuelType = _vehicle.FuelType,
+                VehicleUse = _vehicle.VehicleUse,
+                AcquisitionCost = _vehicle.AcquisitionCost
             };
 
             _newOdometer = _vehicle.Odometer;
@@ -210,7 +243,14 @@ else
                 _edit.Model,
                 _edit.Year,
                 _edit.Type,
-                _edit.Notes));
+                _edit.Notes,
+                _edit.MotorNumber,
+                _edit.ChassisNumber,
+                _edit.NumberOfCylinders,
+                _edit.EngineDisplacementCC,
+                _edit.FuelType,
+                _edit.VehicleUse,
+                _edit.AcquisitionCost));
 
             Snackbar.Add("Vehicle updated.", Severity.Success);
             await Load();
@@ -429,6 +469,13 @@ else
         public int Year { get; set; }
         public string Type { get; set; } = string.Empty;
         public string? Notes { get; set; }
+        public string? MotorNumber { get; set; }
+        public string? ChassisNumber { get; set; }
+        public int? NumberOfCylinders { get; set; }
+        public int? EngineDisplacementCC { get; set; }
+        public string? FuelType { get; set; }
+        public string? VehicleUse { get; set; }
+        public decimal? AcquisitionCost { get; set; }
     }
 
     private sealed class AssignmentModel
