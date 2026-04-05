@@ -48,6 +48,16 @@ internal interface IVehicleClient
 
     Task<List<MotorVehicleInventoryItemDto>> GetMotorVehicleInventoryAsync(
         string? status = null, CancellationToken cancellationToken = default);
+
+    Task<byte[]> GenerateVehicleInventoryPdfAsync(
+        string? status = null,
+        DateTime? asOfDate = null,
+        CancellationToken cancellationToken = default);
+
+    Task<VehicleDailyUsageDto> CreateVehicleDailyUsageAsync(CreateVehicleDailyUsageCommand command, CancellationToken cancellationToken = default);
+    Task<VehicleDailyUsageDto> UpdateVehicleDailyUsageAsync(Guid id, UpdateVehicleDailyUsageCommand command, CancellationToken cancellationToken = default);
+    Task<PagedResponse<VehicleDailyUsageDto>> SearchVehicleDailyUsageAsync(SearchVehicleDailyUsageQuery query, CancellationToken cancellationToken = default);
+    Task<VehicleDailyUsageSummaryDto> GetVehicleDailyUsageSummaryAsync(GetVehicleDailyUsageSummaryQuery query, CancellationToken cancellationToken = default);
 }
 
 internal sealed class VehicleClient : IVehicleClient
@@ -212,6 +222,57 @@ internal sealed class VehicleClient : IVehicleClient
         });
         var result = await _httpClient.GetFromJsonAsync<List<MotorVehicleInventoryItemDto>>(url, cancellationToken);
         return result ?? [];
+    }
+
+    public async Task<byte[]> GenerateVehicleInventoryPdfAsync(
+        string? status = null,
+        DateTime? asOfDate = null,
+        CancellationToken cancellationToken = default)
+    {
+        var command = new { Status = status, AsOfDate = asOfDate };
+        using var response = await _httpClient.PostAsJsonAsync(
+            "api/v1/vehicle/vehicles/inventory/pdf", command, cancellationToken);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadAsByteArrayAsync(cancellationToken);
+    }
+
+    public Task<VehicleDailyUsageDto> CreateVehicleDailyUsageAsync(CreateVehicleDailyUsageCommand command, CancellationToken cancellationToken = default) =>
+        PostJsonAsync<VehicleDailyUsageDto>("api/v1/vehicle/fuel-odometer", command, cancellationToken);
+
+    public Task<VehicleDailyUsageDto> UpdateVehicleDailyUsageAsync(Guid id, UpdateVehicleDailyUsageCommand command, CancellationToken cancellationToken = default) =>
+        PutJsonAsync<VehicleDailyUsageDto>($"api/v1/vehicle/fuel-odometer/{id}", command, cancellationToken);
+
+    public async Task<PagedResponse<VehicleDailyUsageDto>> SearchVehicleDailyUsageAsync(SearchVehicleDailyUsageQuery query, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+
+        var url = BuildUrl("api/v1/vehicle/fuel-odometer", new Dictionary<string, string?>
+        {
+            ["vehicleId"] = query.VehicleId?.ToString(),
+            ["dateFrom"] = query.DateFrom?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+            ["dateTo"] = query.DateTo?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+            ["pageNumber"] = query.PageNumber?.ToString(CultureInfo.InvariantCulture),
+            ["pageSize"] = query.PageSize?.ToString(CultureInfo.InvariantCulture),
+            ["sort"] = query.Sort
+        });
+
+        var response = await _httpClient.GetFromJsonAsync<PagedResponse<VehicleDailyUsageDto>>(url, cancellationToken);
+        return response ?? new PagedResponse<VehicleDailyUsageDto> { Items = [] };
+    }
+
+    public async Task<VehicleDailyUsageSummaryDto> GetVehicleDailyUsageSummaryAsync(GetVehicleDailyUsageSummaryQuery query, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+
+        var url = BuildUrl("api/v1/vehicle/fuel-odometer/summary", new Dictionary<string, string?>
+        {
+            ["vehicleId"] = query.VehicleId?.ToString(),
+            ["dateFrom"] = query.DateFrom?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+            ["dateTo"] = query.DateTo?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)
+        });
+
+        var response = await _httpClient.GetFromJsonAsync<VehicleDailyUsageSummaryDto>(url, cancellationToken);
+        return response ?? new VehicleDailyUsageSummaryDto(0, 0, 0m, 0m, 0m, 0m, 0m);
     }
 
     private async Task<T> PostJsonAsync<T>(string url, object body, CancellationToken cancellationToken)
