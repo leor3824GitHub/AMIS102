@@ -102,6 +102,76 @@ public sealed record GetMotorVehicleInventoryQuery : IQuery<List<MotorVehicleInv
     public string? Status { get; init; }  // optional filter: Active, Retired, etc.
 }
 
+public sealed class GenerateVehicleInventoryPdfCommand : ICommand<byte[]>
+{
+    public string? Status { get; set; }
+    public DateTime? AsOfDate { get; set; }
+}
+
+public record VehicleDailyUsageDto(
+    Guid Id,
+    Guid VehicleId,
+    DateOnly Date,
+    int OdometerStart,
+    int OdometerEnd,
+    int DistanceKm,
+    decimal FuelLiters,
+    decimal FuelCost,
+    decimal KmPerLiter,
+    decimal CostPerKm,
+    string? Destination,
+    string? Remarks,
+    DateTimeOffset CreatedOnUtc,
+    string? CreatedBy,
+    DateTimeOffset? LastModifiedOnUtc,
+    string? LastModifiedBy);
+
+public record CreateVehicleDailyUsageCommand(
+    Guid VehicleId,
+    DateOnly Date,
+    int OdometerStart,
+    int OdometerEnd,
+    decimal FuelLiters,
+    decimal FuelCost,
+    string? Destination,
+    string? Remarks) : ICommand<VehicleDailyUsageDto>;
+
+public record UpdateVehicleDailyUsageCommand(
+    Guid Id,
+    DateOnly Date,
+    int OdometerStart,
+    int OdometerEnd,
+    decimal FuelLiters,
+    decimal FuelCost,
+    string? Destination,
+    string? Remarks) : ICommand<VehicleDailyUsageDto>;
+
+public sealed class SearchVehicleDailyUsageQuery : IPagedQuery, IQuery<PagedResponse<VehicleDailyUsageDto>>
+{
+    public Guid? VehicleId { get; set; }
+    public DateOnly? DateFrom { get; set; }
+    public DateOnly? DateTo { get; set; }
+    public int? PageNumber { get; set; }
+    public int? PageSize { get; set; }
+    public string? Sort { get; set; }
+}
+
+public sealed class GetVehicleDailyUsageSummaryQuery : IQuery<VehicleDailyUsageSummaryDto>
+{
+    public Guid? VehicleId { get; set; }
+    public DateOnly? DateFrom { get; set; }
+    public DateOnly? DateTo { get; set; }
+}
+
+public record VehicleDailyUsageSummaryDto(
+    int RecordCount,
+    int TotalDistanceKm,
+    decimal TotalFuelLiters,
+    decimal TotalFuelCost,
+    decimal AverageKmPerLiter,
+    decimal AverageCostPerKm,
+    decimal AverageDistancePerDay);
+
 public record MotorVehicleInventoryItemDto(
     int Qty,
     string Description,         // Make + Model

@@ -109,6 +109,9 @@
   <ItemGroup Label="Messaging">
     <PackageVersion Include="RabbitMQ.Client" Version="7.2.0" />
   </ItemGroup>
+  <ItemGroup Label="Reporting">
+    <PackageVersion Include="QuestPDF" Version="2025.4.0" />
+  </ItemGroup>
   <ItemGroup Label="CLI Tools">
     <PackageVersion Include="Spectre.Console" Version="0.54.0" />
     <PackageVersion Include="Spectre.Console.Cli" Version="0.53.1" />

@@ -78,10 +78,14 @@
                                         <td><MudChip T="string" Size="Size.Small" Color="@(category.IsActive ? Color.Success : Color.Error)">@(category.IsActive ? "Active" : "Inactive")</MudChip></td>
                                         <td>
                                             <MudStack Row="true" Spacing="1">
-                                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
-                                                               Color="Color.Primary" OnClick="@(() => EditCategory(category))" />
-                                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
-                                                               Color="Color.Error" OnClick="@(() => DeleteCategory(category.Id))" />
+                                                <MudTooltip Text="Edit category">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                                                   Color="Color.Primary" OnClick="@(() => EditCategory(category))" />
+                                                </MudTooltip>
+                                                <MudTooltip Text="Delete category">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                                                   Color="Color.Error" OnClick="@(() => DeleteCategory(category.Id))" />
+                                                </MudTooltip>
                                             </MudStack>
                                         </td>
                                     </tr>

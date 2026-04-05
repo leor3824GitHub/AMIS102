@@ -5,7 +5,7 @@ namespace FSH.Modules.MasterData.Features.v1.ReportSignatories.UpdateReportSigna
 
 public sealed class UpdateReportSignatoryCommandValidator : AbstractValidator<UpdateReportSignatoryCommand>
 {
-    private static readonly string[] AllowedReportTypes = ["VehicleInventory", "PhysicalCount"];
+    private static readonly string[] AllowedReportTypes = ["VehicleInventory", "PhysicalCount", "DepartmentIssuance", "StockCard", "EmployeeIssuance"];
 
     public UpdateReportSignatoryCommandValidator()
     {

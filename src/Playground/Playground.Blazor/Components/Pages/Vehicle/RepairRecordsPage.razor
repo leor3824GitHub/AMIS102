@@ -70,17 +70,25 @@
                                 <MudStack Row="true" Spacing="1">
                                     @if (context.Status == "Pending")
                                     {
-                                        <MudIconButton Icon="@Icons.Material.Filled.PlayArrow" Color="Color.Info" Size="Size.Small" OnClick="@(() => Start(context.Id))" />
+                                        <MudTooltip Text="Start repair">
+                                            <MudIconButton Icon="@Icons.Material.Filled.PlayArrow" Color="Color.Info" Size="Size.Small" OnClick="@(() => Start(context.Id))" />
+                                        </MudTooltip>
                                     }
                                     @if (context.Status == "InProgress")
                                     {
-                                        <MudIconButton Icon="@Icons.Material.Filled.Done" Color="Color.Success" Size="Size.Small" OnClick="@(() => Complete(context.Id))" />
+                                        <MudTooltip Text="Complete repair">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Done" Color="Color.Success" Size="Size.Small" OnClick="@(() => Complete(context.Id))" />
+                                        </MudTooltip>
                                     }
                                     @if (context.Status != "Completed" && context.Status != "Cancelled")
                                     {
-                                        <MudIconButton Icon="@Icons.Material.Filled.Cancel" Color="Color.Warning" Size="Size.Small" OnClick="@(() => Cancel(context.Id))" />
+                                        <MudTooltip Text="Cancel repair">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Cancel" Color="Color.Warning" Size="Size.Small" OnClick="@(() => Cancel(context.Id))" />
+                                        </MudTooltip>
                                     }
-                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => Delete(context.Id))" />
+                                    <MudTooltip Text="Delete repair">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => Delete(context.Id))" />
+                                    </MudTooltip>
                                 </MudStack>
                             </MudTd>
                         </RowTemplate>

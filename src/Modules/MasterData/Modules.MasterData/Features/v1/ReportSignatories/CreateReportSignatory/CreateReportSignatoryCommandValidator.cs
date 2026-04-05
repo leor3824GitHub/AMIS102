@@ -5,7 +5,7 @@ namespace FSH.Modules.MasterData.Features.v1.ReportSignatories.CreateReportSigna
 
 public sealed class CreateReportSignatoryCommandValidator : AbstractValidator<CreateReportSignatoryCommand>
 {
-    private static readonly string[] AllowedReportTypes = ["VehicleInventory", "PhysicalCount"];
+    private static readonly string[] AllowedReportTypes = ["VehicleInventory", "PhysicalCount", "DepartmentIssuance", "StockCard", "EmployeeIssuance"];
 
     public CreateReportSignatoryCommandValidator()
     {

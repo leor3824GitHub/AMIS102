@@ -193,8 +193,10 @@
                         <MudTd Style="text-align:right">$@context.UnitPrice.ToString("F2")</MudTd>
                         <MudTd Style="text-align:right">$@((context.Quantity * context.UnitPrice).ToString("F2"))</MudTd>
                         <MudTd Style="text-align:center">
-                            <MudIconButton Icon="@Icons.Material.Filled.DeleteOutline" Size="Size.Small" Color="Color.Error"
-                                           OnClick="@(() => RemoveLineItem(_editingPO, context.ProductId))" />
+                            <MudTooltip Text="Remove item">
+                                <MudIconButton Icon="@Icons.Material.Filled.DeleteOutline" Size="Size.Small" Color="Color.Error"
+                                               OnClick="@(() => RemoveLineItem(_editingPO, context.ProductId))" />
+                            </MudTooltip>
                         </MudTd>
                     </RowTemplate>
                     <FooterContent>

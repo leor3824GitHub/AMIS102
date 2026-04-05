@@ -80,10 +80,14 @@
                                         <td><MudChip T="string" Size="Size.Small" Color="@(office.IsActive ? Color.Success : Color.Default)">@(office.IsActive ? "Active" : "Inactive")</MudChip></td>
                                         <td>
                                             <MudStack Row="true" Spacing="1">
-                                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
-                                                               Color="Color.Primary" OnClick="@(() => EditOffice(office))" />
-                                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
-                                                               Color="Color.Error" OnClick="@(() => DeleteOffice(office.Id))" />
+                                                <MudTooltip Text="Edit office">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                                                   Color="Color.Primary" OnClick="@(() => EditOffice(office))" />
+                                                </MudTooltip>
+                                                <MudTooltip Text="Delete office">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                                                   Color="Color.Error" OnClick="@(() => DeleteOffice(office.Id))" />
+                                                </MudTooltip>
                                             </MudStack>
                                         </td>
                                     </tr>

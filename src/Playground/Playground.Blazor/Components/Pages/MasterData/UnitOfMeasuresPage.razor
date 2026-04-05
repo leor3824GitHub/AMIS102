@@ -80,10 +80,14 @@
                                         <td><MudChip T="string" Size="Size.Small" Color="@(unit.IsActive ? Color.Success : Color.Default)">@(unit.IsActive ? "Active" : "Inactive")</MudChip></td>
                                         <td>
                                             <MudStack Row="true" Spacing="1">
-                                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
-                                                               Color="Color.Primary" OnClick="@(() => EditUnitOfMeasure(unit))" />
-                                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
-                                                               Color="Color.Error" OnClick="@(() => DeleteUnitOfMeasure(unit.Id))" />
+                                                <MudTooltip Text="Edit unit of measure">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                                                   Color="Color.Primary" OnClick="@(() => EditUnitOfMeasure(unit))" />
+                                                </MudTooltip>
+                                                <MudTooltip Text="Delete unit of measure">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                                                   Color="Color.Error" OnClick="@(() => DeleteUnitOfMeasure(unit.Id))" />
+                                                </MudTooltip>
                                             </MudStack>
                                         </td>
                                     </tr>

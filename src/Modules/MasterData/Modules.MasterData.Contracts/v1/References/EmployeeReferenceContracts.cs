@@ -34,9 +34,9 @@ public sealed record DeleteOfficeCommand(Guid Id) : ICommand<Unit>;
 
 public sealed record DepartmentReferenceDto(Guid Id, string Code, string Name, string? Description, bool IsActive);
 
-public sealed record CreateDepartmentCommand(string Code, string Name, string? Description, bool IsActive = true) : ICommand<DepartmentReferenceDto>;
+public sealed record CreateDepartmentCommand(string Code, string Name, string? Description, string? FundCluster = null, bool IsActive = true) : ICommand<DepartmentReferenceDto>;
 
-public sealed record UpdateDepartmentCommand(Guid Id, string Code, string Name, string? Description, bool IsActive) : ICommand<DepartmentReferenceDto>;
+public sealed record UpdateDepartmentCommand(Guid Id, string Code, string Name, string? Description, string? FundCluster, bool IsActive) : ICommand<DepartmentReferenceDto>;
 
 public sealed record DeleteDepartmentCommand(Guid Id) : ICommand<Unit>;
 

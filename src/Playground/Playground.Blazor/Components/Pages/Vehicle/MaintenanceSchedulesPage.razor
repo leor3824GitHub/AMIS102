@@ -80,11 +80,15 @@
                                 <MudStack Row="true" Spacing="1">
                                     @if (context.IsActive)
                                     {
-                                        <MudIconButton Icon="@Icons.Material.Filled.PauseCircle" Color="Color.Warning" Size="Size.Small"
-                                                       OnClick="@(() => Deactivate(context.Id))" Disabled="_busy" />
+                                        <MudTooltip Text="Deactivate schedule">
+                                            <MudIconButton Icon="@Icons.Material.Filled.PauseCircle" Color="Color.Warning" Size="Size.Small"
+                                                           OnClick="@(() => Deactivate(context.Id))" Disabled="_busy" />
+                                        </MudTooltip>
                                     }
-                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
-                                                   OnClick="@(() => Delete(context.Id))" Disabled="_busy" />
+                                    <MudTooltip Text="Delete schedule">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
+                                                       OnClick="@(() => Delete(context.Id))" Disabled="_busy" />
+                                    </MudTooltip>
                                 </MudStack>
                             </MudTd>
                         </RowTemplate>

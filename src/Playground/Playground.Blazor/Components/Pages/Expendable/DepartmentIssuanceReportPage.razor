@@ -136,6 +136,10 @@
                                StartIcon="@Icons.Material.Filled.Download" Disabled="_loading || _reportData.Count == 0">
                         Export CSV
                     </MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="DownloadPdfAsync"
+                               StartIcon="@Icons.Material.Filled.PictureAsPdf" Disabled="_loading || _reportData.Count == 0">
+                        Download PDF
+                    </MudButton>
                 </MudStack>
             </MudItem>
         </MudGrid>
@@ -378,6 +382,29 @@ else if (!_loading)
             if (match != null) return match.Name;
         }
         return departmentId;
+    }
+
+    private async Task DownloadPdfAsync()
+    {
+        if (_reportData.Count == 0) return;
+        try
+        {
+            var from = _filterFrom.HasValue ? new DateTimeOffset(_filterFrom.Value, TimeSpan.Zero) : (DateTimeOffset?)null;
+            var to = _filterTo.HasValue ? new DateTimeOffset(_filterTo.Value, TimeSpan.Zero) : (DateTimeOffset?)null;
+
+            var bytes = await ReportsClient.GenerateDepartmentIssuancePdfAsync(
+                departmentId: _selectedDepartmentId?.ToString(),
+                from: from,
+                to: to);
+
+            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
+            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            Snackbar.Add("PDF ready.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"PDF generation failed: {ex.Message}", Severity.Error);
+        }
     }
 
     private static bool TryParseDate(string? value, out DateTime date) =>

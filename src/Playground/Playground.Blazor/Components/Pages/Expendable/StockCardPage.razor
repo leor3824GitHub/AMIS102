@@ -122,6 +122,11 @@
                                Disabled="_loading || _stockCard is null">
                         Export CSV
                     </MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="DownloadPdfAsync"
+                               StartIcon="@Icons.Material.Filled.PictureAsPdf"
+                               Disabled="_loading || _stockCard is null">
+                        Download PDF
+                    </MudButton>
                 </MudStack>
             </MudItem>
         </MudGrid>
@@ -377,6 +382,27 @@ else if (!_loading)
         if (Guid.TryParse(departmentId, out var id) && _departmentNames.TryGetValue(id, out var name))
             return name;
         return departmentId;
+    }
+
+    private async Task DownloadPdfAsync()
+    {
+        if (_selectedProduct is null) return;
+        _loading = true;
+        try
+        {
+            var bytes = await ReportsClient.GenerateStockCardPdfAsync(_selectedProduct.Id);
+            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
+            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            Snackbar.Add("PDF ready.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"PDF generation failed: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
     }
 
     private static string Quote(string? v) =>

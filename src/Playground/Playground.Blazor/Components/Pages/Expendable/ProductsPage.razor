@@ -236,10 +236,14 @@
                                                        Title="Discontinue"
                                                        OnClick="@(() => ChangeStatus(context, "discontinue"))" />
                                     }
-                                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
-                                                   Color="Color.Primary" OnClick="@(async () => await EditProduct(context))" />
-                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
-                                                   Color="Color.Error" OnClick="@(() => DeleteProduct(context.Id))" />
+                                    <MudTooltip Text="Edit product">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                                       Color="Color.Primary" OnClick="@(async () => await EditProduct(context))" />
+                                    </MudTooltip>
+                                    <MudTooltip Text="Delete product">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                                       Color="Color.Error" OnClick="@(() => DeleteProduct(context.Id))" />
+                                    </MudTooltip>
                                 </MudStack>
                             </MudTd>
                         </RowTemplate>

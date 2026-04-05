@@ -147,6 +147,43 @@ namespace FSH.Playground.Migrations.PostgreSQL.Vehicle
                     table.PrimaryKey("PK_Vehicles", x => x.Id);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "VehicleDailyUsages",
+                schema: "vehicle",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    VehicleId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Date = table.Column<DateOnly>(type: "date", nullable: false),
+                    OdometerStart = table.Column<int>(type: "integer", nullable: false),
+                    OdometerEnd = table.Column<int>(type: "integer", nullable: false),
+                    DistanceKm = table.Column<int>(type: "integer", nullable: false),
+                    FuelLiters = table.Column<decimal>(type: "numeric(18,3)", precision: 18, scale: 3, nullable: false),
+                    FuelCost = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
+                    Destination = table.Column<string>(type: "character varying(250)", maxLength: 250, nullable: true),
+                    Remarks = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
+                    Version = table.Column<byte[]>(type: "bytea", nullable: false),
+                    CreatedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    LastModifiedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    LastModifiedBy = table.Column<string>(type: "text", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                    DeletedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    DeletedBy = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_VehicleDailyUsages", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_VehicleDailyUsages_Vehicles_VehicleId",
+                        column: x => x.VehicleId,
+                        principalSchema: "vehicle",
+                        principalTable: "Vehicles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_MaintenanceLogs_TenantId_PerformedDate",
                 schema: "vehicle",
@@ -184,6 +221,25 @@ namespace FSH.Playground.Migrations.PostgreSQL.Vehicle
                 columns: new[] { "TenantId", "VehicleId" });
 
             migrationBuilder.CreateIndex(
+                name: "IX_VehicleDailyUsages_TenantId_Date",
+                schema: "vehicle",
+                table: "VehicleDailyUsages",
+                columns: new[] { "TenantId", "Date" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_VehicleDailyUsages_TenantId_VehicleId_Date",
+                schema: "vehicle",
+                table: "VehicleDailyUsages",
+                columns: new[] { "TenantId", "VehicleId", "Date" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_VehicleDailyUsages_VehicleId",
+                schema: "vehicle",
+                table: "VehicleDailyUsages",
+                column: "VehicleId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Vehicles_TenantId_PlateNumber",
                 schema: "vehicle",
                 table: "Vehicles",
@@ -210,6 +266,10 @@ namespace FSH.Playground.Migrations.PostgreSQL.Vehicle
 
             migrationBuilder.DropTable(
                 name: "RepairRecords",
+                schema: "vehicle");
+
+            migrationBuilder.DropTable(
+                name: "VehicleDailyUsages",
                 schema: "vehicle");
 
             migrationBuilder.DropTable(

@@ -5,6 +5,7 @@
 @using FSH.Modules.Vehicle.Contracts.v1.Vehicles
 @using FSH.Playground.Blazor.ApiClient
 @inject IVehicleClient VehicleClient
+@inject ILookupClient LookupClient
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation
 
@@ -103,10 +104,32 @@ else
 
                     <MudTabPanel Text="Assignment/Odometer">
                         <MudGrid>
-                            <MudItem xs="12" sm="6"><MudTextField @bind-Value="_assignment.DepartmentName" Label="Department Name" /></MudItem>
-                            <MudItem xs="12" sm="6"><MudTextField @bind-Value="_assignment.DriverName" Label="Driver Name" /></MudItem>
-                            <MudItem xs="12" sm="6"><MudTextField @bind-Value="_assignment.DepartmentIdText" Label="Department Id (optional)" /></MudItem>
-                            <MudItem xs="12" sm="6"><MudTextField @bind-Value="_assignment.DriverIdText" Label="Driver Id (optional)" /></MudItem>
+                            <MudItem xs="12" sm="6">
+                                <MudAutocomplete T="DepartmentReferenceDto"
+                                                 Value="_selectedDepartment"
+                                                 ValueChanged="OnDepartmentChanged"
+                                                 SearchFunc="SearchDepartments"
+                                                 ToStringFunc="@(d => d?.Name ?? string.Empty)"
+                                                 Label="Department Name"
+                                                 Variant="Variant.Outlined"
+                                                 Placeholder="Search department..."
+                                                 Clearable="true"
+                                                 CoerceValue="true"
+                                                 ResetValueOnEmptyText="true" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                <MudAutocomplete T="EmployeeReferenceDto"
+                                                 Value="_selectedDriver"
+                                                 ValueChanged="OnDriverChanged"
+                                                 SearchFunc="SearchDrivers"
+                                                 ToStringFunc="FormatDriver"
+                                                 Label="Driver Name"
+                                                 Variant="Variant.Outlined"
+                                                 Placeholder="Search employee..."
+                                                 Clearable="true"
+                                                 CoerceValue="true"
+                                                 ResetValueOnEmptyText="true" />
+                            </MudItem>
                         </MudGrid>
                         <MudButton Variant="Variant.Outlined" Color="Color.Primary" Class="mt-2" OnClick="AssignVehicle">Update Assignment</MudButton>
 
@@ -179,6 +202,8 @@ else
     private VehicleDto? _vehicle;
     private VehicleEditModel _edit = new();
     private AssignmentModel _assignment = new();
+    private DepartmentReferenceDto? _selectedDepartment;
+    private EmployeeReferenceDto? _selectedDriver;
     private int _newOdometer;
 
     private List<RepairRecordDto> _repairs = [];
@@ -215,6 +240,15 @@ else
             };
 
             _newOdometer = _vehicle.Odometer;
+            _assignment = new AssignmentModel
+            {
+                DepartmentName = _vehicle.AssignedDepartment,
+                DepartmentIdText = _vehicle.AssignedDepartmentId?.ToString(),
+                DriverName = _vehicle.AssignedDriver,
+                DriverIdText = _vehicle.AssignedDriverId?.ToString()
+            };
+
+            await HydrateAssignmentSelectionsAsync();
 
             var repairs = await VehicleClient.SearchRepairsAsync(new SearchRepairRecordsQuery { VehicleId = Id, PageNumber = 1, PageSize = 5 });
             _repairs = repairs.Items?.ToList() ?? [];
@@ -377,6 +411,131 @@ else
     private static string? EmptyToNull(string? value) => string.IsNullOrWhiteSpace(value) ? null : value;
     private static bool HasPartialAssignment(string? idText, string? name) =>
         Guid.TryParse(idText, out _) != !string.IsNullOrWhiteSpace(name);
+
+    private async Task<IEnumerable<DepartmentReferenceDto>> SearchDepartments(string value, CancellationToken token)
+    {
+        try
+        {
+            var response = await LookupClient.DepartmentsAsync(
+                keyword: string.IsNullOrWhiteSpace(value) ? null : value,
+                isActive: true,
+                pageNumber: 1,
+                pageSize: 20,
+                cancellationToken: token);
+
+            return response.Items ?? Enumerable.Empty<DepartmentReferenceDto>();
+        }
+        catch
+        {
+            return Enumerable.Empty<DepartmentReferenceDto>();
+        }
+    }
+
+    private async Task<IEnumerable<EmployeeReferenceDto>> SearchDrivers(string value, CancellationToken token)
+    {
+        try
+        {
+            var response = await LookupClient.EmployeesGetAsync(
+                keyword: string.IsNullOrWhiteSpace(value) ? null : value,
+                departmentId: ParseGuid(_assignment.DepartmentIdText),
+                isActive: true,
+                pageNumber: 1,
+                pageSize: 20,
+                cancellationToken: token);
+
+            return response.Items ?? Enumerable.Empty<EmployeeReferenceDto>();
+        }
+        catch
+        {
+            return Enumerable.Empty<EmployeeReferenceDto>();
+        }
+    }
+
+    private Task OnDepartmentChanged(DepartmentReferenceDto? department)
+    {
+        _selectedDepartment = department;
+        _assignment.DepartmentName = department?.Name;
+        _assignment.DepartmentIdText = department?.Id.ToString();
+        return Task.CompletedTask;
+    }
+
+    private Task OnDriverChanged(EmployeeReferenceDto? driver)
+    {
+        _selectedDriver = driver;
+        _assignment.DriverIdText = driver?.Id.ToString();
+        _assignment.DriverName = driver is null ? null : FormatDriver(driver);
+        return Task.CompletedTask;
+    }
+
+    private static string FormatDriver(EmployeeReferenceDto? employee)
+    {
+        if (employee is null)
+        {
+            return string.Empty;
+        }
+
+        var fullName = $"{employee.FirstName} {employee.LastName}".Trim();
+        return string.IsNullOrWhiteSpace(fullName) ? employee.EmployeeNumber : fullName;
+    }
+
+    private async Task HydrateAssignmentSelectionsAsync()
+    {
+        if (Guid.TryParse(_assignment.DepartmentIdText, out var departmentId))
+        {
+            _selectedDepartment = new DepartmentReferenceDto
+            {
+                Id = departmentId,
+                Name = _assignment.DepartmentName ?? string.Empty,
+                Code = string.Empty,
+                Description = string.Empty,
+                IsActive = true
+            };
+        }
+        else
+        {
+            _selectedDepartment = null;
+        }
+
+        if (Guid.TryParse(_assignment.DriverIdText, out var driverId))
+        {
+            try
+            {
+                _selectedDriver = await LookupClient.EmployeesGetAsync(driverId);
+                return;
+            }
+            catch
+            {
+                // Fall back to a lightweight display object if lookup fails.
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(_assignment.DriverName))
+        {
+            _selectedDriver = null;
+            return;
+        }
+
+        _selectedDriver = new EmployeeReferenceDto
+        {
+            Id = ParseGuid(_assignment.DriverIdText) ?? Guid.Empty,
+            EmployeeNumber = string.Empty,
+            FirstName = _assignment.DriverName,
+            LastName = string.Empty,
+            WorkEmail = string.Empty,
+            OfficeId = Guid.Empty,
+            OfficeCode = string.Empty,
+            OfficeName = string.Empty,
+            DepartmentId = ParseGuid(_assignment.DepartmentIdText) ?? Guid.Empty,
+            DepartmentCode = string.Empty,
+            DepartmentName = _assignment.DepartmentName ?? string.Empty,
+            PositionId = Guid.Empty,
+            PositionCode = string.Empty,
+            PositionName = string.Empty,
+            DefaultUnitOfMeasureCode = string.Empty,
+            DefaultUnitOfMeasureName = string.Empty,
+            IsActive = true
+        };
+    }
 
     private static Color StatusColor(string status) => status switch
     {

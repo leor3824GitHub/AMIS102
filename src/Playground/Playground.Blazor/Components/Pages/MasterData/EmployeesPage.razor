@@ -154,10 +154,14 @@
                                         <td><MudChip T="string" Size="Size.Small" Color="@(employee.IsActive ? Color.Success : Color.Default)">@(employee.IsActive ? "Active" : "Inactive")</MudChip></td>
                                         <td>
                                             <MudStack Row="true" Spacing="1">
-                                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
-                                                               Color="Color.Primary" OnClick="@(() => EditEmployee(employee))" />
-                                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
-                                                               Color="Color.Error" OnClick="@(() => DeleteEmployee(employee.Id))" />
+                                                <MudTooltip Text="Edit employee">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                                                   Color="Color.Primary" OnClick="@(() => EditEmployee(employee))" />
+                                                </MudTooltip>
+                                                <MudTooltip Text="Delete employee">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                                                   Color="Color.Error" OnClick="@(() => DeleteEmployee(employee.Id))" />
+                                                </MudTooltip>
                                             </MudStack>
                                         </td>
                                     </tr>

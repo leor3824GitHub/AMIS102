@@ -35,5 +35,12 @@ public static class VehicleModuleConstants
             public const string Update = "Permissions.Vehicle.Maintenance.Update";
             public const string Delete = "Permissions.Vehicle.Maintenance.Delete";
         }
+
+        public static class FuelOdometer
+        {
+            public const string View = "Permissions.Vehicle.FuelOdometer.View";
+            public const string Create = "Permissions.Vehicle.FuelOdometer.Create";
+            public const string Update = "Permissions.Vehicle.FuelOdometer.Update";
+        }
     }
 }

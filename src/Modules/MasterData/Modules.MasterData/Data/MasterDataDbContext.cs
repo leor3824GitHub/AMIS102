@@ -20,6 +20,7 @@ public class MasterDataDbContext : BaseDbContext
     public DbSet<Supplier> Suppliers => Set<Supplier>();
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<ReportSignatory> ReportSignatories => Set<ReportSignatory>();
+    public DbSet<OrganizationProfile> OrganizationProfiles => Set<OrganizationProfile>();
 
     public MasterDataDbContext(
         IMultiTenantContextAccessor<AppTenantInfo> multiTenantContextAccessor,

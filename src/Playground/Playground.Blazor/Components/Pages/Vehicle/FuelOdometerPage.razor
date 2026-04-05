@@ -1,0 +1,368 @@
+@page "/vehicle/fuel-odometer"
+@using FSH.Framework.Shared.Persistence
+@using FSH.Modules.Vehicle.Contracts.v1.Vehicles
+@using FSH.Playground.Blazor.ApiClient
+@inject IVehicleClient VehicleClient
+@inject ISnackbar Snackbar
+
+<FshPageHeader Title="Fuel & Odometer Monitoring"
+               Description="Track and monitor daily fuel usage and odometer movement per vehicle" />
+
+<div class="mt-4">
+    @if (_selectedVehicle is not null)
+    {
+        <MudStack Row="true" Spacing="1" Class="mb-3" Wrap="Wrap.Wrap">
+            <MudChip T="string" Color="Color.Default" Variant="Variant.Outlined">Records: @_summary.RecordCount</MudChip>
+            <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">Distance: @_summary.TotalDistanceKm km</MudChip>
+            <MudChip T="string" Color="Color.Success" Variant="Variant.Outlined">Fuel: @_summary.TotalFuelLiters.ToString("N3") L</MudChip>
+            <MudChip T="string" Color="Color.Warning" Variant="Variant.Outlined">Fuel Cost: &#8369;@_summary.TotalFuelCost.ToString("N2")</MudChip>
+            <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined">Avg km/L: @_summary.AverageKmPerLiter.ToString("N2")</MudChip>
+            <MudChip T="string" Color="Color.Secondary" Variant="Variant.Outlined">Avg Cost/km: &#8369;@_summary.AverageCostPerKm.ToString("N2")</MudChip>
+        </MudStack>
+    }
+
+    <MudGrid Spacing="2">
+        <MudItem xs="12" md="4">
+            <MudCard Class="fsh-card">
+                <MudCardContent>
+                    <MudText Typo="Typo.h6" Class="mb-3">Record Daily Usage</MudText>
+                    <MudStack Spacing="2">
+                        <MudAutocomplete T="VehicleDto"
+                                         Label="Vehicle"
+                                         Value="_selectedVehicle"
+                                         ValueChanged="OnVehicleChanged"
+                                         SearchFunc="SearchVehicles"
+                                         ToStringFunc="@(v => v is null ? string.Empty : $"{v.PlateNumber} - {v.Make} {v.Model}")"
+                                         Variant="Variant.Outlined"
+                                         Clearable="true" />
+
+                        <MudDatePicker Label="Date" @bind-Date="_entryDate" Variant="Variant.Outlined" DateFormat="yyyy-MM-dd" />
+                        <MudNumericField T="int" Label="Odometer Start" @bind-Value="_odometerStart" Variant="Variant.Outlined" Min="0"
+                                         Disabled="_isOdometerStartLocked"
+                                         HelperText="@(_isOdometerStartLocked ? "Carried forward from last record." : null)" />
+                        <MudNumericField T="int"
+                                        Label="Odometer End"
+                                        @bind-Value="_odometerEnd"
+                                        Variant="Variant.Outlined"
+                                        Min="0"
+                                        Immediate="true"
+                                        Error="@HasOdometerValidationError"
+                                        ErrorText="@OdometerValidationMessage"
+                                        HelperText="Must be ≥ Odometer Start." />
+                        <MudNumericField T="decimal" Label="Fuel (Liters)" @bind-Value="_fuelLiters" Variant="Variant.Outlined" Min="0" Step="0.001m" />
+                        <MudNumericField T="decimal" Label="Fuel Cost (&#8369;)" @bind-Value="_fuelCost" Variant="Variant.Outlined" Min="0" Step="0.01m" />
+                        <MudTextField Label="Destination" @bind-Value="_destination" Variant="Variant.Outlined" />
+                        <MudTextField Label="Remarks" @bind-Value="_remarks" Variant="Variant.Outlined" Lines="2" />
+
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveDailyUsage"
+                                   Disabled="_busy || _selectedVehicle is null || HasOdometerValidationError"
+                                   FullWidth="true">
+                            @(IsEditingTodayRecord() ? "Update Daily Record" : "Save Daily Record")
+                        </MudButton>
+                    </MudStack>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        <MudItem xs="12" md="8">
+            <MudCard Class="fsh-card">
+                <MudCardContent>
+                    <MudStack Row="true" Spacing="2" Class="mb-3" AlignItems="AlignItems.End">
+                        <MudDatePicker Label="From" @bind-Date="_fromDate" Variant="Variant.Outlined" DateFormat="yyyy-MM-dd" />
+                        <MudDatePicker Label="To" @bind-Date="_toDate" Variant="Variant.Outlined" DateFormat="yyyy-MM-dd" />
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="LoadData"
+                                   Disabled="_busy || _selectedVehicle is null">Refresh</MudButton>
+                    </MudStack>
+
+                    @if (_selectedVehicle is null)
+                    {
+                        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">Select a vehicle on the left to view usage records.</MudAlert>
+                    }
+                    else
+                    {
+                        <MudTable T="VehicleDailyUsageDto" Items="_rows" Dense="true" Hover="true" Striped="true" Loading="_busy">
+                            <HeaderContent>
+                                <MudTh>Date</MudTh>
+                                <MudTh>Start (km)</MudTh>
+                                <MudTh>End (km)</MudTh>
+                                <MudTh>Distance</MudTh>
+                                <MudTh>Fuel (L)</MudTh>
+                                <MudTh>Cost (&#8369;)</MudTh>
+                                <MudTh>km/L</MudTh>
+                                <MudTh>Cost/km</MudTh>
+                                <MudTh>Destination</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd>@context.Date.ToString("yyyy-MM-dd")</MudTd>
+                                <MudTd>@context.OdometerStart.ToString("N0")</MudTd>
+                                <MudTd>@context.OdometerEnd.ToString("N0")</MudTd>
+                                <MudTd>@context.DistanceKm.ToString("N0")</MudTd>
+                                <MudTd>@context.FuelLiters.ToString("N3")</MudTd>
+                                <MudTd>@context.FuelCost.ToString("N2")</MudTd>
+                                <MudTd>@context.KmPerLiter.ToString("N2")</MudTd>
+                                <MudTd>@context.CostPerKm.ToString("N2")</MudTd>
+                                <MudTd>
+                                    @if (!string.IsNullOrWhiteSpace(context.Remarks))
+                                    {
+                                        <MudTooltip Text="@context.Remarks">
+                                            <span>@(context.Destination ?? "-") *</span>
+                                        </MudTooltip>
+                                    }
+                                    else
+                                    {
+                                        @(context.Destination ?? "-")
+                                    }
+                                </MudTd>
+                            </RowTemplate>
+                            <NoRecordsContent>
+                                <MudText Align="Align.Center" Class="pa-4">No usage records found for the selected period.</MudText>
+                            </NoRecordsContent>
+                        </MudTable>
+                    }
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+</div>
+
+@code {
+    private bool _busy;
+    private VehicleDto? _selectedVehicle;
+    private DateTime? _entryDate = DateTime.Today;
+    private int _odometerStart;
+    private int _odometerEnd;
+    private bool _isOdometerStartLocked;
+    private decimal _fuelLiters;
+    private decimal _fuelCost;
+    private string? _destination;
+    private string? _remarks;
+
+    private DateTime? _fromDate = DateTime.Today.AddDays(-30);
+    private DateTime? _toDate = DateTime.Today;
+
+    private readonly List<VehicleDailyUsageDto> _rows = [];
+    private VehicleDailyUsageSummaryDto _summary = new(0, 0, 0m, 0m, 0m, 0m, 0m);
+
+    private bool HasOdometerValidationError => _odometerEnd < _odometerStart;
+
+    private string OdometerValidationMessage => "End reading cannot be less than start reading.";
+
+    protected override Task OnInitializedAsync()
+    {
+        ResetViewForNoVehicle();
+        return Task.CompletedTask;
+    }
+
+    private async Task<IEnumerable<VehicleDto>> SearchVehicles(string value, CancellationToken token)
+    {
+        try
+        {
+            var result = await VehicleClient.SearchVehiclesAsync(new SearchVehiclesQuery
+            {
+                Keyword = string.IsNullOrWhiteSpace(value) ? null : value,
+                PageNumber = 1,
+                PageSize = 20
+            }, token);
+
+            return result.Items ?? [];
+        }
+        catch (OperationCanceledException)
+        {
+            return [];
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load vehicles: {ex.Message}", Severity.Error);
+            return [];
+        }
+    }
+
+    private Task OnVehicleChanged(VehicleDto? vehicle)
+    {
+        _selectedVehicle = vehicle;
+        return LoadData();
+    }
+
+    private async Task SaveDailyUsage()
+    {
+        if (_selectedVehicle is null || !_entryDate.HasValue)
+            return;
+
+        var entryDate = DateOnly.FromDateTime(_entryDate.Value.Date);
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        var existingForDate = _rows.FirstOrDefault(x => x.Date == entryDate);
+
+        try
+        {
+            if (HasOdometerValidationError)
+            {
+                Snackbar.Add(OdometerValidationMessage, Severity.Warning);
+                return;
+            }
+
+            if (existingForDate is not null && entryDate != today)
+            {
+                Snackbar.Add("A record already exists for this date. Only today's record can be edited.", Severity.Warning);
+                return;
+            }
+
+            _busy = true;
+
+            if (existingForDate is not null)
+            {
+                var update = new UpdateVehicleDailyUsageCommand(
+                    existingForDate.Id,
+                    entryDate,
+                    _odometerStart,
+                    _odometerEnd,
+                    _fuelLiters,
+                    _fuelCost,
+                    string.IsNullOrWhiteSpace(_destination) ? null : _destination.Trim(),
+                    string.IsNullOrWhiteSpace(_remarks) ? null : _remarks.Trim());
+
+                await VehicleClient.UpdateVehicleDailyUsageAsync(existingForDate.Id, update);
+                Snackbar.Add("Today's daily usage record updated.", Severity.Success);
+            }
+            else
+            {
+                var create = new CreateVehicleDailyUsageCommand(
+                    _selectedVehicle.Id,
+                    entryDate,
+                    _odometerStart,
+                    _odometerEnd,
+                    _fuelLiters,
+                    _fuelCost,
+                    string.IsNullOrWhiteSpace(_destination) ? null : _destination.Trim(),
+                    string.IsNullOrWhiteSpace(_remarks) ? null : _remarks.Trim());
+
+                await VehicleClient.CreateVehicleDailyUsageAsync(create);
+                Snackbar.Add("Daily usage record saved.", Severity.Success);
+            }
+
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(GetFriendlySaveErrorMessage(ex), Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            if (_selectedVehicle is null)
+            {
+                ResetViewForNoVehicle();
+                return;
+            }
+
+            _busy = true;
+
+            var query = new SearchVehicleDailyUsageQuery
+            {
+                VehicleId = _selectedVehicle.Id,
+                DateFrom = _fromDate.HasValue ? DateOnly.FromDateTime(_fromDate.Value.Date) : null,
+                DateTo = _toDate.HasValue ? DateOnly.FromDateTime(_toDate.Value.Date) : null,
+                PageNumber = 1,
+                PageSize = 200
+            };
+
+            var result = await VehicleClient.SearchVehicleDailyUsageAsync(query);
+            _rows.Clear();
+            _rows.AddRange(result.Items ?? []);
+
+            var summaryQuery = new GetVehicleDailyUsageSummaryQuery
+            {
+                VehicleId = _selectedVehicle.Id,
+                DateFrom = query.DateFrom,
+                DateTo = query.DateTo
+            };
+            _summary = await VehicleClient.GetVehicleDailyUsageSummaryAsync(summaryQuery);
+
+            await SyncOdometerStartAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load records: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task SyncOdometerStartAsync()
+    {
+        if (_selectedVehicle is null)
+        {
+            _isOdometerStartLocked = false;
+            return;
+        }
+
+        var latestResult = await VehicleClient.SearchVehicleDailyUsageAsync(new SearchVehicleDailyUsageQuery
+        {
+            VehicleId = _selectedVehicle.Id,
+            PageNumber = 1,
+            PageSize = 1
+        });
+
+        var latest = latestResult.Items?.FirstOrDefault();
+        if (latest is null)
+        {
+            _isOdometerStartLocked = false;
+            return;
+        }
+
+        // Carry forward from latest Odometer End + 1 for the selected vehicle.
+        var nextStart = latest.OdometerEnd + 1;
+        _isOdometerStartLocked = true;
+        _odometerStart = nextStart;
+        _entryDate = latest.Date.ToDateTime(TimeOnly.MinValue).AddDays(1);
+
+        if (_odometerEnd < _odometerStart)
+        {
+            _odometerEnd = _odometerStart;
+        }
+    }
+
+    private bool IsEditingTodayRecord()
+    {
+        if (!_entryDate.HasValue)
+            return false;
+
+        var selectedDate = DateOnly.FromDateTime(_entryDate.Value.Date);
+        var today = DateOnly.FromDateTime(DateTime.Today);
+
+        return selectedDate == today && _rows.Any(x => x.Date == selectedDate);
+    }
+
+    private string GetFriendlySaveErrorMessage(Exception ex)
+    {
+        if (HasOdometerValidationError)
+            return "Odometer End cannot be less than Odometer Start.";
+
+        if (_entryDate.HasValue)
+        {
+            var selectedDate = DateOnly.FromDateTime(_entryDate.Value.Date);
+            if (_rows.Any(x => x.Date == selectedDate))
+                return "A record already exists for this date. Choose another date, or update today's record only.";
+        }
+
+        return $"Failed to save record: {ex.Message}";
+    }
+
+    private void ResetViewForNoVehicle()
+    {
+        _rows.Clear();
+        _summary = new VehicleDailyUsageSummaryDto(0, 0, 0m, 0m, 0m, 0m, 0m);
+        _isOdometerStartLocked = false;
+        _odometerStart = 0;
+        _odometerEnd = 0;
+    }
+}

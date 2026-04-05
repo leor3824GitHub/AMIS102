@@ -184,10 +184,14 @@
                         @if (context.Status == "Pending")
                         {
                             <MudStack Row="true" Spacing="1">
-                                <MudIconButton Icon="@Icons.Material.Filled.Undo" Size="Size.Small" Color="Color.Info"
-                                               Title="Mark as Returned" OnClick="@(() => OpenReturnDialog(context))" />
-                                <MudIconButton Icon="@Icons.Material.Filled.DeleteForever" Size="Size.Small" Color="Color.Error"
-                                               Title="Mark as Disposed" OnClick="@(() => OpenDisposeDialog(context))" />
+                                <MudTooltip Text="Mark as returned">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Undo" Size="Size.Small" Color="Color.Info"
+                                                   OnClick="@(() => OpenReturnDialog(context))" />
+                                </MudTooltip>
+                                <MudTooltip Text="Mark as disposed">
+                                    <MudIconButton Icon="@Icons.Material.Filled.DeleteForever" Size="Size.Small" Color="Color.Error"
+                                                   OnClick="@(() => OpenDisposeDialog(context))" />
+                                </MudTooltip>
                             </MudStack>
                         }
                         else if (!string.IsNullOrWhiteSpace(context.DispositionNotes))

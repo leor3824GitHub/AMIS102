@@ -18538,6 +18538,9 @@ namespace FSH.Playground.Blazor.ApiClient
         [System.Text.Json.Serialization.JsonPropertyName("description")]
         public string Description { get; set; }
 
+        [System.Text.Json.Serialization.JsonPropertyName("fundCluster")]
+        public string FundCluster { get; set; }
+
         [System.Text.Json.Serialization.JsonPropertyName("isActive")]
         public bool IsActive { get; set; } = true;
 
@@ -18954,6 +18957,9 @@ namespace FSH.Playground.Blazor.ApiClient
 
         [System.Text.Json.Serialization.JsonPropertyName("description")]
         public string Description { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("fundCluster")]
+        public string FundCluster { get; set; }
 
         [System.Text.Json.Serialization.JsonPropertyName("isActive")]
         public bool IsActive { get; set; }
@@ -21811,6 +21817,9 @@ namespace FSH.Playground.Blazor.ApiClient
 
         [System.Text.Json.Serialization.JsonPropertyName("description")]
         public string Description { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("fundCluster")]
+        public string FundCluster { get; set; }
 
         [System.Text.Json.Serialization.JsonPropertyName("isActive")]
         public bool IsActive { get; set; }

@@ -1,0 +1,145 @@
+@page "/master-data/organization-profile"
+@using FSH.Modules.MasterData.Contracts.v1.OrganizationProfile
+@using FSH.Playground.Blazor.ApiClient
+@using MudBlazor
+@inject IOrganizationProfileClient OrgProfileClient
+@inject ISnackbar Snackbar
+
+<FshPageHeader Title="Organization Profile"
+               Description="Agency information printed on official government reports" />
+
+<MudGrid Spacing="3" Class="mt-2">
+    <MudItem xs="12" md="6">
+        <MudPaper Elevation="1" Class="pa-4">
+            <MudText Typo="Typo.h6" Class="mb-3">Agency Details</MudText>
+            <MudStack Spacing="3">
+                <MudTextField @bind-Value="_form.Name"
+                              Label="Agency / Organization Name"
+                              Variant="Variant.Outlined"
+                              Required="true"
+                              CharacterCounter="true"
+                              MaxLength="200"
+                              Placeholder="e.g. National Food Authority" />
+
+                <MudTextField @bind-Value="_form.ShortName"
+                              Label="Short Name / Acronym"
+                              Variant="Variant.Outlined"
+                              CharacterCounter="true"
+                              MaxLength="80"
+                              Placeholder="e.g. NFA" />
+
+                <MudTextField @bind-Value="_form.Address"
+                              Label="Address"
+                              Variant="Variant.Outlined"
+                              Lines="3"
+                              CharacterCounter="true"
+                              MaxLength="400"
+                              Placeholder="e.g. NFA Complex, Visayas Avenue, Diliman, Quezon City" />
+
+                <MudTextField @bind-Value="_form.LogoUrl"
+                              Label="Logo URL"
+                              Variant="Variant.Outlined"
+                              CharacterCounter="true"
+                              MaxLength="500"
+                              Placeholder="https://..." />
+
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           OnClick="SaveAsync"
+                           Disabled="_busy || string.IsNullOrWhiteSpace(_form.Name)"
+                           Class="mt-1">
+                    @if (_busy)
+                    {
+                        <MudProgressCircular Size="Size.Small" Class="mr-2" />
+                    }
+                    Save
+                </MudButton>
+            </MudStack>
+        </MudPaper>
+    </MudItem>
+
+    @if (!string.IsNullOrWhiteSpace(_form.Name))
+    {
+        <MudItem xs="12" md="6">
+            <MudPaper Elevation="1" Class="pa-4">
+                <MudText Typo="Typo.h6" Class="mb-3">Preview</MudText>
+                <MudStack Spacing="1">
+                    <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Republic of the Philippines</MudText>
+                    <MudText Typo="Typo.h6"><b>@_form.Name</b></MudText>
+                    @if (!string.IsNullOrWhiteSpace(_form.ShortName))
+                    {
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">(@_form.ShortName)</MudText>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(_form.Address))
+                    {
+                        <MudText Typo="Typo.body2">@_form.Address</MudText>
+                    }
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+    }
+</MudGrid>
+
+@code {
+    private FormModel _form = new();
+    private bool _busy;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var existing = await OrgProfileClient.GetAsync();
+            if (existing is not null)
+            {
+                _form = new FormModel
+                {
+                    Name = existing.Name,
+                    ShortName = existing.ShortName ?? string.Empty,
+                    Address = existing.Address ?? string.Empty,
+                    LogoUrl = existing.LogoUrl ?? string.Empty
+                };
+            }
+        }
+        catch
+        {
+            // No profile yet — start with empty form
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_form.Name)) return;
+
+        _busy = true;
+        try
+        {
+            var command = new UpsertOrganizationProfileCommand(
+                _form.Name.Trim(),
+                NullIfEmpty(_form.ShortName),
+                NullIfEmpty(_form.Address),
+                NullIfEmpty(_form.LogoUrl));
+
+            await OrgProfileClient.UpsertAsync(command);
+            Snackbar.Add("Organization profile saved.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to save: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private static string? NullIfEmpty(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    private sealed class FormModel
+    {
+        public string Name { get; set; } = string.Empty;
+        public string ShortName { get; set; } = string.Empty;
+        public string Address { get; set; } = string.Empty;
+        public string LogoUrl { get; set; } = string.Empty;
+    }
+}

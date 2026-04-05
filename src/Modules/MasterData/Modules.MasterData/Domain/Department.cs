@@ -7,6 +7,7 @@ public sealed class Department : AggregateRoot<Guid>, IAuditableEntity
     public string Code { get; private set; } = default!;
     public string Name { get; private set; } = default!;
     public string? Description { get; private set; }
+    public string? FundCluster { get; private set; }
     public bool IsActive { get; private set; } = true;
     public byte[] Version { get; set; } = [];
 
@@ -18,7 +19,7 @@ public sealed class Department : AggregateRoot<Guid>, IAuditableEntity
     public string? DeletedBy { get; set; }
     public bool IsDeleted { get; set; }
 
-    public static Department Create(string code, string name, string? description)
+    public static Department Create(string code, string name, string? description, string? fundCluster = null)
     {
         return new Department
         {
@@ -26,16 +27,18 @@ public sealed class Department : AggregateRoot<Guid>, IAuditableEntity
             Code = code,
             Name = name,
             Description = description,
+            FundCluster = fundCluster,
             IsActive = true,
             CreatedOnUtc = DateTimeOffset.UtcNow
         };
     }
 
-    public void Update(string code, string name, string? description, bool isActive)
+    public void Update(string code, string name, string? description, string? fundCluster, bool isActive)
     {
         Code = code;
         Name = name;
         Description = description;
+        FundCluster = fundCluster;
         IsActive = isActive;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
     }

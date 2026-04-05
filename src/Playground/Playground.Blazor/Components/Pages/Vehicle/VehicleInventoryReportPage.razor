@@ -128,6 +128,11 @@
                                Disabled="_loading || _items.Count == 0">
                         CSV
                     </MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="DownloadPdfAsync"
+                               StartIcon="@Icons.Material.Filled.PictureAsPdf"
+                               Disabled="_loading || _items.Count == 0">
+                        Download PDF
+                    </MudButton>
                 </MudStack>
             </MudItem>
         </MudGrid>
@@ -326,6 +331,26 @@ else if (!_loading)
         var dataUrl = $"data:text/csv;base64,{Convert.ToBase64String(Encoding.UTF8.GetBytes(sb.ToString()))}";
         await JS.InvokeVoidAsync("open", dataUrl, "_blank");
         Snackbar.Add("CSV export ready.", Severity.Success);
+    }
+
+    private async Task DownloadPdfAsync()
+    {
+        _loading = true;
+        try
+        {
+            var bytes = await VehicleClient.GenerateVehicleInventoryPdfAsync(_statusFilter, _asOfDate);
+            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
+            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            Snackbar.Add("PDF ready.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"PDF generation failed: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
     }
 
     private static string Quote(string? v) =>

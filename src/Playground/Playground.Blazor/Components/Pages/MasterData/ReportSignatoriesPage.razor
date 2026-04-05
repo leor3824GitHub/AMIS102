@@ -18,6 +18,9 @@
                 <MudSelect T="string" @bind-Value="_form.ReportType" Label="Report Type" Variant="Variant.Outlined" Required="true">
                     <MudSelectItem Value="@("VehicleInventory")">Vehicle Inventory</MudSelectItem>
                     <MudSelectItem Value="@("PhysicalCount")">Physical Count</MudSelectItem>
+                    <MudSelectItem Value="@("DepartmentIssuance")">Department Issuance</MudSelectItem>
+                    <MudSelectItem Value="@("StockCard")">Stock Card</MudSelectItem>
+                    <MudSelectItem Value="@("EmployeeIssuance")">Employee Issuance</MudSelectItem>
                 </MudSelect>
                 <MudNumericField T="int" @bind-Value="_form.SortOrder" Label="Sort Order" Variant="Variant.Outlined"
                                  Min="1" Required="true" HelperText="Determines left-to-right column position" />
@@ -58,6 +61,9 @@
                            Dense="true" Style="width:180px" Clearable="true">
                     <MudSelectItem Value="@("VehicleInventory")">Vehicle Inventory</MudSelectItem>
                     <MudSelectItem Value="@("PhysicalCount")">Physical Count</MudSelectItem>
+                    <MudSelectItem Value="@("DepartmentIssuance")">Department Issuance</MudSelectItem>
+                    <MudSelectItem Value="@("StockCard")">Stock Card</MudSelectItem>
+                    <MudSelectItem Value="@("EmployeeIssuance")">Employee Issuance</MudSelectItem>
                 </MudSelect>
             </MudStack>
 
@@ -94,10 +100,14 @@
                                 </td>
                                 <td>
                                     <MudStack Row="true" Spacing="0">
-                                        <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small"
-                                                       OnClick="() => StartEdit(s)" Disabled="_busy" />
-                                        <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small"
-                                                       Color="Color.Error" OnClick="() => ConfirmDeleteAsync(s)" Disabled="_busy" />
+                                        <MudTooltip Text="Edit signatory">
+                                            <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small"
+                                                           OnClick="() => StartEdit(s)" Disabled="_busy" />
+                                        </MudTooltip>
+                                        <MudTooltip Text="Delete signatory">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                                           Color="Color.Error" OnClick="() => ConfirmDeleteAsync(s)" Disabled="_busy" />
+                                        </MudTooltip>
                                     </MudStack>
                                 </td>
                             </tr>

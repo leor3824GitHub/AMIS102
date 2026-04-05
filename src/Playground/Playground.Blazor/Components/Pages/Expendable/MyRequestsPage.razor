@@ -86,17 +86,19 @@ else
                             <MudStack Row="true" Spacing="0">
                                 @if (req.Status == "Draft")
                                 {
-                                    <MudIconButton Icon="@Icons.Material.Filled.EditNote"
-                                                   Color="Color.Primary" Size="Size.Small"
-                                                   Title="Edit draft"
-                                                   OnClick="@(() => OpenEditDialog(req))" />
+                                    <MudTooltip Text="Edit draft request">
+                                        <MudIconButton Icon="@Icons.Material.Filled.EditNote"
+                                                       Color="Color.Primary" Size="Size.Small"
+                                                       OnClick="@(() => OpenEditDialog(req))" />
+                                    </MudTooltip>
                                 }
                                 @if (req.Status is "Draft" or "Submitted" or "Approved")
                                 {
-                                    <MudIconButton Icon="@Icons.Material.Filled.Cancel"
-                                                   Color="Color.Error" Size="Size.Small"
-                                                   Title="Cancel request"
-                                                   OnClick="@(() => OpenCancelDialog(req))" />
+                                    <MudTooltip Text="Cancel request">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Cancel"
+                                                       Color="Color.Error" Size="Size.Small"
+                                                       OnClick="@(() => OpenCancelDialog(req))" />
+                                    </MudTooltip>
                                 }
                                 <MudIconButton Icon="@(_expandedRequests.Contains(req.Id) ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)"
                                                Size="Size.Small"
@@ -290,9 +292,11 @@ else
                         <MudTd DataLabel="Qty" Style="text-align:center;">@item.RequestedQuantity</MudTd>
                         <MudTd DataLabel="Notes">@(item.Notes ?? "—")</MudTd>
                         <MudTd>
-                            <MudIconButton Icon="@Icons.Material.Filled.DeleteOutline" Color="Color.Error"
-                                           Size="Size.Small" Disabled="_isEditActioning"
-                                           OnClick="@(() => RemoveItemFromDraft(item.ProductId))" />
+                            <MudTooltip Text="Remove item from draft">
+                                <MudIconButton Icon="@Icons.Material.Filled.DeleteOutline" Color="Color.Error"
+                                               Size="Size.Small" Disabled="_isEditActioning"
+                                               OnClick="@(() => RemoveItemFromDraft(item.ProductId))" />
+                            </MudTooltip>
                         </MudTd>
                     </RowTemplate>
                 </MudTable>

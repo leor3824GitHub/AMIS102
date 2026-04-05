@@ -9,6 +9,7 @@
 @inject ILookupClient LookupClient
 @inject ISnackbar Snackbar
 @inject NavigationManager NavigationManager
+@inject IJSRuntime JS
 
 <FshPageHeader Title="Employee Issuance History" Description="Office supplies issued per employee">
 </FshPageHeader>
@@ -54,6 +55,13 @@
                                StartIcon="@Icons.Material.Filled.Download"
                                OnClick="ExportCsvAsync">
                         Export CSV
+                    </MudButton>
+                </MudItem>
+                <MudItem xs="12" sm="2">
+                    <MudButton Variant="Variant.Filled" Color="Color.Error" FullWidth="true"
+                               StartIcon="@Icons.Material.Filled.PictureAsPdf"
+                               OnClick="DownloadPdfAsync">
+                        Download PDF
                     </MudButton>
                 </MudItem>
             </MudGrid>
@@ -443,5 +451,30 @@
         }
 
         return employeeId;
+    }
+
+    private async Task DownloadPdfAsync()
+    {
+        _loading = true;
+        try
+        {
+            var from = _filterFrom.HasValue ? new DateTimeOffset(_filterFrom.Value, TimeSpan.Zero) : (DateTimeOffset?)null;
+            var to = _filterTo.HasValue ? new DateTimeOffset(_filterTo.Value, TimeSpan.Zero) : (DateTimeOffset?)null;
+            var bytes = await ReportsClient.GenerateEmployeeIssuancePdfAsync(
+                employeeId: _selectedEmployee?.Id.ToString(),
+                from: from,
+                to: to);
+            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
+            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            Snackbar.Add("PDF ready.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"PDF generation failed: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
     }
 }

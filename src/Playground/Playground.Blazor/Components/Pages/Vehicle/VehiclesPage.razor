@@ -100,22 +100,32 @@
                                 <MudTd>@context.Odometer</MudTd>
                                 <MudTd>
                                     <MudStack Row="true" Spacing="1">
-                                        <MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Primary"
-                                                       Size="Size.Small" OnClick="@(() => GoDetail(context.Id))" />
+                                        <MudTooltip Text="View details">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Primary"
+                                                           Size="Size.Small" OnClick="@(() => GoDetail(context.Id))" />
+                                        </MudTooltip>
                                         @if (context.Status == "Active")
                                         {
-                                            <MudIconButton Icon="@Icons.Material.Filled.RemoveCircle" Color="Color.Warning"
-                                                           Size="Size.Small" OnClick="@(() => Retire(context.Id))" />
-                                            <MudIconButton Icon="@Icons.Material.Filled.Block" Color="Color.Error"
-                                                           Size="Size.Small" OnClick="@(() => Decommission(context.Id))" />
+                                            <MudTooltip Text="Retire vehicle">
+                                                <MudIconButton Icon="@Icons.Material.Filled.RemoveCircle" Color="Color.Warning"
+                                                               Size="Size.Small" OnClick="@(() => Retire(context.Id))" />
+                                            </MudTooltip>
+                                            <MudTooltip Text="Decommission vehicle">
+                                                <MudIconButton Icon="@Icons.Material.Filled.Block" Color="Color.Error"
+                                                               Size="Size.Small" OnClick="@(() => Decommission(context.Id))" />
+                                            </MudTooltip>
                                         }
                                         else if (context.Status is "Retired" or "Decommissioned")
                                         {
-                                            <MudIconButton Icon="@Icons.Material.Filled.RestartAlt" Color="Color.Success"
-                                                           Size="Size.Small" OnClick="@(() => Reactivate(context.Id))" />
+                                            <MudTooltip Text="Reactivate vehicle">
+                                                <MudIconButton Icon="@Icons.Material.Filled.RestartAlt" Color="Color.Success"
+                                                               Size="Size.Small" OnClick="@(() => Reactivate(context.Id))" />
+                                            </MudTooltip>
                                         }
-                                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error"
-                                                       Size="Size.Small" OnClick="@(() => Delete(context.Id))" />
+                                        <MudTooltip Text="Delete vehicle">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error"
+                                                           Size="Size.Small" OnClick="@(() => Delete(context.Id))" />
+                                        </MudTooltip>
                                     </MudStack>
                                 </MudTd>
                             </RowTemplate>

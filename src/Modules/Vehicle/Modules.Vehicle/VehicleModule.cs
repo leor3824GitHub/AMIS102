@@ -15,6 +15,11 @@ using FSH.Modules.Vehicle.Features.v1.Vehicles.DeleteVehicle;
 using FSH.Modules.Vehicle.Features.v1.Vehicles.GetVehicle;
 using FSH.Modules.Vehicle.Features.v1.Vehicles.SearchVehicles;
 using FSH.Modules.Vehicle.Features.v1.Vehicles.GetMotorVehicleInventory;
+using FSH.Modules.Vehicle.Features.v1.Vehicles.GenerateVehicleInventoryPdf;
+using FSH.Modules.Vehicle.Features.v1.FuelOdometer.CreateVehicleDailyUsage;
+using FSH.Modules.Vehicle.Features.v1.FuelOdometer.UpdateVehicleDailyUsage;
+using FSH.Modules.Vehicle.Features.v1.FuelOdometer.SearchVehicleDailyUsage;
+using FSH.Modules.Vehicle.Features.v1.FuelOdometer.GetVehicleDailyUsageSummary;
 using FSH.Modules.Vehicle.Features.v1.Repairs.CreateRepairRecord;
 using FSH.Modules.Vehicle.Features.v1.Repairs.UpdateRepairRecord;
 using FSH.Modules.Vehicle.Features.v1.Repairs.StartRepair;
@@ -64,6 +69,10 @@ public class VehicleModule : IModule
         new("Create Vehicle Maintenance", "Create", "Vehicle.Maintenance"),
         new("Update Vehicle Maintenance", "Update", "Vehicle.Maintenance"),
         new("Delete Vehicle Maintenance", "Delete", "Vehicle.Maintenance"),
+
+        new("View Vehicle Fuel & Odometer", "View", "Vehicle.FuelOdometer", IsBasic: true),
+        new("Create Vehicle Fuel & Odometer", "Create", "Vehicle.FuelOdometer"),
+        new("Update Vehicle Fuel & Odometer", "Update", "Vehicle.FuelOdometer"),
     ];
 
     public void ConfigureServices(IHostApplicationBuilder builder)
@@ -71,6 +80,9 @@ public class VehicleModule : IModule
         ArgumentNullException.ThrowIfNull(builder);
 
         PermissionConstants.Register(RegisteredPermissions);
+
+        // QuestPDF community license
+        QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 
         builder.Services.AddHeroDbContext<VehicleDbContext>();
         builder.Services.AddScoped<IDbInitializer, VehicleDbInitializer>();
@@ -93,6 +105,7 @@ public class VehicleModule : IModule
 
         var lookupGroup = moduleGroup.MapGroup("/lookup");
         var vehiclesGroup = moduleGroup.MapGroup("/vehicles");
+        var fuelOdometerGroup = moduleGroup.MapGroup("/fuel-odometer");
         var repairsGroup = moduleGroup.MapGroup("/repairs");
         var maintenanceGroup = moduleGroup.MapGroup("/maintenance");
 
@@ -111,6 +124,13 @@ public class VehicleModule : IModule
         GetVehicleEndpoint.Map(vehiclesGroup);
         SearchVehiclesEndpoint.Map(vehiclesGroup);
         GetMotorVehicleInventoryEndpoint.Map(vehiclesGroup);
+        GenerateVehicleInventoryPdfEndpoint.Map(vehiclesGroup);
+
+        // Fuel and odometer daily usage endpoints
+        CreateVehicleDailyUsageEndpoint.Map(fuelOdometerGroup);
+        UpdateVehicleDailyUsageEndpoint.Map(fuelOdometerGroup);
+        SearchVehicleDailyUsageEndpoint.Map(fuelOdometerGroup);
+        GetVehicleDailyUsageSummaryEndpoint.Map(fuelOdometerGroup);
 
         // Repair endpoints
         CreateRepairRecordEndpoint.Map(repairsGroup);

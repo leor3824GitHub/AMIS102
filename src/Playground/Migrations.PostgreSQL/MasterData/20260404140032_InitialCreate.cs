@@ -47,6 +47,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
                     Code = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
                     Name = table.Column<string>(type: "character varying(160)", maxLength: 160, nullable: false),
                     Description = table.Column<string>(type: "character varying(400)", maxLength: 400, nullable: true),
+                    FundCluster = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
                     Version = table.Column<byte[]>(type: "bytea", nullable: false),
                     CreatedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
@@ -84,6 +85,28 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Offices", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "OrganizationProfiles",
+                schema: "employee",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    ShortName = table.Column<string>(type: "character varying(80)", maxLength: 80, nullable: true),
+                    Address = table.Column<string>(type: "character varying(400)", maxLength: 400, nullable: true),
+                    LogoUrl = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    Version = table.Column<byte[]>(type: "bytea", nullable: false),
+                    CreatedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    LastModifiedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    LastModifiedBy = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_OrganizationProfiles", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -344,6 +367,13 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
                 column: "Name");
 
             migrationBuilder.CreateIndex(
+                name: "IX_OrganizationProfiles_TenantId",
+                schema: "employee",
+                table: "OrganizationProfiles",
+                column: "TenantId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Positions_Code",
                 schema: "employee",
                 table: "Positions",
@@ -405,6 +435,10 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
 
             migrationBuilder.DropTable(
                 name: "EmployeeProfiles",
+                schema: "employee");
+
+            migrationBuilder.DropTable(
+                name: "OrganizationProfiles",
                 schema: "employee");
 
             migrationBuilder.DropTable(

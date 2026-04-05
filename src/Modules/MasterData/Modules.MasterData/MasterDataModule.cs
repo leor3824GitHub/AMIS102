@@ -37,6 +37,8 @@ using FSH.Modules.MasterData.Features.v1.ReportSignatories.GetReportSignatories;
 using FSH.Modules.MasterData.Features.v1.ReportSignatories.CreateReportSignatory;
 using FSH.Modules.MasterData.Features.v1.ReportSignatories.UpdateReportSignatory;
 using FSH.Modules.MasterData.Features.v1.ReportSignatories.DeleteReportSignatory;
+using FSH.Modules.MasterData.Features.v1.OrganizationProfile.GetOrganizationProfile;
+using FSH.Modules.MasterData.Features.v1.OrganizationProfile.UpsertOrganizationProfile;
 using FSH.Framework.Eventing;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -90,7 +92,10 @@ public class MasterDataModule : IModule
         new("View Report Signatories", "View", "MasterData.ReportSignatories", IsBasic: true),
         new("Create Report Signatories", "Create", "MasterData.ReportSignatories"),
         new("Update Report Signatories", "Update", "MasterData.ReportSignatories"),
-        new("Delete Report Signatories", "Delete", "MasterData.ReportSignatories")
+        new("Delete Report Signatories", "Delete", "MasterData.ReportSignatories"),
+
+        new("View Organization Profile", "View", "MasterData.OrganizationProfile", IsBasic: true),
+        new("Manage Organization Profile", "Manage", "MasterData.OrganizationProfile")
     ];
 
     public void ConfigureServices(IHostApplicationBuilder builder)
@@ -129,6 +134,7 @@ public class MasterDataModule : IModule
         var suppliersGroup = moduleGroup.MapGroup("/suppliers");
         var categoriesGroup = moduleGroup.MapGroup("/categories");
         var reportSignatoriesGroup = moduleGroup.MapGroup("/report-signatories");
+        var organizationProfileGroup = moduleGroup.MapGroup("/organization-profile");
 
         MasterDataLookupEndpoint.Map(lookupGroup);
         CreateEmployeeEndpoint.Map(employeesGroup);
@@ -164,6 +170,8 @@ public class MasterDataModule : IModule
         CreateReportSignatoryEndpoint.Map(reportSignatoriesGroup);
         UpdateReportSignatoryEndpoint.Map(reportSignatoriesGroup);
         DeleteReportSignatoryEndpoint.Map(reportSignatoriesGroup);
+        GetOrganizationProfileEndpoint.Map(organizationProfileGroup);
+        UpsertOrganizationProfileEndpoint.Map(organizationProfileGroup);
     }
 }
 

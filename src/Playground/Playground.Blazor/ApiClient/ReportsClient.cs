@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Globalization;
 using FSH.Framework.Shared.Persistence;
+using FSH.Modules.Expendable.Contracts.v1.Reports;
 using FSH.Modules.Expendable.Contracts.v1.Requests;
 using FSH.Modules.Expendable.Contracts.v1.Warehouse;
 
@@ -35,6 +36,27 @@ public interface IReportsClient
 
     Task<StockCardDto?> GetStockCardAsync(
         Guid productId,
+        CancellationToken cancellationToken = default);
+
+    Task<byte[]> GenerateDepartmentIssuancePdfAsync(
+        string? departmentId = null,
+        System.DateTimeOffset? from = null,
+        System.DateTimeOffset? to = null,
+        CancellationToken cancellationToken = default);
+
+    Task<byte[]> GeneratePhysicalCountPdfAsync(
+        Guid? warehouseLocationId = null,
+        DateTime? asOfDate = null,
+        CancellationToken cancellationToken = default);
+
+    Task<byte[]> GenerateStockCardPdfAsync(
+        Guid productId,
+        CancellationToken cancellationToken = default);
+
+    Task<byte[]> GenerateEmployeeIssuancePdfAsync(
+        string? employeeId = null,
+        System.DateTimeOffset? from = null,
+        System.DateTimeOffset? to = null,
         CancellationToken cancellationToken = default);
 }
 
@@ -114,6 +136,60 @@ public sealed class ReportsClient : IReportsClient
             url, cancellationToken);
 
         return response ?? [];
+    }
+
+    public async Task<byte[]> GenerateDepartmentIssuancePdfAsync(
+        string? departmentId = null,
+        System.DateTimeOffset? from = null,
+        System.DateTimeOffset? to = null,
+        CancellationToken cancellationToken = default)
+    {
+        var command = new GenerateDepartmentIssuancePdfCommand
+        {
+            DepartmentId = departmentId,
+            From = from,
+            To = to
+        };
+        using var response = await _httpClient.PostAsJsonAsync(
+            "api/v1/expendable/reports/department-issuance/pdf", command, cancellationToken);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadAsByteArrayAsync(cancellationToken);
+    }
+
+    public async Task<byte[]> GeneratePhysicalCountPdfAsync(
+        Guid? warehouseLocationId = null,
+        DateTime? asOfDate = null,
+        CancellationToken cancellationToken = default)
+    {
+        var command = new { WarehouseLocationId = warehouseLocationId, AsOfDate = asOfDate };
+        using var response = await _httpClient.PostAsJsonAsync(
+            "api/v1/expendable/reports/physical-count/pdf", command, cancellationToken);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadAsByteArrayAsync(cancellationToken);
+    }
+
+    public async Task<byte[]> GenerateStockCardPdfAsync(
+        Guid productId,
+        CancellationToken cancellationToken = default)
+    {
+        var command = new { ProductId = productId };
+        using var response = await _httpClient.PostAsJsonAsync(
+            "api/v1/expendable/reports/stock-card/pdf", command, cancellationToken);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadAsByteArrayAsync(cancellationToken);
+    }
+
+    public async Task<byte[]> GenerateEmployeeIssuancePdfAsync(
+        string? employeeId = null,
+        System.DateTimeOffset? from = null,
+        System.DateTimeOffset? to = null,
+        CancellationToken cancellationToken = default)
+    {
+        var command = new { EmployeeId = employeeId, From = from, To = to };
+        using var response = await _httpClient.PostAsJsonAsync(
+            "api/v1/expendable/reports/employee-issuance/pdf", command, cancellationToken);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadAsByteArrayAsync(cancellationToken);
     }
 
     private static string BuildUrl(string basePath, Dictionary<string, string?> queryParams)

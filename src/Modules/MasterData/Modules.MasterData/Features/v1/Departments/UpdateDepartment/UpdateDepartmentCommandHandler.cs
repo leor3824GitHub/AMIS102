@@ -37,7 +37,7 @@ public sealed class UpdateDepartmentCommandHandler : ICommandHandler<UpdateDepar
             ]);
         }
 
-        department.Update(command.Code, command.Name, command.Description, command.IsActive);
+        department.Update(command.Code, command.Name, command.Description, command.FundCluster, command.IsActive);
         department.LastModifiedBy = _currentUser.GetUserId().ToString();
 
         await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);

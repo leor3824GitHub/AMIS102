@@ -33,7 +33,7 @@ public sealed class CreateDepartmentCommandHandler : ICommandHandler<CreateDepar
             ]);
         }
 
-        var department = Department.Create(command.Code, command.Name, command.Description);
+        var department = Department.Create(command.Code, command.Name, command.Description, command.FundCluster);
         department.CreatedBy = _currentUser.GetUserId().ToString();
 
         _dbContext.Departments.Add(department);

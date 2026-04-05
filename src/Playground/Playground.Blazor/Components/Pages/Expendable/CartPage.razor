@@ -137,8 +137,10 @@
                                     </MudTd>
                                     <MudTd DataLabel="Subtotal" Style="text-align:right;">$@context.LineTotal.ToString("F2")</MudTd>
                                     <MudTd DataLabel="Actions" Style="text-align:center;">
-                                        <MudIconButton Icon="@Icons.Material.Filled.DeleteOutline" Color="Color.Error" Size="Size.Small" AriaLabel="delete"
-                                                       OnClick="@(() => RemoveItem(context.ProductId))" />
+                                        <MudTooltip Text="Remove item from basket">
+                                            <MudIconButton Icon="@Icons.Material.Filled.DeleteOutline" Color="Color.Error" Size="Size.Small" AriaLabel="delete"
+                                                           OnClick="@(() => RemoveItem(context.ProductId))" />
+                                        </MudTooltip>
                                     </MudTd>
                                 </RowTemplate>
                             </MudTable>
