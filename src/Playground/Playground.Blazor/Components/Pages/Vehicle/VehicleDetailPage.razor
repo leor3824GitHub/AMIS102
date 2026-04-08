@@ -105,19 +105,6 @@ else
                     <MudTabPanel Text="Assignment/Odometer">
                         <MudGrid>
                             <MudItem xs="12" sm="6">
-                                <MudAutocomplete T="DepartmentReferenceDto"
-                                                 Value="_selectedDepartment"
-                                                 ValueChanged="OnDepartmentChanged"
-                                                 SearchFunc="SearchDepartments"
-                                                 ToStringFunc="@(d => d?.Name ?? string.Empty)"
-                                                 Label="Department Name"
-                                                 Variant="Variant.Outlined"
-                                                 Placeholder="Search department..."
-                                                 Clearable="true"
-                                                 CoerceValue="true"
-                                                 ResetValueOnEmptyText="true" />
-                            </MudItem>
-                            <MudItem xs="12" sm="6">
                                 <MudAutocomplete T="EmployeeReferenceDto"
                                                  Value="_selectedDriver"
                                                  ValueChanged="OnDriverChanged"
@@ -202,7 +189,6 @@ else
     private VehicleDto? _vehicle;
     private VehicleEditModel _edit = new();
     private AssignmentModel _assignment = new();
-    private DepartmentReferenceDto? _selectedDepartment;
     private EmployeeReferenceDto? _selectedDriver;
     private int _newOdometer;
 
@@ -306,12 +292,6 @@ else
             return;
         }
 
-        if (HasPartialAssignment(_assignment.DepartmentIdText, _assignment.DepartmentName))
-        {
-            Snackbar.Add("Department ID and name must both be provided or both left blank.", Severity.Warning);
-            return;
-        }
-
         if (HasPartialAssignment(_assignment.DriverIdText, _assignment.DriverName))
         {
             Snackbar.Add("Driver ID and name must both be provided or both left blank.", Severity.Warning);
@@ -412,32 +392,12 @@ else
     private static bool HasPartialAssignment(string? idText, string? name) =>
         Guid.TryParse(idText, out _) != !string.IsNullOrWhiteSpace(name);
 
-    private async Task<IEnumerable<DepartmentReferenceDto>> SearchDepartments(string value, CancellationToken token)
-    {
-        try
-        {
-            var response = await LookupClient.DepartmentsAsync(
-                keyword: string.IsNullOrWhiteSpace(value) ? null : value,
-                isActive: true,
-                pageNumber: 1,
-                pageSize: 20,
-                cancellationToken: token);
-
-            return response.Items ?? Enumerable.Empty<DepartmentReferenceDto>();
-        }
-        catch
-        {
-            return Enumerable.Empty<DepartmentReferenceDto>();
-        }
-    }
-
     private async Task<IEnumerable<EmployeeReferenceDto>> SearchDrivers(string value, CancellationToken token)
     {
         try
         {
             var response = await LookupClient.EmployeesGetAsync(
                 keyword: string.IsNullOrWhiteSpace(value) ? null : value,
-                departmentId: ParseGuid(_assignment.DepartmentIdText),
                 isActive: true,
                 pageNumber: 1,
                 pageSize: 20,
@@ -451,19 +411,13 @@ else
         }
     }
 
-    private Task OnDepartmentChanged(DepartmentReferenceDto? department)
-    {
-        _selectedDepartment = department;
-        _assignment.DepartmentName = department?.Name;
-        _assignment.DepartmentIdText = department?.Id.ToString();
-        return Task.CompletedTask;
-    }
-
     private Task OnDriverChanged(EmployeeReferenceDto? driver)
     {
         _selectedDriver = driver;
         _assignment.DriverIdText = driver?.Id.ToString();
         _assignment.DriverName = driver is null ? null : FormatDriver(driver);
+        _assignment.DepartmentIdText = driver?.DepartmentId == Guid.Empty ? null : driver?.DepartmentId.ToString();
+        _assignment.DepartmentName = driver?.DepartmentName;
         return Task.CompletedTask;
     }
 
@@ -480,22 +434,6 @@ else
 
     private async Task HydrateAssignmentSelectionsAsync()
     {
-        if (Guid.TryParse(_assignment.DepartmentIdText, out var departmentId))
-        {
-            _selectedDepartment = new DepartmentReferenceDto
-            {
-                Id = departmentId,
-                Name = _assignment.DepartmentName ?? string.Empty,
-                Code = string.Empty,
-                Description = string.Empty,
-                IsActive = true
-            };
-        }
-        else
-        {
-            _selectedDepartment = null;
-        }
-
         if (Guid.TryParse(_assignment.DriverIdText, out var driverId))
         {
             try

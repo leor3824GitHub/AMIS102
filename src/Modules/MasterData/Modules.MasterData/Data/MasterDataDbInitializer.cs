@@ -45,19 +45,13 @@ internal sealed class MasterDataDbInitializer(
         {
             var departments = new[]
             {
-                Department.Create("DPT-EXEC",  "Executive",               "C-suite and executive leadership"),
-                Department.Create("DPT-FIN",   "Finance & Accounting",    "Budgeting, payroll, and financial reporting"),
-                Department.Create("DPT-HR",    "Human Resources",         "Talent acquisition, benefits, and employee relations"),
-                Department.Create("DPT-IT",    "Information Technology",  "Systems, infrastructure, and tech support"),
-                Department.Create("DPT-OPS",   "Operations",              "Day-to-day operations and process management"),
-                Department.Create("DPT-PUR",   "Purchasing & Procurement","Vendor management and supply procurement"),
-                Department.Create("DPT-WH",    "Warehouse & Logistics",   "Inventory control, storage, and distribution"),
-                Department.Create("DPT-SALES", "Sales & Marketing",       "Revenue generation and brand promotion"),
-                Department.Create("DPT-CS",    "Customer Service",        "Client relations and support"),
-                Department.Create("DPT-LEGAL", "Legal & Compliance",      "Corporate legal affairs and regulatory compliance"),
-                Department.Create("DPT-ENG",   "Engineering",             "Product and infrastructure engineering"),
-                Department.Create("DPT-ADMIN", "Admin & General Services","Facilities, utilities, and general administration"),
-            };
+                Department.Create("AGS", "Administrative & General Services","Administrative & General Services", "380"),
+                Department.Create("FI", "Finance","Finance Department", "385"),
+                Department.Create("QA", "Quality Assurance","Quality Assurance Department", "190"),
+                Department.Create("BSM", "Buffer Stock Management","Buffer Stock Management Department", "180"),
+                Department.Create("FA", "Facility Management","Facility Management Department", "170"),
+                Department.Create("COA", "Commission on Audit","Commission on Audit ", "391"),
+            }; 
             await context.Departments.AddRangeAsync(departments, cancellationToken).ConfigureAwait(false);
         }
 
@@ -237,46 +231,46 @@ internal sealed class MasterDataDbInitializer(
             var employees = new[]
             {
                 // Executive
-                EmployeeProfile.Create(tenantId, "EMP-001", "Ricardo",   "Santos",    Off("OFF-HQ"),     Dep("DPT-EXEC"),  Pos("POS-CEO"),    null, "r.santos@company.example"),
-                EmployeeProfile.Create(tenantId, "EMP-002", "Maria",     "Reyes",     Off("OFF-HQ"),     Dep("DPT-FIN"),   Pos("POS-CFO"),    null, "m.reyes@company.example"),
-                EmployeeProfile.Create(tenantId, "EMP-003", "Jonathan",  "Cruz",      Off("OFF-IT"),     Dep("DPT-IT"),    Pos("POS-CTO"),    null, "j.cruz@company.example"),
-                EmployeeProfile.Create(tenantId, "EMP-004", "Angelica",  "Dela Cruz", Off("OFF-OPS"),    Dep("DPT-OPS"),   Pos("POS-COO"),    null, "a.delacruz@company.example"),
+                EmployeeProfile.Create(tenantId, "EMP-001", "Ricardo",   "Santos",    Off("OFF-HQ"),     Dep("AGS"),  Pos("POS-CEO"),    null, "r.santos@company.example"),
+                EmployeeProfile.Create(tenantId, "EMP-002", "Maria",     "Reyes",     Off("OFF-HQ"),     Dep("FI"),   Pos("POS-CFO"),    null, "m.reyes@company.example"),
+                EmployeeProfile.Create(tenantId, "EMP-003", "Jonathan",  "Cruz",      Off("OFF-IT"),     Dep("AGS"),  Pos("POS-CTO"),    null, "j.cruz@company.example"),
+                EmployeeProfile.Create(tenantId, "EMP-004", "Angelica",  "Dela Cruz", Off("OFF-OPS"),    Dep("BSM"),  Pos("POS-COO"),    null, "a.delacruz@company.example"),
                 // Finance
-                EmployeeProfile.Create(tenantId, "EMP-005", "Patricia",  "Domingo",   Off("OFF-HQ"),     Dep("DPT-FIN"),   Pos("POS-MGR"),    null, "p.domingo@company.example"),
-                EmployeeProfile.Create(tenantId, "EMP-006", "Edwin",     "Navarro",   Off("OFF-HQ"),     Dep("DPT-FIN"),   Pos("POS-SR-CLK"), null, "e.navarro@company.example"),
-                EmployeeProfile.Create(tenantId, "EMP-007", "Sheila",    "Aquino",    Off("OFF-HQ"),     Dep("DPT-FIN"),   Pos("POS-CLK"),    null, "s.aquino@company.example"),
+                EmployeeProfile.Create(tenantId, "EMP-005", "Patricia",  "Domingo",   Off("OFF-HQ"),     Dep("FI"),   Pos("POS-MGR"),    null, "p.domingo@company.example"),
+                EmployeeProfile.Create(tenantId, "EMP-006", "Edwin",     "Navarro",   Off("OFF-HQ"),     Dep("FI"),   Pos("POS-SR-CLK"), null, "e.navarro@company.example"),
+                EmployeeProfile.Create(tenantId, "EMP-007", "Sheila",    "Aquino",    Off("OFF-HQ"),     Dep("FI"),   Pos("POS-CLK"),    null, "s.aquino@company.example"),
                 // Human Resources
-                EmployeeProfile.Create(tenantId, "EMP-008", "Carla",     "Mendoza",   Off("OFF-HQ"),     Dep("DPT-HR"),    Pos("POS-MGR"),    null, "c.mendoza@company.example"),
-                EmployeeProfile.Create(tenantId, "EMP-009", "Dennis",    "Ocampo",    Off("OFF-HQ"),     Dep("DPT-HR"),    Pos("POS-SPEC"),   null, "d.ocampo@company.example"),
+                EmployeeProfile.Create(tenantId, "EMP-008", "Carla",     "Mendoza",   Off("OFF-HQ"),     Dep("AGS"),  Pos("POS-MGR"),    null, "c.mendoza@company.example"),
+                EmployeeProfile.Create(tenantId, "EMP-009", "Dennis",    "Ocampo",    Off("OFF-HQ"),     Dep("AGS"),  Pos("POS-SPEC"),   null, "d.ocampo@company.example"),
                 // IT
-                EmployeeProfile.Create(tenantId, "EMP-010", "Roel",      "Caperig",   Off("OFF-IT"),     Dep("DPT-IT"),    Pos("POS-SR-ENG"), null, "admin@root.com"),
-                EmployeeProfile.Create(tenantId, "EMP-011", "Nina",      "Bautista",  Off("OFF-IT"),     Dep("DPT-IT"),    Pos("POS-ENG"),    null, "n.bautista@company.example"),
-                EmployeeProfile.Create(tenantId, "EMP-012", "Marco",     "Tan",       Off("OFF-IT"),     Dep("DPT-IT"),    Pos("POS-JR-ENG"), null, "m.tan@company.example"),
+                EmployeeProfile.Create(tenantId, "EMP-010", "Roel",      "Caperig",   Off("OFF-IT"),     Dep("AGS"),  Pos("POS-SR-ENG"), null, "admin@root.com"),
+                EmployeeProfile.Create(tenantId, "EMP-011", "Nina",      "Bautista",  Off("OFF-IT"),     Dep("AGS"),  Pos("POS-ENG"),    null, "n.bautista@company.example"),
+                EmployeeProfile.Create(tenantId, "EMP-012", "Marco",     "Tan",       Off("OFF-IT"),     Dep("AGS"),  Pos("POS-JR-ENG"), null, "m.tan@company.example"),
                 // Purchasing
-                EmployeeProfile.Create(tenantId, "EMP-013", "Grace",     "Chua",      Off("OFF-HQ"),     Dep("DPT-PUR"),   Pos("POS-MGR"),    null, "g.chua@company.example"),
-                EmployeeProfile.Create(tenantId, "EMP-014", "Anton",     "Flores",    Off("OFF-HQ"),     Dep("DPT-PUR"),   Pos("POS-SPEC"),   null, "a.flores@company.example"),
-                EmployeeProfile.Create(tenantId, "EMP-015", "Lena",      "Uy",        Off("OFF-HQ"),     Dep("DPT-PUR"),   Pos("POS-CLK"),    null, "l.uy@company.example"),
+                EmployeeProfile.Create(tenantId, "EMP-013", "Grace",     "Chua",      Off("OFF-HQ"),     Dep("BSM"),  Pos("POS-MGR"),    null, "g.chua@company.example"),
+                EmployeeProfile.Create(tenantId, "EMP-014", "Anton",     "Flores",    Off("OFF-HQ"),     Dep("BSM"),  Pos("POS-SPEC"),   null, "a.flores@company.example"),
+                EmployeeProfile.Create(tenantId, "EMP-015", "Lena",      "Uy",        Off("OFF-HQ"),     Dep("BSM"),  Pos("POS-CLK"),    null, "l.uy@company.example"),
                 // Operations
-                EmployeeProfile.Create(tenantId, "EMP-016", "Rico",      "Mendoza",   Off("OFF-OPS"),    Dep("DPT-OPS"),   Pos("POS-SUP"),    null, "ri.mendoza@company.example"),
-                EmployeeProfile.Create(tenantId, "EMP-017", "Donna",     "Aguilar",   Off("OFF-OPS"),    Dep("DPT-OPS"),   Pos("POS-ANALYST"),null, "d.aguilar@company.example"),
+                EmployeeProfile.Create(tenantId, "EMP-016", "Rico",      "Mendoza",   Off("OFF-OPS"),    Dep("BSM"),  Pos("POS-SUP"),    null, "ri.mendoza@company.example"),
+                EmployeeProfile.Create(tenantId, "EMP-017", "Donna",     "Aguilar",   Off("OFF-OPS"),    Dep("BSM"),  Pos("POS-ANALYST"),null, "d.aguilar@company.example"),
                 // Warehouse
-                EmployeeProfile.Create(tenantId, "EMP-018", "Roy",       "Castillo",  Off("OFF-WH1"),    Dep("DPT-WH"),    Pos("POS-SUP"),    null, "r.castillo@company.example"),
-                EmployeeProfile.Create(tenantId, "EMP-019", "James",     "Reyes",     Off("OFF-WH1"),    Dep("DPT-WH"),    Pos("POS-WH-STF"), null, "j.reyes@company.example"),
-                EmployeeProfile.Create(tenantId, "EMP-020", "Rachel",    "Cruz",      Off("OFF-WH2"),    Dep("DPT-WH"),    Pos("POS-WH-STF"), null, "ra.cruz@company.example"),
-                EmployeeProfile.Create(tenantId, "EMP-021", "Eric",      "Villanueva",Off("OFF-WH1"),    Dep("DPT-WH"),    Pos("POS-DRIVER"), null, "e.villanueva@company.example"),
+                EmployeeProfile.Create(tenantId, "EMP-018", "Roy",       "Castillo",  Off("OFF-WH1"),    Dep("BSM"),  Pos("POS-SUP"),    null, "r.castillo@company.example"),
+                EmployeeProfile.Create(tenantId, "EMP-019", "James",     "Reyes",     Off("OFF-WH1"),    Dep("BSM"),  Pos("POS-WH-STF"), null, "j.reyes@company.example"),
+                EmployeeProfile.Create(tenantId, "EMP-020", "Rachel",    "Cruz",      Off("OFF-WH2"),    Dep("BSM"),  Pos("POS-WH-STF"), null, "ra.cruz@company.example"),
+                EmployeeProfile.Create(tenantId, "EMP-021", "Eric",      "Villanueva",Off("OFF-WH1"),    Dep("BSM"),  Pos("POS-DRIVER"), null, "e.villanueva@company.example"),
                 // Sales & Marketing
-                EmployeeProfile.Create(tenantId, "EMP-022", "Sofia",     "Lim",       Off("OFF-BR-N"),   Dep("DPT-SALES"), Pos("POS-MGR"),    null, "s.lim@company.example"),
-                EmployeeProfile.Create(tenantId, "EMP-023", "Kevin",     "Fernandez", Off("OFF-BR-S"),   Dep("DPT-SALES"), Pos("POS-SPEC"),   null, "k.fernandez@company.example"),
-                EmployeeProfile.Create(tenantId, "EMP-024", "Hannah",    "Garcia",    Off("OFF-BR-E"),   Dep("DPT-SALES"), Pos("POS-SPEC"),   null, "h.garcia@company.example"),
-                EmployeeProfile.Create(tenantId, "EMP-025", "Luis",      "Torres",    Off("OFF-BR-W"),   Dep("DPT-SALES"), Pos("POS-CLK"),    null, "l.torres@company.example"),
+                EmployeeProfile.Create(tenantId, "EMP-022", "Sofia",     "Lim",       Off("OFF-BR-N"),   Dep("AGS"), Pos("POS-MGR"),    null, "s.lim@company.example"),
+                EmployeeProfile.Create(tenantId, "EMP-023", "Kevin",     "Fernandez", Off("OFF-BR-S"),   Dep("AGS"), Pos("POS-SPEC"),   null, "k.fernandez@company.example"),
+                EmployeeProfile.Create(tenantId, "EMP-024", "Hannah",    "Garcia",    Off("OFF-BR-E"),   Dep("AGS"), Pos("POS-SPEC"),   null, "h.garcia@company.example"),
+                EmployeeProfile.Create(tenantId, "EMP-025", "Luis",      "Torres",    Off("OFF-BR-W"),   Dep("AGS"), Pos("POS-CLK"),    null, "l.torres@company.example"),
                 // Customer Service
-                EmployeeProfile.Create(tenantId, "EMP-026", "Mia",       "Santos",    Off("OFF-HQ"),     Dep("DPT-CS"),    Pos("POS-TL"),     null, "mia.santos@company.example"),
-                EmployeeProfile.Create(tenantId, "EMP-027", "Paul",      "Ramos",     Off("OFF-HQ"),     Dep("DPT-CS"),    Pos("POS-ASST"),   null, "p.ramos@company.example"),
+                EmployeeProfile.Create(tenantId, "EMP-026", "Mia",       "Santos",    Off("OFF-HQ"),     Dep("AGS"),  Pos("POS-TL"),     null, "mia.santos@company.example"),
+                EmployeeProfile.Create(tenantId, "EMP-027", "Paul",      "Ramos",     Off("OFF-HQ"),     Dep("AGS"),  Pos("POS-ASST"),   null, "p.ramos@company.example"),
                 // Admin
-                EmployeeProfile.Create(tenantId, "EMP-028", "Jasmine",   "Pascual",   Off("OFF-HQ"),     Dep("DPT-ADMIN"), Pos("POS-ASST"),   null, "j.pascual@company.example"),
-                EmployeeProfile.Create(tenantId, "EMP-029", "Carlo",     "Soriano",   Off("OFF-HQ"),     Dep("DPT-ADMIN"), Pos("POS-RECEP"),  null, "c.soriano@company.example"),
+                EmployeeProfile.Create(tenantId, "EMP-028", "Jasmine",   "Pascual",   Off("OFF-HQ"),     Dep("AGS"),  Pos("POS-ASST"),   null, "j.pascual@company.example"),
+                EmployeeProfile.Create(tenantId, "EMP-029", "Carlo",     "Soriano",   Off("OFF-HQ"),     Dep("AGS"),  Pos("POS-RECEP"),  null, "c.soriano@company.example"),
                 // Legal
-                EmployeeProfile.Create(tenantId, "EMP-030", "Veronica",  "Manalo",    Off("OFF-HQ"),     Dep("DPT-LEGAL"), Pos("POS-DIR"),    null, "v.manalo@company.example"),
+                EmployeeProfile.Create(tenantId, "EMP-030", "Veronica",  "Manalo",    Off("OFF-HQ"),     Dep("AGS"),  Pos("POS-DIR"),    null, "v.manalo@company.example"),
             };
 
             await context.Employees.AddRangeAsync(employees, cancellationToken).ConfigureAwait(false);

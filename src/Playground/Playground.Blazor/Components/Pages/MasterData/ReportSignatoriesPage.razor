@@ -3,6 +3,7 @@
 @using FSH.Playground.Blazor.ApiClient
 @using MudBlazor
 @inject IReportSignatoryClient SignatoryClient
+@inject ILookupClient LookupClient
 @inject ISnackbar Snackbar
 @inject IDialogService MudDialog
 
@@ -27,8 +28,19 @@
                 <MudTextField @bind-Value="_form.Label" Label="Label" Variant="Variant.Outlined" Required="true"
                               Placeholder="e.g. PREPARED BY:" HelperText="Header shown above the name (max 80 chars)" 
                               CharacterCounter="true" MaxLength="80" />
-                <MudTextField @bind-Value="_form.Name" Label="Name" Variant="Variant.Outlined" Required="true"
-                              Placeholder="e.g. ROEL D. CAPERIG" CharacterCounter="true" MaxLength="160" />
+                <MudAutocomplete T="string"
+                                 Value="_form.Name"
+                                 ValueChanged="OnNameChanged"
+                                 Label="Name"
+                                 Variant="Variant.Outlined"
+                                 Required="true"
+                                 Placeholder="e.g. ROEL D. CAPERIG"
+                                 MaxLength="160"
+                                 CoerceText="true"
+                                 CoerceValue="true"
+                                 SearchFunc="SearchEmployeeNames"
+                                 ResetValueOnEmptyText="false"
+                                 MinCharacters="1" />
                 <MudTextField @bind-Value="_form.Title" Label="Title / Designation" Variant="Variant.Outlined" Required="true"
                               Placeholder="e.g. Procurement Mngt. Officer IV" CharacterCounter="true" MaxLength="200" />
                 @if (_editing is not null)
@@ -129,6 +141,7 @@
     private string? _filter;
     private List<ReportSignatoryDto> _signatories = [];
     private ReportSignatoryDto? _editing;
+    private readonly Dictionary<string, string> _employeeNameToTitle = new(StringComparer.OrdinalIgnoreCase);
 
     private sealed class FormModel
     {
@@ -263,6 +276,38 @@
         finally
         {
             _busy = false;
+        }
+    }
+
+    private async Task<IEnumerable<string>> SearchEmployeeNames(string value, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return [];
+
+        var result = await LookupClient.EmployeesGetAsync(
+            keyword: value,
+            isActive: true,
+            pageNumber: 1,
+            pageSize: 20,
+            cancellationToken: ct);
+
+        var items = result.Items?.ToList() ?? [];
+        _employeeNameToTitle.Clear();
+        foreach (var e in items)
+        {
+            var fullName = $"{e.FirstName} {e.LastName}";
+            _employeeNameToTitle[fullName] = e.PositionName ?? string.Empty;
+        }
+
+        return items.Select(e => $"{e.FirstName} {e.LastName}");
+    }
+
+    private void OnNameChanged(string? name)
+    {
+        _form.Name = name ?? string.Empty;
+        if (!string.IsNullOrEmpty(name) && _employeeNameToTitle.TryGetValue(name, out var title))
+        {
+            _form.Title = title;
         }
     }
 
