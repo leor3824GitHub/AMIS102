@@ -7,9 +7,6 @@ internal static class VehicleDailyUsageMapper
 {
     public static VehicleDailyUsageDto ToDto(this VehicleDailyUsage usage)
     {
-        var kmPerLiter = usage.FuelLiters > 0 ? Math.Round(usage.DistanceKm / usage.FuelLiters, 4) : 0m;
-        var costPerKm = usage.DistanceKm > 0 ? Math.Round(usage.FuelCost / usage.DistanceKm, 4) : 0m;
-
         return new VehicleDailyUsageDto(
             usage.Id,
             usage.VehicleId,
@@ -19,8 +16,8 @@ internal static class VehicleDailyUsageMapper
             usage.DistanceKm,
             usage.FuelLiters,
             usage.FuelCost,
-            kmPerLiter,
-            costPerKm,
+            usage.KmPerLiter,
+            usage.CostPerKm,
             usage.Destination,
             usage.Remarks,
             usage.CreatedOnUtc,

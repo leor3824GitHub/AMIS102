@@ -1,5 +1,6 @@
 using FSH.Modules.Vehicle.Contracts.v1.Vehicles;
 using FSH.Modules.Vehicle.Data;
+using FSH.Modules.Vehicle.Domain.FuelOdometer;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
@@ -32,8 +33,8 @@ public sealed class GetVehicleDailyUsageSummaryQueryHandler(VehicleDbContext db)
         var totalCost = records.Sum(x => x.FuelCost);
         var dayCount = records.Select(x => x.Date).Distinct().Count();
 
-        var avgKmPerLiter = totalLiters > 0 ? Math.Round(totalDistance / totalLiters, 4) : 0m;
-        var avgCostPerKm = totalDistance > 0 ? Math.Round(totalCost / totalDistance, 4) : 0m;
+        var avgKmPerLiter = VehicleDailyUsage.CalculateKmPerLiter(totalDistance, totalLiters);
+        var avgCostPerKm = VehicleDailyUsage.CalculateCostPerKm(totalDistance, totalCost);
         var avgDistancePerDay = dayCount > 0 ? Math.Round((decimal)totalDistance / dayCount, 2) : 0m;
 
         return new VehicleDailyUsageSummaryDto(

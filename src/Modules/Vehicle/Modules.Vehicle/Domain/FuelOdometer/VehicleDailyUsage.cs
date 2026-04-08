@@ -13,6 +13,8 @@ public sealed class VehicleDailyUsage : AggregateRoot<Guid>, IHasTenant, IAudita
     public int DistanceKm { get; private set; }
     public decimal FuelLiters { get; private set; }
     public decimal FuelCost { get; private set; }
+    public decimal KmPerLiter => CalculateKmPerLiter(DistanceKm, FuelLiters);
+    public decimal CostPerKm => CalculateCostPerKm(DistanceKm, FuelCost);
     public string? Destination { get; private set; }
     public string? Remarks { get; private set; }
     public byte[] Version { get; set; } = [];
@@ -87,6 +89,12 @@ public sealed class VehicleDailyUsage : AggregateRoot<Guid>, IHasTenant, IAudita
         DeletedBy = deletedBy;
         Version = NewVersion();
     }
+
+    public static decimal CalculateKmPerLiter(int distanceKm, decimal fuelLiters) =>
+        fuelLiters > 0 ? Math.Round(distanceKm / fuelLiters, 4) : 0m;
+
+    public static decimal CalculateCostPerKm(int distanceKm, decimal fuelCost) =>
+        distanceKm > 0 ? Math.Round(fuelCost / distanceKm, 4) : 0m;
 
     private static void EnsureValid(int odometerStart, int odometerEnd, decimal fuelLiters, decimal fuelCost)
     {

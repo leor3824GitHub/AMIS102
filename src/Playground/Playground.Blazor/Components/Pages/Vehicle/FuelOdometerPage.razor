@@ -13,117 +13,125 @@
     {
         <MudStack Row="true" Spacing="1" Class="mb-3" Wrap="Wrap.Wrap">
             <MudChip T="string" Color="Color.Default" Variant="Variant.Outlined">Records: @_summary.RecordCount</MudChip>
-            <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">Distance: @_summary.TotalDistanceKm km</MudChip>
-            <MudChip T="string" Color="Color.Success" Variant="Variant.Outlined">Fuel: @_summary.TotalFuelLiters.ToString("N3") L</MudChip>
-            <MudChip T="string" Color="Color.Warning" Variant="Variant.Outlined">Fuel Cost: &#8369;@_summary.TotalFuelCost.ToString("N2")</MudChip>
-            <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined">Avg km/L: @_summary.AverageKmPerLiter.ToString("N2")</MudChip>
-            <MudChip T="string" Color="Color.Secondary" Variant="Variant.Outlined">Avg Cost/km: &#8369;@_summary.AverageCostPerKm.ToString("N2")</MudChip>
-        </MudStack>
-    }
-
-    <MudGrid Spacing="2">
-        <MudItem xs="12" md="4">
-            <MudCard Class="fsh-card">
-                <MudCardContent>
-                    <MudText Typo="Typo.h6" Class="mb-3">Record Daily Usage</MudText>
-                    <MudStack Spacing="2">
-                        <MudAutocomplete T="VehicleDto"
-                                         Label="Vehicle"
-                                         Value="_selectedVehicle"
-                                         ValueChanged="OnVehicleChanged"
-                                         SearchFunc="SearchVehicles"
-                                         ToStringFunc="@(v => v is null ? string.Empty : $"{v.PlateNumber} - {v.Make} {v.Model}")"
-                                         Variant="Variant.Outlined"
-                                         Clearable="true" />
-
-                        <MudDatePicker Label="Date" @bind-Date="_entryDate" Variant="Variant.Outlined" DateFormat="yyyy-MM-dd" />
-                        <MudNumericField T="int" Label="Odometer Start" @bind-Value="_odometerStart" Variant="Variant.Outlined" Min="0"
-                                         Disabled="_isOdometerStartLocked"
-                                         HelperText="@(_isOdometerStartLocked ? "Carried forward from last record." : null)" />
-                        <MudNumericField T="int"
-                                        Label="Odometer End"
-                                        @bind-Value="_odometerEnd"
-                                        Variant="Variant.Outlined"
-                                        Min="0"
-                                        Immediate="true"
-                                        Error="@HasOdometerValidationError"
-                                        ErrorText="@OdometerValidationMessage"
-                                        HelperText="Must be ≥ Odometer Start." />
-                        <MudNumericField T="decimal" Label="Fuel (Liters)" @bind-Value="_fuelLiters" Variant="Variant.Outlined" Min="0" Step="0.001m" />
-                        <MudNumericField T="decimal" Label="Fuel Cost (&#8369;)" @bind-Value="_fuelCost" Variant="Variant.Outlined" Min="0" Step="0.01m" />
-                        <MudTextField Label="Destination" @bind-Value="_destination" Variant="Variant.Outlined" />
-                        <MudTextField Label="Remarks" @bind-Value="_remarks" Variant="Variant.Outlined" Lines="2" />
-
-                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveDailyUsage"
-                                   Disabled="_busy || _selectedVehicle is null || HasOdometerValidationError"
-                                   FullWidth="true">
-                            @(IsEditingTodayRecord() ? "Update Daily Record" : "Save Daily Record")
-                        </MudButton>
-                    </MudStack>
-                </MudCardContent>
-            </MudCard>
-        </MudItem>
-
-        <MudItem xs="12" md="8">
-            <MudCard Class="fsh-card">
-                <MudCardContent>
-                    <MudStack Row="true" Spacing="2" Class="mb-3" AlignItems="AlignItems.End">
-                        <MudDatePicker Label="From" @bind-Date="_fromDate" Variant="Variant.Outlined" DateFormat="yyyy-MM-dd" />
-                        <MudDatePicker Label="To" @bind-Date="_toDate" Variant="Variant.Outlined" DateFormat="yyyy-MM-dd" />
-                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="LoadData"
-                                   Disabled="_busy || _selectedVehicle is null">Refresh</MudButton>
-                    </MudStack>
-
-                    @if (_selectedVehicle is null)
-                    {
-                        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">Select a vehicle on the left to view usage records.</MudAlert>
+            <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">Distance: @_summary.TotalDistanceKm km
+            </MudChip>
+            <MudChip T="string" Color="Color.Success" Variant="Variant.Outlined">Fuel:
+                @_summary.TotalFuelLiters.ToString("N3") L</MudChip>
+                <MudChip T="string" Color="Color.Warning" Variant="Variant.Outlined">Fuel Cost:
+                    &#8369;@_summary.TotalFuelCost.ToString("N2")</MudChip>
+                    <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined">Avg km/L:
+                        @_summary.AverageKmPerLiter.ToString("N2")</MudChip>
+                        <MudChip T="string" Color="Color.Secondary" Variant="Variant.Outlined">Avg Cost/km:
+                            &#8369;@_summary.AverageCostPerKm.ToString("N2")</MudChip>
+                        </MudStack>
                     }
+
+                    <MudGrid Spacing="2">
+                        <MudItem xs="12" md="4">
+                            <MudCard Class="fsh-card">
+                                <MudCardContent>
+                                    <MudText Typo="Typo.h6" Class="mb-3">Record Daily Usage</MudText>
+                                    <MudStack Spacing="2">
+                                        <MudAutocomplete T="VehicleDto" Label="Vehicle" Value="_selectedVehicle"
+                                                         ValueChanged="OnVehicleChanged" SearchFunc="SearchVehicles"
+                                                         ToStringFunc="@(v => v is null ? string.Empty : $"{v.PlateNumber} - {v.Make} {v.Model}")"
+                                                         Variant="Variant.Outlined" Clearable="true" />
+
+                                        <MudDatePicker Label="Date" @bind-Date="_entryDate" Variant="Variant.Outlined"
+                                                       DateFormat="yyyy-MM-dd" />
+                                        <MudNumericField T="int" Label="Odometer Start" @bind-Value="_odometerStart"
+                                                         Variant="Variant.Outlined" Min="0" Disabled="_isOdometerStartLocked"
+                                                         HelperText="@(_isOdometerStartLocked ? "Carried forward from last record." : null)" />
+                                        <MudNumericField T="int" Label="Odometer End" @bind-Value="_odometerEnd"
+                                                         Variant="Variant.Outlined" Min="0" Immediate="true" Error="@HasOdometerValidationError"
+                                                         ErrorText="@OdometerValidationMessage" HelperText="Must be ≥ Odometer Start." />
+                                        <MudNumericField T="decimal" Label="Fuel (Liters)" @bind-Value="_fuelLiters"
+                                                         Variant="Variant.Outlined" Min="0" Step="0.001m" />
+                                        <MudNumericField T="decimal" Label="Fuel Cost (&#8369;)" @bind-Value="_fuelCost"
+                                                         Variant="Variant.Outlined" Min="0" Step="0.01m" />
+                                        <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+                                            <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">Distance (auto):
+                                                @ComputedDistanceKm.ToString("N0") km</MudChip>
+                                                <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined">km/L (auto):
+                                                    @ComputedKmPerLiter.ToString("N2")</MudChip>
+                                                </MudStack>
+                                                <MudTextField Label="Destination" @bind-Value="_destination" Variant="Variant.Outlined" />
+                                                <MudTextField Label="Remarks" @bind-Value="_remarks" Variant="Variant.Outlined" Lines="2" />
+
+                                                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveDailyUsage"
+                                                           Disabled="_busy || _selectedVehicle is null || HasOdometerValidationError" FullWidth="true">
+                                                    @(IsEditingTodayRecord() ? "Update Daily Record" : "Save Daily Record")
+                                                </MudButton>
+                                            </MudStack>
+                                        </MudCardContent>
+                                    </MudCard>
+                                </MudItem>
+
+                                <MudItem xs="12" md="8">
+                                    <MudCard Class="fsh-card">
+                                        <MudCardContent>
+                                            <MudStack Row="true" Spacing="2" Class="mb-3" AlignItems="AlignItems.End">
+                                                <MudDatePicker Label="From" @bind-Date="_fromDate" Variant="Variant.Outlined"
+                                                               DateFormat="yyyy-MM-dd" />
+                                                <MudDatePicker Label="To" @bind-Date="_toDate" Variant="Variant.Outlined"
+                                                               DateFormat="yyyy-MM-dd" />
+                                                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="LoadData"
+                                                           Disabled="_busy || _selectedVehicle is null">Refresh</MudButton>
+                                            </MudStack>
+
+                                            @if (_selectedVehicle is null)
+                                            {
+                                                <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">Select a vehicle on the left to view
+                                                    usage records.</MudAlert>
+                                                }
                     else
-                    {
-                        <MudTable T="VehicleDailyUsageDto" Items="_rows" Dense="true" Hover="true" Striped="true" Loading="_busy">
-                            <HeaderContent>
-                                <MudTh>Date</MudTh>
-                                <MudTh>Start (km)</MudTh>
-                                <MudTh>End (km)</MudTh>
-                                <MudTh>Distance</MudTh>
-                                <MudTh>Fuel (L)</MudTh>
-                                <MudTh>Cost (&#8369;)</MudTh>
-                                <MudTh>km/L</MudTh>
-                                <MudTh>Cost/km</MudTh>
-                                <MudTh>Destination</MudTh>
-                            </HeaderContent>
-                            <RowTemplate>
-                                <MudTd>@context.Date.ToString("yyyy-MM-dd")</MudTd>
-                                <MudTd>@context.OdometerStart.ToString("N0")</MudTd>
-                                <MudTd>@context.OdometerEnd.ToString("N0")</MudTd>
-                                <MudTd>@context.DistanceKm.ToString("N0")</MudTd>
-                                <MudTd>@context.FuelLiters.ToString("N3")</MudTd>
-                                <MudTd>@context.FuelCost.ToString("N2")</MudTd>
-                                <MudTd>@context.KmPerLiter.ToString("N2")</MudTd>
-                                <MudTd>@context.CostPerKm.ToString("N2")</MudTd>
-                                <MudTd>
-                                    @if (!string.IsNullOrWhiteSpace(context.Remarks))
-                                    {
-                                        <MudTooltip Text="@context.Remarks">
-                                            <span>@(context.Destination ?? "-") *</span>
-                                        </MudTooltip>
-                                    }
-                                    else
-                                    {
-                                        @(context.Destination ?? "-")
-                                    }
-                                </MudTd>
-                            </RowTemplate>
-                            <NoRecordsContent>
-                                <MudText Align="Align.Center" Class="pa-4">No usage records found for the selected period.</MudText>
-                            </NoRecordsContent>
-                        </MudTable>
-                    }
-                </MudCardContent>
-            </MudCard>
-        </MudItem>
-    </MudGrid>
-</div>
+                                                {
+                                                    <MudTable T="VehicleDailyUsageDto" Items="_rows" Dense="true" Hover="true" Striped="true"
+                                                              Loading="_busy">
+                                                        <HeaderContent>
+                                                            <MudTh>Date</MudTh>
+                                                            <MudTh>Start (km)</MudTh>
+                                                            <MudTh>End (km)</MudTh>
+                                                            <MudTh>Distance</MudTh>
+                                                            <MudTh>Fuel (L)</MudTh>
+                                                            <MudTh>Cost (&#8369;)</MudTh>
+                                                            <MudTh>km/L</MudTh>
+                                                            <MudTh>Cost/km</MudTh>
+                                                            <MudTh>Destination</MudTh>
+                                                        </HeaderContent>
+                                                        <RowTemplate>
+                                                            <MudTd>@context.Date.ToString("yyyy-MM-dd")</MudTd>
+                                                            <MudTd>@context.OdometerStart.ToString("N0")</MudTd>
+                                                            <MudTd>@context.OdometerEnd.ToString("N0")</MudTd>
+                                                            <MudTd>@context.DistanceKm.ToString("N0")</MudTd>
+                                                            <MudTd>@context.FuelLiters.ToString("N3")</MudTd>
+                                                            <MudTd>@context.FuelCost.ToString("N2")</MudTd>
+                                                            <MudTd>@context.KmPerLiter.ToString("N2")</MudTd>
+                                                            <MudTd>@context.CostPerKm.ToString("N2")</MudTd>
+                                                            <MudTd>
+                                                                @if (!string.IsNullOrWhiteSpace(context.Remarks))
+                                                                {
+                                                                    <MudTooltip Text="@context.Remarks">
+                                                                        <span>@(context.Destination ?? "-") *</span>
+                                                                    </MudTooltip>
+                                                                }
+                                                                else
+                                                                {
+                                                                    @(context.Destination ?? "-")
+                                                                }
+                                                            </MudTd>
+                                                        </RowTemplate>
+                                                        <NoRecordsContent>
+                                                            <MudText Align="Align.Center" Class="pa-4">No usage records found for the selected period.
+                                                            </MudText>
+                                                        </NoRecordsContent>
+                                                    </MudTable>
+                                                }
+                                            </MudCardContent>
+                                        </MudCard>
+                                    </MudItem>
+                                </MudGrid>
+                            </div>
 
 @code {
     private bool _busy;
@@ -144,6 +152,8 @@
     private VehicleDailyUsageSummaryDto _summary = new(0, 0, 0m, 0m, 0m, 0m, 0m);
 
     private bool HasOdometerValidationError => _odometerEnd < _odometerStart;
+    private int ComputedDistanceKm => Math.Max(0, _odometerEnd - _odometerStart);
+    private decimal ComputedKmPerLiter => _fuelLiters > 0 ? Math.Round(ComputedDistanceKm / _fuelLiters, 4) : 0m;
 
     private string OdometerValidationMessage => "End reading cannot be less than start reading.";
 

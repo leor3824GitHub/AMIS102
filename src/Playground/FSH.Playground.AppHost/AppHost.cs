@@ -1,11 +1,12 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
 // Postgres container + database
-var postgres = builder.AddPostgres("postgres")
+var postgres = builder.AddPostgres("postgres", port: 5432)
     .WithDataVolume("fsh-postgres-data")
     .AddDatabase("AMIS117");
 
-var redis = builder.AddRedis("redis").WithDataVolume("fsh-redis-data");
+var redis = builder.AddRedis("redis", port: 6379)
+    .WithDataVolume("fsh-redis-data");
 
 var api = builder.AddProject<Projects.Playground_Api>("playground-api")
     .WithReference(postgres)
@@ -20,7 +21,6 @@ var api = builder.AddProject<Projects.Playground_Api>("playground-api")
     .WaitFor(postgres)
     .WithReference(redis)
     .WithEnvironment("CachingOptions__Redis", redis.Resource.ConnectionStringExpression)
-    .WithEnvironment("CachingOptions__EnableSsl", "true")
     .WaitFor(redis);
 
 builder.AddProject<Projects.Playground_Blazor>("playground-blazor")

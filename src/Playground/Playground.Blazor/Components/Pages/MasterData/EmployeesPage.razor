@@ -29,8 +29,8 @@
                 <MudCardContent>
                     <MudText Typo="Typo.h6" Class="mb-3">@(EditingEmployee != null ? "Edit Employee" : "Create Employee")</MudText>
                     <MudStack Spacing="3">
-                        <MudTextField @bind-Value="_form.EmployeeNumber" Label="Employee Number" Placeholder="Employee ID"
-                                      Required="true" />
+                        <MudTextField @bind-Value="_form.EmployeeNumber" Label="Employee Number"
+                                      Placeholder="Employee ID" Required="true" />
                         <MudTextField @bind-Value="_form.FirstName" Label="First Name" Placeholder="First name"
                                       Required="true" />
                         <MudTextField @bind-Value="_form.LastName" Label="Last Name" Placeholder="Last name"
@@ -39,49 +39,27 @@
                                       Placeholder="work@example.com" />
                         
                         <!-- Office Autocomplete -->
-                        <MudAutocomplete T="OfficeReferenceDto" 
-                                         Label="Office" 
-                                         @bind-Value="_form.Office" 
-                                         SearchFunc="@SearchOffices"
-                                         ToStringFunc="@(o => o?.Name)" 
-                                         ResetValueOnEmptyText="true"
-                                         CoerceText="true" CoerceValue="true"
-                                         Required="true"
-                                         Placeholder="Search office..."
+                        <MudAutocomplete T="OfficeReferenceDto" Label="Office" @bind-Value="_form.Office"
+                                         SearchFunc="@SearchOffices" ToStringFunc="@(o => o?.Name)" ResetValueOnEmptyText="true"
+                                         CoerceText="true" CoerceValue="true" Required="true" Placeholder="Search office..."
                                          Clearable="true" />
 
                         <!-- Department Autocomplete -->
-                        <MudAutocomplete T="DepartmentReferenceDto" 
-                                         Label="Department" 
-                                         @bind-Value="_form.Department" 
-                                         SearchFunc="@SearchDepartments"
-                                         ToStringFunc="@(d => d?.Name)" 
-                                         ResetValueOnEmptyText="true"
-                                         CoerceText="true" CoerceValue="true"
-                                         Required="true"
-                                         Placeholder="Search department..."
+                        <MudAutocomplete T="DepartmentReferenceDto" Label="Department" @bind-Value="_form.Department"
+                                         SearchFunc="@SearchDepartments" ToStringFunc="@(d => d?.Name)" ResetValueOnEmptyText="true"
+                                         CoerceText="true" CoerceValue="true" Required="true" Placeholder="Search department..."
                                          Clearable="true" />
 
                         <!-- Position Autocomplete -->
-                        <MudAutocomplete T="PositionReferenceDto" 
-                                         Label="Position" 
-                                         @bind-Value="_form.Position" 
-                                         SearchFunc="@SearchPositions"
-                                         ToStringFunc="@(p => p?.Name)" 
-                                         ResetValueOnEmptyText="true"
-                                         CoerceText="true" CoerceValue="true"
-                                         Required="true"
-                                         Placeholder="Search position..."
+                        <MudAutocomplete T="PositionReferenceDto" Label="Position" @bind-Value="_form.Position"
+                                         SearchFunc="@SearchPositions" ToStringFunc="@(p => p?.Name)" ResetValueOnEmptyText="true"
+                                         CoerceText="true" CoerceValue="true" Required="true" Placeholder="Search position..."
                                          Clearable="true" />
 
-                        <MudAutocomplete T="UserDto"
-                                         Label="Linked Login Account"
-                                         @bind-Value="_form.IdentityUser"
+                        <MudAutocomplete T="UserDto" Label="Linked Login Account" @bind-Value="_form.IdentityUser"
                                          SearchFunc="@SearchIdentityUsers"
                                          ToStringFunc="@(u => u == null ? string.Empty : $"{u.FirstName} {u.LastName} ({u.Email})")"
-                                         CoerceValue="true"
-                                         Clearable="true"
-                                         Placeholder="Search by name or email..."
+                                         CoerceValue="true" Clearable="true" Placeholder="Search by name or email..."
                                          HelperText="@(_form.IdentityUser != null ? $"Linked: {_form.IdentityUser.FirstName} {_form.IdentityUser.LastName}" : "No account linked")" />
                         
                         <MudCheckBox @bind-Value="_form.IsActive" Label="Active" />
@@ -151,33 +129,37 @@
                                                 <MudText Typo="Typo.body2" Color="Color.Default">—</MudText>
                                             }
                                         </td>
-                                        <td><MudChip T="string" Size="Size.Small" Color="@(employee.IsActive ? Color.Success : Color.Default)">@(employee.IsActive ? "Active" : "Inactive")</MudChip></td>
                                         <td>
-                                            <MudStack Row="true" Spacing="1">
-                                                <MudTooltip Text="Edit employee">
-                                                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
-                                                                   Color="Color.Primary" OnClick="@(() => EditEmployee(employee))" />
-                                                </MudTooltip>
-                                                <MudTooltip Text="Delete employee">
-                                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
-                                                                   Color="Color.Error" OnClick="@(() => DeleteEmployee(employee.Id))" />
-                                                </MudTooltip>
-                                            </MudStack>
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </MudSimpleTable>
-                    }
+                                            <MudChip T="string" Size="Size.Small"
+                                                     Color="@(employee.IsActive ? Color.Success : Color.Default)">@(employee.IsActive
+                                                                                        ? "Active" : "Inactive")</MudChip>
+                                            </td>
+                                            <td>
+                                                <MudStack Row="true" Spacing="1">
+                                                    <MudTooltip Text="Edit employee">
+                                                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                                                       Color="Color.Primary" OnClick="@(() => EditEmployee(employee))" />
+                                                    </MudTooltip>
+                                                    <MudTooltip Text="Delete employee">
+                                                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                                                       Color="Color.Error" OnClick="@(() => DeleteEmployee(employee.Id))" />
+                                                    </MudTooltip>
+                                                </MudStack>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </MudSimpleTable>
+                        }
                     else
-                    {
-                        <MudAlert Severity="Severity.Info">No employees yet. Create one to get started.</MudAlert>
-                    }
-                </MudCardContent>
-            </MudCard>
-        </MudItem>
-    </MudGrid>
-</div>
+                        {
+                            <MudAlert Severity="Severity.Info">No employees yet. Create one to get started.</MudAlert>
+                        }
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+    </div>
 
 @code {
     private EmployeeForm _form = new();
@@ -220,7 +202,19 @@
                 search: string.IsNullOrWhiteSpace(value) ? null : value,
                 pageSize: 20,
                 cancellationToken: token);
-            return result?.Items ?? Enumerable.Empty<UserDto>();
+
+            var items = result?.Items ?? Enumerable.Empty<UserDto>();
+
+            // Build the set of user IDs already linked to another employee.
+            // Exclude the current employee's own linked ID so it stays selectable while editing.
+            var currentLinkedId = EditingEmployee?.IdentityUserId;
+            var alreadyLinked = _allEmployees
+                .Where(e => !string.IsNullOrWhiteSpace(e.IdentityUserId)
+                            && e.IdentityUserId != currentLinkedId)
+                .Select(e => e.IdentityUserId!)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            return items.Where(u => !alreadyLinked.Contains(u.Id.ToString()));
         }
         catch (Exception ex)
         {
@@ -384,9 +378,9 @@
 
     private async Task SaveEmployee()
     {
-        if (string.IsNullOrWhiteSpace(_form.EmployeeNumber) || 
-            _form.Office == null || 
-            _form.Department == null || 
+        if (string.IsNullOrWhiteSpace(_form.EmployeeNumber) ||
+            _form.Office == null ||
+            _form.Department == null ||
             _form.Position == null)
         {
             Snackbar.Add("Please fill in all required fields", Severity.Warning);
