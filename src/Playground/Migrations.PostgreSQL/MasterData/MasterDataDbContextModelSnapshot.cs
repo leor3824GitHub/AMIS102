@@ -581,6 +581,11 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
                         .HasMaxLength(160)
                         .HasColumnType("character varying(160)");
 
+                    b.Property<string>("BusinessTaxType")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
                     b.Property<string>("CreatedBy")
                         .HasColumnType("text");
 
@@ -623,6 +628,10 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
                     b.Property<string>("Phone")
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
+
+                    b.Property<string>("TinNo")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
 
                     b.Property<byte[]>("Version")
                         .IsConcurrencyToken()

@@ -1,9 +1,12 @@
 @page "/procurement/purchase-orders"
 @using FSH.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders
+@using FSH.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests
 @using FSH.Framework.Shared.Persistence
 @using FSH.Playground.Blazor.ApiClient
 @using PurchaseOrderContracts = FSH.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders
 @inject IPurchaseOrderClient Client
+@inject IPurchaseRequestClient PurchaseRequestClient
+@inject IMaster_dataClient MasterDataClient
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 
@@ -16,11 +19,33 @@
             <MudCardContent>
                 <MudText Typo="Typo.h6" Class="mb-3">@(_editing is null ? "New Purchase Order" : $"Edit {_editing.PoNumber}")</MudText>
                 <MudStack Spacing="2">
-                    <MudTextField @bind-Value="_form.PurchaseRequestId" Label="Purchase Request ID (GUID)" Variant="Variant.Outlined" Required="true" />
+                    <MudAutocomplete T="PurchaseRequestSummaryDto"
+                                     Value="_selectedPurchaseRequest"
+                                     ValueChanged="OnPurchaseRequestChanged"
+                                     SearchFunc="SearchPurchaseRequests"
+                                     ToStringFunc="FormatPurchaseRequest"
+                                     Label="Purchase Request"
+                                     Variant="Variant.Outlined"
+                                     Placeholder="Search PR number or purpose..."
+                                     Required="true"
+                                     Clearable="true"
+                                     CoerceValue="true"
+                                     ResetValueOnEmptyText="true" />
                     <MudTextField @bind-Value="_form.CanvassRequestId" Label="Canvass Request ID (optional)" Variant="Variant.Outlined" />
                     <MudDivider Class="my-1" />
                     <MudText Typo="Typo.subtitle2">Supplier Information</MudText>
-                    <MudTextField @bind-Value="_form.SupplierName" Label="Supplier Name" Variant="Variant.Outlined" Required="true" />
+                    <MudAutocomplete T="SupplierDto"
+                                     Value="_selectedSupplier"
+                                     ValueChanged="OnSupplierChanged"
+                                     SearchFunc="SearchSuppliers"
+                                     ToStringFunc="FormatSupplier"
+                                     Label="Supplier"
+                                     Variant="Variant.Outlined"
+                                     Placeholder="Search supplier..."
+                                     Required="true"
+                                     Clearable="true"
+                                     CoerceValue="true"
+                                     ResetValueOnEmptyText="true" />
                     <MudTextField @bind-Value="_form.SupplierAddress" Label="Supplier Address" Variant="Variant.Outlined" Required="true" Lines="2" />
                     <MudTextField @bind-Value="_form.SupplierTin" Label="TIN (optional)" Variant="Variant.Outlined" />
                     <MudDivider Class="my-1" />
@@ -274,10 +299,93 @@
     private string _keyword = string.Empty;
     private string _statusFilter = "All";
     private int _page = 1, _pageSize = 15, _totalCount;
+    private PurchaseRequestSummaryDto? _selectedPurchaseRequest;
+    private SupplierDto? _selectedSupplier;
 
     private static readonly string[] _statusFilters = ["All", "Draft", "Issued", "PartiallyDelivered", "Fulfilled", "Cancelled"];
 
     protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task<IEnumerable<PurchaseRequestSummaryDto>> SearchPurchaseRequests(string value, CancellationToken ct)
+    {
+        try
+        {
+            var result = await PurchaseRequestClient.SearchAsync(
+                keyword: string.IsNullOrWhiteSpace(value) ? null : value,
+                status: null,
+                page: 1,
+                pageSize: 20,
+                ct: ct);
+
+            return result.Items ?? Enumerable.Empty<PurchaseRequestSummaryDto>();
+        }
+        catch
+        {
+            return Enumerable.Empty<PurchaseRequestSummaryDto>();
+        }
+    }
+
+    private async Task<IEnumerable<SupplierDto>> SearchSuppliers(string value, CancellationToken ct)
+    {
+        var result = await MasterDataClient.SuppliersListAsync(
+            keyword: string.IsNullOrWhiteSpace(value) ? null : value,
+            pageNumber: 1,
+            pageSize: 20,
+            isActive: true,
+            cancellationToken: ct);
+
+        return result?.Items ?? Enumerable.Empty<SupplierDto>();
+    }
+
+    private Task OnPurchaseRequestChanged(PurchaseRequestSummaryDto? request)
+    {
+        _selectedPurchaseRequest = request;
+        return Task.CompletedTask;
+    }
+
+    private Task OnSupplierChanged(SupplierDto? supplier)
+    {
+        _selectedSupplier = supplier;
+        _form.SupplierName = supplier?.Name ?? string.Empty;
+
+        // Keep PO supplier fields in sync with selected master data supplier.
+        _form.SupplierTin = supplier?.TinNo;
+
+        if (!string.IsNullOrWhiteSpace(supplier?.Address))
+        {
+            _form.SupplierAddress = supplier.Address;
+        }
+        else if (supplier is null)
+        {
+            _form.SupplierAddress = string.Empty;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private static string FormatPurchaseRequest(PurchaseRequestSummaryDto? request)
+    {
+        if (request is null)
+        {
+            return string.Empty;
+        }
+
+        return string.IsNullOrWhiteSpace(request.Purpose)
+            ? request.PrNumber
+            : $"{request.PrNumber} - {request.Purpose}";
+    }
+
+    private static string FormatSupplier(SupplierDto? supplier)
+    {
+        if (supplier is null)
+        {
+            return string.Empty;
+        }
+
+        return string.IsNullOrWhiteSpace(supplier.Code)
+            ? supplier.Name
+            : $"{supplier.Name} ({supplier.Code})";
+    }
 
     private async Task LoadAsync()
     {
@@ -308,9 +416,9 @@
             if (_editing is null)
             {
                 await Client.CreateAsync(new PurchaseOrderContracts.CreatePurchaseOrderCommand(
-                    Guid.Parse(_form.PurchaseRequestId),
+                    _selectedPurchaseRequest!.Id,
                     string.IsNullOrWhiteSpace(_form.CanvassRequestId) ? null : Guid.Parse(_form.CanvassRequestId),
-                    Guid.NewGuid(), // SupplierId placeholder — use master data lookup in production
+                    _selectedSupplier!.Id,
                     _form.SupplierName, _form.SupplierAddress, _form.SupplierTin,
                     _form.ModeOfProcurement, _form.PlaceOfDelivery,
                     ToDateOnly(_form.DateOfDeliveryNullable),
@@ -321,7 +429,7 @@
             {
                 await Client.UpdateAsync(_editing.Id, new UpdatePurchaseOrderCommand(
                     _editing.Id,
-                    _editing.SupplierId,
+                    _selectedSupplier!.Id,
                     _form.SupplierName, _form.SupplierAddress, _form.SupplierTin,
                     _form.ModeOfProcurement, _form.PlaceOfDelivery,
                     ToDateOnly(_form.DateOfDeliveryNullable),
@@ -340,9 +448,45 @@
         var po = await Client.GetAsync(id);
         if (po is null) { Snackbar.Add("PO not found.", Severity.Error); return; }
         _editing = po;
+
+        PurchaseRequestSummaryDto? purchaseRequest = null;
+        try
+        {
+            var pr = await PurchaseRequestClient.GetAsync(po.PurchaseRequestId);
+            if (pr is not null)
+            {
+                purchaseRequest = new PurchaseRequestSummaryDto(
+                    pr.Id,
+                    pr.PrNumber,
+                    pr.PrDate,
+                    pr.DepartmentName,
+                    pr.Section,
+                    pr.Purpose,
+                    pr.PrType,
+                    pr.Status,
+                    pr.LineItems.Count,
+                    pr.LineItems.Sum(li => li.EstimatedTotalCost),
+                    pr.CreatedOnUtc);
+            }
+        }
+        catch
+        {
+            // Keep null if purchase request lookup fails.
+        }
+
+        _selectedPurchaseRequest = purchaseRequest;
+        _selectedSupplier = new SupplierDto
+        {
+            Id = po.SupplierId,
+            Code = string.Empty,
+            Name = po.SupplierName,
+            TinNo = po.SupplierTin,
+            Address = po.SupplierAddress,
+            IsActive = true
+        };
+
         _form = new PoForm
         {
-            PurchaseRequestId = po.PurchaseRequestId.ToString(),
             CanvassRequestId = po.CanvassRequestId?.ToString(),
             SupplierName = po.SupplierName,
             SupplierAddress = po.SupplierAddress,
@@ -392,12 +536,27 @@
 
     private void AddLineItem() => _form.LineItems.Add(new());
     private void RemoveLineItem(int idx) { if (_form.LineItems.Count > 1) _form.LineItems.RemoveAt(idx); }
-    private void CancelEdit() { _editing = null; _form = new(); }
-    private void ResetForm() { _editing = null; _form = new(); }
+    private void CancelEdit()
+    {
+        _editing = null;
+        _selectedPurchaseRequest = null;
+        _selectedSupplier = null;
+        _form = new();
+    }
+
+    private void ResetForm()
+    {
+        _editing = null;
+        _selectedPurchaseRequest = null;
+        _selectedSupplier = null;
+        _form = new();
+    }
 
     private bool IsFormValid() =>
-        Guid.TryParse(_form.PurchaseRequestId, out _) &&
+        _selectedPurchaseRequest is not null &&
+        _selectedSupplier is not null &&
         !string.IsNullOrWhiteSpace(_form.SupplierName) &&
+        !string.IsNullOrWhiteSpace(_form.SupplierAddress) &&
         !string.IsNullOrWhiteSpace(_form.PlaceOfDelivery) &&
         !string.IsNullOrWhiteSpace(_form.DeliveryTerm) &&
         !string.IsNullOrWhiteSpace(_form.PaymentTerm) &&
@@ -426,7 +585,6 @@
 
     private sealed class PoForm
     {
-        public string PurchaseRequestId { get; set; } = string.Empty;
         public string? CanvassRequestId { get; set; }
         public string SupplierName { get; set; } = string.Empty;
         public string SupplierAddress { get; set; } = string.Empty;

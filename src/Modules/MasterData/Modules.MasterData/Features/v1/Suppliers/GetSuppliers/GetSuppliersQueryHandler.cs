@@ -14,9 +14,12 @@ public sealed class GetSuppliersQueryHandler(MasterDataDbContext dbContext) : IQ
         if (!string.IsNullOrWhiteSpace(query.Keyword))
         {
             var keyword = query.Keyword.ToLower();
+            var isTaxKeyword = keyword is "vat" or "non-vat";
             suppliersQuery = suppliersQuery.Where(s =>
                 s.Code.ToLower().Contains(keyword) ||
                 s.Name.ToLower().Contains(keyword) ||
+                (s.TinNo != null && s.TinNo.ToLower().Contains(keyword)) ||
+                (isTaxKeyword && s.BusinessTaxType.ToLower() == keyword) ||
                 (s.Description != null && s.Description.ToLower().Contains(keyword)) ||
                 (s.ContactPerson != null && s.ContactPerson.ToLower().Contains(keyword)) ||
                 (s.Email != null && s.Email.ToLower().Contains(keyword)));
@@ -38,6 +41,8 @@ public sealed class GetSuppliersQueryHandler(MasterDataDbContext dbContext) : IQ
                 s.Id,
                 s.Code,
                 s.Name,
+                s.TinNo,
+                s.BusinessTaxType,
                 s.Description,
                 s.ContactPerson,
                 s.Email,

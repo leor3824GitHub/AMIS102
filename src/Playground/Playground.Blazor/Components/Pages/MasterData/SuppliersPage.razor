@@ -30,6 +30,11 @@
                     <MudStack Spacing="3">
                         <MudTextField @bind-Value="_form.Code" Label="Supplier Code" Placeholder="Unique code" Required="true" />
                         <MudTextField @bind-Value="_form.Name" Label="Supplier Name" Placeholder="Company name" Required="true" />
+                        <MudTextField @bind-Value="_form.TinNo" Label="TIN No." Placeholder="Tax identification number" />
+                        <MudSelect @bind-Value="_form.BusinessTaxType" Label="Business Tax Type" Required="true">
+                            <MudSelectItem Value='@("VAT")'>VAT</MudSelectItem>
+                            <MudSelectItem Value='@("NON-VAT")'>NON-VAT</MudSelectItem>
+                        </MudSelect>
                         <MudTextField @bind-Value="_form.Description" Label="Description" Placeholder="Supplier description" Lines="2" />
                         <MudTextField @bind-Value="_form.ContactPerson" Label="Contact Person" Placeholder="Name of contact" />
                         <MudTextField @bind-Value="_form.Email" Label="Email" Placeholder="contact@example.com" />
@@ -68,6 +73,8 @@
                                 <tr>
                                     <th>Code</th>
                                     <th>Name</th>
+                                    <th>TIN No.</th>
+                                    <th>Tax Type</th>
                                     <th>Contact</th>
                                     <th>Email</th>
                                     <th>Phone</th>
@@ -81,6 +88,8 @@
                                     <tr>
                                         <td>@supplier.Code</td>
                                         <td>@supplier.Name</td>
+                                        <td>@(supplier.TinNo ?? "-")</td>
+                                        <td>@supplier.BusinessTaxType</td>
                                         <td>@(supplier.ContactPerson ?? "-")</td>
                                         <td>@(supplier.Email ?? "-")</td>
                                         <td>@(supplier.Phone ?? "-")</td>
@@ -126,6 +135,8 @@
     {
         public string Code { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
+        public string? TinNo { get; set; }
+        public string BusinessTaxType { get; set; } = "NON-VAT";
         public string? Description { get; set; }
         public string? ContactPerson { get; set; }
         public string? Email { get; set; }
@@ -207,6 +218,8 @@
                     Id = EditingSupplier.Id,
                     Code = _form.Code,
                     Name = _form.Name,
+                    TinNo = _form.TinNo,
+                    BusinessTaxType = _form.BusinessTaxType,
                     Description = _form.Description,
                     ContactPerson = _form.ContactPerson,
                     Email = _form.Email,
@@ -224,6 +237,8 @@
                 {
                     Code = _form.Code,
                     Name = _form.Name,
+                    TinNo = _form.TinNo,
+                    BusinessTaxType = _form.BusinessTaxType,
                     Description = _form.Description,
                     ContactPerson = _form.ContactPerson,
                     Email = _form.Email,
@@ -251,6 +266,8 @@
         {
             Code = supplier.Code,
             Name = supplier.Name,
+            TinNo = supplier.TinNo,
+            BusinessTaxType = supplier.BusinessTaxType,
             Description = supplier.Description,
             ContactPerson = supplier.ContactPerson,
             Email = supplier.Email,

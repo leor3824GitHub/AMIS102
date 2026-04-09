@@ -21,6 +21,7 @@
     </PackageReference>
     <PackageReference Include="Shouldly" />
     <PackageReference Include="AutoFixture" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\BuildingBlocks\Shared\Shared.csproj" />
@@ -28,8 +29,12 @@
     <ProjectReference Include="..\..\Modules\Auditing\Modules.Auditing.Contracts\Modules.Auditing.Contracts.csproj" />
     <ProjectReference Include="..\..\Modules\Expendable\Modules.Expendable\Modules.Expendable.csproj" />
     <ProjectReference Include="..\..\Modules\Expendable\Modules.Expendable.Contracts\Modules.Expendable.Contracts.csproj" />
+    <ProjectReference Include="..\..\Modules\Finance\Modules.Finance\Modules.Finance.csproj" />
+    <ProjectReference Include="..\..\Modules\Finance\Modules.Finance.Contracts\Modules.Finance.Contracts.csproj" />
     <ProjectReference Include="..\..\Modules\Identity\Modules.Identity\Modules.Identity.csproj" />
     <ProjectReference Include="..\..\Modules\Identity\Modules.Identity.Contracts\Modules.Identity.Contracts.csproj" />
+    <ProjectReference Include="..\..\Modules\MasterData\Modules.MasterData\Modules.MasterData.csproj" />
+    <ProjectReference Include="..\..\Modules\MasterData\Modules.MasterData.Contracts\Modules.MasterData.Contracts.csproj" />
     <ProjectReference Include="..\..\Modules\Multitenancy\Modules.Multitenancy\Modules.Multitenancy.csproj" />
     <ProjectReference Include="..\..\Modules\Multitenancy\Modules.Multitenancy.Contracts\Modules.Multitenancy.Contracts.csproj" />
   </ItemGroup>

@@ -6,6 +6,8 @@
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Components.Authorization
 @inject IPurchaseRequestClient Client
+@inject ILookupClient LookupClient
+@inject IMaster_dataClient MasterDataClient
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 @inject AuthenticationStateProvider AuthStateProvider
@@ -19,7 +21,18 @@
             <MudCardContent>
                 <MudText Typo="Typo.h6" Class="mb-3">@(_editing is null ? "New Purchase Request" : $"Edit {_editing.PrNumber}")</MudText>
                 <MudStack Spacing="2">
-                    <MudTextField @bind-Value="_form.DepartmentId" Label="Department ID (GUID)" Variant="Variant.Outlined" Required="true" />
+                    <MudAutocomplete T="DepartmentReferenceDto"
+                                     Value="_form.Department"
+                                     ValueChanged="OnDepartmentChanged"
+                                     SearchFunc="SearchDepartments"
+                                     ToStringFunc="FormatDepartment"
+                                     Label="Department"
+                                     Variant="Variant.Outlined"
+                                     Placeholder="Search department..."
+                                     Required="true"
+                                     Clearable="true"
+                                     CoerceValue="true"
+                                     ResetValueOnEmptyText="true" />
                     <MudTextField @bind-Value="_form.Section" Label="Section" Variant="Variant.Outlined" />
                     <MudTextField @bind-Value="_form.Purpose" Label="Purpose / Title" Variant="Variant.Outlined" Required="true" Lines="2" />
                     <MudSelect @bind-Value="_form.PrType" Label="PR Type" Variant="Variant.Outlined" T="PrType">
@@ -30,7 +43,18 @@
                     {
                         <MudTextField @bind-Value="_form.Justification" Label="Justification" Variant="Variant.Outlined" Lines="2" Required="true" />
                     }
-                    <MudTextField @bind-Value="_form.RequestedById" Label="Requested By (Employee GUID)" Variant="Variant.Outlined" Required="true" />
+                    <MudAutocomplete T="EmployeeReferenceDto"
+                                     Value="_form.RequestedBy"
+                                     ValueChanged="OnRequestedByChanged"
+                                     SearchFunc="SearchEmployees"
+                                     ToStringFunc="FormatEmployee"
+                                     Label="Requested By"
+                                     Variant="Variant.Outlined"
+                                     Placeholder="Search employee..."
+                                     Required="true"
+                                     Clearable="true"
+                                     CoerceValue="true"
+                                     ResetValueOnEmptyText="true" />
                     <MudGrid Spacing="1">
                         <MudItem xs="6"><MudTextField @bind-Value="_form.SaiNumber" Label="SAI Number" Variant="Variant.Outlined" /></MudItem>
                         <MudItem xs="6"><MudDatePicker @bind-Date="_form.SaiDateNullable" Label="SAI Date" Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" /></MudItem>
@@ -201,6 +225,7 @@
     private string _statusFilter = "All";
     private int _page = 1, _pageSize = 15, _totalCount;
     private Guid? _currentUserId;
+    private List<DepartmentReferenceDto> _departments = [];
 
     private static readonly string[] _statusFilters = ["All", "Draft", "Submitted", "Approved", "Rejected", "Cancelled"];
 
@@ -209,7 +234,92 @@
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var idStr = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         _currentUserId = Guid.TryParse(idStr, out var g) ? g : null;
+        await LoadDepartmentsAsync();
         await LoadAsync();
+    }
+
+    private async Task LoadDepartmentsAsync()
+    {
+        try
+        {
+            var response = await LookupClient.DepartmentsAsync(pageSize: 1000, isActive: true);
+            _departments = response?.Items?.ToList() ?? [];
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load departments: {ex.Message}", Severity.Warning);
+        }
+    }
+
+    private Task<IEnumerable<DepartmentReferenceDto>> SearchDepartments(string value, CancellationToken token)
+    {
+        IEnumerable<DepartmentReferenceDto> results = _departments;
+
+        if (!string.IsNullOrWhiteSpace(value))
+        {
+            results = results.Where(d =>
+                d.Name.Contains(value, StringComparison.InvariantCultureIgnoreCase) ||
+                d.Code.Contains(value, StringComparison.InvariantCultureIgnoreCase));
+        }
+
+        return Task.FromResult(results);
+    }
+
+    private async Task<IEnumerable<EmployeeReferenceDto>> SearchEmployees(string value, CancellationToken token)
+    {
+        try
+        {
+            var response = await LookupClient.EmployeesGetAsync(
+                keyword: string.IsNullOrWhiteSpace(value) ? null : value,
+                isActive: true,
+                pageNumber: 1,
+                pageSize: 20,
+                cancellationToken: token);
+
+            return response.Items ?? Enumerable.Empty<EmployeeReferenceDto>();
+        }
+        catch
+        {
+            return Enumerable.Empty<EmployeeReferenceDto>();
+        }
+    }
+
+    private Task OnDepartmentChanged(DepartmentReferenceDto? department)
+    {
+        _form.Department = department;
+        return Task.CompletedTask;
+    }
+
+    private Task OnRequestedByChanged(EmployeeReferenceDto? employee)
+    {
+        _form.RequestedBy = employee;
+        return Task.CompletedTask;
+    }
+
+    private static string FormatDepartment(DepartmentReferenceDto? department)
+    {
+        if (department is null)
+        {
+            return string.Empty;
+        }
+
+        return string.IsNullOrWhiteSpace(department.Code)
+            ? department.Name
+            : $"{department.Code} - {department.Name}";
+    }
+
+    private static string FormatEmployee(EmployeeReferenceDto? employee)
+    {
+        if (employee is null)
+        {
+            return string.Empty;
+        }
+
+        var fullName = $"{employee.FirstName} {employee.LastName}".Trim();
+        var primary = string.IsNullOrWhiteSpace(fullName) ? employee.EmployeeNumber : fullName;
+        return string.IsNullOrWhiteSpace(employee.EmployeeNumber)
+            ? primary
+            : $"{primary} ({employee.EmployeeNumber})";
     }
 
     private async Task LoadAsync()
@@ -246,16 +356,16 @@
             if (_editing is null)
             {
                 await Client.CreateAsync(new CreatePurchaseRequestCommand(
-                    Guid.Parse(_form.DepartmentId), _form.Section, _form.Purpose, _form.PrType, _form.Justification,
-                    Guid.Parse(_form.RequestedById), _form.SaiNumber, ToDateOnly(_form.SaiDateNullable),
+                    _form.Department!.Id, _form.Section, _form.Purpose, _form.PrType, _form.Justification,
+                    _form.RequestedBy!.Id, _form.SaiNumber, ToDateOnly(_form.SaiDateNullable),
                     _form.AlobsNumber, ToDateOnly(_form.AlobsDateNullable), lineItems));
                 Snackbar.Add("Purchase request created.", Severity.Success);
             }
             else
             {
                 await Client.UpdateAsync(_editing.Id, new UpdatePurchaseRequestCommand(
-                    _editing.Id, Guid.Parse(_form.DepartmentId), _form.Section, _form.Purpose, _form.PrType, _form.Justification,
-                    Guid.Parse(_form.RequestedById), _form.SaiNumber, ToDateOnly(_form.SaiDateNullable),
+                    _editing.Id, _form.Department!.Id, _form.Section, _form.Purpose, _form.PrType, _form.Justification,
+                    _form.RequestedBy!.Id, _form.SaiNumber, ToDateOnly(_form.SaiDateNullable),
                     _form.AlobsNumber, ToDateOnly(_form.AlobsDateNullable), lineItems));
                 Snackbar.Add("Purchase request updated.", Severity.Success);
             }
@@ -270,15 +380,46 @@
     {
         var pr = await Client.GetAsync(id);
         if (pr is null) { Snackbar.Add("PR not found.", Severity.Error); return; }
+
+        DepartmentReferenceDto? department = null;
+        if (pr.DepartmentId != Guid.Empty)
+        {
+            department = _departments.FirstOrDefault(d => d.Id == pr.DepartmentId);
+            if (department is null)
+            {
+                try
+                {
+                    department = await MasterDataClient.DepartmentsGetAsync(pr.DepartmentId);
+                }
+                catch
+                {
+                    // Keep null and let validation handle it if lookup data is unavailable.
+                }
+            }
+        }
+
+        EmployeeReferenceDto? requestedBy = null;
+        if (pr.RequestedById != Guid.Empty)
+        {
+            try
+            {
+                requestedBy = await LookupClient.EmployeesGetAsync(pr.RequestedById);
+            }
+            catch
+            {
+                // Keep null and let validation handle it if lookup data is unavailable.
+            }
+        }
+
         _editing = pr;
         _form = new PrForm
         {
-            DepartmentId = pr.DepartmentId.ToString(),
+            Department = department,
             Section = pr.Section,
             Purpose = pr.Purpose,
             PrType = pr.PrType,
             Justification = pr.Justification,
-            RequestedById = pr.RequestedById.ToString(),
+            RequestedBy = requestedBy,
             SaiNumber = pr.SaiNumber,
             SaiDateNullable = pr.SaiDate?.ToDateTime(TimeOnly.MinValue),
             AlobsNumber = pr.AlobsNumber,
@@ -350,8 +491,8 @@
     private void ResetForm() { _editing = null; _form = new(); }
 
     private bool IsFormValid() =>
-        Guid.TryParse(_form.DepartmentId, out _) &&
-        Guid.TryParse(_form.RequestedById, out _) &&
+        _form.Department is not null &&
+        _form.RequestedBy is not null &&
         !string.IsNullOrWhiteSpace(_form.Purpose) &&
         _form.LineItems.Any(li => !string.IsNullOrWhiteSpace(li.ItemDescription));
 
@@ -378,12 +519,12 @@
 
     private sealed class PrForm
     {
-        public string DepartmentId { get; set; } = string.Empty;
+        public DepartmentReferenceDto? Department { get; set; }
         public string? Section { get; set; }
         public string Purpose { get; set; } = string.Empty;
         public PrType PrType { get; set; } = PrType.Planned;
         public string? Justification { get; set; }
-        public string RequestedById { get; set; } = string.Empty;
+        public EmployeeReferenceDto? RequestedBy { get; set; }
         public string? SaiNumber { get; set; }
         public DateTime? SaiDateNullable { get; set; }
         public string? AlobsNumber { get; set; }

@@ -11,7 +11,7 @@ public static class CancelPurchaseOrderEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapPatch("/{id:guid}/cancel", CancelPurchaseOrder)
-            .WithName(nameof(CancelPurchaseOrderCommand))
+            .WithName($"Procurement.{nameof(CancelPurchaseOrderCommand)}")
             .WithSummary("Cancel a purchase order")
             .Produces<PurchaseOrderDto>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound)

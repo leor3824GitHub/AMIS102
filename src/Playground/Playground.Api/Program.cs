@@ -9,6 +9,8 @@ using FSH.Modules.Vehicle;
 using FSH.Modules.Vehicle.Contracts.v1.Vehicles;
 using FSH.Modules.ProcurementAcquisition;
 using FSH.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
+using FSH.Modules.Finance;
+using FSH.Modules.Finance.Contracts.v1.DisbursementVouchers;
 using FSH.Modules.Identity;
 using FSH.Modules.Identity.Contracts.v1.Tokens.TokenGeneration;
 using FSH.Modules.Identity.Features.v1.Tokens.TokenGeneration;
@@ -52,7 +54,9 @@ builder.Services.AddMediator(o =>
         typeof(VehicleModule),
         typeof(CreateVehicleCommand),
         typeof(ProcurementAcquisitionModule),
-        typeof(CreatePurchaseRequestCommand)];
+        typeof(CreatePurchaseRequestCommand),
+        typeof(FinanceModule),
+        typeof(CreateDisbursementVoucherCommand)];
 });
 
 var moduleAssemblies = new Assembly[]
@@ -63,7 +67,8 @@ var moduleAssemblies = new Assembly[]
     typeof(MasterDataModule).Assembly,
     typeof(ExpendableModule).Assembly,
     typeof(VehicleModule).Assembly,
-    typeof(ProcurementAcquisitionModule).Assembly
+    typeof(ProcurementAcquisitionModule).Assembly,
+    typeof(FinanceModule).Assembly
 };
 
 builder.AddHeroPlatform(o =>
@@ -87,4 +92,3 @@ app.MapGet("/", () => Results.Ok(new { message = "hello world!" }))
    .WithTags("PlayGround")
    .AllowAnonymous();
 await app.RunAsync();
-

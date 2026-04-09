@@ -1,8 +1,12 @@
 @page "/procurement/canvass-requests"
 @using FSH.Modules.ProcurementAcquisition.Contracts.v1.Canvass
+@using FSH.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests
 @using FSH.Framework.Shared.Persistence
 @using FSH.Playground.Blazor.ApiClient
+@using FSH.Playground.Blazor.Services
 @inject ICanvassRequestClient Client
+@inject IPurchaseRequestClient PurchaseRequestClient
+@inject MasterDataService MasterDataService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 
@@ -15,8 +19,18 @@
             <MudCardContent>
                 <MudText Typo="Typo.h6" Class="mb-3">New Canvass Request</MudText>
                 <MudStack Spacing="2">
-                    <MudTextField @bind-Value="_prId" Label="Purchase Request ID (GUID)"
-                                  Variant="Variant.Outlined" Required="true" />
+                    <MudAutocomplete T="PurchaseRequestSummaryDto"
+                                     Value="_selectedPurchaseRequest"
+                                     ValueChanged="OnPurchaseRequestChanged"
+                                     SearchFunc="SearchPurchaseRequests"
+                                     ToStringFunc="FormatPurchaseRequest"
+                                     Label="Purchase Request"
+                                     Variant="Variant.Outlined"
+                                     Placeholder="Search PR number or purpose..."
+                                     Required="true"
+                                     Clearable="true"
+                                     CoerceValue="true"
+                                     ResetValueOnEmptyText="true" />
                     <MudDatePicker @bind-Date="_returnDeadlineNullable" Label="Return Deadline"
                                    Variant="Variant.Outlined" Required="true" DateFormat="MM/dd/yyyy" />
                     <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
@@ -38,7 +52,18 @@
                         <MudText Typo="Typo.caption" Color="Color.Secondary">@_selected.RivNumber</MudText>
                     </MudStack>
                     <MudStack Spacing="2">
-                        <MudTextField @bind-Value="_qForm.SupplierName" Label="Supplier Name" Variant="Variant.Outlined" Required="true" />
+                        <MudAutocomplete T="string"
+                                         Value="_qForm.SupplierName"
+                                         ValueChanged="OnSupplierNameChanged"
+                                         SearchFunc="SearchSuppliers"
+                                         Label="Supplier Name"
+                                         Variant="Variant.Outlined"
+                                         Required="true"
+                                         Placeholder="Search supplier..."
+                                         Clearable="true"
+                                         CoerceText="true"
+                                         CoerceValue="true"
+                                         ResetValueOnEmptyText="true" />
                         <MudTextField @bind-Value="_qForm.SupplierAddress" Label="Supplier Address" Variant="Variant.Outlined" Required="true" />
                         <MudTextField @bind-Value="_qForm.TinNumber" Label="TIN (optional)" Variant="Variant.Outlined" />
                         <MudDatePicker @bind-Date="_qForm.QuotationDateNullable" Label="Quotation Date" Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" Required="true" />
@@ -235,16 +260,99 @@
     private List<CanvassRequestSummaryDto> _items = [];
     private CanvassRequestDto? _selected, _selectedDetail;
     private QuotationForm _qForm = new();
-    private string _prId = string.Empty;
+    private PurchaseRequestSummaryDto? _selectedPurchaseRequest;
     private DateTime? _returnDeadlineNullable;
     private bool _busy, _loaded;
     private string _keyword = string.Empty;
     private string _statusFilter = "All";
     private int _page = 1, _pageSize = 15, _totalCount;
+    private readonly Dictionary<string, SupplierDto> _supplierLookup = new(StringComparer.OrdinalIgnoreCase);
 
     private static readonly string[] _statusFilters = ["All", "Open", "Evaluated", "Awarded", "Cancelled"];
 
     protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task<IEnumerable<PurchaseRequestSummaryDto>> SearchPurchaseRequests(string value, CancellationToken token)
+    {
+        try
+        {
+            var result = await PurchaseRequestClient.SearchAsync(
+                keyword: string.IsNullOrWhiteSpace(value) ? null : value,
+                status: null,
+                page: 1,
+                pageSize: 20);
+
+            return result.Items ?? Enumerable.Empty<PurchaseRequestSummaryDto>();
+        }
+        catch
+        {
+            return Enumerable.Empty<PurchaseRequestSummaryDto>();
+        }
+    }
+
+    private Task OnPurchaseRequestChanged(PurchaseRequestSummaryDto? request)
+    {
+        _selectedPurchaseRequest = request;
+        return Task.CompletedTask;
+    }
+
+    private static string FormatPurchaseRequest(PurchaseRequestSummaryDto? request)
+    {
+        if (request is null)
+        {
+            return string.Empty;
+        }
+
+        return string.IsNullOrWhiteSpace(request.Purpose)
+            ? request.PrNumber
+            : $"{request.PrNumber} - {request.Purpose}";
+    }
+
+    private async Task<IEnumerable<string>> SearchSuppliers(string value, CancellationToken token)
+    {
+        try
+        {
+            var response = await MasterDataService.GetSuppliersAsync(
+                keyword: string.IsNullOrWhiteSpace(value) ? null : value,
+                pageSize: 20,
+                cancellationToken: token);
+
+            var suppliers = response?.Items ?? [];
+            foreach (var supplier in suppliers.Where(s => !string.IsNullOrWhiteSpace(s.Name)))
+            {
+                _supplierLookup[supplier.Name] = supplier;
+            }
+
+            return suppliers
+                .Where(s => !string.IsNullOrWhiteSpace(s.Name))
+                .Select(s => s.Name)
+                .Distinct(StringComparer.OrdinalIgnoreCase);
+        }
+        catch
+        {
+            return Enumerable.Empty<string>();
+        }
+    }
+
+    private Task OnSupplierNameChanged(string? supplierName)
+    {
+        _qForm.SupplierName = supplierName?.Trim() ?? string.Empty;
+
+        if (string.IsNullOrWhiteSpace(_qForm.SupplierName))
+        {
+            _qForm.SupplierAddress = null;
+            _qForm.TinNumber = null;
+            return Task.CompletedTask;
+        }
+
+        if (_supplierLookup.TryGetValue(_qForm.SupplierName, out var supplier))
+        {
+            _qForm.SupplierAddress = supplier.Address;
+            _qForm.TinNumber = supplier.TinNo;
+        }
+
+        return Task.CompletedTask;
+    }
 
     private async Task LoadAsync()
     {
@@ -264,17 +372,18 @@
 
     private async Task CreateAsync()
     {
-        if (!Guid.TryParse(_prId, out var prGuid) || !_returnDeadlineNullable.HasValue)
+        if (_selectedPurchaseRequest is null || !_returnDeadlineNullable.HasValue)
         {
-            Snackbar.Add("Enter a valid PR ID and return deadline.", Severity.Warning);
+            Snackbar.Add("Select a purchase request and return deadline.", Severity.Warning);
             return;
         }
         _busy = true;
         try
         {
-            await Client.CreateAsync(new CreateCanvassRequestCommand(prGuid, DateOnly.FromDateTime(_returnDeadlineNullable.Value)));
+            await Client.CreateAsync(new CreateCanvassRequestCommand(_selectedPurchaseRequest.Id, DateOnly.FromDateTime(_returnDeadlineNullable.Value)));
             Snackbar.Add("Canvass request created.", Severity.Success);
-            _prId = string.Empty; _returnDeadlineNullable = null;
+            _selectedPurchaseRequest = null;
+            _returnDeadlineNullable = null;
             await LoadAsync();
         }
         catch (Exception ex) { Snackbar.Add($"Failed: {ex.Message}", Severity.Error); }

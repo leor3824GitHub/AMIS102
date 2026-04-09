@@ -17,6 +17,8 @@ public sealed record SupplierDto(
     Guid Id,
     string Code,
     string Name,
+    string? TinNo,
+    string BusinessTaxType,
     string? Description,
     string? ContactPerson,
     string? Email,

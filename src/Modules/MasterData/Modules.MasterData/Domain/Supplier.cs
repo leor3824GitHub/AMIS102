@@ -6,6 +6,8 @@ public sealed class Supplier : AggregateRoot<Guid>, IAuditableEntity
 {
     public string Code { get; private set; } = default!;
     public string Name { get; private set; } = default!;
+    public string? TinNo { get; private set; }
+    public string BusinessTaxType { get; private set; } = "NON-VAT";
     public string? Description { get; private set; }
     public string? ContactPerson { get; private set; }
     public string? Email { get; private set; }
@@ -22,13 +24,15 @@ public sealed class Supplier : AggregateRoot<Guid>, IAuditableEntity
     public string? DeletedBy { get; set; }
     public bool IsDeleted { get; set; }
 
-    public static Supplier Create(string code, string name, string? description, string? contactPerson, string? email, string? phone, string? address)
+    public static Supplier Create(string code, string name, string? tinNo, string businessTaxType, string? description, string? contactPerson, string? email, string? phone, string? address)
     {
         return new Supplier
         {
             Id = Guid.NewGuid(),
             Code = code,
             Name = name,
+            TinNo = tinNo,
+            BusinessTaxType = NormalizeBusinessTaxType(businessTaxType),
             Description = description,
             ContactPerson = contactPerson,
             Email = email,
@@ -39,10 +43,15 @@ public sealed class Supplier : AggregateRoot<Guid>, IAuditableEntity
         };
     }
 
-    public void Update(string code, string name, string? description, string? contactPerson, string? email, string? phone, string? address, bool isActive)
+    public static Supplier Create(string code, string name, string? description, string? contactPerson, string? email, string? phone, string? address)
+        => Create(code, name, null, "NON-VAT", description, contactPerson, email, phone, address);
+
+    public void Update(string code, string name, string? tinNo, string businessTaxType, string? description, string? contactPerson, string? email, string? phone, string? address, bool isActive)
     {
         Code = code;
         Name = name;
+        TinNo = tinNo;
+        BusinessTaxType = NormalizeBusinessTaxType(businessTaxType);
         Description = description;
         ContactPerson = contactPerson;
         Email = email;
@@ -50,5 +59,23 @@ public sealed class Supplier : AggregateRoot<Guid>, IAuditableEntity
         Address = address;
         IsActive = isActive;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
+    }
+
+    public void Update(string code, string name, string? description, string? contactPerson, string? email, string? phone, string? address, bool isActive)
+        => Update(code, name, null, "NON-VAT", description, contactPerson, email, phone, address, isActive);
+
+    private static string NormalizeBusinessTaxType(string value)
+    {
+        if (string.Equals(value, "VAT", StringComparison.OrdinalIgnoreCase))
+        {
+            return "VAT";
+        }
+
+        if (string.Equals(value, "NON-VAT", StringComparison.OrdinalIgnoreCase))
+        {
+            return "NON-VAT";
+        }
+
+        return "NON-VAT";
     }
 }

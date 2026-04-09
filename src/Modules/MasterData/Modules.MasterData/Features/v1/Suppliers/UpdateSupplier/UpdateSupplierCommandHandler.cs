@@ -44,6 +44,8 @@ public sealed class UpdateSupplierCommandHandler : ICommandHandler<UpdateSupplie
         supplier.Update(
             command.Code,
             command.Name,
+            command.TinNo,
+            command.BusinessTaxType,
             command.Description,
             command.ContactPerson,
             command.Email,

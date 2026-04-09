@@ -35,6 +35,8 @@ public sealed class CreateSupplierCommandHandler : ICommandHandler<CreateSupplie
         var supplier = Supplier.Create(
             command.Code,
             command.Name,
+            command.TinNo,
+            command.BusinessTaxType,
             command.Description,
             command.ContactPerson,
             command.Email,
@@ -50,6 +52,8 @@ public sealed class CreateSupplierCommandHandler : ICommandHandler<CreateSupplie
             supplier.Id,
             supplier.Code,
             supplier.Name,
+            supplier.TinNo,
+            supplier.BusinessTaxType,
             supplier.Description,
             supplier.ContactPerson,
             supplier.Email,

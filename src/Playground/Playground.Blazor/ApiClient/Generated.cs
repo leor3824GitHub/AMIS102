@@ -18799,6 +18799,12 @@ namespace FSH.Playground.Blazor.ApiClient
         [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
         public string Name { get; set; }
 
+        [System.Text.Json.Serialization.JsonPropertyName("tinNo")]
+        public string TinNo { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("businessTaxType")]
+        public string BusinessTaxType { get; set; }
+
         [System.Text.Json.Serialization.JsonPropertyName("description")]
         public string Description { get; set; }
 
@@ -21237,6 +21243,13 @@ namespace FSH.Playground.Blazor.ApiClient
         [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
         public string Name { get; set; }
 
+        [System.Text.Json.Serialization.JsonPropertyName("tinNo")]
+        public string TinNo { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("businessTaxType")]
+        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+        public string BusinessTaxType { get; set; }
+
         [System.Text.Json.Serialization.JsonPropertyName("description")]
         public string Description { get; set; }
 
@@ -21294,6 +21307,13 @@ namespace FSH.Playground.Blazor.ApiClient
         [System.Text.Json.Serialization.JsonPropertyName("name")]
         [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
         public string Name { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("tinNo")]
+        public string TinNo { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("businessTaxType")]
+        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+        public string BusinessTaxType { get; set; }
 
         [System.Text.Json.Serialization.JsonPropertyName("description")]
         public string Description { get; set; }
@@ -22074,6 +22094,12 @@ namespace FSH.Playground.Blazor.ApiClient
         [System.Text.Json.Serialization.JsonPropertyName("name")]
         [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
         public string Name { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("tinNo")]
+        public string TinNo { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("businessTaxType")]
+        public string BusinessTaxType { get; set; }
 
         [System.Text.Json.Serialization.JsonPropertyName("description")]
         public string Description { get; set; }

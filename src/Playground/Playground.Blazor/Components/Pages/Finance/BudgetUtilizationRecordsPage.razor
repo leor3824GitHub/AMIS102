@@ -1,0 +1,419 @@
+@page "/finance/budget-utilization-records"
+@using FSH.Modules.Finance.Contracts.v1.BudgetUtilizationRecords
+@using FSH.Modules.Finance.Contracts.v1.DisbursementVouchers
+@using FSH.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders
+@using FSH.Playground.Blazor.ApiClient
+@inject IBudgetUtilizationRecordClient Client
+@inject IDisbursementVoucherClient DvClient
+@inject IPurchaseOrderClient PurchaseOrderClient
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<FshPageHeader Title="Budget Utilization Records" Description="Create and manage budget utilization records (BUR)" />
+
+<MudGrid Spacing="3">
+    <!-- Form Panel -->
+    <MudItem xs="12" md="4">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                <MudText Typo="Typo.h6" Class="mb-3">New Budget Utilization Record</MudText>
+                <MudStack Spacing="2">
+                    <MudAutocomplete T="PurchaseOrderSummaryDto"
+                                     Value="_selectedPurchaseOrder"
+                                     ValueChanged="OnPurchaseOrderChanged"
+                                     SearchFunc="SearchPurchaseOrders"
+                                     ToStringFunc="FormatPurchaseOrder"
+                                     Label="Purchase Order"
+                                     Variant="Variant.Outlined"
+                                     Placeholder="Search PO number..."
+                                     Required="true"
+                                     Clearable="true"
+                                     CoerceValue="true"
+                                     ResetValueOnEmptyText="true" />
+                    <MudAutocomplete T="DisbursementVoucherListItemDto"
+                                     Value="_selectedDv"
+                                     ValueChanged="OnDvChanged"
+                                     SearchFunc="SearchDisbursementVouchers"
+                                     ToStringFunc="FormatDv"
+                                     Label="Disbursement Voucher (optional)"
+                                     Variant="Variant.Outlined"
+                                     Placeholder="Search DV number..."
+                                     Clearable="true"
+                                     CoerceValue="true"
+                                     ResetValueOnEmptyText="true" />
+                    <MudDatePicker @bind-Date="_form.BurDateNullable" Label="BUR Date" Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" Required="true" />
+                    <MudDivider Class="my-1" />
+                    <MudText Typo="Typo.subtitle2">Budget Classification</MudText>
+                    <MudSelect @bind-Value="_form.AllotmentClass" Label="Allotment Class" Variant="Variant.Outlined" T="string" Required="true">
+                        <MudSelectItem Value="@("Personnel Services")">Personnel Services</MudSelectItem>
+                        <MudSelectItem Value="@("Maintenance and Other Operating Expenses")">Maintenance and Other Operating Expenses</MudSelectItem>
+                        <MudSelectItem Value="@("Financial Expenses")">Financial Expenses</MudSelectItem>
+                        <MudSelectItem Value="@("Capital Outlay")">Capital Outlay</MudSelectItem>
+                    </MudSelect>
+                    <MudTextField @bind-Value="_form.UacsObjectCode" Label="UACS Object Code" Variant="Variant.Outlined" Required="true"
+                                  HelperText="e.g. 5-02-03-010" />
+                    <MudTextField @bind-Value="_form.ResponsibilityCenter" Label="Responsibility Center (optional)" Variant="Variant.Outlined" />
+                    <MudDivider Class="my-1" />
+                    <MudText Typo="Typo.subtitle2">Details</MudText>
+                    <MudTextField @bind-Value="_form.Particulars" Label="Particulars" Variant="Variant.Outlined" Required="true" Lines="3" />
+                    <MudNumericField @bind-Value="_form.Amount" Label="Amount (₱)" Variant="Variant.Outlined" Required="true" Min="0.01m" Format="N2" />
+                    <MudTextField @bind-Value="_form.Remarks" Label="Remarks (optional)" Variant="Variant.Outlined" Lines="2" />
+
+                    <MudStack Row="true" Spacing="2" Class="mt-2">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                                   OnClick="SaveAsync" Disabled="_busy">
+                            @if (_busy) { <MudProgressCircular Size="Size.Small" Class="mr-1" Indeterminate="true" /> }
+                            Create BUR
+                        </MudButton>
+                    </MudStack>
+                </MudStack>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    <!-- List Panel -->
+    <MudItem xs="12" md="8">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
+                    <MudText Typo="Typo.h6" Class="flex-grow-1">Budget Utilization Records</MudText>
+                    <MudTextField @bind-Value="_keyword" Label="Search" Variant="Variant.Outlined" Size="Size.Small"
+                                  Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
+                                  Style="max-width:220px" DebounceInterval="400"
+                                  OnDebounceIntervalElapsed="@(async () => await LoadAsync())" />
+                </MudStack>
+
+                <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap" Class="mb-3">
+                    @foreach (var s in _statusFilters)
+                    {
+                        <MudChip T="string" Size="Size.Small"
+                                 Color="@(_statusFilter == s ? Color.Primary : Color.Default)"
+                                 OnClick="@(() => SetStatusFilter(s))">@s</MudChip>
+                    }
+                </MudStack>
+
+                @if (!_loaded)
+                {
+                    <MudProgressLinear Indeterminate="true" />
+                }
+                else if (_items.Count == 0)
+                {
+                    <MudAlert Severity="Severity.Info">No budget utilization records found.</MudAlert>
+                }
+                else
+                {
+                    <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                        <thead>
+                            <tr>
+                                <th>BUR #</th>
+                                <th>Date</th>
+                                <th>PO #</th>
+                                <th>Allotment Class</th>
+                                <th style="text-align:right">Amount</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in _items)
+                            {
+                                <tr>
+                                    <td><b>@item.BurNumber</b></td>
+                                    <td>@item.BurDate.ToString("MM/dd/yyyy")</td>
+                                    <td><MudText Typo="Typo.caption">@item.PurchaseOrderNumber</MudText></td>
+                                    <td><MudText Typo="Typo.caption">@item.AllotmentClass</MudText></td>
+                                    <td style="text-align:right">₱@item.Amount.ToString("N2")</td>
+                                    <td>@BurStatusChip(item.Status)</td>
+                                    <td>
+                                        <MudStack Row="true" Spacing="0">
+                                            @if (item.Status == BudgetUtilizationRecordStatus.Draft)
+                                            {
+                                                <MudTooltip Text="Obligate">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.AccountBalance" Size="Size.Small" Color="Color.Info"
+                                                                   OnClick="@(async () => await ObligateAsync(item.Id))" />
+                                                </MudTooltip>
+                                            }
+                                            @if (item.Status == BudgetUtilizationRecordStatus.Draft || item.Status == BudgetUtilizationRecordStatus.Obligated)
+                                            {
+                                                <MudTooltip Text="Cancel">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.Cancel" Size="Size.Small" Color="Color.Error"
+                                                                   OnClick="@(async () => await CancelBurAsync(item.Id))" />
+                                                </MudTooltip>
+                                            }
+                                            <MudTooltip Text="View Details">
+                                                <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" Color="Color.Default"
+                                                               OnClick="@(async () => await ViewDetailsAsync(item.Id))" />
+                                            </MudTooltip>
+                                        </MudStack>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </MudSimpleTable>
+
+                    @if (_totalCount > _pageSize)
+                    {
+                        <MudStack Row="true" JustifyContent="JustifyContent.Center" Class="mt-3">
+                            <MudPagination Count="@((_totalCount + _pageSize - 1) / _pageSize)"
+                                           Selected="_page" SelectedChanged="@(async p => { _page = p; await LoadAsync(); })" />
+                        </MudStack>
+                    }
+                }
+            </MudCardContent>
+        </MudCard>
+
+        <!-- BUR Detail View -->
+        @if (_detail is not null)
+        {
+            <MudCard Elevation="1" Class="mt-3">
+                <MudCardContent>
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3">
+                        <MudText Typo="Typo.h6" Class="flex-grow-1">@_detail.BurNumber — Details</MudText>
+                        <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="@(() => _detail = null)" />
+                    </MudStack>
+                    <MudGrid Spacing="2">
+                        <MudItem xs="6" sm="3">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">BUR Date</MudText>
+                            <MudText Typo="Typo.body2">@_detail.BurDate.ToString("MMMM dd, yyyy")</MudText>
+                        </MudItem>
+                        <MudItem xs="6" sm="3">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Purchase Order</MudText>
+                            <MudText Typo="Typo.body2">@_detail.PurchaseOrderNumber</MudText>
+                        </MudItem>
+                        @if (!string.IsNullOrWhiteSpace(_detail.DisbursementVoucherNumber))
+                        {
+                            <MudItem xs="6" sm="3">
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">Disbursement Voucher</MudText>
+                                <MudText Typo="Typo.body2">@_detail.DisbursementVoucherNumber</MudText>
+                            </MudItem>
+                        }
+                        <MudItem xs="6" sm="3">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Status</MudText>
+                            @BurStatusChip(_detail.Status)
+                        </MudItem>
+                        <MudItem xs="6" sm="3">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Allotment Class</MudText>
+                            <MudText Typo="Typo.body2">@_detail.AllotmentClass</MudText>
+                        </MudItem>
+                        <MudItem xs="6" sm="3">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">UACS Object Code</MudText>
+                            <MudText Typo="Typo.body2">@_detail.UacsObjectCode</MudText>
+                        </MudItem>
+                        @if (!string.IsNullOrWhiteSpace(_detail.ResponsibilityCenter))
+                        {
+                            <MudItem xs="6" sm="3">
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">Responsibility Center</MudText>
+                                <MudText Typo="Typo.body2">@_detail.ResponsibilityCenter</MudText>
+                            </MudItem>
+                        }
+                        <MudItem xs="12">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Particulars</MudText>
+                            <MudText Typo="Typo.body2">@_detail.Particulars</MudText>
+                        </MudItem>
+                        @if (!string.IsNullOrWhiteSpace(_detail.Remarks))
+                        {
+                            <MudItem xs="12">
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">Remarks</MudText>
+                                <MudText Typo="Typo.body2">@_detail.Remarks</MudText>
+                            </MudItem>
+                        }
+                        <MudItem xs="12">
+                            <MudDivider />
+                            <MudStack Row="true" JustifyContent="JustifyContent.FlexEnd" Class="mt-2">
+                                <MudText Typo="Typo.h6">Amount: <b>₱@_detail.Amount.ToString("N2")</b></MudText>
+                            </MudStack>
+                        </MudItem>
+                    </MudGrid>
+                </MudCardContent>
+            </MudCard>
+        }
+    </MudItem>
+</MudGrid>
+
+@code {
+    private List<BudgetUtilizationRecordListItemDto> _items = [];
+    private BudgetUtilizationRecordDto? _detail;
+    private BurForm _form = new();
+    private bool _busy, _loaded;
+    private string _keyword = string.Empty;
+    private string _statusFilter = "All";
+    private int _page = 1, _pageSize = 15, _totalCount;
+    private PurchaseOrderSummaryDto? _selectedPurchaseOrder;
+    private DisbursementVoucherListItemDto? _selectedDv;
+
+    private static readonly string[] _statusFilters = ["All", "Draft", "Obligated", "Utilized", "Cancelled"];
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task<IEnumerable<PurchaseOrderSummaryDto>> SearchPurchaseOrders(string value, CancellationToken ct)
+    {
+        try
+        {
+            var result = await PurchaseOrderClient.SearchAsync(
+                keyword: string.IsNullOrWhiteSpace(value) ? null : value,
+                status: null,
+                page: 1,
+                pageSize: 20,
+                ct: ct);
+            return result.Items ?? Enumerable.Empty<PurchaseOrderSummaryDto>();
+        }
+        catch
+        {
+            return Enumerable.Empty<PurchaseOrderSummaryDto>();
+        }
+    }
+
+    private async Task<IEnumerable<DisbursementVoucherListItemDto>> SearchDisbursementVouchers(string value, CancellationToken ct)
+    {
+        try
+        {
+            var result = await DvClient.SearchAsync(
+                keyword: string.IsNullOrWhiteSpace(value) ? null : value,
+                status: null,
+                purchaseOrderId: _selectedPurchaseOrder?.Id,
+                page: 1,
+                pageSize: 20,
+                ct: ct);
+            return result.Items ?? Enumerable.Empty<DisbursementVoucherListItemDto>();
+        }
+        catch
+        {
+            return Enumerable.Empty<DisbursementVoucherListItemDto>();
+        }
+    }
+
+    private Task OnPurchaseOrderChanged(PurchaseOrderSummaryDto? po)
+    {
+        _selectedPurchaseOrder = po;
+        _selectedDv = null;
+        return Task.CompletedTask;
+    }
+
+    private Task OnDvChanged(DisbursementVoucherListItemDto? dv)
+    {
+        _selectedDv = dv;
+        return Task.CompletedTask;
+    }
+
+    private static string FormatPurchaseOrder(PurchaseOrderSummaryDto? po)
+    {
+        if (po is null) return string.Empty;
+        return string.IsNullOrWhiteSpace(po.SupplierName)
+            ? po.PoNumber
+            : $"{po.PoNumber} — {po.SupplierName}";
+    }
+
+    private static string FormatDv(DisbursementVoucherListItemDto? dv)
+    {
+        if (dv is null) return string.Empty;
+        return $"{dv.DvNumber} — {dv.Payee}";
+    }
+
+    private async Task LoadAsync()
+    {
+        _loaded = false;
+        try
+        {
+            BudgetUtilizationRecordStatus? filter = _statusFilter == "All" ? null : Enum.Parse<BudgetUtilizationRecordStatus>(_statusFilter);
+            var result = await Client.SearchAsync(_keyword, filter, null, null, _page, _pageSize);
+            _items = result.Items?.ToList() ?? [];
+            _totalCount = result.TotalCount;
+        }
+        catch (Exception ex) { Snackbar.Add($"Load failed: {ex.Message}", Severity.Error); }
+        finally { _loaded = true; }
+    }
+
+    private async Task SetStatusFilter(string s) { _statusFilter = s; _page = 1; await LoadAsync(); }
+
+    private async Task SaveAsync()
+    {
+        if (!IsFormValid()) { Snackbar.Add("Fill in all required fields.", Severity.Warning); return; }
+        _busy = true;
+        try
+        {
+            await Client.CreateAsync(new CreateBudgetUtilizationRecordCommand(
+                _selectedPurchaseOrder!.Id,
+                _selectedPurchaseOrder.PoNumber,
+                _selectedDv?.Id,
+                _selectedDv?.DvNumber,
+                ToDateOnly(_form.BurDateNullable)!.Value,
+                _form.AllotmentClass,
+                _form.UacsObjectCode,
+                string.IsNullOrWhiteSpace(_form.ResponsibilityCenter) ? null : _form.ResponsibilityCenter,
+                _form.Particulars,
+                _form.Amount,
+                string.IsNullOrWhiteSpace(_form.Remarks) ? null : _form.Remarks));
+            Snackbar.Add("Budget utilization record created.", Severity.Success);
+            ResetForm();
+            await LoadAsync();
+        }
+        catch (Exception ex) { Snackbar.Add($"Save failed: {ex.Message}", Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    private async Task ObligateAsync(Guid id)
+    {
+        var ok = await DialogService.ShowMessageBox("Obligate BUR", "Obligate this budget utilization record?", "Obligate", cancelText: "Cancel");
+        if (ok is not true) return;
+        _busy = true;
+        try { await Client.ObligateAsync(id); Snackbar.Add("BUR obligated.", Severity.Success); await LoadAsync(); }
+        catch (Exception ex) { Snackbar.Add($"Obligate failed: {ex.Message}", Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    private async Task CancelBurAsync(Guid id)
+    {
+        var ok = await DialogService.ShowMessageBox("Cancel BUR", "Cancel this budget utilization record?", "Yes, Cancel", cancelText: "No");
+        if (ok is not true) return;
+        _busy = true;
+        try { await Client.CancelAsync(id, "Cancelled by user."); Snackbar.Add("BUR cancelled.", Severity.Info); await LoadAsync(); }
+        catch (Exception ex) { Snackbar.Add($"Cancel failed: {ex.Message}", Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    private async Task ViewDetailsAsync(Guid id)
+    {
+        _detail = await Client.GetAsync(id);
+    }
+
+    private void ResetForm() { _selectedPurchaseOrder = null; _selectedDv = null; _form = new(); }
+
+    private bool IsFormValid() =>
+        _selectedPurchaseOrder is not null &&
+        _form.BurDateNullable.HasValue &&
+        !string.IsNullOrWhiteSpace(_form.AllotmentClass) &&
+        !string.IsNullOrWhiteSpace(_form.UacsObjectCode) &&
+        !string.IsNullOrWhiteSpace(_form.Particulars) &&
+        _form.Amount > 0;
+
+    private static DateOnly? ToDateOnly(DateTime? d) => d.HasValue ? DateOnly.FromDateTime(d.Value) : null;
+
+    private static RenderFragment BurStatusChip(BudgetUtilizationRecordStatus status) => __builder =>
+    {
+        var (color, icon) = status switch
+        {
+            BudgetUtilizationRecordStatus.Draft => (Color.Default, Icons.Material.Filled.Edit),
+            BudgetUtilizationRecordStatus.Obligated => (Color.Info, Icons.Material.Filled.AccountBalance),
+            BudgetUtilizationRecordStatus.Utilized => (Color.Success, Icons.Material.Filled.CheckCircle),
+            BudgetUtilizationRecordStatus.Cancelled => (Color.Error, Icons.Material.Filled.Cancel),
+            _ => (Color.Default, Icons.Material.Filled.Help)
+        };
+        __builder.OpenComponent<MudChip<string>>(0);
+        __builder.AddAttribute(1, "Size", Size.Small);
+        __builder.AddAttribute(2, "Color", color);
+        __builder.AddAttribute(3, "Icon", icon);
+        __builder.AddAttribute(4, "ChildContent", (RenderFragment)(b => b.AddContent(0, status.ToString())));
+        __builder.CloseComponent();
+    };
+
+    private sealed class BurForm
+    {
+        public DateTime? BurDateNullable { get; set; } = DateTime.Today;
+        public string AllotmentClass { get; set; } = string.Empty;
+        public string UacsObjectCode { get; set; } = string.Empty;
+        public string? ResponsibilityCenter { get; set; }
+        public string Particulars { get; set; } = string.Empty;
+        public decimal Amount { get; set; }
+        public string? Remarks { get; set; }
+    }
+}

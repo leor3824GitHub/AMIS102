@@ -28,6 +28,8 @@ public sealed class GetSupplierByIdQueryHandler : IQueryHandler<GetSupplierByIdQ
             supplier.Id,
             supplier.Code,
             supplier.Name,
+            supplier.TinNo,
+            supplier.BusinessTaxType,
             supplier.Description,
             supplier.ContactPerson,
             supplier.Email,

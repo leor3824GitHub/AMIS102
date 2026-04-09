@@ -6,6 +6,8 @@ public sealed record UpdateSupplierCommand(
     Guid Id,
     string Code,
     string Name,
+    string? TinNo = null,
+    string BusinessTaxType = "NON-VAT",
     string? Description = null,
     string? ContactPerson = null,
     string? Email = null,

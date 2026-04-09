@@ -17,6 +17,14 @@ public sealed class UpdateSupplierCommandValidator : AbstractValidator<UpdateSup
             .NotEmpty().WithMessage("Name is required.")
             .MaximumLength(160).WithMessage("Name must not exceed 160 characters.");
 
+        RuleFor(x => x.TinNo)
+            .MaximumLength(32).WithMessage("TIN No. must not exceed 32 characters.");
+
+        RuleFor(x => x.BusinessTaxType)
+            .NotEmpty().WithMessage("Business tax type is required.")
+            .Must(x => string.Equals(x, "VAT", StringComparison.OrdinalIgnoreCase) || string.Equals(x, "NON-VAT", StringComparison.OrdinalIgnoreCase))
+            .WithMessage("Business tax type must be either VAT or NON-VAT.");
+
         RuleFor(x => x.Description)
             .MaximumLength(400).WithMessage("Description must not exceed 400 characters.");
 
