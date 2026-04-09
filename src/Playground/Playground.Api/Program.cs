@@ -7,6 +7,8 @@ using FSH.Modules.Expendable;
 using FSH.Modules.Expendable.Contracts.v1.Products;
 using FSH.Modules.Vehicle;
 using FSH.Modules.Vehicle.Contracts.v1.Vehicles;
+using FSH.Modules.ProcurementAcquisition;
+using FSH.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
 using FSH.Modules.Identity;
 using FSH.Modules.Identity.Contracts.v1.Tokens.TokenGeneration;
 using FSH.Modules.Identity.Features.v1.Tokens.TokenGeneration;
@@ -48,7 +50,9 @@ builder.Services.AddMediator(o =>
         typeof(MasterDataModule),
         typeof(ExpendableModule),
         typeof(VehicleModule),
-        typeof(CreateVehicleCommand)];
+        typeof(CreateVehicleCommand),
+        typeof(ProcurementAcquisitionModule),
+        typeof(CreatePurchaseRequestCommand)];
 });
 
 var moduleAssemblies = new Assembly[]
@@ -58,7 +62,8 @@ var moduleAssemblies = new Assembly[]
     typeof(AuditingModule).Assembly,
     typeof(MasterDataModule).Assembly,
     typeof(ExpendableModule).Assembly,
-    typeof(VehicleModule).Assembly
+    typeof(VehicleModule).Assembly,
+    typeof(ProcurementAcquisitionModule).Assembly
 };
 
 builder.AddHeroPlatform(o =>

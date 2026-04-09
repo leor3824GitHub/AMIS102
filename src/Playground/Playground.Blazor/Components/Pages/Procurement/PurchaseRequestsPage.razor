@@ -1,0 +1,401 @@
+@page "/procurement/purchase-requests"
+@using FSH.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests
+@using FSH.Framework.Shared.Persistence
+@using FSH.Playground.Blazor.ApiClient
+@using FSH.Playground.Blazor.Components.Shared
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
+@inject IPurchaseRequestClient Client
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject AuthenticationStateProvider AuthStateProvider
+
+<FshPageHeader Title="Purchase Requests" Description="Manage procurement purchase requests (PR)" />
+
+<MudGrid Spacing="3">
+    <!-- Form Panel -->
+    <MudItem xs="12" md="4">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                <MudText Typo="Typo.h6" Class="mb-3">@(_editing is null ? "New Purchase Request" : $"Edit {_editing.PrNumber}")</MudText>
+                <MudStack Spacing="2">
+                    <MudTextField @bind-Value="_form.DepartmentId" Label="Department ID (GUID)" Variant="Variant.Outlined" Required="true" />
+                    <MudTextField @bind-Value="_form.Section" Label="Section" Variant="Variant.Outlined" />
+                    <MudTextField @bind-Value="_form.Purpose" Label="Purpose / Title" Variant="Variant.Outlined" Required="true" Lines="2" />
+                    <MudSelect @bind-Value="_form.PrType" Label="PR Type" Variant="Variant.Outlined" T="PrType">
+                        <MudSelectItem Value="PrType.Planned">Planned</MudSelectItem>
+                        <MudSelectItem Value="PrType.Unplanned">Unplanned</MudSelectItem>
+                    </MudSelect>
+                    @if (_form.PrType == PrType.Unplanned)
+                    {
+                        <MudTextField @bind-Value="_form.Justification" Label="Justification" Variant="Variant.Outlined" Lines="2" Required="true" />
+                    }
+                    <MudTextField @bind-Value="_form.RequestedById" Label="Requested By (Employee GUID)" Variant="Variant.Outlined" Required="true" />
+                    <MudGrid Spacing="1">
+                        <MudItem xs="6"><MudTextField @bind-Value="_form.SaiNumber" Label="SAI Number" Variant="Variant.Outlined" /></MudItem>
+                        <MudItem xs="6"><MudDatePicker @bind-Date="_form.SaiDateNullable" Label="SAI Date" Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" /></MudItem>
+                        <MudItem xs="6"><MudTextField @bind-Value="_form.AlobsNumber" Label="ALOBS Number" Variant="Variant.Outlined" /></MudItem>
+                        <MudItem xs="6"><MudDatePicker @bind-Date="_form.AlobsDateNullable" Label="ALOBS Date" Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" /></MudItem>
+                    </MudGrid>
+
+                    <MudText Typo="Typo.subtitle2" Class="mt-2">Line Items</MudText>
+                    @for (var i = 0; i < _form.LineItems.Count; i++)
+                    {
+                        var idx = i;
+                        var li = _form.LineItems[idx];
+                        <MudPaper Outlined="true" Class="pa-2">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Class="mb-1">
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">Item @(idx + 1)</MudText>
+                                <MudSpacer />
+                                <MudIconButton Icon="@Icons.Material.Filled.Remove" Size="Size.Small" Color="Color.Error"
+                                               OnClick="@(() => RemoveLineItem(idx))" />
+                            </MudStack>
+                            <MudGrid Spacing="1">
+                                <MudItem xs="12">
+                                    <MudTextField @bind-Value="li.ItemDescription" Label="Description" Variant="Variant.Outlined" Dense="true" />
+                                </MudItem>
+                                <MudItem xs="4">
+                                    <MudNumericField @bind-Value="li.Quantity" Label="Qty" Variant="Variant.Outlined" Dense="true" Min="0.01m" />
+                                </MudItem>
+                                <MudItem xs="4">
+                                    <MudTextField @bind-Value="li.UnitOfIssue" Label="Unit" Variant="Variant.Outlined" Dense="true" />
+                                </MudItem>
+                                <MudItem xs="4">
+                                    <MudNumericField @bind-Value="li.EstimatedUnitCost" Label="Unit Cost" Variant="Variant.Outlined" Dense="true" Min="0m" />
+                                </MudItem>
+                            </MudGrid>
+                        </MudPaper>
+                    }
+                    <MudButton StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Text" Size="Size.Small"
+                               OnClick="AddLineItem" Color="Color.Primary">Add Item</MudButton>
+
+                    <MudStack Row="true" Spacing="2" Class="mt-2">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                                   OnClick="SaveAsync" Disabled="_busy">
+                            @if (_busy) { <MudProgressCircular Size="Size.Small" Class="mr-1" Indeterminate="true" /> }
+                            @(_editing is null ? "Create PR" : "Save Changes")
+                        </MudButton>
+                        @if (_editing is not null)
+                        {
+                            <MudButton Variant="Variant.Outlined" Color="Color.Default" OnClick="CancelEdit">Cancel</MudButton>
+                        }
+                    </MudStack>
+                </MudStack>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    <!-- List Panel -->
+    <MudItem xs="12" md="8">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
+                    <MudText Typo="Typo.h6" Class="flex-grow-1">Purchase Requests</MudText>
+                    <MudTextField @bind-Value="_keyword" Label="Search" Variant="Variant.Outlined" Size="Size.Small"
+                                  Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
+                                  Style="max-width:220px" DebounceInterval="400"
+                                  OnDebounceIntervalElapsed="@(async () => await LoadAsync())" />
+                </MudStack>
+
+                <!-- Status Filter -->
+                <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap" Class="mb-3">
+                    @foreach (var s in _statusFilters)
+                    {
+                        <MudChip T="string" Size="Size.Small"
+                                 Color="@(_statusFilter == s ? Color.Primary : Color.Default)"
+                                 OnClick="@(() => SetStatusFilter(s))">@s</MudChip>
+                    }
+                </MudStack>
+
+                @if (!_loaded)
+                {
+                    <MudProgressLinear Indeterminate="true" />
+                }
+                else if (_items.Count == 0)
+                {
+                    <MudAlert Severity="Severity.Info">No purchase requests found.</MudAlert>
+                }
+                else
+                {
+                    <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                        <thead>
+                            <tr>
+                                <th>PR #</th>
+                                <th>Date</th>
+                                <th>Purpose</th>
+                                <th>Type</th>
+                                <th style="text-align:right">Est. Total</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in _items)
+                            {
+                                <tr>
+                                    <td><b>@item.PrNumber</b></td>
+                                    <td>@item.PrDate.ToString("MM/dd/yyyy")</td>
+                                    <td style="max-width:180px;white-space:normal">@item.Purpose</td>
+                                    <td>
+                                        <MudChip T="string" Size="Size.Small"
+                                                 Color="@(item.PrType == PrType.Unplanned ? Color.Warning : Color.Info)">
+                                            @item.PrType
+                                        </MudChip>
+                                    </td>
+                                    <td style="text-align:right">₱@item.TotalEstimatedCost.ToString("N2")</td>
+                                    <td>@StatusChip(item.Status)</td>
+                                    <td>
+                                        <MudStack Row="true" Spacing="0">
+                                            @if (item.Status == PurchaseRequestStatus.Draft)
+                                            {
+                                                <MudTooltip Text="Edit">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary"
+                                                                   OnClick="@(async () => await BeginEdit(item.Id))" />
+                                                </MudTooltip>
+                                                <MudTooltip Text="Submit for Approval">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.Send" Size="Size.Small" Color="Color.Info"
+                                                                   OnClick="@(async () => await SubmitAsync(item.Id))" />
+                                                </MudTooltip>
+                                                <MudTooltip Text="Cancel">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.Cancel" Size="Size.Small" Color="Color.Error"
+                                                                   OnClick="@(async () => await CancelPrAsync(item.Id))" />
+                                                </MudTooltip>
+                                            }
+                                            @if (item.Status == PurchaseRequestStatus.Submitted)
+                                            {
+                                                <MudTooltip Text="Approve">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small" Color="Color.Success"
+                                                                   OnClick="@(async () => await ApproveAsync(item.Id))" />
+                                                </MudTooltip>
+                                                <MudTooltip Text="Reject">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.Cancel" Size="Size.Small" Color="Color.Error"
+                                                                   OnClick="@(async () => await RejectAsync(item.Id))" />
+                                                </MudTooltip>
+                                            }
+                                        </MudStack>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </MudSimpleTable>
+
+                    @if (_totalCount > _pageSize)
+                    {
+                        <MudStack Row="true" JustifyContent="JustifyContent.Center" Class="mt-3">
+                            <MudPagination Count="@((_totalCount + _pageSize - 1) / _pageSize)"
+                                           Selected="_page" SelectedChanged="@(async p => { _page = p; await LoadAsync(); })" />
+                        </MudStack>
+                    }
+                }
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private List<PurchaseRequestSummaryDto> _items = [];
+    private PurchaseRequestDto? _editing;
+    private PrForm _form = new();
+    private bool _busy, _loaded;
+    private string _keyword = string.Empty;
+    private string _statusFilter = "All";
+    private int _page = 1, _pageSize = 15, _totalCount;
+    private Guid? _currentUserId;
+
+    private static readonly string[] _statusFilters = ["All", "Draft", "Submitted", "Approved", "Rejected", "Cancelled"];
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var idStr = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        _currentUserId = Guid.TryParse(idStr, out var g) ? g : null;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loaded = false;
+        try
+        {
+            PurchaseRequestStatus? filter = _statusFilter == "All" ? null : Enum.Parse<PurchaseRequestStatus>(_statusFilter);
+            var result = await Client.SearchAsync(_keyword, filter, _page, _pageSize);
+            _items = result.Items?.ToList() ?? [];
+            _totalCount = (int)result.TotalCount;
+        }
+        catch (Exception ex) { Snackbar.Add($"Load failed: {ex.Message}", Severity.Error); }
+        finally { _loaded = true; }
+    }
+
+    private async Task SetStatusFilter(string status)
+    {
+        _statusFilter = status;
+        _page = 1;
+        await LoadAsync();
+    }
+
+    private async Task SaveAsync()
+    {
+        if (!IsFormValid()) { Snackbar.Add("Fill in all required fields and add at least one line item.", Severity.Warning); return; }
+        _busy = true;
+        try
+        {
+            var lineItems = _form.LineItems
+                .Select(li => new CreatePurchaseRequestLineItemRequest(li.Quantity, li.UnitOfIssue, li.ItemDescription, li.EstimatedUnitCost))
+                .ToList();
+
+            if (_editing is null)
+            {
+                await Client.CreateAsync(new CreatePurchaseRequestCommand(
+                    Guid.Parse(_form.DepartmentId), _form.Section, _form.Purpose, _form.PrType, _form.Justification,
+                    Guid.Parse(_form.RequestedById), _form.SaiNumber, ToDateOnly(_form.SaiDateNullable),
+                    _form.AlobsNumber, ToDateOnly(_form.AlobsDateNullable), lineItems));
+                Snackbar.Add("Purchase request created.", Severity.Success);
+            }
+            else
+            {
+                await Client.UpdateAsync(_editing.Id, new UpdatePurchaseRequestCommand(
+                    _editing.Id, Guid.Parse(_form.DepartmentId), _form.Section, _form.Purpose, _form.PrType, _form.Justification,
+                    Guid.Parse(_form.RequestedById), _form.SaiNumber, ToDateOnly(_form.SaiDateNullable),
+                    _form.AlobsNumber, ToDateOnly(_form.AlobsDateNullable), lineItems));
+                Snackbar.Add("Purchase request updated.", Severity.Success);
+            }
+            ResetForm();
+            await LoadAsync();
+        }
+        catch (Exception ex) { Snackbar.Add($"Save failed: {ex.Message}", Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    private async Task BeginEdit(Guid id)
+    {
+        var pr = await Client.GetAsync(id);
+        if (pr is null) { Snackbar.Add("PR not found.", Severity.Error); return; }
+        _editing = pr;
+        _form = new PrForm
+        {
+            DepartmentId = pr.DepartmentId.ToString(),
+            Section = pr.Section,
+            Purpose = pr.Purpose,
+            PrType = pr.PrType,
+            Justification = pr.Justification,
+            RequestedById = pr.RequestedById.ToString(),
+            SaiNumber = pr.SaiNumber,
+            SaiDateNullable = pr.SaiDate?.ToDateTime(TimeOnly.MinValue),
+            AlobsNumber = pr.AlobsNumber,
+            AlobsDateNullable = pr.AlobsDate?.ToDateTime(TimeOnly.MinValue),
+            LineItems = pr.LineItems.Select(li => new LineItemRow
+            {
+                Quantity = li.Quantity,
+                UnitOfIssue = li.UnitOfIssue,
+                ItemDescription = li.ItemDescription,
+                EstimatedUnitCost = li.EstimatedUnitCost
+            }).ToList()
+        };
+    }
+
+    private async Task SubmitAsync(Guid id)
+    {
+        var ok = await DialogService.ShowMessageBox("Submit PR", "Submit this purchase request for approval?", "Submit", cancelText: "Cancel");
+        if (ok is not true) return;
+        try { await Client.SubmitAsync(id); Snackbar.Add("PR submitted.", Severity.Success); await LoadAsync(); }
+        catch (Exception ex) { Snackbar.Add($"Submit failed: {ex.Message}", Severity.Error); }
+    }
+
+    private async Task ApproveAsync(Guid id)
+    {
+        if (_currentUserId is null)
+        {
+            Snackbar.Add("Cannot determine current user identity. Please re-login.", Severity.Warning);
+            return;
+        }
+        var ok = await DialogService.ShowMessageBox("Approve PR", "Approve this purchase request?", "Approve", cancelText: "Cancel");
+        if (ok is not true) return;
+        try
+        {
+            await Client.ApproveAsync(id, _currentUserId.Value);
+            Snackbar.Add("PR approved.", Severity.Success);
+            await LoadAsync();
+        }
+        catch (Exception ex) { Snackbar.Add($"Approve failed: {ex.Message}", Severity.Error); }
+    }
+
+    private async Task RejectAsync(Guid id)
+    {
+        var parameters = new DialogParameters<ReasonInputDialog>
+        {
+            { x => x.Title, "Reject Purchase Request" },
+            { x => x.Label, "Rejection Reason" },
+            { x => x.ConfirmText, "Reject" }
+        };
+        var dialog = await DialogService.ShowAsync<ReasonInputDialog>("Reject PR", parameters);
+        var result = await dialog.Result;
+        if (result is null || result.Canceled || result.Data is not string reason || string.IsNullOrWhiteSpace(reason))
+            return;
+
+        try { await Client.RejectAsync(id, reason); Snackbar.Add("PR rejected.", Severity.Info); await LoadAsync(); }
+        catch (Exception ex) { Snackbar.Add($"Reject failed: {ex.Message}", Severity.Error); }
+    }
+
+    private async Task CancelPrAsync(Guid id)
+    {
+        var ok = await DialogService.ShowMessageBox("Cancel PR", "Cancel this purchase request?", "Yes, Cancel", cancelText: "No");
+        if (ok is not true) return;
+        try { await Client.CancelAsync(id); Snackbar.Add("PR cancelled.", Severity.Info); await LoadAsync(); }
+        catch (Exception ex) { Snackbar.Add($"Cancel failed: {ex.Message}", Severity.Error); }
+    }
+
+    private void AddLineItem() => _form.LineItems.Add(new LineItemRow());
+    private void RemoveLineItem(int idx) { if (_form.LineItems.Count > 1) _form.LineItems.RemoveAt(idx); }
+    private void CancelEdit() { _editing = null; _form = new(); }
+    private void ResetForm() { _editing = null; _form = new(); }
+
+    private bool IsFormValid() =>
+        Guid.TryParse(_form.DepartmentId, out _) &&
+        Guid.TryParse(_form.RequestedById, out _) &&
+        !string.IsNullOrWhiteSpace(_form.Purpose) &&
+        _form.LineItems.Any(li => !string.IsNullOrWhiteSpace(li.ItemDescription));
+
+    private static DateOnly? ToDateOnly(DateTime? d) => d.HasValue ? DateOnly.FromDateTime(d.Value) : null;
+
+    private static RenderFragment StatusChip(PurchaseRequestStatus status) => __builder =>
+    {
+        var (color, icon) = status switch
+        {
+            PurchaseRequestStatus.Draft => (Color.Default, Icons.Material.Filled.Edit),
+            PurchaseRequestStatus.Submitted => (Color.Info, Icons.Material.Filled.HourglassTop),
+            PurchaseRequestStatus.Approved => (Color.Success, Icons.Material.Filled.CheckCircle),
+            PurchaseRequestStatus.Rejected => (Color.Error, Icons.Material.Filled.Cancel),
+            PurchaseRequestStatus.Cancelled => (Color.Warning, Icons.Material.Filled.Block),
+            _ => (Color.Default, Icons.Material.Filled.Help)
+        };
+        __builder.OpenComponent<MudChip<string>>(0);
+        __builder.AddAttribute(1, "Size", Size.Small);
+        __builder.AddAttribute(2, "Color", color);
+        __builder.AddAttribute(3, "Icon", icon);
+        __builder.AddAttribute(4, "ChildContent", (RenderFragment)(b => b.AddContent(0, status.ToString())));
+        __builder.CloseComponent();
+    };
+
+    private sealed class PrForm
+    {
+        public string DepartmentId { get; set; } = string.Empty;
+        public string? Section { get; set; }
+        public string Purpose { get; set; } = string.Empty;
+        public PrType PrType { get; set; } = PrType.Planned;
+        public string? Justification { get; set; }
+        public string RequestedById { get; set; } = string.Empty;
+        public string? SaiNumber { get; set; }
+        public DateTime? SaiDateNullable { get; set; }
+        public string? AlobsNumber { get; set; }
+        public DateTime? AlobsDateNullable { get; set; }
+        public List<LineItemRow> LineItems { get; set; } = [new()];
+    }
+
+    private sealed class LineItemRow
+    {
+        public decimal Quantity { get; set; } = 1;
+        public string UnitOfIssue { get; set; } = "pc";
+        public string ItemDescription { get; set; } = string.Empty;
+        public decimal EstimatedUnitCost { get; set; }
+    }
+}

@@ -1,0 +1,452 @@
+@page "/procurement/purchase-orders"
+@using FSH.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders
+@using FSH.Framework.Shared.Persistence
+@using FSH.Playground.Blazor.ApiClient
+@using PurchaseOrderContracts = FSH.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders
+@inject IPurchaseOrderClient Client
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<FshPageHeader Title="Purchase Orders" Description="Create and manage purchase orders (PO)" />
+
+<MudGrid Spacing="3">
+    <!-- Form Panel -->
+    <MudItem xs="12" md="4">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                <MudText Typo="Typo.h6" Class="mb-3">@(_editing is null ? "New Purchase Order" : $"Edit {_editing.PoNumber}")</MudText>
+                <MudStack Spacing="2">
+                    <MudTextField @bind-Value="_form.PurchaseRequestId" Label="Purchase Request ID (GUID)" Variant="Variant.Outlined" Required="true" />
+                    <MudTextField @bind-Value="_form.CanvassRequestId" Label="Canvass Request ID (optional)" Variant="Variant.Outlined" />
+                    <MudDivider Class="my-1" />
+                    <MudText Typo="Typo.subtitle2">Supplier Information</MudText>
+                    <MudTextField @bind-Value="_form.SupplierName" Label="Supplier Name" Variant="Variant.Outlined" Required="true" />
+                    <MudTextField @bind-Value="_form.SupplierAddress" Label="Supplier Address" Variant="Variant.Outlined" Required="true" Lines="2" />
+                    <MudTextField @bind-Value="_form.SupplierTin" Label="TIN (optional)" Variant="Variant.Outlined" />
+                    <MudDivider Class="my-1" />
+                    <MudText Typo="Typo.subtitle2">Delivery &amp; Payment</MudText>
+                    <MudSelect @bind-Value="_form.ModeOfProcurement" Label="Mode of Procurement" Variant="Variant.Outlined" T="ModeOfProcurement">
+                        @foreach (var mode in Enum.GetValues<ModeOfProcurement>())
+                        {
+                            <MudSelectItem Value="mode">@mode.ToString().Replace("_", " ")</MudSelectItem>
+                        }
+                    </MudSelect>
+                    <MudTextField @bind-Value="_form.PlaceOfDelivery" Label="Place of Delivery" Variant="Variant.Outlined" Required="true" />
+                    <MudDatePicker @bind-Date="_form.DateOfDeliveryNullable" Label="Date of Delivery" Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" />
+                    <MudTextField @bind-Value="_form.DeliveryTerm" Label="Delivery Term" Variant="Variant.Outlined" Required="true" />
+                    <MudTextField @bind-Value="_form.PaymentTerm" Label="Payment Term" Variant="Variant.Outlined" Required="true" />
+                    <MudGrid Spacing="1">
+                        <MudItem xs="6"><MudTextField @bind-Value="_form.FundCluster" Label="Fund Cluster" Variant="Variant.Outlined" /></MudItem>
+                        <MudItem xs="6"><MudTextField @bind-Value="_form.OursBursNumber" Label="OURS/BURS No." Variant="Variant.Outlined" /></MudItem>
+                    </MudGrid>
+                    <MudDivider Class="my-1" />
+                    <MudText Typo="Typo.subtitle2">Line Items</MudText>
+                    @for (var i = 0; i < _form.LineItems.Count; i++)
+                    {
+                        var idx = i;
+                        var li = _form.LineItems[idx];
+                        <MudPaper Outlined="true" Class="pa-2">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Class="mb-1">
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">Item @(idx + 1)</MudText>
+                                <MudSpacer />
+                                <MudIconButton Icon="@Icons.Material.Filled.Remove" Size="Size.Small" Color="Color.Error"
+                                               OnClick="@(() => RemoveLineItem(idx))" />
+                            </MudStack>
+                            <MudGrid Spacing="1">
+                                <MudItem xs="6">
+                                    <MudTextField @bind-Value="li.StockNumber" Label="Stock No." Variant="Variant.Outlined" Dense="true" />
+                                </MudItem>
+                                <MudItem xs="6">
+                                    <MudTextField @bind-Value="li.Unit" Label="Unit" Variant="Variant.Outlined" Dense="true" />
+                                </MudItem>
+                                <MudItem xs="12">
+                                    <MudTextField @bind-Value="li.Description" Label="Description" Variant="Variant.Outlined" Dense="true" />
+                                </MudItem>
+                                <MudItem xs="6">
+                                    <MudNumericField @bind-Value="li.Quantity" Label="Qty" Variant="Variant.Outlined" Dense="true" Min="0.01m" />
+                                </MudItem>
+                                <MudItem xs="6">
+                                    <MudNumericField @bind-Value="li.UnitCost" Label="Unit Cost" Variant="Variant.Outlined" Dense="true" Min="0m" />
+                                </MudItem>
+                                <MudItem xs="12">
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                        Amount: ₱@((li.Quantity * li.UnitCost).ToString("N2"))
+                                    </MudText>
+                                </MudItem>
+                            </MudGrid>
+                        </MudPaper>
+                    }
+                    <MudButton StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Text" Size="Size.Small"
+                               OnClick="AddLineItem" Color="Color.Primary">Add Item</MudButton>
+
+                    @if (_form.LineItems.Any())
+                    {
+                        <MudPaper Class="pa-2" Style="background:var(--mud-palette-background-grey)">
+                            <MudText Typo="Typo.body2"><b>Total: ₱@_form.LineItems.Sum(li => li.Quantity * li.UnitCost).ToString("N2")</b></MudText>
+                        </MudPaper>
+                    }
+
+                    <MudStack Row="true" Spacing="2" Class="mt-2">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                                   OnClick="SaveAsync" Disabled="_busy">
+                            @if (_busy) { <MudProgressCircular Size="Size.Small" Class="mr-1" Indeterminate="true" /> }
+                            @(_editing is null ? "Create PO" : "Save Changes")
+                        </MudButton>
+                        @if (_editing is not null)
+                        {
+                            <MudButton Variant="Variant.Outlined" Color="Color.Default" OnClick="CancelEdit">Cancel</MudButton>
+                        }
+                    </MudStack>
+                </MudStack>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    <!-- List Panel -->
+    <MudItem xs="12" md="8">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
+                    <MudText Typo="Typo.h6" Class="flex-grow-1">Purchase Orders</MudText>
+                    <MudTextField @bind-Value="_keyword" Label="Search" Variant="Variant.Outlined" Size="Size.Small"
+                                  Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
+                                  Style="max-width:220px" DebounceInterval="400"
+                                  OnDebounceIntervalElapsed="@(async () => await LoadAsync())" />
+                </MudStack>
+
+                <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap" Class="mb-3">
+                    @foreach (var s in _statusFilters)
+                    {
+                        <MudChip T="string" Size="Size.Small"
+                                 Color="@(_statusFilter == s ? Color.Primary : Color.Default)"
+                                 OnClick="@(() => SetStatusFilter(s))">@s</MudChip>
+                    }
+                </MudStack>
+
+                @if (!_loaded)
+                {
+                    <MudProgressLinear Indeterminate="true" />
+                }
+                else if (_items.Count == 0)
+                {
+                    <MudAlert Severity="Severity.Info">No purchase orders found.</MudAlert>
+                }
+                else
+                {
+                    <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                        <thead>
+                            <tr>
+                                <th>PO #</th>
+                                <th>Date</th>
+                                <th>Supplier</th>
+                                <th>Mode</th>
+                                <th style="text-align:right">Total</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in _items)
+                            {
+                                <tr>
+                                    <td><b>@item.PoNumber</b></td>
+                                    <td>@item.PoDate.ToString("MM/dd/yyyy")</td>
+                                    <td>@item.SupplierName</td>
+                                    <td><MudText Typo="Typo.caption">@item.ModeOfProcurement.ToString().Replace("_"," ")</MudText></td>
+                                    <td style="text-align:right">₱@item.TotalAmount.ToString("N2")</td>
+                                    <td>@PoStatusChip(item.Status)</td>
+                                    <td>
+                                        <MudStack Row="true" Spacing="0">
+                                            @if (item.Status == PurchaseOrderStatus.Draft)
+                                            {
+                                                <MudTooltip Text="Edit">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary"
+                                                                   OnClick="@(async () => await BeginEdit(item.Id))" />
+                                                </MudTooltip>
+                                                <MudTooltip Text="Issue PO">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.TaskAlt" Size="Size.Small" Color="Color.Success"
+                                                                   OnClick="@(async () => await IssueAsync(item.Id))" />
+                                                </MudTooltip>
+                                            }
+                                            @if (item.Status == PurchaseOrderStatus.Draft || item.Status == PurchaseOrderStatus.Issued)
+                                            {
+                                                <MudTooltip Text="Cancel PO">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.Cancel" Size="Size.Small" Color="Color.Error"
+                                                                   OnClick="@(async () => await CancelPoAsync(item.Id))" />
+                                                </MudTooltip>
+                                            }
+                                            <MudTooltip Text="View Details">
+                                                <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" Color="Color.Default"
+                                                               OnClick="@(async () => await ViewDetailsAsync(item.Id))" />
+                                            </MudTooltip>
+                                        </MudStack>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </MudSimpleTable>
+
+                    @if (_totalCount > _pageSize)
+                    {
+                        <MudStack Row="true" JustifyContent="JustifyContent.Center" Class="mt-3">
+                            <MudPagination Count="@((_totalCount + _pageSize - 1) / _pageSize)"
+                                           Selected="_page" SelectedChanged="@(async p => { _page = p; await LoadAsync(); })" />
+                        </MudStack>
+                    }
+                }
+            </MudCardContent>
+        </MudCard>
+
+        <!-- PO Detail View -->
+        @if (_detail is not null)
+        {
+            <MudCard Elevation="1" Class="mt-3">
+                <MudCardContent>
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3">
+                        <MudText Typo="Typo.h6" Class="flex-grow-1">@_detail.PoNumber — Details</MudText>
+                        <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="@(() => _detail = null)" />
+                    </MudStack>
+                    <MudGrid Spacing="2">
+                        <MudItem xs="6" sm="3">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Date</MudText>
+                            <MudText Typo="Typo.body2">@_detail.PoDate.ToString("MMMM dd, yyyy")</MudText>
+                        </MudItem>
+                        <MudItem xs="6" sm="3">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Supplier</MudText>
+                            <MudText Typo="Typo.body2">@_detail.SupplierName</MudText>
+                            <MudText Typo="Typo.caption">@_detail.SupplierAddress</MudText>
+                        </MudItem>
+                        <MudItem xs="6" sm="3">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Place of Delivery</MudText>
+                            <MudText Typo="Typo.body2">@_detail.PlaceOfDelivery</MudText>
+                        </MudItem>
+                        <MudItem xs="6" sm="3">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Payment Term</MudText>
+                            <MudText Typo="Typo.body2">@_detail.PaymentTerm</MudText>
+                        </MudItem>
+                    </MudGrid>
+                    <MudDivider Class="my-3" />
+                    <MudSimpleTable Dense="true">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Stock No.</th>
+                                <th>Description</th>
+                                <th>Unit</th>
+                                <th style="text-align:right">Qty</th>
+                                <th style="text-align:right">Unit Cost</th>
+                                <th style="text-align:right">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var li in _detail.LineItems)
+                            {
+                                <tr>
+                                    <td>@li.ItemNo</td>
+                                    <td>@(li.StockNumber ?? "—")</td>
+                                    <td>@li.Description</td>
+                                    <td>@li.Unit</td>
+                                    <td style="text-align:right">@li.Quantity.ToString("N2")</td>
+                                    <td style="text-align:right">₱@li.UnitCost.ToString("N2")</td>
+                                    <td style="text-align:right">₱@li.Amount.ToString("N2")</td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="6" style="text-align:right"><b>Total Amount:</b></td>
+                                <td style="text-align:right"><b>₱@_detail.TotalAmount.ToString("N2")</b></td>
+                            </tr>
+                        </tfoot>
+                    </MudSimpleTable>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2">@_detail.TotalAmountInWords</MudText>
+                </MudCardContent>
+            </MudCard>
+        }
+    </MudItem>
+</MudGrid>
+
+@code {
+    private List<PurchaseOrderSummaryDto> _items = [];
+    private PurchaseOrderDto? _editing, _detail;
+    private PoForm _form = new();
+    private bool _busy, _loaded;
+    private string _keyword = string.Empty;
+    private string _statusFilter = "All";
+    private int _page = 1, _pageSize = 15, _totalCount;
+
+    private static readonly string[] _statusFilters = ["All", "Draft", "Issued", "PartiallyDelivered", "Fulfilled", "Cancelled"];
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loaded = false;
+        try
+        {
+            PurchaseOrderStatus? filter = _statusFilter == "All" ? null : Enum.Parse<PurchaseOrderStatus>(_statusFilter);
+            var result = await Client.SearchAsync(_keyword, filter, _page, _pageSize);
+            _items = result.Items?.ToList() ?? [];
+            _totalCount = (int)result.TotalCount;
+        }
+        catch (Exception ex) { Snackbar.Add($"Load failed: {ex.Message}", Severity.Error); }
+        finally { _loaded = true; }
+    }
+
+    private async Task SetStatusFilter(string s) { _statusFilter = s; _page = 1; await LoadAsync(); }
+
+    private async Task SaveAsync()
+    {
+        if (!IsFormValid()) { Snackbar.Add("Fill in all required fields and at least one line item.", Severity.Warning); return; }
+        _busy = true;
+        try
+        {
+            var lineItems = _form.LineItems
+                .Select(li => new PurchaseOrderLineItemRequest(li.StockNumber, li.Unit, li.Description, li.Quantity, li.UnitCost))
+                .ToList();
+
+            if (_editing is null)
+            {
+                await Client.CreateAsync(new PurchaseOrderContracts.CreatePurchaseOrderCommand(
+                    Guid.Parse(_form.PurchaseRequestId),
+                    string.IsNullOrWhiteSpace(_form.CanvassRequestId) ? null : Guid.Parse(_form.CanvassRequestId),
+                    Guid.NewGuid(), // SupplierId placeholder — use master data lookup in production
+                    _form.SupplierName, _form.SupplierAddress, _form.SupplierTin,
+                    _form.ModeOfProcurement, _form.PlaceOfDelivery,
+                    ToDateOnly(_form.DateOfDeliveryNullable),
+                    _form.DeliveryTerm, _form.PaymentTerm, _form.FundCluster, _form.OursBursNumber, lineItems));
+                Snackbar.Add("Purchase order created.", Severity.Success);
+            }
+            else
+            {
+                await Client.UpdateAsync(_editing.Id, new UpdatePurchaseOrderCommand(
+                    _editing.Id,
+                    _editing.SupplierId,
+                    _form.SupplierName, _form.SupplierAddress, _form.SupplierTin,
+                    _form.ModeOfProcurement, _form.PlaceOfDelivery,
+                    ToDateOnly(_form.DateOfDeliveryNullable),
+                    _form.DeliveryTerm, _form.PaymentTerm, _form.FundCluster, _form.OursBursNumber, lineItems));
+                Snackbar.Add("Purchase order updated.", Severity.Success);
+            }
+            ResetForm();
+            await LoadAsync();
+        }
+        catch (Exception ex) { Snackbar.Add($"Save failed: {ex.Message}", Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    private async Task BeginEdit(Guid id)
+    {
+        var po = await Client.GetAsync(id);
+        if (po is null) { Snackbar.Add("PO not found.", Severity.Error); return; }
+        _editing = po;
+        _form = new PoForm
+        {
+            PurchaseRequestId = po.PurchaseRequestId.ToString(),
+            CanvassRequestId = po.CanvassRequestId?.ToString(),
+            SupplierName = po.SupplierName,
+            SupplierAddress = po.SupplierAddress,
+            SupplierTin = po.SupplierTin,
+            ModeOfProcurement = po.ModeOfProcurement,
+            PlaceOfDelivery = po.PlaceOfDelivery,
+            DateOfDeliveryNullable = po.DateOfDelivery?.ToDateTime(TimeOnly.MinValue),
+            DeliveryTerm = po.DeliveryTerm,
+            PaymentTerm = po.PaymentTerm,
+            FundCluster = po.FundCluster,
+            OursBursNumber = po.OursBursNumber,
+            LineItems = po.LineItems.Select(li => new PoLineItemRow
+            {
+                StockNumber = li.StockNumber,
+                Unit = li.Unit,
+                Description = li.Description,
+                Quantity = li.Quantity,
+                UnitCost = li.UnitCost
+            }).ToList()
+        };
+    }
+
+    private async Task IssueAsync(Guid id)
+    {
+        var ok = await DialogService.ShowMessageBox("Issue Purchase Order", "Issue this PO? It will be sent to the supplier.", "Issue", cancelText: "Cancel");
+        if (ok is not true) return;
+        _busy = true;
+        try { await Client.IssueAsync(id); Snackbar.Add("Purchase order issued.", Severity.Success); await LoadAsync(); }
+        catch (Exception ex) { Snackbar.Add($"Issue failed: {ex.Message}", Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    private async Task CancelPoAsync(Guid id)
+    {
+        var ok = await DialogService.ShowMessageBox("Cancel PO", "Cancel this purchase order?", "Yes, Cancel", cancelText: "No");
+        if (ok is not true) return;
+        _busy = true;
+        try { await Client.CancelAsync(id); Snackbar.Add("Purchase order cancelled.", Severity.Info); await LoadAsync(); }
+        catch (Exception ex) { Snackbar.Add($"Cancel failed: {ex.Message}", Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    private async Task ViewDetailsAsync(Guid id)
+    {
+        _detail = await Client.GetAsync(id);
+    }
+
+    private void AddLineItem() => _form.LineItems.Add(new());
+    private void RemoveLineItem(int idx) { if (_form.LineItems.Count > 1) _form.LineItems.RemoveAt(idx); }
+    private void CancelEdit() { _editing = null; _form = new(); }
+    private void ResetForm() { _editing = null; _form = new(); }
+
+    private bool IsFormValid() =>
+        Guid.TryParse(_form.PurchaseRequestId, out _) &&
+        !string.IsNullOrWhiteSpace(_form.SupplierName) &&
+        !string.IsNullOrWhiteSpace(_form.PlaceOfDelivery) &&
+        !string.IsNullOrWhiteSpace(_form.DeliveryTerm) &&
+        !string.IsNullOrWhiteSpace(_form.PaymentTerm) &&
+        _form.LineItems.Any(li => !string.IsNullOrWhiteSpace(li.Description));
+
+    private static DateOnly? ToDateOnly(DateTime? d) => d.HasValue ? DateOnly.FromDateTime(d.Value) : null;
+
+    private static RenderFragment PoStatusChip(PurchaseOrderStatus status) => __builder =>
+    {
+        var (color, icon) = status switch
+        {
+            PurchaseOrderStatus.Draft => (Color.Default, Icons.Material.Filled.Edit),
+            PurchaseOrderStatus.Issued => (Color.Info, Icons.Material.Filled.Send),
+            PurchaseOrderStatus.PartiallyDelivered => (Color.Warning, Icons.Material.Filled.LocalShipping),
+            PurchaseOrderStatus.Fulfilled => (Color.Success, Icons.Material.Filled.CheckCircle),
+            PurchaseOrderStatus.Cancelled => (Color.Error, Icons.Material.Filled.Cancel),
+            _ => (Color.Default, Icons.Material.Filled.Help)
+        };
+        __builder.OpenComponent<MudChip<string>>(0);
+        __builder.AddAttribute(1, "Size", Size.Small);
+        __builder.AddAttribute(2, "Color", color);
+        __builder.AddAttribute(3, "Icon", icon);
+        __builder.AddAttribute(4, "ChildContent", (RenderFragment)(b => b.AddContent(0, status.ToString())));
+        __builder.CloseComponent();
+    };
+
+    private sealed class PoForm
+    {
+        public string PurchaseRequestId { get; set; } = string.Empty;
+        public string? CanvassRequestId { get; set; }
+        public string SupplierName { get; set; } = string.Empty;
+        public string SupplierAddress { get; set; } = string.Empty;
+        public string? SupplierTin { get; set; }
+        public ModeOfProcurement ModeOfProcurement { get; set; } = ModeOfProcurement.SmallValueProcurement;
+        public string PlaceOfDelivery { get; set; } = string.Empty;
+        public DateTime? DateOfDeliveryNullable { get; set; }
+        public string DeliveryTerm { get; set; } = "30 days";
+        public string PaymentTerm { get; set; } = "30 days";
+        public string? FundCluster { get; set; }
+        public string? OursBursNumber { get; set; }
+        public List<PoLineItemRow> LineItems { get; set; } = [new()];
+    }
+
+    private sealed class PoLineItemRow
+    {
+        public string? StockNumber { get; set; }
+        public string Unit { get; set; } = "pc";
+        public string Description { get; set; } = string.Empty;
+        public decimal Quantity { get; set; } = 1;
+        public decimal UnitCost { get; set; }
+    }
+}

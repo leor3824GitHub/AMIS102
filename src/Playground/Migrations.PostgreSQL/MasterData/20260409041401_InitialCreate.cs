@@ -15,6 +15,29 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
                 name: "employee");
 
             migrationBuilder.CreateTable(
+                name: "CapitalizationThresholds",
+                schema: "employee",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    CircularName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    CapitalizationAmount = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
+                    SemiExpendableLowValueThreshold = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
+                    EffectivityDate = table.Column<DateOnly>(type: "date", nullable: false),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    CreatedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    LastModifiedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    LastModifiedBy = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CapitalizationThresholds", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Categories",
                 schema: "employee",
                 columns: table => new
@@ -272,6 +295,18 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
                 });
 
             migrationBuilder.CreateIndex(
+                name: "IX_CapitalizationThresholds_TenantId",
+                schema: "employee",
+                table: "CapitalizationThresholds",
+                column: "TenantId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CapitalizationThresholds_TenantId_IsActive",
+                schema: "employee",
+                table: "CapitalizationThresholds",
+                columns: new[] { "TenantId", "IsActive" });
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Categories_Code",
                 schema: "employee",
                 table: "Categories",
@@ -429,6 +464,10 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "CapitalizationThresholds",
+                schema: "employee");
+
             migrationBuilder.DropTable(
                 name: "Categories",
                 schema: "employee");

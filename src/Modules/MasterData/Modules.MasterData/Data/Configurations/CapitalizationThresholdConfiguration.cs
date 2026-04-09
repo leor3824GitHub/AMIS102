@@ -20,5 +20,8 @@ public sealed class CapitalizationThresholdConfiguration : IEntityTypeConfigurat
         builder.Property(x => x.SemiExpendableLowValueThreshold).HasColumnType("numeric(18,2)").IsRequired();
         builder.Property(x => x.EffectivityDate).IsRequired();
         builder.Property(x => x.IsActive).IsRequired();
+
+        builder.HasIndex(x => x.TenantId);
+        builder.HasIndex(x => new { x.TenantId, x.IsActive });
     }
 }

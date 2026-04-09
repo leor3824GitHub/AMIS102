@@ -1,0 +1,382 @@
+@page "/procurement/canvass-requests"
+@using FSH.Modules.ProcurementAcquisition.Contracts.v1.Canvass
+@using FSH.Framework.Shared.Persistence
+@using FSH.Playground.Blazor.ApiClient
+@inject ICanvassRequestClient Client
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<FshPageHeader Title="Canvass Requests (RIV)" Description="Request for Issuance of Voucher — manage supplier quotations and award" />
+
+<MudGrid Spacing="3">
+    <!-- Create Form -->
+    <MudItem xs="12" md="4">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                <MudText Typo="Typo.h6" Class="mb-3">New Canvass Request</MudText>
+                <MudStack Spacing="2">
+                    <MudTextField @bind-Value="_prId" Label="Purchase Request ID (GUID)"
+                                  Variant="Variant.Outlined" Required="true" />
+                    <MudDatePicker @bind-Date="_returnDeadlineNullable" Label="Return Deadline"
+                                   Variant="Variant.Outlined" Required="true" DateFormat="MM/dd/yyyy" />
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                               OnClick="CreateAsync" Disabled="_busy">
+                        @if (_busy) { <MudProgressCircular Size="Size.Small" Class="mr-1" Indeterminate="true" /> }
+                        Create Canvass Request
+                    </MudButton>
+                </MudStack>
+            </MudCardContent>
+        </MudCard>
+
+        <!-- Add Quotation Panel (shows when a request is selected) -->
+        @if (_selected is not null)
+        {
+            <MudCard Elevation="1" Class="mt-3">
+                <MudCardContent>
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
+                        <MudText Typo="Typo.h6" Class="flex-grow-1">Add Quotation</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">@_selected.RivNumber</MudText>
+                    </MudStack>
+                    <MudStack Spacing="2">
+                        <MudTextField @bind-Value="_qForm.SupplierName" Label="Supplier Name" Variant="Variant.Outlined" Required="true" />
+                        <MudTextField @bind-Value="_qForm.SupplierAddress" Label="Supplier Address" Variant="Variant.Outlined" Required="true" />
+                        <MudTextField @bind-Value="_qForm.TinNumber" Label="TIN (optional)" Variant="Variant.Outlined" />
+                        <MudDatePicker @bind-Date="_qForm.QuotationDateNullable" Label="Quotation Date" Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" Required="true" />
+                        <MudTextField @bind-Value="_qForm.DeliveryTerms" Label="Delivery Terms" Variant="Variant.Outlined" />
+
+                        <MudText Typo="Typo.subtitle2" Class="mt-1">Quoted Items</MudText>
+                        @for (var i = 0; i < _qForm.LineItems.Count; i++)
+                        {
+                            var idx = i;
+                            var li = _qForm.LineItems[idx];
+                            <MudPaper Outlined="true" Class="pa-2">
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Class="mb-1">
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">Item @(idx + 1)</MudText>
+                                    <MudSpacer />
+                                    <MudIconButton Icon="@Icons.Material.Filled.Remove" Size="Size.Small" Color="Color.Error"
+                                                   OnClick="@(() => RemoveQLineItem(idx))" />
+                                </MudStack>
+                                <MudGrid Spacing="1">
+                                    <MudItem xs="12">
+                                        <MudTextField @bind-Value="li.Description" Label="Description" Variant="Variant.Outlined" Dense="true" />
+                                    </MudItem>
+                                    <MudItem xs="4">
+                                        <MudNumericField @bind-Value="li.Quantity" Label="Qty" Variant="Variant.Outlined" Dense="true" Min="0.01m" />
+                                    </MudItem>
+                                    <MudItem xs="4">
+                                        <MudTextField @bind-Value="li.Unit" Label="Unit" Variant="Variant.Outlined" Dense="true" />
+                                    </MudItem>
+                                    <MudItem xs="4">
+                                        <MudNumericField @bind-Value="li.UnitPrice" Label="Unit Price" Variant="Variant.Outlined" Dense="true" Min="0m" />
+                                    </MudItem>
+                                </MudGrid>
+                            </MudPaper>
+                        }
+                        <MudButton StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Text" Size="Size.Small"
+                                   OnClick="AddQLineItem" Color="Color.Primary">Add Item</MudButton>
+
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                                   OnClick="AddQuotationAsync" Disabled="_busy">
+                            Submit Quotation
+                        </MudButton>
+                        <MudButton Variant="Variant.Text" FullWidth="true" OnClick="@(() => _selected = null)">
+                            Deselect Request
+                        </MudButton>
+                    </MudStack>
+                </MudCardContent>
+            </MudCard>
+        }
+    </MudItem>
+
+    <!-- List Panel -->
+    <MudItem xs="12" md="8">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
+                    <MudText Typo="Typo.h6" Class="flex-grow-1">Canvass Requests</MudText>
+                    <MudTextField @bind-Value="_keyword" Label="Search" Variant="Variant.Outlined" Size="Size.Small"
+                                  Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
+                                  Style="max-width:220px" DebounceInterval="400"
+                                  OnDebounceIntervalElapsed="@(async () => await LoadAsync())" />
+                </MudStack>
+
+                <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap" Class="mb-3">
+                    @foreach (var s in _statusFilters)
+                    {
+                        <MudChip T="string" Size="Size.Small"
+                                 Color="@(_statusFilter == s ? Color.Primary : Color.Default)"
+                                 OnClick="@(() => SetStatusFilter(s))">@s</MudChip>
+                    }
+                </MudStack>
+
+                @if (!_loaded)
+                {
+                    <MudProgressLinear Indeterminate="true" />
+                }
+                else if (_items.Count == 0)
+                {
+                    <MudAlert Severity="Severity.Info">No canvass requests found.</MudAlert>
+                }
+                else
+                {
+                    <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                        <thead>
+                            <tr>
+                                <th>RIV #</th>
+                                <th>PR #</th>
+                                <th>Deadline</th>
+                                <th>Quotations</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in _items)
+                            {
+                                var isSelected = _selected?.Id == item.Id;
+                                <tr style="@(isSelected ? "background:var(--mud-palette-primary-lighten)" : "")">
+                                    <td><b>@item.RivNumber</b></td>
+                                    <td>@item.PrNumber</td>
+                                    <td>@item.ReturnDeadline.ToString("MM/dd/yyyy")</td>
+                                    <td>@item.QuotationCount</td>
+                                    <td>@CanvassStatusChip(item.Status)</td>
+                                    <td>
+                                        <MudStack Row="true" Spacing="0">
+                                            <MudTooltip Text="Manage Quotations">
+                                                <MudIconButton Icon="@Icons.Material.Filled.RequestQuote" Size="Size.Small"
+                                                               Color="Color.Primary"
+                                                               OnClick="@(async () => await SelectCanvass(item.Id))" />
+                                            </MudTooltip>
+                                            @if (item.Status == CanvassRequestStatus.Open && item.QuotationCount > 0)
+                                            {
+                                                <MudTooltip Text="Award to Supplier">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.EmojiEvents" Size="Size.Small"
+                                                                   Color="Color.Success"
+                                                                   OnClick="@(async () => await AwardAsync(item.Id))" />
+                                                </MudTooltip>
+                                            }
+                                        </MudStack>
+                                    </td>
+                                </tr>
+                                <!-- Inline quotation list if selected -->
+                                @if (isSelected && _selectedDetail is not null)
+                                {
+                                    <tr>
+                                        <td colspan="6">
+                                            <MudPaper Outlined="true" Class="pa-3 ma-1">
+                                                <MudText Typo="Typo.subtitle2" Class="mb-2">Quotations for @_selectedDetail.RivNumber</MudText>
+                                                @if (_selectedDetail.Quotations.Count == 0)
+                                                {
+                                                    <MudText Typo="Typo.body2" Color="Color.Secondary">No quotations yet. Add one using the form on the left.</MudText>
+                                                }
+                                                else
+                                                {
+                                                    <MudSimpleTable Dense="true" Hover="true">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Supplier</th>
+                                                                <th>Date</th>
+                                                                <th style="text-align:right">Total</th>
+                                                                <th>Terms</th>
+                                                                <th>Awarded</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @foreach (var q in _selectedDetail.Quotations)
+                                                            {
+                                                                <tr>
+                                                                    <td>
+                                                                        <MudText Typo="Typo.body2"><b>@q.SupplierName</b></MudText>
+                                                                        <MudText Typo="Typo.caption" Color="Color.Secondary">@q.SupplierAddress</MudText>
+                                                                    </td>
+                                                                    <td>@q.QuotationDate.ToString("MM/dd/yyyy")</td>
+                                                                    <td style="text-align:right">₱@q.LineItems.Sum(li => li.Total).ToString("N2")</td>
+                                                                    <td>@(q.DeliveryTerms ?? "—")</td>
+                                                                    <td>
+                                                                        @if (q.IsAwarded)
+                                                                        {
+                                                                            <MudChip T="string" Size="Size.Small" Color="Color.Success" Icon="@Icons.Material.Filled.Star">Awarded</MudChip>
+                                                                        }
+                                                                        else if (_selectedDetail.Status == CanvassRequestStatus.Open)
+                                                                        {
+                                                                            <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Success"
+                                                                                       OnClick="@(async () => await AwardToQuotation(_selectedDetail.Id, q.Id))">
+                                                                                Award
+                                                                            </MudButton>
+                                                                        }
+                                                                    </td>
+                                                                </tr>
+                                                            }
+                                                        </tbody>
+                                                    </MudSimpleTable>
+                                                }
+                                            </MudPaper>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </MudSimpleTable>
+
+                    @if (_totalCount > _pageSize)
+                    {
+                        <MudStack Row="true" JustifyContent="JustifyContent.Center" Class="mt-3">
+                            <MudPagination Count="@((_totalCount + _pageSize - 1) / _pageSize)"
+                                           Selected="_page" SelectedChanged="@(async p => { _page = p; await LoadAsync(); })" />
+                        </MudStack>
+                    }
+                }
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private List<CanvassRequestSummaryDto> _items = [];
+    private CanvassRequestDto? _selected, _selectedDetail;
+    private QuotationForm _qForm = new();
+    private string _prId = string.Empty;
+    private DateTime? _returnDeadlineNullable;
+    private bool _busy, _loaded;
+    private string _keyword = string.Empty;
+    private string _statusFilter = "All";
+    private int _page = 1, _pageSize = 15, _totalCount;
+
+    private static readonly string[] _statusFilters = ["All", "Open", "Evaluated", "Awarded", "Cancelled"];
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loaded = false;
+        try
+        {
+            CanvassRequestStatus? filter = _statusFilter == "All" ? null : Enum.Parse<CanvassRequestStatus>(_statusFilter);
+            var result = await Client.SearchAsync(_keyword, filter, _page, _pageSize);
+            _items = result.Items?.ToList() ?? [];
+            _totalCount = (int)result.TotalCount;
+        }
+        catch (Exception ex) { Snackbar.Add($"Load failed: {ex.Message}", Severity.Error); }
+        finally { _loaded = true; }
+    }
+
+    private async Task SetStatusFilter(string s) { _statusFilter = s; _page = 1; await LoadAsync(); }
+
+    private async Task CreateAsync()
+    {
+        if (!Guid.TryParse(_prId, out var prGuid) || !_returnDeadlineNullable.HasValue)
+        {
+            Snackbar.Add("Enter a valid PR ID and return deadline.", Severity.Warning);
+            return;
+        }
+        _busy = true;
+        try
+        {
+            await Client.CreateAsync(new CreateCanvassRequestCommand(prGuid, DateOnly.FromDateTime(_returnDeadlineNullable.Value)));
+            Snackbar.Add("Canvass request created.", Severity.Success);
+            _prId = string.Empty; _returnDeadlineNullable = null;
+            await LoadAsync();
+        }
+        catch (Exception ex) { Snackbar.Add($"Failed: {ex.Message}", Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    private async Task SelectCanvass(Guid id)
+    {
+        var detail = await Client.GetAsync(id);
+        if (detail is null) { Snackbar.Add("Canvass request not found.", Severity.Error); return; }
+        _selected = detail;
+        _selectedDetail = detail;
+        _qForm = new();
+    }
+
+    private async Task AddQuotationAsync()
+    {
+        if (_selected is null || string.IsNullOrWhiteSpace(_qForm.SupplierName) || !_qForm.QuotationDateNullable.HasValue)
+        {
+            Snackbar.Add("Fill in supplier name and quotation date.", Severity.Warning);
+            return;
+        }
+        _busy = true;
+        try
+        {
+            var lineItems = _qForm.LineItems
+                .Select(li => new AddQuotationLineItemRequest(li.Description, li.Unit, li.Quantity, li.UnitPrice))
+                .ToList();
+            await Client.AddQuotationAsync(_selected.Id, new AddQuotationCommand(
+                _selected.Id, Guid.NewGuid(), _qForm.SupplierName, _qForm.SupplierAddress ?? string.Empty,
+                _qForm.TinNumber, DateOnly.FromDateTime(_qForm.QuotationDateNullable!.Value),
+                _qForm.DeliveryTerms, lineItems));
+            Snackbar.Add("Quotation added.", Severity.Success);
+            _qForm = new();
+            await SelectCanvass(_selected.Id);
+            await LoadAsync();
+        }
+        catch (Exception ex) { Snackbar.Add($"Failed: {ex.Message}", Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    private async Task AwardAsync(Guid canvassId)
+    {
+        var detail = await Client.GetAsync(canvassId);
+        if (detail is null || detail.Quotations.Count == 0) { Snackbar.Add("No quotations to award.", Severity.Warning); return; }
+        // Award to the lowest-priced quotation
+        var lowest = detail.Quotations.OrderBy(q => q.LineItems.Sum(li => li.Total)).First();
+        await AwardToQuotation(canvassId, lowest.Id);
+    }
+
+    private async Task AwardToQuotation(Guid canvassId, Guid quotationId)
+    {
+        var ok = await DialogService.ShowMessageBox("Award Canvass", "Award this canvass to the selected supplier?", "Award", cancelText: "Cancel");
+        if (ok is not true) return;
+        _busy = true;
+        try
+        {
+            await Client.AwardAsync(canvassId, quotationId);
+            Snackbar.Add("Canvass awarded.", Severity.Success);
+            if (_selected?.Id == canvassId) await SelectCanvass(canvassId);
+            await LoadAsync();
+        }
+        catch (Exception ex) { Snackbar.Add($"Award failed: {ex.Message}", Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    private void AddQLineItem() => _qForm.LineItems.Add(new());
+    private void RemoveQLineItem(int idx) { if (_qForm.LineItems.Count > 1) _qForm.LineItems.RemoveAt(idx); }
+
+    private static RenderFragment CanvassStatusChip(CanvassRequestStatus status) => __builder =>
+    {
+        var (color, icon) = status switch
+        {
+            CanvassRequestStatus.Open => (Color.Info, Icons.Material.Filled.HourglassTop),
+            CanvassRequestStatus.Evaluated => (Color.Warning, Icons.Material.Filled.Assessment),
+            CanvassRequestStatus.Awarded => (Color.Success, Icons.Material.Filled.EmojiEvents),
+            CanvassRequestStatus.Cancelled => (Color.Error, Icons.Material.Filled.Cancel),
+            _ => (Color.Default, Icons.Material.Filled.Help)
+        };
+        __builder.OpenComponent<MudChip<string>>(0);
+        __builder.AddAttribute(1, "Size", Size.Small);
+        __builder.AddAttribute(2, "Color", color);
+        __builder.AddAttribute(3, "Icon", icon);
+        __builder.AddAttribute(4, "ChildContent", (RenderFragment)(b => b.AddContent(0, status.ToString())));
+        __builder.CloseComponent();
+    };
+
+    private sealed class QuotationForm
+    {
+        public string SupplierName { get; set; } = string.Empty;
+        public string? SupplierAddress { get; set; }
+        public string? TinNumber { get; set; }
+        public DateTime? QuotationDateNullable { get; set; } = DateTime.Today;
+        public string? DeliveryTerms { get; set; }
+        public List<QLineItemRow> LineItems { get; set; } = [new()];
+    }
+
+    private sealed class QLineItemRow
+    {
+        public string Description { get; set; } = string.Empty;
+        public string Unit { get; set; } = "pc";
+        public decimal Quantity { get; set; } = 1;
+        public decimal UnitPrice { get; set; }
+    }
+}

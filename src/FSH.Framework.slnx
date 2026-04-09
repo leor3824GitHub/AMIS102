@@ -29,6 +29,10 @@
     <Project Path="Modules/Vehicle/Modules.Vehicle.Contracts/Modules.Vehicle.Contracts.csproj" />
     <Project Path="Modules/Vehicle/Modules.Vehicle/Modules.Vehicle.csproj" />
   </Folder>
+  <Folder Name="/Modules/ProcurementAcquisition/">
+    <Project Path="Modules/ProcurementAcquisition/Modules.ProcurementAcquisition.Contracts/Modules.ProcurementAcquisition.Contracts.csproj" />
+    <Project Path="Modules/ProcurementAcquisition/Modules.ProcurementAcquisition/Modules.ProcurementAcquisition.csproj" />
+  </Folder>
   <Folder Name="/Modules/Identity/">
     <Project Path="Modules/Identity/Modules.Identity.Contracts/Modules.Identity.Contracts.csproj" />
     <Project Path="Modules/Identity/Modules.Identity/Modules.Identity.csproj" Id="ebeb33cd-9cce-41b0-9bbc-43988dae9a46" />

@@ -74,6 +74,18 @@
             </MudNavLink>
         </MudNavGroup>
 
+        <MudNavGroup Title="Procurement" Icon="@Icons.Material.Outlined.ShoppingBag" @bind-Expanded="_procurementExpanded">
+            <MudNavLink Href="/procurement/purchase-requests" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Description">
+                Purchase Requests
+            </MudNavLink>
+            <MudNavLink Href="/procurement/canvass-requests" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.RequestQuote">
+                Canvass (RIV)
+            </MudNavLink>
+            <MudNavLink Href="/procurement/purchase-orders" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Receipt">
+                Purchase Orders
+            </MudNavLink>
+        </MudNavGroup>
+
         <MudNavGroup Title="Vehicle" Icon="@Icons.Material.Outlined.DirectionsCar" @bind-Expanded="_vehicleExpanded">
             <MudNavLink Href="/vehicle/vehicles" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.DirectionsCarFilled">
                 Vehicles
@@ -181,12 +193,14 @@
     private bool _expendableExpanded;
     private bool _vehicleExpanded;
     private bool _masterDataExpanded;
+    private bool _procurementExpanded;
 
     protected override async Task OnInitializedAsync()
     {
         var uri = Navigation.Uri;
         _expendableExpanded = uri.Contains("/expendable", StringComparison.OrdinalIgnoreCase);
         _vehicleExpanded = uri.Contains("/vehicle", StringComparison.OrdinalIgnoreCase);
+        _procurementExpanded = uri.Contains("/procurement", StringComparison.OrdinalIgnoreCase);
         _masterDataExpanded = uri.Contains("/master-data", StringComparison.OrdinalIgnoreCase)
                            || uri.Contains("/masterdata", StringComparison.OrdinalIgnoreCase);
         await CheckRootTenantAdmin();

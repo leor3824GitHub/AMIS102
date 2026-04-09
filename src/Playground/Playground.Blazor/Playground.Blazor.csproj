@@ -30,6 +30,7 @@
     <ProjectReference Include="..\..\Modules\MasterData\Modules.MasterData.Contracts\Modules.MasterData.Contracts.csproj" />
     <ProjectReference Include="..\..\Modules\Expendable\Modules.Expendable.Contracts\Modules.Expendable.Contracts.csproj" />
     <ProjectReference Include="..\..\Modules\Vehicle\Modules.Vehicle.Contracts\Modules.Vehicle.Contracts.csproj" />
+    <ProjectReference Include="..\..\Modules\ProcurementAcquisition\Modules.ProcurementAcquisition.Contracts\Modules.ProcurementAcquisition.Contracts.csproj" />
   </ItemGroup>
 
   <ItemGroup>
