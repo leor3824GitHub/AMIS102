@@ -80,5 +80,11 @@ public static class MasterDataModuleConstants
             public const string View = "Permissions.MasterData.OrganizationProfile.View";
             public const string Manage = "Permissions.MasterData.OrganizationProfile.Manage";
         }
+
+        public static class CapitalizationThresholds
+        {
+            public const string View = "Permissions.MasterData.CapitalizationThresholds.View";
+            public const string Manage = "Permissions.MasterData.CapitalizationThresholds.Manage";
+        }
     }
 }

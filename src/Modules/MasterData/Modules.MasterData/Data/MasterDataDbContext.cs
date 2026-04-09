@@ -21,6 +21,7 @@ public class MasterDataDbContext : BaseDbContext
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<ReportSignatory> ReportSignatories => Set<ReportSignatory>();
     public DbSet<OrganizationProfile> OrganizationProfiles => Set<OrganizationProfile>();
+    public DbSet<CapitalizationThreshold> CapitalizationThresholds => Set<CapitalizationThreshold>();
 
     public MasterDataDbContext(
         IMultiTenantContextAccessor<AppTenantInfo> multiTenantContextAccessor,

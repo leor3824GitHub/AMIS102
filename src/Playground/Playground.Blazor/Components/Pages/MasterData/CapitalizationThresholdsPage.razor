@@ -1,0 +1,368 @@
+@page "/master-data/capitalization-thresholds"
+@using FSH.Modules.MasterData.Contracts.v1.CapitalizationThresholds
+@using FSH.Playground.Blazor.ApiClient
+@using MudBlazor
+@inject ICapitalizationThresholdClient Client
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<FshPageHeader Title="Capitalization Thresholds"
+               Description="COA circular-based thresholds that determine item classification: Expendable, Semi-Expendable, or PPE" />
+
+<!-- Active Threshold Summary Banner -->
+@if (_active is not null)
+{
+    <MudPaper Elevation="2" Class="pa-4 mb-4" Style="border-left: 4px solid var(--mud-palette-success);">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-2">
+            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" />
+            <MudText Typo="Typo.subtitle1"><b>Currently Active:</b> @_active.CircularName</MudText>
+            <MudSpacer />
+            <MudChip T="string" Color="Color.Success" Size="Size.Small" Icon="@Icons.Material.Filled.EventAvailable">
+                Effective @_active.EffectivityDate.ToString("MMMM dd, yyyy")
+            </MudChip>
+        </MudStack>
+        <MudGrid Spacing="2">
+            <MudItem xs="12" sm="4">
+                <MudPaper Outlined="true" Class="pa-3 text-center">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">EXPENDABLE</MudText>
+                    <MudText Typo="Typo.body2">Consumable items (any cost)</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Tertiary">→ RSMI on issuance</MudText>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" sm="4">
+                <MudPaper Outlined="true" Class="pa-3 text-center">
+                    <MudText Typo="Typo.caption" Color="Color.Warning">SEMI-EXPENDABLE</MudText>
+                    <MudText Typo="Typo.body2">
+                        Durable, cost &lt; <b>₱@_active.CapitalizationAmount.ToString("N2")</b>
+                    </MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Tertiary">
+                        Low-valued ≤ ₱@_active.SemiExpendableLowValueThreshold.ToString("N2") → ICS
+                    </MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Tertiary">
+                        High-valued > ₱@_active.SemiExpendableLowValueThreshold.ToString("N2") → ICS (enhanced accountability)
+                    </MudText>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" sm="4">
+                <MudPaper Outlined="true" Class="pa-3 text-center">
+                    <MudText Typo="Typo.caption" Color="Color.Error">PPE / FIXED ASSET</MudText>
+                    <MudText Typo="Typo.body2">
+                        Durable, cost ≥ <b>₱@_active.CapitalizationAmount.ToString("N2")</b>
+                    </MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Tertiary">→ PAR + depreciation schedule</MudText>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+}
+else if (_loaded)
+{
+    <MudAlert Severity="Severity.Warning" Class="mb-4">
+        No active threshold is set. Classification logic cannot run until one is activated.
+    </MudAlert>
+}
+
+<MudGrid Spacing="3">
+    <!-- Form -->
+    <MudItem xs="12" md="4">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                <MudText Typo="Typo.h6" Class="mb-3">
+                    @(_editing is null ? "Add New Circular" : "Edit Circular")
+                </MudText>
+                <MudStack Spacing="3">
+
+                    <MudTextField @bind-Value="_form.CircularName"
+                                  Label="Circular Name"
+                                  Variant="Variant.Outlined"
+                                  Required="true"
+                                  MaxLength="100"
+                                  CharacterCounter="true"
+                                  Placeholder="e.g. COA Circular No. 2022-004" />
+
+                    <MudTextField @bind-Value="_form.Description"
+                                  Label="Description"
+                                  Variant="Variant.Outlined"
+                                  Lines="3"
+                                  Required="true"
+                                  MaxLength="500"
+                                  CharacterCounter="true"
+                                  Placeholder="Subject of the circular..." />
+
+                    <MudNumericField @bind-Value="_form.CapitalizationAmount"
+                                     Label="Capitalization Threshold (PPE)"
+                                     Variant="Variant.Outlined"
+                                     Format="N2"
+                                     Adornment="Adornment.Start"
+                                     AdornmentText="₱"
+                                     Min="1"
+                                     Required="true"
+                                     HelperText="Items at or above this amount are capitalized as PPE" />
+
+                    <MudNumericField @bind-Value="_form.SemiExpendableLowValueThreshold"
+                                     Label="Semi-Expendable Low-Value Threshold"
+                                     Variant="Variant.Outlined"
+                                     Format="N2"
+                                     Adornment="Adornment.Start"
+                                     AdornmentText="₱"
+                                     Min="1"
+                                     Required="true"
+                                     HelperText="Items at or below this amount are low-valued semi-expendable (§4.8)" />
+
+                    <MudDatePicker @bind-Date="_form.EffectivityDateNullable"
+                                   Label="Effectivity Date"
+                                   Variant="Variant.Outlined"
+                                   Required="true"
+                                   DateFormat="MM/dd/yyyy"
+                                   HelperText="Date the circular takes effect" />
+
+                    <MudStack Row="true" Spacing="2">
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   FullWidth="true"
+                                   OnClick="SaveAsync"
+                                   Disabled="_busy || !IsFormValid">
+                            @if (_busy)
+                            {
+                                <MudProgressCircular Size="Size.Small" Class="mr-2" Indeterminate="true" />
+                            }
+                            @(_editing is null ? "Add" : "Save")
+                        </MudButton>
+                        @if (_editing is not null)
+                        {
+                            <MudButton Variant="Variant.Outlined"
+                                       Color="Color.Default"
+                                       FullWidth="true"
+                                       OnClick="CancelEdit">
+                                Cancel
+                            </MudButton>
+                        }
+                    </MudStack>
+                </MudStack>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    <!-- Table -->
+    <MudItem xs="12" md="8">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                <MudText Typo="Typo.h6" Class="mb-3">Circular History</MudText>
+
+                @if (!_loaded)
+                {
+                    <MudProgressLinear Indeterminate="true" />
+                }
+                else if (_thresholds.Count == 0)
+                {
+                    <MudAlert Severity="Severity.Info">No threshold records yet. Add the first one.</MudAlert>
+                }
+                else
+                {
+                    <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                        <thead>
+                            <tr>
+                                <th>Circular</th>
+                                <th style="text-align:right">PPE Threshold</th>
+                                <th style="text-align:right">Low-Value Limit</th>
+                                <th>Effectivity</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var t in _thresholds)
+                            {
+                                <tr>
+                                    <td>
+                                        <MudText Typo="Typo.body2"><b>@t.CircularName</b></MudText>
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary" Style="max-width:260px;white-space:normal">
+                                            @(t.Description.Length > 80 ? t.Description[..80] + "…" : t.Description)
+                                        </MudText>
+                                    </td>
+                                    <td style="text-align:right">₱@t.CapitalizationAmount.ToString("N2")</td>
+                                    <td style="text-align:right">₱@t.SemiExpendableLowValueThreshold.ToString("N2")</td>
+                                    <td>@t.EffectivityDate.ToString("MMM dd, yyyy")</td>
+                                    <td>
+                                        @if (t.IsActive)
+                                        {
+                                            <MudChip T="string" Color="Color.Success" Size="Size.Small"
+                                                     Icon="@Icons.Material.Filled.CheckCircle">Active</MudChip>
+                                        }
+                                        else
+                                        {
+                                            <MudChip T="string" Color="Color.Default" Size="Size.Small">Inactive</MudChip>
+                                        }
+                                    </td>
+                                    <td>
+                                        <MudStack Row="true" Spacing="0">
+                                            <MudTooltip Text="Edit">
+                                                <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                                               Size="Size.Small"
+                                                               Color="Color.Primary"
+                                                               OnClick="@(() => BeginEdit(t))" />
+                                            </MudTooltip>
+                                            @if (!t.IsActive)
+                                            {
+                                                <MudTooltip Text="Set as Active">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.TaskAlt"
+                                                                   Size="Size.Small"
+                                                                   Color="Color.Success"
+                                                                   OnClick="@(() => ConfirmSetActiveAsync(t))" />
+                                                </MudTooltip>
+                                            }
+                                        </MudStack>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </MudSimpleTable>
+                }
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private List<CapitalizationThresholdDto> _thresholds = [];
+    private CapitalizationThresholdDto? _active;
+    private CapitalizationThresholdDto? _editing;
+    private FormModel _form = new();
+    private bool _busy;
+    private bool _loaded;
+
+    private bool IsFormValid =>
+        !string.IsNullOrWhiteSpace(_form.CircularName) &&
+        !string.IsNullOrWhiteSpace(_form.Description) &&
+        _form.CapitalizationAmount > 0 &&
+        _form.SemiExpendableLowValueThreshold > 0 &&
+        _form.SemiExpendableLowValueThreshold < _form.CapitalizationAmount &&
+        _form.EffectivityDateNullable.HasValue;
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loaded = false;
+        try
+        {
+            _thresholds = (await Client.GetAllAsync()).ToList();
+            _active = _thresholds.FirstOrDefault(x => x.IsActive);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load thresholds: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loaded = true;
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        if (!IsFormValid) return;
+
+        _busy = true;
+        try
+        {
+            if (_editing is null)
+            {
+                var cmd = new CreateCapitalizationThresholdCommand(
+                    _form.CircularName.Trim(),
+                    _form.Description.Trim(),
+                    _form.CapitalizationAmount,
+                    _form.SemiExpendableLowValueThreshold,
+                    DateOnly.FromDateTime(_form.EffectivityDateNullable!.Value));
+
+                await Client.CreateAsync(cmd);
+                Snackbar.Add("Circular record added.", Severity.Success);
+            }
+            else
+            {
+                var cmd = new UpdateCapitalizationThresholdCommand(
+                    _editing.Id,
+                    _form.CircularName.Trim(),
+                    _form.Description.Trim(),
+                    _form.CapitalizationAmount,
+                    _form.SemiExpendableLowValueThreshold,
+                    DateOnly.FromDateTime(_form.EffectivityDateNullable!.Value));
+
+                await Client.UpdateAsync(_editing.Id, cmd);
+                Snackbar.Add("Circular record updated.", Severity.Success);
+            }
+
+            ResetForm();
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to save: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task ConfirmSetActiveAsync(CapitalizationThresholdDto threshold)
+    {
+        var result = await DialogService.ShowMessageBox(
+            "Activate Circular",
+            $"Set \"{threshold.CircularName}\" as the active capitalization threshold? This will deactivate the current one.",
+            yesText: "Activate",
+            cancelText: "Cancel");
+
+        if (result is not true) return;
+
+        _busy = true;
+        try
+        {
+            await Client.SetActiveAsync(threshold.Id);
+            Snackbar.Add($"{threshold.CircularName} is now active.", Severity.Success);
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to activate: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void BeginEdit(CapitalizationThresholdDto t)
+    {
+        _editing = t;
+        _form = new FormModel
+        {
+            CircularName = t.CircularName,
+            Description = t.Description,
+            CapitalizationAmount = t.CapitalizationAmount,
+            SemiExpendableLowValueThreshold = t.SemiExpendableLowValueThreshold,
+            EffectivityDateNullable = t.EffectivityDate.ToDateTime(TimeOnly.MinValue)
+        };
+    }
+
+    private void CancelEdit()
+    {
+        _editing = null;
+        _form = new();
+    }
+
+    private void ResetForm()
+    {
+        _editing = null;
+        _form = new();
+    }
+
+    private sealed class FormModel
+    {
+        public string CircularName { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public decimal CapitalizationAmount { get; set; } = 50_000m;
+        public decimal SemiExpendableLowValueThreshold { get; set; } = 5_000m;
+        public DateTime? EffectivityDateNullable { get; set; }
+    }
+}

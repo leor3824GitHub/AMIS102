@@ -212,6 +212,23 @@ internal sealed class MasterDataDbInitializer(
             await context.Categories.AddRangeAsync(categories, cancellationToken).ConfigureAwait(false);
         }
 
+        // Capitalization Thresholds
+        if (!await context.CapitalizationThresholds.AnyAsync(cancellationToken).ConfigureAwait(false))
+        {
+            var tenantId = context.TenantInfo?.Identifier ?? MultitenancyConstants.Root.Id;
+
+            var threshold = Domain.CapitalizationThreshold.Create(
+                tenantId,
+                circularName: "COA Circular No. 2022-004",
+                description: "Guidelines on the implementation of Section 23 of the General Provisions of RA No. 11639 (FY 2022 GAA) relative to the increase in the capitalization threshold from P15,000.00 to P50,000.00. Tangible items below P50,000.00 shall be accounted as semi-expendable property; P50,000.00 and above shall be capitalized as PPE. Semi-expendable property is further classified as low-valued (≤ P5,000.00) and high-valued (> P5,000.00 but < P50,000.00).",
+                capitalizationAmount: 50_000.00m,
+                semiExpendableLowValueThreshold: 5_000.00m,
+                effectivityDate: new DateOnly(2022, 6, 15));
+
+            threshold.Activate();
+            await context.CapitalizationThresholds.AddAsync(threshold, cancellationToken).ConfigureAwait(false);
+        }
+
         await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
         // EmployeeProfiles — spread across offices, departments, and positions

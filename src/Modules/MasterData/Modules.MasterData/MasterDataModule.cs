@@ -39,6 +39,11 @@ using FSH.Modules.MasterData.Features.v1.ReportSignatories.UpdateReportSignatory
 using FSH.Modules.MasterData.Features.v1.ReportSignatories.DeleteReportSignatory;
 using FSH.Modules.MasterData.Features.v1.OrganizationProfile.GetOrganizationProfile;
 using FSH.Modules.MasterData.Features.v1.OrganizationProfile.UpsertOrganizationProfile;
+using FSH.Modules.MasterData.Features.v1.CapitalizationThresholds.CreateCapitalizationThreshold;
+using FSH.Modules.MasterData.Features.v1.CapitalizationThresholds.GetActiveThreshold;
+using FSH.Modules.MasterData.Features.v1.CapitalizationThresholds.GetCapitalizationThresholds;
+using FSH.Modules.MasterData.Features.v1.CapitalizationThresholds.SetActiveThreshold;
+using FSH.Modules.MasterData.Features.v1.CapitalizationThresholds.UpdateCapitalizationThreshold;
 using FSH.Framework.Eventing;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -95,7 +100,10 @@ public class MasterDataModule : IModule
         new("Delete Report Signatories", "Delete", "MasterData.ReportSignatories"),
 
         new("View Organization Profile", "View", "MasterData.OrganizationProfile", IsBasic: true),
-        new("Manage Organization Profile", "Manage", "MasterData.OrganizationProfile")
+        new("Manage Organization Profile", "Manage", "MasterData.OrganizationProfile"),
+
+        new("View Capitalization Thresholds", "View", "MasterData.CapitalizationThresholds", IsBasic: true),
+        new("Manage Capitalization Thresholds", "Manage", "MasterData.CapitalizationThresholds")
     ];
 
     public void ConfigureServices(IHostApplicationBuilder builder)
@@ -135,6 +143,7 @@ public class MasterDataModule : IModule
         var categoriesGroup = moduleGroup.MapGroup("/categories");
         var reportSignatoriesGroup = moduleGroup.MapGroup("/report-signatories");
         var organizationProfileGroup = moduleGroup.MapGroup("/organization-profile");
+        var capitalizationThresholdsGroup = moduleGroup.MapGroup("/capitalization-thresholds");
 
         MasterDataLookupEndpoint.Map(lookupGroup);
         CreateEmployeeEndpoint.Map(employeesGroup);
@@ -172,6 +181,11 @@ public class MasterDataModule : IModule
         DeleteReportSignatoryEndpoint.Map(reportSignatoriesGroup);
         GetOrganizationProfileEndpoint.Map(organizationProfileGroup);
         UpsertOrganizationProfileEndpoint.Map(organizationProfileGroup);
+        GetCapitalizationThresholdsEndpoint.Map(capitalizationThresholdsGroup);
+        GetActiveThresholdEndpoint.Map(capitalizationThresholdsGroup);
+        CreateCapitalizationThresholdEndpoint.Map(capitalizationThresholdsGroup);
+        UpdateCapitalizationThresholdEndpoint.Map(capitalizationThresholdsGroup);
+        SetActiveThresholdEndpoint.Map(capitalizationThresholdsGroup);
     }
 }
 
