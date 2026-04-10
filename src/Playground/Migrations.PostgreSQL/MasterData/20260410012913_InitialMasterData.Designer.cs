@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FSH.Playground.Migrations.PostgreSQL.MasterData
 {
     [DbContext(typeof(MasterDataDbContext))]
-    [Migration("20260409041401_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20260410012913_InitialMasterData")]
+    partial class InitialMasterData
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -575,6 +575,11 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
                         .HasMaxLength(400)
                         .HasColumnType("character varying(400)");
 
+                    b.Property<string>("BusinessTaxType")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
                     b.Property<string>("Code")
                         .IsRequired()
                         .HasMaxLength(32)
@@ -626,6 +631,10 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
                     b.Property<string>("Phone")
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
+
+                    b.Property<string>("TinNo")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
 
                     b.Property<byte[]>("Version")
                         .IsConcurrencyToken()

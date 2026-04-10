@@ -572,6 +572,11 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
                         .HasMaxLength(400)
                         .HasColumnType("character varying(400)");
 
+                    b.Property<string>("BusinessTaxType")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
                     b.Property<string>("Code")
                         .IsRequired()
                         .HasMaxLength(32)
@@ -580,11 +585,6 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
                     b.Property<string>("ContactPerson")
                         .HasMaxLength(160)
                         .HasColumnType("character varying(160)");
-
-                    b.Property<string>("BusinessTaxType")
-                        .IsRequired()
-                        .HasMaxLength(16)
-                        .HasColumnType("character varying(16)");
 
                     b.Property<string>("CreatedBy")
                         .HasColumnType("text");

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace FSH.Playground.Migrations.PostgreSQL.MasterData
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class InitialMasterData : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -191,6 +191,8 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Code = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
                     Name = table.Column<string>(type: "character varying(160)", maxLength: 160, nullable: false),
+                    TinNo = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: true),
+                    BusinessTaxType = table.Column<string>(type: "character varying(16)", maxLength: 16, nullable: false),
                     Description = table.Column<string>(type: "character varying(400)", maxLength: 400, nullable: true),
                     ContactPerson = table.Column<string>(type: "character varying(160)", maxLength: 160, nullable: true),
                     Email = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),

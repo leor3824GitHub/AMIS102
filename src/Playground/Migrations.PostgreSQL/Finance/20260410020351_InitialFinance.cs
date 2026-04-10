@@ -3,10 +3,10 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace FSH.Playground.Migrations.PostgreSQL.Migrations
+namespace FSH.Playground.Migrations.PostgreSQL.Finance
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class InitialFinance : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

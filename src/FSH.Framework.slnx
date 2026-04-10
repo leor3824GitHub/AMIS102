@@ -37,6 +37,10 @@
     <Project Path="Modules/Finance/Modules.Finance.Contracts/Modules.Finance.Contracts.csproj" />
     <Project Path="Modules/Finance/Modules.Finance/Modules.Finance.csproj" />
   </Folder>
+  <Folder Name="/Modules/AssetManagement/">
+    <Project Path="Modules/AssetManagement/Modules.AssetManagement.Contracts/Modules.AssetManagement.Contracts.csproj" />
+    <Project Path="Modules/AssetManagement/Modules.AssetManagement/Modules.AssetManagement.csproj" />
+  </Folder>
   <Folder Name="/Modules/Identity/">
     <Project Path="Modules/Identity/Modules.Identity.Contracts/Modules.Identity.Contracts.csproj" />
     <Project Path="Modules/Identity/Modules.Identity/Modules.Identity.csproj" Id="ebeb33cd-9cce-41b0-9bbc-43988dae9a46" />

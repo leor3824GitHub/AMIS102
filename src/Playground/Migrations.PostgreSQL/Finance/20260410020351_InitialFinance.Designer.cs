@@ -9,11 +9,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace FSH.Playground.Migrations.PostgreSQL.Migrations
+namespace FSH.Playground.Migrations.PostgreSQL.Finance
 {
     [DbContext(typeof(FinanceDbContext))]
-    [Migration("20260409124912_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20260410020351_InitialFinance")]
+    partial class InitialFinance
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

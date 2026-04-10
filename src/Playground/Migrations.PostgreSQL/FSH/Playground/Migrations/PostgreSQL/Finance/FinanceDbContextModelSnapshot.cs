@@ -8,7 +8,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace FSH.Playground.Migrations.PostgreSQL.Migrations
+namespace FSH.Playground.Migrations.PostgreSQL.Finance
 {
     [DbContext(typeof(FinanceDbContext))]
     partial class FinanceDbContextModelSnapshot : ModelSnapshot

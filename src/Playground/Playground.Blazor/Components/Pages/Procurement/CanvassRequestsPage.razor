@@ -3,10 +3,9 @@
 @using FSH.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests
 @using FSH.Framework.Shared.Persistence
 @using FSH.Playground.Blazor.ApiClient
-@using FSH.Playground.Blazor.Services
 @inject ICanvassRequestClient Client
 @inject IPurchaseRequestClient PurchaseRequestClient
-@inject MasterDataService MasterDataService
+@inject IMaster_dataClient MasterDataClient
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 
@@ -52,10 +51,11 @@
                         <MudText Typo="Typo.caption" Color="Color.Secondary">@_selected.RivNumber</MudText>
                     </MudStack>
                     <MudStack Spacing="2">
-                        <MudAutocomplete T="string"
-                                         Value="_qForm.SupplierName"
-                                         ValueChanged="OnSupplierNameChanged"
+                        <MudAutocomplete T="SupplierDto"
+                                         Value="_selectedSupplier"
+                                         ValueChanged="OnSupplierChanged"
                                          SearchFunc="SearchSuppliers"
+                                         ToStringFunc="FormatSupplier"
                                          Label="Supplier Name"
                                          Variant="Variant.Outlined"
                                          Required="true"
@@ -266,7 +266,7 @@
     private string _keyword = string.Empty;
     private string _statusFilter = "All";
     private int _page = 1, _pageSize = 15, _totalCount;
-    private readonly Dictionary<string, SupplierDto> _supplierLookup = new(StringComparer.OrdinalIgnoreCase);
+    private SupplierDto? _selectedSupplier;
 
     private static readonly string[] _statusFilters = ["All", "Open", "Evaluated", "Awarded", "Cancelled"];
 
@@ -308,50 +308,54 @@
             : $"{request.PrNumber} - {request.Purpose}";
     }
 
-    private async Task<IEnumerable<string>> SearchSuppliers(string value, CancellationToken token)
+    private async Task<IEnumerable<SupplierDto>> SearchSuppliers(string value, CancellationToken token)
     {
         try
         {
-            var response = await MasterDataService.GetSuppliersAsync(
+            var response = await MasterDataClient.SuppliersListAsync(
                 keyword: string.IsNullOrWhiteSpace(value) ? null : value,
+                pageNumber: 1,
                 pageSize: 20,
+                isActive: null,
                 cancellationToken: token);
 
-            var suppliers = response?.Items ?? [];
-            foreach (var supplier in suppliers.Where(s => !string.IsNullOrWhiteSpace(s.Name)))
-            {
-                _supplierLookup[supplier.Name] = supplier;
-            }
-
-            return suppliers
-                .Where(s => !string.IsNullOrWhiteSpace(s.Name))
-                .Select(s => s.Name)
-                .Distinct(StringComparer.OrdinalIgnoreCase);
+            return response?.Items ?? Enumerable.Empty<SupplierDto>();
         }
-        catch
+        catch (Exception ex)
         {
-            return Enumerable.Empty<string>();
+            Snackbar.Add($"Failed to load suppliers: {ex.Message}", Severity.Warning);
+            return Enumerable.Empty<SupplierDto>();
         }
     }
 
-    private Task OnSupplierNameChanged(string? supplierName)
+    private Task OnSupplierChanged(SupplierDto? supplier)
     {
-        _qForm.SupplierName = supplierName?.Trim() ?? string.Empty;
+        _selectedSupplier = supplier;
+        _qForm.SupplierName = supplier?.Name ?? string.Empty;
 
-        if (string.IsNullOrWhiteSpace(_qForm.SupplierName))
+        if (supplier is null)
         {
             _qForm.SupplierAddress = null;
             _qForm.TinNumber = null;
             return Task.CompletedTask;
         }
 
-        if (_supplierLookup.TryGetValue(_qForm.SupplierName, out var supplier))
-        {
-            _qForm.SupplierAddress = supplier.Address;
-            _qForm.TinNumber = supplier.TinNo;
-        }
+        _qForm.SupplierAddress = supplier.Address;
+        _qForm.TinNumber = supplier.TinNo;
 
         return Task.CompletedTask;
+    }
+
+    private static string FormatSupplier(SupplierDto? supplier)
+    {
+        if (supplier is null)
+        {
+            return string.Empty;
+        }
+
+        return string.IsNullOrWhiteSpace(supplier.Code)
+            ? supplier.Name
+            : $"{supplier.Name} ({supplier.Code})";
     }
 
     private async Task LoadAsync()
@@ -396,6 +400,7 @@
         if (detail is null) { Snackbar.Add("Canvass request not found.", Severity.Error); return; }
         _selected = detail;
         _selectedDetail = detail;
+        _selectedSupplier = null;
         _qForm = new();
     }
 
@@ -417,6 +422,7 @@
                 _qForm.TinNumber, DateOnly.FromDateTime(_qForm.QuotationDateNullable!.Value),
                 _qForm.DeliveryTerms, lineItems));
             Snackbar.Add("Quotation added.", Severity.Success);
+            _selectedSupplier = null;
             _qForm = new();
             await SelectCanvass(_selected.Id);
             await LoadAsync();
