@@ -18,3 +18,17 @@ window.FshTheme = {
         link.href = faviconUrl + '?t=' + Date.now();
     }
 };
+
+window.PhysicalCount = {
+    triggerFileInput: function (inputId, dotnetHelper) {
+        const el = document.getElementById(inputId);
+        if (!el) return;
+        // The 'cancel' event fires when the user dismisses the file picker without selecting.
+        const onCancel = () => {
+            el.removeEventListener('cancel', onCancel);
+            dotnetHelper.invokeMethodAsync('NotifyCameraCancel');
+        };
+        el.addEventListener('cancel', onCancel);
+        el.click();
+    }
+};

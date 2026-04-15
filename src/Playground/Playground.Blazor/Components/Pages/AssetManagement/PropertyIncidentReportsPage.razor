@@ -1,0 +1,347 @@
+@page "/asset-management/incident-reports"
+@using FSH.Playground.Blazor.ApiClient
+@inject IPropertyIncidentReportClient Client
+@inject ISemiExpendablePropertyClient PropertyClient
+@inject ILookupClient LookupClient
+@inject ISnackbar Snackbar
+
+<FshPageHeader Title="Property Incident Reports (RLSDDSP)"
+               Description="Report semi-expendable property that has been lost, stolen, damaged, or destroyed. Property status is set to LostStolenDamaged." />
+
+<MudGrid Spacing="3">
+    <!-- Create Form -->
+    <MudItem xs="12" md="5">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                <MudText Typo="Typo.h6" Class="mb-3">New Incident Report</MudText>
+                <MudStack Spacing="2">
+                    <MudTextField @bind-Value="_form.ReportNo" Label="Report No." Variant="Variant.Outlined"
+                                  Required="true" MaxLength="32" Placeholder="e.g. RLSDDSP-2026-00001" />
+                    <MudDatePicker @bind-Date="_form.DateNullable" Label="Report Date" Variant="Variant.Outlined"
+                                   DateFormat="MM/dd/yyyy" Required="true" />
+                    <MudDatePicker @bind-Date="_form.IncidentDateNullable" Label="Incident Date (if known)" Variant="Variant.Outlined"
+                                   DateFormat="MM/dd/yyyy" />
+                    <MudSelect @bind-Value="_form.IncidentType" Label="Incident Type" Variant="Variant.Outlined" T="PropertyIncidentType">
+                        <MudSelectItem Value="PropertyIncidentType.Lost">Lost</MudSelectItem>
+                        <MudSelectItem Value="PropertyIncidentType.Stolen">Stolen</MudSelectItem>
+                        <MudSelectItem Value="PropertyIncidentType.Damaged">Damaged</MudSelectItem>
+                        <MudSelectItem Value="PropertyIncidentType.Destroyed">Destroyed</MudSelectItem>
+                    </MudSelect>
+                    <MudTextField @bind-Value="_form.FundCluster" Label="Fund Cluster" Variant="Variant.Outlined" MaxLength="50" />
+
+                    <MudAutocomplete T="EmployeeReferenceDto"
+                                     @bind-Value="_form.AccountableEmployee"
+                                     SearchFunc="SearchEmployees"
+                                     ToStringFunc="FormatEmployee"
+                                     Label="Accountable Employee (if known)" Variant="Variant.Outlined"
+                                     Clearable="true" ResetValueOnEmptyText="true" CoerceValue="true" />
+
+                    <MudTextField @bind-Value="_form.IncidentDetails" Label="Incident Details" Variant="Variant.Outlined"
+                                  Lines="3" MaxLength="1000" Required="true"
+                                  Placeholder="Describe the circumstances of the loss/damage..." />
+                    <MudTextField @bind-Value="_form.Remarks" Label="Remarks" Variant="Variant.Outlined"
+                                  Lines="2" MaxLength="500" />
+
+                    <MudDivider Class="my-2" />
+                    <MudStack Row="true" AlignItems="AlignItems.Center">
+                        <MudText Typo="Typo.subtitle2" Class="flex-grow-1">Affected Properties</MudText>
+                        <MudIconButton Icon="@Icons.Material.Filled.Add" Size="Size.Small" Color="Color.Primary"
+                                       OnClick="AddProperty" />
+                    </MudStack>
+
+                    @for (var i = 0; i < _form.Properties.Count; i++)
+                    {
+                        var idx = i;
+                        var row = _form.Properties[idx];
+                        <MudPaper Outlined="true" Class="pa-2">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-1">
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">Property @(idx + 1)</MudText>
+                                <MudSpacer />
+                                <MudIconButton Icon="@Icons.Material.Filled.Remove" Size="Size.Small" Color="Color.Error"
+                                               OnClick="@(() => RemoveProperty(idx))" />
+                            </MudStack>
+                            <MudAutocomplete T="SemiExpendablePropertySummaryDto"
+                                             Value="row.SelectedProperty"
+                                             ValueChanged="@(v => row.SelectedProperty = v)"
+                                             SearchFunc="SearchProperties"
+                                             ToStringFunc="@(x => x is null ? "" : $"{x.PropertyNo} – {x.ItemName} ({x.Status})")"
+                                             Label="Property" Variant="Variant.Outlined" Dense="true"
+                                             Required="true" Clearable="true" CoerceValue="true" ResetValueOnEmptyText="true" />
+                            @if (row.SelectedProperty is not null)
+                            {
+                                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">
+                                    ₱@row.SelectedProperty.UnitCost.ToString("N2") | @row.SelectedProperty.Status
+                                </MudText>
+                            }
+                        </MudPaper>
+                    }
+
+                    <MudButton Variant="Variant.Filled" Color="Color.Warning" FullWidth="true"
+                               OnClick="CreateAsync" Disabled="_busy">Create Incident Report</MudButton>
+                </MudStack>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    <!-- List Panel -->
+    <MudItem xs="12" md="7">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3" Spacing="2">
+                    <MudText Typo="Typo.h6" Class="flex-grow-1">Incident Reports</MudText>
+                    <MudTextField @bind-Value="_keyword" Label="Search" Variant="Variant.Outlined" Size="Size.Small"
+                                  Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
+                                  DebounceInterval="350" OnDebounceIntervalElapsed="@(() => LoadAsync())" Style="max-width:190px" />
+                    <MudSelect Value="_typeFilter" Label="Type" Variant="Variant.Outlined" Size="Size.Small"
+                               T="PropertyIncidentType?" Style="max-width:130px"
+                               ValueChanged="@(v => { _typeFilter = v; _ = LoadAsync(); })">
+                        <MudSelectItem T="PropertyIncidentType?" Value="null">All</MudSelectItem>
+                        <MudSelectItem T="PropertyIncidentType?" Value="PropertyIncidentType.Lost">Lost</MudSelectItem>
+                        <MudSelectItem T="PropertyIncidentType?" Value="PropertyIncidentType.Stolen">Stolen</MudSelectItem>
+                        <MudSelectItem T="PropertyIncidentType?" Value="PropertyIncidentType.Damaged">Damaged</MudSelectItem>
+                        <MudSelectItem T="PropertyIncidentType?" Value="PropertyIncidentType.Destroyed">Destroyed</MudSelectItem>
+                    </MudSelect>
+                </MudStack>
+
+                @if (_loading)
+                {
+                    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+                }
+                else if (_records.Count == 0)
+                {
+                    <MudAlert Severity="Severity.Info">No incident reports yet.</MudAlert>
+                }
+                else
+                {
+                    <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                        <thead>
+                            <tr>
+                                <th>Report No.</th>
+                                <th>Date</th>
+                                <th>Incident</th>
+                                <th>Type</th>
+                                <th>Items</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var s in _records)
+                            {
+                                <tr>
+                                    <td><MudText Typo="Typo.body2"><b>@s.ReportNo</b></MudText></td>
+                                    <td>@s.Date.ToString("MM/dd/yyyy")</td>
+                                    <td>@(s.IncidentDate?.ToString("MM/dd/yyyy") ?? "-")</td>
+                                    <td>
+                                        <MudChip T="string" Size="Size.Small" Color="@IncidentTypeColor(s.IncidentType)">
+                                            @s.IncidentType
+                                        </MudChip>
+                                    </td>
+                                    <td><MudChip T="string" Size="Size.Small" Color="Color.Info">@s.ItemCount items</MudChip></td>
+                                    <td>
+                                        <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small"
+                                                       Color="Color.Primary" OnClick="@(() => ViewAsync(s.Id))" />
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </MudSimpleTable>
+
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-2">
+                        <MudText Typo="Typo.caption">@_totalCount total</MudText>
+                        <MudSpacer />
+                        <MudPagination Count="@TotalPages" Selected="_page" ShowFirstButton="true" ShowLastButton="true"
+                                       SelectedChanged="@(async p => { _page = p; await LoadAsync(); })" />
+                    </MudStack>
+                }
+            </MudCardContent>
+        </MudCard>
+
+        <!-- Detail Card -->
+        @if (_detail is not null)
+        {
+            <MudCard Elevation="1" Class="mt-3">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudStack Row="true" AlignItems="AlignItems.Center">
+                            <MudText Typo="Typo.h6">@_detail.ReportNo — @_detail.Date.ToString("MMMM dd, yyyy")</MudText>
+                            <MudSpacer />
+                            <MudChip T="string" Size="Size.Small" Color="@IncidentTypeColor(_detail.IncidentType)">@_detail.IncidentType</MudChip>
+                            <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="@(() => _detail = null)" />
+                        </MudStack>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudGrid Spacing="1" Class="mb-2">
+                        @if (_detail.IncidentDate.HasValue)
+                        {
+                            <MudItem xs="6"><MudText Typo="Typo.caption">Incident Date</MudText><MudText Typo="Typo.body2">@_detail.IncidentDate.Value.ToString("MMMM dd, yyyy")</MudText></MudItem>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(_detail.FundCluster))
+                        {
+                            <MudItem xs="6"><MudText Typo="Typo.caption">Fund Cluster</MudText><MudText Typo="Typo.body2">@_detail.FundCluster</MudText></MudItem>
+                        }
+                        <MudItem xs="12"><MudText Typo="Typo.caption">Incident Details</MudText><MudText Typo="Typo.body2">@_detail.IncidentDetails</MudText></MudItem>
+                        @if (!string.IsNullOrWhiteSpace(_detail.Remarks))
+                        {
+                            <MudItem xs="12"><MudText Typo="Typo.caption">Remarks</MudText><MudText Typo="Typo.body2">@_detail.Remarks</MudText></MudItem>
+                        }
+                    </MudGrid>
+                    <MudDivider Class="my-2" />
+                    <MudText Typo="Typo.subtitle2" Class="mb-1">Affected Properties</MudText>
+                    <MudSimpleTable Dense="true" Striped="true">
+                        <thead>
+                            <tr><th>#</th><th>Property No.</th><th>Description</th><th>Category</th><th>Unit Cost</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in _detail.Items.OrderBy(x => x.ItemNo))
+                            {
+                                <tr>
+                                    <td>@item.ItemNo</td>
+                                    <td><b>@item.PropertyNo</b></td>
+                                    <td>@(item.Description ?? "-")</td>
+                                    <td><MudChip T="string" Size="Size.Small" Color="Color.Default">@item.CategoryAtTimeOfReport</MudChip></td>
+                                    <td>₱@item.UnitCost.ToString("N2")</td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="4" style="text-align:right"><b>Total Cost:</b></td>
+                                <td><b>₱@_detail.Items.Sum(x => x.UnitCost).ToString("N2")</b></td>
+                            </tr>
+                        </tfoot>
+                    </MudSimpleTable>
+                </MudCardContent>
+            </MudCard>
+        }
+    </MudItem>
+</MudGrid>
+
+@code {
+    private List<PropertyIncidentReportSummaryDto> _records = [];
+    private PropertyIncidentReportDetailsDto? _detail;
+    private PirForm _form = new();
+    private string? _keyword;
+    private PropertyIncidentType? _typeFilter;
+    private bool _loading;
+    private bool _busy;
+    private int _page = 1;
+    private int _totalCount;
+    private const int PageSize = 15;
+    private int TotalPages => Math.Max(1, (int)Math.Ceiling(_totalCount / (double)PageSize));
+
+    protected override async Task OnInitializedAsync()
+    {
+        _form.Properties.Add(new PropertyRow());
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        try
+        {
+            var response = await Client.SearchAsync(_keyword, incidentType: _typeFilter, page: _page, pageSize: PageSize);
+            _records = [.. response.Items];
+            _totalCount = response.TotalCount;
+        }
+        catch (Exception ex) { Snackbar.Add($"Load failed: {ex.Message}", Severity.Error); }
+        finally { _loading = false; }
+    }
+
+    private async Task ViewAsync(Guid id)
+    {
+        try { _detail = await Client.GetAsync(id); }
+        catch (Exception ex) { Snackbar.Add($"Load failed: {ex.Message}", Severity.Error); }
+    }
+
+    private async Task<IEnumerable<EmployeeReferenceDto>> SearchEmployees(string? value, CancellationToken ct)
+    {
+        try
+        {
+            var result = await LookupClient.EmployeesGetAsync(
+                keyword: string.IsNullOrWhiteSpace(value) ? null : value,
+                isActive: true, pageNumber: 1, pageSize: 20, cancellationToken: ct);
+            return result?.Items ?? [];
+        }
+        catch { return []; }
+    }
+
+    private async Task<IEnumerable<SemiExpendablePropertySummaryDto>> SearchProperties(string? value, CancellationToken ct)
+    {
+        // Show all non-disposed properties — backend validates eligible statuses
+        var response = await PropertyClient.SearchAsync(value, page: 1, pageSize: 20, ct: ct);
+        return response.Items;
+    }
+
+    private static string FormatEmployee(EmployeeReferenceDto? e) =>
+        e is null ? "" : $"{e.FirstName} {e.LastName} ({e.EmployeeNumber})";
+
+    private static Color IncidentTypeColor(string type) => type switch
+    {
+        "Lost"      => Color.Warning,
+        "Stolen"    => Color.Error,
+        "Damaged"   => Color.Secondary,
+        "Destroyed" => Color.Dark,
+        _           => Color.Default
+    };
+
+    private async Task CreateAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_form.ReportNo) || _form.DateNullable is null ||
+            string.IsNullOrWhiteSpace(_form.IncidentDetails))
+        {
+            Snackbar.Add("Report No., Date, and Incident Details are required.", Severity.Warning);
+            return;
+        }
+        if (_form.Properties.Any(p => p.SelectedProperty is null))
+        {
+            Snackbar.Add("All property rows must have a selected property.", Severity.Warning);
+            return;
+        }
+        _busy = true;
+        try
+        {
+            var propertyIds = _form.Properties.Select(p => p.SelectedProperty!.Id).ToList();
+
+            var result = await Client.CreateAsync(new CreatePropertyIncidentReportCommand(
+                _form.ReportNo,
+                DateOnly.FromDateTime(_form.DateNullable!.Value),
+                _form.IncidentDateNullable.HasValue ? DateOnly.FromDateTime(_form.IncidentDateNullable.Value) : null,
+                _form.IncidentType,
+                _form.FundCluster,
+                _form.AccountableEmployee?.Id,
+                _form.IncidentDetails,
+                _form.Remarks,
+                propertyIds));
+
+            Snackbar.Add($"Incident report created. {result.ItemCount} property unit(s) flagged.", Severity.Success);
+            _form = new PirForm();
+            _form.Properties.Add(new PropertyRow());
+            await LoadAsync();
+        }
+        catch (Exception ex) { Snackbar.Add($"Create failed: {ex.Message}", Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    private void AddProperty() => _form.Properties.Add(new PropertyRow());
+    private void RemoveProperty(int idx) { if (_form.Properties.Count > 1) _form.Properties.RemoveAt(idx); }
+
+    private sealed class PirForm
+    {
+        public string ReportNo { get; set; } = string.Empty;
+        public DateTime? DateNullable { get; set; } = DateTime.Today;
+        public DateTime? IncidentDateNullable { get; set; }
+        public PropertyIncidentType IncidentType { get; set; } = PropertyIncidentType.Lost;
+        public string? FundCluster { get; set; }
+        public EmployeeReferenceDto? AccountableEmployee { get; set; }
+        public string IncidentDetails { get; set; } = string.Empty;
+        public string? Remarks { get; set; }
+        public List<PropertyRow> Properties { get; set; } = [];
+    }
+
+    private sealed class PropertyRow
+    {
+        public SemiExpendablePropertySummaryDto? SelectedProperty { get; set; }
+    }
+}

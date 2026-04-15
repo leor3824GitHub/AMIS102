@@ -32,26 +32,20 @@ public sealed class GetICSListQueryHandler(AssetManagementDbContext dbContext)
             q = q.Where(x => x.ReceivedByEmployeeId == query.ReceivedByEmployeeId.Value);
         }
 
+        if (query.Category.HasValue)
+        {
+            q = q.Where(x => x.Category == query.Category.Value);
+        }
+
+        if (query.Status.HasValue)
+        {
+            q = q.Where(x => x.Status == query.Status.Value);
+        }
+
         var totalCount = await q.CountAsync(cancellationToken).ConfigureAwait(false);
 
         var pageNumber = query.PageNumber <= 0 ? 1 : query.PageNumber;
         var pageSize = query.PageSize <= 0 ? 10 : query.PageSize;
-
-        var icsIds = await q
-            .OrderByDescending(x => x.Date)
-            .ThenBy(x => x.ICSNo)
-            .Skip((pageNumber - 1) * pageSize)
-            .Take(pageSize)
-            .Select(x => x.Id)
-            .ToListAsync(cancellationToken)
-            .ConfigureAwait(false);
-
-        var itemCounts = await dbContext.ICSItems
-            .Where(x => icsIds.Contains(x.ICSId))
-            .GroupBy(x => x.ICSId)
-            .Select(g => new { ICSId = g.Key, Count = g.Count() })
-            .ToDictionaryAsync(x => x.ICSId, x => x.Count, cancellationToken)
-            .ConfigureAwait(false);
 
         var slips = await q
             .OrderByDescending(x => x.Date)
@@ -62,11 +56,23 @@ public sealed class GetICSListQueryHandler(AssetManagementDbContext dbContext)
                 x.Id,
                 x.ICSNo,
                 x.Date,
+                x.Category.ToString(),
+                x.Status.ToString(),
+                x.ExpiresOn,
                 x.FundCluster,
                 x.IssuedFromEmployeeId,
                 x.ReceivedByEmployeeId,
                 0))
             .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        var fetchedIds = slips.Select(x => x.Id).ToList();
+
+        var itemCounts = await dbContext.ICSItems
+            .Where(x => fetchedIds.Contains(x.ICSId))
+            .GroupBy(x => x.ICSId)
+            .Select(g => new { ICSId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.ICSId, x => x.Count, cancellationToken)
             .ConfigureAwait(false);
 
         var result = slips

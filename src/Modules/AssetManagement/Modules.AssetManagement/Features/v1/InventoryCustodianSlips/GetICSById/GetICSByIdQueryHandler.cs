@@ -1,3 +1,4 @@
+using FSH.Framework.Core.Exceptions;
 using FSH.Modules.AssetManagement.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
@@ -15,27 +16,26 @@ public sealed class GetICSByIdQueryHandler(AssetManagementDbContext dbContext)
 
         if (ics is null)
         {
-            throw new KeyNotFoundException($"Inventory Custodian Slip with ID {query.Id} not found.");
+            throw new NotFoundException($"Inventory Custodian Slip with ID {query.Id} not found.");
         }
 
-        var items = await dbContext.ICSItems
-            .Where(x => x.ICSId == query.Id)
-            .Join(
-                dbContext.SemiExpendableProperties.Include(p => p.SemiExpendableItem),
-                icsItem => icsItem.SemiExpendablePropertyId,
-                prop => prop.Id,
-                (icsItem, prop) => new ICSItemDetailsDto(
-                    icsItem.Id,
-                    icsItem.ItemNo,
-                    prop.Id,
-                    prop.PropertyNo,
-                    prop.SemiExpendableItem.Code,
-                    prop.SemiExpendableItem.Name,
-                    prop.SerialNo,
-                    icsItem.Description,
-                    icsItem.UnitCost,
-                    icsItem.EstimatedUsefulLifeYears))
-            .OrderBy(x => x.ItemNo)
+        var items = await (
+            from icsItem in dbContext.ICSItems.Where(x => x.ICSId == query.Id)
+            join prop in dbContext.SemiExpendableProperties on icsItem.SemiExpendablePropertyId equals prop.Id
+            join catalogItem in dbContext.SemiExpendableItems on prop.SemiExpendableItemId equals catalogItem.Id
+            orderby icsItem.ItemNo
+            select new ICSItemDetailsDto(
+                icsItem.Id,
+                icsItem.ItemNo,
+                prop.Id,
+                prop.PropertyNo,
+                catalogItem.Code,
+                catalogItem.Name,
+                prop.SerialNo,
+                icsItem.Description,
+                icsItem.UnitCost,
+                icsItem.EstimatedUsefulLifeYears,
+                icsItem.CategoryAtTimeOfIssuance.ToString()))
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
@@ -43,9 +43,15 @@ public sealed class GetICSByIdQueryHandler(AssetManagementDbContext dbContext)
             ics.Id,
             ics.ICSNo,
             ics.Date,
+            ics.Category.ToString(),
+            ics.Status.ToString(),
+            ics.ExpiresOn,
             ics.FundCluster,
             ics.IssuedFromEmployeeId,
             ics.ReceivedByEmployeeId,
+            ics.RenewedFromICSId,
+            ics.RenewedByICSId,
+            ics.CancelledByRRSPId,
             ics.CreatedOnUtc,
             ics.CreatedBy,
             items);

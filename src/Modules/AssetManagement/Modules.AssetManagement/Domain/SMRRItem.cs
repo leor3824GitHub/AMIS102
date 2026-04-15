@@ -7,7 +7,7 @@ namespace FSH.Modules.AssetManagement.Domain;
 /// Each SMRRItem with Quantity &gt; 1 creates multiple SemiExpendableProperty units
 /// (one per physical piece), all linked back to this item via SMRRItemId.
 /// </summary>
-public sealed class SMRRItem : AggregateRoot<Guid>
+public sealed class SMRRItem : BaseEntity<Guid>
 {
     /// <summary>FK to the parent SMRR.</summary>
     public Guid SMRRId { get; private set; }

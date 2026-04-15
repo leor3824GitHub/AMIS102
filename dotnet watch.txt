@@ -1,0 +1,1 @@
+dotnet run --project src/Playground/FSH.Playground.AppHost

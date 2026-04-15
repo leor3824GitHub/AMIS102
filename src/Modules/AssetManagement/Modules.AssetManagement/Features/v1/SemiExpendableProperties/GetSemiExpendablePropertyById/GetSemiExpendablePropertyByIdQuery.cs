@@ -12,6 +12,7 @@ public sealed record SemiExpendablePropertyDetailsDto(
     string ItemName,
     string UnitOfMeasure,
     int? EstimatedUsefulLifeYears,
+    string Category,
     string? SerialNo,
     DateOnly AcquisitionDate,
     decimal UnitCost,

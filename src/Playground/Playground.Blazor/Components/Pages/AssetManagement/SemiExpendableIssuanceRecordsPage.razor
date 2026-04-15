@@ -1,0 +1,361 @@
+@page "/asset-management/issuance-records"
+@using FSH.Playground.Blazor.ApiClient
+@inject ISMIRClient Client
+@inject ISemiExpendablePropertyClient PropertyClient
+@inject ILookupClient LookupClient
+@inject ISnackbar Snackbar
+
+<FshPageHeader Title="Semi-Expendable Materials Issuance Records (SMIR)"
+               Description="Record inter-office transfer, donation, or disposal of semi-expendable property. Issuing transitions property status to Transferred." />
+
+<MudGrid Spacing="3">
+    <!-- Create Form -->
+    <MudItem xs="12" md="5">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                <MudText Typo="Typo.h6" Class="mb-3">New SMIR</MudText>
+                <MudStack Spacing="2">
+                    <MudTextField @bind-Value="_form.SMIRNo" Label="SMIR No." Variant="Variant.Outlined"
+                                  Required="true" MaxLength="32" Placeholder="e.g. SMIR-2026-00001" />
+                    <MudDatePicker @bind-Date="_form.DateNullable" Label="Date" Variant="Variant.Outlined"
+                                   DateFormat="MM/dd/yyyy" Required="true" />
+                    <MudTextField @bind-Value="_form.FundCluster" Label="Fund Cluster" Variant="Variant.Outlined" MaxLength="50" />
+                    <MudSelect @bind-Value="_form.IssuanceType" Label="Issuance Type" Variant="Variant.Outlined" T="SMIRIssuanceType">
+                        <MudSelectItem Value="SMIRIssuanceType.Transfer">Transfer</MudSelectItem>
+                        <MudSelectItem Value="SMIRIssuanceType.Donation">Donation</MudSelectItem>
+                        <MudSelectItem Value="SMIRIssuanceType.Disposal">Disposal</MudSelectItem>
+                        <MudSelectItem Value="SMIRIssuanceType.Sale">Sale</MudSelectItem>
+                        <MudSelectItem Value="SMIRIssuanceType.Others">Others</MudSelectItem>
+                    </MudSelect>
+
+                    @if (_form.IssuanceType == SMIRIssuanceType.Transfer)
+                    {
+                        <MudTextField @bind-Value="_form.TransferredToTenantId" Label="Receiving Office (Tenant ID)" Variant="Variant.Outlined" MaxLength="100" />
+                        <MudTextField @bind-Value="_form.TransferredToOfficerName" Label="Receiving Officer Name" Variant="Variant.Outlined" MaxLength="200" />
+                    }
+
+                    <MudAutocomplete T="EmployeeReferenceDto"
+                                     @bind-Value="_form.IssuedBy"
+                                     SearchFunc="SearchEmployees"
+                                     ToStringFunc="FormatEmployee"
+                                     Label="Issued By" Variant="Variant.Outlined"
+                                     Clearable="true" ResetValueOnEmptyText="true" CoerceValue="true" />
+
+                    <MudTextField @bind-Value="_form.Remarks" Label="Remarks" Variant="Variant.Outlined"
+                                  Lines="2" MaxLength="500" />
+
+                    <MudDivider Class="my-2" />
+                    <MudStack Row="true" AlignItems="AlignItems.Center">
+                        <MudText Typo="Typo.subtitle2" Class="flex-grow-1">Properties to Issue</MudText>
+                        <MudIconButton Icon="@Icons.Material.Filled.Add" Size="Size.Small" Color="Color.Primary"
+                                       OnClick="AddItem" />
+                    </MudStack>
+
+                    @for (var i = 0; i < _form.Items.Count; i++)
+                    {
+                        var idx = i;
+                        var li = _form.Items[idx];
+                        <MudPaper Outlined="true" Class="pa-2">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-1">
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">Item @(idx + 1)</MudText>
+                                <MudSpacer />
+                                <MudIconButton Icon="@Icons.Material.Filled.Remove" Size="Size.Small" Color="Color.Error"
+                                               OnClick="@(() => RemoveItem(idx))" />
+                            </MudStack>
+                            <MudStack Spacing="1">
+                                <MudAutocomplete T="SemiExpendablePropertySummaryDto"
+                                                 Value="li.SelectedProperty"
+                                                 ValueChanged="@(v => li.SelectedProperty = v)"
+                                                 SearchFunc="SearchIssuedProperties"
+                                                 ToStringFunc="@(x => x is null ? "" : $"{x.PropertyNo} – {x.ItemName}")"
+                                                 Label="Property (Issued only)" Variant="Variant.Outlined" Dense="true"
+                                                 Required="true" Clearable="true" CoerceValue="true" ResetValueOnEmptyText="true" />
+                                @if (li.SelectedProperty is not null)
+                                {
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                        @li.SelectedProperty.ItemCode | ₱@li.SelectedProperty.UnitCost.ToString("N2") | @li.SelectedProperty.Status
+                                    </MudText>
+                                }
+                                <MudTextField @bind-Value="li.Description" Label="Description (override)" Variant="Variant.Outlined"
+                                              Dense="true" MaxLength="500" />
+                            </MudStack>
+                        </MudPaper>
+                    }
+
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                               OnClick="CreateAsync" Disabled="_busy">Create SMIR</MudButton>
+                </MudStack>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    <!-- List Panel -->
+    <MudItem xs="12" md="7">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3" Spacing="2">
+                    <MudText Typo="Typo.h6" Class="flex-grow-1">Issuance Records</MudText>
+                    <MudTextField @bind-Value="_keyword" Label="Search" Variant="Variant.Outlined" Size="Size.Small"
+                                  Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
+                                  DebounceInterval="350" OnDebounceIntervalElapsed="@(() => LoadAsync())" Style="max-width:200px" />
+                    <MudSelect Value="_typeFilter" Label="Type" Variant="Variant.Outlined" Size="Size.Small"
+                               T="SMIRIssuanceType?" Style="max-width:130px"
+                               ValueChanged="@(v => { _typeFilter = v; _ = LoadAsync(); })">
+                        <MudSelectItem T="SMIRIssuanceType?" Value="null">All</MudSelectItem>
+                        <MudSelectItem T="SMIRIssuanceType?" Value="SMIRIssuanceType.Transfer">Transfer</MudSelectItem>
+                        <MudSelectItem T="SMIRIssuanceType?" Value="SMIRIssuanceType.Donation">Donation</MudSelectItem>
+                        <MudSelectItem T="SMIRIssuanceType?" Value="SMIRIssuanceType.Disposal">Disposal</MudSelectItem>
+                        <MudSelectItem T="SMIRIssuanceType?" Value="SMIRIssuanceType.Sale">Sale</MudSelectItem>
+                        <MudSelectItem T="SMIRIssuanceType?" Value="SMIRIssuanceType.Others">Others</MudSelectItem>
+                    </MudSelect>
+                </MudStack>
+
+                @if (_loading)
+                {
+                    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+                }
+                else if (_records.Count == 0)
+                {
+                    <MudAlert Severity="Severity.Info">No issuance records yet.</MudAlert>
+                }
+                else
+                {
+                    <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                        <thead>
+                            <tr>
+                                <th>SMIR No.</th>
+                                <th>Date</th>
+                                <th>Type</th>
+                                <th>Recipient</th>
+                                <th>Items</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var s in _records)
+                            {
+                                <tr>
+                                    <td><MudText Typo="Typo.body2"><b>@s.SMIRNo</b></MudText></td>
+                                    <td>@s.Date.ToString("MM/dd/yyyy")</td>
+                                    <td>
+                                        <MudChip T="string" Size="Size.Small" Color="@IssuanceTypeColor(s.IssuanceType)">
+                                            @s.IssuanceType
+                                        </MudChip>
+                                    </td>
+                                    <td>
+                                        <MudText Typo="Typo.caption">
+                                            @(s.TransferredToOfficerName ?? s.TransferredToTenantId ?? "-")
+                                        </MudText>
+                                    </td>
+                                    <td><MudChip T="string" Size="Size.Small" Color="Color.Info">@s.ItemCount items</MudChip></td>
+                                    <td>
+                                        <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small"
+                                                       Color="Color.Primary" OnClick="@(() => ViewAsync(s.Id))" />
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </MudSimpleTable>
+
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-2">
+                        <MudText Typo="Typo.caption">@_totalCount total</MudText>
+                        <MudSpacer />
+                        <MudPagination Count="@TotalPages" Selected="_page" ShowFirstButton="true" ShowLastButton="true"
+                                       SelectedChanged="@(async p => { _page = p; await LoadAsync(); })" />
+                    </MudStack>
+                }
+            </MudCardContent>
+        </MudCard>
+
+        <!-- Detail Card -->
+        @if (_detail is not null)
+        {
+            <MudCard Elevation="1" Class="mt-3">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudStack Row="true" AlignItems="AlignItems.Center">
+                            <MudText Typo="Typo.h6">@_detail.SMIRNo — @_detail.Date.ToString("MMMM dd, yyyy")</MudText>
+                            <MudSpacer />
+                            <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="@(() => _detail = null)" />
+                        </MudStack>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudGrid Spacing="1" Class="mb-2">
+                        <MudItem xs="6"><MudText Typo="Typo.caption">Issuance Type</MudText><MudText Typo="Typo.body2">@_detail.IssuanceType</MudText></MudItem>
+                        @if (!string.IsNullOrWhiteSpace(_detail.TransferredToOfficerName))
+                        {
+                            <MudItem xs="6"><MudText Typo="Typo.caption">Receiving Officer</MudText><MudText Typo="Typo.body2">@_detail.TransferredToOfficerName</MudText></MudItem>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(_detail.TransferredToTenantId))
+                        {
+                            <MudItem xs="6"><MudText Typo="Typo.caption">Receiving Office</MudText><MudText Typo="Typo.body2">@_detail.TransferredToTenantId</MudText></MudItem>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(_detail.FundCluster))
+                        {
+                            <MudItem xs="6"><MudText Typo="Typo.caption">Fund Cluster</MudText><MudText Typo="Typo.body2">@_detail.FundCluster</MudText></MudItem>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(_detail.Remarks))
+                        {
+                            <MudItem xs="12"><MudText Typo="Typo.caption">Remarks</MudText><MudText Typo="Typo.body2">@_detail.Remarks</MudText></MudItem>
+                        }
+                    </MudGrid>
+                    <MudDivider Class="my-2" />
+                    <MudText Typo="Typo.subtitle2" Class="mb-1">Issued Items</MudText>
+                    <MudSimpleTable Dense="true" Striped="true">
+                        <thead>
+                            <tr><th>#</th><th>Property No.</th><th>Description</th><th>Category</th><th>Unit Cost</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in _detail.Items.OrderBy(x => x.ItemNo))
+                            {
+                                <tr>
+                                    <td>@item.ItemNo</td>
+                                    <td><b>@item.PropertyNo</b></td>
+                                    <td>@(item.Description ?? "-")</td>
+                                    <td><MudChip T="string" Size="Size.Small" Color="Color.Default">@item.CategoryAtTimeOfIssuance</MudChip></td>
+                                    <td>₱@item.UnitCost.ToString("N2")</td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="4" style="text-align:right"><b>Total:</b></td>
+                                <td><b>₱@_detail.Items.Sum(x => x.UnitCost).ToString("N2")</b></td>
+                            </tr>
+                        </tfoot>
+                    </MudSimpleTable>
+                </MudCardContent>
+            </MudCard>
+        }
+    </MudItem>
+</MudGrid>
+
+@code {
+    private List<SMIRSummaryDto> _records = [];
+    private SMIRDetailsDto? _detail;
+    private SmirForm _form = new();
+    private string? _keyword;
+    private SMIRIssuanceType? _typeFilter;
+    private bool _loading;
+    private bool _busy;
+    private int _page = 1;
+    private int _totalCount;
+    private const int PageSize = 15;
+    private int TotalPages => Math.Max(1, (int)Math.Ceiling(_totalCount / (double)PageSize));
+
+    protected override async Task OnInitializedAsync()
+    {
+        _form.Items.Add(new SmirItemRow());
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        try
+        {
+            var response = await Client.SearchAsync(_keyword, issuanceType: _typeFilter, page: _page, pageSize: PageSize);
+            _records = [.. response.Items];
+            _totalCount = response.TotalCount;
+        }
+        catch (Exception ex) { Snackbar.Add($"Load failed: {ex.Message}", Severity.Error); }
+        finally { _loading = false; }
+    }
+
+    private async Task ViewAsync(Guid id)
+    {
+        try { _detail = await Client.GetAsync(id); }
+        catch (Exception ex) { Snackbar.Add($"Load failed: {ex.Message}", Severity.Error); }
+    }
+
+    private async Task<IEnumerable<EmployeeReferenceDto>> SearchEmployees(string? value, CancellationToken ct)
+    {
+        try
+        {
+            var result = await LookupClient.EmployeesGetAsync(
+                keyword: string.IsNullOrWhiteSpace(value) ? null : value,
+                isActive: true, pageNumber: 1, pageSize: 20, cancellationToken: ct);
+            return result?.Items ?? [];
+        }
+        catch { return []; }
+    }
+
+    private async Task<IEnumerable<SemiExpendablePropertySummaryDto>> SearchIssuedProperties(string? value, CancellationToken ct)
+    {
+        var response = await PropertyClient.SearchAsync(value, status: "Issued", page: 1, pageSize: 20, ct: ct);
+        return response.Items;
+    }
+
+    private static string FormatEmployee(EmployeeReferenceDto? e) =>
+        e is null ? "" : $"{e.FirstName} {e.LastName} ({e.EmployeeNumber})";
+
+    private static Color IssuanceTypeColor(string type) => type switch
+    {
+        "Transfer" => Color.Info,
+        "Donation" => Color.Success,
+        "Disposal" => Color.Warning,
+        "Sale"     => Color.Secondary,
+        _          => Color.Default
+    };
+
+    private async Task CreateAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_form.SMIRNo) || _form.DateNullable is null)
+        {
+            Snackbar.Add("SMIR No. and Date are required.", Severity.Warning);
+            return;
+        }
+        if (_form.Items.Any(i => i.SelectedProperty is null))
+        {
+            Snackbar.Add("All items must have a selected property.", Severity.Warning);
+            return;
+        }
+        _busy = true;
+        try
+        {
+            var items = _form.Items.Select(i => new CreateSMIRItemRequest(
+                i.SelectedProperty!.Id, i.Description)).ToList();
+
+            var result = await Client.CreateAsync(new CreateSMIRCommand(
+                _form.SMIRNo,
+                DateOnly.FromDateTime(_form.DateNullable!.Value),
+                _form.FundCluster,
+                _form.IssuanceType,
+                _form.IssuanceType == SMIRIssuanceType.Transfer ? _form.TransferredToTenantId : null,
+                _form.IssuanceType == SMIRIssuanceType.Transfer ? _form.TransferredToOfficerName : null,
+                _form.IssuedBy?.Id,
+                _form.Remarks,
+                items));
+
+            Snackbar.Add($"SMIR created. {result.ItemCount} property unit(s) transferred.", Severity.Success);
+            _form = new SmirForm();
+            _form.Items.Add(new SmirItemRow());
+            await LoadAsync();
+        }
+        catch (Exception ex) { Snackbar.Add($"Create failed: {ex.Message}", Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    private void AddItem() => _form.Items.Add(new SmirItemRow());
+    private void RemoveItem(int idx) { if (_form.Items.Count > 1) _form.Items.RemoveAt(idx); }
+
+    private sealed class SmirForm
+    {
+        public string SMIRNo { get; set; } = string.Empty;
+        public DateTime? DateNullable { get; set; } = DateTime.Today;
+        public string? FundCluster { get; set; }
+        public SMIRIssuanceType IssuanceType { get; set; } = SMIRIssuanceType.Transfer;
+        public string? TransferredToTenantId { get; set; }
+        public string? TransferredToOfficerName { get; set; }
+        public EmployeeReferenceDto? IssuedBy { get; set; }
+        public string? Remarks { get; set; }
+        public List<SmirItemRow> Items { get; set; } = [];
+    }
+
+    private sealed class SmirItemRow
+    {
+        public SemiExpendablePropertySummaryDto? SelectedProperty { get; set; }
+        public string? Description { get; set; }
+    }
+}

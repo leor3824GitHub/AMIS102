@@ -60,11 +60,19 @@ public sealed class CreateICSCommandHandler : ICommandHandler<CreateICSCommand, 
                 throw new InvalidOperationException(
                     $"Property {prop.PropertyNo} has status '{prop.Status}' and cannot be issued. Only OnHand properties can be issued.");
             }
+
+            // All items on a single ICS must be the same category (COA Circular 2022-004 Section 4.9).
+            if (prop.Category != command.Category)
+            {
+                throw new InvalidOperationException(
+                    $"Property {prop.PropertyNo} has category '{prop.Category}' but this ICS is for '{command.Category}' items. All properties on a single ICS must be the same category.");
+            }
         }
 
         var ics = InventoryCustodianSlip.Create(
             command.ICSNo,
             command.Date,
+            command.Category,
             command.FundCluster,
             command.IssuedFromEmployeeId,
             command.ReceivedByEmployeeId);
@@ -83,7 +91,8 @@ public sealed class CreateICSCommandHandler : ICommandHandler<CreateICSCommand, 
                 itemNo,
                 itemRequest.Description ?? property.SemiExpendableItem?.Name,
                 property.UnitCost,
-                property.SemiExpendableItem?.EstimatedUsefulLifeYears);
+                property.SemiExpendableItem?.EstimatedUsefulLifeYears,
+                property.Category);
 
             _dbContext.ICSItems.Add(icsItem);
             property.SetStatus(PropertyStatus.Issued, command.ReceivedByEmployeeId);

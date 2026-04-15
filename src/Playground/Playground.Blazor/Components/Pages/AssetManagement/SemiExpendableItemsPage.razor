@@ -1,0 +1,209 @@
+@page "/asset-management/semi-expendable-items"
+@using FSH.Playground.Blazor.ApiClient
+@inject ISemiExpendableItemClient Client
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<FshPageHeader Title="Semi-Expendable Item Catalog" Description="Manage the item catalog for semi-expendable property (below ₱50,000 capitalization threshold)" />
+
+<MudGrid Spacing="3">
+    <!-- Form Panel -->
+    <MudItem xs="12" md="4">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                <MudText Typo="Typo.h6" Class="mb-3">@(_editing is null ? "New Item" : $"Edit: {_editing.Code}")</MudText>
+                <MudStack Spacing="2">
+                    <MudTextField @bind-Value="_form.Code" Label="Item Code" Variant="Variant.Outlined"
+                                  Required="true" MaxLength="50" Disabled="_editing is not null" />
+                    <MudTextField @bind-Value="_form.Name" Label="Item Name" Variant="Variant.Outlined"
+                                  Required="true" MaxLength="200" />
+                    <MudTextField @bind-Value="_form.Description" Label="Description" Variant="Variant.Outlined"
+                                  Lines="2" MaxLength="500" />
+                    <MudTextField @bind-Value="_form.UACSObjectCode" Label="UACS Object Code" Variant="Variant.Outlined"
+                                  MaxLength="50" />
+                    <MudTextField @bind-Value="_form.UnitOfMeasure" Label="Unit of Measure" Variant="Variant.Outlined"
+                                  Required="true" MaxLength="50" Placeholder="e.g., pc, set, unit" />
+                    <MudNumericField @bind-Value="_form.EstimatedUsefulLifeYears" Label="Estimated Useful Life (years)"
+                                     Variant="Variant.Outlined" Min="1" Max="50" />
+                    @if (_editing is not null)
+                    {
+                        <MudCheckBox @bind-Value="_form.IsActive" Label="Active" T="bool" />
+                    }
+                    <MudStack Row="true" Spacing="1" Class="mt-2">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                                   OnClick="SaveAsync" Disabled="_busy">
+                            @(_editing is null ? "Create" : "Update")
+                        </MudButton>
+                        @if (_editing is not null)
+                        {
+                            <MudButton Variant="Variant.Outlined" Color="Color.Default" OnClick="CancelEdit">Cancel</MudButton>
+                        }
+                    </MudStack>
+                </MudStack>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    <!-- List Panel -->
+    <MudItem xs="12" md="8">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3" Spacing="2">
+                    <MudText Typo="Typo.h6" Class="flex-grow-1">Item Catalog</MudText>
+                    <MudTextField @bind-Value="_keyword" Label="Search" Variant="Variant.Outlined" Size="Size.Small"
+                                  Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
+                                  DebounceInterval="350" OnDebounceIntervalElapsed="@(() => LoadAsync())" Style="max-width:240px" />
+                    <MudSelect Value="_activeFilter" Label="Status" Variant="Variant.Outlined" Size="Size.Small"
+                               T="bool?" Style="max-width:120px" ValueChanged="@(v => { _activeFilter = v; _ = LoadAsync(); })">
+                        <MudSelectItem T="bool?" Value="null">All</MudSelectItem>
+                        <MudSelectItem T="bool?" Value="true">Active</MudSelectItem>
+                        <MudSelectItem T="bool?" Value="false">Inactive</MudSelectItem>
+                    </MudSelect>
+                </MudStack>
+
+                @if (_loading)
+                {
+                    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+                }
+                else if (_items.Count == 0)
+                {
+                    <MudAlert Severity="Severity.Info">No items found. Create one using the form.</MudAlert>
+                }
+                else
+                {
+                    <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                        <thead>
+                            <tr>
+                                <th>Code</th>
+                                <th>Name</th>
+                                <th>UOM</th>
+                                <th>Useful Life</th>
+                                <th>Status</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in _items)
+                            {
+                                <tr>
+                                    <td><MudText Typo="Typo.body2"><b>@item.Code</b></MudText></td>
+                                    <td>@item.Name</td>
+                                    <td>@item.UnitOfMeasure</td>
+                                    <td>@(item.EstimatedUsefulLifeYears.HasValue ? $"{item.EstimatedUsefulLifeYears} yr(s)" : "-")</td>
+                                    <td>
+                                        <MudChip T="string" Size="Size.Small"
+                                                 Color="@(item.IsActive ? Color.Success : Color.Default)">
+                                            @(item.IsActive ? "Active" : "Inactive")
+                                        </MudChip>
+                                    </td>
+                                    <td>
+                                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                                       Color="Color.Primary" OnClick="@(() => BeginEdit(item.Id))" />
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </MudSimpleTable>
+
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-2" Spacing="1">
+                        <MudText Typo="Typo.caption">@_totalCount items total</MudText>
+                        <MudSpacer />
+                        <MudPagination Count="@TotalPages" Selected="_page" ShowFirstButton="true" ShowLastButton="true"
+                                       SelectedChanged="@(async p => { _page = p; await LoadAsync(); })" />
+                    </MudStack>
+                }
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private List<SemiExpendableItemSummary> _items = [];
+    private SemiExpendableItemDetails? _editing;
+    private ItemForm _form = new();
+    private string? _keyword;
+    private bool? _activeFilter = true;
+    private bool _loading;
+    private bool _busy;
+    private int _page = 1;
+    private int _totalCount;
+    private const int PageSize = 15;
+    private int TotalPages => Math.Max(1, (int)Math.Ceiling(_totalCount / (double)PageSize));
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        try
+        {
+            var response = await Client.SearchForUiAsync(_keyword, _activeFilter, _page, PageSize);
+            _items = [.. response.Items];
+            _totalCount = response.TotalCount;
+        }
+        catch (Exception ex) { Snackbar.Add($"Load failed: {ex.Message}", Severity.Error); }
+        finally { _loading = false; }
+    }
+
+    private async Task BeginEdit(Guid id)
+    {
+        var item = await Client.GetForUiAsync(id);
+        if (item is null) { Snackbar.Add("Item not found.", Severity.Error); return; }
+        _editing = item;
+        _form = new ItemForm
+        {
+            Code = item.Code,
+            Name = item.Name,
+            Description = item.Description,
+            UACSObjectCode = item.UACSObjectCode,
+            UnitOfMeasure = item.UnitOfMeasure,
+            EstimatedUsefulLifeYears = item.EstimatedUsefulLifeYears,
+            IsActive = item.IsActive
+        };
+    }
+
+    private async Task SaveAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_form.Code) || string.IsNullOrWhiteSpace(_form.Name) ||
+            string.IsNullOrWhiteSpace(_form.UnitOfMeasure))
+        {
+            Snackbar.Add("Code, Name, and Unit of Measure are required.", Severity.Warning);
+            return;
+        }
+        _busy = true;
+        try
+        {
+            if (_editing is null)
+            {
+                await Client.CreateForUiAsync(new CreateSemiExpendableItemRequest(
+                    _form.Code, _form.Name, _form.Description,
+                    _form.UACSObjectCode, _form.UnitOfMeasure, _form.EstimatedUsefulLifeYears));
+                Snackbar.Add("Item created.", Severity.Success);
+            }
+            else
+            {
+                await Client.UpdateForUiAsync(_editing.Id, new UpdateSemiExpendableItemRequest(
+                    _form.Code, _form.Name, _form.Description,
+                    _form.UACSObjectCode, _form.UnitOfMeasure, _form.EstimatedUsefulLifeYears, _form.IsActive));
+                Snackbar.Add("Item updated.", Severity.Success);
+            }
+            CancelEdit();
+            await LoadAsync();
+        }
+        catch (Exception ex) { Snackbar.Add($"Save failed: {ex.Message}", Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    private void CancelEdit() { _editing = null; _form = new(); }
+
+    private sealed class ItemForm
+    {
+        public string Code { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public string? UACSObjectCode { get; set; }
+        public string UnitOfMeasure { get; set; } = string.Empty;
+        public int? EstimatedUsefulLifeYears { get; set; }
+        public bool IsActive { get; set; } = true;
+    }
+}

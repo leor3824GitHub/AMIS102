@@ -11,8 +11,8 @@ public sealed record CreateSMRRCommand(
     ReceiptType ReceiptType,
     string? OtherReceiptType,
     string? FundCluster,
-    string? ReceivedBy,
-    string? NotedBy,
+    Guid? ReceivedByEmployeeId,
+    Guid? NotedByEmployeeId,
     IReadOnlyList<CreateSMRRItemRequest> Items) : ICommand<CreateSMRRResult>;
 
 public sealed record CreateSMRRItemRequest(

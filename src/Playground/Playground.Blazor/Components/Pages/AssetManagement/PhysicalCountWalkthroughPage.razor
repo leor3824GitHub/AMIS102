@@ -1,0 +1,610 @@
+@page "/asset-management/physical-count/{SessionId:guid}"
+@using FSH.Playground.Blazor.ApiClient
+@using Microsoft.JSInterop
+@implements IDisposable
+@inject IPhysicalCountClient Client
+@inject ISnackbar Snackbar
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<!-- Hidden camera / file input — triggered via JS -->
+<InputFile id="cameraInput" accept="image/*" OnChange="OnPhotoSelected"
+           style="display:none" AdditionalAttributes="@(new Dictionary<string,object>{{"capture","environment"}})" />
+
+@if (_session is null && _loading)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else if (_session is null)
+{
+    <MudAlert Severity="Severity.Error">Session not found.</MudAlert>
+}
+else
+{
+    <!-- Header -->
+    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2" Wrap="Wrap.Wrap" Spacing="2">
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" OnClick="@(() => Nav.NavigateTo("/asset-management/physical-count"))" />
+        <MudStack Spacing="0" Class="flex-grow-1">
+            <MudText Typo="Typo.h6">@_session.SessionNo — @_session.StationOffice</MudText>
+            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                @_session.CountDate.ToString("MMMM dd, yyyy") &nbsp;·&nbsp; @_session.Scope &nbsp;·&nbsp;
+                <MudChip T="string" Size="Size.Small" Color="@(_session.Status == "Open" ? Color.Warning : Color.Success)">@_session.Status</MudChip>
+            </MudText>
+        </MudStack>
+
+        @if (_session.Status == "Open")
+        {
+            <MudButton Variant="Variant.Outlined" Color="Color.Secondary" Size="Size.Small"
+                       StartIcon="@Icons.Material.Filled.Add" OnClick="OpenFoundAtStationDialog">
+                Found at Station
+            </MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
+                       StartIcon="@Icons.Material.Filled.CameraAlt" OnClick="TriggerCamera" Disabled="_scanning">
+                @(_scanning ? "Scanning…" : "Scan Asset")
+            </MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Small"
+                       StartIcon="@Icons.Material.Filled.CheckCircle" OnClick="ConfirmSubmit" Disabled="_busy">
+                Submit Count
+            </MudButton>
+        }
+        else
+        {
+            <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small"
+                       StartIcon="@Icons.Material.Filled.Assessment" OnClick="LoadRPCPPEAsync" Disabled="_busy">
+                View RPCPPE
+            </MudButton>
+        }
+    </MudStack>
+
+    <!-- Progress bar -->
+    <MudPaper Elevation="1" Class="pa-3 mb-3">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap">
+            <MudText Typo="Typo.body2" Class="flex-grow-1">
+                <b>@(FoundCount + NotFoundCount + AtStationCount)</b> / @TotalCount verified
+            </MudText>
+            <MudChip T="string" Size="Size.Small" Color="Color.Success">@FoundCount Found</MudChip>
+            <MudChip T="string" Size="Size.Small" Color="Color.Error">@NotFoundCount Not Found</MudChip>
+            <MudChip T="string" Size="Size.Small" Color="Color.Info">@AtStationCount Found@Station</MudChip>
+            <MudChip T="string" Size="Size.Small" Color="Color.Default">@PendingCount Pending</MudChip>
+        </MudStack>
+        <MudProgressLinear Value="@ProgressPct" Color="Color.Success" Rounded="true" Size="Size.Medium" Class="mt-1" />
+    </MudPaper>
+
+    <!-- Filter bar -->
+    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2" Spacing="2" Wrap="Wrap.Wrap">
+        <MudSelect Value="_resultFilter" Label="Filter" Variant="Variant.Outlined" Size="Size.Small"
+                   T="string" Style="max-width:150px"
+                   ValueChanged="@((string? v) => { _resultFilter = v; ApplyFilter(); })">
+            <MudSelectItem Value="@((string?)null)">All (@TotalCount)</MudSelectItem>
+            <MudSelectItem Value="@("Pending")">Pending (@PendingCount)</MudSelectItem>
+            <MudSelectItem Value="@("Found")">Found (@FoundCount)</MudSelectItem>
+            <MudSelectItem Value="@("NotFound")">Not Found (@NotFoundCount)</MudSelectItem>
+            <MudSelectItem Value="@("FoundAtStation")">Found@Station (@AtStationCount)</MudSelectItem>
+        </MudSelect>
+        <MudTextField @bind-Value="_keyword" Label="Search property / description" Variant="Variant.Outlined"
+                      Size="Size.Small" Style="max-width:280px"
+                      Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
+                      DebounceInterval="300" OnDebounceIntervalElapsed="ApplyFilter" />
+    </MudStack>
+
+    <!-- Checklist table -->
+    @if (_filtered.Count == 0)
+    {
+        <MudAlert Severity="Severity.Info">No entries match the current filter.</MudAlert>
+    }
+    else
+    {
+        <MudSimpleTable Dense="true" Hover="true" Striped="true">
+            <thead>
+                <tr>
+                    <th>Property No.</th>
+                    <th>Description</th>
+                    <th>Unit Cost</th>
+                    <th>Result</th>
+                    <th>Condition</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var entry in _filtered)
+                {
+                    var resultColor = entry.Result switch
+                    {
+                        "Found"          => Color.Success,
+                        "NotFound"       => Color.Error,
+                        "FoundAtStation" => Color.Info,
+                        _                => Color.Default
+                    };
+                    <tr style="@(entry.Id == _highlightedEntryId ? "background: var(--mud-palette-warning-lighten);" : "")">
+                        <td>
+                            <b>@entry.PropertyNumber</b>
+                            @if (entry.IsScanned)
+                            {
+                                <MudIcon Icon="@Icons.Material.Filled.CameraAlt" Size="Size.Small"
+                                         Color="Color.Primary" Title="Verified by scan" Class="ml-1" />
+                            }
+                        </td>
+                        <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
+                            title="@entry.Description">@entry.Description</td>
+                        <td>₱@entry.UnitCost.ToString("N2")</td>
+                        <td>
+                            @if (entry.Result is not null)
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="@resultColor">@entry.Result</MudChip>
+                            }
+                            else
+                            {
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">Pending</MudText>
+                            }
+                        </td>
+                        <td>
+                            @if (entry.Condition is not null)
+                            {
+                                <MudText Typo="Typo.caption">@entry.Condition</MudText>
+                            }
+                        </td>
+                        <td>
+                            @if (_session.Status == "Open")
+                            {
+                                <MudStack Row="true" Spacing="0">
+                                    <MudIconButton Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small"
+                                                   Color="Color.Success" Title="Mark Found"
+                                                   OnClick="@(() => OpenMarkDialog(entry, false))" />
+                                    <MudIconButton Icon="@Icons.Material.Filled.Cancel" Size="Size.Small"
+                                                   Color="Color.Error" Title="Mark Not Found"
+                                                   OnClick="@(() => MarkNotFoundAsync(entry))" />
+                                </MudStack>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </MudSimpleTable>
+    }
+
+    <!-- Mark Found dialog (inline) -->
+    @if (_markEntry is not null)
+    {
+        <MudOverlay Visible="true" DarkBackground="true" ZIndex="9" OnClick="CloseMarkDialog" />
+        <MudPaper Elevation="8" Class="pa-4" Style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10;min-width:320px;max-width:480px;width:90vw">
+            <MudText Typo="Typo.h6" Class="mb-2">Mark as Found</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-3">@_markEntry.PropertyNumber — @_markEntry.Description[..Math.Min(60,_markEntry.Description.Length)]</MudText>
+            <MudSelect @bind-Value="_markCondition" Label="Condition" Variant="Variant.Outlined" T="string" Class="mb-2">
+                <MudSelectItem Value="@("Good")">Good</MudSelectItem>
+                <MudSelectItem Value="@("NeedsRepair")">Needs Repair</MudSelectItem>
+                <MudSelectItem Value="@("Unserviceable")">Unserviceable</MudSelectItem>
+                <MudSelectItem Value="@("Obsolete")">Obsolete</MudSelectItem>
+                <MudSelectItem Value="@("NoLongerNeeded")">No Longer Needed</MudSelectItem>
+            </MudSelect>
+            <MudTextField @bind-Value="_markRemarks" Label="Remarks (optional)" Variant="Variant.Outlined" Lines="2" Class="mb-3" />
+            <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2">
+                <MudButton OnClick="CloseMarkDialog">Cancel</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Success"
+                           OnClick="ConfirmMarkFoundAsync" Disabled="_busy">
+                    @(_isScanMark ? "Confirm Scan" : "Mark Found")
+                </MudButton>
+            </MudStack>
+        </MudPaper>
+    }
+
+    <!-- Found at Station dialog (inline) -->
+    @if (_showFoundAtStation)
+    {
+        <MudOverlay Visible="true" DarkBackground="true" ZIndex="9" OnClick="@(() => _showFoundAtStation = false)" />
+        <MudPaper Elevation="8" Class="pa-4" Style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10;min-width:320px;max-width:480px;width:90vw">
+            <MudText Typo="Typo.h6" Class="mb-3">Found at Station</MudText>
+            <MudAlert Severity="Severity.Info" Dense="true" Class="mb-2">
+                Use this for assets found physically but not on the pre-generated checklist.
+            </MudAlert>
+            <MudStack Spacing="2">
+                <MudTextField @bind-Value="_fasPropertyNumber" Label="Property Number" Variant="Variant.Outlined" MaxLength="64" />
+                <MudTextField @bind-Value="_fasDescription" Label="Description" Variant="Variant.Outlined" MaxLength="500" Lines="2" />
+                <MudNumericField @bind-Value="_fasUnitCost" Label="Unit Cost (₱)" Variant="Variant.Outlined" Min="0m" T="decimal" />
+                <MudSelect @bind-Value="_fasCondition" Label="Condition" Variant="Variant.Outlined" T="string">
+                    <MudSelectItem Value="@("Good")">Good</MudSelectItem>
+                    <MudSelectItem Value="@("NeedsRepair")">Needs Repair</MudSelectItem>
+                    <MudSelectItem Value="@("Unserviceable")">Unserviceable</MudSelectItem>
+                    <MudSelectItem Value="@("Obsolete")">Obsolete</MudSelectItem>
+                    <MudSelectItem Value="@("NoLongerNeeded")">No Longer Needed</MudSelectItem>
+                </MudSelect>
+                <MudTextField @bind-Value="_fasRemarks" Label="Remarks (optional)" Variant="Variant.Outlined" Lines="2" />
+            </MudStack>
+            <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2" Class="mt-3">
+                <MudButton OnClick="@(() => _showFoundAtStation = false)">Cancel</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Info" OnClick="ConfirmFoundAtStationAsync" Disabled="_busy">Add Entry</MudButton>
+            </MudStack>
+        </MudPaper>
+    }
+
+    <!-- Submit confirmation dialog (inline) -->
+    @if (_showSubmitConfirm)
+    {
+        <MudOverlay Visible="true" DarkBackground="true" ZIndex="9" OnClick="@(() => _showSubmitConfirm = false)" />
+        <MudPaper Elevation="8" Class="pa-4" Style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10;min-width:300px;max-width:420px;width:90vw">
+            <MudText Typo="Typo.h6" Class="mb-2">Submit Physical Count?</MudText>
+            @if (PendingCount > 0)
+            {
+                <MudAlert Severity="Severity.Warning" Dense="true" Class="mb-2">
+                    @PendingCount unverified @(PendingCount == 1 ? "entry" : "entries") will be auto-marked as <b>Not Found</b>.
+                </MudAlert>
+            }
+            <MudText Typo="Typo.body2" Class="mb-3">
+                Once submitted the session is locked and the ICF / RPCPPE reports are ready. This cannot be undone.
+            </MudText>
+            <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2">
+                <MudButton OnClick="@(() => _showSubmitConfirm = false)">Cancel</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="SubmitAsync" Disabled="_busy">Submit</MudButton>
+            </MudStack>
+        </MudPaper>
+    }
+
+    <!-- RPCPPE Report panel (shown after loading) -->
+    @if (_rpcppe is not null)
+    {
+        <MudCard Elevation="1" Class="mt-4">
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudStack Row="true" AlignItems="AlignItems.Center">
+                        <MudText Typo="Typo.h6">Report on the Physical Count of PPE (RPCPPE)</MudText>
+                        <MudSpacer />
+                        <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="@(() => _rpcppe = null)" />
+                    </MudStack>
+                </CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent>
+                <!-- Summary chips -->
+                <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2" Class="mb-3">
+                    <MudChip T="string" Color="Color.Success">Found: @_rpcppe.Summary.Found</MudChip>
+                    <MudChip T="string" Color="Color.Error">Not Found: @_rpcppe.Summary.NotFound</MudChip>
+                    <MudChip T="string" Color="Color.Info">Found@Station: @_rpcppe.Summary.FoundAtStation</MudChip>
+                    <MudChip T="string" Color="Color.Warning">Shortage: @_rpcppe.Summary.TotalShortage</MudChip>
+                    <MudChip T="string" Color="Color.Secondary">Overage: @_rpcppe.Summary.TotalOverage</MudChip>
+                </MudStack>
+
+                <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Property No.</th>
+                            <th>Description</th>
+                            <th>Date Acq.</th>
+                            <th>Unit Cost</th>
+                            <th>Accum. Depr.</th>
+                            <th>Book Value</th>
+                            <th>Per Card</th>
+                            <th>On Hand</th>
+                            <th>Short</th>
+                            <th>Over</th>
+                            <th>Condition</th>
+                            <th>Result</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in _rpcppe.Items)
+                        {
+                            var rc = item.Result switch
+                            {
+                                "Found"          => Color.Success,
+                                "NotFound"       => Color.Error,
+                                "FoundAtStation" => Color.Info,
+                                _                => Color.Default
+                            };
+                            <tr>
+                                <td>@item.LineNo</td>
+                                <td><b>@item.PropertyNumber</b></td>
+                                <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="@item.Description">@item.Description</td>
+                                <td>@item.DateAcquired.ToString("MM/dd/yyyy")</td>
+                                <td>₱@item.UnitCost.ToString("N2")</td>
+                                <td>@(item.AccumulatedDepreciation.HasValue ? $"₱{item.AccumulatedDepreciation.Value:N2}" : "—")</td>
+                                <td>@(item.BookValue.HasValue ? $"₱{item.BookValue.Value:N2}" : "—")</td>
+                                <td>@item.QuantityPerCard</td>
+                                <td>@item.QuantityOnHand</td>
+                                <td>@(item.Shortage > 0 ? item.Shortage.ToString() : "—")</td>
+                                <td>@(item.Overage > 0 ? item.Overage.ToString() : "—")</td>
+                                <td><MudText Typo="Typo.caption">@(item.Condition ?? "—")</MudText></td>
+                                <td><MudChip T="string" Size="Size.Small" Color="@rc">@item.Result</MudChip></td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="4" style="text-align:right"><b>Totals:</b></td>
+                            <td><b>₱@_rpcppe.Summary.TotalUnitCost.ToString("N2")</b></td>
+                            <td><b>@(_rpcppe.Summary.TotalAccumulatedDepreciation.HasValue ? $"₱{_rpcppe.Summary.TotalAccumulatedDepreciation.Value:N2}" : "—")</b></td>
+                            <td><b>@(_rpcppe.Summary.TotalBookValue.HasValue ? $"₱{_rpcppe.Summary.TotalBookValue.Value:N2}" : "—")</b></td>
+                            <td></td><td></td>
+                            <td><b>@_rpcppe.Summary.TotalShortage</b></td>
+                            <td><b>@_rpcppe.Summary.TotalOverage</b></td>
+                            <td colspan="2"></td>
+                        </tr>
+                    </tfoot>
+                </MudSimpleTable>
+            </MudCardContent>
+        </MudCard>
+    }
+}
+
+@code {
+    [Parameter] public Guid SessionId { get; set; }
+
+    // Computed stats from _entries
+    private int TotalCount     => _entries.Count;
+    private int FoundCount     => _entries.Count(e => e.Result == "Found");
+    private int NotFoundCount  => _entries.Count(e => e.Result == "NotFound");
+    private int AtStationCount => _entries.Count(e => e.Result == "FoundAtStation");
+    private int PendingCount   => _entries.Count(e => e.Result is null);
+    private double ProgressPct => TotalCount > 0
+        ? (double)(FoundCount + NotFoundCount + AtStationCount) / TotalCount * 100 : 0;
+
+    private PhysicalCountSessionDetailsDto? _session;
+    private List<PhysicalCountEntryDto> _entries = [];
+    private List<PhysicalCountEntryDto> _filtered = [];
+    private bool _loading, _busy, _scanning;
+    private string? _keyword;
+    private string? _resultFilter;
+    private Guid? _highlightedEntryId;
+
+    // Mark Found dialog
+    private PhysicalCountEntryDto? _markEntry;
+    private string _markCondition = "Good";
+    private string? _markRemarks;
+    private bool _isScanMark;
+    private string? _pendingPhotoPath; // set after scan capture
+
+    // Found at Station dialog
+    private bool _showFoundAtStation;
+    private string _fasPropertyNumber = string.Empty;
+    private string _fasDescription = string.Empty;
+    private decimal _fasUnitCost;
+    private string _fasCondition = "Good";
+    private string? _fasRemarks;
+
+    // Submit confirmation
+    private bool _showSubmitConfirm;
+
+    // RPCPPE report
+    private RPCPPEReportDto? _rpcppe;
+
+    // DotNet reference for JS callbacks (camera cancel detection)
+    private DotNetObjectReference<PhysicalCountWalkthroughPage>? _dotNetRef;
+
+    protected override void OnInitialized()
+    {
+        _dotNetRef = DotNetObjectReference.Create(this);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _loading = true;
+        try
+        {
+            _session = await Client.GetAsync(SessionId);
+            if (_session is not null)
+            {
+                _entries = [.. _session.Entries];
+                ApplyFilter();
+            }
+        }
+        catch (Exception ex) { Snackbar.Add($"Load failed: {ex.Message}", Severity.Error); }
+        finally { _loading = false; }
+    }
+
+    private void ApplyFilter()
+    {
+        var q = _entries.AsEnumerable();
+
+        if (!string.IsNullOrWhiteSpace(_keyword))
+        {
+            var kw = _keyword.ToLower();
+            q = q.Where(e => e.PropertyNumber.ToLower().Contains(kw) || e.Description.ToLower().Contains(kw));
+        }
+
+        q = _resultFilter switch
+        {
+            "Pending"        => q.Where(e => e.Result is null),
+            "Found"          => q.Where(e => e.Result == "Found"),
+            "NotFound"       => q.Where(e => e.Result == "NotFound"),
+            "FoundAtStation" => q.Where(e => e.Result == "FoundAtStation"),
+            _                => q
+        };
+
+        _filtered = q.ToList();
+    }
+
+    // ── Camera scan ───────────────────────────────────────────────────────────
+
+    private async Task TriggerCamera()
+    {
+        _scanning = true;
+        await JS.InvokeVoidAsync("PhysicalCount.triggerFileInput", "cameraInput", _dotNetRef);
+    }
+
+    [JSInvokable]
+    public void NotifyCameraCancel()
+    {
+        _scanning = false;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task OnPhotoSelected(InputFileChangeEventArgs e)
+    {
+        _scanning = false;
+        if (e.FileCount == 0) return;
+
+        // In the MVP we store the photo path as the filename and prompt the user
+        // to confirm which asset they photographed. Full OCR integration would
+        // extract the property number from the image automatically.
+        var file = e.File;
+        _pendingPhotoPath = file.Name; // placeholder — replace with object storage upload
+
+        // Try to auto-match by property number in the filename
+        var matchedEntry = _entries.FirstOrDefault(en =>
+            file.Name.Contains(en.PropertyNumber, StringComparison.OrdinalIgnoreCase));
+
+        if (matchedEntry is not null && matchedEntry.Result is null)
+        {
+            _highlightedEntryId = matchedEntry.Id;
+            OpenMarkDialog(matchedEntry, isScanned: true);
+            Snackbar.Add($"Property {matchedEntry.PropertyNumber} matched. Confirm condition.", Severity.Info);
+        }
+        else
+        {
+            // No automatic match — ask user to pick manually from the pending list
+            Snackbar.Add("Could not auto-identify asset from photo. Please mark the entry manually, or use 'Found at Station' for unlisted assets.", Severity.Warning);
+            _highlightedEntryId = null;
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    // ── Mark Found dialog ─────────────────────────────────────────────────────
+
+    private void OpenMarkDialog(PhysicalCountEntryDto entry, bool isScanned)
+    {
+        _markEntry    = entry;
+        _markCondition = "Good";
+        _markRemarks  = null;
+        _isScanMark   = isScanned;
+        if (!isScanned) _pendingPhotoPath = null;
+    }
+
+    private void CloseMarkDialog()
+    {
+        _markEntry        = null;
+        _highlightedEntryId = null;
+        _pendingPhotoPath  = null;
+    }
+
+    private async Task ConfirmMarkFoundAsync()
+    {
+        if (_markEntry is null) return;
+        _busy = true;
+        try
+        {
+            var updated = await Client.RecordEntryAsync(SessionId, _markEntry.Id,
+                new RecordPhysicalCountEntryRequest(
+                    Result:         "Found",
+                    Condition:      _markCondition,
+                    QuantityOnHand: 1,
+                    Remarks:        _markRemarks,
+                    IsScanned:      _isScanMark,
+                    PhotoPath:      _pendingPhotoPath));
+
+            RefreshEntry(_markEntry.Id, updated.Result, updated.Condition, _isScanMark);
+            Snackbar.Add($"{updated.PropertyNumber} marked as Found.", Severity.Success);
+            CloseMarkDialog();
+        }
+        catch (Exception ex) { Snackbar.Add($"Failed: {ex.Message}", Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    private async Task MarkNotFoundAsync(PhysicalCountEntryDto entry)
+    {
+        _busy = true;
+        try
+        {
+            var updated = await Client.RecordEntryAsync(SessionId, entry.Id,
+                new RecordPhysicalCountEntryRequest(
+                    Result: "NotFound", Condition: null, QuantityOnHand: 1,
+                    Remarks: null, IsScanned: false, PhotoPath: null));
+
+            RefreshEntry(entry.Id, updated.Result, null, false);
+            Snackbar.Add($"{updated.PropertyNumber} marked as Not Found.", Severity.Warning);
+        }
+        catch (Exception ex) { Snackbar.Add($"Failed: {ex.Message}", Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    private void RefreshEntry(Guid entryId, string result, string? condition, bool isScanned)
+    {
+        var idx = _entries.FindIndex(e => e.Id == entryId);
+        if (idx >= 0)
+            _entries[idx] = _entries[idx] with { Result = result, Condition = condition, IsScanned = isScanned };
+        ApplyFilter();
+    }
+
+    // ── Found at Station ──────────────────────────────────────────────────────
+
+    private void OpenFoundAtStationDialog()
+    {
+        _fasPropertyNumber = string.Empty;
+        _fasDescription    = string.Empty;
+        _fasUnitCost       = 0;
+        _fasCondition      = "Good";
+        _fasRemarks        = null;
+        _showFoundAtStation = true;
+    }
+
+    private async Task ConfirmFoundAtStationAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_fasPropertyNumber) || string.IsNullOrWhiteSpace(_fasDescription))
+        {
+            Snackbar.Add("Property Number and Description are required.", Severity.Warning);
+            return;
+        }
+        _busy = true;
+        try
+        {
+            var result = await Client.AddFoundAtStationAsync(SessionId,
+                new AddFoundAtStationEntryRequest(
+                    PropertyNumber: _fasPropertyNumber,
+                    Description:    _fasDescription,
+                    UnitCost:       _fasUnitCost,
+                    Condition:      _fasCondition,
+                    Remarks:        _fasRemarks,
+                    PhotoPath:      null));
+
+            // Add the new entry to the local list
+            var newEntry = new PhysicalCountEntryDto(
+                Id: result.EntryId, PPEItemId: null, SemiExpendablePropertyId: null,
+                PropertyNumber: _fasPropertyNumber, Description: _fasDescription,
+                UnitCost: _fasUnitCost, Result: "FoundAtStation", Condition: _fasCondition,
+                QuantityOnHand: 1, Remarks: _fasRemarks, IsScanned: false, ScannedOnUtc: null, PhotoPath: null);
+
+            _entries.Add(newEntry);
+            ApplyFilter();
+
+            Snackbar.Add($"Found-at-Station entry added for {result.PropertyNumber}.", Severity.Success);
+            _showFoundAtStation = false;
+        }
+        catch (Exception ex) { Snackbar.Add($"Failed: {ex.Message}", Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    // ── Submit ────────────────────────────────────────────────────────────────
+
+    private void ConfirmSubmit() => _showSubmitConfirm = true;
+
+    private async Task LoadRPCPPEAsync()
+    {
+        _busy = true;
+        try { _rpcppe = await Client.GetRPCPPEAsync(SessionId); }
+        catch (Exception ex) { Snackbar.Add($"Failed to load RPCPPE: {ex.Message}", Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    private async Task SubmitAsync()
+    {
+        _busy = true;
+        try
+        {
+            var result = await Client.SubmitAsync(SessionId);
+            Snackbar.Add(
+                $"Session submitted — Found: {result.Found}, Not Found: {result.NotFound}, Found@Station: {result.FoundAtStation}.",
+                Severity.Success);
+            _showSubmitConfirm = false;
+            // Reload to reflect submitted status
+            _session = _session with { Status = "Submitted" };
+            foreach (var e in _entries.Where(e => e.Result is null).ToList())
+            {
+                var idx = _entries.IndexOf(e);
+                _entries[idx] = e with { Result = "NotFound" };
+            }
+            ApplyFilter();
+        }
+        catch (Exception ex) { Snackbar.Add($"Submit failed: {ex.Message}", Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    public void Dispose() => _dotNetRef?.Dispose();
+}

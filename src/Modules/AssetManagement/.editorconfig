@@ -1,0 +1,8 @@
+root = false
+
+# AssetManagement module uses official COA Circular 2022-004 document abbreviations
+# (ICS = Inventory Custodian Slip, SMRR = Supplies and Materials Receiving Report,
+#  ITR = Inventory Transfer Report, RRSP = Receipt of Returned Semi-Expendable Property, etc.)
+# These are uppercase acronyms, not PascalCase violations.
+[*.cs]
+dotnet_diagnostic.S101.severity = none

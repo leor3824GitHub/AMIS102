@@ -1,0 +1,146 @@
+This comprehensive domain guide outlines the architecture for your Asset Management and Inventory System (AMIS). It is designed specifically for government compliance (COA Circular 2022-004), ensuring that the system is resilient to policy changes while maintaining a perfect historical audit trail for every asset.
+AMIS Development Guide: Unified Asset & Lifecycle Domain
+1. Architectural Philosophy: The "Point-in-Time" Truth
+
+The core of this system is that Classification (PPE vs. Semi-Expendable) is a business state, not a physical property.
+
+    The Problem: If you hardcode IsPPE, you cannot reclassify items when the government changes the threshold (e.g., from ₱15k to ₱50k).
+
+    The Solution: Use a Transaction Ledger to record what an item was called at the time of issuance, and a Policy Service to determine what it should be called today.
+
+2. Domain Entities
+A. GovernmentProperty
+
+The physical "Digital Twin" of the item. It stores permanent data (DNA) and current state.
+C#
+
+public class GovernmentProperty
+{
+    public Guid Id { get; set; }
+    public string PropertyNumber { get; set; } // Unique Agency Identifier
+    public string Description { get; set; }    // Brand, Model, Serial No.
+    public decimal UnitCost { get; set; }
+    public DateTime DateAcquired { get; set; }
+    public int EstimatedUsefulLife { get; set; } // Years
+    public string UacsCode { get; set; }
+
+    // Current State (Snapshots)
+    public PropertyStatus Status { get; set; } 
+    public AssetCategory CurrentCategory { get; set; } // PPE, High-Value Semi, Low-Value Semi
+    public Guid? CurrentCustodianId { get; set; } 
+    public virtual Employee CurrentCustodian { get; set; }
+
+    // Navigation Properties
+    public virtual ICollection<PropertyTransaction> Transactions { get; set; }
+    public virtual ICollection<ClassificationLog> ClassificationHistory { get; set; }
+    public virtual ICollection<DepreciationEntry> DepreciationLedger { get; set; }
+}
+
+B. PropertyTransaction (The History Engine)
+
+Every PAR, ICS, SMRR, and PPERR is a transaction. This builds the Historical Monitoring trail.
+C#
+
+public class PropertyTransaction
+{
+    public Guid Id { get; set; }
+    public Guid PropertyId { get; set; }
+    
+    // Logic: Pre-numbered for PPE (Manual), System-gen for Semi (Auto)
+    public string ReferenceNumber { get; set; } 
+    public TransactionType Type { get; set; } // Receipt, Issuance, Transfer, Return
+    public DateTime TransactionDate { get; set; }
+
+    // Accountability Chain
+    public Guid? ReceivedById { get; set; } // End-user / Accountable Officer
+    public virtual Employee ReceivedBy { get; set; }
+    public Guid? IssuedById { get; set; }   // Supply Officer
+    public virtual Employee IssuedBy { get; set; }
+
+    // State at the time of this document
+    public AssetCategory CategoryAtTimeOfIssue { get; set; }
+    public string Remarks { get; set; }
+}
+
+2. Policy & Accounting Entities
+C. ThresholdPolicy
+
+Decouples logic from code. If COA changes a limit, you add a new row here.
+C#
+
+public class ThresholdPolicy
+{
+    public Guid Id { get; set; }
+    public decimal CapitalizationThreshold { get; set; } // e.g., 50,000.00
+    public decimal LowValueThreshold { get; set; }      // e.g., 5,000.00
+    public DateTime EffectiveDate { get; set; }
+    public bool IsActive { get; set; }
+}
+
+D. DepreciationEntry
+
+Tracks the monthly derecognition of value for PPE.
+C#
+
+public class DepreciationEntry
+{
+    public Guid Id { get; set; }
+    public Guid PropertyId { get; set; }
+    public DateTime PostingDate { get; set; }
+    public decimal DepreciationAmount { get; set; }
+    public decimal RemainingBookValue { get; set; }
+}
+
+3. Key Narrative for Development
+I. Rule-Based Numbering (PPE vs. Semi)
+
+Your development logic should check the AssetCategory before enabling the ReferenceNumber field:
+
+    PPE: The UI must require manual entry because these forms (PPERR/PPEIR) are pre-numbered paper forms.
+
+    Semi-Expendable: The UI should auto-generate the sequence (SMRR/SMIR) as these are usually system-driven.
+
+II. The Reclassification Logic ("Affective PPE")
+
+When a new ThresholdPolicy is activated:
+
+    The system identifies assets where Category == PPE but UnitCost < NewCapitalizationThreshold.
+
+    It logs a ClassificationLog entry.
+
+    It triggers a Re-issuance Workflow:
+
+        The old PAR is flagged as "Superseded."
+
+        A new ICS is generated for the current custodian.
+
+        This ensures the custodian's accountability profile remains accurate under the new rule.
+
+III. Historical Monitoring (PAR/ICS)
+
+To monitor assignments, the system queries the PropertyTransaction ledger.
+
+    To see the Current Accountability, it looks at the latest Type == Issuance where no Return has occurred.
+
+    To see the History, it pulls all transactions for that PropertyId in chronological order.
+
+IV. Depreciation Background Worker
+
+A monthly background service runs the following logic for all items currently categorized as PPE:
+
+    Calculation: (UnitCost - (UnitCost * 0.05)) / (UsefulLife * 12).
+
+    Post: Create a DepreciationEntry.
+
+    Condition: Stop posting if RemainingBookValue equals the Salvage Value (5%).
+
+    Exception: If an item is reclassified to Semi-Expendable, the service stops depreciating it, as Semi-Expendable property is fully expensed.
+
+4. System Enums
+C#
+
+public enum PropertyStatus { InStock, Issued, Unserviceable, Disposed }
+public enum TransactionType { Receipt, Issuance, Transfer, Return, Disposal }
+public enum AssetCategory { PPE, HighValueSemi, LowValueSemi }
+
+This domain structure provides the NFA with a system that is not only a digital record-keeper but a compliant accounting tool that can survive changes in Philippine procurement and auditing laws.

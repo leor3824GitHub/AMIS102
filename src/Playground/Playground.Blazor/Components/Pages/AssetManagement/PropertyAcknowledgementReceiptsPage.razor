@@ -1,0 +1,296 @@
+@page "/asset-management/property-acknowledgement-receipts"
+@using FSH.Playground.Blazor.ApiClient
+@inject IPARClient Client
+@inject IPPEItemClient PPEItemClient
+@inject ILookupClient LookupClient
+@inject ISnackbar Snackbar
+
+<FshPageHeader Title="Property Acknowledgement Receipts (PAR)"
+               Description="Assign OnHand PPE items to accountable employees. PAR is in-office accountability movement." />
+
+<MudGrid Spacing="3">
+    <!-- Create Form -->
+    <MudItem xs="12" md="5">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                <MudText Typo="Typo.h6" Class="mb-3">New PAR</MudText>
+                <MudStack Spacing="2">
+                    <MudTextField @bind-Value="_form.PARNo" Label="PAR No." Variant="Variant.Outlined"
+                                  Required="true" MaxLength="32" Placeholder="e.g. PAR-2026-00001" />
+                    <MudDatePicker @bind-Date="_form.DateNullable" Label="Date" Variant="Variant.Outlined"
+                                   DateFormat="MM/dd/yyyy" Required="true" />
+                    <MudSelect @bind-Value="_form.PARType" Label="PAR Type" Variant="Variant.Outlined" T="PARType">
+                        <MudSelectItem Value="PARType.NewPurchase">New Purchase</MudSelectItem>
+                        <MudSelectItem Value="PARType.Transfer">Transfer</MudSelectItem>
+                    </MudSelect>
+                    <MudAutocomplete T="EmployeeReferenceDto"
+                                     @bind-Value="_form.ReceivedFrom"
+                                     SearchFunc="SearchEmployees" ToStringFunc="FormatEmployee"
+                                     Label="Received From (Supply Officer)" Variant="Variant.Outlined"
+                                     Required="true" Clearable="true" ResetValueOnEmptyText="true" CoerceValue="true" />
+                    <MudAutocomplete T="EmployeeReferenceDto"
+                                     @bind-Value="_form.ReceivedBy"
+                                     SearchFunc="SearchEmployees" ToStringFunc="FormatEmployee"
+                                     Label="Received By (Accountable Employee)" Variant="Variant.Outlined"
+                                     Required="true" Clearable="true" ResetValueOnEmptyText="true" CoerceValue="true" />
+                    <MudAutocomplete T="EmployeeReferenceDto"
+                                     @bind-Value="_form.ApprovedBy"
+                                     SearchFunc="SearchEmployees" ToStringFunc="FormatEmployee"
+                                     Label="Approved By" Variant="Variant.Outlined"
+                                     Required="true" Clearable="true" ResetValueOnEmptyText="true" CoerceValue="true" />
+
+                    <MudDivider Class="my-2" />
+                    <MudStack Row="true" AlignItems="AlignItems.Center">
+                        <MudText Typo="Typo.subtitle2" Class="flex-grow-1">PPE Items to Issue</MudText>
+                        <MudIconButton Icon="@Icons.Material.Filled.Add" Size="Size.Small" Color="Color.Primary" OnClick="AddItem" />
+                    </MudStack>
+
+                    @for (var i = 0; i < _form.Items.Count; i++)
+                    {
+                        var idx = i;
+                        var li = _form.Items[idx];
+                        <MudPaper Outlined="true" Class="pa-2">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-1">
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">Item @(idx + 1)</MudText>
+                                <MudSpacer />
+                                <MudIconButton Icon="@Icons.Material.Filled.Remove" Size="Size.Small" Color="Color.Error"
+                                               OnClick="@(() => RemoveItem(idx))" />
+                            </MudStack>
+                            <MudStack Spacing="1">
+                                <MudAutocomplete T="PPEItemSummaryDto"
+                                                 Value="li.SelectedPPEItem"
+                                                 ValueChanged="@(v => li.SelectedPPEItem = v)"
+                                                 SearchFunc="SearchOnHandPPEItems"
+                                                 ToStringFunc="@(x => x is null ? "" : $"{x.PropertyCode} – {x.Description[..Math.Min(40, x.Description.Length)]}")"
+                                                 Label="PPE Item (OnHand)" Variant="Variant.Outlined" Dense="true"
+                                                 Required="true" Clearable="true" CoerceValue="true" ResetValueOnEmptyText="true" />
+                                @if (li.SelectedPPEItem is not null)
+                                {
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                        @li.SelectedPPEItem.PropertyNumber | ₱@li.SelectedPPEItem.UnitCost.ToString("N2") | @li.SelectedPPEItem.Status
+                                    </MudText>
+                                }
+                                <MudGrid Spacing="1">
+                                    <MudItem xs="4">
+                                        <MudNumericField @bind-Value="li.Quantity" Label="Qty" Variant="Variant.Outlined" Dense="true" Min="1" />
+                                    </MudItem>
+                                    <MudItem xs="4">
+                                        <MudTextField @bind-Value="li.Unit" Label="Unit" Variant="Variant.Outlined" Dense="true" MaxLength="32" />
+                                    </MudItem>
+                                </MudGrid>
+                                <MudTextField @bind-Value="li.ItemDescription" Label="Description" Variant="Variant.Outlined"
+                                              Dense="true" MaxLength="500" />
+                            </MudStack>
+                        </MudPaper>
+                    }
+
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                               OnClick="CreateAsync" Disabled="_busy">Create PAR</MudButton>
+                </MudStack>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    <!-- List Panel -->
+    <MudItem xs="12" md="7">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3" Spacing="2">
+                    <MudText Typo="Typo.h6" Class="flex-grow-1">Property Acknowledgement Receipts</MudText>
+                    <MudTextField @bind-Value="_keyword" Label="Search" Variant="Variant.Outlined" Size="Size.Small"
+                                  Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
+                                  DebounceInterval="350" OnDebounceIntervalElapsed="@(() => LoadAsync())" Style="max-width:220px" />
+                </MudStack>
+
+                @if (_loading)
+                {
+                    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+                }
+                else if (_list.Count == 0)
+                {
+                    <MudAlert Severity="Severity.Info">No PAR records yet.</MudAlert>
+                }
+                else
+                {
+                    <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                        <thead>
+                            <tr><th>PAR No.</th><th>Date</th><th>Type</th><th>Items</th><th></th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var s in _list)
+                            {
+                                <tr>
+                                    <td><b>@s.PARNo</b></td>
+                                    <td>@s.Date.ToString("MM/dd/yyyy")</td>
+                                    <td>@s.PARType</td>
+                                    <td><MudChip T="string" Size="Size.Small" Color="Color.Info">@s.ItemCount items</MudChip></td>
+                                    <td><MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small"
+                                                       Color="Color.Primary" OnClick="@(() => ViewAsync(s.Id))" /></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </MudSimpleTable>
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-2">
+                        <MudText Typo="Typo.caption">@_totalCount total</MudText>
+                        <MudSpacer />
+                        <MudPagination Count="@TotalPages" Selected="_page" ShowFirstButton="true" ShowLastButton="true"
+                                       SelectedChanged="@(async p => { _page = p; await LoadAsync(); })" />
+                    </MudStack>
+                }
+            </MudCardContent>
+        </MudCard>
+
+        @if (_detail is not null)
+        {
+            <MudCard Elevation="1" Class="mt-3">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudStack Row="true" AlignItems="AlignItems.Center">
+                            <MudText Typo="Typo.h6">@_detail.PARNo — @_detail.Date.ToString("MMMM dd, yyyy")</MudText>
+                            <MudSpacer />
+                            <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="@(() => _detail = null)" />
+                        </MudStack>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudGrid Spacing="1">
+                        <MudItem xs="6"><MudText Typo="Typo.caption">PAR Type</MudText><MudText>@_detail.PARType</MudText></MudItem>
+                        <MudItem xs="6"><MudText Typo="Typo.caption">Created</MudText><MudText Typo="Typo.caption">@_detail.CreatedOnUtc.ToLocalTime().ToString("MM/dd/yyyy HH:mm")</MudText></MudItem>
+                    </MudGrid>
+                    <MudDivider Class="my-2" />
+                    <MudText Typo="Typo.subtitle2" Class="mb-1">Line Items</MudText>
+                    <MudSimpleTable Dense="true" Striped="true">
+                        <thead>
+                            <tr><th>#</th><th>Property Code</th><th>Property No.</th><th>Description</th><th>Qty</th><th>Unit Cost</th><th>Total</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in _detail.Items)
+                            {
+                                <tr>
+                                    <td>@item.ItemNo</td>
+                                    <td><b>@item.PropertyCode</b></td>
+                                    <td>@item.PropertyNumber</td>
+                                    <td>@item.ItemDescription</td>
+                                    <td>@item.Quantity</td>
+                                    <td>₱@item.UnitCost.ToString("N2")</td>
+                                    <td><b>₱@item.TotalCost.ToString("N2")</b></td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="6" style="text-align:right"><b>Total:</b></td>
+                                <td><b>₱@_detail.Items.Sum(x => x.TotalCost).ToString("N2")</b></td>
+                            </tr>
+                        </tfoot>
+                    </MudSimpleTable>
+                </MudCardContent>
+            </MudCard>
+        }
+    </MudItem>
+</MudGrid>
+
+@code {
+    private List<PARSummaryDto> _list = [];
+    private PARDetailsDto? _detail;
+    private ParForm _form = new();
+    private string? _keyword;
+    private bool _loading, _busy;
+    private int _page = 1, _totalCount;
+    private const int PageSize = 15;
+    private int TotalPages => Math.Max(1, (int)Math.Ceiling(_totalCount / (double)PageSize));
+
+    protected override async Task OnInitializedAsync()
+    {
+        _form.Items.Add(new LineItem());
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        try
+        {
+            var r = await Client.SearchAsync(_keyword, page: _page, pageSize: PageSize);
+            _list = [.. r.Items];
+            _totalCount = r.TotalCount;
+        }
+        catch (Exception ex) { Snackbar.Add($"Load failed: {ex.Message}", Severity.Error); }
+        finally { _loading = false; }
+    }
+
+    private async Task ViewAsync(Guid id)
+    {
+        try { _detail = await Client.GetAsync(id); }
+        catch (Exception ex) { Snackbar.Add($"Load failed: {ex.Message}", Severity.Error); }
+    }
+
+    private async Task CreateAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_form.PARNo) || _form.DateNullable is null ||
+            _form.ReceivedFrom is null || _form.ReceivedBy is null || _form.ApprovedBy is null)
+        {
+            Snackbar.Add("PAR No., Date, Received From, Received By, and Approved By are required.", Severity.Warning);
+            return;
+        }
+        if (_form.Items.Any(i => i.SelectedPPEItem is null || i.Quantity <= 0 || string.IsNullOrWhiteSpace(i.Unit)))
+        {
+            Snackbar.Add("All items need a PPE Item, Quantity, and Unit.", Severity.Warning);
+            return;
+        }
+        _busy = true;
+        try
+        {
+            var items = _form.Items.Select(li => new CreatePARItemRequest(
+                li.SelectedPPEItem!.Id, li.Quantity, li.Unit!, li.ItemDescription ?? li.SelectedPPEItem.Description)).ToList();
+
+            var result = await Client.CreateAsync(new CreatePARCommand(
+                _form.PARNo, DateOnly.FromDateTime(_form.DateNullable!.Value),
+                _form.PARType, _form.ReceivedFrom!.Id, _form.ReceivedBy!.Id, _form.ApprovedBy!.Id, items));
+
+            Snackbar.Add($"PAR {result.PARNo} created with {result.ItemCount} item(s).", Severity.Success);
+            _form = new ParForm();
+            _form.Items.Add(new LineItem());
+            await LoadAsync();
+        }
+        catch (Exception ex) { Snackbar.Add($"Create failed: {ex.Message}", Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    private void AddItem() => _form.Items.Add(new LineItem());
+    private void RemoveItem(int idx) { if (_form.Items.Count > 1) _form.Items.RemoveAt(idx); }
+
+    private async Task<IEnumerable<EmployeeReferenceDto>> SearchEmployees(string? value, CancellationToken ct)
+    {
+        var r = await LookupClient.EmployeesGetAsync(keyword: value, isActive: true, pageSize: 20, cancellationToken: ct);
+        return r.Items;
+    }
+
+    private async Task<IEnumerable<PPEItemSummaryDto>> SearchOnHandPPEItems(string? value, CancellationToken ct)
+    {
+        var r = await PPEItemClient.SearchAsync(value, status: "OnHand", page: 1, pageSize: 20, ct: ct);
+        return r.Items;
+    }
+
+    private static string FormatEmployee(EmployeeReferenceDto? e) =>
+        e is null ? "" : $"{e.LastName}, {e.FirstName} ({e.EmployeeNumber})";
+
+    private sealed class ParForm
+    {
+        public string PARNo { get; set; } = string.Empty;
+        public DateTime? DateNullable { get; set; } = DateTime.Today;
+        public PARType PARType { get; set; } = PARType.NewPurchase;
+        public EmployeeReferenceDto? ReceivedFrom { get; set; }
+        public EmployeeReferenceDto? ReceivedBy { get; set; }
+        public EmployeeReferenceDto? ApprovedBy { get; set; }
+        public List<LineItem> Items { get; set; } = [];
+    }
+
+    private sealed class LineItem
+    {
+        public PPEItemSummaryDto? SelectedPPEItem { get; set; }
+        public int Quantity { get; set; } = 1;
+        public string? Unit { get; set; } = "unit";
+        public string? ItemDescription { get; set; }
+    }
+}

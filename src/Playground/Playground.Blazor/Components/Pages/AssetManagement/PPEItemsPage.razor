@@ -1,0 +1,149 @@
+@page "/asset-management/ppe-items"
+@using FSH.Playground.Blazor.ApiClient
+@inject IPPEItemClient Client
+@inject ISnackbar Snackbar
+
+<FshPageHeader Title="PPE Items"
+               Description="View all Property, Plant & Equipment items registered in the system. Items are created automatically when a PPERR is submitted." />
+
+<MudCard Elevation="1">
+    <MudCardContent>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3" Spacing="2" Wrap="Wrap.Wrap">
+            <MudText Typo="Typo.h6" Class="flex-grow-1">PPE Item Registry</MudText>
+            <MudSelect Value="_statusFilter" Label="Status" Variant="Variant.Outlined" Size="Size.Small"
+                       T="string" Style="max-width:160px"
+                       ValueChanged="@(async (string? v) => { _statusFilter = v; _page = 1; await LoadAsync(); })">
+                <MudSelectItem Value="@((string?)null)">All</MudSelectItem>
+                <MudSelectItem Value="@("OnHand")">On Hand</MudSelectItem>
+                <MudSelectItem Value="@("IssuedPAR")">Issued (PAR)</MudSelectItem>
+                <MudSelectItem Value="@("Transferred")">Transferred</MudSelectItem>
+                <MudSelectItem Value="@("Returned")">Returned</MudSelectItem>
+                <MudSelectItem Value="@("Disposed")">Disposed</MudSelectItem>
+            </MudSelect>
+            <MudTextField @bind-Value="_keyword" Label="Search" Variant="Variant.Outlined" Size="Size.Small"
+                          Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
+                          DebounceInterval="350" OnDebounceIntervalElapsed="@(() => LoadAsync())" Style="max-width:220px" />
+        </MudStack>
+
+        @if (_loading)
+        {
+            <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+        }
+        else if (_list.Count == 0)
+        {
+            <MudAlert Severity="Severity.Info">No PPE items found.</MudAlert>
+        }
+        else
+        {
+            <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                <thead>
+                    <tr>
+                        <th>Property Code</th>
+                        <th>Property No.</th>
+                        <th>Description</th>
+                        <th>Serial No.</th>
+                        <th>Date Acquired</th>
+                        <th>Unit Cost</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in _list)
+                    {
+                        var statusColor = item.Status switch
+                        {
+                            "OnHand" => Color.Success,
+                            "IssuedPAR" => Color.Info,
+                            "Transferred" => Color.Warning,
+                            "Disposed" => Color.Error,
+                            _ => Color.Default
+                        };
+                        <tr>
+                            <td><b>@item.PropertyCode</b></td>
+                            <td>@item.PropertyNumber</td>
+                            <td>@(item.Description.Length > 50 ? item.Description[..50] + "…" : item.Description)</td>
+                            <td>@(item.SerialNumber ?? "-")</td>
+                            <td>@item.DateAcquired.ToString("MM/dd/yyyy")</td>
+                            <td>₱@item.UnitCost.ToString("N2")</td>
+                            <td><MudChip T="string" Size="Size.Small" Color="@statusColor">@item.Status</MudChip></td>
+                            <td><MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small"
+                                               Color="Color.Primary" OnClick="@(() => ViewAsync(item.Id))" /></td>
+                        </tr>
+                    }
+                </tbody>
+            </MudSimpleTable>
+            <MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-2">
+                <MudText Typo="Typo.caption">@_totalCount total</MudText>
+                <MudSpacer />
+                <MudPagination Count="@TotalPages" Selected="_page" ShowFirstButton="true" ShowLastButton="true"
+                               SelectedChanged="@(async p => { _page = p; await LoadAsync(); })" />
+            </MudStack>
+        }
+    </MudCardContent>
+</MudCard>
+
+@if (_detail is not null)
+{
+    <MudCard Elevation="1" Class="mt-3">
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudStack Row="true" AlignItems="AlignItems.Center">
+                    <MudText Typo="Typo.h6">@_detail.PropertyCode — @_detail.PropertyNumber</MudText>
+                    <MudSpacer />
+                    <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="@(() => _detail = null)" />
+                </MudStack>
+            </CardHeaderContent>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudGrid Spacing="1">
+                <MudItem xs="12"><MudText Typo="Typo.caption">Description</MudText><MudText>@_detail.Description</MudText></MudItem>
+                @if (!string.IsNullOrWhiteSpace(_detail.SerialNumber))
+                {
+                    <MudItem xs="6"><MudText Typo="Typo.caption">Serial No.</MudText><MudText>@_detail.SerialNumber</MudText></MudItem>
+                }
+                <MudItem xs="6"><MudText Typo="Typo.caption">Date Acquired</MudText><MudText>@_detail.DateAcquired.ToString("MMMM dd, yyyy")</MudText></MudItem>
+                <MudItem xs="6"><MudText Typo="Typo.caption">Unit Cost</MudText><MudText><b>₱@_detail.UnitCost.ToString("N2")</b></MudText></MudItem>
+                <MudItem xs="6"><MudText Typo="Typo.caption">Est. Useful Life</MudText><MudText>@_detail.EstimatedUsefulLifeYears year(s)</MudText></MudItem>
+                <MudItem xs="6"><MudText Typo="Typo.caption">Status</MudText>
+                    <MudChip T="string" Size="Size.Small" Color="@(_detail.Status == "OnHand" ? Color.Success : _detail.Status == "Disposed" ? Color.Error : Color.Info)">
+                        @_detail.Status
+                    </MudChip>
+                </MudItem>
+                <MudItem xs="6"><MudText Typo="Typo.caption">Registered</MudText><MudText Typo="Typo.caption">@_detail.CreatedOnUtc.ToLocalTime().ToString("MM/dd/yyyy HH:mm")</MudText></MudItem>
+            </MudGrid>
+        </MudCardContent>
+    </MudCard>
+}
+
+@code {
+    private List<PPEItemSummaryDto> _list = [];
+    private PPEItemDetailsDto? _detail;
+    private string? _keyword;
+    private string? _statusFilter;
+    private bool _loading;
+    private int _page = 1, _totalCount;
+    private const int PageSize = 20;
+    private int TotalPages => Math.Max(1, (int)Math.Ceiling(_totalCount / (double)PageSize));
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        try
+        {
+            var r = await Client.SearchAsync(_keyword, _statusFilter, _page, PageSize);
+            _list = [.. r.Items];
+            _totalCount = r.TotalCount;
+        }
+        catch (Exception ex) { Snackbar.Add($"Load failed: {ex.Message}", Severity.Error); }
+        finally { _loading = false; }
+    }
+
+    private async Task ViewAsync(Guid id)
+    {
+        try { _detail = await Client.GetAsync(id); }
+        catch (Exception ex) { Snackbar.Add($"Load failed: {ex.Message}", Severity.Error); }
+    }
+}

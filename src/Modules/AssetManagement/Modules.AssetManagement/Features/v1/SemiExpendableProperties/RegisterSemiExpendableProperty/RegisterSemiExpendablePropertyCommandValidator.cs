@@ -10,6 +10,9 @@ public sealed class RegisterSemiExpendablePropertyCommandValidator : AbstractVal
             .NotEmpty().WithMessage("Property No. is required.")
             .MaximumLength(32).WithMessage("Property No. must not exceed 32 characters.");
 
+        RuleFor(x => x.Category)
+            .IsInEnum().WithMessage("Category must be a valid AssetCategory value.");
+
         RuleFor(x => x.SemiExpendableItemId)
             .NotEmpty().WithMessage("Semi-expendable item is required.");
 

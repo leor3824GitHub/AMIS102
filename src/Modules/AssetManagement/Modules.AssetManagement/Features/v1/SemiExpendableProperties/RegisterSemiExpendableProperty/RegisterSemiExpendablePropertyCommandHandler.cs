@@ -44,6 +44,7 @@ public sealed class RegisterSemiExpendablePropertyCommandHandler : ICommandHandl
         var property = SemiExpendableProperty.Create(
             command.PropertyNo,
             command.SemiExpendableItemId,
+            command.Category,
             command.SerialNo,
             command.AcquisitionDate,
             command.UnitCost,
@@ -61,6 +62,7 @@ public sealed class RegisterSemiExpendablePropertyCommandHandler : ICommandHandl
             property.SemiExpendableItemId,
             item.Code,
             item.Name,
+            property.Category.ToString(),
             property.SerialNo,
             property.AcquisitionDate,
             property.UnitCost,

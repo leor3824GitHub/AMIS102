@@ -1,0 +1,208 @@
+@page "/asset-management/physical-count"
+@using FSH.Playground.Blazor.ApiClient
+@inject IPhysicalCountClient Client
+@inject ILookupClient LookupClient
+@inject ISnackbar Snackbar
+@inject NavigationManager Nav
+
+<FshPageHeader Title="Physical Count"
+               Description="Conduct physical inventory of PPE and semi-expendable property. Create a session to generate the asset checklist, then walk through the inventory using the scan or manual verification flow." />
+
+<MudGrid Spacing="3">
+    <!-- Create Form -->
+    <MudItem xs="12" md="5">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                <MudText Typo="Typo.h6" Class="mb-3">New Session</MudText>
+                <MudStack Spacing="2">
+                    <MudTextField @bind-Value="_form.SessionNo" Label="Session No." Variant="Variant.Outlined"
+                                  Required="true" MaxLength="32" Placeholder="e.g. PCS-2026-00001" />
+                    <MudDatePicker @bind-Date="_form.CountDateNullable" Label="Count Date" Variant="Variant.Outlined"
+                                   DateFormat="MM/dd/yyyy" Required="true" />
+                    <MudTextField @bind-Value="_form.StationOffice" Label="Station / Office" Variant="Variant.Outlined"
+                                  Required="true" MaxLength="200" Placeholder="e.g. IT Division – Head Office" />
+                    <MudSelect @bind-Value="_form.Scope" Label="Scope" Variant="Variant.Outlined" T="string">
+                        <MudSelectItem Value="@("PPEOnly")">PPE Items Only</MudSelectItem>
+                        <MudSelectItem Value="@("SemiExpendableOnly")">Semi-Expendable Only</MudSelectItem>
+                        <MudSelectItem Value="@("Both")">Both PPE &amp; Semi-Expendable</MudSelectItem>
+                    </MudSelect>
+
+                    <MudAutocomplete T="EmployeeReferenceDto"
+                                     @bind-Value="_form.PreparedBy"
+                                     SearchFunc="SearchEmployees" ToStringFunc="FormatEmployee"
+                                     Label="Prepared By" Variant="Variant.Outlined"
+                                     Required="true" Clearable="true" ResetValueOnEmptyText="true" CoerceValue="true" />
+                    <MudAutocomplete T="EmployeeReferenceDto"
+                                     @bind-Value="_form.CertifiedBy"
+                                     SearchFunc="SearchEmployees" ToStringFunc="FormatEmployee"
+                                     Label="Certified By (confirms count was conducted)" Variant="Variant.Outlined"
+                                     Required="true" Clearable="true" ResetValueOnEmptyText="true" CoerceValue="true" />
+                    <MudAutocomplete T="EmployeeReferenceDto"
+                                     @bind-Value="_form.ApprovedBy"
+                                     SearchFunc="SearchEmployees" ToStringFunc="FormatEmployee"
+                                     Label="Approved By (GSD-PSMD Division Chief)" Variant="Variant.Outlined"
+                                     Required="true" Clearable="true" ResetValueOnEmptyText="true" CoerceValue="true" />
+
+                    <MudAlert Severity="Severity.Info" Dense="true">
+                        Creating a session generates a checklist of all active assets in the selected scope.
+                        The inventory walk-through is done on the next screen.
+                    </MudAlert>
+
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                               OnClick="CreateAsync" Disabled="_busy">Create &amp; Open Checklist</MudButton>
+                </MudStack>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    <!-- Sessions List -->
+    <MudItem xs="12" md="7">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3" Spacing="2">
+                    <MudText Typo="Typo.h6" Class="flex-grow-1">Sessions</MudText>
+                    <MudSelect Value="_statusFilter" Label="Status" Variant="Variant.Outlined" Size="Size.Small"
+                               T="string" Style="max-width:130px"
+                               ValueChanged="@(async (string? v) => { _statusFilter = v; _page = 1; await LoadAsync(); })">
+                        <MudSelectItem Value="@((string?)null)">All</MudSelectItem>
+                        <MudSelectItem Value="@("Open")">Open</MudSelectItem>
+                        <MudSelectItem Value="@("Submitted")">Submitted</MudSelectItem>
+                    </MudSelect>
+                    <MudTextField @bind-Value="_keyword" Label="Search" Variant="Variant.Outlined" Size="Size.Small"
+                                  Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
+                                  DebounceInterval="350" OnDebounceIntervalElapsed="@(() => LoadAsync())" Style="max-width:200px" />
+                </MudStack>
+
+                @if (_loading)
+                {
+                    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+                }
+                else if (_list.Count == 0)
+                {
+                    <MudAlert Severity="Severity.Info">No physical count sessions yet.</MudAlert>
+                }
+                else
+                {
+                    <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                        <thead>
+                            <tr>
+                                <th>Session No.</th>
+                                <th>Date</th>
+                                <th>Station / Office</th>
+                                <th>Progress</th>
+                                <th>Status</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var s in _list)
+                            {
+                                var statusColor = s.Status == "Open" ? Color.Warning : Color.Success;
+                                var pct = s.TotalEntries > 0
+                                    ? (double)(s.Found + s.NotFound + s.FoundAtStation) / s.TotalEntries * 100
+                                    : 0;
+                                <tr>
+                                    <td><b>@s.SessionNo</b></td>
+                                    <td>@s.CountDate.ToString("MM/dd/yyyy")</td>
+                                    <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">@s.StationOffice</td>
+                                    <td style="min-width:120px">
+                                        <MudTooltip Text="@($"Found: {s.Found}  Not Found: {s.NotFound}  Found@Station: {s.FoundAtStation}  Pending: {s.Pending}")">
+                                            <MudProgressLinear Value="@pct" Color="Color.Success" Rounded="true" Size="Size.Small" />
+                                            <MudText Typo="Typo.caption">@(s.Found + s.NotFound + s.FoundAtStation) / @s.TotalEntries</MudText>
+                                        </MudTooltip>
+                                    </td>
+                                    <td><MudChip T="string" Size="Size.Small" Color="@statusColor">@s.Status</MudChip></td>
+                                    <td>
+                                        <MudIconButton Icon="@Icons.Material.Filled.PlayArrow" Size="Size.Small"
+                                                       Color="Color.Primary" Title="Open Checklist"
+                                                       OnClick="@(() => Nav.NavigateTo($"/asset-management/physical-count/{s.Id}"))" />
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </MudSimpleTable>
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-2">
+                        <MudText Typo="Typo.caption">@_totalCount total</MudText>
+                        <MudSpacer />
+                        <MudPagination Count="@TotalPages" Selected="_page" ShowFirstButton="true" ShowLastButton="true"
+                                       SelectedChanged="@(async p => { _page = p; await LoadAsync(); })" />
+                    </MudStack>
+                }
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private List<PhysicalCountSessionSummaryDto> _list = [];
+    private SessionForm _form = new();
+    private string? _keyword;
+    private string? _statusFilter;
+    private bool _loading, _busy;
+    private int _page = 1, _totalCount;
+    private const int PageSize = 15;
+    private int TotalPages => Math.Max(1, (int)Math.Ceiling(_totalCount / (double)PageSize));
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        try
+        {
+            var r = await Client.SearchAsync(_keyword, _page, PageSize, _statusFilter);
+            _list = [.. r.Items];
+            _totalCount = r.TotalCount;
+        }
+        catch (Exception ex) { Snackbar.Add($"Load failed: {ex.Message}", Severity.Error); }
+        finally { _loading = false; }
+    }
+
+    private async Task CreateAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_form.SessionNo) || _form.CountDateNullable is null ||
+            string.IsNullOrWhiteSpace(_form.StationOffice) ||
+            _form.PreparedBy is null || _form.CertifiedBy is null || _form.ApprovedBy is null)
+        {
+            Snackbar.Add("All fields are required.", Severity.Warning);
+            return;
+        }
+        _busy = true;
+        try
+        {
+            var result = await Client.CreateAsync(new CreatePhysicalCountSessionRequest(
+                _form.SessionNo,
+                DateOnly.FromDateTime(_form.CountDateNullable!.Value),
+                _form.StationOffice,
+                _form.Scope,
+                _form.PreparedBy!.Id,
+                _form.CertifiedBy!.Id,
+                _form.ApprovedBy!.Id));
+
+            Snackbar.Add($"Session {result.SessionNo} created with {result.EntriesCreated} entries.", Severity.Success);
+            Nav.NavigateTo($"/asset-management/physical-count/{result.SessionId}");
+        }
+        catch (Exception ex) { Snackbar.Add($"Create failed: {ex.Message}", Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    private async Task<IEnumerable<EmployeeReferenceDto>> SearchEmployees(string? value, CancellationToken ct)
+    {
+        var r = await LookupClient.EmployeesGetAsync(keyword: value, isActive: true, pageSize: 20, cancellationToken: ct);
+        return r.Items;
+    }
+
+    private static string FormatEmployee(EmployeeReferenceDto? e) =>
+        e is null ? "" : $"{e.LastName}, {e.FirstName} ({e.EmployeeNumber})";
+
+    private sealed class SessionForm
+    {
+        public string SessionNo { get; set; } = string.Empty;
+        public DateTime? CountDateNullable { get; set; } = DateTime.Today;
+        public string StationOffice { get; set; } = string.Empty;
+        public string Scope { get; set; } = "PPEOnly";
+        public EmployeeReferenceDto? PreparedBy { get; set; }
+        public EmployeeReferenceDto? CertifiedBy { get; set; }
+        public EmployeeReferenceDto? ApprovedBy { get; set; }
+    }
+}

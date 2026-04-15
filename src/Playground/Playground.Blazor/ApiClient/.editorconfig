@@ -1,0 +1,6 @@
+root = false
+
+# ApiClient contains generated types mirroring domain names that use official
+# government document abbreviations (ICS, SMRR, ITR, RRSP, etc.).
+[*.cs]
+dotnet_diagnostic.S101.severity = none

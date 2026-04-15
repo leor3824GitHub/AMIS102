@@ -27,6 +27,7 @@ public sealed class GetSemiExpendablePropertyByIdQueryHandler(AssetManagementDbC
             property.SemiExpendableItem.Name,
             property.SemiExpendableItem.UnitOfMeasure,
             property.SemiExpendableItem.EstimatedUsefulLifeYears,
+            property.Category.ToString(),
             property.SerialNo,
             property.AcquisitionDate,
             property.UnitCost,

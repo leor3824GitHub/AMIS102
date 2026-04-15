@@ -1,0 +1,51 @@
+using FSH.Framework.Core.Domain;
+
+namespace FSH.Modules.AssetManagement.Domain;
+
+/// <summary>
+/// A line item within a Receipt for Returned Semi-Expendable Property.
+/// Snapshots the property details at the time of return for audit trail.
+/// </summary>
+public sealed class RRSPItem : BaseEntity<Guid>
+{
+    /// <summary>FK to the parent RRSP.</summary>
+    public Guid RRSPId { get; private set; }
+
+    /// <summary>The specific property unit being returned.</summary>
+    public Guid SemiExpendablePropertyId { get; private set; }
+
+    /// <summary>Item number on the RRSP form (sequential within the RRSP).</summary>
+    public int ItemNo { get; private set; }
+
+    /// <summary>Description as it appears on the RRSP form.</summary>
+    public string? Description { get; private set; }
+
+    /// <summary>Unit cost copied from the property at the time of return.</summary>
+    public decimal UnitCost { get; private set; }
+
+    /// <summary>
+    /// Asset category at the time of return.
+    /// Frozen here so historical RRSP records remain accurate after reclassification.
+    /// </summary>
+    public AssetCategory CategoryAtTimeOfReturn { get; private set; }
+
+    public static RRSPItem Create(
+        Guid rrspId,
+        Guid semiExpendablePropertyId,
+        int itemNo,
+        string? description,
+        decimal unitCost,
+        AssetCategory categoryAtTimeOfReturn)
+    {
+        return new RRSPItem
+        {
+            Id                       = Guid.NewGuid(),
+            RRSPId                   = rrspId,
+            SemiExpendablePropertyId = semiExpendablePropertyId,
+            ItemNo                   = itemNo,
+            Description              = description,
+            UnitCost                 = unitCost,
+            CategoryAtTimeOfReturn   = categoryAtTimeOfReturn,
+        };
+    }
+}

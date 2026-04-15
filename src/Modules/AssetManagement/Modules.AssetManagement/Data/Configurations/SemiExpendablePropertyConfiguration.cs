@@ -16,12 +16,15 @@ public sealed class SemiExpendablePropertyConfiguration : IEntityTypeConfigurati
         builder.Property(x => x.AcquisitionDate).IsRequired();
         builder.Property(x => x.UnitCost).HasColumnType("numeric(18,2)").IsRequired();
         builder.Property(x => x.FundCluster).HasMaxLength(50);
+        builder.Property(x => x.Category).HasConversion<string>().HasMaxLength(32).IsRequired();
         builder.Property(x => x.Status).HasConversion<string>().HasMaxLength(32).IsRequired();
         builder.Property(x => x.Remarks).HasMaxLength(500);
         builder.Property(x => x.Version).IsConcurrencyToken();
 
         builder.HasIndex(x => x.PropertyNo).IsUnique();
         builder.HasIndex(x => x.Status);
+        builder.HasIndex(x => x.Category);
+        builder.HasIndex(x => x.SemiExpendableItemId);
         builder.HasIndex(x => x.CurrentCustodianId);
 
         builder.Property(x => x.SMRRItemId);

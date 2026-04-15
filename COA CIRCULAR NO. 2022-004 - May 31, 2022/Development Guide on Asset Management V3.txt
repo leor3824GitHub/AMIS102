@@ -1,0 +1,122 @@
+AMIS Final Refined Domain Guide
+1. The Core Entities (Master-Detail Architecture)
+A. The Master Asset: GovernmentProperty
+
+Stores the permanent identity and current status of a single physical unit.
+C#
+
+public class GovernmentProperty
+{
+    public Guid Id { get; set; }
+    public string PropertyNumber { get; set; } 
+    public string Description { get; set; } 
+    public string SerialNumber { get; set; }
+    public decimal UnitCost { get; set; }
+    public DateTime DateAcquired { get; set; }
+    public int EstimatedUsefulLife { get; set; } 
+    
+    // --- Current Snapshot (Managed by Transactions) ---
+    public PropertyStatus Status { get; set; } 
+    public AssetCategory CurrentCategory { get; set; } 
+    public Guid? CurrentCustodianId { get; set; } 
+    public virtual Employee CurrentCustodian { get; set; }
+
+    // Navigation
+    public virtual ICollection<TransactionItem> TransactionHistory { get; set; }
+    public virtual ICollection<DepreciationEntry> DepreciationLedger { get; set; }
+}
+
+B. The Transaction Header: PropertyTransaction
+
+Represents the physical Document (PAR, ICS, PPEIR, SMIR). This contains the shared info like Date, Signatories, and Reference Number.
+C#
+
+public class PropertyTransaction
+{
+    public Guid Id { get; set; }
+    public string ReferenceNumber { get; set; } // PPERR/PPEIR (Manual) or SMRR/SMIR (Auto)
+    public TransactionType Type { get; set; } 
+    public DateTime TransactionDate { get; set; }
+
+    // Signatories (Common to all items in this document)
+    public Guid? ReceivedById { get; set; } // The Custodian
+    public virtual Employee ReceivedBy { get; set; }
+    public Guid? IssuedById { get; set; }   // Supply Officer
+    public virtual Employee IssuedBy { get; set; }
+
+    public string Remarks { get; set; }
+    
+    // The list of assets included in this document
+    public virtual ICollection<TransactionItem> Items { get; set; }
+}
+
+C. The Link: TransactionItem
+
+This connects the document to the asset. This is where the Historical Ledger actually lives.
+C#
+
+public class TransactionItem
+{
+    public Guid Id { get; set; }
+    public Guid TransactionId { get; set; }
+    public virtual PropertyTransaction Transaction { get; set; }
+
+    public Guid PropertyId { get; set; }
+    public virtual GovernmentProperty Property { get; set; }
+
+    // Snapshot of category at the moment this specific item was processed
+    public AssetCategory CategoryAtTimeOfTransaction { get; set; }
+}
+
+2. Updated Development Guide Narratives
+I. Handling Multi-Asset Transactions
+
+When you perform an issuance in your Blazor UI:
+
+    Select multiple assets from the "In Stock" list.
+
+    Create one PropertyTransaction (The Header).
+
+    Loop through the selected assets and create a TransactionItem for each.
+
+    Automatic Side-Effect: For every TransactionItem created, the system must update the corresponding GovernmentProperty.CurrentCustodianId and Status.
+
+II. Dynamic Thresholds & Reclassification
+
+Since you already implemented rule-based thresholds:
+
+    Manual Input for PPE: If any item in the transaction is currently classified as PPE, the UI must require a manual ReferenceNumber.
+
+    Affective PPE Reclassification: If a threshold changes, the system can generate a single ICS document that covers multiple reclassified assets, significantly reducing the paperwork for the custodian.
+
+III. Configurable Depreciation & Salvage
+
+    Salvage Value: Calculated as UnitCost * Policy.StandardSalvageRate (e.g., 5%).
+
+    Background Worker: It iterates through GovernmentProperty entries. If an item is PPE, it calculates the monthly depreciation and adds a DepreciationEntry. It stops once the book value hits the Salvage Value.
+
+IV. Property Assignment Monitoring (Historical)
+
+To see an asset's history, you query TransactionItem filtered by PropertyId. This will show every document (Header) that the asset was ever part of, giving you a full "Chain of Custody."
+3. Operational Document Mapping
+Form	Purpose	Category	Multi-Asset?
+PPERR / SMRR	Receipt of Deliveries	Both	Yes (One delivery, many items)
+PAR / ICS	Primary Issuance	Both	Yes (One employee, many items)
+PPEIR / SMIR	Transfer of Property	Both	Yes (Mass transfer between offices)
+RRSP	Return to Supply	Both	Yes (Surrendering multiple items)
+4. Final System Enums
+C#
+
+public enum PropertyStatus { InStock, Issued, Unserviceable, Disposed }
+public enum AssetCategory { PPE, HighValueSemi, LowValueSemi }
+public enum TransactionType 
+{ 
+    Receipt,   // PPERR / SMRR
+    Issuance,  // PAR / ICS
+    Transfer,  // PPEIR / SMIR
+    Return,    // RRSP
+    Disposal,  // IIRUP / IIRUSP
+    Reclassification 
+}
+
+This Master-Detail structure is the final piece of the puzzle. It allows your AMIS to mirror the actual paper flow at NFA Caraga—where one document often moves a whole truckload of equipment—while keeping a precise, individual history for every single property tag.

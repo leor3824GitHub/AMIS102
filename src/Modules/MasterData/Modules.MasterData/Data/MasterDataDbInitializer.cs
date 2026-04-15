@@ -132,44 +132,44 @@ internal sealed class MasterDataDbInitializer(
             var suppliers = new[]
             {
                 // Office & stationery
-                Supplier.Create("SUP-001", "Acme Supplies Co.", "General office and janitorial supplies", "Alice Smith", "alice@acme-supplies.example", "+63-2-8800-1001", "1 Acme Way, Makati City"),
-                Supplier.Create("SUP-002", "OfficePro Distributors", "Office supplies and consumables", "David Kim", "david@officepro.example", "+63-2-8800-1002", "8 Office Plaza, BGC, Taguig"),
-                Supplier.Create("SUP-003", "PaperWorks Inc.", "Paper, printing, and stationery", "Mia Santos", "mia@paperworks.example", "+63-2-8800-1003", "22 Paper Ave, Quezon City"),
+                Supplier.Create("SUP-001", "Acme Supplies Co.", "123-456-789-000", "NON-VAT", "General office and janitorial supplies", "Alice Smith", "alice@acme-supplies.example", "+63-2-8800-1001", "1 Acme Way, Makati City"),
+                Supplier.Create("SUP-002", "OfficePro Distributors", "234-567-890-001", "NON-VAT", "Office supplies and consumables", "David Kim", "david@officepro.example", "+63-2-8800-1002", "8 Office Plaza, BGC, Taguig"),
+                Supplier.Create("SUP-003", "PaperWorks Inc.", "345-678-901-002", "NON-VAT", "Paper, printing, and stationery", "Mia Santos", "mia@paperworks.example", "+63-2-8800-1003", "22 Paper Ave, Quezon City"),
 
                 // Food & beverages
-                Supplier.Create("SUP-004", "Global Foods Corp.", "Dry goods and pantry staples", "Bob Jones", "bob@globalfoods.example", "+63-2-8800-1004", "12 Market St, Pasig City"),
-                Supplier.Create("SUP-005", "FreshMart Trading", "Fresh produce and dairy", "Rachel Cruz", "rachel@freshmart.example", "+63-2-8800-1005", "55 Farm Rd, Caloocan City"),
-                Supplier.Create("SUP-006", "BrewLine Beverages", "Coffee, tea, and bottled drinks", "Marco Tan", "marco@brewline.example", "+63-2-8800-1006", "30 Brew St, Mandaluyong City"),
+                Supplier.Create("SUP-004", "Global Foods Corp.", "456-789-012-003", "NON-VAT", "Dry goods and pantry staples", "Bob Jones", "bob@globalfoods.example", "+63-2-8800-1004", "12 Market St, Pasig City"),
+                Supplier.Create("SUP-005", "FreshMart Trading", "567-890-123-004", "NON-VAT", "Fresh produce and dairy", "Rachel Cruz", "rachel@freshmart.example", "+63-2-8800-1005", "55 Farm Rd, Caloocan City"),
+                Supplier.Create("SUP-006", "BrewLine Beverages", "678-901-234-005", "NON-VAT", "Coffee, tea, and bottled drinks", "Marco Tan", "marco@brewline.example", "+63-2-8800-1006", "30 Brew St, Mandaluyong City"),
 
                 // Electronics & IT
-                Supplier.Create("SUP-007", "TechSource Philippines", "Computers, peripherals, and accessories", "Carol Lee", "carol@techsource.example", "+63-2-8800-1007", "42 Tech Park, Eastwood, Quezon City"),
-                Supplier.Create("SUP-008", "NetGear Solutions", "Networking equipment and cabling", "James Reyes", "james@netgear-solutions.example", "+63-2-8800-1008", "18 Network Blvd, Ortigas Center"),
-                Supplier.Create("SUP-009", "PowerCell Energy", "Batteries, UPS, and power supplies", "Lena Uy", "lena@powercell.example", "+63-2-8800-1009", "7 Power Drive, Parañaque City"),
+                Supplier.Create("SUP-007", "TechSource Philippines", "789-012-345-006", "NON-VAT", "Computers, peripherals, and accessories", "Carol Lee", "carol@techsource.example", "+63-2-8800-1007", "42 Tech Park, Eastwood, Quezon City"),
+                Supplier.Create("SUP-008", "NetGear Solutions", "890-123-456-007", "NON-VAT", "Networking equipment and cabling", "James Reyes", "james@netgear-solutions.example", "+63-2-8800-1008", "18 Network Blvd, Ortigas Center"),
+                Supplier.Create("SUP-009", "PowerCell Energy", "901-234-567-008", "NON-VAT", "Batteries, UPS, and power supplies", "Lena Uy", "lena@powercell.example", "+63-2-8800-1009", "7 Power Drive, Parañaque City"),
 
                 // Furniture & fixtures
-                Supplier.Create("SUP-010", "Furnishings Co.", "Office furniture and ergonomic chairs", "Eve Turner", "eve@furnishings.example", "+63-2-8800-1010", "99 Furniture Rd, Las Piñas City"),
-                Supplier.Create("SUP-011", "ModSpace Interiors", "Modular workstations and storage", "Anton Flores", "anton@modspace.example", "+63-2-8800-1011", "61 Design Ave, Alabang, Muntinlupa"),
+                Supplier.Create("SUP-010", "Furnishings Co.", "112-233-445-009", "NON-VAT", "Office furniture and ergonomic chairs", "Eve Turner", "eve@furnishings.example", "+63-2-8800-1010", "99 Furniture Rd, Las Piñas City"),
+                Supplier.Create("SUP-011", "ModSpace Interiors", "223-344-556-010", "NON-VAT", "Modular workstations and storage", "Anton Flores", "anton@modspace.example", "+63-2-8800-1011", "61 Design Ave, Alabang, Muntinlupa"),
 
                 // Cleaning & janitorial
-                Supplier.Create("SUP-012", "CleanPro Janitorial", "Cleaning chemicals and janitorial equipment", "Nina Bautista", "nina@cleanpro.example", "+63-2-8800-1012", "14 Clean St, Valenzuela City"),
-                Supplier.Create("SUP-013", "HygieneHub Supply", "Hygiene products and PPE", "Eric Villanueva", "eric@hygienehub.example", "+63-2-8800-1013", "35 Safety Lane, Marikina City"),
+                Supplier.Create("SUP-012", "CleanPro Janitorial", "334-455-667-011", "NON-VAT", "Cleaning chemicals and janitorial equipment", "Nina Bautista", "nina@cleanpro.example", "+63-2-8800-1012", "14 Clean St, Valenzuela City"),
+                Supplier.Create("SUP-013", "HygieneHub Supply", "445-566-778-012", "NON-VAT", "Hygiene products and PPE", "Eric Villanueva", "eric@hygienehub.example", "+63-2-8800-1013", "35 Safety Lane, Marikina City"),
 
                 // Medical & safety
-                Supplier.Create("SUP-014", "MediStock Philippines", "First aid, medicines, and medical supplies", "Dr. Sofia Lim", "sofia@medistock.example", "+63-2-8800-1014", "10 Health Blvd, San Juan City"),
-                Supplier.Create("SUP-015", "SafeGuard Trading", "Safety gear, fire extinguishers, and PPE", "Rico Mendoza", "rico@safeguard.example", "+63-2-8800-1015", "88 Safety Rd, Pasay City"),
+                Supplier.Create("SUP-014", "MediStock Philippines", "556-677-889-013", "NON-VAT", "First aid, medicines, and medical supplies", "Dr. Sofia Lim", "sofia@medistock.example", "+63-2-8800-1014", "10 Health Blvd, San Juan City"),
+                Supplier.Create("SUP-015", "SafeGuard Trading", "667-788-990-014", "NON-VAT", "Safety gear, fire extinguishers, and PPE", "Rico Mendoza", "rico@safeguard.example", "+63-2-8800-1015", "88 Safety Rd, Pasay City"),
 
                 // Electrical & hardware
-                Supplier.Create("SUP-016", "BrightWire Electrical", "Electrical supplies and lighting", "Donna Aguilar", "donna@brightwire.example", "+63-2-8800-1016", "5 Circuit Ave, Navotas City"),
-                Supplier.Create("SUP-017", "IronClad Hardware", "Tools, hardware, and construction materials", "Roy Castillo", "roy@ironclad.example", "+63-2-8800-1017", "27 Hardware St, Malabon City"),
+                Supplier.Create("SUP-016", "BrightWire Electrical", "778-899-101-015", "NON-VAT", "Electrical supplies and lighting", "Donna Aguilar", "donna@brightwire.example", "+63-2-8800-1016", "5 Circuit Ave, Navotas City"),
+                Supplier.Create("SUP-017", "IronClad Hardware", "889-910-212-016", "NON-VAT", "Tools, hardware, and construction materials", "Roy Castillo", "roy@ironclad.example", "+63-2-8800-1017", "27 Hardware St, Malabon City"),
 
                 // Printing & signage
-                Supplier.Create("SUP-018", "PrintMaster Solutions", "Commercial printing and tarpaulin", "Grace Chua", "grace@printmaster.example", "+63-2-8800-1018", "3 Print Blvd, Cubao, Quezon City"),
+                Supplier.Create("SUP-018", "PrintMaster Solutions", "990-121-323-017", "NON-VAT", "Commercial printing and tarpaulin", "Grace Chua", "grace@printmaster.example", "+63-2-8800-1018", "3 Print Blvd, Cubao, Quezon City"),
 
                 // Transport & logistics
-                Supplier.Create("SUP-019", "SpeedLink Logistics", "Courier and freight services", "Dennis Ocampo", "dennis@speedlink.example", "+63-2-8800-1019", "200 Logistics Way, Bicutan, Taguig"),
+                Supplier.Create("SUP-019", "SpeedLink Logistics", "101-232-434-018", "NON-VAT", "Courier and freight services", "Dennis Ocampo", "dennis@speedlink.example", "+63-2-8800-1019", "200 Logistics Way, Bicutan, Taguig"),
 
                 // Miscellaneous
-                Supplier.Create("SUP-020", "AllSource Trading", "General merchandise and seasonal items", "Patricia Domingo", "patricia@allsource.example", "+63-2-8800-1020", "1 Trade Center, Binondo, Manila"),
+                Supplier.Create("SUP-020", "AllSource Trading", "212-343-545-019", "NON-VAT", "General merchandise and seasonal items", "Patricia Domingo", "patricia@allsource.example", "+63-2-8800-1020", "1 Trade Center, Binondo, Manila"),
             };
             await context.Suppliers.AddRangeAsync(suppliers, cancellationToken).ConfigureAwait(false);
         }
@@ -321,6 +321,7 @@ internal sealed class MasterDataDbInitializer(
 
         logger.LogInformation("[{Tenant}] seeded master data.", context.TenantInfo?.Identifier);
     }
+
 }
 
 

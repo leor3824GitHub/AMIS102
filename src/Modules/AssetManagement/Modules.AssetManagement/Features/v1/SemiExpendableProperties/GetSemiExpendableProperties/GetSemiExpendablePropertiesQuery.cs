@@ -6,6 +6,7 @@ namespace FSH.Modules.AssetManagement.Features.v1.SemiExpendableProperties.GetSe
 public sealed record GetSemiExpendablePropertiesQuery(
     string? Keyword = null,
     Guid? SemiExpendableItemId = null,
+    AssetCategory? Category = null,
     PropertyStatus? Status = null,
     Guid? CurrentCustodianId = null,
     int PageNumber = 1,
@@ -23,6 +24,7 @@ public sealed record SemiExpendablePropertySummaryDto(
     Guid SemiExpendableItemId,
     string ItemCode,
     string ItemName,
+    string Category,
     string? SerialNo,
     DateOnly AcquisitionDate,
     decimal UnitCost,

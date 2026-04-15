@@ -19,6 +19,7 @@ public static class GetSemiExpendablePropertiesEndpoint
     private static async Task<IResult> GetSemiExpendableProperties(
         string? keyword = null,
         Guid? semiExpendableItemId = null,
+        AssetCategory? category = null,
         PropertyStatus? status = null,
         Guid? currentCustodianId = null,
         int pageNumber = 1,
@@ -26,7 +27,7 @@ public static class GetSemiExpendablePropertiesEndpoint
         IMediator mediator = null!,
         CancellationToken cancellationToken = default)
     {
-        var query = new GetSemiExpendablePropertiesQuery(keyword, semiExpendableItemId, status, currentCustodianId, pageNumber, pageSize);
+        var query = new GetSemiExpendablePropertiesQuery(keyword, semiExpendableItemId, category, status, currentCustodianId, pageNumber, pageSize);
         var result = await mediator.Send(query, cancellationToken);
         return TypedResults.Ok(result);
     }

@@ -28,11 +28,17 @@ public sealed class SuppliesMaterialsReceivingReport : AggregateRoot<Guid>, IAud
 
     public string? FundCluster { get; private set; }
 
-    /// <summary>Name of the supply officer who prepared/received the report.</summary>
-    public string? ReceivedBy { get; private set; }
+    /// <summary>
+    /// Employee ID of the supply officer who received the goods.
+    /// References MasterData.EmployeeProfile — plain FK, no cross-module navigation.
+    /// </summary>
+    public Guid? ReceivedByEmployeeId { get; private set; }
 
-    /// <summary>Name of the approving officer.</summary>
-    public string? NotedBy { get; private set; }
+    /// <summary>
+    /// Employee ID of the approving/noting officer.
+    /// References MasterData.EmployeeProfile — plain FK, no cross-module navigation.
+    /// </summary>
+    public Guid? NotedByEmployeeId { get; private set; }
 
     public byte[] Version { get; set; } = [];
 
@@ -53,22 +59,22 @@ public sealed class SuppliesMaterialsReceivingReport : AggregateRoot<Guid>, IAud
         ReceiptType receiptType,
         string? otherReceiptType,
         string? fundCluster,
-        string? receivedBy,
-        string? notedBy)
+        Guid? receivedByEmployeeId,
+        Guid? notedByEmployeeId)
     {
         return new SuppliesMaterialsReceivingReport
         {
-            Id             = Guid.NewGuid(),
-            SMRRNo         = smrrNo,
-            Date           = date,
-            ReceivedFrom   = receivedFrom,
-            Address        = address,
-            ReceiptType    = receiptType,
-            OtherReceiptType = otherReceiptType,
-            FundCluster    = fundCluster,
-            ReceivedBy     = receivedBy,
-            NotedBy        = notedBy,
-            CreatedOnUtc   = DateTimeOffset.UtcNow,
+            Id                   = Guid.NewGuid(),
+            SMRRNo               = smrrNo,
+            Date                 = date,
+            ReceivedFrom         = receivedFrom,
+            Address              = address,
+            ReceiptType          = receiptType,
+            OtherReceiptType     = otherReceiptType,
+            FundCluster          = fundCluster,
+            ReceivedByEmployeeId = receivedByEmployeeId,
+            NotedByEmployeeId    = notedByEmployeeId,
+            CreatedOnUtc         = DateTimeOffset.UtcNow,
         };
     }
 }

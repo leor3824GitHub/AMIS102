@@ -1,0 +1,30 @@
+using FSH.Modules.AssetManagement.Domain;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
+namespace FSH.Modules.AssetManagement.Data.Configurations;
+
+public sealed class UnserviceablePropertyReportConfiguration : IEntityTypeConfiguration<UnserviceablePropertyReport>
+{
+    public void Configure(EntityTypeBuilder<UnserviceablePropertyReport> builder)
+    {
+        builder.ToTable("UnserviceablePropertyReports", AssetManagementModuleConstants.SchemaName);
+
+        builder.HasKey(x => x.Id);
+        builder.Property(x => x.ReportNo).HasMaxLength(32).IsRequired();
+        builder.Property(x => x.Date).IsRequired();
+        builder.Property(x => x.DisposalMethod).HasConversion<string>().HasMaxLength(32).IsRequired();
+        builder.Property(x => x.FundCluster).HasMaxLength(50);
+        builder.Property(x => x.Remarks).HasMaxLength(500);
+        builder.Property(x => x.Version).IsConcurrencyToken();
+
+        builder.HasIndex(x => x.ReportNo).IsUnique();
+        builder.HasIndex(x => x.Date);
+        builder.HasIndex(x => x.DisposalMethod);
+        builder.HasIndex(x => x.InspectedByEmployeeId);
+        builder.HasIndex(x => x.ApprovedByEmployeeId);
+
+        builder.Property(x => x.IsDeleted).HasDefaultValue(false);
+        builder.HasQueryFilter(x => !x.IsDeleted);
+    }
+}

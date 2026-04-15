@@ -32,17 +32,43 @@ public sealed class CreateSMRRCommandHandler : ICommandHandler<CreateSMRRCommand
             ]);
         }
 
+        // Resolve active threshold policy once — used for all items in this SMRR.
+        var policy = await _dbContext.CapitalizationThresholdPolicies
+            .FirstOrDefaultAsync(x => x.IsActive, cancellationToken)
+            .ConfigureAwait(false);
+
+        if (policy is null)
+        {
+            throw new InvalidOperationException(
+                "No active capitalization threshold policy is configured. Set one via the Threshold Policies endpoint before receiving items.");
+        }
+
         var requestedItemIds = command.Items.Select(x => x.SemiExpendableItemId).Distinct().ToList();
-        var catalogItems = await _dbContext.SemiExpendableItems
+        var foundItemIds = await _dbContext.SemiExpendableItems
             .Where(x => requestedItemIds.Contains(x.Id))
-            .ToDictionaryAsync(x => x.Id, cancellationToken)
+            .Select(x => x.Id)
+            .ToHashSetAsync(cancellationToken)
             .ConfigureAwait(false);
 
         foreach (var itemId in requestedItemIds)
         {
-            if (!catalogItems.ContainsKey(itemId))
+            if (!foundItemIds.Contains(itemId))
             {
                 throw new KeyNotFoundException($"Semi-expendable item with ID {itemId} not found.");
+            }
+        }
+
+        // Validate that no item exceeds the capitalization threshold — those must be PPE.
+        foreach (var itemRequest in command.Items)
+        {
+            if (itemRequest.UnitCost >= policy.CapitalizationThreshold)
+            {
+                throw new FluentValidation.ValidationException(
+                [
+                    new FluentValidation.Results.ValidationFailure(
+                        nameof(itemRequest.UnitCost),
+                        $"Unit cost ₱{itemRequest.UnitCost:N2} meets or exceeds the capitalization threshold of ₱{policy.CapitalizationThreshold:N2}. Items at or above this amount must be recorded as Fixed Assets (PPE), not as semi-expendable property.")
+                ]);
             }
         }
 
@@ -54,8 +80,8 @@ public sealed class CreateSMRRCommandHandler : ICommandHandler<CreateSMRRCommand
             command.ReceiptType,
             command.OtherReceiptType,
             command.FundCluster,
-            command.ReceivedBy,
-            command.NotedBy);
+            command.ReceivedByEmployeeId,
+            command.NotedByEmployeeId);
 
         smrr.CreatedBy = _currentUser.GetUserId().ToString();
 
@@ -78,7 +104,7 @@ public sealed class CreateSMRRCommandHandler : ICommandHandler<CreateSMRRCommand
 
             _dbContext.SMRRItems.Add(smrrItem);
 
-            var catalogItem = catalogItems[itemRequest.SemiExpendableItemId];
+            var category = policy.ClassifyUnitCost(itemRequest.UnitCost);
 
             for (int i = 0; i < itemRequest.Quantity; i++)
             {
@@ -88,6 +114,7 @@ public sealed class CreateSMRRCommandHandler : ICommandHandler<CreateSMRRCommand
                 var property = SemiExpendableProperty.Create(
                     propertyNo,
                     itemRequest.SemiExpendableItemId,
+                    category,
                     serialNo: null,
                     itemRequest.AcquisitionDate,
                     itemRequest.UnitCost,

@@ -18,8 +18,9 @@ public sealed class SMRRConfiguration : IEntityTypeConfiguration<SuppliesMateria
         builder.Property(x => x.ReceiptType).HasConversion<string>().HasMaxLength(32).IsRequired();
         builder.Property(x => x.OtherReceiptType).HasMaxLength(100);
         builder.Property(x => x.FundCluster).HasMaxLength(50);
-        builder.Property(x => x.ReceivedBy).HasMaxLength(200);
-        builder.Property(x => x.NotedBy).HasMaxLength(200);
+        builder.Property(x => x.ReceivedByEmployeeId);
+        builder.HasIndex(x => x.ReceivedByEmployeeId);
+        builder.Property(x => x.NotedByEmployeeId);
         builder.Property(x => x.Version).IsConcurrencyToken();
 
         builder.HasIndex(x => x.SMRRNo).IsUnique();

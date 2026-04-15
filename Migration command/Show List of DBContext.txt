@@ -1,0 +1,1 @@
+dotnet ef dbcontext list --project "src/Playground/Migrations.PostgreSQL/Migrations.PostgreSQL.csproj" --startup-project "src/Playground/Playground.Api/Playground.Api.csproj"

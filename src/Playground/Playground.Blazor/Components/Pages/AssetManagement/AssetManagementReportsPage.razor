@@ -1,0 +1,548 @@
+@page "/asset-management/reports"
+@using FSH.Playground.Blazor.ApiClient
+@inject IAssetManagementReportsClient Client
+@inject ISemiExpendableItemClient ItemClient
+@inject ISemiExpendablePropertyClient PropertyClient
+@inject ILookupClient LookupClient
+@inject ISnackbar Snackbar
+
+<FshPageHeader Title="Semi-Expendable Property Reports"
+               Description="COA Circular 2022-004 prescribed reports: Property Card, Registry of Issued, Report of Issued, and Property History." />
+
+<MudTabs Elevation="1" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-3">
+
+    <!-- TAB 1: SPC -->
+    <MudTabPanel Text="Property Card (SPC)" Icon="@Icons.Material.Outlined.TableChart">
+        <MudGrid Spacing="3">
+            <MudItem xs="12" md="4">
+                <MudCard Elevation="1">
+                    <MudCardContent>
+                        <MudStack Spacing="2">
+                            <MudText Typo="Typo.subtitle2">Filter</MudText>
+                            <MudAutocomplete T="SemiExpendableItemSummaryDto"
+                                             @bind-Value="_spc.SelectedItem"
+                                             SearchFunc="SearchItems"
+                                             ToStringFunc="@(x => x is null ? "" : $"{x.Code} – {x.Name}")"
+                                             Label="Item" Variant="Variant.Outlined"
+                                             Required="true" Clearable="true" ResetValueOnEmptyText="true" CoerceValue="true" />
+                            <MudDatePicker @bind-Date="_spc.DateFromNullable" Label="Date From" Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" />
+                            <MudDatePicker @bind-Date="_spc.DateToNullable" Label="Date To" Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" />
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                                       OnClick="LoadSPCAsync" Disabled="_spc.Loading || _spc.SelectedItem is null">
+                                Generate
+                            </MudButton>
+                        </MudStack>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" md="8">
+                @if (_spc.Loading)
+                {
+                    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+                }
+                else if (_spc.Result is not null)
+                {
+                    <MudCard Elevation="1">
+                        <MudCardHeader>
+                            <CardHeaderContent>
+                                <MudText Typo="Typo.h6">@_spc.Result.ItemCode — @_spc.Result.ItemName</MudText>
+                            </CardHeaderContent>
+                        </MudCardHeader>
+                        <MudCardContent>
+                            @if (_spc.Result.Entries.Count == 0)
+                            {
+                                <MudAlert Severity="Severity.Info">No movement entries for this item.</MudAlert>
+                            }
+                            else
+                            {
+                                <MudSimpleTable Dense="true" Striped="true" Hover="true">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Document</th>
+                                            <th>Doc No.</th>
+                                            <th style="text-align:right">In</th>
+                                            <th style="text-align:right">Out</th>
+                                            <th style="text-align:right">Unit Cost</th>
+                                            <th style="text-align:right">Balance</th>
+                                            <th>Remarks</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var e in _spc.Result.Entries)
+                                        {
+                                            <tr>
+                                                <td>@e.Date.ToString("MM/dd/yyyy")</td>
+                                                <td><MudChip T="string" Size="Size.Small" Color="@DocTypeColor(e.DocumentType)">@e.DocumentType</MudChip></td>
+                                                <td><MudText Typo="Typo.caption">@e.DocumentNo</MudText></td>
+                                                <td style="text-align:right">@(e.QuantityIn > 0 ? e.QuantityIn.ToString() : "-")</td>
+                                                <td style="text-align:right">@(e.QuantityOut > 0 ? e.QuantityOut.ToString() : "-")</td>
+                                                <td style="text-align:right">₱@e.UnitCost.ToString("N2")</td>
+                                                <td style="text-align:right"><b>@e.RunningBalance</b></td>
+                                                <td><MudText Typo="Typo.caption">@(e.Remarks ?? "-")</MudText></td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </MudSimpleTable>
+                            }
+                        </MudCardContent>
+                    </MudCard>
+                }
+            </MudItem>
+        </MudGrid>
+    </MudTabPanel>
+
+    <!-- TAB 2: RegSPI -->
+    <MudTabPanel Text="Registry of Issued (RegSPI)" Icon="@Icons.Material.Outlined.PersonSearch">
+        <MudGrid Spacing="3">
+            <MudItem xs="12" md="4">
+                <MudCard Elevation="1">
+                    <MudCardContent>
+                        <MudStack Spacing="2">
+                            <MudText Typo="Typo.subtitle2">Filter</MudText>
+                            <MudAutocomplete T="EmployeeReferenceDto"
+                                             @bind-Value="_regspi.SelectedEmployee"
+                                             SearchFunc="SearchEmployees"
+                                             ToStringFunc="FormatEmployee"
+                                             Label="Employee" Variant="Variant.Outlined"
+                                             Required="true" Clearable="true" ResetValueOnEmptyText="true" CoerceValue="true" />
+                            <MudSelect @bind-Value="_regspi.Category" Label="Category" Variant="Variant.Outlined" T="AssetCategory?">
+                                <MudSelectItem T="AssetCategory?" Value="null">All Categories</MudSelectItem>
+                                <MudSelectItem T="AssetCategory?" Value="AssetCategory.LowValuedSemi">Low-Valued</MudSelectItem>
+                                <MudSelectItem T="AssetCategory?" Value="AssetCategory.HighValuedSemi">High-Valued</MudSelectItem>
+                            </MudSelect>
+                            <MudSelect @bind-Value="_regspi.Status" Label="ICS Status" Variant="Variant.Outlined" T="ICSStatus?">
+                                <MudSelectItem T="ICSStatus?" Value="null">All Statuses</MudSelectItem>
+                                <MudSelectItem T="ICSStatus?" Value="ICSStatus.Active">Active</MudSelectItem>
+                                <MudSelectItem T="ICSStatus?" Value="ICSStatus.Renewed">Renewed</MudSelectItem>
+                                <MudSelectItem T="ICSStatus?" Value="ICSStatus.CancelledByReturn">Cancelled</MudSelectItem>
+                                <MudSelectItem T="ICSStatus?" Value="ICSStatus.Expired">Expired</MudSelectItem>
+                            </MudSelect>
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                                       OnClick="@(() => LoadRegSPIAsync(1))"
+                                       Disabled="_regspi.Loading || _regspi.SelectedEmployee is null">
+                                Generate
+                            </MudButton>
+                        </MudStack>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" md="8">
+                @if (_regspi.Loading)
+                {
+                    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+                }
+                else if (_regspi.Result is not null)
+                {
+                    <MudCard Elevation="1">
+                        <MudCardContent>
+                            @if (_regspi.Result.Items.Count == 0)
+                            {
+                                <MudAlert Severity="Severity.Info">No issued properties found for this employee.</MudAlert>
+                            }
+                            else
+                            {
+                                <MudSimpleTable Dense="true" Striped="true" Hover="true">
+                                    <thead>
+                                        <tr>
+                                            <th>ICS No.</th>
+                                            <th>Date</th>
+                                            <th>Property No.</th>
+                                            <th>Item</th>
+                                            <th>Category</th>
+                                            <th style="text-align:right">Unit Cost</th>
+                                            <th>Status</th>
+                                            <th>Expires</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var e in _regspi.Result.Items)
+                                        {
+                                            <tr>
+                                                <td><MudText Typo="Typo.caption">@e.ICSNo</MudText></td>
+                                                <td>@e.Date.ToString("MM/dd/yyyy")</td>
+                                                <td><b>@e.PropertyNo</b></td>
+                                                <td>
+                                                    <MudText Typo="Typo.body2">@e.ItemName</MudText>
+                                                    <MudText Typo="Typo.caption" Color="Color.Secondary">@e.ItemCode</MudText>
+                                                </td>
+                                                <td><MudChip T="string" Size="Size.Small" Color="Color.Default">@e.Category</MudChip></td>
+                                                <td style="text-align:right">₱@e.UnitCost.ToString("N2")</td>
+                                                <td><MudChip T="string" Size="Size.Small" Color="@ICSStatusColor(e.ICSStatus)">@e.ICSStatus</MudChip></td>
+                                                <td>@(e.ExpiresOn?.ToString("MM/dd/yyyy") ?? "-")</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </MudSimpleTable>
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-2">
+                                    <MudText Typo="Typo.caption">@_regspi.Result.TotalCount total</MudText>
+                                    <MudSpacer />
+                                    <MudPagination Count="@RegSPITotalPages" Selected="_regspi.Page"
+                                                   ShowFirstButton="true" ShowLastButton="true"
+                                                   SelectedChanged="@(async p => await LoadRegSPIAsync(p))" />
+                                </MudStack>
+                            }
+                        </MudCardContent>
+                    </MudCard>
+                }
+            </MudItem>
+        </MudGrid>
+    </MudTabPanel>
+
+    <!-- TAB 3: RSPI -->
+    <MudTabPanel Text="Report of Issued (RSPI)" Icon="@Icons.Material.Outlined.ListAlt">
+        <MudGrid Spacing="3">
+            <MudItem xs="12" md="4">
+                <MudCard Elevation="1">
+                    <MudCardContent>
+                        <MudStack Spacing="2">
+                            <MudText Typo="Typo.subtitle2">Filter</MudText>
+                            <MudDatePicker @bind-Date="_rspi.DateFromNullable" Label="Date From" Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" />
+                            <MudDatePicker @bind-Date="_rspi.DateToNullable" Label="Date To" Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" />
+                            <MudSelect @bind-Value="_rspi.Category" Label="Category" Variant="Variant.Outlined" T="AssetCategory?">
+                                <MudSelectItem T="AssetCategory?" Value="null">All Categories</MudSelectItem>
+                                <MudSelectItem T="AssetCategory?" Value="AssetCategory.LowValuedSemi">Low-Valued</MudSelectItem>
+                                <MudSelectItem T="AssetCategory?" Value="AssetCategory.HighValuedSemi">High-Valued</MudSelectItem>
+                            </MudSelect>
+                            <MudCheckBox @bind-Value="_rspi.ActiveOnly" Label="Active ICS only" T="bool" />
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                                       OnClick="@(() => LoadRSPIAsync(1))" Disabled="_rspi.Loading">
+                                Generate
+                            </MudButton>
+                        </MudStack>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" md="8">
+                @if (_rspi.Loading)
+                {
+                    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+                }
+                else if (_rspi.Result is not null)
+                {
+                    <MudCard Elevation="1">
+                        <MudCardContent>
+                            @if (_rspi.Result.Items.Count == 0)
+                            {
+                                <MudAlert Severity="Severity.Info">No issued properties match the filters.</MudAlert>
+                            }
+                            else
+                            {
+                                <MudSimpleTable Dense="true" Striped="true" Hover="true">
+                                    <thead>
+                                        <tr>
+                                            <th>ICS No.</th>
+                                            <th>ICS Date</th>
+                                            <th>Property No.</th>
+                                            <th>Item</th>
+                                            <th>S/N</th>
+                                            <th>Category</th>
+                                            <th style="text-align:right">Unit Cost</th>
+                                            <th>ICS Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var e in _rspi.Result.Items)
+                                        {
+                                            <tr>
+                                                <td><MudText Typo="Typo.caption">@e.ICSNo</MudText></td>
+                                                <td>@e.ICSDate.ToString("MM/dd/yyyy")</td>
+                                                <td><b>@e.PropertyNo</b></td>
+                                                <td>
+                                                    <MudText Typo="Typo.body2">@e.ItemName</MudText>
+                                                    <MudText Typo="Typo.caption" Color="Color.Secondary">@e.ItemCode</MudText>
+                                                </td>
+                                                <td><MudText Typo="Typo.caption">@(e.SerialNo ?? "-")</MudText></td>
+                                                <td><MudChip T="string" Size="Size.Small" Color="Color.Default">@e.Category</MudChip></td>
+                                                <td style="text-align:right">₱@e.UnitCost.ToString("N2")</td>
+                                                <td><MudChip T="string" Size="Size.Small" Color="@ICSStatusColor(e.ICSStatus)">@e.ICSStatus</MudChip></td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </MudSimpleTable>
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-2">
+                                    <MudText Typo="Typo.caption">@_rspi.Result.TotalCount total</MudText>
+                                    <MudSpacer />
+                                    <MudPagination Count="@RSPITotalPages" Selected="_rspi.Page"
+                                                   ShowFirstButton="true" ShowLastButton="true"
+                                                   SelectedChanged="@(async p => await LoadRSPIAsync(p))" />
+                                </MudStack>
+                            }
+                        </MudCardContent>
+                    </MudCard>
+                }
+            </MudItem>
+        </MudGrid>
+    </MudTabPanel>
+
+    <!-- TAB 4: Property History -->
+    <MudTabPanel Text="Property History" Icon="@Icons.Material.Outlined.Timeline">
+        <MudGrid Spacing="3">
+            <MudItem xs="12" md="4">
+                <MudCard Elevation="1">
+                    <MudCardContent>
+                        <MudStack Spacing="2">
+                            <MudText Typo="Typo.subtitle2">Select Property</MudText>
+                            <MudAutocomplete T="SemiExpendablePropertySummaryDto"
+                                             @bind-Value="_history.SelectedProperty"
+                                             SearchFunc="SearchAllProperties"
+                                             ToStringFunc="@(x => x is null ? "" : $"{x.PropertyNo} – {x.ItemName}")"
+                                             Label="Property" Variant="Variant.Outlined"
+                                             Required="true" Clearable="true" ResetValueOnEmptyText="true" CoerceValue="true" />
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                                       OnClick="LoadHistoryAsync"
+                                       Disabled="_history.Loading || _history.SelectedProperty is null">
+                                Load History
+                            </MudButton>
+                        </MudStack>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" md="8">
+                @if (_history.Loading)
+                {
+                    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+                }
+                else if (_history.Result is not null)
+                {
+                    <MudCard Elevation="1">
+                        <MudCardHeader>
+                            <CardHeaderContent>
+                                <MudStack Spacing="0">
+                                    <MudText Typo="Typo.h6">@_history.Result.PropertyNo — @_history.Result.ItemName</MudText>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                        @_history.Result.ItemCode
+                                        @if (!string.IsNullOrWhiteSpace(_history.Result.SerialNo)) { <text> | S/N: @_history.Result.SerialNo</text> }
+                                        | @_history.Result.Category | ₱@_history.Result.UnitCost.ToString("N2")
+                                    </MudText>
+                                    <MudChip T="string" Size="Size.Small" Color="@PropertyStatusColor(_history.Result.CurrentStatus)" Class="mt-1">
+                                        @_history.Result.CurrentStatus
+                                    </MudChip>
+                                </MudStack>
+                            </CardHeaderContent>
+                        </MudCardHeader>
+                        <MudCardContent>
+                            @if (_history.Result.Events.Count == 0)
+                            {
+                                <MudAlert Severity="Severity.Info">No events found for this property.</MudAlert>
+                            }
+                            else
+                            {
+                                <MudTimeline TimelinePosition="TimelinePosition.Start">
+                                    @foreach (var ev in _history.Result.Events)
+                                    {
+                                        <MudTimelineItem Color="@EventTypeColor(ev.EventType)" Size="Size.Small">
+                                            <ItemContent>
+                                                <MudCard Elevation="0" Class="mb-1" Style="background: var(--mud-palette-background-grey)">
+                                                    <MudCardContent Class="pa-2">
+                                                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                                            <MudChip T="string" Size="Size.Small" Color="@EventTypeColor(ev.EventType)">@ev.EventType</MudChip>
+                                                            <MudText Typo="Typo.caption" Color="Color.Secondary">@ev.EventDate.ToString("MM/dd/yyyy")</MudText>
+                                                            <MudText Typo="Typo.caption">@ev.DocumentType</MudText>
+                                                            <MudText Typo="Typo.body2"><b>@ev.DocumentNo</b></MudText>
+                                                        </MudStack>
+                                                        @if (!string.IsNullOrWhiteSpace(ev.Details))
+                                                        {
+                                                            <MudText Typo="Typo.caption" Class="mt-1">@ev.Details</MudText>
+                                                        }
+                                                    </MudCardContent>
+                                                </MudCard>
+                                            </ItemContent>
+                                        </MudTimelineItem>
+                                    }
+                                </MudTimeline>
+                            }
+                        </MudCardContent>
+                    </MudCard>
+                }
+            </MudItem>
+        </MudGrid>
+    </MudTabPanel>
+
+</MudTabs>
+
+@code {
+    // ─── SPC state ────────────────────────────────────────────────────────────
+    private readonly SpcState _spc = new();
+    private sealed class SpcState
+    {
+        public SemiExpendableItemSummaryDto? SelectedItem { get; set; }
+        public DateTime? DateFromNullable { get; set; }
+        public DateTime? DateToNullable { get; set; }
+        public bool Loading { get; set; }
+        public SPCDto? Result { get; set; }
+    }
+
+    // ─── RegSPI state ─────────────────────────────────────────────────────────
+    private readonly RegSpiState _regspi = new();
+    private sealed class RegSpiState
+    {
+        public EmployeeReferenceDto? SelectedEmployee { get; set; }
+        public AssetCategory? Category { get; set; }
+        public ICSStatus? Status { get; set; }
+        public bool Loading { get; set; }
+        public PagedRegSPIResponse? Result { get; set; }
+        public int Page { get; set; } = 1;
+    }
+    private int RegSPITotalPages => _regspi.Result is null ? 1 : Math.Max(1, (int)Math.Ceiling(_regspi.Result.TotalCount / 20.0));
+
+    // ─── RSPI state ───────────────────────────────────────────────────────────
+    private readonly RspiState _rspi = new();
+    private sealed class RspiState
+    {
+        public DateTime? DateFromNullable { get; set; }
+        public DateTime? DateToNullable { get; set; }
+        public AssetCategory? Category { get; set; }
+        public bool ActiveOnly { get; set; } = true;
+        public bool Loading { get; set; }
+        public PagedRSPIResponse? Result { get; set; }
+        public int Page { get; set; } = 1;
+    }
+    private int RSPITotalPages => _rspi.Result is null ? 1 : Math.Max(1, (int)Math.Ceiling(_rspi.Result.TotalCount / 20.0));
+
+    // ─── Property History state ───────────────────────────────────────────────
+    private readonly HistoryState _history = new();
+    private sealed class HistoryState
+    {
+        public SemiExpendablePropertySummaryDto? SelectedProperty { get; set; }
+        public bool Loading { get; set; }
+        public PropertyHistoryDto? Result { get; set; }
+    }
+
+    // ─── Data loaders ─────────────────────────────────────────────────────────
+
+    private async Task LoadSPCAsync()
+    {
+        if (_spc.SelectedItem is null) return;
+        _spc.Loading = true;
+        _spc.Result = null;
+        try
+        {
+            _spc.Result = await Client.GetSPCAsync(
+                _spc.SelectedItem.Id,
+                _spc.DateFromNullable.HasValue ? DateOnly.FromDateTime(_spc.DateFromNullable.Value) : null,
+                _spc.DateToNullable.HasValue ? DateOnly.FromDateTime(_spc.DateToNullable.Value) : null);
+        }
+        catch (Exception ex) { Snackbar.Add($"Failed: {ex.Message}", Severity.Error); }
+        finally { _spc.Loading = false; }
+    }
+
+    private async Task LoadRegSPIAsync(int page)
+    {
+        if (_regspi.SelectedEmployee is null) return;
+        _regspi.Loading = true;
+        _regspi.Page = page;
+        try
+        {
+            _regspi.Result = await Client.GetRegSPIAsync(
+                _regspi.SelectedEmployee.Id,
+                _regspi.Category,
+                _regspi.Status,
+                page, 20);
+        }
+        catch (Exception ex) { Snackbar.Add($"Failed: {ex.Message}", Severity.Error); }
+        finally { _regspi.Loading = false; }
+    }
+
+    private async Task LoadRSPIAsync(int page)
+    {
+        _rspi.Loading = true;
+        _rspi.Page = page;
+        try
+        {
+            _rspi.Result = await Client.GetRSPIAsync(
+                _rspi.DateFromNullable.HasValue ? DateOnly.FromDateTime(_rspi.DateFromNullable.Value) : null,
+                _rspi.DateToNullable.HasValue ? DateOnly.FromDateTime(_rspi.DateToNullable.Value) : null,
+                _rspi.Category,
+                _rspi.ActiveOnly,
+                page, 20);
+        }
+        catch (Exception ex) { Snackbar.Add($"Failed: {ex.Message}", Severity.Error); }
+        finally { _rspi.Loading = false; }
+    }
+
+    private async Task LoadHistoryAsync()
+    {
+        if (_history.SelectedProperty is null) return;
+        _history.Loading = true;
+        _history.Result = null;
+        try
+        {
+            _history.Result = await Client.GetPropertyHistoryAsync(_history.SelectedProperty.Id);
+        }
+        catch (Exception ex) { Snackbar.Add($"Failed: {ex.Message}", Severity.Error); }
+        finally { _history.Loading = false; }
+    }
+
+    // ─── Search helpers ───────────────────────────────────────────────────────
+
+    private async Task<IEnumerable<SemiExpendableItemSummaryDto>> SearchItems(string? value, CancellationToken ct)
+    {
+        var response = await ItemClient.SearchAsync(value, isActive: true, page: 1, pageSize: 20, ct: ct);
+        return response.Items;
+    }
+
+    private async Task<IEnumerable<EmployeeReferenceDto>> SearchEmployees(string? value, CancellationToken ct)
+    {
+        try
+        {
+            var result = await LookupClient.EmployeesGetAsync(
+                keyword: string.IsNullOrWhiteSpace(value) ? null : value,
+                isActive: true, pageNumber: 1, pageSize: 20, cancellationToken: ct);
+            return result?.Items ?? [];
+        }
+        catch { return []; }
+    }
+
+    private async Task<IEnumerable<SemiExpendablePropertySummaryDto>> SearchAllProperties(string? value, CancellationToken ct)
+    {
+        var response = await PropertyClient.SearchAsync(value, page: 1, pageSize: 20, ct: ct);
+        return response.Items;
+    }
+
+    private static string FormatEmployee(EmployeeReferenceDto? e) =>
+        e is null ? "" : $"{e.FirstName} {e.LastName} ({e.EmployeeNumber})";
+
+    // ─── Color helpers ────────────────────────────────────────────────────────
+
+    private static Color DocTypeColor(string docType) => docType switch
+    {
+        "SMRR"    => Color.Success,
+        "ICS"     => Color.Primary,
+        "RRSP"    => Color.Info,
+        "SMIR"    => Color.Warning,
+        "RLSDDSP" => Color.Error,
+        "IIRUSP"  => Color.Dark,
+        _         => Color.Default
+    };
+
+    private static Color ICSStatusColor(string status) => status switch
+    {
+        "Active"           => Color.Success,
+        "Renewed"          => Color.Info,
+        "CancelledByReturn"=> Color.Default,
+        "Expired"          => Color.Warning,
+        _                  => Color.Default
+    };
+
+    private static Color PropertyStatusColor(string status) => status switch
+    {
+        "OnHand"            => Color.Success,
+        "Issued"            => Color.Primary,
+        "Returned"          => Color.Info,
+        "Transferred"       => Color.Warning,
+        "Disposed"          => Color.Dark,
+        "LostStolenDamaged" => Color.Error,
+        _                   => Color.Default
+    };
+
+    private static Color EventTypeColor(string eventType) => eventType switch
+    {
+        "Received"    => Color.Success,
+        "Issued"      => Color.Primary,
+        "Returned"    => Color.Info,
+        "Transferred" => Color.Warning,
+        "Disposed"    => Color.Dark,
+        _             => Color.Error   // Lost/Stolen/Damaged/Destroyed
+    };
+}

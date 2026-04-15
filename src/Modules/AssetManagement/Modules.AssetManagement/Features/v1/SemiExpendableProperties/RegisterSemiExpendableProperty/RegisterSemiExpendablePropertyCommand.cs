@@ -1,3 +1,4 @@
+using FSH.Modules.AssetManagement.Domain;
 using Mediator;
 
 namespace FSH.Modules.AssetManagement.Features.v1.SemiExpendableProperties.RegisterSemiExpendableProperty;
@@ -5,6 +6,7 @@ namespace FSH.Modules.AssetManagement.Features.v1.SemiExpendableProperties.Regis
 public sealed record RegisterSemiExpendablePropertyCommand(
     string PropertyNo,
     Guid SemiExpendableItemId,
+    AssetCategory Category,
     string? SerialNo,
     DateOnly AcquisitionDate,
     decimal UnitCost,
@@ -17,6 +19,7 @@ public sealed record SemiExpendablePropertyDto(
     Guid SemiExpendableItemId,
     string ItemCode,
     string ItemName,
+    string Category,
     string? SerialNo,
     DateOnly AcquisitionDate,
     decimal UnitCost,

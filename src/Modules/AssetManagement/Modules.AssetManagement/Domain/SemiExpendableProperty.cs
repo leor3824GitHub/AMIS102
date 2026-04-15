@@ -40,6 +40,12 @@ public sealed class SemiExpendableProperty : AggregateRoot<Guid>, IAuditableEnti
     public PropertyStatus Status { get; private set; } = PropertyStatus.OnHand;
 
     /// <summary>
+    /// Asset classification frozen at the time of receipt, per COA Circular 2022-004 Section 4.8.
+    /// Only changes via an explicit ReclassifyPropertiesCommand (threshold policy change).
+    /// </summary>
+    public AssetCategory Category { get; private set; }
+
+    /// <summary>
     /// Employee ID of the current accountable officer / end-user.
     /// Populated when Status = Issued or Transferred.
     /// References MasterData.EmployeeProfile — stored as a plain FK (no cross-module navigation).
@@ -68,6 +74,7 @@ public sealed class SemiExpendableProperty : AggregateRoot<Guid>, IAuditableEnti
     public static SemiExpendableProperty Create(
         string propertyNo,
         Guid semiExpendableItemId,
+        AssetCategory category,
         string? serialNo,
         DateOnly acquisitionDate,
         decimal unitCost,
@@ -80,6 +87,7 @@ public sealed class SemiExpendableProperty : AggregateRoot<Guid>, IAuditableEnti
             Id = Guid.NewGuid(),
             PropertyNo = propertyNo,
             SemiExpendableItemId = semiExpendableItemId,
+            Category = category,
             SerialNo = serialNo,
             AcquisitionDate = acquisitionDate,
             UnitCost = unitCost,
@@ -89,6 +97,16 @@ public sealed class SemiExpendableProperty : AggregateRoot<Guid>, IAuditableEnti
             SMRRItemId = smrrItemId,
             CreatedOnUtc = DateTimeOffset.UtcNow,
         };
+    }
+
+    /// <summary>
+    /// Updates the asset category following a threshold policy change.
+    /// Called only from ReclassifyPropertiesCommand — never from business logic directly.
+    /// </summary>
+    public void Reclassify(AssetCategory newCategory)
+    {
+        Category = newCategory;
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;
     }
 
     public void UpdateDetails(

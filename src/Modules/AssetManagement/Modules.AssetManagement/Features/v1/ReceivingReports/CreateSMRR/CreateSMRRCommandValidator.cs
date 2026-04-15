@@ -17,9 +17,6 @@ public sealed class CreateSMRRCommandValidator : AbstractValidator<CreateSMRRCom
             .When(x => x.ReceiptType == ReceiptType.Others)
             .WithMessage("OtherReceiptType is required when ReceiptType is Others.");
         RuleFor(x => x.FundCluster).MaximumLength(50);
-        RuleFor(x => x.ReceivedBy).MaximumLength(200);
-        RuleFor(x => x.NotedBy).MaximumLength(200);
-
         RuleFor(x => x.Items).NotEmpty().WithMessage("At least one item is required.");
         RuleForEach(x => x.Items).SetValidator(new CreateSMRRItemRequestValidator());
     }
@@ -32,8 +29,9 @@ internal sealed class CreateSMRRItemRequestValidator : AbstractValidator<CreateS
         RuleFor(x => x.SemiExpendableItemId).NotEmpty();
         RuleFor(x => x.AcquisitionDate).NotEmpty();
         RuleFor(x => x.Quantity).GreaterThan(0);
-        RuleFor(x => x.UnitCost).GreaterThan(0).LessThan(50_000m)
-            .WithMessage("Unit cost must be less than ₱50,000. Items at or above the capitalization threshold must be registered as Fixed Assets.");
+        RuleFor(x => x.UnitCost)
+            .GreaterThan(0)
+            .WithMessage("Unit cost must be greater than zero.");
         RuleFor(x => x.Description).MaximumLength(500);
         RuleFor(x => x.Reference).MaximumLength(100);
     }

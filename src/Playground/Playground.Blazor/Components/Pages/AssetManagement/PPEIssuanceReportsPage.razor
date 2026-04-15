@@ -1,0 +1,483 @@
+@page "/asset-management/ppe-issuance-reports"
+@using FSH.Playground.Blazor.ApiClient
+@inject IPPEIRClient Client
+@inject IPPEItemClient PPEItemClient
+@inject ILookupClient LookupClient
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<FshPageHeader Title="PPE Issuance Reports (PPEIR)"
+               Description="Record inter-office/department transfer of PPE items. Accounting Unit records depreciation after transfer." />
+
+<MudGrid Spacing="3">
+    <!-- Create Form -->
+    <MudItem xs="12" md="5">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                <MudText Typo="Typo.h6" Class="mb-3">New PPEIR</MudText>
+                <MudStack Spacing="2">
+                    <MudTextField @bind-Value="_form.PPEIRNo" Label="PPEIR No." Variant="Variant.Outlined"
+                                  Required="true" MaxLength="32" Placeholder="e.g. PPEIR-2026-00001" />
+                    <MudDatePicker @bind-Date="_form.DateNullable" Label="Date" Variant="Variant.Outlined"
+                                   DateFormat="MM/dd/yyyy" Required="true" />
+                    <MudSelect @bind-Value="_form.IssuanceType" Label="Issuance Type" Variant="Variant.Outlined" T="PPEIssuanceType">
+                        <MudSelectItem Value="PPEIssuanceType.TransferCO">Transfer – CO</MudSelectItem>
+                        <MudSelectItem Value="PPEIssuanceType.TransferRO">Transfer – RO</MudSelectItem>
+                        <MudSelectItem Value="PPEIssuanceType.TransferPO">Transfer – PO</MudSelectItem>
+                        <MudSelectItem Value="PPEIssuanceType.Donation">Donation</MudSelectItem>
+                        <MudSelectItem Value="PPEIssuanceType.Dumping">Dumping</MudSelectItem>
+                        <MudSelectItem Value="PPEIssuanceType.Destruction">Destruction</MudSelectItem>
+                        <MudSelectItem Value="PPEIssuanceType.Sale">Sale</MudSelectItem>
+                        <MudSelectItem Value="PPEIssuanceType.Others">Others</MudSelectItem>
+                    </MudSelect>
+                    <MudAutocomplete T="EmployeeReferenceDto"
+                                     @bind-Value="_form.IssuedTo"
+                                     SearchFunc="SearchEmployees" ToStringFunc="FormatEmployee"
+                                     Label="Issued To (Receiving Officer)" Variant="Variant.Outlined"
+                                     Required="true" Clearable="true" ResetValueOnEmptyText="true" CoerceValue="true" />
+                    <MudTextField @bind-Value="_form.IssuedToOfficeAddress" Label="Receiving Office Address" Variant="Variant.Outlined"
+                                  Required="true" MaxLength="500" />
+                    <MudAutocomplete T="EmployeeReferenceDto"
+                                     @bind-Value="_form.IssuedBy"
+                                     SearchFunc="SearchEmployees" ToStringFunc="FormatEmployee"
+                                     Label="Issued By (Division Chief)" Variant="Variant.Outlined"
+                                     Required="true" Clearable="true" ResetValueOnEmptyText="true" CoerceValue="true" />
+                    <MudAutocomplete T="EmployeeReferenceDto"
+                                     @bind-Value="_form.ReceivedBy"
+                                     SearchFunc="SearchEmployees" ToStringFunc="FormatEmployee"
+                                     Label="Received By" Variant="Variant.Outlined"
+                                     Required="true" Clearable="true" ResetValueOnEmptyText="true" CoerceValue="true" />
+                    <MudAutocomplete T="EmployeeReferenceDto"
+                                     @bind-Value="_form.ApprovedBy"
+                                     SearchFunc="SearchEmployees" ToStringFunc="FormatEmployee"
+                                     Label="Approved By (GSD-PSMD Chief)" Variant="Variant.Outlined"
+                                     Required="true" Clearable="true" ResetValueOnEmptyText="true" CoerceValue="true" />
+                    <MudDatePicker @bind-Date="_form.DateReceivedNullable" Label="Date Received (optional)"
+                                   Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" />
+                    <MudTextField @bind-Value="_form.DriverName" Label="Driver Name (optional)" Variant="Variant.Outlined" MaxLength="200" />
+                    <MudTextField @bind-Value="_form.BillOfLadingNo" Label="Bill of Lading No. (optional)" Variant="Variant.Outlined" MaxLength="100" />
+
+                    <MudDivider Class="my-2" />
+                    <MudStack Row="true" AlignItems="AlignItems.Center">
+                        <MudText Typo="Typo.subtitle2" Class="flex-grow-1">PPE Items to Transfer</MudText>
+                        <MudIconButton Icon="@Icons.Material.Filled.Add" Size="Size.Small" Color="Color.Primary" OnClick="AddItem" />
+                    </MudStack>
+
+                    @for (var i = 0; i < _form.Items.Count; i++)
+                    {
+                        var idx = i;
+                        var li = _form.Items[idx];
+                        <MudPaper Outlined="true" Class="pa-2">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-1">
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">Item @(idx + 1)</MudText>
+                                <MudSpacer />
+                                <MudIconButton Icon="@Icons.Material.Filled.Remove" Size="Size.Small" Color="Color.Error"
+                                               OnClick="@(() => RemoveItem(idx))" />
+                            </MudStack>
+                            <MudAutocomplete T="PPEItemSummaryDto"
+                                             Value="li.SelectedPPEItem"
+                                             ValueChanged="@(v => li.SelectedPPEItem = v)"
+                                             SearchFunc="SearchTransferablePPEItems"
+                                             ToStringFunc="@(x => x is null ? "" : $"{x.PropertyCode} – {x.Description[..Math.Min(40, x.Description.Length)]}")"
+                                             Label="PPE Item (OnHand / IssuedPAR)" Variant="Variant.Outlined" Dense="true"
+                                             Required="true" Clearable="true" CoerceValue="true" ResetValueOnEmptyText="true" />
+                            @if (li.SelectedPPEItem is not null)
+                            {
+                                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">
+                                    @li.SelectedPPEItem.PropertyNumber | ₱@li.SelectedPPEItem.UnitCost.ToString("N2") | @li.SelectedPPEItem.Status
+                                </MudText>
+                            }
+                        </MudPaper>
+                    }
+
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                               OnClick="CreateAsync" Disabled="_busy">Create PPEIR</MudButton>
+                </MudStack>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    <!-- List Panel -->
+    <MudItem xs="12" md="7">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3" Spacing="2">
+                    <MudText Typo="Typo.h6" Class="flex-grow-1">PPE Issuance Reports</MudText>
+                    <MudTextField @bind-Value="_keyword" Label="Search" Variant="Variant.Outlined" Size="Size.Small"
+                                  Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
+                                  DebounceInterval="350" OnDebounceIntervalElapsed="@(() => LoadAsync())" Style="max-width:220px" />
+                </MudStack>
+
+                @if (_loading)
+                {
+                    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+                }
+                else if (_list.Count == 0)
+                {
+                    <MudAlert Severity="Severity.Info">No PPEIR records yet.</MudAlert>
+                }
+                else
+                {
+                    <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                        <thead>
+                            <tr><th>PPEIR No.</th><th>Date</th><th>Type</th><th>Items</th><th></th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var s in _list)
+                            {
+                                <tr>
+                                    <td><b>@s.PPEIRNo</b></td>
+                                    <td>@s.Date.ToString("MM/dd/yyyy")</td>
+                                    <td>@s.IssuanceType</td>
+                                    <td><MudChip T="string" Size="Size.Small" Color="Color.Info">@s.ItemCount items</MudChip></td>
+                                    <td><MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small"
+                                                       Color="Color.Primary" OnClick="@(() => ViewAsync(s.Id))" /></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </MudSimpleTable>
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-2">
+                        <MudText Typo="Typo.caption">@_totalCount total</MudText>
+                        <MudSpacer />
+                        <MudPagination Count="@TotalPages" Selected="_page" ShowFirstButton="true" ShowLastButton="true"
+                                       SelectedChanged="@(async p => { _page = p; await LoadAsync(); })" />
+                    </MudStack>
+                }
+            </MudCardContent>
+        </MudCard>
+
+        @if (_detail is not null)
+        {
+            <MudCard Elevation="1" Class="mt-3">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Spacing="1">
+                            <MudText Typo="Typo.h6" Class="flex-grow-1">@_detail.PPEIRNo — @_detail.Date.ToString("MMMM dd, yyyy")</MudText>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Info" Size="Size.Small"
+                                       StartIcon="@Icons.Material.Filled.Description"
+                                       OnClick="TogglePTRAsync" Disabled="_ptrBusy">
+                                @(_ptr is not null ? "Hide PTR" : "View PTR")
+                            </MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Warning" Size="Size.Small"
+                                       StartIcon="@Icons.Material.Filled.Calculate"
+                                       OnClick="OpenDepreciationDialog" Disabled="_depBusy">
+                                Record Depreciation
+                            </MudButton>
+                            <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="@(() => { _detail = null; _ptr = null; })" />
+                        </MudStack>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudGrid Spacing="1">
+                        <MudItem xs="6"><MudText Typo="Typo.caption">Issuance Type</MudText><MudText>@_detail.IssuanceType</MudText></MudItem>
+                        <MudItem xs="6"><MudText Typo="Typo.caption">Office Address</MudText><MudText>@_detail.IssuedToOfficeAddress</MudText></MudItem>
+                        @if (!string.IsNullOrWhiteSpace(_detail.DriverName))
+                        {
+                            <MudItem xs="6"><MudText Typo="Typo.caption">Driver</MudText><MudText>@_detail.DriverName</MudText></MudItem>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(_detail.BillOfLadingNo))
+                        {
+                            <MudItem xs="6"><MudText Typo="Typo.caption">Bill of Lading</MudText><MudText>@_detail.BillOfLadingNo</MudText></MudItem>
+                        }
+                    </MudGrid>
+                    <MudDivider Class="my-2" />
+                    <MudText Typo="Typo.subtitle2" Class="mb-1">Line Items</MudText>
+                    <MudSimpleTable Dense="true" Striped="true">
+                        <thead>
+                            <tr><th>#</th><th>Property Code</th><th>S/N</th><th>Spec</th><th>Acq. Cost</th><th>Acc. Dep.</th><th>Book Value</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in _detail.Items)
+                            {
+                                <tr>
+                                    <td>@item.ItemNo</td>
+                                    <td><b>@item.PropertyCode</b></td>
+                                    <td>@(item.SerialNumber ?? "-")</td>
+                                    <td>@(item.PPESpecification.Length > 30 ? item.PPESpecification[..30] + "…" : item.PPESpecification)</td>
+                                    <td>₱@item.AcquisitionCost.ToString("N2")</td>
+                                    <td>@if (item.AccumulatedDepreciation.HasValue) { <text>₱@item.AccumulatedDepreciation.Value.ToString("N2")</text> } else { <MudText Typo="Typo.caption" Color="Color.Warning">Pending</MudText> }</td>
+                                    <td>@(item.BookValue.HasValue ? "₱" + item.BookValue.Value.ToString("N2") : "-")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </MudSimpleTable>
+                </MudCardContent>
+            </MudCard>
+
+            @if (_ptr is not null)
+            {
+                <MudCard Elevation="1" Class="mt-3">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudStack Row="true" AlignItems="AlignItems.Center">
+                                <MudText Typo="Typo.h6">Property Transfer Report (PTR) — @_ptr.PTRNo</MudText>
+                                <MudSpacer />
+                                <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="@(() => _ptr = null)" />
+                            </MudStack>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudGrid Spacing="1" Class="mb-2">
+                            <MudItem xs="6" sm="3">
+                                <MudText Typo="Typo.caption">PTR No.</MudText>
+                                <MudText><b>@_ptr.PTRNo</b></MudText>
+                            </MudItem>
+                            <MudItem xs="6" sm="3">
+                                <MudText Typo="Typo.caption">Date</MudText>
+                                <MudText>@_ptr.Date.ToString("MMMM dd, yyyy")</MudText>
+                            </MudItem>
+                            <MudItem xs="6" sm="3">
+                                <MudText Typo="Typo.caption">Transfer Type</MudText>
+                                <MudChip T="string" Size="Size.Small" Color="Color.Info">@_ptr.TransferType</MudChip>
+                            </MudItem>
+                            <MudItem xs="6" sm="3">
+                                <MudText Typo="Typo.caption">To Office</MudText>
+                                <MudText>@_ptr.ToOfficeAddress</MudText>
+                            </MudItem>
+                        </MudGrid>
+                        <MudDivider Class="my-2" />
+                        <MudText Typo="Typo.subtitle2" Class="mb-1">Items</MudText>
+                        <MudSimpleTable Dense="true" Striped="true" Hover="true">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Property No.</th>
+                                    <th>Description</th>
+                                    <th>Date Acquired</th>
+                                    <th style="text-align:right">Amount</th>
+                                    <th>Condition</th>
+                                    <th>Reason</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in _ptr.Items)
+                                {
+                                    <tr>
+                                        <td>@item.ItemNo</td>
+                                        <td><b>@item.PropertyNumber</b></td>
+                                        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
+                                            title="@item.Description">@item.Description</td>
+                                        <td>@item.DateAcquired.ToString("MM/dd/yyyy")</td>
+                                        <td style="text-align:right">₱@item.Amount.ToString("N2")</td>
+                                        <td><MudText Typo="Typo.caption">@(item.Condition ?? "—")</MudText></td>
+                                        <td><MudText Typo="Typo.caption">@(item.ReasonForTransfer ?? "—")</MudText></td>
+                                    </tr>
+                                }
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="4" style="text-align:right"><b>Total:</b></td>
+                                    <td style="text-align:right"><b>₱@_ptr.Items.Sum(x => x.Amount).ToString("N2")</b></td>
+                                    <td colspan="2"></td>
+                                </tr>
+                            </tfoot>
+                        </MudSimpleTable>
+                    </MudCardContent>
+                </MudCard>
+            }
+        }
+    </MudItem>
+</MudGrid>
+
+<!-- Depreciation Dialog -->
+@if (_showDepreciationDialog && _detail is not null)
+{
+    <MudDialog @bind-IsVisible="_showDepreciationDialog">
+        <TitleContent>Record Depreciation — @_detail.PPEIRNo</TitleContent>
+        <DialogContent>
+            <MudStack Spacing="2">
+                @foreach (var row in _depRows)
+                {
+                    <MudPaper Outlined="true" Class="pa-2">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">@row.PropertyCode</MudText>
+                        <MudGrid Spacing="1">
+                            <MudItem xs="6">
+                                <MudNumericField @bind-Value="row.AccumulatedDepreciation" Label="Acc. Depreciation (₱)"
+                                                 Variant="Variant.Outlined" Dense="true" Min="0m" Format="N2" />
+                            </MudItem>
+                            <MudItem xs="6">
+                                <MudNumericField @bind-Value="row.BookValue" Label="Book Value (₱)"
+                                                 Variant="Variant.Outlined" Dense="true" Min="0m" Format="N2" />
+                            </MudItem>
+                        </MudGrid>
+                    </MudPaper>
+                }
+            </MudStack>
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="@(() => _showDepreciationDialog = false)">Cancel</MudButton>
+            <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="SaveDepreciationAsync" Disabled="_depBusy">Save</MudButton>
+        </DialogActions>
+    </MudDialog>
+}
+
+@code {
+    private List<PPEIRSummaryDto> _list = [];
+    private PPEIRDetailsDto? _detail;
+    private PpeirForm _form = new();
+    private string? _keyword;
+    private bool _loading, _busy, _depBusy;
+    private int _page = 1, _totalCount;
+    private const int PageSize = 15;
+    private int TotalPages => Math.Max(1, (int)Math.Ceiling(_totalCount / (double)PageSize));
+
+    private bool _showDepreciationDialog;
+    private List<DepRow> _depRows = [];
+
+    private PTRDto? _ptr;
+    private bool _ptrBusy;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _form.Items.Add(new LineItem());
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        try
+        {
+            var r = await Client.SearchAsync(_keyword, page: _page, pageSize: PageSize);
+            _list = [.. r.Items];
+            _totalCount = r.TotalCount;
+        }
+        catch (Exception ex) { Snackbar.Add($"Load failed: {ex.Message}", Severity.Error); }
+        finally { _loading = false; }
+    }
+
+    private async Task ViewAsync(Guid id)
+    {
+        _ptr = null;
+        try { _detail = await Client.GetAsync(id); }
+        catch (Exception ex) { Snackbar.Add($"Load failed: {ex.Message}", Severity.Error); }
+    }
+
+    private async Task TogglePTRAsync()
+    {
+        if (_ptr is not null) { _ptr = null; return; }
+        if (_detail is null) return;
+        _ptrBusy = true;
+        try
+        {
+            _ptr = await Client.GetPTRAsync(_detail.Id);
+            if (_ptr is null) Snackbar.Add("PTR data not available for this PPEIR.", Severity.Warning);
+        }
+        catch (Exception ex) { Snackbar.Add($"Failed to load PTR: {ex.Message}", Severity.Error); }
+        finally { _ptrBusy = false; }
+    }
+
+    private void OpenDepreciationDialog()
+    {
+        if (_detail is null) return;
+        _depRows = _detail.Items.Select(i => new DepRow
+        {
+            ItemId = i.Id,
+            PropertyCode = i.PropertyCode,
+            AccumulatedDepreciation = i.AccumulatedDepreciation ?? 0m,
+            BookValue = i.BookValue ?? i.AcquisitionCost
+        }).ToList();
+        _showDepreciationDialog = true;
+    }
+
+    private async Task SaveDepreciationAsync()
+    {
+        if (_detail is null) return;
+        _depBusy = true;
+        try
+        {
+            var items = _depRows.Select(r => new PPEIRItemDepreciationRequest(r.ItemId, r.AccumulatedDepreciation, r.BookValue)).ToList();
+            var result = await Client.UpdateDepreciationAsync(_detail.Id, new UpdatePPEIRDepreciationRequest(items));
+            Snackbar.Add($"Depreciation updated for {result.ItemsUpdated} item(s).", Severity.Success);
+            _showDepreciationDialog = false;
+            _detail = await Client.GetAsync(_detail.Id);
+        }
+        catch (Exception ex) { Snackbar.Add($"Save failed: {ex.Message}", Severity.Error); }
+        finally { _depBusy = false; }
+    }
+
+    private async Task CreateAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_form.PPEIRNo) || _form.DateNullable is null ||
+            _form.IssuedTo is null || string.IsNullOrWhiteSpace(_form.IssuedToOfficeAddress) ||
+            _form.IssuedBy is null || _form.ReceivedBy is null || _form.ApprovedBy is null)
+        {
+            Snackbar.Add("All officer fields and PPEIR No., Date, and Office Address are required.", Severity.Warning);
+            return;
+        }
+        if (_form.Items.Any(i => i.SelectedPPEItem is null))
+        {
+            Snackbar.Add("All items must have a PPE Item selected.", Severity.Warning);
+            return;
+        }
+        _busy = true;
+        try
+        {
+            var items = _form.Items.Select(li => new CreatePPEIRItemRequest(li.SelectedPPEItem!.Id)).ToList();
+            var result = await Client.CreateAsync(new CreatePPEIRCommand(
+                _form.PPEIRNo, DateOnly.FromDateTime(_form.DateNullable!.Value),
+                _form.IssuedTo!.Id, _form.IssuedToOfficeAddress!,
+                _form.IssuanceType,
+                _form.IssuedBy!.Id, _form.ReceivedBy!.Id, _form.ApprovedBy!.Id,
+                _form.DateReceivedNullable.HasValue ? DateOnly.FromDateTime(_form.DateReceivedNullable.Value) : null,
+                string.IsNullOrWhiteSpace(_form.DriverName) ? null : _form.DriverName,
+                string.IsNullOrWhiteSpace(_form.BillOfLadingNo) ? null : _form.BillOfLadingNo,
+                items));
+
+            Snackbar.Add($"PPEIR {result.PPEIRNo} created with {result.ItemCount} item(s).", Severity.Success);
+            _form = new PpeirForm();
+            _form.Items.Add(new LineItem());
+            await LoadAsync();
+        }
+        catch (Exception ex) { Snackbar.Add($"Create failed: {ex.Message}", Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    private void AddItem() => _form.Items.Add(new LineItem());
+    private void RemoveItem(int idx) { if (_form.Items.Count > 1) _form.Items.RemoveAt(idx); }
+
+    private async Task<IEnumerable<EmployeeReferenceDto>> SearchEmployees(string? value, CancellationToken ct)
+    {
+        var r = await LookupClient.EmployeesGetAsync(keyword: value, isActive: true, pageSize: 20, cancellationToken: ct);
+        return r.Items;
+    }
+
+    private async Task<IEnumerable<PPEItemSummaryDto>> SearchTransferablePPEItems(string? value, CancellationToken ct)
+    {
+        var onHand = await PPEItemClient.SearchAsync(value, status: "OnHand", page: 1, pageSize: 10, ct: ct);
+        var issued = await PPEItemClient.SearchAsync(value, status: "IssuedPAR", page: 1, pageSize: 10, ct: ct);
+        return onHand.Items.Concat(issued.Items);
+    }
+
+    private static string FormatEmployee(EmployeeReferenceDto? e) =>
+        e is null ? "" : $"{e.LastName}, {e.FirstName} ({e.EmployeeNumber})";
+
+    private sealed class PpeirForm
+    {
+        public string PPEIRNo { get; set; } = string.Empty;
+        public DateTime? DateNullable { get; set; } = DateTime.Today;
+        public PPEIssuanceType IssuanceType { get; set; } = PPEIssuanceType.TransferCO;
+        public EmployeeReferenceDto? IssuedTo { get; set; }
+        public string? IssuedToOfficeAddress { get; set; }
+        public EmployeeReferenceDto? IssuedBy { get; set; }
+        public EmployeeReferenceDto? ReceivedBy { get; set; }
+        public EmployeeReferenceDto? ApprovedBy { get; set; }
+        public DateTime? DateReceivedNullable { get; set; }
+        public string? DriverName { get; set; }
+        public string? BillOfLadingNo { get; set; }
+        public List<LineItem> Items { get; set; } = [];
+    }
+
+    private sealed class LineItem
+    {
+        public PPEItemSummaryDto? SelectedPPEItem { get; set; }
+    }
+
+    private sealed class DepRow
+    {
+        public Guid ItemId { get; set; }
+        public string PropertyCode { get; set; } = string.Empty;
+        public decimal AccumulatedDepreciation { get; set; }
+        public decimal BookValue { get; set; }
+    }
+}

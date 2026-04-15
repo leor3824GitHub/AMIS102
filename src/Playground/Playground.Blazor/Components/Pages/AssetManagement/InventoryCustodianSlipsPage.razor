@@ -1,0 +1,315 @@
+@page "/asset-management/inventory-custodian-slips"
+@using FSH.Playground.Blazor.ApiClient
+@inject IICSClient Client
+@inject ISemiExpendablePropertyClient PropertyClient
+@inject ILookupClient LookupClient
+@inject ISnackbar Snackbar
+
+<FshPageHeader Title="Inventory Custodian Slips (ICS)"
+               Description="Issue semi-expendable property to end-users per COA Circular 2022-004 Annex A.3. Issuing sets property status to Issued." />
+
+<MudGrid Spacing="3">
+    <!-- Create Form -->
+    <MudItem xs="12" md="5">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                <MudText Typo="Typo.h6" Class="mb-3">New ICS</MudText>
+                <MudStack Spacing="2">
+                    <MudTextField @bind-Value="_form.ICSNo" Label="ICS No." Variant="Variant.Outlined"
+                                  Required="true" MaxLength="32" Placeholder="e.g. ICS-2026-00001" />
+                    <MudDatePicker @bind-Date="_form.DateNullable" Label="Date" Variant="Variant.Outlined"
+                                   DateFormat="MM/dd/yyyy" Required="true" />
+                    <MudTextField @bind-Value="_form.FundCluster" Label="Fund Cluster" Variant="Variant.Outlined" MaxLength="50" />
+
+                    <MudAutocomplete T="EmployeeReferenceDto"
+                                     @bind-Value="_form.IssuedFrom"
+                                     SearchFunc="SearchEmployees"
+                                     ToStringFunc="FormatEmployee"
+                                     Label="Issued From (Supply Officer)" Variant="Variant.Outlined"
+                                     Clearable="true" ResetValueOnEmptyText="true" CoerceValue="true" />
+
+                    <MudAutocomplete T="EmployeeReferenceDto"
+                                     @bind-Value="_form.ReceivedBy"
+                                     SearchFunc="SearchEmployees"
+                                     ToStringFunc="FormatEmployee"
+                                     Label="Received By (End-User)" Variant="Variant.Outlined"
+                                     Required="true" Clearable="true" ResetValueOnEmptyText="true" CoerceValue="true" />
+
+                    <MudDivider Class="my-2" />
+                    <MudStack Row="true" AlignItems="AlignItems.Center">
+                        <MudText Typo="Typo.subtitle2" Class="flex-grow-1">Property Items to Issue</MudText>
+                        <MudIconButton Icon="@Icons.Material.Filled.Add" Size="Size.Small" Color="Color.Primary"
+                                       OnClick="AddItem" />
+                    </MudStack>
+
+                    @for (var i = 0; i < _form.Items.Count; i++)
+                    {
+                        var idx = i;
+                        var li = _form.Items[idx];
+                        <MudPaper Outlined="true" Class="pa-2">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-1">
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">Item @(idx + 1)</MudText>
+                                <MudSpacer />
+                                <MudIconButton Icon="@Icons.Material.Filled.Remove" Size="Size.Small" Color="Color.Error"
+                                               OnClick="@(() => RemoveItem(idx))" />
+                            </MudStack>
+                            <MudStack Spacing="1">
+                                <MudAutocomplete T="SemiExpendablePropertySummaryDto"
+                                                 Value="li.SelectedProperty"
+                                                 ValueChanged="@(v => li.SelectedProperty = v)"
+                                                 SearchFunc="SearchOnHandProperties"
+                                                 ToStringFunc="@(x => x is null ? "" : $"{x.PropertyNo} – {x.ItemName}")"
+                                                 Label="Property (OnHand only)" Variant="Variant.Outlined" Dense="true"
+                                                 Required="true" Clearable="true" CoerceValue="true" ResetValueOnEmptyText="true" />
+                                @if (li.SelectedProperty is not null)
+                                {
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                        @li.SelectedProperty.ItemCode | Unit Cost: ₱@li.SelectedProperty.UnitCost.ToString("N2")
+                                    </MudText>
+                                }
+                                <MudTextField @bind-Value="li.Description" Label="Description (override)" Variant="Variant.Outlined"
+                                              Dense="true" MaxLength="500" />
+                            </MudStack>
+                        </MudPaper>
+                    }
+
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                               OnClick="CreateAsync" Disabled="_busy">Issue Properties (Create ICS)</MudButton>
+                </MudStack>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    <!-- List Panel -->
+    <MudItem xs="12" md="7">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3" Spacing="2">
+                    <MudText Typo="Typo.h6" Class="flex-grow-1">Custodian Slips</MudText>
+                    <MudTextField @bind-Value="_keyword" Label="Search" Variant="Variant.Outlined" Size="Size.Small"
+                                  Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
+                                  DebounceInterval="350" OnDebounceIntervalElapsed="@(() => LoadAsync())" Style="max-width:220px" />
+                </MudStack>
+
+                @if (_loading)
+                {
+                    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+                }
+                else if (_slips.Count == 0)
+                {
+                    <MudAlert Severity="Severity.Info">No ICS records yet.</MudAlert>
+                }
+                else
+                {
+                    <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                        <thead>
+                            <tr>
+                                <th>ICS No.</th>
+                                <th>Date</th>
+                                <th>Received By (ID)</th>
+                                <th>Items</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var s in _slips)
+                            {
+                                <tr>
+                                    <td><MudText Typo="Typo.body2"><b>@s.ICSNo</b></MudText></td>
+                                    <td>@s.Date.ToString("MM/dd/yyyy")</td>
+                                    <td><MudText Typo="Typo.caption">@s.ReceivedByEmployeeId.ToString("D")[..8]…</MudText></td>
+                                    <td><MudChip T="string" Size="Size.Small" Color="Color.Info">@s.ItemCount items</MudChip></td>
+                                    <td>
+                                        <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small"
+                                                       Color="Color.Primary" OnClick="@(() => ViewAsync(s.Id))" />
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </MudSimpleTable>
+
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-2">
+                        <MudText Typo="Typo.caption">@_totalCount total</MudText>
+                        <MudSpacer />
+                        <MudPagination Count="@TotalPages" Selected="_page" ShowFirstButton="true" ShowLastButton="true"
+                                       SelectedChanged="@(async p => { _page = p; await LoadAsync(); })" />
+                    </MudStack>
+                }
+            </MudCardContent>
+        </MudCard>
+
+        <!-- Detail Card -->
+        @if (_detail is not null)
+        {
+            <MudCard Elevation="1" Class="mt-3">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudStack Row="true" AlignItems="AlignItems.Center">
+                            <MudText Typo="Typo.h6">@_detail.ICSNo — @_detail.Date.ToString("MMMM dd, yyyy")</MudText>
+                            <MudSpacer />
+                            <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="@(() => _detail = null)" />
+                        </MudStack>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudGrid Spacing="1" Class="mb-2">
+                        @if (_detail.FundCluster is not null)
+                        {
+                            <MudItem xs="6"><MudText Typo="Typo.caption">Fund Cluster</MudText><MudText Typo="Typo.body2">@_detail.FundCluster</MudText></MudItem>
+                        }
+                        <MudItem xs="12">
+                            <MudText Typo="Typo.caption">Received By (Employee ID)</MudText>
+                            <MudText Typo="Typo.body2">@_detail.ReceivedByEmployeeId</MudText>
+                        </MudItem>
+                    </MudGrid>
+                    <MudDivider Class="my-2" />
+                    <MudText Typo="Typo.subtitle2" Class="mb-1">Issued Items</MudText>
+                    <MudSimpleTable Dense="true" Striped="true">
+                        <thead>
+                            <tr><th>#</th><th>Property No.</th><th>Item</th><th>Serial No.</th><th>Description</th><th>Unit Cost</th><th>Useful Life</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in _detail.Items.OrderBy(x => x.ItemNo))
+                            {
+                                <tr>
+                                    <td>@item.ItemNo</td>
+                                    <td><b>@item.PropertyNo</b></td>
+                                    <td>
+                                        <MudText Typo="Typo.body2">@item.ItemName</MudText>
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">@item.ItemCode</MudText>
+                                    </td>
+                                    <td>@(item.SerialNo ?? "-")</td>
+                                    <td>@(item.Description ?? "-")</td>
+                                    <td>@item.UnitCost.ToString("N2")</td>
+                                    <td>@(item.EstimatedUsefulLifeYears.HasValue ? $"{item.EstimatedUsefulLifeYears} yr(s)" : "-")</td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="5" style="text-align:right"><b>Total Cost:</b></td>
+                                <td colspan="2"><b>₱@_detail.Items.Sum(x => x.UnitCost).ToString("N2")</b></td>
+                            </tr>
+                        </tfoot>
+                    </MudSimpleTable>
+                </MudCardContent>
+            </MudCard>
+        }
+    </MudItem>
+</MudGrid>
+
+@code {
+    private List<ICSSummaryDto> _slips = [];
+    private ICSDetailsDto? _detail;
+    private IcsForm _form = new();
+    private string? _keyword;
+    private bool _loading;
+    private bool _busy;
+    private int _page = 1;
+    private int _totalCount;
+    private const int PageSize = 15;
+    private int TotalPages => Math.Max(1, (int)Math.Ceiling(_totalCount / (double)PageSize));
+
+    protected override async Task OnInitializedAsync()
+    {
+        _form.Items.Add(new IcsItemRow());
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        try
+        {
+            var response = await Client.SearchAsync(_keyword, page: _page, pageSize: PageSize);
+            _slips = [.. response.Items];
+            _totalCount = response.TotalCount;
+        }
+        catch (Exception ex) { Snackbar.Add($"Load failed: {ex.Message}", Severity.Error); }
+        finally { _loading = false; }
+    }
+
+    private async Task ViewAsync(Guid id)
+    {
+        try { _detail = await Client.GetAsync(id); }
+        catch (Exception ex) { Snackbar.Add($"Load failed: {ex.Message}", Severity.Error); }
+    }
+
+    private async Task<IEnumerable<EmployeeReferenceDto>> SearchEmployees(string? value, CancellationToken ct)
+    {
+        try
+        {
+            var result = await LookupClient.EmployeesGetAsync(
+                keyword: string.IsNullOrWhiteSpace(value) ? null : value,
+                isActive: true,
+                pageNumber: 1,
+                pageSize: 20,
+                cancellationToken: ct);
+            return result?.Items ?? [];
+        }
+        catch { return []; }
+    }
+
+    private async Task<IEnumerable<SemiExpendablePropertySummaryDto>> SearchOnHandProperties(string? value, CancellationToken ct)
+    {
+        var response = await PropertyClient.SearchAsync(value, status: "OnHand", page: 1, pageSize: 20, ct: ct);
+        return response.Items;
+    }
+
+    private static string FormatEmployee(EmployeeReferenceDto? e) =>
+        e is null ? "" : $"{e.FirstName} {e.LastName} ({e.EmployeeNumber})";
+
+    private async Task CreateAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_form.ICSNo) || _form.DateNullable is null || _form.ReceivedBy is null)
+        {
+            Snackbar.Add("ICS No., Date, and Received By are required.", Severity.Warning);
+            return;
+        }
+        if (_form.Items.Any(i => i.SelectedProperty is null))
+        {
+            Snackbar.Add("All items must have a selected property.", Severity.Warning);
+            return;
+        }
+        _busy = true;
+        try
+        {
+            var items = _form.Items.Select(i => new CreateICSItemRequest(
+                i.SelectedProperty!.Id, i.Description)).ToList();
+
+            var result = await Client.CreateAsync(new CreateICSCommand(
+                _form.ICSNo,
+                DateOnly.FromDateTime(_form.DateNullable!.Value),
+                _form.FundCluster,
+                _form.IssuedFrom?.Id,
+                _form.ReceivedBy.Id,
+                items));
+
+            Snackbar.Add($"ICS created. {result.ItemCount} property unit(s) issued.", Severity.Success);
+            _form = new IcsForm();
+            _form.Items.Add(new IcsItemRow());
+            await LoadAsync();
+        }
+        catch (Exception ex) { Snackbar.Add($"Create failed: {ex.Message}", Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    private void AddItem() => _form.Items.Add(new IcsItemRow());
+    private void RemoveItem(int idx) { if (_form.Items.Count > 1) _form.Items.RemoveAt(idx); }
+
+    private sealed class IcsForm
+    {
+        public string ICSNo { get; set; } = string.Empty;
+        public DateTime? DateNullable { get; set; } = DateTime.Today;
+        public string? FundCluster { get; set; }
+        public EmployeeReferenceDto? IssuedFrom { get; set; }
+        public EmployeeReferenceDto? ReceivedBy { get; set; }
+        public List<IcsItemRow> Items { get; set; } = [];
+    }
+
+    private sealed class IcsItemRow
+    {
+        public SemiExpendablePropertySummaryDto? SelectedProperty { get; set; }
+        public string? Description { get; set; }
+    }
+}

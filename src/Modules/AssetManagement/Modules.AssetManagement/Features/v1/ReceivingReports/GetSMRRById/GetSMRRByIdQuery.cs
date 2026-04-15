@@ -13,8 +13,8 @@ public sealed record SMRRDetailsDto(
     string ReceiptType,
     string? OtherReceiptType,
     string? FundCluster,
-    string? ReceivedBy,
-    string? NotedBy,
+    Guid? ReceivedByEmployeeId,
+    Guid? NotedByEmployeeId,
     DateTimeOffset CreatedOnUtc,
     string? CreatedBy,
     IReadOnlyList<SMRRItemDetailsDto> Items);

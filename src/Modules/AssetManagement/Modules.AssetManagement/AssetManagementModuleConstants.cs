@@ -37,5 +37,87 @@ public static class AssetManagementModuleConstants
             public const string Update = "Permissions.AssetManagement.InventoryCustodianSlips.Update";
             public const string Delete = "Permissions.AssetManagement.InventoryCustodianSlips.Delete";
         }
+
+        public static class ThresholdPolicies
+        {
+            public const string View   = "Permissions.AssetManagement.ThresholdPolicies.View";
+            public const string Create = "Permissions.AssetManagement.ThresholdPolicies.Create";
+        }
+
+        public static class Reclassification
+        {
+            public const string View   = "Permissions.AssetManagement.Reclassification.View";
+            public const string Create = "Permissions.AssetManagement.Reclassification.Create";
+        }
+
+        public static class SemiExpendableIssuanceRecords
+        {
+            public const string View   = "Permissions.AssetManagement.SemiExpendableIssuanceRecords.View";
+            public const string Create = "Permissions.AssetManagement.SemiExpendableIssuanceRecords.Create";
+        }
+
+        public static class ReceiptForReturnedProperties
+        {
+            public const string View   = "Permissions.AssetManagement.ReceiptForReturnedProperties.View";
+            public const string Create = "Permissions.AssetManagement.ReceiptForReturnedProperties.Create";
+        }
+
+        public static class PropertyIncidentReports
+        {
+            public const string View   = "Permissions.AssetManagement.PropertyIncidentReports.View";
+            public const string Create = "Permissions.AssetManagement.PropertyIncidentReports.Create";
+        }
+
+        public static class UnserviceablePropertyReports
+        {
+            public const string View   = "Permissions.AssetManagement.UnserviceablePropertyReports.View";
+            public const string Create = "Permissions.AssetManagement.UnserviceablePropertyReports.Create";
+        }
+
+        public static class Reports
+        {
+            public const string View = "Permissions.AssetManagement.Reports.View";
+        }
+
+        public static class PPEItems
+        {
+            public const string View   = "Permissions.AssetManagement.PPEItems.View";
+            public const string Create = "Permissions.AssetManagement.PPEItems.Create";
+            public const string Update = "Permissions.AssetManagement.PPEItems.Update";
+            public const string Delete = "Permissions.AssetManagement.PPEItems.Delete";
+        }
+
+        public static class PPEReceivingReports
+        {
+            public const string View   = "Permissions.AssetManagement.PPEReceivingReports.View";
+            public const string Create = "Permissions.AssetManagement.PPEReceivingReports.Create";
+        }
+
+        public static class PropertyAcknowledgementReceipts
+        {
+            public const string View   = "Permissions.AssetManagement.PropertyAcknowledgementReceipts.View";
+            public const string Create = "Permissions.AssetManagement.PropertyAcknowledgementReceipts.Create";
+        }
+
+        public static class PPEIssuanceReports
+        {
+            public const string View   = "Permissions.AssetManagement.PPEIssuanceReports.View";
+            public const string Create = "Permissions.AssetManagement.PPEIssuanceReports.Create";
+            public const string Update = "Permissions.AssetManagement.PPEIssuanceReports.Update";
+        }
+
+        public static class ReceiptsForReturnedPPE
+        {
+            public const string View   = "Permissions.AssetManagement.ReceiptsForReturnedPPE.View";
+            public const string Create = "Permissions.AssetManagement.ReceiptsForReturnedPPE.Create";
+        }
+
+        public static class PhysicalCount
+        {
+            public const string View   = "Permissions.AssetManagement.PhysicalCount.View";
+            public const string Create = "Permissions.AssetManagement.PhysicalCount.Create";
+            public const string Update = "Permissions.AssetManagement.PhysicalCount.Update";
+        }
+
     }
 }

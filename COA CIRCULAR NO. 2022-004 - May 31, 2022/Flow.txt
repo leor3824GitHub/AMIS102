@@ -1,0 +1,76 @@
+The flow of this system is designed to mirror the physical movement of property at the NFA while ensuring the digital ledger remains "Audit-Proof." Since you have multiple assets per transaction, the flow relies on a Master-Detail relationship: a single Document (Header) linked to multiple individual Asset Tags (Line Items).
+
+Here is the step-by-step operational flow:
+1. The Acquisition Flow (Receipt)
+
+When a delivery arrives at the regional office, you don't just "add" assets. You record the Receipt Transaction.
+
+    Step A: Create a PropertyTransaction (Type: Receipt).
+
+    Step B: If the items are ≥ 50k, the user manually inputs the PPERR number. If <50k, the system generates the SMRR number.
+
+    Step C: Add multiple TransactionItem entries for each physical unit (each gets its own PropertyNumber).
+
+    System Result: The status of all these items automatically flips to InStock.
+
+2. The Issuance Flow (Accountability)
+
+This is where the PAR (for PPE) or ICS (for Semi-Expendable) is generated.
+
+    Step A: Select a list of InStock assets to be issued to a single employee.
+
+    Step B: Create a PropertyTransaction (Type: Issuance).
+
+    Step C: The system copies the ReceivedById (the employee) to the CurrentCustodianId of every asset in that list.
+
+    System Result: The status flips to Issued. The system prints one document containing all selected assets.
+
+3. The Transfer Flow (PPEIR / SMIR)
+
+When assets move from one person to another or one warehouse to another.
+
+    Step A: Create a PropertyTransaction (Type: Transfer).
+
+    Step B: The system generates a PPEIR (for PPE) or SMIR (for Semi-Expendable).
+
+    Step C: The CurrentCustodianId is updated from the old employee to the new one for all items in the transaction.
+
+    System Result: The history is preserved. You can see the item moved from Person A to Person B via that specific Transfer Reference Number.
+
+4. The Reclassification Flow (The "Policy Shift")
+
+This is the automated "Affective PPE" logic you requested.
+
+    Step A: You update the ThresholdPolicy (e.g., changing the Cap Threshold).
+
+    Step B: The system identifies all "Affective" items (e.g., items that were ₱25k and were PPE, but are now Semi-Expendable).
+
+    Step C: The system performs a Bulk Reclassification Transaction.
+
+        It voids the existing PARs.
+
+        It issues new ICS documents for those same items to the same custodians.
+
+    System Result: The CurrentCustodianId remains unchanged, but the AssetCategory and the required document type are updated in the history.
+
+5. The Accounting Flow (Depreciation)
+
+This happens in the background, independent of the custodians.
+
+    Step A: A monthly background worker scans all assets where CurrentCategory == PPE.
+
+    Step B: It checks the StandardSalvageRate (e.g., 5%) from your policy.
+
+    Step C: It calculates the monthly expense and creates a DepreciationEntry for every asset.
+
+    System Result: The Book Value of the asset drops monthly. If an item was reclassified to Semi-Expendable in Step 4, this flow stops for that item automatically.
+
+Summary of Data Updates:
+Event	Status	CurrentCustodianId	AssetCategory
+Receipt	InStock	null	Determined by Policy
+Issuance	Issued	Updated to Receiver	Remains same
+Transfer	Issued	Updated to New Receiver	Remains same
+Reclassification	Unchanged	Unchanged	Updated
+Return	InStock	null	Remains same
+
+This flow ensures that no matter how the rules change or who holds the property, you can always look at a single PropertyNumber and see every PAR, ICS, and Depreciation entry ever associated with it.

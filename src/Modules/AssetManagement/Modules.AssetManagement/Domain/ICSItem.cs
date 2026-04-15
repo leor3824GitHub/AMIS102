@@ -6,7 +6,7 @@ namespace FSH.Modules.AssetManagement.Domain;
 /// A line item within an Inventory Custodian Slip.
 /// Each ICSItem references one specific SemiExpendableProperty unit being issued.
 /// </summary>
-public sealed class ICSItem : AggregateRoot<Guid>
+public sealed class ICSItem : BaseEntity<Guid>
 {
     /// <summary>FK to the parent ICS.</summary>
     public Guid ICSId { get; private set; }
@@ -26,13 +26,21 @@ public sealed class ICSItem : AggregateRoot<Guid>
     /// <summary>Estimated useful life in years, from the item catalog.</summary>
     public int? EstimatedUsefulLifeYears { get; private set; }
 
+    /// <summary>
+    /// Asset category at the time this ICS was issued.
+    /// Frozen here so historical ICS records remain accurate even after a reclassification.
+    /// Determines ICS number series (SPLV = LowValuedSemi, SPHV = HighValuedSemi).
+    /// </summary>
+    public AssetCategory CategoryAtTimeOfIssuance { get; private set; }
+
     public static ICSItem Create(
         Guid icsId,
         Guid semiExpendablePropertyId,
         int itemNo,
         string? description,
         decimal unitCost,
-        int? estimatedUsefulLifeYears)
+        int? estimatedUsefulLifeYears,
+        AssetCategory categoryAtTimeOfIssuance)
     {
         return new ICSItem
         {
@@ -43,6 +51,7 @@ public sealed class ICSItem : AggregateRoot<Guid>
             Description              = description,
             UnitCost                 = unitCost,
             EstimatedUsefulLifeYears = estimatedUsefulLifeYears,
+            CategoryAtTimeOfIssuance = categoryAtTimeOfIssuance,
         };
     }
 }

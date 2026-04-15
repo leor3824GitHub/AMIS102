@@ -8,9 +8,15 @@ public sealed record ICSDetailsDto(
     Guid Id,
     string ICSNo,
     DateOnly Date,
+    string Category,
+    string Status,
+    DateOnly? ExpiresOn,
     string? FundCluster,
     Guid? IssuedFromEmployeeId,
     Guid ReceivedByEmployeeId,
+    Guid? RenewedFromICSId,
+    Guid? RenewedByICSId,
+    Guid? CancelledByRRSPId,
     DateTimeOffset CreatedOnUtc,
     string? CreatedBy,
     IReadOnlyList<ICSItemDetailsDto> Items);
@@ -25,4 +31,5 @@ public sealed record ICSItemDetailsDto(
     string? SerialNo,
     string? Description,
     decimal UnitCost,
-    int? EstimatedUsefulLifeYears);
+    int? EstimatedUsefulLifeYears,
+    string CategoryAtTimeOfIssuance);

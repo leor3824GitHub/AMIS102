@@ -1,0 +1,129 @@
+This comprehensive Domain Entity Plan is designed for your Asset Management and Inventory System (AMIS). It follows a "Ledger-First" architecture, ensuring that every piece of government property—from a ₱100,000 industrial rice mill to a ₱3,000 office chair—maintains a perfect audit trail compliant with COA Circular 2022-004.
+AMIS Development Guide: Unified Asset & Lifecycle Domain
+1. Core Architectural Philosophy
+
+The system treats Classification (PPE vs. Semi-Expendable) and Accountability (Custodian) as "point-in-time" states.
+
+    Dynamic Thresholds: Instead of hardcoding IsPPE, the system uses a configurable policy. This allows for Reclassification when government thresholds change.
+
+    Side-Effect Updates: Fields like CurrentCustodianId are never updated manually; they are automated side-effects of saving a Transaction (PAR, ICS, ITR, etc.).
+
+2. Domain Entities (C#)
+A. The Master Entity: GovernmentProperty
+
+This stores the permanent "DNA" of the asset and its current status.
+C#
+
+public class GovernmentProperty
+{
+    public Guid Id { get; set; }
+    public string PropertyNumber { get; set; } // Unique Agency ID
+    public string Description { get; set; }    // Brand, Model, Serial No.
+    public decimal UnitCost { get; set; }
+    public DateTime DateAcquired { get; set; }
+    public int EstimatedUsefulLife { get; set; } // Years
+    public string UacsCode { get; set; }
+    
+    // --- Current Snapshot (Managed by Transactions) ---
+    public PropertyStatus Status { get; set; } 
+    public AssetCategory CurrentCategory { get; set; } 
+    public Guid? CurrentCustodianId { get; set; } 
+    public virtual Employee CurrentCustodian { get; set; }
+
+    // --- Navigation for Audit & Financials ---
+    public virtual ICollection<PropertyTransaction> Transactions { get; set; }
+    public virtual ICollection<ClassificationLog> ClassificationHistory { get; set; }
+    public virtual ICollection<DepreciationEntry> DepreciationLedger { get; set; }
+}
+
+B. The History Engine: PropertyTransaction
+
+This creates the "Chain of Custody." It is the source for all printed COA forms.
+C#
+
+public class PropertyTransaction
+{
+    public Guid Id { get; set; }
+    public Guid PropertyId { get; set; }
+    
+    // Logic: Manual for PPE (Pre-numbered), Auto for Semi-Expendable
+    public string ReferenceNumber { get; set; } 
+    public TransactionType Type { get; set; } 
+    public DateTime TransactionDate { get; set; }
+
+    // Signatories (From ICS/PAR/ITR Forms)
+    public Guid? ReceivedById { get; set; } // New Custodian
+    public virtual Employee ReceivedBy { get; set; }
+    public Guid? IssuedById { get; set; }   // Supply/Property Officer
+    public virtual Employee IssuedBy { get; set; }
+
+    public AssetCategory CategoryAtTimeOfIssue { get; set; } 
+    public string Remarks { get; set; }
+}
+
+C. The Policy Config: ThresholdPolicy
+
+This allows the system to change rules without a code redeploy.
+C#
+
+public class ThresholdPolicy
+{
+    public Guid Id { get; set; }
+    public decimal CapitalizationThreshold { get; set; } // e.g., 50,000.00
+    public decimal LowValueThreshold { get; set; }      // e.g., 5,000.00
+    public decimal StandardSalvageRate { get; set; }    // e.g., 0.05 (5%)
+    public bool IsActive { get; set; }
+    public DateTime EffectiveDate { get; set; }
+}
+
+3. Detailed Development Guide
+I. Automated Custodian Logic
+
+To maintain data integrity, the CurrentCustodianId on the GovernmentProperty table must be updated automatically within the Transaction Service:
+
+    Issuance (PAR/ICS): Sets CurrentCustodianId to the ReceivedById.
+
+    Transfer (PPEIR/SMIR): Updates CurrentCustodianId to the new ReceivedById.
+
+    Return (RRSP): Resets CurrentCustodianId to null (returned to stock).
+
+II. The Reclassification Workflow ("Affective PPE")
+
+When a new policy is activated:
+
+    Identify: Scan for assets where CurrentCategory == PPE but UnitCost < NewCapitalizationThreshold.
+
+    Log: Create a ClassificationLog record.
+
+    Re-Issue: Trigger a service to void the active PAR and generate a new ICS for the current custodian. This ensures the custodian signs the correct document for the new category.
+
+III. Depreciation Background Service
+
+A monthly service runs for all items where CurrentCategory == PPE:
+
+    Calculate Salvage Value: UnitCost * Policy.StandardSalvageRate.
+
+    Monthly Expense: (UnitCost - SalvageValue) / (UsefulLife * 12).
+
+    Post: Add a DepreciationEntry to the ledger.
+
+    Stop Condition: Cease posting when RemainingBookValue equals Salvage Value or if the item is reclassified to Semi-Expendable.
+
+4. Operational Process Mapping
+Action	Form: PPE (>= 50k)	Form: Semi-Expendable (< 50k)	Numbering Source
+Receipt	PPERR	SMRR	Manual (Pre-numbered)
+Issuance	PAR	ICS	Auto (System-gen)
+Transfer	PPEIR	SMIR	Mixed
+Return	RRSP	RRSP	Auto
+Disposal	IIRUP	IIRUSP	Auto
+5. System Enums
+C#
+
+public enum PropertyStatus { InStock, Issued, Unserviceable, Disposed }
+
+public enum TransactionType 
+{ 
+    Receipt, Issuance, Transfer, Return, Disposal, Reclassification 
+}
+
+public enum AssetCategory { PPE, HighValueSemi, LowValueSemi }

@@ -10,7 +10,11 @@ namespace FSH.Modules.AssetManagement.Domain;
 /// </summary>
 public sealed class InventoryCustodianSlip : AggregateRoot<Guid>, IAuditableEntity
 {
-    /// <summary>Control number (e.g., ICS-2024-00001).</summary>
+    /// <summary>
+    /// Control number. Format depends on category:
+    ///   Low-valued:  SPLV-YYYY-MM-NNNN
+    ///   High-valued: SPHV-YYYY-MM-NNNN
+    /// </summary>
     public string ICSNo { get; private set; } = default!;
 
     public DateOnly Date { get; private set; }
@@ -29,6 +33,45 @@ public sealed class InventoryCustodianSlip : AggregateRoot<Guid>, IAuditableEnti
     /// </summary>
     public Guid ReceivedByEmployeeId { get; private set; }
 
+    /// <summary>
+    /// Whether all items on this ICS are low-valued or high-valued semi-expendable property.
+    /// All items on a single ICS must belong to the same category (COA Circular 2022-004 Section 4.9).
+    /// Determines ICS number series (SPLV for LowValuedSemi, SPHV for HighValuedSemi).
+    /// </summary>
+    public AssetCategory Category { get; private set; }
+
+    /// <summary>
+    /// Current lifecycle status of this ICS.
+    /// </summary>
+    public ICSStatus Status { get; private set; } = ICSStatus.Active;
+
+    /// <summary>
+    /// Date this ICS expires and must be renewed.
+    /// Set to Date.AddYears(3) at creation per COA Circular 2022-004 Section 4.11.
+    /// Null for ICS records created before this field was introduced (legacy).
+    /// </summary>
+    public DateOnly? ExpiresOn { get; private set; }
+
+    // ── Lifecycle link fields ──────────────────────────────────────────────────
+
+    /// <summary>
+    /// If this ICS is a renewal, the ID of the previous ICS it replaced.
+    /// Populated by RenewICSCommand.
+    /// </summary>
+    public Guid? RenewedFromICSId { get; private set; }
+
+    /// <summary>
+    /// If this ICS has been renewed, the ID of the ICS that replaced it.
+    /// Populated when Status is set to Renewed.
+    /// </summary>
+    public Guid? RenewedByICSId { get; private set; }
+
+    /// <summary>
+    /// If this ICS was cancelled by a return, the ID of the RRSP that closed it.
+    /// Populated by CreateRRSPCommand.
+    /// </summary>
+    public Guid? CancelledByRRSPId { get; private set; }
+
     public byte[] Version { get; set; } = [];
 
     // IAuditableEntity
@@ -43,19 +86,55 @@ public sealed class InventoryCustodianSlip : AggregateRoot<Guid>, IAuditableEnti
     public static InventoryCustodianSlip Create(
         string icsNo,
         DateOnly date,
+        AssetCategory category,
         string? fundCluster,
         Guid? issuedFromEmployeeId,
-        Guid receivedByEmployeeId)
+        Guid receivedByEmployeeId,
+        Guid? renewedFromICSId = null)
     {
         return new InventoryCustodianSlip
         {
-            Id                  = Guid.NewGuid(),
-            ICSNo               = icsNo,
-            Date                = date,
-            FundCluster         = fundCluster,
+            Id                   = Guid.NewGuid(),
+            ICSNo                = icsNo,
+            Date                 = date,
+            Category             = category,
+            FundCluster          = fundCluster,
             IssuedFromEmployeeId = issuedFromEmployeeId,
             ReceivedByEmployeeId = receivedByEmployeeId,
-            CreatedOnUtc        = DateTimeOffset.UtcNow,
+            Status               = ICSStatus.Active,
+            ExpiresOn            = date.AddYears(3),
+            RenewedFromICSId     = renewedFromICSId,
+            CreatedOnUtc         = DateTimeOffset.UtcNow,
         };
+    }
+
+    /// <summary>
+    /// Marks this ICS as renewed. Called when a new ICS is issued to replace this one.
+    /// </summary>
+    public void MarkRenewed(Guid newICSId)
+    {
+        Status = ICSStatus.Renewed;
+        RenewedByICSId = newICSId;
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;
+    }
+
+    /// <summary>
+    /// Marks this ICS as cancelled due to all items being returned (RRSP).
+    /// </summary>
+    public void CancelByReturn(Guid rrspId)
+    {
+        Status = ICSStatus.CancelledByReturn;
+        CancelledByRRSPId = rrspId;
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;
+    }
+
+    /// <summary>
+    /// Marks this ICS as expired. Called by the Hangfire background job when
+    /// low-valued items reach end of estimated useful life.
+    /// </summary>
+    public void MarkExpired()
+    {
+        Status = ICSStatus.Expired;
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;
     }
 }

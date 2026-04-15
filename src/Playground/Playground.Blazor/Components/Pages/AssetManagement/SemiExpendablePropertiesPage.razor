@@ -1,0 +1,199 @@
+@page "/asset-management/semi-expendable-properties"
+@using FSH.Playground.Blazor.ApiClient
+@inject ISemiExpendablePropertyClient Client
+@inject ISemiExpendableItemClient ItemClient
+@inject ISnackbar Snackbar
+
+<FshPageHeader Title="Semi-Expendable Property Units" Description="Individual property units tracked per COA Circular 2022-004. Register manually or via SMRR." />
+
+<MudGrid Spacing="3">
+    <!-- Register Form -->
+    <MudItem xs="12" md="4">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                <MudText Typo="Typo.h6" Class="mb-3">Register Property Unit</MudText>
+                <MudStack Spacing="2">
+                    <MudTextField @bind-Value="_form.PropertyNo" Label="Property No." Variant="Variant.Outlined"
+                                  Required="true" MaxLength="32" Placeholder="e.g. AM-2026-00001" />
+                    <MudAutocomplete T="SemiExpendableItemSummaryDto"
+                                     @bind-Value="_form.SelectedItem"
+                                     SearchFunc="SearchItems"
+                                     ToStringFunc="@(x => x is null ? "" : $"{x.Code} – {x.Name}")"
+                                     Label="Item (from catalog)" Variant="Variant.Outlined"
+                                     Required="true" Clearable="true"
+                                     ResetValueOnEmptyText="true" CoerceValue="true" />
+                    <MudTextField @bind-Value="_form.SerialNo" Label="Serial No." Variant="Variant.Outlined" MaxLength="100" />
+                    <MudDatePicker @bind-Date="_form.AcquisitionDateNullable" Label="Acquisition Date"
+                                   Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" Required="true" />
+                    <MudNumericField @bind-Value="_form.UnitCost" Label="Unit Cost (₱)" Variant="Variant.Outlined"
+                                     Required="true" Min="0.01m" Max="49999.99m" Format="N2" />
+                    <MudTextField @bind-Value="_form.FundCluster" Label="Fund Cluster" Variant="Variant.Outlined" MaxLength="50" />
+                    <MudTextField @bind-Value="_form.Remarks" Label="Remarks" Variant="Variant.Outlined" MaxLength="500" Lines="2" />
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                               OnClick="RegisterAsync" Disabled="_busy">Register</MudButton>
+                </MudStack>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    <!-- List Panel -->
+    <MudItem xs="12" md="8">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3" Spacing="2">
+                    <MudText Typo="Typo.h6" Class="flex-grow-1">Property Units</MudText>
+                    <MudTextField @bind-Value="_keyword" Label="Search" Variant="Variant.Outlined" Size="Size.Small"
+                                  Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
+                                  DebounceInterval="350" OnDebounceIntervalElapsed="@(() => LoadAsync())" Style="max-width:220px" />
+                    <MudSelect Value="_statusFilter" Label="Status" Variant="Variant.Outlined" Size="Size.Small"
+                               T="string?" Style="max-width:130px" ValueChanged="@(v => { _statusFilter = v; _ = LoadAsync(); })">
+                        <MudSelectItem T="string?" Value="@((string?)null)">All</MudSelectItem>
+                        @foreach (var s in _statuses)
+                        {
+                            <MudSelectItem T="string?" Value="s">@s</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudStack>
+
+                @if (_loading)
+                {
+                    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+                }
+                else if (_items.Count == 0)
+                {
+                    <MudAlert Severity="Severity.Info">No property units found.</MudAlert>
+                }
+                else
+                {
+                    <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                        <thead>
+                            <tr>
+                                <th>Property No.</th>
+                                <th>Item</th>
+                                <th>Serial No.</th>
+                                <th>Acq. Date</th>
+                                <th>Unit Cost</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var p in _items)
+                            {
+                                <tr>
+                                    <td><MudText Typo="Typo.body2"><b>@p.PropertyNo</b></MudText></td>
+                                    <td>
+                                        <MudText Typo="Typo.body2">@p.ItemName</MudText>
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">@p.ItemCode</MudText>
+                                    </td>
+                                    <td>@(p.SerialNo ?? "-")</td>
+                                    <td>@p.AcquisitionDate.ToString("MM/dd/yyyy")</td>
+                                    <td>@p.UnitCost.ToString("N2")</td>
+                                    <td>@StatusChip(p.Status)</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </MudSimpleTable>
+
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-2" Spacing="1">
+                        <MudText Typo="Typo.caption">@_totalCount units total</MudText>
+                        <MudSpacer />
+                        <MudPagination Count="@TotalPages" Selected="_page" ShowFirstButton="true" ShowLastButton="true"
+                                       SelectedChanged="@(async p => { _page = p; await LoadAsync(); })" />
+                    </MudStack>
+                }
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private List<SemiExpendablePropertySummaryDto> _items = [];
+    private PropertyForm _form = new();
+    private string? _keyword;
+    private string? _statusFilter;
+    private bool _loading;
+    private bool _busy;
+    private int _page = 1;
+    private int _totalCount;
+    private const int PageSize = 15;
+    private int TotalPages => Math.Max(1, (int)Math.Ceiling(_totalCount / (double)PageSize));
+    private static readonly string[] _statuses = ["OnHand", "Issued", "Returned", "Transferred", "Disposed", "LostStolenDamaged"];
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        try
+        {
+            var response = await Client.SearchAsync(_keyword, status: _statusFilter, page: _page, pageSize: PageSize);
+            _items = [.. response.Items];
+            _totalCount = response.TotalCount;
+        }
+        catch (Exception ex) { Snackbar.Add($"Load failed: {ex.Message}", Severity.Error); }
+        finally { _loading = false; }
+    }
+
+    private async Task<IEnumerable<SemiExpendableItemSummaryDto>> SearchItems(string? value, CancellationToken ct)
+    {
+        var response = await ItemClient.SearchAsync(value, isActive: true, page: 1, pageSize: 20, ct: ct);
+        return response.Items;
+    }
+
+    private async Task RegisterAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_form.PropertyNo) || _form.SelectedItem is null ||
+            _form.AcquisitionDateNullable is null || _form.UnitCost <= 0)
+        {
+            Snackbar.Add("Property No., Item, Acquisition Date, and Unit Cost are required.", Severity.Warning);
+            return;
+        }
+        _busy = true;
+        try
+        {
+            await Client.RegisterAsync(new RegisterSemiExpendablePropertyCommand(
+                _form.PropertyNo,
+                _form.SelectedItem.Id,
+                _form.SerialNo,
+                DateOnly.FromDateTime(_form.AcquisitionDateNullable.Value),
+                _form.UnitCost,
+                _form.FundCluster,
+                _form.Remarks));
+            Snackbar.Add("Property unit registered.", Severity.Success);
+            _form = new();
+            await LoadAsync();
+        }
+        catch (Exception ex) { Snackbar.Add($"Register failed: {ex.Message}", Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    private static RenderFragment StatusChip(string status) => __builder =>
+    {
+        var color = status switch
+        {
+            "OnHand"          => Color.Success,
+            "Issued"          => Color.Info,
+            "Returned"        => Color.Secondary,
+            "Transferred"     => Color.Warning,
+            "Disposed"        => Color.Default,
+            "LostStolenDamaged" => Color.Error,
+            _                 => Color.Default
+        };
+        __builder.OpenComponent<MudChip<string>>(0);
+        __builder.AddAttribute(1, "Size", Size.Small);
+        __builder.AddAttribute(2, "Color", color);
+        __builder.AddAttribute(3, "ChildContent", (RenderFragment)(b => b.AddContent(0, status)));
+        __builder.CloseComponent();
+    };
+
+    private sealed class PropertyForm
+    {
+        public string PropertyNo { get; set; } = string.Empty;
+        public SemiExpendableItemSummaryDto? SelectedItem { get; set; }
+        public string? SerialNo { get; set; }
+        public DateTime? AcquisitionDateNullable { get; set; } = DateTime.Today;
+        public decimal UnitCost { get; set; }
+        public string? FundCluster { get; set; }
+        public string? Remarks { get; set; }
+    }
+}

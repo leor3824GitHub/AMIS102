@@ -1,4 +1,5 @@
 using FSH.Modules.AssetManagement.Data;
+using FSH.Modules.AssetManagement.Domain;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,6 +14,12 @@ public sealed class GetSemiExpendablePropertiesQueryHandler(AssetManagementDbCon
             .Include(x => x.SemiExpendableItem)
             .AsQueryable();
 
+        // Exclude transferred properties from default view; caller must pass Status=Transferred to see them explicitly.
+        if (!query.Status.HasValue)
+        {
+            propertiesQuery = propertiesQuery.Where(x => x.Status != PropertyStatus.Transferred);
+        }
+
         if (!string.IsNullOrWhiteSpace(query.Keyword))
         {
             var kw = query.Keyword.ToLower();
@@ -26,6 +33,11 @@ public sealed class GetSemiExpendablePropertiesQueryHandler(AssetManagementDbCon
         if (query.SemiExpendableItemId.HasValue)
         {
             propertiesQuery = propertiesQuery.Where(x => x.SemiExpendableItemId == query.SemiExpendableItemId.Value);
+        }
+
+        if (query.Category.HasValue)
+        {
+            propertiesQuery = propertiesQuery.Where(x => x.Category == query.Category.Value);
         }
 
         if (query.Status.HasValue)
@@ -53,6 +65,7 @@ public sealed class GetSemiExpendablePropertiesQueryHandler(AssetManagementDbCon
                 x.SemiExpendableItemId,
                 x.SemiExpendableItem.Code,
                 x.SemiExpendableItem.Name,
+                x.Category.ToString(),
                 x.SerialNo,
                 x.AcquisitionDate,
                 x.UnitCost,

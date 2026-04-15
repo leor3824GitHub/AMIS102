@@ -47,8 +47,8 @@ public sealed class GetSMRRByIdQueryHandler(AssetManagementDbContext dbContext)
             smrr.ReceiptType.ToString(),
             smrr.OtherReceiptType,
             smrr.FundCluster,
-            smrr.ReceivedBy,
-            smrr.NotedBy,
+            smrr.ReceivedByEmployeeId,
+            smrr.NotedByEmployeeId,
             smrr.CreatedOnUtc,
             smrr.CreatedBy,
             items);

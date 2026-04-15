@@ -145,6 +145,53 @@ internal static class ApiClientRegistration
         services.AddTransient<IBudgetUtilizationRecordClient>(sp =>
             new BudgetUtilizationRecordClient(ResolveClient(sp)));
 
+        // Asset Management module manual clients
+        services.AddTransient<ISemiExpendableItemClient>(sp =>
+            new SemiExpendableItemClient(ResolveClient(sp)));
+
+        services.AddTransient<ISemiExpendablePropertyClient>(sp =>
+            new SemiExpendablePropertyClient(ResolveClient(sp)));
+
+        services.AddTransient<ISMRRClient>(sp =>
+            new SMRRClient(ResolveClient(sp)));
+
+        services.AddTransient<IICSClient>(sp =>
+            new ICSClient(ResolveClient(sp)));
+
+        services.AddTransient<ISMIRClient>(sp =>
+            new SMIRClient(ResolveClient(sp)));
+
+        services.AddTransient<IRRSPClient>(sp =>
+            new RRSPClient(ResolveClient(sp)));
+
+        services.AddTransient<IPropertyIncidentReportClient>(sp =>
+            new PropertyIncidentReportClient(ResolveClient(sp)));
+
+        services.AddTransient<IUnserviceablePropertyReportClient>(sp =>
+            new UnserviceablePropertyReportClient(ResolveClient(sp)));
+
+        services.AddTransient<IAssetManagementReportsClient>(sp =>
+            new AssetManagementReportsClient(ResolveClient(sp)));
+
+        // PPE track clients
+        services.AddTransient<IPPERRClient>(sp =>
+            new PPERRClient(ResolveClient(sp)));
+
+        services.AddTransient<IPARClient>(sp =>
+            new PARClient(ResolveClient(sp)));
+
+        services.AddTransient<IPPEIRClient>(sp =>
+            new PPEIRClient(ResolveClient(sp)));
+
+        services.AddTransient<IRRPClient>(sp =>
+            new RRPClient(ResolveClient(sp)));
+
+        services.AddTransient<IPPEItemClient>(sp =>
+            new PPEItemClient(ResolveClient(sp)));
+
+        services.AddTransient<IPhysicalCountClient>(sp =>
+            new PhysicalCountClient(ResolveClient(sp)));
+
         // Procurement module manual clients
         services.AddTransient<IPurchaseRequestClient>(sp =>
             new PurchaseRequestClient(ResolveClient(sp)));

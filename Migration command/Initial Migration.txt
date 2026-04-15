@@ -1,1 +1,4 @@
 dotnet ef migrations add InitialMasterData --context FSH.Modules.MasterData.Data.MasterDataDbContext --output-dir MasterData --namespace FSH.Playground.Migrations.PostgreSQL.MasterData --project src/Playground/Migrations.PostgreSQL/Migrations.PostgreSQL.csproj --startup-project src/Playground/Playground.Api/Playground.Api.csproj
+
+
+dotnet ef migrations add InitialMasterData --context FSH.Modules.MasterData.Data.MasterDataDbContext --output-dir MasterData --namespace FSH.Playground.Migrations.PostgreSQL.MasterData --project src/Playground/Migrations.PostgreSQL/Migrations.PostgreSQL.csproj --startup-project src/Playground/Playground.Api/Playground.Api.csproj

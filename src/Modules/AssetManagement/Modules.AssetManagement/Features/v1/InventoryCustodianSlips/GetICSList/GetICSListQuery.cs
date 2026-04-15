@@ -1,3 +1,4 @@
+using FSH.Modules.AssetManagement.Domain;
 using Mediator;
 
 namespace FSH.Modules.AssetManagement.Features.v1.InventoryCustodianSlips.GetICSList;
@@ -7,6 +8,8 @@ public sealed record GetICSListQuery(
     DateOnly? DateFrom,
     DateOnly? DateTo,
     Guid? ReceivedByEmployeeId,
+    AssetCategory? Category = null,
+    ICSStatus? Status = null,
     int PageNumber = 1,
     int PageSize = 10) : IQuery<PagedICSListResponse>;
 
@@ -20,6 +23,9 @@ public sealed record ICSSummaryDto(
     Guid Id,
     string ICSNo,
     DateOnly Date,
+    string Category,
+    string Status,
+    DateOnly? ExpiresOn,
     string? FundCluster,
     Guid? IssuedFromEmployeeId,
     Guid ReceivedByEmployeeId,
