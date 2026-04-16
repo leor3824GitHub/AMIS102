@@ -138,6 +138,9 @@ internal static class ApiClientRegistration
         services.AddTransient<ICapitalizationThresholdClient>(sp =>
             new CapitalizationThresholdClient(ResolveClient(sp)));
 
+        services.AddTransient<IPropertyClassClient>(sp =>
+            new PropertyClassClient(ResolveClient(sp)));
+
         // Finance module manual clients
         services.AddTransient<IDisbursementVoucherClient>(sp =>
             new DisbursementVoucherClient(ResolveClient(sp)));

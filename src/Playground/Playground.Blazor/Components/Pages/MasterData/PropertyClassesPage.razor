@@ -1,0 +1,377 @@
+@page "/master-data/property-classes"
+@using FSH.Modules.MasterData.Contracts.v1.PropertyClasses
+@using FSH.Playground.Blazor.ApiClient
+@inject IPropertyClassClient Client
+@inject ISnackbar Snackbar
+
+<FshPageHeader Title="Property Classification Library"
+               Description="COA GAM Annex A — property classification codes used in property code generation" />
+
+<MudGrid Spacing="2" Class="mt-3">
+
+    <!-- LEFT: Class list + add form -->
+    <MudItem xs="12" md="5">
+        <MudCard Class="fsh-card">
+            <MudCardContent>
+                <MudText Typo="Typo.h6" Class="mb-3">
+                    @(_editingClass is not null ? "Edit Classification" : "Add Classification")
+                </MudText>
+                <MudStack Spacing="2">
+                    <MudTextField @bind-Value="_classForm.Code" Label="Code (2–4 chars)" Placeholder="e.g. OE"
+                                  HelperText="@(_editingClass is not null ? "Code cannot be changed after creation." : "2-char classification code (PPRCLSCD)")"
+                                  CharacterCounter="true" MaxLength="4"
+                                  ReadOnly="@(_editingClass is not null)" />
+                    <MudTextField @bind-Value="_classForm.Name" Label="Name" Placeholder="e.g. Office Equipment" />
+                    <MudTextField @bind-Value="_classForm.Description" Label="Description" Lines="2" />
+                    @if (_editingClass is not null)
+                    {
+                        <MudCheckBox @bind-Value="_classForm.IsActive" Label="Active" T="bool" />
+                    }
+                    <MudStack Row="true" Spacing="1">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                                   OnClick="SaveClassAsync" Disabled="_busy">
+                            @(_editingClass is not null ? "Update" : "Add")
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Default"
+                                   OnClick="ClearClassForm">Clear</MudButton>
+                    </MudStack>
+                </MudStack>
+
+                <MudDivider Class="my-4" />
+
+                <MudText Typo="Typo.subtitle1" Class="mb-2">
+                    Classifications (@_classes.Count)
+                </MudText>
+
+                @if (_classes.Count == 0 && !_busy)
+                {
+                    <MudAlert Severity="Severity.Info">No classifications yet.</MudAlert>
+                }
+
+                <MudList T="PropertyClassDto" Dense="true">
+                    @foreach (var cls in _classes.OrderBy(x => x.Code))
+                    {
+                        var isSelected = _selectedClass?.Id == cls.Id;
+                        <MudListItem T="PropertyClassDto"
+                                     OnClick="@(() => SelectClass(cls))"
+                                     Style="@(isSelected ? "background: var(--mud-palette-primary-lighten); border-radius: 6px;" : "")">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                <MudChip T="string" Size="Size.Small" Color="Color.Primary" Label="true"
+                                         Style="min-width: 48px; font-weight: 700; font-family: monospace;">
+                                    @cls.Code
+                                </MudChip>
+                                <MudStack Spacing="0" Style="flex: 1; min-width: 0;">
+                                    <MudText Typo="Typo.body2" Style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">@cls.Name</MudText>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">@cls.Items.Count item(s)</MudText>
+                                </MudStack>
+                                <MudChip T="string" Size="Size.Small"
+                                         Color="@(cls.IsActive ? Color.Success : Color.Default)">
+                                    @(cls.IsActive ? "Active" : "Off")
+                                </MudChip>
+                                <span @onclick:stopPropagation="true">
+                                    <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small"
+                                                   Color="Color.Secondary"
+                                                   OnClick="@(() => EditClass(cls))" />
+                                </span>
+                            </MudStack>
+                        </MudListItem>
+                    }
+                </MudList>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    <!-- RIGHT: Items for selected class -->
+    <MudItem xs="12" md="7">
+        @if (_selectedClass is null)
+        {
+            <MudPaper Elevation="1" Class="pa-6" Style="text-align: center; height: 100%;">
+                <MudIcon Icon="@Icons.Material.Outlined.AccountTree" Style="font-size: 4rem; color: var(--mud-palette-text-secondary);" />
+                <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mt-2">
+                    Select a classification to manage its category codes.
+                </MudText>
+            </MudPaper>
+        }
+        else
+        {
+            <MudCard Class="fsh-card">
+                <MudCardContent>
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
+                        <MudChip T="string" Color="Color.Primary" Label="true"
+                                 Style="font-weight: 700; font-family: monospace; font-size: 1.1rem;">
+                            @_selectedClass.Code
+                        </MudChip>
+                        <MudText Typo="Typo.h6">@_selectedClass.Name</MudText>
+                    </MudStack>
+
+                    <!-- Add item form -->
+                    <MudExpansionPanels Class="mb-3">
+                        <MudExpansionPanel Text="@(_editingItem is not null ? $"Edit Item: {_editingItem.ItemCode}" : "Add Category Code")"
+                                           @bind-IsExpanded="_itemFormExpanded">
+                            <MudStack Spacing="2">
+                                <MudTextField @bind-Value="_itemForm.ItemCode"
+                                              Label="Category Code (1–2 chars)" Placeholder="e.g. C"
+                                              HelperText="1-char sub-category code" CharacterCounter="true" MaxLength="2" />
+                                <MudTextField @bind-Value="_itemForm.Name"
+                                              Label="Name" Placeholder="e.g. Computer and Accessories" />
+                                <MudTextField @bind-Value="_itemForm.Description" Label="Description" Lines="2" />
+                                @if (_editingItem is not null)
+                                {
+                                    <MudCheckBox @bind-Value="_itemForm.IsActive" Label="Active" T="bool" />
+                                }
+                                <MudStack Row="true" Spacing="1">
+                                    <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                                               OnClick="SaveItemAsync" Disabled="_busy">
+                                        @(_editingItem is not null ? "Update" : "Add")
+                                    </MudButton>
+                                    <MudButton Variant="Variant.Outlined" OnClick="ClearItemForm">Clear</MudButton>
+                                </MudStack>
+                            </MudStack>
+                        </MudExpansionPanel>
+                    </MudExpansionPanels>
+
+                    <!-- Items table -->
+                    @if (_selectedClass.Items.Count == 0)
+                    {
+                        <MudAlert Severity="Severity.Info">
+                            No category codes yet for <b>@_selectedClass.Code</b>. Add one above.
+                        </MudAlert>
+                    }
+                    else
+                    {
+                        <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                            <thead>
+                                <tr>
+                                    <th style="width: 80px">Code</th>
+                                    <th>Name</th>
+                                    <th>Description</th>
+                                    <th>Example Property Code</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in _selectedClass.Items.OrderBy(x => x.ItemCode))
+                                {
+                                    <tr>
+                                        <td>
+                                            <MudChip T="string" Size="Size.Small" Color="Color.Secondary" Label="true"
+                                                     Style="font-weight: 700; font-family: monospace;">@item.ItemCode</MudChip>
+                                        </td>
+                                        <td>@item.Name</td>
+                                        <td style="color: var(--mud-palette-text-secondary); font-size: 0.8rem;">
+                                            @(item.Description ?? "—")
+                                        </td>
+                                        <td style="font-family: monospace; font-size: 0.8rem; color: var(--mud-palette-success-text);">
+                                            @DateTime.Now.Year-NFA-???-@item.ClassCode-@item.ItemCode-001
+                                        </td>
+                                        <td>
+                                            <MudChip T="string" Size="Size.Small"
+                                                     Color="@(item.IsActive ? Color.Success : Color.Default)">
+                                                @(item.IsActive ? "Active" : "Inactive")
+                                            </MudChip>
+                                        </td>
+                                        <td>
+                                            <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small"
+                                                           Color="Color.Primary"
+                                                           OnClick="@(() => EditItem(item))" />
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </MudSimpleTable>
+                    }
+                </MudCardContent>
+            </MudCard>
+        }
+    </MudItem>
+</MudGrid>
+
+@code {
+    private List<PropertyClassDto> _classes = [];
+    private PropertyClassDto? _selectedClass;
+    private PropertyClassDto? _editingClass;
+    private PropertyClassItemDto? _editingItem;
+    private bool _busy;
+    private bool _itemFormExpanded;
+
+    private ClassForm _classForm = new();
+    private ItemForm _itemForm = new();
+
+    private sealed class ClassForm
+    {
+        public string Code { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public bool IsActive { get; set; } = true;
+    }
+
+    private sealed class ItemForm
+    {
+        public string ItemCode { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public bool IsActive { get; set; } = true;
+    }
+
+    protected override async Task OnInitializedAsync() => await LoadTreeAsync();
+
+    private async Task LoadTreeAsync()
+    {
+        try
+        {
+            _busy = true;
+            var result = await Client.GetTreeAsync();
+            _classes = result?.ToList() ?? [];
+
+            // Re-select the current class to refresh its items
+            if (_selectedClass is not null)
+            {
+                _selectedClass = _classes.FirstOrDefault(x => x.Id == _selectedClass.Id);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load property classes: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void SelectClass(PropertyClassDto cls)
+    {
+        _selectedClass = cls;
+        ClearItemForm();
+    }
+
+    private void EditClass(PropertyClassDto cls)
+    {
+        _editingClass = cls;
+        _classForm = new ClassForm
+        {
+            Code = cls.Code,
+            Name = cls.Name,
+            Description = cls.Description,
+            IsActive = cls.IsActive
+        };
+    }
+
+    private void ClearClassForm()
+    {
+        _editingClass = null;
+        _classForm = new();
+    }
+
+    private void EditItem(PropertyClassItemDto item)
+    {
+        _editingItem = item;
+        _itemForm = new ItemForm
+        {
+            ItemCode = item.ItemCode,
+            Name = item.Name,
+            Description = item.Description,
+            IsActive = item.IsActive
+        };
+        _itemFormExpanded = true;
+    }
+
+    private void ClearItemForm()
+    {
+        _editingItem = null;
+        _itemForm = new();
+        _itemFormExpanded = false;
+    }
+
+    private async Task SaveClassAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_classForm.Code) || string.IsNullOrWhiteSpace(_classForm.Name))
+        {
+            Snackbar.Add("Code and Name are required.", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            _busy = true;
+            if (_editingClass is not null)
+            {
+                var cmd = new UpdatePropertyClassCommand(
+                    _editingClass.Id,
+                    _classForm.Name.Trim(),
+                    _classForm.Description,
+                    _classForm.IsActive);
+                await Client.UpdateClassAsync(_editingClass.Id, cmd);
+                Snackbar.Add("Classification updated.", Severity.Success);
+            }
+            else
+            {
+                var cmd = new CreatePropertyClassCommand(
+                    _classForm.Code.Trim().ToUpperInvariant(),
+                    _classForm.Name.Trim(),
+                    _classForm.Description);
+                await Client.CreateClassAsync(cmd);
+                Snackbar.Add("Classification created.", Severity.Success);
+            }
+
+            ClearClassForm();
+            await LoadTreeAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task SaveItemAsync()
+    {
+        if (_selectedClass is null) return;
+        if (string.IsNullOrWhiteSpace(_itemForm.ItemCode) || string.IsNullOrWhiteSpace(_itemForm.Name))
+        {
+            Snackbar.Add("Item Code and Name are required.", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            _busy = true;
+            if (_editingItem is not null)
+            {
+                var cmd = new UpdatePropertyClassItemCommand(
+                    _editingItem.Id,
+                    _itemForm.ItemCode.Trim().ToUpperInvariant(),
+                    _itemForm.Name.Trim(),
+                    _itemForm.Description,
+                    _itemForm.IsActive);
+                await Client.UpdateItemAsync(_editingItem.Id, cmd);
+                Snackbar.Add("Item updated.", Severity.Success);
+            }
+            else
+            {
+                var cmd = new CreatePropertyClassItemCommand(
+                    _selectedClass.Id,
+                    _itemForm.ItemCode.Trim().ToUpperInvariant(),
+                    _itemForm.Name.Trim(),
+                    _itemForm.Description);
+                await Client.CreateItemAsync(_selectedClass.Id, cmd);
+                Snackbar.Add("Item added.", Severity.Success);
+            }
+
+            ClearItemForm();
+            await LoadTreeAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

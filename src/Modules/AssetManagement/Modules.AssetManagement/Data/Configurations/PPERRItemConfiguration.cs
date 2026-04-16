@@ -14,6 +14,9 @@ public sealed class PPERRItemConfiguration : IEntityTypeConfiguration<PPERRItem>
         builder.Property(x => x.PPERRId).IsRequired();
         builder.Property(x => x.ItemNo).IsRequired();
         builder.Property(x => x.PropertyCode).HasMaxLength(32).IsRequired();
+        builder.Property(x => x.ClassCode).HasMaxLength(4);
+        builder.Property(x => x.ItemCode).HasMaxLength(2);
+        builder.Property(x => x.OfficeCode).HasMaxLength(8);
         builder.Property(x => x.Description).HasMaxLength(500).IsRequired();
         builder.Property(x => x.DateAcquired).IsRequired();
         builder.Property(x => x.Quantity).IsRequired();

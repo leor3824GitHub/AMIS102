@@ -3,12 +3,12 @@ using FSH.Framework.Core.Domain;
 namespace FSH.Modules.AssetManagement.Domain;
 
 /// <summary>
-/// An immutable audit record of a bulk reclassification run triggered by a threshold policy change.
+/// An immutable audit record of a bulk reclassification run triggered by a threshold change.
 ///
-/// When a new <see cref="CapitalizationThresholdPolicy"/> is activated, existing
+/// When a new capitalization threshold is activated in Master Data, existing
 /// <see cref="SemiExpendableProperty"/> records whose <see cref="SemiExpendableProperty.Category"/>
 /// no longer matches the new thresholds must be updated. This entity captures:
-///   - which policy was applied
+///   - which threshold (by ID from MasterData) was active during the run
 ///   - how many properties were reclassified
 ///   - who triggered the run and when
 ///
@@ -16,8 +16,11 @@ namespace FSH.Modules.AssetManagement.Domain;
 /// </summary>
 public sealed class ReclassificationRecord : AggregateRoot<Guid>, IAuditableEntity
 {
-    /// <summary>The active policy that was applied during this run.</summary>
-    public Guid PolicyId { get; private set; }
+    /// <summary>
+    /// The ID of the MasterData CapitalizationThreshold that was active during this run.
+    /// Cross-module reference — no FK constraint is enforced by EF.
+    /// </summary>
+    public Guid ThresholdId { get; private set; }
 
     /// <summary>Number of SemiExpendableProperty records whose category was changed.</summary>
     public int TotalReclassified { get; private set; }
@@ -34,12 +37,12 @@ public sealed class ReclassificationRecord : AggregateRoot<Guid>, IAuditableEnti
     public string? DeletedBy { get; set; }
     public bool IsDeleted { get; set; }
 
-    public static ReclassificationRecord Create(Guid policyId, int totalReclassified, string? notes)
+    public static ReclassificationRecord Create(Guid thresholdId, int totalReclassified, string? notes)
     {
         return new ReclassificationRecord
         {
             Id                = Guid.NewGuid(),
-            PolicyId          = policyId,
+            ThresholdId       = thresholdId,
             TotalReclassified = totalReclassified,
             Notes             = notes,
             CreatedOnUtc      = DateTimeOffset.UtcNow,

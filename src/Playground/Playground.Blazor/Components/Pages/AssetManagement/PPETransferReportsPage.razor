@@ -1,0 +1,204 @@
+@page "/asset-management/ppe-transfer-reports"
+@using FSH.Playground.Blazor.ApiClient
+@inject IPPEIRClient Client
+@inject ISnackbar Snackbar
+
+<FshPageHeader Title="Property Transfer Reports (PTR)"
+               Description="Formal handover document for inter-office/department PPE transfers. Derived from approved PPEIR records." />
+
+<MudGrid Spacing="3">
+    <!-- Search / List Panel -->
+    <MudItem xs="12" md="5">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3" Spacing="2">
+                    <MudText Typo="Typo.h6" Class="flex-grow-1">Transfer List</MudText>
+                    <MudTextField @bind-Value="_keyword" Label="Search" Variant="Variant.Outlined" Size="Size.Small"
+                                  Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
+                                  DebounceInterval="350" OnDebounceIntervalElapsed="@(() => LoadAsync())"
+                                  Style="max-width:200px" />
+                </MudStack>
+
+                <MudStack Row="true" Spacing="1" Class="mb-2" Wrap="Wrap.Wrap">
+                    <MudSelect Value="_typeFilter"
+                               ValueChanged="@(async (PPEIssuanceType? v) => { _typeFilter = v; _page = 1; await LoadAsync(); })"
+                               Label="Transfer Type" Variant="Variant.Outlined"
+                               Size="Size.Small" T="PPEIssuanceType?" Style="max-width:170px">
+                        <MudSelectItem Value="@((PPEIssuanceType?)null)">All Types</MudSelectItem>
+                        <MudSelectItem Value="@((PPEIssuanceType?)PPEIssuanceType.TransferCO)">Transfer – CO</MudSelectItem>
+                        <MudSelectItem Value="@((PPEIssuanceType?)PPEIssuanceType.TransferRO)">Transfer – RO</MudSelectItem>
+                        <MudSelectItem Value="@((PPEIssuanceType?)PPEIssuanceType.TransferPO)">Transfer – PO</MudSelectItem>
+                        <MudSelectItem Value="@((PPEIssuanceType?)PPEIssuanceType.Donation)">Donation</MudSelectItem>
+                        <MudSelectItem Value="@((PPEIssuanceType?)PPEIssuanceType.Sale)">Sale</MudSelectItem>
+                        <MudSelectItem Value="@((PPEIssuanceType?)PPEIssuanceType.Dumping)">Dumping</MudSelectItem>
+                        <MudSelectItem Value="@((PPEIssuanceType?)PPEIssuanceType.Destruction)">Destruction</MudSelectItem>
+                        <MudSelectItem Value="@((PPEIssuanceType?)PPEIssuanceType.Others)">Others</MudSelectItem>
+                    </MudSelect>
+                </MudStack>
+
+                @if (_loading)
+                {
+                    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+                }
+                else if (_list.Count == 0)
+                {
+                    <MudAlert Severity="Severity.Info">No transfer records found.</MudAlert>
+                }
+                else
+                {
+                    <MudList T="PPEIRSummaryDto" Dense="true">
+                        @foreach (var s in _list)
+                        {
+                            var isSelected = _selected?.Id == s.Id;
+                            <MudListItem T="PPEIRSummaryDto"
+                                         OnClick="@(() => ViewPTRAsync(s))"
+                                         Style="@(isSelected ? "background: var(--mud-palette-primary-lighten); border-radius: 6px;" : "")">
+                                <MudStack Spacing="0">
+                                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                        <MudText Typo="Typo.body2"><b>@s.PPEIRNo</b></MudText>
+                                        <MudSpacer />
+                                        <MudChip T="string" Size="Size.Small" Color="Color.Info" Label="true">@s.IssuanceType</MudChip>
+                                    </MudStack>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                        @s.Date.ToString("MMM dd, yyyy") · @s.ItemCount item(s)
+                                    </MudText>
+                                </MudStack>
+                            </MudListItem>
+                        }
+                    </MudList>
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-2">
+                        <MudText Typo="Typo.caption">@_totalCount total</MudText>
+                        <MudSpacer />
+                        <MudPagination Count="@TotalPages" Selected="_page" ShowFirstButton="true" ShowLastButton="true"
+                                       SelectedChanged="@(async p => { _page = p; await LoadAsync(); })" />
+                    </MudStack>
+                }
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    <!-- PTR Detail Panel -->
+    <MudItem xs="12" md="7">
+        @if (_ptr is null && !_ptrBusy)
+        {
+            <MudPaper Elevation="1" Class="pa-6" Style="text-align: center; height: 100%;">
+                <MudIcon Icon="@Icons.Material.Outlined.SwapHoriz" Style="font-size: 4rem; color: var(--mud-palette-text-secondary);" />
+                <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mt-2">
+                    Select a transfer record to view its Property Transfer Report.
+                </MudText>
+            </MudPaper>
+        }
+        else if (_ptrBusy)
+        {
+            <MudPaper Elevation="1" Class="pa-6" Style="text-align: center;">
+                <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+            </MudPaper>
+        }
+        else if (_ptr is not null && _selected is not null)
+        {
+            <MudCard Elevation="1">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                            <MudText Typo="Typo.h6">PTR No. @_ptr.PTRNo</MudText>
+                            <MudSpacer />
+                            <MudChip T="string" Size="Size.Small" Color="Color.Info" Label="true">@_ptr.TransferType</MudChip>
+                        </MudStack>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">@_ptr.Date.ToString("MMMM dd, yyyy")</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <!-- Header fields -->
+                    <MudGrid Spacing="1" Class="mb-3">
+                        <MudItem xs="12">
+                            <MudText Typo="Typo.caption">To Office / Receiving Address</MudText>
+                            <MudText>@_ptr.ToOfficeAddress</MudText>
+                        </MudItem>
+                    </MudGrid>
+
+                    <MudDivider Class="my-2" />
+                    <MudText Typo="Typo.subtitle2" Class="mb-2">Items Transferred</MudText>
+
+                    <MudSimpleTable Dense="true" Striped="true" Hover="true">
+                        <thead>
+                            <tr>
+                                <th style="width:30px">#</th>
+                                <th>Property No.</th>
+                                <th>Description</th>
+                                <th>Date Acquired</th>
+                                <th style="text-align:right">Amount (₱)</th>
+                                <th>Condition</th>
+                                <th>Reason</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in _ptr.Items)
+                            {
+                                <tr>
+                                    <td>@item.ItemNo</td>
+                                    <td><b>@item.PropertyNumber</b></td>
+                                    <td style="max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap"
+                                        title="@item.Description">@item.Description</td>
+                                    <td>@item.DateAcquired.ToString("MM/dd/yyyy")</td>
+                                    <td style="text-align:right">@item.Amount.ToString("N2")</td>
+                                    <td><MudText Typo="Typo.caption">@(item.Condition ?? "—")</MudText></td>
+                                    <td><MudText Typo="Typo.caption">@(item.ReasonForTransfer ?? "—")</MudText></td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="4" style="text-align:right"><b>Total:</b></td>
+                                <td style="text-align:right"><b>₱@_ptr.Items.Sum(x => x.Amount).ToString("N2")</b></td>
+                                <td colspan="2"></td>
+                            </tr>
+                        </tfoot>
+                    </MudSimpleTable>
+                </MudCardContent>
+            </MudCard>
+        }
+    </MudItem>
+</MudGrid>
+
+@code {
+    private List<PPEIRSummaryDto> _list = [];
+    private PPEIRSummaryDto? _selected;
+    private PTRDto? _ptr;
+    private string? _keyword;
+    private PPEIssuanceType? _typeFilter;
+    private bool _loading, _ptrBusy;
+    private int _page = 1, _totalCount;
+    private const int PageSize = 15;
+    private int TotalPages => Math.Max(1, (int)Math.Ceiling(_totalCount / (double)PageSize));
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        try
+        {
+            var r = await Client.SearchAsync(_keyword, issuanceType: _typeFilter, page: _page, pageSize: PageSize);
+            _list = [.. r.Items];
+            _totalCount = r.TotalCount;
+        }
+        catch (Exception ex) { Snackbar.Add($"Load failed: {ex.Message}", Severity.Error); }
+        finally { _loading = false; }
+    }
+
+    private async Task ViewPTRAsync(PPEIRSummaryDto summary)
+    {
+        if (_selected?.Id == summary.Id) return;
+        _selected = summary;
+        _ptr = null;
+        _ptrBusy = true;
+        try
+        {
+            _ptr = await Client.GetPTRAsync(summary.Id);
+            if (_ptr is null)
+                Snackbar.Add("PTR data not available for this record.", Severity.Warning);
+        }
+        catch (Exception ex) { Snackbar.Add($"Failed to load PTR: {ex.Message}", Severity.Error); }
+        finally { _ptrBusy = false; }
+    }
+}

@@ -9,11 +9,20 @@ namespace FSH.Modules.AssetManagement.Domain;
 /// </summary>
 public sealed class PPEItem : AggregateRoot<Guid>, IAuditableEntity
 {
-    /// <summary>PPE property code (coordinates with C.O.-GSD).</summary>
+    /// <summary>PPE property code (coordinates with C.O.-GSD). Format: {YYYY}-NFA-{OFFICE}-{CLASS}-{ITEM}-{SEQ:D3}</summary>
     public string PropertyCode { get; private set; } = default!;
 
     /// <summary>Property number assigned by the Supply Officer.</summary>
     public string PropertyNumber { get; private set; } = default!;
+
+    /// <summary>2-char COA GAM Annex A classification code (e.g. "OE", "TS"). Denormalized from PropertyClass.</summary>
+    public string? ClassCode { get; private set; }
+
+    /// <summary>1-char COA GAM Annex A category code (e.g. "C", "F"). Denormalized from PropertyClassItem.</summary>
+    public string? ItemCode { get; private set; }
+
+    /// <summary>3-char office code from OrganizationProfile.AnnexECode (e.g. "00B").</summary>
+    public string? OfficeCode { get; private set; }
 
     /// <summary>Full specification including serial number, if any.</summary>
     public string Description { get; private set; } = default!;
@@ -62,7 +71,10 @@ public sealed class PPEItem : AggregateRoot<Guid>, IAuditableEntity
         DateOnly dateAcquired,
         decimal unitCost,
         int estimatedUsefulLifeYears,
-        Guid? sourcePPERRId)
+        Guid? sourcePPERRId,
+        string? classCode = null,
+        string? itemCode = null,
+        string? officeCode = null)
     {
         return new PPEItem
         {
@@ -76,6 +88,9 @@ public sealed class PPEItem : AggregateRoot<Guid>, IAuditableEntity
             EstimatedUsefulLifeYears = estimatedUsefulLifeYears,
             Status                   = PPEItemStatus.OnHand,
             SourcePPERRId            = sourcePPERRId,
+            ClassCode                = classCode,
+            ItemCode                 = itemCode,
+            OfficeCode               = officeCode,
             CreatedOnUtc             = DateTimeOffset.UtcNow,
         };
     }

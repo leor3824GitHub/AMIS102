@@ -37,9 +37,6 @@ using FSH.Modules.AssetManagement.Features.v1.ReceiptForReturnedProperties.GetRR
 using FSH.Modules.AssetManagement.Features.v1.SemiExpendableIssuanceRecords.CreateSMIR;
 using FSH.Modules.AssetManagement.Features.v1.SemiExpendableIssuanceRecords.GetSMIRById;
 using FSH.Modules.AssetManagement.Features.v1.SemiExpendableIssuanceRecords.GetSMIRList;
-using FSH.Modules.AssetManagement.Features.v1.ThresholdPolicies.GetActiveThresholdPolicy;
-using FSH.Modules.AssetManagement.Features.v1.ThresholdPolicies.GetThresholdPolicyHistory;
-using FSH.Modules.AssetManagement.Features.v1.ThresholdPolicies.SetThresholdPolicy;
 using FSH.Modules.AssetManagement.Features.v1.PPEReceivingReports.CreatePPERR;
 using FSH.Modules.AssetManagement.Features.v1.PPEReceivingReports.GetPPERRById;
 using FSH.Modules.AssetManagement.Features.v1.PPEReceivingReports.GetPPERRList;
@@ -98,9 +95,6 @@ public class AssetManagementModule : IModule
         new("Create Inventory Custodian Slips", "Create", "AssetManagement.InventoryCustodianSlips"),
         new("Update Inventory Custodian Slips", "Update", "AssetManagement.InventoryCustodianSlips"),
         new("Delete Inventory Custodian Slips", "Delete", "AssetManagement.InventoryCustodianSlips"),
-
-        new("View Capitalization Threshold Policies",   "View",   "AssetManagement.ThresholdPolicies", IsBasic: true),
-        new("Set Capitalization Threshold Policy",      "Create", "AssetManagement.ThresholdPolicies"),
 
         new("View Reclassification History", "View",   "AssetManagement.Reclassification", IsBasic: true),
         new("Reclassify Properties",         "Create", "AssetManagement.Reclassification"),
@@ -172,7 +166,6 @@ public class AssetManagementModule : IModule
         var semiExpendablePropertiesGroup = moduleGroup.MapGroup("/semi-expendable-properties");
         var receivingReportsGroup         = moduleGroup.MapGroup("/receiving-reports");
         var icsGroup                      = moduleGroup.MapGroup("/inventory-custodian-slips");
-        var thresholdPoliciesGroup        = moduleGroup.MapGroup("/threshold-policies");
         var reclassificationGroup         = moduleGroup.MapGroup("/reclassification");
         var smirGroup                     = moduleGroup.MapGroup("/semi-expendable-issuance-records");
         var rrspGroup                     = moduleGroup.MapGroup("/receipt-for-returned-properties");
@@ -208,11 +201,6 @@ public class AssetManagementModule : IModule
         GetICSByIdEndpoint.Map(icsGroup);
         GetExpiringICSEndpoint.Map(icsGroup);
         RenewICSEndpoint.Map(icsGroup);
-
-        // Capitalization Threshold Policies
-        SetThresholdPolicyEndpoint.Map(thresholdPoliciesGroup);
-        GetActiveThresholdPolicyEndpoint.Map(thresholdPoliciesGroup);
-        GetThresholdPolicyHistoryEndpoint.Map(thresholdPoliciesGroup);
 
         // Reclassification
         ReclassifyPropertiesEndpoint.Map(reclassificationGroup);

@@ -13,6 +13,9 @@ public sealed class PPEItemConfiguration : IEntityTypeConfiguration<PPEItem>
         builder.HasKey(x => x.Id);
         builder.Property(x => x.PropertyCode).HasMaxLength(32).IsRequired();
         builder.Property(x => x.PropertyNumber).HasMaxLength(32).IsRequired();
+        builder.Property(x => x.ClassCode).HasMaxLength(4);
+        builder.Property(x => x.ItemCode).HasMaxLength(2);
+        builder.Property(x => x.OfficeCode).HasMaxLength(8);
         builder.Property(x => x.Description).HasMaxLength(500).IsRequired();
         builder.Property(x => x.SerialNumber).HasMaxLength(100);
         builder.Property(x => x.DateAcquired).IsRequired();

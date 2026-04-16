@@ -18,6 +18,6 @@ public sealed class GetOrganizationProfileQueryHandler(MasterDataDbContext db)
 
         return entity is null
             ? null
-            : new OrganizationProfileDto(entity.Id, entity.Name, entity.ShortName, entity.Address, entity.LogoUrl);
+            : new OrganizationProfileDto(entity.Id, entity.Name, entity.ShortName, entity.Address, entity.LogoUrl, entity.AnnexECode);
     }
 }

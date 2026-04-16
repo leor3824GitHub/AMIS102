@@ -319,6 +319,98 @@ internal sealed class MasterDataDbInitializer(
             await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
 
+        // Property Classes (COA GAM Annex A — shared reference data, seeded once regardless of tenant)
+        if (!await context.PropertyClasses.AnyAsync(cancellationToken).ConfigureAwait(false))
+        {
+            var seed = new (string Code, string Name, string? Desc, (string ItemCode, string Name, string? Desc)[] Items)[]
+            {
+                ("OE", "Office Equipment", "Equipment used in office operations.",
+                [
+                    ("C", "Computer and Accessories", "Desktop PCs, laptops, tablets, monitors, keyboards, mice, and related accessories."),
+                    ("P", "Printer and Scanner", "Printers, scanners, copiers, and multifunction devices."),
+                    ("F", "Facsimile and Communication Equipment", "Fax machines, PABX, intercoms, and telephone sets."),
+                    ("A", "Air-Conditioning and Refrigeration", "Window-type, split-type, and inverter ACs; refrigerators and freezers."),
+                    ("O", "Other Office Equipment", "Shredders, laminators, binding machines, and other office appliances."),
+                ]),
+                ("IT", "Information Technology Equipment and Software", "ICT hardware and licensed software.",
+                [
+                    ("S", "Server and Network Equipment", "Servers, routers, switches, hubs, and network infrastructure."),
+                    ("W", "Workstation", "High-performance desktop workstations used in technical work."),
+                    ("L", "Laptop and Mobile Devices", "Laptops, tablets, and handheld devices issued to personnel."),
+                    ("D", "Data Storage Devices", "External hard drives, NAS/SAN, and removable storage media."),
+                    ("B", "Software and Licenses", "Purchased software, system licenses, and subscriptions."),
+                ]),
+                ("FF", "Furniture, Fixtures and Books", "Office furniture, built-in fixtures, and reference books.",
+                [
+                    ("F", "Furniture", "Desks, chairs, tables, sofas, and office workstations."),
+                    ("X", "Fixtures and Fittings", "Built-in cabinets, shelving, partitions, and storage units."),
+                    ("B", "Books and References", "Technical references, directories, and library collections."),
+                ]),
+                ("ME", "Machinery and Equipment", "General-purpose machinery and heavy equipment.",
+                [
+                    ("M", "Machinery", "Industrial machines, generators, compressors, and heavy equipment."),
+                    ("E", "Equipment", "Specialized equipment not covered by other categories."),
+                    ("A", "Agricultural and Farm Equipment", "Tractors, milling machines, and farm implements."),
+                    ("W", "Warehouse and Material Handling Equipment", "Forklifts, pallet jacks, conveyor belts, and storage racks."),
+                ]),
+                ("TS", "Transportation Equipment", "Vehicles and motorized equipment for official use.",
+                [
+                    ("V", "Motor Vehicle — Passenger", "Sedans, SUVs, vans, and minibuses used for official transport."),
+                    ("T", "Motor Vehicle — Utility/Truck", "Service trucks, pickups, and cargo vehicles."),
+                    ("M", "Motorcycle", "Motorcycles and motor scooters."),
+                    ("W", "Watercraft", "Motorized boats and watercraft for official use."),
+                ]),
+                ("SC", "Semi-Conductors and Communication Equipment", "Two-way radios, broadcast, and signal equipment.",
+                [
+                    ("R", "Radio and Two-Way Communication", "Handheld radios, base stations, and repeaters."),
+                    ("T", "Telephone and PABX System", "Telephone systems, PABX, and teleconferencing equipment."),
+                    ("S", "Surveillance and Security", "CCTV cameras, security systems, and access control equipment."),
+                ]),
+                ("ME2", "Medical Equipment", "Medical and laboratory equipment.",
+                [
+                    ("D", "Diagnostic Equipment", "Blood pressure monitors, ECG, and diagnostic instruments."),
+                    ("L", "Laboratory Equipment", "Microscopes, centrifuges, and lab instruments."),
+                    ("S", "Surgical and Dental Equipment", "Operating and dental chairs, surgical instruments."),
+                ]),
+                ("SS", "Sports and Recreational Equipment", "Physical fitness and recreational equipment.",
+                [
+                    ("S", "Sports Equipment", "Balls, nets, weights, and athletic equipment."),
+                    ("R", "Recreational Equipment", "Tables, game sets, and recreation room furnishings."),
+                ]),
+                ("LE", "Leasehold Improvements", "Improvements made to leased premises.",
+                [
+                    ("I", "Interior Improvements", "Renovation works, partitioning, and ceiling work."),
+                    ("E", "Electrical Improvements", "Electrical upgrades, wiring, and lighting installations."),
+                    ("P", "Plumbing Improvements", "Plumbing upgrades and sanitary improvements."),
+                ]),
+                ("LI", "Land Improvements", "Improvements made to owned land.",
+                [
+                    ("F", "Fencing and Gates", "Perimeter fences, gates, and barriers."),
+                    ("P", "Pavement and Roads", "Paved roads, driveways, parking lots, and walkways."),
+                    ("L", "Landscaping", "Landscaping, gardens, and outdoor improvements."),
+                ]),
+            };
+
+            foreach (var cls in seed)
+            {
+                var propertyClass = PropertyClass.Create(cls.Code, cls.Name, cls.Desc);
+                context.PropertyClasses.Add(propertyClass);
+
+                foreach (var item in cls.Items)
+                {
+                    var classItem = PropertyClassItem.Create(
+                        propertyClass.Id,
+                        propertyClass.Code,
+                        item.ItemCode,
+                        item.Name,
+                        item.Desc);
+                    context.PropertyClassItems.Add(classItem);
+                }
+            }
+
+            await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        }
+
         logger.LogInformation("[{Tenant}] seeded master data.", context.TenantInfo?.Identifier);
     }
 

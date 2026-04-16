@@ -43,6 +43,14 @@
                               MaxLength="500"
                               Placeholder="https://..." />
 
+                <MudTextField @bind-Value="_form.AnnexECode"
+                              Label="Office Code (Annex E)"
+                              Variant="Variant.Outlined"
+                              CharacterCounter="true"
+                              MaxLength="8"
+                              Placeholder="e.g. 00B"
+                              HelperText="3-character office code used in property code generation (e.g. 00B for Caraga Regional Office)" />
+
                 <MudButton Variant="Variant.Filled"
                            Color="Color.Primary"
                            OnClick="SaveAsync"
@@ -96,7 +104,8 @@
                     Name = existing.Name,
                     ShortName = existing.ShortName ?? string.Empty,
                     Address = existing.Address ?? string.Empty,
-                    LogoUrl = existing.LogoUrl ?? string.Empty
+                    LogoUrl = existing.LogoUrl ?? string.Empty,
+                    AnnexECode = existing.AnnexECode ?? string.Empty
                 };
             }
         }
@@ -117,7 +126,8 @@
                 _form.Name.Trim(),
                 NullIfEmpty(_form.ShortName),
                 NullIfEmpty(_form.Address),
-                NullIfEmpty(_form.LogoUrl));
+                NullIfEmpty(_form.LogoUrl),
+                NullIfEmpty(_form.AnnexECode));
 
             await OrgProfileClient.UpsertAsync(command);
             Snackbar.Add("Organization profile saved.", Severity.Success);
@@ -141,5 +151,6 @@
         public string ShortName { get; set; } = string.Empty;
         public string Address { get; set; } = string.Empty;
         public string LogoUrl { get; set; } = string.Empty;
+        public string AnnexECode { get; set; } = string.Empty;
     }
 }

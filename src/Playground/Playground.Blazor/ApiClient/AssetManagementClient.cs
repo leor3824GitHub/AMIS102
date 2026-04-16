@@ -992,7 +992,9 @@ internal enum PPEReturnCategory { Serviceable = 0, Junked = 1 }
 // PPE Receiving Reports (PPERR)
 
 internal sealed record CreatePPERRItemRequest(
-    string PropertyCode,
+    string? ClassCode,
+    string? ItemCode,
+    string? PropertyCode,
     string Description,
     string? SerialNumber,
     DateOnly DateAcquired,

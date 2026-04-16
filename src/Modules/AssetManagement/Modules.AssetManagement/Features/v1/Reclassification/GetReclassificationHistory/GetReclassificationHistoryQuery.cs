@@ -7,7 +7,7 @@ public sealed record GetReclassificationHistoryQuery(int PageNumber = 1, int Pag
 
 public sealed record ReclassificationRecordDto(
     Guid Id,
-    Guid PolicyId,
+    Guid ThresholdId,
     int TotalReclassified,
     string? Notes,
     DateTimeOffset CreatedOnUtc,

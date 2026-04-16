@@ -12,7 +12,6 @@ namespace FSH.Modules.AssetManagement.Data;
 
 public class AssetManagementDbContext : BaseDbContext
 {
-    public DbSet<CapitalizationThresholdPolicy>   CapitalizationThresholdPolicies  => Set<CapitalizationThresholdPolicy>();
     public DbSet<ReclassificationRecord>           ReclassificationRecords           => Set<ReclassificationRecord>();
     public DbSet<SemiExpendableIssuanceRecord>     SemiExpendableIssuanceRecords     => Set<SemiExpendableIssuanceRecord>();
     public DbSet<SMIRItem>                         SMIRItems                         => Set<SMIRItem>();
@@ -43,6 +42,9 @@ public class AssetManagementDbContext : BaseDbContext
     // Physical Count track
     public DbSet<PhysicalCountSession>            PhysicalCountSessions            => Set<PhysicalCountSession>();
     public DbSet<PhysicalCountEntry>              PhysicalCountEntries             => Set<PhysicalCountEntry>();
+
+    // Property code generation
+    public DbSet<PropertyCodeCounter>             PropertyCodeCounters             => Set<PropertyCodeCounter>();
 
     public AssetManagementDbContext(
         IMultiTenantContextAccessor<AppTenantInfo> multiTenantContextAccessor,

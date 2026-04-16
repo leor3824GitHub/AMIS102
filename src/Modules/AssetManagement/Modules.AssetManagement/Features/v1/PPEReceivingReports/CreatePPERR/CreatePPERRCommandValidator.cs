@@ -9,7 +9,7 @@ public sealed class CreatePPERRCommandValidator : AbstractValidator<CreatePPERRC
         RuleFor(x => x.PPERRNo).NotEmpty().MaximumLength(32);
         RuleFor(x => x.Date).NotEmpty();
         RuleFor(x => x.ReceivedFrom).NotEmpty().MaximumLength(200);
-        RuleFor(x => x.Address).NotEmpty().MaximumLength(500);
+        RuleFor(x => x.Address).MaximumLength(500);
         RuleFor(x => x.ReceiptNature).IsInEnum();
         RuleFor(x => x.ReceivedByEmployeeId).NotEmpty();
         RuleFor(x => x.NotedByEmployeeId).NotEmpty();
@@ -22,7 +22,16 @@ internal sealed class CreatePPERRItemRequestValidator : AbstractValidator<Create
 {
     public CreatePPERRItemRequestValidator()
     {
-        RuleFor(x => x.PropertyCode).NotEmpty().MaximumLength(32);
+        // Either ClassCode+ItemCode (auto-generate) or explicit PropertyCode must be supplied
+        RuleFor(x => x)
+            .Must(x => (!string.IsNullOrWhiteSpace(x.ClassCode) && !string.IsNullOrWhiteSpace(x.ItemCode))
+                    || !string.IsNullOrWhiteSpace(x.PropertyCode))
+            .WithName("PropertyCode")
+            .WithMessage("Provide either ClassCode + ItemCode (to auto-generate) or an explicit PropertyCode.");
+
+        RuleFor(x => x.ClassCode).MaximumLength(4).When(x => x.ClassCode is not null);
+        RuleFor(x => x.ItemCode).MaximumLength(2).When(x => x.ItemCode is not null);
+        RuleFor(x => x.PropertyCode).MaximumLength(32).When(x => x.PropertyCode is not null);
         RuleFor(x => x.Description).NotEmpty().MaximumLength(500);
         RuleFor(x => x.SerialNumber).MaximumLength(100);
         RuleFor(x => x.DateAcquired).NotEmpty();

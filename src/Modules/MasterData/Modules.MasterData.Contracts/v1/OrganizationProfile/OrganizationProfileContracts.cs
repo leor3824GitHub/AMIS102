@@ -7,7 +7,8 @@ public sealed record OrganizationProfileDto(
     string Name,
     string? ShortName,
     string? Address,
-    string? LogoUrl);
+    string? LogoUrl,
+    string? AnnexECode);
 
 public sealed record GetOrganizationProfileQuery() : IQuery<OrganizationProfileDto?>;
 
@@ -15,4 +16,5 @@ public sealed record UpsertOrganizationProfileCommand(
     string Name,
     string? ShortName,
     string? Address,
-    string? LogoUrl) : ICommand<OrganizationProfileDto>;
+    string? LogoUrl,
+    string? AnnexECode = null) : ICommand<OrganizationProfileDto>;

@@ -2,6 +2,7 @@ using FSH.Framework.Core.Context;
 using FSH.Framework.Core.Exceptions;
 using FSH.Modules.AssetManagement.Data;
 using FSH.Modules.AssetManagement.Domain;
+using FSH.Modules.MasterData.Contracts.v1.CapitalizationThresholds;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,22 +12,23 @@ public sealed class ReclassifyPropertiesCommandHandler : ICommandHandler<Reclass
 {
     private readonly AssetManagementDbContext _dbContext;
     private readonly ICurrentUser _currentUser;
+    private readonly IMediator _mediator;
 
-    public ReclassifyPropertiesCommandHandler(AssetManagementDbContext dbContext, ICurrentUser currentUser)
+    public ReclassifyPropertiesCommandHandler(AssetManagementDbContext dbContext, ICurrentUser currentUser, IMediator mediator)
     {
         _dbContext = dbContext;
         _currentUser = currentUser;
+        _mediator = mediator;
     }
 
     public async ValueTask<ReclassifyPropertiesResult> Handle(ReclassifyPropertiesCommand command, CancellationToken cancellationToken)
     {
-        var policy = await _dbContext.CapitalizationThresholdPolicies
-            .FirstOrDefaultAsync(x => x.IsActive, cancellationToken)
+        var threshold = await _mediator.Send(new GetActiveCapitalizationThresholdQuery(), cancellationToken)
             .ConfigureAwait(false);
 
-        if (policy is null)
+        if (threshold is null)
         {
-            throw new NotFoundException("No active capitalization threshold policy found. Set one before running reclassification.");
+            throw new NotFoundException("No active capitalization threshold found. Set one in Master Data → Capitalization Thresholds before running reclassification.");
         }
 
         // Load all non-deleted properties. Query filter on IsDeleted is applied automatically.
@@ -39,7 +41,9 @@ public sealed class ReclassifyPropertiesCommandHandler : ICommandHandler<Reclass
 
         foreach (var property in properties)
         {
-            var correctCategory = policy.ClassifyUnitCost(property.UnitCost);
+            var correctCategory = property.UnitCost <= threshold.SemiExpendableLowValueThreshold
+                ? AssetCategory.LowValuedSemi
+                : AssetCategory.HighValuedSemi;
             if (property.Category != correctCategory)
             {
                 property.Reclassify(correctCategory);
@@ -48,7 +52,7 @@ public sealed class ReclassifyPropertiesCommandHandler : ICommandHandler<Reclass
             }
         }
 
-        var record = ReclassificationRecord.Create(policy.Id, totalReclassified, command.Notes);
+        var record = ReclassificationRecord.Create(threshold.Id, totalReclassified, command.Notes);
         record.CreatedBy = userId;
         _dbContext.ReclassificationRecords.Add(record);
 

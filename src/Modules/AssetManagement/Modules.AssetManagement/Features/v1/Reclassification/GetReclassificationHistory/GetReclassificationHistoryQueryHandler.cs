@@ -24,7 +24,7 @@ public sealed class GetReclassificationHistoryQueryHandler(AssetManagementDbCont
             .Take(pageSize)
             .Select(x => new ReclassificationRecordDto(
                 x.Id,
-                x.PolicyId,
+                x.ThresholdId,
                 x.TotalReclassified,
                 x.Notes,
                 x.CreatedOnUtc,

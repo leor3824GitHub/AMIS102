@@ -11,11 +11,11 @@ public sealed class ReclassificationRecordConfiguration : IEntityTypeConfigurati
         builder.ToTable("ReclassificationRecords", AssetManagementModuleConstants.SchemaName);
 
         builder.HasKey(x => x.Id);
-        builder.Property(x => x.PolicyId).IsRequired();
+        builder.Property(x => x.ThresholdId).IsRequired();
         builder.Property(x => x.TotalReclassified).IsRequired();
         builder.Property(x => x.Notes).HasMaxLength(500);
 
-        builder.HasIndex(x => x.PolicyId);
+        builder.HasIndex(x => x.ThresholdId);
         builder.HasIndex(x => x.CreatedOnUtc);
 
         builder.Property(x => x.IsDeleted).HasDefaultValue(false);

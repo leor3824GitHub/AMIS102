@@ -14,8 +14,17 @@ public sealed class PPERRItem : BaseEntity<Guid>
     /// <summary>Item number on the PPERR form (sequential within the report).</summary>
     public int ItemNo { get; private set; }
 
-    /// <summary>PPE property code (coordinates with C.O.-GSD).</summary>
+    /// <summary>PPE property code (coordinates with C.O.-GSD). Format: {YYYY}-NFA-{OFFICE}-{CLASS}-{ITEM}-{SEQ:D3}</summary>
     public string PropertyCode { get; private set; } = default!;
+
+    /// <summary>2-char COA GAM Annex A classification code (e.g. "OE"). Denormalized for reporting.</summary>
+    public string? ClassCode { get; private set; }
+
+    /// <summary>1-char COA GAM Annex A category code (e.g. "C"). Denormalized for reporting.</summary>
+    public string? ItemCode { get; private set; }
+
+    /// <summary>3-char office code from OrganizationProfile.AnnexECode (e.g. "00B").</summary>
+    public string? OfficeCode { get; private set; }
 
     /// <summary>Complete specification of the PPE including serial number, if any.</summary>
     public string Description { get; private set; } = default!;
@@ -39,7 +48,10 @@ public sealed class PPERRItem : BaseEntity<Guid>
         string description,
         DateOnly dateAcquired,
         int quantity,
-        decimal unitCost)
+        decimal unitCost,
+        string? classCode = null,
+        string? itemCode = null,
+        string? officeCode = null)
     {
         return new PPERRItem
         {
@@ -47,6 +59,9 @@ public sealed class PPERRItem : BaseEntity<Guid>
             PPERRId      = pperrId,
             ItemNo       = itemNo,
             PropertyCode = propertyCode,
+            ClassCode    = classCode,
+            ItemCode     = itemCode,
+            OfficeCode   = officeCode,
             Description  = description,
             DateAcquired = dateAcquired,
             Quantity     = quantity,

@@ -1,7 +1,9 @@
 @page "/asset-management/ppe-receiving-reports"
+@using FSH.Modules.MasterData.Contracts.v1.PropertyClasses
 @using FSH.Playground.Blazor.ApiClient
 @inject IPPERRClient Client
 @inject ILookupClient LookupClient
+@inject IPropertyClassClient PropertyClassClient
 @inject ISnackbar Snackbar
 
 <FshPageHeader Title="PPE Receiving Reports (PPERR)"
@@ -58,8 +60,34 @@
                                                OnClick="@(() => RemoveItem(idx))" />
                             </MudStack>
                             <MudStack Spacing="1">
-                                <MudTextField @bind-Value="li.PropertyCode" Label="Property Code" Variant="Variant.Outlined"
-                                              Dense="true" Required="true" MaxLength="32" />
+                                <MudSelect Value="li.ClassCode"
+                                           ValueChanged="@((string? v) => { li.ClassCode = v; li.ItemCode = null; StateHasChanged(); })"
+                                           Label="Property Class" Variant="Variant.Outlined" Dense="true"
+                                           T="string?" Placeholder="Select classification..."
+                                           ToStringFunc="@(code => FormatClassCode(code))"
+                                           Required="true" Clearable="true">
+                                    @foreach (var cls in _activeClasses)
+                                    {
+                                        <MudSelectItem T="string?" Value="@cls.Code">@cls.Code — @cls.Name</MudSelectItem>
+                                    }
+                                </MudSelect>
+                                <MudSelect @bind-Value="li.ItemCode"
+                                           Label="Category Code" Variant="Variant.Outlined" Dense="true"
+                                           T="string?" Placeholder="Select category..."
+                                           Required="true" Clearable="true"
+                                           Disabled="@(string.IsNullOrWhiteSpace(li.ClassCode))">
+                                    @foreach (var item in (_activeClasses.FirstOrDefault(c => c.Code == li.ClassCode)?.Items ?? []).Where(i => i.IsActive))
+                                    {
+                                        <MudSelectItem T="string?" Value="@item.ItemCode">@item.ItemCode — @item.Name</MudSelectItem>
+                                    }
+                                </MudSelect>
+                                @if (!string.IsNullOrWhiteSpace(li.ClassCode) && !string.IsNullOrWhiteSpace(li.ItemCode))
+                                {
+                                    <MudAlert Severity="Severity.Info" Dense="true" NoIcon="true"
+                                              Style="font-family: monospace; font-size: 0.8rem;">
+                                        Code preview: @(_form.DateNullable?.Year ?? DateTime.Now.Year)-NFA-???-@li.ClassCode-@li.ItemCode-001
+                                    </MudAlert>
+                                }
                                 <MudTextField @bind-Value="li.Description" Label="Description (incl. serial no.)" Variant="Variant.Outlined"
                                               Dense="true" Required="true" MaxLength="500" />
                                 <MudTextField @bind-Value="li.SerialNumber" Label="Serial Number" Variant="Variant.Outlined"
@@ -206,10 +234,32 @@
     private const int PageSize = 15;
     private int TotalPages => Math.Max(1, (int)Math.Ceiling(_totalCount / (double)PageSize));
 
+    private List<PropertyClassDto> _activeClasses = [];
+
     protected override async Task OnInitializedAsync()
     {
         _form.Items.Add(new LineItem());
-        await LoadAsync();
+        await Task.WhenAll(LoadAsync(), LoadClassesAsync());
+    }
+
+    private async Task LoadClassesAsync()
+    {
+        try
+        {
+            var all = await PropertyClassClient.GetTreeAsync();
+            _activeClasses = all?.Where(c => c.IsActive).ToList() ?? [];
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Could not load property classes: {ex.Message}", Severity.Warning);
+        }
+    }
+
+    private string FormatClassCode(string? code)
+    {
+        if (string.IsNullOrWhiteSpace(code)) return string.Empty;
+        var cls = _activeClasses.FirstOrDefault(c => c.Code == code);
+        return cls is null ? code : $"{cls.Code} — {cls.Name}";
     }
 
     private async Task LoadAsync()
@@ -239,17 +289,19 @@
             Snackbar.Add("PPERR No., Date, Received From, Received By, and Noted By are required.", Severity.Warning);
             return;
         }
-        if (_form.Items.Any(i => string.IsNullOrWhiteSpace(i.PropertyCode) || string.IsNullOrWhiteSpace(i.Description) ||
+        if (_form.Items.Any(i => string.IsNullOrWhiteSpace(i.ClassCode) || string.IsNullOrWhiteSpace(i.ItemCode) ||
+                                  string.IsNullOrWhiteSpace(i.Description) ||
                                   i.DateAcquiredNullable is null || i.Quantity <= 0 || i.UnitCost <= 0 || i.EstimatedUsefulLifeYears <= 0))
         {
-            Snackbar.Add("All line items must have Property Code, Description, Date Acquired, Qty, Unit Cost, and EUL.", Severity.Warning);
+            Snackbar.Add("All line items must have Classification, Category Code, Description, Date Acquired, Qty, Unit Cost, and EUL.", Severity.Warning);
             return;
         }
         _busy = true;
         try
         {
             var items = _form.Items.Select(li => new CreatePPERRItemRequest(
-                li.PropertyCode!, li.Description!,
+                li.ClassCode, li.ItemCode, null,
+                li.Description!,
                 string.IsNullOrWhiteSpace(li.SerialNumber) ? null : li.SerialNumber,
                 DateOnly.FromDateTime(li.DateAcquiredNullable!.Value),
                 li.Quantity, li.UnitCost, li.EstimatedUsefulLifeYears)).ToList();
@@ -294,7 +346,8 @@
 
     private sealed class LineItem
     {
-        public string? PropertyCode { get; set; }
+        public string? ClassCode { get; set; }
+        public string? ItemCode { get; set; }
         public string? Description { get; set; }
         public string? SerialNumber { get; set; }
         public DateTime? DateAcquiredNullable { get; set; } = DateTime.Today;

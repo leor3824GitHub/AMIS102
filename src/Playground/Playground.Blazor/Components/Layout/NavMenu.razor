@@ -106,7 +106,10 @@
                     Semi-Expendable (SMIR)
                 </MudNavLink>
                 <MudNavLink Href="/asset-management/ppe-issuance-reports" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Laptop">
-                    PPE (PPEIR / PTR)
+                    PPE Issuance (PPEIR)
+                </MudNavLink>
+                <MudNavLink Href="/asset-management/ppe-transfer-reports" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.SwapHoriz">
+                    Transfer Reports (PTR)
                 </MudNavLink>
             </MudNavGroup>
             <MudNavLink Href="/asset-management/returned-properties" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.AssignmentReturn">
@@ -203,6 +206,9 @@
             <MudNavLink Href="/master-data/capitalization-thresholds" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Policy">
                 Capitalization Thresholds
             </MudNavLink>
+            <MudNavLink Href="/master-data/property-classes" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.AccountTree">
+                Property Class Library
+            </MudNavLink>
         </MudNavGroup>
 
         <!-- Communication Section -->
@@ -273,7 +279,8 @@
         _receivingExpanded = uri.Contains("/asset-management/receiving-reports", StringComparison.OrdinalIgnoreCase)
                           || uri.Contains("/asset-management/ppe-receiving-reports", StringComparison.OrdinalIgnoreCase);
         _issuanceExpanded = uri.Contains("/asset-management/issuance-records", StringComparison.OrdinalIgnoreCase)
-                         || uri.Contains("/asset-management/ppe-issuance-reports", StringComparison.OrdinalIgnoreCase);
+                         || uri.Contains("/asset-management/ppe-issuance-reports", StringComparison.OrdinalIgnoreCase)
+                         || uri.Contains("/asset-management/ppe-transfer-reports", StringComparison.OrdinalIgnoreCase);
         await CheckRootTenantAdmin();
     }
 

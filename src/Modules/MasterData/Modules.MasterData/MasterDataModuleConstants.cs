@@ -86,5 +86,13 @@ public static class MasterDataModuleConstants
             public const string View = "Permissions.MasterData.CapitalizationThresholds.View";
             public const string Manage = "Permissions.MasterData.CapitalizationThresholds.Manage";
         }
+
+        public static class PropertyClasses
+        {
+            public const string View = "Permissions.MasterData.PropertyClasses.View";
+            public const string Create = "Permissions.MasterData.PropertyClasses.Create";
+            public const string Update = "Permissions.MasterData.PropertyClasses.Update";
+            public const string Delete = "Permissions.MasterData.PropertyClasses.Delete";
+        }
     }
 }

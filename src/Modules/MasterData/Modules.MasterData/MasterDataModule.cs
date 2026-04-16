@@ -44,6 +44,13 @@ using FSH.Modules.MasterData.Features.v1.CapitalizationThresholds.GetActiveThres
 using FSH.Modules.MasterData.Features.v1.CapitalizationThresholds.GetCapitalizationThresholds;
 using FSH.Modules.MasterData.Features.v1.CapitalizationThresholds.SetActiveThreshold;
 using FSH.Modules.MasterData.Features.v1.CapitalizationThresholds.UpdateCapitalizationThreshold;
+using FSH.Modules.MasterData.Features.v1.PropertyClasses.GetPropertyClassTree;
+using FSH.Modules.MasterData.Features.v1.PropertyClasses.GetPropertyClassById;
+using FSH.Modules.MasterData.Features.v1.PropertyClasses.GetPropertyClassItems;
+using FSH.Modules.MasterData.Features.v1.PropertyClasses.CreatePropertyClass;
+using FSH.Modules.MasterData.Features.v1.PropertyClasses.UpdatePropertyClass;
+using FSH.Modules.MasterData.Features.v1.PropertyClasses.CreatePropertyClassItem;
+using FSH.Modules.MasterData.Features.v1.PropertyClasses.UpdatePropertyClassItem;
 using FSH.Framework.Eventing;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -103,7 +110,12 @@ public class MasterDataModule : IModule
         new("Manage Organization Profile", "Manage", "MasterData.OrganizationProfile"),
 
         new("View Capitalization Thresholds", "View", "MasterData.CapitalizationThresholds", IsBasic: true),
-        new("Manage Capitalization Thresholds", "Manage", "MasterData.CapitalizationThresholds")
+        new("Manage Capitalization Thresholds", "Manage", "MasterData.CapitalizationThresholds"),
+
+        new("View Property Classes", "View", "MasterData.PropertyClasses", IsBasic: true),
+        new("Create Property Classes", "Create", "MasterData.PropertyClasses"),
+        new("Update Property Classes", "Update", "MasterData.PropertyClasses"),
+        new("Delete Property Classes", "Delete", "MasterData.PropertyClasses")
     ];
 
     public void ConfigureServices(IHostApplicationBuilder builder)
@@ -144,6 +156,7 @@ public class MasterDataModule : IModule
         var reportSignatoriesGroup = moduleGroup.MapGroup("/report-signatories");
         var organizationProfileGroup = moduleGroup.MapGroup("/organization-profile");
         var capitalizationThresholdsGroup = moduleGroup.MapGroup("/capitalization-thresholds");
+        var propertyClassesGroup = moduleGroup.MapGroup("/property-classes");
 
         MasterDataLookupEndpoint.Map(lookupGroup);
         CreateEmployeeEndpoint.Map(employeesGroup);
@@ -186,6 +199,13 @@ public class MasterDataModule : IModule
         CreateCapitalizationThresholdEndpoint.Map(capitalizationThresholdsGroup);
         UpdateCapitalizationThresholdEndpoint.Map(capitalizationThresholdsGroup);
         SetActiveThresholdEndpoint.Map(capitalizationThresholdsGroup);
+        GetPropertyClassTreeEndpoint.Map(propertyClassesGroup);
+        GetPropertyClassByIdEndpoint.Map(propertyClassesGroup);
+        GetPropertyClassItemsEndpoint.Map(propertyClassesGroup);
+        CreatePropertyClassEndpoint.Map(propertyClassesGroup);
+        UpdatePropertyClassEndpoint.Map(propertyClassesGroup);
+        CreatePropertyClassItemEndpoint.Map(propertyClassesGroup);
+        UpdatePropertyClassItemEndpoint.Map(propertyClassesGroup);
     }
 }
 

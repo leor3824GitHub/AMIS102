@@ -20,18 +20,18 @@ public sealed class UpsertOrganizationProfileCommandHandler(MasterDataDbContext 
         {
             var tenantId = currentUser.GetTenant() ?? string.Empty;
             existing = Domain.OrganizationProfile.Create(
-                tenantId, command.Name, command.ShortName, command.Address, command.LogoUrl);
+                tenantId, command.Name, command.ShortName, command.Address, command.LogoUrl, command.AnnexECode);
             existing.CreatedBy = currentUser.GetUserId().ToString();
             db.OrganizationProfiles.Add(existing);
         }
         else
         {
-            existing.Update(command.Name, command.ShortName, command.Address, command.LogoUrl);
+            existing.Update(command.Name, command.ShortName, command.Address, command.LogoUrl, command.AnnexECode);
             existing.LastModifiedBy = currentUser.GetUserId().ToString();
         }
 
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-        return new OrganizationProfileDto(existing.Id, existing.Name, existing.ShortName, existing.Address, existing.LogoUrl);
+        return new OrganizationProfileDto(existing.Id, existing.Name, existing.ShortName, existing.Address, existing.LogoUrl, existing.AnnexECode);
     }
 }

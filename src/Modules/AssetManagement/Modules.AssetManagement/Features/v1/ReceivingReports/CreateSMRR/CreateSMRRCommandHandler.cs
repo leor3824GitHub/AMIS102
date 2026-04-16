@@ -1,6 +1,8 @@
 using FSH.Framework.Core.Context;
+using FSH.Framework.Core.Exceptions;
 using FSH.Modules.AssetManagement.Data;
 using FSH.Modules.AssetManagement.Domain;
+using FSH.Modules.MasterData.Contracts.v1.CapitalizationThresholds;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,11 +12,13 @@ public sealed class CreateSMRRCommandHandler : ICommandHandler<CreateSMRRCommand
 {
     private readonly AssetManagementDbContext _dbContext;
     private readonly ICurrentUser _currentUser;
+    private readonly IMediator _mediator;
 
-    public CreateSMRRCommandHandler(AssetManagementDbContext dbContext, ICurrentUser currentUser)
+    public CreateSMRRCommandHandler(AssetManagementDbContext dbContext, ICurrentUser currentUser, IMediator mediator)
     {
         _dbContext = dbContext;
         _currentUser = currentUser;
+        _mediator = mediator;
     }
 
     public async ValueTask<CreateSMRRResult> Handle(CreateSMRRCommand command, CancellationToken cancellationToken)
@@ -32,15 +36,13 @@ public sealed class CreateSMRRCommandHandler : ICommandHandler<CreateSMRRCommand
             ]);
         }
 
-        // Resolve active threshold policy once — used for all items in this SMRR.
-        var policy = await _dbContext.CapitalizationThresholdPolicies
-            .FirstOrDefaultAsync(x => x.IsActive, cancellationToken)
+        // Resolve active threshold from MasterData — used for all items in this SMRR.
+        var threshold = await _mediator.Send(new GetActiveCapitalizationThresholdQuery(), cancellationToken)
             .ConfigureAwait(false);
 
-        if (policy is null)
+        if (threshold is null)
         {
-            throw new InvalidOperationException(
-                "No active capitalization threshold policy is configured. Set one via the Threshold Policies endpoint before receiving items.");
+            throw new NotFoundException("No active capitalization threshold is configured. Set one in Master Data → Capitalization Thresholds before receiving items.");
         }
 
         var requestedItemIds = command.Items.Select(x => x.SemiExpendableItemId).Distinct().ToList();
@@ -58,16 +60,16 @@ public sealed class CreateSMRRCommandHandler : ICommandHandler<CreateSMRRCommand
             }
         }
 
-        // Validate that no item exceeds the capitalization threshold — those must be PPE.
+        // Validate that no item meets or exceeds the capitalization threshold — those must be PPE.
         foreach (var itemRequest in command.Items)
         {
-            if (itemRequest.UnitCost >= policy.CapitalizationThreshold)
+            if (itemRequest.UnitCost >= threshold.CapitalizationAmount)
             {
                 throw new FluentValidation.ValidationException(
                 [
                     new FluentValidation.Results.ValidationFailure(
                         nameof(itemRequest.UnitCost),
-                        $"Unit cost ₱{itemRequest.UnitCost:N2} meets or exceeds the capitalization threshold of ₱{policy.CapitalizationThreshold:N2}. Items at or above this amount must be recorded as Fixed Assets (PPE), not as semi-expendable property.")
+                        $"Unit cost ₱{itemRequest.UnitCost:N2} meets or exceeds the capitalization threshold of ₱{threshold.CapitalizationAmount:N2}. Items at or above this amount must be recorded as Fixed Assets (PPE), not as semi-expendable property.")
                 ]);
             }
         }
@@ -104,7 +106,9 @@ public sealed class CreateSMRRCommandHandler : ICommandHandler<CreateSMRRCommand
 
             _dbContext.SMRRItems.Add(smrrItem);
 
-            var category = policy.ClassifyUnitCost(itemRequest.UnitCost);
+            var category = itemRequest.UnitCost <= threshold.SemiExpendableLowValueThreshold
+                ? AssetCategory.LowValuedSemi
+                : AssetCategory.HighValuedSemi;
 
             for (int i = 0; i < itemRequest.Quantity; i++)
             {

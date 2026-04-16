@@ -2,7 +2,7 @@ namespace FSH.Modules.AssetManagement.Domain;
 
 /// <summary>
 /// Classification of semi-expendable property per COA Circular 2022-004 Section 4.8.
-/// The threshold boundaries are governed by the active CapitalizationThresholdPolicy.
+/// The threshold boundaries are governed by the active capitalization threshold configured in Master Data.
 /// This value is frozen on the property at the time of receipt and only changes
 /// via an explicit ReclassifyPropertiesCommand with a ReclassificationRecord audit trail.
 /// </summary>
