@@ -49,6 +49,12 @@ public sealed class PPEItem : AggregateRoot<Guid>, IAuditableEntity
     /// </summary>
     public Guid? CurrentAccountableEmployeeId { get; private set; }
 
+    /// <summary>FK to the unified item catalog. Populated when the PPE was received via a PPERR that selected a catalog entry.</summary>
+    public Guid? ItemId { get; private set; }
+
+    /// <summary>Navigation property to the unified item catalog.</summary>
+    public PropertyItemCatalog? Item { get; private set; }
+
     /// <summary>The PPERR that first registered this PPE item.</summary>
     public Guid? SourcePPERRId { get; private set; }
 
@@ -74,7 +80,8 @@ public sealed class PPEItem : AggregateRoot<Guid>, IAuditableEntity
         Guid? sourcePPERRId,
         string? classCode = null,
         string? itemCode = null,
-        string? officeCode = null)
+        string? officeCode = null,
+        Guid? itemId = null)
     {
         return new PPEItem
         {
@@ -91,6 +98,7 @@ public sealed class PPEItem : AggregateRoot<Guid>, IAuditableEntity
             ClassCode                = classCode,
             ItemCode                 = itemCode,
             OfficeCode               = officeCode,
+            ItemId                   = itemId,
             CreatedOnUtc             = DateTimeOffset.UtcNow,
         };
     }

@@ -18,8 +18,8 @@ public sealed class GetRegSPIQueryHandler(AssetManagementDbContext dbContext)
             from icsItem in dbContext.ICSItems
             join prop in dbContext.SemiExpendableProperties.IgnoreQueryFilters()
                 on icsItem.SemiExpendablePropertyId equals prop.Id
-            join catalogItem in dbContext.SemiExpendableItems
-                on prop.SemiExpendableItemId equals catalogItem.Id
+            join catalogItem in dbContext.PropertyItemCatalog
+                on prop.ItemId equals catalogItem.Id
             join ics in dbContext.InventoryCustodianSlips.IgnoreQueryFilters()
                 on icsItem.ICSId equals ics.Id
             where ics.ReceivedByEmployeeId == query.EmployeeId

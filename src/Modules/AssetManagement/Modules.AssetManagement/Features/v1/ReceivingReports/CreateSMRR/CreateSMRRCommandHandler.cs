@@ -10,6 +10,11 @@ namespace FSH.Modules.AssetManagement.Features.v1.ReceivingReports.CreateSMRR;
 
 public sealed class CreateSMRRCommandHandler : ICommandHandler<CreateSMRRCommand, CreateSMRRResult>
 {
+    // Pseudo-codes used as the PropertyCodeCounter key for semi-expendable sequences.
+    // These never collide with real COA GAM class/item codes (which are alphabetic).
+    private const string SeCounterClassCode = "AM";
+    private const string SeCounterItemCode  = "SE";
+
     private readonly AssetManagementDbContext _dbContext;
     private readonly ICurrentUser _currentUser;
     private readonly IMediator _mediator;
@@ -36,7 +41,6 @@ public sealed class CreateSMRRCommandHandler : ICommandHandler<CreateSMRRCommand
             ]);
         }
 
-        // Resolve active threshold from MasterData — used for all items in this SMRR.
         var threshold = await _mediator.Send(new GetActiveCapitalizationThresholdQuery(), cancellationToken)
             .ConfigureAwait(false);
 
@@ -45,8 +49,8 @@ public sealed class CreateSMRRCommandHandler : ICommandHandler<CreateSMRRCommand
             throw new NotFoundException("No active capitalization threshold is configured. Set one in Master Data → Capitalization Thresholds before receiving items.");
         }
 
-        var requestedItemIds = command.Items.Select(x => x.SemiExpendableItemId).Distinct().ToList();
-        var foundItemIds = await _dbContext.SemiExpendableItems
+        var requestedItemIds = command.Items.Select(x => x.ItemId).Distinct().ToList();
+        var foundItemIds = await _dbContext.PropertyItemCatalog
             .Where(x => requestedItemIds.Contains(x.Id))
             .Select(x => x.Id)
             .ToHashSetAsync(cancellationToken)
@@ -55,12 +59,9 @@ public sealed class CreateSMRRCommandHandler : ICommandHandler<CreateSMRRCommand
         foreach (var itemId in requestedItemIds)
         {
             if (!foundItemIds.Contains(itemId))
-            {
-                throw new KeyNotFoundException($"Semi-expendable item with ID {itemId} not found.");
-            }
+                throw new KeyNotFoundException($"Item catalog entry with ID {itemId} not found.");
         }
 
-        // Validate that no item meets or exceeds the capitalization threshold — those must be PPE.
         foreach (var itemRequest in command.Items)
         {
             if (itemRequest.UnitCost >= threshold.CapitalizationAmount)
@@ -85,75 +86,99 @@ public sealed class CreateSMRRCommandHandler : ICommandHandler<CreateSMRRCommand
             command.ReceivedByEmployeeId,
             command.NotedByEmployeeId);
 
-        smrr.CreatedBy = _currentUser.GetUserId().ToString();
-
+        string userId = _currentUser.GetUserId().ToString();
+        string tenantId = _currentUser.GetTenant() ?? string.Empty;
+        smrr.CreatedBy = userId;
         _dbContext.SuppliesMaterialsReceivingReports.Add(smrr);
 
-        int propertiesCreated = 0;
         int year = command.Date.Year;
-        int sequence = await GetNextPropertySequenceAsync(year, cancellationToken).ConfigureAwait(false);
 
-        foreach (var itemRequest in command.Items)
+        // Build SMRRItems upfront — they stay tracked across retries.
+        var smrrItems = command.Items.Select(itemRequest =>
         {
             var smrrItem = SMRRItem.Create(
                 smrr.Id,
                 itemRequest.Reference,
-                itemRequest.SemiExpendableItemId,
+                itemRequest.ItemId,
                 itemRequest.Description,
                 itemRequest.AcquisitionDate,
                 itemRequest.Quantity,
                 itemRequest.UnitCost);
-
             _dbContext.SMRRItems.Add(smrrItem);
+            return (smrrItem, itemRequest);
+        }).ToList();
 
-            var category = itemRequest.UnitCost <= threshold.SemiExpendableLowValueThreshold
-                ? AssetCategory.LowValuedSemi
-                : AssetCategory.HighValuedSemi;
+        // Retry loop: handles optimistic concurrency conflicts on PropertyCodeCounter (xmin).
+        // On conflict: detach stale counter and properties, reload counter fresh, regenerate codes.
+        const int maxAttempts = 3;
+        int propertiesCreated = 0;
 
-            for (int i = 0; i < itemRequest.Quantity; i++)
+        for (int attempt = 0; ; attempt++)
+        {
+            propertiesCreated = 0;
+
+            // Detach properties and counter from any previous failed attempt
+            foreach (var entry in _dbContext.ChangeTracker.Entries<SemiExpendableProperty>().ToList())
+                entry.State = EntityState.Detached;
+            foreach (var entry in _dbContext.ChangeTracker.Entries<PropertyCodeCounter>().ToList())
+                entry.State = EntityState.Detached;
+
+            // Load (or create) the single counter for all SE sequences in this year
+            var counter = await _dbContext.PropertyCodeCounters
+                .FirstOrDefaultAsync(c =>
+                    c.TenantId  == tenantId &&
+                    c.ClassCode == SeCounterClassCode &&
+                    c.ItemCode  == SeCounterItemCode  &&
+                    c.Year      == year,
+                    cancellationToken)
+                .ConfigureAwait(false);
+
+            if (counter is null)
             {
-                var propertyNo = $"AM-{year}-{sequence:D5}";
-                sequence++;
+                counter = PropertyCodeCounter.Start(tenantId, SeCounterClassCode, SeCounterItemCode, year);
+                _dbContext.PropertyCodeCounters.Add(counter);
+            }
 
-                var property = SemiExpendableProperty.Create(
-                    propertyNo,
-                    itemRequest.SemiExpendableItemId,
-                    category,
-                    serialNo: null,
-                    itemRequest.AcquisitionDate,
-                    itemRequest.UnitCost,
-                    command.FundCluster,
-                    remarks: null,
-                    smrrItemId: smrrItem.Id);
+            foreach (var (smrrItem, itemRequest) in smrrItems)
+            {
+                var category = itemRequest.UnitCost <= threshold.SemiExpendableLowValueThreshold
+                    ? AssetCategory.LowValuedSemi
+                    : AssetCategory.HighValuedSemi;
 
-                property.CreatedBy = _currentUser.GetUserId().ToString();
-                _dbContext.SemiExpendableProperties.Add(property);
-                propertiesCreated++;
+                for (int i = 0; i < itemRequest.Quantity; i++)
+                {
+                    var seq = counter.NextSequence();
+                    var propertyNo = $"{year}-NFA-{tenantId}-{seq:D5}";
+
+                    var property = SemiExpendableProperty.Create(
+                        propertyNo,
+                        itemRequest.ItemId,
+                        category,
+                        serialNo: null,
+                        itemRequest.AcquisitionDate,
+                        itemRequest.UnitCost,
+                        command.FundCluster,
+                        remarks: null,
+                        smrrItemId: smrrItem.Id);
+
+                    property.CreatedBy = userId;
+                    _dbContext.SemiExpendableProperties.Add(property);
+                    propertiesCreated++;
+                }
+            }
+
+            try
+            {
+                await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                break;
+            }
+            catch (DbUpdateConcurrencyException) when (attempt < maxAttempts - 1)
+            {
+                // Another request modified the counter concurrently.
+                // The outer loop will detach and reload everything for the next attempt.
             }
         }
 
-        await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-
         return new CreateSMRRResult(smrr.Id, smrr.SMRRNo, propertiesCreated);
-    }
-
-    private async Task<int> GetNextPropertySequenceAsync(int year, CancellationToken cancellationToken)
-    {
-        var prefix = $"AM-{year}-";
-        var lastNo = await _dbContext.SemiExpendableProperties
-            .IgnoreQueryFilters()
-            .Where(x => x.PropertyNo.StartsWith(prefix))
-            .OrderByDescending(x => x.PropertyNo)
-            .Select(x => x.PropertyNo)
-            .FirstOrDefaultAsync(cancellationToken)
-            .ConfigureAwait(false);
-
-        if (lastNo is null)
-        {
-            return 1;
-        }
-
-        var sequencePart = lastNo[prefix.Length..];
-        return int.TryParse(sequencePart, out var seq) ? seq + 1 : 1;
     }
 }

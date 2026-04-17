@@ -1,7 +1,7 @@
 @page "/asset-management/receiving-reports"
 @using FSH.Playground.Blazor.ApiClient
 @inject ISMRRClient Client
-@inject ISemiExpendableItemClient ItemClient
+@inject IPropertyItemCatalogClient ItemClient
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 
@@ -56,7 +56,7 @@
                                                OnClick="@(() => RemoveLineItem(idx))" />
                             </MudStack>
                             <MudStack Spacing="1">
-                                <MudAutocomplete T="SemiExpendableItemSummaryDto"
+                                <MudAutocomplete T="PropertyItemCatalogSummaryDto"
                                                  Value="li.SelectedItem"
                                                  ValueChanged="@(v => li.SelectedItem = v)"
                                                  SearchFunc="SearchItems"
@@ -197,15 +197,15 @@
                                     <td>@(item.Description ?? "-")</td>
                                     <td>@item.AcquisitionDate.ToString("MM/dd/yyyy")</td>
                                     <td>@item.Quantity</td>
-                                    <td>@item.UnitCost.ToString("N2")</td>
-                                    <td><b>@item.Amount.ToString("N2")</b></td>
+                                    <td>₱@item.UnitCost.ToString("N2")</td>
+                                    <td><b>₱@item.Amount.ToString("N2")</b></td>
                                 </tr>
                             }
                         </tbody>
                         <tfoot>
                             <tr>
                                 <td colspan="6" style="text-align:right"><b>Total:</b></td>
-                                <td><b>@_detail.Items.Sum(x => x.Amount).ToString("N2")</b></td>
+                                <td><b>₱@_detail.Items.Sum(x => x.Amount).ToString("N2")</b></td>
                             </tr>
                         </tfoot>
                     </MudSimpleTable>
@@ -252,7 +252,7 @@
         catch (Exception ex) { Snackbar.Add($"Load failed: {ex.Message}", Severity.Error); }
     }
 
-    private async Task<IEnumerable<SemiExpendableItemSummaryDto>> SearchItems(string? value, CancellationToken ct)
+    private async Task<IEnumerable<PropertyItemCatalogSummaryDto>> SearchItems(string? value, CancellationToken ct)
     {
         var response = await ItemClient.SearchAsync(value, isActive: true, page: 1, pageSize: 20, ct: ct);
         return response.Items;
@@ -315,7 +315,7 @@
 
     private sealed class LineItemRow
     {
-        public SemiExpendableItemSummaryDto? SelectedItem { get; set; }
+        public PropertyItemCatalogSummaryDto? SelectedItem { get; set; }
         public string? Reference { get; set; }
         public string? Description { get; set; }
         public DateTime? AcquisitionDateNullable { get; set; } = DateTime.Today;

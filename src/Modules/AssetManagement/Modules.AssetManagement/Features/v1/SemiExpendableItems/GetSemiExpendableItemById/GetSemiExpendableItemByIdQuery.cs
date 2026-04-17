@@ -2,9 +2,9 @@ using Mediator;
 
 namespace FSH.Modules.AssetManagement.Features.v1.SemiExpendableItems.GetSemiExpendableItemById;
 
-public sealed record GetSemiExpendableItemByIdQuery(Guid Id) : IQuery<SemiExpendableItemDetailsDto>;
+public sealed record GetPropertyItemCatalogByIdQuery(Guid Id) : IQuery<PropertyItemCatalogDetailsDto>;
 
-public sealed record SemiExpendableItemDetailsDto(
+public sealed record PropertyItemCatalogDetailsDto(
     Guid Id,
     string Code,
     string Name,

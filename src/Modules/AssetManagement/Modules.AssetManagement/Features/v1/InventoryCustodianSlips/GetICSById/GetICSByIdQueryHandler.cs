@@ -22,7 +22,7 @@ public sealed class GetICSByIdQueryHandler(AssetManagementDbContext dbContext)
         var items = await (
             from icsItem in dbContext.ICSItems.Where(x => x.ICSId == query.Id)
             join prop in dbContext.SemiExpendableProperties on icsItem.SemiExpendablePropertyId equals prop.Id
-            join catalogItem in dbContext.SemiExpendableItems on prop.SemiExpendableItemId equals catalogItem.Id
+            join catalogItem in dbContext.PropertyItemCatalog on prop.ItemId equals catalogItem.Id
             orderby icsItem.ItemNo
             select new ICSItemDetailsDto(
                 icsItem.Id,

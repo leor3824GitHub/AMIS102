@@ -15,8 +15,8 @@ public sealed class SMRRItem : BaseEntity<Guid>
     /// <summary>Source document reference (e.g., PO number, DR number).</summary>
     public string? Reference { get; private set; }
 
-    /// <summary>FK to the semi-expendable item catalog.</summary>
-    public Guid SemiExpendableItemId { get; private set; }
+    /// <summary>FK to the unified item catalog.</summary>
+    public Guid ItemId { get; private set; }
 
     /// <summary>Specific description / brand / specs for this batch.</summary>
     public string? Description { get; private set; }
@@ -34,7 +34,7 @@ public sealed class SMRRItem : BaseEntity<Guid>
     public static SMRRItem Create(
         Guid smrrId,
         string? reference,
-        Guid semiExpendableItemId,
+        Guid itemId,
         string? description,
         DateOnly acquisitionDate,
         int quantity,
@@ -42,10 +42,10 @@ public sealed class SMRRItem : BaseEntity<Guid>
     {
         return new SMRRItem
         {
-            Id                  = Guid.NewGuid(),
-            SMRRId              = smrrId,
-            Reference           = reference,
-            SemiExpendableItemId = semiExpendableItemId,
+            Id          = Guid.NewGuid(),
+            SMRRId      = smrrId,
+            Reference   = reference,
+            ItemId      = itemId,
             Description         = description,
             AcquisitionDate     = acquisitionDate,
             Quantity            = quantity,

@@ -12,9 +12,9 @@ internal enum ReceiptType
     Others = 3,
 }
 
-// Semi-Expendable Items
+// Property Item Catalog (unified SE + PPE catalog)
 
-internal sealed record CreateSemiExpendableItemRequest(
+internal sealed record CreatePropertyItemCatalogRequest(
     string Code,
     string Name,
     string? Description = null,
@@ -22,7 +22,7 @@ internal sealed record CreateSemiExpendableItemRequest(
     string UnitOfMeasure = "Piece",
     int? EstimatedUsefulLifeYears = null);
 
-internal sealed record UpdateSemiExpendableItemRequest(
+internal sealed record UpdatePropertyItemCatalogRequest(
     string Code,
     string Name,
     string? Description = null,
@@ -31,7 +31,7 @@ internal sealed record UpdateSemiExpendableItemRequest(
     int? EstimatedUsefulLifeYears = null,
     bool IsActive = true);
 
-internal sealed record SemiExpendableItemDto(
+internal sealed record PropertyItemCatalogDto(
     Guid Id,
     string Code,
     string Name,
@@ -41,7 +41,7 @@ internal sealed record SemiExpendableItemDto(
     int? EstimatedUsefulLifeYears,
     bool IsActive);
 
-internal sealed record SemiExpendableItemSummaryDto(
+internal sealed record PropertyItemCatalogSummaryDto(
     Guid Id,
     string Code,
     string Name,
@@ -51,7 +51,7 @@ internal sealed record SemiExpendableItemSummaryDto(
     int? EstimatedUsefulLifeYears,
     bool IsActive);
 
-internal sealed record SemiExpendableItemDetailsDto(
+internal sealed record PropertyItemCatalogDetailsDto(
     Guid Id,
     string Code,
     string Name,
@@ -65,13 +65,13 @@ internal sealed record SemiExpendableItemDetailsDto(
     DateTimeOffset? LastModifiedOnUtc,
     string? LastModifiedBy);
 
-internal sealed record PagedSemiExpendableItemsResponse(
-    IReadOnlyList<SemiExpendableItemSummaryDto> Items,
+internal sealed record PagedPropertyItemCatalogResponse(
+    IReadOnlyList<PropertyItemCatalogSummaryDto> Items,
     int PageNumber,
     int PageSize,
     int TotalCount);
 
-internal sealed record SemiExpendableItemSummary(
+internal sealed record PropertyItemCatalogSummary(
     Guid Id,
     string Code,
     string Name,
@@ -81,7 +81,7 @@ internal sealed record SemiExpendableItemSummary(
     int? EstimatedUsefulLifeYears,
     bool IsActive);
 
-internal sealed record SemiExpendableItemDetails(
+internal sealed record PropertyItemCatalogDetails(
     Guid Id,
     string Code,
     string Name,
@@ -95,32 +95,32 @@ internal sealed record SemiExpendableItemDetails(
     DateTimeOffset? LastModifiedOnUtc,
     string? LastModifiedBy);
 
-internal sealed record SemiExpendableItemsPage(
-    IReadOnlyList<SemiExpendableItemSummary> Items,
+internal sealed record PropertyItemCatalogPage(
+    IReadOnlyList<PropertyItemCatalogSummary> Items,
     int PageNumber,
     int PageSize,
     int TotalCount);
 
-internal interface ISemiExpendableItemClient
+internal interface IPropertyItemCatalogClient
 {
-    Task<SemiExpendableItemsPage> SearchForUiAsync(string? keyword = null, bool? isActive = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
-    Task<SemiExpendableItemDetails?> GetForUiAsync(Guid id, CancellationToken ct = default);
-    Task<SemiExpendableItemSummary> CreateForUiAsync(CreateSemiExpendableItemRequest request, CancellationToken ct = default);
-    Task UpdateForUiAsync(Guid id, UpdateSemiExpendableItemRequest request, CancellationToken ct = default);
+    Task<PropertyItemCatalogPage> SearchForUiAsync(string? keyword = null, bool? isActive = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
+    Task<PropertyItemCatalogDetails?> GetForUiAsync(Guid id, CancellationToken ct = default);
+    Task<PropertyItemCatalogSummary> CreateForUiAsync(CreatePropertyItemCatalogRequest request, CancellationToken ct = default);
+    Task UpdateForUiAsync(Guid id, UpdatePropertyItemCatalogRequest request, CancellationToken ct = default);
 
-    Task<PagedSemiExpendableItemsResponse> SearchAsync(string? keyword = null, bool? isActive = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
-    Task<SemiExpendableItemDetailsDto?> GetAsync(Guid id, CancellationToken ct = default);
+    Task<PagedPropertyItemCatalogResponse> SearchAsync(string? keyword = null, bool? isActive = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
+    Task<PropertyItemCatalogDetailsDto?> GetAsync(Guid id, CancellationToken ct = default);
 }
 
-internal sealed class SemiExpendableItemClient(HttpClient http) : ISemiExpendableItemClient
+internal sealed class PropertyItemCatalogClient(HttpClient http) : IPropertyItemCatalogClient
 {
-    private const string Base = "api/v1/asset-management/semi-expendable-items";
+    private const string Base = "api/v1/asset-management/item-catalog";
 
-    public async Task<SemiExpendableItemsPage> SearchForUiAsync(string? keyword = null, bool? isActive = null, int page = 1, int pageSize = 20, CancellationToken ct = default)
+    public async Task<PropertyItemCatalogPage> SearchForUiAsync(string? keyword = null, bool? isActive = null, int page = 1, int pageSize = 20, CancellationToken ct = default)
     {
         var response = await SearchAsync(keyword, isActive, page, pageSize, ct);
-        return new SemiExpendableItemsPage(
-            response.Items.Select(i => new SemiExpendableItemSummary(
+        return new PropertyItemCatalogPage(
+            response.Items.Select(i => new PropertyItemCatalogSummary(
                 i.Id,
                 i.Code,
                 i.Name,
@@ -134,12 +134,12 @@ internal sealed class SemiExpendableItemClient(HttpClient http) : ISemiExpendabl
             response.TotalCount);
     }
 
-    public async Task<SemiExpendableItemDetails?> GetForUiAsync(Guid id, CancellationToken ct = default)
+    public async Task<PropertyItemCatalogDetails?> GetForUiAsync(Guid id, CancellationToken ct = default)
     {
         var response = await GetAsync(id, ct);
         return response is null
             ? null
-            : new SemiExpendableItemDetails(
+            : new PropertyItemCatalogDetails(
                 response.Id,
                 response.Code,
                 response.Name,
@@ -154,13 +154,13 @@ internal sealed class SemiExpendableItemClient(HttpClient http) : ISemiExpendabl
                 response.LastModifiedBy);
     }
 
-    public async Task<SemiExpendableItemSummary> CreateForUiAsync(CreateSemiExpendableItemRequest request, CancellationToken ct = default)
+    public async Task<PropertyItemCatalogSummary> CreateForUiAsync(CreatePropertyItemCatalogRequest request, CancellationToken ct = default)
     {
         using var r = await http.PostAsJsonAsync(Base, request, ct);
         r.EnsureSuccessStatusCode();
 
-        var created = (await r.Content.ReadFromJsonAsync<SemiExpendableItemDto>(ct))!;
-        return new SemiExpendableItemSummary(
+        var created = (await r.Content.ReadFromJsonAsync<PropertyItemCatalogDto>(ct))!;
+        return new PropertyItemCatalogSummary(
             created.Id,
             created.Code,
             created.Name,
@@ -171,31 +171,31 @@ internal sealed class SemiExpendableItemClient(HttpClient http) : ISemiExpendabl
             created.IsActive);
     }
 
-    public async Task UpdateForUiAsync(Guid id, UpdateSemiExpendableItemRequest request, CancellationToken ct = default)
+    public async Task UpdateForUiAsync(Guid id, UpdatePropertyItemCatalogRequest request, CancellationToken ct = default)
     {
         using var r = await http.PutAsJsonAsync($"{Base}/{id}", request, ct);
         r.EnsureSuccessStatusCode();
     }
 
-    public Task<PagedSemiExpendableItemsResponse> SearchAsync(string? keyword = null, bool? isActive = null, int page = 1, int pageSize = 20, CancellationToken ct = default)
+    public Task<PagedPropertyItemCatalogResponse> SearchAsync(string? keyword = null, bool? isActive = null, int page = 1, int pageSize = 20, CancellationToken ct = default)
     {
         var q = HttpUtility.ParseQueryString(string.Empty);
         if (!string.IsNullOrWhiteSpace(keyword)) q["Keyword"] = keyword;
         if (isActive.HasValue) q["IsActive"] = isActive.Value.ToString();
         q["PageNumber"] = page.ToString(CultureInfo.InvariantCulture);
         q["PageSize"] = pageSize.ToString(CultureInfo.InvariantCulture);
-        return http.GetFromJsonAsync<PagedSemiExpendableItemsResponse>($"{Base}?{q}", ct)!;
+        return http.GetFromJsonAsync<PagedPropertyItemCatalogResponse>($"{Base}?{q}", ct)!;
     }
 
-    public Task<SemiExpendableItemDetailsDto?> GetAsync(Guid id, CancellationToken ct = default) =>
-        http.GetFromJsonAsync<SemiExpendableItemDetailsDto>($"{Base}/{id}", ct);
+    public Task<PropertyItemCatalogDetailsDto?> GetAsync(Guid id, CancellationToken ct = default) =>
+        http.GetFromJsonAsync<PropertyItemCatalogDetailsDto>($"{Base}/{id}", ct);
 }
 
 // Semi-Expendable Properties
 
 internal sealed record RegisterSemiExpendablePropertyCommand(
     string PropertyNo,
-    Guid SemiExpendableItemId,
+    Guid ItemId,
     string? SerialNo,
     DateOnly AcquisitionDate,
     decimal UnitCost,
@@ -205,7 +205,7 @@ internal sealed record RegisterSemiExpendablePropertyCommand(
 internal sealed record SemiExpendablePropertyDto(
     Guid Id,
     string PropertyNo,
-    Guid SemiExpendableItemId,
+    Guid ItemId,
     string ItemCode,
     string ItemName,
     string? SerialNo,
@@ -219,7 +219,7 @@ internal sealed record SemiExpendablePropertyDto(
 internal sealed record SemiExpendablePropertySummaryDto(
     Guid Id,
     string PropertyNo,
-    Guid SemiExpendableItemId,
+    Guid ItemId,
     string ItemCode,
     string ItemName,
     string? SerialNo,
@@ -233,7 +233,7 @@ internal sealed record SemiExpendablePropertySummaryDto(
 internal sealed record SemiExpendablePropertyDetailsDto(
     Guid Id,
     string PropertyNo,
-    Guid SemiExpendableItemId,
+    Guid ItemId,
     string ItemCode,
     string ItemName,
     string UnitOfMeasure,
@@ -258,7 +258,7 @@ internal sealed record PagedSemiExpendablePropertiesResponse(
 
 internal interface ISemiExpendablePropertyClient
 {
-    Task<PagedSemiExpendablePropertiesResponse> SearchAsync(string? keyword = null, Guid? semiExpendableItemId = null, string? status = null, Guid? currentCustodianId = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
+    Task<PagedSemiExpendablePropertiesResponse> SearchAsync(string? keyword = null, Guid? itemId = null, string? status = null, Guid? currentCustodianId = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
     Task<SemiExpendablePropertyDetailsDto?> GetAsync(Guid id, CancellationToken ct = default);
     Task<SemiExpendablePropertyDto> RegisterAsync(RegisterSemiExpendablePropertyCommand command, CancellationToken ct = default);
 }
@@ -267,11 +267,11 @@ internal sealed class SemiExpendablePropertyClient(HttpClient http) : ISemiExpen
 {
     private const string Base = "api/v1/asset-management/semi-expendable-properties";
 
-    public Task<PagedSemiExpendablePropertiesResponse> SearchAsync(string? keyword = null, Guid? semiExpendableItemId = null, string? status = null, Guid? currentCustodianId = null, int page = 1, int pageSize = 20, CancellationToken ct = default)
+    public Task<PagedSemiExpendablePropertiesResponse> SearchAsync(string? keyword = null, Guid? itemId = null, string? status = null, Guid? currentCustodianId = null, int page = 1, int pageSize = 20, CancellationToken ct = default)
     {
         var q = HttpUtility.ParseQueryString(string.Empty);
         if (!string.IsNullOrWhiteSpace(keyword)) q["Keyword"] = keyword;
-        if (semiExpendableItemId.HasValue) q["SemiExpendableItemId"] = semiExpendableItemId.Value.ToString();
+        if (itemId.HasValue) q["ItemId"] = itemId.Value.ToString();
         if (!string.IsNullOrWhiteSpace(status)) q["Status"] = status;
         if (currentCustodianId.HasValue) q["CurrentCustodianId"] = currentCustodianId.Value.ToString();
         q["PageNumber"] = page.ToString(CultureInfo.InvariantCulture);
@@ -294,7 +294,7 @@ internal sealed class SemiExpendablePropertyClient(HttpClient http) : ISemiExpen
 
 internal sealed record CreateSMRRItemRequest(
     string? Reference,
-    Guid SemiExpendableItemId,
+    Guid ItemId,
     string? Description,
     DateOnly AcquisitionDate,
     int Quantity,
@@ -329,7 +329,7 @@ internal sealed record SMRRSummaryDto(
 internal sealed record SMRRItemDetailsDto(
     Guid Id,
     string? Reference,
-    Guid SemiExpendableItemId,
+    Guid ItemId,
     string ItemCode,
     string ItemName,
     string? Description,
@@ -401,6 +401,7 @@ internal sealed record CreateICSItemRequest(
 internal sealed record CreateICSCommand(
     string ICSNo,
     DateOnly Date,
+    AssetCategory Category,
     string? FundCluster,
     Guid? IssuedFromEmployeeId,
     Guid ReceivedByEmployeeId,
@@ -436,6 +437,7 @@ internal sealed record ICSDetailsDto(
     Guid Id,
     string ICSNo,
     DateOnly Date,
+    string Category,
     string? FundCluster,
     Guid? IssuedFromEmployeeId,
     Guid ReceivedByEmployeeId,
@@ -866,7 +868,7 @@ internal sealed record SPCEntryDto(
     string? Remarks);
 
 internal sealed record SPCDto(
-    Guid SemiExpendableItemId,
+    Guid ItemId,
     string ItemCode,
     string ItemName,
     IReadOnlyList<SPCEntryDto> Entries);
@@ -936,7 +938,7 @@ internal sealed record PropertyHistoryDto(
 
 internal interface IAssetManagementReportsClient
 {
-    Task<SPCDto?> GetSPCAsync(Guid semiExpendableItemId, DateOnly? dateFrom = null, DateOnly? dateTo = null, CancellationToken ct = default);
+    Task<SPCDto?> GetSPCAsync(Guid itemId, DateOnly? dateFrom = null, DateOnly? dateTo = null, CancellationToken ct = default);
     Task<PagedRegSPIResponse?> GetRegSPIAsync(Guid employeeId, AssetCategory? category = null, ICSStatus? status = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
     Task<PagedRSPIResponse?> GetRSPIAsync(DateOnly? dateFrom = null, DateOnly? dateTo = null, AssetCategory? category = null, bool activeOnly = true, int page = 1, int pageSize = 20, CancellationToken ct = default);
     Task<PropertyHistoryDto?> GetPropertyHistoryAsync(Guid propertyId, CancellationToken ct = default);
@@ -946,13 +948,13 @@ internal sealed class AssetManagementReportsClient(HttpClient http) : IAssetMana
 {
     private const string Base = "api/v1/asset-management/reports";
 
-    public Task<SPCDto?> GetSPCAsync(Guid semiExpendableItemId, DateOnly? dateFrom = null, DateOnly? dateTo = null, CancellationToken ct = default)
+    public Task<SPCDto?> GetSPCAsync(Guid itemId, DateOnly? dateFrom = null, DateOnly? dateTo = null, CancellationToken ct = default)
     {
         var q = HttpUtility.ParseQueryString(string.Empty);
         if (dateFrom.HasValue) q["DateFrom"] = dateFrom.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
         if (dateTo.HasValue) q["DateTo"] = dateTo.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
         var qs = q.Count > 0 ? $"?{q}" : string.Empty;
-        return http.GetFromJsonAsync<SPCDto>($"{Base}/spc/{semiExpendableItemId}{qs}", ct);
+        return http.GetFromJsonAsync<SPCDto>($"{Base}/spc/{itemId}{qs}", ct);
     }
 
     public Task<PagedRegSPIResponse?> GetRegSPIAsync(Guid employeeId, AssetCategory? category = null, ICSStatus? status = null, int page = 1, int pageSize = 20, CancellationToken ct = default)

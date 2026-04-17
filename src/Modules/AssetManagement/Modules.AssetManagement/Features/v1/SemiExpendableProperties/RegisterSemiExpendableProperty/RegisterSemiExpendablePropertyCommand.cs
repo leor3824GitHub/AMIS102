@@ -5,7 +5,7 @@ namespace FSH.Modules.AssetManagement.Features.v1.SemiExpendableProperties.Regis
 
 public sealed record RegisterSemiExpendablePropertyCommand(
     string PropertyNo,
-    Guid SemiExpendableItemId,
+    Guid ItemId,
     AssetCategory Category,
     string? SerialNo,
     DateOnly AcquisitionDate,
@@ -16,7 +16,7 @@ public sealed record RegisterSemiExpendablePropertyCommand(
 public sealed record SemiExpendablePropertyDto(
     Guid Id,
     string PropertyNo,
-    Guid SemiExpendableItemId,
+    Guid ItemId,
     string ItemCode,
     string ItemName,
     string Category,

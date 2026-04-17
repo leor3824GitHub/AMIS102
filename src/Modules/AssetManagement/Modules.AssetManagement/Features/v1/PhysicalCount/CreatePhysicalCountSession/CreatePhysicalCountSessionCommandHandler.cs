@@ -71,8 +71,8 @@ public sealed class CreatePhysicalCountSessionCommandHandler(
         {
             var seProperties = await dbContext.SemiExpendableProperties
                 .Where(x => x.Status != PropertyStatus.Disposed)
-                .Join(dbContext.SemiExpendableItems,
-                    p => p.SemiExpendableItemId,
+                .Join(dbContext.PropertyItemCatalog,
+                    p => p.ItemId,
                     i => i.Id,
                     (p, i) => new { p.Id, p.PropertyNo, Description = i.Name, p.UnitCost })
                 .ToListAsync(cancellationToken)

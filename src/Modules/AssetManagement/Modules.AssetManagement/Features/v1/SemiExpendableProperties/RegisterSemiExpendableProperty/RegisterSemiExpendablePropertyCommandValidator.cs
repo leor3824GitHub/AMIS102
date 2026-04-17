@@ -13,8 +13,8 @@ public sealed class RegisterSemiExpendablePropertyCommandValidator : AbstractVal
         RuleFor(x => x.Category)
             .IsInEnum().WithMessage("Category must be a valid AssetCategory value.");
 
-        RuleFor(x => x.SemiExpendableItemId)
-            .NotEmpty().WithMessage("Semi-expendable item is required.");
+        RuleFor(x => x.ItemId)
+            .NotEmpty().WithMessage("Item is required.");
 
         RuleFor(x => x.SerialNo)
             .MaximumLength(100).WithMessage("Serial No. must not exceed 100 characters.");

@@ -73,7 +73,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
 
                     b.HasIndex("TenantId", "IsActive");
 
-                    b.ToTable("CapitalizationThresholds", "employee");
+                    b.ToTable("CapitalizationThresholds", "masterdata");
 
                     b.HasAnnotation("Finbuckle:MultiTenant", true);
                 });
@@ -136,7 +136,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
 
                     b.HasIndex("Name");
 
-                    b.ToTable("Categories", "employee");
+                    b.ToTable("Categories", "masterdata");
                 });
 
             modelBuilder.Entity("FSH.Modules.MasterData.Domain.Department", b =>
@@ -201,7 +201,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
 
                     b.HasIndex("Name");
 
-                    b.ToTable("Departments", "employee");
+                    b.ToTable("Departments", "masterdata");
                 });
 
             modelBuilder.Entity("FSH.Modules.MasterData.Domain.EmployeeProfile", b =>
@@ -303,7 +303,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
 
                     b.HasIndex("TenantId", "PositionId");
 
-                    b.ToTable("EmployeeProfiles", "employee");
+                    b.ToTable("EmployeeProfiles", "masterdata");
 
                     b.HasAnnotation("Finbuckle:MultiTenant", true);
                 });
@@ -313,6 +313,10 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
+
+                    b.Property<string>("Address")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<string>("Code")
                         .IsRequired()
@@ -349,10 +353,18 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
                     b.Property<DateTimeOffset?>("LastModifiedOnUtc")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("LocationCode")
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(160)
                         .HasColumnType("character varying(160)");
+
+                    b.Property<string>("RegProvCode")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
 
                     b.Property<byte[]>("Version")
                         .IsConcurrencyToken()
@@ -366,7 +378,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
 
                     b.HasIndex("Name");
 
-                    b.ToTable("Offices", "employee");
+                    b.ToTable("Offices", "masterdata");
                 });
 
             modelBuilder.Entity("FSH.Modules.MasterData.Domain.OrganizationProfile", b =>
@@ -423,7 +435,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
                     b.HasIndex("TenantId")
                         .IsUnique();
 
-                    b.ToTable("OrganizationProfiles", "employee");
+                    b.ToTable("OrganizationProfiles", "masterdata");
 
                     b.HasAnnotation("Finbuckle:MultiTenant", true);
                 });
@@ -486,7 +498,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
 
                     b.HasIndex("Name");
 
-                    b.ToTable("Positions", "employee");
+                    b.ToTable("Positions", "masterdata");
                 });
 
             modelBuilder.Entity("FSH.Modules.MasterData.Domain.PropertyClass", b =>
@@ -531,7 +543,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
 
                     b.HasIndex("IsActive");
 
-                    b.ToTable("PropertyClasses", "employee");
+                    b.ToTable("PropertyClasses", "masterdata");
                 });
 
             modelBuilder.Entity("FSH.Modules.MasterData.Domain.PropertyClassItem", b =>
@@ -587,7 +599,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
                     b.HasIndex("PropertyClassId", "ItemCode")
                         .IsUnique();
 
-                    b.ToTable("PropertyClassItems", "employee");
+                    b.ToTable("PropertyClassItems", "masterdata");
                 });
 
             modelBuilder.Entity("FSH.Modules.MasterData.Domain.ReportSignatory", b =>
@@ -662,7 +674,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
                     b.HasIndex("TenantId", "ReportType", "SortOrder")
                         .IsUnique();
 
-                    b.ToTable("ReportSignatories", "employee");
+                    b.ToTable("ReportSignatories", "masterdata");
 
                     b.HasAnnotation("Finbuckle:MultiTenant", true);
                 });
@@ -750,7 +762,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
 
                     b.HasIndex("Name");
 
-                    b.ToTable("Suppliers", "employee");
+                    b.ToTable("Suppliers", "masterdata");
                 });
 
             modelBuilder.Entity("FSH.Modules.MasterData.Domain.UnitOfMeasure", b =>
@@ -811,7 +823,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
 
                     b.HasIndex("Name");
 
-                    b.ToTable("UnitOfMeasures", "employee");
+                    b.ToTable("UnitOfMeasures", "masterdata");
                 });
 
             modelBuilder.Entity("FSH.Modules.MasterData.Domain.EmployeeProfile", b =>

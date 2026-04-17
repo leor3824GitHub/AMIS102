@@ -3,6 +3,7 @@
 @using FSH.Playground.Blazor.ApiClient
 @using MudBlazor
 @inject IOrganizationProfileClient OrgProfileClient
+@inject ILookupClient LookupClient
 @inject ISnackbar Snackbar
 
 <FshPageHeader Title="Organization Profile"
@@ -13,13 +14,20 @@
         <MudPaper Elevation="1" Class="pa-4">
             <MudText Typo="Typo.h6" Class="mb-3">Agency Details</MudText>
             <MudStack Spacing="3">
-                <MudTextField @bind-Value="_form.Name"
+                <MudAutocomplete T="string"
+                              @bind-Value="_form.Name"
+                              @bind-Value:after="OnOfficeNameSelected"
                               Label="Agency / Organization Name"
                               Variant="Variant.Outlined"
                               Required="true"
-                              CharacterCounter="true"
                               MaxLength="200"
-                              Placeholder="e.g. National Food Authority" />
+                              Placeholder="e.g. National Food Authority"
+                              SearchFunc="SearchOfficeNamesAsync"
+                              ResetValueOnEmptyText="false"
+                              CoerceText="true"
+                              CoerceValue="false"
+                              MinCharacters="1"
+                              HelperText="Type to search offices — selecting one auto-fills the office code" />
 
                 <MudTextField @bind-Value="_form.ShortName"
                               Label="Short Name / Acronym"
@@ -49,7 +57,9 @@
                               CharacterCounter="true"
                               MaxLength="8"
                               Placeholder="e.g. 00B"
-                              HelperText="3-character office code used in property code generation (e.g. 00B for Caraga Regional Office)" />
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Tag"
+                              HelperText="Auto-filled from office selection — used in property code generation" />
 
                 <MudButton Variant="Variant.Filled"
                            Color="Color.Primary"
@@ -91,6 +101,7 @@
 @code {
     private FormModel _form = new();
     private bool _busy;
+    private Dictionary<string, OfficeReferenceDto> _officesByName = new(StringComparer.OrdinalIgnoreCase);
 
     protected override async Task OnInitializedAsync()
     {
@@ -112,6 +123,33 @@
         catch
         {
             // No profile yet — start with empty form
+        }
+    }
+
+    private async Task<IEnumerable<string>> SearchOfficeNamesAsync(string value, CancellationToken ct)
+    {
+        try
+        {
+            var response = await LookupClient.OfficesAsync(keyword: value, pageSize: 30);
+            var items = response?.Items ?? [];
+            _officesByName = items
+                .Where(o => !string.IsNullOrWhiteSpace(o.Name))
+                .ToDictionary(o => o.Name!, o => o, StringComparer.OrdinalIgnoreCase);
+            return _officesByName.Keys.OrderBy(n => n);
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    private void OnOfficeNameSelected()
+    {
+        if (string.IsNullOrWhiteSpace(_form.Name)) return;
+        if (_officesByName.TryGetValue(_form.Name, out var office) &&
+            !string.IsNullOrWhiteSpace(office.RegProvCode))
+        {
+            _form.AnnexECode = office.RegProvCode;
         }
     }
 

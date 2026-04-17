@@ -17,7 +17,7 @@ public sealed class GetPropertyHistoryQueryHandler(AssetManagementDbContext dbCo
         // Load the property (no query filter — may be disposed/transferred).
         var property = await dbContext.SemiExpendableProperties
             .IgnoreQueryFilters()
-            .Include(x => x.SemiExpendableItem)
+            .Include(x => x.Item)
             .Where(x => x.Id == propId)
             .Select(x => new
             {
@@ -28,8 +28,8 @@ public sealed class GetPropertyHistoryQueryHandler(AssetManagementDbContext dbCo
                 x.UnitCost,
                 x.Status,
                 x.CurrentCustodianId,
-                ItemCode = x.SemiExpendableItem.Code,
-                ItemName = x.SemiExpendableItem.Name,
+                ItemCode = x.Item.Code,
+                ItemName = x.Item.Name,
             })
             .FirstOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false);

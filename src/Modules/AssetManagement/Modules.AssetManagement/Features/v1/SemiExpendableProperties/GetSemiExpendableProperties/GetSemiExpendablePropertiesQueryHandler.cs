@@ -11,7 +11,7 @@ public sealed class GetSemiExpendablePropertiesQueryHandler(AssetManagementDbCon
     public async ValueTask<PagedSemiExpendablePropertiesResponse> Handle(GetSemiExpendablePropertiesQuery query, CancellationToken cancellationToken)
     {
         var propertiesQuery = dbContext.SemiExpendableProperties
-            .Include(x => x.SemiExpendableItem)
+            .Include(x => x.Item)
             .AsQueryable();
 
         // Exclude transferred properties from default view; caller must pass Status=Transferred to see them explicitly.
@@ -26,13 +26,13 @@ public sealed class GetSemiExpendablePropertiesQueryHandler(AssetManagementDbCon
             propertiesQuery = propertiesQuery.Where(x =>
                 x.PropertyNo.ToLower().Contains(kw) ||
                 (x.SerialNo != null && x.SerialNo.ToLower().Contains(kw)) ||
-                x.SemiExpendableItem.Code.ToLower().Contains(kw) ||
-                x.SemiExpendableItem.Name.ToLower().Contains(kw));
+                x.Item.Code.ToLower().Contains(kw) ||
+                x.Item.Name.ToLower().Contains(kw));
         }
 
-        if (query.SemiExpendableItemId.HasValue)
+        if (query.ItemId.HasValue)
         {
-            propertiesQuery = propertiesQuery.Where(x => x.SemiExpendableItemId == query.SemiExpendableItemId.Value);
+            propertiesQuery = propertiesQuery.Where(x => x.ItemId == query.ItemId.Value);
         }
 
         if (query.Category.HasValue)
@@ -62,9 +62,9 @@ public sealed class GetSemiExpendablePropertiesQueryHandler(AssetManagementDbCon
             .Select(x => new SemiExpendablePropertySummaryDto(
                 x.Id,
                 x.PropertyNo,
-                x.SemiExpendableItemId,
-                x.SemiExpendableItem.Code,
-                x.SemiExpendableItem.Name,
+                x.ItemId,
+                x.Item.Code,
+                x.Item.Name,
                 x.Category.ToString(),
                 x.SerialNo,
                 x.AcquisitionDate,

@@ -37,11 +37,11 @@ public sealed class UpdateOfficeCommandHandler : ICommandHandler<UpdateOfficeCom
             ]);
         }
 
-        office.Update(command.Code, command.Name, command.Description, command.IsActive);
+        office.Update(command.Code, command.Name, command.Description, command.IsActive, command.RegProvCode, command.LocationCode, command.Address);
         office.LastModifiedBy = _currentUser.GetUserId().ToString();
 
         await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-        return new OfficeReferenceDto(office.Id, office.Code, office.Name, office.Description, office.IsActive);
+        return new OfficeReferenceDto(office.Id, office.Code, office.Name, office.Description, office.Address, office.LocationCode, office.RegProvCode, office.IsActive);
     }
 }

@@ -22,7 +22,7 @@ public sealed record SMRRDetailsDto(
 public sealed record SMRRItemDetailsDto(
     Guid Id,
     string? Reference,
-    Guid SemiExpendableItemId,
+    Guid ItemId,
     string ItemCode,
     string ItemName,
     string? Description,

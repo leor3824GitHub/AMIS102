@@ -1,10 +1,9 @@
-@page "/asset-management/semi-expendable-items"
+@page "/asset-management/item-catalog"
 @using FSH.Playground.Blazor.ApiClient
-@inject ISemiExpendableItemClient Client
+@inject IPropertyItemCatalogClient Client
 @inject ISnackbar Snackbar
-@inject IDialogService DialogService
 
-<FshPageHeader Title="Semi-Expendable Item Catalog" Description="Manage the item catalog for semi-expendable property (below ₱50,000 capitalization threshold)" />
+<FshPageHeader Title="Property Item Catalog" Description="Unified item catalog for all property types (semi-expendable and PPE). Capitalization threshold determines classification at receipt." />
 
 <MudGrid Spacing="3">
     <!-- Form Panel -->
@@ -118,8 +117,8 @@
 </MudGrid>
 
 @code {
-    private List<SemiExpendableItemSummary> _items = [];
-    private SemiExpendableItemDetails? _editing;
+    private List<PropertyItemCatalogSummary> _items = [];
+    private PropertyItemCatalogDetails? _editing;
     private ItemForm _form = new();
     private string? _keyword;
     private bool? _activeFilter = true;
@@ -175,14 +174,14 @@
         {
             if (_editing is null)
             {
-                await Client.CreateForUiAsync(new CreateSemiExpendableItemRequest(
+                await Client.CreateForUiAsync(new CreatePropertyItemCatalogRequest(
                     _form.Code, _form.Name, _form.Description,
                     _form.UACSObjectCode, _form.UnitOfMeasure, _form.EstimatedUsefulLifeYears));
                 Snackbar.Add("Item created.", Severity.Success);
             }
             else
             {
-                await Client.UpdateForUiAsync(_editing.Id, new UpdateSemiExpendableItemRequest(
+                await Client.UpdateForUiAsync(_editing.Id, new UpdatePropertyItemCatalogRequest(
                     _form.Code, _form.Name, _form.Description,
                     _form.UACSObjectCode, _form.UnitOfMeasure, _form.EstimatedUsefulLifeYears, _form.IsActive));
                 Snackbar.Add("Item updated.", Severity.Success);

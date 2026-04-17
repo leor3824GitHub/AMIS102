@@ -40,7 +40,7 @@ public sealed class CreatePropertyIncidentReportCommandHandler(AssetManagementDb
 
         // 3. Load the properties with their catalog item name (used as line-item description).
         var properties = await dbContext.SemiExpendableProperties
-            .Include(x => x.SemiExpendableItem)
+            .Include(x => x.Item)
             .Where(x => distinctIds.Contains(x.Id))
             .OrderBy(x => x.PropertyNo)
             .ToListAsync(cancellationToken)
@@ -88,7 +88,7 @@ public sealed class CreatePropertyIncidentReportCommandHandler(AssetManagementDb
                 reportId:                 report.Id,
                 semiExpendablePropertyId: property.Id,
                 itemNo:                   i + 1,
-                description:              property.SemiExpendableItem.Name,
+                description:              property.Item.Name,
                 unitCost:                 property.UnitCost,
                 categoryAtTimeOfReport:   property.Category);
 

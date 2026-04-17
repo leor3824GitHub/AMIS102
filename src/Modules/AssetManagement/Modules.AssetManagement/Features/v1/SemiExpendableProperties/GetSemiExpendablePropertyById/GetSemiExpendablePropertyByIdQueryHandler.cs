@@ -10,7 +10,7 @@ public sealed class GetSemiExpendablePropertyByIdQueryHandler(AssetManagementDbC
     public async ValueTask<SemiExpendablePropertyDetailsDto> Handle(GetSemiExpendablePropertyByIdQuery query, CancellationToken cancellationToken)
     {
         var property = await dbContext.SemiExpendableProperties
-            .Include(x => x.SemiExpendableItem)
+            .Include(x => x.Item)
             .FirstOrDefaultAsync(x => x.Id == query.Id, cancellationToken)
             .ConfigureAwait(false);
 
@@ -22,11 +22,11 @@ public sealed class GetSemiExpendablePropertyByIdQueryHandler(AssetManagementDbC
         return new SemiExpendablePropertyDetailsDto(
             property.Id,
             property.PropertyNo,
-            property.SemiExpendableItemId,
-            property.SemiExpendableItem.Code,
-            property.SemiExpendableItem.Name,
-            property.SemiExpendableItem.UnitOfMeasure,
-            property.SemiExpendableItem.EstimatedUsefulLifeYears,
+            property.ItemId,
+            property.Item.Code,
+            property.Item.Name,
+            property.Item.UnitOfMeasure,
+            property.Item.EstimatedUsefulLifeYears,
             property.Category.ToString(),
             property.SerialNo,
             property.AcquisitionDate,

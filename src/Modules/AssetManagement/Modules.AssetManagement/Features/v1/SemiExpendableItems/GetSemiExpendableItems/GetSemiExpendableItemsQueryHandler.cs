@@ -4,12 +4,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FSH.Modules.AssetManagement.Features.v1.SemiExpendableItems.GetSemiExpendableItems;
 
-public sealed class GetSemiExpendableItemsQueryHandler(AssetManagementDbContext dbContext)
-    : IQueryHandler<GetSemiExpendableItemsQuery, PagedSemiExpendableItemsResponse>
+public sealed class GetPropertyItemCatalogQueryHandler(AssetManagementDbContext dbContext)
+    : IQueryHandler<GetPropertyItemCatalogQuery, PagedPropertyItemCatalogResponse>
 {
-    public async ValueTask<PagedSemiExpendableItemsResponse> Handle(GetSemiExpendableItemsQuery query, CancellationToken cancellationToken)
+    public async ValueTask<PagedPropertyItemCatalogResponse> Handle(GetPropertyItemCatalogQuery query, CancellationToken cancellationToken)
     {
-        var itemsQuery = dbContext.SemiExpendableItems.AsQueryable();
+        var itemsQuery = dbContext.PropertyItemCatalog.AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(query.Keyword))
         {
@@ -35,7 +35,7 @@ public sealed class GetSemiExpendableItemsQueryHandler(AssetManagementDbContext 
             .OrderBy(x => x.Code)
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
-            .Select(x => new SemiExpendableItemSummaryDto(
+            .Select(x => new PropertyItemCatalogSummaryDto(
                 x.Id,
                 x.Code,
                 x.Name,
@@ -47,6 +47,6 @@ public sealed class GetSemiExpendableItemsQueryHandler(AssetManagementDbContext 
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
-        return new PagedSemiExpendableItemsResponse(items, pageNumber, pageSize, totalCount);
+        return new PagedPropertyItemCatalogResponse(items, pageNumber, pageSize, totalCount);
     }
 }

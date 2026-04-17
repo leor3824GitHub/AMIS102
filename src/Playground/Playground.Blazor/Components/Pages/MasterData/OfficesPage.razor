@@ -27,10 +27,16 @@
                 <MudCardContent>
                     <MudText Typo="Typo.h6" Class="mb-3">@(EditingOffice != null ? "Edit Office" : "Create Office")</MudText>
                     <MudStack Spacing="3">
-                        <MudTextField @bind-Value="_form.Code" Label="Code" Placeholder="Office code"
+                        <MudTextField @bind-Value="_form.Code" Label="Code" Placeholder="e.g. GSD, 100, NDO"
                                       Required="true" />
                         <MudTextField @bind-Value="_form.Name" Label="Name" Placeholder="Office name"
                                       Required="true" />
+                        <MudTextField @bind-Value="_form.Address" Label="Address"
+                                      Placeholder="Office address" Lines="2" />
+                        <MudTextField @bind-Value="_form.LocationCode" Label="Location Code"
+                                      Placeholder="e.g. 8600, 0100, 1301" />
+                        <MudTextField @bind-Value="_form.RegProvCode" Label="Reg./Prov. Code"
+                                      Placeholder="e.g. 100, NDO, 00B (leave blank for Central Office)" />
                         <MudTextField @bind-Value="_form.Description" Label="Description"
                                       Placeholder="Office description" Lines="2" />
                         <MudCheckBox @bind-Value="_form.IsActive"
@@ -65,8 +71,15 @@
                         <MudSimpleTable Dense="true" Hover="true" Striped="true">
                             <thead>
                                 <tr>
-                                    <th>Code</th>
-                                    <th>Name</th>
+                                    <th style="cursor:pointer" @onclick='() => SetSort("LocationCode")'>
+                                        Loc. Code @SortIcon("LocationCode")
+                                    </th>
+                                    <th style="cursor:pointer" @onclick='() => SetSort("Name")'>
+                                        Name @SortIcon("Name")
+                                    </th>
+                                    <th style="cursor:pointer" @onclick='() => SetSort("RegProvCode")'>
+                                        Reg./Prov. @SortIcon("RegProvCode")
+                                    </th>
                                     <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
@@ -75,8 +88,21 @@
                                 @foreach (var office in _offices)
                                 {
                                     <tr>
-                                        <td>@office.Code</td>
+                                        <td>
+                                            @if (!string.IsNullOrWhiteSpace(office.LocationCode))
+                                            {
+                                                <MudChip T="string" Size="Size.Small" Color="Color.Info" Label="true"
+                                                         Style="font-family: monospace;">@office.LocationCode</MudChip>
+                                            }
+                                        </td>
                                         <td>@office.Name</td>
+                                        <td>
+                                            @if (!string.IsNullOrWhiteSpace(office.RegProvCode))
+                                            {
+                                                <MudChip T="string" Size="Size.Small" Color="Color.Secondary" Label="true"
+                                                         Style="font-family: monospace;">@office.RegProvCode</MudChip>
+                                            }
+                                        </td>
                                         <td><MudChip T="string" Size="Size.Small" Color="@(office.IsActive ? Color.Success : Color.Default)">@(office.IsActive ? "Active" : "Inactive")</MudChip></td>
                                         <td>
                                             <MudStack Row="true" Spacing="1">
@@ -114,11 +140,16 @@
     private bool _isLoading = false;
     private string _searchKeyword = string.Empty;
     private string _statusFilter = "All";
+    private string _sortField = "Name";
+    private bool _sortAscending = true;
 
     public class OfficeForm
     {
         public string Code { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
+        public string? Address { get; set; }
+        public string? LocationCode { get; set; }
+        public string? RegProvCode { get; set; }
         public string? Description { get; set; }
         public bool IsActive { get; set; } = true;
     }
@@ -236,6 +267,9 @@
                     Id = EditingOffice.Id,
                     Code = _form.Code,
                     Name = _form.Name,
+                    Address = _form.Address,
+                    LocationCode = _form.LocationCode,
+                    RegProvCode = _form.RegProvCode,
                     Description = _form.Description,
                     IsActive = _form.IsActive
                 };
@@ -262,6 +296,9 @@
                 {
                     Code = _form.Code,
                     Name = _form.Name,
+                    Address = _form.Address,
+                    LocationCode = _form.LocationCode,
+                    RegProvCode = _form.RegProvCode,
                     Description = _form.Description,
                     IsActive = _form.IsActive
                 };
@@ -285,6 +322,9 @@
         {
             Code = office.Code,
             Name = office.Name,
+            Address = office.Address,
+            LocationCode = office.LocationCode,
+            RegProvCode = office.RegProvCode,
             Description = office.Description,
             IsActive = office.IsActive
         };
@@ -321,11 +361,40 @@
 
     private void ApplyLocalFilters()
     {
-        _offices = _statusFilter switch
+        var filtered = _statusFilter switch
         {
-            "Active" => _allOffices.Where(x => x.IsActive).ToList(),
-            "Inactive" => _allOffices.Where(x => !x.IsActive).ToList(),
-            _ => _allOffices.ToList()
+            "Active" => _allOffices.Where(x => x.IsActive),
+            "Inactive" => _allOffices.Where(x => !x.IsActive),
+            _ => _allOffices.AsEnumerable()
         };
+
+        _offices = (_sortField, _sortAscending) switch
+        {
+            ("Name", true)         => filtered.OrderBy(x => x.Name).ThenBy(x => x.Code).ToList(),
+            ("Name", false)        => filtered.OrderByDescending(x => x.Name).ThenBy(x => x.Code).ToList(),
+            ("LocationCode", true) => filtered.OrderBy(x => x.LocationCode).ThenBy(x => x.Name).ToList(),
+            ("LocationCode", false)=> filtered.OrderByDescending(x => x.LocationCode).ThenBy(x => x.Name).ToList(),
+            ("RegProvCode", true)  => filtered.OrderBy(x => x.RegProvCode).ThenBy(x => x.Name).ToList(),
+            ("RegProvCode", false) => filtered.OrderByDescending(x => x.RegProvCode).ThenBy(x => x.Name).ToList(),
+            _                     => filtered.OrderBy(x => x.Name).ToList()
+        };
+    }
+
+    private void SetSort(string field)
+    {
+        if (_sortField == field)
+            _sortAscending = !_sortAscending;
+        else
+        {
+            _sortField = field;
+            _sortAscending = true;
+        }
+        ApplyLocalFilters();
+    }
+
+    private string SortIcon(string field)
+    {
+        if (_sortField != field) return string.Empty;
+        return _sortAscending ? "▲" : "▼";
     }
 }

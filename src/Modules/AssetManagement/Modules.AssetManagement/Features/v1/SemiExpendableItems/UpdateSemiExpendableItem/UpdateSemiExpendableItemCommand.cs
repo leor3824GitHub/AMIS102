@@ -2,7 +2,7 @@ using Mediator;
 
 namespace FSH.Modules.AssetManagement.Features.v1.SemiExpendableItems.UpdateSemiExpendableItem;
 
-public sealed record UpdateSemiExpendableItemCommand(
+public sealed record UpdatePropertyItemCatalogCommand(
     Guid Id,
     string Code,
     string Name,

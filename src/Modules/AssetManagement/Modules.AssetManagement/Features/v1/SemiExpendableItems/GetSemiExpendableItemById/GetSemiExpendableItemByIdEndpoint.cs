@@ -9,19 +9,19 @@ namespace FSH.Modules.AssetManagement.Features.v1.SemiExpendableItems.GetSemiExp
 public static class GetSemiExpendableItemByIdEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
-        endpoints.MapGet("/{id:guid}", GetSemiExpendableItemById)
-            .WithName(nameof(GetSemiExpendableItemByIdQuery))
-            .WithSummary("Get semi-expendable item catalog entry by ID")
-            .Produces<SemiExpendableItemDetailsDto>(StatusCodes.Status200OK)
+        endpoints.MapGet("/{id:guid}", GetItemCatalogById)
+            .WithName(nameof(GetPropertyItemCatalogByIdQuery))
+            .WithSummary("Get item catalog entry by ID")
+            .Produces<PropertyItemCatalogDetailsDto>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound)
             .RequirePermission(AssetManagementModuleConstants.Permissions.SemiExpendableItems.View);
 
-    private static async Task<IResult> GetSemiExpendableItemById(
+    private static async Task<IResult> GetItemCatalogById(
         Guid id,
         IMediator mediator,
         CancellationToken cancellationToken)
     {
-        var result = await mediator.Send(new GetSemiExpendableItemByIdQuery(id), cancellationToken);
+        var result = await mediator.Send(new GetPropertyItemCatalogByIdQuery(id), cancellationToken);
         return TypedResults.Ok(result);
     }
 }

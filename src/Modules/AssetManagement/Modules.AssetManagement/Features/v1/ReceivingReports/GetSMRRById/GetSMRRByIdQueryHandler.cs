@@ -21,13 +21,13 @@ public sealed class GetSMRRByIdQueryHandler(AssetManagementDbContext dbContext)
         var items = await dbContext.SMRRItems
             .Where(x => x.SMRRId == query.Id)
             .Join(
-                dbContext.SemiExpendableItems,
-                item => item.SemiExpendableItemId,
+                dbContext.PropertyItemCatalog,
+                item => item.ItemId,
                 catalogItem => catalogItem.Id,
                 (item, catalogItem) => new SMRRItemDetailsDto(
                     item.Id,
                     item.Reference,
-                    item.SemiExpendableItemId,
+                    item.ItemId,
                     catalogItem.Code,
                     catalogItem.Name,
                     item.Description,

@@ -11,6 +11,9 @@ public sealed class PPERRItem : BaseEntity<Guid>
     /// <summary>FK to the parent PPERR.</summary>
     public Guid PPERRId { get; private set; }
 
+    /// <summary>FK to the unified item catalog. Nullable — may be null for manually-entered PPE descriptions.</summary>
+    public Guid? ItemId { get; private set; }
+
     /// <summary>Item number on the PPERR form (sequential within the report).</summary>
     public int ItemNo { get; private set; }
 
@@ -41,6 +44,15 @@ public sealed class PPERRItem : BaseEntity<Guid>
     /// <summary>Acquisition cost (Quantity × UnitCost), stored for reporting.</summary>
     public decimal Amount { get; private set; }
 
+    /// <summary>
+    /// Updates the PropertyCode field after auto-generation.
+    /// Called by the handler to stamp the first unit's generated code onto the line item.
+    /// </summary>
+    public void PatchPropertyCode(string propertyCode)
+    {
+        PropertyCode = propertyCode;
+    }
+
     public static PPERRItem Create(
         Guid pperrId,
         int itemNo,
@@ -51,7 +63,8 @@ public sealed class PPERRItem : BaseEntity<Guid>
         decimal unitCost,
         string? classCode = null,
         string? itemCode = null,
-        string? officeCode = null)
+        string? officeCode = null,
+        Guid? itemId = null)
     {
         return new PPERRItem
         {
@@ -67,6 +80,7 @@ public sealed class PPERRItem : BaseEntity<Guid>
             Quantity     = quantity,
             UnitCost     = unitCost,
             Amount       = quantity * unitCost,
+            ItemId       = itemId,
         };
     }
 }

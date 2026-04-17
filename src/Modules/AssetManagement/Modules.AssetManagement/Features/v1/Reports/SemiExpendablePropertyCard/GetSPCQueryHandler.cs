@@ -11,21 +11,21 @@ public sealed class GetSPCQueryHandler(AssetManagementDbContext dbContext)
     public async ValueTask<SPCDto> Handle(GetSPCQuery query, CancellationToken cancellationToken)
     {
         // Verify the catalog item exists.
-        var item = await dbContext.SemiExpendableItems
-            .Where(x => x.Id == query.SemiExpendableItemId)
+        var item = await dbContext.PropertyItemCatalog
+            .Where(x => x.Id == query.ItemId)
             .Select(x => new { x.Id, x.Code, x.Name })
             .FirstOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false);
 
         if (item is null)
         {
-            throw new NotFoundException($"Semi-expendable item with ID {query.SemiExpendableItemId} not found.");
+            throw new NotFoundException($"Semi-expendable item with ID {query.ItemId} not found.");
         }
 
         // Collect all property IDs for this item type (needed for non-SMRR queries).
         var propertyIds = await dbContext.SemiExpendableProperties
             .IgnoreQueryFilters()
-            .Where(x => x.SemiExpendableItemId == query.SemiExpendableItemId)
+            .Where(x => x.ItemId == query.ItemId)
             .Select(x => x.Id)
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -35,7 +35,7 @@ public sealed class GetSPCQueryHandler(AssetManagementDbContext dbContext)
         // ── 1. Receipts via SMRR ──────────────────────────────────────────────
         var smrrEntries = await (
             from smrrItem in dbContext.SMRRItems
-                .Where(x => x.SemiExpendableItemId == query.SemiExpendableItemId)
+                .Where(x => x.ItemId == query.ItemId)
             join smrr in dbContext.SuppliesMaterialsReceivingReports.IgnoreQueryFilters()
                 on smrrItem.SMRRId equals smrr.Id
             where (!query.DateFrom.HasValue || smrr.Date >= query.DateFrom.Value)

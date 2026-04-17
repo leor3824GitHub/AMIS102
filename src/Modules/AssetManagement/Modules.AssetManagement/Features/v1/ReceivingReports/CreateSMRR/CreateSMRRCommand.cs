@@ -17,7 +17,7 @@ public sealed record CreateSMRRCommand(
 
 public sealed record CreateSMRRItemRequest(
     string? Reference,
-    Guid SemiExpendableItemId,
+    Guid ItemId,
     string? Description,
     DateOnly AcquisitionDate,
     int Quantity,

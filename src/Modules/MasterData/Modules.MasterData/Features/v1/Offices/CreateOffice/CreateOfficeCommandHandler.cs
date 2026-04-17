@@ -33,12 +33,12 @@ public sealed class CreateOfficeCommandHandler : ICommandHandler<CreateOfficeCom
             ]);
         }
 
-        var office = Office.Create(command.Code, command.Name, command.Description);
+        var office = Office.Create(command.Code, command.Name, command.Description, command.RegProvCode, command.LocationCode, command.Address);
         office.CreatedBy = _currentUser.GetUserId().ToString();
 
         _dbContext.Offices.Add(office);
         await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-        return new OfficeReferenceDto(office.Id, office.Code, office.Name, office.Description, office.IsActive);
+        return new OfficeReferenceDto(office.Id, office.Code, office.Name, office.Description, office.Address, office.LocationCode, office.RegProvCode, office.IsActive);
     }
 }

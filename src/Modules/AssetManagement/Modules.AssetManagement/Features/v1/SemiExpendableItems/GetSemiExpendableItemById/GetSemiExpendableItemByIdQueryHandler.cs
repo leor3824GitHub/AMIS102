@@ -4,21 +4,21 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FSH.Modules.AssetManagement.Features.v1.SemiExpendableItems.GetSemiExpendableItemById;
 
-public sealed class GetSemiExpendableItemByIdQueryHandler(AssetManagementDbContext dbContext)
-    : IQueryHandler<GetSemiExpendableItemByIdQuery, SemiExpendableItemDetailsDto>
+public sealed class GetPropertyItemCatalogByIdQueryHandler(AssetManagementDbContext dbContext)
+    : IQueryHandler<GetPropertyItemCatalogByIdQuery, PropertyItemCatalogDetailsDto>
 {
-    public async ValueTask<SemiExpendableItemDetailsDto> Handle(GetSemiExpendableItemByIdQuery query, CancellationToken cancellationToken)
+    public async ValueTask<PropertyItemCatalogDetailsDto> Handle(GetPropertyItemCatalogByIdQuery query, CancellationToken cancellationToken)
     {
-        var item = await dbContext.SemiExpendableItems
+        var item = await dbContext.PropertyItemCatalog
             .FirstOrDefaultAsync(x => x.Id == query.Id, cancellationToken)
             .ConfigureAwait(false);
 
         if (item is null)
         {
-            throw new KeyNotFoundException($"Semi-expendable item with ID {query.Id} not found.");
+            throw new KeyNotFoundException($"Item catalog entry with ID {query.Id} not found.");
         }
 
-        return new SemiExpendableItemDetailsDto(
+        return new PropertyItemCatalogDetailsDto(
             item.Id,
             item.Code,
             item.Name,

@@ -2,19 +2,19 @@ using Mediator;
 
 namespace FSH.Modules.AssetManagement.Features.v1.SemiExpendableItems.GetSemiExpendableItems;
 
-public sealed record GetSemiExpendableItemsQuery(
+public sealed record GetPropertyItemCatalogQuery(
     string? Keyword = null,
     bool? IsActive = null,
     int PageNumber = 1,
-    int PageSize = 10) : IQuery<PagedSemiExpendableItemsResponse>;
+    int PageSize = 10) : IQuery<PagedPropertyItemCatalogResponse>;
 
-public sealed record PagedSemiExpendableItemsResponse(
-    ICollection<SemiExpendableItemSummaryDto> Items,
+public sealed record PagedPropertyItemCatalogResponse(
+    ICollection<PropertyItemCatalogSummaryDto> Items,
     int PageNumber,
     int PageSize,
     int TotalCount);
 
-public sealed record SemiExpendableItemSummaryDto(
+public sealed record PropertyItemCatalogSummaryDto(
     Guid Id,
     string Code,
     string Name,

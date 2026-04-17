@@ -24,11 +24,11 @@ public sealed record EmployeeReferenceDto(
     string? DefaultUnitOfMeasureName,
     bool IsActive);
 
-public sealed record OfficeReferenceDto(Guid Id, string Code, string Name, string? Description, bool IsActive);
+public sealed record OfficeReferenceDto(Guid Id, string Code, string Name, string? Description, string? Address, string? LocationCode, string? RegProvCode, bool IsActive);
 
-public sealed record CreateOfficeCommand(string Code, string Name, string? Description, bool IsActive = true) : ICommand<OfficeReferenceDto>;
+public sealed record CreateOfficeCommand(string Code, string Name, string? Description, string? Address = null, string? LocationCode = null, string? RegProvCode = null, bool IsActive = true) : ICommand<OfficeReferenceDto>;
 
-public sealed record UpdateOfficeCommand(Guid Id, string Code, string Name, string? Description, bool IsActive) : ICommand<OfficeReferenceDto>;
+public sealed record UpdateOfficeCommand(Guid Id, string Code, string Name, string? Description, string? Address, string? LocationCode, string? RegProvCode, bool IsActive) : ICommand<OfficeReferenceDto>;
 
 public sealed record DeleteOfficeCommand(Guid Id) : ICommand<Unit>;
 

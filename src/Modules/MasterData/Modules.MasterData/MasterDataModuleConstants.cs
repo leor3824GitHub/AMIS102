@@ -2,7 +2,7 @@
 
 public static class MasterDataModuleConstants
 {
-    public const string SchemaName = "employee";
+    public const string SchemaName = "masterdata";
 
     public static class Permissions
     {

@@ -1,0 +1,197 @@
+@using FSH.Playground.Blazor.ApiClient
+@using FSH.Modules.MasterData.Contracts.v1.PropertyClasses
+@inject IOrganizationProfileClient OrgProfileClient
+@inject IPropertyClassClient PropertyClassClient
+
+<MudStack Spacing="0">
+    <MudTextField Value="@Value"
+                  ValueChanged="@((string v) => ValueChanged.InvokeAsync(v))"
+                  Label="@Label"
+                  Variant="Variant.Outlined"
+                  Required="@Required"
+                  MaxLength="@MaxLength"
+                  Placeholder="@Placeholder"
+                  Disabled="@Disabled"
+                  Adornment="Adornment.End"
+                  AdornmentIcon="@Icons.Material.Outlined.AutoAwesome"
+                  AdornmentColor="@(_showGenerator ? Color.Primary : Color.Default)"
+                  OnAdornmentClick="ToggleGeneratorAsync" />
+
+    @if (_showGenerator)
+    {
+        <MudPaper Elevation="4" Class="pa-3 mt-1"
+                  Style="border-left: 3px solid var(--mud-palette-primary); border-radius: 0 0 4px 4px;">
+            <MudStack Spacing="2">
+
+                <!-- Office code (readonly) -->
+                <MudTextField Value="@_officeCode" Label="Office Code (Annex E)"
+                              Variant="Variant.Outlined" Size="Size.Small" ReadOnly="true"
+                              Adornment="@(_officeCode == "???" ? Adornment.End : Adornment.None)"
+                              AdornmentIcon="@Icons.Material.Outlined.Warning"
+                              AdornmentColor="Color.Warning" />
+
+                <!-- Property Class -->
+                <MudSelect @bind-Value="_classCode"
+                           Label="Property Class" Variant="Variant.Outlined" T="string?"
+                           Size="Size.Small"
+                           ToStringFunc="@(c => FormatClass(c))"
+                           AnchorOrigin="Origin.BottomLeft">
+                    <MudSelectItem T="string?" Value="@((string?)null)">— Select —</MudSelectItem>
+                    @foreach (var cls in _classes)
+                    {
+                        <MudSelectItem T="string?" Value="@cls.Code">
+                            @cls.Code — @cls.Name
+                        </MudSelectItem>
+                    }
+                </MudSelect>
+
+                <!-- Category / Item Code -->
+                <MudSelect @bind-Value="_itemCode"
+                           Label="Category Code" Variant="Variant.Outlined" T="string?"
+                           Size="Size.Small"
+                           Disabled="@(string.IsNullOrWhiteSpace(_classCode))"
+                           AnchorOrigin="Origin.BottomLeft">
+                    <MudSelectItem T="string?" Value="@((string?)null)">— Select —</MudSelectItem>
+                    @foreach (var item in ActiveItems)
+                    {
+                        <MudSelectItem T="string?" Value="@item.ItemCode">
+                            @item.ItemCode — @item.Name
+                        </MudSelectItem>
+                    }
+                </MudSelect>
+
+                <!-- Year + Sequence -->
+                <MudStack Row="true" Spacing="2">
+                    <MudNumericField @bind-Value="_year" Label="Year" Variant="Variant.Outlined"
+                                     Size="Size.Small" Min="2000" Max="2099" Style="flex:1" />
+                    <MudNumericField @bind-Value="_seq" Label="Sequence" Variant="Variant.Outlined"
+                                     Size="Size.Small" Min="1" Max="999" Style="flex:1" />
+                </MudStack>
+
+                <!-- Preview -->
+                <MudPaper Elevation="0" Class="pa-2"
+                          Style="background: var(--mud-palette-background-grey); border-radius: 4px;">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                        <MudIcon Icon="@Icons.Material.Outlined.Tag" Size="Size.Small" Color="Color.Primary" />
+                        <MudText Style="font-family: monospace; font-weight: 700; font-size: 0.9rem; letter-spacing: 0.04em; color: var(--mud-palette-primary);">
+                            @PreviewCode
+                        </MudText>
+                    </MudStack>
+                    @if (!string.IsNullOrWhiteSpace(_classCode))
+                    {
+                        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">
+                            @FormatClass(_classCode)@(string.IsNullOrWhiteSpace(_itemCode) ? "" : $" › {FormatItem(_itemCode)}")
+                        </MudText>
+                    }
+                </MudPaper>
+
+                @if (_officeCode == "???")
+                {
+                    <MudAlert Severity="Severity.Warning" Dense="true" Class="py-1">
+                        Office Code not set — configure in <b>Master Data → Organization Profile</b>.
+                    </MudAlert>
+                }
+
+                <!-- Actions -->
+                <MudStack Row="true" Spacing="1">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
+                               FullWidth="true" OnClick="UseCodeAsync" Disabled="@(!CanGenerate)">
+                        <MudIcon Icon="@Icons.Material.Outlined.Check" Size="Size.Small" Class="mr-1" />
+                        Use this code
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Default" Size="Size.Small"
+                               OnClick="@(() => _showGenerator = false)">
+                        Cancel
+                    </MudButton>
+                </MudStack>
+
+            </MudStack>
+        </MudPaper>
+    }
+</MudStack>
+
+@code {
+    [Parameter] public string Value { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    [Parameter] public string Label { get; set; } = "Property No.";
+    [Parameter] public bool Required { get; set; }
+    [Parameter] public int MaxLength { get; set; } = 32;
+    [Parameter] public string Placeholder { get; set; } = string.Empty;
+    [Parameter] public bool Disabled { get; set; }
+
+    private bool _showGenerator;
+    private string _officeCode = "???";
+    private int _year = DateTime.Now.Year;
+    private int _seq = 1;
+    private string? _classCode;
+    private string? _itemCode;
+    private List<PropertyClassDto> _classes = [];
+    private bool _loaded;
+
+    // Format: {Year}-NFA-{Office}-{Class}-{Item}-{Seq:D3}  (same for both SE and PPE)
+    private string PreviewCode =>
+        $"{_year}-NFA-{_officeCode}-{_classCode ?? "??"}-{_itemCode ?? "??"}-{_seq:D3}";
+
+    private bool CanGenerate =>
+        _officeCode != "???" &&
+        !string.IsNullOrWhiteSpace(_classCode) &&
+        !string.IsNullOrWhiteSpace(_itemCode);
+
+    private IEnumerable<PropertyClassItemDto> ActiveItems =>
+        (_classes.FirstOrDefault(c => c.Code == _classCode)?.Items ?? [])
+        .Where(i => i.IsActive)
+        .OrderBy(i => i.ItemCode);
+
+    private async Task ToggleGeneratorAsync()
+    {
+        _showGenerator = !_showGenerator;
+        if (_showGenerator && !_loaded)
+        {
+            await Task.WhenAll(LoadOfficeCodeAsync(), LoadClassesAsync());
+            _loaded = true;
+        }
+    }
+
+    private async Task LoadOfficeCodeAsync()
+    {
+        try
+        {
+            var profile = await OrgProfileClient.GetAsync();
+            _officeCode = string.IsNullOrWhiteSpace(profile?.AnnexECode)
+                ? "???"
+                : profile.AnnexECode.ToUpperInvariant();
+        }
+        catch { _officeCode = "???"; }
+    }
+
+    private async Task LoadClassesAsync()
+    {
+        try
+        {
+            var all = await PropertyClassClient.GetTreeAsync();
+            _classes = all?.Where(c => c.IsActive).OrderBy(c => c.Code).ToList() ?? [];
+        }
+        catch { _classes = []; }
+    }
+
+    private string FormatClass(string? code)
+    {
+        if (string.IsNullOrWhiteSpace(code)) return string.Empty;
+        var cls = _classes.FirstOrDefault(c => c.Code == code);
+        return cls is null ? code : $"{cls.Code} — {cls.Name}";
+    }
+
+    private string FormatItem(string? itemCode)
+    {
+        if (string.IsNullOrWhiteSpace(itemCode)) return string.Empty;
+        var item = ActiveItems.FirstOrDefault(i => i.ItemCode == itemCode);
+        return item is null ? itemCode : $"{item.ItemCode} — {item.Name}";
+    }
+
+    private async Task UseCodeAsync()
+    {
+        await ValueChanged.InvokeAsync(PreviewCode);
+        _showGenerator = false;
+        _seq++;
+    }
+}

@@ -38,7 +38,6 @@ public sealed class CreatePPERRCommandHandler : ICommandHandler<CreatePPERRComma
             ]);
         }
 
-        // Resolve tenant office code once for all items in this PPERR
         var orgProfile = await _mediator.Send(new GetOrganizationProfileQuery(), cancellationToken)
             .ConfigureAwait(false);
         var officeCode = orgProfile?.AnnexECode ?? "NFA";
@@ -52,41 +51,16 @@ public sealed class CreatePPERRCommandHandler : ICommandHandler<CreatePPERRComma
             command.ReceivedByEmployeeId,
             command.NotedByEmployeeId);
 
-        pperr.CreatedBy = _currentUser.GetUserId().ToString();
+        string userId = _currentUser.GetUserId().ToString();
+        pperr.CreatedBy = userId;
         _dbContext.PPEReceivingReports.Add(pperr);
 
-        int ppeItemsCreated = 0;
         int year = command.Date.Year;
+        string tenantId = _currentUser.GetTenant() ?? string.Empty;
 
-        // Pre-load or create counters for all unique (ClassCode, ItemCode) combinations in this command
-        var counterKeys = command.Items
-            .Where(x => !string.IsNullOrWhiteSpace(x.ClassCode) && !string.IsNullOrWhiteSpace(x.ItemCode))
-            .Select(x => (ClassCode: x.ClassCode!.ToUpperInvariant(), ItemCode: x.ItemCode!.ToUpperInvariant()))
-            .Distinct()
-            .ToList();
-
-        var counters = new Dictionary<(string ClassCode, string ItemCode), PropertyCodeCounter>();
-        var tenantId = _currentUser.GetTenant() ?? string.Empty;
-
-        foreach (var key in counterKeys)
-        {
-            var counter = await _dbContext.PropertyCodeCounters
-                .FirstOrDefaultAsync(c =>
-                    c.TenantId == tenantId &&
-                    c.ClassCode == key.ClassCode &&
-                    c.ItemCode == key.ItemCode &&
-                    c.Year == year,
-                    cancellationToken)
-                .ConfigureAwait(false);
-
-            if (counter is null)
-            {
-                counter = PropertyCodeCounter.Start(tenantId, key.ClassCode, key.ItemCode, year);
-                _dbContext.PropertyCodeCounters.Add(counter);
-            }
-
-            counters[key] = counter;
-        }
+        // Build PPERRItems upfront (no property codes yet for auto-classified items).
+        // These stay tracked across retries — their PropertyCode will be patched each attempt.
+        var itemPairs = new List<(PPERRItem PperrItem, CreatePPERRItemRequest Request, bool HasClassification, string? ClassCode, string? ItemCode)>();
 
         foreach (var (itemRequest, itemNo) in command.Items.Select((r, i) => (r, i + 1)))
         {
@@ -94,12 +68,12 @@ public sealed class CreatePPERRCommandHandler : ICommandHandler<CreatePPERRComma
                                   && !string.IsNullOrWhiteSpace(itemRequest.ItemCode);
 
             string? resolvedClassCode = hasClassification ? itemRequest.ClassCode!.ToUpperInvariant() : null;
-            string? resolvedItemCode = hasClassification ? itemRequest.ItemCode!.ToUpperInvariant() : null;
+            string? resolvedItemCode  = hasClassification ? itemRequest.ItemCode!.ToUpperInvariant()  : null;
 
             var pperrItem = PPERRItem.Create(
                 pperr.Id,
                 itemNo,
-                itemRequest.PropertyCode ?? string.Empty,   // will be patched per-unit below if auto-generated
+                itemRequest.PropertyCode ?? string.Empty,
                 itemRequest.Description,
                 itemRequest.DateAcquired,
                 itemRequest.Quantity,
@@ -109,48 +83,108 @@ public sealed class CreatePPERRCommandHandler : ICommandHandler<CreatePPERRComma
                 hasClassification ? officeCode : null);
 
             _dbContext.PPERRItems.Add(pperrItem);
-
-            for (int i = 0; i < itemRequest.Quantity; i++)
-            {
-                string propertyCode;
-                string propertyNumber;
-
-                if (hasClassification)
-                {
-                    var key = (ClassCode: resolvedClassCode!, ItemCode: resolvedItemCode!);
-                    var counter = counters[key];
-                    var seq = counter.NextSequence();
-
-                    // Format: {YYYY}-NFA-{OFFICE}-{CLASS}-{ITEM}-{SEQ:D3}
-                    propertyCode = $"{year}-NFA-{officeCode}-{resolvedClassCode}-{resolvedItemCode}-{seq:D3}";
-                    propertyNumber = propertyCode;
-                }
-                else
-                {
-                    propertyCode = itemRequest.PropertyCode ?? $"PPE-{year}-{ppeItemsCreated + 1:D5}";
-                    propertyNumber = propertyCode;
-                }
-
-                var ppeItem = PPEItem.Create(
-                    propertyCode,
-                    propertyNumber,
-                    itemRequest.Description,
-                    itemRequest.SerialNumber,
-                    itemRequest.DateAcquired,
-                    itemRequest.UnitCost,
-                    itemRequest.EstimatedUsefulLifeYears,
-                    pperr.Id,
-                    resolvedClassCode,
-                    resolvedItemCode,
-                    hasClassification ? officeCode : null);
-
-                ppeItem.CreatedBy = _currentUser.GetUserId().ToString();
-                _dbContext.PPEItems.Add(ppeItem);
-                ppeItemsCreated++;
-            }
+            itemPairs.Add((pperrItem, itemRequest, hasClassification, resolvedClassCode, resolvedItemCode));
         }
 
-        await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        // Retry loop: handles optimistic concurrency conflicts on PropertyCodeCounter (xmin).
+        // On conflict: detach stale counters and PPEItems, reload counters fresh, regenerate codes.
+        const int maxAttempts = 3;
+        int ppeItemsCreated = 0;
+
+        for (int attempt = 0; ; attempt++)
+        {
+            ppeItemsCreated = 0;
+
+            // Detach PPEItems and counters from any previous failed attempt
+            foreach (var entry in _dbContext.ChangeTracker.Entries<PPEItem>().ToList())
+                entry.State = EntityState.Detached;
+            foreach (var entry in _dbContext.ChangeTracker.Entries<PropertyCodeCounter>().ToList())
+                entry.State = EntityState.Detached;
+
+            // Load (or create) counters fresh for each (ClassCode, ItemCode) pair in this command
+            var counterKeys = itemPairs
+                .Where(p => p.HasClassification)
+                .Select(p => (ClassCode: p.ClassCode!, ItemCode: p.ItemCode!))
+                .Distinct()
+                .ToList();
+
+            var counters = new Dictionary<(string ClassCode, string ItemCode), PropertyCodeCounter>();
+
+            foreach (var key in counterKeys)
+            {
+                var counter = await _dbContext.PropertyCodeCounters
+                    .FirstOrDefaultAsync(c =>
+                        c.TenantId == tenantId &&
+                        c.ClassCode == key.ClassCode &&
+                        c.ItemCode  == key.ItemCode  &&
+                        c.Year      == year,
+                        cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (counter is null)
+                {
+                    counter = PropertyCodeCounter.Start(tenantId, key.ClassCode, key.ItemCode, year);
+                    _dbContext.PropertyCodeCounters.Add(counter);
+                }
+
+                counters[key] = counter;
+            }
+
+            // Generate PPEItems; patch first auto-generated code back onto the PPERR line item
+            foreach (var (pperrItem, itemRequest, hasClassification, resolvedClassCode, resolvedItemCode) in itemPairs)
+            {
+                string? firstPropertyCode = null;
+
+                for (int i = 0; i < itemRequest.Quantity; i++)
+                {
+                    string propertyCode;
+
+                    if (hasClassification)
+                    {
+                        var seq = counters[(resolvedClassCode!, resolvedItemCode!)].NextSequence();
+                        propertyCode = $"{year}-NFA-{officeCode}-{resolvedClassCode}-{resolvedItemCode}-{seq:D3}";
+                    }
+                    else
+                    {
+                        propertyCode = itemRequest.PropertyCode ?? $"PPE-{year}-{ppeItemsCreated + 1:D5}";
+                    }
+
+                    firstPropertyCode ??= propertyCode;
+
+                    var ppeItem = PPEItem.Create(
+                        propertyCode,
+                        propertyCode,
+                        itemRequest.Description,
+                        itemRequest.SerialNumber,
+                        itemRequest.DateAcquired,
+                        itemRequest.UnitCost,
+                        itemRequest.EstimatedUsefulLifeYears,
+                        pperr.Id,
+                        resolvedClassCode,
+                        resolvedItemCode,
+                        hasClassification ? officeCode : null);
+
+                    ppeItem.CreatedBy = userId;
+                    _dbContext.PPEItems.Add(ppeItem);
+                    ppeItemsCreated++;
+                }
+
+                // Stamp first generated code onto the PPERR line item for reporting
+                if (hasClassification && firstPropertyCode is not null)
+                    pperrItem.PatchPropertyCode(firstPropertyCode);
+            }
+
+            try
+            {
+                await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                break;
+            }
+            catch (DbUpdateConcurrencyException) when (attempt < maxAttempts - 1)
+            {
+                // Another request modified a counter row concurrently.
+                // The outer loop will detach and reload everything for the next attempt.
+            }
+        }
 
         return new CreatePPERRResult(pperr.Id, pperr.PPERRNo, ppeItemsCreated);
     }

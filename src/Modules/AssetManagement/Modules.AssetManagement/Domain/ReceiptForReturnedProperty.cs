@@ -11,7 +11,7 @@ namespace FSH.Modules.AssetManagement.Domain;
 public sealed class ReceiptForReturnedProperty : AggregateRoot<Guid>, IAuditableEntity
 {
     /// <summary>
-    /// Control number. Suggested format: RRP-YYYY-MM-NNNN.
+    /// Control number. Suggested format: RRSP-YYYY-MM-NNNN.
     /// </summary>
     public string RRSPNo { get; private set; } = default!;
 

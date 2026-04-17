@@ -24,15 +24,15 @@ public sealed class SemiExpendablePropertyConfiguration : IEntityTypeConfigurati
         builder.HasIndex(x => x.PropertyNo).IsUnique();
         builder.HasIndex(x => x.Status);
         builder.HasIndex(x => x.Category);
-        builder.HasIndex(x => x.SemiExpendableItemId);
+        builder.HasIndex(x => x.ItemId);
         builder.HasIndex(x => x.CurrentCustodianId);
 
         builder.Property(x => x.SMRRItemId);
         builder.HasIndex(x => x.SMRRItemId);
 
-        builder.HasOne(x => x.SemiExpendableItem)
+        builder.HasOne(x => x.Item)
             .WithMany()
-            .HasForeignKey(x => x.SemiExpendableItemId)
+            .HasForeignKey(x => x.ItemId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Property(x => x.IsDeleted).HasDefaultValue(false);

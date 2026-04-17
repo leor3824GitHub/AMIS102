@@ -162,7 +162,7 @@ public class AssetManagementModule : IModule
             .WithTags("AssetManagement")
             .WithApiVersionSet(apiVersionSet);
 
-        var semiExpendableItemsGroup      = moduleGroup.MapGroup("/semi-expendable-items");
+        var semiExpendableItemsGroup      = moduleGroup.MapGroup("/item-catalog");
         var semiExpendablePropertiesGroup = moduleGroup.MapGroup("/semi-expendable-properties");
         var receivingReportsGroup         = moduleGroup.MapGroup("/receiving-reports");
         var icsGroup                      = moduleGroup.MapGroup("/inventory-custodian-slips");

@@ -2,9 +2,9 @@ using FluentValidation;
 
 namespace FSH.Modules.AssetManagement.Features.v1.SemiExpendableItems.CreateSemiExpendableItem;
 
-public sealed class CreateSemiExpendableItemCommandValidator : AbstractValidator<CreateSemiExpendableItemCommand>
+public sealed class CreatePropertyItemCatalogCommandValidator : AbstractValidator<CreatePropertyItemCatalogCommand>
 {
-    public CreateSemiExpendableItemCommandValidator()
+    public CreatePropertyItemCatalogCommandValidator()
     {
         RuleFor(x => x.Code)
             .NotEmpty().WithMessage("Code is required.")

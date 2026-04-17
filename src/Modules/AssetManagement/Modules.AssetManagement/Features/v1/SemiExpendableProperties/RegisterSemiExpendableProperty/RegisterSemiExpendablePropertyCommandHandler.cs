@@ -32,18 +32,18 @@ public sealed class RegisterSemiExpendablePropertyCommandHandler : ICommandHandl
             ]);
         }
 
-        var item = await _dbContext.SemiExpendableItems
-            .FirstOrDefaultAsync(x => x.Id == command.SemiExpendableItemId, cancellationToken)
+        var item = await _dbContext.PropertyItemCatalog
+            .FirstOrDefaultAsync(x => x.Id == command.ItemId, cancellationToken)
             .ConfigureAwait(false);
 
         if (item is null)
         {
-            throw new KeyNotFoundException($"Semi-expendable item with ID {command.SemiExpendableItemId} not found.");
+            throw new KeyNotFoundException($"Item catalog entry with ID {command.ItemId} not found.");
         }
 
         var property = SemiExpendableProperty.Create(
             command.PropertyNo,
-            command.SemiExpendableItemId,
+            command.ItemId,
             command.Category,
             command.SerialNo,
             command.AcquisitionDate,
@@ -59,7 +59,7 @@ public sealed class RegisterSemiExpendablePropertyCommandHandler : ICommandHandl
         return new SemiExpendablePropertyDto(
             property.Id,
             property.PropertyNo,
-            property.SemiExpendableItemId,
+            property.ItemId,
             item.Code,
             item.Name,
             property.Category.ToString(),

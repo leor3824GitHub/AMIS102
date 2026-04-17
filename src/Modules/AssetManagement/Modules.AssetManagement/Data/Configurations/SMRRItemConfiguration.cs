@@ -19,16 +19,16 @@ public sealed class SMRRItemConfiguration : IEntityTypeConfiguration<SMRRItem>
         builder.Property(x => x.Amount).HasColumnType("numeric(18,2)").IsRequired();
 
         builder.HasIndex(x => x.SMRRId);
-        builder.HasIndex(x => x.SemiExpendableItemId);
+        builder.HasIndex(x => x.ItemId);
 
         builder.HasOne<SuppliesMaterialsReceivingReport>()
             .WithMany()
             .HasForeignKey(x => x.SMRRId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasOne<SemiExpendableItem>()
+        builder.HasOne<PropertyItemCatalog>()
             .WithMany()
-            .HasForeignKey(x => x.SemiExpendableItemId)
+            .HasForeignKey(x => x.ItemId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

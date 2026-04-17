@@ -74,10 +74,14 @@ public sealed class ListOfficeReferencesQueryHandler(MasterDataDbContext dbConte
 
         if (!string.IsNullOrWhiteSpace(query.Keyword))
         {
+            var pattern = $"%{query.Keyword}%";
             officesQuery = officesQuery.Where(x =>
-                x.Code.Contains(query.Keyword) ||
-                x.Name.Contains(query.Keyword) ||
-                (x.Description != null && x.Description.Contains(query.Keyword)));
+                EF.Functions.ILike(x.Code, pattern) ||
+                EF.Functions.ILike(x.Name, pattern) ||
+                (x.LocationCode != null && EF.Functions.ILike(x.LocationCode, pattern)) ||
+                (x.RegProvCode != null && EF.Functions.ILike(x.RegProvCode, pattern)) ||
+                (x.Address != null && EF.Functions.ILike(x.Address, pattern)) ||
+                (x.Description != null && EF.Functions.ILike(x.Description, pattern)));
         }
 
         if (query.IsActive.HasValue)
@@ -88,7 +92,7 @@ public sealed class ListOfficeReferencesQueryHandler(MasterDataDbContext dbConte
         officesQuery = officesQuery.OrderBy(x => x.Name).ThenBy(x => x.Code);
 
         return await officesQuery
-            .Select(x => new OfficeReferenceDto(x.Id, x.Code, x.Name, x.Description, x.IsActive))
+            .Select(x => new OfficeReferenceDto(x.Id, x.Code, x.Name, x.Description, x.Address, x.LocationCode, x.RegProvCode, x.IsActive))
             .ToPagedResponseAsync(query, cancellationToken)
             .ConfigureAwait(false);
     }
@@ -101,7 +105,7 @@ public sealed class GetOfficeReferenceByIdQueryHandler(MasterDataDbContext dbCon
     {
         return await dbContext.Offices.AsNoTracking()
             .Where(x => x.Id == query.Id)
-            .Select(x => new OfficeReferenceDto(x.Id, x.Code, x.Name, x.Description, x.IsActive))
+            .Select(x => new OfficeReferenceDto(x.Id, x.Code, x.Name, x.Description, x.Address, x.LocationCode, x.RegProvCode, x.IsActive))
             .FirstOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false);
     }

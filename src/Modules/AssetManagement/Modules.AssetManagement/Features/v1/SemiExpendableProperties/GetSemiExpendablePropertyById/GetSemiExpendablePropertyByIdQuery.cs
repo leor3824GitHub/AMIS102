@@ -7,7 +7,7 @@ public sealed record GetSemiExpendablePropertyByIdQuery(Guid Id) : IQuery<SemiEx
 public sealed record SemiExpendablePropertyDetailsDto(
     Guid Id,
     string PropertyNo,
-    Guid SemiExpendableItemId,
+    Guid ItemId,
     string ItemCode,
     string ItemName,
     string UnitOfMeasure,

@@ -6,7 +6,7 @@ namespace FSH.Modules.AssetManagement.Domain;
 /// Tracks the last-used sequence number for property code generation per tenant,
 /// classification code, item code, and fiscal year.
 /// Key: TenantId + ClassCode + ItemCode + Year.
-/// Uses optimistic concurrency (Version) to guard against race conditions.
+/// Uses PostgreSQL xmin optimistic concurrency to guard against race conditions.
 /// </summary>
 public sealed class PropertyCodeCounter : BaseEntity<Guid>
 {

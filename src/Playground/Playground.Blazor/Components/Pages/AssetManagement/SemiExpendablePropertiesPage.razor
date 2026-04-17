@@ -1,7 +1,7 @@
 @page "/asset-management/semi-expendable-properties"
 @using FSH.Playground.Blazor.ApiClient
 @inject ISemiExpendablePropertyClient Client
-@inject ISemiExpendableItemClient ItemClient
+@inject IPropertyItemCatalogClient ItemClient
 @inject ISnackbar Snackbar
 
 <FshPageHeader Title="Semi-Expendable Property Units" Description="Individual property units tracked per COA Circular 2022-004. Register manually or via SMRR." />
@@ -13,9 +13,12 @@
             <MudCardContent>
                 <MudText Typo="Typo.h6" Class="mb-3">Register Property Unit</MudText>
                 <MudStack Spacing="2">
-                    <MudTextField @bind-Value="_form.PropertyNo" Label="Property No." Variant="Variant.Outlined"
-                                  Required="true" MaxLength="32" Placeholder="e.g. AM-2026-00001" />
-                    <MudAutocomplete T="SemiExpendableItemSummaryDto"
+                    <PropertyNoField @bind-Value="_form.PropertyNo"
+                                    Label="Property No."
+                                    Required="true"
+                                    MaxLength="32"
+                                    Placeholder="e.g. 2026-NFA-GSD-00001" />
+                    <MudAutocomplete T="PropertyItemCatalogSummaryDto"
                                      @bind-Value="_form.SelectedItem"
                                      SearchFunc="SearchItems"
                                      ToStringFunc="@(x => x is null ? "" : $"{x.Code} – {x.Name}")"
@@ -134,7 +137,7 @@
         finally { _loading = false; }
     }
 
-    private async Task<IEnumerable<SemiExpendableItemSummaryDto>> SearchItems(string? value, CancellationToken ct)
+    private async Task<IEnumerable<PropertyItemCatalogSummaryDto>> SearchItems(string? value, CancellationToken ct)
     {
         var response = await ItemClient.SearchAsync(value, isActive: true, page: 1, pageSize: 20, ct: ct);
         return response.Items;
@@ -189,7 +192,7 @@
     private sealed class PropertyForm
     {
         public string PropertyNo { get; set; } = string.Empty;
-        public SemiExpendableItemSummaryDto? SelectedItem { get; set; }
+        public PropertyItemCatalogSummaryDto? SelectedItem { get; set; }
         public string? SerialNo { get; set; }
         public DateTime? AcquisitionDateNullable { get; set; } = DateTime.Today;
         public decimal UnitCost { get; set; }

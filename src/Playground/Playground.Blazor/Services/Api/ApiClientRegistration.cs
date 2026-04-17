@@ -149,8 +149,8 @@ internal static class ApiClientRegistration
             new BudgetUtilizationRecordClient(ResolveClient(sp)));
 
         // Asset Management module manual clients
-        services.AddTransient<ISemiExpendableItemClient>(sp =>
-            new SemiExpendableItemClient(ResolveClient(sp)));
+        services.AddTransient<IPropertyItemCatalogClient>(sp =>
+            new PropertyItemCatalogClient(ResolveClient(sp)));
 
         services.AddTransient<ISemiExpendablePropertyClient>(sp =>
             new SemiExpendablePropertyClient(ResolveClient(sp)));

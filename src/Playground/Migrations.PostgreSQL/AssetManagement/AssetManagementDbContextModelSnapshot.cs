@@ -394,6 +394,9 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                         .HasMaxLength(2)
                         .HasColumnType("character varying(2)");
 
+                    b.Property<Guid?>("ItemId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("LastModifiedBy")
                         .HasColumnType("text");
 
@@ -438,6 +441,8 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
 
                     b.HasIndex("CurrentAccountableEmployeeId");
 
+                    b.HasIndex("ItemId");
+
                     b.HasIndex("PropertyCode")
                         .IsUnique();
 
@@ -476,6 +481,9 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                         .HasMaxLength(2)
                         .HasColumnType("character varying(2)");
 
+                    b.Property<Guid?>("ItemId")
+                        .HasColumnType("uuid");
+
                     b.Property<int>("ItemNo")
                         .HasColumnType("integer");
 
@@ -498,6 +506,8 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                         .HasColumnType("numeric(18,2)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ItemId");
 
                     b.HasIndex("PPERRId");
 
@@ -956,6 +966,79 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                     b.ToTable("PropertyIncidentReports", "am");
                 });
 
+            modelBuilder.Entity("FSH.Modules.AssetManagement.Domain.PropertyItemCatalog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("DeletedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int?>("EstimatedUsefulLifeYears")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("LastModifiedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("UACSObjectCode")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("UnitOfMeasure")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<byte[]>("Version")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.HasIndex("Name");
+
+                    b.ToTable("PropertyItemCatalog", "am");
+                });
+
             modelBuilder.Entity("FSH.Modules.AssetManagement.Domain.RRPItem", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1287,6 +1370,9 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<Guid>("ItemId")
+                        .HasColumnType("uuid");
+
                     b.Property<int>("Quantity")
                         .HasColumnType("integer");
 
@@ -1297,17 +1383,14 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                     b.Property<Guid>("SMRRId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("SemiExpendableItemId")
-                        .HasColumnType("uuid");
-
                     b.Property<decimal>("UnitCost")
                         .HasColumnType("numeric(18,2)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("SMRRId");
+                    b.HasIndex("ItemId");
 
-                    b.HasIndex("SemiExpendableItemId");
+                    b.HasIndex("SMRRId");
 
                     b.ToTable("SMRRItems", "am");
                 });
@@ -1394,79 +1477,6 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                     b.ToTable("SemiExpendableIssuanceRecords", "am");
                 });
 
-            modelBuilder.Entity("FSH.Modules.AssetManagement.Domain.SemiExpendableItem", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTimeOffset>("CreatedOnUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("DeletedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTimeOffset?>("DeletedOnUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<int?>("EstimatedUsefulLifeYears")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsDeleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTimeOffset?>("LastModifiedOnUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<string>("UACSObjectCode")
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)");
-
-                    b.Property<string>("UnitOfMeasure")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<byte[]>("Version")
-                        .IsConcurrencyToken()
-                        .IsRequired()
-                        .HasColumnType("bytea");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Code")
-                        .IsUnique();
-
-                    b.HasIndex("Name");
-
-                    b.ToTable("SemiExpendableItems", "am");
-                });
-
             modelBuilder.Entity("FSH.Modules.AssetManagement.Domain.SemiExpendableProperty", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1505,6 +1515,9 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
 
+                    b.Property<Guid>("ItemId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("LastModifiedBy")
                         .HasColumnType("text");
 
@@ -1521,9 +1534,6 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                         .HasColumnType("character varying(500)");
 
                     b.Property<Guid?>("SMRRItemId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("SemiExpendableItemId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("SerialNo")
@@ -1549,12 +1559,12 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
 
                     b.HasIndex("CurrentCustodianId");
 
+                    b.HasIndex("ItemId");
+
                     b.HasIndex("PropertyNo")
                         .IsUnique();
 
                     b.HasIndex("SMRRItemId");
-
-                    b.HasIndex("SemiExpendableItemId");
 
                     b.HasIndex("Status");
 
@@ -1775,6 +1785,24 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("FSH.Modules.AssetManagement.Domain.PPEItem", b =>
+                {
+                    b.HasOne("FSH.Modules.AssetManagement.Domain.PropertyItemCatalog", "Item")
+                        .WithMany()
+                        .HasForeignKey("ItemId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Item");
+                });
+
+            modelBuilder.Entity("FSH.Modules.AssetManagement.Domain.PPERRItem", b =>
+                {
+                    b.HasOne("FSH.Modules.AssetManagement.Domain.PropertyItemCatalog", null)
+                        .WithMany()
+                        .HasForeignKey("ItemId")
+                        .OnDelete(DeleteBehavior.SetNull);
+                });
+
             modelBuilder.Entity("FSH.Modules.AssetManagement.Domain.PhysicalCountEntry", b =>
                 {
                     b.HasOne("FSH.Modules.AssetManagement.Domain.PPEItem", null)
@@ -1796,28 +1824,28 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
 
             modelBuilder.Entity("FSH.Modules.AssetManagement.Domain.SMRRItem", b =>
                 {
+                    b.HasOne("FSH.Modules.AssetManagement.Domain.PropertyItemCatalog", null)
+                        .WithMany()
+                        .HasForeignKey("ItemId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("FSH.Modules.AssetManagement.Domain.SuppliesMaterialsReceivingReport", null)
                         .WithMany()
                         .HasForeignKey("SMRRId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("FSH.Modules.AssetManagement.Domain.SemiExpendableItem", null)
-                        .WithMany()
-                        .HasForeignKey("SemiExpendableItemId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("FSH.Modules.AssetManagement.Domain.SemiExpendableProperty", b =>
                 {
-                    b.HasOne("FSH.Modules.AssetManagement.Domain.SemiExpendableItem", "SemiExpendableItem")
+                    b.HasOne("FSH.Modules.AssetManagement.Domain.PropertyItemCatalog", "Item")
                         .WithMany()
-                        .HasForeignKey("SemiExpendableItemId")
+                        .HasForeignKey("ItemId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("SemiExpendableItem");
+                    b.Navigation("Item");
                 });
 #pragma warning restore 612, 618
         }

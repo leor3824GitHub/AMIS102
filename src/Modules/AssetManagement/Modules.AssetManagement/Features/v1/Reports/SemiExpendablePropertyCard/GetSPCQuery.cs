@@ -9,12 +9,12 @@ namespace FSH.Modules.AssetManagement.Features.v1.Reports.SemiExpendableProperty
 /// with a running on-hand balance.
 /// </summary>
 public sealed record GetSPCQuery(
-    Guid SemiExpendableItemId,
+    Guid ItemId,
     DateOnly? DateFrom,
     DateOnly? DateTo) : IQuery<SPCDto>;
 
 public sealed record SPCDto(
-    Guid SemiExpendableItemId,
+    Guid ItemId,
     string ItemCode,
     string ItemName,
     IReadOnlyList<SPCEntryDto> Entries);

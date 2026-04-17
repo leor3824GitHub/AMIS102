@@ -9,17 +9,17 @@ namespace FSH.Modules.AssetManagement.Features.v1.SemiExpendableItems.UpdateSemi
 public static class UpdateSemiExpendableItemEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
-        endpoints.MapPut("/{id:guid}", UpdateSemiExpendableItem)
-            .WithName(nameof(UpdateSemiExpendableItemCommand))
-            .WithSummary("Update semi-expendable item catalog entry")
+        endpoints.MapPut("/{id:guid}", UpdateItemCatalogEntry)
+            .WithName(nameof(UpdatePropertyItemCatalogCommand))
+            .WithSummary("Update item catalog entry")
             .Produces(StatusCodes.Status204NoContent)
             .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status404NotFound)
             .RequirePermission(AssetManagementModuleConstants.Permissions.SemiExpendableItems.Update);
 
-    private static async Task<IResult> UpdateSemiExpendableItem(
+    private static async Task<IResult> UpdateItemCatalogEntry(
         Guid id,
-        UpdateSemiExpendableItemCommand command,
+        UpdatePropertyItemCatalogCommand command,
         IMediator mediator,
         CancellationToken cancellationToken)
     {

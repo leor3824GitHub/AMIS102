@@ -43,7 +43,7 @@ public sealed class CreateICSCommandHandler : ICommandHandler<CreateICSCommand, 
         }
 
         var properties = await _dbContext.SemiExpendableProperties
-            .Include(x => x.SemiExpendableItem)
+            .Include(x => x.Item)
             .Where(x => propertyIds.Contains(x.Id))
             .ToDictionaryAsync(x => x.Id, cancellationToken)
             .ConfigureAwait(false);
@@ -89,9 +89,9 @@ public sealed class CreateICSCommandHandler : ICommandHandler<CreateICSCommand, 
                 ics.Id,
                 property.Id,
                 itemNo,
-                itemRequest.Description ?? property.SemiExpendableItem?.Name,
+                itemRequest.Description ?? property.Item?.Name,
                 property.UnitCost,
-                property.SemiExpendableItem?.EstimatedUsefulLifeYears,
+                property.Item?.EstimatedUsefulLifeYears,
                 property.Category);
 
             _dbContext.ICSItems.Add(icsItem);

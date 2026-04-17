@@ -26,7 +26,7 @@ internal sealed class CreateSMRRItemRequestValidator : AbstractValidator<CreateS
 {
     public CreateSMRRItemRequestValidator()
     {
-        RuleFor(x => x.SemiExpendableItemId).NotEmpty();
+        RuleFor(x => x.ItemId).NotEmpty();
         RuleFor(x => x.AcquisitionDate).NotEmpty();
         RuleFor(x => x.Quantity).GreaterThan(0);
         RuleFor(x => x.UnitCost)

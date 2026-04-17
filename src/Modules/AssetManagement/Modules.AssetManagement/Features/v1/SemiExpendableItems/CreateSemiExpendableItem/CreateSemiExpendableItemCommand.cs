@@ -2,15 +2,15 @@ using Mediator;
 
 namespace FSH.Modules.AssetManagement.Features.v1.SemiExpendableItems.CreateSemiExpendableItem;
 
-public sealed record CreateSemiExpendableItemCommand(
+public sealed record CreatePropertyItemCatalogCommand(
     string Code,
     string Name,
     string? Description = null,
     string? UACSObjectCode = null,
     string UnitOfMeasure = "Piece",
-    int? EstimatedUsefulLifeYears = null) : ICommand<SemiExpendableItemDto>;
+    int? EstimatedUsefulLifeYears = null) : ICommand<PropertyItemCatalogDto>;
 
-public sealed record SemiExpendableItemDto(
+public sealed record PropertyItemCatalogDto(
     Guid Id,
     string Code,
     string Name,

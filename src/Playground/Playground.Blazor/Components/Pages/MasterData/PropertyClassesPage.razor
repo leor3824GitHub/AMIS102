@@ -18,7 +18,7 @@
                 </MudText>
                 <MudStack Spacing="2">
                     <MudTextField @bind-Value="_classForm.Code" Label="Code (2–4 chars)" Placeholder="e.g. OE"
-                                  HelperText="@(_editingClass is not null ? "Code cannot be changed after creation." : "2-char classification code (PPRCLSCD)")"
+                                  HelperText="@(_editingClass is not null ? "Code cannot be changed after creation." : "2–4 char classification code (PPRCLSCD)")"
                                   CharacterCounter="true" MaxLength="4"
                                   ReadOnly="@(_editingClass is not null)" />
                     <MudTextField @bind-Value="_classForm.Name" Label="Name" Placeholder="e.g. Office Equipment" />
@@ -110,11 +110,11 @@
                                            @bind-IsExpanded="_itemFormExpanded">
                             <MudStack Spacing="2">
                                 <MudTextField @bind-Value="_itemForm.ItemCode"
-                                              Label="Category Code (1–2 chars)" Placeholder="e.g. C"
-                                              HelperText="1-char sub-category code" CharacterCounter="true" MaxLength="2" />
+                                              Label="Category Code (1–2 chars)" Placeholder="e.g. 01"
+                                              HelperText="1–2 char sub-category code (e.g. 01, FM, WE)" CharacterCounter="true" MaxLength="2" />
                                 <MudTextField @bind-Value="_itemForm.Name"
                                               Label="Name" Placeholder="e.g. Computer and Accessories" />
-                                <MudTextField @bind-Value="_itemForm.Description" Label="Description" Lines="2" />
+                                <!-- <MudTextField @bind-Value="_itemForm.Description" Label="Description" Lines="2" /> -->
                                 @if (_editingItem is not null)
                                 {
                                     <MudCheckBox @bind-Value="_itemForm.IsActive" Label="Active" T="bool" />
@@ -144,8 +144,7 @@
                                 <tr>
                                     <th style="width: 80px">Code</th>
                                     <th>Name</th>
-                                    <th>Description</th>
-                                    <th>Example Property Code</th>
+                                    <!-- <th>Description</th> -->
                                     <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
@@ -159,12 +158,6 @@
                                                      Style="font-weight: 700; font-family: monospace;">@item.ItemCode</MudChip>
                                         </td>
                                         <td>@item.Name</td>
-                                        <td style="color: var(--mud-palette-text-secondary); font-size: 0.8rem;">
-                                            @(item.Description ?? "—")
-                                        </td>
-                                        <td style="font-family: monospace; font-size: 0.8rem; color: var(--mud-palette-success-text);">
-                                            @DateTime.Now.Year-NFA-???-@item.ClassCode-@item.ItemCode-001
-                                        </td>
                                         <td>
                                             <MudChip T="string" Size="Size.Small"
                                                      Color="@(item.IsActive ? Color.Success : Color.Default)">

@@ -2,9 +2,9 @@ using FluentValidation;
 
 namespace FSH.Modules.AssetManagement.Features.v1.SemiExpendableItems.UpdateSemiExpendableItem;
 
-public sealed class UpdateSemiExpendableItemCommandValidator : AbstractValidator<UpdateSemiExpendableItemCommand>
+public sealed class UpdatePropertyItemCatalogCommandValidator : AbstractValidator<UpdatePropertyItemCatalogCommand>
 {
-    public UpdateSemiExpendableItemCommandValidator()
+    public UpdatePropertyItemCatalogCommandValidator()
     {
         RuleFor(x => x.Id)
             .NotEmpty().WithMessage("ID is required.");

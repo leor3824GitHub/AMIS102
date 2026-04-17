@@ -84,55 +84,52 @@
         </MudNavGroup>
 
         <MudNavGroup Title="Asset Management" Icon="@Icons.Material.Outlined.Inventory" @bind-Expanded="_assetManagementExpanded">
-            <MudNavLink Href="/asset-management/semi-expendable-items" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Category">
+            <MudNavLink Href="/asset-management/item-catalog" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Category">
                 Item Catalog
             </MudNavLink>
-            <MudNavLink Href="/asset-management/semi-expendable-properties" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Inventory">
+            <MudNavLink Href="/asset-management/property-units" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Inventory">
                 Property Units
             </MudNavLink>
-            <MudNavGroup Title="Receiving" Icon="@Icons.Material.Outlined.MoveToInbox" @bind-Expanded="_receivingExpanded">
-                <MudNavLink Href="/asset-management/receiving-reports" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Inventory2">
-                    Semi-Expendable (SMRR)
+            <MudNavGroup Title="Semi-Expendable" Icon="@Icons.Material.Outlined.Inventory2" @bind-Expanded="_seExpanded">
+                <MudNavLink Href="/asset-management/receiving-reports" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.MoveToInbox">
+                    Receiving (SMRR)
                 </MudNavLink>
-                <MudNavLink Href="/asset-management/ppe-receiving-reports" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Laptop">
-                    PPE (PPERR)
+                <MudNavLink Href="/asset-management/inventory-custodian-slips" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.AssignmentInd">
+                    Custodian Slips (ICS)
+                </MudNavLink>
+                <MudNavLink Href="/asset-management/issuance-records" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.SwapHoriz">
+                    Issuance (SMIR)
+                </MudNavLink>
+                <MudNavLink Href="/asset-management/returned-properties" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.AssignmentReturn">
+                    Returned (RRSP)
+                </MudNavLink>
+                <MudNavLink Href="/asset-management/incident-reports" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.ReportProblem">
+                    Incidents (RLSDDSP)
+                </MudNavLink>
+                <MudNavLink Href="/asset-management/unserviceable-reports" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.DeleteSweep">
+                    Unserviceable (IIRUSP)
+                </MudNavLink>
+                <MudNavLink Href="/asset-management/reports" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Assessment">
+                    Reports (SPC / RegSPI / RSPI)
                 </MudNavLink>
             </MudNavGroup>
-            <MudNavLink Href="/asset-management/inventory-custodian-slips" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.AssignmentInd">
-                Custodian Slips (ICS)
-            </MudNavLink>
-            <MudNavGroup Title="Issuance" Icon="@Icons.Material.Outlined.SwapHoriz" @bind-Expanded="_issuanceExpanded">
-                <MudNavLink Href="/asset-management/issuance-records" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Inventory2">
-                    Semi-Expendable (SMIR)
+            <MudNavGroup Title="PPE" Icon="@Icons.Material.Outlined.Laptop" @bind-Expanded="_ppeExpanded">
+                <MudNavLink Href="/asset-management/ppe-receiving-reports" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.MoveToInbox">
+                    Receiving (PPERR)
                 </MudNavLink>
-                <MudNavLink Href="/asset-management/ppe-issuance-reports" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Laptop">
-                    PPE Issuance (PPEIR)
+                <MudNavLink Href="/asset-management/property-acknowledgement-receipts" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.AssignmentInd">
+                    Acknowledgement (PAR)
                 </MudNavLink>
-                <MudNavLink Href="/asset-management/ppe-transfer-reports" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.SwapHoriz">
+                <MudNavLink Href="/asset-management/ppe-issuance-reports" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.SwapHoriz">
+                    Issuance (PPEIR)
+                </MudNavLink>
+                <MudNavLink Href="/asset-management/ppe-transfer-reports" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.CompareArrows">
                     Transfer Reports (PTR)
                 </MudNavLink>
+                <MudNavLink Href="/asset-management/receipts-for-returned-ppe" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.AssignmentReturn">
+                    Returned PPE (RRP)
+                </MudNavLink>
             </MudNavGroup>
-            <MudNavLink Href="/asset-management/returned-properties" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.AssignmentReturn">
-                Returned Properties (RRSP)
-            </MudNavLink>
-            <MudNavLink Href="/asset-management/incident-reports" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.ReportProblem">
-                Incident Reports (RLSDDSP)
-            </MudNavLink>
-            <MudNavLink Href="/asset-management/unserviceable-reports" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.DeleteSweep">
-                Unserviceable (IIRUSP)
-            </MudNavLink>
-            <MudNavLink Href="/asset-management/reports" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Assessment">
-                Reports (SPC / RegSPI / RSPI)
-            </MudNavLink>
-            <MudNavLink Href="/asset-management/ppe-items" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Laptop">
-                PPE Items
-            </MudNavLink>
-            <MudNavLink Href="/asset-management/property-acknowledgement-receipts" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.AssignmentInd">
-                Acknowledgement (PAR)
-            </MudNavLink>
-            <MudNavLink Href="/asset-management/receipts-for-returned-ppe" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.AssignmentReturn">
-                Returned PPE (RRP)
-            </MudNavLink>
             <MudNavLink Href="/asset-management/physical-count" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.FactCheck">
                 Physical Count (ICF / RPCPPE)
             </MudNavLink>
@@ -209,6 +206,9 @@
             <MudNavLink Href="/master-data/property-classes" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.AccountTree">
                 Property Class Library
             </MudNavLink>
+            <MudNavLink Href="/master-data/property-code-generator" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.QrCode2">
+                Property Code Generator
+            </MudNavLink>
         </MudNavGroup>
 
         <!-- Communication Section -->
@@ -263,8 +263,8 @@
     private bool _procurementExpanded;
     private bool _financeExpanded;
     private bool _assetManagementExpanded;
-    private bool _receivingExpanded;
-    private bool _issuanceExpanded;
+    private bool _seExpanded;
+    private bool _ppeExpanded;
 
     protected override async Task OnInitializedAsync()
     {
@@ -276,11 +276,18 @@
         _masterDataExpanded = uri.Contains("/master-data", StringComparison.OrdinalIgnoreCase)
                            || uri.Contains("/masterdata", StringComparison.OrdinalIgnoreCase);
         _assetManagementExpanded = uri.Contains("/asset-management", StringComparison.OrdinalIgnoreCase);
-        _receivingExpanded = uri.Contains("/asset-management/receiving-reports", StringComparison.OrdinalIgnoreCase)
-                          || uri.Contains("/asset-management/ppe-receiving-reports", StringComparison.OrdinalIgnoreCase);
-        _issuanceExpanded = uri.Contains("/asset-management/issuance-records", StringComparison.OrdinalIgnoreCase)
-                         || uri.Contains("/asset-management/ppe-issuance-reports", StringComparison.OrdinalIgnoreCase)
-                         || uri.Contains("/asset-management/ppe-transfer-reports", StringComparison.OrdinalIgnoreCase);
+        _seExpanded = uri.Contains("/asset-management/receiving-reports", StringComparison.OrdinalIgnoreCase)
+                   || uri.Contains("/asset-management/inventory-custodian-slips", StringComparison.OrdinalIgnoreCase)
+                   || uri.Contains("/asset-management/issuance-records", StringComparison.OrdinalIgnoreCase)
+                   || uri.Contains("/asset-management/returned-properties", StringComparison.OrdinalIgnoreCase)
+                   || uri.Contains("/asset-management/incident-reports", StringComparison.OrdinalIgnoreCase)
+                   || uri.Contains("/asset-management/unserviceable-reports", StringComparison.OrdinalIgnoreCase)
+                   || uri.Contains("/asset-management/reports", StringComparison.OrdinalIgnoreCase);
+        _ppeExpanded = uri.Contains("/asset-management/ppe-receiving-reports", StringComparison.OrdinalIgnoreCase)
+                    || uri.Contains("/asset-management/property-acknowledgement-receipts", StringComparison.OrdinalIgnoreCase)
+                    || uri.Contains("/asset-management/ppe-issuance-reports", StringComparison.OrdinalIgnoreCase)
+                    || uri.Contains("/asset-management/ppe-transfer-reports", StringComparison.OrdinalIgnoreCase)
+                    || uri.Contains("/asset-management/receipts-for-returned-ppe", StringComparison.OrdinalIgnoreCase);
         await CheckRootTenantAdmin();
     }
 

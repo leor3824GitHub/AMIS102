@@ -15,11 +15,11 @@ public sealed class SemiExpendableProperty : AggregateRoot<Guid>, IAuditableEnti
     /// </summary>
     public string PropertyNo { get; private set; } = default!;
 
-    /// <summary>Reference to the item catalog entry.</summary>
-    public Guid SemiExpendableItemId { get; private set; }
+    /// <summary>Reference to the unified item catalog entry.</summary>
+    public Guid ItemId { get; private set; }
 
     /// <summary>Navigation property.</summary>
-    public SemiExpendableItem SemiExpendableItem { get; private set; } = default!;
+    public PropertyItemCatalog Item { get; private set; } = default!;
 
     /// <summary>Manufacturer or supplier serial number, if any.</summary>
     public string? SerialNo { get; private set; }
@@ -73,7 +73,7 @@ public sealed class SemiExpendableProperty : AggregateRoot<Guid>, IAuditableEnti
 
     public static SemiExpendableProperty Create(
         string propertyNo,
-        Guid semiExpendableItemId,
+        Guid itemId,
         AssetCategory category,
         string? serialNo,
         DateOnly acquisitionDate,
@@ -86,7 +86,7 @@ public sealed class SemiExpendableProperty : AggregateRoot<Guid>, IAuditableEnti
         {
             Id = Guid.NewGuid(),
             PropertyNo = propertyNo,
-            SemiExpendableItemId = semiExpendableItemId,
+            ItemId = itemId,
             Category = category,
             SerialNo = serialNo,
             AcquisitionDate = acquisitionDate,

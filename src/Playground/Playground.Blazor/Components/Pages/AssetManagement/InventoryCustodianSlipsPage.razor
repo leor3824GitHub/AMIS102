@@ -1,5 +1,6 @@
 @page "/asset-management/inventory-custodian-slips"
 @using FSH.Playground.Blazor.ApiClient
+@using static FSH.Playground.Blazor.ApiClient.AssetCategory
 @inject IICSClient Client
 @inject ISemiExpendablePropertyClient PropertyClient
 @inject ILookupClient LookupClient
@@ -19,6 +20,10 @@
                                   Required="true" MaxLength="32" Placeholder="e.g. ICS-2026-00001" />
                     <MudDatePicker @bind-Date="_form.DateNullable" Label="Date" Variant="Variant.Outlined"
                                    DateFormat="MM/dd/yyyy" Required="true" />
+                    <MudSelect @bind-Value="_form.Category" Label="Category" Variant="Variant.Outlined" T="AssetCategory" Required="true">
+                        <MudSelectItem Value="AssetCategory.LowValuedSemi">Low-Valued Semi-Expendable (≤ ₱5,000)</MudSelectItem>
+                        <MudSelectItem Value="AssetCategory.HighValuedSemi">High-Valued Semi-Expendable (&gt; ₱5,000)</MudSelectItem>
+                    </MudSelect>
                     <MudTextField @bind-Value="_form.FundCluster" Label="Fund Cluster" Variant="Variant.Outlined" MaxLength="50" />
 
                     <MudAutocomplete T="EmployeeReferenceDto"
@@ -153,6 +158,13 @@
                 </MudCardHeader>
                 <MudCardContent>
                     <MudGrid Spacing="1" Class="mb-2">
+                        <MudItem xs="6">
+                            <MudText Typo="Typo.caption">Category</MudText>
+                            <MudChip T="string" Size="Size.Small"
+                                     Color="@(_detail.Category == "LowValuedSemi" ? Color.Info : Color.Warning)">
+                                @(_detail.Category == "LowValuedSemi" ? "Low-Valued" : "High-Valued")
+                            </MudChip>
+                        </MudItem>
                         @if (_detail.FundCluster is not null)
                         {
                             <MudItem xs="6"><MudText Typo="Typo.caption">Fund Cluster</MudText><MudText Typo="Typo.body2">@_detail.FundCluster</MudText></MudItem>
@@ -180,7 +192,7 @@
                                     </td>
                                     <td>@(item.SerialNo ?? "-")</td>
                                     <td>@(item.Description ?? "-")</td>
-                                    <td>@item.UnitCost.ToString("N2")</td>
+                                    <td>₱@item.UnitCost.ToString("N2")</td>
                                     <td>@(item.EstimatedUsefulLifeYears.HasValue ? $"{item.EstimatedUsefulLifeYears} yr(s)" : "-")</td>
                                 </tr>
                             }
@@ -280,6 +292,7 @@
             var result = await Client.CreateAsync(new CreateICSCommand(
                 _form.ICSNo,
                 DateOnly.FromDateTime(_form.DateNullable!.Value),
+                _form.Category,
                 _form.FundCluster,
                 _form.IssuedFrom?.Id,
                 _form.ReceivedBy.Id,
@@ -301,6 +314,7 @@
     {
         public string ICSNo { get; set; } = string.Empty;
         public DateTime? DateNullable { get; set; } = DateTime.Today;
+        public AssetCategory Category { get; set; } = AssetCategory.LowValuedSemi;
         public string? FundCluster { get; set; }
         public EmployeeReferenceDto? IssuedFrom { get; set; }
         public EmployeeReferenceDto? ReceivedBy { get; set; }

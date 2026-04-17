@@ -15,7 +15,7 @@ public class AssetManagementDbContext : BaseDbContext
     public DbSet<ReclassificationRecord>           ReclassificationRecords           => Set<ReclassificationRecord>();
     public DbSet<SemiExpendableIssuanceRecord>     SemiExpendableIssuanceRecords     => Set<SemiExpendableIssuanceRecord>();
     public DbSet<SMIRItem>                         SMIRItems                         => Set<SMIRItem>();
-    public DbSet<SemiExpendableItem>              SemiExpendableItems              => Set<SemiExpendableItem>();
+    public DbSet<PropertyItemCatalog>             PropertyItemCatalog              => Set<PropertyItemCatalog>();
     public DbSet<SemiExpendableProperty>          SemiExpendableProperties         => Set<SemiExpendableProperty>();
     public DbSet<SuppliesMaterialsReceivingReport> SuppliesMaterialsReceivingReports => Set<SuppliesMaterialsReceivingReport>();
     public DbSet<SMRRItem>                        SMRRItems                        => Set<SMRRItem>();

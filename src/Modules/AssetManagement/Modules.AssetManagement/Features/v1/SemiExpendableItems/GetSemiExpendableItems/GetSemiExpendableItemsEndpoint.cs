@@ -9,13 +9,13 @@ namespace FSH.Modules.AssetManagement.Features.v1.SemiExpendableItems.GetSemiExp
 public static class GetSemiExpendableItemsEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
-        endpoints.MapGet("/", GetSemiExpendableItems)
-            .WithName(nameof(GetSemiExpendableItemsQuery))
-            .WithSummary("Get paginated list of semi-expendable item catalog entries")
-            .Produces<PagedSemiExpendableItemsResponse>(StatusCodes.Status200OK)
+        endpoints.MapGet("/", GetItemCatalog)
+            .WithName(nameof(GetPropertyItemCatalogQuery))
+            .WithSummary("Get paginated list of item catalog entries")
+            .Produces<PagedPropertyItemCatalogResponse>(StatusCodes.Status200OK)
             .RequirePermission(AssetManagementModuleConstants.Permissions.SemiExpendableItems.View);
 
-    private static async Task<IResult> GetSemiExpendableItems(
+    private static async Task<IResult> GetItemCatalog(
         string? keyword = null,
         bool? isActive = null,
         int pageNumber = 1,
@@ -23,7 +23,7 @@ public static class GetSemiExpendableItemsEndpoint
         IMediator mediator = null!,
         CancellationToken cancellationToken = default)
     {
-        var query = new GetSemiExpendableItemsQuery(keyword, isActive, pageNumber, pageSize);
+        var query = new GetPropertyItemCatalogQuery(keyword, isActive, pageNumber, pageSize);
         var result = await mediator.Send(query, cancellationToken);
         return TypedResults.Ok(result);
     }

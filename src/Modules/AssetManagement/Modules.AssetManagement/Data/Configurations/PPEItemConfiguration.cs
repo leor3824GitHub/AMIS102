@@ -24,6 +24,7 @@ public sealed class PPEItemConfiguration : IEntityTypeConfiguration<PPEItem>
         builder.Property(x => x.Status).HasConversion<string>().HasMaxLength(32).IsRequired();
         builder.Property(x => x.CurrentAccountableEmployeeId);
         builder.Property(x => x.SourcePPERRId);
+        builder.Property(x => x.ItemId);
         builder.Property(x => x.Version).IsConcurrencyToken();
 
         builder.HasIndex(x => x.PropertyCode).IsUnique();
@@ -31,6 +32,13 @@ public sealed class PPEItemConfiguration : IEntityTypeConfiguration<PPEItem>
         builder.HasIndex(x => x.Status);
         builder.HasIndex(x => x.CurrentAccountableEmployeeId);
         builder.HasIndex(x => x.SourcePPERRId);
+        builder.HasIndex(x => x.ItemId);
+
+        builder.HasOne(x => x.Item)
+            .WithMany()
+            .HasForeignKey(x => x.ItemId)
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.SetNull);
 
         builder.Property(x => x.IsDeleted).HasDefaultValue(false);
         builder.HasQueryFilter(x => !x.IsDeleted);

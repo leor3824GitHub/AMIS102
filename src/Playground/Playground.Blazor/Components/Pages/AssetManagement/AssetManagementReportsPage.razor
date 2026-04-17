@@ -1,7 +1,7 @@
 @page "/asset-management/reports"
 @using FSH.Playground.Blazor.ApiClient
 @inject IAssetManagementReportsClient Client
-@inject ISemiExpendableItemClient ItemClient
+@inject IPropertyItemCatalogClient ItemClient
 @inject ISemiExpendablePropertyClient PropertyClient
 @inject ILookupClient LookupClient
 @inject ISnackbar Snackbar
@@ -19,7 +19,7 @@
                     <MudCardContent>
                         <MudStack Spacing="2">
                             <MudText Typo="Typo.subtitle2">Filter</MudText>
-                            <MudAutocomplete T="SemiExpendableItemSummaryDto"
+                            <MudAutocomplete T="PropertyItemCatalogSummaryDto"
                                              @bind-Value="_spc.SelectedItem"
                                              SearchFunc="SearchItems"
                                              ToStringFunc="@(x => x is null ? "" : $"{x.Code} – {x.Name}")"
@@ -366,7 +366,7 @@
     private readonly SpcState _spc = new();
     private sealed class SpcState
     {
-        public SemiExpendableItemSummaryDto? SelectedItem { get; set; }
+        public PropertyItemCatalogSummaryDto? SelectedItem { get; set; }
         public DateTime? DateFromNullable { get; set; }
         public DateTime? DateToNullable { get; set; }
         public bool Loading { get; set; }
@@ -476,7 +476,7 @@
 
     // ─── Search helpers ───────────────────────────────────────────────────────
 
-    private async Task<IEnumerable<SemiExpendableItemSummaryDto>> SearchItems(string? value, CancellationToken ct)
+    private async Task<IEnumerable<PropertyItemCatalogSummaryDto>> SearchItems(string? value, CancellationToken ct)
     {
         var response = await ItemClient.SearchAsync(value, isActive: true, page: 1, pageSize: 20, ct: ct);
         return response.Items;

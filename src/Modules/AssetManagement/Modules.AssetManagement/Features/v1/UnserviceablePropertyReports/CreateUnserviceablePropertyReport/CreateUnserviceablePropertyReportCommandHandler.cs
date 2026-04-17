@@ -41,7 +41,7 @@ public sealed class CreateUnserviceablePropertyReportCommandHandler(AssetManagem
 
         // 3. Load the properties with their catalog item name (used as line-item description).
         var properties = await dbContext.SemiExpendableProperties
-            .Include(x => x.SemiExpendableItem)
+            .Include(x => x.Item)
             .Where(x => distinctIds.Contains(x.Id))
             .ToDictionaryAsync(x => x.Id, cancellationToken)
             .ConfigureAwait(false);
@@ -93,7 +93,7 @@ public sealed class CreateUnserviceablePropertyReportCommandHandler(AssetManagem
                 reportId:                 report.Id,
                 semiExpendablePropertyId: property.Id,
                 itemNo:                   i + 1,
-                description:              property.SemiExpendableItem.Name,
+                description:              property.Item.Name,
                 unitCost:                 property.UnitCost,
                 categoryAtTimeOfReport:   property.Category,
                 conditionRemarks:         itemRequest.ConditionRemarks);

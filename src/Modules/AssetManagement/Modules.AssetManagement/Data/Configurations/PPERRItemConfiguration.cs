@@ -23,6 +23,14 @@ public sealed class PPERRItemConfiguration : IEntityTypeConfiguration<PPERRItem>
         builder.Property(x => x.UnitCost).HasColumnType("numeric(18,2)").IsRequired();
         builder.Property(x => x.Amount).HasColumnType("numeric(18,2)").IsRequired();
 
+        builder.Property(x => x.ItemId);
         builder.HasIndex(x => x.PPERRId);
+        builder.HasIndex(x => x.ItemId);
+
+        builder.HasOne<PropertyItemCatalog>()
+            .WithMany()
+            .HasForeignKey(x => x.ItemId)
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }
