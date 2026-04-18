@@ -33,12 +33,12 @@ public sealed class CreateUnitOfMeasureCommandHandler : ICommandHandler<CreateUn
             ]);
         }
 
-        var unitOfMeasure = UnitOfMeasure.Create(command.Code, command.Name, command.Description);
+        var unitOfMeasure = UnitOfMeasure.Create(command.Code, command.Name, command.Description, command.OfficeCode);
         unitOfMeasure.CreatedBy = _currentUser.GetUserId().ToString();
 
         _dbContext.UnitOfMeasures.Add(unitOfMeasure);
         await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-        return new UnitOfMeasureReferenceDto(unitOfMeasure.Id, unitOfMeasure.Code, unitOfMeasure.Name, unitOfMeasure.Description, unitOfMeasure.IsActive);
+        return new UnitOfMeasureReferenceDto(unitOfMeasure.Id, unitOfMeasure.Code, unitOfMeasure.Name, unitOfMeasure.Description, unitOfMeasure.IsActive, unitOfMeasure.OfficeCode);
     }
 }

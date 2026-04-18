@@ -48,7 +48,8 @@ public sealed class GetSuppliersQueryHandler(MasterDataDbContext dbContext) : IQ
                 s.Email,
                 s.Phone,
                 s.Address,
-                s.IsActive))
+                s.IsActive,
+                s.OfficeCode))
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 

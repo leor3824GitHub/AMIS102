@@ -54,7 +54,10 @@ public sealed class CreatePARCommandHandler : ICommandHandler<CreatePARCommand, 
             }
         }
 
+        string tenantId = _currentUser.GetTenant() ?? string.Empty;
+
         var par = PropertyAcknowledgementReceipt.Create(
+            tenantId,
             command.PARNo,
             command.Date,
             command.PARType,

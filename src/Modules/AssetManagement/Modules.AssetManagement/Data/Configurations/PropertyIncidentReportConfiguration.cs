@@ -1,3 +1,4 @@
+using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;
 using FSH.Modules.AssetManagement.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -8,9 +9,11 @@ public sealed class PropertyIncidentReportConfiguration : IEntityTypeConfigurati
 {
     public void Configure(EntityTypeBuilder<PropertyIncidentReport> builder)
     {
-        builder.ToTable("PropertyIncidentReports", AssetManagementModuleConstants.SchemaName);
+        builder.ToTable("PropertyIncidentReports", AssetManagementModuleConstants.SchemaName)
+            .IsMultiTenant();
 
         builder.HasKey(x => x.Id);
+        builder.Property(x => x.TenantId).HasMaxLength(50).IsRequired();
         builder.Property(x => x.ReportNo).HasMaxLength(32).IsRequired();
         builder.Property(x => x.Date).IsRequired();
         builder.Property(x => x.IncidentDate);
@@ -20,12 +23,12 @@ public sealed class PropertyIncidentReportConfiguration : IEntityTypeConfigurati
         builder.Property(x => x.Remarks).HasMaxLength(500);
         builder.Property(x => x.Version).IsConcurrencyToken();
 
-        builder.HasIndex(x => x.ReportNo).IsUnique();
+        builder.HasIndex(x => new { x.TenantId, x.ReportNo }).IsUnique();
         builder.HasIndex(x => x.Date);
         builder.HasIndex(x => x.IncidentType);
         builder.HasIndex(x => x.AccountableEmployeeId);
 
         builder.Property(x => x.IsDeleted).HasDefaultValue(false);
-        builder.HasQueryFilter(x => !x.IsDeleted);
+        builder.HasQueryFilter("SoftDelete", x => !x.IsDeleted);
     }
 }

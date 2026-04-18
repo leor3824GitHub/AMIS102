@@ -14,19 +14,19 @@ public sealed class ICSItemConfiguration : IEntityTypeConfiguration<ICSItem>
         builder.Property(x => x.ItemNo).IsRequired();
         builder.Property(x => x.Description).HasMaxLength(500);
         builder.Property(x => x.UnitCost).HasColumnType("numeric(18,2)").IsRequired();
-        builder.Property(x => x.CategoryAtTimeOfIssuance).HasConversion<string>().HasMaxLength(32).IsRequired();
+        builder.Property(x => x.AssetTypeAtTimeOfIssuance).HasConversion<string>().HasMaxLength(8).IsRequired();
 
         builder.HasIndex(x => x.ICSId);
-        builder.HasIndex(x => x.SemiExpendablePropertyId);
+        builder.HasIndex(x => x.TangibleInventoryItemId);
 
         builder.HasOne<InventoryCustodianSlip>()
             .WithMany()
             .HasForeignKey(x => x.ICSId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasOne<SemiExpendableProperty>()
+        builder.HasOne<TangibleInventoryItem>()
             .WithMany()
-            .HasForeignKey(x => x.SemiExpendablePropertyId)
+            .HasForeignKey(x => x.TangibleInventoryItemId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

@@ -1,3 +1,4 @@
+using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;
 using FSH.Modules.AssetManagement.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -8,9 +9,11 @@ public sealed class SemiExpendableIssuanceRecordConfiguration : IEntityTypeConfi
 {
     public void Configure(EntityTypeBuilder<SemiExpendableIssuanceRecord> builder)
     {
-        builder.ToTable("SemiExpendableIssuanceRecords", AssetManagementModuleConstants.SchemaName);
+        builder.ToTable("SemiExpendableIssuanceRecords", AssetManagementModuleConstants.SchemaName)
+            .IsMultiTenant();
 
         builder.HasKey(x => x.Id);
+        builder.Property(x => x.TenantId).HasMaxLength(50).IsRequired();
         builder.Property(x => x.SMIRNo).HasMaxLength(32).IsRequired();
         builder.Property(x => x.Date).IsRequired();
         builder.Property(x => x.FundCluster).HasMaxLength(50);
@@ -20,13 +23,13 @@ public sealed class SemiExpendableIssuanceRecordConfiguration : IEntityTypeConfi
         builder.Property(x => x.Remarks).HasMaxLength(500);
         builder.Property(x => x.Version).IsConcurrencyToken();
 
-        builder.HasIndex(x => x.SMIRNo).IsUnique();
+        builder.HasIndex(x => new { x.TenantId, x.SMIRNo }).IsUnique();
         builder.HasIndex(x => x.Date);
         builder.HasIndex(x => x.IssuanceType);
         builder.HasIndex(x => x.TransferredToTenantId);
         builder.HasIndex(x => x.IssuedByEmployeeId);
 
         builder.Property(x => x.IsDeleted).HasDefaultValue(false);
-        builder.HasQueryFilter(x => !x.IsDeleted);
+        builder.HasQueryFilter("SoftDelete", x => !x.IsDeleted);
     }
 }

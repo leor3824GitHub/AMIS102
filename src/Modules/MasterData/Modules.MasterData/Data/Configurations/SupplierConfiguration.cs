@@ -20,10 +20,12 @@ public sealed class SupplierConfiguration : IEntityTypeConfiguration<Supplier>
         builder.Property(x => x.Email).HasMaxLength(256);
         builder.Property(x => x.Phone).HasMaxLength(20);
         builder.Property(x => x.Address).HasMaxLength(400);
+        builder.Property(x => x.OfficeCode).HasMaxLength(8);
         builder.Property(x => x.Version).IsConcurrencyToken();
 
         builder.HasIndex(x => x.Code).IsUnique();
         builder.HasIndex(x => x.Name);
+        builder.HasIndex(x => x.OfficeCode);
 
         builder.Property(x => x.IsDeleted).HasDefaultValue(false);
         builder.HasQueryFilter(x => !x.IsDeleted);

@@ -8,8 +8,10 @@ namespace FSH.Modules.AssetManagement.Domain;
 /// Creating an ICS sets the referenced SemiExpendableProperty units to Issued status
 /// and assigns them to the receiving employee (CurrentCustodianId).
 /// </summary>
-public sealed class InventoryCustodianSlip : AggregateRoot<Guid>, IAuditableEntity
+public sealed class InventoryCustodianSlip : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 {
+    public string TenantId { get; private set; } = default!;
+
     /// <summary>
     /// Control number. Format depends on category:
     ///   Low-valued:  SPLV-YYYY-MM-NNNN
@@ -34,11 +36,10 @@ public sealed class InventoryCustodianSlip : AggregateRoot<Guid>, IAuditableEnti
     public Guid ReceivedByEmployeeId { get; private set; }
 
     /// <summary>
-    /// Whether all items on this ICS are low-valued or high-valued semi-expendable property.
-    /// All items on a single ICS must belong to the same category (COA Circular 2022-004 Section 4.9).
-    /// Determines ICS number series (SPLV for LowValuedSemi, SPHV for HighValuedSemi).
+    /// Asset type for all items on this ICS. Always SE for ICS documents.
+    /// Kept on the header for quick filtering; all items must be SE.
     /// </summary>
-    public AssetCategory Category { get; private set; }
+    public AssetType AssetType { get; private set; }
 
     /// <summary>
     /// Current lifecycle status of this ICS.
@@ -84,9 +85,9 @@ public sealed class InventoryCustodianSlip : AggregateRoot<Guid>, IAuditableEnti
     public bool IsDeleted { get; set; }
 
     public static InventoryCustodianSlip Create(
+        string tenantId,
         string icsNo,
         DateOnly date,
-        AssetCategory category,
         string? fundCluster,
         Guid? issuedFromEmployeeId,
         Guid receivedByEmployeeId,
@@ -95,9 +96,10 @@ public sealed class InventoryCustodianSlip : AggregateRoot<Guid>, IAuditableEnti
         return new InventoryCustodianSlip
         {
             Id                   = Guid.NewGuid(),
+            TenantId             = tenantId,
             ICSNo                = icsNo,
             Date                 = date,
-            Category             = category,
+            AssetType            = AssetType.SE,
             FundCluster          = fundCluster,
             IssuedFromEmployeeId = issuedFromEmployeeId,
             ReceivedByEmployeeId = receivedByEmployeeId,

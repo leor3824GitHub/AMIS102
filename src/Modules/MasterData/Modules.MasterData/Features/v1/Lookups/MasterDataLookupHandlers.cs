@@ -92,7 +92,7 @@ public sealed class ListOfficeReferencesQueryHandler(MasterDataDbContext dbConte
         officesQuery = officesQuery.OrderBy(x => x.Name).ThenBy(x => x.Code);
 
         return await officesQuery
-            .Select(x => new OfficeReferenceDto(x.Id, x.Code, x.Name, x.Description, x.Address, x.LocationCode, x.RegProvCode, x.IsActive))
+            .Select(x => new OfficeReferenceDto(x.Id, x.Code, x.Name, x.Description, x.Address, x.LocationCode, x.RegProvCode, x.IsActive, x.OfficeCode))
             .ToPagedResponseAsync(query, cancellationToken)
             .ConfigureAwait(false);
     }
@@ -105,7 +105,7 @@ public sealed class GetOfficeReferenceByIdQueryHandler(MasterDataDbContext dbCon
     {
         return await dbContext.Offices.AsNoTracking()
             .Where(x => x.Id == query.Id)
-            .Select(x => new OfficeReferenceDto(x.Id, x.Code, x.Name, x.Description, x.Address, x.LocationCode, x.RegProvCode, x.IsActive))
+            .Select(x => new OfficeReferenceDto(x.Id, x.Code, x.Name, x.Description, x.Address, x.LocationCode, x.RegProvCode, x.IsActive, x.OfficeCode))
             .FirstOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false);
     }
@@ -134,7 +134,7 @@ public sealed class ListDepartmentReferencesQueryHandler(MasterDataDbContext dbC
         departmentsQuery = departmentsQuery.OrderBy(x => x.Name).ThenBy(x => x.Code);
 
         return await departmentsQuery
-            .Select(x => new DepartmentReferenceDto(x.Id, x.Code, x.Name, x.Description, x.IsActive))
+            .Select(x => new DepartmentReferenceDto(x.Id, x.Code, x.Name, x.Description, x.IsActive, x.OfficeCode))
             .ToPagedResponseAsync(query, cancellationToken)
             .ConfigureAwait(false);
     }
@@ -147,7 +147,7 @@ public sealed class GetDepartmentReferenceByIdQueryHandler(MasterDataDbContext d
     {
         return await dbContext.Departments.AsNoTracking()
             .Where(x => x.Id == query.Id)
-            .Select(x => new DepartmentReferenceDto(x.Id, x.Code, x.Name, x.Description, x.IsActive))
+            .Select(x => new DepartmentReferenceDto(x.Id, x.Code, x.Name, x.Description, x.IsActive, x.OfficeCode))
             .FirstOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false);
     }
@@ -176,7 +176,7 @@ public sealed class ListPositionReferencesQueryHandler(MasterDataDbContext dbCon
         positionsQuery = positionsQuery.OrderBy(x => x.Name).ThenBy(x => x.Code);
 
         return await positionsQuery
-            .Select(x => new PositionReferenceDto(x.Id, x.Code, x.Name, x.Description, x.IsActive))
+            .Select(x => new PositionReferenceDto(x.Id, x.Code, x.Name, x.Description, x.IsActive, x.OfficeCode))
             .ToPagedResponseAsync(query, cancellationToken)
             .ConfigureAwait(false);
     }
@@ -189,7 +189,7 @@ public sealed class GetPositionReferenceByIdQueryHandler(MasterDataDbContext dbC
     {
         return await dbContext.Positions.AsNoTracking()
             .Where(x => x.Id == query.Id)
-            .Select(x => new PositionReferenceDto(x.Id, x.Code, x.Name, x.Description, x.IsActive))
+            .Select(x => new PositionReferenceDto(x.Id, x.Code, x.Name, x.Description, x.IsActive, x.OfficeCode))
             .FirstOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false);
     }
@@ -218,7 +218,7 @@ public sealed class ListUnitOfMeasureReferencesQueryHandler(MasterDataDbContext 
         uomQuery = uomQuery.OrderBy(x => x.Name).ThenBy(x => x.Code);
 
         return await uomQuery
-            .Select(x => new UnitOfMeasureReferenceDto(x.Id, x.Code, x.Name, x.Description, x.IsActive))
+            .Select(x => new UnitOfMeasureReferenceDto(x.Id, x.Code, x.Name, x.Description, x.IsActive, x.OfficeCode))
             .ToPagedResponseAsync(query, cancellationToken)
             .ConfigureAwait(false);
     }
@@ -231,7 +231,7 @@ public sealed class GetUnitOfMeasureReferenceByIdQueryHandler(MasterDataDbContex
     {
         return await dbContext.UnitOfMeasures.AsNoTracking()
             .Where(x => x.Id == query.Id)
-            .Select(x => new UnitOfMeasureReferenceDto(x.Id, x.Code, x.Name, x.Description, x.IsActive))
+            .Select(x => new UnitOfMeasureReferenceDto(x.Id, x.Code, x.Name, x.Description, x.IsActive, x.OfficeCode))
             .FirstOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false);
     }
@@ -302,7 +302,8 @@ internal static class MasterDataLookupQueryBuilder
                 employee.DefaultUnitOfMeasureId,
                 employee.DefaultUnitOfMeasure != null ? employee.DefaultUnitOfMeasure.Code : null,
                 employee.DefaultUnitOfMeasure != null ? employee.DefaultUnitOfMeasure.Name : null,
-                employee.IsActive));
+                employee.IsActive,
+                employee.OfficeCode));
     }
 }
 

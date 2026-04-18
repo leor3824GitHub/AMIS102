@@ -36,6 +36,7 @@ public sealed class GetSupplierByIdQueryHandler : IQueryHandler<GetSupplierByIdQ
             supplier.Phone,
             supplier.Address,
             supplier.IsActive,
+            supplier.OfficeCode,
             supplier.CreatedOnUtc,
             supplier.CreatedBy,
             supplier.LastModifiedOnUtc,

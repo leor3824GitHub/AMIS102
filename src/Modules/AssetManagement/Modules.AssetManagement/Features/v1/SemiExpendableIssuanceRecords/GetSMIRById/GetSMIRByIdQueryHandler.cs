@@ -36,17 +36,17 @@ public sealed class GetSMIRByIdQueryHandler(AssetManagementDbContext dbContext)
 
         var items = await (
             from smirItem in dbContext.SMIRItems.Where(x => x.SMIRId == query.Id)
-            join prop in dbContext.SemiExpendableProperties
-                on smirItem.SemiExpendablePropertyId equals prop.Id
+            join inv in dbContext.TangibleInventoryItems.IgnoreQueryFilters()
+                on smirItem.TangibleInventoryItemId equals inv.Id
             orderby smirItem.ItemNo
             select new SMIRItemDetailsDto(
                 smirItem.Id,
-                smirItem.SemiExpendablePropertyId,
-                prop.PropertyNo,
+                smirItem.TangibleInventoryItemId,
+                inv.PropertyNo,
                 smirItem.ItemNo,
                 smirItem.Description,
                 smirItem.UnitCost,
-                smirItem.CategoryAtTimeOfIssuance.ToString()))
+                smirItem.AssetTypeAtTimeOfIssuance.ToString()))
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 

@@ -35,18 +35,6 @@ public sealed class RenewICSCommandHandler : ICommandHandler<RenewICSCommand, Re
                 $"ICS {oldIcs.ICSNo} has status '{oldIcs.Status}' and cannot be renewed. Only Active ICS records can be renewed.");
         }
 
-        // Validate the new ICS number prefix matches the category being renewed.
-        var expectedPrefix = oldIcs.Category == AssetCategory.LowValuedSemi ? "SPLV-" : "SPHV-";
-        if (!command.NewICSNo.StartsWith(expectedPrefix, StringComparison.Ordinal))
-        {
-            throw new FluentValidation.ValidationException(
-            [
-                new FluentValidation.Results.ValidationFailure(
-                    nameof(command.NewICSNo),
-                    $"New ICS number must start with '{expectedPrefix}' to match the category '{oldIcs.Category}' of the ICS being renewed.")
-            ]);
-        }
-
         var newIcsNoInUse = await _dbContext.InventoryCustodianSlips
             .IgnoreQueryFilters()
             .AnyAsync(x => x.ICSNo == command.NewICSNo, cancellationToken)
@@ -67,12 +55,13 @@ public sealed class RenewICSCommandHandler : ICommandHandler<RenewICSCommand, Re
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
+        string tenantId = _currentUser.GetTenant() ?? string.Empty;
         string userId = _currentUser.GetUserId().ToString();
 
         var newIcs = InventoryCustodianSlip.Create(
+            tenantId,
             command.NewICSNo,
             command.Date,
-            oldIcs.Category,
             oldIcs.FundCluster,
             command.IssuedFromEmployeeId,
             oldIcs.ReceivedByEmployeeId,
@@ -81,18 +70,18 @@ public sealed class RenewICSCommandHandler : ICommandHandler<RenewICSCommand, Re
         newIcs.CreatedBy = userId;
         _dbContext.InventoryCustodianSlips.Add(newIcs);
 
-        // Copy items from old ICS to the new one, freezing category at renewal date.
+        // Copy items from old ICS to the new one, freezing asset type at renewal date.
         int itemNo = 1;
         foreach (var oldItem in oldItems)
         {
             var newItem = ICSItem.Create(
                 newIcs.Id,
-                oldItem.SemiExpendablePropertyId,
+                oldItem.TangibleInventoryItemId,
                 itemNo,
                 oldItem.Description,
                 oldItem.UnitCost,
                 oldItem.EstimatedUsefulLifeYears,
-                oldItem.CategoryAtTimeOfIssuance);
+                oldItem.AssetTypeAtTimeOfIssuance);
 
             _dbContext.ICSItems.Add(newItem);
             itemNo++;

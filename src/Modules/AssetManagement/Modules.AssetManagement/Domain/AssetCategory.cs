@@ -23,4 +23,11 @@ public enum AssetCategory
     /// loss/damage (RLSDDSP), or disposal (IIRUSP).
     /// </summary>
     HighValuedSemi = 1,
+
+    /// <summary>
+    /// Unit cost meets or exceeds the capitalization threshold (e.g., ≥ ₱50,000).
+    /// Recorded as Property, Plant and Equipment per COA rules.
+    /// Issued via PAR and tracked on the PPE ledger card.
+    /// </summary>
+    PPE = 2,
 }

@@ -16,6 +16,7 @@ public sealed record SupplierDetailsDto(
     string? Phone,
     string? Address,
     bool IsActive,
+    string? OfficeCode,
     DateTimeOffset CreatedOnUtc,
     string? CreatedBy,
     DateTimeOffset? LastModifiedOnUtc,

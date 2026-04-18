@@ -20,14 +20,12 @@ public sealed class CreateEmployeeCommandHandler : ICommandHandler<CreateEmploye
 
     public async ValueTask<EmployeeReferenceDto> Handle(CreateEmployeeCommand command, CancellationToken cancellationToken)
     {
-        var tenantId = _currentUser.GetTenant() ?? throw new InvalidOperationException("Tenant ID required");
-
         await EnsureReferencesExist(command.OfficeId, command.DepartmentId, command.PositionId, command.DefaultUnitOfMeasureId, cancellationToken)
             .ConfigureAwait(false);
 
         var employeeNumberInUse = await _dbContext.Employees
             .IgnoreQueryFilters()
-            .AnyAsync(x => x.TenantId == tenantId && x.EmployeeNumber == command.EmployeeNumber, cancellationToken)
+            .AnyAsync(x => x.EmployeeNumber == command.EmployeeNumber, cancellationToken)
             .ConfigureAwait(false);
 
         if (employeeNumberInUse)
@@ -42,7 +40,7 @@ public sealed class CreateEmployeeCommandHandler : ICommandHandler<CreateEmploye
         {
             var identityUserIdInUse = await _dbContext.Employees
                 .IgnoreQueryFilters()
-                .AnyAsync(x => x.TenantId == tenantId && x.IdentityUserId == command.IdentityUserId, cancellationToken)
+                .AnyAsync(x => x.IdentityUserId == command.IdentityUserId, cancellationToken)
                 .ConfigureAwait(false);
 
             if (identityUserIdInUse)
@@ -55,7 +53,6 @@ public sealed class CreateEmployeeCommandHandler : ICommandHandler<CreateEmploye
         }
 
         var employee = EmployeeProfile.Create(
-            tenantId,
             command.EmployeeNumber,
             command.FirstName,
             command.LastName,
@@ -65,7 +62,8 @@ public sealed class CreateEmployeeCommandHandler : ICommandHandler<CreateEmploye
             command.IdentityUserId,
             command.WorkEmail,
             command.DefaultUnitOfMeasureId,
-            command.IsActive);
+            command.IsActive,
+            command.OfficeCode);
 
         employee.CreatedBy = _currentUser.GetUserId().ToString();
 

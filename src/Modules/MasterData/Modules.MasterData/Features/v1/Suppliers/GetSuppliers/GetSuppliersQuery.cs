@@ -24,4 +24,5 @@ public sealed record SupplierDto(
     string? Email,
     string? Phone,
     string? Address,
-    bool IsActive);
+    bool IsActive,
+    string? OfficeCode = null);

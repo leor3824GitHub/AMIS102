@@ -12,7 +12,7 @@ public sealed class PARItemConfiguration : IEntityTypeConfiguration<PARItem>
 
         builder.HasKey(x => x.Id);
         builder.Property(x => x.PARId).IsRequired();
-        builder.Property(x => x.PPEItemId).IsRequired();
+        builder.Property(x => x.TangibleInventoryItemId).IsRequired();
         builder.Property(x => x.ItemNo).IsRequired();
         builder.Property(x => x.Quantity).IsRequired();
         builder.Property(x => x.Unit).HasMaxLength(32).IsRequired();
@@ -23,6 +23,6 @@ public sealed class PARItemConfiguration : IEntityTypeConfiguration<PARItem>
         builder.Property(x => x.DateAcquired).IsRequired();
 
         builder.HasIndex(x => x.PARId);
-        builder.HasIndex(x => x.PPEItemId);
+        builder.HasIndex(x => x.TangibleInventoryItemId);
     }
 }

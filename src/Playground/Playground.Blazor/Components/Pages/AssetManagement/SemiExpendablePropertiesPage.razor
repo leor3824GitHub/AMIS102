@@ -1,7 +1,9 @@
 @page "/asset-management/semi-expendable-properties"
+@using FSH.Modules.MasterData.Contracts.v1.CapitalizationThresholds
 @using FSH.Playground.Blazor.ApiClient
 @inject ISemiExpendablePropertyClient Client
 @inject IPropertyItemCatalogClient ItemClient
+@inject ICapitalizationThresholdClient ThresholdClient
 @inject ISnackbar Snackbar
 
 <FshPageHeader Title="Semi-Expendable Property Units" Description="Individual property units tracked per COA Circular 2022-004. Register manually or via SMRR." />
@@ -22,14 +24,20 @@
                                      @bind-Value="_form.SelectedItem"
                                      SearchFunc="SearchItems"
                                      ToStringFunc="@(x => x is null ? "" : $"{x.Code} – {x.Name}")"
-                                     Label="Item (from catalog)" Variant="Variant.Outlined"
+                                     Label="Category Code" Variant="Variant.Outlined"
                                      Required="true" Clearable="true"
-                                     ResetValueOnEmptyText="true" CoerceValue="true" />
+                                     ResetValueOnEmptyText="true" CoerceValue="true"
+                                     MinCharacters="0" />
                     <MudTextField @bind-Value="_form.SerialNo" Label="Serial No." Variant="Variant.Outlined" MaxLength="100" />
                     <MudDatePicker @bind-Date="_form.AcquisitionDateNullable" Label="Acquisition Date"
                                    Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" Required="true" />
-                    <MudNumericField @bind-Value="_form.UnitCost" Label="Unit Cost (₱)" Variant="Variant.Outlined"
+                    <MudNumericField Value="_form.UnitCost" ValueChanged="OnUnitCostChanged"
+                                     Label="Unit Cost (₱)" Variant="Variant.Outlined" T="decimal"
                                      Required="true" Min="0.01m" Max="49999.99m" Format="N2" />
+                    <MudSelect @bind-Value="_form.Category" Label="Property Class" Variant="Variant.Outlined">
+                        <MudSelectItem Value="AssetCategory.LowValuedSemi">Low-Valued Semi-Expendable</MudSelectItem>
+                        <MudSelectItem Value="AssetCategory.HighValuedSemi">High-Valued Semi-Expendable</MudSelectItem>
+                    </MudSelect>
                     <MudTextField @bind-Value="_form.FundCluster" Label="Fund Cluster" Variant="Variant.Outlined" MaxLength="50" />
                     <MudTextField @bind-Value="_form.Remarks" Label="Remarks" Variant="Variant.Outlined" MaxLength="500" Lines="2" />
                     <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
@@ -121,8 +129,24 @@
     private const int PageSize = 15;
     private int TotalPages => Math.Max(1, (int)Math.Ceiling(_totalCount / (double)PageSize));
     private static readonly string[] _statuses = ["OnHand", "Issued", "Returned", "Transferred", "Disposed", "LostStolenDamaged"];
+    private CapitalizationThresholdDto? _threshold;
 
-    protected override async Task OnInitializedAsync() => await LoadAsync();
+    protected override async Task OnInitializedAsync()
+    {
+        _threshold = await ThresholdClient.GetActiveAsync();
+        await LoadAsync();
+    }
+
+    private void OnUnitCostChanged(decimal value)
+    {
+        _form.UnitCost = value;
+        if (_threshold is not null)
+        {
+            _form.Category = value <= _threshold.SemiExpendableLowValueThreshold
+                ? AssetCategory.LowValuedSemi
+                : AssetCategory.HighValuedSemi;
+        }
+    }
 
     private async Task LoadAsync()
     {
@@ -139,7 +163,7 @@
 
     private async Task<IEnumerable<PropertyItemCatalogSummaryDto>> SearchItems(string? value, CancellationToken ct)
     {
-        var response = await ItemClient.SearchAsync(value, isActive: true, page: 1, pageSize: 20, ct: ct);
+        var response = await ItemClient.SearchAsync(value, isActive: true, page: 1, pageSize: 200, ct: ct);
         return response.Items;
     }
 
@@ -157,6 +181,7 @@
             await Client.RegisterAsync(new RegisterSemiExpendablePropertyCommand(
                 _form.PropertyNo,
                 _form.SelectedItem.Id,
+                _form.Category,
                 _form.SerialNo,
                 DateOnly.FromDateTime(_form.AcquisitionDateNullable.Value),
                 _form.UnitCost,
@@ -193,6 +218,7 @@
     {
         public string PropertyNo { get; set; } = string.Empty;
         public PropertyItemCatalogSummaryDto? SelectedItem { get; set; }
+        public AssetCategory Category { get; set; } = AssetCategory.LowValuedSemi;
         public string? SerialNo { get; set; }
         public DateTime? AcquisitionDateNullable { get; set; } = DateTime.Today;
         public decimal UnitCost { get; set; }

@@ -7,8 +7,10 @@ namespace FSH.Modules.AssetManagement.Domain;
 /// transfer of PPE. Creating a PPEIR updates PPEItem.Status to Transferred.
 /// The Property Transfer Report (PTR) is derived from PPEIR data — no separate entity.
 /// </summary>
-public sealed class PPEIssuanceReport : AggregateRoot<Guid>, IAuditableEntity
+public sealed class PPEIssuanceReport : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 {
+    public string TenantId { get; private set; } = default!;
+
     /// <summary>Control number assigned by the Supply Officer.</summary>
     public string PPEIRNo { get; private set; } = default!;
 
@@ -69,6 +71,7 @@ public sealed class PPEIssuanceReport : AggregateRoot<Guid>, IAuditableEntity
     public bool IsDeleted { get; set; }
 
     public static PPEIssuanceReport Create(
+        string tenantId,
         string ppeirNo,
         DateOnly date,
         Guid issuedToEmployeeId,
@@ -84,6 +87,7 @@ public sealed class PPEIssuanceReport : AggregateRoot<Guid>, IAuditableEntity
         return new PPEIssuanceReport
         {
             Id                    = Guid.NewGuid(),
+            TenantId              = tenantId,
             PPEIRNo               = ppeirNo,
             Date                  = date,
             IssuedToEmployeeId    = issuedToEmployeeId,

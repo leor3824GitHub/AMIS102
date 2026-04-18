@@ -37,6 +37,7 @@ public sealed class ReclassifyPropertiesCommandHandler : ICommandHandler<Reclass
             .ConfigureAwait(false);
 
         int totalReclassified = 0;
+        string tenantId = _currentUser.GetTenant() ?? string.Empty;
         string userId = _currentUser.GetUserId().ToString();
 
         foreach (var property in properties)
@@ -52,7 +53,7 @@ public sealed class ReclassifyPropertiesCommandHandler : ICommandHandler<Reclass
             }
         }
 
-        var record = ReclassificationRecord.Create(threshold.Id, totalReclassified, command.Notes);
+        var record = ReclassificationRecord.Create(tenantId, threshold.Id, totalReclassified, command.Notes);
         record.CreatedBy = userId;
         _dbContext.ReclassificationRecords.Add(record);
 

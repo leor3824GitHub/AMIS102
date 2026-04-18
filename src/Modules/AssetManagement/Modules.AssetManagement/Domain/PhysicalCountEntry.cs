@@ -16,14 +16,10 @@ public sealed class PhysicalCountEntry : BaseEntity<Guid>
     // ── Asset reference ───────────────────────────────────────────────────────
 
     /// <summary>
-    /// FK to PPEItem. Null when this entry is for a Semi-Expendable Property.
+    /// FK to TangibleInventoryItem. Null for "Found at Station" entries
+    /// where there is no pre-generated checklist row.
     /// </summary>
-    public Guid? PPEItemId { get; private set; }
-
-    /// <summary>
-    /// FK to SemiExpendableProperty. Null when this entry is for a PPE item.
-    /// </summary>
-    public Guid? SemiExpendablePropertyId { get; private set; }
+    public Guid? TangibleInventoryItemId { get; private set; }
 
     // ── Snapshot fields (frozen from the asset at session creation) ───────────
 
@@ -73,10 +69,10 @@ public sealed class PhysicalCountEntry : BaseEntity<Guid>
 
     // ─────────────────────────────────────────────────────────────────────────
 
-    /// <summary>Creates a pre-populated checklist entry from a known PPE asset.</summary>
-    public static PhysicalCountEntry FromPPEItem(
+    /// <summary>Creates a pre-populated checklist entry from a known TangibleInventoryItem (PPE or SE).</summary>
+    public static PhysicalCountEntry FromTangibleInventoryItem(
         Guid sessionId,
-        Guid ppeItemId,
+        Guid tangibleInventoryItemId,
         string propertyNumber,
         string description,
         decimal unitCost)
@@ -85,27 +81,7 @@ public sealed class PhysicalCountEntry : BaseEntity<Guid>
         {
             Id                      = Guid.NewGuid(),
             SessionId               = sessionId,
-            PPEItemId               = ppeItemId,
-            PropertyNumber          = propertyNumber,
-            Description             = description,
-            UnitCost                = unitCost,
-            QuantityOnHand          = 1,
-        };
-    }
-
-    /// <summary>Creates a pre-populated checklist entry from a known Semi-Expendable Property.</summary>
-    public static PhysicalCountEntry FromSemiExpendable(
-        Guid sessionId,
-        Guid semiExpendablePropertyId,
-        string propertyNumber,
-        string description,
-        decimal unitCost)
-    {
-        return new PhysicalCountEntry
-        {
-            Id                      = Guid.NewGuid(),
-            SessionId               = sessionId,
-            SemiExpendablePropertyId = semiExpendablePropertyId,
+            TangibleInventoryItemId = tangibleInventoryItemId,
             PropertyNumber          = propertyNumber,
             Description             = description,
             UnitCost                = unitCost,

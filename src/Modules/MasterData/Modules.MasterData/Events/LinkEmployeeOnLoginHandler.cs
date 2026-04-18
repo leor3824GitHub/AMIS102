@@ -40,7 +40,6 @@ internal sealed class LinkEmployeeOnLoginHandler
         var employee = await _dbContext.Employees
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(e =>
-                e.TenantId == @event.TenantId &&
                 !e.IsDeleted &&
                 e.WorkEmail != null &&
                 e.WorkEmail.ToLower() == @event.Email.ToLower(),
@@ -53,7 +52,6 @@ internal sealed class LinkEmployeeOnLoginHandler
             employee = await _dbContext.Employees
                 .IgnoreQueryFilters()
                 .FirstOrDefaultAsync(e =>
-                    e.TenantId == @event.TenantId &&
                     !e.IsDeleted &&
                     e.FirstName.ToLower() == @event.FirstName.ToLower() &&
                     e.LastName.ToLower() == @event.LastName.ToLower(),

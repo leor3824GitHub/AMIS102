@@ -7,6 +7,7 @@ public sealed class Position : AggregateRoot<Guid>, IAuditableEntity
     public string Code { get; private set; } = default!;
     public string Name { get; private set; } = default!;
     public string? Description { get; private set; }
+    public string? OfficeCode { get; private set; }
     public bool IsActive { get; private set; } = true;
     public byte[] Version { get; set; } = [];
 
@@ -18,7 +19,7 @@ public sealed class Position : AggregateRoot<Guid>, IAuditableEntity
     public string? DeletedBy { get; set; }
     public bool IsDeleted { get; set; }
 
-    public static Position Create(string code, string name, string? description)
+    public static Position Create(string code, string name, string? description, string? officeCode = null)
     {
         return new Position
         {
@@ -26,6 +27,7 @@ public sealed class Position : AggregateRoot<Guid>, IAuditableEntity
             Code = code,
             Name = name,
             Description = description,
+            OfficeCode = officeCode,
             IsActive = true,
             CreatedOnUtc = DateTimeOffset.UtcNow
         };

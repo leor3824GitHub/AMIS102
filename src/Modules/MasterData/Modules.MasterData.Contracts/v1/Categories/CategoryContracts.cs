@@ -5,12 +5,14 @@ public record CategoryDto(
     string Code,
     string Name,
     string? Description,
-    bool IsActive);
+    bool IsActive,
+    string? OfficeCode = null);
 
 public record CreateCategoryCommand(
     string Code,
     string Name,
-    string? Description = null);
+    string? Description = null,
+    string? OfficeCode = null);
 
 public record UpdateCategoryCommand(
     Guid Id,

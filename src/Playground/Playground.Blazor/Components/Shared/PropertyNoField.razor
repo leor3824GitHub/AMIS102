@@ -8,7 +8,7 @@
                   ValueChanged="@((string v) => ValueChanged.InvokeAsync(v))"
                   Label="@Label"
                   Variant="Variant.Outlined"
-                  Required="@Required"
+                  Required="@(Required && !Disabled)"
                   MaxLength="@MaxLength"
                   Placeholder="@Placeholder"
                   Disabled="@Disabled"
@@ -31,7 +31,7 @@
                               AdornmentColor="Color.Warning" />
 
                 <!-- Property Class -->
-                <MudSelect @bind-Value="_classCode"
+                <MudSelect Value="_classCode" ValueChanged="@((string? v) => OnClassChangedAsync(v))"
                            Label="Property Class" Variant="Variant.Outlined" T="string?"
                            Size="Size.Small"
                            ToStringFunc="@(c => FormatClass(c))"
@@ -46,10 +46,9 @@
                 </MudSelect>
 
                 <!-- Category / Item Code -->
-                <MudSelect @bind-Value="_itemCode"
+                <MudSelect Value="_itemCode" ValueChanged="@((string? v) => OnItemChangedAsync(v))"
                            Label="Category Code" Variant="Variant.Outlined" T="string?"
                            Size="Size.Small"
-                           Disabled="@(string.IsNullOrWhiteSpace(_classCode))"
                            AnchorOrigin="Origin.BottomLeft">
                     <MudSelectItem T="string?" Value="@((string?)null)">— Select —</MudSelectItem>
                     @foreach (var item in ActiveItems)
@@ -62,10 +61,15 @@
 
                 <!-- Year + Sequence -->
                 <MudStack Row="true" Spacing="2">
-                    <MudNumericField @bind-Value="_year" Label="Year" Variant="Variant.Outlined"
+                    <MudNumericField Value="_year" ValueChanged="@((int v) => OnYearChangedAsync(v))"
+                                     Label="Year" Variant="Variant.Outlined"
                                      Size="Size.Small" Min="2000" Max="2099" Style="flex:1" />
                     <MudNumericField @bind-Value="_seq" Label="Sequence" Variant="Variant.Outlined"
-                                     Size="Size.Small" Min="1" Max="999" Style="flex:1" />
+                                     Size="Size.Small" Min="1" Max="9999" Style="flex:1"
+                                     Disabled="_loadingSeq"
+                                     Adornment="@(_loadingSeq ? Adornment.End : Adornment.None)"
+                                     AdornmentIcon="@Icons.Material.Filled.HourglassEmpty"
+                                     AdornmentColor="Color.Default" />
                 </MudStack>
 
                 <!-- Preview -->
@@ -118,11 +122,16 @@
     [Parameter] public int MaxLength { get; set; } = 32;
     [Parameter] public string Placeholder { get; set; } = string.Empty;
     [Parameter] public bool Disabled { get; set; }
+    // When provided, called with (year, officeCode, classCode, itemCode) to auto-fill the sequence.
+    [Parameter] public Func<int, string, string, string, Task<int>>? NextSequenceProvider { get; set; }
+    // Fires when the user accepts a generated code; carries the chosen classCode and itemCode.
+    [Parameter] public EventCallback<(string ClassCode, string ItemCode)> OnCodeSelected { get; set; }
 
     private bool _showGenerator;
     private string _officeCode = "???";
     private int _year = DateTime.Now.Year;
     private int _seq = 1;
+    private bool _loadingSeq;
     private string? _classCode;
     private string? _itemCode;
     private List<PropertyClassDto> _classes = [];
@@ -188,9 +197,43 @@
         return item is null ? itemCode : $"{item.ItemCode} — {item.Name}";
     }
 
+    private async Task OnYearChangedAsync(int year)
+    {
+        _year = year;
+        await RefreshSequenceAsync();
+    }
+
+    private async Task OnClassChangedAsync(string? classCode)
+    {
+        _classCode = classCode;
+        _itemCode = null;
+        await RefreshSequenceAsync();
+    }
+
+    private async Task OnItemChangedAsync(string? itemCode)
+    {
+        _itemCode = itemCode;
+        await RefreshSequenceAsync();
+    }
+
+    private async Task RefreshSequenceAsync()
+    {
+        if (NextSequenceProvider is null) return;
+        if (_officeCode == "???" || string.IsNullOrWhiteSpace(_classCode) || string.IsNullOrWhiteSpace(_itemCode)) return;
+        _loadingSeq = true;
+        try
+        {
+            _seq = await NextSequenceProvider(_year, _officeCode, _classCode, _itemCode);
+        }
+        catch { /* leave current seq */ }
+        finally { _loadingSeq = false; }
+    }
+
     private async Task UseCodeAsync()
     {
         await ValueChanged.InvokeAsync(PreviewCode);
+        if (OnCodeSelected.HasDelegate && !string.IsNullOrWhiteSpace(_classCode) && !string.IsNullOrWhiteSpace(_itemCode))
+            await OnCodeSelected.InvokeAsync((_classCode!, _itemCode!));
         _showGenerator = false;
         _seq++;
     }

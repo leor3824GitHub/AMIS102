@@ -14,8 +14,7 @@ public sealed class PhysicalCountEntryConfiguration : IEntityTypeConfiguration<P
 
         builder.Property(x => x.SessionId).IsRequired();
 
-        builder.Property(x => x.PPEItemId);
-        builder.Property(x => x.SemiExpendablePropertyId);
+        builder.Property(x => x.TangibleInventoryItemId);
 
         // Snapshot fields
         builder.Property(x => x.PropertyNumber).HasMaxLength(64).IsRequired();
@@ -32,11 +31,9 @@ public sealed class PhysicalCountEntryConfiguration : IEntityTypeConfiguration<P
 
         // Indexes for common query patterns
         builder.HasIndex(x => x.SessionId);
-        builder.HasIndex(x => x.PPEItemId);
-        builder.HasIndex(x => x.SemiExpendablePropertyId);
+        builder.HasIndex(x => x.TangibleInventoryItemId);
         builder.HasIndex(x => x.Result);
-        builder.HasIndex(x => new { x.SessionId, x.PPEItemId });
-        builder.HasIndex(x => new { x.SessionId, x.SemiExpendablePropertyId });
+        builder.HasIndex(x => new { x.SessionId, x.TangibleInventoryItemId });
 
         // FK — session
         builder.HasOne<PhysicalCountSession>()
@@ -44,17 +41,10 @@ public sealed class PhysicalCountEntryConfiguration : IEntityTypeConfiguration<P
             .HasForeignKey(x => x.SessionId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // FK — PPE item (restrict: don't delete a PPE item that appears in a count)
-        builder.HasOne<PPEItem>()
+        // FK — tangible inventory item (restrict: don't delete an item that appears in a count)
+        builder.HasOne<TangibleInventoryItem>()
             .WithMany()
-            .HasForeignKey(x => x.PPEItemId)
-            .IsRequired(false)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        // FK — semi-expendable property (restrict)
-        builder.HasOne<SemiExpendableProperty>()
-            .WithMany()
-            .HasForeignKey(x => x.SemiExpendablePropertyId)
+            .HasForeignKey(x => x.TangibleInventoryItemId)
             .IsRequired(false)
             .OnDelete(DeleteBehavior.Restrict);
     }

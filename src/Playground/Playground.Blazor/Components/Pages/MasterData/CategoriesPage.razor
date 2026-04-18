@@ -5,6 +5,7 @@
 @inherits ComponentBase
 @inject ISnackbar Snackbar
 @inject MasterDataService MasterDataService
+@inject IOrganizationProfileClient OrgProfileClient
 
 <FshPageHeader Title="Categories" Description="Manage product categories">
     <ActionContent>
@@ -30,6 +31,10 @@
                         <MudTextField @bind-Value="_form.Code" Label="Category Code" Placeholder="Unique code" Required="true" />
                         <MudTextField @bind-Value="_form.Name" Label="Category Name" Placeholder="Category name" Required="true" />
                         <MudTextField @bind-Value="_form.Description" Label="Description" Placeholder="Category description" Lines="3" />
+                        <MudTextField @bind-Value="_form.OfficeCode" Label="Owner Office Code"
+                                      Placeholder="e.g. 100, NDO (leave blank for shared)" MaxLength="8"
+                                      Disabled="@(EditingCategory != null)"
+                                      HelperText="@(EditingCategory != null ? "Cannot be changed after creation" : string.Empty)" />
                         <MudCheckBox @bind-Value="_form.IsActive" Label="Active" T="bool" />
 
                         <MudStack Row="true" Spacing="2" Class="mt-4">
@@ -61,37 +66,63 @@
                         <MudSimpleTable Dense="true" Hover="true" Striped="true">
                             <thead>
                                 <tr>
-                                    <th>Code</th>
-                                    <th>Name</th>
+                                    <th style="cursor:pointer" @onclick='() => SetSort("Code")'>Code @SortIcon("Code")</th>
+                                    <th style="cursor:pointer" @onclick='() => SetSort("Name")'>Name @SortIcon("Name")</th>
                                     <th>Description</th>
+                                    <th>Owner</th>
                                     <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach (var category in _categories)
+                                @foreach (var category in _categories.Skip((_pageIndex - 1) * PageSize).Take(PageSize))
                                 {
                                     <tr>
                                         <td>@category.Code</td>
                                         <td>@category.Name</td>
                                         <td>@(category.Description ?? "-")</td>
+                                        <td>
+                                            @if (!string.IsNullOrWhiteSpace(category.OfficeCode))
+                                            {
+                                                <MudChip T="string" Size="Size.Small" Color="Color.Warning" Label="true"
+                                                         Style="font-family:monospace">@category.OfficeCode</MudChip>
+                                            }
+                                            else
+                                            {
+                                                <MudText Typo="Typo.caption" Color="Color.Default">—</MudText>
+                                            }
+                                        </td>
                                         <td><MudChip T="string" Size="Size.Small" Color="@(category.IsActive ? Color.Success : Color.Error)">@(category.IsActive ? "Active" : "Inactive")</MudChip></td>
                                         <td>
-                                            <MudStack Row="true" Spacing="1">
-                                                <MudTooltip Text="Edit category">
-                                                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
-                                                                   Color="Color.Primary" OnClick="@(() => EditCategory(category))" />
+                                            @if (IsOwnedByMe(category.OfficeCode))
+                                            {
+                                                <MudStack Row="true" Spacing="1">
+                                                    <MudTooltip Text="Edit category">
+                                                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                                                       Color="Color.Primary" OnClick="@(() => EditCategory(category))" />
+                                                    </MudTooltip>
+                                                    <MudTooltip Text="Delete category">
+                                                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                                                       Color="Color.Error" OnClick="@(() => DeleteCategory(category.Id))" />
+                                                    </MudTooltip>
+                                                </MudStack>
+                                            }
+                                            else
+                                            {
+                                                <MudTooltip Text="@(string.IsNullOrWhiteSpace(category.OfficeCode) ? "Shared record — read only" : "Owned by another office — read only")">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.Lock" Size="Size.Small" Color="Color.Default" Disabled="true" />
                                                 </MudTooltip>
-                                                <MudTooltip Text="Delete category">
-                                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
-                                                                   Color="Color.Error" OnClick="@(() => DeleteCategory(category.Id))" />
-                                                </MudTooltip>
-                                            </MudStack>
+                                            }
                                         </td>
                                     </tr>
                                 }
                             </tbody>
                         </MudSimpleTable>
+                        @if (_categories.Count > PageSize)
+                        {
+                            <MudPagination Class="mt-2" Count="@((int)Math.Ceiling(_categories.Count / (double)PageSize))"
+                                           @bind-Selected="_pageIndex" Color="Color.Primary" ShowFirstButton="true" ShowLastButton="true" />
+                        }
                     }
                     else
                     {
@@ -112,6 +143,12 @@
     private bool _isLoading = false;
     private string _searchKeyword = string.Empty;
     private string _statusFilter = "All";
+    private string _officeCodeFilter = string.Empty;
+    private string _sortField = "Name";
+    private bool _sortAscending = true;
+    private string? _myOfficeCode;
+    private int _pageIndex = 1;
+    private const int PageSize = 10;
 
     public class CategoryForm
     {
@@ -119,12 +156,15 @@
         public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
         public bool IsActive { get; set; } = true;
+        public string? OfficeCode { get; set; }
     }
 
     protected override async Task OnInitializedAsync()
     {
         if (_initialized) return;
         _initialized = true;
+        var profile = await OrgProfileClient.GetAsync();
+        _myOfficeCode = profile?.AnnexECode;
         await LoadCategories();
     }
 
@@ -221,7 +261,8 @@
                 {
                     Code = normalizedCode,
                     Name = normalizedName,
-                    Description = _form.Description
+                    Description = _form.Description,
+                    OfficeCode = string.IsNullOrWhiteSpace(_form.OfficeCode) ? null : _form.OfficeCode.Trim()
                 };
 
                 await MasterDataService.CreateCategoryAsync(createCmd);
@@ -302,7 +343,8 @@
             Code = category.Code,
             Name = category.Name,
             Description = category.Description,
-            IsActive = category.IsActive
+            IsActive = category.IsActive,
+            OfficeCode = category.OfficeCode
         };
     }
 
@@ -326,6 +368,13 @@
         }
     }
 
+    private void OnOfficeCodeFilterChanged(string value)
+    {
+        _officeCodeFilter = value ?? string.Empty;
+        ApplyLocalFilters();
+        StateHasChanged();
+    }
+
     private Task OnStatusFilterChanged(string status)
     {
         _statusFilter = string.IsNullOrWhiteSpace(status) ? "All" : status;
@@ -334,13 +383,44 @@
         return Task.CompletedTask;
     }
 
+    private bool IsOwnedByMe(string? officeCode) =>
+        !string.IsNullOrWhiteSpace(_myOfficeCode) &&
+        string.Equals(officeCode, _myOfficeCode, StringComparison.OrdinalIgnoreCase);
+
     private void ApplyLocalFilters()
     {
-        _categories = _statusFilter switch
+        var filtered = _statusFilter switch
         {
-            "Active" => _allCategories.Where(x => x.IsActive).ToList(),
-            "Inactive" => _allCategories.Where(x => !x.IsActive).ToList(),
-            _ => _allCategories.ToList()
+            "Active" => _allCategories.Where(x => x.IsActive),
+            "Inactive" => _allCategories.Where(x => !x.IsActive),
+            "Own" => _allCategories.Where(x => IsOwnedByMe(x.OfficeCode)),
+            _ => _allCategories.AsEnumerable()
         };
+
+        if (!string.IsNullOrWhiteSpace(_officeCodeFilter))
+            filtered = filtered.Where(x => x.OfficeCode != null &&
+                x.OfficeCode.Contains(_officeCodeFilter, StringComparison.OrdinalIgnoreCase));
+
+        _pageIndex = 1;
+        _categories = (_sortField, _sortAscending) switch
+        {
+            ("Code", true)  => filtered.OrderBy(x => x.Code).ToList(),
+            ("Code", false) => filtered.OrderByDescending(x => x.Code).ToList(),
+            ("Name", false) => filtered.OrderByDescending(x => x.Name).ThenBy(x => x.Code).ToList(),
+            _               => filtered.OrderBy(x => x.Name).ThenBy(x => x.Code).ToList()
+        };
+    }
+
+    private void SetSort(string field)
+    {
+        if (_sortField == field) _sortAscending = !_sortAscending;
+        else { _sortField = field; _sortAscending = true; }
+        ApplyLocalFilters();
+    }
+
+    private string SortIcon(string field)
+    {
+        if (_sortField != field) return string.Empty;
+        return _sortAscending ? "▲" : "▼";
     }
 }

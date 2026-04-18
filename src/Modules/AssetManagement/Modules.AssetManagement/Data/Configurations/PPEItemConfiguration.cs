@@ -1,3 +1,4 @@
+using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;
 using FSH.Modules.AssetManagement.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -8,9 +9,11 @@ public sealed class PPEItemConfiguration : IEntityTypeConfiguration<PPEItem>
 {
     public void Configure(EntityTypeBuilder<PPEItem> builder)
     {
-        builder.ToTable("PPEItems", AssetManagementModuleConstants.SchemaName);
+        builder.ToTable("PPEItems", AssetManagementModuleConstants.SchemaName)
+            .IsMultiTenant();
 
         builder.HasKey(x => x.Id);
+        builder.Property(x => x.TenantId).HasMaxLength(50).IsRequired();
         builder.Property(x => x.PropertyCode).HasMaxLength(32).IsRequired();
         builder.Property(x => x.PropertyNumber).HasMaxLength(32).IsRequired();
         builder.Property(x => x.ClassCode).HasMaxLength(4);
@@ -27,8 +30,8 @@ public sealed class PPEItemConfiguration : IEntityTypeConfiguration<PPEItem>
         builder.Property(x => x.ItemId);
         builder.Property(x => x.Version).IsConcurrencyToken();
 
-        builder.HasIndex(x => x.PropertyCode).IsUnique();
-        builder.HasIndex(x => x.PropertyNumber).IsUnique();
+        builder.HasIndex(x => new { x.TenantId, x.PropertyCode }).IsUnique();
+        builder.HasIndex(x => new { x.TenantId, x.PropertyNumber }).IsUnique();
         builder.HasIndex(x => x.Status);
         builder.HasIndex(x => x.CurrentAccountableEmployeeId);
         builder.HasIndex(x => x.SourcePPERRId);
@@ -41,6 +44,6 @@ public sealed class PPEItemConfiguration : IEntityTypeConfiguration<PPEItem>
             .OnDelete(DeleteBehavior.SetNull);
 
         builder.Property(x => x.IsDeleted).HasDefaultValue(false);
-        builder.HasQueryFilter(x => !x.IsDeleted);
+        builder.HasQueryFilter("SoftDelete", x => !x.IsDeleted);
     }
 }

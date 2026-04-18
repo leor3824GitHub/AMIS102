@@ -65,9 +65,6 @@ public sealed class CreateProductCommandHandler : ICommandHandler<CreateProductC
                 command.MinimumStockLevel,
                 command.ReorderQuantity);
 
-            product.CategoryId = parent.CategoryId;
-            product.SupplierId = parent.SupplierId;
-            product.ImageUrl = parent.ImageUrl;
             product.CreatedBy = _currentUser.GetUserId().ToString();
         }
         else
@@ -80,11 +77,11 @@ public sealed class CreateProductCommandHandler : ICommandHandler<CreateProductC
                 command.UnitPrice,
                 command.UnitOfMeasure,
                 command.MinimumStockLevel,
-                command.ReorderQuantity);
+                command.ReorderQuantity,
+                command.CategoryId,
+                command.SupplierId,
+                command.ImageUrl);
 
-            product.CategoryId = command.CategoryId;
-            product.SupplierId = command.SupplierId;
-            product.ImageUrl = command.ImageUrl;
             product.CreatedBy = _currentUser.GetUserId().ToString();
         }
 

@@ -11,7 +11,8 @@ public record SupplierDto(
     string? Email,
     string? Phone,
     string? Address,
-    bool IsActive);
+    bool IsActive,
+    string? OfficeCode = null);
 
 public record CreateSupplierCommand(
     string Code,
@@ -23,7 +24,8 @@ public record CreateSupplierCommand(
     string? Email = null,
     string? Phone = null,
     string? Address = null,
-    bool IsActive = true);
+    bool IsActive = true,
+    string? OfficeCode = null);
 
 public record UpdateSupplierCommand(
     Guid Id,

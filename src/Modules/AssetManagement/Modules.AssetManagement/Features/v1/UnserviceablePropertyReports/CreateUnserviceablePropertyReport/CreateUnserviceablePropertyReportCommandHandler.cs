@@ -1,3 +1,4 @@
+using FSH.Framework.Core.Context;
 using FSH.Framework.Core.Exceptions;
 using FSH.Modules.AssetManagement.Data;
 using FSH.Modules.AssetManagement.Domain;
@@ -6,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FSH.Modules.AssetManagement.Features.v1.UnserviceablePropertyReports.CreateUnserviceablePropertyReport;
 
-public sealed class CreateUnserviceablePropertyReportCommandHandler(AssetManagementDbContext dbContext)
+public sealed class CreateUnserviceablePropertyReportCommandHandler(AssetManagementDbContext dbContext, ICurrentUser currentUser)
     : ICommandHandler<CreateUnserviceablePropertyReportCommand, CreateUnserviceablePropertyReportResult>
 {
     private static readonly PropertyStatus[] EligibleStatuses =
@@ -68,7 +69,10 @@ public sealed class CreateUnserviceablePropertyReportCommandHandler(AssetManagem
         }
 
         // 5. Create the report header.
+        string tenantId = currentUser.GetTenant() ?? string.Empty;
+
         var report = UnserviceablePropertyReport.Create(
+            tenantId,
             command.ReportNo,
             command.Date,
             command.DisposalMethod,

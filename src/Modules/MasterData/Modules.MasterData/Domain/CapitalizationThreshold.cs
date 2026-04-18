@@ -2,10 +2,11 @@ using FSH.Framework.Core.Domain;
 
 namespace FSH.Modules.MasterData.Domain;
 
-public sealed class CapitalizationThreshold : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
+/// <summary>
+/// Shared reference data — COA sets this nationally, all tenants read the same threshold.
+/// </summary>
+public sealed class CapitalizationThreshold : AggregateRoot<Guid>, IAuditableEntity
 {
-    public string TenantId { get; private set; } = default!;
-
     /// <summary>COA Circular reference, e.g. "COA Circular No. 2022-004"</summary>
     public string CircularName { get; private set; } = default!;
 
@@ -38,7 +39,6 @@ public sealed class CapitalizationThreshold : AggregateRoot<Guid>, IHasTenant, I
     public string? LastModifiedBy { get; set; }
 
     public static CapitalizationThreshold Create(
-        string tenantId,
         string circularName,
         string description,
         decimal capitalizationAmount,
@@ -48,7 +48,6 @@ public sealed class CapitalizationThreshold : AggregateRoot<Guid>, IHasTenant, I
         return new CapitalizationThreshold
         {
             Id = Guid.NewGuid(),
-            TenantId = tenantId,
             CircularName = circularName,
             Description = description,
             CapitalizationAmount = capitalizationAmount,

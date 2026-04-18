@@ -42,6 +42,6 @@ public sealed class UpdatePositionCommandHandler : ICommandHandler<UpdatePositio
 
         await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-        return new PositionReferenceDto(position.Id, position.Code, position.Name, position.Description, position.IsActive);
+        return new PositionReferenceDto(position.Id, position.Code, position.Name, position.Description, position.IsActive, position.OfficeCode);
     }
 }

@@ -24,12 +24,11 @@ public sealed record ICSDetailsDto(
 public sealed record ICSItemDetailsDto(
     Guid Id,
     int ItemNo,
-    Guid SemiExpendablePropertyId,
+    Guid TangibleInventoryItemId,
     string PropertyNo,
     string ItemCode,
     string ItemName,
-    string? SerialNo,
     string? Description,
     decimal UnitCost,
     int? EstimatedUsefulLifeYears,
-    string CategoryAtTimeOfIssuance);
+    string AssetTypeAtTimeOfIssuance);

@@ -14,8 +14,10 @@ namespace FSH.Modules.AssetManagement.Domain;
 ///
 /// One record is created per explicit ReclassifyPropertiesCommand invocation.
 /// </summary>
-public sealed class ReclassificationRecord : AggregateRoot<Guid>, IAuditableEntity
+public sealed class ReclassificationRecord : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 {
+    public string TenantId { get; private set; } = default!;
+
     /// <summary>
     /// The ID of the MasterData CapitalizationThreshold that was active during this run.
     /// Cross-module reference — no FK constraint is enforced by EF.
@@ -37,11 +39,12 @@ public sealed class ReclassificationRecord : AggregateRoot<Guid>, IAuditableEnti
     public string? DeletedBy { get; set; }
     public bool IsDeleted { get; set; }
 
-    public static ReclassificationRecord Create(Guid thresholdId, int totalReclassified, string? notes)
+    public static ReclassificationRecord Create(string tenantId, Guid thresholdId, int totalReclassified, string? notes)
     {
         return new ReclassificationRecord
         {
             Id                = Guid.NewGuid(),
+            TenantId          = tenantId,
             ThresholdId       = thresholdId,
             TotalReclassified = totalReclassified,
             Notes             = notes,

@@ -33,5 +33,6 @@ internal static class EmployeeReferenceDtoFactory
             employee.DefaultUnitOfMeasureId,
             employee.DefaultUnitOfMeasure?.Code,
             employee.DefaultUnitOfMeasure?.Name,
-            employee.IsActive);
+            employee.IsActive,
+            employee.OfficeCode);
 }

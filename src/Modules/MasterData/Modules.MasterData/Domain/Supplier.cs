@@ -13,6 +13,7 @@ public sealed class Supplier : AggregateRoot<Guid>, IAuditableEntity
     public string? Email { get; private set; }
     public string? Phone { get; private set; }
     public string? Address { get; private set; }
+    public string? OfficeCode { get; private set; }
     public bool IsActive { get; private set; } = true;
     public byte[] Version { get; set; } = [];
 
@@ -24,7 +25,7 @@ public sealed class Supplier : AggregateRoot<Guid>, IAuditableEntity
     public string? DeletedBy { get; set; }
     public bool IsDeleted { get; set; }
 
-    public static Supplier Create(string code, string name, string? tinNo, string businessTaxType, string? description, string? contactPerson, string? email, string? phone, string? address)
+    public static Supplier Create(string code, string name, string? tinNo, string businessTaxType, string? description, string? contactPerson, string? email, string? phone, string? address, string? officeCode = null)
     {
         return new Supplier
         {
@@ -38,6 +39,7 @@ public sealed class Supplier : AggregateRoot<Guid>, IAuditableEntity
             Email = email,
             Phone = phone,
             Address = address,
+            OfficeCode = officeCode,
             IsActive = true,
             CreatedOnUtc = DateTimeOffset.UtcNow
         };

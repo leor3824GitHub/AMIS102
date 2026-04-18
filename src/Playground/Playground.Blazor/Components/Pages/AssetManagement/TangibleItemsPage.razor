@@ -1,0 +1,323 @@
+@page "/asset-management/tangible-items"
+@using FSH.Playground.Blazor.ApiClient
+@inject ITangibleItemClient Client
+@inject IPropertyItemCatalogClient ItemClient
+@inject ISnackbar Snackbar
+
+<FshPageHeader Title="Tangible Items" Description="Register and manage tangible property items in inventory." />
+
+<MudGrid Spacing="3">
+    <!-- Register / Edit Form -->
+    <MudItem xs="12" md="4">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                <MudText Typo="Typo.h6" Class="mb-3">
+                    @(_editing is null ? "Register Tangible Item" : $"Editing: {_editing.PropertyNo}")
+                </MudText>
+                <MudStack Spacing="2">
+                    <MudAutocomplete T="PropertyItemCatalogSummaryDto"
+                                     @bind-Value="_form.SelectedItem"
+                                     SearchFunc="SearchItemsAsync"
+                                     ToStringFunc="@(x => x is null ? "" : $"{x.Code} \u2013 {x.Name}")"
+                                     Label="Category Code" Variant="Variant.Outlined"
+                                     Required="true" Clearable="true"
+                                     ResetValueOnEmptyText="true" CoerceValue="true"
+                                     MinCharacters="0" />
+                    <PropertyNoField @bind-Value="_form.PropertyNo"
+                                   Label="Property No."
+                                   Required="true"
+                                   MaxLength="32"
+                                   Placeholder="e.g. 2026-NFA-GSD-00001"
+                                   Disabled="_editing is not null"
+                                   NextSequenceProvider="GetNextSequenceAsync"
+                                   OnCodeSelected="OnPropertyNoCodeSelected" />
+                    <MudDatePicker @bind-Date="_form.AcquisitionDateNullable"
+                                   Label="Acquisition Date"
+                                   Variant="Variant.Outlined"
+                                   DateFormat="MM/dd/yyyy"
+                                   Required="true" />
+                    <MudNumericField @bind-Value="_form.Quantity"
+                                     Label="Quantity"
+                                     Variant="Variant.Outlined"
+                                     Required="true"
+                                     Min="1"
+                                     Max="9999"
+                                     T="int" />
+                    <MudNumericField @bind-Value="_form.UnitCost"
+                                     Label="Unit Cost (₱)"
+                                     Variant="Variant.Outlined"
+                                     Required="true"
+                                     Min="0.01m"
+                                     Format="N2"
+                                     T="decimal" />
+                    <MudTextField @bind-Value="_form.Remarks"
+                                  Label="Remarks"
+                                  Variant="Variant.Outlined"
+                                  MaxLength="500"
+                                  Lines="2" />
+
+                    <MudStack Row="true" Spacing="1" Class="mt-2">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                                   OnClick="SaveAsync" Disabled="_busy">
+                            @(_editing is null ? "Save" : "Update")
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Default" OnClick="ClearForm">
+                            @(_editing is null ? "Clear" : "Cancel")
+                        </MudButton>
+                    </MudStack>
+                </MudStack>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    <!-- List Panel -->
+    <MudItem xs="12" md="8">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3" Spacing="2">
+                    <MudText Typo="Typo.h6" Class="flex-grow-1">Tangible Items</MudText>
+                    <MudTextField @bind-Value="_keyword" Label="Search" Variant="Variant.Outlined" Size="Size.Small"
+                                  Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
+                                  DebounceInterval="350" OnDebounceIntervalElapsed="@(() => LoadAsync())"
+                                  Style="max-width:220px" />
+                </MudStack>
+
+                @if (_loading)
+                {
+                    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+                }
+                else if (_items.Count == 0)
+                {
+                    <MudAlert Severity="Severity.Info">No tangible items found. Register one using the form.</MudAlert>
+                }
+                else
+                {
+                    <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                        <thead>
+                            <tr>
+                                <th>Property No.</th>
+                                <th>Item Code</th>
+                                <th>Item Name</th>
+                                <th>Acq. Date</th>
+                                <th>Qty</th>
+                                <th>Unit Cost</th>
+                                <th>Remarks</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in _items)
+                            {
+                                <tr>
+                                    <td><MudText Typo="Typo.body2"><b>@item.PropertyNo</b></MudText></td>
+                                    <td>@item.ItemCode</td>
+                                    <td>@item.ItemName</td>
+                                    <td>@item.AcquisitionDate.ToString("MM/dd/yyyy")</td>
+                                    <td>@item.Quantity</td>
+                                    <td>@item.UnitCost.ToString("N2")</td>
+                                    <td>@(string.IsNullOrWhiteSpace(item.Remarks) ? "-" : item.Remarks)</td>
+                                    <td>
+                                        <MudStack Row="true" Spacing="0">
+                                            <MudTooltip Text="Edit">
+                                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                                               Color="Color.Primary" OnClick="@(() => BeginEditAsync(item.Id))" />
+                                            </MudTooltip>
+                                            <MudTooltip Text="Delete">
+                                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                                               Color="Color.Error" OnClick="@(() => DeleteAsync(item.Id))" />
+                                            </MudTooltip>
+                                        </MudStack>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </MudSimpleTable>
+
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-2" Spacing="1">
+                        <MudText Typo="Typo.caption">@_totalCount items total</MudText>
+                        <MudSpacer />
+                        <MudPagination Count="@TotalPages" Selected="_page" ShowFirstButton="true" ShowLastButton="true"
+                                       SelectedChanged="@(async p => { _page = p; await LoadAsync(); })" />
+                    </MudStack>
+                }
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private List<TangibleItemSummaryDto> _items = [];
+    private TangibleItemDto? _editing;
+    private TangibleItemForm _form = new();
+    private string? _keyword;
+    private bool _loading;
+    private bool _busy;
+    private int _page = 1;
+    private int _totalCount;
+    private const int PageSize = 15;
+    private int TotalPages => Math.Max(1, (int)Math.Ceiling(_totalCount / (double)PageSize));
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        try
+        {
+            var response = await Client.SearchAsync(_keyword, page: _page, pageSize: PageSize);
+            _items = [.. response.Items];
+            _totalCount = response.TotalCount;
+        }
+        catch (Exception ex) { Snackbar.Add($"Load failed: {ex.Message}", Severity.Error); }
+        finally { _loading = false; }
+    }
+
+    private async Task<IEnumerable<PropertyItemCatalogSummaryDto>> SearchItemsAsync(string? value, CancellationToken ct)
+    {
+        try
+        {
+            var response = await ItemClient.SearchAsync(value, isActive: true, page: 1, pageSize: 30, ct: ct);
+            return response.Items;
+        }
+        catch { return []; }
+    }
+
+    private async Task BeginEditAsync(Guid id)
+    {
+        var item = await Client.GetAsync(id);
+        if (item is null) { Snackbar.Add("Item not found.", Severity.Error); return; }
+        _editing = item;
+
+        // Populate the selected item from the catalog
+        PropertyItemCatalogSummaryDto? catalogItem = null;
+        try
+        {
+            var page = await ItemClient.SearchAsync(item.ItemCode, isActive: null, page: 1, pageSize: 5);
+            catalogItem = page.Items.FirstOrDefault(x => x.Id == item.ItemId);
+        }
+        catch { /* ignore */ }
+
+        _form = new TangibleItemForm
+        {
+            SelectedItem = catalogItem,
+            PropertyNo = item.PropertyNo,
+            PropertyClass = item.PropertyClass,
+            CategoryCode = item.CategoryCode,
+            AcquisitionDateNullable = item.AcquisitionDate.ToDateTime(TimeOnly.MinValue),
+            Quantity = item.Quantity,
+            UnitCost = item.UnitCost,
+            Remarks = item.Remarks
+        };
+        StateHasChanged();
+    }
+
+    private async Task SaveAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_form.PropertyNo))
+        {
+            Snackbar.Add("Property No. is required.", Severity.Warning);
+            return;
+        }
+        if (_form.SelectedItem is null)
+        {
+            Snackbar.Add("Item (Category Code) is required.", Severity.Warning);
+            return;
+        }
+        if (_form.AcquisitionDateNullable is null)
+        {
+            Snackbar.Add("Acquisition Date is required.", Severity.Warning);
+            return;
+        }
+        if (_form.Quantity <= 0)
+        {
+            Snackbar.Add("Quantity must be greater than 0.", Severity.Warning);
+            return;
+        }
+        if (_form.UnitCost <= 0)
+        {
+            Snackbar.Add("Unit Cost must be greater than 0.", Severity.Warning);
+            return;
+        }
+
+        if (_editing is null && (string.IsNullOrWhiteSpace(_form.PropertyClass) || string.IsNullOrWhiteSpace(_form.CategoryCode)))
+        {
+            Snackbar.Add("Use the ✨ generator to assign the Property No. so the Property Class and Category Code are captured.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            var acquisitionDate = DateOnly.FromDateTime(_form.AcquisitionDateNullable.Value);
+
+            if (_editing is null)
+            {
+                var cmd = new RegisterTangibleItemCommand(
+                    _form.SelectedItem.Id,
+                    _form.PropertyNo,
+                    _form.PropertyClass,
+                    _form.CategoryCode,
+                    acquisitionDate,
+                    _form.Quantity,
+                    _form.UnitCost,
+                    _form.Remarks);
+                await Client.RegisterAsync(cmd);
+                Snackbar.Add("Tangible item registered.", Severity.Success);
+            }
+            else
+            {
+                var cmd = new UpdateTangibleItemCommand(
+                    _editing.Id,
+                    acquisitionDate,
+                    _form.Quantity,
+                    _form.UnitCost,
+                    _form.Remarks);
+                await Client.UpdateAsync(_editing.Id, cmd);
+                Snackbar.Add("Tangible item updated.", Severity.Success);
+            }
+
+            ClearForm();
+            await LoadAsync();
+        }
+        catch (Exception ex) { Snackbar.Add($"Save failed: {ex.Message}", Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    private async Task DeleteAsync(Guid id)
+    {
+        try
+        {
+            await Client.DeleteAsync(id);
+            Snackbar.Add("Tangible item deleted.", Severity.Success);
+            await LoadAsync();
+        }
+        catch (Exception ex) { Snackbar.Add($"Delete failed: {ex.Message}", Severity.Error); }
+    }
+
+    private Task<int> GetNextSequenceAsync(int year, string officeCode, string classCode, string itemCode) =>
+        Client.GetNextSequenceAsync(year, officeCode, classCode, itemCode);
+
+    private void OnPropertyNoCodeSelected((string ClassCode, string ItemCode) codes)
+    {
+        _form.PropertyClass = codes.ClassCode;
+        _form.CategoryCode = codes.ItemCode;
+    }
+
+    private void ClearForm()
+    {
+        _editing = null;
+        _form = new();
+    }
+
+    private sealed class TangibleItemForm
+    {
+        public PropertyItemCatalogSummaryDto? SelectedItem { get; set; }
+        public string PropertyNo { get; set; } = string.Empty;
+        public string PropertyClass { get; set; } = string.Empty;
+        public string CategoryCode { get; set; } = string.Empty;
+        public DateTime? AcquisitionDateNullable { get; set; }
+        public int Quantity { get; set; } = 1;
+        public decimal UnitCost { get; set; }
+        public string? Remarks { get; set; }
+    }
+}

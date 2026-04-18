@@ -12,8 +12,8 @@ public sealed class UnserviceablePropertyItem : BaseEntity<Guid>
     /// <summary>FK to the parent UnserviceablePropertyReport.</summary>
     public Guid ReportId { get; private set; }
 
-    /// <summary>The specific property unit being declared unserviceable.</summary>
-    public Guid SemiExpendablePropertyId { get; private set; }
+    /// <summary>The TangibleInventoryItem being declared unserviceable.</summary>
+    public Guid TangibleInventoryItemId { get; private set; }
 
     /// <summary>Item number on the report form (sequential within the report).</summary>
     public int ItemNo { get; private set; }
@@ -25,10 +25,10 @@ public sealed class UnserviceablePropertyItem : BaseEntity<Guid>
     public decimal UnitCost { get; private set; }
 
     /// <summary>
-    /// Asset category at the time of reporting.
-    /// Frozen here so historical records remain accurate after reclassification.
+    /// Asset type at the time of reporting.
+    /// Frozen here so historical records remain accurate.
     /// </summary>
-    public AssetCategory CategoryAtTimeOfReport { get; private set; }
+    public AssetType AssetTypeAtTimeOfReport { get; private set; }
 
     /// <summary>
     /// Condition notes per item (e.g. "broken display", "motor seized").
@@ -38,23 +38,23 @@ public sealed class UnserviceablePropertyItem : BaseEntity<Guid>
 
     public static UnserviceablePropertyItem Create(
         Guid reportId,
-        Guid semiExpendablePropertyId,
+        Guid tangibleInventoryItemId,
         int itemNo,
         string? description,
         decimal unitCost,
-        AssetCategory categoryAtTimeOfReport,
+        AssetType assetTypeAtTimeOfReport,
         string? conditionRemarks)
     {
         return new UnserviceablePropertyItem
         {
-            Id                       = Guid.NewGuid(),
-            ReportId                 = reportId,
-            SemiExpendablePropertyId = semiExpendablePropertyId,
-            ItemNo                   = itemNo,
-            Description              = description,
-            UnitCost                 = unitCost,
-            CategoryAtTimeOfReport   = categoryAtTimeOfReport,
-            ConditionRemarks         = conditionRemarks,
+            Id                      = Guid.NewGuid(),
+            ReportId                = reportId,
+            TangibleInventoryItemId = tangibleInventoryItemId,
+            ItemNo                  = itemNo,
+            Description             = description,
+            UnitCost                = unitCost,
+            AssetTypeAtTimeOfReport = assetTypeAtTimeOfReport,
+            ConditionRemarks        = conditionRemarks,
         };
     }
 }

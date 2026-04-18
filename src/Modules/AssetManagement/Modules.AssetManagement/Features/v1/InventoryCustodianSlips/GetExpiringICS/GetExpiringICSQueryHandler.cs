@@ -48,7 +48,7 @@ public sealed class GetExpiringICSQueryHandler(AssetManagementDbContext dbContex
                 x.ICSNo,
                 x.Date,
                 x.ExpiresOn!.Value,
-                x.Category.ToString(),
+                x.AssetType.ToString(),
                 x.ReceivedByEmployeeId,
                 x.IssuedFromEmployeeId,
                 x.FundCluster,

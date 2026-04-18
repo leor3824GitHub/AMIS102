@@ -195,6 +195,9 @@ internal static class ApiClientRegistration
         services.AddTransient<IPhysicalCountClient>(sp =>
             new PhysicalCountClient(ResolveClient(sp)));
 
+        services.AddTransient<ITangibleItemClient>(sp =>
+            new TangibleItemClient(ResolveClient(sp)));
+
         // Procurement module manual clients
         services.AddTransient<IPurchaseRequestClient>(sp =>
             new PurchaseRequestClient(ResolveClient(sp)));

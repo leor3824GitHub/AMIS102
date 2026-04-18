@@ -1,0 +1,149 @@
+@using FSH.Modules.MasterData.Contracts.v1.OrganizationProfile
+@using FSH.Playground.Blazor.ApiClient
+@inject IOrganizationProfileClient OrgProfileClient
+@inject ILookupClient LookupClient
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <TitleContent>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudAvatar Color="Color.Primary" Size="Size.Medium">
+                <MudIcon Icon="@Icons.Material.Filled.Apartment" />
+            </MudAvatar>
+            <MudStack Spacing="0">
+                <MudText Typo="Typo.h6">Set Up Your Organization Profile</MudText>
+                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                    This information is printed on official government reports.
+                </MudText>
+            </MudStack>
+        </MudStack>
+    </TitleContent>
+    <DialogContent>
+        <MudStack Spacing="3" Class="pt-2">
+            <MudAutocomplete T="string"
+                             @bind-Value="_form.Name"
+                             @bind-Value:after="OnOfficeNameSelected"
+                             Label="Agency / Organization Name"
+                             Variant="Variant.Outlined"
+                             Required="true"
+                             MaxLength="200"
+                             Placeholder="e.g. National Food Authority"
+                             SearchFunc="SearchOfficeNamesAsync"
+                             ResetValueOnEmptyText="false"
+                             CoerceText="true"
+                             CoerceValue="false"
+                             MinCharacters="1"
+                             HelperText="Type to search — selecting one auto-fills the office code" />
+
+            <MudTextField @bind-Value="_form.ShortName"
+                          Label="Short Name / Acronym"
+                          Variant="Variant.Outlined"
+                          MaxLength="80"
+                          Placeholder="e.g. NFA" />
+
+            <MudTextField @bind-Value="_form.Address"
+                          Label="Address"
+                          Variant="Variant.Outlined"
+                          Lines="2"
+                          MaxLength="400"
+                          Placeholder="e.g. NFA Complex, Visayas Avenue, Diliman, Quezon City" />
+
+            <MudTextField @bind-Value="_form.AnnexECode"
+                          Label="Office Code (Annex E)"
+                          Variant="Variant.Outlined"
+                          MaxLength="8"
+                          Placeholder="e.g. 00B"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Tag"
+                          HelperText="Used in property code generation" />
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" Color="Color.Default" OnClick="Skip">Skip for now</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                   OnClick="SaveAsync"
+                   Disabled="_busy || string.IsNullOrWhiteSpace(_form.Name)">
+            @if (_busy)
+            {
+                <MudProgressCircular Size="Size.Small" Class="mr-2" />
+            }
+            Save & Continue
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    private FormModel _form = new();
+    private bool _busy;
+    private Dictionary<string, OfficeReferenceDto> _officesByName = new(StringComparer.OrdinalIgnoreCase);
+
+    private async Task<IEnumerable<string>> SearchOfficeNamesAsync(string value, CancellationToken ct)
+    {
+        try
+        {
+            var response = await LookupClient.OfficesAsync(keyword: value, pageSize: 30);
+            var items = response?.Items ?? [];
+            _officesByName = items
+                .Where(o => !string.IsNullOrWhiteSpace(o.Name))
+                .ToDictionary(o => o.Name!, o => o, StringComparer.OrdinalIgnoreCase);
+            return _officesByName.Keys.OrderBy(n => n);
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    private void OnOfficeNameSelected()
+    {
+        if (string.IsNullOrWhiteSpace(_form.Name)) return;
+        if (_officesByName.TryGetValue(_form.Name, out var office) &&
+            !string.IsNullOrWhiteSpace(office.RegProvCode))
+        {
+            _form.AnnexECode = office.RegProvCode;
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_form.Name)) return;
+
+        _busy = true;
+        try
+        {
+            var command = new UpsertOrganizationProfileCommand(
+                _form.Name.Trim(),
+                NullIfEmpty(_form.ShortName),
+                NullIfEmpty(_form.Address),
+                null,
+                NullIfEmpty(_form.AnnexECode));
+
+            await OrgProfileClient.UpsertAsync(command);
+            Snackbar.Add("Organization profile saved.", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to save: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void Skip() => MudDialog.Cancel();
+
+    private static string? NullIfEmpty(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    private sealed class FormModel
+    {
+        public string Name { get; set; } = string.Empty;
+        public string ShortName { get; set; } = string.Empty;
+        public string Address { get; set; } = string.Empty;
+        public string AnnexECode { get; set; } = string.Empty;
+    }
+}

@@ -21,9 +21,9 @@ public sealed record PropertyIncidentReportDetailsDto(
 
 public sealed record PropertyIncidentItemDetailsDto(
     Guid Id,
-    Guid SemiExpendablePropertyId,
+    Guid TangibleInventoryItemId,
     string PropertyNo,
     int ItemNo,
     string? Description,
     decimal UnitCost,
-    string CategoryAtTimeOfReport);
+    string AssetTypeAtTimeOfReport);

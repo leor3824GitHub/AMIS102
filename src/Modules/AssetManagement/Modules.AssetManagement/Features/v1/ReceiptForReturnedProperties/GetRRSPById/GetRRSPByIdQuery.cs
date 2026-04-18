@@ -20,9 +20,9 @@ public sealed record RRSPDetailsDto(
 
 public sealed record RRSPItemDetailsDto(
     Guid Id,
-    Guid SemiExpendablePropertyId,
+    Guid TangibleInventoryItemId,
     string PropertyNo,
     int ItemNo,
     string? Description,
     decimal UnitCost,
-    string CategoryAtTimeOfReturn);
+    string AssetTypeAtTimeOfReturn);

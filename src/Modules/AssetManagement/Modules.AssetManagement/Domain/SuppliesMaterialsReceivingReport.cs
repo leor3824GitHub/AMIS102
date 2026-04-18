@@ -7,8 +7,10 @@ namespace FSH.Modules.AssetManagement.Domain;
 /// Records inbound receipt of semi-expendable items from a supplier or transfer source.
 /// Creating an SMRR automatically registers the received units as SemiExpendableProperty records.
 /// </summary>
-public sealed class SuppliesMaterialsReceivingReport : AggregateRoot<Guid>, IAuditableEntity
+public sealed class SuppliesMaterialsReceivingReport : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 {
+    public string TenantId { get; private set; } = default!;
+
     /// <summary>Control number (e.g., SMRR-2024-00001).</summary>
     public string SMRRNo { get; private set; } = default!;
 
@@ -52,6 +54,7 @@ public sealed class SuppliesMaterialsReceivingReport : AggregateRoot<Guid>, IAud
     public bool IsDeleted { get; set; }
 
     public static SuppliesMaterialsReceivingReport Create(
+        string tenantId,
         string smrrNo,
         DateOnly date,
         string receivedFrom,
@@ -65,6 +68,7 @@ public sealed class SuppliesMaterialsReceivingReport : AggregateRoot<Guid>, IAud
         return new SuppliesMaterialsReceivingReport
         {
             Id                   = Guid.NewGuid(),
+            TenantId             = tenantId,
             SMRRNo               = smrrNo,
             Date                 = date,
             ReceivedFrom         = receivedFrom,

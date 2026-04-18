@@ -29,7 +29,10 @@ public sealed class CreatePhysicalCountSessionCommandHandler(
             ]);
         }
 
+        string tenantId = currentUser.GetTenant() ?? string.Empty;
+
         var session = PhysicalCountSession.Create(
+            tenantId,
             command.SessionNo,
             command.CountDate,
             command.StationOffice,

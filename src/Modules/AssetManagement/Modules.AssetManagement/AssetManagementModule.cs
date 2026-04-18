@@ -9,16 +9,10 @@ using FSH.Modules.AssetManagement.Features.v1.InventoryCustodianSlips.GetICSById
 using FSH.Modules.AssetManagement.Features.v1.InventoryCustodianSlips.GetICSList;
 using FSH.Modules.AssetManagement.Features.v1.InventoryCustodianSlips.RenewICS;
 using FSH.Modules.AssetManagement.Provisioning;
-using FSH.Modules.AssetManagement.Features.v1.ReceivingReports.CreateSMRR;
-using FSH.Modules.AssetManagement.Features.v1.ReceivingReports.GetSMRRById;
-using FSH.Modules.AssetManagement.Features.v1.ReceivingReports.GetSMRRs;
 using FSH.Modules.AssetManagement.Features.v1.SemiExpendableItems.CreateSemiExpendableItem;
 using FSH.Modules.AssetManagement.Features.v1.SemiExpendableItems.GetSemiExpendableItemById;
 using FSH.Modules.AssetManagement.Features.v1.SemiExpendableItems.GetSemiExpendableItems;
 using FSH.Modules.AssetManagement.Features.v1.SemiExpendableItems.UpdateSemiExpendableItem;
-using FSH.Modules.AssetManagement.Features.v1.SemiExpendableProperties.GetSemiExpendableProperties;
-using FSH.Modules.AssetManagement.Features.v1.SemiExpendableProperties.GetSemiExpendablePropertyById;
-using FSH.Modules.AssetManagement.Features.v1.SemiExpendableProperties.RegisterSemiExpendableProperty;
 using FSH.Modules.AssetManagement.Features.v1.Reclassification.GetReclassificationHistory;
 using FSH.Modules.AssetManagement.Features.v1.Reclassification.ReclassifyProperties;
 using FSH.Modules.AssetManagement.Features.v1.PropertyIncidentReports.CreatePropertyIncidentReport;
@@ -37,9 +31,6 @@ using FSH.Modules.AssetManagement.Features.v1.ReceiptForReturnedProperties.GetRR
 using FSH.Modules.AssetManagement.Features.v1.SemiExpendableIssuanceRecords.CreateSMIR;
 using FSH.Modules.AssetManagement.Features.v1.SemiExpendableIssuanceRecords.GetSMIRById;
 using FSH.Modules.AssetManagement.Features.v1.SemiExpendableIssuanceRecords.GetSMIRList;
-using FSH.Modules.AssetManagement.Features.v1.PPEReceivingReports.CreatePPERR;
-using FSH.Modules.AssetManagement.Features.v1.PPEReceivingReports.GetPPERRById;
-using FSH.Modules.AssetManagement.Features.v1.PPEReceivingReports.GetPPERRList;
 using FSH.Modules.AssetManagement.Features.v1.PropertyAcknowledgementReceipts.CreatePAR;
 using FSH.Modules.AssetManagement.Features.v1.PropertyAcknowledgementReceipts.GetPARById;
 using FSH.Modules.AssetManagement.Features.v1.PropertyAcknowledgementReceipts.GetPARList;
@@ -51,8 +42,6 @@ using FSH.Modules.AssetManagement.Features.v1.PPEIssuanceReports.UpdatePPEIRDepr
 using FSH.Modules.AssetManagement.Features.v1.ReceiptsForReturnedPPE.CreateRRP;
 using FSH.Modules.AssetManagement.Features.v1.ReceiptsForReturnedPPE.GetRRPById;
 using FSH.Modules.AssetManagement.Features.v1.ReceiptsForReturnedPPE.GetRRPList;
-using FSH.Modules.AssetManagement.Features.v1.PPEItems.GetPPEItemById;
-using FSH.Modules.AssetManagement.Features.v1.PPEItems.GetPPEItemList;
 using FSH.Modules.AssetManagement.Features.v1.PhysicalCount.CreatePhysicalCountSession;
 using FSH.Modules.AssetManagement.Features.v1.PhysicalCount.RecordPhysicalCountEntry;
 using FSH.Modules.AssetManagement.Features.v1.PhysicalCount.AddFoundAtStationEntry;
@@ -61,6 +50,15 @@ using FSH.Modules.AssetManagement.Features.v1.PhysicalCount.GetPhysicalCountSess
 using FSH.Modules.AssetManagement.Features.v1.PhysicalCount.GetPhysicalCountSessionById;
 using FSH.Modules.AssetManagement.Features.v1.PhysicalCount.GetICF;
 using FSH.Modules.AssetManagement.Features.v1.PhysicalCount.GetRPCPPE;
+using FSH.Modules.AssetManagement.Features.v1.TangibleItems.RegisterTangibleItem;
+using FSH.Modules.AssetManagement.Features.v1.TangibleItems.GetTangibleItems;
+using FSH.Modules.AssetManagement.Features.v1.TangibleItems.GetTangibleItemById;
+using FSH.Modules.AssetManagement.Features.v1.TangibleItems.UpdateTangibleItem;
+using FSH.Modules.AssetManagement.Features.v1.TangibleItems.DeleteTangibleItem;
+using FSH.Modules.AssetManagement.Features.v1.TangibleItems.GetNextTangibleItemSequence;
+using FSH.Modules.AssetManagement.Features.v1.TangibleInventory.CreateTangibleInventory;
+using FSH.Modules.AssetManagement.Features.v1.TangibleInventory.GetTangibleInventories;
+using FSH.Modules.AssetManagement.Features.v1.TangibleInventory.GetTangibleInventoryById;
 using Hangfire;
 using Hangfire.Common;
 using Microsoft.AspNetCore.Builder;
@@ -81,15 +79,8 @@ public class AssetManagementModule : IModule
         new("Update Semi-Expendable Items", "Update", "AssetManagement.SemiExpendableItems"),
         new("Delete Semi-Expendable Items", "Delete", "AssetManagement.SemiExpendableItems"),
 
-        new("View Semi-Expendable Properties",   "View",   "AssetManagement.SemiExpendableProperties",   IsBasic: true),
-        new("Create Semi-Expendable Properties", "Create", "AssetManagement.SemiExpendableProperties"),
-        new("Update Semi-Expendable Properties", "Update", "AssetManagement.SemiExpendableProperties"),
-        new("Delete Semi-Expendable Properties", "Delete", "AssetManagement.SemiExpendableProperties"),
-
-        new("View Receiving Reports",   "View",   "AssetManagement.ReceivingReports",   IsBasic: true),
-        new("Create Receiving Reports", "Create", "AssetManagement.ReceivingReports"),
-        new("Update Receiving Reports", "Update", "AssetManagement.ReceivingReports"),
-        new("Delete Receiving Reports", "Delete", "AssetManagement.ReceivingReports"),
+        new("View Tangible Inventory",   "View",   "AssetManagement.TangibleInventory",   IsBasic: true),
+        new("Create Tangible Inventory", "Create", "AssetManagement.TangibleInventory"),
 
         new("View Inventory Custodian Slips",   "View",   "AssetManagement.InventoryCustodianSlips",   IsBasic: true),
         new("Create Inventory Custodian Slips", "Create", "AssetManagement.InventoryCustodianSlips"),
@@ -136,6 +127,12 @@ public class AssetManagementModule : IModule
         new("View Physical Count Sessions",   "View",   "AssetManagement.PhysicalCount", IsBasic: true),
         new("Create Physical Count Session",  "Create", "AssetManagement.PhysicalCount"),
         new("Update Physical Count Session",  "Update", "AssetManagement.PhysicalCount"),
+
+        // Tangible Items
+        new("View Tangible Items",   "View",   "AssetManagement.TangibleItems",   IsBasic: true),
+        new("Create Tangible Item",  "Create", "AssetManagement.TangibleItems"),
+        new("Update Tangible Item",  "Update", "AssetManagement.TangibleItems"),
+        new("Delete Tangible Item",  "Delete", "AssetManagement.TangibleItems"),
     ];
 
     public void ConfigureServices(IHostApplicationBuilder builder)
@@ -163,37 +160,30 @@ public class AssetManagementModule : IModule
             .WithApiVersionSet(apiVersionSet);
 
         var semiExpendableItemsGroup      = moduleGroup.MapGroup("/item-catalog");
-        var semiExpendablePropertiesGroup = moduleGroup.MapGroup("/semi-expendable-properties");
-        var receivingReportsGroup         = moduleGroup.MapGroup("/receiving-reports");
         var icsGroup                      = moduleGroup.MapGroup("/inventory-custodian-slips");
         var reclassificationGroup         = moduleGroup.MapGroup("/reclassification");
         var smirGroup                     = moduleGroup.MapGroup("/semi-expendable-issuance-records");
         var rrspGroup                     = moduleGroup.MapGroup("/receipt-for-returned-properties");
         var pirGroup                      = moduleGroup.MapGroup("/property-incident-reports");
-        var unserviceableGroup                  = moduleGroup.MapGroup("/unserviceable-property-reports");
-        var reportsGroup                        = moduleGroup.MapGroup("/reports");
-        var ppeReceivingReportsGroup            = moduleGroup.MapGroup("/ppe-receiving-reports");
-        var parGroup                            = moduleGroup.MapGroup("/property-acknowledgement-receipts");
-        var ppeirGroup                          = moduleGroup.MapGroup("/ppe-issuance-reports");
-        var rrpGroup                            = moduleGroup.MapGroup("/receipts-for-returned-ppe");
-        var ppeItemsGroup                       = moduleGroup.MapGroup("/ppe-items");
-        var physicalCountGroup                  = moduleGroup.MapGroup("/physical-count");
+        var unserviceableGroup            = moduleGroup.MapGroup("/unserviceable-property-reports");
+        var reportsGroup                  = moduleGroup.MapGroup("/reports");
+        var parGroup                      = moduleGroup.MapGroup("/property-acknowledgement-receipts");
+        var ppeirGroup                    = moduleGroup.MapGroup("/ppe-issuance-reports");
+        var rrpGroup                      = moduleGroup.MapGroup("/receipts-for-returned-ppe");
+        var physicalCountGroup            = moduleGroup.MapGroup("/physical-count");
+        var tangibleItemsGroup            = moduleGroup.MapGroup("/tangible-items");
+        var tangibleInventoryGroup        = moduleGroup.MapGroup("/tangible-inventories");
 
-        // Semi-Expendable Items
+        // Semi-Expendable Items (Item Catalog)
         CreateSemiExpendableItemEndpoint.Map(semiExpendableItemsGroup);
         GetSemiExpendableItemsEndpoint.Map(semiExpendableItemsGroup);
         GetSemiExpendableItemByIdEndpoint.Map(semiExpendableItemsGroup);
         UpdateSemiExpendableItemEndpoint.Map(semiExpendableItemsGroup);
 
-        // Semi-Expendable Properties
-        RegisterSemiExpendablePropertyEndpoint.Map(semiExpendablePropertiesGroup);
-        GetSemiExpendablePropertiesEndpoint.Map(semiExpendablePropertiesGroup);
-        GetSemiExpendablePropertyByIdEndpoint.Map(semiExpendablePropertiesGroup);
-
-        // Receiving Reports (SMRR)
-        CreateSMRREndpoint.Map(receivingReportsGroup);
-        GetSMRRsEndpoint.Map(receivingReportsGroup);
-        GetSMRRByIdEndpoint.Map(receivingReportsGroup);
+        // Tangible Inventory (unified receiving — SE and PPE)
+        CreateTangibleInventoryEndpoint.Map(tangibleInventoryGroup);
+        GetTangibleInventoriesEndpoint.Map(tangibleInventoryGroup);
+        GetTangibleInventoryByIdEndpoint.Map(tangibleInventoryGroup);
 
         // Inventory Custodian Slips (ICS)
         CreateICSEndpoint.Map(icsGroup);
@@ -226,11 +216,6 @@ public class AssetManagementModule : IModule
         GetUnserviceablePropertyReportListEndpoint.Map(unserviceableGroup);
         GetUnserviceablePropertyReportByIdEndpoint.Map(unserviceableGroup);
 
-        // PPE Receiving Reports (PPERR)
-        CreatePPERREndpoint.Map(ppeReceivingReportsGroup);
-        GetPPERRListEndpoint.Map(ppeReceivingReportsGroup);
-        GetPPERRByIdEndpoint.Map(ppeReceivingReportsGroup);
-
         // Property Acknowledgement Receipts (PAR)
         CreatePAREndpoint.Map(parGroup);
         GetPARListEndpoint.Map(parGroup);
@@ -248,10 +233,6 @@ public class AssetManagementModule : IModule
         GetRRPListEndpoint.Map(rrpGroup);
         GetRRPByIdEndpoint.Map(rrpGroup);
 
-        // PPE Items
-        GetPPEItemListEndpoint.Map(ppeItemsGroup);
-        GetPPEItemByIdEndpoint.Map(ppeItemsGroup);
-
         // Physical Count (ICF / RPCPPE)
         CreatePhysicalCountSessionEndpoint.Map(physicalCountGroup);
         GetPhysicalCountSessionListEndpoint.Map(physicalCountGroup);
@@ -267,6 +248,14 @@ public class AssetManagementModule : IModule
         GetRegSPIEndpoint.Map(reportsGroup);
         GetRSPIEndpoint.Map(reportsGroup);
         GetPropertyHistoryEndpoint.Map(reportsGroup);
+
+        // Tangible Items
+        RegisterTangibleItemEndpoint.Map(tangibleItemsGroup);
+        GetTangibleItemsEndpoint.Map(tangibleItemsGroup);
+        GetTangibleItemByIdEndpoint.Map(tangibleItemsGroup);
+        UpdateTangibleItemEndpoint.Map(tangibleItemsGroup);
+        DeleteTangibleItemEndpoint.Map(tangibleItemsGroup);
+        GetNextTangibleItemSequenceEndpoint.Map(tangibleItemsGroup);
 
         // Hangfire recurring jobs
         RegisterRecurringJobs(endpoints);

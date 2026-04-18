@@ -60,22 +60,17 @@ internal sealed class ExpendableDbInitializer(
 
             var products = new[]
             {
-                Product.Create(tenantId, "PRD-001", "Bond Paper A4", "High quality A4 bond paper, 80gsm", 5.50m, "UOM-RIM", 10, 50),
-                Product.Create(tenantId, "PRD-002", "Ink Cartridge Black", "Black ink cartridge for model X", 12.99m, "UOM-PCS", 5, 20),
-                Product.Create(tenantId, "PRD-003", "Stapler", "Standard office stapler", 7.25m, "UOM-PCS", 5, 15),
-                Product.Create(tenantId, "PRD-004", "Notebook A5", "Ruled A5 notebook, 80 pages", 3.75m, "UOM-PCS", 20, 100),
-                Product.Create(tenantId, "PRD-005", "Ballpoint Pen (Blue)", "Smooth-writing blue ballpoint pen", 0.99m, "UOM-PCS", 50, 200),
-                Product.Create(tenantId, "PRD-006", "Calculator", "Basic desktop calculator", 15.00m, "UOM-PCS", 5, 25),
-                Product.Create(tenantId, "PRD-007", "Packing Tape", "Clear packing tape 48mm x 50m", 4.50m, "UOM-BOX", 30, 120),
-                Product.Create(tenantId, "PRD-008", "USB Flash Drive 32GB", "32GB USB-A flash drive", 9.99m, "UOM-PCS", 10, 40),
-                Product.Create(tenantId, "PRD-009", "Desk Lamp", "LED desk lamp with adjustable arm", 29.99m, "UOM-PCS", 3, 10),
-                Product.Create(tenantId, "PRD-010", "Whiteboard Marker (Black)", "Dry erase marker, black", 1.25m, "UOM-PCS", 40, 160),
+                Product.Create(tenantId, "PRD-001", "Bond Paper A4", "High quality A4 bond paper, 80gsm", 5.50m, "UOM-RIM", 10, 50, imageUrl: "/images/products/product1.svg"),
+                Product.Create(tenantId, "PRD-002", "Ink Cartridge Black", "Black ink cartridge for model X", 12.99m, "UOM-PCS", 5, 20, imageUrl: "/images/products/product2.svg"),
+                Product.Create(tenantId, "PRD-003", "Stapler", "Standard office stapler", 7.25m, "UOM-PCS", 5, 15, imageUrl: "/images/products/product3.svg"),
+                Product.Create(tenantId, "PRD-004", "Notebook A5", "Ruled A5 notebook, 80 pages", 3.75m, "UOM-PCS", 20, 100, imageUrl: "/images/products/product4.svg"),
+                Product.Create(tenantId, "PRD-005", "Ballpoint Pen (Blue)", "Smooth-writing blue ballpoint pen", 0.99m, "UOM-PCS", 50, 200, imageUrl: "/images/products/product5.svg"),
+                Product.Create(tenantId, "PRD-006", "Calculator", "Basic desktop calculator", 15.00m, "UOM-PCS", 5, 25, imageUrl: "/images/products/product6.svg"),
+                Product.Create(tenantId, "PRD-007", "Packing Tape", "Clear packing tape 48mm x 50m", 4.50m, "UOM-BOX", 30, 120, imageUrl: "/images/products/product7.svg"),
+                Product.Create(tenantId, "PRD-008", "USB Flash Drive 32GB", "32GB USB-A flash drive", 9.99m, "UOM-PCS", 10, 40, imageUrl: "/images/products/product8.svg"),
+                Product.Create(tenantId, "PRD-009", "Desk Lamp", "LED desk lamp with adjustable arm", 29.99m, "UOM-PCS", 3, 10, imageUrl: "/images/products/product9.svg"),
+                Product.Create(tenantId, "PRD-010", "Whiteboard Marker (Black)", "Dry erase marker, black", 1.25m, "UOM-PCS", 40, 160, imageUrl: "/images/products/product10.svg"),
             };
-
-            for (int i = 0; i < products.Length; i++)
-            {
-                products[i].ImageUrl = $"/images/products/product{(i + 1)}.svg";
-            }
 
             await context.Products.AddRangeAsync(products, cancellationToken).ConfigureAwait(false);
             await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);

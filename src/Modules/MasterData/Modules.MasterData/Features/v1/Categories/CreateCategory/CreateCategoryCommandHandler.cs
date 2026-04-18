@@ -32,7 +32,7 @@ public sealed class CreateCategoryCommandHandler : ICommandHandler<CreateCategor
             ]);
         }
 
-        var category = Category.Create(command.Code, command.Name, command.Description);
+        var category = Category.Create(command.Code, command.Name, command.Description, command.OfficeCode);
         category.CreatedBy = _currentUser.GetUserId().ToString();
 
         _dbContext.Categories.Add(category);
@@ -43,6 +43,7 @@ public sealed class CreateCategoryCommandHandler : ICommandHandler<CreateCategor
             category.Code,
             category.Name,
             category.Description,
-            category.IsActive);
+            category.IsActive,
+            category.OfficeCode);
     }
 }

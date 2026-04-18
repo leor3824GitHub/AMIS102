@@ -8,8 +8,10 @@ namespace FSH.Modules.AssetManagement.Domain;
 /// Creating an RRSP cancels the referenced ICS and sets all returned property units
 /// back to Returned status (clearing the CurrentCustodianId).
 /// </summary>
-public sealed class ReceiptForReturnedProperty : AggregateRoot<Guid>, IAuditableEntity
+public sealed class ReceiptForReturnedProperty : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 {
+    public string TenantId { get; private set; } = default!;
+
     /// <summary>
     /// Control number. Suggested format: RRSP-YYYY-MM-NNNN.
     /// </summary>
@@ -50,6 +52,7 @@ public sealed class ReceiptForReturnedProperty : AggregateRoot<Guid>, IAuditable
     public bool IsDeleted { get; set; }
 
     public static ReceiptForReturnedProperty Create(
+        string tenantId,
         string rrspNo,
         DateOnly date,
         Guid icsId,
@@ -61,6 +64,7 @@ public sealed class ReceiptForReturnedProperty : AggregateRoot<Guid>, IAuditable
         return new ReceiptForReturnedProperty
         {
             Id                    = Guid.NewGuid(),
+            TenantId              = tenantId,
             RRSPNo                = rrspNo,
             Date                  = date,
             ICSId                 = icsId,

@@ -1,4 +1,4 @@
-﻿using FSH.Framework.Shared.Persistence;
+using FSH.Framework.Shared.Persistence;
 using Mediator;
 
 namespace FSH.Modules.MasterData.Contracts.v1.References;
@@ -22,35 +22,36 @@ public sealed record EmployeeReferenceDto(
     Guid? DefaultUnitOfMeasureId,
     string? DefaultUnitOfMeasureCode,
     string? DefaultUnitOfMeasureName,
-    bool IsActive);
+    bool IsActive,
+    string? OwnerOfficeCode = null);
 
-public sealed record OfficeReferenceDto(Guid Id, string Code, string Name, string? Description, string? Address, string? LocationCode, string? RegProvCode, bool IsActive);
+public sealed record OfficeReferenceDto(Guid Id, string Code, string Name, string? Description, string? Address, string? LocationCode, string? RegProvCode, bool IsActive, string? OfficeCode = null);
 
-public sealed record CreateOfficeCommand(string Code, string Name, string? Description, string? Address = null, string? LocationCode = null, string? RegProvCode = null, bool IsActive = true) : ICommand<OfficeReferenceDto>;
+public sealed record CreateOfficeCommand(string Code, string Name, string? Description, string? Address = null, string? LocationCode = null, string? RegProvCode = null, bool IsActive = true, string? OfficeCode = null) : ICommand<OfficeReferenceDto>;
 
 public sealed record UpdateOfficeCommand(Guid Id, string Code, string Name, string? Description, string? Address, string? LocationCode, string? RegProvCode, bool IsActive) : ICommand<OfficeReferenceDto>;
 
 public sealed record DeleteOfficeCommand(Guid Id) : ICommand<Unit>;
 
-public sealed record DepartmentReferenceDto(Guid Id, string Code, string Name, string? Description, bool IsActive);
+public sealed record DepartmentReferenceDto(Guid Id, string Code, string Name, string? Description, bool IsActive, string? OfficeCode = null);
 
-public sealed record CreateDepartmentCommand(string Code, string Name, string? Description, string? FundCluster = null, bool IsActive = true) : ICommand<DepartmentReferenceDto>;
+public sealed record CreateDepartmentCommand(string Code, string Name, string? Description, string? FundCluster = null, bool IsActive = true, string? OfficeCode = null) : ICommand<DepartmentReferenceDto>;
 
 public sealed record UpdateDepartmentCommand(Guid Id, string Code, string Name, string? Description, string? FundCluster, bool IsActive) : ICommand<DepartmentReferenceDto>;
 
 public sealed record DeleteDepartmentCommand(Guid Id) : ICommand<Unit>;
 
-public sealed record PositionReferenceDto(Guid Id, string Code, string Name, string? Description, bool IsActive);
+public sealed record PositionReferenceDto(Guid Id, string Code, string Name, string? Description, bool IsActive, string? OfficeCode = null);
 
-public sealed record CreatePositionCommand(string Code, string Name, string? Description, bool IsActive = true) : ICommand<PositionReferenceDto>;
+public sealed record CreatePositionCommand(string Code, string Name, string? Description, bool IsActive = true, string? OfficeCode = null) : ICommand<PositionReferenceDto>;
 
 public sealed record UpdatePositionCommand(Guid Id, string Code, string Name, string? Description, bool IsActive) : ICommand<PositionReferenceDto>;
 
 public sealed record DeletePositionCommand(Guid Id) : ICommand<Unit>;
 
-public sealed record UnitOfMeasureReferenceDto(Guid Id, string Code, string Name, string? Description, bool IsActive);
+public sealed record UnitOfMeasureReferenceDto(Guid Id, string Code, string Name, string? Description, bool IsActive, string? OfficeCode = null);
 
-public sealed record CreateUnitOfMeasureCommand(string Code, string Name, string? Description, bool IsActive = true) : ICommand<UnitOfMeasureReferenceDto>;
+public sealed record CreateUnitOfMeasureCommand(string Code, string Name, string? Description, bool IsActive = true, string? OfficeCode = null) : ICommand<UnitOfMeasureReferenceDto>;
 
 public sealed record UpdateUnitOfMeasureCommand(Guid Id, string Code, string Name, string? Description, bool IsActive) : ICommand<UnitOfMeasureReferenceDto>;
 
@@ -66,7 +67,8 @@ public sealed record CreateEmployeeCommand(
     string? IdentityUserId = null,
     string? WorkEmail = null,
     Guid? DefaultUnitOfMeasureId = null,
-    bool IsActive = true) : ICommand<EmployeeReferenceDto>;
+    bool IsActive = true,
+    string? OfficeCode = null) : ICommand<EmployeeReferenceDto>;
 
 public sealed record UpdateEmployeeCommand(
     Guid Id,
@@ -143,4 +145,3 @@ public sealed class ListUnitOfMeasureReferencesQuery : IPagedQuery, IQuery<Paged
 }
 
 public sealed record GetUnitOfMeasureReferenceByIdQuery(Guid Id) : IQuery<UnitOfMeasureReferenceDto?>;
-

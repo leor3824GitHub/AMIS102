@@ -17,18 +17,18 @@ public class Product : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
     public string TenantId { get; private set; } = default!;
     public string SKU { get; private set; } = default!;
     public string Name { get; private set; } = default!;
-    public string Description { get; set; } = default!;
-    public decimal UnitPrice { get; set; }
-    public string UnitOfMeasure { get; set; } = default!; // e.g., "PCS", "BOX", "KG"
-    public int MinimumStockLevel { get; set; }
-    public int ReorderQuantity { get; set; }
-    public ProductStatus Status { get; set; } = ProductStatus.Active;
-    public string? CategoryId { get; set; }
-    public string? SupplierId { get; set; }
+    public string Description { get; private set; } = default!;
+    public decimal UnitPrice { get; private set; }
+    public string UnitOfMeasure { get; private set; } = default!; // e.g., "PCS", "BOX", "KG"
+    public int MinimumStockLevel { get; private set; }
+    public int ReorderQuantity { get; private set; }
+    public ProductStatus Status { get; private set; } = ProductStatus.Active;
+    public string? CategoryId { get; private set; }
+    public string? SupplierId { get; private set; }
     // --- VARIANT PROPERTIES ---
     public Guid? ParentProductId { get; private set; }
     public string? VariantName { get; private set; } // e.g., "A4", "Long"
-    public string? ImageUrl { get; set; }
+    public string? ImageUrl { get; private set; }
     public byte[] Version { get; set; } = [];
 
     // IAuditableEntity
@@ -48,7 +48,8 @@ public class Product : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 
     /// <summary>Factory method to create a new product</summary>
     public static Product Create(string tenantId, string sku, string name, string description,
-        decimal unitPrice, string unitOfMeasure, int minimumStockLevel, int reorderQuantity)
+        decimal unitPrice, string unitOfMeasure, int minimumStockLevel, int reorderQuantity,
+        string? categoryId = null, string? supplierId = null, string? imageUrl = null)
     {
         return new Product
         {
@@ -61,6 +62,9 @@ public class Product : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
             UnitOfMeasure = unitOfMeasure,
             MinimumStockLevel = minimumStockLevel,
             ReorderQuantity = reorderQuantity,
+            CategoryId = categoryId,
+            SupplierId = supplierId,
+            ImageUrl = imageUrl,
             Status = ProductStatus.Active,
             CreatedOnUtc = DateTimeOffset.UtcNow
         };
@@ -132,6 +136,20 @@ public class Product : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
         {
             ImageUrl = imageUrl;
         }
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;
+    }
+
+    /// <summary>Assign or change the product's category</summary>
+    public void SetCategory(string? categoryId)
+    {
+        CategoryId = categoryId;
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;
+    }
+
+    /// <summary>Assign or change the product's supplier</summary>
+    public void SetSupplier(string? supplierId)
+    {
+        SupplierId = supplierId;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
     }
 

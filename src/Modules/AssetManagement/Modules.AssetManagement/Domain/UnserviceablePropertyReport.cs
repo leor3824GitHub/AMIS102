@@ -14,8 +14,10 @@ namespace FSH.Modules.AssetManagement.Domain;
 /// If the property is Issued, the employee must first return it via RRSP before
 /// it can be included in this report.
 /// </summary>
-public sealed class UnserviceablePropertyReport : AggregateRoot<Guid>, IAuditableEntity
+public sealed class UnserviceablePropertyReport : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 {
+    public string TenantId { get; private set; } = default!;
+
     /// <summary>
     /// Control number. Suggested format: IUR-YYYY-MM-NNNN
     /// (e.g. IUR-2024-01-0001).
@@ -58,6 +60,7 @@ public sealed class UnserviceablePropertyReport : AggregateRoot<Guid>, IAuditabl
     public bool IsDeleted { get; set; }
 
     public static UnserviceablePropertyReport Create(
+        string tenantId,
         string reportNo,
         DateOnly date,
         DisposalMethod disposalMethod,
@@ -69,6 +72,7 @@ public sealed class UnserviceablePropertyReport : AggregateRoot<Guid>, IAuditabl
         return new UnserviceablePropertyReport
         {
             Id                    = Guid.NewGuid(),
+            TenantId              = tenantId,
             ReportNo              = reportNo,
             Date                  = date,
             DisposalMethod        = disposalMethod,

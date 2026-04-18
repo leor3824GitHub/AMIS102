@@ -7,8 +7,10 @@ namespace FSH.Modules.AssetManagement.Domain;
 /// Each property is assigned a unique PropertyNo by the Supply Division and tracked
 /// through its full lifecycle (on-hand → issued → returned/transferred/disposed).
 /// </summary>
-public sealed class SemiExpendableProperty : AggregateRoot<Guid>, IAuditableEntity
+public sealed class SemiExpendableProperty : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 {
+    public string TenantId { get; private set; } = default!;
+
     /// <summary>
     /// Unique control number assigned by the Supply Division.
     /// Suggested format: AM-YYYY-NNNNN (e.g., AM-2024-00001).
@@ -29,6 +31,9 @@ public sealed class SemiExpendableProperty : AggregateRoot<Guid>, IAuditableEnti
 
     /// <summary>Unit acquisition cost used for ICS and SPLC valuation.</summary>
     public decimal UnitCost { get; private set; }
+
+    /// <summary>Number of physical units represented by this record (default 1).</summary>
+    public int Quantity { get; private set; } = 1;
 
     /// <summary>
     /// Fund cluster per the Unified Accounts Code Structure (UACS).
@@ -72,6 +77,7 @@ public sealed class SemiExpendableProperty : AggregateRoot<Guid>, IAuditableEnti
     public bool IsDeleted { get; set; }
 
     public static SemiExpendableProperty Create(
+        string tenantId,
         string propertyNo,
         Guid itemId,
         AssetCategory category,
@@ -80,17 +86,20 @@ public sealed class SemiExpendableProperty : AggregateRoot<Guid>, IAuditableEnti
         decimal unitCost,
         string? fundCluster,
         string? remarks,
+        int quantity = 1,
         Guid? smrrItemId = null)
     {
         return new SemiExpendableProperty
         {
             Id = Guid.NewGuid(),
+            TenantId = tenantId,
             PropertyNo = propertyNo,
             ItemId = itemId,
             Category = category,
             SerialNo = serialNo,
             AcquisitionDate = acquisitionDate,
             UnitCost = unitCost,
+            Quantity = quantity,
             FundCluster = fundCluster,
             Status = PropertyStatus.OnHand,
             Remarks = remarks,
@@ -128,6 +137,13 @@ public sealed class SemiExpendableProperty : AggregateRoot<Guid>, IAuditableEnti
     {
         Status = status;
         CurrentCustodianId = custodianId;
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;
+    }
+
+    /// <summary>Links this property unit to the SMRR item that received it.</summary>
+    public void LinkToSMRR(Guid smrrItemId)
+    {
+        SMRRItemId = smrrItemId;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
     }
 }

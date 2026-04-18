@@ -1,3 +1,4 @@
+using FSH.Framework.Core.Context;
 using FSH.Framework.Core.Exceptions;
 using FSH.Modules.AssetManagement.Data;
 using FSH.Modules.AssetManagement.Domain;
@@ -6,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FSH.Modules.AssetManagement.Features.v1.PropertyIncidentReports.CreatePropertyIncidentReport;
 
-public sealed class CreatePropertyIncidentReportCommandHandler(AssetManagementDbContext dbContext)
+public sealed class CreatePropertyIncidentReportCommandHandler(AssetManagementDbContext dbContext, ICurrentUser currentUser)
     : ICommandHandler<CreatePropertyIncidentReportCommand, CreatePropertyIncidentReportResult>
 {
     private static readonly PropertyStatus[] TerminalStatuses =
@@ -67,7 +68,10 @@ public sealed class CreatePropertyIncidentReportCommandHandler(AssetManagementDb
         }
 
         // 5. Create the report header.
+        string tenantId = currentUser.GetTenant() ?? string.Empty;
+
         var report = PropertyIncidentReport.Create(
+            tenantId,
             command.ReportNo,
             command.Date,
             command.IncidentDate,

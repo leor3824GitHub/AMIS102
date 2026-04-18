@@ -21,21 +21,20 @@ public sealed class GetICSByIdQueryHandler(AssetManagementDbContext dbContext)
 
         var items = await (
             from icsItem in dbContext.ICSItems.Where(x => x.ICSId == query.Id)
-            join prop in dbContext.SemiExpendableProperties on icsItem.SemiExpendablePropertyId equals prop.Id
-            join catalogItem in dbContext.PropertyItemCatalog on prop.ItemId equals catalogItem.Id
+            join invItem in dbContext.TangibleInventoryItems on icsItem.TangibleInventoryItemId equals invItem.Id
+            join catalogItem in dbContext.PropertyItemCatalog on invItem.ItemId equals catalogItem.Id
             orderby icsItem.ItemNo
             select new ICSItemDetailsDto(
                 icsItem.Id,
                 icsItem.ItemNo,
-                prop.Id,
-                prop.PropertyNo,
+                invItem.Id,
+                invItem.PropertyNo,
                 catalogItem.Code,
                 catalogItem.Name,
-                prop.SerialNo,
                 icsItem.Description,
                 icsItem.UnitCost,
                 icsItem.EstimatedUsefulLifeYears,
-                icsItem.CategoryAtTimeOfIssuance.ToString()))
+                icsItem.AssetTypeAtTimeOfIssuance.ToString()))
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
@@ -43,7 +42,7 @@ public sealed class GetICSByIdQueryHandler(AssetManagementDbContext dbContext)
             ics.Id,
             ics.ICSNo,
             ics.Date,
-            ics.Category.ToString(),
+            ics.AssetType.ToString(),
             ics.Status.ToString(),
             ics.ExpiresOn,
             ics.FundCluster,

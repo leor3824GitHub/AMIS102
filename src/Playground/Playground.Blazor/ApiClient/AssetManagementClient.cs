@@ -196,11 +196,13 @@ internal sealed class PropertyItemCatalogClient(HttpClient http) : IPropertyItem
 internal sealed record RegisterSemiExpendablePropertyCommand(
     string PropertyNo,
     Guid ItemId,
+    AssetCategory Category,
     string? SerialNo,
     DateOnly AcquisitionDate,
     decimal UnitCost,
     string? FundCluster = null,
-    string? Remarks = null);
+    string? Remarks = null,
+    int Quantity = 1);
 
 internal sealed record SemiExpendablePropertyDto(
     Guid Id,
@@ -211,6 +213,7 @@ internal sealed record SemiExpendablePropertyDto(
     string? SerialNo,
     DateOnly AcquisitionDate,
     decimal UnitCost,
+    int Quantity,
     string? FundCluster,
     string Status,
     Guid? CurrentCustodianId,
@@ -225,9 +228,11 @@ internal sealed record SemiExpendablePropertySummaryDto(
     string? SerialNo,
     DateOnly AcquisitionDate,
     decimal UnitCost,
+    int Quantity,
     string? FundCluster,
     string Status,
     Guid? CurrentCustodianId,
+    Guid? SMRRItemId,
     string? Remarks);
 
 internal sealed record SemiExpendablePropertyDetailsDto(
@@ -241,6 +246,7 @@ internal sealed record SemiExpendablePropertyDetailsDto(
     string? SerialNo,
     DateOnly AcquisitionDate,
     decimal UnitCost,
+    int Quantity,
     string? FundCluster,
     string Status,
     Guid? CurrentCustodianId,
@@ -293,12 +299,8 @@ internal sealed class SemiExpendablePropertyClient(HttpClient http) : ISemiExpen
 // Receiving Reports (SMRR)
 
 internal sealed record CreateSMRRItemRequest(
-    string? Reference,
-    Guid ItemId,
-    string? Description,
-    DateOnly AcquisitionDate,
-    int Quantity,
-    decimal UnitCost);
+    Guid TangibleItemId,
+    string? Reference);
 
 internal sealed record CreateSMRRCommand(
     string SMRRNo,
@@ -315,7 +317,7 @@ internal sealed record CreateSMRRCommand(
 internal sealed record CreateSMRRResult(
     Guid SMRRId,
     string SMRRNo,
-    int PropertiesCreated);
+    int ItemCount);
 
 internal sealed record SMRRSummaryDto(
     Guid Id,
@@ -328,6 +330,8 @@ internal sealed record SMRRSummaryDto(
 
 internal sealed record SMRRItemDetailsDto(
     Guid Id,
+    Guid SemiExpendablePropertyId,
+    string PropertyNo,
     string? Reference,
     Guid ItemId,
     string ItemCode,
@@ -854,7 +858,7 @@ internal sealed class UnserviceablePropertyReportClient(HttpClient http) : IUnse
 
 // Asset Management Reports (SPC, RegSPI, RSPI, Property History)
 
-internal enum AssetCategory { LowValuedSemi = 0, HighValuedSemi = 1 }
+internal enum AssetCategory { LowValuedSemi = 0, HighValuedSemi = 1, PPE = 2 }
 internal enum ICSStatus { Active = 0, Renewed = 1, CancelledByReturn = 2, Expired = 3 }
 
 internal sealed record SPCEntryDto(
@@ -1460,4 +1464,115 @@ internal sealed class PhysicalCountClient(HttpClient http) : IPhysicalCountClien
 
     public Task<RPCPPEReportDto?> GetRPCPPEAsync(Guid sessionId, CancellationToken ct = default) =>
         http.GetFromJsonAsync<RPCPPEReportDto>($"{Base}/{sessionId}/rpcppe", ct);
+}
+
+// Tangible Items
+
+internal sealed record RegisterTangibleItemCommand(
+    Guid ItemId,
+    string PropertyNo,
+    string PropertyClass,
+    string CategoryCode,
+    DateOnly AcquisitionDate,
+    int Quantity,
+    decimal UnitCost,
+    string? Remarks = null);
+
+internal sealed record UpdateTangibleItemCommand(
+    Guid Id,
+    DateOnly AcquisitionDate,
+    int Quantity,
+    decimal UnitCost,
+    string? Remarks = null);
+
+internal sealed record TangibleItemDto(
+    Guid Id,
+    string PropertyNo,
+    string PropertyClass,
+    string CategoryCode,
+    Guid ItemId,
+    string ItemCode,
+    string ItemName,
+    DateOnly AcquisitionDate,
+    int Quantity,
+    decimal UnitCost,
+    string? Remarks,
+    DateTimeOffset CreatedOnUtc);
+
+internal sealed record TangibleItemSummaryDto(
+    Guid Id,
+    string PropertyNo,
+    Guid ItemId,
+    string ItemCode,
+    string ItemName,
+    DateOnly AcquisitionDate,
+    int Quantity,
+    decimal UnitCost,
+    string? Remarks);
+
+internal sealed record PagedTangibleItemsResponse(
+    IReadOnlyList<TangibleItemSummaryDto> Items,
+    int PageNumber,
+    int PageSize,
+    int TotalCount);
+
+internal interface ITangibleItemClient
+{
+    Task<PagedTangibleItemsResponse> SearchAsync(string? keyword = null, bool? excludeLinked = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
+    Task<TangibleItemDto?> GetAsync(Guid id, CancellationToken ct = default);
+    Task<TangibleItemDto> RegisterAsync(RegisterTangibleItemCommand command, CancellationToken ct = default);
+    Task<TangibleItemDto> UpdateAsync(Guid id, UpdateTangibleItemCommand command, CancellationToken ct = default);
+    Task DeleteAsync(Guid id, CancellationToken ct = default);
+    Task<int> GetNextSequenceAsync(int year, string officeCode, string classCode, string itemCode, CancellationToken ct = default);
+}
+
+internal sealed class TangibleItemClient(HttpClient http) : ITangibleItemClient
+{
+    private const string Base = "api/v1/asset-management/tangible-items";
+
+    public Task<PagedTangibleItemsResponse> SearchAsync(string? keyword = null, bool? excludeLinked = null, int page = 1, int pageSize = 20, CancellationToken ct = default)
+    {
+        var q = HttpUtility.ParseQueryString(string.Empty);
+        if (!string.IsNullOrWhiteSpace(keyword)) q["Keyword"] = keyword;
+        if (excludeLinked.HasValue) q["ExcludeLinked"] = excludeLinked.Value.ToString().ToLowerInvariant();
+        q["PageNumber"] = page.ToString(CultureInfo.InvariantCulture);
+        q["PageSize"] = pageSize.ToString(CultureInfo.InvariantCulture);
+        return http.GetFromJsonAsync<PagedTangibleItemsResponse>($"{Base}?{q}", ct)!;
+    }
+
+    public Task<TangibleItemDto?> GetAsync(Guid id, CancellationToken ct = default) =>
+        http.GetFromJsonAsync<TangibleItemDto>($"{Base}/{id}", ct);
+
+    public async Task<TangibleItemDto> RegisterAsync(RegisterTangibleItemCommand command, CancellationToken ct = default)
+    {
+        using var r = await http.PostAsJsonAsync(Base, command, ct);
+        r.EnsureSuccessStatusCode();
+        return (await r.Content.ReadFromJsonAsync<TangibleItemDto>(ct))!;
+    }
+
+    public async Task<TangibleItemDto> UpdateAsync(Guid id, UpdateTangibleItemCommand command, CancellationToken ct = default)
+    {
+        using var r = await http.PutAsJsonAsync($"{Base}/{id}", command, ct);
+        r.EnsureSuccessStatusCode();
+        return (await r.Content.ReadFromJsonAsync<TangibleItemDto>(ct))!;
+    }
+
+    public async Task DeleteAsync(Guid id, CancellationToken ct = default)
+    {
+        using var r = await http.DeleteAsync($"{Base}/{id}", ct);
+        r.EnsureSuccessStatusCode();
+    }
+
+    public async Task<int> GetNextSequenceAsync(int year, string officeCode, string classCode, string itemCode, CancellationToken ct = default)
+    {
+        var q = HttpUtility.ParseQueryString(string.Empty);
+        q["year"] = year.ToString(CultureInfo.InvariantCulture);
+        q["officeCode"] = officeCode;
+        q["classCode"] = classCode;
+        q["itemCode"] = itemCode;
+        var result = await http.GetFromJsonAsync<NextSequenceResponse>($"{Base}/next-sequence?{q}", ct);
+        return result?.NextSequence ?? 1;
+    }
+
+    private sealed record NextSequenceResponse(int NextSequence);
 }

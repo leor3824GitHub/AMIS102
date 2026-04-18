@@ -19,8 +19,6 @@ public sealed class UpdateEmployeeCommandHandler : ICommandHandler<UpdateEmploye
 
     public async ValueTask<EmployeeReferenceDto> Handle(UpdateEmployeeCommand command, CancellationToken cancellationToken)
     {
-        var tenantId = _currentUser.GetTenant() ?? throw new InvalidOperationException("Tenant ID required");
-
         var employee = await _dbContext.Employees
             .FirstOrDefaultAsync(x => x.Id == command.Id, cancellationToken)
             .ConfigureAwait(false)
@@ -31,7 +29,7 @@ public sealed class UpdateEmployeeCommandHandler : ICommandHandler<UpdateEmploye
 
         var employeeNumberInUse = await _dbContext.Employees
             .IgnoreQueryFilters()
-            .AnyAsync(x => x.TenantId == tenantId && x.Id != command.Id && x.EmployeeNumber == command.EmployeeNumber, cancellationToken)
+            .AnyAsync(x => x.Id != command.Id && x.EmployeeNumber == command.EmployeeNumber, cancellationToken)
             .ConfigureAwait(false);
 
         if (employeeNumberInUse)
@@ -46,7 +44,7 @@ public sealed class UpdateEmployeeCommandHandler : ICommandHandler<UpdateEmploye
         {
             var identityUserIdInUse = await _dbContext.Employees
                 .IgnoreQueryFilters()
-                .AnyAsync(x => x.TenantId == tenantId && x.Id != command.Id && x.IdentityUserId == command.IdentityUserId, cancellationToken)
+                .AnyAsync(x => x.Id != command.Id && x.IdentityUserId == command.IdentityUserId, cancellationToken)
                 .ConfigureAwait(false);
 
             if (identityUserIdInUse)

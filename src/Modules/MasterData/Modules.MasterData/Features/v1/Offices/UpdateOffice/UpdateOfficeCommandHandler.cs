@@ -42,6 +42,6 @@ public sealed class UpdateOfficeCommandHandler : ICommandHandler<UpdateOfficeCom
 
         await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-        return new OfficeReferenceDto(office.Id, office.Code, office.Name, office.Description, office.Address, office.LocationCode, office.RegProvCode, office.IsActive);
+        return new OfficeReferenceDto(office.Id, office.Code, office.Name, office.Description, office.Address, office.LocationCode, office.RegProvCode, office.IsActive, office.OfficeCode);
     }
 }

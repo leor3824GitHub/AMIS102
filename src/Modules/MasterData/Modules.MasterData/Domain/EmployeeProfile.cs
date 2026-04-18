@@ -1,10 +1,9 @@
-﻿using FSH.Framework.Core.Domain;
+using FSH.Framework.Core.Domain;
 
 namespace FSH.Modules.MasterData.Domain;
 
-public sealed class EmployeeProfile : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
+public sealed class EmployeeProfile : AggregateRoot<Guid>, IAuditableEntity
 {
-    public string TenantId { get; private set; } = default!;
     public string EmployeeNumber { get; private set; } = default!;
     public string? IdentityUserId { get; private set; }
 
@@ -16,6 +15,8 @@ public sealed class EmployeeProfile : AggregateRoot<Guid>, IHasTenant, IAuditabl
     public Guid DepartmentId { get; private set; }
     public Guid PositionId { get; private set; }
     public Guid? DefaultUnitOfMeasureId { get; private set; }
+
+    public string? OfficeCode { get; private set; }
 
     public bool IsActive { get; private set; } = true;
     public byte[] Version { get; set; } = [];
@@ -34,7 +35,6 @@ public sealed class EmployeeProfile : AggregateRoot<Guid>, IHasTenant, IAuditabl
     public bool IsDeleted { get; set; }
 
     public static EmployeeProfile Create(
-        string tenantId,
         string employeeNumber,
         string firstName,
         string lastName,
@@ -44,12 +44,12 @@ public sealed class EmployeeProfile : AggregateRoot<Guid>, IHasTenant, IAuditabl
         string? identityUserId = null,
         string? workEmail = null,
         Guid? defaultUnitOfMeasureId = null,
-        bool isActive = true)
+        bool isActive = true,
+        string? officeCode = null)
     {
         return new EmployeeProfile
         {
             Id = Guid.NewGuid(),
-            TenantId = tenantId,
             EmployeeNumber = employeeNumber,
             FirstName = firstName,
             LastName = lastName,
@@ -59,6 +59,7 @@ public sealed class EmployeeProfile : AggregateRoot<Guid>, IHasTenant, IAuditabl
             IdentityUserId = identityUserId,
             WorkEmail = workEmail,
             DefaultUnitOfMeasureId = defaultUnitOfMeasureId,
+            OfficeCode = officeCode,
             IsActive = isActive,
             CreatedOnUtc = DateTimeOffset.UtcNow
         };
@@ -113,4 +114,3 @@ public sealed class EmployeeProfile : AggregateRoot<Guid>, IHasTenant, IAuditabl
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
     }
 }
-

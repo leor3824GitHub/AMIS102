@@ -1,3 +1,4 @@
+using FSH.Framework.Core.Context;
 using FSH.Framework.Core.Exceptions;
 using FSH.Modules.AssetManagement.Data;
 using FSH.Modules.AssetManagement.Domain;
@@ -6,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FSH.Modules.AssetManagement.Features.v1.ReceiptForReturnedProperties.CreateRRSP;
 
-public sealed class CreateRRSPCommandHandler(AssetManagementDbContext dbContext)
+public sealed class CreateRRSPCommandHandler(AssetManagementDbContext dbContext, ICurrentUser currentUser)
     : ICommandHandler<CreateRRSPCommand, CreateRRSPResult>
 {
     public async ValueTask<CreateRRSPResult> Handle(CreateRRSPCommand command, CancellationToken cancellationToken)
@@ -61,7 +62,10 @@ public sealed class CreateRRSPCommandHandler(AssetManagementDbContext dbContext)
         var propertyMap = properties.ToDictionary(x => x.Id);
 
         // 5. Create the RRSP header.
+        string tenantId = currentUser.GetTenant() ?? string.Empty;
+
         var rrsp = ReceiptForReturnedProperty.Create(
+            tenantId,
             command.RRSPNo,
             command.Date,
             command.ICSId,

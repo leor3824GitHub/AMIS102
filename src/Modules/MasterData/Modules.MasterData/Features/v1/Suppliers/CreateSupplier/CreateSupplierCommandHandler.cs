@@ -41,7 +41,8 @@ public sealed class CreateSupplierCommandHandler : ICommandHandler<CreateSupplie
             command.ContactPerson,
             command.Email,
             command.Phone,
-            command.Address);
+            command.Address,
+            command.OfficeCode);
 
         supplier.CreatedBy = _currentUser.GetUserId().ToString();
 
@@ -59,6 +60,7 @@ public sealed class CreateSupplierCommandHandler : ICommandHandler<CreateSupplie
             supplier.Email,
             supplier.Phone,
             supplier.Address,
-            supplier.IsActive);
+            supplier.IsActive,
+            supplier.OfficeCode);
     }
 }

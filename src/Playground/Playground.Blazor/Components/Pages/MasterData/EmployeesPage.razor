@@ -7,6 +7,7 @@
 @inject ILookupClient LookupClient
 @inject IIdentityClient IdentityClient
 @inject IUsersClient UsersClient
+@inject IOrganizationProfileClient OrgProfileClient
 
 <FshPageHeader Title="Employees" Description="Manage employee profiles">
     <ActionContent>
@@ -93,19 +94,20 @@
                         <MudSimpleTable Dense="true" Hover="true" Striped="true">
                             <thead>
                                 <tr>
-                                    <th>Employee #</th>
-                                    <th>Name</th>
+                                    <th style="cursor:pointer" @onclick='() => SetSort("EmployeeNumber")'>Employee # @SortIcon("EmployeeNumber")</th>
+                                    <th style="cursor:pointer" @onclick='() => SetSort("Name")'>Name @SortIcon("Name")</th>
                                     <th>Email</th>
-                                    <th>Office</th>
+                                    <th style="cursor:pointer" @onclick='() => SetSort("Office")'>Office @SortIcon("Office")</th>
                                     <th>Department</th>
                                     <th>Position</th>
                                     <th>Linked Account</th>
+                                    <th>Owner</th>
                                     <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach (var employee in _employees)
+                                @foreach (var employee in _employees.Skip((_pageIndex - 1) * PageSize).Take(PageSize))
                                 {
                                     <tr>
                                         <td>@employee.EmployeeNumber</td>
@@ -130,26 +132,51 @@
                                             }
                                         </td>
                                         <td>
+                                            @if (!string.IsNullOrWhiteSpace(employee.OwnerOfficeCode))
+                                            {
+                                                <MudChip T="string" Size="Size.Small" Color="Color.Warning" Label="true"
+                                                         Style="font-family:monospace">@employee.OwnerOfficeCode</MudChip>
+                                            }
+                                            else
+                                            {
+                                                <MudText Typo="Typo.caption" Color="Color.Default">—</MudText>
+                                            }
+                                        </td>
+                                        <td>
                                             <MudChip T="string" Size="Size.Small"
                                                      Color="@(employee.IsActive ? Color.Success : Color.Default)">@(employee.IsActive
                                                                                         ? "Active" : "Inactive")</MudChip>
                                             </td>
                                             <td>
-                                                <MudStack Row="true" Spacing="1">
-                                                    <MudTooltip Text="Edit employee">
-                                                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
-                                                                       Color="Color.Primary" OnClick="@(() => EditEmployee(employee))" />
+                                                @if (IsOwnedByMe(employee.OwnerOfficeCode))
+                                                {
+                                                    <MudStack Row="true" Spacing="1">
+                                                        <MudTooltip Text="Edit employee">
+                                                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                                                           Color="Color.Primary" OnClick="@(() => EditEmployee(employee))" />
+                                                        </MudTooltip>
+                                                        <MudTooltip Text="Delete employee">
+                                                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                                                           Color="Color.Error" OnClick="@(() => DeleteEmployee(employee.Id))" />
+                                                        </MudTooltip>
+                                                    </MudStack>
+                                                }
+                                                else
+                                                {
+                                                    <MudTooltip Text="@(string.IsNullOrWhiteSpace(employee.OwnerOfficeCode) ? "Shared record — read only" : "Owned by another office — read only")">
+                                                        <MudIconButton Icon="@Icons.Material.Filled.Lock" Size="Size.Small" Color="Color.Default" Disabled="true" />
                                                     </MudTooltip>
-                                                    <MudTooltip Text="Delete employee">
-                                                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
-                                                                       Color="Color.Error" OnClick="@(() => DeleteEmployee(employee.Id))" />
-                                                    </MudTooltip>
-                                                </MudStack>
+                                                }
                                             </td>
                                         </tr>
                                     }
                                 </tbody>
                             </MudSimpleTable>
+                        @if (_employees.Count > PageSize)
+                        {
+                            <MudPagination Class="mt-2" Count="@((int)Math.Ceiling(_employees.Count / (double)PageSize))"
+                                           @bind-Selected="_pageIndex" Color="Color.Primary" ShowFirstButton="true" ShowLastButton="true" />
+                        }
                         }
                     else
                         {
@@ -174,6 +201,12 @@
     private bool _isLoading = false;
     private string _searchKeyword = string.Empty;
     private string _statusFilter = "All";
+    private string _officeCodeFilter = string.Empty;
+    private string _sortField = "Name";
+    private bool _sortAscending = true;
+    private string? _myOfficeCode;
+    private int _pageIndex = 1;
+    private const int PageSize = 10;
 
     public class EmployeeForm
     {
@@ -246,13 +279,15 @@
     {
         if (_initialized) return;
         _initialized = true;
-        
+
+        var profileTask = OrgProfileClient.GetAsync();
         await Task.WhenAll(
             LoadOffices(),
             LoadDepartments(),
             LoadPositions()
         );
-        
+        _myOfficeCode = (await profileTask)?.AnnexECode;
+
         await LoadEmployees();
     }
 
@@ -358,6 +393,13 @@
         }
     }
 
+    private void OnOfficeCodeFilterChanged(string value)
+    {
+        _officeCodeFilter = value ?? string.Empty;
+        ApplyLocalFilters();
+        StateHasChanged();
+    }
+
     private Task OnStatusFilterChanged(string status)
     {
         _statusFilter = string.IsNullOrWhiteSpace(status) ? "All" : status;
@@ -366,14 +408,47 @@
         return Task.CompletedTask;
     }
 
+    private bool IsOwnedByMe(string? officeCode) =>
+        !string.IsNullOrWhiteSpace(_myOfficeCode) &&
+        string.Equals(officeCode, _myOfficeCode, StringComparison.OrdinalIgnoreCase);
+
     private void ApplyLocalFilters()
     {
-        _employees = _statusFilter switch
+        var filtered = _statusFilter switch
         {
-            "Active" => _allEmployees.Where(x => x.IsActive).ToList(),
-            "Inactive" => _allEmployees.Where(x => !x.IsActive).ToList(),
-            _ => _allEmployees.ToList()
+            "Active" => _allEmployees.Where(x => x.IsActive),
+            "Inactive" => _allEmployees.Where(x => !x.IsActive),
+            "Own" => _allEmployees.Where(x => IsOwnedByMe(x.OwnerOfficeCode)),
+            _ => _allEmployees.AsEnumerable()
         };
+
+        if (!string.IsNullOrWhiteSpace(_officeCodeFilter))
+            filtered = filtered.Where(x => x.OwnerOfficeCode != null &&
+                x.OwnerOfficeCode.Contains(_officeCodeFilter, StringComparison.OrdinalIgnoreCase));
+
+        _pageIndex = 1;
+        _employees = (_sortField, _sortAscending) switch
+        {
+            ("EmployeeNumber", true)  => filtered.OrderBy(x => x.EmployeeNumber).ToList(),
+            ("EmployeeNumber", false) => filtered.OrderByDescending(x => x.EmployeeNumber).ToList(),
+            ("Name", false)           => filtered.OrderByDescending(x => x.LastName).ThenByDescending(x => x.FirstName).ToList(),
+            ("Office", true)          => filtered.OrderBy(x => x.OfficeName).ThenBy(x => x.LastName).ToList(),
+            ("Office", false)         => filtered.OrderByDescending(x => x.OfficeName).ThenBy(x => x.LastName).ToList(),
+            _                         => filtered.OrderBy(x => x.LastName).ThenBy(x => x.FirstName).ToList()
+        };
+    }
+
+    private void SetSort(string field)
+    {
+        if (_sortField == field) _sortAscending = !_sortAscending;
+        else { _sortField = field; _sortAscending = true; }
+        ApplyLocalFilters();
+    }
+
+    private string SortIcon(string field)
+    {
+        if (_sortField != field) return string.Empty;
+        return _sortAscending ? "▲" : "▼";
     }
 
     private async Task SaveEmployee()

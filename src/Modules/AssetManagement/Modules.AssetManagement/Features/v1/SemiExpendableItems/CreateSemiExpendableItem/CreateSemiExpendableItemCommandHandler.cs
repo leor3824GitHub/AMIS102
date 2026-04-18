@@ -32,7 +32,10 @@ public sealed class CreatePropertyItemCatalogCommandHandler : ICommandHandler<Cr
             ]);
         }
 
+        string tenantId = _currentUser.GetTenant() ?? string.Empty;
+
         var item = PropertyItemCatalog.Create(
+            tenantId,
             command.Code,
             command.Name,
             command.Description,

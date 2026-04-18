@@ -11,8 +11,8 @@ public sealed class PropertyIncidentItem : BaseEntity<Guid>
     /// <summary>FK to the parent PropertyIncidentReport.</summary>
     public Guid ReportId { get; private set; }
 
-    /// <summary>The specific property unit being reported.</summary>
-    public Guid SemiExpendablePropertyId { get; private set; }
+    /// <summary>The TangibleInventoryItem being reported.</summary>
+    public Guid TangibleInventoryItemId { get; private set; }
 
     /// <summary>Item number on the report form (sequential within the report).</summary>
     public int ItemNo { get; private set; }
@@ -24,28 +24,28 @@ public sealed class PropertyIncidentItem : BaseEntity<Guid>
     public decimal UnitCost { get; private set; }
 
     /// <summary>
-    /// Asset category at the time of reporting.
-    /// Frozen here so historical records remain accurate after reclassification.
+    /// Asset type at the time of reporting.
+    /// Frozen here so historical records remain accurate.
     /// </summary>
-    public AssetCategory CategoryAtTimeOfReport { get; private set; }
+    public AssetType AssetTypeAtTimeOfReport { get; private set; }
 
     public static PropertyIncidentItem Create(
         Guid reportId,
-        Guid semiExpendablePropertyId,
+        Guid tangibleInventoryItemId,
         int itemNo,
         string? description,
         decimal unitCost,
-        AssetCategory categoryAtTimeOfReport)
+        AssetType assetTypeAtTimeOfReport)
     {
         return new PropertyIncidentItem
         {
-            Id                       = Guid.NewGuid(),
-            ReportId                 = reportId,
-            SemiExpendablePropertyId = semiExpendablePropertyId,
-            ItemNo                   = itemNo,
-            Description              = description,
-            UnitCost                 = unitCost,
-            CategoryAtTimeOfReport   = categoryAtTimeOfReport,
+            Id                      = Guid.NewGuid(),
+            ReportId                = reportId,
+            TangibleInventoryItemId = tangibleInventoryItemId,
+            ItemNo                  = itemNo,
+            Description             = description,
+            UnitCost                = unitCost,
+            AssetTypeAtTimeOfReport = assetTypeAtTimeOfReport,
         };
     }
 }

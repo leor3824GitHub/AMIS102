@@ -5,6 +5,7 @@
 @inject ISnackbar Snackbar
 @inject IMaster_dataClient MasterDataClient
 @inject ILookupClient LookupClient
+@inject IOrganizationProfileClient OrgProfileClient
 
 <FshPageHeader Title="Departments" Description="Manage departments">
     <ActionContent>
@@ -35,6 +36,10 @@
                                       Placeholder="Department description" Lines="2" />
                         <MudTextField @bind-Value="_form.FundCluster" Label="Fund Cluster"
                                       Placeholder="e.g. GENERAL OPERATING FUND" MaxLength="100" />
+                        <MudTextField @bind-Value="_form.OfficeCode" Label="Owner Office Code"
+                                      Placeholder="e.g. 100, NDO (leave blank for shared)" MaxLength="8"
+                                      Disabled="@(EditingDepartment != null)"
+                                      HelperText="@(EditingDepartment != null ? "Cannot be changed after creation" : string.Empty)" />
                         <MudCheckBox @bind-Value="_form.IsActive"
                                      Label="Active" />
 
@@ -67,35 +72,61 @@
                         <MudSimpleTable Dense="true" Hover="true" Striped="true">
                             <thead>
                                 <tr>
-                                    <th>Code</th>
-                                    <th>Name</th>
+                                    <th style="cursor:pointer" @onclick='() => SetSort("Code")'>Code @SortIcon("Code")</th>
+                                    <th style="cursor:pointer" @onclick='() => SetSort("Name")'>Name @SortIcon("Name")</th>
+                                    <th>Owner</th>
                                     <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach (var department in _departments)
+                                @foreach (var department in _departments.Skip((_pageIndex - 1) * PageSize).Take(PageSize))
                                 {
                                     <tr>
                                         <td>@department.Code</td>
                                         <td>@department.Name</td>
+                                        <td>
+                                            @if (!string.IsNullOrWhiteSpace(department.OfficeCode))
+                                            {
+                                                <MudChip T="string" Size="Size.Small" Color="Color.Warning" Label="true"
+                                                         Style="font-family:monospace">@department.OfficeCode</MudChip>
+                                            }
+                                            else
+                                            {
+                                                <MudText Typo="Typo.caption" Color="Color.Default">—</MudText>
+                                            }
+                                        </td>
                                         <td><MudChip T="string" Size="Size.Small" Color="@(department.IsActive ? Color.Success : Color.Default)">@(department.IsActive ? "Active" : "Inactive")</MudChip></td>
                                         <td>
-                                            <MudStack Row="true" Spacing="1">
-                                                <MudTooltip Text="Edit department">
-                                                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
-                                                                   Color="Color.Primary" OnClick="@(() => EditDepartment(department))" />
+                                            @if (IsOwnedByMe(department.OfficeCode))
+                                            {
+                                                <MudStack Row="true" Spacing="1">
+                                                    <MudTooltip Text="Edit department">
+                                                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                                                       Color="Color.Primary" OnClick="@(() => EditDepartment(department))" />
+                                                    </MudTooltip>
+                                                    <MudTooltip Text="Delete department">
+                                                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                                                       Color="Color.Error" OnClick="@(() => DeleteDepartment(department.Id))" />
+                                                    </MudTooltip>
+                                                </MudStack>
+                                            }
+                                            else
+                                            {
+                                                <MudTooltip Text="@(string.IsNullOrWhiteSpace(department.OfficeCode) ? "Shared record — read only" : "Owned by another office — read only")">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.Lock" Size="Size.Small" Color="Color.Default" Disabled="true" />
                                                 </MudTooltip>
-                                                <MudTooltip Text="Delete department">
-                                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
-                                                                   Color="Color.Error" OnClick="@(() => DeleteDepartment(department.Id))" />
-                                                </MudTooltip>
-                                            </MudStack>
+                                            }
                                         </td>
                                     </tr>
                                 }
                             </tbody>
                         </MudSimpleTable>
+                        @if (_departments.Count > PageSize)
+                        {
+                            <MudPagination Class="mt-2" Count="@((int)Math.Ceiling(_departments.Count / (double)PageSize))"
+                                           @bind-Selected="_pageIndex" Color="Color.Primary" ShowFirstButton="true" ShowLastButton="true" />
+                        }
                     }
                     else
                     {
@@ -116,6 +147,12 @@
     private bool _isLoading = false;
     private string _searchKeyword = string.Empty;
     private string _statusFilter = "All";
+    private string _officeCodeFilter = string.Empty;
+    private string _sortField = "Name";
+    private bool _sortAscending = true;
+    private string? _myOfficeCode;
+    private int _pageIndex = 1;
+    private const int PageSize = 10;
 
     public class DepartmentForm
     {
@@ -124,12 +161,15 @@
         public string? Description { get; set; }
         public string? FundCluster { get; set; }
         public bool IsActive { get; set; } = true;
+        public string? OfficeCode { get; set; }
     }
 
     protected override async Task OnInitializedAsync()
     {
         if (_initialized) return;
         _initialized = true;
+        var profile = await OrgProfileClient.GetAsync();
+        _myOfficeCode = profile?.AnnexECode;
         await LoadDepartments();
     }
 
@@ -267,7 +307,8 @@
                     Name = _form.Name,
                     Description = _form.Description,
                     FundCluster = _form.FundCluster,
-                    IsActive = _form.IsActive
+                    IsActive = _form.IsActive,
+                    OfficeCode = string.IsNullOrWhiteSpace(_form.OfficeCode) ? null : _form.OfficeCode.Trim()
                 };
                 await MasterDataClient.DepartmentsPostAsync(createCmd);
                 Snackbar.Add("Department created successfully", Severity.Success);
@@ -291,7 +332,8 @@
             Name = department.Name,
             Description = department.Description,
             FundCluster = department.FundCluster ?? string.Empty,
-            IsActive = department.IsActive
+            IsActive = department.IsActive,
+            OfficeCode = department.OfficeCode
         };
         await InvokeAsync(StateHasChanged);
     }
@@ -316,6 +358,13 @@
         }
     }
 
+    private void OnOfficeCodeFilterChanged(string value)
+    {
+        _officeCodeFilter = value ?? string.Empty;
+        ApplyLocalFilters();
+        StateHasChanged();
+    }
+
     private Task OnStatusFilterChanged(string status)
     {
         _statusFilter = string.IsNullOrWhiteSpace(status) ? "All" : status;
@@ -324,13 +373,44 @@
         return Task.CompletedTask;
     }
 
+    private bool IsOwnedByMe(string? officeCode) =>
+        !string.IsNullOrWhiteSpace(_myOfficeCode) &&
+        string.Equals(officeCode, _myOfficeCode, StringComparison.OrdinalIgnoreCase);
+
     private void ApplyLocalFilters()
     {
-        _departments = _statusFilter switch
+        var filtered = _statusFilter switch
         {
-            "Active" => _allDepartments.Where(x => x.IsActive).ToList(),
-            "Inactive" => _allDepartments.Where(x => !x.IsActive).ToList(),
-            _ => _allDepartments.ToList()
+            "Active" => _allDepartments.Where(x => x.IsActive),
+            "Inactive" => _allDepartments.Where(x => !x.IsActive),
+            "Own" => _allDepartments.Where(x => IsOwnedByMe(x.OfficeCode)),
+            _ => _allDepartments.AsEnumerable()
         };
+
+        if (!string.IsNullOrWhiteSpace(_officeCodeFilter))
+            filtered = filtered.Where(x => x.OfficeCode != null &&
+                x.OfficeCode.Contains(_officeCodeFilter, StringComparison.OrdinalIgnoreCase));
+
+        _pageIndex = 1;
+        _departments = (_sortField, _sortAscending) switch
+        {
+            ("Code", true)  => filtered.OrderBy(x => x.Code).ToList(),
+            ("Code", false) => filtered.OrderByDescending(x => x.Code).ToList(),
+            ("Name", false) => filtered.OrderByDescending(x => x.Name).ThenBy(x => x.Code).ToList(),
+            _               => filtered.OrderBy(x => x.Name).ThenBy(x => x.Code).ToList()
+        };
+    }
+
+    private void SetSort(string field)
+    {
+        if (_sortField == field) _sortAscending = !_sortAscending;
+        else { _sortField = field; _sortAscending = true; }
+        ApplyLocalFilters();
+    }
+
+    private string SortIcon(string field)
+    {
+        if (_sortField != field) return string.Empty;
+        return _sortAscending ? "▲" : "▼";
     }
 }

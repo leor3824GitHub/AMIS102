@@ -1,4 +1,3 @@
-using FSH.Modules.AssetManagement.Domain;
 using Mediator;
 
 namespace FSH.Modules.AssetManagement.Features.v1.InventoryCustodianSlips.CreateICS;
@@ -6,14 +5,13 @@ namespace FSH.Modules.AssetManagement.Features.v1.InventoryCustodianSlips.Create
 public sealed record CreateICSCommand(
     string ICSNo,
     DateOnly Date,
-    AssetCategory Category,
     string? FundCluster,
     Guid? IssuedFromEmployeeId,
     Guid ReceivedByEmployeeId,
     IReadOnlyList<CreateICSItemRequest> Items) : ICommand<CreateICSResult>;
 
 public sealed record CreateICSItemRequest(
-    Guid SemiExpendablePropertyId,
+    Guid TangibleInventoryItemId,
     string? Description);
 
 public sealed record CreateICSResult(

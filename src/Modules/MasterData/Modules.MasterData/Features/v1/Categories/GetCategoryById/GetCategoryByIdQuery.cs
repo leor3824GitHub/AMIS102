@@ -10,6 +10,7 @@ public sealed record CategoryDetailsDto(
     string Name,
     string? Description,
     bool IsActive,
+    string? OfficeCode,
     DateTimeOffset CreatedOnUtc,
     string? CreatedBy,
     DateTimeOffset? LastModifiedOnUtc,

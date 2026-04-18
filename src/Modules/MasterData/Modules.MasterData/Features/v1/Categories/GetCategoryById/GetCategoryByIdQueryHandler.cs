@@ -30,6 +30,7 @@ public sealed class GetCategoryByIdQueryHandler : IQueryHandler<GetCategoryByIdQ
             category.Name,
             category.Description,
             category.IsActive,
+            category.OfficeCode,
             category.CreatedOnUtc,
             category.CreatedBy,
             category.LastModifiedOnUtc,

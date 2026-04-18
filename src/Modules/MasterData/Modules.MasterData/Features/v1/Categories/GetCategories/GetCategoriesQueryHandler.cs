@@ -37,7 +37,8 @@ public sealed class GetCategoriesQueryHandler(MasterDataDbContext dbContext) : I
                 c.Code,
                 c.Name,
                 c.Description,
-                c.IsActive))
+                c.IsActive,
+                c.OfficeCode))
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 

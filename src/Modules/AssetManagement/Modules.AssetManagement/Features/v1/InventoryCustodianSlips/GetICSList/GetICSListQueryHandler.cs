@@ -32,9 +32,9 @@ public sealed class GetICSListQueryHandler(AssetManagementDbContext dbContext)
             q = q.Where(x => x.ReceivedByEmployeeId == query.ReceivedByEmployeeId.Value);
         }
 
-        if (query.Category.HasValue)
+        if (query.AssetType.HasValue)
         {
-            q = q.Where(x => x.Category == query.Category.Value);
+            q = q.Where(x => x.AssetType == query.AssetType.Value);
         }
 
         if (query.Status.HasValue)
@@ -56,7 +56,7 @@ public sealed class GetICSListQueryHandler(AssetManagementDbContext dbContext)
                 x.Id,
                 x.ICSNo,
                 x.Date,
-                x.Category.ToString(),
+                x.AssetType.ToString(),
                 x.Status.ToString(),
                 x.ExpiresOn,
                 x.FundCluster,

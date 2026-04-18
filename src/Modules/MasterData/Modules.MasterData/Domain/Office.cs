@@ -12,6 +12,7 @@ public sealed class Office : AggregateRoot<Guid>, IAuditableEntity
     public string? LocationCode { get; private set; }
     /// <summary>NFA Regional/Provincial Code (e.g. 100, NDO, 00B). Null for Central Office units.</summary>
     public string? RegProvCode { get; private set; }
+    public string? OfficeCode { get; private set; }
     public bool IsActive { get; private set; } = true;
     public byte[] Version { get; set; } = [];
 
@@ -23,7 +24,7 @@ public sealed class Office : AggregateRoot<Guid>, IAuditableEntity
     public string? DeletedBy { get; set; }
     public bool IsDeleted { get; set; }
 
-    public static Office Create(string code, string name, string? description, string? regProvCode = null, string? locationCode = null, string? address = null)
+    public static Office Create(string code, string name, string? description, string? regProvCode = null, string? locationCode = null, string? address = null, string? officeCode = null)
     {
         return new Office
         {
@@ -34,6 +35,7 @@ public sealed class Office : AggregateRoot<Guid>, IAuditableEntity
             Address = address,
             LocationCode = locationCode,
             RegProvCode = regProvCode,
+            OfficeCode = officeCode,
             IsActive = true,
             CreatedOnUtc = DateTimeOffset.UtcNow
         };

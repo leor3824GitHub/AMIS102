@@ -37,8 +37,8 @@ public sealed class UpdateProductCommandHandler : ICommandHandler<UpdateProductC
             product.SetVariantName(command.VariantName);
         }
 
-        product.CategoryId = command.CategoryId;
-        product.SupplierId = command.SupplierId;
+        product.SetCategory(command.CategoryId);
+        product.SetSupplier(command.SupplierId);
         product.LastModifiedBy = _currentUser.GetUserId().ToString();
 
         await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);

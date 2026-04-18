@@ -11,8 +11,8 @@ public sealed class ICSItem : BaseEntity<Guid>
     /// <summary>FK to the parent ICS.</summary>
     public Guid ICSId { get; private set; }
 
-    /// <summary>The specific property unit being issued.</summary>
-    public Guid SemiExpendablePropertyId { get; private set; }
+    /// <summary>The TangibleInventoryItem (SE type) being issued.</summary>
+    public Guid TangibleInventoryItemId { get; private set; }
 
     /// <summary>Item number on the ICS form (sequential within the ICS).</summary>
     public int ItemNo { get; private set; }
@@ -27,31 +27,30 @@ public sealed class ICSItem : BaseEntity<Guid>
     public int? EstimatedUsefulLifeYears { get; private set; }
 
     /// <summary>
-    /// Asset category at the time this ICS was issued.
-    /// Frozen here so historical ICS records remain accurate even after a reclassification.
-    /// Determines ICS number series (SPLV = LowValuedSemi, SPHV = HighValuedSemi).
+    /// Asset type at the time this ICS was issued.
+    /// Frozen here so historical ICS records remain accurate.
     /// </summary>
-    public AssetCategory CategoryAtTimeOfIssuance { get; private set; }
+    public AssetType AssetTypeAtTimeOfIssuance { get; private set; }
 
     public static ICSItem Create(
         Guid icsId,
-        Guid semiExpendablePropertyId,
+        Guid tangibleInventoryItemId,
         int itemNo,
         string? description,
         decimal unitCost,
         int? estimatedUsefulLifeYears,
-        AssetCategory categoryAtTimeOfIssuance)
+        AssetType assetTypeAtTimeOfIssuance)
     {
         return new ICSItem
         {
             Id                       = Guid.NewGuid(),
             ICSId                    = icsId,
-            SemiExpendablePropertyId = semiExpendablePropertyId,
+            TangibleInventoryItemId  = tangibleInventoryItemId,
             ItemNo                   = itemNo,
             Description              = description,
             UnitCost                 = unitCost,
             EstimatedUsefulLifeYears = estimatedUsefulLifeYears,
-            CategoryAtTimeOfIssuance = categoryAtTimeOfIssuance,
+            AssetTypeAtTimeOfIssuance = assetTypeAtTimeOfIssuance,
         };
     }
 }

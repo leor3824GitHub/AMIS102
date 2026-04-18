@@ -20,6 +20,7 @@
 @inject ITenantThemeState TenantThemeState
 @inject IThemeStateFactory ThemeStateFactory
 @inject FSH.Playground.Blazor.ApiClient.IIdentityClient IdentityClient
+@inject FSH.Playground.Blazor.ApiClient.IOrganizationProfileClient OrgProfileClient
 @inject IUserProfileState UserProfileState
 @inject IDialogService DialogService
 @inject IAuthStateNotifier AuthStateNotifier
@@ -92,6 +93,7 @@ else
     private string? _userRole;
     private string? _avatarUrl;
     private string? _logoUrl;
+    private bool _orgProfileChecked;
 
     protected override async Task OnInitializedAsync()
     {
@@ -233,6 +235,9 @@ else
                 // Load full profile in Interactive mode
                 await LoadUserProfileAsync();
 
+                // Show org profile setup dialog if tenant has no profile yet
+                await CheckOrganizationProfileAsync();
+
                 // Handle toast notifications
                 var currentUri = new Uri(Navigation.Uri);
                 var query = QueryHelpers.ParseQuery(currentUri.Query);
@@ -258,6 +263,33 @@ else
 
                 StateHasChanged();
             }
+        }
+    }
+
+    private async Task CheckOrganizationProfileAsync()
+    {
+        if (_orgProfileChecked) return;
+        _orgProfileChecked = true;
+
+        try
+        {
+            var profile = await OrgProfileClient.GetAsync();
+            if (profile is null || string.IsNullOrWhiteSpace(profile.Name))
+            {
+                var options = new DialogOptions
+                {
+                    CloseOnEscapeKey = false,
+                    BackdropClick = false,
+                    MaxWidth = MaxWidth.Small,
+                    FullWidth = true
+                };
+                await DialogService.ShowAsync<FSH.Playground.Blazor.Components.Shared.OrganizationProfileSetupDialog>(
+                    string.Empty, options);
+            }
+        }
+        catch
+        {
+            // Silently skip — don't block the user if the API is unavailable
         }
     }
 

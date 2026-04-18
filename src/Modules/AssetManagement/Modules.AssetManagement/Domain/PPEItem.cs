@@ -7,8 +7,10 @@ namespace FSH.Modules.AssetManagement.Domain;
 /// Created from a PPERR line item. Accountability is tracked via PAR (in-office) and
 /// PPEIR (inter-office transfer).
 /// </summary>
-public sealed class PPEItem : AggregateRoot<Guid>, IAuditableEntity
+public sealed class PPEItem : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 {
+    public string TenantId { get; private set; } = default!;
+
     /// <summary>PPE property code (coordinates with C.O.-GSD). Format: {YYYY}-NFA-{OFFICE}-{CLASS}-{ITEM}-{SEQ:D3}</summary>
     public string PropertyCode { get; private set; } = default!;
 
@@ -70,6 +72,7 @@ public sealed class PPEItem : AggregateRoot<Guid>, IAuditableEntity
     public bool IsDeleted { get; set; }
 
     public static PPEItem Create(
+        string tenantId,
         string propertyCode,
         string propertyNumber,
         string description,
@@ -86,6 +89,7 @@ public sealed class PPEItem : AggregateRoot<Guid>, IAuditableEntity
         return new PPEItem
         {
             Id                       = Guid.NewGuid(),
+            TenantId                 = tenantId,
             PropertyCode             = propertyCode,
             PropertyNumber           = propertyNumber,
             Description              = description,

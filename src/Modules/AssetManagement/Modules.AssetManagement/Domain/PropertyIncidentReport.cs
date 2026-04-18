@@ -14,8 +14,10 @@ namespace FSH.Modules.AssetManagement.Domain;
 /// the accountable employee remains liable until formally relieved through the
 /// appropriate administrative or legal process.
 /// </summary>
-public sealed class PropertyIncidentReport : AggregateRoot<Guid>, IAuditableEntity
+public sealed class PropertyIncidentReport : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 {
+    public string TenantId { get; private set; } = default!;
+
     /// <summary>
     /// Control number. Suggested format: RLS-YYYY-MM-NNNN
     /// (e.g. RLS-2024-01-0001).
@@ -57,6 +59,7 @@ public sealed class PropertyIncidentReport : AggregateRoot<Guid>, IAuditableEnti
     public bool IsDeleted { get; set; }
 
     public static PropertyIncidentReport Create(
+        string tenantId,
         string reportNo,
         DateOnly date,
         DateOnly? incidentDate,
@@ -69,6 +72,7 @@ public sealed class PropertyIncidentReport : AggregateRoot<Guid>, IAuditableEnti
         return new PropertyIncidentReport
         {
             Id                    = Guid.NewGuid(),
+            TenantId              = tenantId,
             ReportNo              = reportNo,
             Date                  = date,
             IncidentDate          = incidentDate,

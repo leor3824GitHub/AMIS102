@@ -12,10 +12,7 @@ public sealed class CreateCapitalizationThresholdCommandHandler(MasterDataDbCont
     public async ValueTask<Guid> Handle(
         CreateCapitalizationThresholdCommand command, CancellationToken cancellationToken)
     {
-        var tenantId = currentUser.GetTenant() ?? string.Empty;
-
         var threshold = CapitalizationThreshold.Create(
-            tenantId,
             command.CircularName,
             command.Description,
             command.CapitalizationAmount,

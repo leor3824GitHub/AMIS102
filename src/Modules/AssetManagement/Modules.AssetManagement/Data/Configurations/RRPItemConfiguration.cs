@@ -12,7 +12,7 @@ public sealed class RRPItemConfiguration : IEntityTypeConfiguration<RRPItem>
 
         builder.HasKey(x => x.Id);
         builder.Property(x => x.RRPId).IsRequired();
-        builder.Property(x => x.PPEItemId).IsRequired();
+        builder.Property(x => x.TangibleInventoryItemId).IsRequired();
         builder.Property(x => x.ItemNo).IsRequired();
         builder.Property(x => x.SourceDocumentRef).HasMaxLength(64);
         builder.Property(x => x.PropertyCode).HasMaxLength(32).IsRequired();
@@ -22,6 +22,6 @@ public sealed class RRPItemConfiguration : IEntityTypeConfiguration<RRPItem>
         builder.Property(x => x.TotalCost).HasColumnType("numeric(18,2)").IsRequired();
 
         builder.HasIndex(x => x.RRPId);
-        builder.HasIndex(x => x.PPEItemId);
+        builder.HasIndex(x => x.TangibleInventoryItemId);
     }
 }

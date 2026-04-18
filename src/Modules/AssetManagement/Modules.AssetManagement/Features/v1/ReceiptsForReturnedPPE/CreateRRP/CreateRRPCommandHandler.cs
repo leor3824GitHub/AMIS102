@@ -54,7 +54,10 @@ public sealed class CreateRRPCommandHandler : ICommandHandler<CreateRRPCommand, 
             }
         }
 
+        string tenantId = _currentUser.GetTenant() ?? string.Empty;
+
         var rrp = ReceiptForReturnedPPE.Create(
+            tenantId,
             command.RRPNo,
             command.Date,
             command.ReturnCategory,

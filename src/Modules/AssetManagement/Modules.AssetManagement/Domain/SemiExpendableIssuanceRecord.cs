@@ -18,8 +18,10 @@ namespace FSH.Modules.AssetManagement.Domain;
 ///     inventory of the sending office; the audit trail is preserved.
 ///   - The receiving office records its own SMRR when items physically arrive.
 /// </summary>
-public sealed class SemiExpendableIssuanceRecord : AggregateRoot<Guid>, IAuditableEntity
+public sealed class SemiExpendableIssuanceRecord : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 {
+    public string TenantId { get; private set; } = default!;
+
     /// <summary>
     /// Control number assigned by the Supply Division.
     /// Recommended format: SMIR-YYYY-NNNN.
@@ -66,6 +68,7 @@ public sealed class SemiExpendableIssuanceRecord : AggregateRoot<Guid>, IAuditab
     public bool IsDeleted { get; set; }
 
     public static SemiExpendableIssuanceRecord Create(
+        string tenantId,
         string smirNo,
         DateOnly date,
         string? fundCluster,
@@ -78,6 +81,7 @@ public sealed class SemiExpendableIssuanceRecord : AggregateRoot<Guid>, IAuditab
         return new SemiExpendableIssuanceRecord
         {
             Id                      = Guid.NewGuid(),
+            TenantId                = tenantId,
             SMIRNo                  = smirNo,
             Date                    = date,
             FundCluster             = fundCluster,

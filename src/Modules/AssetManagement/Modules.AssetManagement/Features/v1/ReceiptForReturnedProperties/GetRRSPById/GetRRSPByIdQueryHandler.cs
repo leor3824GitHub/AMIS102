@@ -42,17 +42,17 @@ public sealed class GetRRSPByIdQueryHandler(AssetManagementDbContext dbContext)
 
         var items = await (
             from rrspItem in dbContext.RRSPItems.Where(x => x.RRSPId == query.Id)
-            join prop in dbContext.SemiExpendableProperties.IgnoreQueryFilters()
-                on rrspItem.SemiExpendablePropertyId equals prop.Id
+            join inv in dbContext.TangibleInventoryItems.IgnoreQueryFilters()
+                on rrspItem.TangibleInventoryItemId equals inv.Id
             orderby rrspItem.ItemNo
             select new RRSPItemDetailsDto(
                 rrspItem.Id,
-                rrspItem.SemiExpendablePropertyId,
-                prop.PropertyNo,
+                rrspItem.TangibleInventoryItemId,
+                inv.PropertyNo,
                 rrspItem.ItemNo,
                 rrspItem.Description,
                 rrspItem.UnitCost,
-                rrspItem.CategoryAtTimeOfReturn.ToString()))
+                rrspItem.AssetTypeAtTimeOfReturn.ToString()))
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 

@@ -1,3 +1,4 @@
+using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;
 using FSH.Modules.AssetManagement.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -8,9 +9,11 @@ public sealed class PhysicalCountSessionConfiguration : IEntityTypeConfiguration
 {
     public void Configure(EntityTypeBuilder<PhysicalCountSession> builder)
     {
-        builder.ToTable("PhysicalCountSessions", AssetManagementModuleConstants.SchemaName);
+        builder.ToTable("PhysicalCountSessions", AssetManagementModuleConstants.SchemaName)
+            .IsMultiTenant();
 
         builder.HasKey(x => x.Id);
+        builder.Property(x => x.TenantId).HasMaxLength(50).IsRequired();
         builder.Property(x => x.SessionNo).HasMaxLength(32).IsRequired();
         builder.Property(x => x.CountDate).IsRequired();
         builder.Property(x => x.StationOffice).HasMaxLength(200).IsRequired();
@@ -22,11 +25,11 @@ public sealed class PhysicalCountSessionConfiguration : IEntityTypeConfiguration
         builder.Property(x => x.SubmittedOnUtc);
         builder.Property(x => x.Version).IsConcurrencyToken();
 
-        builder.HasIndex(x => x.SessionNo).IsUnique();
+        builder.HasIndex(x => new { x.TenantId, x.SessionNo }).IsUnique();
         builder.HasIndex(x => x.CountDate);
         builder.HasIndex(x => x.Status);
 
         builder.Property(x => x.IsDeleted).HasDefaultValue(false);
-        builder.HasQueryFilter(x => !x.IsDeleted);
+        builder.HasQueryFilter("SoftDelete", x => !x.IsDeleted);
     }
 }

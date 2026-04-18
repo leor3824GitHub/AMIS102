@@ -1,3 +1,4 @@
+using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;
 using FSH.Modules.AssetManagement.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -8,13 +9,15 @@ public sealed class ICSConfiguration : IEntityTypeConfiguration<InventoryCustodi
 {
     public void Configure(EntityTypeBuilder<InventoryCustodianSlip> builder)
     {
-        builder.ToTable("InventoryCustodianSlips", AssetManagementModuleConstants.SchemaName);
+        builder.ToTable("InventoryCustodianSlips", AssetManagementModuleConstants.SchemaName)
+            .IsMultiTenant();
 
         builder.HasKey(x => x.Id);
+        builder.Property(x => x.TenantId).HasMaxLength(50).IsRequired();
         builder.Property(x => x.ICSNo).HasMaxLength(32).IsRequired();
         builder.Property(x => x.Date).IsRequired();
         builder.Property(x => x.FundCluster).HasMaxLength(50);
-        builder.Property(x => x.Category).HasConversion<string>().HasMaxLength(32).IsRequired();
+        builder.Property(x => x.AssetType).HasConversion<string>().HasMaxLength(8).IsRequired();
         builder.Property(x => x.Status).HasConversion<string>().HasMaxLength(32).IsRequired();
         builder.Property(x => x.ExpiresOn);
         builder.Property(x => x.RenewedFromICSId);
@@ -22,18 +25,18 @@ public sealed class ICSConfiguration : IEntityTypeConfiguration<InventoryCustodi
         builder.Property(x => x.CancelledByRRSPId);
         builder.Property(x => x.Version).IsConcurrencyToken();
 
-        builder.HasIndex(x => x.ICSNo).IsUnique();
+        builder.HasIndex(x => new { x.TenantId, x.ICSNo }).IsUnique();
         builder.HasIndex(x => x.Date);
         builder.HasIndex(x => x.IssuedFromEmployeeId);
         builder.HasIndex(x => x.ReceivedByEmployeeId);
         builder.HasIndex(x => x.Status);
         builder.HasIndex(x => x.ExpiresOn);
-        builder.HasIndex(x => x.Category);
+        builder.HasIndex(x => x.AssetType);
         builder.HasIndex(x => x.RenewedFromICSId);
         builder.HasIndex(x => x.RenewedByICSId);
         builder.HasIndex(x => x.CancelledByRRSPId);
 
         builder.Property(x => x.IsDeleted).HasDefaultValue(false);
-        builder.HasQueryFilter(x => !x.IsDeleted);
+        builder.HasQueryFilter("SoftDelete", x => !x.IsDeleted);
     }
 }

@@ -10,8 +10,10 @@ namespace FSH.Modules.AssetManagement.Domain;
 /// individual physical units are tracked as <see cref="SemiExpendableProperty"/> (SE) or
 /// <see cref="PPEItem"/> (PPE).
 /// </summary>
-public sealed class PropertyItemCatalog : AggregateRoot<Guid>, IAuditableEntity
+public sealed class PropertyItemCatalog : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 {
+    public string TenantId { get; private set; } = default!;
+
     /// <summary>Short unique identifier assigned by the supply division (e.g., "LAP-001").</summary>
     public string Code { get; private set; } = default!;
 
@@ -43,6 +45,7 @@ public sealed class PropertyItemCatalog : AggregateRoot<Guid>, IAuditableEntity
     public bool IsDeleted { get; set; }
 
     public static PropertyItemCatalog Create(
+        string tenantId,
         string code,
         string name,
         string? description,
@@ -53,6 +56,7 @@ public sealed class PropertyItemCatalog : AggregateRoot<Guid>, IAuditableEntity
         return new PropertyItemCatalog
         {
             Id = Guid.NewGuid(),
+            TenantId = tenantId,
             Code = code,
             Name = name,
             Description = description,

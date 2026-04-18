@@ -119,5 +119,19 @@ public static class AssetManagementModuleConstants
             public const string Update = "Permissions.AssetManagement.PhysicalCount.Update";
         }
 
+        public static class TangibleItems
+        {
+            public const string View   = "asset-management.tangible-items.view";
+            public const string Create = "asset-management.tangible-items.create";
+            public const string Update = "asset-management.tangible-items.update";
+            public const string Delete = "asset-management.tangible-items.delete";
+        }
+
+        public static class TangibleInventory
+        {
+            public const string View   = "Permissions.AssetManagement.TangibleInventory.View";
+            public const string Create = "Permissions.AssetManagement.TangibleInventory.Create";
+        }
+
     }
 }

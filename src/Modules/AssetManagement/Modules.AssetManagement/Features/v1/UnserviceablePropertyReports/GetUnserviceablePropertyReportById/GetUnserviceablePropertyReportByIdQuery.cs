@@ -20,10 +20,10 @@ public sealed record UnserviceablePropertyReportDetailsDto(
 
 public sealed record UnserviceablePropertyItemDetailsDto(
     Guid Id,
-    Guid SemiExpendablePropertyId,
+    Guid TangibleInventoryItemId,
     string PropertyNo,
     int ItemNo,
     string? Description,
     decimal UnitCost,
-    string CategoryAtTimeOfReport,
+    string AssetTypeAtTimeOfReport,
     string? ConditionRemarks);

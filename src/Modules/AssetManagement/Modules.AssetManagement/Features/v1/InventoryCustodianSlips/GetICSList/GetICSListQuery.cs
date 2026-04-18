@@ -8,7 +8,7 @@ public sealed record GetICSListQuery(
     DateOnly? DateFrom,
     DateOnly? DateTo,
     Guid? ReceivedByEmployeeId,
-    AssetCategory? Category = null,
+    AssetType? AssetType = null,
     ICSStatus? Status = null,
     int PageNumber = 1,
     int PageSize = 10) : IQuery<PagedICSListResponse>;

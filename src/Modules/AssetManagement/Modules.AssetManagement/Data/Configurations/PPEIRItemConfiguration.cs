@@ -12,7 +12,7 @@ public sealed class PPEIRItemConfiguration : IEntityTypeConfiguration<PPEIRItem>
 
         builder.HasKey(x => x.Id);
         builder.Property(x => x.PPEIRId).IsRequired();
-        builder.Property(x => x.PPEItemId).IsRequired();
+        builder.Property(x => x.TangibleInventoryItemId).IsRequired();
         builder.Property(x => x.ItemNo).IsRequired();
         builder.Property(x => x.PropertyCode).HasMaxLength(32).IsRequired();
         builder.Property(x => x.SerialNumber).HasMaxLength(100);
@@ -23,6 +23,6 @@ public sealed class PPEIRItemConfiguration : IEntityTypeConfiguration<PPEIRItem>
         builder.Property(x => x.BookValue).HasColumnType("numeric(18,2)");
 
         builder.HasIndex(x => x.PPEIRId);
-        builder.HasIndex(x => x.PPEItemId);
+        builder.HasIndex(x => x.TangibleInventoryItemId);
     }
 }

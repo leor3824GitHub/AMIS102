@@ -12,8 +12,8 @@ public sealed class RRPItem : BaseEntity<Guid>
     /// <summary>FK to the parent RRP.</summary>
     public Guid RRPId { get; private set; }
 
-    /// <summary>The PPE item being returned.</summary>
-    public Guid PPEItemId { get; private set; }
+    /// <summary>The TangibleInventoryItem (PPE type) being returned.</summary>
+    public Guid TangibleInventoryItemId { get; private set; }
 
     /// <summary>Item number on the RRP form (sequential within the RRP).</summary>
     public int ItemNo { get; private set; }
@@ -40,7 +40,7 @@ public sealed class RRPItem : BaseEntity<Guid>
 
     public static RRPItem Create(
         Guid rrpId,
-        Guid ppeItemId,
+        Guid tangibleInventoryItemId,
         int itemNo,
         string? sourceDocumentRef,
         string propertyCode,
@@ -50,16 +50,16 @@ public sealed class RRPItem : BaseEntity<Guid>
     {
         return new RRPItem
         {
-            Id                = Guid.NewGuid(),
-            RRPId             = rrpId,
-            PPEItemId         = ppeItemId,
-            ItemNo            = itemNo,
-            SourceDocumentRef = sourceDocumentRef,
-            PropertyCode      = propertyCode,
-            Description       = description,
-            Quantity          = quantity,
-            UnitCost          = unitCost,
-            TotalCost         = quantity * unitCost,
+            Id                      = Guid.NewGuid(),
+            RRPId                   = rrpId,
+            TangibleInventoryItemId = tangibleInventoryItemId,
+            ItemNo                  = itemNo,
+            SourceDocumentRef       = sourceDocumentRef,
+            PropertyCode            = propertyCode,
+            Description             = description,
+            Quantity                = quantity,
+            UnitCost                = unitCost,
+            TotalCost               = quantity * unitCost,
         };
     }
 }

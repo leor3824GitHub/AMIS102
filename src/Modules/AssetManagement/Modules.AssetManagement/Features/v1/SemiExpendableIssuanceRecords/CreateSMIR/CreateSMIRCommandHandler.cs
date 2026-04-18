@@ -66,9 +66,11 @@ public sealed class CreateSMIRCommandHandler : ICommandHandler<CreateSMIRCommand
             }
         }
 
+        string tenantId = _currentUser.GetTenant() ?? string.Empty;
         string userId = _currentUser.GetUserId().ToString();
 
         var smir = SemiExpendableIssuanceRecord.Create(
+            tenantId,
             command.SMIRNo,
             command.Date,
             command.FundCluster,

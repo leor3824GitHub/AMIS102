@@ -1,3 +1,4 @@
+using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;
 using FSH.Modules.AssetManagement.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -8,20 +9,23 @@ public sealed class SemiExpendablePropertyConfiguration : IEntityTypeConfigurati
 {
     public void Configure(EntityTypeBuilder<SemiExpendableProperty> builder)
     {
-        builder.ToTable("SemiExpendableProperties", AssetManagementModuleConstants.SchemaName);
+        builder.ToTable("SemiExpendableProperties", AssetManagementModuleConstants.SchemaName)
+            .IsMultiTenant();
 
         builder.HasKey(x => x.Id);
+        builder.Property(x => x.TenantId).HasMaxLength(50).IsRequired();
         builder.Property(x => x.PropertyNo).HasMaxLength(32).IsRequired();
         builder.Property(x => x.SerialNo).HasMaxLength(100);
         builder.Property(x => x.AcquisitionDate).IsRequired();
         builder.Property(x => x.UnitCost).HasColumnType("numeric(18,2)").IsRequired();
+        builder.Property(x => x.Quantity).IsRequired().HasDefaultValue(1);
         builder.Property(x => x.FundCluster).HasMaxLength(50);
         builder.Property(x => x.Category).HasConversion<string>().HasMaxLength(32).IsRequired();
         builder.Property(x => x.Status).HasConversion<string>().HasMaxLength(32).IsRequired();
         builder.Property(x => x.Remarks).HasMaxLength(500);
         builder.Property(x => x.Version).IsConcurrencyToken();
 
-        builder.HasIndex(x => x.PropertyNo).IsUnique();
+        builder.HasIndex(x => new { x.TenantId, x.PropertyNo }).IsUnique();
         builder.HasIndex(x => x.Status);
         builder.HasIndex(x => x.Category);
         builder.HasIndex(x => x.ItemId);
@@ -36,6 +40,6 @@ public sealed class SemiExpendablePropertyConfiguration : IEntityTypeConfigurati
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Property(x => x.IsDeleted).HasDefaultValue(false);
-        builder.HasQueryFilter(x => !x.IsDeleted);
+        builder.HasQueryFilter("SoftDelete", x => !x.IsDeleted);
     }
 }

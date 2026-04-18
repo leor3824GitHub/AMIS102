@@ -32,47 +32,41 @@ public sealed class CreateICSCommandHandler : ICommandHandler<CreateICSCommand, 
             ]);
         }
 
-        var propertyIds = command.Items.Select(x => x.SemiExpendablePropertyId).Distinct().ToList();
+        var itemIds = command.Items.Select(x => x.TangibleInventoryItemId).Distinct().ToList();
 
-        if (propertyIds.Count != command.Items.Count)
+        if (itemIds.Count != command.Items.Count)
         {
             throw new FluentValidation.ValidationException(
             [
-                new FluentValidation.Results.ValidationFailure(nameof(command.Items), "Duplicate property entries are not allowed in a single ICS.")
+                new FluentValidation.Results.ValidationFailure(nameof(command.Items), "Duplicate inventory item entries are not allowed in a single ICS.")
             ]);
         }
 
-        var properties = await _dbContext.SemiExpendableProperties
-            .Include(x => x.Item)
-            .Where(x => propertyIds.Contains(x.Id))
+        var invItems = await _dbContext.TangibleInventoryItems
+            .Where(x => itemIds.Contains(x.Id))
             .ToDictionaryAsync(x => x.Id, cancellationToken)
             .ConfigureAwait(false);
 
-        foreach (var propertyId in propertyIds)
+        foreach (var itemId in itemIds)
         {
-            if (!properties.TryGetValue(propertyId, out var prop))
-            {
-                throw new KeyNotFoundException($"Semi-expendable property with ID {propertyId} not found.");
-            }
+            if (!invItems.TryGetValue(itemId, out var invItem))
+                throw new KeyNotFoundException($"TangibleInventoryItem with ID {itemId} not found.");
 
-            if (prop.Status != PropertyStatus.OnHand)
-            {
+            if (invItem.AssetType != AssetType.SE)
                 throw new InvalidOperationException(
-                    $"Property {prop.PropertyNo} has status '{prop.Status}' and cannot be issued. Only OnHand properties can be issued.");
-            }
+                    $"TangibleInventoryItem {invItem.PropertyNo} has AssetType '{invItem.AssetType}'. Only SE items can be issued via ICS.");
 
-            // All items on a single ICS must be the same category (COA Circular 2022-004 Section 4.9).
-            if (prop.Category != command.Category)
-            {
+            if (invItem.IsIssued)
                 throw new InvalidOperationException(
-                    $"Property {prop.PropertyNo} has category '{prop.Category}' but this ICS is for '{command.Category}' items. All properties on a single ICS must be the same category.");
-            }
+                    $"TangibleInventoryItem {invItem.PropertyNo} is already issued.");
         }
 
+        string tenantId = _currentUser.GetTenant() ?? string.Empty;
+
         var ics = InventoryCustodianSlip.Create(
+            tenantId,
             command.ICSNo,
             command.Date,
-            command.Category,
             command.FundCluster,
             command.IssuedFromEmployeeId,
             command.ReceivedByEmployeeId);
@@ -83,19 +77,19 @@ public sealed class CreateICSCommandHandler : ICommandHandler<CreateICSCommand, 
         int itemNo = 1;
         foreach (var itemRequest in command.Items)
         {
-            var property = properties[itemRequest.SemiExpendablePropertyId];
+            var invItem = invItems[itemRequest.TangibleInventoryItemId];
 
             var icsItem = ICSItem.Create(
                 ics.Id,
-                property.Id,
+                invItem.Id,
                 itemNo,
-                itemRequest.Description ?? property.Item?.Name,
-                property.UnitCost,
-                property.Item?.EstimatedUsefulLifeYears,
-                property.Category);
+                itemRequest.Description ?? invItem.Description,
+                invItem.UnitCost,
+                null, // EUL not on TangibleInventoryItem — may be sourced from catalog separately
+                invItem.AssetType);
 
             _dbContext.ICSItems.Add(icsItem);
-            property.SetStatus(PropertyStatus.Issued, command.ReceivedByEmployeeId);
+            invItem.MarkIssued();
             itemNo++;
         }
 

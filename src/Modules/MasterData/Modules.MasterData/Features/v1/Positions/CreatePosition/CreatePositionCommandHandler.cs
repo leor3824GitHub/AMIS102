@@ -33,12 +33,12 @@ public sealed class CreatePositionCommandHandler : ICommandHandler<CreatePositio
             ]);
         }
 
-        var position = Position.Create(command.Code, command.Name, command.Description);
+        var position = Position.Create(command.Code, command.Name, command.Description, command.OfficeCode);
         position.CreatedBy = _currentUser.GetUserId().ToString();
 
         _dbContext.Positions.Add(position);
         await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-        return new PositionReferenceDto(position.Id, position.Code, position.Name, position.Description, position.IsActive);
+        return new PositionReferenceDto(position.Id, position.Code, position.Name, position.Description, position.IsActive, position.OfficeCode);
     }
 }

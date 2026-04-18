@@ -54,7 +54,10 @@ public sealed class CreatePPEIRCommandHandler : ICommandHandler<CreatePPEIRComma
             }
         }
 
+        string tenantId = _currentUser.GetTenant() ?? string.Empty;
+
         var ppeir = PPEIssuanceReport.Create(
+            tenantId,
             command.PPEIRNo,
             command.Date,
             command.IssuedToEmployeeId,

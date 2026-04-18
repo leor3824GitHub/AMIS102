@@ -12,13 +12,13 @@ public sealed class SMIRItemConfiguration : IEntityTypeConfiguration<SMIRItem>
 
         builder.HasKey(x => x.Id);
         builder.Property(x => x.SMIRId).IsRequired();
-        builder.Property(x => x.SemiExpendablePropertyId).IsRequired();
+        builder.Property(x => x.TangibleInventoryItemId).IsRequired();
         builder.Property(x => x.ItemNo).IsRequired();
         builder.Property(x => x.Description).HasMaxLength(500);
         builder.Property(x => x.UnitCost).HasColumnType("numeric(18,2)").IsRequired();
-        builder.Property(x => x.CategoryAtTimeOfIssuance).HasConversion<string>().HasMaxLength(32).IsRequired();
+        builder.Property(x => x.AssetTypeAtTimeOfIssuance).HasConversion<string>().HasMaxLength(8).IsRequired();
 
         builder.HasIndex(x => x.SMIRId);
-        builder.HasIndex(x => x.SemiExpendablePropertyId);
+        builder.HasIndex(x => x.TangibleInventoryItemId);
     }
 }

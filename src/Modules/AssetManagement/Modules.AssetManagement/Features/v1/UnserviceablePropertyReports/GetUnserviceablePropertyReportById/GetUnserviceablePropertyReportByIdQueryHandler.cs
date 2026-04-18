@@ -37,17 +37,17 @@ public sealed class GetUnserviceablePropertyReportByIdQueryHandler(AssetManageme
 
         var items = await (
             from item in dbContext.UnserviceablePropertyItems.Where(x => x.ReportId == query.Id)
-            join prop in dbContext.SemiExpendableProperties.IgnoreQueryFilters()
-                on item.SemiExpendablePropertyId equals prop.Id
+            join inv in dbContext.TangibleInventoryItems.IgnoreQueryFilters()
+                on item.TangibleInventoryItemId equals inv.Id
             orderby item.ItemNo
             select new UnserviceablePropertyItemDetailsDto(
                 item.Id,
-                item.SemiExpendablePropertyId,
-                prop.PropertyNo,
+                item.TangibleInventoryItemId,
+                inv.PropertyNo,
                 item.ItemNo,
                 item.Description,
                 item.UnitCost,
-                item.CategoryAtTimeOfReport.ToString(),
+                item.AssetTypeAtTimeOfReport.ToString(),
                 item.ConditionRemarks))
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);

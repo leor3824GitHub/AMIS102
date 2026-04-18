@@ -21,9 +21,9 @@ public sealed record SMIRDetailsDto(
 
 public sealed record SMIRItemDetailsDto(
     Guid Id,
-    Guid SemiExpendablePropertyId,
+    Guid TangibleInventoryItemId,
     string PropertyNo,
     int ItemNo,
     string? Description,
     decimal UnitCost,
-    string CategoryAtTimeOfIssuance);
+    string AssetTypeAtTimeOfIssuance);

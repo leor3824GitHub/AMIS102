@@ -11,8 +11,8 @@ public sealed class RRSPItem : BaseEntity<Guid>
     /// <summary>FK to the parent RRSP.</summary>
     public Guid RRSPId { get; private set; }
 
-    /// <summary>The specific property unit being returned.</summary>
-    public Guid SemiExpendablePropertyId { get; private set; }
+    /// <summary>The TangibleInventoryItem being returned.</summary>
+    public Guid TangibleInventoryItemId { get; private set; }
 
     /// <summary>Item number on the RRSP form (sequential within the RRSP).</summary>
     public int ItemNo { get; private set; }
@@ -24,28 +24,28 @@ public sealed class RRSPItem : BaseEntity<Guid>
     public decimal UnitCost { get; private set; }
 
     /// <summary>
-    /// Asset category at the time of return.
-    /// Frozen here so historical RRSP records remain accurate after reclassification.
+    /// Asset type at the time of return.
+    /// Frozen here so historical RRSP records remain accurate.
     /// </summary>
-    public AssetCategory CategoryAtTimeOfReturn { get; private set; }
+    public AssetType AssetTypeAtTimeOfReturn { get; private set; }
 
     public static RRSPItem Create(
         Guid rrspId,
-        Guid semiExpendablePropertyId,
+        Guid tangibleInventoryItemId,
         int itemNo,
         string? description,
         decimal unitCost,
-        AssetCategory categoryAtTimeOfReturn)
+        AssetType assetTypeAtTimeOfReturn)
     {
         return new RRSPItem
         {
-            Id                       = Guid.NewGuid(),
-            RRSPId                   = rrspId,
-            SemiExpendablePropertyId = semiExpendablePropertyId,
-            ItemNo                   = itemNo,
-            Description              = description,
-            UnitCost                 = unitCost,
-            CategoryAtTimeOfReturn   = categoryAtTimeOfReturn,
+            Id                      = Guid.NewGuid(),
+            RRSPId                  = rrspId,
+            TangibleInventoryItemId = tangibleInventoryItemId,
+            ItemNo                  = itemNo,
+            Description             = description,
+            UnitCost                = unitCost,
+            AssetTypeAtTimeOfReturn = assetTypeAtTimeOfReturn,
         };
     }
 }

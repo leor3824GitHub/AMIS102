@@ -18,4 +18,5 @@ public sealed record CategoryDto(
     string Code,
     string Name,
     string? Description,
-    bool IsActive);
+    bool IsActive,
+    string? OfficeCode = null);

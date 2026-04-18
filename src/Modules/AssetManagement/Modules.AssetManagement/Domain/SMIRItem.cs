@@ -11,8 +11,8 @@ public sealed class SMIRItem : BaseEntity<Guid>
     /// <summary>FK to the parent SMIR.</summary>
     public Guid SMIRId { get; private set; }
 
-    /// <summary>The specific property unit being transferred out.</summary>
-    public Guid SemiExpendablePropertyId { get; private set; }
+    /// <summary>The TangibleInventoryItem being transferred out.</summary>
+    public Guid TangibleInventoryItemId { get; private set; }
 
     /// <summary>Item number on the SMIR form (sequential within the SMIR).</summary>
     public int ItemNo { get; private set; }
@@ -24,28 +24,28 @@ public sealed class SMIRItem : BaseEntity<Guid>
     public decimal UnitCost { get; private set; }
 
     /// <summary>
-    /// Asset category at the time this SMIR was processed.
-    /// Frozen here so historical records remain accurate after reclassification.
+    /// Asset type at the time this SMIR was processed.
+    /// Frozen here so historical records remain accurate.
     /// </summary>
-    public AssetCategory CategoryAtTimeOfIssuance { get; private set; }
+    public AssetType AssetTypeAtTimeOfIssuance { get; private set; }
 
     public static SMIRItem Create(
         Guid smirId,
-        Guid semiExpendablePropertyId,
+        Guid tangibleInventoryItemId,
         int itemNo,
         string? description,
         decimal unitCost,
-        AssetCategory categoryAtTimeOfIssuance)
+        AssetType assetTypeAtTimeOfIssuance)
     {
         return new SMIRItem
         {
             Id                       = Guid.NewGuid(),
             SMIRId                   = smirId,
-            SemiExpendablePropertyId = semiExpendablePropertyId,
+            TangibleInventoryItemId  = tangibleInventoryItemId,
             ItemNo                   = itemNo,
             Description              = description,
             UnitCost                 = unitCost,
-            CategoryAtTimeOfIssuance = categoryAtTimeOfIssuance,
+            AssetTypeAtTimeOfIssuance = assetTypeAtTimeOfIssuance,
         };
     }
 }

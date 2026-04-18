@@ -1,3 +1,4 @@
+using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;
 using FSH.Modules.AssetManagement.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -8,9 +9,11 @@ public sealed class PPEIssuanceReportConfiguration : IEntityTypeConfiguration<PP
 {
     public void Configure(EntityTypeBuilder<PPEIssuanceReport> builder)
     {
-        builder.ToTable("PPEIssuanceReports", AssetManagementModuleConstants.SchemaName);
+        builder.ToTable("PPEIssuanceReports", AssetManagementModuleConstants.SchemaName)
+            .IsMultiTenant();
 
         builder.HasKey(x => x.Id);
+        builder.Property(x => x.TenantId).HasMaxLength(50).IsRequired();
         builder.Property(x => x.PPEIRNo).HasMaxLength(32).IsRequired();
         builder.Property(x => x.Date).IsRequired();
         builder.Property(x => x.IssuedToEmployeeId).IsRequired();
@@ -24,12 +27,12 @@ public sealed class PPEIssuanceReportConfiguration : IEntityTypeConfiguration<PP
         builder.Property(x => x.BillOfLadingNo).HasMaxLength(100);
         builder.Property(x => x.Version).IsConcurrencyToken();
 
-        builder.HasIndex(x => x.PPEIRNo).IsUnique();
+        builder.HasIndex(x => new { x.TenantId, x.PPEIRNo }).IsUnique();
         builder.HasIndex(x => x.Date);
         builder.HasIndex(x => x.IssuedToEmployeeId);
         builder.HasIndex(x => x.IssuanceType);
 
         builder.Property(x => x.IsDeleted).HasDefaultValue(false);
-        builder.HasQueryFilter(x => !x.IsDeleted);
+        builder.HasQueryFilter("SoftDelete", x => !x.IsDeleted);
     }
 }

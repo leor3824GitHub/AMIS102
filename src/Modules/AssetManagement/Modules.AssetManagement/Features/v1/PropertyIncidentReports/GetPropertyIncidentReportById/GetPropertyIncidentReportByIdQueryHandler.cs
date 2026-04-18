@@ -38,17 +38,17 @@ public sealed class GetPropertyIncidentReportByIdQueryHandler(AssetManagementDbC
 
         var items = await (
             from item in dbContext.PropertyIncidentItems.Where(x => x.ReportId == query.Id)
-            join prop in dbContext.SemiExpendableProperties.IgnoreQueryFilters()
-                on item.SemiExpendablePropertyId equals prop.Id
+            join inv in dbContext.TangibleInventoryItems.IgnoreQueryFilters()
+                on item.TangibleInventoryItemId equals inv.Id
             orderby item.ItemNo
             select new PropertyIncidentItemDetailsDto(
                 item.Id,
-                item.SemiExpendablePropertyId,
-                prop.PropertyNo,
+                item.TangibleInventoryItemId,
+                inv.PropertyNo,
                 item.ItemNo,
                 item.Description,
                 item.UnitCost,
-                item.CategoryAtTimeOfReport.ToString()))
+                item.AssetTypeAtTimeOfReport.ToString()))
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 

@@ -7,8 +7,10 @@ namespace FSH.Modules.AssetManagement.Domain;
 /// Assigns a PPE item to an accountable officer within the same office.
 /// Creating a PAR updates PPEItem.Status to IssuedPAR.
 /// </summary>
-public sealed class PropertyAcknowledgementReceipt : AggregateRoot<Guid>, IAuditableEntity
+public sealed class PropertyAcknowledgementReceipt : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 {
+    public string TenantId { get; private set; } = default!;
+
     /// <summary>Control number assigned by the Supply Officer.</summary>
     public string PARNo { get; private set; } = default!;
 
@@ -48,6 +50,7 @@ public sealed class PropertyAcknowledgementReceipt : AggregateRoot<Guid>, IAudit
     public bool IsDeleted { get; set; }
 
     public static PropertyAcknowledgementReceipt Create(
+        string tenantId,
         string parNo,
         DateOnly date,
         PARType parType,
@@ -58,6 +61,7 @@ public sealed class PropertyAcknowledgementReceipt : AggregateRoot<Guid>, IAudit
         return new PropertyAcknowledgementReceipt
         {
             Id                     = Guid.NewGuid(),
+            TenantId               = tenantId,
             PARNo                  = parNo,
             Date                   = date,
             PARType                = parType,

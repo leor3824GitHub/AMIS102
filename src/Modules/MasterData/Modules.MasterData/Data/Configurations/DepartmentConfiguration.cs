@@ -15,10 +15,12 @@ public sealed class DepartmentConfiguration : IEntityTypeConfiguration<Departmen
         builder.Property(x => x.Name).HasMaxLength(160).IsRequired();
         builder.Property(x => x.Description).HasMaxLength(400);
         builder.Property(x => x.FundCluster).HasMaxLength(100);
+        builder.Property(x => x.OfficeCode).HasMaxLength(8);
         builder.Property(x => x.Version).IsConcurrencyToken();
 
         builder.HasIndex(x => x.Code).IsUnique();
         builder.HasIndex(x => x.Name);
+        builder.HasIndex(x => x.OfficeCode);
 
         builder.Property(x => x.IsDeleted).HasDefaultValue(false);
         builder.HasQueryFilter(x => !x.IsDeleted);

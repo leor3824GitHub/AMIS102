@@ -1,3 +1,4 @@
+using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;
 using FSH.Modules.AssetManagement.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -8,9 +9,11 @@ public sealed class PropertyAcknowledgementReceiptConfiguration : IEntityTypeCon
 {
     public void Configure(EntityTypeBuilder<PropertyAcknowledgementReceipt> builder)
     {
-        builder.ToTable("PropertyAcknowledgementReceipts", AssetManagementModuleConstants.SchemaName);
+        builder.ToTable("PropertyAcknowledgementReceipts", AssetManagementModuleConstants.SchemaName)
+            .IsMultiTenant();
 
         builder.HasKey(x => x.Id);
+        builder.Property(x => x.TenantId).HasMaxLength(50).IsRequired();
         builder.Property(x => x.PARNo).HasMaxLength(32).IsRequired();
         builder.Property(x => x.Date).IsRequired();
         builder.Property(x => x.PARType).HasConversion<string>().HasMaxLength(32).IsRequired();
@@ -19,12 +22,12 @@ public sealed class PropertyAcknowledgementReceiptConfiguration : IEntityTypeCon
         builder.Property(x => x.ApprovedByEmployeeId).IsRequired();
         builder.Property(x => x.Version).IsConcurrencyToken();
 
-        builder.HasIndex(x => x.PARNo).IsUnique();
+        builder.HasIndex(x => new { x.TenantId, x.PARNo }).IsUnique();
         builder.HasIndex(x => x.Date);
         builder.HasIndex(x => x.ReceivedByEmployeeId);
         builder.HasIndex(x => x.PARType);
 
         builder.Property(x => x.IsDeleted).HasDefaultValue(false);
-        builder.HasQueryFilter(x => !x.IsDeleted);
+        builder.HasQueryFilter("SoftDelete", x => !x.IsDeleted);
     }
 }

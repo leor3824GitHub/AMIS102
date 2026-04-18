@@ -6,8 +6,10 @@ namespace FSH.Modules.AssetManagement.Domain;
 /// PPE Receiving Report (PPERR) — documents receipt of PPE from a supplier, donor, or transfer.
 /// Creates PPEItem records upon issuance.
 /// </summary>
-public sealed class PPEReceivingReport : AggregateRoot<Guid>, IAuditableEntity
+public sealed class PPEReceivingReport : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 {
+    public string TenantId { get; private set; } = default!;
+
     /// <summary>Control number assigned by the Supply Officer.</summary>
     public string PPERRNo { get; private set; } = default!;
 
@@ -47,6 +49,7 @@ public sealed class PPEReceivingReport : AggregateRoot<Guid>, IAuditableEntity
     public bool IsDeleted { get; set; }
 
     public static PPEReceivingReport Create(
+        string tenantId,
         string pperrNo,
         DateOnly date,
         string receivedFrom,
@@ -58,6 +61,7 @@ public sealed class PPEReceivingReport : AggregateRoot<Guid>, IAuditableEntity
         return new PPEReceivingReport
         {
             Id                   = Guid.NewGuid(),
+            TenantId             = tenantId,
             PPERRNo              = pperrNo,
             Date                 = date,
             ReceivedFrom         = receivedFrom,

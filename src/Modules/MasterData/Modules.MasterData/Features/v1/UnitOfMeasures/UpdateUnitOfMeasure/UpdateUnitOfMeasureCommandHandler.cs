@@ -42,6 +42,6 @@ public sealed class UpdateUnitOfMeasureCommandHandler : ICommandHandler<UpdateUn
 
         await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-        return new UnitOfMeasureReferenceDto(unitOfMeasure.Id, unitOfMeasure.Code, unitOfMeasure.Name, unitOfMeasure.Description, unitOfMeasure.IsActive);
+        return new UnitOfMeasureReferenceDto(unitOfMeasure.Id, unitOfMeasure.Code, unitOfMeasure.Name, unitOfMeasure.Description, unitOfMeasure.IsActive, unitOfMeasure.OfficeCode);
     }
 }

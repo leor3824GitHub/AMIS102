@@ -11,7 +11,8 @@ public sealed record CreateSupplierCommand(
     string? ContactPerson = null,
     string? Email = null,
     string? Phone = null,
-    string? Address = null) : ICommand<SupplierDto>;
+    string? Address = null,
+    string? OfficeCode = null) : ICommand<SupplierDto>;
 
 public sealed record SupplierDto(
     Guid Id,
@@ -24,4 +25,5 @@ public sealed record SupplierDto(
     string? Email,
     string? Phone,
     string? Address,
-    bool IsActive);
+    bool IsActive,
+    string? OfficeCode = null);

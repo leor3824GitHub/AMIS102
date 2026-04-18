@@ -12,8 +12,8 @@ public sealed class PARItem : BaseEntity<Guid>
     /// <summary>FK to the parent PAR.</summary>
     public Guid PARId { get; private set; }
 
-    /// <summary>The PPE item being assigned.</summary>
-    public Guid PPEItemId { get; private set; }
+    /// <summary>The TangibleInventoryItem (PPE type) being assigned.</summary>
+    public Guid TangibleInventoryItemId { get; private set; }
 
     /// <summary>Item number on the PAR form (sequential within the PAR).</summary>
     public int ItemNo { get; private set; }
@@ -44,7 +44,7 @@ public sealed class PARItem : BaseEntity<Guid>
 
     public static PARItem Create(
         Guid parId,
-        Guid ppeItemId,
+        Guid tangibleInventoryItemId,
         int itemNo,
         int quantity,
         string unit,
@@ -57,7 +57,7 @@ public sealed class PARItem : BaseEntity<Guid>
         {
             Id                       = Guid.NewGuid(),
             PARId                    = parId,
-            PPEItemId                = ppeItemId,
+            TangibleInventoryItemId  = tangibleInventoryItemId,
             ItemNo                   = itemNo,
             Quantity                 = quantity,
             Unit                     = unit,

@@ -12,8 +12,8 @@ public sealed class PPEIRItem : BaseEntity<Guid>
     /// <summary>FK to the parent PPEIR.</summary>
     public Guid PPEIRId { get; private set; }
 
-    /// <summary>The PPE item being transferred.</summary>
-    public Guid PPEItemId { get; private set; }
+    /// <summary>The TangibleInventoryItem (PPE type) being transferred.</summary>
+    public Guid TangibleInventoryItemId { get; private set; }
 
     /// <summary>Item number on the PPEIR form (sequential within the report).</summary>
     public int ItemNo { get; private set; }
@@ -50,7 +50,7 @@ public sealed class PPEIRItem : BaseEntity<Guid>
 
     public static PPEIRItem Create(
         Guid ppeirId,
-        Guid ppeItemId,
+        Guid tangibleInventoryItemId,
         int itemNo,
         string propertyCode,
         string? serialNumber,
@@ -60,15 +60,15 @@ public sealed class PPEIRItem : BaseEntity<Guid>
     {
         return new PPEIRItem
         {
-            Id               = Guid.NewGuid(),
-            PPEIRId          = ppeirId,
-            PPEItemId        = ppeItemId,
-            ItemNo           = itemNo,
-            PropertyCode     = propertyCode,
-            SerialNumber     = serialNumber,
-            PPESpecification = ppeSpecification,
-            DateAcquired     = dateAcquired,
-            AcquisitionCost  = acquisitionCost,
+            Id                      = Guid.NewGuid(),
+            PPEIRId                 = ppeirId,
+            TangibleInventoryItemId = tangibleInventoryItemId,
+            ItemNo                  = itemNo,
+            PropertyCode            = propertyCode,
+            SerialNumber            = serialNumber,
+            PPESpecification        = ppeSpecification,
+            DateAcquired            = dateAcquired,
+            AcquisitionCost         = acquisitionCost,
         };
     }
 

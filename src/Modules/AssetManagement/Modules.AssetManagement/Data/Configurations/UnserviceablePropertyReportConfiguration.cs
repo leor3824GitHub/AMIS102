@@ -1,3 +1,4 @@
+using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;
 using FSH.Modules.AssetManagement.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -8,9 +9,11 @@ public sealed class UnserviceablePropertyReportConfiguration : IEntityTypeConfig
 {
     public void Configure(EntityTypeBuilder<UnserviceablePropertyReport> builder)
     {
-        builder.ToTable("UnserviceablePropertyReports", AssetManagementModuleConstants.SchemaName);
+        builder.ToTable("UnserviceablePropertyReports", AssetManagementModuleConstants.SchemaName)
+            .IsMultiTenant();
 
         builder.HasKey(x => x.Id);
+        builder.Property(x => x.TenantId).HasMaxLength(50).IsRequired();
         builder.Property(x => x.ReportNo).HasMaxLength(32).IsRequired();
         builder.Property(x => x.Date).IsRequired();
         builder.Property(x => x.DisposalMethod).HasConversion<string>().HasMaxLength(32).IsRequired();
@@ -18,13 +21,13 @@ public sealed class UnserviceablePropertyReportConfiguration : IEntityTypeConfig
         builder.Property(x => x.Remarks).HasMaxLength(500);
         builder.Property(x => x.Version).IsConcurrencyToken();
 
-        builder.HasIndex(x => x.ReportNo).IsUnique();
+        builder.HasIndex(x => new { x.TenantId, x.ReportNo }).IsUnique();
         builder.HasIndex(x => x.Date);
         builder.HasIndex(x => x.DisposalMethod);
         builder.HasIndex(x => x.InspectedByEmployeeId);
         builder.HasIndex(x => x.ApprovedByEmployeeId);
 
         builder.Property(x => x.IsDeleted).HasDefaultValue(false);
-        builder.HasQueryFilter(x => !x.IsDeleted);
+        builder.HasQueryFilter("SoftDelete", x => !x.IsDeleted);
     }
 }

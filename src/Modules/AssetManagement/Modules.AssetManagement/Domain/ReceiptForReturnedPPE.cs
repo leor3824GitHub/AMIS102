@@ -8,8 +8,10 @@ namespace FSH.Modules.AssetManagement.Domain;
 /// Separate control number series for Serviceable (reissue) and Junked (disposal) items.
 /// Creating an RRP updates PPEItem.Status: Serviceable → OnHand, Junked → Disposed.
 /// </summary>
-public sealed class ReceiptForReturnedPPE : AggregateRoot<Guid>, IAuditableEntity
+public sealed class ReceiptForReturnedPPE : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 {
+    public string TenantId { get; private set; } = default!;
+
     /// <summary>
     /// Control number assigned by the Supply Officer.
     /// Separate sequences maintained for Serviceable and Junked categories.
@@ -61,6 +63,7 @@ public sealed class ReceiptForReturnedPPE : AggregateRoot<Guid>, IAuditableEntit
     public bool IsDeleted { get; set; }
 
     public static ReceiptForReturnedPPE Create(
+        string tenantId,
         string rrpNo,
         DateOnly date,
         PPEReturnCategory returnCategory,
@@ -72,6 +75,7 @@ public sealed class ReceiptForReturnedPPE : AggregateRoot<Guid>, IAuditableEntit
         return new ReceiptForReturnedPPE
         {
             Id                        = Guid.NewGuid(),
+            TenantId                  = tenantId,
             RRPNo                     = rrpNo,
             Date                      = date,
             ReturnCategory            = returnCategory,

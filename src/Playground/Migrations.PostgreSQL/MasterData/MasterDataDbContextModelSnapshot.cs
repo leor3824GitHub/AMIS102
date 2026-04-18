@@ -62,20 +62,11 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
                     b.Property<decimal>("SemiExpendableLowValueThreshold")
                         .HasColumnType("numeric(18,2)");
 
-                    b.Property<string>("TenantId")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("TenantId");
-
-                    b.HasIndex("TenantId", "IsActive");
+                    b.HasIndex("IsActive");
 
                     b.ToTable("CapitalizationThresholds", "masterdata");
-
-                    b.HasAnnotation("Finbuckle:MultiTenant", true);
                 });
 
             modelBuilder.Entity("FSH.Modules.MasterData.Domain.Category", b =>
@@ -124,6 +115,10 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
                         .HasMaxLength(160)
                         .HasColumnType("character varying(160)");
 
+                    b.Property<string>("OfficeCode")
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
+
                     b.Property<byte[]>("Version")
                         .IsConcurrencyToken()
                         .IsRequired()
@@ -135,6 +130,8 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
                         .IsUnique();
 
                     b.HasIndex("Name");
+
+                    b.HasIndex("OfficeCode");
 
                     b.ToTable("Categories", "masterdata");
                 });
@@ -189,6 +186,10 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
                         .HasMaxLength(160)
                         .HasColumnType("character varying(160)");
 
+                    b.Property<string>("OfficeCode")
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
+
                     b.Property<byte[]>("Version")
                         .IsConcurrencyToken()
                         .IsRequired()
@@ -200,6 +201,8 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
                         .IsUnique();
 
                     b.HasIndex("Name");
+
+                    b.HasIndex("OfficeCode");
 
                     b.ToTable("Departments", "masterdata");
                 });
@@ -261,16 +264,15 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)");
 
+                    b.Property<string>("OfficeCode")
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
+
                     b.Property<Guid>("OfficeId")
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("PositionId")
                         .HasColumnType("uuid");
-
-                    b.Property<string>("TenantId")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
 
                     b.Property<byte[]>("Version")
                         .IsConcurrencyToken()
@@ -287,25 +289,19 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
 
                     b.HasIndex("DepartmentId");
 
+                    b.HasIndex("EmployeeNumber")
+                        .IsUnique();
+
+                    b.HasIndex("IdentityUserId")
+                        .IsUnique();
+
+                    b.HasIndex("OfficeCode");
+
                     b.HasIndex("OfficeId");
 
                     b.HasIndex("PositionId");
 
-                    b.HasIndex("TenantId", "DepartmentId");
-
-                    b.HasIndex("TenantId", "EmployeeNumber")
-                        .IsUnique();
-
-                    b.HasIndex("TenantId", "IdentityUserId")
-                        .IsUnique();
-
-                    b.HasIndex("TenantId", "OfficeId");
-
-                    b.HasIndex("TenantId", "PositionId");
-
                     b.ToTable("EmployeeProfiles", "masterdata");
-
-                    b.HasAnnotation("Finbuckle:MultiTenant", true);
                 });
 
             modelBuilder.Entity("FSH.Modules.MasterData.Domain.Office", b =>
@@ -362,6 +358,10 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
                         .HasMaxLength(160)
                         .HasColumnType("character varying(160)");
 
+                    b.Property<string>("OfficeCode")
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
+
                     b.Property<string>("RegProvCode")
                         .HasMaxLength(16)
                         .HasColumnType("character varying(16)");
@@ -377,6 +377,8 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
                         .IsUnique();
 
                     b.HasIndex("Name");
+
+                    b.HasIndex("OfficeCode");
 
                     b.ToTable("Offices", "masterdata");
                 });
@@ -486,6 +488,10 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
                         .HasMaxLength(160)
                         .HasColumnType("character varying(160)");
 
+                    b.Property<string>("OfficeCode")
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
+
                     b.Property<byte[]>("Version")
                         .IsConcurrencyToken()
                         .IsRequired()
@@ -497,6 +503,8 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
                         .IsUnique();
 
                     b.HasIndex("Name");
+
+                    b.HasIndex("OfficeCode");
 
                     b.ToTable("Positions", "masterdata");
                 });
@@ -742,6 +750,10 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
                         .HasMaxLength(160)
                         .HasColumnType("character varying(160)");
 
+                    b.Property<string>("OfficeCode")
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
+
                     b.Property<string>("Phone")
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
@@ -761,6 +773,8 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
                         .IsUnique();
 
                     b.HasIndex("Name");
+
+                    b.HasIndex("OfficeCode");
 
                     b.ToTable("Suppliers", "masterdata");
                 });
@@ -811,6 +825,10 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
                         .HasMaxLength(160)
                         .HasColumnType("character varying(160)");
 
+                    b.Property<string>("OfficeCode")
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
+
                     b.Property<byte[]>("Version")
                         .IsConcurrencyToken()
                         .IsRequired()
@@ -822,6 +840,8 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
                         .IsUnique();
 
                     b.HasIndex("Name");
+
+                    b.HasIndex("OfficeCode");
 
                     b.ToTable("UnitOfMeasures", "masterdata");
                 });

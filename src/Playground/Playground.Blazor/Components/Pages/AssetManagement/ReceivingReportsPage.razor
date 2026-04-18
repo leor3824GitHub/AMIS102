@@ -1,12 +1,11 @@
 @page "/asset-management/receiving-reports"
 @using FSH.Playground.Blazor.ApiClient
 @inject ISMRRClient Client
-@inject IPropertyItemCatalogClient ItemClient
+@inject ITangibleItemClient TangibleClient
 @inject ISnackbar Snackbar
-@inject IDialogService DialogService
 
 <FshPageHeader Title="Supplies and Materials Receiving Reports (SMRR)"
-               Description="Record inbound receipt of semi-expendable property. Creating an SMRR automatically registers individual property units." />
+               Description="Link pre-registered tangible items to a receiving report. Register assets first in Tangible Items before creating an SMRR." />
 
 <MudGrid Spacing="3">
     <!-- Create Form -->
@@ -39,7 +38,7 @@
 
                     <MudDivider Class="my-2" />
                     <MudStack Row="true" AlignItems="AlignItems.Center">
-                        <MudText Typo="Typo.subtitle2" Class="flex-grow-1">Line Items</MudText>
+                        <MudText Typo="Typo.subtitle2" Class="flex-grow-1">Tangible Items</MudText>
                         <MudIconButton Icon="@Icons.Material.Filled.Add" Size="Size.Small" Color="Color.Primary"
                                        OnClick="AddLineItem" />
                     </MudStack>
@@ -56,34 +55,53 @@
                                                OnClick="@(() => RemoveLineItem(idx))" />
                             </MudStack>
                             <MudStack Spacing="1">
-                                <MudAutocomplete T="PropertyItemCatalogSummaryDto"
+                                <MudAutocomplete T="TangibleItemSummaryDto"
                                                  Value="li.SelectedItem"
-                                                 ValueChanged="@(v => li.SelectedItem = v)"
-                                                 SearchFunc="SearchItems"
-                                                 ToStringFunc="@(x => x is null ? "" : $"{x.Code} – {x.Name}")"
-                                                 Label="Item" Variant="Variant.Outlined" Dense="true"
-                                                 Required="true" Clearable="true" CoerceValue="true" ResetValueOnEmptyText="true" />
-                                <MudTextField @bind-Value="li.Reference" Label="Reference (PO/DR #)" Variant="Variant.Outlined"
-                                              Dense="true" MaxLength="100" />
-                                <MudTextField @bind-Value="li.Description" Label="Description / Specs" Variant="Variant.Outlined"
-                                              Dense="true" MaxLength="500" />
-                                <MudDatePicker @bind-Date="li.AcquisitionDateNullable" Label="Acquisition Date"
-                                               Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" Dense="true" />
-                                <MudGrid Spacing="1">
-                                    <MudItem xs="6">
-                                        <MudNumericField @bind-Value="li.Quantity" Label="Qty" Variant="Variant.Outlined"
-                                                         Dense="true" Min="1" />
-                                    </MudItem>
-                                    <MudItem xs="6">
-                                        <MudNumericField @bind-Value="li.UnitCost" Label="Unit Cost (₱)"
-                                                         Variant="Variant.Outlined" Dense="true" Min="0.01m" Max="49999.99m" Format="N2" />
-                                    </MudItem>
-                                </MudGrid>
-                                <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                    Amount: ₱@((li.Quantity * li.UnitCost).ToString("N2"))
-                                </MudText>
+                                                 ValueChanged="@(v => OnItemSelected(li, v))"
+                                                 SearchFunc="SearchTangibleItems"
+                                                 ToStringFunc="@(x => x is null ? "" : $"{x.PropertyNo} — {x.ItemName}")"
+                                                 Label="Tangible Item*" Variant="Variant.Outlined" Dense="true"
+                                                 Required="true" Clearable="true" CoerceValue="true"
+                                                 ResetValueOnEmptyText="true" MinCharacters="0" />
+
+                                @if (li.SelectedItem is not null)
+                                {
+                                    <MudGrid Spacing="1" Class="mt-1">
+                                        <MudItem xs="6">
+                                            <MudText Typo="Typo.caption" Color="Color.Secondary">Item Code</MudText>
+                                            <MudText Typo="Typo.body2">@li.SelectedItem.ItemCode</MudText>
+                                        </MudItem>
+                                        <MudItem xs="6">
+                                            <MudText Typo="Typo.caption" Color="Color.Secondary">Acq. Date</MudText>
+                                            <MudText Typo="Typo.body2">@li.SelectedItem.AcquisitionDate.ToString("MM/dd/yyyy")</MudText>
+                                        </MudItem>
+                                        <MudItem xs="4">
+                                            <MudText Typo="Typo.caption" Color="Color.Secondary">Qty</MudText>
+                                            <MudText Typo="Typo.body2">@li.SelectedItem.Quantity</MudText>
+                                        </MudItem>
+                                        <MudItem xs="8">
+                                            <MudText Typo="Typo.caption" Color="Color.Secondary">Unit Cost</MudText>
+                                            <MudText Typo="Typo.body2">₱@li.SelectedItem.UnitCost.ToString("N2")</MudText>
+                                        </MudItem>
+                                        <MudItem xs="12">
+                                            <MudText Typo="Typo.caption" Color="Color.Secondary">Amount</MudText>
+                                            <MudText Typo="Typo.body2"><b>₱@((li.SelectedItem.Quantity * li.SelectedItem.UnitCost).ToString("N2"))</b></MudText>
+                                        </MudItem>
+                                    </MudGrid>
+                                }
+
+                                <MudTextField @bind-Value="li.Reference" Label="Reference (PO/DR #)"
+                                              Variant="Variant.Outlined" Dense="true" MaxLength="100" />
                             </MudStack>
                         </MudPaper>
+                    }
+
+                    @if (_form.Items.Count > 0 && _form.Items.Any(x => x.SelectedItem is not null))
+                    {
+                        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="text-right">
+                            Total: <b>₱@(_form.Items.Where(x => x.SelectedItem is not null)
+                                .Sum(x => x.SelectedItem!.Quantity * x.SelectedItem.UnitCost).ToString("N2"))</b>
+                        </MudText>
                     }
 
                     <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
@@ -153,7 +171,7 @@
             </MudCardContent>
         </MudCard>
 
-        <!-- Detail Drawer -->
+        <!-- Detail Panel -->
         @if (_detail is not null)
         {
             <MudCard Elevation="1" Class="mt-3">
@@ -180,21 +198,23 @@
                         }
                     </MudGrid>
                     <MudDivider Class="my-2" />
-                    <MudText Typo="Typo.subtitle2" Class="mb-1">Line Items</MudText>
+                    <MudText Typo="Typo.subtitle2" Class="mb-1">Property Units</MudText>
                     <MudSimpleTable Dense="true" Striped="true">
                         <thead>
-                            <tr><th>#</th><th>Item</th><th>Description</th><th>Acq. Date</th><th>Qty</th><th>Unit Cost</th><th>Amount</th></tr>
+                            <tr><th>#</th><th>Property No.</th><th>Item</th><th>Description</th><th>Ref.</th><th>Acq. Date</th><th>Qty</th><th>Unit Cost</th><th>Amount</th></tr>
                         </thead>
                         <tbody>
                             @foreach (var (item, i) in _detail.Items.Select((x, i) => (x, i + 1)))
                             {
                                 <tr>
                                     <td>@i</td>
+                                    <td><b>@item.PropertyNo</b></td>
                                     <td>
                                         <MudText Typo="Typo.body2">@item.ItemName</MudText>
                                         <MudText Typo="Typo.caption" Color="Color.Secondary">@item.ItemCode</MudText>
                                     </td>
-                                    <td>@(item.Description ?? "-")</td>
+                                    <td>@(item.Description ?? "—")</td>
+                                    <td>@(item.Reference ?? "—")</td>
                                     <td>@item.AcquisitionDate.ToString("MM/dd/yyyy")</td>
                                     <td>@item.Quantity</td>
                                     <td>₱@item.UnitCost.ToString("N2")</td>
@@ -204,7 +224,7 @@
                         </tbody>
                         <tfoot>
                             <tr>
-                                <td colspan="6" style="text-align:right"><b>Total:</b></td>
+                                <td colspan="8" style="text-align:right"><b>Total:</b></td>
                                 <td><b>₱@_detail.Items.Sum(x => x.Amount).ToString("N2")</b></td>
                             </tr>
                         </tfoot>
@@ -252,10 +272,21 @@
         catch (Exception ex) { Snackbar.Add($"Load failed: {ex.Message}", Severity.Error); }
     }
 
-    private async Task<IEnumerable<PropertyItemCatalogSummaryDto>> SearchItems(string? value, CancellationToken ct)
+    private async Task<IEnumerable<TangibleItemSummaryDto>> SearchTangibleItems(string? value, CancellationToken ct)
     {
-        var response = await ItemClient.SearchAsync(value, isActive: true, page: 1, pageSize: 20, ct: ct);
-        return response.Items;
+        var response = await TangibleClient.SearchAsync(keyword: value, excludeLinked: true, page: 1, pageSize: 50, ct: ct);
+        // Exclude items already selected in other line items on this form
+        var alreadySelected = _form.Items
+            .Where(x => x.SelectedItem is not null)
+            .Select(x => x.SelectedItem!.Id)
+            .ToHashSet();
+        return response.Items.Where(x => !alreadySelected.Contains(x.Id));
+    }
+
+    private static void OnItemSelected(LineItemRow li, TangibleItemSummaryDto? value)
+    {
+        li.SelectedItem = value;
+        li.Reference = null;
     }
 
     private async Task CreateAsync()
@@ -266,28 +297,31 @@
             Snackbar.Add("SMRR No., Date, and Received From are required.", Severity.Warning);
             return;
         }
-        if (_form.Items.Any(i => i.SelectedItem is null || i.Quantity <= 0 || i.UnitCost <= 0 || i.AcquisitionDateNullable is null))
+        if (_form.Items.Any(i => i.SelectedItem is null))
         {
-            Snackbar.Add("All line items must have an Item, Quantity, Unit Cost, and Acquisition Date.", Severity.Warning);
+            Snackbar.Add("All line items must have a tangible item selected.", Severity.Warning);
             return;
         }
         _busy = true;
         try
         {
-            var items = _form.Items.Select(li => new CreateSMRRItemRequest(
-                li.Reference,
-                li.SelectedItem!.Id,
-                li.Description,
-                DateOnly.FromDateTime(li.AcquisitionDateNullable!.Value),
-                li.Quantity,
-                li.UnitCost)).ToList();
+            var items = _form.Items
+                .Select(li => new CreateSMRRItemRequest(li.SelectedItem!.Id, li.Reference))
+                .ToList();
 
             var result = await Client.CreateAsync(new CreateSMRRCommand(
-                _form.SMRRNo, DateOnly.FromDateTime(_form.DateNullable!.Value),
-                _form.ReceivedFrom, _form.Address, _form.ReceiptType, _form.OtherReceiptType,
-                _form.FundCluster, _form.ReceivedBy, _form.NotedBy, items));
+                _form.SMRRNo,
+                DateOnly.FromDateTime(_form.DateNullable!.Value),
+                _form.ReceivedFrom,
+                _form.Address,
+                _form.ReceiptType,
+                _form.OtherReceiptType,
+                _form.FundCluster,
+                _form.ReceivedBy,
+                _form.NotedBy,
+                items));
 
-            Snackbar.Add($"SMRR created. {result.PropertiesCreated} property unit(s) registered.", Severity.Success);
+            Snackbar.Add($"SMRR {result.SMRRNo} created with {result.ItemCount} item(s).", Severity.Success);
             _form = new SmrrForm();
             _form.Items.Add(new LineItemRow());
             await LoadAsync();
@@ -315,11 +349,7 @@
 
     private sealed class LineItemRow
     {
-        public PropertyItemCatalogSummaryDto? SelectedItem { get; set; }
+        public TangibleItemSummaryDto? SelectedItem { get; set; }
         public string? Reference { get; set; }
-        public string? Description { get; set; }
-        public DateTime? AcquisitionDateNullable { get; set; } = DateTime.Today;
-        public int Quantity { get; set; } = 1;
-        public decimal UnitCost { get; set; }
     }
 }

@@ -1,4 +1,3 @@
-using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;
 using FSH.Modules.MasterData.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -9,11 +8,9 @@ public sealed class CapitalizationThresholdConfiguration : IEntityTypeConfigurat
 {
     public void Configure(EntityTypeBuilder<CapitalizationThreshold> builder)
     {
-        builder.ToTable("CapitalizationThresholds", MasterDataModuleConstants.SchemaName)
-            .IsMultiTenant();
+        builder.ToTable("CapitalizationThresholds", MasterDataModuleConstants.SchemaName);
 
         builder.HasKey(x => x.Id);
-        builder.Property(x => x.TenantId).HasMaxLength(50).IsRequired();
         builder.Property(x => x.CircularName).HasMaxLength(100).IsRequired();
         builder.Property(x => x.Description).HasMaxLength(500).IsRequired();
         builder.Property(x => x.CapitalizationAmount).HasColumnType("numeric(18,2)").IsRequired();
@@ -21,7 +18,6 @@ public sealed class CapitalizationThresholdConfiguration : IEntityTypeConfigurat
         builder.Property(x => x.EffectivityDate).IsRequired();
         builder.Property(x => x.IsActive).IsRequired();
 
-        builder.HasIndex(x => x.TenantId);
-        builder.HasIndex(x => new { x.TenantId, x.IsActive });
+        builder.HasIndex(x => x.IsActive);
     }
 }

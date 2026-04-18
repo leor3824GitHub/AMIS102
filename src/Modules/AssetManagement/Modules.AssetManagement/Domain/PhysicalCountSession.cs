@@ -11,8 +11,10 @@ namespace FSH.Modules.AssetManagement.Domain;
 ///   - The Report on the Physical Count of PPE (RPCPPE) is generated when the session is submitted.
 ///   - A session may cover PPE only, Semi-Expendable only, or both tracks.
 /// </summary>
-public sealed class PhysicalCountSession : AggregateRoot<Guid>, IAuditableEntity
+public sealed class PhysicalCountSession : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 {
+    public string TenantId { get; private set; } = default!;
+
     /// <summary>
     /// Control number for this count session (e.g., PCS-2026-00001).
     /// Assigned by the Supply Officer.
@@ -74,6 +76,7 @@ public sealed class PhysicalCountSession : AggregateRoot<Guid>, IAuditableEntity
     // ─────────────────────────────────────────────────────────────────────────
 
     public static PhysicalCountSession Create(
+        string tenantId,
         string sessionNo,
         DateOnly countDate,
         string stationOffice,
@@ -85,6 +88,7 @@ public sealed class PhysicalCountSession : AggregateRoot<Guid>, IAuditableEntity
         return new PhysicalCountSession
         {
             Id                     = Guid.NewGuid(),
+            TenantId               = tenantId,
             SessionNo              = sessionNo,
             CountDate              = countDate,
             StationOffice          = stationOffice,

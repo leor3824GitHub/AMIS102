@@ -17,10 +17,12 @@ public sealed class OfficeConfiguration : IEntityTypeConfiguration<Office>
         builder.Property(x => x.Address).HasMaxLength(500);
         builder.Property(x => x.LocationCode).HasMaxLength(8);
         builder.Property(x => x.RegProvCode).HasMaxLength(16);
+        builder.Property(x => x.OfficeCode).HasMaxLength(8);
         builder.Property(x => x.Version).IsConcurrencyToken();
 
         builder.HasIndex(x => x.Code).IsUnique();
         builder.HasIndex(x => x.Name);
+        builder.HasIndex(x => x.OfficeCode);
 
         builder.Property(x => x.IsDeleted).HasDefaultValue(false);
         builder.HasQueryFilter(x => !x.IsDeleted);
