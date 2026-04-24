@@ -1502,6 +1502,8 @@ internal sealed record TangibleItemDto(
 internal sealed record TangibleItemSummaryDto(
     Guid Id,
     string PropertyNo,
+    string PropertyClass,
+    string CategoryCode,
     Guid ItemId,
     string ItemCode,
     string ItemName,
@@ -1518,7 +1520,7 @@ internal sealed record PagedTangibleItemsResponse(
 
 internal interface ITangibleItemClient
 {
-    Task<PagedTangibleItemsResponse> SearchAsync(string? keyword = null, bool? excludeLinked = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
+    Task<PagedTangibleItemsResponse> SearchAsync(string? keyword = null, string? propertyClass = null, string? categoryCode = null, bool? excludeLinked = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
     Task<TangibleItemDto?> GetAsync(Guid id, CancellationToken ct = default);
     Task<TangibleItemDto> RegisterAsync(RegisterTangibleItemCommand command, CancellationToken ct = default);
     Task<TangibleItemDto> UpdateAsync(Guid id, UpdateTangibleItemCommand command, CancellationToken ct = default);
@@ -1530,10 +1532,12 @@ internal sealed class TangibleItemClient(HttpClient http) : ITangibleItemClient
 {
     private const string Base = "api/v1/asset-management/tangible-items";
 
-    public Task<PagedTangibleItemsResponse> SearchAsync(string? keyword = null, bool? excludeLinked = null, int page = 1, int pageSize = 20, CancellationToken ct = default)
+    public Task<PagedTangibleItemsResponse> SearchAsync(string? keyword = null, string? propertyClass = null, string? categoryCode = null, bool? excludeLinked = null, int page = 1, int pageSize = 20, CancellationToken ct = default)
     {
         var q = HttpUtility.ParseQueryString(string.Empty);
         if (!string.IsNullOrWhiteSpace(keyword)) q["Keyword"] = keyword;
+        if (!string.IsNullOrWhiteSpace(propertyClass)) q["PropertyClass"] = propertyClass;
+        if (!string.IsNullOrWhiteSpace(categoryCode)) q["CategoryCode"] = categoryCode;
         if (excludeLinked.HasValue) q["ExcludeLinked"] = excludeLinked.Value.ToString().ToLowerInvariant();
         q["PageNumber"] = page.ToString(CultureInfo.InvariantCulture);
         q["PageSize"] = pageSize.ToString(CultureInfo.InvariantCulture);

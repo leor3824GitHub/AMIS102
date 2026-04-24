@@ -32,26 +32,35 @@ public sealed class CreatePARCommandHandler : ICommandHandler<CreatePARCommand, 
             ]);
         }
 
-        var requestedPPEItemIds = command.Items.Select(x => x.PPEItemId).Distinct().ToList();
-        var ppeItems = await _dbContext.PPEItems
-            .Where(x => requestedPPEItemIds.Contains(x.Id))
-            .ToListAsync(cancellationToken)
+        var requestedItemIds = command.Items.Select(x => x.TangibleInventoryItemId).Distinct().ToList();
+
+        if (requestedItemIds.Count != command.Items.Count)
+        {
+            throw new FluentValidation.ValidationException(
+            [
+                new FluentValidation.Results.ValidationFailure(nameof(command.Items), "Duplicate inventory item entries are not allowed in a single PAR.")
+            ]);
+        }
+
+        var invItems = await (
+            from inv in _dbContext.TangibleInventoryItems.Where(x => requestedItemIds.Contains(x.Id))
+            join catalog in _dbContext.PropertyItemCatalog on inv.ItemId equals catalog.Id
+            select new { Inv = inv, EUL = catalog.EstimatedUsefulLifeYears })
+            .ToDictionaryAsync(x => x.Inv.Id, cancellationToken)
             .ConfigureAwait(false);
 
-        foreach (var ppeItemId in requestedPPEItemIds)
+        foreach (var itemId in requestedItemIds)
         {
-            var ppeItem = ppeItems.FirstOrDefault(x => x.Id == ppeItemId)
-                ?? throw new KeyNotFoundException($"PPE item with ID {ppeItemId} not found.");
+            if (!invItems.TryGetValue(itemId, out var row))
+                throw new KeyNotFoundException($"TangibleInventoryItem with ID {itemId} not found.");
 
-            if (ppeItem.Status != PPEItemStatus.OnHand)
-            {
-                throw new FluentValidation.ValidationException(
-                [
-                    new FluentValidation.Results.ValidationFailure(
-                        nameof(ppeItemId),
-                        $"PPE item '{ppeItem.PropertyCode}' is not available (Status: {ppeItem.Status}). Only OnHand items can be assigned via PAR.")
-                ]);
-            }
+            if (row.Inv.AssetType != AssetType.PPE)
+                throw new InvalidOperationException(
+                    $"TangibleInventoryItem {row.Inv.PropertyNo} has AssetType '{row.Inv.AssetType}'. Only PPE items can be assigned via PAR.");
+
+            if (row.Inv.IsIssued)
+                throw new InvalidOperationException(
+                    $"TangibleInventoryItem {row.Inv.PropertyNo} is already issued.");
         }
 
         string tenantId = _currentUser.GetTenant() ?? string.Empty;
@@ -68,24 +77,25 @@ public sealed class CreatePARCommandHandler : ICommandHandler<CreatePARCommand, 
         par.CreatedBy = _currentUser.GetUserId().ToString();
         _dbContext.PropertyAcknowledgementReceipts.Add(par);
 
-        foreach (var (itemRequest, itemNo) in command.Items.Select((r, i) => (r, i + 1)))
+        int itemNo = 1;
+        foreach (var itemRequest in command.Items)
         {
-            var ppeItem = ppeItems.First(x => x.Id == itemRequest.PPEItemId);
+            var row = invItems[itemRequest.TangibleInventoryItemId];
 
             var parItem = PARItem.Create(
                 par.Id,
-                ppeItem.Id,
+                row.Inv.Id,
                 itemNo,
                 itemRequest.Quantity,
                 itemRequest.Unit,
                 itemRequest.ItemDescription,
-                ppeItem.UnitCost,
-                ppeItem.EstimatedUsefulLifeYears,
-                ppeItem.DateAcquired);
+                row.Inv.UnitCost,
+                row.EUL ?? 0,
+                row.Inv.AcquisitionDate);
 
             _dbContext.PARItems.Add(parItem);
-
-            ppeItem.AssignPAR(command.ReceivedByEmployeeId);
+            row.Inv.MarkIssued();
+            itemNo++;
         }
 
         await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);

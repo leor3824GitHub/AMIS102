@@ -21,8 +21,7 @@ public sealed record PhysicalCountSessionDetailsDto(
 
 public sealed record PhysicalCountEntryDto(
     Guid Id,
-    Guid? PPEItemId,
-    Guid? SemiExpendablePropertyId,
+    Guid? TangibleInventoryItemId,
     string PropertyNumber,
     string Description,
     decimal UnitCost,

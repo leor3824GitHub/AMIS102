@@ -21,7 +21,7 @@ internal sealed class CreatePARItemRequestValidator : AbstractValidator<CreatePA
 {
     public CreatePARItemRequestValidator()
     {
-        RuleFor(x => x.PPEItemId).NotEmpty();
+        RuleFor(x => x.TangibleInventoryItemId).NotEmpty();
         RuleFor(x => x.Quantity).GreaterThan(0);
         RuleFor(x => x.Unit).NotEmpty().MaximumLength(32);
         RuleFor(x => x.ItemDescription).NotEmpty().MaximumLength(500);

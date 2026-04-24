@@ -21,51 +21,47 @@ public sealed class GetRPCPPEQueryHandler(AssetManagementDbContext dbContext)
         if (session.Scope == PhysicalCountScope.SemiExpendableOnly)
             throw new InvalidOperationException("RPCPPE is only applicable to sessions that include PPE items.");
 
-        // Load PPE entries from the session checklist
-        var ppeEntries = await dbContext.PhysicalCountEntries
-            .Where(x => x.SessionId == query.SessionId && x.PPEItemId != null)
-            .OrderBy(x => x.PropertyNumber)
+        // Load PPE checklist entries — join to TangibleInventoryItem to filter AssetType == PPE.
+        var ppeEntries = await (
+            from e in dbContext.PhysicalCountEntries.Where(x => x.SessionId == query.SessionId && x.TangibleInventoryItemId != null)
+            join inv in dbContext.TangibleInventoryItems.IgnoreQueryFilters()
+                on e.TangibleInventoryItemId equals inv.Id
+            where inv.AssetType == AssetType.PPE
+            orderby e.PropertyNumber
+            select new
+            {
+                Entry = e,
+                inv.PropertyNo,
+                inv.AcquisitionDate,
+            })
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
-        // Load PPE item details (PropertyCode, DateAcquired) for the entries
-        var ppeItemIds = ppeEntries
-            .Select(e => e.PPEItemId!.Value)
-            .Distinct()
-            .ToList();
+        var invItemIds = ppeEntries.Select(e => e.Entry.TangibleInventoryItemId!.Value).Distinct().ToList();
 
-        var ppeItemDetails = await dbContext.PPEItems
-            .Where(x => ppeItemIds.Contains(x.Id))
-            .Select(x => new { x.Id, x.PropertyCode, x.DateAcquired })
-            .ToDictionaryAsync(x => x.Id, cancellationToken)
-            .ConfigureAwait(false);
-
-        // Load the most recent depreciation data per PPE item from PPEIRItems.
-        // Join with PPEIssuanceReports to order by issuance date (not by accumulated value,
-        // which would be wrong when depreciation is partially filled or corrected).
-        var allDeprRows = await dbContext.PPEIRItems
-            .Where(x => ppeItemIds.Contains(x.PPEItemId) && x.AccumulatedDepreciation.HasValue)
-            .Join(dbContext.PPEIssuanceReports,
-                item => item.PPEIRId,
-                rpt  => rpt.Id,
-                (item, rpt) => new
-                {
-                    item.PPEItemId,
-                    item.AccumulatedDepreciation,
-                    item.BookValue,
-                    rpt.Date,
-                })
-            .OrderByDescending(x => x.Date)
+        // Load most-recent depreciation per inventory item from PPEIRItems.
+        var allDeprRows = await (
+            from item in dbContext.PPEIRItems
+            where invItemIds.Contains(item.TangibleInventoryItemId) && item.AccumulatedDepreciation.HasValue
+            join rpt in dbContext.PPEIssuanceReports on item.PPEIRId equals rpt.Id
+            orderby rpt.Date descending
+            select new
+            {
+                item.TangibleInventoryItemId,
+                item.AccumulatedDepreciation,
+                item.BookValue,
+                rpt.Date,
+            })
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
-        // In-memory: pick the first (most-recent) row per PPE item
         var depreciationData = allDeprRows
-            .GroupBy(x => x.PPEItemId)
+            .GroupBy(x => x.TangibleInventoryItemId)
             .ToDictionary(g => g.Key, g => g.First());
 
-        var lineItems = ppeEntries.Select((e, idx) =>
+        var lineItems = ppeEntries.Select((row, idx) =>
         {
+            var e = row.Entry;
             bool isFoundAtStation = e.Result == PhysicalCountEntryResult.FoundAtStation;
             int perCard = isFoundAtStation ? 0 : 1;
             int onHand  = (e.Result == PhysicalCountEntryResult.Found || isFoundAtStation)
@@ -73,15 +69,14 @@ public sealed class GetRPCPPEQueryHandler(AssetManagementDbContext dbContext)
             int shortage = Math.Max(0, perCard - onHand);
             int overage  = Math.Max(0, onHand - perCard);
 
-            ppeItemDetails.TryGetValue(e.PPEItemId!.Value, out var ppe);
-            depreciationData.TryGetValue(e.PPEItemId!.Value, out var depr);
+            depreciationData.TryGetValue(e.TangibleInventoryItemId!.Value, out var depr);
 
             return new RPCPPELineItemDto(
                 LineNo:                  idx + 1,
-                PropertyCode:            ppe?.PropertyCode ?? string.Empty,
+                PropertyCode:            row.PropertyNo,
                 Description:             e.Description,
                 PropertyNumber:          e.PropertyNumber,
-                DateAcquired:            ppe?.DateAcquired ?? default,
+                DateAcquired:            row.AcquisitionDate,
                 UnitCost:                e.UnitCost,
                 AccumulatedDepreciation: depr?.AccumulatedDepreciation,
                 BookValue:               depr?.BookValue,

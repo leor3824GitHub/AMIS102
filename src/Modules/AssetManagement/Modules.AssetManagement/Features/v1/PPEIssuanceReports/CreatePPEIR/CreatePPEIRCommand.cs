@@ -18,7 +18,7 @@ public sealed record CreatePPEIRCommand(
     IReadOnlyList<CreatePPEIRItemRequest> Items) : ICommand<CreatePPEIRResult>;
 
 public sealed record CreatePPEIRItemRequest(
-    Guid PPEItemId);
+    Guid TangibleInventoryItemId);
 
 public sealed record CreatePPEIRResult(
     Guid PPEIRId,

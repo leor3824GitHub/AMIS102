@@ -5,9 +5,9 @@ namespace FSH.Modules.AssetManagement.Features.v1.PropertyIncidentReports.Create
 
 /// <summary>
 /// Creates a Report of Lost/Stolen/Damaged/Destroyed Semi-Expendable Property (RLSDDSP).
-/// All listed properties are set to PropertyStatus.LostStolenDamaged.
-/// If properties were Issued, the ICS is NOT cancelled — the accountable employee
-/// remains liable until formally relieved through administrative / legal process.
+/// The listed TangibleInventoryItems are snapshotted into PropertyIncidentItem rows.
+/// The accountable employee remains liable until formally relieved through administrative
+/// or legal process; this report does not automatically cancel the underlying ICS/PAR.
 /// </summary>
 public sealed record CreatePropertyIncidentReportCommand(
     string ReportNo,
@@ -18,6 +18,6 @@ public sealed record CreatePropertyIncidentReportCommand(
     Guid? AccountableEmployeeId,
     string IncidentDetails,
     string? Remarks,
-    IReadOnlyList<Guid> PropertyIds) : ICommand<CreatePropertyIncidentReportResult>;
+    IReadOnlyList<Guid> TangibleInventoryItemIds) : ICommand<CreatePropertyIncidentReportResult>;
 
 public sealed record CreatePropertyIncidentReportResult(Guid ReportId, string ReportNo, int ItemCount);

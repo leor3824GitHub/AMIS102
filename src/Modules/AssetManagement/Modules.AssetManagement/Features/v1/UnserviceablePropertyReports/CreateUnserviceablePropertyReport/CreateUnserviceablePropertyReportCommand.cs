@@ -5,10 +5,7 @@ namespace FSH.Modules.AssetManagement.Features.v1.UnserviceablePropertyReports.C
 
 /// <summary>
 /// Creates an Inspection and Inventory Report of Unserviceable Semi-Expendable
-/// Property (IIRUSP).
-/// All listed properties are set to PropertyStatus.Disposed.
-/// Properties must be in OnHand, Returned, or LostStolenDamaged status.
-/// If the property is Issued, the employee must first return it via RRSP.
+/// Property (IIRUSP).  Each listed TangibleInventoryItem is snapshotted into a line.
 /// </summary>
 public sealed record CreateUnserviceablePropertyReportCommand(
     string ReportNo,
@@ -21,7 +18,7 @@ public sealed record CreateUnserviceablePropertyReportCommand(
     IReadOnlyList<CreateUnserviceablePropertyItemRequest> Items) : ICommand<CreateUnserviceablePropertyReportResult>;
 
 public sealed record CreateUnserviceablePropertyItemRequest(
-    Guid SemiExpendablePropertyId,
+    Guid TangibleInventoryItemId,
     string? ConditionRemarks);
 
 public sealed record CreateUnserviceablePropertyReportResult(Guid ReportId, string ReportNo, int ItemCount);

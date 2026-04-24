@@ -18,8 +18,8 @@
                     <MudAutocomplete T="PropertyItemCatalogSummaryDto"
                                      @bind-Value="_form.SelectedItem"
                                      SearchFunc="SearchItemsAsync"
-                                     ToStringFunc="@(x => x is null ? "" : $"{x.Code} \u2013 {x.Name}")"
-                                     Label="Category Code" Variant="Variant.Outlined"
+                                     ToStringFunc="@(x => x is null ? "" : $"{x.Name} \u2013 {x.Code}")"
+                                     Label="Item Name" Variant="Variant.Outlined"
                                      Required="true" Clearable="true"
                                      ResetValueOnEmptyText="true" CoerceValue="true"
                                      MinCharacters="0" />
@@ -220,7 +220,7 @@
         }
         if (_form.SelectedItem is null)
         {
-            Snackbar.Add("Item (Category Code) is required.", Severity.Warning);
+            Snackbar.Add("Item Name is required.", Severity.Warning);
             return;
         }
         if (_form.AcquisitionDateNullable is null)
@@ -239,9 +239,9 @@
             return;
         }
 
-        if (_editing is null && (string.IsNullOrWhiteSpace(_form.PropertyClass) || string.IsNullOrWhiteSpace(_form.CategoryCode)))
+        if (_editing is null && string.IsNullOrWhiteSpace(_form.PropertyClass))
         {
-            Snackbar.Add("Use the ✨ generator to assign the Property No. so the Property Class and Category Code are captured.", Severity.Warning);
+            Snackbar.Add("Use the ✨ generator to assign the Property No. so the Property Class is captured.", Severity.Warning);
             return;
         }
 

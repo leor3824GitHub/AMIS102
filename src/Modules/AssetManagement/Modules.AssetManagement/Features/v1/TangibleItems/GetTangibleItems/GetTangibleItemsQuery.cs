@@ -4,6 +4,8 @@ namespace FSH.Modules.AssetManagement.Features.v1.TangibleItems.GetTangibleItems
 
 public sealed record GetTangibleItemsQuery(
     string? Keyword = null,
+    string? PropertyClass = null,
+    string? CategoryCode = null,
     bool? ExcludeLinked = null,
     int PageNumber = 1,
     int PageSize = 20) : IQuery<PagedTangibleItemsResponse>;
@@ -17,6 +19,8 @@ public sealed record PagedTangibleItemsResponse(
 public sealed record TangibleItemSummaryDto(
     Guid Id,
     string PropertyNo,
+    string PropertyClass,
+    string CategoryCode,
     Guid ItemId,
     string ItemCode,
     string ItemName,

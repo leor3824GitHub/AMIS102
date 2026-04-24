@@ -24,7 +24,7 @@ public sealed class GetRRPByIdQueryHandler(AssetManagementDbContext dbContext)
             .Select(x => new RRPItemDto(
                 x.Id,
                 x.ItemNo,
-                x.PPEItemId,
+                x.TangibleInventoryItemId,
                 x.SourceDocumentRef,
                 x.PropertyCode,
                 x.Description,

@@ -28,7 +28,7 @@ public sealed class CreateUnserviceablePropertyReportCommandValidator
 
         RuleForEach(x => x.Items).ChildRules(item =>
         {
-            item.RuleFor(x => x.SemiExpendablePropertyId).NotEmpty();
+            item.RuleFor(x => x.TangibleInventoryItemId).NotEmpty();
             item.RuleFor(x => x.ConditionRemarks).MaximumLength(500);
         });
     }

@@ -44,55 +44,34 @@ public sealed class CreatePhysicalCountSessionCommandHandler(
         session.CreatedBy = currentUser.GetUserId().ToString();
         dbContext.PhysicalCountSessions.Add(session);
 
+        // Build the asset filter based on scope.
+        // Scope maps to AssetType on TangibleInventoryItem (SE or PPE).
+        var query = dbContext.TangibleInventoryItems.AsQueryable();
+
+        query = command.Scope switch
+        {
+            PhysicalCountScope.PPEOnly            => query.Where(x => x.AssetType == AssetType.PPE),
+            PhysicalCountScope.SemiExpendableOnly => query.Where(x => x.AssetType == AssetType.SE),
+            _                                     => query, // Both — no filter
+        };
+
+        var invItems = await query
+            .Select(x => new { x.Id, x.PropertyNo, x.Description, x.UnitCost })
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
         int entriesCreated = 0;
-
-        // Generate PPE checklist entries
-        if (command.Scope is PhysicalCountScope.PPEOnly or PhysicalCountScope.Both)
+        foreach (var item in invItems)
         {
-            var ppeItems = await dbContext.PPEItems
-                .Where(x => x.Status != PPEItemStatus.Disposed)
-                .Select(x => new { x.Id, x.PropertyNumber, x.Description, x.UnitCost })
-                .ToListAsync(cancellationToken)
-                .ConfigureAwait(false);
+            var entry = PhysicalCountEntry.FromTangibleInventoryItem(
+                session.Id,
+                item.Id,
+                item.PropertyNo,
+                item.Description ?? string.Empty,
+                item.UnitCost);
 
-            foreach (var item in ppeItems)
-            {
-                var entry = PhysicalCountEntry.FromPPEItem(
-                    session.Id,
-                    item.Id,
-                    item.PropertyNumber,
-                    item.Description,
-                    item.UnitCost);
-
-                dbContext.PhysicalCountEntries.Add(entry);
-                entriesCreated++;
-            }
-        }
-
-        // Generate Semi-Expendable checklist entries
-        if (command.Scope is PhysicalCountScope.SemiExpendableOnly or PhysicalCountScope.Both)
-        {
-            var seProperties = await dbContext.SemiExpendableProperties
-                .Where(x => x.Status != PropertyStatus.Disposed)
-                .Join(dbContext.PropertyItemCatalog,
-                    p => p.ItemId,
-                    i => i.Id,
-                    (p, i) => new { p.Id, p.PropertyNo, Description = i.Name, p.UnitCost })
-                .ToListAsync(cancellationToken)
-                .ConfigureAwait(false);
-
-            foreach (var prop in seProperties)
-            {
-                var entry = PhysicalCountEntry.FromSemiExpendable(
-                    session.Id,
-                    prop.Id,
-                    prop.PropertyNo,
-                    prop.Description,
-                    prop.UnitCost);
-
-                dbContext.PhysicalCountEntries.Add(entry);
-                entriesCreated++;
-            }
+            dbContext.PhysicalCountEntries.Add(entry);
+            entriesCreated++;
         }
 
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);

@@ -20,7 +20,7 @@ public sealed record RRPDetailsDto(
 public sealed record RRPItemDto(
     Guid Id,
     int ItemNo,
-    Guid PPEItemId,
+    Guid TangibleInventoryItemId,
     string? SourceDocumentRef,
     string PropertyCode,
     string Description,

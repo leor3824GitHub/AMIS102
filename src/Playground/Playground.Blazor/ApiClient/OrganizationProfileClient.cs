@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
 using FSH.Modules.MasterData.Contracts.v1.OrganizationProfile;
@@ -12,8 +13,13 @@ internal interface IOrganizationProfileClient
 
 internal sealed class OrganizationProfileClient(HttpClient httpClient) : IOrganizationProfileClient
 {
-    public Task<OrganizationProfileDto?> GetAsync(CancellationToken cancellationToken = default) =>
-        httpClient.GetFromJsonAsync<OrganizationProfileDto>("api/v1/master-data/organization-profile", cancellationToken);
+    public async Task<OrganizationProfileDto?> GetAsync(CancellationToken cancellationToken = default)
+    {
+        var response = await httpClient.GetAsync("api/v1/master-data/organization-profile", cancellationToken);
+        if (response.StatusCode == HttpStatusCode.NotFound) return null;
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<OrganizationProfileDto>(cancellationToken: cancellationToken);
+    }
 
     public async Task<OrganizationProfileDto> UpsertAsync(
         UpsertOrganizationProfileCommand command, CancellationToken cancellationToken = default)

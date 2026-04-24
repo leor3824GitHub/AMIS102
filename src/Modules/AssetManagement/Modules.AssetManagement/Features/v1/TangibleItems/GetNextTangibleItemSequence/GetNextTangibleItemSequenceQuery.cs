@@ -7,8 +7,7 @@ namespace FSH.Modules.AssetManagement.Features.v1.TangibleItems.GetNextTangibleI
 public sealed record GetNextTangibleItemSequenceQuery(
     int Year,
     string OfficeCode,
-    string ClassCode,
-    string ItemCode) : IQuery<NextTangibleItemSequenceResponse>;
+    string ClassCode) : IQuery<NextTangibleItemSequenceResponse>;
 
 public sealed record NextTangibleItemSequenceResponse(int NextSequence);
 
@@ -18,11 +17,10 @@ public sealed class GetNextTangibleItemSequenceQueryHandler(AssetManagementDbCon
     public async ValueTask<NextTangibleItemSequenceResponse> Handle(
         GetNextTangibleItemSequenceQuery query, CancellationToken cancellationToken)
     {
-        var prefix = $"{query.Year}-NFA-{query.OfficeCode}-{query.ClassCode}-{query.ItemCode}-";
+        var prefix = $"{query.Year}-NFA-{query.OfficeCode}-{query.ClassCode}-";
 
         var maxSeq = await dbContext.TangibleItems
             .Where(x => x.PropertyClass == query.ClassCode
-                     && x.CategoryCode == query.ItemCode
                      && x.PropertyNo.StartsWith(prefix))
             .Select(x => x.PropertyNo.Substring(prefix.Length))
             .ToListAsync(cancellationToken)

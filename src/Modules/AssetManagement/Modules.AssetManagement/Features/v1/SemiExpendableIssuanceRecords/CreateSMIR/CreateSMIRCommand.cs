@@ -15,7 +15,7 @@ public sealed record CreateSMIRCommand(
     IReadOnlyList<CreateSMIRItemRequest> Items) : ICommand<CreateSMIRResult>;
 
 public sealed record CreateSMIRItemRequest(
-    Guid SemiExpendablePropertyId,
+    Guid TangibleInventoryItemId,
     string? Description);
 
 public sealed record CreateSMIRResult(

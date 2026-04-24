@@ -18,21 +18,19 @@ public sealed class GetPTRQueryHandler(AssetManagementDbContext dbContext)
             throw new KeyNotFoundException($"PPE Issuance Report with ID {query.PPEIRId} not found.");
         }
 
-        var items = await dbContext.PPEIRItems
-            .Where(x => x.PPEIRId == query.PPEIRId)
-            .Join(
-                dbContext.PPEItems,
-                ppeirItem => ppeirItem.PPEItemId,
-                ppeItem => ppeItem.Id,
-                (ppeirItem, ppeItem) => new PTRItemDto(
-                    ppeirItem.ItemNo,
-                    ppeirItem.DateAcquired,
-                    ppeItem.PropertyNumber,
-                    ppeirItem.PPESpecification,
-                    ppeirItem.AcquisitionCost,
-                    null,
-                    null))
-            .OrderBy(x => x.ItemNo)
+        var items = await (
+            from ppeirItem in dbContext.PPEIRItems.Where(x => x.PPEIRId == query.PPEIRId)
+            join inv in dbContext.TangibleInventoryItems.IgnoreQueryFilters()
+                on ppeirItem.TangibleInventoryItemId equals inv.Id
+            orderby ppeirItem.ItemNo
+            select new PTRItemDto(
+                ppeirItem.ItemNo,
+                ppeirItem.DateAcquired,
+                inv.PropertyNo,
+                ppeirItem.PPESpecification,
+                ppeirItem.AcquisitionCost,
+                null,
+                null))
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 

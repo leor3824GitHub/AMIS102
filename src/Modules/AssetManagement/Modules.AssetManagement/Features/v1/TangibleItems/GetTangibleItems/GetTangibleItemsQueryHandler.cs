@@ -20,6 +20,16 @@ public sealed class GetTangibleItemsQueryHandler(AssetManagementDbContext dbCont
             itemsQuery = itemsQuery.Where(x => x.TangibleInventoryItemId == null);
         }
 
+        if (!string.IsNullOrWhiteSpace(query.PropertyClass))
+        {
+            itemsQuery = itemsQuery.Where(x => x.PropertyClass == query.PropertyClass);
+        }
+
+        if (!string.IsNullOrWhiteSpace(query.CategoryCode))
+        {
+            itemsQuery = itemsQuery.Where(x => x.CategoryCode == query.CategoryCode);
+        }
+
         if (!string.IsNullOrWhiteSpace(query.Keyword))
         {
             var kw = query.Keyword.ToLower();
@@ -41,6 +51,8 @@ public sealed class GetTangibleItemsQueryHandler(AssetManagementDbContext dbCont
             .Select(x => new TangibleItemSummaryDto(
                 x.Id,
                 x.PropertyNo,
+                x.PropertyClass,
+                x.CategoryCode,
                 x.ItemId,
                 x.Item.Code,
                 x.Item.Name,

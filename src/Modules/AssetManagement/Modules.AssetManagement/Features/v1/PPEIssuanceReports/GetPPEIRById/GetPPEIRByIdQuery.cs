@@ -24,7 +24,7 @@ public sealed record PPEIRDetailsDto(
 public sealed record PPEIRItemDto(
     Guid Id,
     int ItemNo,
-    Guid PPEItemId,
+    Guid TangibleInventoryItemId,
     string PropertyCode,
     string? SerialNumber,
     string PPESpecification,

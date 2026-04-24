@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
 {
     [DbContext(typeof(AssetManagementDbContext))]
-    [Migration("20260417084547_UnifyPropertyItemCatalog")]
-    partial class UnifyPropertyItemCatalog
+    [Migration("20260424071057_InitialAssetManagement")]
+    partial class InitialAssetManagement
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -31,10 +31,10 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("CategoryAtTimeOfIssuance")
+                    b.Property<string>("AssetTypeAtTimeOfIssuance")
                         .IsRequired()
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)");
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
 
                     b.Property<string>("Description")
                         .HasMaxLength(500)
@@ -49,7 +49,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                     b.Property<int>("ItemNo")
                         .HasColumnType("integer");
 
-                    b.Property<Guid>("SemiExpendablePropertyId")
+                    b.Property<Guid>("TangibleInventoryItemId")
                         .HasColumnType("uuid");
 
                     b.Property<decimal>("UnitCost")
@@ -59,7 +59,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
 
                     b.HasIndex("ICSId");
 
-                    b.HasIndex("SemiExpendablePropertyId");
+                    b.HasIndex("TangibleInventoryItemId");
 
                     b.ToTable("ICSItems", "am");
                 });
@@ -70,13 +70,13 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("AssetType")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
+
                     b.Property<Guid?>("CancelledByRRSPId")
                         .HasColumnType("uuid");
-
-                    b.Property<string>("Category")
-                        .IsRequired()
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)");
 
                     b.Property<string>("CreatedBy")
                         .HasColumnType("text");
@@ -133,6 +133,11 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)");
 
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
                     b.Property<byte[]>("Version")
                         .IsConcurrencyToken()
                         .IsRequired()
@@ -140,16 +145,13 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CancelledByRRSPId");
+                    b.HasIndex("AssetType");
 
-                    b.HasIndex("Category");
+                    b.HasIndex("CancelledByRRSPId");
 
                     b.HasIndex("Date");
 
                     b.HasIndex("ExpiresOn");
-
-                    b.HasIndex("ICSNo")
-                        .IsUnique();
 
                     b.HasIndex("IssuedFromEmployeeId");
 
@@ -161,7 +163,12 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
 
                     b.HasIndex("Status");
 
+                    b.HasIndex("TenantId", "ICSNo")
+                        .IsUnique();
+
                     b.ToTable("InventoryCustodianSlips", "am");
+
+                    b.HasAnnotation("Finbuckle:MultiTenant", true);
                 });
 
             modelBuilder.Entity("FSH.Modules.AssetManagement.Domain.PARItem", b =>
@@ -187,11 +194,11 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                     b.Property<Guid>("PARId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("PPEItemId")
-                        .HasColumnType("uuid");
-
                     b.Property<int>("Quantity")
                         .HasColumnType("integer");
+
+                    b.Property<Guid>("TangibleInventoryItemId")
+                        .HasColumnType("uuid");
 
                     b.Property<decimal>("TotalCost")
                         .HasColumnType("numeric(18,2)");
@@ -208,7 +215,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
 
                     b.HasIndex("PARId");
 
-                    b.HasIndex("PPEItemId");
+                    b.HasIndex("TangibleInventoryItemId");
 
                     b.ToTable("PARItems", "am");
                 });
@@ -237,9 +244,6 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                     b.Property<Guid>("PPEIRId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("PPEItemId")
-                        .HasColumnType("uuid");
-
                     b.Property<string>("PPESpecification")
                         .IsRequired()
                         .HasMaxLength(500)
@@ -254,11 +258,14 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<Guid>("TangibleInventoryItemId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
 
                     b.HasIndex("PPEIRId");
 
-                    b.HasIndex("PPEItemId");
+                    b.HasIndex("TangibleInventoryItemId");
 
                     b.ToTable("PPEIRItems", "am");
                 });
@@ -333,6 +340,11 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                     b.Property<Guid>("ReceivedByEmployeeId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
                     b.Property<byte[]>("Version")
                         .IsConcurrencyToken()
                         .IsRequired()
@@ -346,250 +358,12 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
 
                     b.HasIndex("IssuedToEmployeeId");
 
-                    b.HasIndex("PPEIRNo")
+                    b.HasIndex("TenantId", "PPEIRNo")
                         .IsUnique();
 
                     b.ToTable("PPEIssuanceReports", "am");
-                });
 
-            modelBuilder.Entity("FSH.Modules.AssetManagement.Domain.PPEItem", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("ClassCode")
-                        .HasMaxLength(4)
-                        .HasColumnType("character varying(4)");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTimeOffset>("CreatedOnUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("CurrentAccountableEmployeeId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateOnly>("DateAcquired")
-                        .HasColumnType("date");
-
-                    b.Property<string>("DeletedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTimeOffset?>("DeletedOnUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<int>("EstimatedUsefulLifeYears")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("IsDeleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
-
-                    b.Property<string>("ItemCode")
-                        .HasMaxLength(2)
-                        .HasColumnType("character varying(2)");
-
-                    b.Property<Guid?>("ItemId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTimeOffset?>("LastModifiedOnUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("OfficeCode")
-                        .HasMaxLength(8)
-                        .HasColumnType("character varying(8)");
-
-                    b.Property<string>("PropertyCode")
-                        .IsRequired()
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)");
-
-                    b.Property<string>("PropertyNumber")
-                        .IsRequired()
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)");
-
-                    b.Property<string>("SerialNumber")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<Guid?>("SourcePPERRId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)");
-
-                    b.Property<decimal>("UnitCost")
-                        .HasColumnType("numeric(18,2)");
-
-                    b.Property<byte[]>("Version")
-                        .IsConcurrencyToken()
-                        .IsRequired()
-                        .HasColumnType("bytea");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CurrentAccountableEmployeeId");
-
-                    b.HasIndex("ItemId");
-
-                    b.HasIndex("PropertyCode")
-                        .IsUnique();
-
-                    b.HasIndex("PropertyNumber")
-                        .IsUnique();
-
-                    b.HasIndex("SourcePPERRId");
-
-                    b.HasIndex("Status");
-
-                    b.ToTable("PPEItems", "am");
-                });
-
-            modelBuilder.Entity("FSH.Modules.AssetManagement.Domain.PPERRItem", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<decimal>("Amount")
-                        .HasColumnType("numeric(18,2)");
-
-                    b.Property<string>("ClassCode")
-                        .HasMaxLength(4)
-                        .HasColumnType("character varying(4)");
-
-                    b.Property<DateOnly>("DateAcquired")
-                        .HasColumnType("date");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<string>("ItemCode")
-                        .HasMaxLength(2)
-                        .HasColumnType("character varying(2)");
-
-                    b.Property<Guid?>("ItemId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("ItemNo")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("OfficeCode")
-                        .HasMaxLength(8)
-                        .HasColumnType("character varying(8)");
-
-                    b.Property<Guid>("PPERRId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("PropertyCode")
-                        .IsRequired()
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("integer");
-
-                    b.Property<decimal>("UnitCost")
-                        .HasColumnType("numeric(18,2)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ItemId");
-
-                    b.HasIndex("PPERRId");
-
-                    b.ToTable("PPERRItems", "am");
-                });
-
-            modelBuilder.Entity("FSH.Modules.AssetManagement.Domain.PPEReceivingReport", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Address")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTimeOffset>("CreatedOnUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateOnly>("Date")
-                        .HasColumnType("date");
-
-                    b.Property<string>("DeletedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTimeOffset?>("DeletedOnUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsDeleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTimeOffset?>("LastModifiedOnUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("NotedByEmployeeId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("PPERRNo")
-                        .IsRequired()
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)");
-
-                    b.Property<string>("ReceiptNature")
-                        .IsRequired()
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)");
-
-                    b.Property<Guid>("ReceivedByEmployeeId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("ReceivedFrom")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<byte[]>("Version")
-                        .IsConcurrencyToken()
-                        .IsRequired()
-                        .HasColumnType("bytea");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Date");
-
-                    b.HasIndex("PPERRNo")
-                        .IsUnique();
-
-                    b.HasIndex("ReceivedByEmployeeId");
-
-                    b.ToTable("PPEReceivingReports", "am");
+                    b.HasAnnotation("Finbuckle:MultiTenant", true);
                 });
 
             modelBuilder.Entity("FSH.Modules.AssetManagement.Domain.PhysicalCountEntry", b =>
@@ -606,9 +380,6 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
-
-                    b.Property<Guid?>("PPEItemId")
-                        .HasColumnType("uuid");
 
                     b.Property<string>("PhotoPath")
                         .HasMaxLength(500)
@@ -633,10 +404,10 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                     b.Property<DateTimeOffset?>("ScannedOnUtc")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid?>("SemiExpendablePropertyId")
+                    b.Property<Guid>("SessionId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("SessionId")
+                    b.Property<Guid?>("TangibleInventoryItemId")
                         .HasColumnType("uuid");
 
                     b.Property<decimal>("UnitCost")
@@ -644,17 +415,13 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PPEItemId");
-
                     b.HasIndex("Result");
-
-                    b.HasIndex("SemiExpendablePropertyId");
 
                     b.HasIndex("SessionId");
 
-                    b.HasIndex("SessionId", "PPEItemId");
+                    b.HasIndex("TangibleInventoryItemId");
 
-                    b.HasIndex("SessionId", "SemiExpendablePropertyId");
+                    b.HasIndex("SessionId", "TangibleInventoryItemId");
 
                     b.ToTable("PhysicalCountEntries", "am");
                 });
@@ -723,6 +490,11 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                     b.Property<DateTimeOffset?>("SubmittedOnUtc")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
                     b.Property<byte[]>("Version")
                         .IsConcurrencyToken()
                         .IsRequired()
@@ -732,12 +504,14 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
 
                     b.HasIndex("CountDate");
 
-                    b.HasIndex("SessionNo")
-                        .IsUnique();
-
                     b.HasIndex("Status");
 
+                    b.HasIndex("TenantId", "SessionNo")
+                        .IsUnique();
+
                     b.ToTable("PhysicalCountSessions", "am");
+
+                    b.HasAnnotation("Finbuckle:MultiTenant", true);
                 });
 
             modelBuilder.Entity("FSH.Modules.AssetManagement.Domain.PropertyAcknowledgementReceipt", b =>
@@ -791,6 +565,11 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                     b.Property<Guid>("ReceivedFromEmployeeId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
                     b.Property<byte[]>("Version")
                         .IsConcurrencyToken()
                         .IsRequired()
@@ -800,14 +579,16 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
 
                     b.HasIndex("Date");
 
-                    b.HasIndex("PARNo")
-                        .IsUnique();
-
                     b.HasIndex("PARType");
 
                     b.HasIndex("ReceivedByEmployeeId");
 
+                    b.HasIndex("TenantId", "PARNo")
+                        .IsUnique();
+
                     b.ToTable("PropertyAcknowledgementReceipts", "am");
+
+                    b.HasAnnotation("Finbuckle:MultiTenant", true);
                 });
 
             modelBuilder.Entity("FSH.Modules.AssetManagement.Domain.PropertyCodeCounter", b =>
@@ -859,10 +640,10 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("CategoryAtTimeOfReport")
+                    b.Property<string>("AssetTypeAtTimeOfReport")
                         .IsRequired()
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)");
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
 
                     b.Property<string>("Description")
                         .HasMaxLength(500)
@@ -874,7 +655,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                     b.Property<Guid>("ReportId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("SemiExpendablePropertyId")
+                    b.Property<Guid>("TangibleInventoryItemId")
                         .HasColumnType("uuid");
 
                     b.Property<decimal>("UnitCost")
@@ -884,7 +665,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
 
                     b.HasIndex("ReportId");
 
-                    b.HasIndex("SemiExpendablePropertyId");
+                    b.HasIndex("TangibleInventoryItemId");
 
                     b.ToTable("PropertyIncidentItems", "am");
                 });
@@ -950,6 +731,11 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)");
 
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
                     b.Property<byte[]>("Version")
                         .IsConcurrencyToken()
                         .IsRequired()
@@ -963,10 +749,12 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
 
                     b.HasIndex("IncidentType");
 
-                    b.HasIndex("ReportNo")
+                    b.HasIndex("TenantId", "ReportNo")
                         .IsUnique();
 
                     b.ToTable("PropertyIncidentReports", "am");
+
+                    b.HasAnnotation("Finbuckle:MultiTenant", true);
                 });
 
             modelBuilder.Entity("FSH.Modules.AssetManagement.Domain.PropertyItemCatalog", b =>
@@ -1018,6 +806,11 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
                     b.Property<string>("UACSObjectCode")
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)");
@@ -1034,12 +827,14 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Code")
-                        .IsUnique();
-
                     b.HasIndex("Name");
 
+                    b.HasIndex("TenantId", "Code")
+                        .IsUnique();
+
                     b.ToTable("PropertyItemCatalog", "am");
+
+                    b.HasAnnotation("Finbuckle:MultiTenant", true);
                 });
 
             modelBuilder.Entity("FSH.Modules.AssetManagement.Domain.RRPItem", b =>
@@ -1056,9 +851,6 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                     b.Property<int>("ItemNo")
                         .HasColumnType("integer");
 
-                    b.Property<Guid>("PPEItemId")
-                        .HasColumnType("uuid");
-
                     b.Property<string>("PropertyCode")
                         .IsRequired()
                         .HasMaxLength(32)
@@ -1074,6 +866,9 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
 
+                    b.Property<Guid>("TangibleInventoryItemId")
+                        .HasColumnType("uuid");
+
                     b.Property<decimal>("TotalCost")
                         .HasColumnType("numeric(18,2)");
 
@@ -1082,9 +877,9 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PPEItemId");
-
                     b.HasIndex("RRPId");
+
+                    b.HasIndex("TangibleInventoryItemId");
 
                     b.ToTable("RRPItems", "am");
                 });
@@ -1095,10 +890,10 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("CategoryAtTimeOfReturn")
+                    b.Property<string>("AssetTypeAtTimeOfReturn")
                         .IsRequired()
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)");
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
 
                     b.Property<string>("Description")
                         .HasMaxLength(500)
@@ -1110,7 +905,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                     b.Property<Guid>("RRSPId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("SemiExpendablePropertyId")
+                    b.Property<Guid>("TangibleInventoryItemId")
                         .HasColumnType("uuid");
 
                     b.Property<decimal>("UnitCost")
@@ -1120,7 +915,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
 
                     b.HasIndex("RRSPId");
 
-                    b.HasIndex("SemiExpendablePropertyId");
+                    b.HasIndex("TangibleInventoryItemId");
 
                     b.ToTable("RRSPItems", "am");
                 });
@@ -1179,6 +974,11 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                     b.Property<Guid>("SignedByEmployeeId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
                     b.Property<byte[]>("Version")
                         .IsConcurrencyToken()
                         .IsRequired()
@@ -1188,14 +988,16 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
 
                     b.HasIndex("Date");
 
-                    b.HasIndex("RRPNo")
-                        .IsUnique();
-
                     b.HasIndex("ReturnCategory");
 
                     b.HasIndex("ReturnedByEmployeeId");
 
+                    b.HasIndex("TenantId", "RRPNo")
+                        .IsUnique();
+
                     b.ToTable("ReceiptsForReturnedPPE", "am");
+
+                    b.HasAnnotation("Finbuckle:MultiTenant", true);
                 });
 
             modelBuilder.Entity("FSH.Modules.AssetManagement.Domain.ReceiptForReturnedProperty", b =>
@@ -1252,6 +1054,11 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                     b.Property<Guid>("ReturnedByEmployeeId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
                     b.Property<byte[]>("Version")
                         .IsConcurrencyToken()
                         .IsRequired()
@@ -1263,14 +1070,16 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
 
                     b.HasIndex("ICSId");
 
-                    b.HasIndex("RRSPNo")
-                        .IsUnique();
-
                     b.HasIndex("ReceivedByEmployeeId");
 
                     b.HasIndex("ReturnedByEmployeeId");
 
+                    b.HasIndex("TenantId", "RRSPNo")
+                        .IsUnique();
+
                     b.ToTable("ReceiptForReturnedProperties", "am");
+
+                    b.HasAnnotation("Finbuckle:MultiTenant", true);
                 });
 
             modelBuilder.Entity("FSH.Modules.AssetManagement.Domain.ReclassificationRecord", b =>
@@ -1306,6 +1115,11 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
                     b.Property<Guid>("ThresholdId")
                         .HasColumnType("uuid");
 
@@ -1316,9 +1130,13 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
 
                     b.HasIndex("CreatedOnUtc");
 
+                    b.HasIndex("TenantId");
+
                     b.HasIndex("ThresholdId");
 
                     b.ToTable("ReclassificationRecords", "am");
+
+                    b.HasAnnotation("Finbuckle:MultiTenant", true);
                 });
 
             modelBuilder.Entity("FSH.Modules.AssetManagement.Domain.SMIRItem", b =>
@@ -1327,10 +1145,10 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("CategoryAtTimeOfIssuance")
+                    b.Property<string>("AssetTypeAtTimeOfIssuance")
                         .IsRequired()
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)");
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
 
                     b.Property<string>("Description")
                         .HasMaxLength(500)
@@ -1342,7 +1160,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                     b.Property<Guid>("SMIRId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("SemiExpendablePropertyId")
+                    b.Property<Guid>("TangibleInventoryItemId")
                         .HasColumnType("uuid");
 
                     b.Property<decimal>("UnitCost")
@@ -1352,50 +1170,9 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
 
                     b.HasIndex("SMIRId");
 
-                    b.HasIndex("SemiExpendablePropertyId");
+                    b.HasIndex("TangibleInventoryItemId");
 
                     b.ToTable("SMIRItems", "am");
-                });
-
-            modelBuilder.Entity("FSH.Modules.AssetManagement.Domain.SMRRItem", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateOnly>("AcquisitionDate")
-                        .HasColumnType("date");
-
-                    b.Property<decimal>("Amount")
-                        .HasColumnType("numeric(18,2)");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<Guid>("ItemId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Reference")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<Guid>("SMRRId")
-                        .HasColumnType("uuid");
-
-                    b.Property<decimal>("UnitCost")
-                        .HasColumnType("numeric(18,2)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ItemId");
-
-                    b.HasIndex("SMRRId");
-
-                    b.ToTable("SMRRItems", "am");
                 });
 
             modelBuilder.Entity("FSH.Modules.AssetManagement.Domain.SemiExpendableIssuanceRecord", b =>
@@ -1451,6 +1228,11 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)");
 
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
                     b.Property<string>("TransferredToOfficerName")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
@@ -1472,109 +1254,17 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
 
                     b.HasIndex("IssuedByEmployeeId");
 
-                    b.HasIndex("SMIRNo")
-                        .IsUnique();
-
                     b.HasIndex("TransferredToTenantId");
 
-                    b.ToTable("SemiExpendableIssuanceRecords", "am");
-                });
-
-            modelBuilder.Entity("FSH.Modules.AssetManagement.Domain.SemiExpendableProperty", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateOnly>("AcquisitionDate")
-                        .HasColumnType("date");
-
-                    b.Property<string>("Category")
-                        .IsRequired()
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTimeOffset>("CreatedOnUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("CurrentCustodianId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("DeletedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTimeOffset?>("DeletedOnUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("FundCluster")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<bool>("IsDeleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
-
-                    b.Property<Guid>("ItemId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTimeOffset?>("LastModifiedOnUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("PropertyNo")
-                        .IsRequired()
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)");
-
-                    b.Property<string>("Remarks")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<Guid?>("SMRRItemId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("SerialNo")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)");
-
-                    b.Property<decimal>("UnitCost")
-                        .HasColumnType("numeric(18,2)");
-
-                    b.Property<byte[]>("Version")
-                        .IsConcurrencyToken()
-                        .IsRequired()
-                        .HasColumnType("bytea");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Category");
-
-                    b.HasIndex("CurrentCustodianId");
-
-                    b.HasIndex("ItemId");
-
-                    b.HasIndex("PropertyNo")
+                    b.HasIndex("TenantId", "SMIRNo")
                         .IsUnique();
 
-                    b.HasIndex("SMRRItemId");
+                    b.ToTable("SemiExpendableIssuanceRecords", "am");
 
-                    b.HasIndex("Status");
-
-                    b.ToTable("SemiExpendableProperties", "am");
+                    b.HasAnnotation("Finbuckle:MultiTenant", true);
                 });
 
-            modelBuilder.Entity("FSH.Modules.AssetManagement.Domain.SuppliesMaterialsReceivingReport", b =>
+            modelBuilder.Entity("FSH.Modules.AssetManagement.Domain.TangibleInventory", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -1634,10 +1324,15 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
-                    b.Property<string>("SMRRNo")
+                    b.Property<string>("ReportNo")
                         .IsRequired()
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<byte[]>("Version")
                         .IsConcurrencyToken()
@@ -1650,10 +1345,167 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
 
                     b.HasIndex("ReceivedByEmployeeId");
 
-                    b.HasIndex("SMRRNo")
+                    b.HasIndex("TenantId", "ReportNo")
                         .IsUnique();
 
-                    b.ToTable("SMRRs", "am");
+                    b.ToTable("TangibleInventories", "am");
+
+                    b.HasAnnotation("Finbuckle:MultiTenant", true);
+                });
+
+            modelBuilder.Entity("FSH.Modules.AssetManagement.Domain.TangibleInventoryItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("AcquisitionDate")
+                        .HasColumnType("date");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("AssetType")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<bool>("IsIssued")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<Guid>("ItemId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("PropertyNo")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Reference")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid>("TangibleInventoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TangibleItemId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("ThresholdAmountUsed")
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<decimal>("UnitCost")
+                        .HasColumnType("numeric(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssetType");
+
+                    b.HasIndex("IsIssued");
+
+                    b.HasIndex("ItemId");
+
+                    b.HasIndex("TangibleInventoryId");
+
+                    b.HasIndex("TangibleItemId")
+                        .IsUnique();
+
+                    b.ToTable("TangibleInventoryItems", "am");
+                });
+
+            modelBuilder.Entity("FSH.Modules.AssetManagement.Domain.TangibleItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("AcquisitionDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("CategoryCode")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("DeletedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<Guid>("ItemId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("LastModifiedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PropertyClass")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("PropertyNo")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Remarks")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<Guid?>("TangibleInventoryItemId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<decimal>("UnitCost")
+                        .HasColumnType("numeric(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ItemId");
+
+                    b.HasIndex("TangibleInventoryItemId");
+
+                    b.HasIndex("TenantId", "CategoryCode");
+
+                    b.HasIndex("TenantId", "PropertyClass");
+
+                    b.HasIndex("TenantId", "PropertyNo")
+                        .IsUnique();
+
+                    b.ToTable("TangibleItems", "am");
+
+                    b.HasAnnotation("Finbuckle:MultiTenant", true);
                 });
 
             modelBuilder.Entity("FSH.Modules.AssetManagement.Domain.UnserviceablePropertyItem", b =>
@@ -1662,10 +1514,10 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("CategoryAtTimeOfReport")
+                    b.Property<string>("AssetTypeAtTimeOfReport")
                         .IsRequired()
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)");
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
 
                     b.Property<string>("ConditionRemarks")
                         .HasMaxLength(500)
@@ -1681,7 +1533,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                     b.Property<Guid>("ReportId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("SemiExpendablePropertyId")
+                    b.Property<Guid>("TangibleInventoryItemId")
                         .HasColumnType("uuid");
 
                     b.Property<decimal>("UnitCost")
@@ -1691,7 +1543,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
 
                     b.HasIndex("ReportId");
 
-                    b.HasIndex("SemiExpendablePropertyId");
+                    b.HasIndex("TangibleInventoryItemId");
 
                     b.ToTable("UnserviceablePropertyItems", "am");
                 });
@@ -1752,6 +1604,11 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)");
 
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
                     b.Property<byte[]>("Version")
                         .IsConcurrencyToken()
                         .IsRequired()
@@ -1767,10 +1624,12 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
 
                     b.HasIndex("InspectedByEmployeeId");
 
-                    b.HasIndex("ReportNo")
+                    b.HasIndex("TenantId", "ReportNo")
                         .IsUnique();
 
                     b.ToTable("UnserviceablePropertyReports", "am");
+
+                    b.HasAnnotation("Finbuckle:MultiTenant", true);
                 });
 
             modelBuilder.Entity("FSH.Modules.AssetManagement.Domain.ICSItem", b =>
@@ -1781,51 +1640,28 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("FSH.Modules.AssetManagement.Domain.SemiExpendableProperty", null)
+                    b.HasOne("FSH.Modules.AssetManagement.Domain.TangibleInventoryItem", null)
                         .WithMany()
-                        .HasForeignKey("SemiExpendablePropertyId")
+                        .HasForeignKey("TangibleInventoryItemId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("FSH.Modules.AssetManagement.Domain.PPEItem", b =>
-                {
-                    b.HasOne("FSH.Modules.AssetManagement.Domain.PropertyItemCatalog", "Item")
-                        .WithMany()
-                        .HasForeignKey("ItemId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("Item");
-                });
-
-            modelBuilder.Entity("FSH.Modules.AssetManagement.Domain.PPERRItem", b =>
-                {
-                    b.HasOne("FSH.Modules.AssetManagement.Domain.PropertyItemCatalog", null)
-                        .WithMany()
-                        .HasForeignKey("ItemId")
-                        .OnDelete(DeleteBehavior.SetNull);
-                });
-
             modelBuilder.Entity("FSH.Modules.AssetManagement.Domain.PhysicalCountEntry", b =>
                 {
-                    b.HasOne("FSH.Modules.AssetManagement.Domain.PPEItem", null)
-                        .WithMany()
-                        .HasForeignKey("PPEItemId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("FSH.Modules.AssetManagement.Domain.SemiExpendableProperty", null)
-                        .WithMany()
-                        .HasForeignKey("SemiExpendablePropertyId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("FSH.Modules.AssetManagement.Domain.PhysicalCountSession", null)
                         .WithMany()
                         .HasForeignKey("SessionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("FSH.Modules.AssetManagement.Domain.TangibleInventoryItem", null)
+                        .WithMany()
+                        .HasForeignKey("TangibleInventoryItemId")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
-            modelBuilder.Entity("FSH.Modules.AssetManagement.Domain.SMRRItem", b =>
+            modelBuilder.Entity("FSH.Modules.AssetManagement.Domain.TangibleInventoryItem", b =>
                 {
                     b.HasOne("FSH.Modules.AssetManagement.Domain.PropertyItemCatalog", null)
                         .WithMany()
@@ -1833,14 +1669,20 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("FSH.Modules.AssetManagement.Domain.SuppliesMaterialsReceivingReport", null)
+                    b.HasOne("FSH.Modules.AssetManagement.Domain.TangibleInventory", null)
                         .WithMany()
-                        .HasForeignKey("SMRRId")
+                        .HasForeignKey("TangibleInventoryId")
                         .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("FSH.Modules.AssetManagement.Domain.TangibleItem", null)
+                        .WithMany()
+                        .HasForeignKey("TangibleItemId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("FSH.Modules.AssetManagement.Domain.SemiExpendableProperty", b =>
+            modelBuilder.Entity("FSH.Modules.AssetManagement.Domain.TangibleItem", b =>
                 {
                     b.HasOne("FSH.Modules.AssetManagement.Domain.PropertyItemCatalog", "Item")
                         .WithMany()

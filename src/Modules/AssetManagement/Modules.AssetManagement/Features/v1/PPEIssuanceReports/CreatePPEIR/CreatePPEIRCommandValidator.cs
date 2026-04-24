@@ -18,6 +18,6 @@ public sealed class CreatePPEIRCommandValidator : AbstractValidator<CreatePPEIRC
         RuleFor(x => x.BillOfLadingNo).MaximumLength(100);
         RuleFor(x => x.Items).NotEmpty().WithMessage("At least one PPE item is required.");
         RuleForEach(x => x.Items).ChildRules(item =>
-            item.RuleFor(x => x.PPEItemId).NotEmpty());
+            item.RuleFor(x => x.TangibleInventoryItemId).NotEmpty());
     }
 }

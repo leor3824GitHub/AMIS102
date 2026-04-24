@@ -77,6 +77,11 @@ public sealed class EmployeeProfile : AggregateRoot<Guid>, IAuditableEntity
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
     }
 
+    public void SetOwnerOfficeCode(string? officeCode)
+    {
+        OfficeCode = officeCode;
+    }
+
     public void Deactivate()
     {
         IsActive = false;

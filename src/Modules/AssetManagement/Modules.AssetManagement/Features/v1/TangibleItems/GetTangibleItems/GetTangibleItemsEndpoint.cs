@@ -17,13 +17,15 @@ public static class GetTangibleItemsEndpoint
 
     private static async Task<IResult> GetTangibleItems(
         string? keyword = null,
+        string? propertyClass = null,
+        string? categoryCode = null,
         bool? excludeLinked = null,
         int pageNumber = 1,
         int pageSize = 20,
         IMediator mediator = null!,
         CancellationToken cancellationToken = default)
     {
-        var query = new GetTangibleItemsQuery(keyword, excludeLinked, pageNumber, pageSize);
+        var query = new GetTangibleItemsQuery(keyword, propertyClass, categoryCode, excludeLinked, pageNumber, pageSize);
         var result = await mediator.Send(query, cancellationToken);
         return TypedResults.Ok(result);
     }

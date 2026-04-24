@@ -1,5 +1,4 @@
 using FSH.Modules.AssetManagement.Data;
-using FSH.Modules.AssetManagement.Domain;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,21 +12,21 @@ public sealed class GetRegSPIQueryHandler(AssetManagementDbContext dbContext)
         var pageNumber = query.PageNumber <= 0 ? 1 : query.PageNumber;
         var pageSize   = query.PageSize   <= 0 ? 20 : query.PageSize;
 
-        // Base: ICS items for this employee, joined to property and catalog.
+        // Base: ICS items for this employee, joined to inventory item and catalog.
         var q =
             from icsItem in dbContext.ICSItems
-            join prop in dbContext.SemiExpendableProperties.IgnoreQueryFilters()
-                on icsItem.SemiExpendablePropertyId equals prop.Id
+            join inv in dbContext.TangibleInventoryItems.IgnoreQueryFilters()
+                on icsItem.TangibleInventoryItemId equals inv.Id
             join catalogItem in dbContext.PropertyItemCatalog
-                on prop.ItemId equals catalogItem.Id
+                on inv.ItemId equals catalogItem.Id
             join ics in dbContext.InventoryCustodianSlips.IgnoreQueryFilters()
                 on icsItem.ICSId equals ics.Id
             where ics.ReceivedByEmployeeId == query.EmployeeId
-            select new { ics, icsItem, prop, catalogItem };
+            select new { ics, icsItem, inv, catalogItem };
 
-        if (query.Category.HasValue)
+        if (query.AssetType.HasValue)
         {
-            q = q.Where(x => x.icsItem.CategoryAtTimeOfIssuance == query.Category.Value);
+            q = q.Where(x => x.icsItem.AssetTypeAtTimeOfIssuance == query.AssetType.Value);
         }
 
         if (query.Status.HasValue)
@@ -39,7 +38,7 @@ public sealed class GetRegSPIQueryHandler(AssetManagementDbContext dbContext)
 
         var rows = await q
             .OrderByDescending(x => x.ics.Date)
-            .ThenBy(x => x.prop.PropertyNo)
+            .ThenBy(x => x.inv.PropertyNo)
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
             .Select(x => new RegSPIEntryDto(
@@ -47,11 +46,11 @@ public sealed class GetRegSPIQueryHandler(AssetManagementDbContext dbContext)
                 x.ics.ICSNo,
                 x.ics.Date,
                 x.ics.FundCluster,
-                x.prop.Id,
-                x.prop.PropertyNo,
+                x.inv.Id,
+                x.inv.PropertyNo,
                 x.catalogItem.Code,
                 x.catalogItem.Name,
-                x.icsItem.CategoryAtTimeOfIssuance.ToString(),
+                x.icsItem.AssetTypeAtTimeOfIssuance.ToString(),
                 x.icsItem.UnitCost,
                 x.icsItem.EstimatedUsefulLifeYears,
                 x.ics.ExpiresOn,

@@ -29,7 +29,7 @@ internal sealed class CreateSMIRItemRequestValidator : AbstractValidator<CreateS
 {
     public CreateSMIRItemRequestValidator()
     {
-        RuleFor(x => x.SemiExpendablePropertyId).NotEmpty();
+        RuleFor(x => x.TangibleInventoryItemId).NotEmpty();
         RuleFor(x => x.Description).MaximumLength(500);
     }
 }

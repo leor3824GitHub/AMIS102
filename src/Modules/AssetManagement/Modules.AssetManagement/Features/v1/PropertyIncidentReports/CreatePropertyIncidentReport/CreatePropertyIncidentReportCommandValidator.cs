@@ -31,11 +31,11 @@ public sealed class CreatePropertyIncidentReportCommandValidator
         RuleFor(x => x.Remarks)
             .MaximumLength(500);
 
-        RuleFor(x => x.PropertyIds)
+        RuleFor(x => x.TangibleInventoryItemIds)
             .NotEmpty()
             .WithMessage("At least one property must be listed.");
 
-        RuleForEach(x => x.PropertyIds)
+        RuleForEach(x => x.TangibleInventoryItemIds)
             .NotEmpty();
     }
 }

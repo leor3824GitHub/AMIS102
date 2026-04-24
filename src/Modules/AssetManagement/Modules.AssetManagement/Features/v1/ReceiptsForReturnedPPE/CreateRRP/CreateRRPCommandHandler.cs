@@ -32,26 +32,33 @@ public sealed class CreateRRPCommandHandler : ICommandHandler<CreateRRPCommand, 
             ]);
         }
 
-        var requestedIds = command.Items.Select(x => x.PPEItemId).Distinct().ToList();
-        var ppeItems = await _dbContext.PPEItems
+        var requestedIds = command.Items.Select(x => x.TangibleInventoryItemId).Distinct().ToList();
+
+        if (requestedIds.Count != command.Items.Count)
+        {
+            throw new FluentValidation.ValidationException(
+            [
+                new FluentValidation.Results.ValidationFailure(nameof(command.Items), "Duplicate inventory item entries are not allowed in a single RRP.")
+            ]);
+        }
+
+        var invItems = await _dbContext.TangibleInventoryItems
             .Where(x => requestedIds.Contains(x.Id))
-            .ToListAsync(cancellationToken)
+            .ToDictionaryAsync(x => x.Id, cancellationToken)
             .ConfigureAwait(false);
 
-        foreach (var ppeItemId in requestedIds)
+        foreach (var itemId in requestedIds)
         {
-            var ppeItem = ppeItems.FirstOrDefault(x => x.Id == ppeItemId)
-                ?? throw new KeyNotFoundException($"PPE item with ID {ppeItemId} not found.");
+            if (!invItems.TryGetValue(itemId, out var invItem))
+                throw new KeyNotFoundException($"TangibleInventoryItem with ID {itemId} not found.");
 
-            if (ppeItem.Status == PPEItemStatus.Disposed)
-            {
-                throw new FluentValidation.ValidationException(
-                [
-                    new FluentValidation.Results.ValidationFailure(
-                        nameof(ppeItemId),
-                        $"PPE item '{ppeItem.PropertyCode}' is already disposed and cannot be returned.")
-                ]);
-            }
+            if (invItem.AssetType != AssetType.PPE)
+                throw new InvalidOperationException(
+                    $"TangibleInventoryItem {invItem.PropertyNo} has AssetType '{invItem.AssetType}'. Only PPE items can be returned via RRP.");
+
+            if (!invItem.IsIssued)
+                throw new InvalidOperationException(
+                    $"TangibleInventoryItem {invItem.PropertyNo} is not currently issued and cannot be returned.");
         }
 
         string tenantId = _currentUser.GetTenant() ?? string.Empty;
@@ -71,27 +78,23 @@ public sealed class CreateRRPCommandHandler : ICommandHandler<CreateRRPCommand, 
 
         foreach (var (itemRequest, itemNo) in command.Items.Select((r, i) => (r, i + 1)))
         {
-            var ppeItem = ppeItems.First(x => x.Id == itemRequest.PPEItemId);
+            var invItem = invItems[itemRequest.TangibleInventoryItemId];
 
             var rrpItem = RRPItem.Create(
                 rrp.Id,
-                ppeItem.Id,
+                invItem.Id,
                 itemNo,
                 itemRequest.SourceDocumentRef,
-                ppeItem.PropertyCode,
-                ppeItem.Description,
+                invItem.PropertyNo,
+                invItem.Description ?? string.Empty,
                 itemRequest.Quantity,
-                ppeItem.UnitCost);
+                invItem.UnitCost);
 
             _dbContext.RRPItems.Add(rrpItem);
 
             if (command.ReturnCategory == PPEReturnCategory.Serviceable)
             {
-                ppeItem.ReturnToStock();
-            }
-            else
-            {
-                ppeItem.MarkDisposed();
+                invItem.MarkReturned();
             }
         }
 

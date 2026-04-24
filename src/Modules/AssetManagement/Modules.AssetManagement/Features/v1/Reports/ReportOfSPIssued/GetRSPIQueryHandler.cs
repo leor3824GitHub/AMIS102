@@ -15,13 +15,13 @@ public sealed class GetRSPIQueryHandler(AssetManagementDbContext dbContext)
 
         var q =
             from icsItem in dbContext.ICSItems
-            join prop in dbContext.SemiExpendableProperties.IgnoreQueryFilters()
-                on icsItem.SemiExpendablePropertyId equals prop.Id
+            join inv in dbContext.TangibleInventoryItems.IgnoreQueryFilters()
+                on icsItem.TangibleInventoryItemId equals inv.Id
             join catalogItem in dbContext.PropertyItemCatalog
-                on prop.ItemId equals catalogItem.Id
+                on inv.ItemId equals catalogItem.Id
             join ics in dbContext.InventoryCustodianSlips.IgnoreQueryFilters()
                 on icsItem.ICSId equals ics.Id
-            select new { ics, icsItem, prop, catalogItem };
+            select new { ics, icsItem, inv, catalogItem };
 
         if (query.ActiveOnly)
         {
@@ -38,16 +38,16 @@ public sealed class GetRSPIQueryHandler(AssetManagementDbContext dbContext)
             q = q.Where(x => x.ics.Date <= query.DateTo.Value);
         }
 
-        if (query.Category.HasValue)
+        if (query.AssetType.HasValue)
         {
-            q = q.Where(x => x.icsItem.CategoryAtTimeOfIssuance == query.Category.Value);
+            q = q.Where(x => x.icsItem.AssetTypeAtTimeOfIssuance == query.AssetType.Value);
         }
 
         var totalCount = await q.CountAsync(cancellationToken).ConfigureAwait(false);
 
         var rows = await q
             .OrderBy(x => x.ics.Date)
-            .ThenBy(x => x.prop.PropertyNo)
+            .ThenBy(x => x.inv.PropertyNo)
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
             .Select(x => new RSPIItemDto(
@@ -57,12 +57,11 @@ public sealed class GetRSPIQueryHandler(AssetManagementDbContext dbContext)
                 x.ics.Status.ToString(),
                 x.ics.ReceivedByEmployeeId,
                 x.ics.IssuedFromEmployeeId,
-                x.prop.Id,
-                x.prop.PropertyNo,
-                x.prop.SerialNo,
+                x.inv.Id,
+                x.inv.PropertyNo,
                 x.catalogItem.Code,
                 x.catalogItem.Name,
-                x.icsItem.CategoryAtTimeOfIssuance.ToString(),
+                x.icsItem.AssetTypeAtTimeOfIssuance.ToString(),
                 x.icsItem.UnitCost,
                 x.ics.ExpiresOn))
             .ToListAsync(cancellationToken)

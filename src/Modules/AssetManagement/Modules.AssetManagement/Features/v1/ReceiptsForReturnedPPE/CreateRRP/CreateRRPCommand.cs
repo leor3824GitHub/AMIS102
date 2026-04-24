@@ -14,7 +14,7 @@ public sealed record CreateRRPCommand(
     IReadOnlyList<CreateRRPItemRequest> Items) : ICommand<CreateRRPResult>;
 
 public sealed record CreateRRPItemRequest(
-    Guid PPEItemId,
+    Guid TangibleInventoryItemId,
     string? SourceDocumentRef,
     int Quantity);
 

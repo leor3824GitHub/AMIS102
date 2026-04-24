@@ -51,15 +51,13 @@ public sealed class CreateRRSPCommandHandler(AssetManagementDbContext dbContext,
             throw new InvalidOperationException($"ICS '{ics.ICSNo}' has no items.");
         }
 
-        // 4. Load the corresponding SemiExpendableProperties.
-        var propertyIds = icsItems.Select(x => x.SemiExpendablePropertyId).ToList();
+        // 4. Load the corresponding TangibleInventoryItems.
+        var invItemIds = icsItems.Select(x => x.TangibleInventoryItemId).ToList();
 
-        var properties = await dbContext.SemiExpendableProperties
-            .Where(x => propertyIds.Contains(x.Id))
-            .ToListAsync(cancellationToken)
+        var invItems = await dbContext.TangibleInventoryItems
+            .Where(x => invItemIds.Contains(x.Id))
+            .ToDictionaryAsync(x => x.Id, cancellationToken)
             .ConfigureAwait(false);
-
-        var propertyMap = properties.ToDictionary(x => x.Id);
 
         // 5. Create the RRSP header.
         string tenantId = currentUser.GetTenant() ?? string.Empty;
@@ -76,28 +74,28 @@ public sealed class CreateRRSPCommandHandler(AssetManagementDbContext dbContext,
 
         dbContext.ReceiptForReturnedProperties.Add(rrsp);
 
-        // 6. Create RRSP items and return each property to Returned status.
+        // 6. Create RRSP items and mark each inventory item returned.
         for (var i = 0; i < icsItems.Count; i++)
         {
             var icsItem = icsItems[i];
 
-            if (!propertyMap.TryGetValue(icsItem.SemiExpendablePropertyId, out var property))
+            if (!invItems.TryGetValue(icsItem.TangibleInventoryItemId, out var invItem))
             {
                 throw new NotFoundException(
-                    $"SemiExpendableProperty with ID {icsItem.SemiExpendablePropertyId} not found.");
+                    $"TangibleInventoryItem with ID {icsItem.TangibleInventoryItemId} not found.");
             }
 
             var rrspItem = RRSPItem.Create(
-                rrspId:                    rrsp.Id,
-                semiExpendablePropertyId:  icsItem.SemiExpendablePropertyId,
-                itemNo:                    i + 1,
-                description:               icsItem.Description,
-                unitCost:                  icsItem.UnitCost,
-                categoryAtTimeOfReturn:    icsItem.CategoryAtTimeOfIssuance);
+                rrspId:                   rrsp.Id,
+                tangibleInventoryItemId:  icsItem.TangibleInventoryItemId,
+                itemNo:                   i + 1,
+                description:              icsItem.Description,
+                unitCost:                 icsItem.UnitCost,
+                assetTypeAtTimeOfReturn:  icsItem.AssetTypeAtTimeOfIssuance);
 
             dbContext.RRSPItems.Add(rrspItem);
 
-            property.SetStatus(PropertyStatus.Returned, custodianId: null);
+            invItem.MarkReturned();
         }
 
         // 7. Cancel the ICS.

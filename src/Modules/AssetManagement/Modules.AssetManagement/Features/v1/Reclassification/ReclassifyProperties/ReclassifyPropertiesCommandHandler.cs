@@ -31,8 +31,8 @@ public sealed class ReclassifyPropertiesCommandHandler : ICommandHandler<Reclass
             throw new NotFoundException("No active capitalization threshold found. Set one in Master Data → Capitalization Thresholds before running reclassification.");
         }
 
-        // Load all non-deleted properties. Query filter on IsDeleted is applied automatically.
-        var properties = await _dbContext.SemiExpendableProperties
+        // Load all non-deleted tangible inventory items. Query filter on IsDeleted is applied automatically.
+        var invItems = await _dbContext.TangibleInventoryItems
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
@@ -40,15 +40,15 @@ public sealed class ReclassifyPropertiesCommandHandler : ICommandHandler<Reclass
         string tenantId = _currentUser.GetTenant() ?? string.Empty;
         string userId = _currentUser.GetUserId().ToString();
 
-        foreach (var property in properties)
+        foreach (var invItem in invItems)
         {
-            var correctCategory = property.UnitCost <= threshold.SemiExpendableLowValueThreshold
-                ? AssetCategory.LowValuedSemi
-                : AssetCategory.HighValuedSemi;
-            if (property.Category != correctCategory)
+            var correctAssetType = invItem.UnitCost < threshold.CapitalizationAmount
+                ? AssetType.SE
+                : AssetType.PPE;
+
+            if (invItem.AssetType != correctAssetType || invItem.ThresholdAmountUsed != threshold.CapitalizationAmount)
             {
-                property.Reclassify(correctCategory);
-                property.LastModifiedBy = userId;
+                invItem.Reclassify(correctAssetType, threshold.CapitalizationAmount);
                 totalReclassified++;
             }
         }

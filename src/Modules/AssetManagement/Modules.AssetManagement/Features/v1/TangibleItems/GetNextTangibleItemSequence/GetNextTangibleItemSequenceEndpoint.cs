@@ -19,11 +19,10 @@ public static class GetNextTangibleItemSequenceEndpoint
         int year,
         string officeCode,
         string classCode,
-        string itemCode,
         IMediator mediator,
         CancellationToken cancellationToken)
     {
-        var query = new GetNextTangibleItemSequenceQuery(year, officeCode, classCode, itemCode);
+        var query = new GetNextTangibleItemSequenceQuery(year, officeCode, classCode);
         var result = await mediator.Send(query, cancellationToken);
         return TypedResults.Ok(result);
     }

@@ -20,12 +20,13 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     ICSNo = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
                     Date = table.Column<DateOnly>(type: "date", nullable: false),
                     FundCluster = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
                     IssuedFromEmployeeId = table.Column<Guid>(type: "uuid", nullable: true),
                     ReceivedByEmployeeId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Category = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
+                    AssetType = table.Column<string>(type: "character varying(8)", maxLength: 8, nullable: false),
                     Status = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
                     ExpiresOn = table.Column<DateOnly>(type: "date", nullable: true),
                     RenewedFromICSId = table.Column<Guid>(type: "uuid", nullable: true),
@@ -52,7 +53,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     PARId = table.Column<Guid>(type: "uuid", nullable: false),
-                    PPEItemId = table.Column<Guid>(type: "uuid", nullable: false),
+                    TangibleInventoryItemId = table.Column<Guid>(type: "uuid", nullable: false),
                     ItemNo = table.Column<int>(type: "integer", nullable: false),
                     Quantity = table.Column<int>(type: "integer", nullable: false),
                     Unit = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
@@ -73,6 +74,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     SessionNo = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
                     CountDate = table.Column<DateOnly>(type: "date", nullable: false),
                     StationOffice = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
@@ -103,7 +105,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     PPEIRId = table.Column<Guid>(type: "uuid", nullable: false),
-                    PPEItemId = table.Column<Guid>(type: "uuid", nullable: false),
+                    TangibleInventoryItemId = table.Column<Guid>(type: "uuid", nullable: false),
                     ItemNo = table.Column<int>(type: "integer", nullable: false),
                     PropertyCode = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
                     SerialNumber = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
@@ -124,6 +126,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     PPEIRNo = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
                     Date = table.Column<DateOnly>(type: "date", nullable: false),
                     IssuedToEmployeeId = table.Column<Guid>(type: "uuid", nullable: false),
@@ -150,94 +153,12 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                 });
 
             migrationBuilder.CreateTable(
-                name: "PPEItems",
-                schema: "am",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    PropertyCode = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
-                    PropertyNumber = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
-                    ClassCode = table.Column<string>(type: "character varying(4)", maxLength: 4, nullable: true),
-                    ItemCode = table.Column<string>(type: "character varying(2)", maxLength: 2, nullable: true),
-                    OfficeCode = table.Column<string>(type: "character varying(8)", maxLength: 8, nullable: true),
-                    Description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
-                    SerialNumber = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
-                    DateAcquired = table.Column<DateOnly>(type: "date", nullable: false),
-                    UnitCost = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
-                    EstimatedUsefulLifeYears = table.Column<int>(type: "integer", nullable: false),
-                    Status = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
-                    CurrentAccountableEmployeeId = table.Column<Guid>(type: "uuid", nullable: true),
-                    SourcePPERRId = table.Column<Guid>(type: "uuid", nullable: true),
-                    Version = table.Column<byte[]>(type: "bytea", nullable: false),
-                    CreatedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    CreatedBy = table.Column<string>(type: "text", nullable: true),
-                    LastModifiedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    LastModifiedBy = table.Column<string>(type: "text", nullable: true),
-                    DeletedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    DeletedBy = table.Column<string>(type: "text", nullable: true),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_PPEItems", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "PPEReceivingReports",
-                schema: "am",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    PPERRNo = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
-                    Date = table.Column<DateOnly>(type: "date", nullable: false),
-                    ReceivedFrom = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    Address = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
-                    ReceiptNature = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
-                    ReceivedByEmployeeId = table.Column<Guid>(type: "uuid", nullable: false),
-                    NotedByEmployeeId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Version = table.Column<byte[]>(type: "bytea", nullable: false),
-                    CreatedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    CreatedBy = table.Column<string>(type: "text", nullable: true),
-                    LastModifiedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    LastModifiedBy = table.Column<string>(type: "text", nullable: true),
-                    DeletedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    DeletedBy = table.Column<string>(type: "text", nullable: true),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_PPEReceivingReports", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "PPERRItems",
-                schema: "am",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    PPERRId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ItemNo = table.Column<int>(type: "integer", nullable: false),
-                    PropertyCode = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
-                    ClassCode = table.Column<string>(type: "character varying(4)", maxLength: 4, nullable: true),
-                    ItemCode = table.Column<string>(type: "character varying(2)", maxLength: 2, nullable: true),
-                    OfficeCode = table.Column<string>(type: "character varying(8)", maxLength: 8, nullable: true),
-                    Description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
-                    DateAcquired = table.Column<DateOnly>(type: "date", nullable: false),
-                    Quantity = table.Column<int>(type: "integer", nullable: false),
-                    UnitCost = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
-                    Amount = table.Column<decimal>(type: "numeric(18,2)", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_PPERRItems", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "PropertyAcknowledgementReceipts",
                 schema: "am",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     PARNo = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
                     Date = table.Column<DateOnly>(type: "date", nullable: false),
                     PARType = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
@@ -283,11 +204,11 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     ReportId = table.Column<Guid>(type: "uuid", nullable: false),
-                    SemiExpendablePropertyId = table.Column<Guid>(type: "uuid", nullable: false),
+                    TangibleInventoryItemId = table.Column<Guid>(type: "uuid", nullable: false),
                     ItemNo = table.Column<int>(type: "integer", nullable: false),
                     Description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     UnitCost = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
-                    CategoryAtTimeOfReport = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false)
+                    AssetTypeAtTimeOfReport = table.Column<string>(type: "character varying(8)", maxLength: 8, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -300,6 +221,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     ReportNo = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
                     Date = table.Column<DateOnly>(type: "date", nullable: false),
                     IncidentDate = table.Column<DateOnly>(type: "date", nullable: true),
@@ -323,11 +245,40 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                 });
 
             migrationBuilder.CreateTable(
+                name: "PropertyItemCatalog",
+                schema: "am",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    Code = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
+                    Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    UACSObjectCode = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: true),
+                    UnitOfMeasure = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    EstimatedUsefulLifeYears = table.Column<int>(type: "integer", nullable: true),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    Version = table.Column<byte[]>(type: "bytea", nullable: false),
+                    CreatedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    LastModifiedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    LastModifiedBy = table.Column<string>(type: "text", nullable: true),
+                    DeletedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    DeletedBy = table.Column<string>(type: "text", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PropertyItemCatalog", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "ReceiptForReturnedProperties",
                 schema: "am",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     RRSPNo = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
                     Date = table.Column<DateOnly>(type: "date", nullable: false),
                     ICSId = table.Column<Guid>(type: "uuid", nullable: false),
@@ -355,6 +306,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     RRPNo = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
                     Date = table.Column<DateOnly>(type: "date", nullable: false),
                     ReturnCategory = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
@@ -382,6 +334,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     ThresholdId = table.Column<Guid>(type: "uuid", nullable: false),
                     TotalReclassified = table.Column<int>(type: "integer", nullable: false),
                     Notes = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
@@ -405,7 +358,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     RRPId = table.Column<Guid>(type: "uuid", nullable: false),
-                    PPEItemId = table.Column<Guid>(type: "uuid", nullable: false),
+                    TangibleInventoryItemId = table.Column<Guid>(type: "uuid", nullable: false),
                     ItemNo = table.Column<int>(type: "integer", nullable: false),
                     SourceDocumentRef = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
                     PropertyCode = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
@@ -426,11 +379,11 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     RRSPId = table.Column<Guid>(type: "uuid", nullable: false),
-                    SemiExpendablePropertyId = table.Column<Guid>(type: "uuid", nullable: false),
+                    TangibleInventoryItemId = table.Column<Guid>(type: "uuid", nullable: false),
                     ItemNo = table.Column<int>(type: "integer", nullable: false),
                     Description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     UnitCost = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
-                    CategoryAtTimeOfReturn = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false)
+                    AssetTypeAtTimeOfReturn = table.Column<string>(type: "character varying(8)", maxLength: 8, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -443,6 +396,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     SMIRNo = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
                     Date = table.Column<DateOnly>(type: "date", nullable: false),
                     FundCluster = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
@@ -466,44 +420,17 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                 });
 
             migrationBuilder.CreateTable(
-                name: "SemiExpendableItems",
-                schema: "am",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Code = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
-                    Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    Description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
-                    UACSObjectCode = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: true),
-                    UnitOfMeasure = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    EstimatedUsefulLifeYears = table.Column<int>(type: "integer", nullable: true),
-                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    Version = table.Column<byte[]>(type: "bytea", nullable: false),
-                    CreatedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    CreatedBy = table.Column<string>(type: "text", nullable: true),
-                    LastModifiedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    LastModifiedBy = table.Column<string>(type: "text", nullable: true),
-                    DeletedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    DeletedBy = table.Column<string>(type: "text", nullable: true),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_SemiExpendableItems", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "SMIRItems",
                 schema: "am",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     SMIRId = table.Column<Guid>(type: "uuid", nullable: false),
-                    SemiExpendablePropertyId = table.Column<Guid>(type: "uuid", nullable: false),
+                    TangibleInventoryItemId = table.Column<Guid>(type: "uuid", nullable: false),
                     ItemNo = table.Column<int>(type: "integer", nullable: false),
                     Description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     UnitCost = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
-                    CategoryAtTimeOfIssuance = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false)
+                    AssetTypeAtTimeOfIssuance = table.Column<string>(type: "character varying(8)", maxLength: 8, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -511,12 +438,13 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                 });
 
             migrationBuilder.CreateTable(
-                name: "SMRRs",
+                name: "TangibleInventories",
                 schema: "am",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    SMRRNo = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
+                    TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    ReportNo = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
                     Date = table.Column<DateOnly>(type: "date", nullable: false),
                     ReceivedFrom = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     Address = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
@@ -536,7 +464,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_SMRRs", x => x.Id);
+                    table.PrimaryKey("PK_TangibleInventories", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -546,11 +474,11 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     ReportId = table.Column<Guid>(type: "uuid", nullable: false),
-                    SemiExpendablePropertyId = table.Column<Guid>(type: "uuid", nullable: false),
+                    TangibleInventoryItemId = table.Column<Guid>(type: "uuid", nullable: false),
                     ItemNo = table.Column<int>(type: "integer", nullable: false),
                     Description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     UnitCost = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
-                    CategoryAtTimeOfReport = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
+                    AssetTypeAtTimeOfReport = table.Column<string>(type: "character varying(8)", maxLength: 8, nullable: false),
                     ConditionRemarks = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true)
                 },
                 constraints: table =>
@@ -564,6 +492,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     ReportNo = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
                     Date = table.Column<DateOnly>(type: "date", nullable: false),
                     DisposalMethod = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
@@ -586,23 +515,21 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                 });
 
             migrationBuilder.CreateTable(
-                name: "SemiExpendableProperties",
+                name: "TangibleItems",
                 schema: "am",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    ItemId = table.Column<Guid>(type: "uuid", nullable: false),
                     PropertyNo = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
-                    SemiExpendableItemId = table.Column<Guid>(type: "uuid", nullable: false),
-                    SerialNo = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    PropertyClass = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    CategoryCode = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     AcquisitionDate = table.Column<DateOnly>(type: "date", nullable: false),
+                    Quantity = table.Column<int>(type: "integer", nullable: false),
                     UnitCost = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
-                    FundCluster = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
-                    Status = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
-                    Category = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
-                    CurrentCustodianId = table.Column<Guid>(type: "uuid", nullable: true),
                     Remarks = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
-                    SMRRItemId = table.Column<Guid>(type: "uuid", nullable: true),
-                    Version = table.Column<byte[]>(type: "bytea", nullable: false),
+                    TangibleInventoryItemId = table.Column<Guid>(type: "uuid", nullable: true),
                     CreatedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     CreatedBy = table.Column<string>(type: "text", nullable: true),
                     LastModifiedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
@@ -613,25 +540,30 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_SemiExpendableProperties", x => x.Id);
+                    table.PrimaryKey("PK_TangibleItems", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_SemiExpendableProperties_SemiExpendableItems_SemiExpendable~",
-                        column: x => x.SemiExpendableItemId,
+                        name: "FK_TangibleItems_PropertyItemCatalog_ItemId",
+                        column: x => x.ItemId,
                         principalSchema: "am",
-                        principalTable: "SemiExpendableItems",
+                        principalTable: "PropertyItemCatalog",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
-                name: "SMRRItems",
+                name: "TangibleInventoryItems",
                 schema: "am",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    SMRRId = table.Column<Guid>(type: "uuid", nullable: false),
+                    TangibleInventoryId = table.Column<Guid>(type: "uuid", nullable: false),
+                    TangibleItemId = table.Column<Guid>(type: "uuid", nullable: false),
                     Reference = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
-                    SemiExpendableItemId = table.Column<Guid>(type: "uuid", nullable: false),
+                    AssetType = table.Column<string>(type: "character varying(8)", maxLength: 8, nullable: false),
+                    ThresholdAmountUsed = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
+                    IsIssued = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                    PropertyNo = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
+                    ItemId = table.Column<Guid>(type: "uuid", nullable: false),
                     Description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     AcquisitionDate = table.Column<DateOnly>(type: "date", nullable: false),
                     Quantity = table.Column<int>(type: "integer", nullable: false),
@@ -640,19 +572,26 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_SMRRItems", x => x.Id);
+                    table.PrimaryKey("PK_TangibleInventoryItems", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_SMRRItems_SMRRs_SMRRId",
-                        column: x => x.SMRRId,
+                        name: "FK_TangibleInventoryItems_PropertyItemCatalog_ItemId",
+                        column: x => x.ItemId,
                         principalSchema: "am",
-                        principalTable: "SMRRs",
+                        principalTable: "PropertyItemCatalog",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_TangibleInventoryItems_TangibleInventories_TangibleInventor~",
+                        column: x => x.TangibleInventoryId,
+                        principalSchema: "am",
+                        principalTable: "TangibleInventories",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_SMRRItems_SemiExpendableItems_SemiExpendableItemId",
-                        column: x => x.SemiExpendableItemId,
+                        name: "FK_TangibleInventoryItems_TangibleItems_TangibleItemId",
+                        column: x => x.TangibleItemId,
                         principalSchema: "am",
-                        principalTable: "SemiExpendableItems",
+                        principalTable: "TangibleItems",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -664,12 +603,12 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     ICSId = table.Column<Guid>(type: "uuid", nullable: false),
-                    SemiExpendablePropertyId = table.Column<Guid>(type: "uuid", nullable: false),
+                    TangibleInventoryItemId = table.Column<Guid>(type: "uuid", nullable: false),
                     ItemNo = table.Column<int>(type: "integer", nullable: false),
                     Description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     UnitCost = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
                     EstimatedUsefulLifeYears = table.Column<int>(type: "integer", nullable: true),
-                    CategoryAtTimeOfIssuance = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false)
+                    AssetTypeAtTimeOfIssuance = table.Column<string>(type: "character varying(8)", maxLength: 8, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -682,10 +621,10 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_ICSItems_SemiExpendableProperties_SemiExpendablePropertyId",
-                        column: x => x.SemiExpendablePropertyId,
+                        name: "FK_ICSItems_TangibleInventoryItems_TangibleInventoryItemId",
+                        column: x => x.TangibleInventoryItemId,
                         principalSchema: "am",
-                        principalTable: "SemiExpendableProperties",
+                        principalTable: "TangibleInventoryItems",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -697,8 +636,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     SessionId = table.Column<Guid>(type: "uuid", nullable: false),
-                    PPEItemId = table.Column<Guid>(type: "uuid", nullable: true),
-                    SemiExpendablePropertyId = table.Column<Guid>(type: "uuid", nullable: true),
+                    TangibleInventoryItemId = table.Column<Guid>(type: "uuid", nullable: true),
                     PropertyNumber = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
                     Description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
                     UnitCost = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
@@ -713,13 +651,6 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                 {
                     table.PrimaryKey("PK_PhysicalCountEntries", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_PhysicalCountEntries_PPEItems_PPEItemId",
-                        column: x => x.PPEItemId,
-                        principalSchema: "am",
-                        principalTable: "PPEItems",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
                         name: "FK_PhysicalCountEntries_PhysicalCountSessions_SessionId",
                         column: x => x.SessionId,
                         principalSchema: "am",
@@ -727,10 +658,10 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_PhysicalCountEntries_SemiExpendableProperties_SemiExpendabl~",
-                        column: x => x.SemiExpendablePropertyId,
+                        name: "FK_PhysicalCountEntries_TangibleInventoryItems_TangibleInvento~",
+                        column: x => x.TangibleInventoryItemId,
                         principalSchema: "am",
-                        principalTable: "SemiExpendableProperties",
+                        principalTable: "TangibleInventoryItems",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -742,22 +673,22 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                 column: "ICSId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ICSItems_SemiExpendablePropertyId",
+                name: "IX_ICSItems_TangibleInventoryItemId",
                 schema: "am",
                 table: "ICSItems",
-                column: "SemiExpendablePropertyId");
+                column: "TangibleInventoryItemId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_InventoryCustodianSlips_AssetType",
+                schema: "am",
+                table: "InventoryCustodianSlips",
+                column: "AssetType");
 
             migrationBuilder.CreateIndex(
                 name: "IX_InventoryCustodianSlips_CancelledByRRSPId",
                 schema: "am",
                 table: "InventoryCustodianSlips",
                 column: "CancelledByRRSPId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_InventoryCustodianSlips_Category",
-                schema: "am",
-                table: "InventoryCustodianSlips",
-                column: "Category");
 
             migrationBuilder.CreateIndex(
                 name: "IX_InventoryCustodianSlips_Date",
@@ -770,13 +701,6 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                 schema: "am",
                 table: "InventoryCustodianSlips",
                 column: "ExpiresOn");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_InventoryCustodianSlips_ICSNo",
-                schema: "am",
-                table: "InventoryCustodianSlips",
-                column: "ICSNo",
-                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_InventoryCustodianSlips_IssuedFromEmployeeId",
@@ -809,22 +733,23 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                 column: "Status");
 
             migrationBuilder.CreateIndex(
+                name: "IX_InventoryCustodianSlips_TenantId_ICSNo",
+                schema: "am",
+                table: "InventoryCustodianSlips",
+                columns: new[] { "TenantId", "ICSNo" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_PARItems_PARId",
                 schema: "am",
                 table: "PARItems",
                 column: "PARId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_PARItems_PPEItemId",
+                name: "IX_PARItems_TangibleInventoryItemId",
                 schema: "am",
                 table: "PARItems",
-                column: "PPEItemId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_PhysicalCountEntries_PPEItemId",
-                schema: "am",
-                table: "PhysicalCountEntries",
-                column: "PPEItemId");
+                column: "TangibleInventoryItemId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_PhysicalCountEntries_Result",
@@ -833,28 +758,22 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                 column: "Result");
 
             migrationBuilder.CreateIndex(
-                name: "IX_PhysicalCountEntries_SemiExpendablePropertyId",
-                schema: "am",
-                table: "PhysicalCountEntries",
-                column: "SemiExpendablePropertyId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_PhysicalCountEntries_SessionId",
                 schema: "am",
                 table: "PhysicalCountEntries",
                 column: "SessionId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_PhysicalCountEntries_SessionId_PPEItemId",
+                name: "IX_PhysicalCountEntries_SessionId_TangibleInventoryItemId",
                 schema: "am",
                 table: "PhysicalCountEntries",
-                columns: new[] { "SessionId", "PPEItemId" });
+                columns: new[] { "SessionId", "TangibleInventoryItemId" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_PhysicalCountEntries_SessionId_SemiExpendablePropertyId",
+                name: "IX_PhysicalCountEntries_TangibleInventoryItemId",
                 schema: "am",
                 table: "PhysicalCountEntries",
-                columns: new[] { "SessionId", "SemiExpendablePropertyId" });
+                column: "TangibleInventoryItemId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_PhysicalCountSessions_CountDate",
@@ -863,17 +782,17 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                 column: "CountDate");
 
             migrationBuilder.CreateIndex(
-                name: "IX_PhysicalCountSessions_SessionNo",
-                schema: "am",
-                table: "PhysicalCountSessions",
-                column: "SessionNo",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
                 name: "IX_PhysicalCountSessions_Status",
                 schema: "am",
                 table: "PhysicalCountSessions",
                 column: "Status");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PhysicalCountSessions_TenantId_SessionNo",
+                schema: "am",
+                table: "PhysicalCountSessions",
+                columns: new[] { "TenantId", "SessionNo" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_PPEIRItems_PPEIRId",
@@ -882,10 +801,10 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                 column: "PPEIRId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_PPEIRItems_PPEItemId",
+                name: "IX_PPEIRItems_TangibleInventoryItemId",
                 schema: "am",
                 table: "PPEIRItems",
-                column: "PPEItemId");
+                column: "TangibleInventoryItemId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_PPEIssuanceReports_Date",
@@ -906,81 +825,17 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                 column: "IssuedToEmployeeId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_PPEIssuanceReports_PPEIRNo",
+                name: "IX_PPEIssuanceReports_TenantId_PPEIRNo",
                 schema: "am",
                 table: "PPEIssuanceReports",
-                column: "PPEIRNo",
+                columns: new[] { "TenantId", "PPEIRNo" },
                 unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_PPEItems_CurrentAccountableEmployeeId",
-                schema: "am",
-                table: "PPEItems",
-                column: "CurrentAccountableEmployeeId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_PPEItems_PropertyCode",
-                schema: "am",
-                table: "PPEItems",
-                column: "PropertyCode",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_PPEItems_PropertyNumber",
-                schema: "am",
-                table: "PPEItems",
-                column: "PropertyNumber",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_PPEItems_SourcePPERRId",
-                schema: "am",
-                table: "PPEItems",
-                column: "SourcePPERRId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_PPEItems_Status",
-                schema: "am",
-                table: "PPEItems",
-                column: "Status");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_PPEReceivingReports_Date",
-                schema: "am",
-                table: "PPEReceivingReports",
-                column: "Date");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_PPEReceivingReports_PPERRNo",
-                schema: "am",
-                table: "PPEReceivingReports",
-                column: "PPERRNo",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_PPEReceivingReports_ReceivedByEmployeeId",
-                schema: "am",
-                table: "PPEReceivingReports",
-                column: "ReceivedByEmployeeId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_PPERRItems_PPERRId",
-                schema: "am",
-                table: "PPERRItems",
-                column: "PPERRId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_PropertyAcknowledgementReceipts_Date",
                 schema: "am",
                 table: "PropertyAcknowledgementReceipts",
                 column: "Date");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_PropertyAcknowledgementReceipts_PARNo",
-                schema: "am",
-                table: "PropertyAcknowledgementReceipts",
-                column: "PARNo",
-                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_PropertyAcknowledgementReceipts_PARType",
@@ -993,6 +848,13 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                 schema: "am",
                 table: "PropertyAcknowledgementReceipts",
                 column: "ReceivedByEmployeeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PropertyAcknowledgementReceipts_TenantId_PARNo",
+                schema: "am",
+                table: "PropertyAcknowledgementReceipts",
+                columns: new[] { "TenantId", "PARNo" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_PropertyCodeCounters_TenantId_ClassCode_ItemCode_Year",
@@ -1008,10 +870,10 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                 column: "ReportId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_PropertyIncidentItems_SemiExpendablePropertyId",
+                name: "IX_PropertyIncidentItems_TangibleInventoryItemId",
                 schema: "am",
                 table: "PropertyIncidentItems",
-                column: "SemiExpendablePropertyId");
+                column: "TangibleInventoryItemId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_PropertyIncidentReports_AccountableEmployeeId",
@@ -1032,10 +894,23 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                 column: "IncidentType");
 
             migrationBuilder.CreateIndex(
-                name: "IX_PropertyIncidentReports_ReportNo",
+                name: "IX_PropertyIncidentReports_TenantId_ReportNo",
                 schema: "am",
                 table: "PropertyIncidentReports",
-                column: "ReportNo",
+                columns: new[] { "TenantId", "ReportNo" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PropertyItemCatalog_Name",
+                schema: "am",
+                table: "PropertyItemCatalog",
+                column: "Name");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PropertyItemCatalog_TenantId_Code",
+                schema: "am",
+                table: "PropertyItemCatalog",
+                columns: new[] { "TenantId", "Code" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -1063,10 +938,10 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                 column: "ReturnedByEmployeeId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ReceiptForReturnedProperties_RRSPNo",
+                name: "IX_ReceiptForReturnedProperties_TenantId_RRSPNo",
                 schema: "am",
                 table: "ReceiptForReturnedProperties",
-                column: "RRSPNo",
+                columns: new[] { "TenantId", "RRSPNo" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -1088,10 +963,10 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                 column: "ReturnedByEmployeeId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ReceiptsForReturnedPPE_RRPNo",
+                name: "IX_ReceiptsForReturnedPPE_TenantId_RRPNo",
                 schema: "am",
                 table: "ReceiptsForReturnedPPE",
-                column: "RRPNo",
+                columns: new[] { "TenantId", "RRPNo" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -1101,16 +976,16 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                 column: "CreatedOnUtc");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ReclassificationRecords_TenantId",
+                schema: "am",
+                table: "ReclassificationRecords",
+                column: "TenantId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ReclassificationRecords_ThresholdId",
                 schema: "am",
                 table: "ReclassificationRecords",
                 column: "ThresholdId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_RRPItems_PPEItemId",
-                schema: "am",
-                table: "RRPItems",
-                column: "PPEItemId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_RRPItems_RRPId",
@@ -1119,16 +994,22 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                 column: "RRPId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_RRPItems_TangibleInventoryItemId",
+                schema: "am",
+                table: "RRPItems",
+                column: "TangibleInventoryItemId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_RRSPItems_RRSPId",
                 schema: "am",
                 table: "RRSPItems",
                 column: "RRSPId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_RRSPItems_SemiExpendablePropertyId",
+                name: "IX_RRSPItems_TangibleInventoryItemId",
                 schema: "am",
                 table: "RRSPItems",
-                column: "SemiExpendablePropertyId");
+                column: "TangibleInventoryItemId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_SemiExpendableIssuanceRecords_Date",
@@ -1149,10 +1030,10 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                 column: "IssuedByEmployeeId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_SemiExpendableIssuanceRecords_SMIRNo",
+                name: "IX_SemiExpendableIssuanceRecords_TenantId_SMIRNo",
                 schema: "am",
                 table: "SemiExpendableIssuanceRecords",
-                column: "SMIRNo",
+                columns: new[] { "TenantId", "SMIRNo" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -1162,96 +1043,96 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                 column: "TransferredToTenantId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_SemiExpendableItems_Code",
-                schema: "am",
-                table: "SemiExpendableItems",
-                column: "Code",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_SemiExpendableItems_Name",
-                schema: "am",
-                table: "SemiExpendableItems",
-                column: "Name");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_SemiExpendableProperties_Category",
-                schema: "am",
-                table: "SemiExpendableProperties",
-                column: "Category");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_SemiExpendableProperties_CurrentCustodianId",
-                schema: "am",
-                table: "SemiExpendableProperties",
-                column: "CurrentCustodianId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_SemiExpendableProperties_PropertyNo",
-                schema: "am",
-                table: "SemiExpendableProperties",
-                column: "PropertyNo",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_SemiExpendableProperties_SemiExpendableItemId",
-                schema: "am",
-                table: "SemiExpendableProperties",
-                column: "SemiExpendableItemId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_SemiExpendableProperties_SMRRItemId",
-                schema: "am",
-                table: "SemiExpendableProperties",
-                column: "SMRRItemId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_SemiExpendableProperties_Status",
-                schema: "am",
-                table: "SemiExpendableProperties",
-                column: "Status");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_SMIRItems_SemiExpendablePropertyId",
-                schema: "am",
-                table: "SMIRItems",
-                column: "SemiExpendablePropertyId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_SMIRItems_SMIRId",
                 schema: "am",
                 table: "SMIRItems",
                 column: "SMIRId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_SMRRItems_SemiExpendableItemId",
+                name: "IX_SMIRItems_TangibleInventoryItemId",
                 schema: "am",
-                table: "SMRRItems",
-                column: "SemiExpendableItemId");
+                table: "SMIRItems",
+                column: "TangibleInventoryItemId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_SMRRItems_SMRRId",
+                name: "IX_TangibleInventories_Date",
                 schema: "am",
-                table: "SMRRItems",
-                column: "SMRRId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_SMRRs_Date",
-                schema: "am",
-                table: "SMRRs",
+                table: "TangibleInventories",
                 column: "Date");
 
             migrationBuilder.CreateIndex(
-                name: "IX_SMRRs_ReceivedByEmployeeId",
+                name: "IX_TangibleInventories_ReceivedByEmployeeId",
                 schema: "am",
-                table: "SMRRs",
+                table: "TangibleInventories",
                 column: "ReceivedByEmployeeId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_SMRRs_SMRRNo",
+                name: "IX_TangibleInventories_TenantId_ReportNo",
                 schema: "am",
-                table: "SMRRs",
-                column: "SMRRNo",
+                table: "TangibleInventories",
+                columns: new[] { "TenantId", "ReportNo" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TangibleInventoryItems_AssetType",
+                schema: "am",
+                table: "TangibleInventoryItems",
+                column: "AssetType");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TangibleInventoryItems_IsIssued",
+                schema: "am",
+                table: "TangibleInventoryItems",
+                column: "IsIssued");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TangibleInventoryItems_ItemId",
+                schema: "am",
+                table: "TangibleInventoryItems",
+                column: "ItemId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TangibleInventoryItems_TangibleInventoryId",
+                schema: "am",
+                table: "TangibleInventoryItems",
+                column: "TangibleInventoryId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TangibleInventoryItems_TangibleItemId",
+                schema: "am",
+                table: "TangibleInventoryItems",
+                column: "TangibleItemId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TangibleItems_ItemId",
+                schema: "am",
+                table: "TangibleItems",
+                column: "ItemId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TangibleItems_TangibleInventoryItemId",
+                schema: "am",
+                table: "TangibleItems",
+                column: "TangibleInventoryItemId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TangibleItems_TenantId_CategoryCode",
+                schema: "am",
+                table: "TangibleItems",
+                columns: new[] { "TenantId", "CategoryCode" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TangibleItems_TenantId_PropertyClass",
+                schema: "am",
+                table: "TangibleItems",
+                columns: new[] { "TenantId", "PropertyClass" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TangibleItems_TenantId_PropertyNo",
+                schema: "am",
+                table: "TangibleItems",
+                columns: new[] { "TenantId", "PropertyNo" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -1261,10 +1142,10 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                 column: "ReportId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_UnserviceablePropertyItems_SemiExpendablePropertyId",
+                name: "IX_UnserviceablePropertyItems_TangibleInventoryItemId",
                 schema: "am",
                 table: "UnserviceablePropertyItems",
-                column: "SemiExpendablePropertyId");
+                column: "TangibleInventoryItemId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_UnserviceablePropertyReports_ApprovedByEmployeeId",
@@ -1291,10 +1172,10 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                 column: "InspectedByEmployeeId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_UnserviceablePropertyReports_ReportNo",
+                name: "IX_UnserviceablePropertyReports_TenantId_ReportNo",
                 schema: "am",
                 table: "UnserviceablePropertyReports",
-                column: "ReportNo",
+                columns: new[] { "TenantId", "ReportNo" },
                 unique: true);
         }
 
@@ -1319,14 +1200,6 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
 
             migrationBuilder.DropTable(
                 name: "PPEIssuanceReports",
-                schema: "am");
-
-            migrationBuilder.DropTable(
-                name: "PPEReceivingReports",
-                schema: "am");
-
-            migrationBuilder.DropTable(
-                name: "PPERRItems",
                 schema: "am");
 
             migrationBuilder.DropTable(
@@ -1374,10 +1247,6 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                 schema: "am");
 
             migrationBuilder.DropTable(
-                name: "SMRRItems",
-                schema: "am");
-
-            migrationBuilder.DropTable(
                 name: "UnserviceablePropertyItems",
                 schema: "am");
 
@@ -1390,23 +1259,23 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                 schema: "am");
 
             migrationBuilder.DropTable(
-                name: "PPEItems",
-                schema: "am");
-
-            migrationBuilder.DropTable(
                 name: "PhysicalCountSessions",
                 schema: "am");
 
             migrationBuilder.DropTable(
-                name: "SemiExpendableProperties",
+                name: "TangibleInventoryItems",
                 schema: "am");
 
             migrationBuilder.DropTable(
-                name: "SMRRs",
+                name: "TangibleInventories",
                 schema: "am");
 
             migrationBuilder.DropTable(
-                name: "SemiExpendableItems",
+                name: "TangibleItems",
+                schema: "am");
+
+            migrationBuilder.DropTable(
+                name: "PropertyItemCatalog",
                 schema: "am");
         }
     }

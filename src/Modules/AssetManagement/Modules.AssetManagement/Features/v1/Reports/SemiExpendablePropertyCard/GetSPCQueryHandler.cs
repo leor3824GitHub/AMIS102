@@ -1,5 +1,6 @@
 using FSH.Framework.Core.Exceptions;
 using FSH.Modules.AssetManagement.Data;
+using FSH.Modules.AssetManagement.Domain;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
@@ -22,36 +23,36 @@ public sealed class GetSPCQueryHandler(AssetManagementDbContext dbContext)
             throw new NotFoundException($"Semi-expendable item with ID {query.ItemId} not found.");
         }
 
-        // Collect all property IDs for this item type (needed for non-SMRR queries).
-        var propertyIds = await dbContext.SemiExpendableProperties
+        // Collect all SE inventory-item IDs for this catalog type (SPC card = SE only).
+        var invItemIds = await dbContext.TangibleInventoryItems
             .IgnoreQueryFilters()
-            .Where(x => x.ItemId == query.ItemId)
+            .Where(x => x.ItemId == query.ItemId && x.AssetType == AssetType.SE)
             .Select(x => x.Id)
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
         var entries = new List<SPCEntryDto>();
 
-        // ── 1. Receipts via SMRR ──────────────────────────────────────────────
-        var smrrEntries = await (
-            from smrrItem in dbContext.SMRRItems
-                .Where(x => x.ItemId == query.ItemId)
-            join smrr in dbContext.SuppliesMaterialsReceivingReports.IgnoreQueryFilters()
-                on smrrItem.SMRRId equals smrr.Id
-            where (!query.DateFrom.HasValue || smrr.Date >= query.DateFrom.Value)
-               && (!query.DateTo.HasValue   || smrr.Date <= query.DateTo.Value)
-            select new { smrr.Date, smrr.SMRRNo, smrrItem.Quantity, smrrItem.UnitCost, smrrItem.Description })
-            .ToListAsync(cancellationToken)
-            .ConfigureAwait(false);
-
-        entries.AddRange(smrrEntries.Select(x =>
-            new SPCEntryDto(x.Date, "SMRR", x.SMRRNo, x.Quantity, 0, x.UnitCost, 0, x.Description)));
-
-        if (propertyIds.Count > 0)
+        if (invItemIds.Count > 0)
         {
+            // ── 1. Receipts via TangibleInventory ─────────────────────────────
+            var receiptEntries = await (
+                from inv in dbContext.TangibleInventoryItems.IgnoreQueryFilters()
+                    .Where(x => invItemIds.Contains(x.Id))
+                join ti in dbContext.TangibleInventories.IgnoreQueryFilters()
+                    on inv.TangibleInventoryId equals ti.Id
+                where (!query.DateFrom.HasValue || ti.Date >= query.DateFrom.Value)
+                   && (!query.DateTo.HasValue   || ti.Date <= query.DateTo.Value)
+                select new { ti.Date, ti.ReportNo, inv.Quantity, inv.UnitCost, inv.Description })
+                .ToListAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            entries.AddRange(receiptEntries.Select(x =>
+                new SPCEntryDto(x.Date, "TangibleInventory", x.ReportNo, x.Quantity, 0, x.UnitCost, 0, x.Description)));
+
             // ── 2. Issuances via ICS ──────────────────────────────────────────
             var icsRaw = await (
-                from icsItem in dbContext.ICSItems.Where(x => propertyIds.Contains(x.SemiExpendablePropertyId))
+                from icsItem in dbContext.ICSItems.Where(x => invItemIds.Contains(x.TangibleInventoryItemId))
                 join ics in dbContext.InventoryCustodianSlips.IgnoreQueryFilters()
                     on icsItem.ICSId equals ics.Id
                 where (!query.DateFrom.HasValue || ics.Date >= query.DateFrom.Value)
@@ -66,7 +67,7 @@ public sealed class GetSPCQueryHandler(AssetManagementDbContext dbContext)
 
             // ── 3. Returns via RRSP ───────────────────────────────────────────
             var rrspRaw = await (
-                from rrspItem in dbContext.RRSPItems.Where(x => propertyIds.Contains(x.SemiExpendablePropertyId))
+                from rrspItem in dbContext.RRSPItems.Where(x => invItemIds.Contains(x.TangibleInventoryItemId))
                 join rrsp in dbContext.ReceiptForReturnedProperties.IgnoreQueryFilters()
                     on rrspItem.RRSPId equals rrsp.Id
                 where (!query.DateFrom.HasValue || rrsp.Date >= query.DateFrom.Value)
@@ -81,7 +82,7 @@ public sealed class GetSPCQueryHandler(AssetManagementDbContext dbContext)
 
             // ── 4. Transfers via SMIR ─────────────────────────────────────────
             var smirRaw = await (
-                from smirItem in dbContext.SMIRItems.Where(x => propertyIds.Contains(x.SemiExpendablePropertyId))
+                from smirItem in dbContext.SMIRItems.Where(x => invItemIds.Contains(x.TangibleInventoryItemId))
                 join smir in dbContext.SemiExpendableIssuanceRecords.IgnoreQueryFilters()
                     on smirItem.SMIRId equals smir.Id
                 where (!query.DateFrom.HasValue || smir.Date >= query.DateFrom.Value)
@@ -96,7 +97,7 @@ public sealed class GetSPCQueryHandler(AssetManagementDbContext dbContext)
 
             // ── 5. Incidents via RLSDDSP ──────────────────────────────────────
             var pirRaw = await (
-                from pirItem in dbContext.PropertyIncidentItems.Where(x => propertyIds.Contains(x.SemiExpendablePropertyId))
+                from pirItem in dbContext.PropertyIncidentItems.Where(x => invItemIds.Contains(x.TangibleInventoryItemId))
                 join pir in dbContext.PropertyIncidentReports.IgnoreQueryFilters()
                     on pirItem.ReportId equals pir.Id
                 where (!query.DateFrom.HasValue || pir.Date >= query.DateFrom.Value)
@@ -112,8 +113,8 @@ public sealed class GetSPCQueryHandler(AssetManagementDbContext dbContext)
                     g.Key.IncidentType.ToString())));
 
             // ── 6. Disposals via IIRUSP ───────────────────────────────────────
-            var iiruспRaw = await (
-                from iurItem in dbContext.UnserviceablePropertyItems.Where(x => propertyIds.Contains(x.SemiExpendablePropertyId))
+            var iuruspRaw = await (
+                from iurItem in dbContext.UnserviceablePropertyItems.Where(x => invItemIds.Contains(x.TangibleInventoryItemId))
                 join iur in dbContext.UnserviceablePropertyReports.IgnoreQueryFilters()
                     on iurItem.ReportId equals iur.Id
                 where (!query.DateFrom.HasValue || iur.Date >= query.DateFrom.Value)
@@ -122,7 +123,7 @@ public sealed class GetSPCQueryHandler(AssetManagementDbContext dbContext)
                 .ToListAsync(cancellationToken)
                 .ConfigureAwait(false);
 
-            entries.AddRange(iiruспRaw
+            entries.AddRange(iuruspRaw
                 .GroupBy(x => new { x.Date, x.ReportNo, x.DisposalMethod, x.UnitCost })
                 .Select(g => new SPCEntryDto(
                     g.Key.Date, "IIRUSP", g.Key.ReportNo, 0, g.Count(), g.Key.UnitCost, 0,

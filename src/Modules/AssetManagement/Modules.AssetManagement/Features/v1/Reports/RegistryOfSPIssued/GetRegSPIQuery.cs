@@ -5,12 +5,11 @@ namespace FSH.Modules.AssetManagement.Features.v1.Reports.RegistryOfSPIssued;
 
 /// <summary>
 /// Generates a Registry of Semi-Expendable Property Issued (RegSPI) for a specific employee.
-/// Shows all ICS records (current and historical) for that employee,
-/// with per-line property detail.
+/// Shows all ICS records (current and historical) for that employee, with per-line property detail.
 /// </summary>
 public sealed record GetRegSPIQuery(
     Guid EmployeeId,
-    AssetCategory? Category,
+    AssetType? AssetType,
     ICSStatus? Status,
     int PageNumber = 1,
     int PageSize   = 20) : IQuery<PagedRegSPIResponse>;
@@ -27,11 +26,11 @@ public sealed record RegSPIEntryDto(
     string ICSNo,
     DateOnly Date,
     string? FundCluster,
-    Guid PropertyId,
+    Guid TangibleInventoryItemId,
     string PropertyNo,
     string ItemCode,
     string ItemName,
-    string Category,
+    string AssetType,
     decimal UnitCost,
     int? EstimatedUsefulLifeYears,
     DateOnly? ExpiresOn,

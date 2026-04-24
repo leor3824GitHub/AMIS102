@@ -32,26 +32,29 @@ public sealed class CreatePPEIRCommandHandler : ICommandHandler<CreatePPEIRComma
             ]);
         }
 
-        var requestedIds = command.Items.Select(x => x.PPEItemId).Distinct().ToList();
-        var ppeItems = await _dbContext.PPEItems
-            .Where(x => requestedIds.Contains(x.Id))
-            .ToListAsync(cancellationToken)
+        var requestedItemIds = command.Items.Select(x => x.TangibleInventoryItemId).Distinct().ToList();
+
+        if (requestedItemIds.Count != command.Items.Count)
+        {
+            throw new FluentValidation.ValidationException(
+            [
+                new FluentValidation.Results.ValidationFailure(nameof(command.Items), "Duplicate inventory item entries are not allowed in a single PPEIR.")
+            ]);
+        }
+
+        var invItems = await _dbContext.TangibleInventoryItems
+            .Where(x => requestedItemIds.Contains(x.Id))
+            .ToDictionaryAsync(x => x.Id, cancellationToken)
             .ConfigureAwait(false);
 
-        foreach (var ppeItemId in requestedIds)
+        foreach (var itemId in requestedItemIds)
         {
-            var ppeItem = ppeItems.FirstOrDefault(x => x.Id == ppeItemId)
-                ?? throw new KeyNotFoundException($"PPE item with ID {ppeItemId} not found.");
+            if (!invItems.TryGetValue(itemId, out var invItem))
+                throw new KeyNotFoundException($"TangibleInventoryItem with ID {itemId} not found.");
 
-            if (ppeItem.Status is not (PPEItemStatus.OnHand or PPEItemStatus.IssuedPAR))
-            {
-                throw new FluentValidation.ValidationException(
-                [
-                    new FluentValidation.Results.ValidationFailure(
-                        nameof(ppeItemId),
-                        $"PPE item '{ppeItem.PropertyCode}' cannot be transferred (Status: {ppeItem.Status}).")
-                ]);
-            }
+            if (invItem.AssetType != AssetType.PPE)
+                throw new InvalidOperationException(
+                    $"TangibleInventoryItem {invItem.PropertyNo} has AssetType '{invItem.AssetType}'. Only PPE items can be transferred via PPEIR.");
         }
 
         string tenantId = _currentUser.GetTenant() ?? string.Empty;
@@ -73,22 +76,23 @@ public sealed class CreatePPEIRCommandHandler : ICommandHandler<CreatePPEIRComma
         ppeir.CreatedBy = _currentUser.GetUserId().ToString();
         _dbContext.PPEIssuanceReports.Add(ppeir);
 
-        foreach (var (itemRequest, itemNo) in command.Items.Select((r, i) => (r, i + 1)))
+        int itemNo = 1;
+        foreach (var itemRequest in command.Items)
         {
-            var ppeItem = ppeItems.First(x => x.Id == itemRequest.PPEItemId);
+            var invItem = invItems[itemRequest.TangibleInventoryItemId];
 
             var ppeirItem = PPEIRItem.Create(
                 ppeir.Id,
-                ppeItem.Id,
+                invItem.Id,
                 itemNo,
-                ppeItem.PropertyCode,
-                ppeItem.SerialNumber,
-                ppeItem.Description,
-                ppeItem.DateAcquired,
-                ppeItem.UnitCost);
+                invItem.PropertyNo,
+                null, // SerialNumber — not on TangibleInventoryItem snapshot
+                invItem.Description ?? string.Empty,
+                invItem.AcquisitionDate,
+                invItem.UnitCost);
 
             _dbContext.PPEIRItems.Add(ppeirItem);
-            ppeItem.MarkTransferred();
+            itemNo++;
         }
 
         await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);

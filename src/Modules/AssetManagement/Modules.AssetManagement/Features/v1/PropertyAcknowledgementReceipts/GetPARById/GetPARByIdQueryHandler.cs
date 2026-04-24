@@ -18,26 +18,23 @@ public sealed class GetPARByIdQueryHandler(AssetManagementDbContext dbContext)
             throw new KeyNotFoundException($"Property Acknowledgement Receipt with ID {query.Id} not found.");
         }
 
-        var items = await dbContext.PARItems
-            .Where(x => x.PARId == query.Id)
-            .Join(
-                dbContext.PPEItems,
-                item => item.PPEItemId,
-                ppe => ppe.Id,
-                (item, ppe) => new PARItemDto(
-                    item.Id,
-                    item.ItemNo,
-                    item.PPEItemId,
-                    ppe.PropertyCode,
-                    ppe.PropertyNumber,
-                    item.Quantity,
-                    item.Unit,
-                    item.ItemDescription,
-                    item.UnitCost,
-                    item.TotalCost,
-                    item.EstimatedUsefulLifeYears,
-                    item.DateAcquired))
-            .OrderBy(x => x.ItemNo)
+        var items = await (
+            from item in dbContext.PARItems.Where(x => x.PARId == query.Id)
+            join inv in dbContext.TangibleInventoryItems.IgnoreQueryFilters()
+                on item.TangibleInventoryItemId equals inv.Id
+            orderby item.ItemNo
+            select new PARItemDto(
+                item.Id,
+                item.ItemNo,
+                item.TangibleInventoryItemId,
+                inv.PropertyNo,
+                item.Quantity,
+                item.Unit,
+                item.ItemDescription,
+                item.UnitCost,
+                item.TotalCost,
+                item.EstimatedUsefulLifeYears,
+                item.DateAcquired))
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 

@@ -3,20 +3,20 @@ using Mediator;
 namespace FSH.Modules.AssetManagement.Features.v1.Reports.PropertyHistory;
 
 /// <summary>
-/// Returns the complete lifecycle audit trail for a single semi-expendable property unit,
-/// from initial receipt through every document it appears in.
+/// Returns the complete lifecycle audit trail for a single tangible inventory item,
+/// from initial receipt through every downstream document it appears in.
 /// </summary>
-public sealed record GetPropertyHistoryQuery(Guid SemiExpendablePropertyId) : IQuery<PropertyHistoryDto>;
+public sealed record GetPropertyHistoryQuery(Guid TangibleInventoryItemId) : IQuery<PropertyHistoryDto>;
 
 public sealed record PropertyHistoryDto(
-    Guid PropertyId,
+    Guid TangibleInventoryItemId,
     string PropertyNo,
     string ItemCode,
     string ItemName,
-    string? SerialNo,
-    string Category,
+    string AssetType,
     decimal UnitCost,
-    string CurrentStatus,
+    decimal ThresholdAmountUsed,
+    bool IsIssued,
     Guid? CurrentCustodianId,
     IReadOnlyList<PropertyHistoryEventDto> Events);
 

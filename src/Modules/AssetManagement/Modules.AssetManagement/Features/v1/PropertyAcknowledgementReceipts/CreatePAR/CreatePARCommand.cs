@@ -13,7 +13,7 @@ public sealed record CreatePARCommand(
     IReadOnlyList<CreatePARItemRequest> Items) : ICommand<CreatePARResult>;
 
 public sealed record CreatePARItemRequest(
-    Guid PPEItemId,
+    Guid TangibleInventoryItemId,
     int Quantity,
     string Unit,
     string ItemDescription);

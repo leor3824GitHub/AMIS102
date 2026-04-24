@@ -12,60 +12,58 @@ public sealed class GetPropertyHistoryQueryHandler(AssetManagementDbContext dbCo
         GetPropertyHistoryQuery query,
         CancellationToken cancellationToken)
     {
-        var propId = query.SemiExpendablePropertyId;
+        var invItemId = query.TangibleInventoryItemId;
 
-        // Load the property (no query filter — may be disposed/transferred).
-        var property = await dbContext.SemiExpendableProperties
-            .IgnoreQueryFilters()
-            .Include(x => x.Item)
-            .Where(x => x.Id == propId)
-            .Select(x => new
+        // Header — load the inventory item joined to its catalog entry.
+        var header = await (
+            from inv in dbContext.TangibleInventoryItems.IgnoreQueryFilters()
+            join catalog in dbContext.PropertyItemCatalog.IgnoreQueryFilters()
+                on inv.ItemId equals catalog.Id
+            where inv.Id == invItemId
+            select new
             {
-                x.Id,
-                x.PropertyNo,
-                x.SerialNo,
-                x.Category,
-                x.UnitCost,
-                x.Status,
-                x.CurrentCustodianId,
-                ItemCode = x.Item.Code,
-                ItemName = x.Item.Name,
+                inv.Id,
+                inv.PropertyNo,
+                inv.AssetType,
+                inv.UnitCost,
+                inv.ThresholdAmountUsed,
+                inv.IsIssued,
+                ItemCode = catalog.Code,
+                ItemName = catalog.Name,
             })
             .FirstOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false);
 
-        if (property is null)
+        if (header is null)
         {
-            throw new NotFoundException($"Semi-expendable property with ID {propId} not found.");
+            throw new NotFoundException($"Tangible inventory item with ID {invItemId} not found.");
         }
 
         var events = new List<PropertyHistoryEventDto>();
 
-        // 1. SMRR receipt (the property's origin document).
-        var smrrEvent = await (
-            from smrrItem in dbContext.SMRRItems
-                .Where(x => dbContext.SemiExpendableProperties
-                    .IgnoreQueryFilters()
-                    .Any(p => p.Id == propId && p.SMRRItemId == x.Id))
-            join smrr in dbContext.SuppliesMaterialsReceivingReports.IgnoreQueryFilters()
-                on smrrItem.SMRRId equals smrr.Id
-            select new { smrr.Date, smrr.SMRRNo, smrr.ReceivedFrom })
+        // 1. Initial receipt — via parent TangibleInventory.
+        var receiptEvent = await (
+            from inv in dbContext.TangibleInventoryItems.IgnoreQueryFilters()
+            join ti in dbContext.TangibleInventories.IgnoreQueryFilters()
+                on inv.TangibleInventoryId equals ti.Id
+            where inv.Id == invItemId
+            select new { ti.Date, ti.ReportNo, ti.ReceivedFrom })
             .FirstOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false);
 
-        if (smrrEvent is not null)
+        if (receiptEvent is not null)
         {
             events.Add(new PropertyHistoryEventDto(
-                smrrEvent.Date,
+                receiptEvent.Date,
                 "Received",
-                "SMRR",
-                smrrEvent.SMRRNo,
-                $"Received from: {smrrEvent.ReceivedFrom}"));
+                "TangibleInventory",
+                receiptEvent.ReportNo,
+                $"Received from: {receiptEvent.ReceivedFrom}"));
         }
 
-        // 2. ICS issuances (all, including historical).
+        // 2. ICS issuances (SE track).
         var icsEvents = await (
-            from icsItem in dbContext.ICSItems.Where(x => x.SemiExpendablePropertyId == propId)
+            from icsItem in dbContext.ICSItems.Where(x => x.TangibleInventoryItemId == invItemId)
             join ics in dbContext.InventoryCustodianSlips.IgnoreQueryFilters()
                 on icsItem.ICSId equals ics.Id
             orderby ics.Date
@@ -83,9 +81,57 @@ public sealed class GetPropertyHistoryQueryHandler(AssetManagementDbContext dbCo
                 $"Issued to employee: {e.ReceivedByEmployeeId} | ICS status: {e.Status}"));
         }
 
-        // 3. RRSP returns.
+        // 3. PAR issuances (PPE track).
+        var parEvents = await (
+            from parItem in dbContext.PARItems.Where(x => x.TangibleInventoryItemId == invItemId)
+            join par in dbContext.PropertyAcknowledgementReceipts.IgnoreQueryFilters()
+                on parItem.PARId equals par.Id
+            orderby par.Date
+            select new { par.Date, par.PARNo, par.ReceivedByEmployeeId, par.PARType })
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        foreach (var e in parEvents)
+        {
+            events.Add(new PropertyHistoryEventDto(
+                e.Date,
+                "Issued",
+                "PAR",
+                e.PARNo,
+                $"Issued to employee: {e.ReceivedByEmployeeId} | PAR type: {e.PARType}"));
+        }
+
+        // 4. PPEIR events (PPE depreciation / re-issuance records).
+        var ppeirEvents = await (
+            from ppeirItem in dbContext.PPEIRItems.Where(x => x.TangibleInventoryItemId == invItemId)
+            join ppeir in dbContext.PPEIssuanceReports.IgnoreQueryFilters()
+                on ppeirItem.PPEIRId equals ppeir.Id
+            orderby ppeir.Date
+            select new
+            {
+                ppeir.Date,
+                ppeir.PPEIRNo,
+                ppeirItem.AccumulatedDepreciation,
+                ppeirItem.BookValue,
+            })
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        foreach (var e in ppeirEvents)
+        {
+            var parts = new List<string>();
+            if (e.AccumulatedDepreciation.HasValue)
+                parts.Add($"Accum. Dep.: {e.AccumulatedDepreciation:N2}");
+            if (e.BookValue.HasValue)
+                parts.Add($"Book Value: {e.BookValue:N2}");
+            var details = parts.Count > 0 ? string.Join(" | ", parts) : null;
+
+            events.Add(new PropertyHistoryEventDto(e.Date, "Depreciation", "PPEIR", e.PPEIRNo, details));
+        }
+
+        // 5. RRSP returns (SE track).
         var rrspEvents = await (
-            from rrspItem in dbContext.RRSPItems.Where(x => x.SemiExpendablePropertyId == propId)
+            from rrspItem in dbContext.RRSPItems.Where(x => x.TangibleInventoryItemId == invItemId)
             join rrsp in dbContext.ReceiptForReturnedProperties.IgnoreQueryFilters()
                 on rrspItem.RRSPId equals rrsp.Id
             orderby rrsp.Date
@@ -103,9 +149,29 @@ public sealed class GetPropertyHistoryQueryHandler(AssetManagementDbContext dbCo
                 $"Returned by employee: {e.ReturnedByEmployeeId}"));
         }
 
-        // 4. SMIR transfers.
+        // 6. RRP returns (PPE track).
+        var rrpEvents = await (
+            from rrpItem in dbContext.RRPItems.Where(x => x.TangibleInventoryItemId == invItemId)
+            join rrp in dbContext.ReceiptsForReturnedPPE.IgnoreQueryFilters()
+                on rrpItem.RRPId equals rrp.Id
+            orderby rrp.Date
+            select new { rrp.Date, rrp.RRPNo, rrp.ReturnedByEmployeeId, rrp.ReturnCategory })
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        foreach (var e in rrpEvents)
+        {
+            events.Add(new PropertyHistoryEventDto(
+                e.Date,
+                "Returned",
+                "RRP",
+                e.RRPNo,
+                $"Returned by employee: {e.ReturnedByEmployeeId} | Category: {e.ReturnCategory}"));
+        }
+
+        // 7. SMIR transfers.
         var smirEvents = await (
-            from smirItem in dbContext.SMIRItems.Where(x => x.SemiExpendablePropertyId == propId)
+            from smirItem in dbContext.SMIRItems.Where(x => x.TangibleInventoryItemId == invItemId)
             join smir in dbContext.SemiExpendableIssuanceRecords.IgnoreQueryFilters()
                 on smirItem.SMIRId equals smir.Id
             orderby smir.Date
@@ -129,9 +195,9 @@ public sealed class GetPropertyHistoryQueryHandler(AssetManagementDbContext dbCo
             events.Add(new PropertyHistoryEventDto(e.Date, "Transferred", "SMIR", e.SMIRNo, details));
         }
 
-        // 5. RLSDDSP incidents.
+        // 8. Incident reports.
         var pirEvents = await (
-            from pirItem in dbContext.PropertyIncidentItems.Where(x => x.SemiExpendablePropertyId == propId)
+            from pirItem in dbContext.PropertyIncidentItems.Where(x => x.TangibleInventoryItemId == invItemId)
             join pir in dbContext.PropertyIncidentReports.IgnoreQueryFilters()
                 on pirItem.ReportId equals pir.Id
             orderby pir.Date
@@ -149,9 +215,9 @@ public sealed class GetPropertyHistoryQueryHandler(AssetManagementDbContext dbCo
                 e.IncidentDetails));
         }
 
-        // 6. IIRUSP disposals.
+        // 9. Unserviceable / disposal reports.
         var iurEvents = await (
-            from iurItem in dbContext.UnserviceablePropertyItems.Where(x => x.SemiExpendablePropertyId == propId)
+            from iurItem in dbContext.UnserviceablePropertyItems.Where(x => x.TangibleInventoryItemId == invItemId)
             join iur in dbContext.UnserviceablePropertyReports.IgnoreQueryFilters()
                 on iurItem.ReportId equals iur.Id
             orderby iur.Date
@@ -169,7 +235,32 @@ public sealed class GetPropertyHistoryQueryHandler(AssetManagementDbContext dbCo
                 $"Method: {e.DisposalMethod}" + (e.ConditionRemarks is null ? "" : $" | {e.ConditionRemarks}")));
         }
 
-        // Sort events chronologically; within same date preserve document-type order.
+        // Determine current custodian from the most-recent active ICS/PAR (if still issued).
+        Guid? currentCustodianId = null;
+        if (header.IsIssued)
+        {
+            var latestIcs = await (
+                from icsItem in dbContext.ICSItems.Where(x => x.TangibleInventoryItemId == invItemId)
+                join ics in dbContext.InventoryCustodianSlips.IgnoreQueryFilters()
+                    on icsItem.ICSId equals ics.Id
+                orderby ics.Date descending
+                select (Guid?)ics.ReceivedByEmployeeId)
+                .FirstOrDefaultAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            var latestPar = await (
+                from parItem in dbContext.PARItems.Where(x => x.TangibleInventoryItemId == invItemId)
+                join par in dbContext.PropertyAcknowledgementReceipts.IgnoreQueryFilters()
+                    on parItem.PARId equals par.Id
+                orderby par.Date descending
+                select (Guid?)par.ReceivedByEmployeeId)
+                .FirstOrDefaultAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            currentCustodianId = latestIcs ?? latestPar;
+        }
+
+        // Sort events chronologically; within same date, preserve document-no ordering.
         events.Sort((a, b) =>
         {
             var dateCmp = a.EventDate.CompareTo(b.EventDate);
@@ -177,15 +268,15 @@ public sealed class GetPropertyHistoryQueryHandler(AssetManagementDbContext dbCo
         });
 
         return new PropertyHistoryDto(
-            property.Id,
-            property.PropertyNo,
-            property.ItemCode,
-            property.ItemName,
-            property.SerialNo,
-            property.Category.ToString(),
-            property.UnitCost,
-            property.Status.ToString(),
-            property.CurrentCustodianId,
+            header.Id,
+            header.PropertyNo,
+            header.ItemCode,
+            header.ItemName,
+            header.AssetType.ToString(),
+            header.UnitCost,
+            header.ThresholdAmountUsed,
+            header.IsIssued,
+            currentCustodianId,
             events);
     }
 }

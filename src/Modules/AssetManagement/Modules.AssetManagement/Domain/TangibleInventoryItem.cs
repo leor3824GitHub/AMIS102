@@ -98,4 +98,21 @@ public sealed class TangibleInventoryItem : BaseEntity<Guid>
     /// referencing this inventory item.
     /// </summary>
     public void MarkIssued() => IsIssued = true;
+
+    /// <summary>
+    /// Marks this item as returned (no longer issued).  Called when an RRSP (SE) or
+    /// RRP (PPE) is created returning this inventory item.  Allows the item to be
+    /// re-issued via a new ICS/PAR.
+    /// </summary>
+    public void MarkReturned() => IsIssued = false;
+
+    /// <summary>
+    /// Reclassifies this inventory item when the capitalization threshold policy changes.
+    /// Updates both AssetType and the snapshot ThresholdAmountUsed to reflect the new policy.
+    /// </summary>
+    public void Reclassify(AssetType newAssetType, decimal newThresholdAmount)
+    {
+        AssetType           = newAssetType;
+        ThresholdAmountUsed = newThresholdAmount;
+    }
 }

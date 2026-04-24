@@ -132,10 +132,10 @@
                                             }
                                         </td>
                                         <td>
-                                            @if (!string.IsNullOrWhiteSpace(employee.OwnerOfficeCode))
+                                            @if (!string.IsNullOrWhiteSpace(employee.OfficeCode))
                                             {
                                                 <MudChip T="string" Size="Size.Small" Color="Color.Warning" Label="true"
-                                                         Style="font-family:monospace">@employee.OwnerOfficeCode</MudChip>
+                                                         Style="font-family:monospace">@employee.OfficeCode</MudChip>
                                             }
                                             else
                                             {
@@ -148,7 +148,7 @@
                                                                                         ? "Active" : "Inactive")</MudChip>
                                             </td>
                                             <td>
-                                                @if (IsOwnedByMe(employee.OwnerOfficeCode))
+                                                @if (IsOwnedByMe(employee.OfficeCode))
                                                 {
                                                     <MudStack Row="true" Spacing="1">
                                                         <MudTooltip Text="Edit employee">
@@ -163,7 +163,7 @@
                                                 }
                                                 else
                                                 {
-                                                    <MudTooltip Text="@(string.IsNullOrWhiteSpace(employee.OwnerOfficeCode) ? "Shared record — read only" : "Owned by another office — read only")">
+                                                    <MudTooltip Text="Owned by another office — read only">
                                                         <MudIconButton Icon="@Icons.Material.Filled.Lock" Size="Size.Small" Color="Color.Default" Disabled="true" />
                                                     </MudTooltip>
                                                 }

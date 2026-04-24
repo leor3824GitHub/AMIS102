@@ -23,8 +23,7 @@ public sealed class GetPhysicalCountSessionByIdQueryHandler(AssetManagementDbCon
             .OrderBy(x => x.PropertyNumber)
             .Select(x => new PhysicalCountEntryDto(
                 x.Id,
-                x.PPEItemId,
-                x.SemiExpendablePropertyId,
+                x.TangibleInventoryItemId,
                 x.PropertyNumber,
                 x.Description,
                 x.UnitCost,

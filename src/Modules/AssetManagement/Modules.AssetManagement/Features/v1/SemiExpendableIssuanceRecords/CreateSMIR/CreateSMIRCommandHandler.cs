@@ -33,37 +33,30 @@ public sealed class CreateSMIRCommandHandler : ICommandHandler<CreateSMIRCommand
             ]);
         }
 
-        var propertyIds = command.Items.Select(x => x.SemiExpendablePropertyId).Distinct().ToList();
+        var invItemIds = command.Items.Select(x => x.TangibleInventoryItemId).Distinct().ToList();
 
-        if (propertyIds.Count != command.Items.Count)
+        if (invItemIds.Count != command.Items.Count)
         {
             throw new FluentValidation.ValidationException(
             [
-                new FluentValidation.Results.ValidationFailure(nameof(command.Items), "Duplicate property entries are not allowed in a single SMIR.")
+                new FluentValidation.Results.ValidationFailure(nameof(command.Items), "Duplicate inventory item entries are not allowed in a single SMIR.")
             ]);
         }
 
-        var properties = await _dbContext.SemiExpendableProperties
-            .Where(x => propertyIds.Contains(x.Id))
+        var invItems = await _dbContext.TangibleInventoryItems
+            .Where(x => invItemIds.Contains(x.Id))
             .ToDictionaryAsync(x => x.Id, cancellationToken)
             .ConfigureAwait(false);
 
-        foreach (var propertyId in propertyIds)
+        foreach (var itemId in invItemIds)
         {
-            if (!properties.TryGetValue(propertyId, out var prop))
-            {
-                throw new NotFoundException($"Semi-expendable property with ID {propertyId} not found.");
-            }
+            if (!invItems.TryGetValue(itemId, out var invItem))
+                throw new NotFoundException($"TangibleInventoryItem with ID {itemId} not found.");
 
-            // Only OnHand or Returned properties can be transferred.
-            // Issued = still under active ICS; supply officer must collect via RRSP first.
-            if (prop.Status != PropertyStatus.OnHand && prop.Status != PropertyStatus.Returned)
-            {
+            if (invItem.IsIssued)
                 throw new InvalidOperationException(
-                    $"Property {prop.PropertyNo} has status '{prop.Status}' and cannot be issued via SMIR. " +
-                    $"Only OnHand or Returned properties can be transferred. " +
-                    $"If the property is Issued, the employee must first return it via RRSP.");
-            }
+                    $"TangibleInventoryItem {invItem.PropertyNo} is currently issued and cannot be transferred via SMIR. " +
+                    "The employee must first return it via RRSP.");
         }
 
         string tenantId = _currentUser.GetTenant() ?? string.Empty;
@@ -86,27 +79,26 @@ public sealed class CreateSMIRCommandHandler : ICommandHandler<CreateSMIRCommand
         int itemNo = 1;
         foreach (var itemRequest in command.Items)
         {
-            var property = properties[itemRequest.SemiExpendablePropertyId];
+            var invItem = invItems[itemRequest.TangibleInventoryItemId];
 
             var smirItem = SMIRItem.Create(
                 smir.Id,
-                property.Id,
+                invItem.Id,
                 itemNo,
-                itemRequest.Description ?? property.PropertyNo,
-                property.UnitCost,
-                property.Category);
+                itemRequest.Description ?? invItem.PropertyNo,
+                invItem.UnitCost,
+                invItem.AssetType);
 
             _dbContext.SMIRItems.Add(smirItem);
 
-            // Mark as Transferred — removed from active inventory, audit trail preserved.
-            property.SetStatus(PropertyStatus.Transferred, custodianId: null);
-            property.LastModifiedBy = userId;
+            // Mark the inventory item as issued — transferred out of the current tenant.
+            invItem.MarkIssued();
 
             itemNo++;
         }
 
         await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-        return new CreateSMIRResult(smir.Id, smir.SMIRNo, propertyIds.Count);
+        return new CreateSMIRResult(smir.Id, smir.SMIRNo, invItemIds.Count);
     }
 }

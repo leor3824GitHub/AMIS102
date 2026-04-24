@@ -58,13 +58,12 @@ public sealed class GetRRSPListQueryHandler(AssetManagementDbContext dbContext)
             .ConfigureAwait(false);
 
         // Load ICS numbers for display.
-        var icsIds = await dbContext.ReceiptForReturnedProperties
+        var icsIdSet = await dbContext.ReceiptForReturnedProperties
             .Where(x => rrspIds.Contains(x.Id))
-            .Select(x => new { x.Id, x.ICSId })
+            .Select(x => x.ICSId)
+            .Distinct()
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
-
-        var icsIdSet = icsIds.Select(x => x.ICSId).Distinct().ToList();
 
         var icsNoMap = await dbContext.InventoryCustodianSlips
             .IgnoreQueryFilters()
@@ -72,8 +71,6 @@ public sealed class GetRRSPListQueryHandler(AssetManagementDbContext dbContext)
             .Select(x => new { x.Id, x.ICSNo })
             .ToDictionaryAsync(x => x.Id, x => x.ICSNo, cancellationToken)
             .ConfigureAwait(false);
-
-        var rrspIcsMap = icsIds.ToDictionary(x => x.Id, x => x.ICSId);
 
         var items = await dbContext.ReceiptForReturnedProperties
             .Where(x => rrspIds.Contains(x.Id))

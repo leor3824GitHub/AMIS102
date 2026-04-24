@@ -62,8 +62,7 @@ public sealed class CreateEmployeeCommandHandler : ICommandHandler<CreateEmploye
             command.IdentityUserId,
             command.WorkEmail,
             command.DefaultUnitOfMeasureId,
-            command.IsActive,
-            command.OfficeCode);
+            command.IsActive);
 
         employee.CreatedBy = _currentUser.GetUserId().ToString();
 

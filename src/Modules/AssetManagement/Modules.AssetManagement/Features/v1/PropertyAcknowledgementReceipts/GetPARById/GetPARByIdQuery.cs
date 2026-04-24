@@ -19,9 +19,8 @@ public sealed record PARDetailsDto(
 public sealed record PARItemDto(
     Guid Id,
     int ItemNo,
-    Guid PPEItemId,
-    string PropertyCode,
-    string PropertyNumber,
+    Guid TangibleInventoryItemId,
+    string PropertyNo,
     int Quantity,
     string Unit,
     string ItemDescription,

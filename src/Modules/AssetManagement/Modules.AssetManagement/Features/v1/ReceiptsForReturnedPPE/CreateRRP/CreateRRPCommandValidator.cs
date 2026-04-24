@@ -18,7 +18,7 @@ public sealed class CreateRRPCommandValidator : AbstractValidator<CreateRRPComma
         RuleFor(x => x.Items).NotEmpty().WithMessage("At least one item is required.");
         RuleForEach(x => x.Items).ChildRules(item =>
         {
-            item.RuleFor(x => x.PPEItemId).NotEmpty();
+            item.RuleFor(x => x.TangibleInventoryItemId).NotEmpty();
             item.RuleFor(x => x.Quantity).GreaterThan(0);
             item.RuleFor(x => x.SourceDocumentRef).MaximumLength(64);
         });

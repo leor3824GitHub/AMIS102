@@ -11,7 +11,7 @@ namespace FSH.Modules.AssetManagement.Features.v1.Reports.ReportOfSPIssued;
 public sealed record GetRSPIQuery(
     DateOnly? DateFrom,
     DateOnly? DateTo,
-    AssetCategory? Category,
+    AssetType? AssetType,
     bool ActiveOnly = true,
     int PageNumber  = 1,
     int PageSize    = 20) : IQuery<PagedRSPIResponse>;
@@ -29,11 +29,10 @@ public sealed record RSPIItemDto(
     string ICSStatus,
     Guid ReceivedByEmployeeId,
     Guid? IssuedFromEmployeeId,
-    Guid PropertyId,
+    Guid TangibleInventoryItemId,
     string PropertyNo,
-    string? SerialNo,
     string ItemCode,
     string ItemName,
-    string Category,
+    string AssetType,
     decimal UnitCost,
     DateOnly? ExpiresOn);

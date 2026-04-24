@@ -24,7 +24,7 @@ public sealed class GetPPEIRByIdQueryHandler(AssetManagementDbContext dbContext)
             .Select(x => new PPEIRItemDto(
                 x.Id,
                 x.ItemNo,
-                x.PPEItemId,
+                x.TangibleInventoryItemId,
                 x.PropertyCode,
                 x.SerialNumber,
                 x.PPESpecification,

@@ -24,7 +24,8 @@ public sealed class TangibleItemConfiguration : IEntityTypeConfiguration<Tangibl
 
         builder.HasIndex(x => new { x.TenantId, x.PropertyNo }).IsUnique();
         builder.HasIndex(x => x.ItemId);
-        builder.HasIndex(x => new { x.TenantId, x.PropertyClass, x.CategoryCode });
+        builder.HasIndex(x => new { x.TenantId, x.PropertyClass });
+        builder.HasIndex(x => new { x.TenantId, x.CategoryCode });
 
         builder.Property(x => x.TangibleInventoryItemId);
         builder.HasIndex(x => x.TangibleInventoryItemId);
