@@ -8,4 +8,5 @@ public sealed record UpdateTangibleItemCommand(
     DateOnly AcquisitionDate,
     int Quantity,
     decimal UnitCost,
-    string? Remarks) : ICommand<TangibleItemDto>;
+    string? Remarks,
+    Guid? PurchaseOrderId = null) : ICommand<TangibleItemDto>;

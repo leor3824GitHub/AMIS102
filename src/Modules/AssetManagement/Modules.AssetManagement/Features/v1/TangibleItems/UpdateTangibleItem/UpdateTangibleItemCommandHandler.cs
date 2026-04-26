@@ -28,7 +28,8 @@ public sealed class UpdateTangibleItemCommandHandler(
             command.AcquisitionDate,
             command.Quantity,
             command.UnitCost,
-            command.Remarks);
+            command.Remarks,
+            command.PurchaseOrderId);
 
         tangibleItem.LastModifiedBy = currentUser.GetUserId().ToString();
 
@@ -46,6 +47,7 @@ public sealed class UpdateTangibleItemCommandHandler(
             tangibleItem.Quantity,
             tangibleItem.UnitCost,
             tangibleItem.Remarks,
+            tangibleItem.PurchaseOrderId,
             tangibleItem.CreatedOnUtc);
     }
 }

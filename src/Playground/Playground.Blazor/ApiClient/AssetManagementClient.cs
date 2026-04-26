@@ -1476,14 +1476,16 @@ internal sealed record RegisterTangibleItemCommand(
     DateOnly AcquisitionDate,
     int Quantity,
     decimal UnitCost,
-    string? Remarks = null);
+    string? Remarks = null,
+    Guid? PurchaseOrderId = null);
 
 internal sealed record UpdateTangibleItemCommand(
     Guid Id,
     DateOnly AcquisitionDate,
     int Quantity,
     decimal UnitCost,
-    string? Remarks = null);
+    string? Remarks = null,
+    Guid? PurchaseOrderId = null);
 
 internal sealed record TangibleItemDto(
     Guid Id,
@@ -1497,6 +1499,7 @@ internal sealed record TangibleItemDto(
     int Quantity,
     decimal UnitCost,
     string? Remarks,
+    Guid? PurchaseOrderId,
     DateTimeOffset CreatedOnUtc);
 
 internal sealed record TangibleItemSummaryDto(
@@ -1510,7 +1513,8 @@ internal sealed record TangibleItemSummaryDto(
     DateOnly AcquisitionDate,
     int Quantity,
     decimal UnitCost,
-    string? Remarks);
+    string? Remarks,
+    Guid? PurchaseOrderId = null);
 
 internal sealed record PagedTangibleItemsResponse(
     IReadOnlyList<TangibleItemSummaryDto> Items,

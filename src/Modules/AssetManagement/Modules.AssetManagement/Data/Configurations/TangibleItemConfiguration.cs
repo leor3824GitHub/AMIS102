@@ -30,6 +30,9 @@ public sealed class TangibleItemConfiguration : IEntityTypeConfiguration<Tangibl
         builder.Property(x => x.TangibleInventoryItemId);
         builder.HasIndex(x => x.TangibleInventoryItemId);
 
+        builder.Property(x => x.PurchaseOrderId);
+        builder.HasIndex(x => x.PurchaseOrderId);
+
         builder.HasOne(x => x.Item)
             .WithMany()
             .HasForeignKey(x => x.ItemId)

@@ -10,7 +10,8 @@ public sealed record RegisterTangibleItemCommand(
     DateOnly AcquisitionDate,
     int Quantity,
     decimal UnitCost,
-    string? Remarks) : ICommand<TangibleItemDto>;
+    string? Remarks,
+    Guid? PurchaseOrderId = null) : ICommand<TangibleItemDto>;
 
 public sealed record TangibleItemDto(
     Guid Id,
@@ -24,4 +25,5 @@ public sealed record TangibleItemDto(
     int Quantity,
     decimal UnitCost,
     string? Remarks,
+    Guid? PurchaseOrderId,
     DateTimeOffset CreatedOnUtc);

@@ -49,7 +49,8 @@ public sealed class RegisterTangibleItemCommandHandler(
             command.AcquisitionDate,
             command.Quantity,
             command.UnitCost,
-            command.Remarks);
+            command.Remarks,
+            command.PurchaseOrderId);
 
         tangibleItem.CreatedBy = currentUser.GetUserId().ToString();
 
@@ -68,6 +69,7 @@ public sealed class RegisterTangibleItemCommandHandler(
             tangibleItem.Quantity,
             tangibleItem.UnitCost,
             tangibleItem.Remarks,
+            tangibleItem.PurchaseOrderId,
             tangibleItem.CreatedOnUtc);
     }
 }

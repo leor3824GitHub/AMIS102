@@ -18,6 +18,9 @@ public sealed class TangibleItem : AggregateRoot<Guid>, IHasTenant, IAuditableEn
     /// <summary>Set when this item is received on a TangibleInventory. Null = pending receipt.</summary>
     public Guid? TangibleInventoryItemId { get; private set; }
 
+    /// <summary>Optional reference to the Purchase Order that sourced this item. Null for donations/transfers.</summary>
+    public Guid? PurchaseOrderId { get; private set; }
+
     // IAuditableEntity
     public DateTimeOffset CreatedOnUtc { get; set; } = DateTimeOffset.UtcNow;
     public string? CreatedBy { get; set; }
@@ -36,7 +39,8 @@ public sealed class TangibleItem : AggregateRoot<Guid>, IHasTenant, IAuditableEn
         DateOnly acquisitionDate,
         int quantity,
         decimal unitCost,
-        string? remarks) =>
+        string? remarks,
+        Guid? purchaseOrderId = null) =>
         new()
         {
             Id = Guid.NewGuid(),
@@ -49,17 +53,19 @@ public sealed class TangibleItem : AggregateRoot<Guid>, IHasTenant, IAuditableEn
             Quantity = quantity,
             UnitCost = unitCost,
             Remarks = remarks,
+            PurchaseOrderId = purchaseOrderId,
             CreatedOnUtc = DateTimeOffset.UtcNow,
         };
 
     public void LinkToInventory(Guid tangibleInventoryItemId) => TangibleInventoryItemId = tangibleInventoryItemId;
 
-    public void Update(DateOnly acquisitionDate, int quantity, decimal unitCost, string? remarks)
+    public void Update(DateOnly acquisitionDate, int quantity, decimal unitCost, string? remarks, Guid? purchaseOrderId)
     {
         AcquisitionDate = acquisitionDate;
         Quantity = quantity;
         UnitCost = unitCost;
         Remarks = remarks;
+        PurchaseOrderId = purchaseOrderId;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
     }
 }

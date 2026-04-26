@@ -59,7 +59,8 @@ public sealed class GetTangibleItemsQueryHandler(AssetManagementDbContext dbCont
                 x.AcquisitionDate,
                 x.Quantity,
                 x.UnitCost,
-                x.Remarks))
+                x.Remarks,
+                x.PurchaseOrderId))
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 

@@ -37,6 +37,10 @@
     <Project Path="Modules/Finance/Modules.Finance.Contracts/Modules.Finance.Contracts.csproj" />
     <Project Path="Modules/Finance/Modules.Finance/Modules.Finance.csproj" />
   </Folder>
+  <Folder Name="/Modules/AssetProcurement/">
+    <Project Path="Modules/AssetProcurement/Modules.AssetProcurement.Contracts/Modules.AssetProcurement.Contracts.csproj" />
+    <Project Path="Modules/AssetProcurement/Modules.AssetProcurement/Modules.AssetProcurement.csproj" />
+  </Folder>
   <Folder Name="/Modules/AssetManagement/">
     <Project Path="Modules/AssetManagement/Modules.AssetManagement.Contracts/Modules.AssetManagement.Contracts.csproj" />
     <Project Path="Modules/AssetManagement/Modules.AssetManagement/Modules.AssetManagement.csproj" />

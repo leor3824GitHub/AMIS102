@@ -34,6 +34,7 @@ public sealed class GetTangibleItemByIdQueryHandler(AssetManagementDbContext dbC
             item.Quantity,
             item.UnitCost,
             item.Remarks,
+            item.PurchaseOrderId,
             item.CreatedOnUtc);
     }
 }

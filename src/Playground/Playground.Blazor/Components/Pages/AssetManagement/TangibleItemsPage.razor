@@ -1,7 +1,9 @@
 @page "/asset-management/tangible-items"
 @using FSH.Playground.Blazor.ApiClient
+@using FSH.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders
 @inject ITangibleItemClient Client
 @inject IPropertyItemCatalogClient ItemClient
+@inject IPurchaseOrderClient PoClient
 @inject ISnackbar Snackbar
 
 <FshPageHeader Title="Tangible Items" Description="Register and manage tangible property items in inventory." />
@@ -23,19 +25,20 @@
                                      Required="true" Clearable="true"
                                      ResetValueOnEmptyText="true" CoerceValue="true"
                                      MinCharacters="0" />
+                    <MudDatePicker @bind-Date="_form.AcquisitionDateNullable"
+                                   Label="Acquisition Date"
+                                   Variant="Variant.Outlined"
+                                   DateFormat="MM/dd/yyyy"
+                                   Required="true" />
                     <PropertyNoField @bind-Value="_form.PropertyNo"
                                    Label="Property No."
                                    Required="true"
                                    MaxLength="32"
                                    Placeholder="e.g. 2026-NFA-GSD-00001"
                                    Disabled="_editing is not null"
+                                   InitialYear="@(_form.AcquisitionDateNullable?.Year ?? DateTime.Now.Year)"
                                    NextSequenceProvider="GetNextSequenceAsync"
                                    OnCodeSelected="OnPropertyNoCodeSelected" />
-                    <MudDatePicker @bind-Date="_form.AcquisitionDateNullable"
-                                   Label="Acquisition Date"
-                                   Variant="Variant.Outlined"
-                                   DateFormat="MM/dd/yyyy"
-                                   Required="true" />
                     <MudNumericField @bind-Value="_form.Quantity"
                                      Label="Quantity"
                                      Variant="Variant.Outlined"
@@ -55,6 +58,15 @@
                                   Variant="Variant.Outlined"
                                   MaxLength="500"
                                   Lines="2" />
+                    <MudAutocomplete T="PurchaseOrderSummaryDto"
+                                     @bind-Value="_form.SelectedPurchaseOrder"
+                                     SearchFunc="SearchPurchaseOrdersAsync"
+                                     ToStringFunc="@(x => x is null ? "" : $"{x.PoNumber} – {x.SupplierName}")"
+                                     Label="Purchase Order (optional)"
+                                     Variant="Variant.Outlined"
+                                     Clearable="true"
+                                     ResetValueOnEmptyText="true" CoerceValue="true"
+                                     MinCharacters="0" />
 
                     <MudStack Row="true" Spacing="1" Class="mt-2">
                         <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
@@ -197,6 +209,17 @@
         }
         catch { /* ignore */ }
 
+        PurchaseOrderSummaryDto? purchaseOrder = null;
+        if (item.PurchaseOrderId.HasValue)
+        {
+            try
+            {
+                var poPage = await PoClient.SearchAsync(page: 1, pageSize: 50);
+                purchaseOrder = poPage.Items.FirstOrDefault(x => x.Id == item.PurchaseOrderId.Value);
+            }
+            catch { /* ignore */ }
+        }
+
         _form = new TangibleItemForm
         {
             SelectedItem = catalogItem,
@@ -206,7 +229,8 @@
             AcquisitionDateNullable = item.AcquisitionDate.ToDateTime(TimeOnly.MinValue),
             Quantity = item.Quantity,
             UnitCost = item.UnitCost,
-            Remarks = item.Remarks
+            Remarks = item.Remarks,
+            SelectedPurchaseOrder = purchaseOrder
         };
         StateHasChanged();
     }
@@ -260,7 +284,8 @@
                     acquisitionDate,
                     _form.Quantity,
                     _form.UnitCost,
-                    _form.Remarks);
+                    _form.Remarks,
+                    _form.SelectedPurchaseOrder?.Id);
                 await Client.RegisterAsync(cmd);
                 Snackbar.Add("Tangible item registered.", Severity.Success);
             }
@@ -271,7 +296,8 @@
                     acquisitionDate,
                     _form.Quantity,
                     _form.UnitCost,
-                    _form.Remarks);
+                    _form.Remarks,
+                    _form.SelectedPurchaseOrder?.Id);
                 await Client.UpdateAsync(_editing.Id, cmd);
                 Snackbar.Add("Tangible item updated.", Severity.Success);
             }
@@ -309,6 +335,16 @@
         _form = new();
     }
 
+    private async Task<IEnumerable<PurchaseOrderSummaryDto>> SearchPurchaseOrdersAsync(string? value, CancellationToken ct)
+    {
+        try
+        {
+            var response = await PoClient.SearchAsync(keyword: value, page: 1, pageSize: 30, ct: ct);
+            return response.Items;
+        }
+        catch { return []; }
+    }
+
     private sealed class TangibleItemForm
     {
         public PropertyItemCatalogSummaryDto? SelectedItem { get; set; }
@@ -319,5 +355,6 @@
         public int Quantity { get; set; } = 1;
         public decimal UnitCost { get; set; }
         public string? Remarks { get; set; }
+        public PurchaseOrderSummaryDto? SelectedPurchaseOrder { get; set; }
     }
 }

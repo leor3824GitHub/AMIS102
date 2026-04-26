@@ -1469,6 +1469,9 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)");
 
+                    b.Property<Guid?>("PurchaseOrderId")
+                        .HasColumnType("uuid");
+
                     b.Property<int>("Quantity")
                         .HasColumnType("integer");
 
@@ -1490,6 +1493,8 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
                     b.HasKey("Id");
 
                     b.HasIndex("ItemId");
+
+                    b.HasIndex("PurchaseOrderId");
 
                     b.HasIndex("TangibleInventoryItemId");
 

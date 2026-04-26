@@ -27,4 +27,5 @@ public sealed record TangibleItemSummaryDto(
     DateOnly AcquisitionDate,
     int Quantity,
     decimal UnitCost,
-    string? Remarks);
+    string? Remarks,
+    Guid? PurchaseOrderId = null);

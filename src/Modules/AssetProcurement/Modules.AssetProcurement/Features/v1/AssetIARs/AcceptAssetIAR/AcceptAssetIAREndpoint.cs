@@ -1,0 +1,25 @@
+using FSH.Framework.Shared.Identity.Authorization;
+using FSH.Modules.AssetProcurement.Contracts.v1.AssetInspectionAcceptanceReports;
+using Mediator;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
+
+namespace FSH.Modules.AssetProcurement.Features.v1.AssetIARs.AcceptAssetIAR;
+
+public static class AcceptAssetIAREndpoint
+{
+    public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
+        endpoints.MapPost("/{id:guid}/accept", Handle)
+            .WithName(nameof(AcceptAssetIARCommand))
+            .WithSummary("Accept an asset IAR — triggers TangibleItem creation in AssetManagement")
+            .Produces<AssetIARDto>()
+            .Produces(StatusCodes.Status404NotFound)
+            .RequirePermission(AssetProcurementModuleConstants.Permissions.AssetIARs.Accept);
+
+    private static async Task<IResult> Handle(Guid id, IMediator mediator, CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(new AcceptAssetIARCommand(id), cancellationToken);
+        return TypedResults.Ok(result);
+    }
+}
