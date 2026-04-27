@@ -16,6 +16,9 @@ using FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.SearchPpmps;
 using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.CreateAnnualProcurementPlan;
 using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.ConsolidatePpmps;
 using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.PublishAnnualProcurementPlan;
+using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.ApproveAnnualProcurementPlan;
+using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.RecallAnnualProcurementPlan;
+using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.ReturnAnnualProcurementPlan;
 using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.AmendAnnualProcurementPlan;
 using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.GetAnnualProcurementPlan;
 using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.GetAvailablePpmps;
@@ -45,6 +48,8 @@ public class ProcurementPlanningModule : IModule
         new("Create APPs",      "Create",      "ProcurementPlanning.Apps"),
         new("Consolidate APPs", "Consolidate", "ProcurementPlanning.Apps"),
         new("Publish APPs",     "Publish",     "ProcurementPlanning.Apps"),
+        new("Approve APPs",     "Approve",     "ProcurementPlanning.Apps"),
+        new("Return APPs",      "Return",      "ProcurementPlanning.Apps"),
         new("Amend APPs",       "Amend",       "ProcurementPlanning.Apps"),
     ];
 
@@ -93,6 +98,9 @@ public class ProcurementPlanningModule : IModule
         CreateAnnualProcurementPlanEndpoint.Map(appGroup);
         ConsolidatePpmpsEndpoint.Map(appGroup);
         PublishAnnualProcurementPlanEndpoint.Map(appGroup);
+        ApproveAnnualProcurementPlanEndpoint.Map(appGroup);
+        RecallAnnualProcurementPlanEndpoint.Map(appGroup);
+        ReturnAnnualProcurementPlanEndpoint.Map(appGroup);
         AmendAnnualProcurementPlanEndpoint.Map(appGroup);
         GetAnnualProcurementPlanEndpoint.Map(appGroup);
         GetAvailablePpmpsEndpoint.Map(appGroup);

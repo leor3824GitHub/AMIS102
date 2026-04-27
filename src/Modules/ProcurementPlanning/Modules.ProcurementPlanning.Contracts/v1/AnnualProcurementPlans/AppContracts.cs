@@ -11,7 +11,8 @@ public enum AppStatus
     Draft = 0,
     Published = 1,
     Approved = 2,
-    Superseded = 3
+    Superseded = 3,
+    Returned = 4
 }
 
 public enum AppRevisionType
@@ -60,6 +61,9 @@ public sealed record AnnualProcurementPlanDto(
     DateTimeOffset? ConsolidatedOn,
     string? ApprovedById,
     DateTimeOffset? ApprovedOn,
+    string? ReturnReason,
+    DateTimeOffset? ReturnedAt,
+    Guid? ReturnedById,
     decimal TotalEstimatedBudget,
     IReadOnlyList<AppItemDto> Items,
     DateTimeOffset CreatedOnUtc,
@@ -95,6 +99,10 @@ public sealed record AmendAnnualProcurementPlanCommand(
     Guid Id,
     string AmendmentReason,
     AppRevisionType RevisionType) : ICommand<AnnualProcurementPlanDto>;
+
+public sealed record ApproveAppCommand(Guid Id, Guid ApprovedById) : ICommand<AnnualProcurementPlanDto>;
+public sealed record RecallAppCommand(Guid Id) : ICommand<AnnualProcurementPlanDto>;
+public sealed record ReturnAppCommand(Guid Id, string ReturnReason, Guid ReturnedById) : ICommand<AnnualProcurementPlanDto>;
 
 // ── Queries ───────────────────────────────────────────────────────────────────
 

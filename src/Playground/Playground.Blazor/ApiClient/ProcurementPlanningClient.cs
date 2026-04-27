@@ -114,6 +114,9 @@ internal interface IAppClient
     Task<AnnualProcurementPlanDto> CreateAsync(CreateAnnualProcurementPlanCommand command, CancellationToken ct = default);
     Task<AnnualProcurementPlanDto> ConsolidateAsync(Guid id, IReadOnlyList<Guid> ppmpIds, CancellationToken ct = default);
     Task<AnnualProcurementPlanDto> PublishAsync(Guid id, CancellationToken ct = default);
+    Task<AnnualProcurementPlanDto> ApproveAsync(Guid id, Guid approvedById, CancellationToken ct = default);
+    Task<AnnualProcurementPlanDto> RecallAsync(Guid id, CancellationToken ct = default);
+    Task<AnnualProcurementPlanDto> ReturnAsync(Guid id, string returnReason, Guid returnedById, CancellationToken ct = default);
     Task<AnnualProcurementPlanDto> AmendAsync(Guid id, string reason, AppRevisionType revisionType, CancellationToken ct = default);
 }
 
@@ -159,6 +162,29 @@ internal sealed class AppClient(HttpClient http) : IAppClient
     public async Task<AnnualProcurementPlanDto> PublishAsync(Guid id, CancellationToken ct = default)
     {
         using var r = await http.PostAsync($"{Base}/{id}/publish", null, ct);
+        r.EnsureSuccessStatusCode();
+        return (await r.Content.ReadFromJsonAsync<AnnualProcurementPlanDto>(ct))!;
+    }
+
+    public async Task<AnnualProcurementPlanDto> ApproveAsync(Guid id, Guid approvedById, CancellationToken ct = default)
+    {
+        using var r = await http.PostAsJsonAsync($"{Base}/{id}/approve",
+            new ApproveAppCommand(id, approvedById), ct);
+        r.EnsureSuccessStatusCode();
+        return (await r.Content.ReadFromJsonAsync<AnnualProcurementPlanDto>(ct))!;
+    }
+
+    public async Task<AnnualProcurementPlanDto> RecallAsync(Guid id, CancellationToken ct = default)
+    {
+        using var r = await http.PostAsync($"{Base}/{id}/recall", null, ct);
+        r.EnsureSuccessStatusCode();
+        return (await r.Content.ReadFromJsonAsync<AnnualProcurementPlanDto>(ct))!;
+    }
+
+    public async Task<AnnualProcurementPlanDto> ReturnAsync(Guid id, string returnReason, Guid returnedById, CancellationToken ct = default)
+    {
+        using var r = await http.PostAsJsonAsync($"{Base}/{id}/return",
+            new ReturnAppCommand(id, returnReason, returnedById), ct);
         r.EnsureSuccessStatusCode();
         return (await r.Content.ReadFromJsonAsync<AnnualProcurementPlanDto>(ct))!;
     }

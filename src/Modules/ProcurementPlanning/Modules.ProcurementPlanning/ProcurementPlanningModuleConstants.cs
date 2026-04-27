@@ -23,6 +23,8 @@ public static class ProcurementPlanningModuleConstants
             public const string Create      = "Permissions.ProcurementPlanning.Apps.Create";
             public const string Consolidate = "Permissions.ProcurementPlanning.Apps.Consolidate";
             public const string Publish     = "Permissions.ProcurementPlanning.Apps.Publish";
+            public const string Approve     = "Permissions.ProcurementPlanning.Apps.Approve";
+            public const string Return      = "Permissions.ProcurementPlanning.Apps.Return";
             public const string Amend       = "Permissions.ProcurementPlanning.Apps.Amend";
         }
     }

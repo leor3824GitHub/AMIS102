@@ -22,6 +22,9 @@ internal static class AppMapper
             app.ConsolidatedOn,
             app.ApprovedById,
             app.ApprovedOn,
+            app.ReturnReason,
+            app.ReturnedAt,
+            app.ReturnedById,
             app.Items.Sum(i => i.EstimatedBudget),
             app.Items.Select(i => new AppItemDto(
                 i.Id, i.SourcePpmpId, i.SourcePpmpItemId,

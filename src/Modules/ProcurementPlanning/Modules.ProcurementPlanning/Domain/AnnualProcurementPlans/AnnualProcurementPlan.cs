@@ -99,6 +99,10 @@ public sealed class AnnualProcurementPlan : AggregateRoot<Guid>, IAuditableEntit
     public string? ApprovedById { get; private set; }
     public DateTimeOffset? ApprovedOn { get; private set; }
 
+    public string? ReturnReason { get; private set; }
+    public DateTimeOffset? ReturnedAt { get; private set; }
+    public Guid? ReturnedById { get; private set; }
+
     public byte[] Version { get; set; } = [];
 
     private readonly List<AppItem> _items = [];
@@ -132,8 +136,8 @@ public sealed class AnnualProcurementPlan : AggregateRoot<Guid>, IAuditableEntit
     /// <summary>Consolidates approved PPMPs into this APP. Re-consolidating the same PPMPs replaces their items.</summary>
     public void ConsolidatePpmps(IEnumerable<Ppmp> ppmps, string consolidatedById)
     {
-        if (Status != AppStatus.Draft)
-            throw new InvalidOperationException("Only Draft APPs can have PPMPs consolidated into them.");
+        if (Status is not (AppStatus.Draft or AppStatus.Returned))
+            throw new InvalidOperationException("Only Draft or Returned APPs can have PPMPs consolidated into them.");
 
         var ppmpList = ppmps.ToList();
         var ppmpIds = ppmpList.Select(p => p.Id).ToHashSet();
@@ -158,8 +162,8 @@ public sealed class AnnualProcurementPlan : AggregateRoot<Guid>, IAuditableEntit
 
     public void Publish()
     {
-        if (Status != AppStatus.Draft)
-            throw new InvalidOperationException("Only Draft APPs can be published.");
+        if (Status is not (AppStatus.Draft or AppStatus.Returned))
+            throw new InvalidOperationException("Only Draft or Returned APPs can be submitted for approval.");
         if (_items.Count == 0)
             throw new InvalidOperationException("APP must have at least one item before publishing.");
 
@@ -175,6 +179,25 @@ public sealed class AnnualProcurementPlan : AggregateRoot<Guid>, IAuditableEntit
         Status = AppStatus.Approved;
         ApprovedById = approvedById;
         ApprovedOn = DateTimeOffset.UtcNow;
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;
+    }
+
+    public void Recall()
+    {
+        if (Status != AppStatus.Published)
+            throw new InvalidOperationException("Only Published APPs can be recalled.");
+        Status = AppStatus.Draft;
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;
+    }
+
+    public void Return(string returnReason, Guid returnedById)
+    {
+        if (Status != AppStatus.Published)
+            throw new InvalidOperationException("Only Published APPs can be returned for revision.");
+        Status = AppStatus.Returned;
+        ReturnReason = returnReason;
+        ReturnedAt = DateTimeOffset.UtcNow;
+        ReturnedById = returnedById;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
     }
 

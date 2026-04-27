@@ -16,6 +16,7 @@ internal sealed class AnnualProcurementPlanConfiguration : IEntityTypeConfigurat
         builder.Property(x => x.AmendedById).HasMaxLength(256);
         builder.Property(x => x.ConsolidatedById).HasMaxLength(256);
         builder.Property(x => x.ApprovedById).HasMaxLength(256);
+        builder.Property(x => x.ReturnReason).HasMaxLength(1000);
 
         builder.Property(x => x.Version).IsRowVersion();
 
