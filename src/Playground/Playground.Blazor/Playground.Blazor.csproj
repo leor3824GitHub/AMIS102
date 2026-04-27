@@ -31,6 +31,7 @@
     <ProjectReference Include="..\..\Modules\Expendable\Modules.Expendable.Contracts\Modules.Expendable.Contracts.csproj" />
     <ProjectReference Include="..\..\Modules\Vehicle\Modules.Vehicle.Contracts\Modules.Vehicle.Contracts.csproj" />
     <ProjectReference Include="..\..\Modules\ProcurementAcquisition\Modules.ProcurementAcquisition.Contracts\Modules.ProcurementAcquisition.Contracts.csproj" />
+    <ProjectReference Include="..\..\Modules\ProcurementPlanning\Modules.ProcurementPlanning.Contracts\Modules.ProcurementPlanning.Contracts.csproj" />
     <ProjectReference Include="..\..\Modules\Finance\Modules.Finance.Contracts\Modules.Finance.Contracts.csproj" />
   </ItemGroup>
 

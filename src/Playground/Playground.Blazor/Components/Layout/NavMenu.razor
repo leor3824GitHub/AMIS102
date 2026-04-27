@@ -135,6 +135,15 @@
             </MudNavLink>
         </MudNavGroup>
 
+        <MudNavGroup Title="Procurement Planning" Icon="@Icons.Material.Outlined.Assignment" @bind-Expanded="_procurementPlanningExpanded">
+            <MudNavLink Href="/procurement-planning/ppmps" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.ListAlt">
+                PPMP
+            </MudNavLink>
+            <MudNavLink Href="/procurement-planning/apps" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Description">
+                Annual Procurement Plan (APP)
+            </MudNavLink>
+        </MudNavGroup>
+
         <MudNavGroup Title="Procurement" Icon="@Icons.Material.Outlined.ShoppingBag" @bind-Expanded="_procurementExpanded">
             <MudNavLink Href="/procurement/purchase-requests" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Description">
                 Purchase Requests
@@ -260,6 +269,7 @@
     private bool _expendableExpanded;
     private bool _vehicleExpanded;
     private bool _masterDataExpanded;
+    private bool _procurementPlanningExpanded;
     private bool _procurementExpanded;
     private bool _financeExpanded;
     private bool _assetManagementExpanded;
@@ -271,7 +281,8 @@
         var uri = Navigation.Uri;
         _expendableExpanded = uri.Contains("/expendable", StringComparison.OrdinalIgnoreCase);
         _vehicleExpanded = uri.Contains("/vehicle", StringComparison.OrdinalIgnoreCase);
-        _procurementExpanded = uri.Contains("/procurement", StringComparison.OrdinalIgnoreCase);
+        _procurementPlanningExpanded = uri.Contains("/procurement-planning", StringComparison.OrdinalIgnoreCase);
+        _procurementExpanded = uri.Contains("/procurement/", StringComparison.OrdinalIgnoreCase);
         _financeExpanded = uri.Contains("/finance", StringComparison.OrdinalIgnoreCase);
         _masterDataExpanded = uri.Contains("/master-data", StringComparison.OrdinalIgnoreCase)
                            || uri.Contains("/masterdata", StringComparison.OrdinalIgnoreCase);

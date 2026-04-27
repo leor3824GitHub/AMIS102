@@ -2,6 +2,7 @@
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Components.Authorization
 @inject FSH.Playground.Blazor.ApiClient.IIdentityClient IdentityClient
+@inject FSH.Playground.Blazor.ApiClient.IEmployeesClient EmployeesClient
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthenticationStateProvider
@@ -200,6 +201,100 @@ else
                     </MudCard>
                 </MudTabPanel>
 
+                <!-- Employee Info Tab -->
+                <MudTabPanel Icon="@Icons.Material.Filled.Badge" Text="Employee Info">
+                    <MudCard Elevation="0" Class="profile-form-card">
+                        <MudCardHeader Class="px-6 pt-6 pb-0">
+                            <CardHeaderContent>
+                                <MudStack Spacing="1">
+                                    <MudText Typo="Typo.h6" Class="fw-600">Employee Information</MudText>
+                                    <MudText Typo="Typo.body2" Class="text-muted">
+                                        Your employee profile linked to this account
+                                    </MudText>
+                                </MudStack>
+                            </CardHeaderContent>
+                        </MudCardHeader>
+                        <MudCardContent Class="px-6 py-4">
+                            @if (_loadingEmployee)
+                            {
+                                <MudStack AlignItems="AlignItems.Center" Class="pa-4">
+                                    <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Small" />
+                                </MudStack>
+                            }
+                            else if (_employeeProfile is null)
+                            {
+                                <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+                                    No employee profile is linked to this account.
+                                </MudAlert>
+                            }
+                            else
+                            {
+                                <MudGrid Spacing="3">
+                                    <MudItem xs="12" sm="6">
+                                        <MudTextField Value="_employeeProfile.EmployeeNumber"
+                                                      Label="Employee Number"
+                                                      Variant="Variant.Outlined"
+                                                      ReadOnly="true"
+                                                      Adornment="Adornment.Start"
+                                                      AdornmentIcon="@Icons.Material.Filled.Tag" />
+                                    </MudItem>
+                                    <MudItem xs="12" sm="6">
+                                        <MudTextField Value="@($"{_employeeProfile.FirstName} {_employeeProfile.LastName}".Trim())"
+                                                      Label="Full Name"
+                                                      Variant="Variant.Outlined"
+                                                      ReadOnly="true"
+                                                      Adornment="Adornment.Start"
+                                                      AdornmentIcon="@Icons.Material.Filled.Person" />
+                                    </MudItem>
+                                    <MudItem xs="12" sm="6">
+                                        <MudTextField Value="_employeeProfile.WorkEmail"
+                                                      Label="Work Email"
+                                                      Variant="Variant.Outlined"
+                                                      ReadOnly="true"
+                                                      Adornment="Adornment.Start"
+                                                      AdornmentIcon="@Icons.Material.Filled.Email" />
+                                    </MudItem>
+                                    <MudItem xs="12" sm="6">
+                                        <MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-2">
+                                            <MudText Typo="Typo.body2" Class="text-muted">Status:</MudText>
+                                            <MudChip T="string" Size="Size.Small" Color="@(_employeeProfile.IsActive ? Color.Success : Color.Error)">
+                                                @(_employeeProfile.IsActive ? "Active" : "Inactive")
+                                            </MudChip>
+                                        </MudStack>
+                                    </MudItem>
+                                    <MudItem xs="12">
+                                        <MudDivider />
+                                    </MudItem>
+                                    <MudItem xs="12" sm="6">
+                                        <MudTextField Value="@($"{_employeeProfile.OfficeName} ({_employeeProfile.OfficeCode})")"
+                                                      Label="Office"
+                                                      Variant="Variant.Outlined"
+                                                      ReadOnly="true"
+                                                      Adornment="Adornment.Start"
+                                                      AdornmentIcon="@Icons.Material.Filled.Business" />
+                                    </MudItem>
+                                    <MudItem xs="12" sm="6">
+                                        <MudTextField Value="@($"{_employeeProfile.DepartmentName} ({_employeeProfile.DepartmentCode})")"
+                                                      Label="Department"
+                                                      Variant="Variant.Outlined"
+                                                      ReadOnly="true"
+                                                      Adornment="Adornment.Start"
+                                                      AdornmentIcon="@Icons.Material.Filled.AccountTree" />
+                                    </MudItem>
+                                    <MudItem xs="12" sm="6">
+                                        <MudTextField Value="@($"{_employeeProfile.PositionName} ({_employeeProfile.PositionCode})")"
+                                                      Label="Position"
+                                                      Variant="Variant.Outlined"
+                                                      ReadOnly="true"
+                                                      Adornment="Adornment.Start"
+                                                      AdornmentIcon="@Icons.Material.Filled.Work" />
+                                    </MudItem>
+                                </MudGrid>
+                            }
+                        </MudCardContent>
+                    </MudCard>
+                </MudTabPanel>
+
                 <!-- Security Tab (Change Password) -->
                 <MudTabPanel Icon="@Icons.Material.Filled.Lock" Text="Security">
                     <MudCard Elevation="0" Class="profile-form-card">
@@ -337,7 +432,9 @@ else
     private bool _loading = true;
     private bool _saving;
     private bool _changingPassword;
+    private bool _loadingEmployee;
     private FSH.Playground.Blazor.ApiClient.UserDto? _profile;
+    private FSH.Playground.Blazor.ApiClient.EmployeeReferenceDto? _employeeProfile;
     private string? _avatarPreviewUrl;
     private bool _hasImageChanges;
     private bool _deleteCurrentImage;
@@ -381,6 +478,8 @@ else
                     PhoneNumber = _profile.PhoneNumber
                 };
                 _avatarPreviewUrl = _profile.ImageUrl;
+
+                await LoadEmployeeProfileAsync(_profile.Id);
             }
         }
         catch (Exception ex)
@@ -390,6 +489,29 @@ else
         finally
         {
             _loading = false;
+        }
+    }
+
+    private async Task LoadEmployeeProfileAsync(string identityUserId)
+    {
+        if (string.IsNullOrWhiteSpace(identityUserId)) return;
+
+        _loadingEmployee = true;
+        try
+        {
+            _employeeProfile = await EmployeesClient.ByIdentityAsync(identityUserId);
+        }
+        catch (FSH.Playground.Blazor.ApiClient.ApiException ex) when (ex.StatusCode == 404)
+        {
+            _employeeProfile = null;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load employee profile: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loadingEmployee = false;
         }
     }
 

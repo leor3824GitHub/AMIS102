@@ -85,7 +85,6 @@
                                     <th style="cursor:pointer" @onclick='() => SetSort("RegProvCode")'>
                                         Reg./Prov. @SortIcon("RegProvCode")
                                     </th>
-                                    <th>Owner</th>
                                     <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
@@ -107,17 +106,6 @@
                                             {
                                                 <MudChip T="string" Size="Size.Small" Color="Color.Secondary" Label="true"
                                                          Style="font-family: monospace;">@office.RegProvCode</MudChip>
-                                            }
-                                        </td>
-                                        <td>
-                                            @if (!string.IsNullOrWhiteSpace(office.OfficeCode))
-                                            {
-                                                <MudChip T="string" Size="Size.Small" Color="Color.Warning" Label="true"
-                                                         Style="font-family:monospace">@office.OfficeCode</MudChip>
-                                            }
-                                            else
-                                            {
-                                                <MudText Typo="Typo.caption" Color="Color.Default">—</MudText>
                                             }
                                         </td>
                                         <td><MudChip T="string" Size="Size.Small" Color="@(office.IsActive ? Color.Success : Color.Default)">@(office.IsActive ? "Active" : "Inactive")</MudChip></td>

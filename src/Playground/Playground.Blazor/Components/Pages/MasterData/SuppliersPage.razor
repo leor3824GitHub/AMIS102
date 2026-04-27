@@ -83,7 +83,6 @@
                                     <th>Contact</th>
                                     <th>Email</th>
                                     <th>Phone</th>
-                                    <th>Owner</th>
                                     <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
@@ -99,17 +98,6 @@
                                         <td>@(supplier.ContactPerson ?? "-")</td>
                                         <td>@(supplier.Email ?? "-")</td>
                                         <td>@(supplier.Phone ?? "-")</td>
-                                        <td>
-                                            @if (!string.IsNullOrWhiteSpace(supplier.OfficeCode))
-                                            {
-                                                <MudChip T="string" Size="Size.Small" Color="Color.Warning" Label="true"
-                                                         Style="font-family:monospace">@supplier.OfficeCode</MudChip>
-                                            }
-                                            else
-                                            {
-                                                <MudText Typo="Typo.caption" Color="Color.Default">—</MudText>
-                                            }
-                                        </td>
                                         <td><MudChip T="string" Size="Size.Small" Color="@(supplier.IsActive ? Color.Success : Color.Error)">@(supplier.IsActive ? "Active" : "Inactive")</MudChip></td>
                                         <td>
                                             @if (IsOwnedByMe(supplier.OfficeCode))

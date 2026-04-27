@@ -101,7 +101,6 @@
                                     <th>Department</th>
                                     <th>Position</th>
                                     <th>Linked Account</th>
-                                    <th>Owner</th>
                                     <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
@@ -129,17 +128,6 @@
                                             else
                                             {
                                                 <MudText Typo="Typo.body2" Color="Color.Default">—</MudText>
-                                            }
-                                        </td>
-                                        <td>
-                                            @if (!string.IsNullOrWhiteSpace(employee.OfficeCode))
-                                            {
-                                                <MudChip T="string" Size="Size.Small" Color="Color.Warning" Label="true"
-                                                         Style="font-family:monospace">@employee.OfficeCode</MudChip>
-                                            }
-                                            else
-                                            {
-                                                <MudText Typo="Typo.caption" Color="Color.Default">—</MudText>
                                             }
                                         </td>
                                         <td>

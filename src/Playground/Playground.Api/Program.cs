@@ -14,6 +14,8 @@ using FSH.Modules.Finance.Contracts.v1.DisbursementVouchers;
 using FSH.Modules.AssetManagement;
 using FSH.Modules.AssetProcurement;
 using FSH.Modules.AssetProcurement.Contracts.v1.AssetPurchaseRequests;
+using FSH.Modules.ProcurementPlanning;
+using FSH.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
 using FSH.Modules.Identity;
 using FSH.Modules.Identity.Contracts.v1.Tokens.TokenGeneration;
 using FSH.Modules.Identity.Features.v1.Tokens.TokenGeneration;
@@ -62,7 +64,9 @@ builder.Services.AddMediator(o =>
         typeof(CreateDisbursementVoucherCommand),
         typeof(AssetManagementModule),
         typeof(AssetProcurementModule),
-        typeof(CreateAssetPurchaseRequestCommand)];
+        typeof(CreateAssetPurchaseRequestCommand),
+        typeof(ProcurementPlanningModule),
+        typeof(CreatePpmpCommand)];
 });
 
 var moduleAssemblies = new Assembly[]
@@ -76,7 +80,8 @@ var moduleAssemblies = new Assembly[]
     typeof(ProcurementAcquisitionModule).Assembly,
     typeof(FinanceModule).Assembly,
     typeof(AssetManagementModule).Assembly,
-    typeof(AssetProcurementModule).Assembly
+    typeof(AssetProcurementModule).Assembly,
+    typeof(ProcurementPlanningModule).Assembly
 };
 
 builder.AddHeroPlatform(o =>

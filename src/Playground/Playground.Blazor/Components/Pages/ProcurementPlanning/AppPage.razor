@@ -1,0 +1,498 @@
+@page "/procurement-planning/apps"
+@using FSH.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans
+@using FSH.Modules.ProcurementPlanning.Contracts.v1.Ppmps
+@using FSH.Framework.Shared.Persistence
+@using FSH.Playground.Blazor.ApiClient
+@using FSH.Playground.Blazor.Components.Shared
+@inject IAppClient AppClient
+@inject IPpmpClient PpmpClient
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<FshPageHeader Title="Annual Procurement Plan (APP)"
+               Description="Consolidate approved PPMPs into the Annual Procurement Plan" />
+
+<MudGrid Spacing="3">
+    <!-- ── FORM PANEL ─────────────────────────────────────────────── -->
+    <MudItem xs="12" md="4">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                <MudText Typo="Typo.h6" Class="mb-3">
+                    @(_editing is null ? "New APP" : $"Edit {_editing.AppNumber}")
+                </MudText>
+
+                @if (_editing is not null && _editing.Status != AppStatus.Draft)
+                {
+                    <MudAlert Severity="Severity.Info" Dense="true" Class="mb-3">
+                        Status: <strong>@_editing.Status</strong> — read-only
+                    </MudAlert>
+                }
+
+                <MudStack Spacing="2">
+                    <MudNumericField @bind-Value="_form.FiscalYear" Label="Fiscal Year"
+                                     Variant="Variant.Outlined" Min="2000" Max="2100"
+                                     Disabled="@(_editing is not null)" />
+                    <MudSelect @bind-Value="_form.RevisionType" Label="Revision Type"
+                               Variant="Variant.Outlined" T="AppRevisionType"
+                               Disabled="@(_editing is not null)">
+                        <MudSelectItem Value="AppRevisionType.Original">Original</MudSelectItem>
+                        <MudSelectItem Value="AppRevisionType.Supplemental">Supplemental</MudSelectItem>
+                        <MudSelectItem Value="AppRevisionType.Revised">Revised</MudSelectItem>
+                    </MudSelect>
+
+                    @if (_editing is null)
+                    {
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                                   OnClick="CreateAppAsync" Disabled="_busy">
+                            @if (_busy) { <MudProgressCircular Size="Size.Small" Class="mr-1" Indeterminate="true" /> }
+                            Create APP Draft
+                        </MudButton>
+                    }
+
+                    <!-- Consolidation section (only for Draft) -->
+                    @if (_editing is not null && _editing.Status == AppStatus.Draft)
+                    {
+                        <MudDivider Class="my-1" />
+                        <MudText Typo="Typo.subtitle2">Consolidate PPMPs</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                            Select Approved PPMPs to include in this APP.
+                        </MudText>
+
+                        <MudButton Variant="Variant.Outlined" Size="Size.Small"
+                                   StartIcon="@Icons.Material.Filled.Refresh"
+                                   OnClick="LoadAvailablePpmpsAsync" Disabled="_busy">
+                            Load Available PPMPs for FY @_editing.FiscalYear
+                        </MudButton>
+
+                        @if (_availablePpmps.Count > 0)
+                        {
+                            <MudPaper Outlined="true" Class="pa-2" Style="max-height:200px;overflow-y:auto">
+                                @foreach (var ppmp in _availablePpmps)
+                                {
+                                    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-1">
+                                        <MudCheckBox @bind-Value="ppmp.Selected" Dense="true" />
+                                        <MudStack Spacing="0">
+                                            <MudText Typo="Typo.body2">@ppmp.PpmpNumber</MudText>
+                                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                                @ppmp.OfficeCode · @ppmp.ItemCount items · ₱@ppmp.TotalEstimatedBudget.ToString("N0")
+                                            </MudText>
+                                        </MudStack>
+                                    </MudStack>
+                                }
+                            </MudPaper>
+
+                            <MudButton Variant="Variant.Filled" Color="Color.Info" FullWidth="true"
+                                       StartIcon="@Icons.Material.Filled.MergeType"
+                                       OnClick="ConsolidateAsync" Disabled="_busy || !_availablePpmps.Any(p => p.Selected)">
+                                @if (_busy) { <MudProgressCircular Size="Size.Small" Class="mr-1" Indeterminate="true" /> }
+                                Consolidate Selected (@_availablePpmps.Count(p => p.Selected))
+                            </MudButton>
+                        }
+
+                        @if (_editing.Items.Count > 0)
+                        {
+                            <MudDivider Class="my-1" />
+                            <MudButton Variant="Variant.Filled" Color="Color.Success" FullWidth="true"
+                                       StartIcon="@Icons.Material.Filled.Publish"
+                                       OnClick="ShowPublishConfirmAsync" Disabled="_busy">
+                                Publish APP
+                            </MudButton>
+                        }
+                    }
+
+                    <!-- Amend button for Published/Approved -->
+                    @if (_editing is not null &&
+                         _editing.Status is AppStatus.Published or AppStatus.Approved &&
+                         _editing.IsCurrentVersion)
+                    {
+                        <MudDivider Class="my-1" />
+                        <MudButton Variant="Variant.Outlined" Color="Color.Warning" FullWidth="true"
+                                   StartIcon="@Icons.Material.Filled.Edit"
+                                   OnClick="ShowAmendDialogAsync" Disabled="_busy">
+                            Amend APP (New Version)
+                        </MudButton>
+                    }
+
+                    @if (_editing is not null)
+                    {
+                        <MudButton Variant="Variant.Text" OnClick="ClearForm" Disabled="_busy">
+                            Close / New APP
+                        </MudButton>
+                    }
+                </MudStack>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    <!-- ── DETAIL / LIST PANEL ───────────────────────────────────── -->
+    <MudItem xs="12" md="8">
+        <!-- Version history strip -->
+        @if (_versions.Count > 1)
+        {
+            <MudCard Elevation="1" Class="mb-3">
+                <MudCardContent Class="pa-2">
+                    <MudText Typo="Typo.caption" Class="mb-1">Version History — @(_editing?.AppNumber)</MudText>
+                    <MudChipSet T="Guid" @bind-SelectedValue="_selectedVersionId" SelectionMode="SelectionMode.SingleSelection">
+                        @foreach (var v in _versions)
+                        {
+                            <MudChip T="Guid" Value="v.Id"
+                                     Color="@(v.IsCurrentVersion ? Color.Primary : Color.Default)"
+                                     OnClick="@(() => LoadVersionAsync(v.Id))">
+                                v@(v.VersionNumber) · @v.Status · @v.RevisionType
+                            </MudChip>
+                        }
+                    </MudChipSet>
+                </MudCardContent>
+            </MudCard>
+        }
+
+        <!-- Consolidated Items Table (shown when an APP is selected) -->
+        @if (_editing is not null)
+        {
+            <MudCard Elevation="1" Class="mb-3">
+                <MudCardContent>
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
+                        <MudText Typo="Typo.subtitle1">
+                            Consolidated Items — @_editing.AppNumber v@_editing.VersionNumber
+                        </MudText>
+                        <MudSpacer />
+                        <MudText Typo="Typo.subtitle2" Color="Color.Primary">
+                            Total: ₱ @_editing.TotalEstimatedBudget.ToString("N2")
+                        </MudText>
+                    </MudStack>
+
+                    @if (_editing.Items.Count == 0)
+                    {
+                        <MudAlert Severity="Severity.Info" Dense="true">No items yet. Load and consolidate PPMPs first.</MudAlert>
+                    }
+                    else
+                    {
+                        <MudSimpleTable Dense="true" Hover="true" Striped="true" Style="overflow-x:auto">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Office</th>
+                                    <th>Description</th>
+                                    <th>Type</th>
+                                    <th>Qty / Unit</th>
+                                    <th>Mode</th>
+                                    <th>Period</th>
+                                    <th>Budget (₱)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in _editing.Items)
+                                {
+                                    <tr>
+                                        <td>@item.ItemNo</td>
+                                        <td><MudText Typo="Typo.caption">@item.OfficeCode</MudText></td>
+                                        <td>@item.GeneralDescription</td>
+                                        <td><MudChip T="string" Size="Size.Small">@item.ProjectType</MudChip></td>
+                                        <td>@item.Quantity @item.Unit</td>
+                                        <td>@item.ModeOfProcurement</td>
+                                        <td>@item.ProcurementStart – @item.ProcurementEnd</td>
+                                        <td class="text-right">@item.EstimatedBudget.ToString("N2")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </MudSimpleTable>
+                    }
+                </MudCardContent>
+            </MudCard>
+        }
+
+        <!-- APP List -->
+        <MudCard Elevation="1">
+            <MudCardContent>
+                <MudStack Row="true" Spacing="2" Class="mb-3" AlignItems="AlignItems.Center">
+                    <MudText Typo="Typo.subtitle2">All APPs</MudText>
+                    <MudSpacer />
+                    <MudSelect Value="@_filterFiscalYear" Label="FY" Variant="Variant.Outlined"
+                               T="int?" Style="width:100px" ValueChanged="OnFilterChanged">
+                        <MudSelectItem T="int?" Value="null">All</MudSelectItem>
+                        @foreach (var fy in _fiscalYears)
+                        {
+                            <MudSelectItem T="int?" Value="fy">@fy</MudSelectItem>
+                        }
+                    </MudSelect>
+                    <MudSelect Value="@_filterStatus" Label="Status" Variant="Variant.Outlined"
+                               T="AppStatus?" Style="width:140px" ValueChanged="OnStatusFilterChanged">
+                        <MudSelectItem T="AppStatus?" Value="null">All</MudSelectItem>
+                        @foreach (AppStatus s in Enum.GetValues<AppStatus>())
+                        {
+                            <MudSelectItem T="AppStatus?" Value="s">@s</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudStack>
+
+                @if (_loading)
+                {
+                    <MudProgressLinear Indeterminate="true" />
+                }
+                else if (_apps.Count == 0)
+                {
+                    <MudAlert Severity="Severity.Info">No APPs found.</MudAlert>
+                }
+                else
+                {
+                    <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                        <thead>
+                            <tr>
+                                <th>APP No.</th>
+                                <th>FY</th>
+                                <th>Type</th>
+                                <th>Ver.</th>
+                                <th>Status</th>
+                                <th>Items</th>
+                                <th>Total Budget</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var app in _apps)
+                            {
+                                <tr style="cursor:pointer" @onclick="@(() => SelectAppAsync(app.Id))">
+                                    <td>@app.AppNumber</td>
+                                    <td>@app.FiscalYear</td>
+                                    <td><MudChip T="string" Size="Size.Small" Color="@RevisionColor(app.RevisionType)">@app.RevisionType</MudChip></td>
+                                    <td>v@app.VersionNumber</td>
+                                    <td><MudChip T="string" Size="Size.Small" Color="@AppStatusColor(app.Status)">@app.Status</MudChip></td>
+                                    <td>@app.ItemCount</td>
+                                    <td>₱ @app.TotalEstimatedBudget.ToString("N2")</td>
+                                    <td>
+                                        <MudIconButton Icon="@Icons.Material.Filled.OpenInNew" Size="Size.Small"
+                                                       Color="Color.Primary"
+                                                       OnClick="@(() => SelectAppAsync(app.Id))" />
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </MudSimpleTable>
+
+                    <MudStack Row="true" Class="mt-2" AlignItems="AlignItems.Center">
+                        <MudText Typo="Typo.caption">@_totalCount total</MudText>
+                        <MudSpacer />
+                        <MudPagination Selected="@_page" Count="_totalPages" SelectedChanged="OnPageChanged" />
+                    </MudStack>
+                }
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+</MudGrid>
+
+@code {
+    // ── State ────────────────────────────────────────────────────────
+    private List<AnnualProcurementPlanSummaryDto> _apps = [];
+    private List<AnnualProcurementPlanSummaryDto> _versions = [];
+    private AnnualProcurementPlanDto? _editing;
+    private List<SelectablePpmp> _availablePpmps = [];
+    private bool _loading;
+    private bool _busy;
+    private int? _filterFiscalYear;
+    private AppStatus? _filterStatus;
+    private int _page = 1;
+    private int _totalCount;
+    private int _totalPages = 1;
+    private const int PageSize = 15;
+    private Guid _selectedVersionId;
+
+    private readonly int[] _fiscalYears = Enumerable.Range(DateTime.Now.Year - 2, 5).ToArray();
+
+    private sealed class SelectablePpmp
+    {
+        public Guid Id { get; init; }
+        public string PpmpNumber { get; init; } = string.Empty;
+        public string OfficeCode { get; init; } = string.Empty;
+        public int ItemCount { get; init; }
+        public decimal TotalEstimatedBudget { get; init; }
+        public bool Selected { get; set; }
+    }
+
+    private sealed class AppFormModel
+    {
+        public int FiscalYear { get; set; } = DateTime.Now.Year + 1;
+        public AppRevisionType RevisionType { get; set; } = AppRevisionType.Original;
+    }
+
+    private AppFormModel _form = new();
+
+    // ── Lifecycle ────────────────────────────────────────────────────
+    protected override async Task OnInitializedAsync() => await LoadAppsAsync();
+
+    private async Task LoadAppsAsync()
+    {
+        _loading = true;
+        try
+        {
+            var result = await AppClient.SearchAsync(
+                fiscalYear: _filterFiscalYear, status: _filterStatus,
+                page: _page, pageSize: PageSize);
+            _apps = result.Items.ToList();
+            _totalCount = (int)result.TotalCount;
+            _totalPages = (int)Math.Ceiling(_totalCount / (double)PageSize);
+        }
+        catch (Exception ex) { Snackbar.Add($"Error: {ex.Message}", Severity.Error); }
+        finally { _loading = false; }
+    }
+
+    // ── Select ───────────────────────────────────────────────────────
+    private async Task SelectAppAsync(Guid id)
+    {
+        _busy = true;
+        try
+        {
+            _editing = await AppClient.GetAsync(id);
+            if (_editing is null) return;
+            _selectedVersionId = _editing.Id;
+            _versions = (await AppClient.SearchAsync(currentOnly: false, fiscalYear: _editing.FiscalYear)).Items
+                .Where(a => a.VersionChainId == _editing.VersionChainId)
+                .OrderBy(a => a.VersionNumber)
+                .ToList();
+            _availablePpmps.Clear();
+        }
+        catch (Exception ex) { Snackbar.Add($"Error: {ex.Message}", Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    private async Task LoadVersionAsync(Guid id)
+    {
+        if (id == _editing?.Id) return;
+        _busy = true;
+        try
+        {
+            _editing = await AppClient.GetAsync(id);
+            _availablePpmps.Clear();
+        }
+        catch (Exception ex) { Snackbar.Add($"Error: {ex.Message}", Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    private void ClearForm() { _form = new AppFormModel(); _editing = null; _versions.Clear(); _availablePpmps.Clear(); }
+
+    // ── Create ───────────────────────────────────────────────────────
+    private async Task CreateAppAsync()
+    {
+        _busy = true;
+        try
+        {
+            _editing = await AppClient.CreateAsync(
+                new CreateAnnualProcurementPlanCommand(_form.FiscalYear, _form.RevisionType));
+            Snackbar.Add($"APP {_editing.AppNumber} created.", Severity.Success);
+            await LoadAppsAsync();
+        }
+        catch (Exception ex) { Snackbar.Add($"Error: {ex.Message}", Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    // ── Consolidation ────────────────────────────────────────────────
+    private async Task LoadAvailablePpmpsAsync()
+    {
+        if (_editing is null) return;
+        _busy = true;
+        try
+        {
+            var list = await AppClient.GetAvailablePpmpsAsync(_editing.FiscalYear);
+            _availablePpmps = list.Select(p => new SelectablePpmp
+            {
+                Id = p.Id,
+                PpmpNumber = p.PpmpNumber,
+                OfficeCode = p.OfficeCode,
+                ItemCount = p.ItemCount,
+                TotalEstimatedBudget = p.TotalEstimatedBudget,
+                Selected = false
+            }).ToList();
+        }
+        catch (Exception ex) { Snackbar.Add($"Error: {ex.Message}", Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    private async Task ConsolidateAsync()
+    {
+        if (_editing is null) return;
+        var ids = _availablePpmps.Where(p => p.Selected).Select(p => p.Id).ToList();
+        if (ids.Count == 0) return;
+        _busy = true;
+        try
+        {
+            _editing = await AppClient.ConsolidateAsync(_editing.Id, ids);
+            Snackbar.Add($"Consolidated {ids.Count} PPMP(s) — {_editing.Items.Count} total items.", Severity.Success);
+            _availablePpmps.ForEach(p => p.Selected = false);
+        }
+        catch (Exception ex) { Snackbar.Add($"Error: {ex.Message}", Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    // ── Publish ──────────────────────────────────────────────────────
+    private async Task ShowPublishConfirmAsync()
+    {
+        if (_editing is null) return;
+        var confirmed = await DialogService.ShowMessageBox(
+            "Confirm Publish",
+            $"Publish {_editing.AppNumber}? This will lock the APP. The document can only be changed by creating an amendment.",
+            yesText: "Publish", cancelText: "Cancel");
+        if (confirmed == true)
+        {
+            _busy = true;
+            try
+            {
+                _editing = await AppClient.PublishAsync(_editing.Id);
+                Snackbar.Add($"{_editing.AppNumber} published.", Severity.Success);
+                await LoadAppsAsync();
+            }
+            catch (Exception ex) { Snackbar.Add($"Error: {ex.Message}", Severity.Error); }
+            finally { _busy = false; }
+        }
+    }
+
+    // ── Amend ─────────────────────────────────────────────────────────
+    private async Task ShowAmendDialogAsync()
+    {
+        if (_editing is null) return;
+        var parameters = new DialogParameters<AmendAppDialog>
+        {
+            { x => x.DocumentNumber, _editing.AppNumber },
+            { x => x.CurrentVersion, _editing.VersionNumber }
+        };
+        var dialog = await DialogService.ShowAsync<AmendAppDialog>("Amend APP", parameters);
+        var result = await dialog.Result;
+        if (result is { Canceled: false } && result.Data is (string reason, AppRevisionType revType))
+        {
+            _busy = true;
+            try
+            {
+                _editing = await AppClient.AmendAsync(_editing.Id, reason, revType);
+                _versions = (await AppClient.SearchAsync(currentOnly: false, fiscalYear: _editing.FiscalYear)).Items
+                    .Where(a => a.VersionChainId == _editing.VersionChainId)
+                    .OrderBy(a => a.VersionNumber)
+                    .ToList();
+                _selectedVersionId = _editing.Id;
+                Snackbar.Add($"Amendment v{_editing.VersionNumber} created.", Severity.Success);
+                await LoadAppsAsync();
+            }
+            catch (Exception ex) { Snackbar.Add($"Error: {ex.Message}", Severity.Error); }
+            finally { _busy = false; }
+        }
+    }
+
+    // ── Filter / pagination ──────────────────────────────────────────
+    private async Task OnFilterChanged(int? val) { _filterFiscalYear = val; _page = 1; await LoadAppsAsync(); }
+    private async Task OnStatusFilterChanged(AppStatus? val) { _filterStatus = val; _page = 1; await LoadAppsAsync(); }
+    private async Task OnPageChanged(int page) { _page = page; await LoadAppsAsync(); }
+
+    // ── Helpers ──────────────────────────────────────────────────────
+    private static Color AppStatusColor(AppStatus s) => s switch
+    {
+        AppStatus.Draft      => Color.Default,
+        AppStatus.Published  => Color.Success,
+        AppStatus.Approved   => Color.Primary,
+        AppStatus.Superseded => Color.Warning,
+        _                    => Color.Default
+    };
+    private static Color RevisionColor(AppRevisionType t) => t switch
+    {
+        AppRevisionType.Original     => Color.Default,
+        AppRevisionType.Supplemental => Color.Info,
+        AppRevisionType.Revised      => Color.Warning,
+        _                            => Color.Default
+    };
+}

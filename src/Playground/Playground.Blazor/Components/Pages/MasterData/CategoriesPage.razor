@@ -69,7 +69,6 @@
                                     <th style="cursor:pointer" @onclick='() => SetSort("Code")'>Code @SortIcon("Code")</th>
                                     <th style="cursor:pointer" @onclick='() => SetSort("Name")'>Name @SortIcon("Name")</th>
                                     <th>Description</th>
-                                    <th>Owner</th>
                                     <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
@@ -81,17 +80,6 @@
                                         <td>@category.Code</td>
                                         <td>@category.Name</td>
                                         <td>@(category.Description ?? "-")</td>
-                                        <td>
-                                            @if (!string.IsNullOrWhiteSpace(category.OfficeCode))
-                                            {
-                                                <MudChip T="string" Size="Size.Small" Color="Color.Warning" Label="true"
-                                                         Style="font-family:monospace">@category.OfficeCode</MudChip>
-                                            }
-                                            else
-                                            {
-                                                <MudText Typo="Typo.caption" Color="Color.Default">—</MudText>
-                                            }
-                                        </td>
                                         <td><MudChip T="string" Size="Size.Small" Color="@(category.IsActive ? Color.Success : Color.Error)">@(category.IsActive ? "Active" : "Inactive")</MudChip></td>
                                         <td>
                                             @if (IsOwnedByMe(category.OfficeCode))

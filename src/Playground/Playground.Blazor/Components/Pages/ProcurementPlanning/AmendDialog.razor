@@ -1,0 +1,41 @@
+@using MudBlazor
+@inject IDialogService DialogService
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Edit" Class="mr-2" />
+            Amend @DocumentNumber (v@CurrentVersion → v@(CurrentVersion + 1))
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudStack Spacing="3">
+            <MudAlert Severity="Severity.Warning" Dense="true">
+                This will <strong>supersede</strong> v@CurrentVersion and create a new Draft.
+                The new version must go through the approval workflow again.
+            </MudAlert>
+            <MudTextField @bind-Value="_reason" Label="Reason for Amendment *"
+                          Variant="Variant.Outlined" Lines="3"
+                          Placeholder="e.g. Budget realignment, scope change..." />
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Warning" Variant="Variant.Filled"
+                   Disabled="@(string.IsNullOrWhiteSpace(_reason))"
+                   OnClick="Confirm">
+            Create v@(CurrentVersion + 1) Draft
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public string DocumentNumber { get; set; } = string.Empty;
+    [Parameter] public int CurrentVersion { get; set; }
+
+    private string _reason = string.Empty;
+
+    private void Confirm() => MudDialog.Close(DialogResult.Ok(_reason));
+    private void Cancel()  => MudDialog.Cancel();
+}

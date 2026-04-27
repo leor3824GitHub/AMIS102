@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>FSH.Modules.ProcurementPlanning.Contracts</RootNamespace>
+    <AssemblyName>FSH.Modules.ProcurementPlanning.Contracts</AssemblyName>
+    <PackageId>FullStackHero.Modules.ProcurementPlanning.Contracts</PackageId>
+    <NoWarn>$(NoWarn);CA1002;CA1056;CS1572;S2094</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Mediator.Abstractions" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\BuildingBlocks\Eventing.Abstractions\Eventing.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\Shared\Shared.csproj" />
+  </ItemGroup>
+</Project>

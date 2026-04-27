@@ -1,0 +1,27 @@
+using FSH.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
+using FSH.Modules.ProcurementPlanning.Data;
+using Mediator;
+using Microsoft.EntityFrameworkCore;
+
+namespace FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.UpdatePpmp;
+
+public sealed class UpdatePpmpCommandHandler(
+    ProcurementPlanningDbContext dbContext) : ICommandHandler<UpdatePpmpCommand, PpmpDto>
+{
+    public async ValueTask<PpmpDto> Handle(UpdatePpmpCommand command, CancellationToken cancellationToken)
+    {
+        var ppmp = await dbContext.Ppmps
+            .Include(x => x.Items)
+            .FirstOrDefaultAsync(x => x.Id == command.Id, cancellationToken)
+            .ConfigureAwait(false)
+            ?? throw new KeyNotFoundException($"PPMP {command.Id} not found.");
+
+        ppmp.Update(
+            command.FiscalYear, command.PpmpType,
+            command.OfficeCode, command.EndUserUnit,
+            command.PreparedById, command.Items);
+
+        await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return PpmpMapper.ToDto(ppmp);
+    }
+}
