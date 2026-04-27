@@ -7,6 +7,8 @@ using FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.CreatePpmp;
 using FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.UpdatePpmp;
 using FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.SubmitPpmp;
 using FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.ApprovePpmp;
+using FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.RecallPpmp;
+using FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.ReturnPpmp;
 using FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.AmendPpmp;
 using FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.GetPpmp;
 using FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.GetPpmpVersions;
@@ -36,6 +38,7 @@ public class ProcurementPlanningModule : IModule
         new("Update PPMPs",  "Update",  "ProcurementPlanning.Ppmps"),
         new("Submit PPMPs",  "Submit",  "ProcurementPlanning.Ppmps"),
         new("Approve PPMPs", "Approve", "ProcurementPlanning.Ppmps"),
+        new("Return PPMPs",  "Return",  "ProcurementPlanning.Ppmps"),
         new("Amend PPMPs",   "Amend",   "ProcurementPlanning.Ppmps"),
 
         new("View APPs",        "View",        "ProcurementPlanning.Apps", IsBasic: true),
@@ -79,6 +82,8 @@ public class ProcurementPlanningModule : IModule
         UpdatePpmpEndpoint.Map(ppmpGroup);
         SubmitPpmpEndpoint.Map(ppmpGroup);
         ApprovePpmpEndpoint.Map(ppmpGroup);
+        RecallPpmpEndpoint.Map(ppmpGroup);
+        ReturnPpmpEndpoint.Map(ppmpGroup);
         AmendPpmpEndpoint.Map(ppmpGroup);
         GetPpmpEndpoint.Map(ppmpGroup);
         GetPpmpVersionsEndpoint.Map(ppmpGroup);

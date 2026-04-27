@@ -3,6 +3,7 @@ using System;
 using FSH.Modules.ProcurementPlanning.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FSH.Playground.Migrations.PostgreSQL.ProcurementPlanning
 {
     [DbContext(typeof(ProcurementPlanningDbContext))]
-    partial class ProcurementPlanningDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260427115330_AddPpmpReturnForRevision")]
+    partial class AddPpmpReturnForRevision
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

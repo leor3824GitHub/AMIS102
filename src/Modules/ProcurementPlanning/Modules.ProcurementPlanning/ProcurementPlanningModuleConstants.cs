@@ -13,6 +13,7 @@ public static class ProcurementPlanningModuleConstants
             public const string Update  = "Permissions.ProcurementPlanning.Ppmps.Update";
             public const string Submit  = "Permissions.ProcurementPlanning.Ppmps.Submit";
             public const string Approve = "Permissions.ProcurementPlanning.Ppmps.Approve";
+            public const string Return  = "Permissions.ProcurementPlanning.Ppmps.Return";
             public const string Amend   = "Permissions.ProcurementPlanning.Ppmps.Amend";
         }
 

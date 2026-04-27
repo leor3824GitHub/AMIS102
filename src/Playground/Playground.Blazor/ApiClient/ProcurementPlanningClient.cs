@@ -19,6 +19,8 @@ internal interface IPpmpClient
     Task<PpmpDto> UpdateAsync(Guid id, UpdatePpmpCommand command, CancellationToken ct = default);
     Task<PpmpDto> SubmitAsync(Guid id, CancellationToken ct = default);
     Task<PpmpDto> ApproveAsync(Guid id, Guid approvedById, CancellationToken ct = default);
+    Task<PpmpDto> RecallAsync(Guid id, CancellationToken ct = default);
+    Task<PpmpDto> ReturnAsync(Guid id, string returnReason, Guid returnedById, CancellationToken ct = default);
     Task<PpmpDto> AmendAsync(Guid id, string reason, CancellationToken ct = default);
 }
 
@@ -72,6 +74,21 @@ internal sealed class PpmpClient(HttpClient http) : IPpmpClient
     {
         using var r = await http.PostAsJsonAsync($"{Base}/{id}/approve",
             new ApprovePpmpCommand(id, approvedById), ct);
+        r.EnsureSuccessStatusCode();
+        return (await r.Content.ReadFromJsonAsync<PpmpDto>(ct))!;
+    }
+
+    public async Task<PpmpDto> RecallAsync(Guid id, CancellationToken ct = default)
+    {
+        using var r = await http.PostAsync($"{Base}/{id}/recall", null, ct);
+        r.EnsureSuccessStatusCode();
+        return (await r.Content.ReadFromJsonAsync<PpmpDto>(ct))!;
+    }
+
+    public async Task<PpmpDto> ReturnAsync(Guid id, string returnReason, Guid returnedById, CancellationToken ct = default)
+    {
+        using var r = await http.PostAsJsonAsync($"{Base}/{id}/return",
+            new ReturnPpmpCommand(id, returnReason, returnedById), ct);
         r.EnsureSuccessStatusCode();
         return (await r.Content.ReadFromJsonAsync<PpmpDto>(ct))!;
     }

@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using FSH.Framework.Core.Domain;
 using FSH.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
 
@@ -84,6 +85,10 @@ public sealed class Ppmp : AggregateRoot<Guid>, IAuditableEntity
     public DateTimeOffset? ApprovedAt { get; private set; }
     public Guid? ApprovedById { get; private set; }
 
+    public string? ReturnReason { get; private set; }
+    public DateTimeOffset? ReturnedAt { get; private set; }
+    public Guid? ReturnedById { get; private set; }
+
     // Set when this PPMP is consolidated into an APP
     public Guid? AppId { get; private set; }
 
@@ -102,6 +107,8 @@ public sealed class Ppmp : AggregateRoot<Guid>, IAuditableEntity
     public bool IsDeleted { get; set; }
 
     private Ppmp() { }
+
+    private static byte[] NewVersion() => RandomNumberGenerator.GetBytes(8);
 
     public static Ppmp Create(
         string ppmpNumber,
@@ -127,7 +134,8 @@ public sealed class Ppmp : AggregateRoot<Guid>, IAuditableEntity
             IsCurrentVersion = true,
             VersionChainId = chainId,
             PreviousVersionId = null,
-            CreatedOnUtc = DateTimeOffset.UtcNow
+            CreatedOnUtc = DateTimeOffset.UtcNow,
+            Version = NewVersion()
         };
 
         ppmp.ReplaceItems(items);
@@ -142,8 +150,8 @@ public sealed class Ppmp : AggregateRoot<Guid>, IAuditableEntity
         Guid preparedById,
         IEnumerable<PpmpItemRequest> items)
     {
-        if (Status != PpmpStatus.Draft)
-            throw new InvalidOperationException("Only Draft PPMPs can be updated.");
+        if (Status is not (PpmpStatus.Draft or PpmpStatus.Returned))
+            throw new InvalidOperationException("Only Draft or Returned PPMPs can be updated.");
 
         FiscalYear = fiscalYear;
         PpmpType = ppmpType;
@@ -151,20 +159,22 @@ public sealed class Ppmp : AggregateRoot<Guid>, IAuditableEntity
         EndUserUnit = endUserUnit;
         PreparedById = preparedById;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        Version = NewVersion();
 
         ReplaceItems(items);
     }
 
     public void Submit()
     {
-        if (Status != PpmpStatus.Draft)
-            throw new InvalidOperationException("Only Draft PPMPs can be submitted.");
+        if (Status is not (PpmpStatus.Draft or PpmpStatus.Returned))
+            throw new InvalidOperationException("Only Draft or Returned PPMPs can be submitted.");
         if (_items.Count == 0)
             throw new InvalidOperationException("PPMP must have at least one item before submitting.");
 
         Status = PpmpStatus.Submitted;
         SubmittedAt = DateTimeOffset.UtcNow;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        Version = NewVersion();
     }
 
     public void Approve(Guid approvedById)
@@ -176,6 +186,31 @@ public sealed class Ppmp : AggregateRoot<Guid>, IAuditableEntity
         ApprovedById = approvedById;
         ApprovedAt = DateTimeOffset.UtcNow;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        Version = NewVersion();
+    }
+
+    public void Recall()
+    {
+        if (Status != PpmpStatus.Submitted)
+            throw new InvalidOperationException("Only Submitted PPMPs can be recalled.");
+
+        Status = PpmpStatus.Draft;
+        SubmittedAt = null;
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        Version = NewVersion();
+    }
+
+    public void Return(string returnReason, Guid returnedById)
+    {
+        if (Status != PpmpStatus.Submitted)
+            throw new InvalidOperationException("Only Submitted PPMPs can be returned for revision.");
+
+        Status = PpmpStatus.Returned;
+        ReturnReason = returnReason;
+        ReturnedAt = DateTimeOffset.UtcNow;
+        ReturnedById = returnedById;
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        Version = NewVersion();
     }
 
     public void MarkConsolidated(Guid appId)
@@ -186,6 +221,7 @@ public sealed class Ppmp : AggregateRoot<Guid>, IAuditableEntity
         Status = PpmpStatus.Consolidated;
         AppId = appId;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        Version = NewVersion();
     }
 
     /// <summary>Creates a new version of this PPMP (amendment). Caller must set IsCurrentVersion=false on this instance.</summary>
@@ -211,7 +247,8 @@ public sealed class Ppmp : AggregateRoot<Guid>, IAuditableEntity
             AmendmentReason = amendmentReason,
             AmendedAt = DateTimeOffset.UtcNow,
             AmendedById = amendedById,
-            CreatedOnUtc = DateTimeOffset.UtcNow
+            CreatedOnUtc = DateTimeOffset.UtcNow,
+            Version = NewVersion()
         };
 
         // Clone items
@@ -236,6 +273,7 @@ public sealed class Ppmp : AggregateRoot<Guid>, IAuditableEntity
         IsCurrentVersion = false;
         Status = PpmpStatus.Superseded;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        Version = NewVersion();
     }
 
     private void ReplaceItems(IEnumerable<PpmpItemRequest> items)

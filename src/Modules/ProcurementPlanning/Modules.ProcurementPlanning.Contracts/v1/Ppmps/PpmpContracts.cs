@@ -17,7 +17,8 @@ public enum PpmpStatus
     Submitted = 1,
     Approved = 2,
     Consolidated = 3,
-    Superseded = 4
+    Superseded = 4,
+    Returned = 5
 }
 
 public enum ProjectType
@@ -75,6 +76,9 @@ public sealed record PpmpDto(
     DateTimeOffset? SubmittedAt,
     DateTimeOffset? ApprovedAt,
     Guid? ApprovedById,
+    string? ReturnReason,
+    DateTimeOffset? ReturnedAt,
+    Guid? ReturnedById,
     Guid? AppId,
     decimal TotalEstimatedBudget,
     IReadOnlyList<PpmpItemDto> Items,
@@ -136,6 +140,10 @@ public sealed record UpdatePpmpCommand(
 public sealed record SubmitPpmpCommand(Guid Id) : ICommand<PpmpDto>;
 
 public sealed record ApprovePpmpCommand(Guid Id, Guid ApprovedById) : ICommand<PpmpDto>;
+
+public sealed record RecallPpmpCommand(Guid Id) : ICommand<PpmpDto>;
+
+public sealed record ReturnPpmpCommand(Guid Id, string ReturnReason, Guid ReturnedById) : ICommand<PpmpDto>;
 
 public sealed record AmendPpmpCommand(
     Guid Id,

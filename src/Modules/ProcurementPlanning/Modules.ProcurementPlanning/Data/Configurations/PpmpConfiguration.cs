@@ -16,8 +16,9 @@ internal sealed class PpmpConfiguration : IEntityTypeConfiguration<Ppmp>
         builder.Property(x => x.EndUserUnit).HasMaxLength(256).IsRequired();
         builder.Property(x => x.AmendmentReason).HasMaxLength(1000);
         builder.Property(x => x.AmendedById).HasMaxLength(256);
+        builder.Property(x => x.ReturnReason).HasMaxLength(1000);
 
-        builder.Property(x => x.Version).IsRowVersion();
+        builder.Property(x => x.Version).IsConcurrencyToken();
 
         builder.HasIndex(x => x.PpmpNumber);
         builder.HasIndex(x => x.VersionChainId);

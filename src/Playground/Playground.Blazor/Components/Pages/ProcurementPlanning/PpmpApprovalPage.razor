@@ -1,0 +1,334 @@
+@page "/procurement-planning/ppmp-approvals"
+@using FSH.Modules.ProcurementPlanning.Contracts.v1.Ppmps
+@using FSH.Playground.Blazor.ApiClient
+@using FSH.Playground.Blazor.Components.Shared
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@inject IPpmpClient PpmpClient
+@inject ILookupClient LookupClient
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<FshPageHeader Title="PPMP Approval Queue"
+               Description="Review and approve submitted procurement plans" />
+
+<MudGrid Spacing="3">
+
+    <!-- ══ LEFT: Queue ══════════════════════════════════════════════ -->
+    <MudItem xs="12" md="4">
+        <MudCard Elevation="1">
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                        <MudText Typo="Typo.subtitle1" Style="font-weight:600">Pending Approval</MudText>
+                        @if (_queue.Count > 0)
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Warning" Label="true">@_queue.Count</MudChip>
+                        }
+                        <MudSpacer />
+                        <MudIconButton Icon="@Icons.Material.Filled.Refresh" Size="Size.Small"
+                                       OnClick="LoadQueueAsync" Disabled="_loading" />
+                    </MudStack>
+                </CardHeaderContent>
+            </MudCardHeader>
+
+            <MudCardContent Class="pa-0">
+                @if (_loading)
+                {
+                    <MudProgressLinear Indeterminate="true" />
+                }
+                else if (_queue.Count == 0)
+                {
+                    <div Class="pa-4">
+                        <MudAlert Severity="Severity.Success" Dense="true">
+                            No PPMPs pending approval.
+                        </MudAlert>
+                    </div>
+                }
+                else
+                {
+                    <MudList T="PpmpSummaryDto" Dense="true" SelectedValue="_selected"
+                             SelectedValueChanged="SelectPpmpAsync">
+                        @foreach (var item in _queue)
+                        {
+                            <MudListItem T="PpmpSummaryDto" Value="item"
+                                         Style="@(_selected?.Id == item.Id ? "background:var(--mud-palette-primary-lighten);border-left:3px solid var(--mud-palette-primary)" : "border-left:3px solid transparent")">
+                                <MudStack Spacing="0">
+                                    <MudText Typo="Typo.subtitle2" Style="font-weight:600">@item.PpmpNumber</MudText>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">@item.EndUserUnit</MudText>
+                                    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Class="mt-1">
+                                        <MudChip T="string" Size="Size.Small" Color="Color.Default" Label="true"
+                                                 Style="font-family:monospace; font-size:10px">@item.OfficeCode</MudChip>
+                                        <MudText Typo="Typo.caption">FY @item.FiscalYear</MudText>
+                                        <MudSpacer />
+                                        <MudText Typo="Typo.caption" Style="font-weight:600; color:var(--mud-palette-primary)">
+                                            ₱ @item.TotalEstimatedBudget.ToString("N0")
+                                        </MudText>
+                                    </MudStack>
+                                </MudStack>
+                            </MudListItem>
+                            <MudDivider />
+                        }
+                    </MudList>
+                }
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    <!-- ══ RIGHT: Review Pane ════════════════════════════════════════ -->
+    <MudItem xs="12" md="8">
+        @if (_detail is null)
+        {
+            <MudCard Elevation="1" Style="height:100%">
+                <MudCardContent Style="display:flex; align-items:center; justify-content:center; min-height:300px">
+                    <MudStack AlignItems="AlignItems.Center" Spacing="2">
+                        <MudIcon Icon="@Icons.Material.Outlined.TouchApp" Color="Color.Secondary" Size="Size.Large" />
+                        <MudText Typo="Typo.body1" Color="Color.Secondary">Select a PPMP from the queue to review</MudText>
+                    </MudStack>
+                </MudCardContent>
+            </MudCard>
+        }
+        else
+        {
+            <MudCard Elevation="1">
+                <!-- Header -->
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                            <MudStack Spacing="0">
+                                <MudText Typo="Typo.h6" Style="font-weight:700">@_detail.PpmpNumber</MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                    Submitted for approval · v@(_detail.VersionNumber)
+                                </MudText>
+                            </MudStack>
+                            <MudSpacer />
+                            <MudChip T="string" Size="Size.Small" Color="Color.Info" Label="true">
+                                @_detail.Status
+                            </MudChip>
+                        </MudStack>
+                    </CardHeaderContent>
+                </MudCardHeader>
+
+                <MudDivider />
+
+                <MudCardContent>
+                    <!-- Meta grid -->
+                    <MudGrid Spacing="2" Class="mb-4">
+                        <MudItem xs="6" sm="3">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Fiscal Year</MudText>
+                            <MudText Typo="Typo.body2" Style="font-weight:600">@_detail.FiscalYear</MudText>
+                        </MudItem>
+                        <MudItem xs="6" sm="3">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Office Code</MudText>
+                            <MudText Typo="Typo.body2" Style="font-family:monospace; font-weight:600">@_detail.OfficeCode</MudText>
+                        </MudItem>
+                        <MudItem xs="6" sm="3">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">PPMP Type</MudText>
+                            <MudText Typo="Typo.body2">@_detail.PpmpType</MudText>
+                        </MudItem>
+                        <MudItem xs="6" sm="3">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Total Budget</MudText>
+                            <MudText Typo="Typo.body2" Style="font-weight:600; color:var(--mud-palette-primary)">
+                                ₱ @_detail.TotalEstimatedBudget.ToString("N2")
+                            </MudText>
+                        </MudItem>
+                        <MudItem xs="12">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">End-User / Section</MudText>
+                            <MudText Typo="Typo.body2">@_detail.EndUserUnit</MudText>
+                        </MudItem>
+                    </MudGrid>
+
+                    <!-- Line Items -->
+                    <MudText Typo="Typo.subtitle2" Class="mb-2" Style="font-weight:600">Line Items (@_detail.Items.Count)</MudText>
+                    <div style="overflow-x:auto">
+                        <MudSimpleTable Dense="true" Hover="true" Striped="true" Style="min-width:750px">
+                            <thead>
+                                <tr>
+                                    <th style="width:36px">#</th>
+                                    <th style="min-width:200px">Description / Objective</th>
+                                    <th>Type</th>
+                                    <th style="text-align:right">Qty</th>
+                                    <th>Unit</th>
+                                    <th>Mode</th>
+                                    <th style="width:80px">Schedule</th>
+                                    <th style="text-align:right">Budget (₱)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in _detail.Items)
+                                {
+                                    <tr>
+                                        <td style="color:var(--mud-palette-text-secondary)">@item.ItemNo</td>
+                                        <td>
+                                            <MudText Typo="Typo.body2">@item.GeneralDescription</MudText>
+                                            @if (!string.IsNullOrWhiteSpace(item.Remarks))
+                                            {
+                                                <MudText Typo="Typo.caption" Color="Color.Secondary">@item.Remarks</MudText>
+                                            }
+                                        </td>
+                                        <td>
+                                            <MudChip T="string" Size="Size.Small" Color="Color.Default" Label="true">@item.ProjectType</MudChip>
+                                        </td>
+                                        <td style="text-align:right">@item.Quantity.ToString("N2")</td>
+                                        <td style="font-family:monospace">@item.Unit</td>
+                                        <td>
+                                            <MudText Typo="Typo.caption">@item.ModeOfProcurement</MudText>
+                                        </td>
+                                        <td>
+                                            <MudText Typo="Typo.caption">@item.ProcurementStart – @item.ProcurementEnd</MudText>
+                                            <MudText Typo="Typo.caption" Color="Color.Secondary">Del: @item.ExpectedDelivery</MudText>
+                                        </td>
+                                        <td style="text-align:right; font-weight:600">₱ @item.EstimatedBudget.ToString("N2")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </MudSimpleTable>
+                    </div>
+
+                    <!-- Total -->
+                    <MudStack Row="true" Class="mt-2 pa-2 rounded"
+                              Style="background:var(--mud-palette-background-grey)"
+                              AlignItems="AlignItems.Center">
+                        <MudText Typo="Typo.subtitle2">Total Estimated Budget</MudText>
+                        <MudSpacer />
+                        <MudText Typo="Typo.subtitle1" Color="Color.Primary" Style="font-weight:700">
+                            ₱ @_detail.TotalEstimatedBudget.ToString("N2")
+                        </MudText>
+                    </MudStack>
+                </MudCardContent>
+
+                <MudDivider />
+
+                <!-- Action bar -->
+                <MudCardActions Class="pa-3">
+                    <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Large"
+                               StartIcon="@Icons.Material.Filled.CheckCircle"
+                               OnClick="ConfirmApproveAsync" Disabled="_busy">
+                        @if (_busy)
+                        {
+                            <MudProgressCircular Size="Size.Small" Class="mr-1" Indeterminate="true" />
+                        }
+                        Approve
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Error" Size="Size.Large"
+                               StartIcon="@Icons.Material.Filled.Undo"
+                               OnClick="ConfirmReturnAsync" Disabled="_busy" Class="ml-2">
+                        Return for Revision
+                    </MudButton>
+                    <MudSpacer />
+                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mr-2">
+                        @_detail.Items.Count item@(_detail.Items.Count != 1 ? "s" : "") ·
+                        ₱ @_detail.TotalEstimatedBudget.ToString("N2") total
+                    </MudText>
+                </MudCardActions>
+            </MudCard>
+        }
+    </MudItem>
+</MudGrid>
+
+@code {
+    private List<PpmpSummaryDto> _queue = [];
+    private PpmpSummaryDto? _selected;
+    private PpmpDto? _detail;
+    private bool _loading;
+    private bool _busy;
+    private Guid _approverId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.WhenAll(LoadApproverAsync(), LoadQueueAsync());
+    }
+
+    private async Task LoadApproverAsync()
+    {
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var identityUserId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!string.IsNullOrWhiteSpace(identityUserId))
+            {
+                var result = await LookupClient.EmployeesGetAsync(identityUserId: identityUserId, pageSize: 1);
+                var employee = result.Items?.FirstOrDefault();
+                if (employee is not null)
+                    _approverId = employee.Id;
+            }
+        }
+        catch { /* non-critical */ }
+    }
+
+    private async Task LoadQueueAsync()
+    {
+        _loading = true;
+        _selected = null;
+        _detail = null;
+        try
+        {
+            var result = await PpmpClient.SearchAsync(
+                status: PpmpStatus.Submitted, page: 1, pageSize: 100);
+            _queue = result.Items.ToList();
+        }
+        catch (Exception ex) { Snackbar.Add($"Error loading queue: {ex.Message}", Severity.Error); }
+        finally { _loading = false; }
+    }
+
+    private async Task SelectPpmpAsync(PpmpSummaryDto? summary)
+    {
+        if (summary is null) return;
+        _selected = summary;
+        _busy = true;
+        try
+        {
+            _detail = await PpmpClient.GetAsync(summary.Id);
+        }
+        catch (Exception ex) { Snackbar.Add($"Error loading PPMP: {ex.Message}", Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    private async Task ConfirmReturnAsync()
+    {
+        if (_detail is null) return;
+
+        var parameters = new DialogParameters<ReasonInputDialog>
+        {
+            { x => x.Title, "Return for Revision" },
+            { x => x.Label, "Reason for return" },
+            { x => x.ConfirmText, "Return" }
+        };
+        var dialog = await DialogService.ShowAsync<ReasonInputDialog>("Return for Revision", parameters);
+        var result = await dialog.Result;
+        if (result is { Canceled: true } || result?.Data is not string reason || string.IsNullOrWhiteSpace(reason))
+            return;
+
+        _busy = true;
+        try
+        {
+            await PpmpClient.ReturnAsync(_detail.Id, reason, _approverId);
+            Snackbar.Add($"{_detail.PpmpNumber} returned for revision.", Severity.Warning);
+            await LoadQueueAsync();
+        }
+        catch (Exception ex) { Snackbar.Add($"Error: {ex.Message}", Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    private async Task ConfirmApproveAsync()
+    {
+        if (_detail is null) return;
+
+        var confirmed = await DialogService.ShowMessageBox(
+            "Approve PPMP",
+            $"Approve {_detail.PpmpNumber} for FY {_detail.FiscalYear}?\n\nThis action cannot be undone unless an amendment is created.",
+            yesText: "Approve", cancelText: "Cancel");
+        if (confirmed != true) return;
+
+        _busy = true;
+        try
+        {
+            await PpmpClient.ApproveAsync(_detail.Id, _approverId);
+            Snackbar.Add($"{_detail.PpmpNumber} approved successfully.", Severity.Success);
+            await LoadQueueAsync();
+        }
+        catch (Exception ex) { Snackbar.Add($"Error: {ex.Message}", Severity.Error); }
+        finally { _busy = false; }
+    }
+}
