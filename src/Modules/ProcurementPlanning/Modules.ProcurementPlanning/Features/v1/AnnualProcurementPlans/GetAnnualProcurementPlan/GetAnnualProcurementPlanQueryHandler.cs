@@ -10,14 +10,5 @@ public sealed class GetAnnualProcurementPlanQueryHandler(
 {
     public async ValueTask<AnnualProcurementPlanDto> Handle(
         GetAnnualProcurementPlanQuery query, CancellationToken cancellationToken)
-    {
-        var app = await dbContext.AnnualProcurementPlans
-            .AsNoTracking()
-            .Include(x => x.Items)
-            .FirstOrDefaultAsync(x => x.Id == query.Id, cancellationToken)
-            .ConfigureAwait(false)
-            ?? throw new KeyNotFoundException($"APP {query.Id} not found.");
-
-        return AppMapper.ToDto(app);
-    }
+        => await AppReadProjection.BuildDtoAsync(dbContext, query.Id, cancellationToken).ConfigureAwait(false);
 }

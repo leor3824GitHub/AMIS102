@@ -11,7 +11,7 @@
 @inject IDialogService DialogService
 
 <FshPageHeader Title="APP Approval Queue"
-               Description="Review and approve submitted Annual Procurement Plans" />
+               Description="Review and approve published Annual Procurement Plans" />
 
 <MudGrid Spacing="3">
 
@@ -24,7 +24,9 @@
                         <MudText Typo="Typo.subtitle1" Style="font-weight:600">Pending Approval</MudText>
                         @if (_queue.Count > 0)
                         {
-                            <MudChip T="string" Size="Size.Small" Color="Color.Warning" Label="true">@_queue.Count</MudChip>
+                            <MudChip T="string" Size="Size.Small" Color="Color.Warning" Label="true">
+                                @_queue.Count
+                            </MudChip>
                         }
                         <MudSpacer />
                         <MudIconButton Icon="@Icons.Material.Filled.Refresh" Size="Size.Small"
@@ -40,7 +42,7 @@
                 }
                 else if (_queue.Count == 0)
                 {
-                    <div class="pa-4">
+                    <div Class="pa-4">
                         <MudAlert Severity="Severity.Success" Dense="true">
                             No APPs pending approval.
                         </MudAlert>
@@ -48,26 +50,29 @@
                 }
                 else
                 {
-                    <MudList T="AnnualProcurementPlanSummaryDto" Dense="true" SelectedValue="_selected"
-                             SelectedValueChanged="SelectAppAsync">
+                    <MudList T="AnnualProcurementPlanSummaryDto" Dense="true"
+                             SelectedValue="_selected" SelectedValueChanged="SelectAppAsync">
                         @foreach (var item in _queue)
                         {
                             <MudListItem T="AnnualProcurementPlanSummaryDto" Value="item"
-                                         Style="@(_selected?.Id == item.Id ? "background:var(--mud-palette-primary-lighten);border-left:3px solid var(--mud-palette-primary)" : "border-left:3px solid transparent")">
+                                         Style="@(_selected?.Id == item.Id
+                                             ? "background:var(--mud-palette-primary-lighten);border-left:3px solid var(--mud-palette-primary)"
+                                             : "border-left:3px solid transparent")">
                                 <MudStack Spacing="0">
                                     <MudText Typo="Typo.subtitle2" Style="font-weight:600">@item.AppNumber</MudText>
                                     <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Class="mt-1">
-                                        <MudChip T="string" Size="Size.Small" Color="@RevisionColor(item.RevisionType)"
-                                                 Label="true">@item.RevisionType</MudChip>
+                                        <MudChip T="string" Size="Size.Small" Color="Color.Default" Label="true"
+                                                 Style="font-size:10px">
+                                            @item.RevisionType
+                                        </MudChip>
                                         <MudText Typo="Typo.caption">FY @item.FiscalYear</MudText>
+                                        <MudText Typo="Typo.caption">· @item.ItemCount items</MudText>
                                         <MudSpacer />
-                                        <MudText Typo="Typo.caption" Style="font-weight:600; color:var(--mud-palette-primary)">
+                                        <MudText Typo="Typo.caption"
+                                                 Style="font-weight:600; color:var(--mud-palette-primary)">
                                             ₱ @item.TotalEstimatedBudget.ToString("N0")
                                         </MudText>
                                     </MudStack>
-                                    <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                        @item.ItemCount item@(item.ItemCount != 1 ? "s" : "")
-                                    </MudText>
                                 </MudStack>
                             </MudListItem>
                             <MudDivider />
@@ -85,8 +90,11 @@
             <MudCard Elevation="1" Style="height:100%">
                 <MudCardContent Style="display:flex; align-items:center; justify-content:center; min-height:300px">
                     <MudStack AlignItems="AlignItems.Center" Spacing="2">
-                        <MudIcon Icon="@Icons.Material.Outlined.TouchApp" Color="Color.Secondary" Size="Size.Large" />
-                        <MudText Typo="Typo.body1" Color="Color.Secondary">Select an APP from the queue to review</MudText>
+                        <MudIcon Icon="@Icons.Material.Outlined.TouchApp"
+                                 Color="Color.Secondary" Size="Size.Large" />
+                        <MudText Typo="Typo.body1" Color="Color.Secondary">
+                            Select an APP from the queue to review
+                        </MudText>
                     </MudStack>
                 </MudCardContent>
             </MudCard>
@@ -101,13 +109,12 @@
                             <MudStack Spacing="0">
                                 <MudText Typo="Typo.h6" Style="font-weight:700">@_detail.AppNumber</MudText>
                                 <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                    Submitted for approval · v@(_detail.VersionNumber)
+                                    Published for approval · v@(_detail.VersionNumber) · @_detail.RevisionType
                                 </MudText>
                             </MudStack>
                             <MudSpacer />
-                            <MudChip T="string" Size="Size.Small" Color="Color.Info" Label="true"
-                                     Icon="@Icons.Material.Filled.Send">
-                                For Approval
+                            <MudChip T="string" Size="Size.Small" Color="Color.Info" Label="true">
+                                @_detail.Status
                             </MudChip>
                         </MudStack>
                     </CardHeaderContent>
@@ -132,73 +139,113 @@
                         </MudItem>
                         <MudItem xs="6" sm="3">
                             <MudText Typo="Typo.caption" Color="Color.Secondary">Total Budget</MudText>
-                            <MudText Typo="Typo.body2" Style="font-weight:600; color:var(--mud-palette-primary)">
+                            <MudText Typo="Typo.body2" Color="Color.Primary" Style="font-weight:700">
                                 ₱ @_detail.TotalEstimatedBudget.ToString("N2")
                             </MudText>
                         </MudItem>
-                        @if (!string.IsNullOrWhiteSpace(_detail.AmendmentReason))
+                        @if (_detail.ConsolidatedOn.HasValue)
                         {
                             <MudItem xs="12">
-                                <MudText Typo="Typo.caption" Color="Color.Secondary">Amendment Reason</MudText>
-                                <MudText Typo="Typo.body2">@_detail.AmendmentReason</MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">Consolidated On</MudText>
+                                <MudText Typo="Typo.caption">
+                                    @_detail.ConsolidatedOn.Value.ToLocalTime().ToString("MMMM dd, yyyy HH:mm")
+                                </MudText>
                             </MudItem>
                         }
                     </MudGrid>
 
-                    <!-- Line Items by Office -->
-                    <MudText Typo="Typo.subtitle2" Class="mb-2" Style="font-weight:600">
-                        Consolidated Items (@_detail.Items.Count)
-                    </MudText>
-                    <div style="overflow-x:auto">
-                        <MudSimpleTable Dense="true" Hover="true" Striped="true" Style="min-width:700px">
-                            <thead>
-                                <tr>
-                                    <th style="width:36px">#</th>
-                                    <th>Office</th>
-                                    <th style="min-width:180px">Description</th>
-                                    <th>Type</th>
-                                    <th style="text-align:right">Qty</th>
-                                    <th>Unit</th>
-                                    <th>Mode</th>
-                                    <th>Period</th>
-                                    <th style="text-align:right">Budget (₱)</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var item in _detail.Items)
-                                {
-                                    <tr>
-                                        <td style="color:var(--mud-palette-text-secondary)">@item.ItemNo</td>
-                                        <td>
-                                            <MudChip T="string" Size="Size.Small" Label="true"
-                                                     Style="font-family:monospace; font-size:10px">@item.OfficeCode</MudChip>
-                                        </td>
-                                        <td>
-                                            <MudText Typo="Typo.body2">@item.GeneralDescription</MudText>
-                                            @if (!string.IsNullOrWhiteSpace(item.Remarks))
-                                            {
-                                                <MudText Typo="Typo.caption" Color="Color.Secondary">@item.Remarks</MudText>
-                                            }
-                                        </td>
-                                        <td><MudChip T="string" Size="Size.Small" Label="true">@item.ProjectType</MudChip></td>
-                                        <td style="text-align:right">@item.Quantity.ToString("N2")</td>
-                                        <td style="font-family:monospace">@item.Unit</td>
-                                        <td><MudText Typo="Typo.caption">@item.ModeOfProcurement</MudText></td>
-                                        <td>
-                                            <MudText Typo="Typo.caption">@item.ProcurementStart – @item.ProcurementEnd</MudText>
-                                        </td>
-                                        <td style="text-align:right; font-weight:600">₱ @item.EstimatedBudget.ToString("N2")</td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </MudSimpleTable>
-                    </div>
+                    <!-- Budget by type summary -->
+                    <MudStack Row="true" Spacing="2" Class="mb-4" Wrap="Wrap.Wrap">
+                        @foreach (var tg in _detail.Items.GroupBy(i => i.ProjectType).OrderBy(g => g.Key))
+                        {
+                            <MudPaper Elevation="0" Class="pa-2"
+                                      Style="border:1px solid var(--mud-palette-lines-default); border-radius:4px; min-width:140px">
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">@tg.Key</MudText>
+                                <MudText Typo="Typo.body2" Style="font-weight:600">₱ @tg.Sum(i => i.EstimatedBudget).ToString("N2")</MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">@tg.Count() items</MudText>
+                            </MudPaper>
+                        }
+                    </MudStack>
 
-                    <!-- Total row -->
-                    <MudStack Row="true" Class="mt-2 pa-2 rounded"
+                    <!-- Items grouped by office -->
+                    <MudText Typo="Typo.subtitle2" Class="mb-2" Style="font-weight:600">
+                        Line Items by Office
+                    </MudText>
+
+                    @foreach (var officeGroup in _detail.Items
+                        .GroupBy(i => i.OfficeCode)
+                        .OrderBy(g => g.Key))
+                    {
+                        <MudPaper Elevation="0" Class="mb-3"
+                                  Style="border:1px solid var(--mud-palette-lines-default); border-radius:4px">
+                            <div Class="pa-2"
+                                 Style="background:var(--mud-palette-background-grey); border-bottom:1px solid var(--mud-palette-lines-default)">
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                    <MudText Typo="Typo.caption"
+                                             Style="font-family:monospace; font-weight:700">
+                                        @officeGroup.Key
+                                    </MudText>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                        · @officeGroup.First().EndUserUnit
+                                        · @officeGroup.Count() items
+                                    </MudText>
+                                    <MudSpacer />
+                                    <MudText Typo="Typo.caption"
+                                             Style="font-weight:600; color:var(--mud-palette-primary)">
+                                        ₱ @officeGroup.Sum(i => i.EstimatedBudget).ToString("N2")
+                                    </MudText>
+                                </MudStack>
+                            </div>
+                            <div style="overflow-x:auto">
+                                <MudSimpleTable Dense="true" Hover="true" Striped="true"
+                                               Style="min-width:700px; border-radius:0">
+                                    <thead>
+                                        <tr>
+                                            <th style="width:36px">#</th>
+                                            <th style="min-width:180px">Description</th>
+                                            <th>Type</th>
+                                            <th style="text-align:right">Qty</th>
+                                            <th>Unit</th>
+                                            <th>Mode</th>
+                                            <th style="text-align:right; width:120px">Budget (₱)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var item in officeGroup.OrderBy(i => i.ItemNo))
+                                        {
+                                            <tr>
+                                                <td style="color:var(--mud-palette-text-secondary)">@item.ItemNo</td>
+                                                <td>
+                                                    <MudText Typo="Typo.body2">@item.GeneralDescription</MudText>
+                                                    @if (!string.IsNullOrWhiteSpace(item.Remarks))
+                                                    {
+                                                        <MudText Typo="Typo.caption" Color="Color.Secondary">@item.Remarks</MudText>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    <MudChip T="string" Size="Size.Small" Color="Color.Default" Label="true">
+                                                        @item.ProjectType
+                                                    </MudChip>
+                                                </td>
+                                                <td style="text-align:right">@item.Quantity.ToString("N2")</td>
+                                                <td style="font-family:monospace">@item.Unit</td>
+                                                <td><MudText Typo="Typo.caption">@item.ModeOfProcurement</MudText></td>
+                                                <td style="text-align:right; font-weight:600">
+                                                    ₱ @item.EstimatedBudget.ToString("N2")
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </MudSimpleTable>
+                            </div>
+                        </MudPaper>
+                    }
+
+                    <!-- Grand total -->
+                    <MudStack Row="true" Class="mt-2 pa-3 rounded"
                               Style="background:var(--mud-palette-background-grey)"
                               AlignItems="AlignItems.Center">
-                        <MudText Typo="Typo.subtitle2">Total Estimated Budget</MudText>
+                        <MudText Typo="Typo.subtitle2">Grand Total</MudText>
                         <MudSpacer />
                         <MudText Typo="Typo.subtitle1" Color="Color.Primary" Style="font-weight:700">
                             ₱ @_detail.TotalEstimatedBudget.ToString("N2")
@@ -217,7 +264,7 @@
                         {
                             <MudProgressCircular Size="Size.Small" Class="mr-1" Indeterminate="true" />
                         }
-                        Approve APP
+                        Approve
                     </MudButton>
                     <MudButton Variant="Variant.Outlined" Color="Color.Error" Size="Size.Large"
                                StartIcon="@Icons.Material.Filled.Undo"
@@ -225,7 +272,7 @@
                         Return for Revision
                     </MudButton>
                     <MudSpacer />
-                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mr-2">
                         @_detail.Items.Count item@(_detail.Items.Count != 1 ? "s" : "") ·
                         ₱ @_detail.TotalEstimatedBudget.ToString("N2") total
                     </MudText>
@@ -295,7 +342,6 @@
     private async Task ConfirmApproveAsync()
     {
         if (_detail is null) return;
-
         var confirmed = await DialogService.ShowMessageBox(
             "Approve APP",
             $"Approve {_detail.AppNumber} for FY {_detail.FiscalYear}?\n\nThis action cannot be undone unless an amendment is created.",
@@ -319,7 +365,7 @@
 
         var parameters = new DialogParameters<ReasonInputDialog>
         {
-            { x => x.Title, "Return for Revision" },
+            { x => x.Title, "Return APP for Revision" },
             { x => x.Label, "Reason for return" },
             { x => x.ConfirmText, "Return" }
         };
@@ -338,12 +384,4 @@
         catch (Exception ex) { Snackbar.Add($"Error: {ex.Message}", Severity.Error); }
         finally { _busy = false; }
     }
-
-    private static Color RevisionColor(AppRevisionType t) => t switch
-    {
-        AppRevisionType.Original     => Color.Default,
-        AppRevisionType.Supplemental => Color.Info,
-        AppRevisionType.Revised      => Color.Warning,
-        _                            => Color.Default
-    };
 }

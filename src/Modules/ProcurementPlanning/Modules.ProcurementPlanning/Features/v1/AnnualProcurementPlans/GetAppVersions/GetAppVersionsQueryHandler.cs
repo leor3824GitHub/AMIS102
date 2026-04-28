@@ -1,42 +1,20 @@
-using FSH.Framework.Shared.Persistence;
 using FSH.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
 using FSH.Modules.ProcurementPlanning.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.SearchAnnualProcurementPlans;
+namespace FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.GetAppVersions;
 
-public sealed class SearchAnnualProcurementPlansQueryHandler(
-    ProcurementPlanningDbContext dbContext) : IQueryHandler<SearchAnnualProcurementPlansQuery, PagedResponse<AnnualProcurementPlanSummaryDto>>
+public sealed class GetAppVersionsQueryHandler(
+    ProcurementPlanningDbContext dbContext) : IQueryHandler<GetAppVersionsQuery, IReadOnlyList<AnnualProcurementPlanSummaryDto>>
 {
-    public async ValueTask<PagedResponse<AnnualProcurementPlanSummaryDto>> Handle(
-        SearchAnnualProcurementPlansQuery query, CancellationToken cancellationToken)
+    public async ValueTask<IReadOnlyList<AnnualProcurementPlanSummaryDto>> Handle(
+        GetAppVersionsQuery query, CancellationToken cancellationToken)
     {
-        var q = dbContext.AnnualProcurementPlans
+        var versions = await dbContext.AnnualProcurementPlans
             .AsNoTracking()
-            .Where(x => !x.IsDeleted);
-
-        if (query.CurrentVersionOnly)
-            q = q.Where(x => x.IsCurrentVersion);
-
-        if (!string.IsNullOrWhiteSpace(query.Keyword))
-            q = q.Where(x => x.AppNumber.Contains(query.Keyword));
-
-        if (query.FiscalYear.HasValue)
-            q = q.Where(x => x.FiscalYear == query.FiscalYear.Value);
-
-        if (query.Status.HasValue)
-            q = q.Where(x => x.Status == query.Status.Value);
-
-        if (query.RevisionType.HasValue)
-            q = q.Where(x => x.RevisionType == query.RevisionType.Value);
-
-        var totalCount = await q.CountAsync(cancellationToken).ConfigureAwait(false);
-
-        var pageApps = await q
-            .OrderByDescending(x => x.CreatedOnUtc)
-            .Skip((query.PageNumber - 1) * query.PageSize)
-            .Take(query.PageSize)
+            .Where(x => x.VersionChainId == query.VersionChainId)
+            .OrderBy(x => x.VersionNumber)
             .Select(x => new
             {
                 x.Id,
@@ -52,7 +30,7 @@ public sealed class SearchAnnualProcurementPlansQueryHandler(
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
-        var appIds = pageApps.Select(x => x.Id).ToList();
+        var appIds = versions.Select(x => x.Id).ToList();
 
         var aggregates = await (
                 from line in dbContext.AppLineReferences.AsNoTracking()
@@ -69,7 +47,7 @@ public sealed class SearchAnnualProcurementPlansQueryHandler(
             .ToDictionaryAsync(x => x.AppId, cancellationToken)
             .ConfigureAwait(false);
 
-        var items = pageApps
+        return versions
             .Select(x =>
             {
                 var hasAgg = aggregates.TryGetValue(x.Id, out var agg);
@@ -87,13 +65,5 @@ public sealed class SearchAnnualProcurementPlansQueryHandler(
                     x.CreatedOnUtc);
             })
             .ToList();
-
-        return new PagedResponse<AnnualProcurementPlanSummaryDto>
-        {
-            Items = items,
-            TotalCount = totalCount,
-            PageNumber = query.PageNumber,
-            PageSize = query.PageSize
-        };
     }
 }

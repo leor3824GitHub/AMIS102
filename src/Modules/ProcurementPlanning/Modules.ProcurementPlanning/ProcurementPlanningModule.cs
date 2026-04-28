@@ -20,7 +20,9 @@ using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.Approve
 using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.RecallAnnualProcurementPlan;
 using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.ReturnAnnualProcurementPlan;
 using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.AmendAnnualProcurementPlan;
+using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.DeleteAnnualProcurementPlan;
 using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.GetAnnualProcurementPlan;
+using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.GetAppVersions;
 using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.GetAvailablePpmps;
 using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.SearchAnnualProcurementPlans;
 using FSH.Modules.ProcurementPlanning.Provisioning;
@@ -103,6 +105,8 @@ public class ProcurementPlanningModule : IModule
         ReturnAnnualProcurementPlanEndpoint.Map(appGroup);
         AmendAnnualProcurementPlanEndpoint.Map(appGroup);
         GetAnnualProcurementPlanEndpoint.Map(appGroup);
+        DeleteAnnualProcurementPlanEndpoint.Map(appGroup);
+        GetAppVersionsEndpoint.Map(appGroup);
         GetAvailablePpmpsEndpoint.Map(appGroup);
         SearchAnnualProcurementPlansEndpoint.Map(appGroup);
     }

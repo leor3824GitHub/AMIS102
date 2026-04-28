@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using FSH.Framework.Core.Domain;
 using FSH.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
 using FSH.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
@@ -5,10 +6,66 @@ using FSH.Modules.ProcurementPlanning.Domain.Ppmps;
 
 namespace FSH.Modules.ProcurementPlanning.Domain.AnnualProcurementPlans;
 
-public sealed class AppItem
+public sealed class AppLineReference
 {
     public Guid Id { get; private set; }
     public Guid AppId { get; private set; }
+    public Guid SourcePpmpId { get; private set; }
+    public Guid SourcePpmpItemId { get; private set; }
+    public int ItemNo { get; private set; }
+
+    private AppLineReference() { }
+
+    public static AppLineReference FromPpmpItem(Guid appId, int itemNo, Ppmp ppmp, PpmpItem source) =>
+        new()
+        {
+            Id = Guid.NewGuid(),
+            AppId = appId,
+            SourcePpmpId = ppmp.Id,
+            SourcePpmpItemId = source.Id,
+            ItemNo = itemNo
+        };
+
+    internal static AppLineReference Clone(Guid newAppId, int itemNo, AppLineReference source) =>
+        new()
+        {
+            Id = Guid.NewGuid(),
+            AppId = newAppId,
+            SourcePpmpId = source.SourcePpmpId,
+            SourcePpmpItemId = source.SourcePpmpItemId,
+            ItemNo = itemNo
+        };
+}
+
+public enum AppSnapshotType
+{
+    Published = 1,
+    Approved = 2
+}
+
+public sealed record AppSnapshotLineData(
+    Guid SourcePpmpId,
+    Guid SourcePpmpItemId,
+    string OfficeCode,
+    string EndUserUnit,
+    int ItemNo,
+    string GeneralDescription,
+    ProjectType ProjectType,
+    decimal Quantity,
+    string Unit,
+    ModeOfProcurement ModeOfProcurement,
+    bool PreProcurementConference,
+    string ProcurementStart,
+    string ProcurementEnd,
+    string ExpectedDelivery,
+    string SourceOfFunds,
+    decimal EstimatedBudget,
+    string? Remarks);
+
+public sealed class AppSnapshotItem
+{
+    public Guid Id { get; private set; }
+    public Guid AppSnapshotId { get; private set; }
     public Guid SourcePpmpId { get; private set; }
     public Guid SourcePpmpItemId { get; private set; }
     public string OfficeCode { get; private set; } = default!;
@@ -27,58 +84,85 @@ public sealed class AppItem
     public decimal EstimatedBudget { get; private set; }
     public string? Remarks { get; private set; }
 
-    private AppItem() { }
+    private AppSnapshotItem() { }
 
-    public static AppItem FromPpmpItem(Guid appId, int itemNo, Ppmp ppmp, PpmpItem source) =>
+    internal static AppSnapshotItem Create(Guid snapshotId, AppSnapshotLineData line) =>
         new()
         {
             Id = Guid.NewGuid(),
-            AppId = appId,
-            SourcePpmpId = ppmp.Id,
-            SourcePpmpItemId = source.Id,
-            OfficeCode = ppmp.OfficeCode,
-            EndUserUnit = ppmp.EndUserUnit,
-            ItemNo = itemNo,
-            GeneralDescription = source.GeneralDescription,
-            ProjectType = source.ProjectType,
-            Quantity = source.Quantity,
-            Unit = source.Unit,
-            ModeOfProcurement = source.ModeOfProcurement,
-            PreProcurementConference = source.PreProcurementConference,
-            ProcurementStart = source.ProcurementStart,
-            ProcurementEnd = source.ProcurementEnd,
-            ExpectedDelivery = source.ExpectedDelivery,
-            SourceOfFunds = source.SourceOfFunds,
-            EstimatedBudget = source.EstimatedBudget,
-            Remarks = source.Remarks
-        };
-
-    internal static AppItem Clone(Guid newAppId, int itemNo, AppItem source) =>
-        new()
-        {
-            Id = Guid.NewGuid(),
-            AppId = newAppId,
-            SourcePpmpId = source.SourcePpmpId,
-            SourcePpmpItemId = source.SourcePpmpItemId,
-            OfficeCode = source.OfficeCode,
-            EndUserUnit = source.EndUserUnit,
-            ItemNo = itemNo,
-            GeneralDescription = source.GeneralDescription,
-            ProjectType = source.ProjectType,
-            Quantity = source.Quantity,
-            Unit = source.Unit,
-            ModeOfProcurement = source.ModeOfProcurement,
-            PreProcurementConference = source.PreProcurementConference,
-            ProcurementStart = source.ProcurementStart,
-            ProcurementEnd = source.ProcurementEnd,
-            ExpectedDelivery = source.ExpectedDelivery,
-            SourceOfFunds = source.SourceOfFunds,
-            EstimatedBudget = source.EstimatedBudget,
-            Remarks = source.Remarks
+            AppSnapshotId = snapshotId,
+            SourcePpmpId = line.SourcePpmpId,
+            SourcePpmpItemId = line.SourcePpmpItemId,
+            OfficeCode = line.OfficeCode,
+            EndUserUnit = line.EndUserUnit,
+            ItemNo = line.ItemNo,
+            GeneralDescription = line.GeneralDescription,
+            ProjectType = line.ProjectType,
+            Quantity = line.Quantity,
+            Unit = line.Unit,
+            ModeOfProcurement = line.ModeOfProcurement,
+            PreProcurementConference = line.PreProcurementConference,
+            ProcurementStart = line.ProcurementStart,
+            ProcurementEnd = line.ProcurementEnd,
+            ExpectedDelivery = line.ExpectedDelivery,
+            SourceOfFunds = line.SourceOfFunds,
+            EstimatedBudget = line.EstimatedBudget,
+            Remarks = line.Remarks
         };
 }
 
-public sealed class AnnualProcurementPlan : AggregateRoot<Guid>, IAuditableEntity
+public sealed class AppSnapshot
+{
+    public Guid Id { get; private set; }
+    public Guid AppId { get; private set; }
+    public AppSnapshotType SnapshotType { get; private set; }
+    public string AppNumber { get; private set; } = default!;
+    public int FiscalYear { get; private set; }
+    public AppRevisionType RevisionType { get; private set; }
+    public AppStatus StatusAtCapture { get; private set; }
+    public int VersionNumber { get; private set; }
+    public Guid VersionChainId { get; private set; }
+    public DateTimeOffset CapturedOnUtc { get; private set; }
+    public string? CapturedBy { get; private set; }
+    public decimal TotalEstimatedBudget { get; private set; }
+
+    private readonly List<AppSnapshotItem> _items = [];
+    public IReadOnlyList<AppSnapshotItem> Items => _items.AsReadOnly();
+
+    private AppSnapshot() { }
+
+    public static AppSnapshot Capture(
+        AnnualProcurementPlan app,
+        AppSnapshotType snapshotType,
+        string? capturedBy,
+        IEnumerable<AppSnapshotLineData> lines)
+    {
+        var snapshot = new AppSnapshot
+        {
+            Id = Guid.NewGuid(),
+            AppId = app.Id,
+            SnapshotType = snapshotType,
+            AppNumber = app.AppNumber,
+            FiscalYear = app.FiscalYear,
+            RevisionType = app.RevisionType,
+            StatusAtCapture = app.Status,
+            VersionNumber = app.VersionNumber,
+            VersionChainId = app.VersionChainId,
+            CapturedOnUtc = DateTimeOffset.UtcNow,
+            CapturedBy = capturedBy
+        };
+
+        foreach (var line in lines.OrderBy(x => x.ItemNo))
+        {
+            snapshot._items.Add(AppSnapshotItem.Create(snapshot.Id, line));
+        }
+
+        snapshot.TotalEstimatedBudget = snapshot._items.Sum(x => x.EstimatedBudget);
+        return snapshot;
+    }
+}
+
+public sealed class AnnualProcurementPlan : AggregateRoot<Guid>, IAuditableEntity, ISoftDeletable
 {
     public string AppNumber { get; private set; } = default!;
     public int FiscalYear { get; private set; }
@@ -105,8 +189,8 @@ public sealed class AnnualProcurementPlan : AggregateRoot<Guid>, IAuditableEntit
 
     public byte[] Version { get; set; } = [];
 
-    private readonly List<AppItem> _items = [];
-    public IReadOnlyList<AppItem> Items => _items.AsReadOnly();
+    private readonly List<AppLineReference> _lineReferences = [];
+    public IReadOnlyList<AppLineReference> LineReferences => _lineReferences.AsReadOnly();
 
     // IAuditableEntity
     public DateTimeOffset CreatedOnUtc { get; set; } = DateTimeOffset.UtcNow;
@@ -119,6 +203,8 @@ public sealed class AnnualProcurementPlan : AggregateRoot<Guid>, IAuditableEntit
 
     private AnnualProcurementPlan() { }
 
+    private static byte[] NewVersion() => RandomNumberGenerator.GetBytes(8);
+
     public static AnnualProcurementPlan Create(string appNumber, int fiscalYear, AppRevisionType revisionType) =>
         new()
         {
@@ -130,7 +216,8 @@ public sealed class AnnualProcurementPlan : AggregateRoot<Guid>, IAuditableEntit
             VersionNumber = 1,
             IsCurrentVersion = true,
             VersionChainId = Guid.NewGuid(),
-            CreatedOnUtc = DateTimeOffset.UtcNow
+            CreatedOnUtc = DateTimeOffset.UtcNow,
+            Version = NewVersion()
         };
 
     /// <summary>Consolidates approved PPMPs into this APP. Re-consolidating the same PPMPs replaces their items.</summary>
@@ -142,33 +229,35 @@ public sealed class AnnualProcurementPlan : AggregateRoot<Guid>, IAuditableEntit
         var ppmpList = ppmps.ToList();
         var ppmpIds = ppmpList.Select(p => p.Id).ToHashSet();
 
-        // Remove items previously sourced from these PPMPs (allow re-consolidation)
-        _items.RemoveAll(i => ppmpIds.Contains(i.SourcePpmpId));
+        // Remove previously linked source lines from these PPMPs to keep consolidation idempotent.
+        _lineReferences.RemoveAll(i => ppmpIds.Contains(i.SourcePpmpId));
 
-        var nextItemNo = _items.Count == 0 ? 1 : _items.Max(i => i.ItemNo) + 1;
+        var nextItemNo = _lineReferences.Count == 0 ? 1 : _lineReferences.Max(i => i.ItemNo) + 1;
 
         foreach (var ppmp in ppmpList)
         {
             foreach (var item in ppmp.Items)
             {
-                _items.Add(AppItem.FromPpmpItem(Id, nextItemNo++, ppmp, item));
+                _lineReferences.Add(AppLineReference.FromPpmpItem(Id, nextItemNo++, ppmp, item));
             }
         }
 
         ConsolidatedById = consolidatedById;
         ConsolidatedOn = DateTimeOffset.UtcNow;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        Version = NewVersion();
     }
 
     public void Publish()
     {
         if (Status is not (AppStatus.Draft or AppStatus.Returned))
             throw new InvalidOperationException("Only Draft or Returned APPs can be submitted for approval.");
-        if (_items.Count == 0)
+        if (_lineReferences.Count == 0)
             throw new InvalidOperationException("APP must have at least one item before publishing.");
 
         Status = AppStatus.Published;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        Version = NewVersion();
     }
 
     public void Approve(string approvedById)
@@ -180,6 +269,7 @@ public sealed class AnnualProcurementPlan : AggregateRoot<Guid>, IAuditableEntit
         ApprovedById = approvedById;
         ApprovedOn = DateTimeOffset.UtcNow;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        Version = NewVersion();
     }
 
     public void Recall()
@@ -188,6 +278,7 @@ public sealed class AnnualProcurementPlan : AggregateRoot<Guid>, IAuditableEntit
             throw new InvalidOperationException("Only Published APPs can be recalled.");
         Status = AppStatus.Draft;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        Version = NewVersion();
     }
 
     public void Return(string returnReason, Guid returnedById)
@@ -199,6 +290,7 @@ public sealed class AnnualProcurementPlan : AggregateRoot<Guid>, IAuditableEntit
         ReturnedAt = DateTimeOffset.UtcNow;
         ReturnedById = returnedById;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        Version = NewVersion();
     }
 
     /// <summary>Creates a new version of this APP (amendment). Caller must call Supersede() on this instance.</summary>
@@ -221,13 +313,14 @@ public sealed class AnnualProcurementPlan : AggregateRoot<Guid>, IAuditableEntit
             AmendmentReason = amendmentReason,
             AmendedAt = DateTimeOffset.UtcNow,
             AmendedById = amendedById,
-            CreatedOnUtc = DateTimeOffset.UtcNow
+            CreatedOnUtc = DateTimeOffset.UtcNow,
+            Version = NewVersion()
         };
 
-        var itemNo = 1;
-        foreach (var src in _items)
+        var lineNo = 1;
+        foreach (var src in _lineReferences)
         {
-            amendment._items.Add(AppItem.Clone(amendment.Id, itemNo++, src));
+            amendment._lineReferences.Add(AppLineReference.Clone(amendment.Id, lineNo++, src));
         }
 
         return amendment;
@@ -238,5 +331,6 @@ public sealed class AnnualProcurementPlan : AggregateRoot<Guid>, IAuditableEntit
         IsCurrentVersion = false;
         Status = AppStatus.Superseded;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        Version = NewVersion();
     }
 }

@@ -21,8 +21,13 @@ public sealed class ICSExpiryJob(AssetManagementDbContext dbContext, ILogger<ICS
     {
         var today = DateOnly.FromDateTime(DateTime.UtcNow.Date);
 
+        // IgnoreQueryFilters bypasses both the Finbuckle multi-tenant filter (which has
+        // no tenant context in a Hangfire job) and the named soft-delete filter.
+        // Soft-delete is re-applied manually. The expiry job intentionally spans all tenants.
         var expiredIcs = await dbContext.InventoryCustodianSlips
-            .Where(x => x.Status == ICSStatus.Active
+            .IgnoreQueryFilters()
+            .Where(x => !x.IsDeleted
+                     && x.Status == ICSStatus.Active
                      && x.ExpiresOn.HasValue
                      && x.ExpiresOn.Value < today)
             .ToListAsync(cancellationToken)

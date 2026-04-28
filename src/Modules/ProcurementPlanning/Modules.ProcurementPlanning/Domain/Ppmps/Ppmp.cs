@@ -62,7 +62,7 @@ public sealed class PpmpItem
         };
 }
 
-public sealed class Ppmp : AggregateRoot<Guid>, IAuditableEntity
+public sealed class Ppmp : AggregateRoot<Guid>, IAuditableEntity, ISoftDeletable
 {
     public string PpmpNumber { get; private set; } = default!;
     public int FiscalYear { get; private set; }
@@ -220,6 +220,17 @@ public sealed class Ppmp : AggregateRoot<Guid>, IAuditableEntity
 
         Status = PpmpStatus.Consolidated;
         AppId = appId;
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        Version = NewVersion();
+    }
+
+    public void UnmarkConsolidated()
+    {
+        if (Status != PpmpStatus.Consolidated)
+            throw new InvalidOperationException("Only Consolidated PPMPs can be unmarked.");
+
+        Status = PpmpStatus.Approved;
+        AppId = null;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
         Version = NewVersion();
     }

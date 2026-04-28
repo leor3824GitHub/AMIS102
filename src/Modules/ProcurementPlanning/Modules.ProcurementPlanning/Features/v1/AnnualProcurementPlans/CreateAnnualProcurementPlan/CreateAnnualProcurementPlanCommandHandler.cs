@@ -1,4 +1,6 @@
+using System.Net;
 using FSH.Framework.Core.Context;
+using FSH.Framework.Core.Exceptions;
 using FSH.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
 using FSH.Modules.ProcurementPlanning.Data;
 using FSH.Modules.ProcurementPlanning.Domain.AnnualProcurementPlans;
@@ -14,6 +16,18 @@ public sealed class CreateAnnualProcurementPlanCommandHandler(
     public async ValueTask<AnnualProcurementPlanDto> Handle(
         CreateAnnualProcurementPlanCommand command, CancellationToken cancellationToken)
     {
+        var hasDuplicate = await dbContext.AnnualProcurementPlans
+            .AnyAsync(x => x.FiscalYear == command.FiscalYear
+                        && x.IsCurrentVersion
+                        && x.Status != AppStatus.Superseded, cancellationToken)
+            .ConfigureAwait(false);
+
+        if (hasDuplicate)
+            throw new CustomException(
+                $"An APP already exists for fiscal year {command.FiscalYear}. Use 'Amend' to create a new version.",
+                Enumerable.Empty<string>(),
+                HttpStatusCode.Conflict);
+
         var appNumber = await GenerateAppNumberAsync(command.FiscalYear, cancellationToken);
 
         var app = AnnualProcurementPlan.Create(appNumber, command.FiscalYear, command.RevisionType);
@@ -22,7 +36,7 @@ public sealed class CreateAnnualProcurementPlanCommandHandler(
         dbContext.AnnualProcurementPlans.Add(app);
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-        return AppMapper.ToDto(app);
+        return await AppReadProjection.BuildDtoAsync(dbContext, app.Id, cancellationToken).ConfigureAwait(false);
     }
 
     private async Task<string> GenerateAppNumberAsync(int fiscalYear, CancellationToken ct)

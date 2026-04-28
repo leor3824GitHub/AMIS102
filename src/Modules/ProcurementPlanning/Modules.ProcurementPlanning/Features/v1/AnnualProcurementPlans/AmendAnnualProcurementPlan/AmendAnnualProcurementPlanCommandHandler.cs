@@ -14,7 +14,7 @@ public sealed class AmendAnnualProcurementPlanCommandHandler(
         AmendAnnualProcurementPlanCommand command, CancellationToken cancellationToken)
     {
         var original = await dbContext.AnnualProcurementPlans
-            .Include(x => x.Items)
+            .Include(x => x.LineReferences)
             .FirstOrDefaultAsync(x => x.Id == command.Id && x.IsCurrentVersion, cancellationToken)
             .ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"APP {command.Id} not found or is not the current version.");
@@ -28,6 +28,6 @@ public sealed class AmendAnnualProcurementPlanCommandHandler(
         dbContext.AnnualProcurementPlans.Add(amendment);
 
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return AppMapper.ToDto(amendment);
+        return await AppReadProjection.BuildDtoAsync(dbContext, amendment.Id, cancellationToken).ConfigureAwait(false);
     }
 }

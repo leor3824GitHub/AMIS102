@@ -14,8 +14,9 @@ public sealed class GetAvailablePpmpsQueryHandler(
         return await dbContext.Ppmps
             .AsNoTracking()
             .Where(x => x.FiscalYear == query.FiscalYear
-                     && x.Status == PpmpStatus.Approved
-                     && x.IsCurrentVersion)
+                     && x.IsCurrentVersion
+                     && (x.Status == PpmpStatus.Approved
+                         || (x.Status == PpmpStatus.Consolidated && x.AppId == query.AppId)))
             .OrderBy(x => x.OfficeCode).ThenBy(x => x.PpmpNumber)
             .Select(x => new PpmpSummaryDto(
                 x.Id, x.PpmpNumber, x.FiscalYear, x.PpmpType,
