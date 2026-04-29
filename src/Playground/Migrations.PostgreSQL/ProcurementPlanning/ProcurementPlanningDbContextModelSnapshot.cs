@@ -107,7 +107,6 @@ namespace FSH.Playground.Migrations.PostgreSQL.ProcurementPlanning
                     b.Property<byte[]>("Version")
                         .IsConcurrencyToken()
                         .IsRequired()
-                        .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("bytea");
 
                     b.Property<Guid>("VersionChainId")

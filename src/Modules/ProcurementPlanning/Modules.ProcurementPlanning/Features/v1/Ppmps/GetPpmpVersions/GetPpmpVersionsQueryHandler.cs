@@ -16,7 +16,7 @@ public sealed class GetPpmpVersionsQueryHandler(
             .Where(x => x.VersionChainId == query.VersionChainId)
             .OrderBy(x => x.VersionNumber)
             .Select(x => new PpmpSummaryDto(
-                x.Id, x.PpmpNumber, x.FiscalYear, x.PpmpType,
+                x.Id, x.PpmpNumber, x.FiscalYear, x.Phase,
                 x.OfficeCode, x.EndUserUnit, x.Status,
                 x.VersionNumber, x.IsCurrentVersion, x.VersionChainId,
                 x.Items.Count,

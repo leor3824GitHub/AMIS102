@@ -15,7 +15,6 @@ internal sealed class PpmpConfiguration : IEntityTypeConfiguration<Ppmp>
         builder.Property(x => x.OfficeCode).HasMaxLength(64).IsRequired();
         builder.Property(x => x.EndUserUnit).HasMaxLength(256).IsRequired();
         builder.Property(x => x.AmendmentReason).HasMaxLength(1000);
-        builder.Property(x => x.AmendedById).HasMaxLength(256);
         builder.Property(x => x.ReturnReason).HasMaxLength(1000);
 
         builder.Property(x => x.Version).IsConcurrencyToken();
@@ -24,6 +23,7 @@ internal sealed class PpmpConfiguration : IEntityTypeConfiguration<Ppmp>
         builder.HasIndex(x => x.VersionChainId);
         builder.HasIndex(x => new { x.FiscalYear, x.OfficeCode, x.IsCurrentVersion });
 
+        builder.Navigation(x => x.Items).HasField("_items");
         builder.HasMany(x => x.Items)
                .WithOne()
                .HasForeignKey(x => x.PpmpId)

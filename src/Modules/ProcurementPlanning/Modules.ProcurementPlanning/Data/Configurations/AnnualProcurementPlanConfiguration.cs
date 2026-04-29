@@ -13,17 +13,15 @@ internal sealed class AnnualProcurementPlanConfiguration : IEntityTypeConfigurat
         builder.HasKey(x => x.Id);
         builder.Property(x => x.AppNumber).HasMaxLength(64).IsRequired();
         builder.Property(x => x.AmendmentReason).HasMaxLength(1000);
-        builder.Property(x => x.AmendedById).HasMaxLength(256);
-        builder.Property(x => x.ConsolidatedById).HasMaxLength(256);
-        builder.Property(x => x.ApprovedById).HasMaxLength(256);
         builder.Property(x => x.ReturnReason).HasMaxLength(1000);
 
-        builder.Property(x => x.Version).IsRowVersion();
+        builder.Property(x => x.Version).IsConcurrencyToken();
 
         builder.HasIndex(x => x.AppNumber);
         builder.HasIndex(x => x.VersionChainId);
         builder.HasIndex(x => new { x.FiscalYear, x.IsCurrentVersion });
 
+        builder.Navigation(x => x.Items).HasField("_items");
         builder.HasMany(x => x.Items)
                .WithOne()
                .HasForeignKey(x => x.AppId)

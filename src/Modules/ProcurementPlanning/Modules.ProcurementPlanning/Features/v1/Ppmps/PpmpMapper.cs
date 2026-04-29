@@ -9,7 +9,7 @@ internal static class PpmpMapper
         new(ppmp.Id,
             ppmp.PpmpNumber,
             ppmp.FiscalYear,
-            ppmp.PpmpType,
+            ppmp.Phase,
             ppmp.OfficeCode,
             ppmp.EndUserUnit,
             ppmp.Status,
@@ -38,4 +38,10 @@ internal static class PpmpMapper
             ppmp.CreatedOnUtc,
             ppmp.CreatedBy,
             ppmp.LastModifiedOnUtc);
+
+    internal static PpmpItemData ToItemData(PpmpItemRequest r) =>
+        new(r.GeneralDescription, r.ProjectType, r.Quantity, r.Unit,
+            r.ModeOfProcurement, r.PreProcurementConference,
+            r.ProcurementStart, r.ProcurementEnd, r.ExpectedDelivery,
+            r.SourceOfFunds, r.EstimatedBudget, r.SupportingDocuments, r.Remarks);
 }

@@ -26,8 +26,8 @@ public sealed class SearchAnnualProcurementPlansQueryHandler(
         if (query.Status.HasValue)
             q = q.Where(x => x.Status == query.Status.Value);
 
-        if (query.RevisionType.HasValue)
-            q = q.Where(x => x.RevisionType == query.RevisionType.Value);
+        if (query.Phase.HasValue)
+            q = q.Where(x => x.Phase == query.Phase.Value);
 
         var totalCount = await q.CountAsync(cancellationToken).ConfigureAwait(false);
 
@@ -36,7 +36,7 @@ public sealed class SearchAnnualProcurementPlansQueryHandler(
             .Skip((query.PageNumber - 1) * query.PageSize)
             .Take(query.PageSize)
             .Select(x => new AnnualProcurementPlanSummaryDto(
-                x.Id, x.AppNumber, x.FiscalYear, x.RevisionType, x.Status,
+                x.Id, x.AppNumber, x.FiscalYear, x.Phase, x.Status,
                 x.VersionNumber, x.IsCurrentVersion, x.VersionChainId,
                 x.Items.Count,
                 x.Items.Sum(i => i.EstimatedBudget),

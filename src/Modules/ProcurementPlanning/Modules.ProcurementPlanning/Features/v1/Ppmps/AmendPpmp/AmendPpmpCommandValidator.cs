@@ -3,11 +3,11 @@ using FSH.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
 
 namespace FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.AmendPpmp;
 
-public sealed class AmendPpmpCommandValidator : AbstractValidator<AmendPpmpCommand>
+public sealed class CreateUpdatePpmpCommandValidator : AbstractValidator<CreateUpdatePpmpCommand>
 {
-    public AmendPpmpCommandValidator()
+    public CreateUpdatePpmpCommandValidator()
     {
         RuleFor(x => x.Id).NotEmpty();
-        RuleFor(x => x.AmendmentReason).NotEmpty().MaximumLength(1000);
+        RuleFor(x => x.UpdateReason).NotEmpty().MaximumLength(1000);
     }
 }

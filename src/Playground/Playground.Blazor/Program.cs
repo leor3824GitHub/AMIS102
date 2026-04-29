@@ -169,7 +169,7 @@ builder.Services.AddOutputCache(options =>
 });
 
 builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents();
+    .AddInteractiveServerComponents(o => o.DetailedErrors = builder.Environment.IsDevelopment());
 
 var app = builder.Build();
 

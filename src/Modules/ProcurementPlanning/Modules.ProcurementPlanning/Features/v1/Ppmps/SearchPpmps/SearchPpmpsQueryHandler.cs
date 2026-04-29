@@ -29,8 +29,8 @@ public sealed class SearchPpmpsQueryHandler(
         if (query.Status.HasValue)
             q = q.Where(x => x.Status == query.Status.Value);
 
-        if (query.PpmpType.HasValue)
-            q = q.Where(x => x.PpmpType == query.PpmpType.Value);
+        if (query.Phase.HasValue)
+            q = q.Where(x => x.Phase == query.Phase.Value);
 
         var totalCount = await q.CountAsync(cancellationToken).ConfigureAwait(false);
 
@@ -39,7 +39,7 @@ public sealed class SearchPpmpsQueryHandler(
             .Skip((query.PageNumber - 1) * query.PageSize)
             .Take(query.PageSize)
             .Select(x => new PpmpSummaryDto(
-                x.Id, x.PpmpNumber, x.FiscalYear, x.PpmpType,
+                x.Id, x.PpmpNumber, x.FiscalYear, x.Phase,
                 x.OfficeCode, x.EndUserUnit, x.Status,
                 x.VersionNumber, x.IsCurrentVersion, x.VersionChainId,
                 x.Items.Count,

@@ -18,7 +18,7 @@ public sealed class GetAvailablePpmpsQueryHandler(
                      && x.IsCurrentVersion)
             .OrderBy(x => x.OfficeCode).ThenBy(x => x.PpmpNumber)
             .Select(x => new PpmpSummaryDto(
-                x.Id, x.PpmpNumber, x.FiscalYear, x.PpmpType,
+                x.Id, x.PpmpNumber, x.FiscalYear, x.Phase,
                 x.OfficeCode, x.EndUserUnit, x.Status,
                 x.VersionNumber, x.IsCurrentVersion, x.VersionChainId,
                 x.Items.Count,

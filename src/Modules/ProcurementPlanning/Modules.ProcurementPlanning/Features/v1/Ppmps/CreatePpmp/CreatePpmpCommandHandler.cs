@@ -2,6 +2,7 @@ using FSH.Framework.Core.Context;
 using FSH.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
 using FSH.Modules.ProcurementPlanning.Data;
 using FSH.Modules.ProcurementPlanning.Domain.Ppmps;
+using FSH.Modules.ProcurementPlanning.Features.v1.Ppmps;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,11 +19,11 @@ public sealed class CreatePpmpCommandHandler(
         var ppmp = Ppmp.Create(
             number,
             command.FiscalYear,
-            command.PpmpType,
+            command.Phase,
             command.OfficeCode,
             command.EndUserUnit,
             command.PreparedById,
-            command.Items);
+            command.Items.Select(PpmpMapper.ToItemData));
 
         ppmp.CreatedBy = currentUser.GetUserId().ToString();
 

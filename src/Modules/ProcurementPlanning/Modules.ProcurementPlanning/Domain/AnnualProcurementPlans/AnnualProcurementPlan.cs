@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using FSH.Framework.Core.Domain;
 using FSH.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
 using FSH.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
@@ -5,6 +6,8 @@ using FSH.Modules.ProcurementPlanning.Domain.Ppmps;
 
 namespace FSH.Modules.ProcurementPlanning.Domain.AnnualProcurementPlans;
 
+// AppItem is a point-in-time snapshot of a PpmpItem at consolidation. It is intentionally
+// denormalized — if the source PPMP is later amended, AppItem preserves the original values.
 public sealed class AppItem
 {
     public Guid Id { get; private set; }
@@ -82,7 +85,7 @@ public sealed class AnnualProcurementPlan : AggregateRoot<Guid>, IAuditableEntit
 {
     public string AppNumber { get; private set; } = default!;
     public int FiscalYear { get; private set; }
-    public AppRevisionType RevisionType { get; private set; }
+    public AppPhase Phase { get; private set; }
     public AppStatus Status { get; private set; }
 
     // Versioning
@@ -92,18 +95,18 @@ public sealed class AnnualProcurementPlan : AggregateRoot<Guid>, IAuditableEntit
     public Guid? PreviousVersionId { get; private set; }
     public string? AmendmentReason { get; private set; }
     public DateTimeOffset? AmendedAt { get; private set; }
-    public string? AmendedById { get; private set; }
+    public Guid? AmendedById { get; private set; }
 
-    public string? ConsolidatedById { get; private set; }
+    public Guid? ConsolidatedById { get; private set; }
     public DateTimeOffset? ConsolidatedOn { get; private set; }
-    public string? ApprovedById { get; private set; }
+    public Guid? ApprovedById { get; private set; }
     public DateTimeOffset? ApprovedOn { get; private set; }
 
     public string? ReturnReason { get; private set; }
     public DateTimeOffset? ReturnedAt { get; private set; }
     public Guid? ReturnedById { get; private set; }
 
-    public byte[] Version { get; set; } = [];
+    public byte[] Version { get; private set; } = [];
 
     private readonly List<AppItem> _items = [];
     public IReadOnlyList<AppItem> Items => _items.AsReadOnly();
@@ -119,27 +122,43 @@ public sealed class AnnualProcurementPlan : AggregateRoot<Guid>, IAuditableEntit
 
     private AnnualProcurementPlan() { }
 
-    public static AnnualProcurementPlan Create(string appNumber, int fiscalYear, AppRevisionType revisionType) =>
+    private static byte[] NewVersion() => RandomNumberGenerator.GetBytes(8);
+
+    private void MarkChanged()
+    {
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        Version = NewVersion();
+    }
+
+    public static AnnualProcurementPlan Create(string appNumber, int fiscalYear, AppPhase phase) =>
         new()
         {
             Id = Guid.NewGuid(),
             AppNumber = appNumber,
             FiscalYear = fiscalYear,
-            RevisionType = revisionType,
+            Phase = phase,
             Status = AppStatus.Draft,
             VersionNumber = 1,
             IsCurrentVersion = true,
             VersionChainId = Guid.NewGuid(),
-            CreatedOnUtc = DateTimeOffset.UtcNow
+            CreatedOnUtc = DateTimeOffset.UtcNow,
+            Version = NewVersion()
         };
 
     /// <summary>Consolidates approved PPMPs into this APP. Re-consolidating the same PPMPs replaces their items.</summary>
-    public void ConsolidatePpmps(IEnumerable<Ppmp> ppmps, string consolidatedById)
+    public void ConsolidatePpmps(IEnumerable<Ppmp> ppmps, Guid consolidatedById)
     {
         if (Status is not (AppStatus.Draft or AppStatus.Returned))
             throw new InvalidOperationException("Only Draft or Returned APPs can have PPMPs consolidated into them.");
 
         var ppmpList = ppmps.ToList();
+
+        var expectedPpmpPhase = (PpmpPhase)(int)Phase;
+        var mismatch = ppmpList.FirstOrDefault(p => p.Phase != expectedPpmpPhase);
+        if (mismatch is not null)
+            throw new InvalidOperationException(
+                $"PPMP {mismatch.Id} has phase '{mismatch.Phase}' but this APP requires phase '{expectedPpmpPhase}'.");
+
         var ppmpIds = ppmpList.Select(p => p.Id).ToHashSet();
 
         // Remove items previously sourced from these PPMPs (allow re-consolidation)
@@ -157,7 +176,7 @@ public sealed class AnnualProcurementPlan : AggregateRoot<Guid>, IAuditableEntit
 
         ConsolidatedById = consolidatedById;
         ConsolidatedOn = DateTimeOffset.UtcNow;
-        LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        MarkChanged();
     }
 
     public void Publish()
@@ -168,10 +187,10 @@ public sealed class AnnualProcurementPlan : AggregateRoot<Guid>, IAuditableEntit
             throw new InvalidOperationException("APP must have at least one item before publishing.");
 
         Status = AppStatus.Published;
-        LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        MarkChanged();
     }
 
-    public void Approve(string approvedById)
+    public void Approve(Guid approvedById)
     {
         if (Status != AppStatus.Published)
             throw new InvalidOperationException("Only Published APPs can be approved.");
@@ -179,64 +198,101 @@ public sealed class AnnualProcurementPlan : AggregateRoot<Guid>, IAuditableEntit
         Status = AppStatus.Approved;
         ApprovedById = approvedById;
         ApprovedOn = DateTimeOffset.UtcNow;
-        LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        MarkChanged();
     }
 
     public void Recall()
     {
         if (Status != AppStatus.Published)
             throw new InvalidOperationException("Only Published APPs can be recalled.");
+
         Status = AppStatus.Draft;
-        LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        ReturnReason = null;
+        ReturnedAt = null;
+        ReturnedById = null;
+        MarkChanged();
     }
 
     public void Return(string returnReason, Guid returnedById)
     {
         if (Status != AppStatus.Published)
             throw new InvalidOperationException("Only Published APPs can be returned for revision.");
+
         Status = AppStatus.Returned;
         ReturnReason = returnReason;
         ReturnedAt = DateTimeOffset.UtcNow;
         ReturnedById = returnedById;
-        LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        MarkChanged();
     }
 
-    /// <summary>Creates a new version of this APP (amendment). Caller must call Supersede() on this instance.</summary>
-    public AnnualProcurementPlan CreateAmendment(string amendmentReason, AppRevisionType revisionType, string amendedById)
+    /// <summary>Promotes an Approved Indicative APP to a new empty Final draft. BAC Sec must re-consolidate Final PPMPs into the new APP.</summary>
+    public AnnualProcurementPlan PromoteToFinal(Guid promotedById)
     {
-        if (Status is not (AppStatus.Published or AppStatus.Approved))
-            throw new InvalidOperationException("Only Published or Approved APPs can be amended.");
+        if (Status is not AppStatus.Approved)
+            throw new InvalidOperationException("Only Approved APPs can be promoted to Final.");
+        if (Phase is not AppPhase.Indicative)
+            throw new InvalidOperationException("Only Indicative APPs can be promoted to Final.");
 
-        var amendment = new AnnualProcurementPlan
+        return new AnnualProcurementPlan
         {
             Id = Guid.NewGuid(),
             AppNumber = AppNumber,
             FiscalYear = FiscalYear,
-            RevisionType = revisionType,
+            Phase = AppPhase.Final,
+            Status = AppStatus.Draft,
+            VersionNumber = 1,
+            IsCurrentVersion = true,
+            VersionChainId = Guid.NewGuid(),
+            PreviousVersionId = Id,
+            AmendedAt = DateTimeOffset.UtcNow,
+            AmendedById = promotedById,
+            CreatedOnUtc = DateTimeOffset.UtcNow,
+            Version = NewVersion()
+        };
+    }
+
+    /// <summary>Creates a new Updated version of an Approved Final or Updated APP. Caller must call Supersede() on this instance.</summary>
+    public AnnualProcurementPlan CreateUpdate(string updateReason, Guid updatedById)
+    {
+        if (Status is not (AppStatus.Published or AppStatus.Approved))
+            throw new InvalidOperationException("Only Published or Approved APPs can have an update created.");
+        if (Phase is AppPhase.Indicative)
+            throw new InvalidOperationException("Indicative APPs should be promoted to Final, not updated directly.");
+
+        var update = new AnnualProcurementPlan
+        {
+            Id = Guid.NewGuid(),
+            AppNumber = AppNumber,
+            FiscalYear = FiscalYear,
+            Phase = AppPhase.Updated,
             Status = AppStatus.Draft,
             VersionNumber = VersionNumber + 1,
             IsCurrentVersion = true,
             VersionChainId = VersionChainId,
             PreviousVersionId = Id,
-            AmendmentReason = amendmentReason,
+            AmendmentReason = updateReason,
             AmendedAt = DateTimeOffset.UtcNow,
-            AmendedById = amendedById,
-            CreatedOnUtc = DateTimeOffset.UtcNow
+            AmendedById = updatedById,
+            CreatedOnUtc = DateTimeOffset.UtcNow,
+            Version = NewVersion()
         };
 
         var itemNo = 1;
         foreach (var src in _items)
-        {
-            amendment._items.Add(AppItem.Clone(amendment.Id, itemNo++, src));
-        }
+            update._items.Add(AppItem.Clone(update.Id, itemNo++, src));
 
-        return amendment;
+        return update;
     }
 
     public void Supersede()
     {
+        if (!IsCurrentVersion)
+            throw new InvalidOperationException("Only the current version can be superseded.");
+        if (Status == AppStatus.Superseded)
+            throw new InvalidOperationException("APP is already superseded.");
+
         IsCurrentVersion = false;
         Status = AppStatus.Superseded;
-        LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        MarkChanged();
     }
 }

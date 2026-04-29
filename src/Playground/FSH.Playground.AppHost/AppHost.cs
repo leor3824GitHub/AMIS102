@@ -2,11 +2,11 @@ var builder = DistributedApplication.CreateBuilder(args);
 
 // Postgres container + database
 var postgres = builder.AddPostgres("postgres", port: 5432)
-    .WithDataVolume("fsh-postgres-data221")
-    .AddDatabase("AMIS221");
+    .WithDataVolume("fsh-postgres-data223")
+    .AddDatabase("AMIS223");
 
 var redis = builder.AddRedis("redis", port: 6379)
-    .WithDataVolume("fsh-redis-data221");
+    .WithDataVolume("fsh-redis-data223");
 
 var api = builder.AddProject<Projects.Playground_Api>("playground-api")
     .WithReference(postgres)

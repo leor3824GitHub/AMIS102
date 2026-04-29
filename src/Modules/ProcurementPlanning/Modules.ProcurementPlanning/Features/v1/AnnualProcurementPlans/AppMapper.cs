@@ -9,7 +9,7 @@ internal static class AppMapper
         new(app.Id,
             app.AppNumber,
             app.FiscalYear,
-            app.RevisionType,
+            app.Phase,
             app.Status,
             app.VersionNumber,
             app.IsCurrentVersion,
@@ -25,8 +25,8 @@ internal static class AppMapper
             app.ReturnReason,
             app.ReturnedAt,
             app.ReturnedById,
-            app.Items.Sum(i => i.EstimatedBudget),
-            app.Items.Select(i => new AppItemDto(
+            app.Items?.Sum(i => i.EstimatedBudget) ?? 0m,
+            (app.Items ?? []).Select(i => new AppItemDto(
                 i.Id, i.SourcePpmpId, i.SourcePpmpItemId,
                 i.OfficeCode, i.EndUserUnit, i.ItemNo,
                 i.GeneralDescription, i.ProjectType,

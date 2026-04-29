@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using System.Text.Json;
 using System.Web;
 using FSH.Framework.Shared.Persistence;
 using FSH.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
@@ -59,8 +60,41 @@ internal sealed class PpmpClient(HttpClient http) : IPpmpClient
     public async Task<PpmpDto> UpdateAsync(Guid id, UpdatePpmpCommand command, CancellationToken ct = default)
     {
         using var r = await http.PutAsJsonAsync($"{Base}/{id}", command, ct);
-        r.EnsureSuccessStatusCode();
+        if (!r.IsSuccessStatusCode)
+        {
+            var body = await r.Content.ReadAsStringAsync(ct);
+            var message = TryGetApiMessage(body) ?? $"Failed to save PPMP ({(int)r.StatusCode}).";
+            throw new InvalidOperationException(message);
+        }
+
         return (await r.Content.ReadFromJsonAsync<PpmpDto>(ct))!;
+    }
+
+    private static string? TryGetApiMessage(string? body)
+    {
+        if (string.IsNullOrWhiteSpace(body))
+            return null;
+
+        try
+        {
+            using var doc = JsonDocument.Parse(body);
+            var root = doc.RootElement;
+
+            if (root.TryGetProperty("message", out var message) && message.ValueKind == JsonValueKind.String)
+                return message.GetString();
+
+            if (root.TryGetProperty("detail", out var detail) && detail.ValueKind == JsonValueKind.String)
+                return detail.GetString();
+
+            if (root.TryGetProperty("title", out var title) && title.ValueKind == JsonValueKind.String)
+                return title.GetString();
+        }
+        catch
+        {
+            // Ignore non-JSON error bodies.
+        }
+
+        return null;
     }
 
     public async Task<PpmpDto> SubmitAsync(Guid id, CancellationToken ct = default)

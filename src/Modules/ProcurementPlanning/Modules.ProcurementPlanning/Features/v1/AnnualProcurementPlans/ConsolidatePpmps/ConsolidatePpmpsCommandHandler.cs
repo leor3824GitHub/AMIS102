@@ -28,7 +28,7 @@ public sealed class ConsolidatePpmpsCommandHandler(
         if (ppmps.Count == 0)
             throw new InvalidOperationException("No Approved PPMPs found for the provided IDs.");
 
-        var userId = currentUser.GetUserId().ToString();
+        var userId = currentUser.GetUserId();
         app.ConsolidatePpmps(ppmps, userId);
 
         // Mark consolidated PPMPs

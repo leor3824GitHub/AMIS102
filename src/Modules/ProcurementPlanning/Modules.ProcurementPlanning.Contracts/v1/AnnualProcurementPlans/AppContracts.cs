@@ -15,11 +15,11 @@ public enum AppStatus
     Returned = 4
 }
 
-public enum AppRevisionType
+public enum AppPhase
 {
-    Original = 0,
-    Supplemental = 1,
-    Revised = 2
+    Indicative = 0,
+    Final = 1,
+    Updated = 2
 }
 
 // ── DTOs ─────────────────────────────────────────────────────────────────────
@@ -48,7 +48,7 @@ public sealed record AnnualProcurementPlanDto(
     Guid Id,
     string AppNumber,
     int FiscalYear,
-    AppRevisionType RevisionType,
+    AppPhase Phase,
     AppStatus Status,
     int VersionNumber,
     bool IsCurrentVersion,
@@ -56,10 +56,10 @@ public sealed record AnnualProcurementPlanDto(
     Guid? PreviousVersionId,
     string? AmendmentReason,
     DateTimeOffset? AmendedAt,
-    string? AmendedById,
-    string? ConsolidatedById,
+    Guid? AmendedById,
+    Guid? ConsolidatedById,
     DateTimeOffset? ConsolidatedOn,
-    string? ApprovedById,
+    Guid? ApprovedById,
     DateTimeOffset? ApprovedOn,
     string? ReturnReason,
     DateTimeOffset? ReturnedAt,
@@ -74,7 +74,7 @@ public sealed record AnnualProcurementPlanSummaryDto(
     Guid Id,
     string AppNumber,
     int FiscalYear,
-    AppRevisionType RevisionType,
+    AppPhase Phase,
     AppStatus Status,
     int VersionNumber,
     bool IsCurrentVersion,
@@ -87,7 +87,7 @@ public sealed record AnnualProcurementPlanSummaryDto(
 
 public sealed record CreateAnnualProcurementPlanCommand(
     int FiscalYear,
-    AppRevisionType RevisionType) : ICommand<AnnualProcurementPlanDto>;
+    AppPhase Phase) : ICommand<AnnualProcurementPlanDto>;
 
 public sealed record ConsolidatePpmpsCommand(
     Guid AppId,
@@ -95,10 +95,11 @@ public sealed record ConsolidatePpmpsCommand(
 
 public sealed record PublishAnnualProcurementPlanCommand(Guid Id) : ICommand<AnnualProcurementPlanDto>;
 
-public sealed record AmendAnnualProcurementPlanCommand(
-    Guid Id,
-    string AmendmentReason,
-    AppRevisionType RevisionType) : ICommand<AnnualProcurementPlanDto>;
+/// <summary>Promotes an Approved Indicative APP to a new Final draft (per-phase version reset to 1).</summary>
+public sealed record PromoteToFinalAppCommand(Guid Id) : ICommand<AnnualProcurementPlanDto>;
+
+/// <summary>Creates a new Updated version of an Approved Final or Updated APP.</summary>
+public sealed record CreateUpdateAppCommand(Guid Id, string UpdateReason) : ICommand<AnnualProcurementPlanDto>;
 
 public sealed record ApproveAppCommand(Guid Id, Guid ApprovedById) : ICommand<AnnualProcurementPlanDto>;
 public sealed record RecallAppCommand(Guid Id) : ICommand<AnnualProcurementPlanDto>;
@@ -115,7 +116,7 @@ public sealed record SearchAnnualProcurementPlansQuery : IQuery<PagedResponse<An
     public string? Keyword { get; init; }
     public int? FiscalYear { get; init; }
     public AppStatus? Status { get; init; }
-    public AppRevisionType? RevisionType { get; init; }
+    public AppPhase? Phase { get; init; }
     public bool CurrentVersionOnly { get; init; } = true;
     public int PageNumber { get; init; } = 1;
     public int PageSize { get; init; } = 20;

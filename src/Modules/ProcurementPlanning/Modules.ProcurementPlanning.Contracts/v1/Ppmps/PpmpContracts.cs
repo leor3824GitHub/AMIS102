@@ -5,10 +5,11 @@ namespace FSH.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
 
 // ── Shared Enums ─────────────────────────────────────────────────────────────
 
-public enum PpmpType
+public enum PpmpPhase
 {
     Indicative = 0,
-    Final = 1
+    Final = 1,
+    Updated = 2
 }
 
 public enum PpmpStatus
@@ -61,7 +62,7 @@ public sealed record PpmpDto(
     Guid Id,
     string PpmpNumber,
     int FiscalYear,
-    PpmpType PpmpType,
+    PpmpPhase Phase,
     string OfficeCode,
     string EndUserUnit,
     PpmpStatus Status,
@@ -71,7 +72,7 @@ public sealed record PpmpDto(
     Guid? PreviousVersionId,
     string? AmendmentReason,
     DateTimeOffset? AmendedAt,
-    string? AmendedById,
+    Guid? AmendedById,
     Guid PreparedById,
     DateTimeOffset? SubmittedAt,
     DateTimeOffset? ApprovedAt,
@@ -90,7 +91,7 @@ public sealed record PpmpSummaryDto(
     Guid Id,
     string PpmpNumber,
     int FiscalYear,
-    PpmpType PpmpType,
+    PpmpPhase Phase,
     string OfficeCode,
     string EndUserUnit,
     PpmpStatus Status,
@@ -122,7 +123,7 @@ public sealed record PpmpItemRequest(
 
 public sealed record CreatePpmpCommand(
     int FiscalYear,
-    PpmpType PpmpType,
+    PpmpPhase Phase,
     string OfficeCode,
     string EndUserUnit,
     Guid PreparedById,
@@ -131,7 +132,6 @@ public sealed record CreatePpmpCommand(
 public sealed record UpdatePpmpCommand(
     Guid Id,
     int FiscalYear,
-    PpmpType PpmpType,
     string OfficeCode,
     string EndUserUnit,
     Guid PreparedById,
@@ -145,9 +145,11 @@ public sealed record RecallPpmpCommand(Guid Id) : ICommand<PpmpDto>;
 
 public sealed record ReturnPpmpCommand(Guid Id, string ReturnReason, Guid ReturnedById) : ICommand<PpmpDto>;
 
-public sealed record AmendPpmpCommand(
-    Guid Id,
-    string AmendmentReason) : ICommand<PpmpDto>;
+/// <summary>Promotes an Approved Indicative PPMP to a new Final draft (per-phase version reset to 1).</summary>
+public sealed record PromoteToFinalPpmpCommand(Guid Id) : ICommand<PpmpDto>;
+
+/// <summary>Creates a new Updated version of an Approved/Consolidated Final or Updated PPMP. Caller may add a reason.</summary>
+public sealed record CreateUpdatePpmpCommand(Guid Id, string UpdateReason) : ICommand<PpmpDto>;
 
 // ── Queries ───────────────────────────────────────────────────────────────────
 
@@ -163,7 +165,7 @@ public sealed record SearchPpmpsQuery : IQuery<PagedResponse<PpmpSummaryDto>>
     public int? FiscalYear { get; init; }
     public string? OfficeCode { get; init; }
     public PpmpStatus? Status { get; init; }
-    public PpmpType? PpmpType { get; init; }
+    public PpmpPhase? Phase { get; init; }
     public bool CurrentVersionOnly { get; init; } = true;
     public int PageNumber { get; init; } = 1;
     public int PageSize { get; init; } = 20;

@@ -836,7 +836,7 @@
             }
             else
             {
-                var cmd = new UpdatePpmpCommand(_editing.Id, _form.FiscalYear, _form.PpmpType,
+                var cmd = new UpdatePpmpCommand(_editing.Id, _form.FiscalYear,
                     _form.OfficeCode, _form.EndUserUnit, _editing.PreparedById, items);
                 _editing = await PpmpClient.UpdateAsync(_editing.Id, cmd);
                 Snackbar.Add("PPMP updated.", Severity.Success);

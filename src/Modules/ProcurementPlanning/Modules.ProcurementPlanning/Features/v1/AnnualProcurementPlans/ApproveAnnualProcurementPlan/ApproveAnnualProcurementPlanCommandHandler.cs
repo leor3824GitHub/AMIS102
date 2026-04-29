@@ -16,7 +16,7 @@ public sealed class ApproveAnnualProcurementPlanCommandHandler(
             .ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"APP {command.Id} not found.");
 
-        app.Approve(command.ApprovedById.ToString());
+        app.Approve(command.ApprovedById);
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return AppMapper.ToDto(app);
     }

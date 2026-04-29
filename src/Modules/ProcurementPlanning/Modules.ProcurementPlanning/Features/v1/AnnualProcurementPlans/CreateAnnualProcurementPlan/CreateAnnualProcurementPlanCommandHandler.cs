@@ -2,6 +2,7 @@ using FSH.Framework.Core.Context;
 using FSH.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
 using FSH.Modules.ProcurementPlanning.Data;
 using FSH.Modules.ProcurementPlanning.Domain.AnnualProcurementPlans;
+using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,7 +17,7 @@ public sealed class CreateAnnualProcurementPlanCommandHandler(
     {
         var appNumber = await GenerateAppNumberAsync(command.FiscalYear, cancellationToken);
 
-        var app = AnnualProcurementPlan.Create(appNumber, command.FiscalYear, command.RevisionType);
+        var app = AnnualProcurementPlan.Create(appNumber, command.FiscalYear, command.Phase);
         app.CreatedBy = currentUser.GetUserId().ToString();
 
         dbContext.AnnualProcurementPlans.Add(app);

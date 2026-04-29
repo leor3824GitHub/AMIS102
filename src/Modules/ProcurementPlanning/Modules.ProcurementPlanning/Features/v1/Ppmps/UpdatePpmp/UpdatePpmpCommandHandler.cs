@@ -1,5 +1,6 @@
 using FSH.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
 using FSH.Modules.ProcurementPlanning.Data;
+using FSH.Modules.ProcurementPlanning.Features.v1.Ppmps;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,9 +18,10 @@ public sealed class UpdatePpmpCommandHandler(
             ?? throw new KeyNotFoundException($"PPMP {command.Id} not found.");
 
         ppmp.Update(
-            command.FiscalYear, command.PpmpType,
+            command.FiscalYear,
             command.OfficeCode, command.EndUserUnit,
-            command.PreparedById, command.Items);
+            command.PreparedById,
+            command.Items.Select(PpmpMapper.ToItemData));
 
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return PpmpMapper.ToDto(ppmp);

@@ -10,6 +10,7 @@ using FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.ApprovePpmp;
 using FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.RecallPpmp;
 using FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.ReturnPpmp;
 using FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.AmendPpmp;
+using FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.PromoteToFinalPpmp;
 using FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.GetPpmp;
 using FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.GetPpmpVersions;
 using FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.SearchPpmps;
@@ -20,6 +21,7 @@ using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.Approve
 using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.RecallAnnualProcurementPlan;
 using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.ReturnAnnualProcurementPlan;
 using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.AmendAnnualProcurementPlan;
+using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.PromoteToFinalApp;
 using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.GetAnnualProcurementPlan;
 using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.GetAvailablePpmps;
 using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.SearchAnnualProcurementPlans;
@@ -89,7 +91,8 @@ public class ProcurementPlanningModule : IModule
         ApprovePpmpEndpoint.Map(ppmpGroup);
         RecallPpmpEndpoint.Map(ppmpGroup);
         ReturnPpmpEndpoint.Map(ppmpGroup);
-        AmendPpmpEndpoint.Map(ppmpGroup);
+        CreateUpdatePpmpEndpoint.Map(ppmpGroup);
+        PromoteToFinalPpmpEndpoint.Map(ppmpGroup);
         GetPpmpEndpoint.Map(ppmpGroup);
         GetPpmpVersionsEndpoint.Map(ppmpGroup);
         SearchPpmpsEndpoint.Map(ppmpGroup);
@@ -101,7 +104,8 @@ public class ProcurementPlanningModule : IModule
         ApproveAnnualProcurementPlanEndpoint.Map(appGroup);
         RecallAnnualProcurementPlanEndpoint.Map(appGroup);
         ReturnAnnualProcurementPlanEndpoint.Map(appGroup);
-        AmendAnnualProcurementPlanEndpoint.Map(appGroup);
+        CreateUpdateAppEndpoint.Map(appGroup);
+        PromoteToFinalAppEndpoint.Map(appGroup);
         GetAnnualProcurementPlanEndpoint.Map(appGroup);
         GetAvailablePpmpsEndpoint.Map(appGroup);
         SearchAnnualProcurementPlansEndpoint.Map(appGroup);

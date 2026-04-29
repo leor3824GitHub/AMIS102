@@ -13,22 +13,22 @@
                Description="Consolidate approved PPMPs from all offices into the Annual Procurement Plan" />
 
 <MudCard Elevation="1">
-    <MudTabs @bind-ActivePanelIndex="_activeTab" Elevation="0" Rounded="false"
-             ApplyEffectsToContainer="true" PanelClass="pa-4" Color="Color.Primary">
+    <MudTabs @bind-ActivePanelIndex="_activeTab" Elevation="0" Rounded="false" ApplyEffectsToContainer="true"
+             PanelClass="pa-4" Color="Color.Primary">
 
         <!-- ══ LIST TAB ══════════════════════════════════════════════════ -->
         <MudTabPanel Text="All APPs" Icon="@Icons.Material.Outlined.ListAlt">
             <MudStack Row="true" Spacing="2" Class="mb-3" AlignItems="AlignItems.Center">
-                <MudSelect Value="@_filterFiscalYear" Label="Fiscal Year" Variant="Variant.Outlined"
-                           T="int?" Style="width:120px" ValueChanged="OnFilterChanged">
+                <MudSelect Value="@_filterFiscalYear" Label="Fiscal Year" Variant="Variant.Outlined" T="int?"
+                           Style="width:120px" ValueChanged="OnFilterChanged">
                     <MudSelectItem T="int?" Value="null">All FY</MudSelectItem>
                     @foreach (var fy in _fiscalYears)
                     {
                         <MudSelectItem T="int?" Value="fy">@fy</MudSelectItem>
                     }
                 </MudSelect>
-                <MudSelect Value="@_filterStatus" Label="Status" Variant="Variant.Outlined"
-                           T="AppStatus?" Style="width:150px" ValueChanged="OnStatusFilterChanged">
+                <MudSelect Value="@_filterStatus" Label="Status" Variant="Variant.Outlined" T="AppStatus?"
+                           Style="width:150px" ValueChanged="OnStatusFilterChanged">
                     <MudSelectItem T="AppStatus?" Value="null">All</MudSelectItem>
                     @foreach (AppStatus s in Enum.GetValues<AppStatus>())
                     {
@@ -36,8 +36,8 @@
                     }
                 </MudSelect>
                 <MudSpacer />
-                <MudButton Variant="Variant.Filled" Color="Color.Primary"
-                           StartIcon="@Icons.Material.Filled.Add" OnClick="StartNew">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+                           OnClick="StartNew">
                     New APP
                 </MudButton>
             </MudStack>
@@ -74,15 +74,13 @@
                                 <td><strong>@app.AppNumber</strong></td>
                                 <td>@app.FiscalYear</td>
                                 <td>
-                                    <MudChip T="string" Size="Size.Small" Label="true"
-                                             Color="@RevisionColor(app.RevisionType)">
+                                    <MudChip T="string" Size="Size.Small" Label="true" Color="@RevisionColor(app.RevisionType)">
                                         @app.RevisionType
                                     </MudChip>
                                 </td>
                                 <td>v@(app.VersionNumber)</td>
                                 <td>
-                                    <MudChip T="string" Size="Size.Small" Label="true"
-                                             Icon="@AppStatusIcon(app.Status)"
+                                    <MudChip T="string" Size="Size.Small" Label="true" Icon="@AppStatusIcon(app.Status)"
                                              Color="@AppStatusColor(app.Status)">
                                         @AppStatusLabel(app.Status)
                                     </MudChip>
@@ -94,15 +92,13 @@
                                     {
                                         <MudTooltip Text="Recall submission">
                                             <MudIconButton Icon="@Icons.Material.Filled.Undo" Size="Size.Small"
-                                                           Color="Color.Warning"
-                                                           OnClick="@(() => QuickRecallAsync(app))" />
+                                                           Color="Color.Warning" OnClick="@(() => QuickRecallAsync(app))" />
                                         </MudTooltip>
                                     }
                                     else
                                     {
                                         <MudIconButton Icon="@Icons.Material.Outlined.OpenInNew" Size="Size.Small"
-                                                       Color="Color.Primary"
-                                                       OnClick="@(() => SelectAppAsync(app.Id))" />
+                                                       Color="Color.Primary" OnClick="@(() => SelectAppAsync(app.Id))" />
                                     }
                                 </td>
                             </tr>
@@ -121,23 +117,33 @@
         <!-- ══ EDITOR TAB ════════════════════════════════════════════════ -->
         <MudTabPanel Text="@(_editing is null ? "+ New APP" : _editing.AppNumber)"
                      Icon="@(_editing is null ? Icons.Material.Outlined.Add : Icons.Material.Outlined.Edit)">
+            @{
+                // Snapshot _editing into a local so that ChildContent lambdas inside
+                // MudText / MudChip / MudAlert capture `app` (a fixed reference for this
+                // render cycle) rather than the _editing field, which can become null
+                // between renders when MudBlazor's resize-observer fires asynchronously.
+                var app = _editing;
+                int step = app is null ? 0
+                         : app.Status is AppStatus.Draft or AppStatus.Returned
+                             ? (EditingItems.Count == 0 ? 1 : 2)
+                             : 3;
+            }
 
             <!-- ── Action bar ─────────────────────────────────────────── -->
             <MudPaper Elevation="0" Class="pa-3 mb-4 rounded"
                       Style="background:var(--mud-palette-background-grey); border:1px solid var(--mud-palette-lines-default)">
                 <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap">
-                    @if (_editing is not null)
+                    @if (app is not null)
                     {
                         <MudStack Spacing="0">
-                            <MudText Typo="Typo.subtitle1" Style="font-weight:700">@_editing.AppNumber</MudText>
+                            <MudText Typo="Typo.subtitle1" Style="font-weight:700">@(app.AppNumber)</MudText>
                             <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                FY @_editing.FiscalYear · v@(_editing.VersionNumber) · @_editing.RevisionType
+                                FY @(app.FiscalYear) · v@(app.VersionNumber) · @(app.RevisionType)
                             </MudText>
                         </MudStack>
-                        <MudChip T="string" Size="Size.Small" Label="true"
-                                 Icon="@AppStatusIcon(_editing.Status)"
-                                 Color="@AppStatusColor(_editing.Status)">
-                            @AppStatusLabel(_editing.Status)
+                        <MudChip T="string" Size="Size.Small" Label="true" Icon="@AppStatusIcon(app.Status)"
+                                 Color="@AppStatusColor(app.Status)">
+                            @AppStatusLabel(app.Status)
                         </MudChip>
                     }
                     else
@@ -163,29 +169,26 @@
 
                     <MudSpacer />
 
-                    @if (_editing is not null)
+                    @if (app is not null)
                     {
-                        @if (_editing.Status is AppStatus.Draft or AppStatus.Returned && _editing.Items.Count > 0)
+                        @if (app.Status is AppStatus.Draft or AppStatus.Returned && EditingItems.Count > 0)
                         {
                             <MudButton Variant="Variant.Filled" Color="Color.Info" Size="Size.Small"
-                                       StartIcon="@Icons.Material.Filled.Send"
-                                       OnClick="ShowSubmitConfirmAsync" Disabled="_busy">
+                                       StartIcon="@Icons.Material.Filled.Send" OnClick="ShowSubmitConfirmAsync" Disabled="_busy">
                                 Submit for Approval
                             </MudButton>
                         }
-                        @if (_editing.Status == AppStatus.Published)
+                        @if (app.Status == AppStatus.Published)
                         {
                             <MudButton Variant="Variant.Outlined" Color="Color.Warning" Size="Size.Small"
-                                       StartIcon="@Icons.Material.Filled.Undo"
-                                       OnClick="RecallAsync" Disabled="_busy">
+                                       StartIcon="@Icons.Material.Filled.Undo" OnClick="RecallAsync" Disabled="_busy">
                                 Recall Submission
                             </MudButton>
                         }
-                        @if (_editing.Status is AppStatus.Published or AppStatus.Approved && _editing.IsCurrentVersion)
+                        @if (app.Status is AppStatus.Published or AppStatus.Approved && app.IsCurrentVersion)
                         {
                             <MudButton Variant="Variant.Outlined" Color="Color.Warning" Size="Size.Small"
-                                       StartIcon="@Icons.Material.Filled.Edit"
-                                       OnClick="ShowAmendDialogAsync" Disabled="_busy">
+                                       StartIcon="@Icons.Material.Filled.Edit" OnClick="ShowAmendDialogAsync" Disabled="_busy">
                                 Amend
                             </MudButton>
                         }
@@ -198,15 +201,6 @@
             </MudPaper>
 
             <!-- ── Workflow progress ──────────────────────────────────── -->
-            @{
-                int step;
-                if (_editing is null)
-                    step = 0;
-                else if (_editing.Status is AppStatus.Draft or AppStatus.Returned)
-                    step = _editing.Items.Count == 0 ? 1 : 2;
-                else
-                    step = 3;
-            }
             <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="0" Class="mb-4">
                 <div style="display:flex;flex-direction:column;align-items:center;gap:2px;min-width:72px">
                     <div style="@StepCircleStyle(step >= 1, step == 0)">@(step >= 1 ? "✓" : "1")</div>
@@ -225,16 +219,16 @@
             </MudStack>
 
             <!-- ── Return reason banner ───────────────────────────────── -->
-            @if (_editing is not null && _editing.Status == AppStatus.Returned &&
-                 !string.IsNullOrWhiteSpace(_editing.ReturnReason))
+            @if (app is not null && app.Status == AppStatus.Returned &&
+                             !string.IsNullOrWhiteSpace(app.ReturnReason))
             {
                 <MudAlert Severity="Severity.Error" Class="mb-3" Icon="@Icons.Material.Filled.Undo">
-                    <strong>Returned for revision:</strong> @_editing.ReturnReason
+                    <strong>Returned for revision:</strong> @(app.ReturnReason)
                 </MudAlert>
             }
 
             <!-- ── Step 0: Create new APP ─────────────────────────────── -->
-            @if (_editing is null)
+            @if (app is null)
             {
                 <MudGrid Spacing="3" Justify="Justify.Center">
                     <MudItem xs="12" sm="6" md="4">
@@ -256,8 +250,8 @@
                                         After creating the draft, select which approved PPMPs to include.
                                     </MudAlert>
                                     <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
-                                               StartIcon="@Icons.Material.Filled.CreateNewFolder"
-                                               OnClick="CreateAppAsync" Disabled="_busy">
+                                               StartIcon="@Icons.Material.Filled.CreateNewFolder" OnClick="CreateAppAsync"
+                                               Disabled="_busy">
                                         @if (_busy)
                                         {
                                             <MudProgressCircular Size="Size.Small" Class="mr-1" Indeterminate="true" />
@@ -272,139 +266,153 @@
             }
 
             <!-- ── Step 1 & 2: Draft / Returned — consolidate PPMPs ──── -->
-            else if (_editing.Status is AppStatus.Draft or AppStatus.Returned)
+            else if (app.Status is AppStatus.Draft or AppStatus.Returned)
             {
-                <MudGrid Spacing="3">
-                    <!-- Available PPMPs -->
-                    <MudItem xs="12" md="5">
-                        <MudCard Elevation="1" Style="height:100%">
-                            <MudCardHeader>
-                                <CardHeaderContent>
-                                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-                                        <MudText Typo="Typo.subtitle2" Style="font-weight:600">Available Approved PPMPs</MudText>
-                                        <MudText Typo="Typo.caption" Color="Color.Secondary">— FY @_editing.FiscalYear</MudText>
-                                        <MudSpacer />
-                                        <MudIconButton Icon="@Icons.Material.Filled.Refresh" Size="Size.Small"
-                                                       OnClick="LoadAvailablePpmpsAsync" Disabled="_busy" />
-                                    </MudStack>
-                                </CardHeaderContent>
-                            </MudCardHeader>
-                            <MudCardContent Class="pa-0">
-                                @if (_availablePpmps.Count == 0)
-                                {
-                                    <div class="pa-4">
-                                        <MudAlert Severity="Severity.Info" Dense="true">
-                                            Click <MudIcon Icon="@Icons.Material.Filled.Refresh" Size="Size.Small" /> to load approved PPMPs.
-                                        </MudAlert>
-                                    </div>
-                                }
-                                else
-                                {
-                                    <MudList T="SelectablePpmp" Dense="true">
-                                        @foreach (var ppmp in _availablePpmps)
-                                        {
-                                            <MudListItem T="SelectablePpmp">
-                                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
-                                                    <MudCheckBox @bind-Value="ppmp.Selected" Dense="true" Color="Color.Primary" />
-                                                    <MudStack Spacing="0" Style="flex:1; min-width:0">
-                                                        <MudText Typo="Typo.body2" Style="font-weight:600">@ppmp.PpmpNumber</MudText>
-                                                        <MudText Typo="Typo.caption" Color="Color.Secondary">@ppmp.EndUserUnit</MudText>
-                                                        <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Class="mt-1">
-                                                            <MudChip T="string" Size="Size.Small" Label="true"
-                                                                     Style="font-family:monospace; font-size:10px">
-                                                                @ppmp.OfficeCode
-                                                            </MudChip>
-                                                            <MudText Typo="Typo.caption">@ppmp.ItemCount items</MudText>
-                                                            <MudSpacer />
-                                                            <MudText Typo="Typo.caption" Style="font-weight:600; color:var(--mud-palette-primary)">
-                                                                ₱ @ppmp.TotalEstimatedBudget.ToString("N0")
-                                                            </MudText>
-                                                        </MudStack>
+            <MudGrid Spacing="3">
+                <!-- Available PPMPs -->
+                <MudItem xs="12" md="5">
+                    <MudCard Elevation="1" Style="height:100%">
+                        <MudCardHeader>
+                            <CardHeaderContent>
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                    <MudText Typo="Typo.subtitle2" Style="font-weight:600">Available Approved PPMPs
+                                    </MudText>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">— FY @(app.FiscalYear)
+                                    </MudText>
+                                    <MudSpacer />
+                                    <MudIconButton Icon="@Icons.Material.Filled.Refresh" Size="Size.Small"
+                                                   OnClick="LoadAvailablePpmpsAsync" Disabled="_busy" />
+                                </MudStack>
+                            </CardHeaderContent>
+                        </MudCardHeader>
+                        <MudCardContent Class="pa-0">
+                            @if (_availablePpmps.Count == 0)
+                            {
+                                <div class="pa-4">
+                                    <MudAlert Severity="Severity.Info" Dense="true">
+                                        Click
+                                        <MudIcon Icon="@Icons.Material.Filled.Refresh" Size="Size.Small" /> to load approved
+                                        PPMPs.
+                                    </MudAlert>
+                                </div>
+                            }
+                            else
+                            {
+                                <MudList T="SelectablePpmp" Dense="true">
+                                    @foreach (var ppmp in _availablePpmps)
+                                    {
+                                        <MudListItem T="SelectablePpmp">
+                                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                                <MudCheckBox @bind-Value="ppmp.Selected" Dense="true" Color="Color.Primary" />
+                                                <MudStack Spacing="0" Style="flex:1; min-width:0">
+                                                    <MudText Typo="Typo.body2" Style="font-weight:600">@ppmp.PpmpNumber
+                                                    </MudText>
+                                                    <MudText Typo="Typo.caption" Color="Color.Secondary">@ppmp.EndUserUnit
+                                                    </MudText>
+                                                    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center"
+                                                              Class="mt-1">
+                                                        <MudChip T="string" Size="Size.Small" Label="true"
+                                                                 Style="font-family:monospace; font-size:10px">
+                                                            @ppmp.OfficeCode
+                                                        </MudChip>
+                                                        <MudText Typo="Typo.caption">@ppmp.ItemCount items</MudText>
+                                                        <MudSpacer />
+                                                        <MudText Typo="Typo.caption"
+                                                                 Style="font-weight:600; color:var(--mud-palette-primary)">
+                                                            ₱ @ppmp.TotalEstimatedBudget.ToString("N0")
+                                                        </MudText>
                                                     </MudStack>
                                                 </MudStack>
-                                            </MudListItem>
-                                            <MudDivider />
-                                        }
-                                    </MudList>
-                                }
-                            </MudCardContent>
-                            @if (_availablePpmps.Any(p => p.Selected))
-                            {
-                                <MudCardActions>
-                                    <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
-                                               StartIcon="@Icons.Material.Filled.MergeType"
-                                               OnClick="ConsolidateAsync" Disabled="_busy">
-                                        @if (_busy)
-                                        {
-                                            <MudProgressCircular Size="Size.Small" Class="mr-1" Indeterminate="true" />
-                                        }
-                                        Add @_availablePpmps.Count(p => p.Selected) Selected
-                                    </MudButton>
-                                </MudCardActions>
+                                            </MudStack>
+                                        </MudListItem>
+                                        <MudDivider />
+                                    }
+                                </MudList>
                             }
-                        </MudCard>
-                    </MudItem>
+                        </MudCardContent>
+                        @if (_availablePpmps.Any(p => p.Selected))
+                        {
+                            <MudCardActions>
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                                           StartIcon="@Icons.Material.Filled.MergeType" OnClick="ConsolidateAsync"
+                                           Disabled="_busy">
+                                    @if (_busy)
+                                    {
+                                        <MudProgressCircular Size="Size.Small" Class="mr-1" Indeterminate="true" />
+                                    }
+                                    Add @_availablePpmps.Count(p => p.Selected) Selected
+                                </MudButton>
+                            </MudCardActions>
+                        }
+                    </MudCard>
+                </MudItem>
 
-                    <!-- Consolidated items -->
-                    <MudItem xs="12" md="7">
-                        <MudCard Elevation="1" Style="height:100%">
-                            <MudCardHeader>
-                                <CardHeaderContent>
-                                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-                                        <MudText Typo="Typo.subtitle2" Style="font-weight:600">Consolidated Items</MudText>
-                                        @if (_editing.Items.Count > 0)
-                                        {
-                                            <MudChip T="string" Size="Size.Small" Color="Color.Primary" Label="true">
-                                                @_editing.Items.Count
-                                            </MudChip>
-                                        }
-                                        <MudSpacer />
-                                        <MudText Typo="Typo.subtitle2" Color="Color.Primary" Style="font-weight:700">
-                                            ₱ @_editing.TotalEstimatedBudget.ToString("N2")
-                                        </MudText>
-                                    </MudStack>
-                                </CardHeaderContent>
-                            </MudCardHeader>
-                            <MudCardContent Class="pa-0">
-                                @if (_editing.Items.Count == 0)
-                                {
-                                    <div class="pa-4">
-                                        <MudAlert Severity="Severity.Info" Dense="true">
-                                            No items yet — select PPMPs from the left and click <strong>Add Selected</strong>.
-                                        </MudAlert>
-                                    </div>
-                                }
-                                else
-                                {
-                                    <div style="overflow-x:auto">
-                                        <MudSimpleTable Dense="true" Hover="true" Striped="true" Style="min-width:500px">
-                                            <thead>
+                <!-- Consolidated items -->
+                <MudItem xs="12" md="7">
+                    <MudCard Elevation="1" Style="height:100%">
+                        <MudCardHeader>
+                            <CardHeaderContent>
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                    <MudText Typo="Typo.subtitle2" Style="font-weight:600">Consolidated Items</MudText>
+                                    @if (EditingItems.Count > 0)
+                                    {
+                                        <MudChip T="string" Size="Size.Small" Color="Color.Primary" Label="true">
+                                            @EditingItems.Count
+                                        </MudChip>
+                                    }
+                                    <MudSpacer />
+                                    <MudText Typo="Typo.subtitle2" Color="Color.Primary" Style="font-weight:700">
+                                        ₱ @(app.TotalEstimatedBudget.ToString("N2"))
+                                    </MudText>
+                                </MudStack>
+                            </CardHeaderContent>
+                        </MudCardHeader>
+                        <MudCardContent Class="pa-0">
+                            @if (EditingItems.Count == 0)
+                            {
+                                <div class="pa-4">
+                                    <MudAlert Severity="Severity.Info" Dense="true">
+                                        No items yet — select PPMPs from the left and click <strong>Add Selected</strong>.
+                                    </MudAlert>
+                                </div>
+                            }
+                            else
+                            {
+                                <div style="overflow-x:auto">
+                                    <MudSimpleTable Dense="true" Hover="true" Striped="true" Style="min-width:500px">
+                                        <thead>
+                                            <tr>
+                                                <th style="width:36px">#</th>
+                                                <th>Office</th>
+                                                <th style="min-width:180px">Description</th>
+                                                <th>Type</th>
+                                                <th style="text-align:right">Qty</th>
+                                                <th>Unit</th>
+                                                <th style="text-align:right">Budget (₱)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var item in EditingItems)
+                                            {
                                                 <tr>
-                                                    <th style="width:36px">#</th>
-                                                    <th>Office</th>
-                                                    <th style="min-width:180px">Description</th>
-                                                    <th>Type</th>
-                                                    <th style="text-align:right">Qty</th>
-                                                    <th>Unit</th>
-                                                    <th style="text-align:right">Budget (₱)</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                @foreach (var item in _editing.Items)
-                                                {
-                                                    <tr>
-                                                        <td style="color:var(--mud-palette-text-secondary)">@item.ItemNo</td>
-                                                        <td>
-                                                            <MudChip T="string" Size="Size.Small" Label="true"
-                                                                     Style="font-family:monospace; font-size:10px">
-                                                                @item.OfficeCode
-                                                            </MudChip>
-                                                        </td>
-                                                        <td><MudText Typo="Typo.body2">@item.GeneralDescription</MudText></td>
-                                                        <td><MudChip T="string" Size="Size.Small" Label="true">@item.ProjectType</MudChip></td>
-                                                        <td style="text-align:right">@item.Quantity.ToString("N2")</td>
-                                                        <td style="font-family:monospace">@item.Unit</td>
-                                                        <td style="text-align:right; font-weight:600">₱ @item.EstimatedBudget.ToString("N2")</td>
+                                                    <td style="color:var(--mud-palette-text-secondary)">@item.ItemNo</td>
+                                                    <td>
+                                                        <MudChip T="string" Size="Size.Small" Label="true"
+                                                                 Style="font-family:monospace; font-size:10px">
+                                                            @item.OfficeCode
+                                                        </MudChip>
+                                                    </td>
+                                                    <td>
+                                                        <MudText Typo="Typo.body2">@item.GeneralDescription</MudText>
+                                                    </td>
+                                                    <td>
+                                                        <MudChip T="string" Size="Size.Small" Label="true">@item.ProjectType
+                                                        </MudChip>
+                                                    </td>
+                                                    <td style="text-align:right">@item.Quantity.ToString("N2")</td>
+                                                    <td style="font-family:monospace">@item.Unit</td>
+                                                    <td style="text-align:right; font-weight:600">₱
+                                                        @item.EstimatedBudget.ToString("N2")</td>
                                                     </tr>
                                                 }
                                             </tbody>
@@ -415,36 +423,36 @@
                         </MudCard>
                     </MudItem>
                 </MudGrid>
-            }
+                }
 
-            <!-- ── Step 3: Published / Approved / Superseded — read-only -->
-            else
-            {
+                <!-- ── Step 3: Published / Approved / Superseded — read-only -->
+                else
+                {
                 <MudCard Elevation="1">
                     <MudCardContent>
                         <MudGrid Spacing="2" Class="mb-3">
                             <MudItem xs="6" sm="3">
                                 <MudText Typo="Typo.caption" Color="Color.Secondary">Fiscal Year</MudText>
-                                <MudText Typo="Typo.body1" Style="font-weight:600">@_editing.FiscalYear</MudText>
+                                <MudText Typo="Typo.body1" Style="font-weight:600">@(app.FiscalYear)</MudText>
                             </MudItem>
                             <MudItem xs="6" sm="3">
                                 <MudText Typo="Typo.caption" Color="Color.Secondary">Revision Type</MudText>
-                                <MudText Typo="Typo.body1">@_editing.RevisionType</MudText>
+                                <MudText Typo="Typo.body1">@(app.RevisionType)</MudText>
                             </MudItem>
                             <MudItem xs="6" sm="3">
                                 <MudText Typo="Typo.caption" Color="Color.Secondary">Total Items</MudText>
-                                <MudText Typo="Typo.body1" Style="font-weight:600">@_editing.Items.Count</MudText>
+                                <MudText Typo="Typo.body1" Style="font-weight:600">@EditingItems.Count</MudText>
                             </MudItem>
                             <MudItem xs="6" sm="3">
                                 <MudText Typo="Typo.caption" Color="Color.Secondary">Total Budget</MudText>
                                 <MudText Typo="Typo.body1" Style="font-weight:700; color:var(--mud-palette-primary)">
-                                    ₱ @_editing.TotalEstimatedBudget.ToString("N2")
+                                    ₱ @(app.TotalEstimatedBudget.ToString("N2"))
                                 </MudText>
                             </MudItem>
                         </MudGrid>
 
                         <MudText Typo="Typo.subtitle2" Class="mb-2" Style="font-weight:600">
-                            All Line Items (@_editing.Items.Count)
+                            All Line Items (@EditingItems.Count)
                         </MudText>
                         <div style="overflow-x:auto">
                             <MudSimpleTable Dense="true" Hover="true" Striped="true" Style="min-width:600px">
@@ -462,7 +470,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach (var item in _editing.Items)
+                                    @foreach (var item in EditingItems)
                                     {
                                         <tr>
                                             <td>@item.ItemNo</td>
@@ -473,14 +481,20 @@
                                                 </MudChip>
                                             </td>
                                             <td>@item.GeneralDescription</td>
-                                            <td><MudChip T="string" Size="Size.Small" Label="true">@item.ProjectType</MudChip></td>
+                                            <td>
+                                                <MudChip T="string" Size="Size.Small" Label="true">@item.ProjectType</MudChip>
+                                            </td>
                                             <td style="text-align:right">@item.Quantity.ToString("N2")</td>
                                             <td style="font-family:monospace">@item.Unit</td>
-                                            <td><MudText Typo="Typo.caption">@item.ModeOfProcurement</MudText></td>
                                             <td>
-                                                <MudText Typo="Typo.caption">@item.ProcurementStart – @item.ProcurementEnd</MudText>
+                                                <MudText Typo="Typo.caption">@item.ModeOfProcurement</MudText>
                                             </td>
-                                            <td style="text-align:right; font-weight:600">₱ @item.EstimatedBudget.ToString("N2")</td>
+                                            <td>
+                                                <MudText Typo="Typo.caption">@item.ProcurementStart – @item.ProcurementEnd
+                                                </MudText>
+                                            </td>
+                                            <td style="text-align:right; font-weight:600">₱ @item.EstimatedBudget.ToString("N2")
+                                            </td>
                                         </tr>
                                     }
                                 </tbody>
@@ -488,17 +502,18 @@
                         </div>
                     </MudCardContent>
                 </MudCard>
-            }
+                }
 
-        </MudTabPanel>
-    </MudTabs>
-</MudCard>
+            </MudTabPanel>
+        </MudTabs>
+    </MudCard>
 
 @code {
     private int _activeTab;
     private List<AnnualProcurementPlanSummaryDto> _apps = [];
     private List<AnnualProcurementPlanSummaryDto> _versions = [];
     private AnnualProcurementPlanDto? _editing;
+    private List<AppItemDto> EditingItems => _editing?.Items?.ToList() ?? [];
     private List<SelectablePpmp> _availablePpmps = [];
     private bool _loading;
     private bool _busy;
@@ -645,7 +660,7 @@
         try
         {
             _editing = await AppClient.ConsolidateAsync(_editing.Id, ids);
-            Snackbar.Add($"Added {ids.Count} PPMP(s) — {_editing.Items.Count} total items.", Severity.Success);
+            Snackbar.Add($"Added {ids.Count} PPMP(s) — {EditingItems.Count} total items.", Severity.Success);
             _availablePpmps.RemoveAll(p => p.Selected);
         }
         catch (Exception ex) { Snackbar.Add($"Error: {ex.Message}", Severity.Error); }
@@ -746,45 +761,48 @@
 
     private static string StepCircleStyle(bool done, bool active)
     {
-        var bg = done ? "var(--mud-palette-success)" : active ? "var(--mud-palette-primary)" : "var(--mud-palette-lines-default)";
+        var bg = done ? "var(--mud-palette-success)" : active ? "var(--mud-palette-primary)" :
+"var(--mud-palette-lines-default)";
         var fg = (done || active) ? "#fff" : "var(--mud-palette-text-secondary)";
-        return $"width:28px;height:28px;border-radius:50%;background:{bg};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:{fg}";
+        return
+$"width:28px;height:28px;border-radius:50%;background:{bg};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:{fg}";
     }
 
     private static string StepLabelStyle(bool active) =>
-        $"font-size:11px;white-space:nowrap;color:{(active ? "var(--mud-palette-primary)" : "var(--mud-palette-text-secondary)")}";
+        $"font-size:11px;white-space:nowrap;color:{(active ? "var(--mud-palette-primary)" :
+"var(--mud-palette-text-secondary)")}";
 
     private static Color AppStatusColor(AppStatus s) => s switch
     {
-        AppStatus.Draft      => Color.Default,
-        AppStatus.Published  => Color.Info,
-        AppStatus.Approved   => Color.Success,
+        AppStatus.Draft => Color.Default,
+        AppStatus.Published => Color.Info,
+        AppStatus.Approved => Color.Success,
         AppStatus.Superseded => Color.Warning,
-        AppStatus.Returned   => Color.Error,
-        _                    => Color.Default
+        AppStatus.Returned => Color.Error,
+        _ => Color.Default
     };
 
     private static string AppStatusIcon(AppStatus s) => s switch
     {
-        AppStatus.Draft      => Icons.Material.Outlined.EditNote,
-        AppStatus.Published  => Icons.Material.Filled.Send,
-        AppStatus.Approved   => Icons.Material.Filled.CheckCircle,
+        AppStatus.Draft => Icons.Material.Outlined.EditNote,
+        AppStatus.Published => Icons.Material.Filled.Send,
+        AppStatus.Approved => Icons.Material.Filled.CheckCircle,
         AppStatus.Superseded => Icons.Material.Outlined.History,
-        AppStatus.Returned   => Icons.Material.Filled.Undo,
-        _                    => Icons.Material.Outlined.Circle
+        AppStatus.Returned => Icons.Material.Filled.Undo,
+        _ => Icons.Material.Outlined.Circle
     };
 
     private static string AppStatusLabel(AppStatus s) => s switch
     {
         AppStatus.Published => "For Approval",
-        _                   => s.ToString()
+        _ => s.ToString()
     };
 
     private static Color RevisionColor(AppRevisionType t) => t switch
     {
-        AppRevisionType.Original     => Color.Default,
+        AppRevisionType.Original => Color.Default,
         AppRevisionType.Supplemental => Color.Info,
-        AppRevisionType.Revised      => Color.Warning,
-        _                            => Color.Default
+        AppRevisionType.Revised => Color.Warning,
+        _ => Color.Default
     };
 }

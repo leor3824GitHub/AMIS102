@@ -21,7 +21,18 @@ public static class UpdatePpmpEndpoint
     private static async Task<IResult> Handle(
         Guid id, UpdatePpmpCommand command, IMediator mediator, CancellationToken ct)
     {
-        var result = await mediator.Send(command with { Id = id }, ct);
-        return TypedResults.Ok(result);
+        try
+        {
+            var result = await mediator.Send(command with { Id = id }, ct);
+            return TypedResults.Ok(result);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return TypedResults.NotFound(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return TypedResults.BadRequest(new { message = ex.Message });
+        }
     }
 }

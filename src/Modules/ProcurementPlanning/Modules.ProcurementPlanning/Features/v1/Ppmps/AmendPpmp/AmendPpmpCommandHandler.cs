@@ -1,16 +1,17 @@
 using FSH.Framework.Core.Context;
 using FSH.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
 using FSH.Modules.ProcurementPlanning.Data;
+using FSH.Modules.ProcurementPlanning.Features.v1.Ppmps;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
 namespace FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.AmendPpmp;
 
-public sealed class AmendPpmpCommandHandler(
+public sealed class CreateUpdatePpmpCommandHandler(
     ProcurementPlanningDbContext dbContext,
-    ICurrentUser currentUser) : ICommandHandler<AmendPpmpCommand, PpmpDto>
+    ICurrentUser currentUser) : ICommandHandler<CreateUpdatePpmpCommand, PpmpDto>
 {
-    public async ValueTask<PpmpDto> Handle(AmendPpmpCommand command, CancellationToken cancellationToken)
+    public async ValueTask<PpmpDto> Handle(CreateUpdatePpmpCommand command, CancellationToken cancellationToken)
     {
         var original = await dbContext.Ppmps
             .Include(x => x.Items)
@@ -18,15 +19,15 @@ public sealed class AmendPpmpCommandHandler(
             .ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"PPMP {command.Id} not found or is not the current version.");
 
-        var userId = currentUser.GetUserId().ToString();
-        var amendment = original.CreateAmendment(command.AmendmentReason, userId);
+        var userId = currentUser.GetUserId();
+        var update = original.CreateUpdate(command.UpdateReason, userId);
 
         original.Supersede();
 
-        amendment.CreatedBy = userId;
-        dbContext.Ppmps.Add(amendment);
+        update.CreatedBy = userId.ToString();
+        dbContext.Ppmps.Add(update);
 
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return PpmpMapper.ToDto(amendment);
+        return PpmpMapper.ToDto(update);
     }
 }
