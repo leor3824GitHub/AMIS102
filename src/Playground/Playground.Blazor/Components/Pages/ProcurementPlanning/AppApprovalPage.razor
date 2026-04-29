@@ -63,7 +63,7 @@
                                     <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Class="mt-1">
                                         <MudChip T="string" Size="Size.Small" Color="Color.Default" Label="true"
                                                  Style="font-size:10px">
-                                            @item.RevisionType
+                                            @item.Phase
                                         </MudChip>
                                         <MudText Typo="Typo.caption">FY @item.FiscalYear</MudText>
                                         <MudText Typo="Typo.caption">· @item.ItemCount items</MudText>
@@ -109,7 +109,7 @@
                             <MudStack Spacing="0">
                                 <MudText Typo="Typo.h6" Style="font-weight:700">@_detail.AppNumber</MudText>
                                 <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                    Published for approval · v@(_detail.VersionNumber) · @_detail.RevisionType
+                                    Published for approval · v@(_detail.VersionNumber) · @_detail.Phase
                                 </MudText>
                             </MudStack>
                             <MudSpacer />
@@ -131,7 +131,7 @@
                         </MudItem>
                         <MudItem xs="6" sm="3">
                             <MudText Typo="Typo.caption" Color="Color.Secondary">Revision Type</MudText>
-                            <MudText Typo="Typo.body2">@_detail.RevisionType</MudText>
+                            <MudText Typo="Typo.body2">@_detail.Phase</MudText>
                         </MudItem>
                         <MudItem xs="6" sm="3">
                             <MudText Typo="Typo.caption" Color="Color.Secondary">Total Items</MudText>

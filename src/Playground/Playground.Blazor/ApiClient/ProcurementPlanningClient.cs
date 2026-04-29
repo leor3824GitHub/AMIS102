@@ -119,8 +119,8 @@ internal sealed class PpmpClient(HttpClient http) : IPpmpClient
 
     public async Task<PpmpDto> AmendAsync(Guid id, string reason, CancellationToken ct = default)
     {
-        using var r = await http.PostAsJsonAsync($"{Base}/{id}/amend",
-            new AmendPpmpCommand(id, reason), ct);
+        using var r = await http.PostAsJsonAsync($"{Base}/{id}/create-update",
+            new CreateUpdatePpmpCommand(id, reason), ct);
         await r.EnsureApiSuccessAsync(ct);
         return (await r.Content.ReadFromJsonAsync<PpmpDto>(ct))!;
     }

@@ -292,7 +292,7 @@ public sealed class AnnualProcurementPlanWorkflowTests
         var ppmp = Ppmp.Create(
             ppmpNumber: $"PPMP-{Guid.NewGuid():N}"[..13],
             fiscalYear: 2026,
-            phase: PpmpPhase.Indicative,
+            phase: PpmpPhase.Final,
             officeCode: "ICT",
             endUserUnit: "ICT Unit",
             preparedById: preparedById,
@@ -321,7 +321,7 @@ public sealed class AnnualProcurementPlanWorkflowTests
 
     private static AnnualProcurementPlan CreateDraftAppFrom(Ppmp ppmp, string userId)
     {
-        var app = AnnualProcurementPlan.Create($"APP-{Guid.NewGuid():N}"[..12], 2026, AppPhase.Indicative);
+        var app = AnnualProcurementPlan.Create($"APP-{Guid.NewGuid():N}"[..12], 2026, AppPhase.Final);
         app.CreatedBy = userId;
         app.ConsolidatePpmps([ppmp], Guid.NewGuid());
         return app;
