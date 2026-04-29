@@ -12,13 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FSH.Playground.Migrations.PostgreSQL.ProcurementPlanning
 {
     [DbContext(typeof(ProcurementPlanningDbContext))]
-<<<<<<<< HEAD:src/Playground/Migrations.PostgreSQL/ProcurementPlanning/20260428001944_InitialProcurementPlanning.Designer.cs
-    [Migration("20260428001944_InitialProcurementPlanning")]
-    partial class InitialProcurementPlanning
-========
     [Migration("20260428161849_InitialProcurementPlanningPostgreSql")]
     partial class InitialProcurementPlanningPostgreSql
->>>>>>>> d63aec54a5aea0527fd07e545543a98aceae4138:src/Playground/Migrations.PostgreSQL/ProcurementPlanning/20260428161849_InitialProcurementPlanningPostgreSql.Designer.cs
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

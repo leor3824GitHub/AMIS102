@@ -35,7 +35,7 @@ file static class HttpExtensions
 internal interface IPpmpClient
 {
     Task<PagedResponse<PpmpSummaryDto>> SearchAsync(string? keyword = null, int? fiscalYear = null,
-        PpmpStatus? status = null, PpmpType? ppmpType = null, bool currentOnly = true,
+        PpmpStatus? status = null, PpmpPhase? ppmpType = null, bool currentOnly = true,
         int page = 1, int pageSize = 20, CancellationToken ct = default);
     Task<PpmpDto?> GetAsync(Guid id, CancellationToken ct = default);
     Task<IReadOnlyList<PpmpSummaryDto>> GetVersionsAsync(Guid chainId, CancellationToken ct = default);
@@ -53,7 +53,7 @@ internal sealed class PpmpClient(HttpClient http) : IPpmpClient
     private const string Base = "api/v1/procurement-planning/ppmps";
 
     public Task<PagedResponse<PpmpSummaryDto>> SearchAsync(string? keyword = null, int? fiscalYear = null,
-        PpmpStatus? status = null, PpmpType? ppmpType = null, bool currentOnly = true,
+        PpmpStatus? status = null, PpmpPhase? ppmpType = null, bool currentOnly = true,
         int page = 1, int pageSize = 20, CancellationToken ct = default)
     {
         var q = HttpUtility.ParseQueryString(string.Empty);
@@ -83,45 +83,8 @@ internal sealed class PpmpClient(HttpClient http) : IPpmpClient
     public async Task<PpmpDto> UpdateAsync(Guid id, UpdatePpmpCommand command, CancellationToken ct = default)
     {
         using var r = await http.PutAsJsonAsync($"{Base}/{id}", command, ct);
-<<<<<<< HEAD
-        if (!r.IsSuccessStatusCode)
-        {
-            var body = await r.Content.ReadAsStringAsync(ct);
-            var message = TryGetApiMessage(body) ?? $"Failed to save PPMP ({(int)r.StatusCode}).";
-            throw new InvalidOperationException(message);
-        }
-
-=======
         await r.EnsureApiSuccessAsync(ct);
->>>>>>> d63aec54a5aea0527fd07e545543a98aceae4138
         return (await r.Content.ReadFromJsonAsync<PpmpDto>(ct))!;
-    }
-
-    private static string? TryGetApiMessage(string? body)
-    {
-        if (string.IsNullOrWhiteSpace(body))
-            return null;
-
-        try
-        {
-            using var doc = JsonDocument.Parse(body);
-            var root = doc.RootElement;
-
-            if (root.TryGetProperty("message", out var message) && message.ValueKind == JsonValueKind.String)
-                return message.GetString();
-
-            if (root.TryGetProperty("detail", out var detail) && detail.ValueKind == JsonValueKind.String)
-                return detail.GetString();
-
-            if (root.TryGetProperty("title", out var title) && title.ValueKind == JsonValueKind.String)
-                return title.GetString();
-        }
-        catch
-        {
-            // Ignore non-JSON error bodies.
-        }
-
-        return null;
     }
 
     public async Task<PpmpDto> SubmitAsync(Guid id, CancellationToken ct = default)
@@ -262,8 +225,8 @@ internal sealed class AppClient(HttpClient http) : IAppClient
     public async Task<AnnualProcurementPlanDto> AmendAsync(Guid id, string reason,
         AppRevisionType revisionType, CancellationToken ct = default)
     {
-        using var r = await http.PostAsJsonAsync($"{Base}/{id}/amend",
-            new AmendAnnualProcurementPlanCommand(id, reason, revisionType), ct);
+        using var r = await http.PostAsJsonAsync($"{Base}/{id}/create-update",
+            new CreateUpdateAppCommand(id, reason), ct);
         await r.EnsureApiSuccessAsync(ct);
         return (await r.Content.ReadFromJsonAsync<AnnualProcurementPlanDto>(ct))!;
     }

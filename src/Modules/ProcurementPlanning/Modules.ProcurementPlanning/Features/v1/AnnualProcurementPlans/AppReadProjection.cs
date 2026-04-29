@@ -78,7 +78,7 @@ internal static class AppReadProjection
             app.Id,
             app.AppNumber,
             app.FiscalYear,
-            app.RevisionType,
+            app.Phase,
             app.Status,
             app.VersionNumber,
             app.IsCurrentVersion,

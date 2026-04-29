@@ -187,8 +187,8 @@
                                 <td>@row.EndUserUnit</td>
                                 <td>
                                     <MudChip T="string" Size="Size.Small"
-                                             Color="@(row.PpmpType == PpmpType.Final ? Color.Primary : Color.Default)">
-                                        @row.PpmpType
+                                             Color="@(row.Phase == PpmpPhase.Final ? Color.Primary : Color.Default)">
+                                        @row.Phase
                                     </MudChip>
                                 </td>
                                 <td>v@(row.VersionNumber)</td>
@@ -349,10 +349,10 @@
                                      Disabled="_isReadOnly" />
                 </MudItem>
                 <MudItem xs="6" sm="3">
-                    <MudSelect @bind-Value="_form.PpmpType" Label="PPMP Type"
-                               Variant="Variant.Outlined" T="PpmpType" Disabled="_isReadOnly">
-                        <MudSelectItem Value="PpmpType.Indicative">Indicative</MudSelectItem>
-                        <MudSelectItem Value="PpmpType.Final">Final</MudSelectItem>
+                    <MudSelect @bind-Value="_form.Phase" Label="PPMP Phase"
+                               Variant="Variant.Outlined" T="PpmpPhase" Disabled="_isReadOnly">
+                        <MudSelectItem Value="PpmpPhase.Indicative">Indicative</MudSelectItem>
+                        <MudSelectItem Value="PpmpPhase.Final">Final</MudSelectItem>
                     </MudSelect>
                 </MudItem>
                 <MudItem xs="6" sm="3">
@@ -520,7 +520,7 @@
     private sealed class PpmpFormModel
     {
         public int FiscalYear { get; set; } = DateTime.Now.Year + 1;
-        public PpmpType PpmpType { get; set; } = PpmpType.Indicative;
+        public PpmpPhase Phase { get; set; } = PpmpPhase.Indicative;
         public string OfficeCode { get; set; } = string.Empty;
         public string EndUserUnit { get; set; } = string.Empty;
         public List<PpmpItemFormModel> Items { get; set; } = [];
@@ -663,7 +663,7 @@
         _form = new PpmpFormModel
         {
             FiscalYear = dto.FiscalYear,
-            PpmpType = dto.PpmpType,
+            Phase = dto.Phase,
             OfficeCode = dto.OfficeCode,
             EndUserUnit = dto.EndUserUnit,
             Items = dto.Items.Select(i => new PpmpItemFormModel
@@ -829,7 +829,7 @@
 
             if (_editing is null)
             {
-                var cmd = new CreatePpmpCommand(_form.FiscalYear, _form.PpmpType,
+                var cmd = new CreatePpmpCommand(_form.FiscalYear, _form.Phase,
                     _form.OfficeCode, _form.EndUserUnit, _preparedById, items);
                 _editing = await PpmpClient.CreateAsync(cmd);
                 Snackbar.Add($"PPMP {_editing.PpmpNumber} created.", Severity.Success);

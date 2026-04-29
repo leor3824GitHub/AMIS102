@@ -29,10 +29,6 @@ public sealed class CreateUpdateAppCommandHandler(
         dbContext.AnnualProcurementPlans.Add(update);
 
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-<<<<<<< HEAD
-        return AppMapper.ToDto(update);
-=======
-        return await AppReadProjection.BuildDtoAsync(dbContext, amendment.Id, cancellationToken).ConfigureAwait(false);
->>>>>>> d63aec54a5aea0527fd07e545543a98aceae4138
+        return await AppReadProjection.BuildDtoAsync(dbContext, update.Id, cancellationToken).ConfigureAwait(false);
     }
 }

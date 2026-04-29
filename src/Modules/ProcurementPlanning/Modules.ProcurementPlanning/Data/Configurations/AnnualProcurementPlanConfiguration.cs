@@ -22,18 +22,15 @@ internal sealed class AnnualProcurementPlanConfiguration : IEntityTypeConfigurat
         builder.HasIndex(x => x.VersionChainId);
         builder.HasIndex(x => new { x.FiscalYear, x.IsCurrentVersion });
 
-<<<<<<< HEAD
-        builder.Navigation(x => x.Items).HasField("_items");
-=======
-         builder.HasMany(x => x.LineReferences)
-             .WithOne()
-             .HasForeignKey(x => x.AppId)
-             .OnDelete(DeleteBehavior.Cascade);
+        builder.HasMany(x => x.LineReferences)
+            .WithOne()
+            .HasForeignKey(x => x.AppId)
+            .OnDelete(DeleteBehavior.Cascade);
 
-         builder.HasMany<AppSnapshot>()
-             .WithOne()
-             .HasForeignKey(x => x.AppId)
-             .OnDelete(DeleteBehavior.Cascade);
+        builder.HasMany<AppSnapshot>()
+            .WithOne()
+            .HasForeignKey(x => x.AppId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }
 
@@ -77,7 +74,6 @@ internal sealed class AppSnapshotConfiguration : IEntityTypeConfiguration<AppSna
         builder.HasIndex(x => x.VersionChainId);
         builder.HasIndex(x => new { x.AppId, x.VersionNumber, x.SnapshotType }).IsUnique();
 
->>>>>>> d63aec54a5aea0527fd07e545543a98aceae4138
         builder.HasMany(x => x.Items)
                .WithOne()
                .HasForeignKey(x => x.AppSnapshotId)

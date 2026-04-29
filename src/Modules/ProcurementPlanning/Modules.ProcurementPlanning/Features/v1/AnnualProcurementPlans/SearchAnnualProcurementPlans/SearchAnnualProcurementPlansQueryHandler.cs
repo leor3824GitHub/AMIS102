@@ -37,27 +37,18 @@ public sealed class SearchAnnualProcurementPlansQueryHandler(
             .OrderByDescending(x => x.CreatedOnUtc)
             .Skip((query.PageNumber - 1) * query.PageSize)
             .Take(query.PageSize)
-<<<<<<< HEAD
-            .Select(x => new AnnualProcurementPlanSummaryDto(
-                x.Id, x.AppNumber, x.FiscalYear, x.Phase, x.Status,
-                x.VersionNumber, x.IsCurrentVersion, x.VersionChainId,
-                x.Items.Count,
-                x.Items.Sum(i => i.EstimatedBudget),
-                x.CreatedOnUtc))
-=======
             .Select(x => new
             {
                 x.Id,
                 x.AppNumber,
                 x.FiscalYear,
-                x.RevisionType,
+                x.Phase,
                 x.Status,
                 x.VersionNumber,
                 x.IsCurrentVersion,
                 x.VersionChainId,
                 x.CreatedOnUtc
             })
->>>>>>> d63aec54a5aea0527fd07e545543a98aceae4138
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
@@ -86,7 +77,7 @@ public sealed class SearchAnnualProcurementPlansQueryHandler(
                     x.Id,
                     x.AppNumber,
                     x.FiscalYear,
-                    x.RevisionType,
+                    x.Phase,
                     x.Status,
                     x.VersionNumber,
                     x.IsCurrentVersion,

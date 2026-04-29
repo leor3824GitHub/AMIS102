@@ -6,13 +6,7 @@ using FSH.Modules.ProcurementPlanning.Domain.Ppmps;
 
 namespace FSH.Modules.ProcurementPlanning.Domain.AnnualProcurementPlans;
 
-<<<<<<< HEAD
-// AppItem is a point-in-time snapshot of a PpmpItem at consolidation. It is intentionally
-// denormalized — if the source PPMP is later amended, AppItem preserves the original values.
-public sealed class AppItem
-=======
 public sealed class AppLineReference
->>>>>>> d63aec54a5aea0527fd07e545543a98aceae4138
 {
     public Guid Id { get; private set; }
     public Guid AppId { get; private set; }
@@ -124,7 +118,7 @@ public sealed class AppSnapshot
     public AppSnapshotType SnapshotType { get; private set; }
     public string AppNumber { get; private set; } = default!;
     public int FiscalYear { get; private set; }
-    public AppRevisionType RevisionType { get; private set; }
+    public AppPhase Phase { get; private set; }
     public AppStatus StatusAtCapture { get; private set; }
     public int VersionNumber { get; private set; }
     public Guid VersionChainId { get; private set; }
@@ -150,7 +144,7 @@ public sealed class AppSnapshot
             SnapshotType = snapshotType,
             AppNumber = app.AppNumber,
             FiscalYear = app.FiscalYear,
-            RevisionType = app.RevisionType,
+            Phase = app.Phase,
             StatusAtCapture = app.Status,
             VersionNumber = app.VersionNumber,
             VersionChainId = app.VersionChainId,
@@ -211,7 +205,6 @@ public sealed class AnnualProcurementPlan : AggregateRoot<Guid>, IAuditableEntit
 
     private static byte[] NewVersion() => RandomNumberGenerator.GetBytes(8);
 
-<<<<<<< HEAD
     private void MarkChanged()
     {
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
@@ -219,9 +212,6 @@ public sealed class AnnualProcurementPlan : AggregateRoot<Guid>, IAuditableEntit
     }
 
     public static AnnualProcurementPlan Create(string appNumber, int fiscalYear, AppPhase phase) =>
-=======
-    public static AnnualProcurementPlan Create(string appNumber, int fiscalYear, AppRevisionType revisionType) =>
->>>>>>> d63aec54a5aea0527fd07e545543a98aceae4138
         new()
         {
             Id = Guid.NewGuid(),
@@ -267,12 +257,7 @@ public sealed class AnnualProcurementPlan : AggregateRoot<Guid>, IAuditableEntit
 
         ConsolidatedById = consolidatedById;
         ConsolidatedOn = DateTimeOffset.UtcNow;
-<<<<<<< HEAD
         MarkChanged();
-=======
-        LastModifiedOnUtc = DateTimeOffset.UtcNow;
-        Version = NewVersion();
->>>>>>> d63aec54a5aea0527fd07e545543a98aceae4138
     }
 
     public void Publish()
@@ -283,12 +268,7 @@ public sealed class AnnualProcurementPlan : AggregateRoot<Guid>, IAuditableEntit
             throw new InvalidOperationException("APP must have at least one item before publishing.");
 
         Status = AppStatus.Published;
-<<<<<<< HEAD
         MarkChanged();
-=======
-        LastModifiedOnUtc = DateTimeOffset.UtcNow;
-        Version = NewVersion();
->>>>>>> d63aec54a5aea0527fd07e545543a98aceae4138
     }
 
     public void Approve(Guid approvedById)
@@ -299,12 +279,7 @@ public sealed class AnnualProcurementPlan : AggregateRoot<Guid>, IAuditableEntit
         Status = AppStatus.Approved;
         ApprovedById = approvedById;
         ApprovedOn = DateTimeOffset.UtcNow;
-<<<<<<< HEAD
         MarkChanged();
-=======
-        LastModifiedOnUtc = DateTimeOffset.UtcNow;
-        Version = NewVersion();
->>>>>>> d63aec54a5aea0527fd07e545543a98aceae4138
     }
 
     public void Recall()
@@ -313,15 +288,10 @@ public sealed class AnnualProcurementPlan : AggregateRoot<Guid>, IAuditableEntit
             throw new InvalidOperationException("Only Published APPs can be recalled.");
 
         Status = AppStatus.Draft;
-<<<<<<< HEAD
         ReturnReason = null;
         ReturnedAt = null;
         ReturnedById = null;
         MarkChanged();
-=======
-        LastModifiedOnUtc = DateTimeOffset.UtcNow;
-        Version = NewVersion();
->>>>>>> d63aec54a5aea0527fd07e545543a98aceae4138
     }
 
     public void Return(string returnReason, Guid returnedById)
@@ -333,12 +303,7 @@ public sealed class AnnualProcurementPlan : AggregateRoot<Guid>, IAuditableEntit
         ReturnReason = returnReason;
         ReturnedAt = DateTimeOffset.UtcNow;
         ReturnedById = returnedById;
-<<<<<<< HEAD
         MarkChanged();
-=======
-        LastModifiedOnUtc = DateTimeOffset.UtcNow;
-        Version = NewVersion();
->>>>>>> d63aec54a5aea0527fd07e545543a98aceae4138
     }
 
     /// <summary>Promotes an Approved Indicative APP to a new empty Final draft. BAC Sec must re-consolidate Final PPMPs into the new APP.</summary>
@@ -365,6 +330,7 @@ public sealed class AnnualProcurementPlan : AggregateRoot<Guid>, IAuditableEntit
             CreatedOnUtc = DateTimeOffset.UtcNow,
             Version = NewVersion()
         };
+        // No items — BAC Sec consolidates Final PPMPs fresh into this draft.
     }
 
     /// <summary>Creates a new Updated version of an Approved Final or Updated APP. Caller must call Supersede() on this instance.</summary>
@@ -388,26 +354,16 @@ public sealed class AnnualProcurementPlan : AggregateRoot<Guid>, IAuditableEntit
             PreviousVersionId = Id,
             AmendmentReason = updateReason,
             AmendedAt = DateTimeOffset.UtcNow,
-<<<<<<< HEAD
             AmendedById = updatedById,
-=======
-            AmendedById = amendedById,
->>>>>>> d63aec54a5aea0527fd07e545543a98aceae4138
             CreatedOnUtc = DateTimeOffset.UtcNow,
             Version = NewVersion()
         };
 
-<<<<<<< HEAD
-        var itemNo = 1;
-        foreach (var src in _items)
-            update._items.Add(AppItem.Clone(update.Id, itemNo++, src));
-=======
         var lineNo = 1;
         foreach (var src in _lineReferences)
         {
-            amendment._lineReferences.Add(AppLineReference.Clone(amendment.Id, lineNo++, src));
+            update._lineReferences.Add(AppLineReference.Clone(update.Id, lineNo++, src));
         }
->>>>>>> d63aec54a5aea0527fd07e545543a98aceae4138
 
         return update;
     }
@@ -421,11 +377,6 @@ public sealed class AnnualProcurementPlan : AggregateRoot<Guid>, IAuditableEntit
 
         IsCurrentVersion = false;
         Status = AppStatus.Superseded;
-<<<<<<< HEAD
         MarkChanged();
-=======
-        LastModifiedOnUtc = DateTimeOffset.UtcNow;
-        Version = NewVersion();
->>>>>>> d63aec54a5aea0527fd07e545543a98aceae4138
     }
 }

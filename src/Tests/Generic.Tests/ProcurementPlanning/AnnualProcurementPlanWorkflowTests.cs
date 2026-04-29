@@ -142,11 +142,11 @@ public sealed class AnnualProcurementPlanWorkflowTests
         await dbContext.SaveChangesAsync();
 
         var currentUser = new TestCurrentUser(Guid.NewGuid());
-        var handler = new AmendAnnualProcurementPlanCommandHandler(dbContext, currentUser);
+        var handler = new CreateUpdateAppCommandHandler(dbContext, currentUser);
 
         // Act
         var result = await handler.Handle(
-            new AmendAnnualProcurementPlanCommand(app.Id, "Need revised quantities", AppRevisionType.Revised),
+            new CreateUpdateAppCommand(app.Id, "Need revised quantities"),
             CancellationToken.None);
 
         // Assert
@@ -191,11 +191,11 @@ public sealed class AnnualProcurementPlanWorkflowTests
         var originalApp = CreateDraftAppFrom(ppmp, "draft-user");
         originalApp.Publish();
 
-        var amendment = originalApp.CreateAmendment("Annual adjustment", AppRevisionType.Revised, Guid.NewGuid().ToString());
+        var amendment = originalApp.CreateUpdate("Annual adjustment", Guid.NewGuid());
         amendment.CreatedBy = "amender";
         originalApp.Supersede();
 
-        var deletedApp = AnnualProcurementPlan.Create("APP-DELETED", 2026, AppRevisionType.Original);
+        var deletedApp = AnnualProcurementPlan.Create("APP-DELETED", 2026, AppPhase.Indicative);
         deletedApp.IsDeleted = true;
         deletedApp.CreatedBy = "deleted-user";
 
@@ -236,7 +236,7 @@ public sealed class AnnualProcurementPlanWorkflowTests
         var originalApp = CreateDraftAppFrom(ppmp, "draft-user");
         originalApp.Publish();
 
-        var amendment = originalApp.CreateAmendment("Updated requirement", AppRevisionType.Revised, Guid.NewGuid().ToString());
+        var amendment = originalApp.CreateUpdate("Updated requirement", Guid.NewGuid());
         amendment.CreatedBy = "amender";
         originalApp.Supersede();
 
@@ -292,13 +292,13 @@ public sealed class AnnualProcurementPlanWorkflowTests
         var ppmp = Ppmp.Create(
             ppmpNumber: $"PPMP-{Guid.NewGuid():N}"[..13],
             fiscalYear: 2026,
-            ppmpType: PpmpType.Final,
+            phase: PpmpPhase.Indicative,
             officeCode: "ICT",
             endUserUnit: "ICT Unit",
             preparedById: preparedById,
             items:
             [
-                new PpmpItemRequest(
+                new PpmpItemData(
                     description,
                     ProjectType.Goods,
                     1,
@@ -321,9 +321,9 @@ public sealed class AnnualProcurementPlanWorkflowTests
 
     private static AnnualProcurementPlan CreateDraftAppFrom(Ppmp ppmp, string userId)
     {
-        var app = AnnualProcurementPlan.Create($"APP-{Guid.NewGuid():N}"[..12], 2026, AppRevisionType.Original);
+        var app = AnnualProcurementPlan.Create($"APP-{Guid.NewGuid():N}"[..12], 2026, AppPhase.Indicative);
         app.CreatedBy = userId;
-        app.ConsolidatePpmps([ppmp], userId);
+        app.ConsolidatePpmps([ppmp], Guid.NewGuid());
         return app;
     }
 

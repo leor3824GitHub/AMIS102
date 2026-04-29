@@ -15,7 +15,6 @@ public sealed class PromoteToFinalAppCommandHandler(
         PromoteToFinalAppCommand command, CancellationToken cancellationToken)
     {
         var original = await dbContext.AnnualProcurementPlans
-            .Include(x => x.Items)
             .FirstOrDefaultAsync(x => x.Id == command.Id && x.IsCurrentVersion, cancellationToken)
             .ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"APP {command.Id} not found or is not the current version.");
@@ -27,6 +26,6 @@ public sealed class PromoteToFinalAppCommandHandler(
         dbContext.AnnualProcurementPlans.Add(finalApp);
 
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return AppMapper.ToDto(finalApp);
+        return await AppReadProjection.BuildDtoAsync(dbContext, finalApp.Id, cancellationToken).ConfigureAwait(false);
     }
 }

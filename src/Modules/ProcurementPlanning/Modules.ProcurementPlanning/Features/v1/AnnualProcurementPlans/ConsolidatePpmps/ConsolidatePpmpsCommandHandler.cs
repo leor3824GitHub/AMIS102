@@ -52,11 +52,7 @@ public sealed class ConsolidatePpmpsCommandHandler(
         if (ppmps.Count == 0)
             throw new CustomException("No eligible PPMPs found for consolidation.", Enumerable.Empty<string>(), HttpStatusCode.BadRequest);
 
-<<<<<<< HEAD
         var userId = currentUser.GetUserId();
-        app.ConsolidatePpmps(ppmps, userId);
-=======
-        var userId = currentUser.GetUserId().ToString();
         try
         {
             app.ConsolidatePpmps(ppmps, userId);
@@ -65,7 +61,6 @@ public sealed class ConsolidatePpmpsCommandHandler(
         {
             throw new CustomException(ex.Message, Enumerable.Empty<string>(), HttpStatusCode.Conflict);
         }
->>>>>>> d63aec54a5aea0527fd07e545543a98aceae4138
 
         var approvedIds = ppmps
             .Where(x => x.Status == PpmpStatus.Approved)

@@ -17,9 +17,6 @@ public sealed class ApproveAnnualProcurementPlanCommandHandler(
             .ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"APP {command.Id} not found.");
 
-<<<<<<< HEAD
-        app.Approve(command.ApprovedById);
-=======
         var snapshotLines = await (
                 from line in dbContext.AppLineReferences.AsNoTracking()
                 join ppmp in dbContext.Ppmps.AsNoTracking() on line.SourcePpmpId equals ppmp.Id
@@ -47,7 +44,7 @@ public sealed class ApproveAnnualProcurementPlanCommandHandler(
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
-        app.Approve(command.ApprovedById.ToString());
+        app.Approve(command.ApprovedById);
 
         var existingApprovedSnapshot = await dbContext.AppSnapshots
             .Include(x => x.Items)
@@ -66,7 +63,6 @@ public sealed class ApproveAnnualProcurementPlanCommandHandler(
         var approvedSnapshot = AppSnapshot.Capture(app, AppSnapshotType.Approved, command.ApprovedById.ToString(), snapshotLines);
         dbContext.AppSnapshots.Add(approvedSnapshot);
 
->>>>>>> d63aec54a5aea0527fd07e545543a98aceae4138
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return await AppReadProjection.BuildDtoAsync(dbContext, app.Id, cancellationToken).ConfigureAwait(false);
     }
