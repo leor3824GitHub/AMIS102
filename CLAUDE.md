@@ -136,3 +136,44 @@ dotnet test src/FSH.Framework.slnx   # All tests must pass
 ---
 
 **Philosophy:** This is a production-ready starter kit. Every pattern is battle-tested. Follow the conventions, and you'll ship faster.
+
+---
+
+## Work Done — Branch `April82026`
+
+### ProcurementPlanning Module (complete)
+
+Full PPMP + APP workflow implemented and tested.
+
+**Domain concepts (do not confuse):**
+- `PpmpPhase` — Indicative / Final / Updated (was incorrectly called `PpmpType` in older code)
+- `AppPhase` — Indicative / Final / Updated
+- `AppRevisionType` — Original / Supplemental / Revised (separate concept, not the same as phase)
+- `AppLineReference` — live FK from APP → PPMP items (mutable)
+- `AppSnapshot` — immutable point-in-time copy created at Publish and Approve
+- `CreateUpdate()` — domain method for amending a Final/Updated APP; **forbidden on Indicative APPs** (those must use `PromoteToFinal()` instead)
+- `PpmpItemData` — domain-internal item type; `PpmpItemRequest` is the contract/API type
+
+**Merge conflicts resolved (April 2026):**
+- `AppHost.cs` — kept 223 suffix for volume/database names
+- `ProcurementPlanningClient.cs` — kept `EnsureApiSuccessAsync`; removed stale `TryGetApiMessage`
+- Migration `20260428001944` — deleted (empty .cs + conflicted designer); `20260428161849` is the canonical initial migration
+- AssetManagement migration `20260428002013` — .cs file was missing; created with full 24-table Up()/Down()
+
+**Key renames applied throughout contracts, client, and Blazor pages:**
+- `PpmpType` → `Phase` (on `PpmpDto` and `PpmpSummaryDto`)
+- `RevisionType` → `Phase` (on `AnnualProcurementPlanDto` and summary)
+- `AmendPpmpCommand` → `CreateUpdatePpmpCommand` at `/create-update` endpoint
+- `AppMapper.ToDto()` → `AppReadProjection.BuildDtoAsync()` (mapper class doesn't exist)
+
+**Handler/projection fixes:**
+- `PromoteToFinalAppCommandHandler` — removed `.Include(x => x.Items)` (entity uses `LineReferences`); use `AppReadProjection.BuildDtoAsync` for return value
+- `GetAppVersionsQueryHandler` — `x.RevisionType` → `x.Phase`
+
+**Unit test fixes (`AnnualProcurementPlanWorkflowTests`):**
+- `CreateApprovedPpmp` helper → `PpmpPhase.Final` (was Indicative)
+- `CreateDraftAppFrom` helper → `AppPhase.Final` (was Indicative)
+- Reason: `ConsolidatePpmps` requires PPMP phase to match APP phase (`(PpmpPhase)(int)Phase`), and `CreateUpdate` throws on Indicative APPs. Tests exercising the amendment workflow must use Final-phase entities.
+- Handler class is `CreateUpdateAppCommandHandler` (namespace `AmendAnnualProcurementPlan`)
+
+**Final state:** build 0 errors, all 220 tests pass (Architecture 47, Generic 73, Multitenancy 93, Vehicle 8).
