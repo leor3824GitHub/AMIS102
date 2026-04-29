@@ -11,13 +11,12 @@ public sealed class ReturnAnnualProcurementPlanCommandHandler(
     public async ValueTask<AnnualProcurementPlanDto> Handle(ReturnAppCommand command, CancellationToken cancellationToken)
     {
         var app = await dbContext.AnnualProcurementPlans
-            .Include(x => x.Items)
             .FirstOrDefaultAsync(x => x.Id == command.Id, cancellationToken)
             .ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"APP {command.Id} not found.");
 
         app.Return(command.ReturnReason, command.ReturnedById);
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return AppMapper.ToDto(app);
+        return await AppReadProjection.BuildDtoAsync(dbContext, app.Id, cancellationToken).ConfigureAwait(false);
     }
 }

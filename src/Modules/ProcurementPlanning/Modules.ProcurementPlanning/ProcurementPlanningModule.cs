@@ -21,8 +21,13 @@ using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.Approve
 using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.RecallAnnualProcurementPlan;
 using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.ReturnAnnualProcurementPlan;
 using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.AmendAnnualProcurementPlan;
+<<<<<<< HEAD
 using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.PromoteToFinalApp;
+=======
+using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.DeleteAnnualProcurementPlan;
+>>>>>>> d63aec54a5aea0527fd07e545543a98aceae4138
 using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.GetAnnualProcurementPlan;
+using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.GetAppVersions;
 using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.GetAvailablePpmps;
 using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.SearchAnnualProcurementPlans;
 using FSH.Modules.ProcurementPlanning.Provisioning;
@@ -107,6 +112,8 @@ public class ProcurementPlanningModule : IModule
         CreateUpdateAppEndpoint.Map(appGroup);
         PromoteToFinalAppEndpoint.Map(appGroup);
         GetAnnualProcurementPlanEndpoint.Map(appGroup);
+        DeleteAnnualProcurementPlanEndpoint.Map(appGroup);
+        GetAppVersionsEndpoint.Map(appGroup);
         GetAvailablePpmpsEndpoint.Map(appGroup);
         SearchAnnualProcurementPlansEndpoint.Map(appGroup);
     }

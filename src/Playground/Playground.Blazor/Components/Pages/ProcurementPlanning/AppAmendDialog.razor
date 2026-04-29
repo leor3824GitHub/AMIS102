@@ -1,6 +1,5 @@
-@using MudBlazor
 @using FSH.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans
-@inject IDialogService DialogService
+@using MudBlazor
 
 <MudDialog>
     <TitleContent>
@@ -15,14 +14,17 @@
                 This will <strong>supersede</strong> v@CurrentVersion and create a new Draft.
                 The new version must go through the approval workflow again.
             </MudAlert>
-            <MudSelect T="AppRevisionType" @bind-Value="_revisionType" Label="Revision Type *"
-                       Variant="Variant.Outlined">
+
+            <MudSelect @bind-Value="_revisionType" Label="Revision Type *"
+                       Variant="Variant.Outlined" T="AppRevisionType"
+                       HelperText="Supplemental adds new items; Revised replaces the plan">
                 <MudSelectItem Value="AppRevisionType.Supplemental">Supplemental</MudSelectItem>
                 <MudSelectItem Value="AppRevisionType.Revised">Revised</MudSelectItem>
             </MudSelect>
+
             <MudTextField @bind-Value="_reason" Label="Reason for Amendment *"
                           Variant="Variant.Outlined" Lines="3"
-                          Placeholder="e.g. Additional procurement items, budget realignment..." />
+                          Placeholder="e.g. Budget realignment, additional procurement items added..." />
         </MudStack>
     </DialogContent>
     <DialogActions>
@@ -41,8 +43,8 @@
     [Parameter] public int CurrentVersion { get; set; }
 
     private string _reason = string.Empty;
-    private AppRevisionType _revisionType = AppRevisionType.Supplemental;
+    private AppRevisionType _revisionType = AppRevisionType.Revised;
 
     private void Confirm() => MudDialog.Close(DialogResult.Ok((_reason, _revisionType)));
-    private void Cancel()  => MudDialog.Cancel();
+    private void Cancel() => MudDialog.Cancel();
 }

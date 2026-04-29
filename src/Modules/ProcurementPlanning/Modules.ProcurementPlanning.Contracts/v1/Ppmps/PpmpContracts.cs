@@ -157,7 +157,7 @@ public sealed record GetPpmpQuery(Guid Id) : IQuery<PpmpDto>;
 
 public sealed record GetPpmpVersionsQuery(Guid VersionChainId) : IQuery<IReadOnlyList<PpmpSummaryDto>>;
 
-public sealed record GetAvailablePpmpsForAppQuery(int FiscalYear) : IQuery<IReadOnlyList<PpmpSummaryDto>>;
+public sealed record GetAvailablePpmpsForAppQuery(int FiscalYear, Guid? AppId = null) : IQuery<IReadOnlyList<PpmpSummaryDto>>;
 
 public sealed record SearchPpmpsQuery : IQuery<PagedResponse<PpmpSummaryDto>>
 {

@@ -84,7 +84,7 @@ public sealed class PpmpItem
         };
 }
 
-public sealed class Ppmp : AggregateRoot<Guid>, IAuditableEntity
+public sealed class Ppmp : AggregateRoot<Guid>, IAuditableEntity, ISoftDeletable
 {
     public string PpmpNumber { get; private set; } = default!;
     public int FiscalYear { get; private set; }
@@ -243,8 +243,24 @@ public sealed class Ppmp : AggregateRoot<Guid>, IAuditableEntity
         MarkChanged();
     }
 
+<<<<<<< HEAD
     /// <summary>Promotes an Approved Indicative PPMP to a new Final draft. Caller must call Supersede() on this instance.</summary>
     public Ppmp PromoteToFinal(Guid promotedById)
+=======
+    public void UnmarkConsolidated()
+    {
+        if (Status != PpmpStatus.Consolidated)
+            throw new InvalidOperationException("Only Consolidated PPMPs can be unmarked.");
+
+        Status = PpmpStatus.Approved;
+        AppId = null;
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        Version = NewVersion();
+    }
+
+    /// <summary>Creates a new version of this PPMP (amendment). Caller must set IsCurrentVersion=false on this instance.</summary>
+    public Ppmp CreateAmendment(string amendmentReason, string amendedById)
+>>>>>>> d63aec54a5aea0527fd07e545543a98aceae4138
     {
         if (Status is not PpmpStatus.Approved)
             throw new InvalidOperationException("Only Approved PPMPs can be promoted to Final.");

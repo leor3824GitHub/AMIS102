@@ -12,7 +12,9 @@ public sealed class SearchPpmpsQueryHandler(
     public async ValueTask<PagedResponse<PpmpSummaryDto>> Handle(
         SearchPpmpsQuery query, CancellationToken cancellationToken)
     {
-        var q = dbContext.Ppmps.AsNoTracking();
+        var q = dbContext.Ppmps
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted);
 
         if (query.CurrentVersionOnly)
             q = q.Where(x => x.IsCurrentVersion);

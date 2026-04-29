@@ -15,7 +15,7 @@ public sealed class CreateUpdateAppCommandHandler(
         CreateUpdateAppCommand command, CancellationToken cancellationToken)
     {
         var original = await dbContext.AnnualProcurementPlans
-            .Include(x => x.Items)
+            .Include(x => x.LineReferences)
             .FirstOrDefaultAsync(x => x.Id == command.Id && x.IsCurrentVersion, cancellationToken)
             .ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"APP {command.Id} not found or is not the current version.");
@@ -29,6 +29,10 @@ public sealed class CreateUpdateAppCommandHandler(
         dbContext.AnnualProcurementPlans.Add(update);
 
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+<<<<<<< HEAD
         return AppMapper.ToDto(update);
+=======
+        return await AppReadProjection.BuildDtoAsync(dbContext, amendment.Id, cancellationToken).ConfigureAwait(false);
+>>>>>>> d63aec54a5aea0527fd07e545543a98aceae4138
     }
 }

@@ -104,6 +104,7 @@ public sealed record CreateUpdateAppCommand(Guid Id, string UpdateReason) : ICom
 public sealed record ApproveAppCommand(Guid Id, Guid ApprovedById) : ICommand<AnnualProcurementPlanDto>;
 public sealed record RecallAppCommand(Guid Id) : ICommand<AnnualProcurementPlanDto>;
 public sealed record ReturnAppCommand(Guid Id, string ReturnReason, Guid ReturnedById) : ICommand<AnnualProcurementPlanDto>;
+public sealed record DeleteAnnualProcurementPlanCommand(Guid Id) : ICommand<Unit>;
 
 // ── Queries ───────────────────────────────────────────────────────────────────
 

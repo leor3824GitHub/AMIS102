@@ -37,5 +37,7 @@
     <ProjectReference Include="..\..\Modules\MasterData\Modules.MasterData.Contracts\Modules.MasterData.Contracts.csproj" />
     <ProjectReference Include="..\..\Modules\Multitenancy\Modules.Multitenancy\Modules.Multitenancy.csproj" />
     <ProjectReference Include="..\..\Modules\Multitenancy\Modules.Multitenancy.Contracts\Modules.Multitenancy.Contracts.csproj" />
+    <ProjectReference Include="..\..\Modules\ProcurementPlanning\Modules.ProcurementPlanning\Modules.ProcurementPlanning.csproj" />
+    <ProjectReference Include="..\..\Modules\ProcurementPlanning\Modules.ProcurementPlanning.Contracts\Modules.ProcurementPlanning.Contracts.csproj" />
   </ItemGroup>
 </Project>

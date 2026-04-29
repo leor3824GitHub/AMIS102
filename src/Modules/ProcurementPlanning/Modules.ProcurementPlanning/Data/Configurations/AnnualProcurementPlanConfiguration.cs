@@ -1,4 +1,5 @@
 using FSH.Modules.ProcurementPlanning.Domain.AnnualProcurementPlans;
+using FSH.Modules.ProcurementPlanning.Domain.Ppmps;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -21,19 +22,74 @@ internal sealed class AnnualProcurementPlanConfiguration : IEntityTypeConfigurat
         builder.HasIndex(x => x.VersionChainId);
         builder.HasIndex(x => new { x.FiscalYear, x.IsCurrentVersion });
 
+<<<<<<< HEAD
         builder.Navigation(x => x.Items).HasField("_items");
+=======
+         builder.HasMany(x => x.LineReferences)
+             .WithOne()
+             .HasForeignKey(x => x.AppId)
+             .OnDelete(DeleteBehavior.Cascade);
+
+         builder.HasMany<AppSnapshot>()
+             .WithOne()
+             .HasForeignKey(x => x.AppId)
+             .OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
+internal sealed class AppLineReferenceConfiguration : IEntityTypeConfiguration<AppLineReference>
+{
+    public void Configure(EntityTypeBuilder<AppLineReference> builder)
+    {
+        builder.ToTable("AppLineReferences", ProcurementPlanningModuleConstants.SchemaName);
+
+        builder.HasKey(x => x.Id);
+
+        builder.HasOne<Ppmp>()
+            .WithMany()
+            .HasForeignKey(x => x.SourcePpmpId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne<PpmpItem>()
+            .WithMany()
+            .HasForeignKey(x => x.SourcePpmpItemId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasIndex(x => x.AppId);
+        builder.HasIndex(x => x.SourcePpmpId);
+        builder.HasIndex(x => x.SourcePpmpItemId);
+        builder.HasIndex(x => new { x.AppId, x.SourcePpmpItemId }).IsUnique();
+    }
+}
+
+internal sealed class AppSnapshotConfiguration : IEntityTypeConfiguration<AppSnapshot>
+{
+    public void Configure(EntityTypeBuilder<AppSnapshot> builder)
+    {
+        builder.ToTable("AppSnapshots", ProcurementPlanningModuleConstants.SchemaName);
+
+        builder.HasKey(x => x.Id);
+        builder.Property(x => x.AppNumber).HasMaxLength(64).IsRequired();
+        builder.Property(x => x.CapturedBy).HasMaxLength(256);
+        builder.Property(x => x.TotalEstimatedBudget).HasColumnType("numeric(18,2)");
+
+        builder.HasIndex(x => x.AppId);
+        builder.HasIndex(x => x.VersionChainId);
+        builder.HasIndex(x => new { x.AppId, x.VersionNumber, x.SnapshotType }).IsUnique();
+
+>>>>>>> d63aec54a5aea0527fd07e545543a98aceae4138
         builder.HasMany(x => x.Items)
                .WithOne()
-               .HasForeignKey(x => x.AppId)
+               .HasForeignKey(x => x.AppSnapshotId)
                .OnDelete(DeleteBehavior.Cascade);
     }
 }
 
-internal sealed class AppItemConfiguration : IEntityTypeConfiguration<AppItem>
+internal sealed class AppSnapshotItemConfiguration : IEntityTypeConfiguration<AppSnapshotItem>
 {
-    public void Configure(EntityTypeBuilder<AppItem> builder)
+    public void Configure(EntityTypeBuilder<AppSnapshotItem> builder)
     {
-        builder.ToTable("AppItems", ProcurementPlanningModuleConstants.SchemaName);
+        builder.ToTable("AppSnapshotItems", ProcurementPlanningModuleConstants.SchemaName);
 
         builder.HasKey(x => x.Id);
         builder.Property(x => x.OfficeCode).HasMaxLength(64).IsRequired();
@@ -47,7 +103,8 @@ internal sealed class AppItemConfiguration : IEntityTypeConfiguration<AppItem>
         builder.Property(x => x.EstimatedBudget).HasColumnType("numeric(18,2)");
         builder.Property(x => x.Remarks).HasMaxLength(500);
 
-        builder.HasIndex(x => x.AppId);
+        builder.HasIndex(x => x.AppSnapshotId);
         builder.HasIndex(x => x.SourcePpmpId);
+        builder.HasIndex(x => x.SourcePpmpItemId);
     }
 }

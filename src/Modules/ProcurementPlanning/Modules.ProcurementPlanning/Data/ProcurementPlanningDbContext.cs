@@ -16,7 +16,9 @@ public class ProcurementPlanningDbContext : BaseDbContext
     public DbSet<Ppmp> Ppmps => Set<Ppmp>();
     public DbSet<PpmpItem> PpmpItems => Set<PpmpItem>();
     public DbSet<AnnualProcurementPlan> AnnualProcurementPlans => Set<AnnualProcurementPlan>();
-    public DbSet<AppItem> AppItems => Set<AppItem>();
+    public DbSet<AppLineReference> AppLineReferences => Set<AppLineReference>();
+    public DbSet<AppSnapshot> AppSnapshots => Set<AppSnapshot>();
+    public DbSet<AppSnapshotItem> AppSnapshotItems => Set<AppSnapshotItem>();
 
     public ProcurementPlanningDbContext(
         IMultiTenantContextAccessor<AppTenantInfo> multiTenantContextAccessor,
