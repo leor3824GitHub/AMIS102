@@ -23,6 +23,7 @@ public sealed class AddFoundAtStationEntryCommandHandler(AssetManagementDbContex
             throw new InvalidOperationException("Cannot add entries to a submitted physical count session.");
 
         var entry = PhysicalCountEntry.CreateFoundAtStation(
+            session.TenantId,
             command.SessionId,
             command.PropertyNumber,
             command.Description,

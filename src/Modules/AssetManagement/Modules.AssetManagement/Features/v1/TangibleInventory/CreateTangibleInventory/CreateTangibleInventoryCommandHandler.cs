@@ -18,7 +18,6 @@ public sealed class CreateTangibleInventoryCommandHandler(
     {
         // Validate unique ReportNo
         var reportNoInUse = await dbContext.TangibleInventories
-            .IgnoreQueryFilters()
             .AnyAsync(x => x.ReportNo == command.ReportNo, cancellationToken)
             .ConfigureAwait(false);
 
@@ -75,7 +74,7 @@ public sealed class CreateTangibleInventoryCommandHandler(
         }
 
         string tenantId = currentUser.GetTenant() ?? string.Empty;
-        string userId   = currentUser.GetUserId().ToString();
+        string userId = currentUser.GetUserId().ToString();
 
         var inventory = Domain.TangibleInventory.Create(
             tenantId,
@@ -105,6 +104,7 @@ public sealed class CreateTangibleInventoryCommandHandler(
                 : AssetType.SE;
 
             var inventoryItem = TangibleInventoryItem.Create(
+                tenantId,
                 inventory.Id,
                 ti.Id,
                 itemRequest.Reference,

@@ -7,8 +7,10 @@ namespace FSH.Modules.AssetManagement.Domain;
 /// Each RRPItem references one PPEItem being returned/surrendered.
 /// Key values are snapshots from the PPEItem at return time.
 /// </summary>
-public sealed class RRPItem : BaseEntity<Guid>
+public sealed class RRPItem : BaseEntity<Guid>, IHasTenant
 {
+    public string TenantId { get; private set; } = default!;
+
     /// <summary>FK to the parent RRP.</summary>
     public Guid RRPId { get; private set; }
 
@@ -39,6 +41,7 @@ public sealed class RRPItem : BaseEntity<Guid>
     public decimal TotalCost { get; private set; }
 
     public static RRPItem Create(
+        string tenantId,
         Guid rrpId,
         Guid tangibleInventoryItemId,
         int itemNo,
@@ -50,16 +53,17 @@ public sealed class RRPItem : BaseEntity<Guid>
     {
         return new RRPItem
         {
-            Id                      = Guid.NewGuid(),
-            RRPId                   = rrpId,
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            RRPId = rrpId,
             TangibleInventoryItemId = tangibleInventoryItemId,
-            ItemNo                  = itemNo,
-            SourceDocumentRef       = sourceDocumentRef,
-            PropertyCode            = propertyCode,
-            Description             = description,
-            Quantity                = quantity,
-            UnitCost                = unitCost,
-            TotalCost               = quantity * unitCost,
+            ItemNo = itemNo,
+            SourceDocumentRef = sourceDocumentRef,
+            PropertyCode = propertyCode,
+            Description = description,
+            Quantity = quantity,
+            UnitCost = unitCost,
+            TotalCost = quantity * unitCost,
         };
     }
 }

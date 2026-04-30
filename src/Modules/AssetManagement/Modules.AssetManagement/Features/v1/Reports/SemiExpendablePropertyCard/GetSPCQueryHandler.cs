@@ -25,7 +25,6 @@ public sealed class GetSPCQueryHandler(AssetManagementDbContext dbContext)
 
         // Collect all SE inventory-item IDs for this catalog type (SPC card = SE only).
         var invItemIds = await dbContext.TangibleInventoryItems
-            .IgnoreQueryFilters()
             .Where(x => x.ItemId == query.ItemId && x.AssetType == AssetType.SE)
             .Select(x => x.Id)
             .ToListAsync(cancellationToken)
@@ -37,9 +36,9 @@ public sealed class GetSPCQueryHandler(AssetManagementDbContext dbContext)
         {
             // ── 1. Receipts via TangibleInventory ─────────────────────────────
             var receiptEntries = await (
-                from inv in dbContext.TangibleInventoryItems.IgnoreQueryFilters()
+                from inv in dbContext.TangibleInventoryItems
                     .Where(x => invItemIds.Contains(x.Id))
-                join ti in dbContext.TangibleInventories.IgnoreQueryFilters()
+                join ti in dbContext.TangibleInventories
                     on inv.TangibleInventoryId equals ti.Id
                 where (!query.DateFrom.HasValue || ti.Date >= query.DateFrom.Value)
                    && (!query.DateTo.HasValue   || ti.Date <= query.DateTo.Value)
@@ -53,7 +52,7 @@ public sealed class GetSPCQueryHandler(AssetManagementDbContext dbContext)
             // ── 2. Issuances via ICS ──────────────────────────────────────────
             var icsRaw = await (
                 from icsItem in dbContext.ICSItems.Where(x => invItemIds.Contains(x.TangibleInventoryItemId))
-                join ics in dbContext.InventoryCustodianSlips.IgnoreQueryFilters()
+                join ics in dbContext.InventoryCustodianSlips
                     on icsItem.ICSId equals ics.Id
                 where (!query.DateFrom.HasValue || ics.Date >= query.DateFrom.Value)
                    && (!query.DateTo.HasValue   || ics.Date <= query.DateTo.Value)
@@ -68,7 +67,7 @@ public sealed class GetSPCQueryHandler(AssetManagementDbContext dbContext)
             // ── 3. Returns via RRSP ───────────────────────────────────────────
             var rrspRaw = await (
                 from rrspItem in dbContext.RRSPItems.Where(x => invItemIds.Contains(x.TangibleInventoryItemId))
-                join rrsp in dbContext.ReceiptForReturnedProperties.IgnoreQueryFilters()
+                join rrsp in dbContext.ReceiptForReturnedProperties
                     on rrspItem.RRSPId equals rrsp.Id
                 where (!query.DateFrom.HasValue || rrsp.Date >= query.DateFrom.Value)
                    && (!query.DateTo.HasValue   || rrsp.Date <= query.DateTo.Value)
@@ -83,7 +82,7 @@ public sealed class GetSPCQueryHandler(AssetManagementDbContext dbContext)
             // ── 4. Transfers via SMIR ─────────────────────────────────────────
             var smirRaw = await (
                 from smirItem in dbContext.SMIRItems.Where(x => invItemIds.Contains(x.TangibleInventoryItemId))
-                join smir in dbContext.SemiExpendableIssuanceRecords.IgnoreQueryFilters()
+                join smir in dbContext.SemiExpendableIssuanceRecords
                     on smirItem.SMIRId equals smir.Id
                 where (!query.DateFrom.HasValue || smir.Date >= query.DateFrom.Value)
                    && (!query.DateTo.HasValue   || smir.Date <= query.DateTo.Value)
@@ -98,7 +97,7 @@ public sealed class GetSPCQueryHandler(AssetManagementDbContext dbContext)
             // ── 5. Incidents via RLSDDSP ──────────────────────────────────────
             var pirRaw = await (
                 from pirItem in dbContext.PropertyIncidentItems.Where(x => invItemIds.Contains(x.TangibleInventoryItemId))
-                join pir in dbContext.PropertyIncidentReports.IgnoreQueryFilters()
+                join pir in dbContext.PropertyIncidentReports
                     on pirItem.ReportId equals pir.Id
                 where (!query.DateFrom.HasValue || pir.Date >= query.DateFrom.Value)
                    && (!query.DateTo.HasValue   || pir.Date <= query.DateTo.Value)
@@ -115,7 +114,7 @@ public sealed class GetSPCQueryHandler(AssetManagementDbContext dbContext)
             // ── 6. Disposals via IIRUSP ───────────────────────────────────────
             var iuruspRaw = await (
                 from iurItem in dbContext.UnserviceablePropertyItems.Where(x => invItemIds.Contains(x.TangibleInventoryItemId))
-                join iur in dbContext.UnserviceablePropertyReports.IgnoreQueryFilters()
+                join iur in dbContext.UnserviceablePropertyReports
                     on iurItem.ReportId equals iur.Id
                 where (!query.DateFrom.HasValue || iur.Date >= query.DateFrom.Value)
                    && (!query.DateTo.HasValue   || iur.Date <= query.DateTo.Value)

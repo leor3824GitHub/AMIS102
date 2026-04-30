@@ -6,8 +6,10 @@ namespace FSH.Modules.AssetManagement.Domain;
 /// A line item within a Property Incident Report (RLSDDSP).
 /// Snapshots the property details at the time of reporting for audit trail.
 /// </summary>
-public sealed class PropertyIncidentItem : BaseEntity<Guid>
+public sealed class PropertyIncidentItem : BaseEntity<Guid>, IHasTenant
 {
+    public string TenantId { get; private set; } = default!;
+
     /// <summary>FK to the parent PropertyIncidentReport.</summary>
     public Guid ReportId { get; private set; }
 
@@ -30,6 +32,7 @@ public sealed class PropertyIncidentItem : BaseEntity<Guid>
     public AssetType AssetTypeAtTimeOfReport { get; private set; }
 
     public static PropertyIncidentItem Create(
+        string tenantId,
         Guid reportId,
         Guid tangibleInventoryItemId,
         int itemNo,
@@ -39,12 +42,13 @@ public sealed class PropertyIncidentItem : BaseEntity<Guid>
     {
         return new PropertyIncidentItem
         {
-            Id                      = Guid.NewGuid(),
-            ReportId                = reportId,
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            ReportId = reportId,
             TangibleInventoryItemId = tangibleInventoryItemId,
-            ItemNo                  = itemNo,
-            Description             = description,
-            UnitCost                = unitCost,
+            ItemNo = itemNo,
+            Description = description,
+            UnitCost = unitCost,
             AssetTypeAtTimeOfReport = assetTypeAtTimeOfReport,
         };
     }

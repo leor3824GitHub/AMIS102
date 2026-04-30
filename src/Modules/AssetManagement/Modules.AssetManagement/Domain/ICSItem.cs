@@ -6,8 +6,10 @@ namespace FSH.Modules.AssetManagement.Domain;
 /// A line item within an Inventory Custodian Slip.
 /// Each ICSItem references one specific SemiExpendableProperty unit being issued.
 /// </summary>
-public sealed class ICSItem : BaseEntity<Guid>
+public sealed class ICSItem : BaseEntity<Guid>, IHasTenant
 {
+    public string TenantId { get; private set; } = default!;
+
     /// <summary>FK to the parent ICS.</summary>
     public Guid ICSId { get; private set; }
 
@@ -33,6 +35,7 @@ public sealed class ICSItem : BaseEntity<Guid>
     public AssetType AssetTypeAtTimeOfIssuance { get; private set; }
 
     public static ICSItem Create(
+        string tenantId,
         Guid icsId,
         Guid tangibleInventoryItemId,
         int itemNo,
@@ -43,12 +46,13 @@ public sealed class ICSItem : BaseEntity<Guid>
     {
         return new ICSItem
         {
-            Id                       = Guid.NewGuid(),
-            ICSId                    = icsId,
-            TangibleInventoryItemId  = tangibleInventoryItemId,
-            ItemNo                   = itemNo,
-            Description              = description,
-            UnitCost                 = unitCost,
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            ICSId = icsId,
+            TangibleInventoryItemId = tangibleInventoryItemId,
+            ItemNo = itemNo,
+            Description = description,
+            UnitCost = unitCost,
             EstimatedUsefulLifeYears = estimatedUsefulLifeYears,
             AssetTypeAtTimeOfIssuance = assetTypeAtTimeOfIssuance,
         };

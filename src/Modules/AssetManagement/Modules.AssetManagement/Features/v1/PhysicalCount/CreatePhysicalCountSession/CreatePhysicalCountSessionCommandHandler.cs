@@ -16,7 +16,6 @@ public sealed class CreatePhysicalCountSessionCommandHandler(
         CancellationToken cancellationToken)
     {
         var sessionNoInUse = await dbContext.PhysicalCountSessions
-            .IgnoreQueryFilters()
             .AnyAsync(x => x.SessionNo == command.SessionNo, cancellationToken)
             .ConfigureAwait(false);
 
@@ -50,9 +49,9 @@ public sealed class CreatePhysicalCountSessionCommandHandler(
 
         query = command.Scope switch
         {
-            PhysicalCountScope.PPEOnly            => query.Where(x => x.AssetType == AssetType.PPE),
+            PhysicalCountScope.PPEOnly => query.Where(x => x.AssetType == AssetType.PPE),
             PhysicalCountScope.SemiExpendableOnly => query.Where(x => x.AssetType == AssetType.SE),
-            _                                     => query, // Both — no filter
+            _ => query, // Both — no filter
         };
 
         var invItems = await query
@@ -64,6 +63,7 @@ public sealed class CreatePhysicalCountSessionCommandHandler(
         foreach (var item in invItems)
         {
             var entry = PhysicalCountEntry.FromTangibleInventoryItem(
+                tenantId,
                 session.Id,
                 item.Id,
                 item.PropertyNo,

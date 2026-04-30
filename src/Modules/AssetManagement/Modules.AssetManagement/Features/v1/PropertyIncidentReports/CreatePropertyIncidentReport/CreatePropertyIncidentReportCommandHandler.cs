@@ -14,9 +14,8 @@ public sealed class CreatePropertyIncidentReportCommandHandler(AssetManagementDb
         CreatePropertyIncidentReportCommand command,
         CancellationToken cancellationToken)
     {
-        // 1. Validate ReportNo uniqueness (including soft-deleted records).
+        // 1. Validate ReportNo uniqueness within this tenant.
         var reportNoExists = await dbContext.PropertyIncidentReports
-            .IgnoreQueryFilters()
             .AnyAsync(x => x.ReportNo == command.ReportNo, cancellationToken)
             .ConfigureAwait(false);
 
@@ -68,11 +67,12 @@ public sealed class CreatePropertyIncidentReportCommandHandler(AssetManagementDb
             var invItem = invItems[i];
 
             var item = PropertyIncidentItem.Create(
-                reportId:                report.Id,
+                tenantId: tenantId,
+                reportId: report.Id,
                 tangibleInventoryItemId: invItem.Id,
-                itemNo:                  i + 1,
-                description:             invItem.Description,
-                unitCost:                invItem.UnitCost,
+                itemNo: i + 1,
+                description: invItem.Description,
+                unitCost: invItem.UnitCost,
                 assetTypeAtTimeOfReport: invItem.AssetType);
 
             dbContext.PropertyIncidentItems.Add(item);

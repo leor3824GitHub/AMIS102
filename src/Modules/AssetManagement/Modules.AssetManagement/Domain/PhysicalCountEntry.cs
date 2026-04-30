@@ -8,8 +8,10 @@ namespace FSH.Modules.AssetManagement.Domain;
 /// Generated from the asset registry at session creation; updated during the walk-through.
 /// Per COA Circular 2020-006 — Inventory Count Form (ICF) line item.
 /// </summary>
-public sealed class PhysicalCountEntry : BaseEntity<Guid>
+public sealed class PhysicalCountEntry : BaseEntity<Guid>, IHasTenant
 {
+    public string TenantId { get; private set; } = default!;
+
     /// <summary>FK to the parent Physical Count Session.</summary>
     public Guid SessionId { get; private set; }
 
@@ -71,6 +73,7 @@ public sealed class PhysicalCountEntry : BaseEntity<Guid>
 
     /// <summary>Creates a pre-populated checklist entry from a known TangibleInventoryItem (PPE or SE).</summary>
     public static PhysicalCountEntry FromTangibleInventoryItem(
+        string tenantId,
         Guid sessionId,
         Guid tangibleInventoryItemId,
         string propertyNumber,
@@ -79,13 +82,14 @@ public sealed class PhysicalCountEntry : BaseEntity<Guid>
     {
         return new PhysicalCountEntry
         {
-            Id                      = Guid.NewGuid(),
-            SessionId               = sessionId,
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            SessionId = sessionId,
             TangibleInventoryItemId = tangibleInventoryItemId,
-            PropertyNumber          = propertyNumber,
-            Description             = description,
-            UnitCost                = unitCost,
-            QuantityOnHand          = 1,
+            PropertyNumber = propertyNumber,
+            Description = description,
+            UnitCost = unitCost,
+            QuantityOnHand = 1,
         };
     }
 
@@ -94,6 +98,7 @@ public sealed class PhysicalCountEntry : BaseEntity<Guid>
     /// that is not on the pre-generated checklist (e.g., unrecorded or mis-assigned asset).
     /// </summary>
     public static PhysicalCountEntry CreateFoundAtStation(
+        string tenantId,
         Guid sessionId,
         string propertyNumber,
         string description,
@@ -104,44 +109,45 @@ public sealed class PhysicalCountEntry : BaseEntity<Guid>
     {
         return new PhysicalCountEntry
         {
-            Id             = Guid.NewGuid(),
-            SessionId      = sessionId,
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            SessionId = sessionId,
             PropertyNumber = propertyNumber,
-            Description    = description,
-            UnitCost       = unitCost,
-            Result         = PhysicalCountEntryResult.FoundAtStation,
-            Condition      = condition,
-            Remarks        = remarks,
+            Description = description,
+            UnitCost = unitCost,
+            Result = PhysicalCountEntryResult.FoundAtStation,
+            Condition = condition,
+            Remarks = remarks,
             QuantityOnHand = 1,
-            PhotoPath      = photoPath,
+            PhotoPath = photoPath,
         };
     }
 
     /// <summary>Records that the asset was physically found and verified by the inventory team.</summary>
     public void MarkFound(PhysicalCountCondition condition, int quantityOnHand, string? remarks)
     {
-        Result         = PhysicalCountEntryResult.Found;
-        Condition      = condition;
+        Result = PhysicalCountEntryResult.Found;
+        Condition = condition;
         QuantityOnHand = quantityOnHand;
-        Remarks        = remarks;
+        Remarks = remarks;
     }
 
     /// <summary>Records that the asset was found via camera scan of its property sticker.</summary>
     public void MarkFoundViaScan(PhysicalCountCondition condition, int quantityOnHand, string? remarks, string? photoPath)
     {
-        Result         = PhysicalCountEntryResult.Found;
-        Condition      = condition;
+        Result = PhysicalCountEntryResult.Found;
+        Condition = condition;
         QuantityOnHand = quantityOnHand;
-        Remarks        = remarks;
-        PhotoPath      = photoPath;
-        ScannedOnUtc   = DateTimeOffset.UtcNow;
+        Remarks = remarks;
+        PhotoPath = photoPath;
+        ScannedOnUtc = DateTimeOffset.UtcNow;
     }
 
     /// <summary>Records that the asset was not located during the walk-through.</summary>
     public void MarkNotFound(string? remarks)
     {
-        Result    = PhysicalCountEntryResult.NotFound;
+        Result = PhysicalCountEntryResult.NotFound;
         Condition = null;
-        Remarks   = remarks;
+        Remarks = remarks;
     }
 }

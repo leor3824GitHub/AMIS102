@@ -20,7 +20,6 @@ public sealed class CreatePropertyItemCatalogCommandHandler : ICommandHandler<Cr
     public async ValueTask<PropertyItemCatalogDto> Handle(CreatePropertyItemCatalogCommand command, CancellationToken cancellationToken)
     {
         var codeInUse = await _dbContext.PropertyItemCatalog
-            .IgnoreQueryFilters()
             .AnyAsync(x => x.Code == command.Code, cancellationToken)
             .ConfigureAwait(false);
 

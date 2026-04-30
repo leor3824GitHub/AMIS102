@@ -36,7 +36,6 @@ public sealed class RenewICSCommandHandler : ICommandHandler<RenewICSCommand, Re
         }
 
         var newIcsNoInUse = await _dbContext.InventoryCustodianSlips
-            .IgnoreQueryFilters()
             .AnyAsync(x => x.ICSNo == command.NewICSNo, cancellationToken)
             .ConfigureAwait(false);
 
@@ -75,6 +74,7 @@ public sealed class RenewICSCommandHandler : ICommandHandler<RenewICSCommand, Re
         foreach (var oldItem in oldItems)
         {
             var newItem = ICSItem.Create(
+                tenantId,
                 newIcs.Id,
                 oldItem.TangibleInventoryItemId,
                 itemNo,

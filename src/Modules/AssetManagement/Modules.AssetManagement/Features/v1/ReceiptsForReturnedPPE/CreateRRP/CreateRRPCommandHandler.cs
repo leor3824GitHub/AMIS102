@@ -20,7 +20,6 @@ public sealed class CreateRRPCommandHandler : ICommandHandler<CreateRRPCommand, 
     public async ValueTask<CreateRRPResult> Handle(CreateRRPCommand command, CancellationToken cancellationToken)
     {
         var rrpNoInUse = await _dbContext.ReceiptsForReturnedPPE
-            .IgnoreQueryFilters()
             .AnyAsync(x => x.RRPNo == command.RRPNo, cancellationToken)
             .ConfigureAwait(false);
 
@@ -81,6 +80,7 @@ public sealed class CreateRRPCommandHandler : ICommandHandler<CreateRRPCommand, 
             var invItem = invItems[itemRequest.TangibleInventoryItemId];
 
             var rrpItem = RRPItem.Create(
+                tenantId,
                 rrp.Id,
                 invItem.Id,
                 itemNo,

@@ -15,11 +15,11 @@ public sealed class GetRSPIQueryHandler(AssetManagementDbContext dbContext)
 
         var q =
             from icsItem in dbContext.ICSItems
-            join inv in dbContext.TangibleInventoryItems.IgnoreQueryFilters()
+            join inv in dbContext.TangibleInventoryItems
                 on icsItem.TangibleInventoryItemId equals inv.Id
             join catalogItem in dbContext.PropertyItemCatalog
                 on inv.ItemId equals catalogItem.Id
-            join ics in dbContext.InventoryCustodianSlips.IgnoreQueryFilters()
+            join ics in dbContext.InventoryCustodianSlips
                 on icsItem.ICSId equals ics.Id
             select new { ics, icsItem, inv, catalogItem };
 

@@ -7,8 +7,10 @@ namespace FSH.Modules.AssetManagement.Domain;
 /// Each PARItem references one PPEItem being assigned to the accountable officer.
 /// Key values (cost, EUL, date) are frozen at issuance time.
 /// </summary>
-public sealed class PARItem : BaseEntity<Guid>
+public sealed class PARItem : BaseEntity<Guid>, IHasTenant
 {
+    public string TenantId { get; private set; } = default!;
+
     /// <summary>FK to the parent PAR.</summary>
     public Guid PARId { get; private set; }
 
@@ -43,6 +45,7 @@ public sealed class PARItem : BaseEntity<Guid>
     public DateOnly DateAcquired { get; private set; }
 
     public static PARItem Create(
+        string tenantId,
         Guid parId,
         Guid tangibleInventoryItemId,
         int itemNo,
@@ -55,17 +58,18 @@ public sealed class PARItem : BaseEntity<Guid>
     {
         return new PARItem
         {
-            Id                       = Guid.NewGuid(),
-            PARId                    = parId,
-            TangibleInventoryItemId  = tangibleInventoryItemId,
-            ItemNo                   = itemNo,
-            Quantity                 = quantity,
-            Unit                     = unit,
-            ItemDescription          = itemDescription,
-            UnitCost                 = unitCost,
-            TotalCost                = quantity * unitCost,
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            PARId = parId,
+            TangibleInventoryItemId = tangibleInventoryItemId,
+            ItemNo = itemNo,
+            Quantity = quantity,
+            Unit = unit,
+            ItemDescription = itemDescription,
+            UnitCost = unitCost,
+            TotalCost = quantity * unitCost,
             EstimatedUsefulLifeYears = estimatedUsefulLifeYears,
-            DateAcquired             = dateAcquired,
+            DateAcquired = dateAcquired,
         };
     }
 }

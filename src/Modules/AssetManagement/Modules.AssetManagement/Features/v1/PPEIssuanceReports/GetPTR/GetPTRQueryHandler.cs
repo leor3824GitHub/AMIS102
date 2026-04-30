@@ -20,7 +20,7 @@ public sealed class GetPTRQueryHandler(AssetManagementDbContext dbContext)
 
         var items = await (
             from ppeirItem in dbContext.PPEIRItems.Where(x => x.PPEIRId == query.PPEIRId)
-            join inv in dbContext.TangibleInventoryItems.IgnoreQueryFilters()
+            join inv in dbContext.TangibleInventoryItems
                 on ppeirItem.TangibleInventoryItemId equals inv.Id
             orderby ppeirItem.ItemNo
             select new PTRItemDto(

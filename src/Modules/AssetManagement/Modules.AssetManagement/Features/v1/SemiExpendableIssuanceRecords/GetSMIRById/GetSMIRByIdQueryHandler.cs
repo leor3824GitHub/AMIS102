@@ -36,7 +36,7 @@ public sealed class GetSMIRByIdQueryHandler(AssetManagementDbContext dbContext)
 
         var items = await (
             from smirItem in dbContext.SMIRItems.Where(x => x.SMIRId == query.Id)
-            join inv in dbContext.TangibleInventoryItems.IgnoreQueryFilters()
+            join inv in dbContext.TangibleInventoryItems
                 on smirItem.TangibleInventoryItemId equals inv.Id
             orderby smirItem.ItemNo
             select new SMIRItemDetailsDto(

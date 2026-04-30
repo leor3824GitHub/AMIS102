@@ -7,8 +7,10 @@ namespace FSH.Modules.AssetManagement.Domain;
 /// Semi-Expendable Property (IIRUSP).
 /// Snapshots the property details at the time of reporting for audit trail.
 /// </summary>
-public sealed class UnserviceablePropertyItem : BaseEntity<Guid>
+public sealed class UnserviceablePropertyItem : BaseEntity<Guid>, IHasTenant
 {
+    public string TenantId { get; private set; } = default!;
+
     /// <summary>FK to the parent UnserviceablePropertyReport.</summary>
     public Guid ReportId { get; private set; }
 
@@ -37,6 +39,7 @@ public sealed class UnserviceablePropertyItem : BaseEntity<Guid>
     public string? ConditionRemarks { get; private set; }
 
     public static UnserviceablePropertyItem Create(
+        string tenantId,
         Guid reportId,
         Guid tangibleInventoryItemId,
         int itemNo,
@@ -47,14 +50,15 @@ public sealed class UnserviceablePropertyItem : BaseEntity<Guid>
     {
         return new UnserviceablePropertyItem
         {
-            Id                      = Guid.NewGuid(),
-            ReportId                = reportId,
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            ReportId = reportId,
             TangibleInventoryItemId = tangibleInventoryItemId,
-            ItemNo                  = itemNo,
-            Description             = description,
-            UnitCost                = unitCost,
+            ItemNo = itemNo,
+            Description = description,
+            UnitCost = unitCost,
             AssetTypeAtTimeOfReport = assetTypeAtTimeOfReport,
-            ConditionRemarks        = conditionRemarks,
+            ConditionRemarks = conditionRemarks,
         };
     }
 }

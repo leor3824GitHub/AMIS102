@@ -20,7 +20,6 @@ public sealed class CreateICSCommandHandler : ICommandHandler<CreateICSCommand, 
     public async ValueTask<CreateICSResult> Handle(CreateICSCommand command, CancellationToken cancellationToken)
     {
         var icsNoInUse = await _dbContext.InventoryCustodianSlips
-            .IgnoreQueryFilters()
             .AnyAsync(x => x.ICSNo == command.ICSNo, cancellationToken)
             .ConfigureAwait(false);
 
@@ -80,6 +79,7 @@ public sealed class CreateICSCommandHandler : ICommandHandler<CreateICSCommand, 
             var invItem = invItems[itemRequest.TangibleInventoryItemId];
 
             var icsItem = ICSItem.Create(
+                tenantId,
                 ics.Id,
                 invItem.Id,
                 itemNo,

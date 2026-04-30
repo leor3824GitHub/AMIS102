@@ -24,7 +24,7 @@ public sealed class GetRPCPPEQueryHandler(AssetManagementDbContext dbContext)
         // Load PPE checklist entries — join to TangibleInventoryItem to filter AssetType == PPE.
         var ppeEntries = await (
             from e in dbContext.PhysicalCountEntries.Where(x => x.SessionId == query.SessionId && x.TangibleInventoryItemId != null)
-            join inv in dbContext.TangibleInventoryItems.IgnoreQueryFilters()
+            join inv in dbContext.TangibleInventoryItems
                 on e.TangibleInventoryItemId equals inv.Id
             where inv.AssetType == AssetType.PPE
             orderby e.PropertyNumber

@@ -20,7 +20,7 @@ public sealed class GetPARByIdQueryHandler(AssetManagementDbContext dbContext)
 
         var items = await (
             from item in dbContext.PARItems.Where(x => x.PARId == query.Id)
-            join inv in dbContext.TangibleInventoryItems.IgnoreQueryFilters()
+            join inv in dbContext.TangibleInventoryItems
                 on item.TangibleInventoryItemId equals inv.Id
             orderby item.ItemNo
             select new PARItemDto(

@@ -34,7 +34,6 @@ public sealed class GetRRSPByIdQueryHandler(AssetManagementDbContext dbContext)
         }
 
         var icsNo = await dbContext.InventoryCustodianSlips
-            .IgnoreQueryFilters()
             .Where(x => x.Id == rrsp.ICSId)
             .Select(x => x.ICSNo)
             .FirstOrDefaultAsync(cancellationToken)
@@ -42,7 +41,7 @@ public sealed class GetRRSPByIdQueryHandler(AssetManagementDbContext dbContext)
 
         var items = await (
             from rrspItem in dbContext.RRSPItems.Where(x => x.RRSPId == query.Id)
-            join inv in dbContext.TangibleInventoryItems.IgnoreQueryFilters()
+            join inv in dbContext.TangibleInventoryItems
                 on rrspItem.TangibleInventoryItemId equals inv.Id
             orderby rrspItem.ItemNo
             select new RRSPItemDetailsDto(

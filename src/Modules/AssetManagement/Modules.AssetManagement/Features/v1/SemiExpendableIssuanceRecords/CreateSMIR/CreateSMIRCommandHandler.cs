@@ -21,7 +21,6 @@ public sealed class CreateSMIRCommandHandler : ICommandHandler<CreateSMIRCommand
     public async ValueTask<CreateSMIRResult> Handle(CreateSMIRCommand command, CancellationToken cancellationToken)
     {
         var smirNoInUse = await _dbContext.SemiExpendableIssuanceRecords
-            .IgnoreQueryFilters()
             .AnyAsync(x => x.SMIRNo == command.SMIRNo, cancellationToken)
             .ConfigureAwait(false);
 
@@ -82,6 +81,7 @@ public sealed class CreateSMIRCommandHandler : ICommandHandler<CreateSMIRCommand
             var invItem = invItems[itemRequest.TangibleInventoryItemId];
 
             var smirItem = SMIRItem.Create(
+                tenantId,
                 smir.Id,
                 invItem.Id,
                 itemNo,

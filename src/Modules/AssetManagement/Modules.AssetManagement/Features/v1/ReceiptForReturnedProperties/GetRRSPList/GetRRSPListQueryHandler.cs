@@ -66,7 +66,6 @@ public sealed class GetRRSPListQueryHandler(AssetManagementDbContext dbContext)
             .ConfigureAwait(false);
 
         var icsNoMap = await dbContext.InventoryCustodianSlips
-            .IgnoreQueryFilters()
             .Where(x => icsIdSet.Contains(x.Id))
             .Select(x => new { x.Id, x.ICSNo })
             .ToDictionaryAsync(x => x.Id, x => x.ICSNo, cancellationToken)

@@ -15,11 +15,11 @@ public sealed class GetRegSPIQueryHandler(AssetManagementDbContext dbContext)
         // Base: ICS items for this employee, joined to inventory item and catalog.
         var q =
             from icsItem in dbContext.ICSItems
-            join inv in dbContext.TangibleInventoryItems.IgnoreQueryFilters()
+            join inv in dbContext.TangibleInventoryItems
                 on icsItem.TangibleInventoryItemId equals inv.Id
             join catalogItem in dbContext.PropertyItemCatalog
                 on inv.ItemId equals catalogItem.Id
-            join ics in dbContext.InventoryCustodianSlips.IgnoreQueryFilters()
+            join ics in dbContext.InventoryCustodianSlips
                 on icsItem.ICSId equals ics.Id
             where ics.ReceivedByEmployeeId == query.EmployeeId
             select new { ics, icsItem, inv, catalogItem };

@@ -14,9 +14,8 @@ public sealed class CreateUnserviceablePropertyReportCommandHandler(AssetManagem
         CreateUnserviceablePropertyReportCommand command,
         CancellationToken cancellationToken)
     {
-        // 1. Validate ReportNo uniqueness (including soft-deleted records).
+        // 1. Validate ReportNo uniqueness within this tenant.
         var reportNoExists = await dbContext.UnserviceablePropertyReports
-            .IgnoreQueryFilters()
             .AnyAsync(x => x.ReportNo == command.ReportNo, cancellationToken)
             .ConfigureAwait(false);
 
@@ -27,7 +26,7 @@ public sealed class CreateUnserviceablePropertyReportCommandHandler(AssetManagem
 
         // 2. Reject duplicate item IDs in the request.
         var requestedIds = command.Items.Select(x => x.TangibleInventoryItemId).ToList();
-        var distinctIds  = requestedIds.Distinct().ToList();
+        var distinctIds = requestedIds.Distinct().ToList();
         if (distinctIds.Count != requestedIds.Count)
         {
             throw new InvalidOperationException("Items contains duplicate TangibleInventoryItemId entries.");
@@ -69,16 +68,17 @@ public sealed class CreateUnserviceablePropertyReportCommandHandler(AssetManagem
         for (var i = 0; i < orderedItems.Count; i++)
         {
             var itemRequest = orderedItems[i];
-            var invItem     = invItems[itemRequest.TangibleInventoryItemId];
+            var invItem = invItems[itemRequest.TangibleInventoryItemId];
 
             var item = UnserviceablePropertyItem.Create(
-                reportId:                report.Id,
+                tenantId: tenantId,
+                reportId: report.Id,
                 tangibleInventoryItemId: invItem.Id,
-                itemNo:                  i + 1,
-                description:             invItem.Description,
-                unitCost:                invItem.UnitCost,
+                itemNo: i + 1,
+                description: invItem.Description,
+                unitCost: invItem.UnitCost,
                 assetTypeAtTimeOfReport: invItem.AssetType,
-                conditionRemarks:        itemRequest.ConditionRemarks);
+                conditionRemarks: itemRequest.ConditionRemarks);
 
             dbContext.UnserviceablePropertyItems.Add(item);
         }

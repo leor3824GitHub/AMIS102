@@ -1,3 +1,4 @@
+using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;
 using FSH.Modules.AssetManagement.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -8,7 +9,7 @@ public sealed class PropertyCodeCounterConfiguration : IEntityTypeConfiguration<
 {
     public void Configure(EntityTypeBuilder<PropertyCodeCounter> builder)
     {
-        builder.ToTable("PropertyCodeCounters", AssetManagementModuleConstants.SchemaName);
+        builder.ToTable("PropertyCodeCounters", AssetManagementModuleConstants.SchemaName).IsMultiTenant();
 
         builder.HasKey(x => x.Id);
         builder.Property(x => x.TenantId).HasMaxLength(50).IsRequired();
@@ -24,6 +25,8 @@ public sealed class PropertyCodeCounterConfiguration : IEntityTypeConfiguration<
             .HasColumnType("xid")
             .ValueGeneratedOnAddOrUpdate()
             .IsConcurrencyToken();
+
+        builder.HasIndex(x => x.TenantId);
 
         // One counter row per (TenantId + ClassCode + ItemCode + Year)
         builder.HasIndex(x => new { x.TenantId, x.ClassCode, x.ItemCode, x.Year }).IsUnique();

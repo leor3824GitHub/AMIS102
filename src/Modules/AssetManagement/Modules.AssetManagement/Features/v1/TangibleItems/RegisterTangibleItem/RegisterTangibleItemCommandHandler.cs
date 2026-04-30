@@ -15,7 +15,6 @@ public sealed class RegisterTangibleItemCommandHandler(
         CancellationToken cancellationToken)
     {
         var propertyNoInUse = await dbContext.TangibleItems
-            .IgnoreQueryFilters()
             .AnyAsync(x => x.PropertyNo == command.PropertyNo, cancellationToken)
             .ConfigureAwait(false);
 

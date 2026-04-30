@@ -1,3 +1,4 @@
+using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;
 using FSH.Modules.AssetManagement.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -8,10 +9,11 @@ public sealed class TangibleInventoryItemConfiguration : IEntityTypeConfiguratio
 {
     public void Configure(EntityTypeBuilder<TangibleInventoryItem> builder)
     {
-        builder.ToTable("TangibleInventoryItems", AssetManagementModuleConstants.SchemaName);
+        builder.ToTable("TangibleInventoryItems", AssetManagementModuleConstants.SchemaName).IsMultiTenant();
 
         builder.HasKey(x => x.Id);
 
+        builder.Property(x => x.TenantId).HasMaxLength(50).IsRequired();
         builder.Property(x => x.TangibleInventoryId).IsRequired();
         builder.Property(x => x.TangibleItemId).IsRequired();
         builder.Property(x => x.Reference).HasMaxLength(100);
@@ -28,6 +30,11 @@ public sealed class TangibleInventoryItemConfiguration : IEntityTypeConfiguratio
         builder.Property(x => x.UnitCost).HasColumnType("numeric(18,2)").IsRequired();
         builder.Property(x => x.Amount).HasColumnType("numeric(18,2)").IsRequired();
 
+        builder.HasIndex(x => x.TenantId);
+        builder.HasIndex(x => new { x.TenantId, x.TangibleInventoryId });
+        builder.HasIndex(x => new { x.TenantId, x.ItemId });
+        builder.HasIndex(x => new { x.TenantId, x.AssetType });
+        builder.HasIndex(x => new { x.TenantId, x.IsIssued });
         builder.HasIndex(x => x.TangibleInventoryId);
         builder.HasIndex(x => x.TangibleItemId).IsUnique(); // one item per report
         builder.HasIndex(x => x.ItemId);

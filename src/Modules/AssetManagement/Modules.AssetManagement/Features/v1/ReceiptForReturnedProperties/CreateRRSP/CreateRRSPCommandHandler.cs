@@ -14,7 +14,6 @@ public sealed class CreateRRSPCommandHandler(AssetManagementDbContext dbContext,
     {
         // 1. Validate RRSPNo uniqueness.
         var rrspNoExists = await dbContext.ReceiptForReturnedProperties
-            .IgnoreQueryFilters()
             .AnyAsync(x => x.RRSPNo == command.RRSPNo, cancellationToken)
             .ConfigureAwait(false);
 
@@ -86,12 +85,13 @@ public sealed class CreateRRSPCommandHandler(AssetManagementDbContext dbContext,
             }
 
             var rrspItem = RRSPItem.Create(
-                rrspId:                   rrsp.Id,
-                tangibleInventoryItemId:  icsItem.TangibleInventoryItemId,
-                itemNo:                   i + 1,
-                description:              icsItem.Description,
-                unitCost:                 icsItem.UnitCost,
-                assetTypeAtTimeOfReturn:  icsItem.AssetTypeAtTimeOfIssuance);
+                tenantId: tenantId,
+                rrspId: rrsp.Id,
+                tangibleInventoryItemId: icsItem.TangibleInventoryItemId,
+                itemNo: i + 1,
+                description: icsItem.Description,
+                unitCost: icsItem.UnitCost,
+                assetTypeAtTimeOfReturn: icsItem.AssetTypeAtTimeOfIssuance);
 
             dbContext.RRSPItems.Add(rrspItem);
 

@@ -20,7 +20,6 @@ public sealed class CreatePPEIRCommandHandler : ICommandHandler<CreatePPEIRComma
     public async ValueTask<CreatePPEIRResult> Handle(CreatePPEIRCommand command, CancellationToken cancellationToken)
     {
         var ppeirNoInUse = await _dbContext.PPEIssuanceReports
-            .IgnoreQueryFilters()
             .AnyAsync(x => x.PPEIRNo == command.PPEIRNo, cancellationToken)
             .ConfigureAwait(false);
 
@@ -82,6 +81,7 @@ public sealed class CreatePPEIRCommandHandler : ICommandHandler<CreatePPEIRComma
             var invItem = invItems[itemRequest.TangibleInventoryItemId];
 
             var ppeirItem = PPEIRItem.Create(
+                tenantId,
                 ppeir.Id,
                 invItem.Id,
                 itemNo,

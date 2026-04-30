@@ -37,7 +37,7 @@ public sealed class GetUnserviceablePropertyReportByIdQueryHandler(AssetManageme
 
         var items = await (
             from item in dbContext.UnserviceablePropertyItems.Where(x => x.ReportId == query.Id)
-            join inv in dbContext.TangibleInventoryItems.IgnoreQueryFilters()
+            join inv in dbContext.TangibleInventoryItems
                 on item.TangibleInventoryItemId equals inv.Id
             orderby item.ItemNo
             select new UnserviceablePropertyItemDetailsDto(

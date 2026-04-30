@@ -16,8 +16,8 @@ public sealed class GetPropertyHistoryQueryHandler(AssetManagementDbContext dbCo
 
         // Header — load the inventory item joined to its catalog entry.
         var header = await (
-            from inv in dbContext.TangibleInventoryItems.IgnoreQueryFilters()
-            join catalog in dbContext.PropertyItemCatalog.IgnoreQueryFilters()
+            from inv in dbContext.TangibleInventoryItems
+            join catalog in dbContext.PropertyItemCatalog
                 on inv.ItemId equals catalog.Id
             where inv.Id == invItemId
             select new
@@ -43,8 +43,8 @@ public sealed class GetPropertyHistoryQueryHandler(AssetManagementDbContext dbCo
 
         // 1. Initial receipt — via parent TangibleInventory.
         var receiptEvent = await (
-            from inv in dbContext.TangibleInventoryItems.IgnoreQueryFilters()
-            join ti in dbContext.TangibleInventories.IgnoreQueryFilters()
+            from inv in dbContext.TangibleInventoryItems
+            join ti in dbContext.TangibleInventories
                 on inv.TangibleInventoryId equals ti.Id
             where inv.Id == invItemId
             select new { ti.Date, ti.ReportNo, ti.ReceivedFrom })
@@ -64,7 +64,7 @@ public sealed class GetPropertyHistoryQueryHandler(AssetManagementDbContext dbCo
         // 2. ICS issuances (SE track).
         var icsEvents = await (
             from icsItem in dbContext.ICSItems.Where(x => x.TangibleInventoryItemId == invItemId)
-            join ics in dbContext.InventoryCustodianSlips.IgnoreQueryFilters()
+            join ics in dbContext.InventoryCustodianSlips
                 on icsItem.ICSId equals ics.Id
             orderby ics.Date
             select new { ics.Date, ics.ICSNo, ics.ReceivedByEmployeeId, ics.Status })
@@ -84,7 +84,7 @@ public sealed class GetPropertyHistoryQueryHandler(AssetManagementDbContext dbCo
         // 3. PAR issuances (PPE track).
         var parEvents = await (
             from parItem in dbContext.PARItems.Where(x => x.TangibleInventoryItemId == invItemId)
-            join par in dbContext.PropertyAcknowledgementReceipts.IgnoreQueryFilters()
+            join par in dbContext.PropertyAcknowledgementReceipts
                 on parItem.PARId equals par.Id
             orderby par.Date
             select new { par.Date, par.PARNo, par.ReceivedByEmployeeId, par.PARType })
@@ -104,7 +104,7 @@ public sealed class GetPropertyHistoryQueryHandler(AssetManagementDbContext dbCo
         // 4. PPEIR events (PPE depreciation / re-issuance records).
         var ppeirEvents = await (
             from ppeirItem in dbContext.PPEIRItems.Where(x => x.TangibleInventoryItemId == invItemId)
-            join ppeir in dbContext.PPEIssuanceReports.IgnoreQueryFilters()
+            join ppeir in dbContext.PPEIssuanceReports
                 on ppeirItem.PPEIRId equals ppeir.Id
             orderby ppeir.Date
             select new
@@ -132,7 +132,7 @@ public sealed class GetPropertyHistoryQueryHandler(AssetManagementDbContext dbCo
         // 5. RRSP returns (SE track).
         var rrspEvents = await (
             from rrspItem in dbContext.RRSPItems.Where(x => x.TangibleInventoryItemId == invItemId)
-            join rrsp in dbContext.ReceiptForReturnedProperties.IgnoreQueryFilters()
+            join rrsp in dbContext.ReceiptForReturnedProperties
                 on rrspItem.RRSPId equals rrsp.Id
             orderby rrsp.Date
             select new { rrsp.Date, rrsp.RRSPNo, rrsp.ReturnedByEmployeeId })
@@ -152,7 +152,7 @@ public sealed class GetPropertyHistoryQueryHandler(AssetManagementDbContext dbCo
         // 6. RRP returns (PPE track).
         var rrpEvents = await (
             from rrpItem in dbContext.RRPItems.Where(x => x.TangibleInventoryItemId == invItemId)
-            join rrp in dbContext.ReceiptsForReturnedPPE.IgnoreQueryFilters()
+            join rrp in dbContext.ReceiptsForReturnedPPE
                 on rrpItem.RRPId equals rrp.Id
             orderby rrp.Date
             select new { rrp.Date, rrp.RRPNo, rrp.ReturnedByEmployeeId, rrp.ReturnCategory })
@@ -172,7 +172,7 @@ public sealed class GetPropertyHistoryQueryHandler(AssetManagementDbContext dbCo
         // 7. SMIR transfers.
         var smirEvents = await (
             from smirItem in dbContext.SMIRItems.Where(x => x.TangibleInventoryItemId == invItemId)
-            join smir in dbContext.SemiExpendableIssuanceRecords.IgnoreQueryFilters()
+            join smir in dbContext.SemiExpendableIssuanceRecords
                 on smirItem.SMIRId equals smir.Id
             orderby smir.Date
             select new { smir.Date, smir.SMIRNo, smir.IssuanceType, smir.TransferredToOfficerName, smir.TransferredToTenantId })
@@ -198,7 +198,7 @@ public sealed class GetPropertyHistoryQueryHandler(AssetManagementDbContext dbCo
         // 8. Incident reports.
         var pirEvents = await (
             from pirItem in dbContext.PropertyIncidentItems.Where(x => x.TangibleInventoryItemId == invItemId)
-            join pir in dbContext.PropertyIncidentReports.IgnoreQueryFilters()
+            join pir in dbContext.PropertyIncidentReports
                 on pirItem.ReportId equals pir.Id
             orderby pir.Date
             select new { pir.Date, pir.ReportNo, pir.IncidentType, pir.IncidentDetails })
@@ -218,7 +218,7 @@ public sealed class GetPropertyHistoryQueryHandler(AssetManagementDbContext dbCo
         // 9. Unserviceable / disposal reports.
         var iurEvents = await (
             from iurItem in dbContext.UnserviceablePropertyItems.Where(x => x.TangibleInventoryItemId == invItemId)
-            join iur in dbContext.UnserviceablePropertyReports.IgnoreQueryFilters()
+            join iur in dbContext.UnserviceablePropertyReports
                 on iurItem.ReportId equals iur.Id
             orderby iur.Date
             select new { iur.Date, iur.ReportNo, iur.DisposalMethod, iurItem.ConditionRemarks })
@@ -241,7 +241,7 @@ public sealed class GetPropertyHistoryQueryHandler(AssetManagementDbContext dbCo
         {
             var latestIcs = await (
                 from icsItem in dbContext.ICSItems.Where(x => x.TangibleInventoryItemId == invItemId)
-                join ics in dbContext.InventoryCustodianSlips.IgnoreQueryFilters()
+                join ics in dbContext.InventoryCustodianSlips
                     on icsItem.ICSId equals ics.Id
                 orderby ics.Date descending
                 select (Guid?)ics.ReceivedByEmployeeId)
@@ -250,7 +250,7 @@ public sealed class GetPropertyHistoryQueryHandler(AssetManagementDbContext dbCo
 
             var latestPar = await (
                 from parItem in dbContext.PARItems.Where(x => x.TangibleInventoryItemId == invItemId)
-                join par in dbContext.PropertyAcknowledgementReceipts.IgnoreQueryFilters()
+                join par in dbContext.PropertyAcknowledgementReceipts
                     on parItem.PARId equals par.Id
                 orderby par.Date descending
                 select (Guid?)par.ReceivedByEmployeeId)

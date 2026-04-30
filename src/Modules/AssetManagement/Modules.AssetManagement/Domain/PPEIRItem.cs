@@ -7,8 +7,10 @@ namespace FSH.Modules.AssetManagement.Domain;
 /// Key values are frozen at transfer time as snapshots for historical accuracy.
 /// AccumulatedDepreciation and BookValue are filled later by ASD/F.O. Accounting Unit.
 /// </summary>
-public sealed class PPEIRItem : BaseEntity<Guid>
+public sealed class PPEIRItem : BaseEntity<Guid>, IHasTenant
 {
+    public string TenantId { get; private set; } = default!;
+
     /// <summary>FK to the parent PPEIR.</summary>
     public Guid PPEIRId { get; private set; }
 
@@ -49,6 +51,7 @@ public sealed class PPEIRItem : BaseEntity<Guid>
     public decimal? BookValue { get; private set; }
 
     public static PPEIRItem Create(
+        string tenantId,
         Guid ppeirId,
         Guid tangibleInventoryItemId,
         int itemNo,
@@ -60,15 +63,16 @@ public sealed class PPEIRItem : BaseEntity<Guid>
     {
         return new PPEIRItem
         {
-            Id                      = Guid.NewGuid(),
-            PPEIRId                 = ppeirId,
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            PPEIRId = ppeirId,
             TangibleInventoryItemId = tangibleInventoryItemId,
-            ItemNo                  = itemNo,
-            PropertyCode            = propertyCode,
-            SerialNumber            = serialNumber,
-            PPESpecification        = ppeSpecification,
-            DateAcquired            = dateAcquired,
-            AcquisitionCost         = acquisitionCost,
+            ItemNo = itemNo,
+            PropertyCode = propertyCode,
+            SerialNumber = serialNumber,
+            PPESpecification = ppeSpecification,
+            DateAcquired = dateAcquired,
+            AcquisitionCost = acquisitionCost,
         };
     }
 

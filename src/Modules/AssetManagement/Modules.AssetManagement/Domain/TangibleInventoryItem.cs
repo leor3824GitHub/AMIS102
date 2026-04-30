@@ -8,8 +8,10 @@ namespace FSH.Modules.AssetManagement.Domain;
 /// AssetType is computed at creation by comparing UnitCost against the active capitalization
 /// threshold and stored as a snapshot for historical accuracy.
 /// </summary>
-public sealed class TangibleInventoryItem : BaseEntity<Guid>
+public sealed class TangibleInventoryItem : BaseEntity<Guid>, IHasTenant
 {
+    public string TenantId { get; private set; } = default!;
+
     /// <summary>FK to the parent TangibleInventory.</summary>
     public Guid TangibleInventoryId { get; private set; }
 
@@ -62,6 +64,7 @@ public sealed class TangibleInventoryItem : BaseEntity<Guid>
     public decimal Amount { get; private set; }
 
     public static TangibleInventoryItem Create(
+        string tenantId,
         Guid tangibleInventoryId,
         Guid tangibleItemId,
         string? reference,
@@ -76,20 +79,21 @@ public sealed class TangibleInventoryItem : BaseEntity<Guid>
     {
         return new TangibleInventoryItem
         {
-            Id                   = Guid.NewGuid(),
-            TangibleInventoryId  = tangibleInventoryId,
-            TangibleItemId       = tangibleItemId,
-            Reference            = reference,
-            AssetType            = assetType,
-            ThresholdAmountUsed  = thresholdAmountUsed,
-            IsIssued             = false,
-            PropertyNo           = propertyNo,
-            ItemId               = itemId,
-            Description          = description,
-            AcquisitionDate      = acquisitionDate,
-            Quantity             = quantity,
-            UnitCost             = unitCost,
-            Amount               = quantity * unitCost,
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            TangibleInventoryId = tangibleInventoryId,
+            TangibleItemId = tangibleItemId,
+            Reference = reference,
+            AssetType = assetType,
+            ThresholdAmountUsed = thresholdAmountUsed,
+            IsIssued = false,
+            PropertyNo = propertyNo,
+            ItemId = itemId,
+            Description = description,
+            AcquisitionDate = acquisitionDate,
+            Quantity = quantity,
+            UnitCost = unitCost,
+            Amount = quantity * unitCost,
         };
     }
 
@@ -112,7 +116,7 @@ public sealed class TangibleInventoryItem : BaseEntity<Guid>
     /// </summary>
     public void Reclassify(AssetType newAssetType, decimal newThresholdAmount)
     {
-        AssetType           = newAssetType;
+        AssetType = newAssetType;
         ThresholdAmountUsed = newThresholdAmount;
     }
 }

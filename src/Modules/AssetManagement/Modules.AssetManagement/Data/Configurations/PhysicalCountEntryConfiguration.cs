@@ -1,3 +1,4 @@
+using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;
 using FSH.Modules.AssetManagement.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -8,10 +9,11 @@ public sealed class PhysicalCountEntryConfiguration : IEntityTypeConfiguration<P
 {
     public void Configure(EntityTypeBuilder<PhysicalCountEntry> builder)
     {
-        builder.ToTable("PhysicalCountEntries", AssetManagementModuleConstants.SchemaName);
+        builder.ToTable("PhysicalCountEntries", AssetManagementModuleConstants.SchemaName).IsMultiTenant();
 
         builder.HasKey(x => x.Id);
 
+        builder.Property(x => x.TenantId).HasMaxLength(50).IsRequired();
         builder.Property(x => x.SessionId).IsRequired();
 
         builder.Property(x => x.TangibleInventoryItemId);
@@ -30,6 +32,11 @@ public sealed class PhysicalCountEntryConfiguration : IEntityTypeConfiguration<P
         builder.Property(x => x.PhotoPath).HasMaxLength(500);
 
         // Indexes for common query patterns
+        builder.HasIndex(x => x.TenantId);
+        builder.HasIndex(x => new { x.TenantId, x.SessionId });
+        builder.HasIndex(x => new { x.TenantId, x.TangibleInventoryItemId });
+        builder.HasIndex(x => new { x.TenantId, x.Result });
+        builder.HasIndex(x => new { x.TenantId, x.SessionId, x.TangibleInventoryItemId });
         builder.HasIndex(x => x.SessionId);
         builder.HasIndex(x => x.TangibleInventoryItemId);
         builder.HasIndex(x => x.Result);

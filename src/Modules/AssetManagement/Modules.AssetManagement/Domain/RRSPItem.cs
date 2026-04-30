@@ -6,8 +6,10 @@ namespace FSH.Modules.AssetManagement.Domain;
 /// A line item within a Receipt for Returned Semi-Expendable Property.
 /// Snapshots the property details at the time of return for audit trail.
 /// </summary>
-public sealed class RRSPItem : BaseEntity<Guid>
+public sealed class RRSPItem : BaseEntity<Guid>, IHasTenant
 {
+    public string TenantId { get; private set; } = default!;
+
     /// <summary>FK to the parent RRSP.</summary>
     public Guid RRSPId { get; private set; }
 
@@ -30,6 +32,7 @@ public sealed class RRSPItem : BaseEntity<Guid>
     public AssetType AssetTypeAtTimeOfReturn { get; private set; }
 
     public static RRSPItem Create(
+        string tenantId,
         Guid rrspId,
         Guid tangibleInventoryItemId,
         int itemNo,
@@ -39,12 +42,13 @@ public sealed class RRSPItem : BaseEntity<Guid>
     {
         return new RRSPItem
         {
-            Id                      = Guid.NewGuid(),
-            RRSPId                  = rrspId,
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            RRSPId = rrspId,
             TangibleInventoryItemId = tangibleInventoryItemId,
-            ItemNo                  = itemNo,
-            Description             = description,
-            UnitCost                = unitCost,
+            ItemNo = itemNo,
+            Description = description,
+            UnitCost = unitCost,
             AssetTypeAtTimeOfReturn = assetTypeAtTimeOfReturn,
         };
     }

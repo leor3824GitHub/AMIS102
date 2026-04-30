@@ -28,7 +28,6 @@ public sealed class UpdatePropertyItemCatalogCommandHandler : ICommandHandler<Up
         }
 
         var codeInUse = await _dbContext.PropertyItemCatalog
-            .IgnoreQueryFilters()
             .AnyAsync(x => x.Code == command.Code && x.Id != command.Id, cancellationToken)
             .ConfigureAwait(false);
 

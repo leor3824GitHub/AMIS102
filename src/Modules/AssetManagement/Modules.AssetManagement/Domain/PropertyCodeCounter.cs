@@ -8,7 +8,7 @@ namespace FSH.Modules.AssetManagement.Domain;
 /// Key: TenantId + ClassCode + ItemCode + Year.
 /// Uses PostgreSQL xmin optimistic concurrency to guard against race conditions.
 /// </summary>
-public sealed class PropertyCodeCounter : BaseEntity<Guid>
+public sealed class PropertyCodeCounter : BaseEntity<Guid>, IHasTenant
 {
     public string TenantId { get; private set; } = default!;
 

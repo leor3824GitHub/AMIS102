@@ -20,7 +20,6 @@ public sealed class CreatePARCommandHandler : ICommandHandler<CreatePARCommand, 
     public async ValueTask<CreatePARResult> Handle(CreatePARCommand command, CancellationToken cancellationToken)
     {
         var parNoInUse = await _dbContext.PropertyAcknowledgementReceipts
-            .IgnoreQueryFilters()
             .AnyAsync(x => x.PARNo == command.PARNo, cancellationToken)
             .ConfigureAwait(false);
 
@@ -83,6 +82,7 @@ public sealed class CreatePARCommandHandler : ICommandHandler<CreatePARCommand, 
             var row = invItems[itemRequest.TangibleInventoryItemId];
 
             var parItem = PARItem.Create(
+                tenantId,
                 par.Id,
                 row.Inv.Id,
                 itemNo,

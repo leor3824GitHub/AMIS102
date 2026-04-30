@@ -6,8 +6,10 @@ namespace FSH.Modules.AssetManagement.Domain;
 /// A line item within a Semi-expendable Materials Issuance Record (SMIR).
 /// Each SMIRItem references one specific SemiExpendableProperty unit being transferred out.
 /// </summary>
-public sealed class SMIRItem : BaseEntity<Guid>
+public sealed class SMIRItem : BaseEntity<Guid>, IHasTenant
 {
+    public string TenantId { get; private set; } = default!;
+
     /// <summary>FK to the parent SMIR.</summary>
     public Guid SMIRId { get; private set; }
 
@@ -30,6 +32,7 @@ public sealed class SMIRItem : BaseEntity<Guid>
     public AssetType AssetTypeAtTimeOfIssuance { get; private set; }
 
     public static SMIRItem Create(
+        string tenantId,
         Guid smirId,
         Guid tangibleInventoryItemId,
         int itemNo,
@@ -39,12 +42,13 @@ public sealed class SMIRItem : BaseEntity<Guid>
     {
         return new SMIRItem
         {
-            Id                       = Guid.NewGuid(),
-            SMIRId                   = smirId,
-            TangibleInventoryItemId  = tangibleInventoryItemId,
-            ItemNo                   = itemNo,
-            Description              = description,
-            UnitCost                 = unitCost,
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            SMIRId = smirId,
+            TangibleInventoryItemId = tangibleInventoryItemId,
+            ItemNo = itemNo,
+            Description = description,
+            UnitCost = unitCost,
             AssetTypeAtTimeOfIssuance = assetTypeAtTimeOfIssuance,
         };
     }
