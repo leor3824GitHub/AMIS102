@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
 {
     [DbContext(typeof(AssetManagementDbContext))]
-    [Migration("20260430055523_InitialCreate")]
+    [Migration("20260430055919_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />

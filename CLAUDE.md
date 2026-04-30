@@ -276,7 +276,7 @@ All rows share one `VersionChainId`. Only the latest draft has `IsCurrentVersion
 ### Merge conflicts resolved (April 2026 — historical)
 
 - `AppHost.cs` — kept 223 suffix for volume/database names
-- `appsettings.json` and `appsettings.Development.json` — kept `AMIS223` database name
+- `appsettings.json` and `appsettings.Development.json` — kept `AMIS224` database name
 - `ProcurementPlanningClient.cs` — kept `EnsureApiSuccessAsync`; removed stale `TryGetApiMessage`
 - Migration `20260428001944` — deleted; `20260428161849` is the canonical initial migration
 - AssetManagement migration `20260428002013` — created with full 24-table Up()/Down()
