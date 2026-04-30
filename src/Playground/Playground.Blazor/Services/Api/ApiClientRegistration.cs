@@ -141,6 +141,9 @@ internal static class ApiClientRegistration
         services.AddTransient<IPropertyClassClient>(sp =>
             new PropertyClassClient(ResolveClient(sp)));
 
+        services.AddTransient<IModeOfProcurementClient>(sp =>
+            new ModeOfProcurementClient(ResolveClient(sp)));
+
         // Finance module manual clients
         services.AddTransient<IDisbursementVoucherClient>(sp =>
             new DisbursementVoucherClient(ResolveClient(sp)));

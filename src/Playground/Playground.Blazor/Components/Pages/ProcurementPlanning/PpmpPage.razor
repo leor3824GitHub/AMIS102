@@ -6,6 +6,7 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Security.Claims
 @inject IPpmpClient PpmpClient
+@inject IModeOfProcurementClient ModeOfProcurementClient
 @inject IOrganizationProfileClient OrgProfileClient
 @inject ILookupClient LookupClient
 @inject AuthenticationStateProvider AuthStateProvider
@@ -44,16 +45,11 @@
             </MudItem>
 
             <MudItem xs="12" sm="6">
-                <MudSelect @bind-Value="_itemForm.ModeOfProcurement" Label="Mode of Procurement"
-                           Variant="Variant.Outlined" T="ModeOfProcurement">
-                    <MudSelectItem Value="ModeOfProcurement.PublicBidding">Public Bidding</MudSelectItem>
-                    <MudSelectItem Value="ModeOfProcurement.LimitedSourceBidding">Limited Source Bidding</MudSelectItem>
-                    <MudSelectItem Value="ModeOfProcurement.DirectContracting">Direct Contracting</MudSelectItem>
-                    <MudSelectItem Value="ModeOfProcurement.RepeatOrder">Repeat Order</MudSelectItem>
-                    <MudSelectItem Value="ModeOfProcurement.Shopping">Shopping</MudSelectItem>
-                    <MudSelectItem Value="ModeOfProcurement.NegotiatedProcurement">Negotiated Procurement
-                    </MudSelectItem>
-                </MudSelect>
+                <MudAutocomplete T="string" @bind-Value="_itemForm.ModeOfProcurementText" Label="Mode of Procurement"
+                                 Variant="Variant.Outlined" SearchFunc="SearchModesOfProcurement"
+                                 ResetValueOnEmptyText="false" CoerceText="true" CoerceValue="true" Required="true"
+                                 Placeholder="Select mode of procurement"
+                                 HelperText="Sourced from Master Data" />
             </MudItem>
 
             <MudItem xs="12" sm="4">
@@ -502,6 +498,7 @@
 
     // ── Master data for autocomplete ─────────────────────────────────
     private List<string> _unitCodes = [];
+    private List<string> _modeOfProcurementNames = [];
     private readonly HashSet<string> _usedDescriptions = new(StringComparer.OrdinalIgnoreCase);
 
     // ── Item dialog state ────────────────────────────────────────────
@@ -528,6 +525,7 @@
         public decimal Quantity { get; set; } = 1;
         public string Unit { get; set; } = "LOT";
         public ModeOfProcurement ModeOfProcurement { get; set; } = ModeOfProcurement.Shopping;
+        public string ModeOfProcurementText { get; set; } = "Shopping";
         public bool PreProcurementConference { get; set; }
         public string ProcurementStart { get; set; } = $"01/{DateTime.Now.Year + 1}";
         public string ProcurementEnd { get; set; } = $"03/{DateTime.Now.Year + 1}";
@@ -540,7 +538,28 @@
     // ── Lifecycle ────────────────────────────────────────────────────
     protected override async Task OnInitializedAsync()
     {
-        await Task.WhenAll(LoadDefaultsAsync(), LoadUnitsAsync(), LoadAsync());
+        await Task.WhenAll(LoadDefaultsAsync(), LoadUnitsAsync(), LoadModesOfProcurementAsync(), LoadAsync());
+    }
+
+    private async Task LoadModesOfProcurementAsync()
+    {
+        try
+        {
+            var result = await ModeOfProcurementClient.SearchAsync(pageSize: 200);
+            _modeOfProcurementNames = result?.Items?
+                .Where(x => x.IsActive && !string.IsNullOrWhiteSpace(x.Name))
+                .Select(x => x.Name.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(x => x)
+                .ToList() ?? [];
+        }
+        catch
+        {
+            _modeOfProcurementNames = [];
+        }
+
+        if (_modeOfProcurementNames.Count == 0)
+            _modeOfProcurementNames = GetDefaultModeNames();
     }
 
     private async Task LoadDefaultsAsync()
@@ -668,6 +687,7 @@
                 Quantity = i.Quantity,
                 Unit = i.Unit,
                 ModeOfProcurement = i.ModeOfProcurement,
+                ModeOfProcurementText = ToModeOfProcurementText(i.ModeOfProcurement),
                 PreProcurementConference = i.PreProcurementConference,
                 ProcurementStart = i.ProcurementStart,
                 ProcurementEnd = i.ProcurementEnd,
@@ -701,6 +721,7 @@
             Quantity = src.Quantity,
             Unit = src.Unit,
             ModeOfProcurement = src.ModeOfProcurement,
+            ModeOfProcurementText = ToModeOfProcurementText(src.ModeOfProcurement),
             PreProcurementConference = src.PreProcurementConference,
             ProcurementStart = src.ProcurementStart,
             ProcurementEnd = src.ProcurementEnd,
@@ -724,6 +745,15 @@
             Snackbar.Add("Estimated budget must be greater than zero.", Severity.Warning);
             return;
         }
+
+        if (!TryMapModeOfProcurement(_itemForm.ModeOfProcurementText, out var modeOfProcurement))
+        {
+            Snackbar.Add("Please select a valid mode of procurement.", Severity.Warning);
+            return;
+        }
+
+        _itemForm.ModeOfProcurement = modeOfProcurement;
+        _itemForm.ModeOfProcurementText = ToModeOfProcurementText(modeOfProcurement);
 
         if (!string.IsNullOrWhiteSpace(_itemForm.GeneralDescription))
             _usedDescriptions.Add(_itemForm.GeneralDescription);
@@ -792,6 +822,72 @@
 
         var matches = all.Where(d => d.Contains(value, StringComparison.OrdinalIgnoreCase)).Take(15);
         return Task.FromResult<IEnumerable<string>>(matches);
+    }
+
+    private Task<IEnumerable<string>> SearchModesOfProcurement(string value, CancellationToken _)
+    {
+        var source = _modeOfProcurementNames.Count > 0 ? _modeOfProcurementNames : GetDefaultModeNames();
+
+        if (string.IsNullOrWhiteSpace(value))
+            return Task.FromResult<IEnumerable<string>>(source.Take(20));
+
+        var matches = source
+            .Where(x => x.Contains(value, StringComparison.OrdinalIgnoreCase))
+            .Take(20);
+
+        return Task.FromResult<IEnumerable<string>>(matches);
+    }
+
+    private static string ToModeOfProcurementText(ModeOfProcurement value) => value switch
+    {
+        ModeOfProcurement.PublicBidding => "Public Bidding",
+        ModeOfProcurement.LimitedSourceBidding => "Limited Source Bidding",
+        ModeOfProcurement.DirectContracting => "Direct Contracting",
+        ModeOfProcurement.RepeatOrder => "Repeat Order",
+        ModeOfProcurement.Shopping => "Shopping",
+        ModeOfProcurement.NegotiatedProcurement => "Negotiated Procurement",
+        _ => value.ToString()
+    };
+
+    private static List<string> GetDefaultModeNames() =>
+    [
+        "Public Bidding",
+        "Limited Source Bidding",
+        "Direct Contracting",
+        "Repeat Order",
+        "Shopping",
+        "Negotiated Procurement"
+    ];
+
+    private static bool TryMapModeOfProcurement(string? value, out ModeOfProcurement mode)
+    {
+        mode = ModeOfProcurement.Shopping;
+        if (string.IsNullOrWhiteSpace(value))
+            return false;
+
+        var normalized = string.Join(' ', value.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries));
+
+        if (normalized.StartsWith("Negotiated Procurement", StringComparison.OrdinalIgnoreCase))
+        {
+            mode = ModeOfProcurement.NegotiatedProcurement;
+            return true;
+        }
+
+        return normalized.ToLowerInvariant() switch
+        {
+            "public bidding" => SetMode(ModeOfProcurement.PublicBidding, out mode),
+            "limited source bidding" => SetMode(ModeOfProcurement.LimitedSourceBidding, out mode),
+            "direct contracting" => SetMode(ModeOfProcurement.DirectContracting, out mode),
+            "repeat order" => SetMode(ModeOfProcurement.RepeatOrder, out mode),
+            "shopping" => SetMode(ModeOfProcurement.Shopping, out mode),
+            _ => false
+        };
+    }
+
+    private static bool SetMode(ModeOfProcurement source, out ModeOfProcurement target)
+    {
+        target = source;
+        return true;
     }
 
     // ── CRUD ─────────────────────────────────────────────────────────
