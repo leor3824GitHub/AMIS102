@@ -14,7 +14,7 @@ public static class PromoteToFinalPpmpEndpoint
             .WithName(nameof(PromoteToFinalPpmpCommand))
             .WithSummary("Promote an Approved Indicative PPMP to a new Final draft")
             .Produces<PpmpDto>(StatusCodes.Status201Created)
-            .RequirePermission(ProcurementPlanningModuleConstants.Permissions.Ppmps.Amend);
+            .RequirePermission(ProcurementPlanningModuleConstants.Permissions.Ppmps.PromoteToFinal);
 
     private static async Task<IResult> Handle(
         Guid id, IMediator mediator, CancellationToken ct)

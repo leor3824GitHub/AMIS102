@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.AmendPpmp;
+namespace FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.CreateUpdatePpmp;
 
 public static class CreateUpdatePpmpEndpoint
 {
@@ -14,7 +14,7 @@ public static class CreateUpdatePpmpEndpoint
             .WithName(nameof(CreateUpdatePpmpCommand))
             .WithSummary("Create a new Updated version of an Approved/Consolidated Final or Updated PPMP")
             .Produces<PpmpDto>(StatusCodes.Status201Created)
-            .RequirePermission(ProcurementPlanningModuleConstants.Permissions.Ppmps.Amend);
+            .RequirePermission(ProcurementPlanningModuleConstants.Permissions.Ppmps.CreateUpdate);
 
     private static async Task<IResult> Handle(
         Guid id, CreateUpdatePpmpCommand command, IMediator mediator, CancellationToken ct)

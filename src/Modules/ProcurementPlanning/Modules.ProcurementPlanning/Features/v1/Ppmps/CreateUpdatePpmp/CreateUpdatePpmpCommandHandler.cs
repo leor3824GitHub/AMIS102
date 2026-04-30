@@ -5,7 +5,7 @@ using FSH.Modules.ProcurementPlanning.Features.v1.Ppmps;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.AmendPpmp;
+namespace FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.CreateUpdatePpmp;
 
 public sealed class CreateUpdatePpmpCommandHandler(
     ProcurementPlanningDbContext dbContext,

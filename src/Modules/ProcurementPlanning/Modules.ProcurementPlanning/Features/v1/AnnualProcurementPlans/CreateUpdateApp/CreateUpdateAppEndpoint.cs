@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.AmendAnnualProcurementPlan;
+namespace FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.CreateUpdateApp;
 
 public static class CreateUpdateAppEndpoint
 {
@@ -14,7 +14,7 @@ public static class CreateUpdateAppEndpoint
             .WithName(nameof(CreateUpdateAppCommand))
             .WithSummary("Create a new Updated version of an Approved Final or Updated APP")
             .Produces<AnnualProcurementPlanDto>(StatusCodes.Status201Created)
-            .RequirePermission(ProcurementPlanningModuleConstants.Permissions.AnnualProcurementPlans.Amend);
+            .RequirePermission(ProcurementPlanningModuleConstants.Permissions.AnnualProcurementPlans.CreateUpdate);
 
     private static async Task<IResult> Handle(
         Guid id, CreateUpdateAppCommand command, IMediator mediator, CancellationToken ct)

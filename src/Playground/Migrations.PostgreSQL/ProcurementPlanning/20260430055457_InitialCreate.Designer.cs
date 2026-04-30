@@ -3,6 +3,7 @@ using System;
 using FSH.Modules.ProcurementPlanning.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FSH.Playground.Migrations.PostgreSQL.ProcurementPlanning
 {
     [DbContext(typeof(ProcurementPlanningDbContext))]
-    partial class ProcurementPlanningDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260430055457_InitialCreate")]
+    partial class InitialCreate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -31,9 +34,8 @@ namespace FSH.Playground.Migrations.PostgreSQL.ProcurementPlanning
                     b.Property<DateTimeOffset?>("AmendedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("AmendedById")
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
+                    b.Property<Guid?>("AmendedById")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("AmendmentReason")
                         .HasMaxLength(1000)
@@ -44,16 +46,14 @@ namespace FSH.Playground.Migrations.PostgreSQL.ProcurementPlanning
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
 
-                    b.Property<string>("ApprovedById")
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
+                    b.Property<Guid?>("ApprovedById")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset?>("ApprovedOn")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("ConsolidatedById")
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
+                    b.Property<Guid?>("ConsolidatedById")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset?>("ConsolidatedOn")
                         .HasColumnType("timestamp with time zone");
@@ -85,6 +85,9 @@ namespace FSH.Playground.Migrations.PostgreSQL.ProcurementPlanning
                     b.Property<DateTimeOffset?>("LastModifiedOnUtc")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int>("Phase")
+                        .HasColumnType("integer");
+
                     b.Property<Guid?>("PreviousVersionId")
                         .HasColumnType("uuid");
 
@@ -97,9 +100,6 @@ namespace FSH.Playground.Migrations.PostgreSQL.ProcurementPlanning
 
                     b.Property<Guid?>("ReturnedById")
                         .HasColumnType("uuid");
-
-                    b.Property<int>("RevisionType")
-                        .HasColumnType("integer");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
@@ -182,7 +182,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.ProcurementPlanning
                     b.Property<int>("FiscalYear")
                         .HasColumnType("integer");
 
-                    b.Property<int>("RevisionType")
+                    b.Property<int>("Phase")
                         .HasColumnType("integer");
 
                     b.Property<int>("SnapshotType")
@@ -309,9 +309,8 @@ namespace FSH.Playground.Migrations.PostgreSQL.ProcurementPlanning
                     b.Property<DateTimeOffset?>("AmendedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("AmendedById")
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
+                    b.Property<Guid?>("AmendedById")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("AmendmentReason")
                         .HasMaxLength(1000)
@@ -363,13 +362,13 @@ namespace FSH.Playground.Migrations.PostgreSQL.ProcurementPlanning
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
 
+                    b.Property<int>("Phase")
+                        .HasColumnType("integer");
+
                     b.Property<string>("PpmpNumber")
                         .IsRequired()
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
-
-                    b.Property<int>("PpmpType")
-                        .HasColumnType("integer");
 
                     b.Property<Guid>("PreparedById")
                         .HasColumnType("uuid");

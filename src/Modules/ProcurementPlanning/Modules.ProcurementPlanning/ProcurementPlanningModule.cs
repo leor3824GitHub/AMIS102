@@ -9,7 +9,7 @@ using FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.SubmitPpmp;
 using FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.ApprovePpmp;
 using FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.RecallPpmp;
 using FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.ReturnPpmp;
-using FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.AmendPpmp;
+using FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.CreateUpdatePpmp;
 using FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.PromoteToFinalPpmp;
 using FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.GetPpmp;
 using FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.GetPpmpVersions;
@@ -20,7 +20,7 @@ using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.Publish
 using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.ApproveAnnualProcurementPlan;
 using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.RecallAnnualProcurementPlan;
 using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.ReturnAnnualProcurementPlan;
-using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.AmendAnnualProcurementPlan;
+using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.CreateUpdateApp;
 using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.PromoteToFinalApp;
 using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.DeleteAnnualProcurementPlan;
 using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.GetAnnualProcurementPlan;
@@ -46,7 +46,8 @@ public class ProcurementPlanningModule : IModule
         new("Submit PPMPs",  "Submit",  "ProcurementPlanning.Ppmps"),
         new("Approve PPMPs", "Approve", "ProcurementPlanning.Ppmps"),
         new("Return PPMPs",  "Return",  "ProcurementPlanning.Ppmps"),
-        new("Amend PPMPs",   "Amend",   "ProcurementPlanning.Ppmps"),
+        new("Promote PPMPs to Final", "PromoteToFinal", "ProcurementPlanning.Ppmps"),
+        new("Create Updated PPMPs",   "CreateUpdate",   "ProcurementPlanning.Ppmps"),
 
         new("View APPs",        "View",        "ProcurementPlanning.Apps", IsBasic: true),
         new("Create APPs",      "Create",      "ProcurementPlanning.Apps"),
@@ -54,7 +55,8 @@ public class ProcurementPlanningModule : IModule
         new("Publish APPs",     "Publish",     "ProcurementPlanning.Apps"),
         new("Approve APPs",     "Approve",     "ProcurementPlanning.Apps"),
         new("Return APPs",      "Return",      "ProcurementPlanning.Apps"),
-        new("Amend APPs",       "Amend",       "ProcurementPlanning.Apps"),
+        new("Promote APPs to Final", "PromoteToFinal", "ProcurementPlanning.Apps"),
+        new("Create Updated APPs",   "CreateUpdate",   "ProcurementPlanning.Apps"),
     ];
 
     public void ConfigureServices(IHostApplicationBuilder builder)
@@ -84,7 +86,7 @@ public class ProcurementPlanningModule : IModule
             .WithApiVersionSet(apiVersionSet);
 
         var ppmpGroup = moduleGroup.MapGroup("/ppmps");
-        var appGroup  = moduleGroup.MapGroup("/apps");
+        var appGroup = moduleGroup.MapGroup("/apps");
 
         // PPMPs
         CreatePpmpEndpoint.Map(ppmpGroup);

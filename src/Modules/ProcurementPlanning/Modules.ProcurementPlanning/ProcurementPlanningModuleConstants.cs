@@ -8,24 +8,26 @@ public static class ProcurementPlanningModuleConstants
     {
         public static class Ppmps
         {
-            public const string View    = "Permissions.ProcurementPlanning.Ppmps.View";
-            public const string Create  = "Permissions.ProcurementPlanning.Ppmps.Create";
-            public const string Update  = "Permissions.ProcurementPlanning.Ppmps.Update";
-            public const string Submit  = "Permissions.ProcurementPlanning.Ppmps.Submit";
+            public const string View = "Permissions.ProcurementPlanning.Ppmps.View";
+            public const string Create = "Permissions.ProcurementPlanning.Ppmps.Create";
+            public const string Update = "Permissions.ProcurementPlanning.Ppmps.Update";
+            public const string Submit = "Permissions.ProcurementPlanning.Ppmps.Submit";
             public const string Approve = "Permissions.ProcurementPlanning.Ppmps.Approve";
-            public const string Return  = "Permissions.ProcurementPlanning.Ppmps.Return";
-            public const string Amend   = "Permissions.ProcurementPlanning.Ppmps.Amend";
+            public const string Return = "Permissions.ProcurementPlanning.Ppmps.Return";
+            public const string PromoteToFinal = "Permissions.ProcurementPlanning.Ppmps.PromoteToFinal";
+            public const string CreateUpdate = "Permissions.ProcurementPlanning.Ppmps.CreateUpdate";
         }
 
         public static class AnnualProcurementPlans
         {
-            public const string View        = "Permissions.ProcurementPlanning.Apps.View";
-            public const string Create      = "Permissions.ProcurementPlanning.Apps.Create";
+            public const string View = "Permissions.ProcurementPlanning.Apps.View";
+            public const string Create = "Permissions.ProcurementPlanning.Apps.Create";
             public const string Consolidate = "Permissions.ProcurementPlanning.Apps.Consolidate";
-            public const string Publish     = "Permissions.ProcurementPlanning.Apps.Publish";
-            public const string Approve     = "Permissions.ProcurementPlanning.Apps.Approve";
-            public const string Return      = "Permissions.ProcurementPlanning.Apps.Return";
-            public const string Amend       = "Permissions.ProcurementPlanning.Apps.Amend";
+            public const string Publish = "Permissions.ProcurementPlanning.Apps.Publish";
+            public const string Approve = "Permissions.ProcurementPlanning.Apps.Approve";
+            public const string Return = "Permissions.ProcurementPlanning.Apps.Return";
+            public const string PromoteToFinal = "Permissions.ProcurementPlanning.Apps.PromoteToFinal";
+            public const string CreateUpdate = "Permissions.ProcurementPlanning.Apps.CreateUpdate";
         }
     }
 }

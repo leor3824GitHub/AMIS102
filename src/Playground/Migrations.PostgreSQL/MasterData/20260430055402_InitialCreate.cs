@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace FSH.Playground.Migrations.PostgreSQL.MasterData
 {
     /// <inheritdoc />
-    public partial class InitialMasterData : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -20,7 +20,6 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     CircularName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     Description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
                     CapitalizationAmount = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
@@ -46,6 +45,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
                     Code = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
                     Name = table.Column<string>(type: "character varying(160)", maxLength: 160, nullable: false),
                     Description = table.Column<string>(type: "character varying(400)", maxLength: 400, nullable: true),
+                    OfficeCode = table.Column<string>(type: "character varying(8)", maxLength: 8, nullable: true),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
                     Version = table.Column<byte[]>(type: "bytea", nullable: false),
                     CreatedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
@@ -71,6 +71,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
                     Name = table.Column<string>(type: "character varying(160)", maxLength: 160, nullable: false),
                     Description = table.Column<string>(type: "character varying(400)", maxLength: 400, nullable: true),
                     FundCluster = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    OfficeCode = table.Column<string>(type: "character varying(8)", maxLength: 8, nullable: true),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
                     Version = table.Column<byte[]>(type: "bytea", nullable: false),
                     CreatedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
@@ -95,6 +96,10 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
                     Code = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
                     Name = table.Column<string>(type: "character varying(160)", maxLength: 160, nullable: false),
                     Description = table.Column<string>(type: "character varying(400)", maxLength: 400, nullable: true),
+                    Address = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    LocationCode = table.Column<string>(type: "character varying(8)", maxLength: 8, nullable: true),
+                    RegProvCode = table.Column<string>(type: "character varying(16)", maxLength: 16, nullable: true),
+                    OfficeCode = table.Column<string>(type: "character varying(8)", maxLength: 8, nullable: true),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
                     Version = table.Column<byte[]>(type: "bytea", nullable: false),
                     CreatedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
@@ -142,6 +147,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
                     Code = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
                     Name = table.Column<string>(type: "character varying(160)", maxLength: 160, nullable: false),
                     Description = table.Column<string>(type: "character varying(400)", maxLength: 400, nullable: true),
+                    OfficeCode = table.Column<string>(type: "character varying(8)", maxLength: 8, nullable: true),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
                     Version = table.Column<byte[]>(type: "bytea", nullable: false),
                     CreatedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
@@ -219,6 +225,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
                     Email = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     Phone = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
                     Address = table.Column<string>(type: "character varying(400)", maxLength: 400, nullable: true),
+                    OfficeCode = table.Column<string>(type: "character varying(8)", maxLength: 8, nullable: true),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
                     Version = table.Column<byte[]>(type: "bytea", nullable: false),
                     CreatedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
@@ -243,6 +250,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
                     Code = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
                     Name = table.Column<string>(type: "character varying(160)", maxLength: 160, nullable: false),
                     Description = table.Column<string>(type: "character varying(400)", maxLength: 400, nullable: true),
+                    OfficeCode = table.Column<string>(type: "character varying(8)", maxLength: 8, nullable: true),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
                     Version = table.Column<byte[]>(type: "bytea", nullable: false),
                     CreatedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
@@ -293,7 +301,6 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     EmployeeNumber = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
                     IdentityUserId = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
                     FirstName = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
@@ -303,6 +310,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
                     DepartmentId = table.Column<Guid>(type: "uuid", nullable: false),
                     PositionId = table.Column<Guid>(type: "uuid", nullable: false),
                     DefaultUnitOfMeasureId = table.Column<Guid>(type: "uuid", nullable: true),
+                    OfficeCode = table.Column<string>(type: "character varying(8)", maxLength: 8, nullable: true),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
                     Version = table.Column<byte[]>(type: "bytea", nullable: false),
                     CreatedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
@@ -347,16 +355,10 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_CapitalizationThresholds_TenantId",
+                name: "IX_CapitalizationThresholds_IsActive",
                 schema: "masterdata",
                 table: "CapitalizationThresholds",
-                column: "TenantId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_CapitalizationThresholds_TenantId_IsActive",
-                schema: "masterdata",
-                table: "CapitalizationThresholds",
-                columns: new[] { "TenantId", "IsActive" });
+                column: "IsActive");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Categories_Code",
@@ -372,6 +374,12 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
                 column: "Name");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Categories_OfficeCode",
+                schema: "masterdata",
+                table: "Categories",
+                column: "OfficeCode");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Departments_Code",
                 schema: "masterdata",
                 table: "Departments",
@@ -383,6 +391,12 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
                 schema: "masterdata",
                 table: "Departments",
                 column: "Name");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Departments_OfficeCode",
+                schema: "masterdata",
+                table: "Departments",
+                column: "OfficeCode");
 
             migrationBuilder.CreateIndex(
                 name: "IX_EmployeeProfiles_DefaultUnitOfMeasureId",
@@ -397,6 +411,26 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
                 column: "DepartmentId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_EmployeeProfiles_EmployeeNumber",
+                schema: "masterdata",
+                table: "EmployeeProfiles",
+                column: "EmployeeNumber",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EmployeeProfiles_IdentityUserId",
+                schema: "masterdata",
+                table: "EmployeeProfiles",
+                column: "IdentityUserId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EmployeeProfiles_OfficeCode",
+                schema: "masterdata",
+                table: "EmployeeProfiles",
+                column: "OfficeCode");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_EmployeeProfiles_OfficeId",
                 schema: "masterdata",
                 table: "EmployeeProfiles",
@@ -407,38 +441,6 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
                 schema: "masterdata",
                 table: "EmployeeProfiles",
                 column: "PositionId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_EmployeeProfiles_TenantId_DepartmentId",
-                schema: "masterdata",
-                table: "EmployeeProfiles",
-                columns: new[] { "TenantId", "DepartmentId" });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_EmployeeProfiles_TenantId_EmployeeNumber",
-                schema: "masterdata",
-                table: "EmployeeProfiles",
-                columns: new[] { "TenantId", "EmployeeNumber" },
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_EmployeeProfiles_TenantId_IdentityUserId",
-                schema: "masterdata",
-                table: "EmployeeProfiles",
-                columns: new[] { "TenantId", "IdentityUserId" },
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_EmployeeProfiles_TenantId_OfficeId",
-                schema: "masterdata",
-                table: "EmployeeProfiles",
-                columns: new[] { "TenantId", "OfficeId" });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_EmployeeProfiles_TenantId_PositionId",
-                schema: "masterdata",
-                table: "EmployeeProfiles",
-                columns: new[] { "TenantId", "PositionId" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Offices_Code",
@@ -452,6 +454,12 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
                 schema: "masterdata",
                 table: "Offices",
                 column: "Name");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Offices_OfficeCode",
+                schema: "masterdata",
+                table: "Offices",
+                column: "OfficeCode");
 
             migrationBuilder.CreateIndex(
                 name: "IX_OrganizationProfiles_TenantId",
@@ -472,6 +480,12 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
                 schema: "masterdata",
                 table: "Positions",
                 column: "Name");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Positions_OfficeCode",
+                schema: "masterdata",
+                table: "Positions",
+                column: "OfficeCode");
 
             migrationBuilder.CreateIndex(
                 name: "IX_PropertyClasses_Code",
@@ -533,6 +547,12 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
                 column: "Name");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Suppliers_OfficeCode",
+                schema: "masterdata",
+                table: "Suppliers",
+                column: "OfficeCode");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_UnitOfMeasures_Code",
                 schema: "masterdata",
                 table: "UnitOfMeasures",
@@ -544,6 +564,12 @@ namespace FSH.Playground.Migrations.PostgreSQL.MasterData
                 schema: "masterdata",
                 table: "UnitOfMeasures",
                 column: "Name");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UnitOfMeasures_OfficeCode",
+                schema: "masterdata",
+                table: "UnitOfMeasures",
+                column: "OfficeCode");
         }
 
         /// <inheritdoc />

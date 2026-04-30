@@ -16,32 +16,27 @@
                Description="Manage per-section procurement plans for the fiscal year" />
 
 <!-- ══ Add / Edit Line Item Dialog ══════════════════════════════════ -->
-<MudDialog @bind-Visible="_itemDialogOpen" Options="@(new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseOnEscapeKey = true })">
+<MudDialog @bind-Visible="_itemDialogOpen"
+           Options="@(new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseOnEscapeKey = true })">
     <TitleContent>
         <MudText Typo="Typo.h6">
-            <MudIcon Icon="@(_editingItemIdx.HasValue ? Icons.Material.Filled.Edit : Icons.Material.Filled.Add)" Class="mr-2" Style="vertical-align:middle" />
+            <MudIcon Icon="@(_editingItemIdx.HasValue? Icons.Material.Filled.Edit : Icons.Material.Filled.Add)"
+                     Class="mr-2" Style="vertical-align:middle" />
             @(_editingItemIdx.HasValue ? "Edit Line Item" : "Add Line Item")
         </MudText>
     </TitleContent>
     <DialogContent>
         <MudGrid Spacing="2" Class="mt-1">
             <MudItem xs="12">
-                <MudAutocomplete T="string"
-                                 @bind-Value="_itemForm.GeneralDescription"
-                                 Label="Description / Objective"
-                                 Variant="Variant.Outlined"
-                                 SearchFunc="SearchDescriptions"
-                                 ResetValueOnEmptyText="false"
-                                 CoerceText="true"
-                                 CoerceValue="true"
-                                 Required="true"
+                <MudAutocomplete T="string" @bind-Value="_itemForm.GeneralDescription" Label="Description / Objective"
+                                 Variant="Variant.Outlined" SearchFunc="SearchDescriptions" ResetValueOnEmptyText="false"
+                                 CoerceText="true" CoerceValue="true" Required="true"
                                  HelperText="Start typing — previous descriptions will appear"
                                  Placeholder="Describe the procurement item or objective" />
             </MudItem>
 
             <MudItem xs="12" sm="6">
-                <MudSelect @bind-Value="_itemForm.ProjectType" Label="Type"
-                           Variant="Variant.Outlined" T="ProjectType">
+                <MudSelect @bind-Value="_itemForm.ProjectType" Label="Type" Variant="Variant.Outlined" T="ProjectType">
                     <MudSelectItem Value="ProjectType.Goods">Goods</MudSelectItem>
                     <MudSelectItem Value="ProjectType.Infrastructure">Infrastructure</MudSelectItem>
                     <MudSelectItem Value="ProjectType.ConsultingServices">Consulting Services</MudSelectItem>
@@ -56,25 +51,20 @@
                     <MudSelectItem Value="ModeOfProcurement.DirectContracting">Direct Contracting</MudSelectItem>
                     <MudSelectItem Value="ModeOfProcurement.RepeatOrder">Repeat Order</MudSelectItem>
                     <MudSelectItem Value="ModeOfProcurement.Shopping">Shopping</MudSelectItem>
-                    <MudSelectItem Value="ModeOfProcurement.NegotiatedProcurement">Negotiated Procurement</MudSelectItem>
+                    <MudSelectItem Value="ModeOfProcurement.NegotiatedProcurement">Negotiated Procurement
+                    </MudSelectItem>
                 </MudSelect>
             </MudItem>
 
             <MudItem xs="12" sm="4">
-                <MudNumericField @bind-Value="_itemForm.Quantity" Label="Quantity"
-                                 Variant="Variant.Outlined" Min="0.01m" />
+                <MudNumericField @bind-Value="_itemForm.Quantity" Label="Quantity" Variant="Variant.Outlined"
+                                 Min="0.01m" />
             </MudItem>
 
             <MudItem xs="12" sm="4">
-                <MudAutocomplete T="string"
-                                 @bind-Value="_itemForm.Unit"
-                                 Label="Unit of Measure"
-                                 Variant="Variant.Outlined"
-                                 SearchFunc="SearchUnits"
-                                 ResetValueOnEmptyText="false"
-                                 CoerceText="true"
-                                 CoerceValue="true"
-                                 Placeholder="e.g. LOT, PCS, BOX..."
+                <MudAutocomplete T="string" @bind-Value="_itemForm.Unit" Label="Unit of Measure"
+                                 Variant="Variant.Outlined" SearchFunc="SearchUnits" ResetValueOnEmptyText="false" CoerceText="true"
+                                 CoerceValue="true" Placeholder="e.g. LOT, PCS, BOX..."
                                  HelperText="Select from master data or type a unit" />
             </MudItem>
 
@@ -88,8 +78,8 @@
                               Variant="Variant.Outlined" Placeholder="MM/YYYY" />
             </MudItem>
             <MudItem xs="12" sm="4">
-                <MudTextField @bind-Value="_itemForm.ProcurementEnd" Label="Procurement End"
-                              Variant="Variant.Outlined" Placeholder="MM/YYYY" />
+                <MudTextField @bind-Value="_itemForm.ProcurementEnd" Label="Procurement End" Variant="Variant.Outlined"
+                              Placeholder="MM/YYYY" />
             </MudItem>
             <MudItem xs="12" sm="4">
                 <MudTextField @bind-Value="_itemForm.ExpectedDelivery" Label="Expected Delivery"
@@ -102,13 +92,12 @@
             </MudItem>
 
             <MudItem xs="12" sm="3" Style="display:flex;align-items:center">
-                <MudCheckBox @bind-Value="_itemForm.PreProcurementConference"
-                             Label="Pre-Proc Conference" Color="Color.Primary" />
+                <MudCheckBox @bind-Value="_itemForm.PreProcurementConference" Label="Pre-Proc Conference"
+                             Color="Color.Primary" />
             </MudItem>
 
             <MudItem xs="12">
-                <MudTextField @bind-Value="_itemForm.Remarks" Label="Remarks"
-                              Variant="Variant.Outlined" Lines="2" />
+                <MudTextField @bind-Value="_itemForm.Remarks" Label="Remarks" Variant="Variant.Outlined" Lines="2" />
             </MudItem>
         </MudGrid>
     </DialogContent>
@@ -121,34 +110,33 @@
 </MudDialog>
 
 <MudCard Elevation="1">
-    <MudTabs @bind-ActivePanelIndex="_activeTab" Elevation="0" Rounded="false"
-             ApplyEffectsToContainer="true" PanelClass="pa-4" Color="Color.Primary">
+    <MudTabs @bind-ActivePanelIndex="_activeTab" Elevation="0" Rounded="false" ApplyEffectsToContainer="true"
+             PanelClass="pa-4" Color="Color.Primary">
 
         <!-- ══ LIST TAB ══════════════════════════════════════════════════ -->
         <MudTabPanel Text="List" Icon="@Icons.Material.Outlined.ListAlt">
             <MudStack Row="true" Spacing="2" Class="mb-3" AlignItems="AlignItems.Center">
                 <MudTextField @bind-Value="_search" Placeholder="Search PPMP number or unit..."
-                              Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
-                              Variant="Variant.Outlined" Immediate="true" DebounceInterval="400"
-                              OnDebounceIntervalElapsed="LoadAsync" Class="flex-1" />
-                <MudSelect Value="@_filterFiscalYear" Label="FY" Variant="Variant.Outlined"
-                           T="int?" Style="width:100px" ValueChanged="OnFilterChanged">
+                              Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Variant="Variant.Outlined"
+                              Immediate="true" DebounceInterval="400" OnDebounceIntervalElapsed="LoadAsync" Class="flex-1" />
+                <MudSelect Value="@_filterFiscalYear" Label="FY" Variant="Variant.Outlined" T="int?" Style="width:100px"
+                           ValueChanged="OnFilterChanged">
                     <MudSelectItem T="int?" Value="null">All</MudSelectItem>
                     @foreach (var fy in _fiscalYears)
                     {
                         <MudSelectItem T="int?" Value="fy">@fy</MudSelectItem>
                     }
                 </MudSelect>
-                <MudSelect Value="@_filterStatus" Label="Status" Variant="Variant.Outlined"
-                           T="PpmpStatus?" Style="width:150px" ValueChanged="OnStatusFilterChanged">
+                <MudSelect Value="@_filterStatus" Label="Status" Variant="Variant.Outlined" T="PpmpStatus?"
+                           Style="width:150px" ValueChanged="OnStatusFilterChanged">
                     <MudSelectItem T="PpmpStatus?" Value="null">All</MudSelectItem>
                     @foreach (PpmpStatus s in Enum.GetValues<PpmpStatus>())
                     {
                         <MudSelectItem T="PpmpStatus?" Value="s">@s</MudSelectItem>
                     }
                 </MudSelect>
-                <MudButton Variant="Variant.Filled" Color="Color.Primary"
-                           StartIcon="@Icons.Material.Filled.Add" OnClick="StartNew">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+                           OnClick="StartNew">
                     New PPMP
                 </MudButton>
             </MudStack>
@@ -197,15 +185,13 @@
                                 <td @onclick:stopPropagation="true">
                                     @if (row.Status is PpmpStatus.Draft or PpmpStatus.Returned)
                                     {
-                                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
-                                                       Color="Color.Primary"
+                                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary"
                                                        OnClick="@(() => SelectPpmpAsync(row.Id))" />
                                     }
                                     @if (row.Status is PpmpStatus.Draft or PpmpStatus.Returned)
                                     {
                                         <MudTooltip Text="Submit for Approval">
-                                            <MudIconButton Icon="@Icons.Material.Filled.Send" Size="Size.Small"
-                                                           Color="Color.Info"
+                                            <MudIconButton Icon="@Icons.Material.Filled.Send" Size="Size.Small" Color="Color.Info"
                                                            OnClick="@(() => QuickSubmitAsync(row))" />
                                         </MudTooltip>
                                     }
@@ -213,8 +199,7 @@
                                     {
                                         <MudTooltip Text="Recall (return to Draft)">
                                             <MudIconButton Icon="@Icons.Material.Filled.Undo" Size="Size.Small"
-                                                           Color="Color.Warning"
-                                                           OnClick="@(() => QuickRecallAsync(row))" />
+                                                           Color="Color.Warning" OnClick="@(() => QuickRecallAsync(row))" />
                                         </MudTooltip>
                                     }
                                 </td>
@@ -274,26 +259,33 @@
                     <!-- Workflow actions -->
                     @if (_editing is not null && _editing.Status is PpmpStatus.Draft or PpmpStatus.Returned)
                     {
-                        <MudButton Variant="Variant.Filled" Color="Color.Info"
-                                   StartIcon="@Icons.Material.Filled.Send"
+                        <MudButton Variant="Variant.Filled" Color="Color.Info" StartIcon="@Icons.Material.Filled.Send"
                                    OnClick="SubmitAsync" Disabled="_busy" Size="Size.Small">
                             Submit for Approval
                         </MudButton>
                     }
                     @if (_editing is not null && _editing.Status == PpmpStatus.Submitted)
                     {
-                        <MudButton Variant="Variant.Outlined" Color="Color.Warning"
-                                   StartIcon="@Icons.Material.Filled.Undo"
+                        <MudButton Variant="Variant.Outlined" Color="Color.Warning" StartIcon="@Icons.Material.Filled.Undo"
                                    OnClick="RecallAsync" Disabled="_busy" Size="Size.Small">
                             Recall
                         </MudButton>
                     }
-                    @if (_editing is not null && _editing.Status is PpmpStatus.Approved or PpmpStatus.Consolidated)
+                    @if (_editing is not null && _editing.Phase == PpmpPhase.Indicative && _editing.Status ==
+                                                            PpmpStatus.Approved)
                     {
-                        <MudButton Variant="Variant.Outlined" Color="Color.Warning"
-                                   StartIcon="@Icons.Material.Filled.Edit"
-                                   OnClick="ShowAmendDialogAsync" Disabled="_busy" Size="Size.Small">
-                            Amend
+                        <MudButton Variant="Variant.Outlined" Color="Color.Primary"
+                                   StartIcon="@Icons.Material.Filled.MoveUp" OnClick="PromoteToFinalAsync" Disabled="_busy"
+                                   Size="Size.Small">
+                            Promote to Final
+                        </MudButton>
+                    }
+                    @if (_editing is not null && _editing.Phase is PpmpPhase.Final or PpmpPhase.Updated
+                                                                 && _editing.Status is PpmpStatus.Approved or PpmpStatus.Consolidated)
+                    {
+                        <MudButton Variant="Variant.Outlined" Color="Color.Warning" StartIcon="@Icons.Material.Filled.Edit"
+                                   OnClick="ShowCreateUpdateDialogAsync" Disabled="_busy" Size="Size.Small">
+                            Create Update
                         </MudButton>
                     }
 
@@ -301,8 +293,7 @@
                     @if (!_isReadOnly)
                     {
                         <MudDivider Vertical="true" FlexItem="true" Class="mx-1" />
-                        <MudButton Variant="Variant.Filled" Color="Color.Primary"
-                                   StartIcon="@Icons.Material.Filled.Save"
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save"
                                    OnClick="SaveAsync" Disabled="_busy" Size="Size.Small">
                             @if (_busy)
                             {
@@ -310,8 +301,7 @@
                             }
                             @(_editing is null ? "Create" : "Save")
                         </MudButton>
-                        <MudButton Variant="Variant.Text" OnClick="ClearForm"
-                                   Disabled="_busy" Size="Size.Small">
+                        <MudButton Variant="Variant.Text" OnClick="ClearForm" Disabled="_busy" Size="Size.Small">
                             Cancel
                         </MudButton>
                     }
@@ -321,8 +311,7 @@
             <!-- ── Return reason alert ────────────────────────────────── -->
             @if (_editing is not null && _editing.Status == PpmpStatus.Returned)
             {
-                <MudAlert Severity="Severity.Error" Dense="true" Class="mb-3"
-                          Icon="@Icons.Material.Filled.Undo">
+                <MudAlert Severity="Severity.Error" Dense="true" Class="mb-3" Icon="@Icons.Material.Filled.Undo">
                     <strong>Returned for revision</strong> — please address the feedback and resubmit.
                     @if (!string.IsNullOrWhiteSpace(_editing.ReturnReason))
                     {
@@ -330,13 +319,21 @@
                     }
                 </MudAlert>
             }
-            else if (_editing is not null && _editing.Status is PpmpStatus.Submitted or PpmpStatus.Approved or PpmpStatus.Consolidated or PpmpStatus.Superseded)
+            else if (_editing is not null && _editing.Status is PpmpStatus.Submitted or PpmpStatus.Approved or
+            PpmpStatus.Consolidated or PpmpStatus.Superseded)
             {
                 <MudAlert Severity="Severity.Info" Dense="true" Class="mb-3">
                     This PPMP is <strong>@_editing.Status</strong> and cannot be edited.
                     @if (_editing.Status is PpmpStatus.Approved or PpmpStatus.Consolidated)
                     {
-                        <span> Use <strong>Amend</strong> to create a new version.</span>
+                        @if (_editing.Phase == PpmpPhase.Indicative)
+                        {
+                            <span> Use <strong>Promote to Final</strong> to create the Final phase.</span>
+                        }
+                        else
+                        {
+                            <span> Use <strong>Create Update</strong> to create a new version.</span>
+                        }
                     }
                 </MudAlert>
             }
@@ -344,138 +341,136 @@
             <!-- ── Details row ────────────────────────────────────────── -->
             <MudGrid Spacing="2" Class="mb-3">
                 <MudItem xs="6" sm="3">
-                    <MudNumericField @bind-Value="_form.FiscalYear" Label="Fiscal Year"
-                                     Variant="Variant.Outlined" Min="2000" Max="2100"
-                                     Disabled="_isReadOnly" />
+                    <MudNumericField @bind-Value="_form.FiscalYear" Label="Fiscal Year" Variant="Variant.Outlined"
+                                     Min="2000" Max="2100" Disabled="_isReadOnly" />
                 </MudItem>
                 <MudItem xs="6" sm="3">
-                    <MudSelect @bind-Value="_form.Phase" Label="PPMP Phase"
-                               Variant="Variant.Outlined" T="PpmpPhase" Disabled="_isReadOnly">
+                    <MudSelect @bind-Value="_form.Phase" Label="PPMP Phase" Variant="Variant.Outlined" T="PpmpPhase"
+                               Disabled="_isReadOnly">
                         <MudSelectItem Value="PpmpPhase.Indicative">Indicative</MudSelectItem>
                         <MudSelectItem Value="PpmpPhase.Final">Final</MudSelectItem>
                     </MudSelect>
                 </MudItem>
                 <MudItem xs="6" sm="3">
-                    <MudTextField @bind-Value="_form.OfficeCode" Label="Office Code"
-                                  Variant="Variant.Outlined" Required="true" Disabled="_isReadOnly"
+                    <MudTextField @bind-Value="_form.OfficeCode" Label="Office Code" Variant="Variant.Outlined"
+                                  Required="true" Disabled="_isReadOnly"
                                   HelperText="@(_orgOfficeCode != null ? "From Organization Profile" : null)" />
                 </MudItem>
                 <MudItem xs="6" sm="3">
-                    <MudTextField @bind-Value="_form.EndUserUnit" Label="End-User / Section"
-                                  Variant="Variant.Outlined" Required="true" Disabled="_isReadOnly"
+                    <MudTextField @bind-Value="_form.EndUserUnit" Label="End-User / Section" Variant="Variant.Outlined"
+                                  Required="true" Disabled="_isReadOnly"
                                   HelperText="@(_employeeDepartment != null ? "From your employee profile" : null)" />
                 </MudItem>
             </MudGrid>
 
             <!-- ── Line Items (full width) ────────────────────────────── -->
             <MudItem xs="12">
-                    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
-                        <MudText Typo="Typo.subtitle1" Style="font-weight:600">Line Items</MudText>
-                        <MudSpacer />
-                        @if (!_isReadOnly)
-                        {
-                            <MudButton StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Filled"
-                                       Color="Color.Primary" Size="Size.Small" OnClick="OpenAddItemDialog">
-                                Add Item
-                            </MudButton>
-                        }
-                    </MudStack>
-
-                    @if (_form.Items.Count == 0)
+                <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
+                    <MudText Typo="Typo.subtitle1" Style="font-weight:600">Line Items</MudText>
+                    <MudSpacer />
+                    @if (!_isReadOnly)
                     {
-                        <MudAlert Severity="Severity.Info" Dense="true">
-                            @(!_isReadOnly ? "Click \"+ Add Item\" to add procurement line items." : "No items.")
-                        </MudAlert>
+                        <MudButton StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Filled" Color="Color.Primary"
+                                   Size="Size.Small" OnClick="OpenAddItemDialog">
+                            Add Item
+                        </MudButton>
                     }
-                    else
-                    {
-                        <div style="overflow-x:auto">
-                            <MudSimpleTable Dense="true" Hover="true" Striped="true" Style="min-width:900px">
-                                <thead>
+                </MudStack>
+
+                @if (_form.Items.Count == 0)
+                {
+                    <MudAlert Severity="Severity.Info" Dense="true">
+                        @(!_isReadOnly ? "Click \"+ Add Item\" to add procurement line items." : "No items.")
+                    </MudAlert>
+                }
+                else
+                {
+                    <div style="overflow-x:auto">
+                        <MudSimpleTable Dense="true" Hover="true" Striped="true" Style="min-width:900px">
+                            <thead>
+                                <tr>
+                                    <th style="width:36px">#</th>
+                                    <th style="min-width:220px">Description / Objective</th>
+                                    <th style="min-width:110px">Type</th>
+                                    <th style="width:60px; text-align:right">Qty</th>
+                                    <th style="width:70px">Unit</th>
+                                    <th style="min-width:130px">Mode of Procurement</th>
+                                    <th style="width:55px; text-align:center">Pre-Proc</th>
+                                    <th style="width:130px; text-align:right">Est. Budget (₱)</th>
+                                    @if (!_isReadOnly)
+                                    {
+                                        <th style="width:80px; text-align:center">Actions</th>
+                                    }
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (var i = 0; i < _form.Items.Count; i++)
+                                {
+                                    var idx = i;
+                                    var item = _form.Items[idx];
                                     <tr>
-                                        <th style="width:36px">#</th>
-                                        <th style="min-width:220px">Description / Objective</th>
-                                        <th style="min-width:110px">Type</th>
-                                        <th style="width:60px; text-align:right">Qty</th>
-                                        <th style="width:70px">Unit</th>
-                                        <th style="min-width:130px">Mode of Procurement</th>
-                                        <th style="width:55px; text-align:center">Pre-Proc</th>
-                                        <th style="width:130px; text-align:right">Est. Budget (₱)</th>
+                                        <td style="vertical-align:middle; color:var(--mud-palette-text-secondary)">
+                                            @(idx + 1)
+                                        </td>
+                                        <td style="vertical-align:middle">
+                                            <MudText Typo="Typo.body2">@item.GeneralDescription</MudText>
+                                            @if (!string.IsNullOrWhiteSpace(item.Remarks))
+                                            {
+                                                <MudText Typo="Typo.caption" Color="Color.Secondary">@item.Remarks</MudText>
+                                            }
+                                        </td>
+                                        <td style="vertical-align:middle">
+                                            <MudChip T="string" Size="Size.Small" Color="Color.Default" Label="true">
+                                                @item.ProjectType
+                                            </MudChip>
+                                        </td>
+                                        <td style="vertical-align:middle; text-align:right">@item.Quantity.ToString("N2")</td>
+                                        <td style="vertical-align:middle">
+                                            <MudText Typo="Typo.body2" Style="font-family:monospace">@item.Unit</MudText>
+                                        </td>
+                                        <td style="vertical-align:middle">
+                                            <MudText Typo="Typo.caption">@item.ModeOfProcurement</MudText>
+                                        </td>
+                                        <td style="vertical-align:middle; text-align:center">
+                                            @if (item.PreProcurementConference)
+                                            {
+                                                <MudIcon Icon="@Icons.Material.Filled.CheckBox" Size="Size.Small"
+                                                         Color="Color.Success" />
+                                            }
+                                            else
+                                            {
+                                                <MudIcon Icon="@Icons.Material.Filled.CheckBoxOutlineBlank" Size="Size.Small"
+                                                         Color="Color.Default" />
+                                            }
+                                        </td>
+                                        <td style="vertical-align:middle; text-align:right; font-weight:600">
+                                            ₱ @item.EstimatedBudget.ToString("N2")
+                                        </td>
                                         @if (!_isReadOnly)
                                         {
-                                            <th style="width:80px; text-align:center">Actions</th>
+                                            <td style="vertical-align:middle; text-align:center">
+                                                <MudIconButton Icon="@Icons.Material.Filled.EditNote" Size="Size.Small"
+                                                               Color="Color.Primary" OnClick="@(() => OpenEditItemDialog(idx))" />
+                                                <MudIconButton Icon="@Icons.Material.Filled.DeleteOutline" Size="Size.Small"
+                                                               Color="Color.Error" OnClick="@(() => RemoveItem(idx))" />
+                                            </td>
                                         }
                                     </tr>
-                                </thead>
-                                <tbody>
-                                    @for (var i = 0; i < _form.Items.Count; i++)
-                                    {
-                                        var idx = i;
-                                        var item = _form.Items[idx];
-                                        <tr>
-                                            <td style="vertical-align:middle; color:var(--mud-palette-text-secondary)">
-                                                @(idx + 1)
-                                            </td>
-                                            <td style="vertical-align:middle">
-                                                <MudText Typo="Typo.body2">@item.GeneralDescription</MudText>
-                                                @if (!string.IsNullOrWhiteSpace(item.Remarks))
-                                                {
-                                                    <MudText Typo="Typo.caption" Color="Color.Secondary">@item.Remarks</MudText>
-                                                }
-                                            </td>
-                                            <td style="vertical-align:middle">
-                                                <MudChip T="string" Size="Size.Small" Color="Color.Default" Label="true">
-                                                    @item.ProjectType
-                                                </MudChip>
-                                            </td>
-                                            <td style="vertical-align:middle; text-align:right">@item.Quantity.ToString("N2")</td>
-                                            <td style="vertical-align:middle">
-                                                <MudText Typo="Typo.body2" Style="font-family:monospace">@item.Unit</MudText>
-                                            </td>
-                                            <td style="vertical-align:middle">
-                                                <MudText Typo="Typo.caption">@item.ModeOfProcurement</MudText>
-                                            </td>
-                                            <td style="vertical-align:middle; text-align:center">
-                                                @if (item.PreProcurementConference)
-                                                {
-                                                    <MudIcon Icon="@Icons.Material.Filled.CheckBox" Size="Size.Small" Color="Color.Success" />
-                                                }
-                                                else
-                                                {
-                                                    <MudIcon Icon="@Icons.Material.Filled.CheckBoxOutlineBlank" Size="Size.Small" Color="Color.Default" />
-                                                }
-                                            </td>
-                                            <td style="vertical-align:middle; text-align:right; font-weight:600">
-                                                ₱ @item.EstimatedBudget.ToString("N2")
-                                            </td>
-                                            @if (!_isReadOnly)
-                                            {
-                                                <td style="vertical-align:middle; text-align:center">
-                                                    <MudIconButton Icon="@Icons.Material.Filled.EditNote"
-                                                                   Size="Size.Small" Color="Color.Primary"
-                                                                   OnClick="@(() => OpenEditItemDialog(idx))" />
-                                                    <MudIconButton Icon="@Icons.Material.Filled.DeleteOutline"
-                                                                   Size="Size.Small" Color="Color.Error"
-                                                                   OnClick="@(() => RemoveItem(idx))" />
-                                                </td>
-                                            }
-                                        </tr>
-                                    }
-                                </tbody>
-                            </MudSimpleTable>
-                        </div>
+                                }
+                            </tbody>
+                        </MudSimpleTable>
+                    </div>
 
-                        <MudStack Row="true" Class="mt-2 pa-2 rounded"
-                                  Style="background:var(--mud-palette-background-grey)"
-                                  AlignItems="AlignItems.Center">
-                            <MudText Typo="Typo.subtitle2">Total Estimated Budget</MudText>
-                            <MudSpacer />
-                            <MudText Typo="Typo.subtitle2" Color="Color.Primary">
-                                ₱ @_form.Items.Sum(i => i.EstimatedBudget).ToString("N2")
-                            </MudText>
-                        </MudStack>
-                    }
-                </MudItem>
+                    <MudStack Row="true" Class="mt-2 pa-2 rounded" Style="background:var(--mud-palette-background-grey)"
+                              AlignItems="AlignItems.Center">
+                        <MudText Typo="Typo.subtitle2">Total Estimated Budget</MudText>
+                        <MudSpacer />
+                        <MudText Typo="Typo.subtitle2" Color="Color.Primary">
+                            ₱ @_form.Items.Sum(i => i.EstimatedBudget).ToString("N2")
+                        </MudText>
+                    </MudStack>
+                }
+            </MudItem>
         </MudTabPanel>
     </MudTabs>
 </MudCard>
@@ -701,18 +696,18 @@
         _editingItemIdx = idx;
         _itemForm = new PpmpItemFormModel
         {
-            GeneralDescription    = src.GeneralDescription,
-            ProjectType           = src.ProjectType,
-            Quantity              = src.Quantity,
-            Unit                  = src.Unit,
-            ModeOfProcurement     = src.ModeOfProcurement,
+            GeneralDescription = src.GeneralDescription,
+            ProjectType = src.ProjectType,
+            Quantity = src.Quantity,
+            Unit = src.Unit,
+            ModeOfProcurement = src.ModeOfProcurement,
             PreProcurementConference = src.PreProcurementConference,
-            ProcurementStart      = src.ProcurementStart,
-            ProcurementEnd        = src.ProcurementEnd,
-            ExpectedDelivery      = src.ExpectedDelivery,
-            SourceOfFunds         = src.SourceOfFunds,
-            EstimatedBudget       = src.EstimatedBudget,
-            Remarks               = src.Remarks
+            ProcurementStart = src.ProcurementStart,
+            ProcurementEnd = src.ProcurementEnd,
+            ExpectedDelivery = src.ExpectedDelivery,
+            SourceOfFunds = src.SourceOfFunds,
+            EstimatedBudget = src.EstimatedBudget,
+            Remarks = src.Remarks
         };
         _itemDialogOpen = true;
     }
@@ -736,35 +731,35 @@
         if (_editingItemIdx.HasValue)
         {
             var target = _form.Items[_editingItemIdx.Value];
-            target.GeneralDescription    = _itemForm.GeneralDescription;
-            target.ProjectType           = _itemForm.ProjectType;
-            target.Quantity              = _itemForm.Quantity;
-            target.Unit                  = _itemForm.Unit;
-            target.ModeOfProcurement     = _itemForm.ModeOfProcurement;
+            target.GeneralDescription = _itemForm.GeneralDescription;
+            target.ProjectType = _itemForm.ProjectType;
+            target.Quantity = _itemForm.Quantity;
+            target.Unit = _itemForm.Unit;
+            target.ModeOfProcurement = _itemForm.ModeOfProcurement;
             target.PreProcurementConference = _itemForm.PreProcurementConference;
-            target.ProcurementStart      = _itemForm.ProcurementStart;
-            target.ProcurementEnd        = _itemForm.ProcurementEnd;
-            target.ExpectedDelivery      = _itemForm.ExpectedDelivery;
-            target.SourceOfFunds         = _itemForm.SourceOfFunds;
-            target.EstimatedBudget       = _itemForm.EstimatedBudget;
-            target.Remarks               = _itemForm.Remarks;
+            target.ProcurementStart = _itemForm.ProcurementStart;
+            target.ProcurementEnd = _itemForm.ProcurementEnd;
+            target.ExpectedDelivery = _itemForm.ExpectedDelivery;
+            target.SourceOfFunds = _itemForm.SourceOfFunds;
+            target.EstimatedBudget = _itemForm.EstimatedBudget;
+            target.Remarks = _itemForm.Remarks;
         }
         else
         {
             _form.Items.Add(new PpmpItemFormModel
             {
-                GeneralDescription    = _itemForm.GeneralDescription,
-                ProjectType           = _itemForm.ProjectType,
-                Quantity              = _itemForm.Quantity,
-                Unit                  = _itemForm.Unit,
-                ModeOfProcurement     = _itemForm.ModeOfProcurement,
+                GeneralDescription = _itemForm.GeneralDescription,
+                ProjectType = _itemForm.ProjectType,
+                Quantity = _itemForm.Quantity,
+                Unit = _itemForm.Unit,
+                ModeOfProcurement = _itemForm.ModeOfProcurement,
                 PreProcurementConference = _itemForm.PreProcurementConference,
-                ProcurementStart      = _itemForm.ProcurementStart,
-                ProcurementEnd        = _itemForm.ProcurementEnd,
-                ExpectedDelivery      = _itemForm.ExpectedDelivery,
-                SourceOfFunds         = _itemForm.SourceOfFunds,
-                EstimatedBudget       = _itemForm.EstimatedBudget,
-                Remarks               = _itemForm.Remarks
+                ProcurementStart = _itemForm.ProcurementStart,
+                ProcurementEnd = _itemForm.ProcurementEnd,
+                ExpectedDelivery = _itemForm.ExpectedDelivery,
+                SourceOfFunds = _itemForm.SourceOfFunds,
+                EstimatedBudget = _itemForm.EstimatedBudget,
+                Remarks = _itemForm.Remarks
             });
         }
 
@@ -919,7 +914,29 @@
         finally { _busy = false; }
     }
 
-    private async Task ShowAmendDialogAsync()
+    private async Task PromoteToFinalAsync()
+    {
+        if (_editing is null) return;
+        var confirmed = await DialogService.ShowMessageBox(
+            "Promote to Final",
+            $"Promote {_editing.PpmpNumber} to Final phase? The current Indicative version will be superseded.",
+            yesText: "Promote", cancelText: "Cancel");
+        if (confirmed != true) return;
+        _busy = true;
+        try
+        {
+            _editing = await PpmpClient.PromoteToFinalAsync(_editing.Id);
+            _versions = (await PpmpClient.GetVersionsAsync(_editing.VersionChainId)).ToList();
+            _selectedVersionId = _editing.Id;
+            PopulateForm(_editing);
+            Snackbar.Add($"Final draft v{_editing.VersionNumber} created.", Severity.Success);
+            await LoadAsync();
+        }
+        catch (Exception ex) { Snackbar.Add($"Error: {ex.Message}", Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    private async Task ShowCreateUpdateDialogAsync()
     {
         if (_editing is null) return;
         var parameters = new DialogParameters<AmendDialog>
@@ -927,18 +944,18 @@
             { x => x.DocumentNumber, _editing.PpmpNumber },
             { x => x.CurrentVersion, _editing.VersionNumber }
         };
-        var dialog = await DialogService.ShowAsync<AmendDialog>("Amend PPMP", parameters);
+        var dialog = await DialogService.ShowAsync<AmendDialog>("Create Update PPMP", parameters);
         var result = await dialog.Result;
         if (result is { Canceled: false } && result.Data is string reason)
         {
             _busy = true;
             try
             {
-                _editing = await PpmpClient.AmendAsync(_editing.Id, reason);
+                _editing = await PpmpClient.CreateUpdateAsync(_editing.Id, reason);
                 _versions = (await PpmpClient.GetVersionsAsync(_editing.VersionChainId)).ToList();
                 _selectedVersionId = _editing.Id;
                 PopulateForm(_editing);
-                Snackbar.Add($"Amendment v{_editing.VersionNumber} created.", Severity.Success);
+                Snackbar.Add($"Updated v{_editing.VersionNumber} created.", Severity.Success);
                 await LoadAsync();
             }
             catch (Exception ex) { Snackbar.Add($"Error: {ex.Message}", Severity.Error); }
@@ -953,28 +970,28 @@
 
     // ── Helpers ──────────────────────────────────────────────────────
     private RenderFragment StatusChip(PpmpStatus status) =>
-        @<MudChip T="string" Size="Size.Small" Color="@StatusColor(status)"
-                  Icon="@StatusIcon(status)" Label="true">@status</MudChip>;
+        @<MudChip T="string" Size="Size.Small" Color="@StatusColor(status)" Icon="@StatusIcon(status)" Label="true">@status
+        </MudChip>;
 
     private static Color StatusColor(PpmpStatus s) => s switch
     {
-        PpmpStatus.Draft        => Color.Default,
-        PpmpStatus.Submitted    => Color.Info,
-        PpmpStatus.Approved     => Color.Success,
+        PpmpStatus.Draft => Color.Default,
+        PpmpStatus.Submitted => Color.Info,
+        PpmpStatus.Approved => Color.Success,
         PpmpStatus.Consolidated => Color.Primary,
-        PpmpStatus.Superseded   => Color.Warning,
-        PpmpStatus.Returned     => Color.Error,
-        _                       => Color.Default
+        PpmpStatus.Superseded => Color.Warning,
+        PpmpStatus.Returned => Color.Error,
+        _ => Color.Default
     };
 
     private static string StatusIcon(PpmpStatus s) => s switch
     {
-        PpmpStatus.Draft        => Icons.Material.Outlined.EditNote,
-        PpmpStatus.Submitted    => Icons.Material.Outlined.HourglassTop,
-        PpmpStatus.Approved     => Icons.Material.Filled.CheckCircle,
+        PpmpStatus.Draft => Icons.Material.Outlined.EditNote,
+        PpmpStatus.Submitted => Icons.Material.Outlined.HourglassTop,
+        PpmpStatus.Approved => Icons.Material.Filled.CheckCircle,
         PpmpStatus.Consolidated => Icons.Material.Filled.LibraryAddCheck,
-        PpmpStatus.Superseded   => Icons.Material.Outlined.History,
-        PpmpStatus.Returned     => Icons.Material.Filled.Undo,
-        _                       => Icons.Material.Outlined.Circle
+        PpmpStatus.Superseded => Icons.Material.Outlined.History,
+        PpmpStatus.Returned => Icons.Material.Filled.Undo,
+        _ => Icons.Material.Outlined.Circle
     };
 }

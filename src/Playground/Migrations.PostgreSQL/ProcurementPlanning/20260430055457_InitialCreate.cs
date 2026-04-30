@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace FSH.Playground.Migrations.PostgreSQL.ProcurementPlanning
 {
     /// <inheritdoc />
-    public partial class InitialProcurementPlanningPostgreSql : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -22,7 +22,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.ProcurementPlanning
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     AppNumber = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
                     FiscalYear = table.Column<int>(type: "integer", nullable: false),
-                    RevisionType = table.Column<int>(type: "integer", nullable: false),
+                    Phase = table.Column<int>(type: "integer", nullable: false),
                     Status = table.Column<int>(type: "integer", nullable: false),
                     VersionNumber = table.Column<int>(type: "integer", nullable: false),
                     IsCurrentVersion = table.Column<bool>(type: "boolean", nullable: false),
@@ -30,10 +30,10 @@ namespace FSH.Playground.Migrations.PostgreSQL.ProcurementPlanning
                     PreviousVersionId = table.Column<Guid>(type: "uuid", nullable: true),
                     AmendmentReason = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
                     AmendedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    AmendedById = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
-                    ConsolidatedById = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    AmendedById = table.Column<Guid>(type: "uuid", nullable: true),
+                    ConsolidatedById = table.Column<Guid>(type: "uuid", nullable: true),
                     ConsolidatedOn = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    ApprovedById = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    ApprovedById = table.Column<Guid>(type: "uuid", nullable: true),
                     ApprovedOn = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     ReturnReason = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
                     ReturnedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
@@ -60,7 +60,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.ProcurementPlanning
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     PpmpNumber = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
                     FiscalYear = table.Column<int>(type: "integer", nullable: false),
-                    PpmpType = table.Column<int>(type: "integer", nullable: false),
+                    Phase = table.Column<int>(type: "integer", nullable: false),
                     OfficeCode = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
                     EndUserUnit = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
                     Status = table.Column<int>(type: "integer", nullable: false),
@@ -70,7 +70,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.ProcurementPlanning
                     PreviousVersionId = table.Column<Guid>(type: "uuid", nullable: true),
                     AmendmentReason = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
                     AmendedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    AmendedById = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    AmendedById = table.Column<Guid>(type: "uuid", nullable: true),
                     PreparedById = table.Column<Guid>(type: "uuid", nullable: false),
                     SubmittedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     ApprovedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
@@ -94,29 +94,6 @@ namespace FSH.Playground.Migrations.PostgreSQL.ProcurementPlanning
                 });
 
             migrationBuilder.CreateTable(
-                name: "AppLineReferences",
-                schema: "procurement_planning",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    AppId = table.Column<Guid>(type: "uuid", nullable: false),
-                    SourcePpmpId = table.Column<Guid>(type: "uuid", nullable: false),
-                    SourcePpmpItemId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ItemNo = table.Column<int>(type: "integer", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_AppLineReferences", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_AppLineReferences_AnnualProcurementPlans_AppId",
-                        column: x => x.AppId,
-                        principalSchema: "procurement_planning",
-                        principalTable: "AnnualProcurementPlans",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "AppSnapshots",
                 schema: "procurement_planning",
                 columns: table => new
@@ -126,7 +103,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.ProcurementPlanning
                     SnapshotType = table.Column<int>(type: "integer", nullable: false),
                     AppNumber = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
                     FiscalYear = table.Column<int>(type: "integer", nullable: false),
-                    RevisionType = table.Column<int>(type: "integer", nullable: false),
+                    Phase = table.Column<int>(type: "integer", nullable: false),
                     StatusAtCapture = table.Column<int>(type: "integer", nullable: false),
                     VersionNumber = table.Column<int>(type: "integer", nullable: false),
                     VersionChainId = table.Column<Guid>(type: "uuid", nullable: false),
@@ -215,6 +192,43 @@ namespace FSH.Playground.Migrations.PostgreSQL.ProcurementPlanning
                         principalTable: "AppSnapshots",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AppLineReferences",
+                schema: "procurement_planning",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    AppId = table.Column<Guid>(type: "uuid", nullable: false),
+                    SourcePpmpId = table.Column<Guid>(type: "uuid", nullable: false),
+                    SourcePpmpItemId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ItemNo = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AppLineReferences", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_AppLineReferences_AnnualProcurementPlans_AppId",
+                        column: x => x.AppId,
+                        principalSchema: "procurement_planning",
+                        principalTable: "AnnualProcurementPlans",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_AppLineReferences_PpmpItems_SourcePpmpItemId",
+                        column: x => x.SourcePpmpItemId,
+                        principalSchema: "procurement_planning",
+                        principalTable: "PpmpItems",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_AppLineReferences_Ppmps_SourcePpmpId",
+                        column: x => x.SourcePpmpId,
+                        principalSchema: "procurement_planning",
+                        principalTable: "Ppmps",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateIndex(

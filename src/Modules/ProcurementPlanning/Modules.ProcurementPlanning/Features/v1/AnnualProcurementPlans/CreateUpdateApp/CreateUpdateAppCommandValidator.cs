@@ -1,7 +1,7 @@
 using FluentValidation;
 using FSH.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
 
-namespace FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.AmendAnnualProcurementPlan;
+namespace FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.CreateUpdateApp;
 
 public sealed class CreateUpdateAppCommandValidator : AbstractValidator<CreateUpdateAppCommand>
 {

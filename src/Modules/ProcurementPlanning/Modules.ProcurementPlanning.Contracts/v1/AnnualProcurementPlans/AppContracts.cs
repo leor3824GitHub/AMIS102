@@ -22,13 +22,6 @@ public enum AppPhase
     Updated = 2
 }
 
-public enum AppRevisionType
-{
-    Original = 0,
-    Supplemental = 1,
-    Revised = 2
-}
-
 // ── DTOs ─────────────────────────────────────────────────────────────────────
 
 public sealed record AppItemDto(

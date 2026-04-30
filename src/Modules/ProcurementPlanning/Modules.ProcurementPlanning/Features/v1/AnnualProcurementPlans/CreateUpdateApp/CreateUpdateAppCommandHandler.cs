@@ -5,7 +5,7 @@ using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.AmendAnnualProcurementPlan;
+namespace FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.CreateUpdateApp;
 
 public sealed class CreateUpdateAppCommandHandler(
     ProcurementPlanningDbContext dbContext,
