@@ -1,3 +1,4 @@
+using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;
 using FSH.Modules.ProcurementAcquisition.Domain.Canvass;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -8,9 +9,11 @@ public sealed class CanvassQuotationConfiguration : IEntityTypeConfiguration<Can
 {
     public void Configure(EntityTypeBuilder<CanvassQuotation> builder)
     {
-        builder.ToTable("CanvassQuotations", ProcurementAcquisitionModuleConstants.SchemaName);
+        builder.ToTable("CanvassQuotations", ProcurementAcquisitionModuleConstants.SchemaName)
+            .IsMultiTenant();
 
         builder.HasKey(x => x.Id);
+        builder.Property(x => x.TenantId).HasMaxLength(64).IsRequired();
         builder.Property(x => x.SupplierName).HasMaxLength(256).IsRequired();
         builder.Property(x => x.SupplierAddress).HasMaxLength(500).IsRequired();
         builder.Property(x => x.TinNumber).HasMaxLength(32);
@@ -20,7 +23,7 @@ public sealed class CanvassQuotationConfiguration : IEntityTypeConfiguration<Can
         builder.HasIndex(x => x.SupplierId);
 
         builder.Property(x => x.IsDeleted).HasDefaultValue(false);
-        builder.HasQueryFilter(x => !x.IsDeleted);
+        builder.HasQueryFilter("SoftDelete", x => !x.IsDeleted);
 
         builder.OwnsMany(x => x.LineItems, b =>
         {

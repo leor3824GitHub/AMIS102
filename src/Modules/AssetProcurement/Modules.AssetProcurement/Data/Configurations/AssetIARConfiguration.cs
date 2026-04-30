@@ -1,4 +1,5 @@
 using FSH.Modules.AssetProcurement.Domain.AssetInspectionAcceptanceReports;
+using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -8,9 +9,11 @@ internal sealed class AssetIARConfiguration : IEntityTypeConfiguration<AssetInsp
 {
     public void Configure(EntityTypeBuilder<AssetInspectionAcceptanceReport> builder)
     {
-        builder.ToTable("AssetIARs", AssetProcurementModuleConstants.SchemaName);
+        builder.ToTable("AssetIARs", AssetProcurementModuleConstants.SchemaName)
+            .IsMultiTenant();
 
         builder.HasKey(x => x.Id);
+        builder.Property(x => x.TenantId).IsRequired().HasMaxLength(50);
         builder.Property(x => x.IarNumber).IsRequired().HasMaxLength(64);
         builder.Property(x => x.SupplierName).IsRequired().HasMaxLength(500);
         builder.Property(x => x.DeliveryReceiptNo).HasMaxLength(64);
@@ -31,11 +34,11 @@ internal sealed class AssetIARConfiguration : IEntityTypeConfiguration<AssetInsp
             li.Property(x => x.InspectionRemarks).HasMaxLength(500);
         });
 
-        builder.HasQueryFilter(x => !x.IsDeleted);
+        builder.HasQueryFilter("SoftDelete", x => !x.IsDeleted);
 
-        builder.HasIndex(x => x.IarNumber).IsUnique();
-        builder.HasIndex(x => x.Status);
-        builder.HasIndex(x => x.PurchaseOrderId);
+        builder.HasIndex(x => new { x.TenantId, x.IarNumber }).IsUnique();
+        builder.HasIndex(x => new { x.TenantId, x.Status });
+        builder.HasIndex(x => new { x.TenantId, x.PurchaseOrderId });
         builder.HasIndex(x => x.CreatedOnUtc);
     }
 }

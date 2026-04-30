@@ -14,6 +14,8 @@ public sealed class CreateCanvassRequestCommandHandler(
 {
     public async ValueTask<CanvassRequestDto> Handle(CreateCanvassRequestCommand command, CancellationToken cancellationToken)
     {
+        var tenantId = GetRequiredTenantId();
+
         var pr = await dbContext.PurchaseRequests
             .FirstOrDefaultAsync(x => x.Id == command.PurchaseRequestId, cancellationToken)
             .ConfigureAwait(false)
@@ -29,9 +31,9 @@ public sealed class CreateCanvassRequestCommandHandler(
         if (alreadyExists)
             throw new InvalidOperationException("A canvass request already exists for this purchase request.");
 
-        var rivNumber = await GenerateRivNumberAsync(cancellationToken).ConfigureAwait(false);
+        var rivNumber = await GenerateRivNumberAsync(tenantId, cancellationToken).ConfigureAwait(false);
 
-        var canvass = CanvassRequest.Create(rivNumber, command.PurchaseRequestId, command.ReturnDeadline);
+        var canvass = CanvassRequest.Create(tenantId, rivNumber, command.PurchaseRequestId, command.ReturnDeadline);
         canvass.CreatedBy = currentUser.GetUserId().ToString();
 
         dbContext.CanvassRequests.Add(canvass);
@@ -40,14 +42,14 @@ public sealed class CreateCanvassRequestCommandHandler(
         return MapToDto(canvass, pr.PrNumber);
     }
 
-    private async Task<string> GenerateRivNumberAsync(CancellationToken ct)
+    private async Task<string> GenerateRivNumberAsync(string tenantId, CancellationToken ct)
     {
         var year = DateTime.UtcNow.Year;
         var prefix = $"RIV-{year}-";
 
         var lastNumber = await dbContext.CanvassRequests
             .IgnoreQueryFilters()
-            .Where(x => x.RivNumber.StartsWith(prefix))
+            .Where(x => x.TenantId == tenantId && x.RivNumber.StartsWith(prefix))
             .Select(x => x.RivNumber)
             .OrderByDescending(x => x)
             .FirstOrDefaultAsync(ct)
@@ -61,6 +63,11 @@ public sealed class CreateCanvassRequestCommandHandler(
 
         return $"{prefix}{next:0000}";
     }
+
+    private string GetRequiredTenantId() =>
+        currentUser.GetTenant()
+        ?? dbContext.TenantInfo?.Identifier
+        ?? throw new InvalidOperationException("Tenant ID required.");
 
     internal static CanvassRequestDto MapToDto(CanvassRequest canvass, string prNumber)
     {

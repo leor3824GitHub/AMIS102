@@ -38,8 +38,9 @@ public sealed class PurchaseOrderLineItem
     }
 }
 
-public sealed class PurchaseOrder : AggregateRoot<Guid>, IAuditableEntity
+public sealed class PurchaseOrder : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 {
+    public string TenantId { get; private set; } = default!;
     public string PoNumber { get; private set; } = default!;
     public DateOnly PoDate { get; private set; }
     public Guid PurchaseRequestId { get; private set; }
@@ -76,6 +77,7 @@ public sealed class PurchaseOrder : AggregateRoot<Guid>, IAuditableEntity
     private PurchaseOrder() { }
 
     public static PurchaseOrder Create(
+        string tenantId,
         string poNumber,
         Guid purchaseRequestId,
         Guid? canvassRequestId,
@@ -95,6 +97,7 @@ public sealed class PurchaseOrder : AggregateRoot<Guid>, IAuditableEntity
         var po = new PurchaseOrder
         {
             Id = Guid.NewGuid(),
+            TenantId = tenantId,
             PoNumber = poNumber,
             PoDate = DateOnly.FromDateTime(DateTime.UtcNow),
             PurchaseRequestId = purchaseRequestId,

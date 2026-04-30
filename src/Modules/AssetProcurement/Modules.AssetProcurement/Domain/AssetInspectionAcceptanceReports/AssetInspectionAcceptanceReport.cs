@@ -48,8 +48,9 @@ public sealed class AssetIARLineItem
         };
 }
 
-public sealed class AssetInspectionAcceptanceReport : AggregateRoot<Guid>, IAuditableEntity
+public sealed class AssetInspectionAcceptanceReport : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 {
+    public string TenantId { get; private set; } = default!;
     public string IarNumber { get; private set; } = default!;
     public DateOnly IarDate { get; private set; }
     public Guid PurchaseOrderId { get; private set; }
@@ -79,6 +80,7 @@ public sealed class AssetInspectionAcceptanceReport : AggregateRoot<Guid>, IAudi
     private AssetInspectionAcceptanceReport() { }
 
     public static AssetInspectionAcceptanceReport Create(
+        string tenantId,
         string iarNumber,
         Guid purchaseOrderId,
         Guid supplierId,
@@ -93,6 +95,7 @@ public sealed class AssetInspectionAcceptanceReport : AggregateRoot<Guid>, IAudi
         var iar = new AssetInspectionAcceptanceReport
         {
             Id = Guid.NewGuid(),
+            TenantId = tenantId,
             IarNumber = iarNumber,
             IarDate = DateOnly.FromDateTime(DateTime.UtcNow),
             PurchaseOrderId = purchaseOrderId,

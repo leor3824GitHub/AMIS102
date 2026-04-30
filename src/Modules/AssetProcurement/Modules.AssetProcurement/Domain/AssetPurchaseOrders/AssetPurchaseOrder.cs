@@ -42,8 +42,9 @@ public sealed class AssetPurchaseOrderLineItem
         };
 }
 
-public sealed class AssetPurchaseOrder : AggregateRoot<Guid>, IAuditableEntity
+public sealed class AssetPurchaseOrder : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 {
+    public string TenantId { get; private set; } = default!;
     public string PoNumber { get; private set; } = default!;
     public DateOnly PoDate { get; private set; }
     public Guid PurchaseRequestId { get; private set; }
@@ -77,6 +78,7 @@ public sealed class AssetPurchaseOrder : AggregateRoot<Guid>, IAuditableEntity
     private AssetPurchaseOrder() { }
 
     public static AssetPurchaseOrder Create(
+        string tenantId,
         string poNumber,
         Guid purchaseRequestId,
         Guid supplierId,
@@ -95,6 +97,7 @@ public sealed class AssetPurchaseOrder : AggregateRoot<Guid>, IAuditableEntity
         var po = new AssetPurchaseOrder
         {
             Id = Guid.NewGuid(),
+            TenantId = tenantId,
             PoNumber = poNumber,
             PoDate = DateOnly.FromDateTime(DateTime.UtcNow),
             PurchaseRequestId = purchaseRequestId,

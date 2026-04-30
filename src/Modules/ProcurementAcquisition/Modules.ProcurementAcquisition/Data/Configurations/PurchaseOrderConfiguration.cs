@@ -1,3 +1,4 @@
+using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;
 using FSH.Modules.ProcurementAcquisition.Domain.PurchaseOrders;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -8,9 +9,11 @@ public sealed class PurchaseOrderConfiguration : IEntityTypeConfiguration<Purcha
 {
     public void Configure(EntityTypeBuilder<PurchaseOrder> builder)
     {
-        builder.ToTable("PurchaseOrders", ProcurementAcquisitionModuleConstants.SchemaName);
+        builder.ToTable("PurchaseOrders", ProcurementAcquisitionModuleConstants.SchemaName)
+            .IsMultiTenant();
 
         builder.HasKey(x => x.Id);
+        builder.Property(x => x.TenantId).HasMaxLength(64).IsRequired();
         builder.Property(x => x.PoNumber).HasMaxLength(32).IsRequired();
         builder.Property(x => x.SupplierName).HasMaxLength(256).IsRequired();
         builder.Property(x => x.SupplierAddress).HasMaxLength(500).IsRequired();
@@ -25,12 +28,12 @@ public sealed class PurchaseOrderConfiguration : IEntityTypeConfiguration<Purcha
         builder.Property(x => x.CancellationReason).HasMaxLength(1000);
         // Version column kept for future xmin-based concurrency; not active until properly wired
 
-        builder.HasIndex(x => x.PoNumber).IsUnique();
+        builder.HasIndex(x => new { x.TenantId, x.PoNumber }).IsUnique();
         builder.HasIndex(x => x.PurchaseRequestId);
         builder.HasIndex(x => x.Status);
 
         builder.Property(x => x.IsDeleted).HasDefaultValue(false);
-        builder.HasQueryFilter(x => !x.IsDeleted);
+        builder.HasQueryFilter("SoftDelete", x => !x.IsDeleted);
 
         builder.OwnsMany(x => x.LineItems, b =>
         {

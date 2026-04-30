@@ -13,6 +13,8 @@ public sealed class AddQuotationCommandHandler(
 {
     public async ValueTask<CanvassQuotationDto> Handle(AddQuotationCommand command, CancellationToken cancellationToken)
     {
+        var tenantId = GetRequiredTenantId();
+
         var canvass = await dbContext.CanvassRequests
             .Include(x => x.Quotations)
             .FirstOrDefaultAsync(x => x.Id == command.CanvassRequestId, cancellationToken)
@@ -29,6 +31,7 @@ public sealed class AddQuotationCommandHandler(
             (li.Description, li.Unit, li.Quantity, li.UnitPrice));
 
         var quotation = CanvassQuotation.Create(
+            tenantId,
             command.CanvassRequestId,
             command.SupplierId,
             command.SupplierName,
@@ -55,4 +58,9 @@ public sealed class AddQuotationCommandHandler(
             quotation.LineItems.Select(li => new CanvassQuotationLineItemDto(
                 li.ItemNo, li.Description, li.Unit, li.Quantity, li.UnitPrice, li.Total)).ToList());
     }
+
+    private string GetRequiredTenantId() =>
+        currentUser.GetTenant()
+        ?? dbContext.TenantInfo?.Identifier
+        ?? throw new InvalidOperationException("Tenant ID required.");
 }

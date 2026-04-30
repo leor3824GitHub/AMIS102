@@ -26,8 +26,9 @@ public sealed class CanvassQuotationLineItem
     }
 }
 
-public sealed class CanvassQuotation : AggregateRoot<Guid>, IAuditableEntity
+public sealed class CanvassQuotation : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 {
+    public string TenantId { get; private set; } = default!;
     public Guid CanvassRequestId { get; private set; }
     public Guid SupplierId { get; private set; }
     public string SupplierName { get; private set; } = default!;
@@ -52,6 +53,7 @@ public sealed class CanvassQuotation : AggregateRoot<Guid>, IAuditableEntity
     private CanvassQuotation() { }
 
     public static CanvassQuotation Create(
+        string tenantId,
         Guid canvassRequestId,
         Guid supplierId,
         string supplierName,
@@ -64,6 +66,7 @@ public sealed class CanvassQuotation : AggregateRoot<Guid>, IAuditableEntity
         var quotation = new CanvassQuotation
         {
             Id = Guid.NewGuid(),
+            TenantId = tenantId,
             CanvassRequestId = canvassRequestId,
             SupplierId = supplierId,
             SupplierName = supplierName,

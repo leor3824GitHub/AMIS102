@@ -13,15 +13,18 @@ public sealed class CreateAssetIARCommandHandler(
 {
     public async ValueTask<AssetIARDto> Handle(CreateAssetIARCommand command, CancellationToken cancellationToken)
     {
+        var tenantId = GetRequiredTenantId();
+
         var po = await dbContext.AssetPurchaseOrders
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == command.PurchaseOrderId, cancellationToken)
             .ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Asset purchase order '{command.PurchaseOrderId}' not found.");
 
-        var iarNumber = await GenerateIARNumberAsync(cancellationToken).ConfigureAwait(false);
+        var iarNumber = await GenerateIARNumberAsync(tenantId, cancellationToken).ConfigureAwait(false);
 
         var iar = AssetInspectionAcceptanceReport.Create(
+            tenantId,
             iarNumber,
             command.PurchaseOrderId,
             po.SupplierId,
@@ -41,14 +44,14 @@ public sealed class CreateAssetIARCommandHandler(
         return MapToDto(iar, po.PoNumber);
     }
 
-    private async Task<string> GenerateIARNumberAsync(CancellationToken ct)
+    private async Task<string> GenerateIARNumberAsync(string tenantId, CancellationToken ct)
     {
         var year = DateTime.UtcNow.Year;
         var prefix = $"IAR-{year}-";
 
         var lastNumber = await dbContext.AssetIARs
             .IgnoreQueryFilters()
-            .Where(x => x.IarNumber.StartsWith(prefix))
+            .Where(x => x.TenantId == tenantId && x.IarNumber.StartsWith(prefix))
             .Select(x => x.IarNumber)
             .OrderByDescending(x => x)
             .FirstOrDefaultAsync(ct)
@@ -60,6 +63,11 @@ public sealed class CreateAssetIARCommandHandler(
 
         return $"{prefix}{next:0000}";
     }
+
+    private string GetRequiredTenantId() =>
+        currentUser.GetTenant()
+        ?? dbContext.TenantInfo?.Identifier
+        ?? throw new InvalidOperationException("Tenant ID required.");
 
     internal static AssetIARDto MapToDto(AssetInspectionAcceptanceReport iar, string poNumber) =>
         new(iar.Id,

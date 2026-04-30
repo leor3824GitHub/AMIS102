@@ -3,8 +3,9 @@ using FSH.Modules.ProcurementAcquisition.Contracts.v1.Canvass;
 
 namespace FSH.Modules.ProcurementAcquisition.Domain.Canvass;
 
-public sealed class CanvassRequest : AggregateRoot<Guid>, IAuditableEntity
+public sealed class CanvassRequest : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 {
+    public string TenantId { get; private set; } = default!;
     public string RivNumber { get; private set; } = default!;
     public Guid PurchaseRequestId { get; private set; }
     public DateOnly ReturnDeadline { get; private set; }
@@ -26,11 +27,12 @@ public sealed class CanvassRequest : AggregateRoot<Guid>, IAuditableEntity
 
     private CanvassRequest() { }
 
-    public static CanvassRequest Create(string rivNumber, Guid purchaseRequestId, DateOnly returnDeadline)
+    public static CanvassRequest Create(string tenantId, string rivNumber, Guid purchaseRequestId, DateOnly returnDeadline)
     {
         return new CanvassRequest
         {
             Id = Guid.NewGuid(),
+            TenantId = tenantId,
             RivNumber = rivNumber,
             PurchaseRequestId = purchaseRequestId,
             ReturnDeadline = returnDeadline,

@@ -62,8 +62,9 @@ public sealed class AssetPurchaseRequestLineItem
     }
 }
 
-public sealed class AssetPurchaseRequest : AggregateRoot<Guid>, IAuditableEntity
+public sealed class AssetPurchaseRequest : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 {
+    public string TenantId { get; private set; } = default!;
     public string PrNumber { get; private set; } = default!;
     public DateOnly PrDate { get; private set; }
     public string? SaiNumber { get; private set; }
@@ -96,6 +97,7 @@ public sealed class AssetPurchaseRequest : AggregateRoot<Guid>, IAuditableEntity
     private AssetPurchaseRequest() { }
 
     public static AssetPurchaseRequest Create(
+        string tenantId,
         string prNumber,
         Guid departmentId,
         string? section,
@@ -112,6 +114,7 @@ public sealed class AssetPurchaseRequest : AggregateRoot<Guid>, IAuditableEntity
         var pr = new AssetPurchaseRequest
         {
             Id = Guid.NewGuid(),
+            TenantId = tenantId,
             PrNumber = prNumber,
             PrDate = DateOnly.FromDateTime(DateTime.UtcNow),
             DepartmentId = departmentId,

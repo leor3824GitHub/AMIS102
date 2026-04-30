@@ -13,9 +13,11 @@ public sealed class CreateAssetPurchaseOrderCommandHandler(
 {
     public async ValueTask<AssetPurchaseOrderDto> Handle(CreateAssetPurchaseOrderCommand command, CancellationToken cancellationToken)
     {
-        var poNumber = await GeneratePoNumberAsync(cancellationToken).ConfigureAwait(false);
+        var tenantId = GetRequiredTenantId();
+        var poNumber = await GeneratePoNumberAsync(tenantId, cancellationToken).ConfigureAwait(false);
 
         var po = AssetPurchaseOrder.Create(
+            tenantId,
             poNumber,
             command.PurchaseRequestId,
             command.SupplierId,
@@ -39,14 +41,14 @@ public sealed class CreateAssetPurchaseOrderCommandHandler(
         return MapToDto(po, string.Empty);
     }
 
-    private async Task<string> GeneratePoNumberAsync(CancellationToken ct)
+    private async Task<string> GeneratePoNumberAsync(string tenantId, CancellationToken ct)
     {
         var year = DateTime.UtcNow.Year;
         var prefix = $"APO-{year}-";
 
         var lastNumber = await dbContext.AssetPurchaseOrders
             .IgnoreQueryFilters()
-            .Where(x => x.PoNumber.StartsWith(prefix))
+            .Where(x => x.TenantId == tenantId && x.PoNumber.StartsWith(prefix))
             .Select(x => x.PoNumber)
             .OrderByDescending(x => x)
             .FirstOrDefaultAsync(ct)
@@ -58,6 +60,11 @@ public sealed class CreateAssetPurchaseOrderCommandHandler(
 
         return $"{prefix}{next:0000}";
     }
+
+    private string GetRequiredTenantId() =>
+        currentUser.GetTenant()
+        ?? dbContext.TenantInfo?.Identifier
+        ?? throw new InvalidOperationException("Tenant ID required.");
 
     internal static AssetPurchaseOrderDto MapToDto(AssetPurchaseOrder po, string prNumber) =>
         new(po.Id,

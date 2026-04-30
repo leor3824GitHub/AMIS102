@@ -156,6 +156,7 @@ Full PPMP + APP workflow implemented and tested.
 
 **Merge conflicts resolved (April 2026):**
 - `AppHost.cs` — kept 223 suffix for volume/database names
+- `appsettings.json` and `appsettings.Development.json` — kept `AMIS223` database name
 - `ProcurementPlanningClient.cs` — kept `EnsureApiSuccessAsync`; removed stale `TryGetApiMessage`
 - Migration `20260428001944` — deleted (empty .cs + conflicted designer); `20260428161849` is the canonical initial migration
 - AssetManagement migration `20260428002013` — .cs file was missing; created with full 24-table Up()/Down()
@@ -170,10 +171,44 @@ Full PPMP + APP workflow implemented and tested.
 - `PromoteToFinalAppCommandHandler` — removed `.Include(x => x.Items)` (entity uses `LineReferences`); use `AppReadProjection.BuildDtoAsync` for return value
 - `GetAppVersionsQueryHandler` — `x.RevisionType` → `x.Phase`
 
+**Domain behaviour fixes:**
+- `PromoteToFinalPpmpCommandHandler` and `PromoteToFinalAppCommandHandler` — removed `original.Supersede()` call; the Indicative document must remain Approved as the filed approval copy after the Final is created
+- `AnnualProcurementPlan.PromoteToFinal()` — no longer clones items; Final APP starts empty and must be re-consolidated from Final-phase PPMPs
+- `AnnualProcurementPlan.ConsolidatePpmps()` — added phase alignment guard: throws if any supplied PPMP's `Phase` does not match `(PpmpPhase)(int)this.Phase`
+
 **Unit test fixes (`AnnualProcurementPlanWorkflowTests`):**
 - `CreateApprovedPpmp` helper → `PpmpPhase.Final` (was Indicative)
 - `CreateDraftAppFrom` helper → `AppPhase.Final` (was Indicative)
 - Reason: `ConsolidatePpmps` requires PPMP phase to match APP phase (`(PpmpPhase)(int)Phase`), and `CreateUpdate` throws on Indicative APPs. Tests exercising the amendment workflow must use Final-phase entities.
 - Handler class is `CreateUpdateAppCommandHandler` (namespace `AmendAnnualProcurementPlan`)
 
-**Final state:** build 0 errors, all 220 tests pass (Architecture 47, Generic 73, Multitenancy 93, Vehicle 8).
+---
+
+### AssetManagement Module — Multi-Tenancy (complete)
+
+All 24 domain entities updated to implement `IHasTenant` (carries `TenantId` property) for Finbuckle data isolation.
+
+**Two-layer fix required for tenant isolation:**
+1. Domain entity must implement `IHasTenant` — done for all 24 entities
+2. EF configuration must call `.IsMultiTenant()` on the `ToTable()` chain — activates Finbuckle's automatic `WHERE TenantId = @tenant` query filter
+
+**EF configuration fixes (`using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;` required):**
+- Added `.IsMultiTenant()` to 11 item-entity configurations that were missing it:
+  `ICSItems`, `PARItems`, `PPEIRItems`, `PhysicalCountEntries`, `PropertyCodeCounters`, `PropertyIncidentItems`, `RRPItems`, `RRSPItems`, `SMIRItems`, `TangibleInventoryItems`, `UnserviceablePropertyItems`
+- The 13 parent-document configurations already had `.IsMultiTenant()`
+
+**`.IgnoreQueryFilters()` removal — document-number uniqueness (11 command handlers):**
+- Document numbers (ICSNo, PARNo, RRSPNo, etc.) are unique **per tenant**, not globally — each agency runs its own numbering series
+- Removed `.IgnoreQueryFilters()` from all uniqueness `AnyAsync` checks in: `CreateICSCommandHandler`, `RenewICSCommandHandler`, `CreatePARCommandHandler`, `CreatePPEIRCommandHandler`, `CreateRRSPCommandHandler`, `CreateRRPCommandHandler`, `CreateSMIRCommandHandler`, `CreatePropertyIncidentReportCommandHandler`, `CreateUnserviceablePropertyReportCommandHandler`, `CreatePhysicalCountSessionCommandHandler`, `CreateTangibleInventoryCommandHandler`
+
+**`.IgnoreQueryFilters()` removal — report/query handlers (15+ handlers):**
+- After item entities gained `IHasTenant` + `.IsMultiTenant()`, any `.IgnoreQueryFilters()` on joined tables bypasses the new tenant filter — all removed
+- Affected handlers: `GetSPCQueryHandler`, `GetPropertyHistoryQueryHandler`, `GetRRSPByIdQueryHandler`, `GetRRSPListQueryHandler`, `GetRSPIQueryHandler`, `GetRegSPIQueryHandler`, `GetPARByIdQueryHandler`, `GetSMIRByIdQueryHandler`, `GetRPCPPEQueryHandler`, `GetPropertyIncidentReportByIdQueryHandler`, `GetPTRQueryHandler`, `GetRSPIQueryHandler`, `GetRegSPIQueryHandler`, `GetUnserviceablePropertyReportByIdQueryHandler`, `RegisterTangibleItemCommandHandler`, `CreateSemiExpendableItemCommandHandler`, `UpdateSemiExpendableItemCommandHandler`
+- **Exception — `ICSExpiryJob.cs` retains `.IgnoreQueryFilters()`**: Hangfire background job runs without tenant context and intentionally processes expired ICS records across all tenants
+
+**Migration:**
+- `20260430035559_AddTenantIdToItemEntities` — adds `TenantId` column + tenant-scoped indices to 10 item tables (`PropertyCodeCounters` already had the column from the initial migration; only its index is new)
+
+---
+
+**Final state:** build 0 errors, all 513 tests pass (Architecture 47, Generic 73, Multitenancy 93, Vehicle 8, Auditing 60, Expendable 12, Identity 220).

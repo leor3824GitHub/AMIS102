@@ -13,12 +13,14 @@ public sealed class CreatePurchaseRequestCommandHandler(
 {
     public async ValueTask<PurchaseRequestDto> Handle(CreatePurchaseRequestCommand command, CancellationToken cancellationToken)
     {
-        var prNumber = await GeneratePrNumberAsync(cancellationToken).ConfigureAwait(false);
+        var tenantId = GetRequiredTenantId();
+        var prNumber = await GeneratePrNumberAsync(tenantId, cancellationToken).ConfigureAwait(false);
 
         var lineItems = command.LineItems.Select(li =>
             (li.Quantity, li.UnitOfIssue, li.ItemDescription, li.EstimatedUnitCost));
 
         var pr = PurchaseRequest.Create(
+            tenantId,
             prNumber,
             command.DepartmentId,
             command.Section,
@@ -40,14 +42,14 @@ public sealed class CreatePurchaseRequestCommandHandler(
         return MapToDto(pr);
     }
 
-    private async Task<string> GeneratePrNumberAsync(CancellationToken ct)
+    private async Task<string> GeneratePrNumberAsync(string tenantId, CancellationToken ct)
     {
         var year = DateTime.UtcNow.Year;
         var prefix = $"PR-{year}-";
 
         var lastNumber = await dbContext.PurchaseRequests
             .IgnoreQueryFilters()
-            .Where(x => x.PrNumber.StartsWith(prefix))
+            .Where(x => x.TenantId == tenantId && x.PrNumber.StartsWith(prefix))
             .Select(x => x.PrNumber)
             .OrderByDescending(x => x)
             .FirstOrDefaultAsync(ct)
@@ -61,6 +63,11 @@ public sealed class CreatePurchaseRequestCommandHandler(
 
         return $"{prefix}{next:0000}";
     }
+
+    private string GetRequiredTenantId() =>
+        currentUser.GetTenant()
+        ?? dbContext.TenantInfo?.Identifier
+        ?? throw new InvalidOperationException("Tenant ID required.");
 
     internal static PurchaseRequestDto MapToDto(PurchaseRequest pr)
     {

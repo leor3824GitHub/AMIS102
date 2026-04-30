@@ -40,8 +40,9 @@ public sealed class PurchaseRequestLineItem
     }
 }
 
-public sealed class PurchaseRequest : AggregateRoot<Guid>, IAuditableEntity
+public sealed class PurchaseRequest : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 {
+    public string TenantId { get; private set; } = default!;
     public string PrNumber { get; private set; } = default!;
     public DateOnly PrDate { get; private set; }
     public string? SaiNumber { get; private set; }
@@ -75,6 +76,7 @@ public sealed class PurchaseRequest : AggregateRoot<Guid>, IAuditableEntity
     private PurchaseRequest() { }
 
     public static PurchaseRequest Create(
+        string tenantId,
         string prNumber,
         Guid departmentId,
         string? section,
@@ -91,6 +93,7 @@ public sealed class PurchaseRequest : AggregateRoot<Guid>, IAuditableEntity
         var pr = new PurchaseRequest
         {
             Id = Guid.NewGuid(),
+            TenantId = tenantId,
             PrNumber = prNumber,
             PrDate = DateOnly.FromDateTime(DateTime.UtcNow),
             DepartmentId = departmentId,
