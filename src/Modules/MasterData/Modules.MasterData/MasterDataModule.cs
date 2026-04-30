@@ -33,6 +33,11 @@ using FSH.Modules.MasterData.Features.v1.Categories.DeleteCategory;
 using FSH.Modules.MasterData.Features.v1.Categories.GetCategories;
 using FSH.Modules.MasterData.Features.v1.Categories.GetCategoryById;
 using FSH.Modules.MasterData.Features.v1.Categories.UpdateCategory;
+using FSH.Modules.MasterData.Features.v1.ModesOfProcurement.CreateModeOfProcurement;
+using FSH.Modules.MasterData.Features.v1.ModesOfProcurement.DeleteModeOfProcurement;
+using FSH.Modules.MasterData.Features.v1.ModesOfProcurement.GetModeOfProcurementById;
+using FSH.Modules.MasterData.Features.v1.ModesOfProcurement.GetModesOfProcurement;
+using FSH.Modules.MasterData.Features.v1.ModesOfProcurement.UpdateModeOfProcurement;
 using FSH.Modules.MasterData.Features.v1.ReportSignatories.GetReportSignatories;
 using FSH.Modules.MasterData.Features.v1.ReportSignatories.CreateReportSignatory;
 using FSH.Modules.MasterData.Features.v1.ReportSignatories.UpdateReportSignatory;
@@ -101,6 +106,11 @@ public class MasterDataModule : IModule
         new("Update Categories", "Update", "MasterData.Categories"),
         new("Delete Categories", "Delete", "MasterData.Categories"),
 
+        new("View Modes Of Procurement", "View", "MasterData.ModesOfProcurement"),
+        new("Create Modes Of Procurement", "Create", "MasterData.ModesOfProcurement"),
+        new("Update Modes Of Procurement", "Update", "MasterData.ModesOfProcurement"),
+        new("Delete Modes Of Procurement", "Delete", "MasterData.ModesOfProcurement"),
+
         new("View Report Signatories", "View", "MasterData.ReportSignatories", IsBasic: true),
         new("Create Report Signatories", "Create", "MasterData.ReportSignatories"),
         new("Update Report Signatories", "Update", "MasterData.ReportSignatories"),
@@ -153,6 +163,7 @@ public class MasterDataModule : IModule
         var unitOfMeasuresGroup = moduleGroup.MapGroup("/unit-of-measures");
         var suppliersGroup = moduleGroup.MapGroup("/suppliers");
         var categoriesGroup = moduleGroup.MapGroup("/categories");
+        var modesOfProcurementGroup = moduleGroup.MapGroup("/modes-of-procurement");
         var reportSignatoriesGroup = moduleGroup.MapGroup("/report-signatories");
         var organizationProfileGroup = moduleGroup.MapGroup("/organization-profile");
         var capitalizationThresholdsGroup = moduleGroup.MapGroup("/capitalization-thresholds");
@@ -188,6 +199,11 @@ public class MasterDataModule : IModule
         GetCategoryByIdEndpoint.Map(categoriesGroup);
         UpdateCategoryEndpoint.Map(categoriesGroup);
         DeleteCategoryEndpoint.Map(categoriesGroup);
+        CreateModeOfProcurementEndpoint.Map(modesOfProcurementGroup);
+        GetModesOfProcurementEndpoint.Map(modesOfProcurementGroup);
+        GetModeOfProcurementByIdEndpoint.Map(modesOfProcurementGroup);
+        UpdateModeOfProcurementEndpoint.Map(modesOfProcurementGroup);
+        DeleteModeOfProcurementEndpoint.Map(modesOfProcurementGroup);
         GetReportSignatoriesEndpoint.Map(reportSignatoriesGroup);
         CreateReportSignatoryEndpoint.Map(reportSignatoriesGroup);
         UpdateReportSignatoryEndpoint.Map(reportSignatoriesGroup);

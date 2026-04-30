@@ -366,6 +366,39 @@ internal sealed class MasterDataDbInitializer(
             await context.Categories.AddRangeAsync(categories, cancellationToken).ConfigureAwait(false);
         }
 
+        // Modes of Procurement (RA 12009 / NGPA)
+        if (!await context.ModesOfProcurement.AnyAsync(cancellationToken).ConfigureAwait(false))
+        {
+            var modesOfProcurement = new[]
+            {
+                ModeOfProcurement.Create("Competitive Bidding", "The default and primary mode of procurement."),
+                ModeOfProcurement.Create("Limited Source Bidding"),
+                ModeOfProcurement.Create("Direct Contracting"),
+                ModeOfProcurement.Create("Repeat Order"),
+                ModeOfProcurement.Create("Shopping"),
+                ModeOfProcurement.Create("Negotiated Procurement"),
+                ModeOfProcurement.Create("Negotiated Procurement - Two Failed Biddings"),
+                ModeOfProcurement.Create("Negotiated Procurement - Emergency Cases"),
+                ModeOfProcurement.Create("Negotiated Procurement - Take-over of Contracts"),
+                ModeOfProcurement.Create("Negotiated Procurement - Adjacent or Contiguous"),
+                ModeOfProcurement.Create("Negotiated Procurement - Agency-to-Agency"),
+                ModeOfProcurement.Create("Negotiated Procurement - Scientific, Scholarly or Artistic Work, Exclusive Technology and Media Services"),
+                ModeOfProcurement.Create("Negotiated Procurement - Highly Technical Consultants"),
+                ModeOfProcurement.Create("Negotiated Procurement - Small Value Procurement"),
+                ModeOfProcurement.Create("Negotiated Procurement - Lease of Real Property and Venue"),
+                ModeOfProcurement.Create("Negotiated Procurement - NGO Participation"),
+                ModeOfProcurement.Create("Negotiated Procurement - Community Participation"),
+                ModeOfProcurement.Create("Negotiated Procurement - UN Agencies, International Organizations or International Financing Institutions"),
+                ModeOfProcurement.Create("Competitive Dialogue"),
+                ModeOfProcurement.Create("Unsolicited Proposals"),
+                ModeOfProcurement.Create("Direct Acquisition"),
+                ModeOfProcurement.Create("Direct Purchase from Government Agencies"),
+                ModeOfProcurement.Create("Portfolio Management")
+            };
+
+            await context.ModesOfProcurement.AddRangeAsync(modesOfProcurement, cancellationToken).ConfigureAwait(false);
+        }
+
         // Capitalization Thresholds
         if (!await context.CapitalizationThresholds.AnyAsync(cancellationToken).ConfigureAwait(false))
         {

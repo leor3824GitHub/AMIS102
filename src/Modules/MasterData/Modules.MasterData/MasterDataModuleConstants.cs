@@ -67,6 +67,14 @@ public static class MasterDataModuleConstants
             public const string Delete = "Permissions.MasterData.Categories.Delete";
         }
 
+        public static class ModesOfProcurement
+        {
+            public const string View = "Permissions.MasterData.ModesOfProcurement.View";
+            public const string Create = "Permissions.MasterData.ModesOfProcurement.Create";
+            public const string Update = "Permissions.MasterData.ModesOfProcurement.Update";
+            public const string Delete = "Permissions.MasterData.ModesOfProcurement.Delete";
+        }
+
         public static class ReportSignatories
         {
             public const string View = "Permissions.MasterData.ReportSignatories.View";
