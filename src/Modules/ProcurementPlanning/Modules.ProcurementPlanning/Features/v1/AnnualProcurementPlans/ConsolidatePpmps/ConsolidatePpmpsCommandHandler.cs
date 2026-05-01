@@ -4,6 +4,7 @@ using FSH.Framework.Core.Exceptions;
 using FSH.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
 using FSH.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
 using FSH.Modules.ProcurementPlanning.Data;
+using FSH.Modules.ProcurementPlanning.Domain.AnnualProcurementPlans;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
@@ -63,6 +64,24 @@ public sealed class ConsolidatePpmpsCommandHandler(
                 throw new CustomException(ex.Message, Enumerable.Empty<string>(), HttpStatusCode.Conflict);
             }
 
+            // Consolidation rebuilds child rows (remove then add) for selected PPMPs.
+            // Ensure newly created child entities are inserted rather than updated.
+            foreach (var sourceEntry in dbContext.ChangeTracker.Entries<AppSourcePpmp>())
+            {
+                if (sourceEntry.State == EntityState.Modified && selectedIds.Contains(sourceEntry.Entity.PpmpId))
+                    sourceEntry.State = EntityState.Added;
+            }
+
+            foreach (var lineEntry in dbContext.ChangeTracker.Entries<AppLineItem>())
+            {
+                if (lineEntry.State == EntityState.Modified && selectedIds.Contains(lineEntry.Entity.SourcePpmpId))
+                    lineEntry.State = EntityState.Added;
+            }
+
+            // Persist APP/source/line-item mutations first. Bulk ExecuteUpdate below bypasses
+            // change tracking and can conflict with tracked snapshots when SaveChanges runs after it.
+            await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
             var approvedIds = ppmps.Where(x => x.Status == PpmpStatus.Approved).Select(x => x.Id).ToList();
             if (approvedIds.Count > 0)
             {
@@ -81,8 +100,6 @@ public sealed class ConsolidatePpmpsCommandHandler(
                         Enumerable.Empty<string>(),
                         HttpStatusCode.Conflict);
             }
-
-            await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
             return await AppReadProjection.BuildDtoAsync(dbContext, command.AppId, cancellationToken).ConfigureAwait(false);
         }

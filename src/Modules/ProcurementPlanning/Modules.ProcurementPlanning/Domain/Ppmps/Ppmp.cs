@@ -280,6 +280,10 @@ public sealed class Ppmp : AggregateRoot<Guid>, IAuditableEntity, ISoftDeletable
         if (Phase is PpmpPhase.Indicative)
             throw new InvalidOperationException("Indicative PPMPs should be promoted to Final, not updated directly.");
 
+        var updatedVersionNumber = Phase == PpmpPhase.Final
+            ? 1
+            : VersionNumber + 1;
+
         var update = new Ppmp
         {
             Id = Guid.NewGuid(),
@@ -290,7 +294,7 @@ public sealed class Ppmp : AggregateRoot<Guid>, IAuditableEntity, ISoftDeletable
             EndUserUnit = EndUserUnit,
             PreparedById = PreparedById,
             Status = PpmpStatus.Draft,
-            VersionNumber = VersionNumber + 1,
+            VersionNumber = updatedVersionNumber,
             IsCurrentVersion = true,
             VersionChainId = VersionChainId,
             PreviousVersionId = Id,

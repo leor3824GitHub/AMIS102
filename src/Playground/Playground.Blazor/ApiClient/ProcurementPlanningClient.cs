@@ -165,7 +165,7 @@ internal sealed class PpmpClient(HttpClient http) : IPpmpClient
 internal interface IAppClient
 {
     Task<PagedResponse<AnnualProcurementPlanSummaryDto>> SearchAsync(string? keyword = null,
-        int? fiscalYear = null, AppStatus? status = null, bool currentOnly = true,
+        int? fiscalYear = null, AppStatus? status = null, AppPhase? phase = null, bool currentOnly = true,
         int page = 1, int pageSize = 20, CancellationToken ct = default);
     Task<AnnualProcurementPlanDto?> GetAsync(Guid id, CancellationToken ct = default);
     Task<IReadOnlyList<AnnualProcurementPlanSummaryDto>> GetVersionsAsync(Guid chainId, CancellationToken ct = default);
@@ -186,13 +186,14 @@ internal sealed class AppClient(HttpClient http) : IAppClient
     private const string Base = "api/v1/procurement-planning/apps";
 
     public Task<PagedResponse<AnnualProcurementPlanSummaryDto>> SearchAsync(string? keyword = null,
-        int? fiscalYear = null, AppStatus? status = null, bool currentOnly = true,
+        int? fiscalYear = null, AppStatus? status = null, AppPhase? phase = null, bool currentOnly = true,
         int page = 1, int pageSize = 20, CancellationToken ct = default)
     {
         var q = HttpUtility.ParseQueryString(string.Empty);
         if (!string.IsNullOrWhiteSpace(keyword)) q["Keyword"] = keyword;
         if (fiscalYear.HasValue) q["FiscalYear"] = fiscalYear.Value.ToString();
         if (status.HasValue) q["Status"] = ((int)status.Value).ToString();
+        if (phase.HasValue) q["Phase"] = ((int)phase.Value).ToString();
         q["CurrentVersionOnly"] = currentOnly.ToString().ToLowerInvariant();
         q["PageNumber"] = page.ToString();
         q["PageSize"] = pageSize.ToString();

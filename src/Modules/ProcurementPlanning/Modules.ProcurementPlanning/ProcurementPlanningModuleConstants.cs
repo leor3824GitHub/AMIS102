@@ -22,6 +22,7 @@ public static class ProcurementPlanningModuleConstants
         {
             public const string View = "Permissions.ProcurementPlanning.Apps.View";
             public const string Create = "Permissions.ProcurementPlanning.Apps.Create";
+            public const string Delete = "Permissions.ProcurementPlanning.Apps.Delete";
             public const string Consolidate = "Permissions.ProcurementPlanning.Apps.Consolidate";
             public const string Publish = "Permissions.ProcurementPlanning.Apps.Publish";
             public const string Approve = "Permissions.ProcurementPlanning.Apps.Approve";

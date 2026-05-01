@@ -73,11 +73,10 @@ public sealed class AnnualProcurementPlan : AggregateRoot<Guid>, IAuditableEntit
         if (Status is not (AppStatus.Draft or AppStatus.Returned))
             throw new InvalidOperationException("Only Draft or Returned APPs can have PPMPs consolidated into them.");
 
-        var expectedPpmpPhase = (PpmpPhase)(int)Phase;
-        var mismatch = ppmps.FirstOrDefault(p => p.Phase != expectedPpmpPhase);
+        var mismatch = ppmps.FirstOrDefault(p => !IsPpmpPhaseAllowedForConsolidation(p.Phase));
         if (mismatch is not null)
             throw new InvalidOperationException(
-                $"PPMP {mismatch.Id} has phase '{mismatch.Phase}' but this APP requires phase '{expectedPpmpPhase}'.");
+                $"PPMP {mismatch.Id} has phase '{mismatch.Phase}' which is not allowed for APP phase '{Phase}'.");
     }
 
     /// <summary>Consolidates approved PPMPs into this APP. Re-consolidating the same PPMPs replaces their items.</summary>
@@ -88,11 +87,10 @@ public sealed class AnnualProcurementPlan : AggregateRoot<Guid>, IAuditableEntit
 
         var ppmpList = ppmps.ToList();
 
-        var expectedPpmpPhase = (PpmpPhase)(int)Phase;
-        var mismatch = ppmpList.FirstOrDefault(p => p.Phase != expectedPpmpPhase);
+        var mismatch = ppmpList.FirstOrDefault(p => !IsPpmpPhaseAllowedForConsolidation(p.Phase));
         if (mismatch is not null)
             throw new InvalidOperationException(
-                $"PPMP {mismatch.Id} has phase '{mismatch.Phase}' but this APP requires phase '{expectedPpmpPhase}'.");
+                $"PPMP {mismatch.Id} has phase '{mismatch.Phase}' which is not allowed for APP phase '{Phase}'.");
 
         if (ppmpList.Any(x => x.FiscalYear != FiscalYear))
             throw new InvalidOperationException("All selected PPMPs must belong to the same fiscal year as the APP.");
@@ -195,10 +193,14 @@ public sealed class AnnualProcurementPlan : AggregateRoot<Guid>, IAuditableEntit
     /// <summary>Creates a new Updated version of an Approved Final or Updated APP. Caller must call Supersede() on this instance.</summary>
     public AnnualProcurementPlan CreateUpdate(string updateReason, Guid updatedById)
     {
-        if (Status is not (AppStatus.Published or AppStatus.Approved))
-            throw new InvalidOperationException("Only Published or Approved APPs can have an update created.");
+        if (Status is not AppStatus.Approved)
+            throw new InvalidOperationException("Only Approved APPs can have an update created.");
         if (Phase is AppPhase.Indicative)
             throw new InvalidOperationException("Indicative APPs should be promoted to Final, not updated directly.");
+
+        var updatedVersionNumber = Phase == AppPhase.Final
+            ? 1
+            : VersionNumber + 1;
 
         var update = new AnnualProcurementPlan
         {
@@ -207,7 +209,7 @@ public sealed class AnnualProcurementPlan : AggregateRoot<Guid>, IAuditableEntit
             FiscalYear = FiscalYear,
             Phase = AppPhase.Updated,
             Status = AppStatus.Draft,
-            VersionNumber = VersionNumber + 1,
+            VersionNumber = updatedVersionNumber,
             IsCurrentVersion = true,
             VersionChainId = VersionChainId,
             PreviousVersionId = Id,
@@ -242,4 +244,12 @@ public sealed class AnnualProcurementPlan : AggregateRoot<Guid>, IAuditableEntit
         Status = AppStatus.Superseded;
         Touch();
     }
+
+    private bool IsPpmpPhaseAllowedForConsolidation(PpmpPhase ppmpPhase) => Phase switch
+    {
+        AppPhase.Indicative => ppmpPhase == PpmpPhase.Indicative,
+        AppPhase.Final => ppmpPhase == PpmpPhase.Final,
+        AppPhase.Updated => ppmpPhase is PpmpPhase.Final or PpmpPhase.Updated,
+        _ => false
+    };
 }

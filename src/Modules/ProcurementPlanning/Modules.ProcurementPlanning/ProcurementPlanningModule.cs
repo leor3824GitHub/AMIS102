@@ -51,6 +51,7 @@ public class ProcurementPlanningModule : IModule
 
         new("View APPs",        "View",        "ProcurementPlanning.Apps", IsBasic: true),
         new("Create APPs",      "Create",      "ProcurementPlanning.Apps"),
+        new("Delete APPs",      "Delete",      "ProcurementPlanning.Apps"),
         new("Consolidate APPs", "Consolidate", "ProcurementPlanning.Apps"),
         new("Publish APPs",     "Publish",     "ProcurementPlanning.Apps"),
         new("Approve APPs",     "Approve",     "ProcurementPlanning.Apps"),

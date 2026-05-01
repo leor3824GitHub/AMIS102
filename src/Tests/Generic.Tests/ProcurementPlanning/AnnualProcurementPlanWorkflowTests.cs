@@ -129,7 +129,7 @@ public sealed class AnnualProcurementPlanWorkflowTests
     }
 
     [Fact]
-    public async Task CreateUpdateAppCommandHandler_WhenAppIsPublished_ClonesAppLineItemsIntoNewVersion()
+    public async Task CreateUpdateAppCommandHandler_WhenAppIsApproved_ClonesAppLineItemsIntoNewVersion()
     {
         // Arrange
         await using var dbContext = CreateDbContext();
@@ -138,6 +138,7 @@ public sealed class AnnualProcurementPlanWorkflowTests
         var ppmp = CreateApprovedPpmp(preparedById, approvedById, "Network Switch", 64000m);
         var app = CreateDraftAppFrom(ppmp, "draft-user");
         app.Publish();
+        app.Approve(Guid.NewGuid());
 
         dbContext.Ppmps.Add(ppmp);
         dbContext.AnnualProcurementPlans.Add(app);
@@ -153,7 +154,7 @@ public sealed class AnnualProcurementPlanWorkflowTests
 
         // Assert
         result.Status.ShouldBe(AppStatus.Draft);
-        result.VersionNumber.ShouldBe(2);
+        result.VersionNumber.ShouldBe(1);
         result.PreviousVersionId.ShouldBe(app.Id);
         result.Items.Count.ShouldBe(1);
         result.Items[0].GeneralDescription.ShouldBe("Network Switch");
@@ -192,6 +193,7 @@ public sealed class AnnualProcurementPlanWorkflowTests
         var ppmp = CreateApprovedPpmp(Guid.NewGuid(), Guid.NewGuid(), "Searchable Item", 45000m);
         var originalApp = CreateDraftAppFrom(ppmp, "draft-user");
         originalApp.Publish();
+        originalApp.Approve(Guid.NewGuid());
 
         var amendment = originalApp.CreateUpdate("Annual adjustment", Guid.NewGuid());
         amendment.CreatedBy = "amender";
@@ -224,7 +226,7 @@ public sealed class AnnualProcurementPlanWorkflowTests
         items.Count.ShouldBe(1);
         items[0].Id.ShouldBe(amendment.Id);
         items[0].Status.ShouldBe(AppStatus.Draft);
-        items[0].VersionNumber.ShouldBe(2);
+        items[0].VersionNumber.ShouldBe(1);
         items[0].ItemCount.ShouldBe(1);
         items[0].TotalEstimatedBudget.ShouldBe(45000m);
     }
@@ -237,6 +239,7 @@ public sealed class AnnualProcurementPlanWorkflowTests
         var ppmp = CreateApprovedPpmp(Guid.NewGuid(), Guid.NewGuid(), "Versioned Item", 88000m);
         var originalApp = CreateDraftAppFrom(ppmp, "draft-user");
         originalApp.Publish();
+        originalApp.Approve(Guid.NewGuid());
 
         var amendment = originalApp.CreateUpdate("Updated requirement", Guid.NewGuid());
         amendment.CreatedBy = "amender";
@@ -260,7 +263,7 @@ public sealed class AnnualProcurementPlanWorkflowTests
         result[0].TotalEstimatedBudget.ShouldBe(88000m);
 
         result[1].Id.ShouldBe(amendment.Id);
-        result[1].VersionNumber.ShouldBe(2);
+        result[1].VersionNumber.ShouldBe(1);
         result[1].Status.ShouldBe(AppStatus.Draft);
         result[1].ItemCount.ShouldBe(1);
         result[1].TotalEstimatedBudget.ShouldBe(88000m);
@@ -497,7 +500,7 @@ public sealed class AnnualProcurementPlanWorkflowTests
         // Assert shape
         updatedDto.Phase.ShouldBe(AppPhase.Updated);
         updatedDto.Status.ShouldBe(AppStatus.Draft);
-        updatedDto.VersionNumber.ShouldBe(2);
+        updatedDto.VersionNumber.ShouldBe(1);
         updatedDto.PreviousVersionId.ShouldBe(finalApp.Id);
         updatedDto.AmendmentReason.ShouldBe("Budget revision");
 

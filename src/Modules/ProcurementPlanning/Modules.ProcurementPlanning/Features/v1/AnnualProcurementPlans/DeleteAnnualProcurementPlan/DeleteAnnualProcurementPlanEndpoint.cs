@@ -14,7 +14,7 @@ public static class DeleteAnnualProcurementPlanEndpoint
             .WithName(nameof(DeleteAnnualProcurementPlanCommand))
             .WithSummary("Delete a Draft APP and revert any consolidated PPMPs")
             .Produces(StatusCodes.Status204NoContent)
-            .RequirePermission(ProcurementPlanningModuleConstants.Permissions.AnnualProcurementPlans.Create);
+            .RequirePermission(ProcurementPlanningModuleConstants.Permissions.AnnualProcurementPlans.Delete);
 
     private static async Task<IResult> Handle(Guid id, IMediator mediator, CancellationToken ct)
     {

@@ -1,3 +1,4 @@
+using FSH.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
 using FSH.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
 using FSH.Modules.ProcurementPlanning.Data;
 using Mediator;
@@ -11,6 +12,15 @@ public sealed class GetAvailablePpmpsQueryHandler(
     public async ValueTask<IReadOnlyList<PpmpSummaryDto>> Handle(
         GetAvailablePpmpsForAppQuery query, CancellationToken cancellationToken)
     {
+        var app = query.AppId.HasValue
+            ? await dbContext.AnnualProcurementPlans
+                .AsNoTracking()
+                .Where(x => x.Id == query.AppId.Value)
+                .Select(x => new { x.Id, x.Phase })
+                .FirstOrDefaultAsync(cancellationToken)
+                .ConfigureAwait(false)
+            : null;
+
         var appSourcePpmpIds = query.AppId.HasValue
             ? await dbContext.AppSourcePpmps
                 .AsNoTracking()
@@ -24,6 +34,10 @@ public sealed class GetAvailablePpmpsQueryHandler(
             .AsNoTracking()
             .Where(x => x.FiscalYear == query.FiscalYear
                      && x.IsCurrentVersion
+                     && (!query.AppId.HasValue ||
+                         (app!.Phase == AppPhase.Indicative && x.Phase == PpmpPhase.Indicative) ||
+                         (app!.Phase == AppPhase.Final && x.Phase == PpmpPhase.Final) ||
+                         (app!.Phase == AppPhase.Updated && (x.Phase == PpmpPhase.Final || x.Phase == PpmpPhase.Updated)))
                      && (x.Status == PpmpStatus.Approved
                          || (x.Status == PpmpStatus.Consolidated && appSourcePpmpIds.Contains(x.Id))))
             .OrderBy(x => x.OfficeCode).ThenBy(x => x.PpmpNumber)
