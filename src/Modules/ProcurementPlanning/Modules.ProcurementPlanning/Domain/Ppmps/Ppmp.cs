@@ -1,4 +1,3 @@
-using System.Security.Cryptography;
 using FSH.Framework.Core.Domain;
 using FSH.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
 
@@ -10,7 +9,7 @@ public sealed record PpmpItemData(
     ProjectType ProjectType,
     decimal Quantity,
     string Unit,
-    ModeOfProcurement ModeOfProcurement,
+    string ModeOfProcurement,
     bool PreProcurementConference,
     string ProcurementStart,
     string ProcurementEnd,
@@ -29,7 +28,7 @@ public sealed class PpmpItem
     public ProjectType ProjectType { get; private set; }
     public decimal Quantity { get; private set; }
     public string Unit { get; private set; } = default!;
-    public ModeOfProcurement ModeOfProcurement { get; private set; }
+    public string ModeOfProcurement { get; private set; } = default!;
     public bool PreProcurementConference { get; private set; }
     public string ProcurementStart { get; private set; } = default!;
     public string ProcurementEnd { get; private set; } = default!;
@@ -111,11 +110,6 @@ public sealed class Ppmp : AggregateRoot<Guid>, IAuditableEntity, ISoftDeletable
     public DateTimeOffset? ReturnedAt { get; private set; }
     public Guid? ReturnedById { get; private set; }
 
-    // Set when this PPMP is consolidated into an APP
-    public Guid? AppId { get; private set; }
-
-    public byte[] Version { get; private set; } = [];
-
     private readonly List<PpmpItem> _items = [];
     public IReadOnlyList<PpmpItem> Items => _items.AsReadOnly();
 
@@ -130,13 +124,7 @@ public sealed class Ppmp : AggregateRoot<Guid>, IAuditableEntity, ISoftDeletable
 
     private Ppmp() { }
 
-    private static byte[] NewVersion() => RandomNumberGenerator.GetBytes(8);
-
-    private void MarkChanged()
-    {
-        LastModifiedOnUtc = DateTimeOffset.UtcNow;
-        Version = NewVersion();
-    }
+    private void Touch() => LastModifiedOnUtc = DateTimeOffset.UtcNow;
 
     public static Ppmp Create(
         string ppmpNumber,
@@ -161,8 +149,7 @@ public sealed class Ppmp : AggregateRoot<Guid>, IAuditableEntity, ISoftDeletable
             IsCurrentVersion = true,
             VersionChainId = Guid.NewGuid(),
             PreviousVersionId = null,
-            CreatedOnUtc = DateTimeOffset.UtcNow,
-            Version = NewVersion()
+            CreatedOnUtc = DateTimeOffset.UtcNow
         };
 
         ppmp.ReplaceItems(items);
@@ -185,7 +172,7 @@ public sealed class Ppmp : AggregateRoot<Guid>, IAuditableEntity, ISoftDeletable
         PreparedById = preparedById;
 
         ReplaceItems(items);
-        MarkChanged();
+        Touch();
     }
 
     public void Submit()
@@ -197,7 +184,7 @@ public sealed class Ppmp : AggregateRoot<Guid>, IAuditableEntity, ISoftDeletable
 
         Status = PpmpStatus.Submitted;
         SubmittedAt = DateTimeOffset.UtcNow;
-        MarkChanged();
+        Touch();
     }
 
     public void Approve(Guid approvedById)
@@ -208,7 +195,7 @@ public sealed class Ppmp : AggregateRoot<Guid>, IAuditableEntity, ISoftDeletable
         Status = PpmpStatus.Approved;
         ApprovedById = approvedById;
         ApprovedAt = DateTimeOffset.UtcNow;
-        MarkChanged();
+        Touch();
     }
 
     public void Recall()
@@ -218,7 +205,7 @@ public sealed class Ppmp : AggregateRoot<Guid>, IAuditableEntity, ISoftDeletable
 
         Status = PpmpStatus.Draft;
         SubmittedAt = null;
-        MarkChanged();
+        Touch();
     }
 
     public void Return(string returnReason, Guid returnedById)
@@ -230,17 +217,16 @@ public sealed class Ppmp : AggregateRoot<Guid>, IAuditableEntity, ISoftDeletable
         ReturnReason = returnReason;
         ReturnedAt = DateTimeOffset.UtcNow;
         ReturnedById = returnedById;
-        MarkChanged();
+        Touch();
     }
 
-    public void MarkConsolidated(Guid appId)
+    public void MarkConsolidated()
     {
         if (Status != PpmpStatus.Approved)
             throw new InvalidOperationException("Only Approved PPMPs can be consolidated into an APP.");
 
         Status = PpmpStatus.Consolidated;
-        AppId = appId;
-        MarkChanged();
+        Touch();
     }
 
     public void UnmarkConsolidated()
@@ -249,8 +235,7 @@ public sealed class Ppmp : AggregateRoot<Guid>, IAuditableEntity, ISoftDeletable
             throw new InvalidOperationException("Only Consolidated PPMPs can be unmarked.");
 
         Status = PpmpStatus.Approved;
-        AppId = null;
-        MarkChanged();
+        Touch();
     }
 
     /// <summary>Promotes an Approved Indicative PPMP to a new Final draft. Caller must call Supersede() on this instance.</summary>
@@ -273,12 +258,11 @@ public sealed class Ppmp : AggregateRoot<Guid>, IAuditableEntity, ISoftDeletable
             Status = PpmpStatus.Draft,
             VersionNumber = 1,
             IsCurrentVersion = true,
-            VersionChainId = Guid.NewGuid(),
+            VersionChainId = VersionChainId,
             PreviousVersionId = Id,
             AmendedAt = DateTimeOffset.UtcNow,
             AmendedById = promotedById,
-            CreatedOnUtc = DateTimeOffset.UtcNow,
-            Version = NewVersion()
+            CreatedOnUtc = DateTimeOffset.UtcNow
         };
 
         var itemNo = 1;
@@ -313,8 +297,7 @@ public sealed class Ppmp : AggregateRoot<Guid>, IAuditableEntity, ISoftDeletable
             AmendmentReason = updateReason,
             AmendedAt = DateTimeOffset.UtcNow,
             AmendedById = updatedById,
-            CreatedOnUtc = DateTimeOffset.UtcNow,
-            Version = NewVersion()
+            CreatedOnUtc = DateTimeOffset.UtcNow
         };
 
         var itemNo = 1;
@@ -333,7 +316,7 @@ public sealed class Ppmp : AggregateRoot<Guid>, IAuditableEntity, ISoftDeletable
 
         IsCurrentVersion = false;
         Status = PpmpStatus.Superseded;
-        MarkChanged();
+        Touch();
     }
 
     private void ReplaceItems(IEnumerable<PpmpItemData> items)

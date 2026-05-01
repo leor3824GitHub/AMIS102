@@ -45,7 +45,7 @@
             </MudItem>
 
             <MudItem xs="12" sm="6">
-                <MudAutocomplete T="string" @bind-Value="_itemForm.ModeOfProcurementText" Label="Mode of Procurement"
+                <MudAutocomplete T="string" @bind-Value="_itemForm.ModeOfProcurement" Label="Mode of Procurement"
                                  Variant="Variant.Outlined" SearchFunc="SearchModesOfProcurement"
                                  ResetValueOnEmptyText="false" CoerceText="true" CoerceValue="true" Required="true"
                                  Placeholder="Select mode of procurement"
@@ -524,8 +524,7 @@
         public ProjectType ProjectType { get; set; } = ProjectType.Goods;
         public decimal Quantity { get; set; } = 1;
         public string Unit { get; set; } = "LOT";
-        public ModeOfProcurement ModeOfProcurement { get; set; } = ModeOfProcurement.Shopping;
-        public string ModeOfProcurementText { get; set; } = "Shopping";
+        public string ModeOfProcurement { get; set; } = string.Empty;
         public bool PreProcurementConference { get; set; }
         public string ProcurementStart { get; set; } = $"01/{DateTime.Now.Year + 1}";
         public string ProcurementEnd { get; set; } = $"03/{DateTime.Now.Year + 1}";
@@ -549,17 +548,12 @@
             _modeOfProcurementNames = result?.Items?
                 .Where(x => x.IsActive && !string.IsNullOrWhiteSpace(x.Name))
                 .Select(x => x.Name.Trim())
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .OrderBy(x => x)
                 .ToList() ?? [];
         }
         catch
         {
             _modeOfProcurementNames = [];
         }
-
-        if (_modeOfProcurementNames.Count == 0)
-            _modeOfProcurementNames = GetDefaultModeNames();
     }
 
     private async Task LoadDefaultsAsync()
@@ -687,7 +681,6 @@
                 Quantity = i.Quantity,
                 Unit = i.Unit,
                 ModeOfProcurement = i.ModeOfProcurement,
-                ModeOfProcurementText = ToModeOfProcurementText(i.ModeOfProcurement),
                 PreProcurementConference = i.PreProcurementConference,
                 ProcurementStart = i.ProcurementStart,
                 ProcurementEnd = i.ProcurementEnd,
@@ -721,7 +714,6 @@
             Quantity = src.Quantity,
             Unit = src.Unit,
             ModeOfProcurement = src.ModeOfProcurement,
-            ModeOfProcurementText = ToModeOfProcurementText(src.ModeOfProcurement),
             PreProcurementConference = src.PreProcurementConference,
             ProcurementStart = src.ProcurementStart,
             ProcurementEnd = src.ProcurementEnd,
@@ -746,14 +738,11 @@
             return;
         }
 
-        if (!TryMapModeOfProcurement(_itemForm.ModeOfProcurementText, out var modeOfProcurement))
+        if (string.IsNullOrWhiteSpace(_itemForm.ModeOfProcurement))
         {
             Snackbar.Add("Please select a valid mode of procurement.", Severity.Warning);
             return;
         }
-
-        _itemForm.ModeOfProcurement = modeOfProcurement;
-        _itemForm.ModeOfProcurementText = ToModeOfProcurementText(modeOfProcurement);
 
         if (!string.IsNullOrWhiteSpace(_itemForm.GeneralDescription))
             _usedDescriptions.Add(_itemForm.GeneralDescription);
@@ -826,7 +815,7 @@
 
     private Task<IEnumerable<string>> SearchModesOfProcurement(string value, CancellationToken _)
     {
-        var source = _modeOfProcurementNames.Count > 0 ? _modeOfProcurementNames : GetDefaultModeNames();
+        var source = _modeOfProcurementNames.Count > 0 ? _modeOfProcurementNames : [];
 
         if (string.IsNullOrWhiteSpace(value))
             return Task.FromResult<IEnumerable<string>>(source.Take(20));
@@ -836,58 +825,6 @@
             .Take(20);
 
         return Task.FromResult<IEnumerable<string>>(matches);
-    }
-
-    private static string ToModeOfProcurementText(ModeOfProcurement value) => value switch
-    {
-        ModeOfProcurement.PublicBidding => "Public Bidding",
-        ModeOfProcurement.LimitedSourceBidding => "Limited Source Bidding",
-        ModeOfProcurement.DirectContracting => "Direct Contracting",
-        ModeOfProcurement.RepeatOrder => "Repeat Order",
-        ModeOfProcurement.Shopping => "Shopping",
-        ModeOfProcurement.NegotiatedProcurement => "Negotiated Procurement",
-        _ => value.ToString()
-    };
-
-    private static List<string> GetDefaultModeNames() =>
-    [
-        "Public Bidding",
-        "Limited Source Bidding",
-        "Direct Contracting",
-        "Repeat Order",
-        "Shopping",
-        "Negotiated Procurement"
-    ];
-
-    private static bool TryMapModeOfProcurement(string? value, out ModeOfProcurement mode)
-    {
-        mode = ModeOfProcurement.Shopping;
-        if (string.IsNullOrWhiteSpace(value))
-            return false;
-
-        var normalized = string.Join(' ', value.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries));
-
-        if (normalized.StartsWith("Negotiated Procurement", StringComparison.OrdinalIgnoreCase))
-        {
-            mode = ModeOfProcurement.NegotiatedProcurement;
-            return true;
-        }
-
-        return normalized.ToLowerInvariant() switch
-        {
-            "public bidding" => SetMode(ModeOfProcurement.PublicBidding, out mode),
-            "limited source bidding" => SetMode(ModeOfProcurement.LimitedSourceBidding, out mode),
-            "direct contracting" => SetMode(ModeOfProcurement.DirectContracting, out mode),
-            "repeat order" => SetMode(ModeOfProcurement.RepeatOrder, out mode),
-            "shopping" => SetMode(ModeOfProcurement.Shopping, out mode),
-            _ => false
-        };
-    }
-
-    private static bool SetMode(ModeOfProcurement source, out ModeOfProcurement target)
-    {
-        target = source;
-        return true;
     }
 
     // ── CRUD ─────────────────────────────────────────────────────────
@@ -908,6 +845,12 @@
     private async Task SaveAsync()
     {
         if (_form.Items.Count == 0) { Snackbar.Add("Add at least one line item.", Severity.Warning); return; }
+        if (_editing is null && _preparedById == Guid.Empty)
+        {
+            Snackbar.Add("Unable to resolve the preparer profile. Please ensure your employee record is linked to your account.", Severity.Warning);
+            return;
+        }
+
         _busy = true;
         try
         {

@@ -27,7 +27,6 @@ internal static class PpmpMapper
             ppmp.ReturnReason,
             ppmp.ReturnedAt,
             ppmp.ReturnedById,
-            ppmp.AppId,
             ppmp.Items.Sum(i => i.EstimatedBudget),
             ppmp.Items.Select(i => new PpmpItemDto(
                 i.Id, i.ItemNo, i.GeneralDescription, i.ProjectType,

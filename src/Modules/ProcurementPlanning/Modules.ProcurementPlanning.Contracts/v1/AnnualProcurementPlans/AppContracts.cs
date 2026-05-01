@@ -35,7 +35,7 @@ public sealed record AppItemDto(
     ProjectType ProjectType,
     decimal Quantity,
     string Unit,
-    ModeOfProcurement ModeOfProcurement,
+    string ModeOfProcurement,
     bool PreProcurementConference,
     string ProcurementStart,
     string ProcurementEnd,

@@ -3,6 +3,7 @@ using System;
 using FSH.Modules.ProcurementPlanning.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FSH.Playground.Migrations.PostgreSQL.ProcurementPlanning
 {
     [DbContext(typeof(ProcurementPlanningDbContext))]
-    partial class ProcurementPlanningDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260501004220_ModeOfProcurementToString")]
+    partial class ModeOfProcurementToString
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -101,6 +104,11 @@ namespace FSH.Playground.Migrations.PostgreSQL.ProcurementPlanning
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
+                    b.Property<byte[]>("Version")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
                     b.Property<Guid>("VersionChainId")
                         .HasColumnType("uuid");
 
@@ -118,7 +126,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.ProcurementPlanning
                     b.ToTable("AnnualProcurementPlans", "procurement_planning");
                 });
 
-            modelBuilder.Entity("FSH.Modules.ProcurementPlanning.Domain.AnnualProcurementPlans.AppLineItem", b =>
+            modelBuilder.Entity("FSH.Modules.ProcurementPlanning.Domain.AnnualProcurementPlans.AppLineReference", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -127,8 +135,91 @@ namespace FSH.Playground.Migrations.PostgreSQL.ProcurementPlanning
                     b.Property<Guid>("AppId")
                         .HasColumnType("uuid");
 
-                    b.Property<DateTimeOffset>("ConsolidatedAt")
+                    b.Property<int>("ItemNo")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("SourcePpmpId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("SourcePpmpItemId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AppId");
+
+                    b.HasIndex("SourcePpmpId");
+
+                    b.HasIndex("SourcePpmpItemId");
+
+                    b.HasIndex("AppId", "SourcePpmpItemId")
+                        .IsUnique();
+
+                    b.ToTable("AppLineReferences", "procurement_planning");
+                });
+
+            modelBuilder.Entity("FSH.Modules.ProcurementPlanning.Domain.AnnualProcurementPlans.AppSnapshot", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AppId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AppNumber")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("CapturedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<DateTimeOffset>("CapturedOnUtc")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("FiscalYear")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Phase")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("SnapshotType")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("StatusAtCapture")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("TotalEstimatedBudget")
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<Guid>("VersionChainId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("VersionNumber")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AppId");
+
+                    b.HasIndex("VersionChainId");
+
+                    b.HasIndex("AppId", "VersionNumber", "SnapshotType")
+                        .IsUnique();
+
+                    b.ToTable("AppSnapshots", "procurement_planning");
+                });
+
+            modelBuilder.Entity("FSH.Modules.ProcurementPlanning.Domain.AnnualProcurementPlans.AppSnapshotItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AppSnapshotId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("EndUserUnit")
                         .IsRequired()
@@ -195,15 +286,6 @@ namespace FSH.Playground.Migrations.PostgreSQL.ProcurementPlanning
                     b.Property<Guid>("SourcePpmpItemId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("SourcePpmpNumber")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
-
-                    b.Property<string>("SupportingDocuments")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
                     b.Property<string>("Unit")
                         .IsRequired()
                         .HasMaxLength(64)
@@ -211,67 +293,13 @@ namespace FSH.Playground.Migrations.PostgreSQL.ProcurementPlanning
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AppId");
+                    b.HasIndex("AppSnapshotId");
 
                     b.HasIndex("SourcePpmpId");
 
                     b.HasIndex("SourcePpmpItemId");
 
-                    b.HasIndex("AppId", "SourcePpmpItemId")
-                        .IsUnique();
-
-                    b.ToTable("AppLineItems", "procurement_planning");
-                });
-
-            modelBuilder.Entity("FSH.Modules.ProcurementPlanning.Domain.AnnualProcurementPlans.AppSourcePpmp", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("AppId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("EndUserUnit")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
-
-                    b.Property<Guid>("IncludedById")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset>("IncludedOnUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("OfficeCode")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
-
-                    b.Property<int>("Phase")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("PpmpId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("PpmpNumber")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
-
-                    b.Property<int>("VersionNumber")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AppId");
-
-                    b.HasIndex("PpmpId");
-
-                    b.HasIndex("AppId", "PpmpId")
-                        .IsUnique();
-
-                    b.ToTable("AppSourcePpmps", "procurement_planning");
+                    b.ToTable("AppSnapshotItems", "procurement_planning");
                 });
 
             modelBuilder.Entity("FSH.Modules.ProcurementPlanning.Domain.Ppmps.Ppmp", b =>
@@ -289,6 +317,9 @@ namespace FSH.Playground.Migrations.PostgreSQL.ProcurementPlanning
                     b.Property<string>("AmendmentReason")
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
+
+                    b.Property<Guid?>("AppId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset?>("ApprovedAt")
                         .HasColumnType("timestamp with time zone");
@@ -362,6 +393,11 @@ namespace FSH.Playground.Migrations.PostgreSQL.ProcurementPlanning
 
                     b.Property<DateTimeOffset?>("SubmittedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<byte[]>("Version")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasColumnType("bytea");
 
                     b.Property<Guid>("VersionChainId")
                         .HasColumnType("uuid");
@@ -454,20 +490,41 @@ namespace FSH.Playground.Migrations.PostgreSQL.ProcurementPlanning
                     b.ToTable("PpmpItems", "procurement_planning");
                 });
 
-            modelBuilder.Entity("FSH.Modules.ProcurementPlanning.Domain.AnnualProcurementPlans.AppLineItem", b =>
+            modelBuilder.Entity("FSH.Modules.ProcurementPlanning.Domain.AnnualProcurementPlans.AppLineReference", b =>
                 {
                     b.HasOne("FSH.Modules.ProcurementPlanning.Domain.AnnualProcurementPlans.AnnualProcurementPlan", null)
-                        .WithMany("LineItems")
+                        .WithMany("LineReferences")
+                        .HasForeignKey("AppId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("FSH.Modules.ProcurementPlanning.Domain.Ppmps.Ppmp", null)
+                        .WithMany()
+                        .HasForeignKey("SourcePpmpId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("FSH.Modules.ProcurementPlanning.Domain.Ppmps.PpmpItem", null)
+                        .WithMany()
+                        .HasForeignKey("SourcePpmpItemId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("FSH.Modules.ProcurementPlanning.Domain.AnnualProcurementPlans.AppSnapshot", b =>
+                {
+                    b.HasOne("FSH.Modules.ProcurementPlanning.Domain.AnnualProcurementPlans.AnnualProcurementPlan", null)
+                        .WithMany()
                         .HasForeignKey("AppId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("FSH.Modules.ProcurementPlanning.Domain.AnnualProcurementPlans.AppSourcePpmp", b =>
+            modelBuilder.Entity("FSH.Modules.ProcurementPlanning.Domain.AnnualProcurementPlans.AppSnapshotItem", b =>
                 {
-                    b.HasOne("FSH.Modules.ProcurementPlanning.Domain.AnnualProcurementPlans.AnnualProcurementPlan", null)
-                        .WithMany("SourcePpmps")
-                        .HasForeignKey("AppId")
+                    b.HasOne("FSH.Modules.ProcurementPlanning.Domain.AnnualProcurementPlans.AppSnapshot", null)
+                        .WithMany("Items")
+                        .HasForeignKey("AppSnapshotId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -483,9 +540,12 @@ namespace FSH.Playground.Migrations.PostgreSQL.ProcurementPlanning
 
             modelBuilder.Entity("FSH.Modules.ProcurementPlanning.Domain.AnnualProcurementPlans.AnnualProcurementPlan", b =>
                 {
-                    b.Navigation("LineItems");
+                    b.Navigation("LineReferences");
+                });
 
-                    b.Navigation("SourcePpmps");
+            modelBuilder.Entity("FSH.Modules.ProcurementPlanning.Domain.AnnualProcurementPlans.AppSnapshot", b =>
+                {
+                    b.Navigation("Items");
                 });
 
             modelBuilder.Entity("FSH.Modules.ProcurementPlanning.Domain.Ppmps.Ppmp", b =>

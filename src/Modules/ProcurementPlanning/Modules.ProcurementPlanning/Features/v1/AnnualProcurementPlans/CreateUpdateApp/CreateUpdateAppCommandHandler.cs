@@ -15,7 +15,8 @@ public sealed class CreateUpdateAppCommandHandler(
         CreateUpdateAppCommand command, CancellationToken cancellationToken)
     {
         var original = await dbContext.AnnualProcurementPlans
-            .Include(x => x.LineReferences)
+            .Include(x => x.SourcePpmps)
+            .Include(x => x.LineItems)
             .FirstOrDefaultAsync(x => x.Id == command.Id && x.IsCurrentVersion, cancellationToken)
             .ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"APP {command.Id} not found or is not the current version.");

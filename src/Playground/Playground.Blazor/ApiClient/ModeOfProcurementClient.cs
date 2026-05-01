@@ -18,6 +18,18 @@ internal interface IModeOfProcurementClient
         int pageNumber = 1,
         int pageSize = 50,
         CancellationToken cancellationToken = default);
+
+    Task<ModeOfProcurementDto?> CreateAsync(
+        CreateModeOfProcurementCommand command,
+        CancellationToken cancellationToken = default);
+
+    Task UpdateAsync(
+        UpdateModeOfProcurementCommand command,
+        CancellationToken cancellationToken = default);
+
+    Task DeleteAsync(
+        Guid id,
+        CancellationToken cancellationToken = default);
 }
 
 internal sealed class ModeOfProcurementClient(HttpClient httpClient) : IModeOfProcurementClient
@@ -36,5 +48,30 @@ internal sealed class ModeOfProcurementClient(HttpClient httpClient) : IModeOfPr
         query["pageSize"] = pageSize.ToString(CultureInfo.InvariantCulture);
 
         return httpClient.GetFromJsonAsync<ModeOfProcurementPagedResponse>($"{Base}?{query}", cancellationToken);
+    }
+
+    public async Task<ModeOfProcurementDto?> CreateAsync(
+        CreateModeOfProcurementCommand command,
+        CancellationToken cancellationToken = default)
+    {
+        using var response = await httpClient.PostAsJsonAsync(Base, command, cancellationToken);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<ModeOfProcurementDto>(cancellationToken: cancellationToken);
+    }
+
+    public async Task UpdateAsync(
+        UpdateModeOfProcurementCommand command,
+        CancellationToken cancellationToken = default)
+    {
+        using var response = await httpClient.PutAsJsonAsync($"{Base}/{command.Id}", command, cancellationToken);
+        response.EnsureSuccessStatusCode();
+    }
+
+    public async Task DeleteAsync(
+        Guid id,
+        CancellationToken cancellationToken = default)
+    {
+        using var response = await httpClient.DeleteAsync($"{Base}/{id}", cancellationToken);
+        response.EnsureSuccessStatusCode();
     }
 }

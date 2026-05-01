@@ -1,0 +1,309 @@
+@page "/master-data/modes-of-procurement"
+@using FSH.Modules.MasterData.Contracts.v1.ModesOfProcurement
+@using FSH.Framework.Blazor.UI.Components.Cards
+@using FSH.Playground.Blazor.ApiClient
+@inject IModeOfProcurementClient ModeClient
+@inject ISnackbar Snackbar
+
+<FshPageHeader Title="Modes of Procurement" Description="Manage procurement modes used across planning and purchasing">
+    <ActionContent>
+        <MudStack Row="true" Spacing="2" Style="width: 100%; max-width: 400px;">
+            <MudTextField @bind-Value="_searchKeyword" Label="Search" Placeholder="Search modes..."
+                          DebounceInterval="300" OnDebounceIntervalElapsed="@(async () => await SearchAsync())"
+                          Variant="Variant.Outlined" Size="Size.Small" />
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SearchAsync">
+                Search
+            </MudButton>
+        </MudStack>
+    </ActionContent>
+</FshPageHeader>
+
+<div class="mt-4">
+    <MudGrid Spacing="2">
+        <MudItem xs="12" sm="5" md="4">
+            <MudCard Class="fsh-card">
+                <MudCardContent>
+                    <MudText Typo="Typo.h6" Class="mb-3">@(EditingMode is null ? "Create Mode" : "Edit Mode")</MudText>
+                    <MudStack Spacing="3">
+                        <MudTextField @bind-Value="_form.Name" Label="Name" Placeholder="e.g. Public Bidding" Required="true" />
+                        <MudTextField @bind-Value="_form.Description" Label="Description" Placeholder="Optional description" Lines="3" />
+
+                        @if (EditingMode is not null)
+                        {
+                            <MudCheckBox @bind-Value="_form.IsActive" Label="Active" />
+                        }
+
+                        <MudStack Row="true" Spacing="2" Class="mt-2">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                                       OnClick="SaveAsync" Disabled="_isLoading">
+                                @(EditingMode is null ? "Create" : "Update")
+                            </MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Default" FullWidth="true"
+                                       OnClick="ResetForm">
+                                Clear
+                            </MudButton>
+                        </MudStack>
+                    </MudStack>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        <MudItem xs="12" sm="7" md="8">
+            <MudCard Class="fsh-card">
+                <MudCardContent>
+                    <MudStack Row="true" Spacing="1" Class="mb-3" AlignItems="AlignItems.Center">
+                        <MudText Typo="Typo.h6" Class="flex-grow-1">Modes List</MudText>
+                        <MasterDataStatusFilterChips Value="_statusFilter" ValueChanged="OnStatusFilterChanged" />
+                    </MudStack>
+
+                    @if (_isLoading)
+                    {
+                        <MudProgressLinear Indeterminate="true" />
+                    }
+                    else if (_modes.Any())
+                    {
+                        <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                            <thead>
+                                <tr>
+                                    <th style="cursor:pointer" @onclick='() => SetSort("Name")'>Name @SortIcon("Name")</th>
+                                    <th>Description</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var mode in _modes.Skip((_pageIndex - 1) * PageSize).Take(PageSize))
+                                {
+                                    <tr>
+                                        <td>@mode.Name</td>
+                                        <td>@(string.IsNullOrWhiteSpace(mode.Description) ? "-" : mode.Description)</td>
+                                        <td>
+                                            <MudChip T="string" Size="Size.Small" Color="@(mode.IsActive ? Color.Success : Color.Default)">
+                                                @(mode.IsActive ? "Active" : "Inactive")
+                                            </MudChip>
+                                        </td>
+                                        <td>
+                                            <MudStack Row="true" Spacing="1">
+                                                <MudTooltip Text="Edit mode">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                                                   Color="Color.Primary" OnClick="@(() => EditMode(mode))" />
+                                                </MudTooltip>
+                                                <MudTooltip Text="Delete mode">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                                                   Color="Color.Error" OnClick="@(() => DeleteAsync(mode.Id))" />
+                                                </MudTooltip>
+                                            </MudStack>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </MudSimpleTable>
+
+                        @if (_modes.Count > PageSize)
+                        {
+                            <MudPagination Class="mt-2" Count="@((int)Math.Ceiling(_modes.Count / (double)PageSize))"
+                                           @bind-Selected="_pageIndex" Color="Color.Primary" ShowFirstButton="true" ShowLastButton="true" />
+                        }
+                    }
+                    else
+                    {
+                        <MudAlert Severity="Severity.Info">No modes of procurement yet. Create one to get started.</MudAlert>
+                    }
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+</div>
+
+@code {
+    private sealed class ModeForm
+    {
+        public string Name { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public bool IsActive { get; set; } = true;
+    }
+
+    private const int PageSize = 10;
+    private ModeForm _form = new();
+    private ModeOfProcurementDto? EditingMode { get; set; }
+    private List<ModeOfProcurementDto> _modes = [];
+    private List<ModeOfProcurementDto> _allModes = [];
+    private bool _isLoading;
+    private string _searchKeyword = string.Empty;
+    private string _statusFilter = "All";
+    private string _sortField = "Name";
+    private bool _sortAscending = true;
+    private int _pageIndex = 1;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync(string? keyword = null)
+    {
+        try
+        {
+            _isLoading = true;
+            var response = await ModeClient.SearchAsync(keyword: keyword, pageSize: 200);
+            _allModes = response?.Items?.ToList() ?? [];
+            ApplyLocalFilters();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load modes: {ex.Message}", Severity.Error);
+            _modes = [];
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task SearchAsync()
+    {
+        await LoadAsync(_searchKeyword);
+    }
+
+    private async Task SaveAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_form.Name))
+        {
+            Snackbar.Add("Name is required.", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            _isLoading = true;
+
+            if (EditingMode is null)
+            {
+                await ModeClient.CreateAsync(new CreateModeOfProcurementCommand(_form.Name.Trim(), NullIfEmpty(_form.Description)));
+                Snackbar.Add("Mode created.", Severity.Success);
+            }
+            else
+            {
+                await ModeClient.UpdateAsync(new UpdateModeOfProcurementCommand(
+                    EditingMode.Id,
+                    _form.Name.Trim(),
+                    NullIfEmpty(_form.Description),
+                    _form.IsActive));
+                Snackbar.Add("Mode updated.", Severity.Success);
+            }
+
+            ResetForm();
+            await LoadAsync(_searchKeyword);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Save failed: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task DeleteAsync(Guid id)
+    {
+        try
+        {
+            _isLoading = true;
+            await ModeClient.DeleteAsync(id);
+            Snackbar.Add("Mode deleted.", Severity.Success);
+
+            if (EditingMode?.Id == id)
+            {
+                ResetForm();
+            }
+
+            await LoadAsync(_searchKeyword);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Delete failed: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private void EditMode(ModeOfProcurementDto mode)
+    {
+        EditingMode = mode;
+        _form = new ModeForm
+        {
+            Name = mode.Name,
+            Description = mode.Description,
+            IsActive = mode.IsActive
+        };
+    }
+
+    private void ResetForm()
+    {
+        EditingMode = null;
+        _form = new ModeForm();
+    }
+
+    private void OnStatusFilterChanged(string value)
+    {
+        _statusFilter = value;
+        _pageIndex = 1;
+        ApplyLocalFilters();
+    }
+
+    private void SetSort(string field)
+    {
+        if (_sortField == field)
+        {
+            _sortAscending = !_sortAscending;
+        }
+        else
+        {
+            _sortField = field;
+            _sortAscending = true;
+        }
+
+        ApplyLocalFilters();
+    }
+
+    private RenderFragment SortIcon(string field) => builder =>
+    {
+        if (_sortField != field)
+            return;
+
+        builder.OpenComponent<MudIcon>(0);
+        builder.AddAttribute(1, "Icon", _sortAscending ? Icons.Material.Filled.ArrowUpward : Icons.Material.Filled.ArrowDownward);
+        builder.AddAttribute(2, "Size", Size.Small);
+        builder.CloseComponent();
+    };
+
+    private void ApplyLocalFilters()
+    {
+        IEnumerable<ModeOfProcurementDto> query = _allModes;
+
+        if (_statusFilter == "Active")
+            query = query.Where(x => x.IsActive);
+        else if (_statusFilter == "Inactive")
+            query = query.Where(x => !x.IsActive);
+
+        query = (_sortField, _sortAscending) switch
+        {
+            ("Name", true) => query.OrderBy(x => x.Name),
+            ("Name", false) => query.OrderByDescending(x => x.Name),
+            _ => query.OrderBy(x => x.Name)
+        };
+
+        _modes = query.ToList();
+
+        var maxPage = Math.Max(1, (int)Math.Ceiling(_modes.Count / (double)PageSize));
+        if (_pageIndex > maxPage)
+            _pageIndex = maxPage;
+    }
+
+    private static string? NullIfEmpty(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+}

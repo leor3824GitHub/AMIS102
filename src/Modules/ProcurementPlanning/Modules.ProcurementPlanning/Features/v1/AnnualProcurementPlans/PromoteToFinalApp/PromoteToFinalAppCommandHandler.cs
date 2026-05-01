@@ -21,6 +21,7 @@ public sealed class PromoteToFinalAppCommandHandler(
 
         var userId = currentUser.GetUserId();
         var finalApp = original.PromoteToFinal(userId);
+        original.Supersede();
 
         finalApp.CreatedBy = userId.ToString();
         dbContext.AnnualProcurementPlans.Add(finalApp);

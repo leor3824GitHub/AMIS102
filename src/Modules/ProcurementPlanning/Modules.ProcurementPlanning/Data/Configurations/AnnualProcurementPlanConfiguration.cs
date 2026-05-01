@@ -1,5 +1,4 @@
 using FSH.Modules.ProcurementPlanning.Domain.AnnualProcurementPlans;
-using FSH.Modules.ProcurementPlanning.Domain.Ppmps;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -16,91 +15,65 @@ internal sealed class AnnualProcurementPlanConfiguration : IEntityTypeConfigurat
         builder.Property(x => x.AmendmentReason).HasMaxLength(1000);
         builder.Property(x => x.ReturnReason).HasMaxLength(1000);
 
-        builder.Property(x => x.Version).IsConcurrencyToken();
-
         builder.HasIndex(x => x.AppNumber);
         builder.HasIndex(x => x.VersionChainId);
         builder.HasIndex(x => new { x.FiscalYear, x.IsCurrentVersion });
 
-        builder.HasMany(x => x.LineReferences)
+        builder.Navigation(x => x.SourcePpmps).HasField("_sourcePpmps");
+        builder.HasMany(x => x.SourcePpmps)
             .WithOne()
             .HasForeignKey(x => x.AppId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasMany<AppSnapshot>()
+        builder.Navigation(x => x.LineItems).HasField("_lineItems");
+        builder.HasMany(x => x.LineItems)
             .WithOne()
             .HasForeignKey(x => x.AppId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }
 
-internal sealed class AppLineReferenceConfiguration : IEntityTypeConfiguration<AppLineReference>
+internal sealed class AppSourcePpmpConfiguration : IEntityTypeConfiguration<AppSourcePpmp>
 {
-    public void Configure(EntityTypeBuilder<AppLineReference> builder)
+    public void Configure(EntityTypeBuilder<AppSourcePpmp> builder)
     {
-        builder.ToTable("AppLineReferences", ProcurementPlanningModuleConstants.SchemaName);
+        builder.ToTable("AppSourcePpmps", ProcurementPlanningModuleConstants.SchemaName);
 
         builder.HasKey(x => x.Id);
-
-        builder.HasOne<Ppmp>()
-            .WithMany()
-            .HasForeignKey(x => x.SourcePpmpId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.HasOne<PpmpItem>()
-            .WithMany()
-            .HasForeignKey(x => x.SourcePpmpItemId)
-            .OnDelete(DeleteBehavior.Restrict);
+        builder.Property(x => x.PpmpNumber).HasMaxLength(64).IsRequired();
+        builder.Property(x => x.OfficeCode).HasMaxLength(64).IsRequired();
+        builder.Property(x => x.EndUserUnit).HasMaxLength(256).IsRequired();
 
         builder.HasIndex(x => x.AppId);
-        builder.HasIndex(x => x.SourcePpmpId);
-        builder.HasIndex(x => x.SourcePpmpItemId);
-        builder.HasIndex(x => new { x.AppId, x.SourcePpmpItemId }).IsUnique();
+        builder.HasIndex(x => x.PpmpId);
+        builder.HasIndex(x => new { x.AppId, x.PpmpId }).IsUnique();
     }
 }
 
-internal sealed class AppSnapshotConfiguration : IEntityTypeConfiguration<AppSnapshot>
+internal sealed class AppLineItemConfiguration : IEntityTypeConfiguration<AppLineItem>
 {
-    public void Configure(EntityTypeBuilder<AppSnapshot> builder)
+    public void Configure(EntityTypeBuilder<AppLineItem> builder)
     {
-        builder.ToTable("AppSnapshots", ProcurementPlanningModuleConstants.SchemaName);
+        builder.ToTable("AppLineItems", ProcurementPlanningModuleConstants.SchemaName);
 
         builder.HasKey(x => x.Id);
-        builder.Property(x => x.AppNumber).HasMaxLength(64).IsRequired();
-        builder.Property(x => x.CapturedBy).HasMaxLength(256);
-        builder.Property(x => x.TotalEstimatedBudget).HasColumnType("numeric(18,2)");
-
-        builder.HasIndex(x => x.AppId);
-        builder.HasIndex(x => x.VersionChainId);
-        builder.HasIndex(x => new { x.AppId, x.VersionNumber, x.SnapshotType }).IsUnique();
-
-        builder.HasMany(x => x.Items)
-               .WithOne()
-               .HasForeignKey(x => x.AppSnapshotId)
-               .OnDelete(DeleteBehavior.Cascade);
-    }
-}
-
-internal sealed class AppSnapshotItemConfiguration : IEntityTypeConfiguration<AppSnapshotItem>
-{
-    public void Configure(EntityTypeBuilder<AppSnapshotItem> builder)
-    {
-        builder.ToTable("AppSnapshotItems", ProcurementPlanningModuleConstants.SchemaName);
-
-        builder.HasKey(x => x.Id);
+        builder.Property(x => x.SourcePpmpNumber).HasMaxLength(64).IsRequired();
         builder.Property(x => x.OfficeCode).HasMaxLength(64).IsRequired();
         builder.Property(x => x.EndUserUnit).HasMaxLength(256).IsRequired();
         builder.Property(x => x.GeneralDescription).HasMaxLength(1000).IsRequired();
         builder.Property(x => x.Unit).HasMaxLength(64).IsRequired();
+        builder.Property(x => x.ModeOfProcurement).HasMaxLength(200).IsRequired();
         builder.Property(x => x.ProcurementStart).HasMaxLength(10).IsRequired();
         builder.Property(x => x.ProcurementEnd).HasMaxLength(10).IsRequired();
         builder.Property(x => x.ExpectedDelivery).HasMaxLength(10).IsRequired();
         builder.Property(x => x.SourceOfFunds).HasMaxLength(256).IsRequired();
         builder.Property(x => x.EstimatedBudget).HasColumnType("numeric(18,2)");
+        builder.Property(x => x.SupportingDocuments).HasMaxLength(500);
         builder.Property(x => x.Remarks).HasMaxLength(500);
 
-        builder.HasIndex(x => x.AppSnapshotId);
+        builder.HasIndex(x => x.AppId);
         builder.HasIndex(x => x.SourcePpmpId);
         builder.HasIndex(x => x.SourcePpmpItemId);
+        builder.HasIndex(x => new { x.AppId, x.SourcePpmpItemId }).IsUnique();
     }
 }

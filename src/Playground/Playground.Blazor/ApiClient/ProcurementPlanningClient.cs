@@ -14,17 +14,43 @@ file static class HttpExtensions
         if (response.IsSuccessStatusCode) return;
 
         string? detail = null;
+        List<string>? validationMessages = null;
         try
         {
             var body = await response.Content.ReadAsStringAsync(ct);
             var doc = JsonDocument.Parse(body);
+
             if (doc.RootElement.TryGetProperty("detail", out var d))
                 detail = d.GetString();
+
+            if (doc.RootElement.TryGetProperty("errors", out var errors) && errors.ValueKind == JsonValueKind.Object)
+            {
+                validationMessages = [];
+                foreach (var property in errors.EnumerateObject())
+                {
+                    if (property.Value.ValueKind != JsonValueKind.Array)
+                        continue;
+
+                    var messages = property.Value
+                        .EnumerateArray()
+                        .Where(x => x.ValueKind == JsonValueKind.String)
+                        .Select(x => x.GetString())
+                        .Where(x => !string.IsNullOrWhiteSpace(x))
+                        .ToArray();
+
+                    if (messages.Length > 0)
+                        validationMessages.Add($"{property.Name}: {string.Join(", ", messages!)}");
+                }
+            }
         }
         catch { /* ignore */ }
 
+        var message = validationMessages is { Count: > 0 }
+            ? string.Join(" | ", validationMessages)
+            : detail;
+
         throw new HttpRequestException(
-            detail ?? $"Request failed with status {(int)response.StatusCode}.",
+            message ?? $"Request failed with status {(int)response.StatusCode}.",
             null,
             response.StatusCode);
     }

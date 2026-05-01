@@ -1,7 +1,8 @@
-using System.Net;
+﻿using System.Net;
 using FSH.Framework.Core.Context;
 using FSH.Framework.Core.Exceptions;
 using FSH.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
+using FSH.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
 using FSH.Modules.ProcurementPlanning.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
@@ -15,7 +16,7 @@ public sealed class DeleteAnnualProcurementPlanCommandHandler(
     public async ValueTask<Unit> Handle(DeleteAnnualProcurementPlanCommand command, CancellationToken cancellationToken)
     {
         var app = await dbContext.AnnualProcurementPlans
-            .Include(x => x.LineReferences)
+            .Include(x => x.SourcePpmps)
             .FirstOrDefaultAsync(x => x.Id == command.Id, cancellationToken)
             .ConfigureAwait(false)
             ?? throw new CustomException($"APP {command.Id} not found.", Enumerable.Empty<string>(), HttpStatusCode.NotFound);
@@ -26,12 +27,11 @@ public sealed class DeleteAnnualProcurementPlanCommandHandler(
                 Enumerable.Empty<string>(),
                 HttpStatusCode.Conflict);
 
-        // Revert consolidated PPMPs back to Approved so they can be used again
-        var consolidatedPpmpIds = app.LineReferences.Select(i => i.SourcePpmpId).Distinct().ToList();
+        var consolidatedPpmpIds = app.SourcePpmps.Select(i => i.PpmpId).Distinct().ToList();
         if (consolidatedPpmpIds.Count > 0)
         {
             var ppmps = await dbContext.Ppmps
-                .Where(x => consolidatedPpmpIds.Contains(x.Id) && x.AppId == command.Id)
+                .Where(x => consolidatedPpmpIds.Contains(x.Id) && x.Status == PpmpStatus.Consolidated)
                 .ToListAsync(cancellationToken)
                 .ConfigureAwait(false);
 
@@ -44,7 +44,6 @@ public sealed class DeleteAnnualProcurementPlanCommandHandler(
         app.DeletedBy = currentUser.GetUserId().ToString();
 
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-
         return Unit.Value;
     }
 }

@@ -684,6 +684,7 @@
 
     private async Task ConsolidateAsync()
     {
+        if (_busy) return;
         if (_editing is null || _selectedPpmpIds.Count == 0) return;
         _busy = true;
         try

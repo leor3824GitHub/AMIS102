@@ -1,5 +1,4 @@
-using System.Net;
-using System.Security.Cryptography;
+﻿using System.Net;
 using FSH.Framework.Core.Context;
 using FSH.Framework.Core.Exceptions;
 using FSH.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
@@ -21,88 +20,76 @@ public sealed class ConsolidatePpmpsCommandHandler(
             throw new CustomException("Select at least one PPMP to consolidate.", Enumerable.Empty<string>(), HttpStatusCode.BadRequest);
 
         var selectedIds = command.PpmpIds.Distinct().ToList();
+        var userId = currentUser.GetUserId();
 
         await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
-
-        var app = await dbContext.AnnualProcurementPlans
-            .Include(x => x.LineReferences)
-            .FirstOrDefaultAsync(x => x.Id == command.AppId, cancellationToken)
-            .ConfigureAwait(false)
-            ?? throw new CustomException($"APP {command.AppId} not found.", Enumerable.Empty<string>(), HttpStatusCode.NotFound);
-
-        var ppmps = await dbContext.Ppmps
-            .AsNoTracking()
-            .Include(x => x.Items)
-            .Where(x => selectedIds.Contains(x.Id) &&
-                        (x.Status == PpmpStatus.Approved ||
-                         (x.Status == PpmpStatus.Consolidated && x.AppId == command.AppId)))
-            .ToListAsync(cancellationToken)
-            .ConfigureAwait(false);
-
-        var foundIds = ppmps.Select(x => x.Id).ToHashSet();
-        var missingIds = selectedIds.Where(id => !foundIds.Contains(id)).ToList();
-        if (missingIds.Count > 0)
-        {
-            throw new CustomException(
-                "Some selected PPMPs are no longer eligible. Please refresh and try again.",
-                missingIds.Select(x => x.ToString()),
-                HttpStatusCode.Conflict);
-        }
-
-        if (ppmps.Count == 0)
-            throw new CustomException("No eligible PPMPs found for consolidation.", Enumerable.Empty<string>(), HttpStatusCode.BadRequest);
-
-        var userId = currentUser.GetUserId();
         try
         {
-            app.ConsolidatePpmps(ppmps, userId);
-        }
-        catch (InvalidOperationException ex)
-        {
-            throw new CustomException(ex.Message, Enumerable.Empty<string>(), HttpStatusCode.Conflict);
-        }
+            var app = await dbContext.AnnualProcurementPlans
+                .Include(x => x.SourcePpmps)
+                .Include(x => x.LineItems)
+                .FirstOrDefaultAsync(x => x.Id == command.AppId, cancellationToken)
+                .ConfigureAwait(false)
+                ?? throw new CustomException($"APP {command.AppId} not found.", Enumerable.Empty<string>(), HttpStatusCode.NotFound);
 
-        var approvedIds = ppmps
-            .Where(x => x.Status == PpmpStatus.Approved)
-            .Select(x => x.Id)
-            .ToList();
+            var existingSourcePpmpIds = app.SourcePpmps.Select(x => x.PpmpId).ToList();
 
-        if (approvedIds.Count > 0)
-        {
-            // Use set-based update to reduce per-row tracked updates and avoid unnecessary row-version contention.
-            var now = DateTimeOffset.UtcNow;
-            var updatedCount = await dbContext.Ppmps
-                .Where(x => approvedIds.Contains(x.Id) && x.Status == PpmpStatus.Approved)
-                .ExecuteUpdateAsync(setters => setters
-                    .SetProperty(x => x.Status, PpmpStatus.Consolidated)
-                    .SetProperty(x => x.AppId, app.Id)
-                    .SetProperty(x => x.LastModifiedOnUtc, now)
-                    .SetProperty(x => x.Version, RandomNumberGenerator.GetBytes(8)),
-                    cancellationToken)
+            var ppmps = await dbContext.Ppmps
+                .AsNoTracking()
+                .Include(x => x.Items)
+                .Where(x => selectedIds.Contains(x.Id) &&
+                            (x.Status == PpmpStatus.Approved ||
+                             (x.Status == PpmpStatus.Consolidated && existingSourcePpmpIds.Contains(x.Id))))
+                .ToListAsync(cancellationToken)
                 .ConfigureAwait(false);
 
-            if (updatedCount != approvedIds.Count)
-            {
+            var foundIds = ppmps.Select(x => x.Id).ToHashSet();
+            var missingIds = selectedIds.Where(id => !foundIds.Contains(id)).ToList();
+            if (missingIds.Count > 0)
                 throw new CustomException(
-                    "Some selected PPMPs changed state while consolidating. Please refresh and try again.",
-                    Enumerable.Empty<string>(),
+                    "Some selected PPMPs are no longer eligible. Please refresh and try again.",
+                    missingIds.Select(x => x.ToString()),
                     HttpStatusCode.Conflict);
-            }
-        }
 
-        try
-        {
+            if (ppmps.Count == 0)
+                throw new CustomException("No eligible PPMPs found for consolidation.", Enumerable.Empty<string>(), HttpStatusCode.BadRequest);
+
+            try
+            {
+                app.ConsolidatePpmps(ppmps, userId);
+            }
+            catch (InvalidOperationException ex)
+            {
+                throw new CustomException(ex.Message, Enumerable.Empty<string>(), HttpStatusCode.Conflict);
+            }
+
+            var approvedIds = ppmps.Where(x => x.Status == PpmpStatus.Approved).Select(x => x.Id).ToList();
+            if (approvedIds.Count > 0)
+            {
+                var ppmpNow = DateTimeOffset.UtcNow;
+                var updatedPpmps = await dbContext.Ppmps
+                    .Where(x => approvedIds.Contains(x.Id) && x.Status == PpmpStatus.Approved)
+                    .ExecuteUpdateAsync(setters => setters
+                        .SetProperty(x => x.Status, PpmpStatus.Consolidated)
+                        .SetProperty(x => x.LastModifiedOnUtc, ppmpNow),
+                        cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (updatedPpmps != approvedIds.Count)
+                    throw new CustomException(
+                        "Some selected PPMPs changed state while consolidating. Please refresh and try again.",
+                        Enumerable.Empty<string>(),
+                        HttpStatusCode.Conflict);
+            }
+
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            return await AppReadProjection.BuildDtoAsync(dbContext, command.AppId, cancellationToken).ConfigureAwait(false);
         }
-        catch (DbUpdateConcurrencyException)
+        catch
         {
-            throw new CustomException(
-                "Consolidation failed because the APP was updated by another user. Please refresh and try again.",
-                Enumerable.Empty<string>(),
-                HttpStatusCode.Conflict);
+            await transaction.RollbackAsync(cancellationToken).ConfigureAwait(false);
+            throw;
         }
-
-        return await AppReadProjection.BuildDtoAsync(dbContext, app.Id, cancellationToken).ConfigureAwait(false);
     }
 }

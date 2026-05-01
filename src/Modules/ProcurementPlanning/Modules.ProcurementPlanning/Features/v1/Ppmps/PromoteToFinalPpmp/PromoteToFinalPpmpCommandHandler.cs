@@ -21,6 +21,7 @@ public sealed class PromoteToFinalPpmpCommandHandler(
 
         var userId = currentUser.GetUserId();
         var finalPpmp = original.PromoteToFinal(userId);
+        original.Supersede();
 
         finalPpmp.CreatedBy = userId.ToString();
         dbContext.Ppmps.Add(finalPpmp);

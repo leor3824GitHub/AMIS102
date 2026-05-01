@@ -29,16 +29,6 @@ public enum ProjectType
     ConsultingServices = 2
 }
 
-public enum ModeOfProcurement
-{
-    PublicBidding = 0,
-    LimitedSourceBidding = 1,
-    DirectContracting = 2,
-    RepeatOrder = 3,
-    Shopping = 4,
-    NegotiatedProcurement = 5
-}
-
 // ── DTOs ─────────────────────────────────────────────────────────────────────
 
 public sealed record PpmpItemDto(
@@ -48,7 +38,7 @@ public sealed record PpmpItemDto(
     ProjectType ProjectType,
     decimal Quantity,
     string Unit,
-    ModeOfProcurement ModeOfProcurement,
+    string ModeOfProcurement,
     bool PreProcurementConference,
     string ProcurementStart,
     string ProcurementEnd,
@@ -80,7 +70,6 @@ public sealed record PpmpDto(
     string? ReturnReason,
     DateTimeOffset? ReturnedAt,
     Guid? ReturnedById,
-    Guid? AppId,
     decimal TotalEstimatedBudget,
     IReadOnlyList<PpmpItemDto> Items,
     DateTimeOffset CreatedOnUtc,
@@ -109,7 +98,7 @@ public sealed record PpmpItemRequest(
     ProjectType ProjectType,
     decimal Quantity,
     string Unit,
-    ModeOfProcurement ModeOfProcurement,
+    string ModeOfProcurement,
     bool PreProcurementConference,
     string ProcurementStart,
     string ProcurementEnd,

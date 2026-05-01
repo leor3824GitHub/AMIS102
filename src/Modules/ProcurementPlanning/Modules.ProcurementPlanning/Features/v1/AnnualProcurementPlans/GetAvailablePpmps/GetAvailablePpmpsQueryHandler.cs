@@ -11,12 +11,21 @@ public sealed class GetAvailablePpmpsQueryHandler(
     public async ValueTask<IReadOnlyList<PpmpSummaryDto>> Handle(
         GetAvailablePpmpsForAppQuery query, CancellationToken cancellationToken)
     {
+        var appSourcePpmpIds = query.AppId.HasValue
+            ? await dbContext.AppSourcePpmps
+                .AsNoTracking()
+                .Where(x => x.AppId == query.AppId.Value)
+                .Select(x => x.PpmpId)
+                .ToListAsync(cancellationToken)
+                .ConfigureAwait(false)
+            : [];
+
         return await dbContext.Ppmps
             .AsNoTracking()
             .Where(x => x.FiscalYear == query.FiscalYear
                      && x.IsCurrentVersion
                      && (x.Status == PpmpStatus.Approved
-                         || (x.Status == PpmpStatus.Consolidated && x.AppId == query.AppId)))
+                         || (x.Status == PpmpStatus.Consolidated && appSourcePpmpIds.Contains(x.Id))))
             .OrderBy(x => x.OfficeCode).ThenBy(x => x.PpmpNumber)
             .Select(x => new PpmpSummaryDto(
                 x.Id, x.PpmpNumber, x.FiscalYear, x.Phase,

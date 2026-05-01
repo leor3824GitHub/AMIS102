@@ -1,4 +1,4 @@
-using FSH.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
+﻿using FSH.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
 using FSH.Modules.ProcurementPlanning.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
@@ -33,10 +33,9 @@ public sealed class GetAppVersionsQueryHandler(
         var appIds = versions.Select(x => x.Id).ToList();
 
         var aggregates = await (
-                from line in dbContext.AppLineReferences.AsNoTracking()
-                join ppmpItem in dbContext.PpmpItems.AsNoTracking() on line.SourcePpmpItemId equals ppmpItem.Id
+                from line in dbContext.AppLineItems.AsNoTracking()
                 where appIds.Contains(line.AppId)
-                group ppmpItem by line.AppId
+                group line by line.AppId
                 into g
                 select new
                 {
