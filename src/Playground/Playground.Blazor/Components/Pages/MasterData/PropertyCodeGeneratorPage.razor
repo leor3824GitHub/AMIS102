@@ -19,38 +19,79 @@
 
                             <MudTextField Value="@_officeCode" Label="Office Code (Annex E)"
                                           Variant="Variant.Outlined" ReadOnly="true"
-                                          HelperText="From Organization Profile — set it in Master Data → Organization Profile"
+                                          HelperText="Master Data → Organization Profile"
                                           Adornment="@(_officeCode == "???" ? Adornment.End : Adornment.None)"
                                           AdornmentIcon="@Icons.Material.Outlined.Warning"
                                           AdornmentColor="Color.Warning" />
 
-                            <MudSelect @bind-Value="_ppeClassCode"
-                                       Label="Property Class" Variant="Variant.Outlined" T="string?"
-                                       Placeholder="Select classification..."
-                                       ToStringFunc="@(code => FormatClass(code))"
-                                       AnchorOrigin="Origin.BottomLeft">
-                                <MudSelectItem T="string?" Value="@((string?)null)">— Select —</MudSelectItem>
-                                @foreach (var cls in _activeClasses)
-                                {
-                                    <MudSelectItem T="string?" Value="@cls.Code">
-                                        @cls.Code — @cls.Name
-                                    </MudSelectItem>
-                                }
-                            </MudSelect>
+                            <MudButtonGroup Size="Size.Small" OverrideStyles="false" Style="width:100%">
+                                <MudButton OnClick="@(() => SetMode(false))"
+                                           Variant="@(!_categoryFirst ? Variant.Filled : Variant.Outlined)"
+                                           Color="@(!_categoryFirst ? Color.Primary : Color.Default)"
+                                           FullWidth="true">
+                                    Class &#8594; Category
+                                </MudButton>
+                                <MudButton OnClick="@(() => SetMode(true))"
+                                           Variant="@(_categoryFirst ? Variant.Filled : Variant.Outlined)"
+                                           Color="@(_categoryFirst ? Color.Primary : Color.Default)"
+                                           FullWidth="true">
+                                    Category &#8594; Class
+                                </MudButton>
+                            </MudButtonGroup>
 
-                            <MudSelect @bind-Value="_ppeItemCode"
-                                       Label="Category Code" Variant="Variant.Outlined" T="string?"
-                                       Placeholder="Select category..."
-                                       Disabled="@(string.IsNullOrWhiteSpace(_ppeClassCode))"
-                                       AnchorOrigin="Origin.BottomLeft">
-                                <MudSelectItem T="string?" Value="@((string?)null)">— Select —</MudSelectItem>
-                                @foreach (var item in PpeActiveItems)
-                                {
-                                    <MudSelectItem T="string?" Value="@item.ItemCode">
-                                        @item.ItemCode — @item.Name
-                                    </MudSelectItem>
-                                }
-                            </MudSelect>
+                            @if (!_categoryFirst)
+                            {
+                                <MudAutocomplete T="PropertyClassDto"
+                                                 Value="_selectedClass"
+                                                 ValueChanged="OnClassSelectedAsync"
+                                                 SearchFunc="SearchClassesAsync"
+                                                 ToStringFunc="@(c => c is null ? string.Empty : $"{c.Code} — {c.Name}")"
+                                                 Label="Property Class"
+                                                 Variant="Variant.Outlined"
+                                                 Placeholder="Type class code or name..."
+                                                 ResetValueOnEmptyText="true"
+                                                 CoerceValue="false"
+                                                 MinCharacters="0"
+                                                 AnchorOrigin="Origin.BottomLeft" />
+
+                                <MudAutocomplete T="PropertyClassItemDto"
+                                                 Value="_selectedItem"
+                                                 ValueChanged="OnItemSelectedAsync"
+                                                 SearchFunc="SearchItemsInClassAsync"
+                                                 ToStringFunc="@(i => i is null ? string.Empty : $"{i.ItemCode} — {i.Name}")"
+                                                 Label="Category Code"
+                                                 Variant="Variant.Outlined"
+                                                 Placeholder="Type category code or name..."
+                                                 Disabled="@(string.IsNullOrWhiteSpace(_ppeClassCode))"
+                                                 ResetValueOnEmptyText="true"
+                                                 CoerceValue="false"
+                                                 MinCharacters="0"
+                                                 AnchorOrigin="Origin.BottomLeft" />
+                            }
+                            else
+                            {
+                                <MudAutocomplete T="PropertyClassItemDto"
+                                                 Value="_selectedItem"
+                                                 ValueChanged="OnItemSelectedAsync"
+                                                 SearchFunc="SearchAllItemsAsync"
+                                                 ToStringFunc="@(i => i is null ? string.Empty : $"{i.ItemCode} — {i.Name}")"
+                                                 Label="Category Code"
+                                                 Variant="Variant.Outlined"
+                                                 Placeholder="Type category code or name..."
+                                                 ResetValueOnEmptyText="true"
+                                                 CoerceValue="false"
+                                                 MinCharacters="0"
+                                                 AnchorOrigin="Origin.BottomLeft" />
+
+                                <MudTextField Value="@FormatClass(_ppeClassCode)"
+                                              Label="Property Class"
+                                              Variant="Variant.Outlined"
+                                              ReadOnly="true"
+                                              Placeholder="Auto-filled when category is selected"
+                                              Adornment="@(string.IsNullOrWhiteSpace(_ppeClassCode) ? Adornment.End : Adornment.None)"
+                                              AdornmentIcon="@Icons.Material.Outlined.Info"
+                                              AdornmentColor="Color.Secondary" />
+                            }
 
                             <MudNumericField @bind-Value="_ppeYear" Label="Year" Variant="Variant.Outlined"
                                              Min="2000" Max="2099" />
@@ -147,6 +188,9 @@
     private int _ppeYear = DateTime.Now.Year;
     private int _ppeSeqFrom = 1;
     private int _ppeSeqTo = 10;
+    private bool _categoryFirst;
+    private PropertyClassDto? _selectedClass;
+    private PropertyClassItemDto? _selectedItem;
 
     protected override async Task OnInitializedAsync()
     {
@@ -185,6 +229,17 @@
         .Where(i => i.IsActive)
         .OrderBy(i => i.ItemCode);
 
+    private IEnumerable<PropertyClassItemDto> PpeAllActiveItems =>
+        _activeClasses
+            .Where(c => c.IsActive)
+            .SelectMany(c => c.Items.Where(i => i.IsActive))
+            .OrderBy(i => i.ItemCode);
+
+    private PropertyClassItemDto? SelectedItem =>
+        PpeAllActiveItems.FirstOrDefault(i =>
+            i.ItemCode == _ppeItemCode &&
+            (string.IsNullOrWhiteSpace(_ppeClassCode) || i.ClassCode == _ppeClassCode));
+
     private bool PpeReady =>
         !string.IsNullOrWhiteSpace(_ppeClassCode) && !string.IsNullOrWhiteSpace(_ppeItemCode);
 
@@ -195,7 +250,7 @@
         _activeClasses.FirstOrDefault(c => c.Code == _ppeClassCode)?.Name ?? string.Empty;
 
     private string SelectedItemName =>
-        PpeActiveItems.FirstOrDefault(i => i.ItemCode == _ppeItemCode)?.Name ?? string.Empty;
+        SelectedItem?.Name ?? string.Empty;
 
     private IEnumerable<int> PpeSequenceRange =>
         Enumerable.Range(_ppeSeqFrom, Math.Max(1, Math.Min(_ppeSeqTo - _ppeSeqFrom + 1, 50)));
@@ -208,6 +263,71 @@
         if (string.IsNullOrWhiteSpace(code)) return string.Empty;
         var cls = _activeClasses.FirstOrDefault(c => c.Code == code);
         return cls is null ? code : $"{cls.Code} — {cls.Name}";
+    }
+
+    private void SetMode(bool categoryFirst)
+    {
+        if (_categoryFirst == categoryFirst) return;
+        _categoryFirst = categoryFirst;
+        _selectedClass = null;
+        _selectedItem = null;
+        _ppeClassCode = null;
+        _ppeItemCode = null;
+    }
+
+    private Task<IEnumerable<PropertyClassDto>> SearchClassesAsync(string? value, CancellationToken ct)
+    {
+        IEnumerable<PropertyClassDto> results = string.IsNullOrWhiteSpace(value)
+            ? _activeClasses
+            : _activeClasses.Where(c =>
+                c.Code.Contains(value, StringComparison.OrdinalIgnoreCase) ||
+                c.Name.Contains(value, StringComparison.OrdinalIgnoreCase));
+
+        return Task.FromResult(results);
+    }
+
+    private Task<IEnumerable<PropertyClassItemDto>> SearchItemsInClassAsync(string? value, CancellationToken ct)
+    {
+        IEnumerable<PropertyClassItemDto> items = _selectedClass is null
+            ? []
+            : _selectedClass.Items.Where(i => i.IsActive);
+        if (!string.IsNullOrWhiteSpace(value))
+            items = items.Where(i =>
+                i.ItemCode.Contains(value, StringComparison.OrdinalIgnoreCase) ||
+                i.Name.Contains(value, StringComparison.OrdinalIgnoreCase));
+        return Task.FromResult(items.OrderBy(i => i.ItemCode).AsEnumerable());
+    }
+
+    private Task<IEnumerable<PropertyClassItemDto>> SearchAllItemsAsync(string? value, CancellationToken ct)
+    {
+        IEnumerable<PropertyClassItemDto> items = PpeAllActiveItems;
+        if (!string.IsNullOrWhiteSpace(value))
+            items = items.Where(i =>
+                i.ItemCode.Contains(value, StringComparison.OrdinalIgnoreCase) ||
+                i.Name.Contains(value, StringComparison.OrdinalIgnoreCase));
+        return Task.FromResult(items.AsEnumerable());
+    }
+
+    private Task OnClassSelectedAsync(PropertyClassDto? selectedClass)
+    {
+        _selectedClass = selectedClass;
+        _ppeClassCode = selectedClass?.Code;
+        _selectedItem = null;
+        _ppeItemCode = null;
+        return Task.CompletedTask;
+    }
+
+    private Task OnItemSelectedAsync(PropertyClassItemDto? item)
+    {
+        _selectedItem = item;
+        _ppeItemCode = item?.ItemCode;
+        if (_categoryFirst)
+        {
+            _ppeClassCode = item?.ClassCode;
+            _selectedClass = _activeClasses.FirstOrDefault(c => c.Code == _ppeClassCode);
+        }
+
+        return Task.CompletedTask;
     }
 
     // Utility

@@ -1,5 +1,6 @@
 using AutoFixture;
 using FSH.Framework.Core.Context;
+using FSH.Framework.Eventing.Abstractions;
 using FSH.Framework.Eventing.Outbox;
 using FSH.Framework.Shared.Multitenancy;
 using FSH.Modules.Auditing.Contracts;
@@ -26,6 +27,7 @@ public sealed class GenerateTokenCommandHandlerTests
     private readonly ISecurityAudit _securityAudit;
     private readonly IRequestContext _requestContext;
     private readonly IOutboxStore _outboxStore;
+    private readonly IEventBus _eventBus;
     private readonly IMultiTenantContextAccessor<AppTenantInfo> _multiTenantContextAccessor;
     private readonly ISessionService _sessionService;
     private readonly ILogger<GenerateTokenCommandHandler> _logger;
@@ -39,6 +41,7 @@ public sealed class GenerateTokenCommandHandlerTests
         _securityAudit = Substitute.For<ISecurityAudit>();
         _requestContext = Substitute.For<IRequestContext>();
         _outboxStore = Substitute.For<IOutboxStore>();
+        _eventBus = Substitute.For<IEventBus>();
         _multiTenantContextAccessor = Substitute.For<IMultiTenantContextAccessor<AppTenantInfo>>();
         _sessionService = Substitute.For<ISessionService>();
         _logger = Substitute.For<ILogger<GenerateTokenCommandHandler>>();
@@ -49,6 +52,7 @@ public sealed class GenerateTokenCommandHandlerTests
             _securityAudit,
             _requestContext,
             _outboxStore,
+            _eventBus,
             _multiTenantContextAccessor,
             _sessionService,
             _logger);

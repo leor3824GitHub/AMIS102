@@ -18,68 +18,137 @@
     <!-- ══ LEFT: Queue ══════════════════════════════════════════════ -->
     <MudItem xs="12" md="4">
         <MudCard Elevation="1">
-            <MudCardHeader>
-                <CardHeaderContent>
-                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-                        <MudText Typo="Typo.subtitle1" Style="font-weight:600">Pending Approval</MudText>
-                        @if (_queue.Count > 0)
-                        {
-                            <MudChip T="string" Size="Size.Small" Color="Color.Warning" Label="true">
-                                @_queue.Count
-                            </MudChip>
-                        }
-                        <MudSpacer />
-                        <MudIconButton Icon="@Icons.Material.Filled.Refresh" Size="Size.Small"
-                                       OnClick="LoadQueueAsync" Disabled="_loading" />
-                    </MudStack>
-                </CardHeaderContent>
-            </MudCardHeader>
+            <MudTabs Rounded="false" PanelClass="pa-0" @bind-ActivePanelIndex="_activeTab"
+                     Color="Color.Primary" Ripple="false" SliderAnimation="false">
 
-            <MudCardContent Class="pa-0">
-                @if (_loading)
-                {
-                    <MudProgressLinear Indeterminate="true" />
-                }
-                else if (_queue.Count == 0)
-                {
-                    <div Class="pa-4">
-                        <MudAlert Severity="Severity.Success" Dense="true">
-                            No APPs pending approval.
-                        </MudAlert>
-                    </div>
-                }
-                else
-                {
-                    <MudList T="AnnualProcurementPlanSummaryDto" Dense="true"
-                             SelectedValue="_selected" SelectedValueChanged="SelectAppAsync">
-                        @foreach (var item in _queue)
+                <!-- Tab 1: Pending Approval -->
+                <MudTabPanel>
+                    <TabContent>
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                            <MudText Typo="Typo.body2" Style="font-weight:600">Pending Approval</MudText>
+                            @if (_queue.Count > 0)
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Warning" Label="true">@_queue.Count</MudChip>
+                            }
+                        </MudStack>
+                    </TabContent>
+                    <ChildContent>
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Class="px-3 pt-2 pb-1">
+                            <MudSpacer />
+                            <MudIconButton Icon="@Icons.Material.Filled.Refresh" Size="Size.Small"
+                                           OnClick="LoadQueueAsync" Disabled="_loading" />
+                        </MudStack>
+                        @if (_loading)
                         {
-                            <MudListItem T="AnnualProcurementPlanSummaryDto" Value="item"
-                                         Style="@(_selected?.Id == item.Id
-                                             ? "background:var(--mud-palette-primary-lighten);border-left:3px solid var(--mud-palette-primary)"
-                                             : "border-left:3px solid transparent")">
-                                <MudStack Spacing="0">
-                                    <MudText Typo="Typo.subtitle2" Style="font-weight:600">@item.AppNumber</MudText>
-                                    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Class="mt-1">
-                                        <MudChip T="string" Size="Size.Small" Color="Color.Default" Label="true"
-                                                 Style="font-size:10px">
-                                            @item.Phase
-                                        </MudChip>
-                                        <MudText Typo="Typo.caption">FY @item.FiscalYear</MudText>
-                                        <MudText Typo="Typo.caption">· @item.ItemCount items</MudText>
-                                        <MudSpacer />
-                                        <MudText Typo="Typo.caption"
-                                                 Style="font-weight:600; color:var(--mud-palette-primary)">
-                                            ₱ @item.TotalEstimatedBudget.ToString("N0")
-                                        </MudText>
-                                    </MudStack>
-                                </MudStack>
-                            </MudListItem>
-                            <MudDivider />
+                            <MudProgressLinear Indeterminate="true" />
                         }
-                    </MudList>
-                }
-            </MudCardContent>
+                        else if (_queue.Count == 0)
+                        {
+                            <div class="pa-4">
+                                <MudAlert Severity="Severity.Success" Dense="true">
+                                    No APPs pending approval.
+                                </MudAlert>
+                            </div>
+                        }
+                        else
+                        {
+                            <MudList T="AnnualProcurementPlanSummaryDto" Dense="true"
+                                     SelectedValue="_selected" SelectedValueChanged="SelectAppAsync">
+                                @foreach (var item in _queue)
+                                {
+                                    <MudListItem T="AnnualProcurementPlanSummaryDto" Value="item"
+                                                 Style="@(_selected?.Id == item.Id ? "background:var(--mud-palette-primary-lighten);border-left:3px solid var(--mud-palette-primary)" : "border-left:3px solid transparent")">
+                                        <MudStack Spacing="0">
+                                            <MudText Typo="Typo.subtitle2" Style="font-weight:600">@item.AppNumber</MudText>
+                                            <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Class="mt-1">
+                                                <MudChip T="string" Size="Size.Small" Color="Color.Default" Label="true"
+                                                         Style="font-size:10px">@item.Phase</MudChip>
+                                                <MudText Typo="Typo.caption">FY @item.FiscalYear</MudText>
+                                                <MudText Typo="Typo.caption">· @item.ItemCount items</MudText>
+                                                <MudSpacer />
+                                                <MudText Typo="Typo.caption" Style="font-weight:600; color:var(--mud-palette-primary)">
+                                                    ₱ @item.TotalEstimatedBudget.ToString("N0")
+                                                </MudText>
+                                            </MudStack>
+                                        </MudStack>
+                                    </MudListItem>
+                                    <MudDivider />
+                                }
+                            </MudList>
+                        }
+                    </ChildContent>
+                </MudTabPanel>
+
+                <!-- Tab 2: Approved APPs -->
+                <MudTabPanel>
+                    <TabContent>
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                            <MudText Typo="Typo.body2" Style="font-weight:600">Approved</MudText>
+                            @if (_approvedQueue.Count > 0)
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Success" Label="true">@_approvedQueue.Count</MudChip>
+                            }
+                        </MudStack>
+                    </TabContent>
+                    <ChildContent>
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Class="px-3 pt-2 pb-1" Spacing="1">
+                            <MudTextField @bind-Value="_approvedKeyword"
+                                          Placeholder="Search..."
+                                          Variant="Variant.Outlined"
+                                          Adornment="Adornment.End"
+                                          AdornmentIcon="@Icons.Material.Filled.Search"
+                                          DebounceInterval="350"
+                                          OnDebounceIntervalElapsed="@(() => LoadApprovedAsync())"
+                                          Size="Size.Small" Class="flex-grow-1" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Refresh" Size="Size.Small"
+                                           OnClick="LoadApprovedAsync" Disabled="_loadingApproved" />
+                        </MudStack>
+                        @if (_loadingApproved)
+                        {
+                            <MudProgressLinear Indeterminate="true" />
+                        }
+                        else if (_approvedQueue.Count == 0)
+                        {
+                            <div class="pa-4">
+                                <MudAlert Severity="Severity.Info" Dense="true">
+                                    No approved APPs found.
+                                </MudAlert>
+                            </div>
+                        }
+                        else
+                        {
+                            <MudList T="AnnualProcurementPlanSummaryDto" Dense="true"
+                                     SelectedValue="_selected" SelectedValueChanged="SelectAppAsync">
+                                @foreach (var item in _approvedQueue)
+                                {
+                                    <MudListItem T="AnnualProcurementPlanSummaryDto" Value="item"
+                                                 Style="@(_selected?.Id == item.Id ? "background:var(--mud-palette-success-lighten);border-left:3px solid var(--mud-palette-success)" : "border-left:3px solid transparent")">
+                                        <MudStack Spacing="0">
+                                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                                <MudText Typo="Typo.subtitle2" Style="font-weight:600">@item.AppNumber</MudText>
+                                                <MudChip T="string" Size="Size.Small" Color="Color.Success" Label="true"
+                                                         Style="font-size:9px">Approved</MudChip>
+                                            </MudStack>
+                                            <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Class="mt-1">
+                                                <MudChip T="string" Size="Size.Small" Color="Color.Default" Label="true"
+                                                         Style="font-size:10px">@item.Phase</MudChip>
+                                                <MudText Typo="Typo.caption">FY @item.FiscalYear</MudText>
+                                                <MudText Typo="Typo.caption">· @item.ItemCount items</MudText>
+                                                <MudSpacer />
+                                                <MudText Typo="Typo.caption" Style="font-weight:600; color:var(--mud-palette-success)">
+                                                    ₱ @item.TotalEstimatedBudget.ToString("N0")
+                                                </MudText>
+                                            </MudStack>
+                                        </MudStack>
+                                    </MudListItem>
+                                    <MudDivider />
+                                }
+                            </MudList>
+                        }
+                    </ChildContent>
+                </MudTabPanel>
+
+            </MudTabs>
         </MudCard>
     </MudItem>
 
@@ -255,28 +324,31 @@
 
                 <MudDivider />
 
-                <!-- Action bar -->
-                <MudCardActions Class="pa-3">
-                    <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Large"
-                               StartIcon="@Icons.Material.Filled.CheckCircle"
-                               OnClick="ConfirmApproveAsync" Disabled="_busy">
-                        @if (_busy)
-                        {
-                            <MudProgressCircular Size="Size.Small" Class="mr-1" Indeterminate="true" />
-                        }
-                        Approve
-                    </MudButton>
-                    <MudButton Variant="Variant.Outlined" Color="Color.Error" Size="Size.Large"
-                               StartIcon="@Icons.Material.Filled.Undo"
-                               OnClick="ConfirmReturnAsync" Disabled="_busy" Class="ml-2">
-                        Return for Revision
-                    </MudButton>
-                    <MudSpacer />
-                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mr-2">
-                        @_detail.Items.Count item@(_detail.Items.Count != 1 ? "s" : "") ·
-                        ₱ @_detail.TotalEstimatedBudget.ToString("N2") total
-                    </MudText>
-                </MudCardActions>
+                <!-- Action bar — only for Published APPs -->
+                @if (_detail.Status == AppStatus.Published)
+                {
+                    <MudCardActions Class="pa-3">
+                        <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Large"
+                                   StartIcon="@Icons.Material.Filled.CheckCircle"
+                                   OnClick="ConfirmApproveAsync" Disabled="_busy">
+                            @if (_busy)
+                            {
+                                <MudProgressCircular Size="Size.Small" Class="mr-1" Indeterminate="true" />
+                            }
+                            Approve
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Error" Size="Size.Large"
+                                   StartIcon="@Icons.Material.Filled.Undo"
+                                   OnClick="ConfirmReturnAsync" Disabled="_busy" Class="ml-2">
+                            Return for Revision
+                        </MudButton>
+                        <MudSpacer />
+                        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mr-2">
+                            @_detail.Items.Count item@(_detail.Items.Count != 1 ? "s" : "") ·
+                            ₱ @_detail.TotalEstimatedBudget.ToString("N2") total
+                        </MudText>
+                    </MudCardActions>
+                }
             </MudCard>
         }
     </MudItem>
@@ -284,15 +356,19 @@
 
 @code {
     private List<AnnualProcurementPlanSummaryDto> _queue = [];
+    private List<AnnualProcurementPlanSummaryDto> _approvedQueue = [];
     private AnnualProcurementPlanSummaryDto? _selected;
     private AnnualProcurementPlanDto? _detail;
     private bool _loading;
+    private bool _loadingApproved;
     private bool _busy;
+    private int _activeTab;
+    private string? _approvedKeyword;
     private Guid _approverId;
 
     protected override async Task OnInitializedAsync()
     {
-        await Task.WhenAll(LoadApproverAsync(), LoadQueueAsync());
+        await Task.WhenAll(LoadApproverAsync(), LoadQueueAsync(), LoadApprovedAsync());
     }
 
     private async Task LoadApproverAsync()
@@ -324,6 +400,20 @@
         }
         catch (Exception ex) { Snackbar.Add($"Error loading queue: {ex.Message}", Severity.Error); }
         finally { _loading = false; }
+    }
+
+    private async Task LoadApprovedAsync()
+    {
+        _loadingApproved = true;
+        try
+        {
+            var result = await AppClient.SearchAsync(
+                keyword: _approvedKeyword,
+                status: AppStatus.Approved, page: 1, pageSize: 100);
+            _approvedQueue = result.Items.ToList();
+        }
+        catch (Exception ex) { Snackbar.Add($"Error loading approved list: {ex.Message}", Severity.Error); }
+        finally { _loadingApproved = false; }
     }
 
     private async Task SelectAppAsync(AnnualProcurementPlanSummaryDto? summary)

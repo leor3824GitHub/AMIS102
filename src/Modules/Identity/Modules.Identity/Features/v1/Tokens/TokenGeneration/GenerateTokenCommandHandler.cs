@@ -6,6 +6,7 @@ using FSH.Modules.Identity.Contracts.v1.Tokens.TokenGeneration;
 using Mediator;
 using System.Security.Claims;
 using Finbuckle.MultiTenant.Abstractions;
+using FSH.Framework.Eventing.Abstractions;
 using FSH.Framework.Eventing.Outbox;
 using FSH.Framework.Shared.Multitenancy;
 using FSH.Modules.Identity.Contracts.Events;
@@ -21,6 +22,7 @@ public sealed class GenerateTokenCommandHandler
     private readonly ISecurityAudit _securityAudit;
     private readonly IRequestContext _requestContext;
     private readonly IOutboxStore _outboxStore;
+    private readonly IEventBus _eventBus;
     private readonly IMultiTenantContextAccessor<AppTenantInfo> _multiTenantContextAccessor;
     private readonly ISessionService _sessionService;
     private readonly ILogger<GenerateTokenCommandHandler> _logger;
@@ -31,6 +33,7 @@ public sealed class GenerateTokenCommandHandler
         ISecurityAudit securityAudit,
         IRequestContext requestContext,
         IOutboxStore outboxStore,
+        IEventBus eventBus,
         IMultiTenantContextAccessor<AppTenantInfo> multiTenantContextAccessor,
         ISessionService sessionService,
         ILogger<GenerateTokenCommandHandler> logger)
@@ -40,6 +43,7 @@ public sealed class GenerateTokenCommandHandler
         _securityAudit = securityAudit;
         _requestContext = requestContext;
         _outboxStore = outboxStore;
+        _eventBus = eventBus;
         _multiTenantContextAccessor = multiTenantContextAccessor;
         _sessionService = sessionService;
         _logger = logger;
@@ -123,8 +127,29 @@ public sealed class GenerateTokenCommandHandler
         // 4) Enqueue integration events
         var tenantId = _multiTenantContextAccessor.MultiTenantContext?.TenantInfo?.Id;
         var correlationId = Guid.NewGuid().ToString();
-        var firstName = claims.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value ?? string.Empty;
+        var firstName = claims.FirstOrDefault(c => c.Type == ClaimTypes.GivenName)?.Value ?? string.Empty;
         var lastName = claims.FirstOrDefault(c => c.Type == ClaimTypes.Surname)?.Value ?? string.Empty;
+
+        // Fallback for identities that only provide a display name claim.
+        if (string.IsNullOrWhiteSpace(firstName) || string.IsNullOrWhiteSpace(lastName))
+        {
+            var displayName = claims.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value;
+            if (!string.IsNullOrWhiteSpace(displayName))
+            {
+                var nameParts = displayName
+                    .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+                if (string.IsNullOrWhiteSpace(firstName) && nameParts.Length > 0)
+                {
+                    firstName = nameParts[0];
+                }
+
+                if (string.IsNullOrWhiteSpace(lastName) && nameParts.Length > 1)
+                {
+                    lastName = nameParts[^1];
+                }
+            }
+        }
 
         var integrationEvent = new TokenGeneratedIntegrationEvent(
             Id: Guid.NewGuid(),
@@ -142,7 +167,11 @@ public sealed class GenerateTokenCommandHandler
 
         await _outboxStore.AddAsync(integrationEvent, cancellationToken).ConfigureAwait(false);
 
-        // Notify other modules (e.g. MasterData) so they can auto-link records on login
+        // Notify other modules (e.g. MasterData) so they can auto-link records on login.
+        // Published directly to the event bus (not via outbox) because:
+        // - Auto-linking is best-effort; no retry guarantee is needed.
+        // - The outbox dispatcher is disabled by default (UseHostedServiceDispatcher=false).
+        // InMemoryEventBus swallows handler exceptions so a link failure never breaks login.
         var loggedInEvent = new UserLoggedInIntegrationEvent(
             Id: Guid.NewGuid(),
             OccurredOnUtc: DateTime.UtcNow,
@@ -154,7 +183,7 @@ public sealed class GenerateTokenCommandHandler
             FirstName: firstName,
             LastName: lastName);
 
-        await _outboxStore.AddAsync(loggedInEvent, cancellationToken).ConfigureAwait(false);
+        await _eventBus.PublishAsync(loggedInEvent, cancellationToken).ConfigureAwait(false);
 
         return token;
     }
