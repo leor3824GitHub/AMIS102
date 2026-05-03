@@ -228,13 +228,33 @@ The interface in this repo uses `MigrateAsync` and `SeedAsync`.
 
 Put entities under `Domain/`.
 
-Typical shape:
+Typical shape (see `add-entity` skill for the full template):
 
 ```csharp
-public class {Entity} : BaseEntity, IAuditable, IMustHaveTenant
+public sealed class {Entity} : AggregateRoot<Guid>, IHasTenant, IAuditableEntity, ISoftDeletable
 {
-        public string Name { get; private set; } = default!;
-        public Guid TenantId { get; set; }
+    public string Name { get; private set; } = default!;
+
+    // IHasTenant
+    public string TenantId { get; private set; } = null!;
+
+    // IAuditableEntity
+    public DateTimeOffset CreatedAt { get; set; }
+    public string? CreatedBy { get; set; }
+    public DateTimeOffset? LastModifiedAt { get; set; }
+    public string? LastModifiedBy { get; set; }
+
+    // ISoftDeletable
+    public DateTimeOffset? DeletedAt { get; set; }
+    public string? DeletedBy { get; set; }
+
+    private {Entity}() { }
+
+    public static {Entity} Create(string name, string tenantId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        return new {Entity} { Id = Guid.NewGuid(), Name = name, TenantId = tenantId };
+    }
 }
 ```
 
@@ -300,7 +320,25 @@ In `src/Playground/Playground.Api/Playground.Api.csproj`:
 <ProjectReference Include="..\..\Modules\{Name}\Modules.{Name}\Modules.{Name}.csproj" />
 ```
 
-## Step 14: Verify
+## Step 14: Add Migration
+
+New modules need an initial migration for their DbContext:
+
+```powershell
+dotnet ef migrations add "Initial_{Name}Schema" `
+  --project src/Playground/Migrations.PostgreSQL `
+  --startup-project src/Playground/Playground.Api `
+  --context {Name}DbContext
+
+dotnet ef database update `
+  --project src/Playground/Migrations.PostgreSQL `
+  --startup-project src/Playground/Playground.Api `
+  --context {Name}DbContext
+```
+
+See the `migration-helper` agent for the full context name list.
+
+## Step 15: Verify
 
 ```bash
 dotnet build src/FSH.Framework.slnx
@@ -323,6 +361,7 @@ dotnet test src/FSH.Framework.slnx
 - [ ] `moduleAssemblies` updated in `Program.cs`
 - [ ] API project references added
 - [ ] Solution updated
+- [ ] Initial migration created and applied
 - [ ] Build passes with zero warnings
 
 ## Practical Guidance

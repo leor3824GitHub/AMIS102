@@ -13,15 +13,15 @@ You are an architecture guardian for FullStackHero .NET Starter Kit. Your job is
 
 ### 1. Check for BuildingBlocks Modifications
 
-```bash
-git diff --name-only | grep -E "^src/BuildingBlocks/"
+```powershell
+git diff --name-only | Where-Object { $_ -match "^src/BuildingBlocks/" }
 ```
 
 If any files listed: **STOP** - BuildingBlocks changes require explicit approval.
 
 ### 2. Run Architecture Tests
 
-```bash
+```powershell
 dotnet test src/Tests/Architecture.Tests --no-build
 ```
 
@@ -29,8 +29,8 @@ All tests must pass.
 
 ### 3. Verify Build Has 0 Warnings
 
-```bash
-dotnet build src/FSH.Framework.slnx 2>&1 | grep -E "warning|error"
+```powershell
+dotnet build src/FSH.Framework.slnx 2>&1 | Where-Object { $_ -match "warning|error" }
 ```
 
 Must show no warnings or errors.
@@ -39,42 +39,49 @@ Must show no warnings or errors.
 
 Verify no cross-module internal dependencies:
 
-```bash
-# Check if any module references another module's internal types
-grep -r "using Modules\." src/Modules/ --include="*.cs" | grep -v "\.Contracts"
+```powershell
+# Check if any module references another module's internal types (should only reference .Contracts)
+Get-ChildItem -Recurse -Filter "*.cs" src/Modules/ |
+    Select-String "using FSH\.Modules\." |
+    Where-Object { $_ -notmatch "\.Contracts" }
 ```
 
-Should only show references to `.Contracts` namespaces.
+Should return no results.
 
 ### 5. Verify Mediator Usage
 
-```bash
+```powershell
 # Check for MediatR usage (should be empty)
-grep -r "MediatR\|IRequest<\|IRequestHandler<" src/Modules/ --include="*.cs"
+Get-ChildItem -Recurse -Filter "*.cs" src/Modules/ |
+    Select-String "MediatR|IRequest<|IRequestHandler<"
 ```
 
-Must be empty - all should use Mediator interfaces.
+Must return no results — all must use Mediator interfaces.
 
 ### 6. Check Validator Coverage
 
 For each command, verify a validator exists:
 
-```bash
+```powershell
 # List commands
-find src/Modules -name "*Command.cs" -type f
+Get-ChildItem -Recurse -Filter "*Command.cs" src/Modules/
 
 # List validators
-find src/Modules -name "*Validator.cs" -type f
+Get-ChildItem -Recurse -Filter "*Validator.cs" src/Modules/
 ```
 
 Every command needs a corresponding validator.
 
 ### 7. Check Endpoint Authorization
 
-```bash
-# Find endpoints without authorization
-grep -r "\.Map\(Get\|Post\|Put\|Delete\)" src/Modules/ --include="*.cs" -A 5 | \
-grep -v "RequirePermission\|AllowAnonymous"
+```powershell
+# Find endpoints missing authorization
+Get-ChildItem -Recurse -Filter "*Endpoint*.cs" src/Modules/ |
+    Select-String "MapGet|MapPost|MapPut|MapDelete" -l |
+    ForEach-Object {
+        $content = Get-Content $_
+        if ($content -notmatch "RequirePermission|AllowAnonymous") { $_ }
+    }
 ```
 
 Every endpoint must have explicit authorization.

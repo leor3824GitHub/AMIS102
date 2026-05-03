@@ -58,6 +58,7 @@ Notes:
 
 - Use `Domain/`, not `Entities/`.
 - Use `Data/`, not `Persistence/`.
+- **Exception:** The `Auditing` module is a legacy core framework module that uses `Core/`, `Infrastructure/`, and `Persistence/` instead of `Data/`. Do not copy this structure — it is intentionally left as-is for backward compatibility.
 - Use `{ModuleName}Module.cs`, not `Extensions.cs`, for DI and endpoint mapping.
 - Use `{ModuleName}ModuleConstants.cs` for schema and permission constants.
 - `Provisioning/` is optional. Expendable uses it; MasterData does not.

@@ -4,40 +4,24 @@
 @inject IPropertyClassClient Client
 @inject ISnackbar Snackbar
 
-<FshPageHeader Title="Property Classification Library"
-               Description="COA GAM Annex A — property classification codes used in property code generation" />
+<FshPageHeader Title="Property Classification & Category Library"
+               Description="Property classification & category codes used in property code generation" />
 
 <MudGrid Spacing="2" Class="mt-3">
 
-    <!-- LEFT: Class list + add form -->
+    <!-- LEFT: Class list -->
     <MudItem xs="12" md="5">
         <MudCard Class="fsh-card">
             <MudCardContent>
-                <MudText Typo="Typo.h6" Class="mb-3">
-                    @(_editingClass is not null ? "Edit Classification" : "Add Classification")
-                </MudText>
-                <MudStack Spacing="2">
-                    <MudTextField @bind-Value="_classForm.Code" Label="Code (2–4 chars)" Placeholder="e.g. OE"
-                                  HelperText="@(_editingClass is not null ? "Code cannot be changed after creation." : "2–4 char classification code (PPRCLSCD)")"
-                                  CharacterCounter="true" MaxLength="4"
-                                  ReadOnly="@(_editingClass is not null)" />
-                    <MudTextField @bind-Value="_classForm.Name" Label="Name" Placeholder="e.g. Office Equipment" />
-                    <MudTextField @bind-Value="_classForm.Description" Label="Description" Lines="2" />
-                    @if (_editingClass is not null)
-                    {
-                        <MudCheckBox @bind-Value="_classForm.IsActive" Label="Active" T="bool" />
-                    }
-                    <MudStack Row="true" Spacing="1">
-                        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
-                                   OnClick="SaveClassAsync" Disabled="_busy">
-                            @(_editingClass is not null ? "Update" : "Add")
-                        </MudButton>
-                        <MudButton Variant="Variant.Outlined" Color="Color.Default"
-                                   OnClick="ClearClassForm">Clear</MudButton>
-                    </MudStack>
+                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-3">
+                    <MudText Typo="Typo.h6">Classifications</MudText>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                               StartIcon="@Icons.Material.Outlined.Add"
+                               OnClick="OpenAddClassDialog"
+                               Disabled="_busy">
+                        Add Classification
+                    </MudButton>
                 </MudStack>
-
-                <MudDivider Class="my-4" />
 
                 <MudText Typo="Typo.subtitle1" Class="mb-2">
                     Classifications (@_classes.Count)
@@ -71,7 +55,7 @@
                                 <span @onclick:stopPropagation="true">
                                     <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small"
                                                    Color="Color.Secondary"
-                                                   OnClick="@(() => EditClass(cls))" />
+                                                   OnClick="@(() => OpenEditClassDialog(cls))" />
                                 </span>
                             </MudStack>
                         </MudListItem>
@@ -180,6 +164,75 @@
     </MudItem>
 </MudGrid>
 
+<MudDialog @bind-Visible="_classDialogOpen" Options="_classDialogOptions" Class="property-class-dialog">
+    <TitleContent>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+            <MudText Typo="Typo.h6">@(_editingClass is not null ? "Edit Classification" : "Add Classification")</MudText>
+            <MudIconButton Icon="@Icons.Material.Outlined.Close"
+                           Color="Color.Default"
+                           Size="Size.Small"
+                           OnClick="CloseClassDialog"
+                           Disabled="_busy" />
+        </MudStack>
+    </TitleContent>
+    <DialogContent>
+        <MudStack Spacing="2" Class="pt-2">
+            <MudTextField @bind-Value="_classForm.Code" Label="Code (2–4 chars)" Placeholder="e.g. OE"
+                          HelperText="@(_editingClass is not null ? "Code cannot be changed after creation." : "2–4 char classification code (PPRCLSCD)")"
+                          Variant="Variant.Outlined"
+                          CharacterCounter="true" MaxLength="4"
+                          Required="true" RequiredError="Code is required"
+                          AutoFocus="@(_editingClass is null)"
+                          OnKeyDown="HandleClassDialogKeyDown"
+                          ReadOnly="@(_editingClass is not null)" />
+            <MudTextField @bind-Value="_classForm.Name" Label="Name" Placeholder="e.g. Office Equipment"
+                          Variant="Variant.Outlined"
+                          Required="true" RequiredError="Name is required"
+                          AutoFocus="@(_editingClass is not null)"
+                          OnKeyDown="HandleClassDialogKeyDown" />
+            <MudTextField @bind-Value="_classForm.Description" Label="Description" Lines="2" Variant="Variant.Outlined" />
+            @if (_editingClass is not null)
+            {
+                <MudCheckBox @bind-Value="_classForm.IsActive" Label="Active" T="bool" />
+            }
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" Color="Color.Default" OnClick="CloseClassDialog" Disabled="_busy">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveClassAsync" Disabled="_busy">
+            @(_editingClass is not null ? "Update" : "Add")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+<style>
+    .property-class-dialog .mud-dialog {
+        animation: property-class-dialog-in 180ms ease-out;
+    }
+
+    @@keyframes property-class-dialog-in {
+        from {
+            opacity: 0;
+            transform: translateY(14px) scale(0.98);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .property-class-dialog .mud-dialog {
+            margin: 0;
+            width: 100vw;
+            max-width: 100vw;
+            height: 100dvh;
+            max-height: 100dvh;
+            border-radius: 0;
+        }
+    }
+</style>
+
 @code {
     private List<PropertyClassDto> _classes = [];
     private PropertyClassDto? _selectedClass;
@@ -187,6 +240,14 @@
     private PropertyClassItemDto? _editingItem;
     private bool _busy;
     private bool _itemFormExpanded;
+    private bool _classDialogOpen;
+    private readonly DialogOptions _classDialogOptions = new()
+    {
+        MaxWidth = MaxWidth.Small,
+        FullWidth = true,
+        CloseOnEscapeKey = true,
+        BackdropClick = true
+    };
 
     private ClassForm _classForm = new();
     private ItemForm _itemForm = new();
@@ -251,10 +312,36 @@
         };
     }
 
+    private void OpenAddClassDialog()
+    {
+        ClearClassForm();
+        _classDialogOpen = true;
+    }
+
+    private void OpenEditClassDialog(PropertyClassDto cls)
+    {
+        EditClass(cls);
+        _classDialogOpen = true;
+    }
+
+    private void CloseClassDialog()
+    {
+        _classDialogOpen = false;
+        ClearClassForm();
+    }
+
     private void ClearClassForm()
     {
         _editingClass = null;
         _classForm = new();
+    }
+
+    private async Task HandleClassDialogKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Enter" && !_busy)
+        {
+            await SaveClassAsync();
+        }
     }
 
     private void EditItem(PropertyClassItemDto item)
@@ -308,7 +395,7 @@
                 Snackbar.Add("Classification created.", Severity.Success);
             }
 
-            ClearClassForm();
+            CloseClassDialog();
             await LoadTreeAsync();
         }
         catch (Exception ex)

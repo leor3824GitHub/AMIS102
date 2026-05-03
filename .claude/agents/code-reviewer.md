@@ -29,6 +29,7 @@ You are a code reviewer for the FullStackHero .NET Starter Kit. Your job is to r
 - [ ] Handlers use `ICommandHandler<T,R>` or `IQueryHandler<T,R>`
 - [ ] Handler methods return `ValueTask<T>` not `Task<T>`
 - [ ] Using `Mediator` namespace, not `MediatR`
+- [ ] Handlers and validators are `sealed`
 
 ### Validation
 - [ ] Every command has a matching `AbstractValidator<TCommand>`
