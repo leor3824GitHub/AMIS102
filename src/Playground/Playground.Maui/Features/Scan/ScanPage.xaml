@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:Playground.Maui.Features.Scan"
              xmlns:zxing="clr-namespace:ZXing.Net.Maui.Controls;assembly=ZXing.Net.MAUI.Controls"
+             xmlns:zxingcore="clr-namespace:ZXing.Net.Maui;assembly=ZXing.Net.MAUI"
              x:DataType="vm:ScanViewModel"
              x:Class="Playground.Maui.Features.Scan.ScanPage"
              Title="Scan Asset">
@@ -12,11 +13,11 @@
                                        HeightRequest="300"
                                        IsVisible="{Binding IsCameraAvailable}"
                                        IsDetecting="True"
-                                       BarcodeDetected="OnBarcodeDetected">
+                                       BarcodesDetected="OnBarcodeDetected">
             <zxing:CameraBarcodeReaderView.Options>
-                <zxing:BarcodeReaderOptions BarcodeFormats="QrCode,Code128,Code39,DataMatrix"
-                                            AutoRotate="True"
-                                            Multiple="False" />
+                <zxingcore:BarcodeReaderOptions Formats="QrCode,Code128,Code39,DataMatrix"
+                                                AutoRotate="True"
+                                                Multiple="False" />
             </zxing:CameraBarcodeReaderView.Options>
         </zxing:CameraBarcodeReaderView>
 
