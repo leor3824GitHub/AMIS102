@@ -1,0 +1,5 @@
+<Solution>
+  <Folder Name="/Playground/">
+    <Project Path="Playground.Maui/Playground.Maui.csproj" />
+  </Folder>
+</Solution>

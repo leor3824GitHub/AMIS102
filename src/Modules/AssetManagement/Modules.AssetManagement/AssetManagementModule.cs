@@ -57,6 +57,7 @@ using FSH.Modules.AssetManagement.Features.v1.TangibleItems.UpdateTangibleItem;
 using FSH.Modules.AssetManagement.Features.v1.TangibleItems.DeleteTangibleItem;
 using FSH.Modules.AssetManagement.Features.v1.TangibleItems.GetNextTangibleItemSequence;
 using FSH.Modules.AssetManagement.Features.v1.TangibleInventory.CreateTangibleInventory;
+using FSH.Modules.AssetManagement.Features.v1.TangibleInventory.GetByPropertyNo;
 using FSH.Modules.AssetManagement.Features.v1.TangibleInventory.GetTangibleInventories;
 using FSH.Modules.AssetManagement.Features.v1.TangibleInventory.GetTangibleInventoryById;
 using Hangfire;
@@ -173,6 +174,7 @@ public class AssetManagementModule : IModule
         var physicalCountGroup            = moduleGroup.MapGroup("/physical-count");
         var tangibleItemsGroup            = moduleGroup.MapGroup("/tangible-items");
         var tangibleInventoryGroup        = moduleGroup.MapGroup("/tangible-inventories");
+        var tangibleInventoryItemsGroup    = moduleGroup.MapGroup("/tangible-inventory-items");
 
         // Semi-Expendable Items (Item Catalog)
         CreateSemiExpendableItemEndpoint.Map(semiExpendableItemsGroup);
@@ -184,6 +186,9 @@ public class AssetManagementModule : IModule
         CreateTangibleInventoryEndpoint.Map(tangibleInventoryGroup);
         GetTangibleInventoriesEndpoint.Map(tangibleInventoryGroup);
         GetTangibleInventoryByIdEndpoint.Map(tangibleInventoryGroup);
+
+        // Tangible Inventory Items (scan/lookup by PropertyNo)
+        GetTangibleInventoryItemByPropertyNoEndpoint.Map(tangibleInventoryItemsGroup);
 
         // Inventory Custodian Slips (ICS)
         CreateICSEndpoint.Map(icsGroup);

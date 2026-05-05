@@ -13,15 +13,15 @@ You are an architecture guardian for FullStackHero .NET Starter Kit. Your job is
 
 ### 1. Check for BuildingBlocks Modifications
 
-```bash
-git diff --name-only | grep -E "^src/BuildingBlocks/"
+```powershell
+git diff --name-only | Where-Object { $_ -match "^src/BuildingBlocks/" }
 ```
 
 If any files listed: **STOP** - BuildingBlocks changes require explicit approval.
 
 ### 2. Run Architecture Tests
 
-```bash
+```powershell
 dotnet test src/Tests/Architecture.Tests --no-build
 ```
 
@@ -29,8 +29,8 @@ All tests must pass.
 
 ### 3. Verify Build Has 0 Warnings
 
-```bash
-dotnet build src/FSH.Framework.slnx 2>&1 | grep -E "warning|error"
+```powershell
+dotnet build src/FSH.Framework.slnx 2>&1 | Where-Object { $_ -match "warning|error" }
 ```
 
 Must show no warnings or errors.
@@ -39,45 +39,89 @@ Must show no warnings or errors.
 
 Verify no cross-module internal dependencies:
 
-```bash
-# Check if any module references another module's internal types
-grep -r "using Modules\." src/Modules/ --include="*.cs" | grep -v "\.Contracts"
+```powershell
+# Check if any module references another module's internal types (should only reference .Contracts)
+Get-ChildItem -Recurse -Filter "*.cs" src/Modules/ |
+    Select-String "using FSH\.Modules\." |
+    Where-Object { $_ -notmatch "\.Contracts" }
 ```
 
-Should only show references to `.Contracts` namespaces.
+Should return no results.
 
 ### 5. Verify Mediator Usage
 
-```bash
+```powershell
 # Check for MediatR usage (should be empty)
-grep -r "MediatR\|IRequest<\|IRequestHandler<" src/Modules/ --include="*.cs"
+Get-ChildItem -Recurse -Filter "*.cs" src/Modules/ |
+    Select-String "MediatR|IRequest<|IRequestHandler<"
 ```
 
-Must be empty - all should use Mediator interfaces.
+Must return no results — all must use Mediator interfaces.
 
 ### 6. Check Validator Coverage
 
 For each command, verify a validator exists:
 
-```bash
+```powershell
 # List commands
-find src/Modules -name "*Command.cs" -type f
+Get-ChildItem -Recurse -Filter "*Command.cs" src/Modules/
 
 # List validators
-find src/Modules -name "*Validator.cs" -type f
+Get-ChildItem -Recurse -Filter "*Validator.cs" src/Modules/
 ```
 
 Every command needs a corresponding validator.
 
 ### 7. Check Endpoint Authorization
 
-```bash
-# Find endpoints without authorization
-grep -r "\.Map\(Get\|Post\|Put\|Delete\)" src/Modules/ --include="*.cs" -A 5 | \
-grep -v "RequirePermission\|AllowAnonymous"
+```powershell
+# Find endpoints missing authorization
+Get-ChildItem -Recurse -Filter "*Endpoint*.cs" src/Modules/ |
+    Select-String "MapGet|MapPost|MapPut|MapDelete" -l |
+    ForEach-Object {
+        $content = Get-Content $_
+        if ($content -notmatch "RequirePermission|AllowAnonymous") { $_ }
+    }
 ```
 
 Every endpoint must have explicit authorization.
+
+### 8. Check MAUI Client Boundaries
+
+Only run when files under `src/Playground/Playground.Maui/` are changed.
+
+```powershell
+# MAUI must not reference any Modules.* project
+Select-String -Path "src/Playground/Playground.Maui/Playground.Maui.csproj" -Pattern "Modules\."
+```
+
+Must return no results — MAUI is API-only; no module project references allowed.
+
+```powershell
+# MAUI must not use Navigation.PushAsync (Shell navigation required)
+Get-ChildItem -Recurse -Filter "*.cs" src/Playground/Playground.Maui/ |
+    Select-String "Navigation\.PushAsync|Navigation\.PopAsync"
+```
+
+Must return no results.
+
+```powershell
+# MAUI must not store tokens in Preferences (SecureStorage/PasswordVault required)
+Get-ChildItem -Recurse -Filter "*.cs" src/Playground/Playground.Maui/ |
+    Select-String "Preferences\.Set|Preferences\.Get" |
+    Where-Object { $_ -match "token|Token|accessToken|refreshToken" }
+```
+
+Must return no results.
+
+```powershell
+# ViewModels must be sealed partial
+Get-ChildItem -Recurse -Filter "*ViewModel.cs" src/Playground/Playground.Maui/ |
+    Select-String "class.*ViewModel" |
+    Where-Object { $_ -notmatch "sealed partial" }
+```
+
+Must return no results.
 
 ## Output Format
 
@@ -104,6 +148,12 @@ Every endpoint must have explicit authorization.
 
 ### Authorization
 ✅ All endpoints authorized | ❌ Missing: {list}
+
+### MAUI Boundaries (if applicable)
+✅ No Modules.* references | ❌ Forbidden project reference found
+✅ Shell navigation only | ❌ Navigation.PushAsync detected
+✅ SecureStorage/PasswordVault used | ❌ Preferences used for tokens
+✅ ViewModels are sealed partial | ❌ Missing sealed/partial modifier
 
 ---
 **Overall:** ✅ PASS | ❌ FAIL - Fix issues before commit

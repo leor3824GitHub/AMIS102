@@ -8,6 +8,7 @@ using FSH.Modules.MasterData.Features.v1.Departments.DeleteDepartment;
 using FSH.Modules.MasterData.Features.v1.Departments.UpdateDepartment;
 using FSH.Modules.MasterData.Features.v1.Employees.CreateEmployee;
 using FSH.Modules.MasterData.Features.v1.Employees.DeleteEmployee;
+using FSH.Modules.MasterData.Features.v1.Employees.GetMyEmployee;
 using FSH.Modules.MasterData.Features.v1.Employees.UpdateEmployee;
 using FSH.Modules.MasterData.Features.v1.Lookups;
 using FSH.Modules.MasterData.Features.v1.Offices.CreateOffice;
@@ -170,6 +171,7 @@ public class MasterDataModule : IModule
         var propertyClassesGroup = moduleGroup.MapGroup("/property-classes");
 
         MasterDataLookupEndpoint.Map(lookupGroup);
+        GetMyEmployeeEndpoint.Map(employeesGroup);
         CreateEmployeeEndpoint.Map(employeesGroup);
         UpdateEmployeeEndpoint.Map(employeesGroup);
         DeleteEmployeeEndpoint.Map(employeesGroup);

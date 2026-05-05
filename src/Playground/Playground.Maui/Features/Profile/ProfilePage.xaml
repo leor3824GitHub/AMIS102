@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Playground.Maui.Features.Profile"
+             x:DataType="vm:ProfileViewModel"
+             x:Class="Playground.Maui.Features.Profile.ProfilePage"
+             Title="Profile">
+    <VerticalStackLayout Padding="16" Spacing="12">
+        <ActivityIndicator IsRunning="{Binding IsLoading}" IsVisible="{Binding IsLoading}" />
+        <Label Text="{Binding FullName}" FontSize="22" FontAttributes="Bold" />
+        <Label Text="{Binding Email}" />
+        <Label Text="{Binding Department}" />
+        <Label Text="{Binding Position}" />
+        <Button Text="Sign Out" Clicked="OnLogoutClicked" Margin="0,24,0,0" />
+    </VerticalStackLayout>
+</ContentPage>

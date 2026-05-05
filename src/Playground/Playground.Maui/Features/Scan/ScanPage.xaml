@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Playground.Maui.Features.Scan"
+             xmlns:zxing="clr-namespace:ZXing.Net.Maui.Controls;assembly=ZXing.Net.MAUI.Controls"
+             x:DataType="vm:ScanViewModel"
+             x:Class="Playground.Maui.Features.Scan.ScanPage"
+             Title="Scan Asset">
+    <VerticalStackLayout Spacing="0">
+        <!-- Camera viewfinder (hidden on Windows if no camera) -->
+        <zxing:CameraBarcodeReaderView x:Name="BarcodeReader"
+                                       HeightRequest="300"
+                                       IsVisible="{Binding IsCameraAvailable}"
+                                       IsDetecting="True"
+                                       BarcodeDetected="OnBarcodeDetected">
+            <zxing:CameraBarcodeReaderView.Options>
+                <zxing:BarcodeReaderOptions BarcodeFormats="QrCode,Code128,Code39,DataMatrix"
+                                            AutoRotate="True"
+                                            Multiple="False" />
+            </zxing:CameraBarcodeReaderView.Options>
+        </zxing:CameraBarcodeReaderView>
+
+        <Label IsVisible="{Binding IsCameraAvailable, Converter={StaticResource InvertedBoolConverter}}"
+               Text="Use the search box below to look up a property number."
+               HorizontalOptions="Center"
+               Margin="16" />
+
+        <Label Text="— or enter manually —"
+               HorizontalOptions="Center"
+               Margin="0,12" />
+
+        <Grid Padding="16" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+            <Entry Grid.Column="0"
+                   Placeholder="Property No. e.g. SPLV-2026-01-0001"
+                   Text="{Binding ManualPropertyNo}"
+                   ReturnCommand="{Binding SearchManualCommand}"
+                   AutomationId="PropertyNoEntry" />
+            <Button Grid.Column="1"
+                    Text="Search"
+                    Command="{Binding SearchManualCommand}" />
+        </Grid>
+    </VerticalStackLayout>
+</ContentPage>

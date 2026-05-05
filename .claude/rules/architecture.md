@@ -22,12 +22,14 @@ Communication via Contracts (interfaces/DTOs)
 ```
 
 **Modules:**
+
 - Identity (users, roles, permissions)
 - Multitenancy (tenants, subscriptions)
 - Auditing (audit trails)
 - Your business modules (e.g., Catalog, Orders)
 
 **Rules:**
+
 - Modules CANNOT reference other module internals
 - Modules CAN reference other module Contracts
 - Modules share BuildingBlocks (framework code)
@@ -35,6 +37,7 @@ Communication via Contracts (interfaces/DTOs)
 ### 2. CQRS (Mediator Library)
 
 **Commands** (write operations):
+
 ```csharp
 public record CreateUserCommand(string Email) : ICommand<Guid>;
 
@@ -49,6 +52,7 @@ public class CreateUserHandler : ICommandHandler<CreateUserCommand, Guid>
 ```
 
 **Queries** (read operations):
+
 ```csharp
 public record GetUserQuery(Guid Id) : IQuery<UserDto>;
 
@@ -67,12 +71,13 @@ public class GetUserHandler : IQueryHandler<GetUserQuery, UserDto>
 ### 3. Domain-Driven Design
 
 **Entities** inherit `BaseEntity`:
+
 ```csharp
 public class Product : BaseEntity, IAuditable
 {
     public string Name { get; private set; } = default!;
     public Money Price { get; private set; } = default!;
-    
+
     public static Product Create(string name, Money price)
     {
         // Factory method, enforce invariants
@@ -82,11 +87,13 @@ public class Product : BaseEntity, IAuditable
 ```
 
 **Value Objects** (immutable):
+
 ```csharp
 public record Money(decimal Amount, string Currency);
 ```
 
 **Aggregates:**
+
 - Root entity controls access to child entities
 - Enforce business rules
 - Transaction boundary
@@ -94,6 +101,7 @@ public record Money(decimal Amount, string Currency);
 ### 4. Multi-Tenancy
 
 **Finbuckle.MultiTenant:**
+
 - Shared database, tenant isolation via TenantId
 - Automatic query filtering
 - Tenant resolution from HTTP header or claim
@@ -107,6 +115,7 @@ public class Order : BaseEntity, IMustHaveTenant
 ```
 
 **Tenant Resolution Order:**
+
 1. HTTP header: `X-Tenant`
 2. JWT claim: `tenant`
 3. Host/route strategy (optional)
@@ -124,6 +133,7 @@ Features/v1/CreateProduct/
 ```
 
 **Benefits:**
+
 - High cohesion (related code together)
 - Low coupling (features don't depend on each other)
 - Easy to find/modify
@@ -132,19 +142,19 @@ Features/v1/CreateProduct/
 
 11 packages providing cross-cutting concerns:
 
-| Package | Purpose |
-|---------|---------|
-| Core | Base entities, interfaces, exceptions |
-| Persistence | EF Core, repositories, specifications |
-| Caching | Redis/memory caching |
-| Mailing | Email templates, MailKit integration |
-| Jobs | Hangfire background jobs |
-| Storage | File storage (AWS S3, local) |
-| Web | API conventions, filters, middleware |
-| Eventing | Domain events, message bus |
-| Blazor.UI | UI components (optional) |
-| Shared | DTOs, constants |
-| Eventing.Abstractions | Event contracts |
+| Package               | Purpose                               |
+| --------------------- | ------------------------------------- |
+| Core                  | Base entities, interfaces, exceptions |
+| Persistence           | EF Core, repositories, specifications |
+| Caching               | Redis/memory caching                  |
+| Mailing               | Email templates, MailKit integration  |
+| Jobs                  | Hangfire background jobs              |
+| Storage               | File storage (AWS S3, local)          |
+| Web                   | API conventions, filters, middleware  |
+| Eventing              | Domain events, message bus            |
+| Blazor.UI             | UI components (optional)              |
+| Shared                | DTOs, constants                       |
+| Eventing.Abstractions | Event contracts                       |
 
 **Protected:** BuildingBlocks should NOT be modified without approval. See `.claude/rules/buildingblocks-protection.md`.
 
@@ -161,6 +171,7 @@ Infrastructure Layer (Persistence/External Services)
 ```
 
 **Rules:**
+
 - Domain CANNOT depend on infrastructure
 - Application CANNOT depend on infrastructure directly
 - Infrastructure implements domain interfaces
@@ -168,12 +179,14 @@ Infrastructure Layer (Persistence/External Services)
 ### 8. Persistence Strategy
 
 **DbContext per Module:**
+
 - IdentityDbContext
 - MultitenancyDbContext
 - AuditingDbContext
 - Your module DbContexts
 
 **Repository Pattern:**
+
 ```csharp
 public interface IRepository<T> where T : BaseEntity
 {
@@ -186,6 +199,7 @@ public interface IRepository<T> where T : BaseEntity
 ```
 
 **Specification Pattern** (queries):
+
 ```csharp
 public class ActiveProductsSpec : Specification<Product>
 {
@@ -229,6 +243,30 @@ public void Domain_Should_Not_Depend_On_Infrastructure()
 - **OpenTelemetry** (observability)
 - **Aspire** (orchestration)
 
+### 9. MAUI Client Layer
+
+`Playground.Maui` is a **client-only** consumer of the REST API. It is NOT a module and does NOT follow the module pattern.
+
+```
+Playground.Maui/       ← Client UI (Android · iOS · Windows)
+    ↓ HTTP (REST)
+Playground.Api/        ← API host (Modules + BuildingBlocks)
+    ↓
+Modules/* + BuildingBlocks/*
+```
+
+**Boundary rules:**
+
+- MAUI NEVER references `Modules.*` projects — fully decoupled from backend internals.
+- MAUI NEVER touches EF Core, repositories, or domain entities directly.
+- MAUI consumes only public REST endpoints (`/api/v1/...`).
+- Authentication: direct `POST /api/v1/identity/token/issue` (no BFF).
+- Offline data: `sqlite-net-pcl` for ICS/PAR list cache only.
+
+**MAUI follows its own rules — see `.claude/rules/maui.md`.**
+
+---
+
 ## Key Takeaways
 
 1. **Modular Monolith** ≠ Microservices. Modules share process, database, infrastructure.
@@ -238,10 +276,13 @@ public void Domain_Should_Not_Depend_On_Infrastructure()
 5. **Vertical Slices** keep features independent. No shared "services" layer.
 6. **BuildingBlocks** provide infrastructure. Don't reinvent, reuse.
 7. **Tests enforce architecture**. Violate rules → build fails.
+8. **MAUI is a client only.** No backend code, no module references, no EF Core.
 
 ---
 
 For implementation details, see:
+
 - `ARCHITECTURE_ANALYSIS.md` (deep dive)
 - `.claude/rules/modules.md` (module patterns)
 - `.claude/rules/persistence.md` (data access patterns)
+- `.claude/rules/maui.md` (MAUI client patterns)

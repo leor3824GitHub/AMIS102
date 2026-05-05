@@ -27,8 +27,16 @@ dotnet ef migrations add {MigrationName} \
 **Context names:**
 - `IdentityDbContext` - Identity module
 - `MultitenancyDbContext` - Multitenancy module
-- `AuditingDbContext` - Auditing module
-- `{Module}DbContext` - Custom modules
+- `AuditDbContext` - Auditing module
+- `MasterDataDbContext` - MasterData module
+- `ExpendableDbContext` - Expendable module
+- `VehicleDbContext` - Vehicle module
+- `AssetManagementDbContext` - AssetManagement module
+- `AssetProcurementDbContext` - AssetProcurement module
+- `FinanceDbContext` - Finance module
+- `ProcurementDbContext` - ProcurementAcquisition module
+- `ProcurementPlanningDbContext` - ProcurementPlanning module
+- `{Module}DbContext` - Custom/new modules
 
 ### Apply Migrations
 
