@@ -1,3 +1,5 @@
+using System.Net;
+using FSH.Framework.Core.Exceptions;
 using FSH.Modules.AssetManagement.Data;
 using FSH.Modules.AssetManagement.Domain;
 using Mediator;
@@ -17,17 +19,17 @@ public sealed class RecordPhysicalCountEntryCommandHandler(AssetManagementDbCont
             .ConfigureAwait(false);
 
         if (session is null)
-            throw new KeyNotFoundException($"Physical count session {command.SessionId} not found.");
+            throw new NotFoundException($"Physical count session {command.SessionId} not found.");
 
         if (session.Status == PhysicalCountStatus.Submitted)
-            throw new InvalidOperationException("Cannot record entries on a submitted physical count session.");
+            throw new CustomException("Cannot record entries on a submitted physical count session.", Array.Empty<string>(), HttpStatusCode.Conflict);
 
         var entry = await dbContext.PhysicalCountEntries
             .FirstOrDefaultAsync(x => x.Id == command.EntryId && x.SessionId == command.SessionId, cancellationToken)
             .ConfigureAwait(false);
 
         if (entry is null)
-            throw new KeyNotFoundException($"Physical count entry {command.EntryId} not found in session {command.SessionId}.");
+            throw new NotFoundException($"Physical count entry {command.EntryId} not found in session {command.SessionId}.");
 
         switch (command.Result)
         {

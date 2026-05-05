@@ -1,3 +1,5 @@
+using System.Net;
+using FSH.Framework.Core.Exceptions;
 using FSH.Modules.AssetManagement.Data;
 using FSH.Modules.AssetManagement.Domain;
 using Mediator;
@@ -15,11 +17,11 @@ public sealed class GetRPCPPEQueryHandler(AssetManagementDbContext dbContext)
             .ConfigureAwait(false);
 
         if (session is null)
-            throw new KeyNotFoundException($"Physical count session {query.SessionId} not found.");
+            throw new NotFoundException($"Physical count session {query.SessionId} not found.");
 
         // RPCPPE covers PPE items only (scope filter)
         if (session.Scope == PhysicalCountScope.SemiExpendableOnly)
-            throw new InvalidOperationException("RPCPPE is only applicable to sessions that include PPE items.");
+            throw new CustomException("RPCPPE is only applicable to sessions that include PPE items.", Array.Empty<string>(), HttpStatusCode.UnprocessableEntity);
 
         // Load PPE checklist entries — join to TangibleInventoryItem to filter AssetType == PPE.
         var ppeEntries = await (

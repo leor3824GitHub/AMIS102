@@ -1336,8 +1336,7 @@ internal sealed record PhysicalCountSessionSummaryDto(
 
 internal sealed record PhysicalCountEntryDto(
     Guid Id,
-    Guid? PPEItemId,
-    Guid? SemiExpendablePropertyId,
+    Guid? TangibleInventoryItemId,
     string PropertyNumber,
     string Description,
     decimal UnitCost,

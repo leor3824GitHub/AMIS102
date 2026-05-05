@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Shell xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+       xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+       xmlns:inventory="clr-namespace:Playground.Maui.Features.Inventory"
+       xmlns:scan="clr-namespace:Playground.Maui.Features.Scan"
+       xmlns:profile="clr-namespace:Playground.Maui.Features.Profile"
+       x:Class="Playground.Maui.AppShell"
+       Shell.FlyoutBehavior="Disabled">
+
+    <TabBar>
+        <ShellContent Title="My Inventory"
+                      Icon="inventory.png"
+                      ContentTemplate="{DataTemplate inventory:InventoryPage}"
+                      Route="InventoryPage" />
+        <ShellContent Title="Scan"
+                      Icon="scan.png"
+                      ContentTemplate="{DataTemplate scan:ScanPage}"
+                      Route="ScanPage" />
+        <ShellContent Title="Profile"
+                      Icon="profile.png"
+                      ContentTemplate="{DataTemplate profile:ProfilePage}"
+                      Route="ProfilePage" />
+    </TabBar>
+</Shell>

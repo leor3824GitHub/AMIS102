@@ -31,6 +31,7 @@ src/
 │   ├── FSH.Playground.AppHost/  # .NET Aspire orchestration
 │   ├── Playground.Api/          # API host
 │   ├── Playground.Blazor/       # Blazor UI client
+│   ├── Playground.Maui/         # .NET MAUI mobile/desktop client ← NEW
 │   └── Migrations.PostgreSQL/   # EF Core migrations
 └── Tests/              # Architecture + unit tests
 ```
@@ -49,6 +50,8 @@ Modules/{Module}/Features/v1/{Feature}/
 
 ## Critical Rules
 
+### Backend (API)
+
 | ⚠️ Rule                             | Why                                     |
 | ----------------------------------- | --------------------------------------- |
 | Use **Mediator** not MediatR        | Different library, different interfaces |
@@ -58,30 +61,52 @@ Modules/{Module}/Features/v1/{Feature}/
 | `.RequirePermission()` on endpoints | Explicit authorization                  |
 | Zero build warnings                 | CI blocks merges                        |
 
+### MAUI Client (`Playground.Maui`)
+
+| ⚠️ Rule                                                         | Why                                              |
+| --------------------------------------------------------------- | ------------------------------------------------ |
+| `sealed partial class : ObservableObject`                       | Required for CommunityToolkit.Mvvm source gen    |
+| `[ObservableProperty]` / `[RelayCommand]`                       | No manual `INotifyPropertyChanged`               |
+| No `Modules.*` project references                               | Client must be fully decoupled from backend      |
+| Shell navigation only — no `Navigation.PushAsync`               | Consistent routing via `Routing.RegisterRoute`   |
+| `ITokenStorageService` for tokens                               | Never `Preferences` — not encrypted              |
+| `ICacheService` for ICS/PAR offline cache                       | SQLite via `sqlite-net-pcl`                      |
+| Manual PropertyNo entry always visible                          | Fallback for Windows + damaged stickers          |
+| PropertyNo normalized: `.Trim().ToUpperInvariant()`             | Consistent lookup across scan + manual entry     |
+| `x:DataType` on every Page and DataTemplate                     | Compiled bindings — faster + build-time errors   |
+| `CollectionView` not `ListView`                                 | Virtualization, better performance               |
+| `VerticalStackLayout`/`HorizontalStackLayout` not `StackLayout` | Correct directional layout controls              |
+| `Border` not `Frame`                                            | `Frame` is deprecated in .NET MAUI               |
+| No `CollectionView` inside `ScrollView`                         | Breaks virtualization — all items render at once |
+| No `Task.Run()` for I/O — use `async/await` directly            | `Task.Run()` causes deadlocks on UI thread       |
+| No inline colors/font sizes — use `{StaticResource}`            | Maintainable, theme-consistent styling           |
+
 ## Available Skills
 
 Call skills with `/skill-name` in your prompt.
 
-| Skill             | Purpose                                                           |
-| ----------------- | ----------------------------------------------------------------- |
-| `/add-feature`    | Create complete CQRS feature (command/handler/validator/endpoint) |
-| `/add-entity`     | Add domain entity with base class inheritance                     |
-| `/add-module`     | Scaffold new bounded context module                               |
-| `/query-patterns` | Implement paginated/filtered queries                              |
-| `/testing-guide`  | Write architecture + unit tests                                   |
-| `/error-handling` | Exception types, HTTP status mappings, throw vs. handle patterns  |
+| Skill             | Purpose                                                             |
+| ----------------- | ------------------------------------------------------------------- |
+| `/add-feature`    | Create complete CQRS feature (command/handler/validator/endpoint)   |
+| `/add-entity`     | Add domain entity with base class inheritance                       |
+| `/add-module`     | Scaffold new bounded context module                                 |
+| `/query-patterns` | Implement paginated/filtered queries                                |
+| `/testing-guide`  | Write architecture + unit tests                                     |
+| `/error-handling` | Exception types, HTTP status mappings, throw vs. handle patterns    |
+| `/maui-feature`   | Add a MAUI screen: Page + ViewModel + API client method + DI wiring |
 
 ## Available Agents
 
 Delegate complex tasks to specialized agents.
 
-| Agent                | Expertise                                                |
-| -------------------- | -------------------------------------------------------- |
-| `code-reviewer`      | Review changes against FSH patterns + architecture rules |
-| `feature-scaffolder` | Generate complete feature slices from requirements       |
-| `module-creator`     | Create new modules with contracts, persistence, DI setup |
-| `architecture-guard` | Verify layering, dependencies, module boundaries         |
-| `migration-helper`   | Generate and apply EF Core migrations                    |
+| Agent                | Expertise                                                  |
+| -------------------- | ---------------------------------------------------------- |
+| `code-reviewer`      | Review changes against FSH patterns + architecture rules   |
+| `feature-scaffolder` | Generate complete feature slices from requirements         |
+| `module-creator`     | Create new modules with contracts, persistence, DI setup   |
+| `architecture-guard` | Verify layering, dependencies, module boundaries           |
+| `migration-helper`   | Generate and apply EF Core migrations                      |
+| `maui-reviewer`      | Review MAUI screens/ViewModels against MVVM + client rules |
 
 ## Example: Create Feature
 
@@ -129,8 +154,9 @@ public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
 - **Multi-Tenancy:** Finbuckle.MultiTenant (shared DB, tenant isolation)
 - **Modules:** 3 core (Identity, Multitenancy, Auditing) + 8 business modules (MasterData, Expendable, AssetManagement, AssetProcurement, Vehicle, Finance, ProcurementPlanning, ProcurementAcquisition)
 - **BuildingBlocks:** 11 packages (Core, Persistence, Caching, Jobs, Web, etc.)
+- **MAUI Client:** `Playground.Maui` — Android · iOS · Windows; CommunityToolkit.Mvvm, ZXing.Net.MAUI, sqlite-net-pcl
 
-Details: See `.claude/rules/architecture.md`
+Details: See `.claude/rules/architecture.md` | MAUI details: `.claude/rules/maui.md`
 
 ## Before Committing
 
@@ -141,9 +167,10 @@ dotnet test src/FSH.Framework.slnx   # All tests must pass
 
 ## Documentation
 
-- **Rules:** See `.claude/rules/*.md` (API conventions, testing, modules)
+- **Rules:** See `.claude/rules/*.md` (API conventions, testing, modules, MAUI)
 - **Skills:** See `.claude/skills/*/SKILL.md` (step-by-step guides)
 - **Agents:** See `.claude/agents/*.md` (specialized assistants)
+- **MAUI Plan:** See `MAUI-IMPLEMENTATION-PLAN.md` (full implementation roadmap)
 
 ---
 

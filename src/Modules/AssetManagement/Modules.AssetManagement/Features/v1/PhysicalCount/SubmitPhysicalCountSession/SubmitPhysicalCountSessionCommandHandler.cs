@@ -1,3 +1,4 @@
+using FSH.Framework.Core.Exceptions;
 using FSH.Modules.AssetManagement.Data;
 using FSH.Modules.AssetManagement.Domain;
 using Mediator;
@@ -17,7 +18,7 @@ public sealed class SubmitPhysicalCountSessionCommandHandler(AssetManagementDbCo
             .ConfigureAwait(false);
 
         if (session is null)
-            throw new KeyNotFoundException($"Physical count session {command.SessionId} not found.");
+            throw new NotFoundException($"Physical count session {command.SessionId} not found.");
 
         var entries = await dbContext.PhysicalCountEntries
             .Where(x => x.SessionId == command.SessionId)
