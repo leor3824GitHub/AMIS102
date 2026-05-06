@@ -84,8 +84,8 @@ public sealed class AuthenticatedHttpHandler(
             if (tokenResponse is null)
                 return null;
 
-            await tokenStorage.SaveTokensAsync(tokenResponse.Token, tokenResponse.RefreshToken);
-            return tokenResponse.Token;
+            await tokenStorage.SaveTokensAsync(tokenResponse.AccessToken, tokenResponse.RefreshToken);
+            return tokenResponse.AccessToken;
         }
         catch
         {
@@ -110,5 +110,5 @@ public sealed class AuthenticatedHttpHandler(
         return clone;
     }
 
-    private sealed record TokenResponse(string Token, string RefreshToken);
+    private sealed record TokenResponse(string AccessToken, string RefreshToken);
 }

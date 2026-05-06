@@ -28,4 +28,12 @@ builder.AddProject<Projects.Playground_Blazor>("playground-blazor")
     .WithEnvironment("Api__BaseUrl", api.GetEndpoint("https"))
     .WaitFor(api);
 
+builder.AddExecutable(
+        "playground-maui",
+        "dotnet",
+        Path.Combine("..", "Playground.Maui"),
+        "run", "--framework", "net10.0-windows10.0.19041.0")
+    .WithEnvironment("Api__BaseUrl", api.GetEndpoint("https"))
+    .WaitFor(api);
+
 await builder.Build().RunAsync();

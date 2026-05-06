@@ -22,13 +22,15 @@ public static class MauiProgram
             .UseBarcodeReader()
             .ConfigureFonts(fonts => { });
 
-        // Configuration from embedded appsettings.json
+        // Configuration: embedded appsettings.json, then environment variables
+        // (environment variables override so Aspire can inject Api__BaseUrl at launch time)
         var assembly = typeof(MauiProgram).Assembly;
         using var stream = assembly.GetManifestResourceStream("Playground.Maui.appsettings.json");
         if (stream is not null)
         {
             var config = new ConfigurationBuilder()
                 .AddJsonStream(stream)
+                .AddEnvironmentVariables()
                 .Build();
             builder.Configuration.AddConfiguration(config);
         }

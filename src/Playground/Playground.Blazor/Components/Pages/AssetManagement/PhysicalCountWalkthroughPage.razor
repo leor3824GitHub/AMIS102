@@ -8,8 +8,7 @@
 @inject IJSRuntime JS
 
 <!-- Hidden camera / file input — triggered via JS -->
-<InputFile id="cameraInput" accept="image/*" OnChange="OnPhotoSelected"
-           style="display:none" AdditionalAttributes="@(new Dictionary<string,object>{{"capture","environment"}})" />
+<InputFile id="@_fileInputId" OnChange="OnPhotoSelected" class="d-none" />
 
 @if (_session is null && _loading)
 {
@@ -343,6 +342,7 @@ else
     private string? _keyword;
     private string? _resultFilter;
     private Guid? _highlightedEntryId;
+    private string _fileInputId = $"file-input-{Guid.NewGuid()}";
 
     // Mark Found dialog
     private PhysicalCountEntryDto? _markEntry;
@@ -416,7 +416,7 @@ else
     private async Task TriggerCamera()
     {
         _scanning = true;
-        await JS.InvokeVoidAsync("PhysicalCount.triggerFileInput", "cameraInput", _dotNetRef);
+        await JS.InvokeVoidAsync("PhysicalCount.triggerFileInput", _fileInputId, _dotNetRef);
     }
 
     [JSInvokable]

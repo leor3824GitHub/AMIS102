@@ -4,7 +4,7 @@ namespace Playground.Maui.Services;
 
 // DTOs for API responses
 public sealed record TokenIssueRequest(string Email, string Password);
-public sealed record TokenResponse(string Token, string RefreshToken);
+public sealed record TokenResponse(string AccessToken, string RefreshToken);
 public sealed record UserProfileDto(string Id, string Email, string? FirstName, string? LastName, string? ImageUrl);
 public sealed record MyEmployeeDto(Guid EmployeeId, string FullName, string? Department, string? Position);
 
