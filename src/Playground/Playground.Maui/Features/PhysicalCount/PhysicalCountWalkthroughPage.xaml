@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Playground.Maui.Features.PhysicalCount"
+             xmlns:svc="clr-namespace:Playground.Maui.Services"
+             xmlns:zxing="clr-namespace:ZXing.Net.Maui.Controls;assembly=ZXing.Net.MAUI.Controls"
+             xmlns:zxingcore="clr-namespace:ZXing.Net.Maui;assembly=ZXing.Net.MAUI"
+             x:Name="ThisPage"
+             x:DataType="vm:PhysicalCountWalkthroughViewModel"
+             x:Class="Playground.Maui.Features.PhysicalCount.PhysicalCountWalkthroughPage"
+             Title="{Binding SessionNo}">
+
+    <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,*">
+
+        <!-- Row 0: Session info header -->
+        <VerticalStackLayout Grid.Row="0" Padding="16,12,16,8" Spacing="2"
+                             BackgroundColor="{StaticResource Gray100}">
+            <Label Text="{Binding StationOffice}" FontAttributes="Bold" FontSize="15" />
+            <Label FontSize="12" TextColor="{StaticResource Gray500}">
+                <Label.Text>
+                    <MultiBinding StringFormat="{}{0}  ·  {1}">
+                        <Binding Path="Scope" />
+                        <Binding Path="Status" />
+                    </MultiBinding>
+                </Label.Text>
+            </Label>
+        </VerticalStackLayout>
+
+        <!-- Row 1: Progress badges -->
+        <Grid Grid.Row="1" Padding="12,8" ColumnDefinitions="*,*,*,*" ColumnSpacing="6">
+            <!-- Found -->
+            <Border Grid.Column="0" BackgroundColor="{StaticResource Success}" StrokeShape="RoundRectangle 6" Padding="6,4">
+                <VerticalStackLayout HorizontalOptions="Center">
+                    <Label Text="{Binding FoundCount}" TextColor="White" FontAttributes="Bold" HorizontalOptions="Center" FontSize="16" />
+                    <Label Text="Found" TextColor="White" FontSize="9" HorizontalOptions="Center" />
+                </VerticalStackLayout>
+            </Border>
+            <!-- Not Found -->
+            <Border Grid.Column="1" BackgroundColor="{StaticResource Danger}" StrokeShape="RoundRectangle 6" Padding="6,4">
+                <VerticalStackLayout HorizontalOptions="Center">
+                    <Label Text="{Binding NotFoundCount}" TextColor="White" FontAttributes="Bold" HorizontalOptions="Center" FontSize="16" />
+                    <Label Text="Not Found" TextColor="White" FontSize="9" HorizontalOptions="Center" />
+                </VerticalStackLayout>
+            </Border>
+            <!-- Found@Station -->
+            <Border Grid.Column="2" BackgroundColor="{StaticResource Primary}" StrokeShape="RoundRectangle 6" Padding="6,4">
+                <VerticalStackLayout HorizontalOptions="Center">
+                    <Label Text="{Binding FoundAtStationCount}" TextColor="White" FontAttributes="Bold" HorizontalOptions="Center" FontSize="16" />
+                    <Label Text="@Station" TextColor="White" FontSize="9" HorizontalOptions="Center" />
+                </VerticalStackLayout>
+            </Border>
+            <!-- Pending -->
+            <Border Grid.Column="3" BackgroundColor="{StaticResource Gray400}" StrokeShape="RoundRectangle 6" Padding="6,4">
+                <VerticalStackLayout HorizontalOptions="Center">
+                    <Label Text="{Binding PendingCount}" TextColor="White" FontAttributes="Bold" HorizontalOptions="Center" FontSize="16" />
+                    <Label Text="Pending" TextColor="White" FontSize="9" HorizontalOptions="Center" />
+                </VerticalStackLayout>
+            </Border>
+        </Grid>
+
+        <!-- Row 2: Sync banner (offline queue) -->
+        <Border Grid.Row="2"
+                IsVisible="{Binding SyncBanner, Converter={StaticResource IsNotNullConverter}}"
+                BackgroundColor="{StaticResource Warning}"
+                Margin="12,0"
+                StrokeShape="RoundRectangle 6"
+                Padding="10,6">
+            <Grid ColumnDefinitions="*,Auto">
+                <Label Grid.Column="0"
+                       Text="{Binding SyncBanner}"
+                       TextColor="White" FontSize="12" />
+                <Button Grid.Column="1"
+                        Text="Sync Now"
+                        Command="{Binding FlushPendingCommand}"
+                        FontSize="11"
+                        Padding="8,4"
+                        BackgroundColor="{StaticResource Tertiary}"
+                        TextColor="White" />
+            </Grid>
+        </Border>
+
+        <!-- Row 3: Camera + manual entry -->
+        <VerticalStackLayout Grid.Row="3" Spacing="0">
+            <zxing:CameraBarcodeReaderView x:Name="BarcodeReader"
+                                           HeightRequest="220"
+                                           IsVisible="{Binding IsCameraAvailable}"
+                                           IsDetecting="True"
+                                           BarcodesDetected="OnBarcodeDetected">
+                <zxing:CameraBarcodeReaderView.Options>
+                    <zxingcore:BarcodeReaderOptions Formats="QrCode,Code128,Code39,DataMatrix"
+                                                    AutoRotate="True"
+                                                    Multiple="False" />
+                </zxing:CameraBarcodeReaderView.Options>
+            </zxing:CameraBarcodeReaderView>
+
+            <Label IsVisible="{Binding IsCameraAvailable, Converter={StaticResource InvertedBoolConverter}}"
+                   Text="Enter property number below to find or add an entry."
+                   HorizontalOptions="Center"
+                   FontSize="12"
+                   TextColor="{StaticResource Gray500}"
+                   Margin="16,8" />
+
+            <Grid Padding="12,8" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                <Entry Grid.Column="0"
+                       Placeholder="Property No. (scan or type)"
+                       Text="{Binding ManualPropertyNo}"
+                       ReturnCommand="{Binding SearchManualCommand}"
+                       AutomationId="PropertyNoEntry" />
+                <Button Grid.Column="1"
+                        Text="Search"
+                        Command="{Binding SearchManualCommand}" />
+            </Grid>
+        </VerticalStackLayout>
+
+        <!-- Row 4: Filter + Search -->
+        <Grid Grid.Row="4" Padding="12,0,12,8" ColumnDefinitions="Auto,*" ColumnSpacing="8">
+            <Picker Grid.Column="0"
+                    ItemsSource="{Binding FilterOptions}"
+                    SelectedItem="{Binding SelectedFilter}"
+                    MinimumWidthRequest="120" />
+            <Entry Grid.Column="1"
+                   Placeholder="Search property / description"
+                   Text="{Binding SearchText}" />
+        </Grid>
+
+        <!-- Row 5: Checklist CollectionView -->
+        <CollectionView Grid.Row="5"
+                        ItemsSource="{Binding FilteredEntries}"
+                        SelectionMode="Single"
+                        SelectionChanged="OnEntrySelected"
+                        EmptyView="No entries match the current filter.">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="svc:PhysicalCountEntryDto">
+                    <Border Margin="12,4" Padding="12" StrokeShape="RoundRectangle 8">
+                        <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" RowSpacing="4">
+                            <!-- PropertyNo + result badge -->
+                            <Label Grid.Row="0" Grid.Column="0"
+                                   Text="{Binding PropertyNumber}"
+                                   FontAttributes="Bold" FontSize="14" />
+                            <Border Grid.Row="0" Grid.Column="1"
+                                    Padding="6,2"
+                                    StrokeShape="RoundRectangle 10"
+                                    BackgroundColor="{StaticResource Gray300}">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding Result}" Value="Found">
+                                        <Setter Property="BackgroundColor" Value="{StaticResource Success}" />
+                                    </DataTrigger>
+                                    <DataTrigger TargetType="Border" Binding="{Binding Result}" Value="NotFound">
+                                        <Setter Property="BackgroundColor" Value="{StaticResource Danger}" />
+                                    </DataTrigger>
+                                    <DataTrigger TargetType="Border" Binding="{Binding Result}" Value="FoundAtStation">
+                                        <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Label FontSize="10" FontAttributes="Bold" TextColor="White"
+                                       Text="{Binding Result, TargetNullValue='Pending'}" />
+                            </Border>
+
+                            <!-- Description -->
+                            <Label Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                                   Text="{Binding Description}"
+                                   FontSize="12"
+                                   TextColor="{StaticResource Gray500}"
+                                   LineBreakMode="TailTruncation" />
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+    </Grid>
+</ContentPage>

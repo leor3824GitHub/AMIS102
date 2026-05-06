@@ -4,6 +4,7 @@ using Playground.Maui.Data;
 using Playground.Maui.Features.Asset;
 using Playground.Maui.Features.Auth;
 using Playground.Maui.Features.Inventory;
+using Playground.Maui.Features.PhysicalCount;
 using Playground.Maui.Features.Profile;
 using Playground.Maui.Features.Scan;
 using Playground.Maui.Services;
@@ -37,7 +38,23 @@ public static class MauiProgram
 
         var apiOptions = builder.Configuration
             .GetSection("Api")
-            .Get<ApiClientOptions>() ?? new ApiClientOptions { BaseUrl = "http://localhost:5000" };
+            .Get<ApiClientOptions>() ?? new ApiClientOptions { BaseUrl = "http://localhost:5030" };
+
+        if (OperatingSystem.IsAndroid())
+        {
+            // Android emulator cannot reach host loopback via localhost; use 10.0.2.2.
+            if (Uri.TryCreate(apiOptions.BaseUrl, UriKind.Absolute, out var uri) &&
+                (string.Equals(uri.Host, "localhost", StringComparison.OrdinalIgnoreCase) ||
+                 uri.Host == "127.0.0.1"))
+            {
+                var uriBuilder = new UriBuilder(uri)
+                {
+                    Host = "10.0.2.2"
+                };
+
+                apiOptions.BaseUrl = uriBuilder.Uri.ToString().TrimEnd('/');
+            }
+        }
 
         // Services
         builder.Services.AddSingleton(apiOptions);
@@ -51,6 +68,8 @@ public static class MauiProgram
             client.BaseAddress = new Uri(apiOptions.BaseUrl))
             .AddHttpMessageHandler<AuthenticatedHttpHandler>();
 
+        builder.Services.AddTransient<IPhysicalCountSyncService, PhysicalCountSyncService>();
+
         // ViewModels
         builder.Services.AddTransient<LoginViewModel>();
         builder.Services.AddTransient<ProfileViewModel>();
@@ -59,6 +78,10 @@ public static class MauiProgram
         builder.Services.AddTransient<PARDetailViewModel>();
         builder.Services.AddTransient<ScanViewModel>();
         builder.Services.AddTransient<AssetDetailViewModel>();
+        builder.Services.AddTransient<PhysicalCountSessionListViewModel>();
+        builder.Services.AddTransient<PhysicalCountWalkthroughViewModel>();
+        builder.Services.AddTransient<PhysicalCountMarkEntryViewModel>();
+        builder.Services.AddTransient<PhysicalCountFoundAtStationViewModel>();
 
         // Pages
         builder.Services.AddTransient<LoginPage>();
@@ -68,6 +91,10 @@ public static class MauiProgram
         builder.Services.AddTransient<PARDetailPage>();
         builder.Services.AddTransient<ScanPage>();
         builder.Services.AddTransient<AssetDetailPage>();
+        builder.Services.AddTransient<PhysicalCountSessionListPage>();
+        builder.Services.AddTransient<PhysicalCountWalkthroughPage>();
+        builder.Services.AddTransient<PhysicalCountMarkEntryPage>();
+        builder.Services.AddTransient<PhysicalCountFoundAtStationPage>();
 
         return builder.Build();
     }

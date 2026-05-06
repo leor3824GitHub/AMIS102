@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Playground.Maui.Features.PhysicalCount"
+             xmlns:svc="clr-namespace:Playground.Maui.Services"
+             x:Name="ThisPage"
+             x:DataType="vm:PhysicalCountSessionListViewModel"
+             x:Class="Playground.Maui.Features.PhysicalCount.PhysicalCountSessionListPage"
+             Title="Physical Count">
+
+    <RefreshView IsRefreshing="{Binding IsLoading}" Command="{Binding LoadCommand}">
+        <VerticalStackLayout Padding="16" Spacing="8">
+
+            <!-- Offline sync banner -->
+            <Border IsVisible="{Binding HasPendingSync}"
+                    BackgroundColor="{StaticResource Warning}"
+                    StrokeShape="RoundRectangle 6"
+                    Padding="10,6">
+                <Label TextColor="White" FontSize="12"
+                       Text="{Binding PendingSyncCount, StringFormat='{0} entry(s) pending sync — connect to upload.'}" />
+            </Border>
+
+            <Label Text="{Binding ErrorMessage}"
+                   IsVisible="{Binding ErrorMessage, Converter={StaticResource IsNotNullConverter}}"
+                   TextColor="{StaticResource Danger}"
+                   FontSize="13" />
+
+            <CollectionView ItemsSource="{Binding Sessions}"
+                            SelectionMode="Single"
+                            SelectionChanged="OnSessionSelected"
+                            EmptyView="No physical count sessions found.">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="svc:PhysicalCountSessionSummaryDto">
+                        <Border Margin="0,4" Padding="12" StrokeShape="RoundRectangle 8">
+                            <Grid ColumnDefinitions="*,Auto"
+                                  RowDefinitions="Auto,Auto,Auto"
+                                  RowSpacing="4">
+                                <!-- Row 0: SessionNo + Status -->
+                                <Label Grid.Row="0" Grid.Column="0"
+                                       Text="{Binding SessionNo}"
+                                       FontAttributes="Bold" FontSize="15" />
+                                <Border Grid.Row="0" Grid.Column="1"
+                                        Padding="6,2"
+                                        StrokeShape="RoundRectangle 12">
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding Status}" Value="Open">
+                                            <Setter Property="BackgroundColor" Value="{StaticResource Warning}" />
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="Border" Binding="{Binding Status}" Value="Submitted">
+                                            <Setter Property="BackgroundColor" Value="{StaticResource Success}" />
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                    <Label Text="{Binding Status}"
+                                           TextColor="White"
+                                           FontSize="11"
+                                           FontAttributes="Bold" />
+                                </Border>
+
+                                <!-- Row 1: StationOffice + Scope -->
+                                <Label Grid.Row="1" Grid.Column="0"
+                                       Text="{Binding StationOffice}"
+                                       FontSize="13"
+                                       TextColor="{StaticResource Gray600}" />
+                                <Label Grid.Row="1" Grid.Column="1"
+                                       Text="{Binding Scope}"
+                                       FontSize="11"
+                                       TextColor="{StaticResource Gray500}" />
+
+                                <!-- Row 2: Date + Progress -->
+                                <Label Grid.Row="2" Grid.Column="0"
+                                       Text="{Binding CountDate}"
+                                       FontSize="11"
+                                       TextColor="{StaticResource Gray400}" />
+                                <Label Grid.Row="2" Grid.Column="1"
+                                       FontSize="11"
+                                       TextColor="{StaticResource Gray500}">
+                                    <Label.Text>
+                                        <MultiBinding StringFormat="{}{0}/{1} verified">
+                                            <Binding Path="Found" />
+                                            <Binding Path="TotalEntries" />
+                                        </MultiBinding>
+                                    </Label.Text>
+                                </Label>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+        </VerticalStackLayout>
+    </RefreshView>
+</ContentPage>

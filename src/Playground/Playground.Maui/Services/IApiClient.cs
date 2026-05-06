@@ -66,6 +66,65 @@ public sealed record TangibleInventoryItemDetailDto(
     string? LinkedDocumentNo,
     Guid? LinkedDocumentId);
 
+// ── Physical Count ────────────────────────────────────────────────────────────
+
+public sealed record PhysicalCountSessionSummaryDto(
+    Guid Id,
+    string SessionNo,
+    DateOnly CountDate,
+    string StationOffice,
+    string Scope,
+    string Status,
+    int TotalEntries,
+    int Found,
+    int NotFound,
+    int FoundAtStation,
+    int Pending);
+
+public sealed record PhysicalCountSessionDetailDto(
+    Guid Id,
+    string SessionNo,
+    DateOnly CountDate,
+    string StationOffice,
+    string Scope,
+    string Status,
+    List<PhysicalCountEntryDto> Entries);
+
+public sealed record PhysicalCountEntryDto(
+    Guid Id,
+    Guid? TangibleInventoryItemId,
+    string PropertyNumber,
+    string Description,
+    decimal UnitCost,
+    string? Result,      // "Found" | "NotFound" | "FoundAtStation" | null
+    string? Condition,   // "Good" | "NeedsRepair" | etc. | null
+    int QuantityOnHand,
+    string? Remarks,
+    bool IsScanned);
+
+// Enums are serialized as strings (JsonStringEnumConverter is configured globally)
+public sealed record RecordCountEntryRequest(
+    string Result,
+    string? Condition,
+    int QuantityOnHand,
+    string? Remarks,
+    bool IsScanned,
+    string? PhotoPath = null);
+
+public sealed record AddFoundAtStationRequest(
+    string PropertyNumber,
+    string Description,
+    decimal UnitCost,
+    string Condition,
+    string? Remarks,
+    string? PhotoPath = null);
+
+public sealed record AddFoundAtStationResult(
+    Guid EntryId,
+    string PropertyNumber);
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 public interface IApiClient
 {
     Task<TokenResponse> IssueTokenAsync(string email, string password, CancellationToken ct = default);
@@ -76,4 +135,9 @@ public interface IApiClient
     Task<List<PARSummaryDto>> GetMyPARListAsync(Guid employeeId, CancellationToken ct = default);
     Task<PARDetailDto> GetPARByIdAsync(Guid id, CancellationToken ct = default);
     Task<TangibleInventoryItemDetailDto> GetItemByPropertyNoAsync(string propertyNo, CancellationToken ct = default);
+
+    Task<List<PhysicalCountSessionSummaryDto>> GetPhysicalCountSessionsAsync(CancellationToken ct = default);
+    Task<PhysicalCountSessionDetailDto> GetPhysicalCountSessionByIdAsync(Guid sessionId, CancellationToken ct = default);
+    Task RecordPhysicalCountEntryAsync(Guid sessionId, Guid entryId, RecordCountEntryRequest request, CancellationToken ct = default);
+    Task<AddFoundAtStationResult> AddFoundAtStationEntryAsync(Guid sessionId, AddFoundAtStationRequest request, CancellationToken ct = default);
 }

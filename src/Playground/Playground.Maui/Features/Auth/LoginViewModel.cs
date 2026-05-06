@@ -50,7 +50,7 @@ public sealed partial class LoginViewModel(
         }
         catch (HttpRequestException)
         {
-            ErrorMessage = "Login failed. Check your credentials and try again.";
+            ErrorMessage = "Cannot reach API. Ensure Playground.Api is running and MAUI uses the correct BaseUrl.";
         }
         catch (Exception ex)
         {
