@@ -15,11 +15,7 @@
                 "@modelcontextprotocol/server-postgres"
             ],
             "env": {
-<<<<<<< HEAD
                 "DATABASE_URL": "postgresql://postgres:password@localhost:5432/AMIS226"
-=======
-                    "DATABASE_URL": "postgresql://postgres:password@localhost:5432/AMIS222"
->>>>>>> d63aec54a5aea0527fd07e545543a98aceae4138
             }
         }
     }
