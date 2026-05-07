@@ -48,10 +48,20 @@ else
         }
         else
         {
-            <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small"
-                       StartIcon="@Icons.Material.Filled.Assessment" OnClick="LoadRPCPPEAsync" Disabled="_busy">
-                View RPCPPE
-            </MudButton>
+            @if (_session.Scope != "SemiExpendableOnly")
+            {
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small"
+                           StartIcon="@Icons.Material.Filled.Assessment" OnClick="LoadRPCPPEAsync" Disabled="_busy">
+                    View RPCPPE
+                </MudButton>
+            }
+            @if (_session.Scope != "PPEOnly")
+            {
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" Size="Size.Small"
+                           StartIcon="@Icons.Material.Filled.Assessment" OnClick="LoadRPCSEMEXAsync" Disabled="_busy">
+                    View RPCSEMEX
+                </MudButton>
+            }
         }
     </MudStack>
 
@@ -321,6 +331,85 @@ else
             </MudCardContent>
         </MudCard>
     }
+
+    <!-- RPCSEMEX Report panel (shown after loading) -->
+    @if (_rpcsemex is not null)
+    {
+        <MudCard Elevation="1" Class="mt-4">
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudStack Row="true" AlignItems="AlignItems.Center">
+                        <MudText Typo="Typo.h6">Report on the Physical Count of Semi-Expendable Properties (RPCSEMEX)</MudText>
+                        <MudSpacer />
+                        <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="@(() => _rpcsemex = null)" />
+                    </MudStack>
+                </CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent>
+                <!-- Summary chips -->
+                <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2" Class="mb-3">
+                    <MudChip T="string" Color="Color.Success">Found: @_rpcsemex.Summary.Found</MudChip>
+                    <MudChip T="string" Color="Color.Error">Not Found: @_rpcsemex.Summary.NotFound</MudChip>
+                    <MudChip T="string" Color="Color.Info">Found@Station: @_rpcsemex.Summary.FoundAtStation</MudChip>
+                    <MudChip T="string" Color="Color.Warning">Shortage: @_rpcsemex.Summary.TotalShortage</MudChip>
+                    <MudChip T="string" Color="Color.Secondary">Overage: @_rpcsemex.Summary.TotalOverage</MudChip>
+                </MudStack>
+
+                <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Property No.</th>
+                            <th>Description</th>
+                            <th>Date Acq.</th>
+                            <th>Unit Cost</th>
+                            <th>Per Card</th>
+                            <th>On Hand</th>
+                            <th>Short</th>
+                            <th>Over</th>
+                            <th>Condition</th>
+                            <th>Result</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in _rpcsemex.Items)
+                        {
+                            var rc = item.Result switch
+                            {
+                                "Found"          => Color.Success,
+                                "NotFound"       => Color.Error,
+                                "FoundAtStation" => Color.Info,
+                                _                => Color.Default
+                            };
+                            <tr>
+                                <td>@item.LineNo</td>
+                                <td><b>@item.PropertyNumber</b></td>
+                                <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="@item.Description">@item.Description</td>
+                                <td>@item.DateAcquired.ToString("MM/dd/yyyy")</td>
+                                <td>₱@item.UnitCost.ToString("N2")</td>
+                                <td>@item.QuantityPerCard</td>
+                                <td>@item.QuantityOnHand</td>
+                                <td>@(item.Shortage > 0 ? item.Shortage.ToString() : "—")</td>
+                                <td>@(item.Overage > 0 ? item.Overage.ToString() : "—")</td>
+                                <td><MudText Typo="Typo.caption">@(item.Condition ?? "—")</MudText></td>
+                                <td><MudChip T="string" Size="Size.Small" Color="@rc">@item.Result</MudChip></td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="4" style="text-align:right"><b>Totals:</b></td>
+                            <td><b>₱@_rpcsemex.Summary.TotalUnitCost.ToString("N2")</b></td>
+                            <td></td><td></td>
+                            <td><b>@_rpcsemex.Summary.TotalShortage</b></td>
+                            <td><b>@_rpcsemex.Summary.TotalOverage</b></td>
+                            <td colspan="2"></td>
+                        </tr>
+                    </tfoot>
+                </MudSimpleTable>
+            </MudCardContent>
+        </MudCard>
+    }
 }
 
 @code {
@@ -364,6 +453,9 @@ else
 
     // RPCPPE report
     private RPCPPEReportDto? _rpcppe;
+
+    // RPCSEMEX report
+    private RPCSEMEXReportDto? _rpcsemex;
 
     // DotNet reference for JS callbacks (camera cancel detection)
     private DotNetObjectReference<PhysicalCountWalkthroughPage>? _dotNetRef;
@@ -580,6 +672,14 @@ else
         _busy = true;
         try { _rpcppe = await Client.GetRPCPPEAsync(SessionId); }
         catch (Exception ex) { Snackbar.Add($"Failed to load RPCPPE: {ex.Message}", Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    private async Task LoadRPCSEMEXAsync()
+    {
+        _busy = true;
+        try { _rpcsemex = await Client.GetRPCSEMEXAsync(SessionId); }
+        catch (Exception ex) { Snackbar.Add($"Failed to load RPCSEMEX: {ex.Message}", Severity.Error); }
         finally { _busy = false; }
     }
 

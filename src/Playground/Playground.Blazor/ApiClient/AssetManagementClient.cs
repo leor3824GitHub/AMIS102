@@ -1405,6 +1405,24 @@ internal sealed record RPCPPEReportDto(
     IReadOnlyList<RPCPPELineItemDto> Items,
     RPCPPESummaryDto Summary);
 
+// RPCSEMEX report DTOs (Semi-Expendable equivalent of RPCPPE — no depreciation/book value)
+internal sealed record RPCSEMEXLineItemDto(
+    int LineNo, string PropertyCode, string Description, string PropertyNumber,
+    DateOnly DateAcquired, decimal UnitCost,
+    int QuantityPerCard, int QuantityOnHand, int Shortage, int Overage,
+    string? Condition, string? Remarks, string Result, bool IsScanned);
+
+internal sealed record RPCSEMEXSummaryDto(
+    int TotalItems, int Found, int NotFound, int FoundAtStation, int Pending,
+    decimal TotalUnitCost, int TotalShortage, int TotalOverage);
+
+internal sealed record RPCSEMEXReportDto(
+    Guid SessionId, string SessionNo, DateOnly CountDate, string StationOffice,
+    Guid PreparedByEmployeeId, Guid CertifiedByEmployeeId, Guid ApprovedByEmployeeId,
+    DateTimeOffset? SubmittedOnUtc,
+    IReadOnlyList<RPCSEMEXLineItemDto> Items,
+    RPCSEMEXSummaryDto Summary);
+
 internal interface IPhysicalCountClient
 {
     Task<PagedPhysicalCountSessionResponse> SearchAsync(string? keyword = null, int page = 1, int pageSize = 15, string? status = null, CancellationToken ct = default);
@@ -1414,6 +1432,7 @@ internal interface IPhysicalCountClient
     Task<AddFoundAtStationEntryResult> AddFoundAtStationAsync(Guid sessionId, AddFoundAtStationEntryRequest request, CancellationToken ct = default);
     Task<SubmitPhysicalCountSessionResult> SubmitAsync(Guid sessionId, CancellationToken ct = default);
     Task<RPCPPEReportDto?> GetRPCPPEAsync(Guid sessionId, CancellationToken ct = default);
+    Task<RPCSEMEXReportDto?> GetRPCSEMEXAsync(Guid sessionId, CancellationToken ct = default);
 }
 
 internal sealed class PhysicalCountClient(HttpClient http) : IPhysicalCountClient
@@ -1463,6 +1482,9 @@ internal sealed class PhysicalCountClient(HttpClient http) : IPhysicalCountClien
 
     public Task<RPCPPEReportDto?> GetRPCPPEAsync(Guid sessionId, CancellationToken ct = default) =>
         http.GetFromJsonAsync<RPCPPEReportDto>($"{Base}/{sessionId}/rpcppe", ct);
+
+    public Task<RPCSEMEXReportDto?> GetRPCSEMEXAsync(Guid sessionId, CancellationToken ct = default) =>
+        http.GetFromJsonAsync<RPCSEMEXReportDto>($"{Base}/{sessionId}/rpcsemex", ct);
 }
 
 // Tangible Items

@@ -50,6 +50,7 @@ using FSH.Modules.AssetManagement.Features.v1.PhysicalCount.GetPhysicalCountSess
 using FSH.Modules.AssetManagement.Features.v1.PhysicalCount.GetPhysicalCountSessionById;
 using FSH.Modules.AssetManagement.Features.v1.PhysicalCount.GetICF;
 using FSH.Modules.AssetManagement.Features.v1.PhysicalCount.GetRPCPPE;
+using FSH.Modules.AssetManagement.Features.v1.PhysicalCount.GetRPCSEMEX;
 using FSH.Modules.AssetManagement.Features.v1.TangibleItems.RegisterTangibleItem;
 using FSH.Modules.AssetManagement.Features.v1.TangibleItems.GetTangibleItems;
 using FSH.Modules.AssetManagement.Features.v1.TangibleItems.GetTangibleItemById;
@@ -238,7 +239,7 @@ public class AssetManagementModule : IModule
         GetRRPListEndpoint.Map(rrpGroup);
         GetRRPByIdEndpoint.Map(rrpGroup);
 
-        // Physical Count (ICF / RPCPPE)
+        // Physical Count (ICF / RPCPPE / RPCSEMEX)
         CreatePhysicalCountSessionEndpoint.Map(physicalCountGroup);
         GetPhysicalCountSessionListEndpoint.Map(physicalCountGroup);
         GetPhysicalCountSessionByIdEndpoint.Map(physicalCountGroup);
@@ -247,6 +248,7 @@ public class AssetManagementModule : IModule
         SubmitPhysicalCountSessionEndpoint.Map(physicalCountGroup);
         GetICFEndpoint.Map(physicalCountGroup);
         GetRPCPPEEndpoint.Map(physicalCountGroup);
+        GetRPCSEMEXEndpoint.Map(physicalCountGroup);
 
         // Reports (SPC, RegSPI, RSPI, Property History)
         GetSPCEndpoint.Map(reportsGroup);
