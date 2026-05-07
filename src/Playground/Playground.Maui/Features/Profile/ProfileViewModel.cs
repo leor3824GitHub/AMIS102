@@ -13,6 +13,7 @@ public sealed partial class ProfileViewModel(
     [ObservableProperty] private string _email = "";
     [ObservableProperty] private string? _department;
     [ObservableProperty] private string? _position;
+    [ObservableProperty] private string _initials = "?";
     [ObservableProperty] private bool _isLoading;
 
     public async Task LoadAsync(CancellationToken ct = default)
@@ -30,11 +31,25 @@ public sealed partial class ProfileViewModel(
                 Position = authState.Employee.Position;
                 FullName = authState.Employee.FullName;
             }
+
+            Initials = ComputeInitials(FullName);
         }
         finally
         {
             IsLoading = false;
         }
+    }
+
+    private static string ComputeInitials(string fullName)
+    {
+        if (string.IsNullOrWhiteSpace(fullName)) return "?";
+        var parts = fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length switch
+        {
+            0 => "?",
+            1 => char.ToUpperInvariant(parts[0][0]).ToString(),
+            _ => $"{char.ToUpperInvariant(parts[0][0])}{char.ToUpperInvariant(parts[^1][0])}"
+        };
     }
 
     public async Task LogoutAsync()

@@ -4,13 +4,54 @@
              xmlns:vm="clr-namespace:Playground.Maui.Features.Inventory"
              x:DataType="vm:PARDetailViewModel"
              x:Class="Playground.Maui.Features.Inventory.PARDetailPage"
-             Title="PAR Detail">
-    <VerticalStackLayout Padding="16" Spacing="8">
-        <ActivityIndicator IsRunning="{Binding IsLoading}" IsVisible="{Binding IsLoading}" />
-        <Label Text="{Binding ErrorMessage}" TextColor="{StaticResource Danger}"
-               IsVisible="{Binding ErrorMessage, Converter={StaticResource IsNotNullConverter}}" />
-        <Label Text="{Binding Detail.PARNo}" FontAttributes="Bold" FontSize="18" />
-        <Label Text="{Binding Detail.Date}" />
-        <Label Text="{Binding Detail.PARType}" />
-    </VerticalStackLayout>
+             Title="PAR Detail"
+             BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource OffBlack}}">
+
+    <ScrollView>
+        <VerticalStackLayout Spacing="0">
+
+            <ActivityIndicator IsRunning="{Binding IsLoading}"
+                               IsVisible="{Binding IsLoading}"
+                               Margin="0,24,0,16" />
+
+            <Label Text="{Binding ErrorMessage}"
+                   TextColor="{StaticResource Danger}"
+                   FontSize="13"
+                   Margin="20,16"
+                   IsVisible="{Binding ErrorMessage, Converter={StaticResource IsNotNullConverter}}" />
+
+            <!-- Header card -->
+            <Border Style="{StaticResource CardBorderStyle}" Margin="16,16,16,0" Padding="20">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="PAR NO." Style="{StaticResource FieldLabelStyle}" />
+                    <Label Text="{Binding Detail.PARNo}"
+                           FontSize="22" FontAttributes="Bold" />
+                    <Border Stroke="Transparent"
+                            StrokeShape="RoundRectangle 10"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource PrimaryLight}, Dark={StaticResource Tertiary}}"
+                            Padding="10,4"
+                            HorizontalOptions="Start">
+                        <Label Text="{Binding Detail.PARType}"
+                               FontSize="12" FontAttributes="Bold"
+                               TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+                    </Border>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Details card -->
+            <Label Text="DOCUMENT DETAILS"
+                   Style="{StaticResource SectionHeaderStyle}"
+                   Margin="20,20,20,10" />
+
+            <Border Style="{StaticResource CardBorderStyle}" Margin="16,0">
+                <Grid Padding="16,14" ColumnDefinitions="*">
+                    <VerticalStackLayout Spacing="2">
+                        <Label Text="DATE" Style="{StaticResource FieldLabelStyle}" />
+                        <Label Text="{Binding Detail.Date}" FontSize="15" />
+                    </VerticalStackLayout>
+                </Grid>
+            </Border>
+
+        </VerticalStackLayout>
+    </ScrollView>
 </ContentPage>

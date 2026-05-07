@@ -52,7 +52,7 @@ internal sealed class UpgradeCommand : AsyncCommand<UpgradeCommand.Settings>
         public bool IncludePrerelease { get; set; }
     }
 
-    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
+    protected override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
     {
         // Validate project has manifest
         var manifest = FshManifest.TryLoad(settings.Path);

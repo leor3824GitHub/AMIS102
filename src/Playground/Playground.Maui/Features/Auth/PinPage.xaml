@@ -4,48 +4,78 @@
              xmlns:vm="clr-namespace:Playground.Maui.Features.Auth"
              x:DataType="vm:PinViewModel"
              x:Class="Playground.Maui.Features.Auth.PinPage"
-             Title="Unlock">
+             Title="Unlock"
+             BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource OffBlack}}">
+
     <ScrollView>
-        <VerticalStackLayout Padding="32" Spacing="16" VerticalOptions="Center">
+        <VerticalStackLayout Spacing="0">
 
-            <Label Text="Welcome back"
-                   FontSize="14"
-                   TextColor="{StaticResource Gray500}"
-                   HorizontalOptions="Center" />
+            <!-- Greeting header -->
+            <VerticalStackLayout Padding="32,52,32,28" Spacing="8" HorizontalOptions="Center">
+                <Border StrokeShape="RoundRectangle 40"
+                        Stroke="Transparent"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource PrimaryLight}, Dark={StaticResource Tertiary}}"
+                        WidthRequest="72" HeightRequest="72"
+                        HorizontalOptions="Center">
+                    <Label Text="&#x1F512;"
+                           FontSize="28"
+                           HorizontalOptions="Center" VerticalOptions="Center" />
+                </Border>
+                <Label Text="Welcome back"
+                       FontSize="13"
+                       TextColor="{StaticResource Gray400}"
+                       HorizontalOptions="Center" />
+                <Label Text="{Binding DisplayName}"
+                       FontSize="22" FontAttributes="Bold"
+                       HorizontalOptions="Center"
+                       HorizontalTextAlignment="Center" />
+                <Label Text="Enter your PIN to continue"
+                       FontSize="13"
+                       TextColor="{StaticResource Gray400}"
+                       HorizontalOptions="Center" />
+            </VerticalStackLayout>
 
-            <Label Text="{Binding DisplayName}"
-                   FontSize="24"
-                   FontAttributes="Bold"
-                   HorizontalOptions="Center" />
+            <!-- PIN card -->
+            <Border Style="{StaticResource CardBorderStyle}" Margin="20,0" Padding="20">
+                <VerticalStackLayout Spacing="4">
+                    <Label Text="PIN" Style="{StaticResource FieldLabelStyle}" />
+                    <Entry Placeholder="••••••"
+                           Text="{Binding Pin}"
+                           IsPassword="True"
+                           Keyboard="Numeric"
+                           MaxLength="6"
+                           AutomationId="PinEntry" />
+                </VerticalStackLayout>
+            </Border>
 
-            <Label Text="Enter your PIN to continue"
-                   TextColor="{StaticResource Gray500}"
-                   HorizontalOptions="Center" />
-
-            <Entry Placeholder="PIN"
-                   Text="{Binding Pin}"
-                   IsPassword="True"
-                   Keyboard="Numeric"
-                   MaxLength="6"
-                   AutomationId="PinEntry" />
-
+            <!-- Error -->
             <Label Text="{Binding ErrorMessage}"
                    TextColor="{StaticResource Danger}"
+                   FontSize="13"
+                   HorizontalOptions="Center"
+                   HorizontalTextAlignment="Center"
+                   Margin="20,14,20,0"
                    IsVisible="{Binding ErrorMessage, Converter={StaticResource IsNotNullConverter}}" />
 
+            <!-- Spinner -->
             <ActivityIndicator IsRunning="{Binding IsLoading}"
                                IsVisible="{Binding IsLoading}"
-                               HorizontalOptions="Center" />
+                               HorizontalOptions="Center"
+                               Margin="0,16,0,0" />
 
+            <!-- Unlock -->
             <Button Text="Unlock"
                     Command="{Binding UnlockCommand}"
-                    IsEnabled="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
+                    IsEnabled="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}"
+                    Margin="20,20,20,8" />
 
+            <!-- Use password instead -->
             <Button Text="Sign in with password instead"
                     Command="{Binding UsePasswordCommand}"
                     BackgroundColor="Transparent"
                     TextColor="{StaticResource Primary}"
-                    IsEnabled="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
+                    IsEnabled="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}"
+                    Margin="20,0,20,40" />
 
         </VerticalStackLayout>
     </ScrollView>

@@ -6,42 +6,59 @@
              x:Name="ThisPage"
              x:DataType="vm:PhysicalCountSessionListViewModel"
              x:Class="Playground.Maui.Features.PhysicalCount.PhysicalCountSessionListPage"
-             Title="Physical Count">
+             Title="Physical Count"
+             BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource OffBlack}}">
 
     <RefreshView IsRefreshing="{Binding IsLoading}" Command="{Binding LoadCommand}">
-        <VerticalStackLayout Padding="16" Spacing="8">
+        <VerticalStackLayout Padding="0,16,0,24" Spacing="0">
 
-            <!-- Offline sync banner -->
+            <!-- Sync banner -->
             <Border IsVisible="{Binding HasPendingSync}"
+                    Stroke="Transparent"
+                    StrokeShape="RoundRectangle 10"
                     BackgroundColor="{StaticResource Warning}"
-                    StrokeShape="RoundRectangle 6"
-                    Padding="10,6">
-                <Label TextColor="White" FontSize="12"
-                       Text="{Binding PendingSyncCount, StringFormat='{0} entry(s) pending sync — connect to upload.'}" />
+                    Padding="14,10"
+                    Margin="16,0,16,12">
+                <Label Text="{Binding PendingSyncCount, StringFormat='{0} entry(s) pending sync — connect to upload.'}"
+                       FontSize="12"
+                       TextColor="White" />
             </Border>
 
+            <!-- Error -->
             <Label Text="{Binding ErrorMessage}"
                    IsVisible="{Binding ErrorMessage, Converter={StaticResource IsNotNullConverter}}"
                    TextColor="{StaticResource Danger}"
-                   FontSize="13" />
+                   FontSize="13"
+                   Margin="20,0,20,12" />
 
+            <!-- Section header -->
+            <Label Text="SESSIONS"
+                   Style="{StaticResource SectionHeaderStyle}" />
+
+            <!-- Sessions list -->
             <CollectionView ItemsSource="{Binding Sessions}"
                             SelectionMode="Single"
                             SelectionChanged="OnSessionSelected"
                             EmptyView="No physical count sessions found.">
                 <CollectionView.ItemTemplate>
                     <DataTemplate x:DataType="svc:PhysicalCountSessionSummaryDto">
-                        <Border Margin="0,4" Padding="12" StrokeShape="RoundRectangle 8">
+                        <Border Stroke="Transparent"
+                                StrokeShape="RoundRectangle 12"
+                                BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray950}}"
+                                Margin="16,4" Padding="16,14">
                             <Grid ColumnDefinitions="*,Auto"
                                   RowDefinitions="Auto,Auto,Auto"
                                   RowSpacing="4">
-                                <!-- Row 0: SessionNo + Status -->
+
+                                <!-- SessionNo + Status badge -->
                                 <Label Grid.Row="0" Grid.Column="0"
                                        Text="{Binding SessionNo}"
                                        FontAttributes="Bold" FontSize="15" />
                                 <Border Grid.Row="0" Grid.Column="1"
-                                        Padding="6,2"
-                                        StrokeShape="RoundRectangle 12">
+                                        Stroke="Transparent"
+                                        StrokeShape="RoundRectangle 10"
+                                        BackgroundColor="{StaticResource Gray300}"
+                                        Padding="8,3">
                                     <Border.Triggers>
                                         <DataTrigger TargetType="Border" Binding="{Binding Status}" Value="Open">
                                             <Setter Property="BackgroundColor" Value="{StaticResource Warning}" />
@@ -52,28 +69,27 @@
                                     </Border.Triggers>
                                     <Label Text="{Binding Status}"
                                            TextColor="White"
-                                           FontSize="11"
-                                           FontAttributes="Bold" />
+                                           FontSize="11" FontAttributes="Bold" />
                                 </Border>
 
-                                <!-- Row 1: StationOffice + Scope -->
+                                <!-- StationOffice + Scope -->
                                 <Label Grid.Row="1" Grid.Column="0"
                                        Text="{Binding StationOffice}"
                                        FontSize="13"
-                                       TextColor="{StaticResource Gray600}" />
+                                       TextColor="{StaticResource Gray500}" />
                                 <Label Grid.Row="1" Grid.Column="1"
                                        Text="{Binding Scope}"
                                        FontSize="11"
-                                       TextColor="{StaticResource Gray500}" />
+                                       TextColor="{StaticResource Gray400}" />
 
-                                <!-- Row 2: Date + Progress -->
+                                <!-- Date + Progress -->
                                 <Label Grid.Row="2" Grid.Column="0"
                                        Text="{Binding CountDate}"
                                        FontSize="11"
-                                       TextColor="{StaticResource Gray400}" />
+                                       TextColor="{StaticResource Gray300}" />
                                 <Label Grid.Row="2" Grid.Column="1"
                                        FontSize="11"
-                                       TextColor="{StaticResource Gray500}">
+                                       TextColor="{StaticResource Gray400}">
                                     <Label.Text>
                                         <MultiBinding StringFormat="{}{0}/{1} verified">
                                             <Binding Path="Found" />
@@ -81,6 +97,7 @@
                                         </MultiBinding>
                                     </Label.Text>
                                 </Label>
+
                             </Grid>
                         </Border>
                     </DataTemplate>

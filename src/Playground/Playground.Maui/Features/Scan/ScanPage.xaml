@@ -7,10 +7,12 @@
              x:DataType="vm:ScanViewModel"
              x:Class="Playground.Maui.Features.Scan.ScanPage"
              Title="Scan Asset">
-    <VerticalStackLayout Spacing="0">
-        <!-- Camera viewfinder (hidden on Windows if no camera) -->
-        <zxing:CameraBarcodeReaderView x:Name="BarcodeReader"
-                                       HeightRequest="300"
+
+    <Grid RowDefinitions="*,Auto">
+
+        <!-- Camera viewfinder fills available space -->
+        <zxing:CameraBarcodeReaderView Grid.Row="0"
+                                       x:Name="BarcodeReader"
                                        IsVisible="{Binding IsCameraAvailable}"
                                        IsDetecting="True"
                                        BarcodesDetected="OnBarcodeDetected">
@@ -21,41 +23,71 @@
             </zxing:CameraBarcodeReaderView.Options>
         </zxing:CameraBarcodeReaderView>
 
-        <Label IsVisible="{Binding IsCameraAvailable, Converter={StaticResource InvertedBoolConverter}}"
-               Text="Use the search box below to look up a property number."
-               HorizontalOptions="Center"
-               Margin="16" />
+        <!-- No camera placeholder -->
+        <VerticalStackLayout Grid.Row="0"
+                             IsVisible="{Binding IsCameraAvailable, Converter={StaticResource InvertedBoolConverter}}"
+                             VerticalOptions="Center" HorizontalOptions="Center"
+                             Spacing="12" Padding="32">
+            <Label Text="&#x1F4F7;"
+                   FontSize="52"
+                   HorizontalOptions="Center" />
+            <Label Text="Camera not available on this device."
+                   FontSize="14"
+                   TextColor="{StaticResource Gray400}"
+                   HorizontalOptions="Center"
+                   HorizontalTextAlignment="Center" />
+            <Label Text="Use the search box below to look up a property number."
+                   FontSize="13"
+                   TextColor="{StaticResource Gray400}"
+                   HorizontalOptions="Center"
+                   HorizontalTextAlignment="Center" />
+        </VerticalStackLayout>
 
-        <Label Text="— or enter manually —"
-               HorizontalOptions="Center"
-               Margin="0,12" />
+        <!-- Bottom panel: manual entry -->
+        <Border Grid.Row="1"
+                Stroke="Transparent"
+                BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray950}}"
+                Padding="20,16,20,24">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="20,20,0,0" />
+            </Border.StrokeShape>
+            <Border.Shadow>
+                <Shadow Brush="Black" Offset="0,-4" Radius="16" Opacity="0.06" />
+            </Border.Shadow>
 
-        <Grid Padding="16,0,16,8" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
-            <Entry Grid.Column="0"
-                   Placeholder="Property No. e.g. SPLV-2026-01-0001"
-                   Text="{Binding ManualPropertyNo}"
-                   ReturnCommand="{Binding SearchManualCommand}"
-                   AutomationId="PropertyNoEntry" />
-            <Button Grid.Column="1"
-                    Text="Search"
-                    Command="{Binding SearchManualCommand}" />
-            <Button Grid.Column="2"
-                    Text="Scan Text"
-                    IsVisible="{Binding IsOcrSupported}"
-                    IsEnabled="{Binding IsOcrBusy, Converter={StaticResource InvertedBoolConverter}}"
-                    Command="{Binding ScanTextCommand}" />
-        </Grid>
+            <VerticalStackLayout Spacing="12">
+                <Label Text="MANUAL ENTRY"
+                       Style="{StaticResource SectionHeaderStyle}"
+                       Margin="0,0,0,0" />
 
-        <ActivityIndicator IsRunning="{Binding IsOcrBusy}"
-                          IsVisible="{Binding IsOcrBusy}"
-                          HorizontalOptions="Center"
-                          Margin="0,4" />
+                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+                    <Entry Grid.Column="0"
+                           Placeholder="Property No. e.g. SPLV-2026-01-0001"
+                           Text="{Binding ManualPropertyNo}"
+                           ReturnCommand="{Binding SearchManualCommand}"
+                           AutomationId="PropertyNoEntry" />
+                    <Button Grid.Column="1"
+                            Text="Search"
+                            Command="{Binding SearchManualCommand}" />
+                    <Button Grid.Column="2"
+                            Text="Scan Text"
+                            IsVisible="{Binding IsOcrSupported}"
+                            IsEnabled="{Binding IsOcrBusy, Converter={StaticResource InvertedBoolConverter}}"
+                            Command="{Binding ScanTextCommand}" />
+                </Grid>
 
-        <Label Text="{Binding ErrorMessage}"
-               IsVisible="{Binding ErrorMessage, Converter={StaticResource IsNotNullConverter}}"
-               TextColor="{StaticResource Danger}"
-               FontSize="12"
-               HorizontalOptions="Center"
-               Margin="16,0,16,8" />
-    </VerticalStackLayout>
+                <ActivityIndicator IsRunning="{Binding IsOcrBusy}"
+                                   IsVisible="{Binding IsOcrBusy}"
+                                   HorizontalOptions="Center" />
+
+                <Label Text="{Binding ErrorMessage}"
+                       IsVisible="{Binding ErrorMessage, Converter={StaticResource IsNotNullConverter}}"
+                       TextColor="{StaticResource Danger}"
+                       FontSize="13"
+                       HorizontalOptions="Center"
+                       HorizontalTextAlignment="Center" />
+            </VerticalStackLayout>
+        </Border>
+
+    </Grid>
 </ContentPage>

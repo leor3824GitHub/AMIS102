@@ -23,7 +23,11 @@ public sealed partial class LoginViewModel(
     [ObservableProperty] private string _password = "";
 #endif
     [ObservableProperty] private bool _isLoading;
+    [ObservableProperty] private bool _isPasswordVisible;
     [ObservableProperty] private string? _errorMessage;
+
+    [RelayCommand]
+    private void TogglePasswordVisibility() => IsPasswordVisible = !IsPasswordVisible;
 
     [RelayCommand]
     private async Task LoginAsync(CancellationToken ct)

@@ -32,7 +32,10 @@ public partial class App : Application
 
     protected override Window CreateWindow(IActivationState? activationState)
     {
-        return new Window(new AppShell()) { Title = "AMIS Mobile" };
+        // Use a blank page initially; OnStart replaces it after the window is attached.
+        // Creating AppShell here causes a Fragment 1.8.9 crash on Android because the
+        // Activity view hierarchy isn't ready when Fragment eagerly tries to attach tab views.
+        return new Window(new ContentPage()) { Title = "AMIS Mobile" };
     }
 
     protected override async void OnStart()

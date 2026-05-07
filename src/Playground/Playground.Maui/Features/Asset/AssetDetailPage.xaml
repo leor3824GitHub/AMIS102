@@ -4,17 +4,81 @@
              xmlns:vm="clr-namespace:Playground.Maui.Features.Asset"
              x:DataType="vm:AssetDetailViewModel"
              x:Class="Playground.Maui.Features.Asset.AssetDetailPage"
-             Title="Asset Detail">
-    <VerticalStackLayout Padding="16" Spacing="8">
-        <ActivityIndicator IsRunning="{Binding IsLoading}" IsVisible="{Binding IsLoading}" />
-        <Label Text="{Binding ErrorMessage}" TextColor="{StaticResource Danger}"
-               IsVisible="{Binding ErrorMessage, Converter={StaticResource IsNotNullConverter}}" />
-        <Label Text="{Binding PropertyNo}" FontSize="13" TextColor="{StaticResource Secondary}" />
-        <Label Text="{Binding Item.ItemName}" FontAttributes="Bold" FontSize="20" />
-        <Label Text="{Binding Item.Description}" />
-        <Label Text="{Binding Item.AssetType}" />
-        <Label Text="{Binding Item.UnitCost, StringFormat='Unit Cost: {0:C}'}" />
-        <Label Text="{Binding Item.LinkedDocumentType}" />
-        <Label Text="{Binding Item.LinkedDocumentNo}" />
-    </VerticalStackLayout>
+             Title="Asset Detail"
+             BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource OffBlack}}">
+
+    <ScrollView>
+        <VerticalStackLayout Spacing="0">
+
+            <ActivityIndicator IsRunning="{Binding IsLoading}"
+                               IsVisible="{Binding IsLoading}"
+                               Margin="0,24,0,16" />
+
+            <Label Text="{Binding ErrorMessage}"
+                   TextColor="{StaticResource Danger}"
+                   FontSize="13"
+                   Margin="20,16"
+                   IsVisible="{Binding ErrorMessage, Converter={StaticResource IsNotNullConverter}}" />
+
+            <!-- Header card -->
+            <Border Style="{StaticResource CardBorderStyle}" Margin="16,16,16,0" Padding="20">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="{Binding PropertyNo}"
+                           FontSize="12"
+                           TextColor="{StaticResource Gray400}" />
+                    <Label Text="{Binding Item.ItemName}"
+                           FontSize="22" FontAttributes="Bold" />
+                    <Label Text="{Binding Item.Description}"
+                           FontSize="14"
+                           TextColor="{StaticResource Gray500}"
+                           IsVisible="{Binding Item.Description, Converter={StaticResource IsNotNullConverter}}" />
+                    <Border Stroke="Transparent"
+                            StrokeShape="RoundRectangle 10"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource PrimaryLight}, Dark={StaticResource Tertiary}}"
+                            Padding="10,4"
+                            HorizontalOptions="Start"
+                            IsVisible="{Binding Item.AssetType, Converter={StaticResource IsNotNullConverter}}">
+                        <Label Text="{Binding Item.AssetType}"
+                               FontSize="12" FontAttributes="Bold"
+                               TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+                    </Border>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Asset info card -->
+            <Label Text="ASSET INFORMATION"
+                   Style="{StaticResource SectionHeaderStyle}"
+                   Margin="20,20,20,10" />
+
+            <Border Style="{StaticResource CardBorderStyle}" Margin="16,0,16,24">
+                <VerticalStackLayout Spacing="0">
+
+                    <Grid Padding="16,14" ColumnDefinitions="*">
+                        <VerticalStackLayout Spacing="2">
+                            <Label Text="UNIT COST" Style="{StaticResource FieldLabelStyle}" />
+                            <Label Text="{Binding Item.UnitCost, StringFormat='₱{0:N2}'}"
+                                   FontSize="15" FontAttributes="Bold" />
+                        </VerticalStackLayout>
+                    </Grid>
+
+                    <BoxView HeightRequest="1"
+                             Color="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}"
+                             Margin="16,0" />
+
+                    <Grid Padding="16,14" ColumnDefinitions="*,*">
+                        <VerticalStackLayout Grid.Column="0" Spacing="2">
+                            <Label Text="DOCUMENT TYPE" Style="{StaticResource FieldLabelStyle}" />
+                            <Label Text="{Binding Item.LinkedDocumentType}" FontSize="15" />
+                        </VerticalStackLayout>
+                        <VerticalStackLayout Grid.Column="1" Spacing="2">
+                            <Label Text="DOCUMENT NO." Style="{StaticResource FieldLabelStyle}" />
+                            <Label Text="{Binding Item.LinkedDocumentNo}" FontSize="15" />
+                        </VerticalStackLayout>
+                    </Grid>
+
+                </VerticalStackLayout>
+            </Border>
+
+        </VerticalStackLayout>
+    </ScrollView>
 </ContentPage>

@@ -78,4 +78,36 @@
         <Setter Property="SelectionMode" Value="None" />
     </Style>
 
+    <!-- ── Shared named styles ── -->
+
+    <Style x:Key="CardBorderStyle" TargetType="Border">
+        <Setter Property="Stroke" Value="Transparent" />
+        <Setter Property="StrokeShape">
+            <Setter.Value>
+                <RoundRectangle CornerRadius="16" />
+            </Setter.Value>
+        </Setter>
+        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray950}}" />
+        <Setter Property="Shadow">
+            <Setter.Value>
+                <Shadow Brush="Black" Offset="0,2" Radius="8" Opacity="0.05" />
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="SectionHeaderStyle" TargetType="Label">
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="CharacterSpacing" Value="1.5" />
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray300}}" />
+        <Setter Property="Margin" Value="20,0,20,10" />
+    </Style>
+
+    <Style x:Key="FieldLabelStyle" TargetType="Label">
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="CharacterSpacing" Value="0.8" />
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray300}}" />
+    </Style>
+
 </ResourceDictionary>

@@ -31,7 +31,7 @@ internal sealed class VersionCommand : AsyncCommand<VersionCommand.Settings>
         public bool Json { get; set; }
     }
 
-    public override Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
+    protected override Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
     {
         var cliVersion = GetCliVersion();
         var manifest = FshManifest.TryLoad(settings.Path);

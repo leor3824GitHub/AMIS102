@@ -24,7 +24,12 @@ public sealed class AuthenticatedHttpHandler(
 
         var response = await base.SendAsync(request, cancellationToken);
 
-        if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized && !_isRefreshing)
+        // Only attempt refresh + SessionExpired when a token existed but was rejected.
+        // If there was no token (offline/PIN-unlock mode), return the 401 as-is so
+        // ViewModels fall back to cache without triggering the PIN-page loop.
+        if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized
+            && !_isRefreshing
+            && !string.IsNullOrEmpty(accessToken))
         {
             _isRefreshing = true;
             try

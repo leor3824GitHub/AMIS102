@@ -4,75 +4,102 @@
              xmlns:vm="clr-namespace:Playground.Maui.Features.PhysicalCount"
              x:DataType="vm:PhysicalCountFoundAtStationViewModel"
              x:Class="Playground.Maui.Features.PhysicalCount.PhysicalCountFoundAtStationPage"
-             Title="Found at Station">
+             Title="Found at Station"
+             BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource OffBlack}}">
 
     <ScrollView>
-        <VerticalStackLayout Padding="20" Spacing="16">
+        <VerticalStackLayout Padding="0,16,0,32" Spacing="0">
 
-            <ActivityIndicator IsRunning="{Binding IsLoading}" IsVisible="{Binding IsLoading}" />
+            <ActivityIndicator IsRunning="{Binding IsLoading}"
+                               IsVisible="{Binding IsLoading}"
+                               Margin="0,0,0,8" />
 
             <Label Text="{Binding ErrorMessage}"
                    IsVisible="{Binding ErrorMessage, Converter={StaticResource IsNotNullConverter}}"
                    TextColor="{StaticResource Danger}"
-                   FontSize="13" />
+                   FontSize="13"
+                   Margin="20,0,20,12" />
 
-            <!-- Property number (pre-filled from scan, read-only display) -->
-            <Border StrokeShape="RoundRectangle 8" Padding="14" BackgroundColor="{StaticResource Gray100}">
-                <VerticalStackLayout Spacing="2">
-                    <Label Text="Property No." FontSize="11" TextColor="{StaticResource Gray500}" />
-                    <Label Text="{Binding PropertyNo}" FontAttributes="Bold" FontSize="16" />
+            <!-- Property number header card -->
+            <Border Style="{StaticResource CardBorderStyle}" Margin="16,0" Padding="20">
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="PROPERTY NO." Style="{StaticResource FieldLabelStyle}" />
+                    <Label Text="{Binding PropertyNo}"
+                           FontAttributes="Bold" FontSize="18" />
+                    <Label Text="This asset is not on the pre-generated checklist."
+                           FontSize="12"
+                           TextColor="{StaticResource Gray400}"
+                           Margin="0,2,0,0" />
                 </VerticalStackLayout>
             </Border>
 
-            <Label Text="This asset is not on the pre-generated checklist. Fill in the details below."
-                   FontSize="12"
-                   TextColor="{StaticResource Gray500}" />
+            <!-- Form card -->
+            <Label Text="ASSET DETAILS"
+                   Style="{StaticResource SectionHeaderStyle}"
+                   Margin="20,20,20,10" />
 
-            <!-- Description (required) -->
-            <VerticalStackLayout Spacing="4">
-                <Label FontAttributes="Bold" FontSize="13">
-                    <Label.FormattedText>
-                        <FormattedString>
-                            <Span Text="Description" />
-                            <Span Text=" *" TextColor="{StaticResource Danger}" />
-                        </FormattedString>
-                    </Label.FormattedText>
-                </Label>
-                <Entry Text="{Binding Description}" Placeholder="e.g. Dell Laptop Model XYZ" />
-            </VerticalStackLayout>
+            <Border Style="{StaticResource CardBorderStyle}" Margin="16,0" Padding="20">
+                <VerticalStackLayout Spacing="0">
 
-            <!-- Unit Cost -->
-            <VerticalStackLayout Spacing="4">
-                <Label Text="Unit Cost (₱)" FontAttributes="Bold" FontSize="13" />
-                <Entry Keyboard="Numeric"
-                       Text="{Binding UnitCostText}"
-                       Placeholder="0.00" />
-            </VerticalStackLayout>
+                    <!-- Description -->
+                    <VerticalStackLayout Spacing="4" Padding="0,0,0,14">
+                        <Label FontSize="11" FontAttributes="Bold" CharacterSpacing="0.8"
+                               TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray300}}">
+                            <Label.FormattedText>
+                                <FormattedString>
+                                    <Span Text="DESCRIPTION" />
+                                    <Span Text=" *" TextColor="{StaticResource Danger}" />
+                                </FormattedString>
+                            </Label.FormattedText>
+                        </Label>
+                        <Entry Text="{Binding Description}"
+                               Placeholder="e.g. Dell Laptop Model XYZ" />
+                    </VerticalStackLayout>
 
-            <!-- Condition -->
-            <VerticalStackLayout Spacing="4">
-                <Label Text="Condition" FontAttributes="Bold" FontSize="13" />
-                <Picker ItemsSource="{Binding Conditions}"
-                        SelectedIndex="{Binding SelectedConditionIndex}"
-                        Title="Select condition" />
-            </VerticalStackLayout>
+                    <BoxView HeightRequest="1"
+                             Color="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}" />
 
-            <!-- Remarks -->
-            <VerticalStackLayout Spacing="4">
-                <Label Text="Remarks (optional)" FontAttributes="Bold" FontSize="13" />
-                <Editor Text="{Binding Remarks}"
-                        Placeholder="e.g. found in stock room, sticker missing"
-                        HeightRequest="80"
-                        AutoSize="TextChanges" />
-            </VerticalStackLayout>
+                    <!-- Unit Cost -->
+                    <VerticalStackLayout Spacing="4" Padding="0,14,0,14">
+                        <Label Text="UNIT COST (&#x20B1;)" Style="{StaticResource FieldLabelStyle}" />
+                        <Entry Keyboard="Numeric"
+                               Text="{Binding UnitCostText}"
+                               Placeholder="0.00" />
+                    </VerticalStackLayout>
 
-            <!-- Buttons -->
-            <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                    <BoxView HeightRequest="1"
+                             Color="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}" />
+
+                    <!-- Condition -->
+                    <VerticalStackLayout Spacing="4" Padding="0,14,0,14">
+                        <Label Text="CONDITION" Style="{StaticResource FieldLabelStyle}" />
+                        <Picker ItemsSource="{Binding Conditions}"
+                                SelectedIndex="{Binding SelectedConditionIndex}"
+                                Title="Select condition" />
+                    </VerticalStackLayout>
+
+                    <BoxView HeightRequest="1"
+                             Color="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}" />
+
+                    <!-- Remarks -->
+                    <VerticalStackLayout Spacing="4" Padding="0,14,0,0">
+                        <Label Text="REMARKS (optional)" Style="{StaticResource FieldLabelStyle}" />
+                        <Editor Text="{Binding Remarks}"
+                                Placeholder="e.g. found in stock room, sticker missing"
+                                HeightRequest="80"
+                                AutoSize="TextChanges" />
+                    </VerticalStackLayout>
+
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Action buttons -->
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="12" Margin="16,20,16,0">
                 <Button Grid.Column="0"
                         Text="Cancel"
                         Command="{Binding CancelCommand}"
-                        BackgroundColor="{StaticResource Gray200}"
-                        TextColor="{StaticResource Gray900}" />
+                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}"
+                        TextColor="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource White}}" />
                 <Button Grid.Column="1"
                         Text="Add Entry"
                         Command="{Binding SaveCommand}"
