@@ -65,9 +65,7 @@ public static class MauiProgram
         builder.Services.AddSingleton(apiOptions);
         builder.Services.AddSingleton<AuthStateService>();
         builder.Services.AddSingleton<LocalDb>();
-        builder.Services.AddSingleton<ICacheService, CacheService>();
         builder.Services.AddSingleton<ITokenStorageService, TokenStorageService>();
-        builder.Services.AddSingleton<IPinStorageService, PinStorageService>();
         builder.Services.AddSingleton<IOcrService, OcrService>();
         builder.Services.AddTransient<AuthenticatedHttpHandler>();
 
@@ -87,8 +85,6 @@ public static class MauiProgram
 
         // ViewModels
         builder.Services.AddTransient<LoginViewModel>();
-        builder.Services.AddTransient<SetPinViewModel>();
-        builder.Services.AddTransient<PinViewModel>();
         builder.Services.AddTransient<ProfileViewModel>();
         builder.Services.AddTransient<InventoryViewModel>();
         builder.Services.AddTransient<ICSDetailViewModel>();
@@ -103,8 +99,6 @@ public static class MauiProgram
 
         // Pages
         builder.Services.AddTransient<LoginPage>();
-        builder.Services.AddTransient<SetPinPage>();
-        builder.Services.AddTransient<PinPage>();
         builder.Services.AddTransient<ProfilePage>();
         builder.Services.AddTransient<InventoryPage>();
         builder.Services.AddTransient<ICSDetailPage>();

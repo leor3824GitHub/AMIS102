@@ -6,8 +6,7 @@ namespace Playground.Maui.Features.Profile;
 public sealed partial class ProfileViewModel(
     IApiClient apiClient,
     AuthStateService authState,
-    ITokenStorageService tokenStorage,
-    ICacheService cacheService) : ObservableObject
+    ITokenStorageService tokenStorage) : ObservableObject
 {
     [ObservableProperty] private string _fullName = "";
     [ObservableProperty] private string _email = "";
@@ -55,9 +54,7 @@ public sealed partial class ProfileViewModel(
     public async Task LogoutAsync()
     {
         await tokenStorage.ClearAsync();
-        await cacheService.ClearAllAsync();
         authState.Clear();
-        // Replace window root with a fresh login page
         var loginPage = Application.Current!.Handler!.MauiContext!.Services
             .GetRequiredService<Auth.LoginPage>();
         Application.Current!.Windows[0].Page = new NavigationPage(loginPage);

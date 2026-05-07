@@ -48,20 +48,6 @@ public sealed class TokenStorageService : ITokenStorageService
 #endif
     }
 
-    public Task SaveLastSessionAsync(string userId, string tenantId)
-    {
-        Preferences.Set("amis_last_user_id", userId);
-        Preferences.Set("amis_last_tenant_id", tenantId);
-        return Task.CompletedTask;
-    }
-
-    public Task<(string? UserId, string? TenantId)> GetLastSessionAsync()
-    {
-        var userId = Preferences.Get("amis_last_user_id", (string?)null);
-        var tenantId = Preferences.Get("amis_last_tenant_id", (string?)null);
-        return Task.FromResult((userId, tenantId));
-    }
-
 #if WINDOWS
     private static string GetTokenFilePath(string key) =>
         Path.Combine(FileSystem.AppDataDirectory, $"{key}.dat");
