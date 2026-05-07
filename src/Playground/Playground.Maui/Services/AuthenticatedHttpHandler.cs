@@ -57,11 +57,26 @@ public sealed class AuthenticatedHttpHandler(
     {
         request.Headers.Remove("Authorization");
         request.Headers.Remove("tenant");
+        request.Headers.Remove("X-Client-Id");
 
         if (!string.IsNullOrEmpty(accessToken))
             request.Headers.Add("Authorization", $"Bearer {accessToken}");
 
         request.Headers.Add("tenant", options.TenantId);
+        request.Headers.Add("X-Client-Id", GetClientId());
+    }
+
+    private static string GetClientId()
+    {
+#if ANDROID
+        return "maui-android";
+#elif IOS
+        return "maui-ios";
+#elif WINDOWS
+        return "maui-windows";
+#else
+        return "maui";
+#endif
     }
 
     private async Task<string?> TryRefreshTokenAsync(CancellationToken cancellationToken)
@@ -72,6 +87,7 @@ public sealed class AuthenticatedHttpHandler(
 
         using var refreshRequest = new HttpRequestMessage(HttpMethod.Post, "api/v1/identity/token/refresh");
         refreshRequest.Headers.Add("tenant", options.TenantId);
+        refreshRequest.Headers.Add("X-Client-Id", GetClientId());
         refreshRequest.Content = System.Net.Http.Json.JsonContent.Create(new { Token = refreshToken });
 
         try
@@ -84,8 +100,8 @@ public sealed class AuthenticatedHttpHandler(
             if (tokenResponse is null)
                 return null;
 
-            await tokenStorage.SaveTokensAsync(tokenResponse.Token, tokenResponse.RefreshToken);
-            return tokenResponse.Token;
+            await tokenStorage.SaveTokensAsync(tokenResponse.AccessToken, tokenResponse.RefreshToken);
+            return tokenResponse.AccessToken;
         }
         catch
         {
@@ -110,5 +126,5 @@ public sealed class AuthenticatedHttpHandler(
         return clone;
     }
 
-    private sealed record TokenResponse(string Token, string RefreshToken);
+    private sealed record TokenResponse(string AccessToken, string RefreshToken);
 }

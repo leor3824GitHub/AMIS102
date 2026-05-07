@@ -24,6 +24,7 @@ public sealed class LocalDb
             await _connection.CreateTableAsync<CachedEmployeeProfile>();
             await _connection.CreateTableAsync<CachedICS>();
             await _connection.CreateTableAsync<CachedPAR>();
+            await _connection.CreateTableAsync<PendingCountEntry>();
             return _connection;
         }
         finally

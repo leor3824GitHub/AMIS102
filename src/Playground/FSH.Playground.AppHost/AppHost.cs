@@ -28,4 +28,25 @@ builder.AddProject<Projects.Playground_Blazor>("playground-blazor")
     .WithEnvironment("Api__BaseUrl", api.GetEndpoint("https"))
     .WaitFor(api);
 
+builder.AddExecutable(
+        "playground-maui",
+        "dotnet",
+        Path.Combine("..", "Playground.Maui"),
+        "run", "--framework", "net10.0-windows10.0.19041.0")
+    .WithEnvironment("Api__BaseUrl", api.GetEndpoint("https"))
+    .WaitFor(api);
+
+// Android: requires an emulator or physical device connected via ADB.
+// Set MAUI_ANDROID=true to include this resource (off by default).
+if (builder.Configuration["MAUI_ANDROID"] == "true")
+{
+    builder.AddExecutable(
+            "playground-maui-android",
+            "dotnet",
+            Path.Combine("..", "Playground.Maui"),
+            "run", "--framework", "net10.0-android")
+        .WithEnvironment("Api__BaseUrl", api.GetEndpoint("http"))  // Use HTTP; dev cert is not trusted on Android emulator
+        .WaitFor(api);
+}
+
 await builder.Build().RunAsync();

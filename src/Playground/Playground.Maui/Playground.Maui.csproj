@@ -10,6 +10,10 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
+<<<<<<< HEAD
+=======
+
+>>>>>>> e381be5f746bf2a49bd5cc7ac822676a935d6d3a
     <!-- Display name and versioning -->
     <ApplicationTitle>AMIS Mobile</ApplicationTitle>
     <ApplicationId>com.amis.mobile</ApplicationId>
@@ -20,10 +24,17 @@
     <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">26.0</SupportedOSPlatformVersion>
     <!-- iOS -->
     <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">16.0</SupportedOSPlatformVersion>
+<<<<<<< HEAD
     <!-- Windows -->
     <TargetPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.19041.0</TargetPlatformVersion>
+=======
+    <!-- Windows — version baked into TFM; keep min-version in sync -->
+>>>>>>> e381be5f746bf2a49bd5cc7ac822676a935d6d3a
     <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.19041.0</SupportedOSPlatformVersion>
     <TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.19041.0</TargetPlatformMinVersion>
+    <!-- Run unpackaged with WinAppSDK bundled so dotnet run / Aspire don't need WinAppRuntime installed system-wide -->
+    <WindowsPackageType Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">None</WindowsPackageType>
+    <WindowsAppSDKSelfContained Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">true</WindowsAppSDKSelfContained>
 
     <!-- CommunityToolkit.Maui source gen -->
     <EnableMauiCommunityToolkit>true</EnableMauiCommunityToolkit>
@@ -47,8 +58,10 @@
     <PackageReference Include="ZXing.Net.Maui.Controls" />
     <PackageReference Include="sqlite-net-pcl" />
     <PackageReference Include="SQLitePCLRaw.bundle_green" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" />
     <PackageReference Include="Microsoft.Extensions.Http" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" />
   </ItemGroup>
 
 </Project>

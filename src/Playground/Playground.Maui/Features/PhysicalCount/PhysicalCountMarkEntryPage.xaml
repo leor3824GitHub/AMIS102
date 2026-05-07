@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Playground.Maui.Features.PhysicalCount"
+             x:DataType="vm:PhysicalCountMarkEntryViewModel"
+             x:Class="Playground.Maui.Features.PhysicalCount.PhysicalCountMarkEntryPage"
+             Title="Mark Entry">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="16">
+
+            <ActivityIndicator IsRunning="{Binding IsLoading}" IsVisible="{Binding IsLoading}" />
+
+            <Label Text="{Binding ErrorMessage}"
+                   IsVisible="{Binding ErrorMessage, Converter={StaticResource IsNotNullConverter}}"
+                   TextColor="{StaticResource Danger}"
+                   FontSize="13" />
+
+            <!-- Asset info -->
+            <Border StrokeShape="RoundRectangle 8" Padding="14" BackgroundColor="{StaticResource Gray100}">
+                <VerticalStackLayout Spacing="4">
+                    <Label Text="{Binding PropertyNo}" FontAttributes="Bold" FontSize="16" />
+                    <Label Text="{Binding DisplayDescription}"
+                           FontSize="13"
+                           TextColor="{StaticResource Gray500}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Result picker -->
+            <VerticalStackLayout Spacing="4">
+                <Label Text="Result" FontAttributes="Bold" FontSize="13" />
+                <Picker ItemsSource="{Binding Results}"
+                        SelectedIndex="{Binding SelectedResultIndex}"
+                        Title="Select result" />
+            </VerticalStackLayout>
+
+            <!-- Condition picker -->
+            <VerticalStackLayout Spacing="4">
+                <Label Text="Condition" FontAttributes="Bold" FontSize="13" />
+                <Picker ItemsSource="{Binding Conditions}"
+                        SelectedIndex="{Binding SelectedConditionIndex}"
+                        Title="Select condition" />
+            </VerticalStackLayout>
+
+            <!-- Quantity -->
+            <VerticalStackLayout Spacing="4">
+                <Label Text="Quantity on Hand" FontAttributes="Bold" FontSize="13" />
+                <Entry Keyboard="Numeric"
+                       Text="{Binding QuantityOnHand}"
+                       Placeholder="1" />
+            </VerticalStackLayout>
+
+            <!-- Remarks -->
+            <VerticalStackLayout Spacing="4">
+                <Label Text="Remarks (optional)" FontAttributes="Bold" FontSize="13" />
+                <Editor Text="{Binding Remarks}"
+                        Placeholder="e.g. found in storage room"
+                        HeightRequest="80"
+                        AutoSize="TextChanges" />
+            </VerticalStackLayout>
+
+            <!-- Buttons -->
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                <Button Grid.Column="0"
+                        Text="Cancel"
+                        Command="{Binding CancelCommand}"
+                        BackgroundColor="{StaticResource Gray200}"
+                        TextColor="{StaticResource Gray900}" />
+                <Button Grid.Column="1"
+                        Text="Save"
+                        Command="{Binding SaveCommand}"
+                        IsEnabled="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
+            </Grid>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

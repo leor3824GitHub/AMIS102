@@ -4,13 +4,12 @@ public sealed class TokenStorageService : ITokenStorageService
 {
     private const string AccessTokenKey = "amis_access_token";
     private const string RefreshTokenKey = "amis_refresh_token";
-    private const string VaultResource = "amis_mobile";
 
     public async Task SaveTokensAsync(string accessToken, string refreshToken)
     {
 #if WINDOWS
-        SaveToVault(AccessTokenKey, accessToken);
-        SaveToVault(RefreshTokenKey, refreshToken);
+    SaveToEncryptedFile(AccessTokenKey, accessToken);
+    SaveToEncryptedFile(RefreshTokenKey, refreshToken);
         await Task.CompletedTask;
 #else
         await SecureStorage.SetAsync(AccessTokenKey, accessToken);
@@ -21,7 +20,7 @@ public sealed class TokenStorageService : ITokenStorageService
     public async Task<string?> GetAccessTokenAsync()
     {
 #if WINDOWS
-        return await Task.FromResult(GetFromVault(AccessTokenKey));
+        return await Task.FromResult(GetFromEncryptedFile(AccessTokenKey));
 #else
         return await SecureStorage.GetAsync(AccessTokenKey);
 #endif
@@ -30,7 +29,7 @@ public sealed class TokenStorageService : ITokenStorageService
     public async Task<string?> GetRefreshTokenAsync()
     {
 #if WINDOWS
-        return await Task.FromResult(GetFromVault(RefreshTokenKey));
+        return await Task.FromResult(GetFromEncryptedFile(RefreshTokenKey));
 #else
         return await SecureStorage.GetAsync(RefreshTokenKey);
 #endif
@@ -39,8 +38,8 @@ public sealed class TokenStorageService : ITokenStorageService
     public async Task ClearAsync()
     {
 #if WINDOWS
-        ClearFromVault(AccessTokenKey);
-        ClearFromVault(RefreshTokenKey);
+        ClearEncryptedFile(AccessTokenKey);
+        ClearEncryptedFile(RefreshTokenKey);
         await Task.CompletedTask;
 #else
         SecureStorage.Remove(AccessTokenKey);
@@ -50,21 +49,35 @@ public sealed class TokenStorageService : ITokenStorageService
     }
 
 #if WINDOWS
-    private static void SaveToVault(string key, string value)
+    private static string GetTokenFilePath(string key) =>
+        Path.Combine(FileSystem.AppDataDirectory, $"{key}.dat");
+
+    private static void SaveToEncryptedFile(string key, string value)
     {
-        var vault = new Windows.Security.Credentials.PasswordVault();
-        try { vault.Remove(vault.Retrieve(VaultResource, key)); } catch { }
-        vault.Add(new Windows.Security.Credentials.PasswordCredential(VaultResource, key, value));
+        var plainBytes = System.Text.Encoding.UTF8.GetBytes(value);
+        var encryptedBytes = System.Security.Cryptography.ProtectedData.Protect(
+            plainBytes,
+            optionalEntropy: null,
+            scope: System.Security.Cryptography.DataProtectionScope.CurrentUser);
+
+        File.WriteAllBytes(GetTokenFilePath(key), encryptedBytes);
     }
 
-    private static string? GetFromVault(string key)
+    private static string? GetFromEncryptedFile(string key)
     {
         try
         {
-            var vault = new Windows.Security.Credentials.PasswordVault();
-            var cred = vault.Retrieve(VaultResource, key);
-            cred.RetrievePassword();
-            return cred.Password;
+            var path = GetTokenFilePath(key);
+            if (!File.Exists(path))
+                return null;
+
+            var encryptedBytes = File.ReadAllBytes(path);
+            var plainBytes = System.Security.Cryptography.ProtectedData.Unprotect(
+                encryptedBytes,
+                optionalEntropy: null,
+                scope: System.Security.Cryptography.DataProtectionScope.CurrentUser);
+
+            return System.Text.Encoding.UTF8.GetString(plainBytes);
         }
         catch
         {
@@ -72,12 +85,13 @@ public sealed class TokenStorageService : ITokenStorageService
         }
     }
 
-    private static void ClearFromVault(string key)
+    private static void ClearEncryptedFile(string key)
     {
         try
         {
-            var vault = new Windows.Security.Credentials.PasswordVault();
-            vault.Remove(vault.Retrieve(VaultResource, key));
+            var path = GetTokenFilePath(key);
+            if (File.Exists(path))
+                File.Delete(path);
         }
         catch { }
     }

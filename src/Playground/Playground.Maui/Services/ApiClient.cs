@@ -64,5 +64,37 @@ public sealed class ApiClient(HttpClient httpClient) : IApiClient
         return result!;
     }
 
+    public async Task<List<PhysicalCountSessionSummaryDto>> GetPhysicalCountSessionsAsync(CancellationToken ct = default)
+    {
+        var result = await httpClient.GetFromJsonAsync<PagedPhysicalCountListResponse>(
+            "api/v1/asset-management/physical-count?PageSize=100", ct);
+        return result?.Items?.ToList() ?? [];
+    }
+
+    public async Task<PhysicalCountSessionDetailDto> GetPhysicalCountSessionByIdAsync(Guid sessionId, CancellationToken ct = default)
+    {
+        var result = await httpClient.GetFromJsonAsync<PhysicalCountSessionDetailDto>(
+            $"api/v1/asset-management/physical-count/{sessionId}", ct);
+        return result!;
+    }
+
+    public async Task RecordPhysicalCountEntryAsync(Guid sessionId, Guid entryId, RecordCountEntryRequest request, CancellationToken ct = default)
+    {
+        var response = await httpClient.PutAsJsonAsync(
+            $"api/v1/asset-management/physical-count/{sessionId}/entries/{entryId}", request, ct);
+        response.EnsureSuccessStatusCode();
+    }
+
+    public async Task<AddFoundAtStationResult> AddFoundAtStationEntryAsync(Guid sessionId, AddFoundAtStationRequest request, CancellationToken ct = default)
+    {
+        var response = await httpClient.PostAsJsonAsync(
+            $"api/v1/asset-management/physical-count/{sessionId}/found-at-station", request, ct);
+        response.EnsureSuccessStatusCode();
+        return (await response.Content.ReadFromJsonAsync<AddFoundAtStationResult>(ct))!;
+    }
+
     private sealed record PagedResult<T>(List<T> Data, int TotalCount);
+    private sealed record PagedPhysicalCountListResponse(
+        IReadOnlyList<PhysicalCountSessionSummaryDto>? Items,
+        int PageNumber, int PageSize, int TotalCount);
 }
