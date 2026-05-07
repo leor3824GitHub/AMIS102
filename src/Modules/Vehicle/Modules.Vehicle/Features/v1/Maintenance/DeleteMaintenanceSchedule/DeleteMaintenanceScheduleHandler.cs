@@ -1,3 +1,4 @@
+using FSH.Framework.Core.Exceptions;
 using FSH.Modules.Vehicle.Data;
 using FSH.Modules.Vehicle.Domain.Maintenance;
 using Mediator;
@@ -10,14 +11,14 @@ public sealed class DeleteMaintenanceScheduleHandler(
 {
     public async ValueTask<Unit> Handle(
         DeleteMaintenanceScheduleCommand command,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
-        var schedule = await db.MaintenanceSchedules.FirstOrDefaultAsync(x => x.Id == command.ScheduleId, ct)
-            ?? throw new ApplicationException($"Maintenance schedule {command.ScheduleId} not found");
+        var schedule = await db.MaintenanceSchedules.FirstOrDefaultAsync(x => x.Id == command.ScheduleId, cancellationToken)
+            ?? throw new NotFoundException($"Maintenance schedule {command.ScheduleId} not found");
 
         schedule.SoftDelete();
         db.MaintenanceSchedules.Update(schedule);
-        await db.SaveChangesAsync(ct);
+        await db.SaveChangesAsync(cancellationToken);
 
         return Unit.Value;
     }

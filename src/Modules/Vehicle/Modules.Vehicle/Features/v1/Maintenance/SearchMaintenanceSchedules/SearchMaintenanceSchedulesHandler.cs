@@ -11,14 +11,14 @@ public sealed class SearchMaintenanceSchedulesHandler(
 {
     public async ValueTask<List<MaintenanceScheduleDto>> Handle(
         SearchMaintenanceSchedulesQuery query,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         var schedules = await db.MaintenanceSchedules
             .Where(x => (string.IsNullOrEmpty(query.MaintenanceType) || x.MaintenanceType.Contains(query.MaintenanceType)) &&
                      (!query.VehicleId.HasValue || x.VehicleId == query.VehicleId) &&
                      (!query.IsActive.HasValue || x.IsActive == query.IsActive) &&
                      !x.IsDeleted)
-            .ToListAsync(ct);
+            .ToListAsync(cancellationToken);
 
         return schedules
             .Select(x => new MaintenanceScheduleDto(

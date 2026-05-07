@@ -13,7 +13,7 @@ public sealed class CreateMaintenanceScheduleHandler(
 {
     public async ValueTask<CreateMaintenanceScheduleResponse> Handle(
         CreateMaintenanceScheduleCommand command,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         var tenantId = currentUser.GetTenant() ?? throw new InvalidOperationException("Tenant ID required");
 
@@ -28,7 +28,7 @@ public sealed class CreateMaintenanceScheduleHandler(
             command.InitialDueMileage);
 
         db.MaintenanceSchedules.Add(schedule);
-        await db.SaveChangesAsync(ct);
+        await db.SaveChangesAsync(cancellationToken);
         return new CreateMaintenanceScheduleResponse(schedule.Id);
     }
 }

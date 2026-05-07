@@ -11,7 +11,7 @@ public sealed class GetDueMaintenanceSchedulesHandler(
 {
     public async ValueTask<List<MaintenanceScheduleDto>> Handle(
         GetDueMaintenanceSchedulesQuery query,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         var dueDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(query.DaysAhead));
 
@@ -21,7 +21,7 @@ public sealed class GetDueMaintenanceSchedulesHandler(
                      !x.IsDeleted &&
                      x.DueDate.HasValue &&
                      x.DueDate <= dueDate)
-            .ToListAsync(ct);
+            .ToListAsync(cancellationToken);
 
         return schedules
             .Select(x => new MaintenanceScheduleDto(

@@ -42,14 +42,19 @@ public static class MauiProgram
 
         if (OperatingSystem.IsAndroid())
         {
-            // Android emulator cannot reach host loopback via localhost; use 10.0.2.2.
+            // Android cannot reach host loopback via localhost. Physical devices need the host's
+            // LAN IP (Api:AndroidHost); emulators fall back to 10.0.2.2 when AndroidHost is empty.
             if (Uri.TryCreate(apiOptions.BaseUrl, UriKind.Absolute, out var uri) &&
                 (string.Equals(uri.Host, "localhost", StringComparison.OrdinalIgnoreCase) ||
                  uri.Host == "127.0.0.1"))
             {
+                var androidHost = string.IsNullOrWhiteSpace(apiOptions.AndroidHost)
+                    ? "10.0.2.2"
+                    : apiOptions.AndroidHost;
+
                 var uriBuilder = new UriBuilder(uri)
                 {
-                    Host = "10.0.2.2"
+                    Host = androidHost
                 };
 
                 apiOptions.BaseUrl = uriBuilder.Uri.ToString().TrimEnd('/');
@@ -64,9 +69,17 @@ public static class MauiProgram
         builder.Services.AddSingleton<ITokenStorageService, TokenStorageService>();
         builder.Services.AddTransient<AuthenticatedHttpHandler>();
 
-        builder.Services.AddHttpClient<IApiClient, ApiClient>(client =>
+        var apiClientBuilder = builder.Services.AddHttpClient<IApiClient, ApiClient>(client =>
             client.BaseAddress = new Uri(apiOptions.BaseUrl))
             .AddHttpMessageHandler<AuthenticatedHttpHandler>();
+
+#if DEBUG && ANDROID
+        // Android emulator does not trust the .NET HTTPS dev cert. Allow self-signed only in Debug.
+        apiClientBuilder.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+        {
+            ServerCertificateCustomValidationCallback = (_, _, _, _) => true
+        });
+#endif
 
         builder.Services.AddTransient<IPhysicalCountSyncService, PhysicalCountSyncService>();
 

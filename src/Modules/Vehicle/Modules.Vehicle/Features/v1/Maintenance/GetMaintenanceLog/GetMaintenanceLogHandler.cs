@@ -1,3 +1,4 @@
+using FSH.Framework.Core.Exceptions;
 using FSH.Modules.Vehicle.Contracts.v1.Maintenance;
 using FSH.Modules.Vehicle.Data;
 using FSH.Modules.Vehicle.Domain.Maintenance;
@@ -11,10 +12,10 @@ public sealed class GetMaintenanceLogHandler(
 {
     public async ValueTask<MaintenanceLogDto> Handle(
         GetMaintenanceLogQuery query,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
-        var log = await db.MaintenanceLogs.FirstOrDefaultAsync(x => x.Id == query.LogId, ct)
-            ?? throw new ApplicationException($"Maintenance log {query.LogId} not found");
+        var log = await db.MaintenanceLogs.FirstOrDefaultAsync(x => x.Id == query.LogId, cancellationToken)
+            ?? throw new NotFoundException($"Maintenance log {query.LogId} not found");
 
         return new MaintenanceLogDto(
             log.Id,
