@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Playground.Maui.Features.Auth"
+             x:DataType="vm:SetPinViewModel"
+             x:Class="Playground.Maui.Features.Auth.SetPinPage"
+             Title="Set Up PIN">
+    <ScrollView>
+        <VerticalStackLayout Padding="32" Spacing="16" VerticalOptions="Center">
+
+            <Label Text="Set Up Offline PIN"
+                   FontSize="24"
+                   FontAttributes="Bold"
+                   HorizontalOptions="Center" />
+
+            <Label Text="Create a PIN so you can log in when there's no internet connection."
+                   TextColor="{StaticResource Gray500}"
+                   HorizontalOptions="Center"
+                   HorizontalTextAlignment="Center" />
+
+            <Entry Placeholder="Enter 4–6 digit PIN"
+                   Text="{Binding Pin}"
+                   IsPassword="True"
+                   Keyboard="Numeric"
+                   MaxLength="6"
+                   AutomationId="PinEntry" />
+
+            <Entry Placeholder="Confirm PIN"
+                   Text="{Binding ConfirmPin}"
+                   IsPassword="True"
+                   Keyboard="Numeric"
+                   MaxLength="6"
+                   AutomationId="ConfirmPinEntry" />
+
+            <Label Text="{Binding ErrorMessage}"
+                   TextColor="{StaticResource Danger}"
+                   IsVisible="{Binding ErrorMessage, Converter={StaticResource IsNotNullConverter}}" />
+
+            <ActivityIndicator IsRunning="{Binding IsLoading}"
+                               IsVisible="{Binding IsLoading}"
+                               HorizontalOptions="Center" />
+
+            <Button Text="Set PIN"
+                    Command="{Binding SetPinCommand}"
+                    IsEnabled="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
+
+            <Button Text="Skip for now"
+                    Command="{Binding SkipCommand}"
+                    BackgroundColor="Transparent"
+                    TextColor="{StaticResource Primary}"
+                    IsEnabled="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

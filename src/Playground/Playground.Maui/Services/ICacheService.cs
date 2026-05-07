@@ -10,5 +10,7 @@ public interface ICacheService
     Task UpsertPARAsync(IEnumerable<CachedPAR> items);
     Task SaveEmployeeProfileAsync(CachedEmployeeProfile profile);
     Task<CachedEmployeeProfile?> GetEmployeeProfileAsync(string userId);
+    Task SaveUserIdentityAsync(CachedUserIdentity identity);
+    Task<CachedUserIdentity?> GetUserIdentityAsync(string userId);
     Task ClearAllAsync();
 }

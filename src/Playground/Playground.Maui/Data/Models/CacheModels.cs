@@ -2,6 +2,17 @@ using SQLite;
 
 namespace Playground.Maui.Data.Models;
 
+[Table("CachedUserIdentity")]
+public sealed class CachedUserIdentity
+{
+    [PrimaryKey] public string UserId { get; set; } = "";
+    public string Email { get; set; } = "";
+    public string? FirstName { get; set; }
+    public string? LastName { get; set; }
+    public string TenantId { get; set; } = "";
+    public DateTimeOffset CachedAt { get; set; }
+}
+
 [Table("CachedEmployeeProfile")]
 public sealed class CachedEmployeeProfile
 {

@@ -6,4 +6,6 @@ public interface ITokenStorageService
     Task<string?> GetAccessTokenAsync();
     Task<string?> GetRefreshTokenAsync();
     Task ClearAsync();
+    Task SaveLastSessionAsync(string userId, string tenantId);
+    Task<(string? UserId, string? TenantId)> GetLastSessionAsync();
 }

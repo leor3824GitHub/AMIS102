@@ -51,9 +51,24 @@ public sealed class CacheService(LocalDb localDb) : ICacheService
             .FirstOrDefaultAsync();
     }
 
+    public async Task SaveUserIdentityAsync(CachedUserIdentity identity)
+    {
+        var db = await localDb.GetConnectionAsync();
+        await db.InsertOrReplaceAsync(identity);
+    }
+
+    public async Task<CachedUserIdentity?> GetUserIdentityAsync(string userId)
+    {
+        var db = await localDb.GetConnectionAsync();
+        return await db.Table<CachedUserIdentity>()
+            .Where(x => x.UserId == userId)
+            .FirstOrDefaultAsync();
+    }
+
     public async Task ClearAllAsync()
     {
         var db = await localDb.GetConnectionAsync();
+        await db.DeleteAllAsync<CachedUserIdentity>();
         await db.DeleteAllAsync<CachedEmployeeProfile>();
         await db.DeleteAllAsync<CachedICS>();
         await db.DeleteAllAsync<CachedPAR>();

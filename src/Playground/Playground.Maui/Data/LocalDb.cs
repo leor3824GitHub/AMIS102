@@ -21,6 +21,7 @@ public sealed class LocalDb
 
             var dbPath = Path.Combine(FileSystem.AppDataDirectory, "amis-cache.db");
             _connection = new SQLiteAsyncConnection(dbPath, SQLiteOpenFlags.Create | SQLiteOpenFlags.ReadWrite | SQLiteOpenFlags.SharedCache);
+            await _connection.CreateTableAsync<CachedUserIdentity>();
             await _connection.CreateTableAsync<CachedEmployeeProfile>();
             await _connection.CreateTableAsync<CachedICS>();
             await _connection.CreateTableAsync<CachedPAR>();

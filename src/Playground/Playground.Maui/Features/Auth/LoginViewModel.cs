@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Playground.Maui.Data.Models;
 using Playground.Maui.Services;
 
 namespace Playground.Maui.Features.Auth;
@@ -7,11 +8,12 @@ namespace Playground.Maui.Features.Auth;
 public sealed partial class LoginViewModel(
     IApiClient apiClient,
     ITokenStorageService tokenStorage,
+    IPinStorageService pinStorage,
+    ICacheService cacheService,
     AuthStateService authState,
     ApiClientOptions apiOptions) : ObservableObject
 {
 #if DEBUG
-    // Development defaults for easy testing on MAUI
     [ObservableProperty] private string _tenant = "root";
     [ObservableProperty] private string _email = "admin@root.com";
     [ObservableProperty] private string _password = "123Pa$$word!";
@@ -46,7 +48,39 @@ public sealed partial class LoginViewModel(
             var employee = await apiClient.GetMyEmployeeAsync(ct);
             authState.SetEmployee(new EmployeeInfo(employee.EmployeeId, employee.FullName, employee.Department, employee.Position));
 
-            Application.Current!.MainPage = new AppShell();
+            // Persist session metadata and identity for offline login support
+            await tokenStorage.SaveLastSessionAsync(profile.Id, Tenant.Trim());
+            await cacheService.SaveUserIdentityAsync(new CachedUserIdentity
+            {
+                UserId = profile.Id,
+                Email = profile.Email,
+                FirstName = profile.FirstName,
+                LastName = profile.LastName,
+                TenantId = Tenant.Trim(),
+                CachedAt = DateTimeOffset.UtcNow,
+            });
+            await cacheService.SaveEmployeeProfileAsync(new CachedEmployeeProfile
+            {
+                UserId = profile.Id,
+                EmployeeId = employee.EmployeeId,
+                FullName = employee.FullName,
+                Department = employee.Department,
+                Position = employee.Position,
+                CachedAt = DateTimeOffset.UtcNow,
+            });
+
+            // First time login — offer PIN setup. Subsequent logins go straight to AppShell.
+            var pinAlreadySet = await pinStorage.IsPinSetAsync();
+            if (!pinAlreadySet)
+            {
+                var setPin = (SetPinPage)Application.Current!.Handler!.MauiContext!.Services
+                    .GetRequiredService(typeof(SetPinPage));
+                Application.Current!.MainPage = new NavigationPage(setPin);
+            }
+            else
+            {
+                Application.Current!.MainPage = new AppShell();
+            }
         }
         catch (HttpRequestException)
         {
