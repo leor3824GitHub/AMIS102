@@ -56,4 +56,12 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" />
   </ItemGroup>
 
+  <!-- Android-only: Google ML Kit on-device text recognition (OCR) -->
+  <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
+    <PackageReference Include="Xamarin.Google.MLKit.TextRecognition" />
+    <!-- Force-align the AndroidX.SavedState.Ktx version with what ML Kit pulls (1.4.0.2);
+         otherwise R8 sees duplicate androidx/savedstate/ViewKt classes. -->
+    <PackageReference Include="Xamarin.AndroidX.SavedState.SavedState.Ktx" />
+  </ItemGroup>
+
 </Project>

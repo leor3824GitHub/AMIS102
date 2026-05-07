@@ -6,6 +6,8 @@ namespace Playground.Maui.Features.PhysicalCount;
 
 [QueryProperty(nameof(SessionId), "SessionId")]
 [QueryProperty(nameof(PropertyNo), "PropertyNo")]
+[QueryProperty(nameof(Desc), "Desc")]
+[QueryProperty(nameof(UnitCost), "UnitCost")]
 public sealed partial class PhysicalCountFoundAtStationViewModel : ObservableObject
 {
     private readonly IPhysicalCountSyncService _syncService;
@@ -16,6 +18,25 @@ public sealed partial class PhysicalCountFoundAtStationViewModel : ObservableObj
     // Form fields
     [ObservableProperty] private string _description = "";
     [ObservableProperty] private string _unitCostText = "";
+
+    // Pre-fill hooks: navigation params arrive after construction; mirror them into the form fields.
+    public string Desc
+    {
+        set { if (!string.IsNullOrWhiteSpace(value)) Description = value; }
+    }
+
+    public string UnitCost
+    {
+        set
+        {
+            if (!string.IsNullOrWhiteSpace(value) &&
+                decimal.TryParse(value, System.Globalization.NumberStyles.Number,
+                    System.Globalization.CultureInfo.InvariantCulture, out var parsed))
+            {
+                UnitCostText = parsed.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+            }
+        }
+    }
     [ObservableProperty] private int _selectedConditionIndex;
     [ObservableProperty] private string _remarks = "";
 

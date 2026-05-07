@@ -30,7 +30,7 @@
                HorizontalOptions="Center"
                Margin="0,12" />
 
-        <Grid Padding="16" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+        <Grid Padding="16,0,16,8" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
             <Entry Grid.Column="0"
                    Placeholder="Property No. e.g. SPLV-2026-01-0001"
                    Text="{Binding ManualPropertyNo}"
@@ -39,6 +39,23 @@
             <Button Grid.Column="1"
                     Text="Search"
                     Command="{Binding SearchManualCommand}" />
+            <Button Grid.Column="2"
+                    Text="Scan Text"
+                    IsVisible="{Binding IsOcrSupported}"
+                    IsEnabled="{Binding IsOcrBusy, Converter={StaticResource InvertedBoolConverter}}"
+                    Command="{Binding ScanTextCommand}" />
         </Grid>
+
+        <ActivityIndicator IsRunning="{Binding IsOcrBusy}"
+                          IsVisible="{Binding IsOcrBusy}"
+                          HorizontalOptions="Center"
+                          Margin="0,4" />
+
+        <Label Text="{Binding ErrorMessage}"
+               IsVisible="{Binding ErrorMessage, Converter={StaticResource IsNotNullConverter}}"
+               TextColor="{StaticResource Danger}"
+               FontSize="12"
+               HorizontalOptions="Center"
+               Margin="16,0,16,8" />
     </VerticalStackLayout>
 </ContentPage>

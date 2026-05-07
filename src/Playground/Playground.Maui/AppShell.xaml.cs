@@ -14,6 +14,7 @@ public partial class AppShell : Shell
         Routing.RegisterRoute(nameof(PARDetailPage), typeof(PARDetailPage));
         Routing.RegisterRoute(nameof(AssetDetailPage), typeof(AssetDetailPage));
         Routing.RegisterRoute(nameof(PhysicalCountWalkthroughPage), typeof(PhysicalCountWalkthroughPage));
+        Routing.RegisterRoute(nameof(PhysicalCountScanPage), typeof(PhysicalCountScanPage));
         Routing.RegisterRoute(nameof(PhysicalCountMarkEntryPage), typeof(PhysicalCountMarkEntryPage));
         Routing.RegisterRoute(nameof(PhysicalCountFoundAtStationPage), typeof(PhysicalCountFoundAtStationPage));
     }

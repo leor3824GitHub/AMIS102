@@ -105,6 +105,10 @@
     <PackageVersion Include="CommunityToolkit.Maui" Version="11.0.0" />
     <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     <PackageVersion Include="ZXing.Net.Maui.Controls" Version="0.4.0" />
+    <PackageVersion Include="Xamarin.Google.MLKit.TextRecognition" Version="116.0.1.7" />
+    <!-- Pin AndroidX.SavedState.Ktx to align with the SavedState 1.4.0.2 pulled in transitively by ML Kit;
+         older 1.2.x ships duplicate androidx/savedstate/ViewKt and causes R8 dex merge to fail. -->
+    <PackageVersion Include="Xamarin.AndroidX.SavedState.SavedState.Ktx" Version="1.4.0.2" />
     <PackageVersion Include="sqlite-net-pcl" Version="1.9.172" />
     <PackageVersion Include="SQLitePCLRaw.bundle_green" Version="2.1.11" />
     <PackageVersion Include="System.Security.Cryptography.ProtectedData" Version="10.0.0" />

@@ -67,6 +67,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<LocalDb>();
         builder.Services.AddSingleton<ICacheService, CacheService>();
         builder.Services.AddSingleton<ITokenStorageService, TokenStorageService>();
+        builder.Services.AddSingleton<IOcrService, OcrService>();
         builder.Services.AddTransient<AuthenticatedHttpHandler>();
 
         var apiClientBuilder = builder.Services.AddHttpClient<IApiClient, ApiClient>(client =>
@@ -93,6 +94,7 @@ public static class MauiProgram
         builder.Services.AddTransient<AssetDetailViewModel>();
         builder.Services.AddTransient<PhysicalCountSessionListViewModel>();
         builder.Services.AddTransient<PhysicalCountWalkthroughViewModel>();
+        builder.Services.AddTransient<PhysicalCountScanViewModel>();
         builder.Services.AddTransient<PhysicalCountMarkEntryViewModel>();
         builder.Services.AddTransient<PhysicalCountFoundAtStationViewModel>();
 
@@ -106,6 +108,7 @@ public static class MauiProgram
         builder.Services.AddTransient<AssetDetailPage>();
         builder.Services.AddTransient<PhysicalCountSessionListPage>();
         builder.Services.AddTransient<PhysicalCountWalkthroughPage>();
+        builder.Services.AddTransient<PhysicalCountScanPage>();
         builder.Services.AddTransient<PhysicalCountMarkEntryPage>();
         builder.Services.AddTransient<PhysicalCountFoundAtStationPage>();
 

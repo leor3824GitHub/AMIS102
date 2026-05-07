@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using Playground.Maui.Services;
 using System.Collections.ObjectModel;
 
@@ -10,8 +11,8 @@ public sealed partial class PhysicalCountWalkthroughViewModel : ObservableObject
 {
     private readonly IApiClient _apiClient;
     private readonly IPhysicalCountSyncService _syncService;
+    private readonly IOcrService _ocr;
     private List<PhysicalCountEntryDto> _allEntries = [];
-    private DateTimeOffset? _lastScanTime;
 
     [ObservableProperty] private string _sessionId = "";
     [ObservableProperty] private string _sessionNo = "";
@@ -21,7 +22,7 @@ public sealed partial class PhysicalCountWalkthroughViewModel : ObservableObject
     [ObservableProperty] private bool _isLoading;
     [ObservableProperty] private string? _errorMessage;
     [ObservableProperty] private string? _syncBanner;
-    [ObservableProperty] private bool _isCameraAvailable;
+    [ObservableProperty] private bool _isOcrBusy;
 
     [ObservableProperty] private string _manualPropertyNo = "";
     [ObservableProperty] private string _searchText = "";
@@ -39,12 +40,29 @@ public sealed partial class PhysicalCountWalkthroughViewModel : ObservableObject
 
     public string[] FilterOptions => ["All", "Pending", "Found", "Not Found", "Found@Station"];
 
-    public PhysicalCountWalkthroughViewModel(IApiClient apiClient, IPhysicalCountSyncService syncService)
+    public PhysicalCountWalkthroughViewModel(IApiClient apiClient, IPhysicalCountSyncService syncService, IOcrService ocr)
     {
         _apiClient = apiClient;
         _syncService = syncService;
-        IsCameraAvailable = DeviceInfo.Current.Platform != DevicePlatform.Unknown;
+        _ocr = ocr;
     }
+
+    public bool IsOcrSupported => _ocr.IsSupported;
+
+    public void SubscribeMessages() =>
+        WeakReferenceMessenger.Default.Register<PhysicalCountBarcodeScannedMessage>(this,
+            (_, msg) => MainThread.BeginInvokeOnMainThread(() =>
+            {
+                ManualPropertyNo = msg.PropertyNo;
+                _ = ProcessPropertyNoAsync(msg.PropertyNo);
+            }));
+
+    public void UnsubscribeMessages() =>
+        WeakReferenceMessenger.Default.Unregister<PhysicalCountBarcodeScannedMessage>(this);
+
+    [RelayCommand]
+    private static async Task ScanQrAsync() =>
+        await Shell.Current.GoToAsync(nameof(PhysicalCountScanPage));
 
     partial void OnSessionIdChanged(string value) => _ = LoadAsync();
     partial void OnSelectedFilterChanged(string value) => ApplyFilter();
@@ -98,14 +116,6 @@ public sealed partial class PhysicalCountWalkthroughViewModel : ObservableObject
             await LoadAsync(ct);
     }
 
-    public void OnBarcodeDetected(string rawValue)
-    {
-        if (IsDebounced()) return;
-        var propertyNo = rawValue.Trim().ToUpperInvariant();
-        ManualPropertyNo = propertyNo;
-        _ = ProcessPropertyNoAsync(propertyNo);
-    }
-
     [RelayCommand]
     private async Task SearchManualAsync(CancellationToken ct = default)
     {
@@ -115,19 +125,80 @@ public sealed partial class PhysicalCountWalkthroughViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private async Task ScanTextAsync(CancellationToken ct = default)
+    {
+        if (IsOcrBusy) return;
+        if (!_ocr.IsSupported)
+        {
+            ErrorMessage = "Text scanning isn't available on this device.";
+            return;
+        }
+
+        IsOcrBusy = true;
+        ErrorMessage = null;
+        try
+        {
+            var photo = await MediaPicker.Default.CapturePhotoAsync();
+            if (photo is null) return;
+
+            await using var stream = await photo.OpenReadAsync();
+            var raw = await _ocr.RecognizeTextAsync(stream, ct);
+            var info = PropertyNumberExtractor.Extract(raw);
+
+            if (string.IsNullOrEmpty(info.PropertyNo))
+            {
+                ManualPropertyNo = (raw ?? string.Empty).Trim();
+                ErrorMessage = "Couldn't detect a property number. Edit the text and tap Search.";
+                return;
+            }
+
+            ManualPropertyNo = info.PropertyNo;
+            await ProcessPropertyNoAsync(info.PropertyNo, info.Item, info.Value);
+        }
+        catch (FeatureNotSupportedException)
+        {
+            ErrorMessage = "Camera capture isn't supported on this device.";
+        }
+        catch (PermissionException)
+        {
+            ErrorMessage = "Camera permission was denied.";
+        }
+        catch (Exception)
+        {
+            ErrorMessage = "Could not scan text. Please try again.";
+        }
+        finally
+        {
+            IsOcrBusy = false;
+        }
+    }
+
+    [RelayCommand]
     private async Task OpenEntryAsync(PhysicalCountEntryDto entry) =>
         await NavigateToMarkEntryAsync(entry, isScanned: false);
 
-    private async Task ProcessPropertyNoAsync(string propertyNo)
+    private async Task ProcessPropertyNoAsync(string propertyNo, string? description = null, decimal? unitCost = null)
     {
         var entry = _allEntries.FirstOrDefault(e =>
             string.Equals(e.PropertyNumber, propertyNo, StringComparison.OrdinalIgnoreCase));
 
         if (entry is not null)
+        {
             await NavigateToMarkEntryAsync(entry, isScanned: true);
-        else
-            await Shell.Current.GoToAsync(
-                $"{nameof(PhysicalCountFoundAtStationPage)}?SessionId={SessionId}&PropertyNo={Uri.EscapeDataString(propertyNo)}");
+            return;
+        }
+
+        var route = $"{nameof(PhysicalCountFoundAtStationPage)}" +
+                    $"?SessionId={SessionId}" +
+                    $"&PropertyNo={Uri.EscapeDataString(propertyNo)}";
+
+        if (!string.IsNullOrWhiteSpace(description))
+            route += $"&Desc={Uri.EscapeDataString(description)}";
+
+        if (unitCost.HasValue)
+            route += $"&UnitCost={unitCost.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+
+        await Shell.Current.GoToAsync(route);
     }
 
     private async Task NavigateToMarkEntryAsync(PhysicalCountEntryDto entry, bool isScanned) =>
@@ -184,12 +255,4 @@ public sealed partial class PhysicalCountWalkthroughViewModel : ObservableObject
         PendingCount = _allEntries.Count(e => e.Result is null);
     }
 
-    private bool IsDebounced()
-    {
-        if (_lastScanTime.HasValue &&
-            (DateTimeOffset.UtcNow - _lastScanTime.Value).TotalSeconds < 2)
-            return true;
-        _lastScanTime = DateTimeOffset.UtcNow;
-        return false;
-    }
 }

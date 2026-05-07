@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Playground.Maui.Features.PhysicalCount"
+             xmlns:zxing="clr-namespace:ZXing.Net.Maui.Controls;assembly=ZXing.Net.MAUI.Controls"
+             xmlns:zxingcore="clr-namespace:ZXing.Net.Maui;assembly=ZXing.Net.MAUI"
+             x:DataType="vm:PhysicalCountScanViewModel"
+             x:Class="Playground.Maui.Features.PhysicalCount.PhysicalCountScanPage"
+             Title="Scan Property Barcode">
+
+    <Grid RowDefinitions="*,Auto">
+
+        <!-- Camera viewfinder -->
+        <zxing:CameraBarcodeReaderView Grid.Row="0"
+                                       x:Name="BarcodeReader"
+                                       IsVisible="{Binding IsCameraAvailable}"
+                                       IsDetecting="True"
+                                       BarcodesDetected="OnBarcodeDetected">
+            <zxing:CameraBarcodeReaderView.Options>
+                <zxingcore:BarcodeReaderOptions Formats="QrCode,Code128,Code39,DataMatrix"
+                                                AutoRotate="True"
+                                                Multiple="False" />
+            </zxing:CameraBarcodeReaderView.Options>
+        </zxing:CameraBarcodeReaderView>
+
+        <Label Grid.Row="0"
+               IsVisible="{Binding IsCameraAvailable, Converter={StaticResource InvertedBoolConverter}}"
+               Text="Camera not available on this device. Tap Cancel and use manual entry."
+               HorizontalOptions="Center"
+               VerticalOptions="Center"
+               Padding="24"
+               FontSize="14"
+               TextColor="{StaticResource Gray500}" />
+
+        <!-- Cancel bar -->
+        <Border Grid.Row="1"
+                BackgroundColor="{StaticResource Gray100}"
+                Padding="16,10">
+            <Button Text="Cancel"
+                    Command="{Binding CancelCommand}"
+                    HorizontalOptions="Center" />
+        </Border>
+
+    </Grid>
+</ContentPage>

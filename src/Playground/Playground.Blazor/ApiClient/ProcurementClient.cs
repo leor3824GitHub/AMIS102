@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net.Http.Json;
 using System.Web;
 using FSH.Framework.Shared.Persistence;
@@ -30,9 +31,9 @@ internal sealed class PurchaseRequestClient(HttpClient http) : IPurchaseRequestC
     {
         var q = HttpUtility.ParseQueryString(string.Empty);
         if (!string.IsNullOrWhiteSpace(keyword)) q["Keyword"] = keyword;
-        if (status.HasValue) q["Status"] = ((int)status.Value).ToString();
-        q["PageNumber"] = page.ToString();
-        q["PageSize"] = pageSize.ToString();
+        if (status.HasValue) q["Status"] = ((int)status.Value).ToString(CultureInfo.InvariantCulture);
+        q["PageNumber"] = page.ToString(CultureInfo.InvariantCulture);
+        q["PageSize"] = pageSize.ToString(CultureInfo.InvariantCulture);
         return http.GetFromJsonAsync<PagedResponse<PurchaseRequestSummaryDto>>($"{Base}?{q}", ct)!;
     }
 
@@ -101,9 +102,9 @@ internal sealed class CanvassRequestClient(HttpClient http) : ICanvassRequestCli
     {
         var q = HttpUtility.ParseQueryString(string.Empty);
         if (!string.IsNullOrWhiteSpace(keyword)) q["Keyword"] = keyword;
-        if (status.HasValue) q["Status"] = ((int)status.Value).ToString();
-        q["PageNumber"] = page.ToString();
-        q["PageSize"] = pageSize.ToString();
+        if (status.HasValue) q["Status"] = ((int)status.Value).ToString(CultureInfo.InvariantCulture);
+        q["PageNumber"] = page.ToString(CultureInfo.InvariantCulture);
+        q["PageSize"] = pageSize.ToString(CultureInfo.InvariantCulture);
         return http.GetFromJsonAsync<PagedResponse<CanvassRequestSummaryDto>>($"{Base}?{q}", ct)!;
     }
 
@@ -152,9 +153,9 @@ internal sealed class PurchaseOrderClient(HttpClient http) : IPurchaseOrderClien
     {
         var q = HttpUtility.ParseQueryString(string.Empty);
         if (!string.IsNullOrWhiteSpace(keyword)) q["Keyword"] = keyword;
-        if (status.HasValue) q["Status"] = ((int)status.Value).ToString();
-        q["PageNumber"] = page.ToString();
-        q["PageSize"] = pageSize.ToString();
+        if (status.HasValue) q["Status"] = ((int)status.Value).ToString(CultureInfo.InvariantCulture);
+        q["PageNumber"] = page.ToString(CultureInfo.InvariantCulture);
+        q["PageSize"] = pageSize.ToString(CultureInfo.InvariantCulture);
         return http.GetFromJsonAsync<PagedResponse<PurchaseOrderSummaryDto>>($"{Base}?{q}", ct)!;
     }
 
