@@ -55,6 +55,28 @@ public sealed class TangibleInventory : AggregateRoot<Guid>, IHasTenant, IAudita
     public string? DeletedBy { get; set; }
     public bool IsDeleted { get; set; }
 
+    public void Update(
+        string reportNo,
+        DateOnly date,
+        string receivedFrom,
+        string? address,
+        ReceiptType receiptType,
+        string? otherReceiptType,
+        string? fundCluster,
+        Guid? receivedByEmployeeId,
+        Guid? notedByEmployeeId)
+    {
+        ReportNo             = reportNo;
+        Date                 = date;
+        ReceivedFrom         = receivedFrom;
+        Address              = address;
+        ReceiptType          = receiptType;
+        OtherReceiptType     = otherReceiptType;
+        FundCluster          = fundCluster;
+        ReceivedByEmployeeId = receivedByEmployeeId;
+        NotedByEmployeeId    = notedByEmployeeId;
+    }
+
     public static TangibleInventory Create(
         string tenantId,
         string reportNo,

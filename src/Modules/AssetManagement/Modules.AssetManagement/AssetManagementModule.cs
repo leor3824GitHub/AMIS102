@@ -58,6 +58,8 @@ using FSH.Modules.AssetManagement.Features.v1.TangibleItems.UpdateTangibleItem;
 using FSH.Modules.AssetManagement.Features.v1.TangibleItems.DeleteTangibleItem;
 using FSH.Modules.AssetManagement.Features.v1.TangibleItems.GetNextTangibleItemSequence;
 using FSH.Modules.AssetManagement.Features.v1.TangibleInventory.CreateTangibleInventory;
+using FSH.Modules.AssetManagement.Features.v1.TangibleInventory.UpdateTangibleInventory;
+using FSH.Modules.AssetManagement.Features.v1.TangibleInventory.DeleteTangibleInventory;
 using FSH.Modules.AssetManagement.Features.v1.TangibleInventory.GetByPropertyNo;
 using FSH.Modules.AssetManagement.Features.v1.TangibleInventory.GetTangibleInventories;
 using FSH.Modules.AssetManagement.Features.v1.TangibleInventory.GetTangibleInventoryById;
@@ -83,6 +85,8 @@ public class AssetManagementModule : IModule
 
         new("View Tangible Inventory",   "View",   "AssetManagement.TangibleInventory",   IsBasic: true),
         new("Create Tangible Inventory", "Create", "AssetManagement.TangibleInventory"),
+        new("Update Tangible Inventory", "Update", "AssetManagement.TangibleInventory"),
+        new("Delete Tangible Inventory", "Delete", "AssetManagement.TangibleInventory"),
 
         new("View Inventory Custodian Slips",   "View",   "AssetManagement.InventoryCustodianSlips",   IsBasic: true),
         new("Create Inventory Custodian Slips", "Create", "AssetManagement.InventoryCustodianSlips"),
@@ -187,6 +191,8 @@ public class AssetManagementModule : IModule
         CreateTangibleInventoryEndpoint.Map(tangibleInventoryGroup);
         GetTangibleInventoriesEndpoint.Map(tangibleInventoryGroup);
         GetTangibleInventoryByIdEndpoint.Map(tangibleInventoryGroup);
+        UpdateTangibleInventoryEndpoint.Map(tangibleInventoryGroup);
+        DeleteTangibleInventoryEndpoint.Map(tangibleInventoryGroup);
 
         // Tangible Inventory Items (scan/lookup by PropertyNo)
         GetTangibleInventoryItemByPropertyNoEndpoint.Map(tangibleInventoryItemsGroup);

@@ -28,9 +28,16 @@
                              IsVisible="{Binding IsCameraAvailable, Converter={StaticResource InvertedBoolConverter}}"
                              VerticalOptions="Center" HorizontalOptions="Center"
                              Spacing="12" Padding="32">
-            <Label Text="&#x1F4F7;"
-                   FontSize="52"
-                   HorizontalOptions="Center" />
+            <Border StrokeShape="RoundRectangle 24"
+                    Stroke="Transparent"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray950}}"
+                    WidthRequest="80" HeightRequest="80"
+                    HorizontalOptions="Center">
+                <Label Text="CAM"
+                       FontFamily="InterBold" FontSize="18"
+                       TextColor="{StaticResource Gray400}"
+                       HorizontalOptions="Center" VerticalOptions="Center" />
+            </Border>
             <Label Text="Camera not available on this device."
                    FontSize="14"
                    TextColor="{StaticResource Gray400}"

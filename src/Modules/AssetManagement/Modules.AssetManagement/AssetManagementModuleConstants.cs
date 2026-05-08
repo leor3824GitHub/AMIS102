@@ -131,6 +131,8 @@ public static class AssetManagementModuleConstants
         {
             public const string View   = "Permissions.AssetManagement.TangibleInventory.View";
             public const string Create = "Permissions.AssetManagement.TangibleInventory.Create";
+            public const string Update = "Permissions.AssetManagement.TangibleInventory.Update";
+            public const string Delete = "Permissions.AssetManagement.TangibleInventory.Delete";
         }
 
     }

@@ -25,14 +25,14 @@
                 <VerticalStackLayout Spacing="8">
                     <Label Text="ICS NO." Style="{StaticResource FieldLabelStyle}" />
                     <Label Text="{Binding Detail.ICSNo}"
-                           FontSize="22" FontAttributes="Bold" />
+                           FontFamily="InterBold" FontSize="22" />
                     <Border Stroke="Transparent"
                             StrokeShape="RoundRectangle 10"
                             BackgroundColor="{AppThemeBinding Light={StaticResource PrimaryLight}, Dark={StaticResource Tertiary}}"
                             Padding="10,4"
                             HorizontalOptions="Start">
                         <Label Text="{Binding Detail.Status}"
-                               FontSize="12" FontAttributes="Bold"
+                               FontFamily="InterSemiBold" FontSize="12"
                                TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
                     </Border>
                 </VerticalStackLayout>

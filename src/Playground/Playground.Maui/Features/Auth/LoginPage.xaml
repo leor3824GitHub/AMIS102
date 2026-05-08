@@ -24,14 +24,14 @@
                            HorizontalOptions="Center" VerticalOptions="Center" />
                 </Border>
                 <Label Text="AMIS Mobile"
-                       FontSize="22" FontAttributes="Bold"
+                       Style="{StaticResource TitleStyle}"
+                       FontSize="22"
                        HorizontalOptions="Center" />
             </VerticalStackLayout>
 
             <!-- Tenant -->
-            <Label Text="Tenant"
-                   FontSize="13"
-                   TextColor="{StaticResource Gray500}"
+            <Label Text="TENANT"
+                   Style="{StaticResource FieldLabelStyle}"
                    Margin="0,0,0,6" />
             <Border StrokeShape="RoundRectangle 12"
                     Stroke="{StaticResource Gray100}"
@@ -44,9 +44,8 @@
             </Border>
 
             <!-- Email -->
-            <Label Text="Your email"
-                   FontSize="13"
-                   TextColor="{StaticResource Gray500}"
+            <Label Text="EMAIL"
+                   Style="{StaticResource FieldLabelStyle}"
                    Margin="0,0,0,6" />
             <Border StrokeShape="RoundRectangle 12"
                     Stroke="{StaticResource Gray100}"
@@ -60,9 +59,8 @@
             </Border>
 
             <!-- Password -->
-            <Label Text="Password"
-                   FontSize="13"
-                   TextColor="{StaticResource Gray500}"
+            <Label Text="PASSWORD"
+                   Style="{StaticResource FieldLabelStyle}"
                    Margin="0,0,0,6" />
             <Border StrokeShape="RoundRectangle 12"
                     Stroke="{StaticResource Gray100}"
@@ -105,8 +103,8 @@
                     IsEnabled="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}"
                     HeightRequest="52"
                     CornerRadius="12"
+                    FontFamily="InterSemiBold"
                     FontSize="16"
-                    FontAttributes="Bold"
                     Margin="0,0,0,0" />
 
         </VerticalStackLayout>

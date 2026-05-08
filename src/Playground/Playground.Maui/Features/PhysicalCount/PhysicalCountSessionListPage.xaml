@@ -42,9 +42,7 @@
                             EmptyView="No physical count sessions found.">
                 <CollectionView.ItemTemplate>
                     <DataTemplate x:DataType="svc:PhysicalCountSessionSummaryDto">
-                        <Border Stroke="Transparent"
-                                StrokeShape="RoundRectangle 12"
-                                BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray950}}"
+                        <Border Style="{StaticResource CardBorderStyle}"
                                 Margin="16,4" Padding="16,14">
                             <Grid ColumnDefinitions="*,Auto"
                                   RowDefinitions="Auto,Auto,Auto"
@@ -53,7 +51,7 @@
                                 <!-- SessionNo + Status badge -->
                                 <Label Grid.Row="0" Grid.Column="0"
                                        Text="{Binding SessionNo}"
-                                       FontAttributes="Bold" FontSize="15" />
+                                       FontFamily="InterSemiBold" FontSize="15" />
                                 <Border Grid.Row="0" Grid.Column="1"
                                         Stroke="Transparent"
                                         StrokeShape="RoundRectangle 10"
@@ -69,7 +67,7 @@
                                     </Border.Triggers>
                                     <Label Text="{Binding Status}"
                                            TextColor="White"
-                                           FontSize="11" FontAttributes="Bold" />
+                                           FontFamily="InterSemiBold" FontSize="11" />
                                 </Border>
 
                                 <!-- StationOffice + Scope -->
@@ -79,14 +77,12 @@
                                        TextColor="{StaticResource Gray500}" />
                                 <Label Grid.Row="1" Grid.Column="1"
                                        Text="{Binding Scope}"
-                                       FontSize="11"
-                                       TextColor="{StaticResource Gray400}" />
+                                       Style="{StaticResource CaptionStyle}" />
 
                                 <!-- Date + Progress -->
                                 <Label Grid.Row="2" Grid.Column="0"
                                        Text="{Binding CountDate}"
-                                       FontSize="11"
-                                       TextColor="{StaticResource Gray300}" />
+                                       Style="{StaticResource CaptionStyle}" />
                                 <Label Grid.Row="2" Grid.Column="1"
                                        FontSize="11"
                                        TextColor="{StaticResource Gray400}">

@@ -42,31 +42,27 @@
                                         HeightRequest="400">
                             <CollectionView.ItemTemplate>
                                 <DataTemplate x:DataType="svc:PARSummaryDto">
-                                    <Border Stroke="Transparent"
-                                            StrokeShape="RoundRectangle 12"
-                                            BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray950}}"
+                                    <Border Style="{StaticResource CardBorderStyle}"
                                             Margin="16,4" Padding="16,14">
                                         <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" RowSpacing="4">
                                             <Label Grid.Row="0" Grid.Column="0"
                                                    Text="{Binding PARNo}"
-                                                   FontAttributes="Bold" FontSize="15" />
+                                                   FontFamily="InterSemiBold" FontSize="15" />
                                             <Border Grid.Row="0" Grid.Column="1"
                                                     Stroke="Transparent"
                                                     StrokeShape="RoundRectangle 10"
                                                     BackgroundColor="{AppThemeBinding Light={StaticResource PrimaryLight}, Dark={StaticResource Tertiary}}"
                                                     Padding="8,3">
                                                 <Label Text="{Binding PARType}"
-                                                       FontSize="11" FontAttributes="Bold"
+                                                       FontFamily="InterSemiBold" FontSize="11"
                                                        TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
                                             </Border>
                                             <Label Grid.Row="1" Grid.Column="0"
                                                    Text="{Binding Date}"
-                                                   FontSize="12"
-                                                   TextColor="{StaticResource Gray400}" />
+                                                   Style="{StaticResource CaptionStyle}" />
                                             <Label Grid.Row="1" Grid.Column="1"
                                                    Text="{Binding ItemCount, StringFormat='{0} items'}"
-                                                   FontSize="12"
-                                                   TextColor="{StaticResource Gray400}" />
+                                                   Style="{StaticResource CaptionStyle}" />
                                         </Grid>
                                     </Border>
                                 </DataTemplate>
@@ -76,31 +72,27 @@
                 </CollectionView.Footer>
                 <CollectionView.ItemTemplate>
                     <DataTemplate x:DataType="svc:ICSSummaryDto">
-                        <Border Stroke="Transparent"
-                                StrokeShape="RoundRectangle 12"
-                                BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray950}}"
+                        <Border Style="{StaticResource CardBorderStyle}"
                                 Margin="16,4" Padding="16,14">
                             <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" RowSpacing="4">
                                 <Label Grid.Row="0" Grid.Column="0"
                                        Text="{Binding ICSNo}"
-                                       FontAttributes="Bold" FontSize="15" />
+                                       FontFamily="InterSemiBold" FontSize="15" />
                                 <Border Grid.Row="0" Grid.Column="1"
                                         Stroke="Transparent"
                                         StrokeShape="RoundRectangle 10"
                                         BackgroundColor="{AppThemeBinding Light={StaticResource PrimaryLight}, Dark={StaticResource Tertiary}}"
                                         Padding="8,3">
                                     <Label Text="{Binding Status}"
-                                           FontSize="11" FontAttributes="Bold"
+                                           FontFamily="InterSemiBold" FontSize="11"
                                            TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
                                 </Border>
                                 <Label Grid.Row="1" Grid.Column="0"
                                        Text="{Binding Date}"
-                                       FontSize="12"
-                                       TextColor="{StaticResource Gray400}" />
+                                       Style="{StaticResource CaptionStyle}" />
                                 <Label Grid.Row="1" Grid.Column="1"
                                        Text="{Binding ItemCount, StringFormat='{0} items'}"
-                                       FontSize="12"
-                                       TextColor="{StaticResource Gray400}" />
+                                       Style="{StaticResource CaptionStyle}" />
                             </Grid>
                         </Border>
                     </DataTemplate>

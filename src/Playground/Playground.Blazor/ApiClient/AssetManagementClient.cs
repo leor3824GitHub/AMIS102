@@ -296,46 +296,49 @@ internal sealed class SemiExpendablePropertyClient(HttpClient http) : ISemiExpen
     }
 }
 
-// Receiving Reports (SMRR)
+// Receiving Reports (Tangible Inventory / SMRR)
 
 internal sealed record CreateSMRRItemRequest(
     Guid TangibleItemId,
     string? Reference);
 
 internal sealed record CreateSMRRCommand(
-    string SMRRNo,
+    string ReportNo,
     DateOnly Date,
     string ReceivedFrom,
     string? Address,
     ReceiptType ReceiptType,
     string? OtherReceiptType,
     string? FundCluster,
-    string? ReceivedBy,
-    string? NotedBy,
+    Guid? ReceivedByEmployeeId,
+    Guid? NotedByEmployeeId,
     IReadOnlyList<CreateSMRRItemRequest> Items);
 
 internal sealed record CreateSMRRResult(
-    Guid SMRRId,
-    string SMRRNo,
-    int ItemCount);
+    Guid TangibleInventoryId,
+    string ReportNo,
+    int SEItemCount,
+    int PPEItemCount);
 
 internal sealed record SMRRSummaryDto(
     Guid Id,
-    string SMRRNo,
+    string ReportNo,
     DateOnly Date,
     string ReceivedFrom,
     string ReceiptType,
     string? FundCluster,
-    int ItemCount);
+    int SEItemCount,
+    int PPEItemCount);
 
 internal sealed record SMRRItemDetailsDto(
     Guid Id,
-    Guid SemiExpendablePropertyId,
-    string PropertyNo,
+    Guid TangibleItemId,
     string? Reference,
+    string AssetType,
+    decimal ThresholdAmountUsed,
+    bool IsIssued,
+    string PropertyNo,
     Guid ItemId,
-    string ItemCode,
-    string ItemName,
     string? Description,
     DateOnly AcquisitionDate,
     int Quantity,
@@ -344,17 +347,15 @@ internal sealed record SMRRItemDetailsDto(
 
 internal sealed record SMRRDetailsDto(
     Guid Id,
-    string SMRRNo,
+    string ReportNo,
     DateOnly Date,
     string ReceivedFrom,
     string? Address,
     string ReceiptType,
     string? OtherReceiptType,
     string? FundCluster,
-    string? ReceivedBy,
-    string? NotedBy,
-    DateTimeOffset CreatedOnUtc,
-    string? CreatedBy,
+    Guid? ReceivedByEmployeeId,
+    Guid? NotedByEmployeeId,
     IReadOnlyList<SMRRItemDetailsDto> Items);
 
 internal sealed record PagedSMRRsResponse(
@@ -372,7 +373,7 @@ internal interface ISMRRClient
 
 internal sealed class SMRRClient(HttpClient http) : ISMRRClient
 {
-    private const string Base = "api/v1/asset-management/receiving-reports";
+    private const string Base = "api/v1/asset-management/tangible-inventories";
 
     public Task<PagedSMRRsResponse> SearchAsync(string? keyword = null, DateOnly? dateFrom = null, DateOnly? dateTo = null, int page = 1, int pageSize = 20, CancellationToken ct = default)
     {
@@ -995,62 +996,101 @@ internal enum PARType { NewPurchase = 0, Transfer = 1 }
 internal enum PPEIssuanceType { TransferCO = 0, TransferRO = 1, TransferPO = 2, Donation = 3, Dumping = 4, Destruction = 5, Sale = 6, Others = 7 }
 internal enum PPEReturnCategory { Serviceable = 0, Junked = 1 }
 
-// PPE Receiving Reports (PPERR)
+// PPE Receiving Reports (PPERR — uses same tangible-inventories endpoint, filtered to PPE asset type)
 
 internal sealed record CreatePPERRItemRequest(
-    string? ClassCode,
-    string? ItemCode,
-    string? PropertyCode,
-    string Description,
-    string? SerialNumber,
-    DateOnly DateAcquired,
-    int Quantity,
-    decimal UnitCost,
-    int EstimatedUsefulLifeYears);
+    Guid TangibleItemId,
+    string? Reference);
 
 internal sealed record CreatePPERRCommand(
-    string PPERRNo,
+    string ReportNo,
     DateOnly Date,
     string ReceivedFrom,
-    string Address,
-    PPEReceiptNature ReceiptNature,
-    Guid ReceivedByEmployeeId,
-    Guid NotedByEmployeeId,
+    string? Address,
+    ReceiptType ReceiptType,
+    string? OtherReceiptType,
+    string? FundCluster,
+    Guid? ReceivedByEmployeeId,
+    Guid? NotedByEmployeeId,
     IReadOnlyList<CreatePPERRItemRequest> Items);
 
-internal sealed record CreatePPERRResult(Guid PPERRId, string PPERRNo, int PPEItemsCreated);
+internal sealed record CreatePPERRResult(
+    Guid TangibleInventoryId,
+    string ReportNo,
+    int SEItemCount,
+    int PPEItemCount);
 
-internal sealed record PPERRSummaryDto(Guid Id, string PPERRNo, DateOnly Date, string ReceivedFrom, string ReceiptNature, int ItemCount);
+internal sealed record PPERRSummaryDto(
+    Guid Id,
+    string ReportNo,
+    DateOnly Date,
+    string ReceivedFrom,
+    string ReceiptType,
+    string? FundCluster,
+    int SEItemCount,
+    int PPEItemCount);
 
-internal sealed record PPERRItemDto(Guid Id, int ItemNo, string PropertyCode, string Description, DateOnly DateAcquired, int Quantity, decimal UnitCost, decimal Amount);
+internal sealed record PPERRItemDto(
+    Guid Id,
+    Guid TangibleItemId,
+    string? Reference,
+    string AssetType,
+    decimal ThresholdAmountUsed,
+    bool IsIssued,
+    string PropertyNo,
+    Guid ItemId,
+    string? Description,
+    DateOnly AcquisitionDate,
+    int Quantity,
+    decimal UnitCost,
+    decimal Amount);
 
 internal sealed record PPERRDetailsDto(
-    Guid Id, string PPERRNo, DateOnly Date,
-    string ReceivedFrom, string Address, string ReceiptNature,
-    Guid ReceivedByEmployeeId, Guid NotedByEmployeeId,
-    DateTimeOffset CreatedOnUtc, string? CreatedBy,
+    Guid Id,
+    string ReportNo,
+    DateOnly Date,
+    string ReceivedFrom,
+    string? Address,
+    string ReceiptType,
+    string? OtherReceiptType,
+    string? FundCluster,
+    Guid? ReceivedByEmployeeId,
+    Guid? NotedByEmployeeId,
     IReadOnlyList<PPERRItemDto> Items);
 
 internal sealed record PagedPPERRResponse(IReadOnlyList<PPERRSummaryDto> Items, int PageNumber, int PageSize, int TotalCount);
 
+internal sealed record UpdatePPERRCommand(
+    string ReportNo,
+    DateOnly Date,
+    string ReceivedFrom,
+    string? Address,
+    ReceiptType ReceiptType,
+    string? OtherReceiptType,
+    string? FundCluster,
+    Guid? ReceivedByEmployeeId,
+    Guid? NotedByEmployeeId);
+
 internal interface IPPERRClient
 {
-    Task<PagedPPERRResponse> SearchAsync(string? keyword = null, DateOnly? dateFrom = null, DateOnly? dateTo = null, PPEReceiptNature? receiptNature = null, int page = 1, int pageSize = 15, CancellationToken ct = default);
+    Task<PagedPPERRResponse> SearchAsync(string? keyword = null, DateOnly? dateFrom = null, DateOnly? dateTo = null, int page = 1, int pageSize = 15, CancellationToken ct = default);
     Task<PPERRDetailsDto?> GetAsync(Guid id, CancellationToken ct = default);
     Task<CreatePPERRResult> CreateAsync(CreatePPERRCommand command, CancellationToken ct = default);
+    Task UpdateAsync(Guid id, UpdatePPERRCommand command, CancellationToken ct = default);
+    Task DeleteAsync(Guid id, CancellationToken ct = default);
 }
 
 internal sealed class PPERRClient(HttpClient http) : IPPERRClient
 {
-    private const string Base = "api/v1/asset-management/ppe-receiving-reports";
+    private const string Base = "api/v1/asset-management/tangible-inventories";
 
-    public Task<PagedPPERRResponse> SearchAsync(string? keyword = null, DateOnly? dateFrom = null, DateOnly? dateTo = null, PPEReceiptNature? receiptNature = null, int page = 1, int pageSize = 15, CancellationToken ct = default)
+    public Task<PagedPPERRResponse> SearchAsync(string? keyword = null, DateOnly? dateFrom = null, DateOnly? dateTo = null, int page = 1, int pageSize = 15, CancellationToken ct = default)
     {
         var q = HttpUtility.ParseQueryString(string.Empty);
         if (!string.IsNullOrWhiteSpace(keyword)) q["Keyword"] = keyword;
         if (dateFrom.HasValue) q["DateFrom"] = dateFrom.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
         if (dateTo.HasValue) q["DateTo"] = dateTo.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-        if (receiptNature.HasValue) q["ReceiptNature"] = ((int)receiptNature.Value).ToString(CultureInfo.InvariantCulture);
+        q["AssetType"] = "PPE";
         q["PageNumber"] = page.ToString(CultureInfo.InvariantCulture);
         q["PageSize"] = pageSize.ToString(CultureInfo.InvariantCulture);
         return http.GetFromJsonAsync<PagedPPERRResponse>($"{Base}?{q}", ct)!;
@@ -1064,6 +1104,18 @@ internal sealed class PPERRClient(HttpClient http) : IPPERRClient
         using var r = await http.PostAsJsonAsync(Base, command, ct);
         r.EnsureSuccessStatusCode();
         return (await r.Content.ReadFromJsonAsync<CreatePPERRResult>(ct))!;
+    }
+
+    public async Task UpdateAsync(Guid id, UpdatePPERRCommand command, CancellationToken ct = default)
+    {
+        using var r = await http.PutAsJsonAsync($"{Base}/{id}", command, ct);
+        r.EnsureSuccessStatusCode();
+    }
+
+    public async Task DeleteAsync(Guid id, CancellationToken ct = default)
+    {
+        using var r = await http.DeleteAsync($"{Base}/{id}", ct);
+        r.EnsureSuccessStatusCode();
     }
 }
 

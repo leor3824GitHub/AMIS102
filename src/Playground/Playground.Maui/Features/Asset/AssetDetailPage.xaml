@@ -24,10 +24,9 @@
             <Border Style="{StaticResource CardBorderStyle}" Margin="16,16,16,0" Padding="20">
                 <VerticalStackLayout Spacing="8">
                     <Label Text="{Binding PropertyNo}"
-                           FontSize="12"
-                           TextColor="{StaticResource Gray400}" />
+                           Style="{StaticResource CaptionStyle}" />
                     <Label Text="{Binding Item.ItemName}"
-                           FontSize="22" FontAttributes="Bold" />
+                           FontFamily="InterBold" FontSize="22" />
                     <Label Text="{Binding Item.Description}"
                            FontSize="14"
                            TextColor="{StaticResource Gray500}"
@@ -39,7 +38,7 @@
                             HorizontalOptions="Start"
                             IsVisible="{Binding Item.AssetType, Converter={StaticResource IsNotNullConverter}}">
                         <Label Text="{Binding Item.AssetType}"
-                               FontSize="12" FontAttributes="Bold"
+                               FontFamily="InterSemiBold" FontSize="12"
                                TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
                     </Border>
                 </VerticalStackLayout>
@@ -57,7 +56,7 @@
                         <VerticalStackLayout Spacing="2">
                             <Label Text="UNIT COST" Style="{StaticResource FieldLabelStyle}" />
                             <Label Text="{Binding Item.UnitCost, StringFormat='₱{0:N2}'}"
-                                   FontSize="15" FontAttributes="Bold" />
+                                   FontFamily="InterBold" FontSize="15" />
                         </VerticalStackLayout>
                     </Grid>
 

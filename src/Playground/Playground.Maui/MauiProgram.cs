@@ -21,7 +21,12 @@ public static class MauiProgram
             .UseMauiApp<App>()
             .UseMauiCommunityToolkit()
             .UseBarcodeReader()
-            .ConfigureFonts(fonts => { });
+            .ConfigureFonts(fonts =>
+            {
+                fonts.AddFont("Inter-Regular.ttf", "InterRegular");
+                fonts.AddFont("Inter-SemiBold.ttf", "InterSemiBold");
+                fonts.AddFont("Inter-Bold.ttf", "InterBold");
+            });
 
         // Configuration: embedded appsettings.json, then environment variables
         // (environment variables override so Aspire can inject Api__BaseUrl at launch time)

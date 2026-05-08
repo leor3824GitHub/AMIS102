@@ -25,10 +25,9 @@
                 <VerticalStackLayout Spacing="6">
                     <Label Text="PROPERTY NO." Style="{StaticResource FieldLabelStyle}" />
                     <Label Text="{Binding PropertyNo}"
-                           FontAttributes="Bold" FontSize="18" />
+                           FontFamily="InterBold" FontSize="18" />
                     <Label Text="This asset is not on the pre-generated checklist."
-                           FontSize="12"
-                           TextColor="{StaticResource Gray400}"
+                           Style="{StaticResource CaptionStyle}"
                            Margin="0,2,0,0" />
                 </VerticalStackLayout>
             </Border>

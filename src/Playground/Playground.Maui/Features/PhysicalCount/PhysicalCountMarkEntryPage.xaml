@@ -24,10 +24,9 @@
             <Border Style="{StaticResource CardBorderStyle}" Margin="16,0" Padding="20">
                 <VerticalStackLayout Spacing="4">
                     <Label Text="{Binding PropertyNo}"
-                           FontSize="12"
-                           TextColor="{StaticResource Gray400}" />
+                           Style="{StaticResource CaptionStyle}" />
                     <Label Text="{Binding DisplayDescription}"
-                           FontAttributes="Bold" FontSize="16" />
+                           FontFamily="InterSemiBold" FontSize="16" />
                 </VerticalStackLayout>
             </Border>
 
