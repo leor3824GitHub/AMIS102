@@ -1,4 +1,6 @@
-﻿using FSH.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
+﻿using System.Net;
+using FSH.Framework.Core.Exceptions;
+using FSH.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
 using FSH.Modules.ProcurementPlanning.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
@@ -6,8 +8,7 @@ using Microsoft.EntityFrameworkCore;
 namespace FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.PublishAnnualProcurementPlan;
 
 public sealed class PublishAnnualProcurementPlanCommandHandler(
-    ProcurementPlanningDbContext dbContext,
-    FSH.Framework.Core.Context.ICurrentUser currentUser) : ICommandHandler<PublishAnnualProcurementPlanCommand, AnnualProcurementPlanDto>
+    ProcurementPlanningDbContext dbContext) : ICommandHandler<PublishAnnualProcurementPlanCommand, AnnualProcurementPlanDto>
 {
     public async ValueTask<AnnualProcurementPlanDto> Handle(
         PublishAnnualProcurementPlanCommand command, CancellationToken cancellationToken)
@@ -16,7 +17,7 @@ public sealed class PublishAnnualProcurementPlanCommandHandler(
             .Include(x => x.LineItems)
             .FirstOrDefaultAsync(x => x.Id == command.Id, cancellationToken)
             .ConfigureAwait(false)
-            ?? throw new KeyNotFoundException($"APP {command.Id} not found.");
+            ?? throw new CustomException($"APP {command.Id} not found.", Enumerable.Empty<string>(), HttpStatusCode.NotFound);
 
         app.Publish();
 

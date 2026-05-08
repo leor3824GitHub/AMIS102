@@ -19,14 +19,14 @@ public sealed class VehicleDailyUsage : AggregateRoot<Guid>, IHasTenant, IAudita
     public string? Remarks { get; private set; }
     public byte[] Version { get; set; } = [];
 
-    public DateTimeOffset CreatedOnUtc { get; set; } = DateTimeOffset.UtcNow;
-    public string? CreatedBy { get; set; }
-    public DateTimeOffset? LastModifiedOnUtc { get; set; }
-    public string? LastModifiedBy { get; set; }
+    public DateTimeOffset CreatedOnUtc { get; private set; } = DateTimeOffset.UtcNow;
+    public string? CreatedBy { get; private set; }
+    public DateTimeOffset? LastModifiedOnUtc { get; private set; }
+    public string? LastModifiedBy { get; private set; }
 
-    public bool IsDeleted { get; set; }
-    public DateTimeOffset? DeletedOnUtc { get; set; }
-    public string? DeletedBy { get; set; }
+    public bool IsDeleted { get; private set; }
+    public DateTimeOffset? DeletedOnUtc { get; private set; }
+    public string? DeletedBy { get; private set; }
 
     public static VehicleDailyUsage Create(
         string tenantId,
@@ -88,6 +88,16 @@ public sealed class VehicleDailyUsage : AggregateRoot<Guid>, IHasTenant, IAudita
         DeletedOnUtc = DateTimeOffset.UtcNow;
         DeletedBy = deletedBy;
         Version = NewVersion();
+    }
+
+    internal void SetCreatedBy(string? userId)
+    {
+        CreatedBy = userId;
+    }
+
+    internal void SetLastModifiedBy(string? userId)
+    {
+        LastModifiedBy = userId;
     }
 
     public static decimal CalculateKmPerLiter(int distanceKm, decimal fuelLiters) =>

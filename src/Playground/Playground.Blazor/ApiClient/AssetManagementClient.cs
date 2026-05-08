@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Net.Http.Json;
+using System.Text.Json;
 using System.Web;
 
 namespace FSH.Playground.Blazor.ApiClient;
@@ -364,11 +365,25 @@ internal sealed record PagedSMRRsResponse(
     int PageSize,
     int TotalCount);
 
+internal sealed record UpdateSMRRCommand(
+    Guid Id,
+    string ReportNo,
+    DateOnly Date,
+    string ReceivedFrom,
+    string? Address,
+    ReceiptType ReceiptType,
+    string? OtherReceiptType,
+    string? FundCluster,
+    Guid? ReceivedByEmployeeId,
+    Guid? NotedByEmployeeId);
+
 internal interface ISMRRClient
 {
     Task<PagedSMRRsResponse> SearchAsync(string? keyword = null, DateOnly? dateFrom = null, DateOnly? dateTo = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
     Task<SMRRDetailsDto?> GetAsync(Guid id, CancellationToken ct = default);
     Task<CreateSMRRResult> CreateAsync(CreateSMRRCommand command, CancellationToken ct = default);
+    Task UpdateAsync(Guid id, UpdateSMRRCommand command, CancellationToken ct = default);
+    Task DeleteAsync(Guid id, CancellationToken ct = default);
 }
 
 internal sealed class SMRRClient(HttpClient http) : ISMRRClient
@@ -395,12 +410,51 @@ internal sealed class SMRRClient(HttpClient http) : ISMRRClient
         r.EnsureSuccessStatusCode();
         return (await r.Content.ReadFromJsonAsync<CreateSMRRResult>(ct))!;
     }
+
+    public async Task UpdateAsync(Guid id, UpdateSMRRCommand command, CancellationToken ct = default)
+    {
+        using var r = await http.PutAsJsonAsync($"{Base}/{id}", command, ct);
+        r.EnsureSuccessStatusCode();
+    }
+
+    public async Task DeleteAsync(Guid id, CancellationToken ct = default)
+    {
+        using var r = await http.DeleteAsync($"{Base}/{id}", ct);
+        r.EnsureSuccessStatusCode();
+    }
+}
+
+// Tangible Inventory Item lookup (by property number)
+
+internal sealed record TangibleInventoryItemDetailDto(
+    Guid Id,
+    string PropertyNo,
+    string ItemName,
+    string? Description,
+    decimal UnitCost,
+    string AssetType,
+    bool IsIssued,
+    string? LinkedDocumentType,
+    string? LinkedDocumentNo,
+    Guid? LinkedDocumentId);
+
+internal interface ITangibleInventoryItemClient
+{
+    Task<TangibleInventoryItemDetailDto?> GetByPropertyNoAsync(string propertyNo, CancellationToken ct = default);
+}
+
+internal sealed class TangibleInventoryItemClient(HttpClient http) : ITangibleInventoryItemClient
+{
+    private const string Base = "api/v1/asset-management/tangible-inventory-items";
+
+    public Task<TangibleInventoryItemDetailDto?> GetByPropertyNoAsync(string propertyNo, CancellationToken ct = default) =>
+        http.GetFromJsonAsync<TangibleInventoryItemDetailDto>($"{Base}/by-property-no/{Uri.EscapeDataString(propertyNo)}", ct);
 }
 
 // Inventory Custodian Slips (ICS)
 
 internal sealed record CreateICSItemRequest(
-    Guid SemiExpendablePropertyId,
+    Guid TangibleInventoryItemId,
     string? Description);
 
 internal sealed record CreateICSCommand(
@@ -429,11 +483,10 @@ internal sealed record ICSSummaryDto(
 internal sealed record ICSItemDetailsDto(
     Guid Id,
     int ItemNo,
-    Guid SemiExpendablePropertyId,
+    Guid TangibleInventoryItemId,
     string PropertyNo,
     string ItemCode,
     string ItemName,
-    string? SerialNo,
     string? Description,
     decimal UnitCost,
     int? EstimatedUsefulLifeYears);
@@ -1084,6 +1137,64 @@ internal sealed class PPERRClient(HttpClient http) : IPPERRClient
 {
     private const string Base = "api/v1/asset-management/tangible-inventories";
 
+    private static async Task EnsureSuccessWithDetailsAsync(HttpResponseMessage response, CancellationToken ct)
+    {
+        if (response.IsSuccessStatusCode)
+        {
+            return;
+        }
+
+        var body = await response.Content.ReadAsStringAsync(ct);
+        if (!string.IsNullOrWhiteSpace(body))
+        {
+            try
+            {
+                using var doc = JsonDocument.Parse(body);
+                if (doc.RootElement.TryGetProperty("errors", out var errors) && errors.ValueKind == JsonValueKind.Object)
+                {
+                    foreach (var fieldError in errors.EnumerateObject())
+                    {
+                        if (fieldError.Value.ValueKind == JsonValueKind.Array)
+                        {
+                            foreach (var item in fieldError.Value.EnumerateArray())
+                            {
+                                var message = item.GetString();
+                                if (!string.IsNullOrWhiteSpace(message))
+                                {
+                                    throw new InvalidOperationException(message);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (doc.RootElement.TryGetProperty("detail", out var detailElement))
+                {
+                    var detail = detailElement.GetString();
+                    if (!string.IsNullOrWhiteSpace(detail))
+                    {
+                        throw new InvalidOperationException(detail);
+                    }
+                }
+
+                if (doc.RootElement.TryGetProperty("title", out var titleElement))
+                {
+                    var title = titleElement.GetString();
+                    if (!string.IsNullOrWhiteSpace(title))
+                    {
+                        throw new InvalidOperationException(title);
+                    }
+                }
+            }
+            catch (JsonException)
+            {
+                // Ignore parsing failures and fall back to status code.
+            }
+        }
+
+        response.EnsureSuccessStatusCode();
+    }
+
     public Task<PagedPPERRResponse> SearchAsync(string? keyword = null, DateOnly? dateFrom = null, DateOnly? dateTo = null, int page = 1, int pageSize = 15, CancellationToken ct = default)
     {
         var q = HttpUtility.ParseQueryString(string.Empty);
@@ -1102,20 +1213,20 @@ internal sealed class PPERRClient(HttpClient http) : IPPERRClient
     public async Task<CreatePPERRResult> CreateAsync(CreatePPERRCommand command, CancellationToken ct = default)
     {
         using var r = await http.PostAsJsonAsync(Base, command, ct);
-        r.EnsureSuccessStatusCode();
+        await EnsureSuccessWithDetailsAsync(r, ct);
         return (await r.Content.ReadFromJsonAsync<CreatePPERRResult>(ct))!;
     }
 
     public async Task UpdateAsync(Guid id, UpdatePPERRCommand command, CancellationToken ct = default)
     {
         using var r = await http.PutAsJsonAsync($"{Base}/{id}", command, ct);
-        r.EnsureSuccessStatusCode();
+        await EnsureSuccessWithDetailsAsync(r, ct);
     }
 
     public async Task DeleteAsync(Guid id, CancellationToken ct = default)
     {
         using var r = await http.DeleteAsync($"{Base}/{id}", ct);
-        r.EnsureSuccessStatusCode();
+        await EnsureSuccessWithDetailsAsync(r, ct);
     }
 }
 

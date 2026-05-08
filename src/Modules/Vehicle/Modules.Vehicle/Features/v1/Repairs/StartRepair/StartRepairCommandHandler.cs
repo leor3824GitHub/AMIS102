@@ -22,7 +22,7 @@ public sealed class StartRepairCommandHandler(VehicleDbContext db, ICurrentUser 
             [new ValidationFailure(nameof(cmd.Id), "Only pending repairs can be started.")]);
 
         record.StartRepair();
-        record.LastModifiedBy = currentUser.GetUserId().ToString();
+        record.SetLastModifiedBy(currentUser.GetUserId().ToString());
 
         // Mark the vehicle as under repair
         var vehicle = await db.Vehicles.FirstOrDefaultAsync(v => v.Id == record.VehicleId, ct).ConfigureAwait(false)

@@ -18,6 +18,7 @@ public sealed class ICSConfiguration : IEntityTypeConfiguration<InventoryCustodi
         builder.Property(x => x.Date).IsRequired();
         builder.Property(x => x.FundCluster).HasMaxLength(50);
         builder.Property(x => x.AssetType).HasConversion<string>().HasMaxLength(8).IsRequired();
+        builder.Property(x => x.Category).HasConversion<string>().HasMaxLength(32).IsRequired();
         builder.Property(x => x.Status).HasConversion<string>().HasMaxLength(32).IsRequired();
         builder.Property(x => x.ExpiresOn);
         builder.Property(x => x.RenewedFromICSId);

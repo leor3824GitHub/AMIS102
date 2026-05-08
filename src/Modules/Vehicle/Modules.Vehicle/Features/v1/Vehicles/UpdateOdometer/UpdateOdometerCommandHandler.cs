@@ -21,7 +21,7 @@ public sealed class UpdateOdometerCommandHandler(VehicleDbContext db, ICurrentUs
             [new ValidationFailure(nameof(cmd.Reading), "Odometer reading cannot be less than the current reading.")]);
 
         vehicle.UpdateOdometer(cmd.Reading);
-        vehicle.LastModifiedBy = currentUser.GetUserId().ToString();
+        vehicle.SetLastModifiedBy(currentUser.GetUserId().ToString());
         await db.SaveChangesAsync(ct).ConfigureAwait(false);
         return Unit.Value;
     }

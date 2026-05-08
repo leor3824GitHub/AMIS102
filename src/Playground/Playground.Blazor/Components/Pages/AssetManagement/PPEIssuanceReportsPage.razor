@@ -92,7 +92,10 @@
                     }
 
                     <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
-                               OnClick="CreateAsync" Disabled="_busy">Create PPEIR</MudButton>
+                               OnClick="CreateAsync" Disabled="_busy">
+                        @if (_busy) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" /> }
+                        Create PPEIR
+                    </MudButton>
                 </MudStack>
             </MudCardContent>
         </MudCard>
@@ -129,7 +132,7 @@
                                 <tr>
                                     <td><b>@s.PPEIRNo</b></td>
                                     <td>@s.Date.ToString("MM/dd/yyyy")</td>
-                                    <td>@s.IssuanceType</td>
+                                    <td>@FormatIssuanceType(s.IssuanceType)</td>
                                     <td><MudChip T="string" Size="Size.Small" Color="Color.Info">@s.ItemCount items</MudChip></td>
                                     <td><MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small"
                                                        Color="Color.Primary" OnClick="@(() => ViewAsync(s.Id))" /></td>
@@ -170,7 +173,7 @@
                 </MudCardHeader>
                 <MudCardContent>
                     <MudGrid Spacing="1">
-                        <MudItem xs="6"><MudText Typo="Typo.caption">Issuance Type</MudText><MudText>@_detail.IssuanceType</MudText></MudItem>
+                        <MudItem xs="6"><MudText Typo="Typo.caption">Issuance Type</MudText><MudText>@FormatIssuanceType(_detail.IssuanceType)</MudText></MudItem>
                         <MudItem xs="6"><MudText Typo="Typo.caption">Office Address</MudText><MudText>@_detail.IssuedToOfficeAddress</MudText></MudItem>
                         @if (!string.IsNullOrWhiteSpace(_detail.DriverName))
                         {
@@ -384,6 +387,14 @@
     {
         public PPEItemSummaryDto? SelectedPPEItem { get; set; }
     }
+
+    private static string FormatIssuanceType(string t) => t switch
+    {
+        "TransferCO" => "Transfer – CO",
+        "TransferRO" => "Transfer – RO",
+        "TransferPO" => "Transfer – PO",
+        _ => t
+    };
 
     private sealed class DepRow
     {

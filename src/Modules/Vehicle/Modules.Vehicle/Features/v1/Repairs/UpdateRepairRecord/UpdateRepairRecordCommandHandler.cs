@@ -24,7 +24,7 @@ public sealed class UpdateRepairRecordCommandHandler(VehicleDbContext db, ICurre
 
         record.UpdateDetails(cmd.RepairDate, cmd.Description, cmd.Cost,
             cmd.VendorName, cmd.VendorContact, cmd.PartsUsed, cmd.Notes);
-        record.LastModifiedBy = currentUser.GetUserId().ToString();
+        record.SetLastModifiedBy(currentUser.GetUserId().ToString());
         await db.SaveChangesAsync(ct).ConfigureAwait(false);
         return record.ToDto();
     }

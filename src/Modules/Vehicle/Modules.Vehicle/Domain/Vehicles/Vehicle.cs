@@ -58,15 +58,15 @@ public class Vehicle : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
     public byte[] Version { get; set; } = [];
 
     // IAuditableEntity
-    public DateTimeOffset CreatedOnUtc { get; set; } = DateTimeOffset.UtcNow;
-    public string? CreatedBy { get; set; }
-    public DateTimeOffset? LastModifiedOnUtc { get; set; }
-    public string? LastModifiedBy { get; set; }
+    public DateTimeOffset CreatedOnUtc { get; private set; } = DateTimeOffset.UtcNow;
+    public string? CreatedBy { get; private set; }
+    public DateTimeOffset? LastModifiedOnUtc { get; private set; }
+    public string? LastModifiedBy { get; private set; }
 
     // ISoftDeletable
-    public bool IsDeleted { get; set; }
-    public DateTimeOffset? DeletedOnUtc { get; set; }
-    public string? DeletedBy { get; set; }
+    public bool IsDeleted { get; private set; }
+    public DateTimeOffset? DeletedOnUtc { get; private set; }
+    public string? DeletedBy { get; private set; }
 
     public static Vehicle Create(string tenantId, string plateNumber, string make, string model,
         int year, VehicleType type, int odometer = 0, string? notes = null,
@@ -205,6 +205,21 @@ public class Vehicle : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
         DeletedOnUtc = DateTimeOffset.UtcNow;
         DeletedBy = deletedBy;
         Version = NewVersion();
+    }
+
+    internal void SetCreatedBy(string? userId)
+    {
+        CreatedBy = userId;
+    }
+
+    internal void SetLastModifiedBy(string? userId)
+    {
+        LastModifiedBy = userId;
+    }
+
+    internal void SetLastModifiedOnUtc(DateTimeOffset utcNow)
+    {
+        LastModifiedOnUtc = utcNow;
     }
 
     private static void ValidateAssignmentPair(Guid? id, string? name, string label)

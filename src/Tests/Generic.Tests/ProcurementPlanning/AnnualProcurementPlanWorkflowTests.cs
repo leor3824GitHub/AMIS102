@@ -67,7 +67,7 @@ public sealed class AnnualProcurementPlanWorkflowTests
         dbContext.AnnualProcurementPlans.Add(app);
         await dbContext.SaveChangesAsync();
 
-        var publishHandler = new PublishAnnualProcurementPlanCommandHandler(dbContext, new TestCurrentUser(Guid.NewGuid()));
+        var publishHandler = new PublishAnnualProcurementPlanCommandHandler(dbContext);
         await publishHandler.Handle(new PublishAnnualProcurementPlanCommand(app.Id), CancellationToken.None);
 
         var ppmpItem = await dbContext.PpmpItems.SingleAsync();
@@ -102,11 +102,11 @@ public sealed class AnnualProcurementPlanWorkflowTests
         dbContext.AnnualProcurementPlans.Add(app);
         await dbContext.SaveChangesAsync();
 
-        var publishHandler = new PublishAnnualProcurementPlanCommandHandler(dbContext, new TestCurrentUser(Guid.NewGuid()));
+        var publishHandler = new PublishAnnualProcurementPlanCommandHandler(dbContext);
         await publishHandler.Handle(new PublishAnnualProcurementPlanCommand(app.Id), CancellationToken.None);
 
-        var approveHandler = new ApproveAnnualProcurementPlanCommandHandler(dbContext);
-        await approveHandler.Handle(new ApproveAppCommand(app.Id, Guid.NewGuid()), CancellationToken.None);
+        var approveHandler = new ApproveAnnualProcurementPlanCommandHandler(dbContext, new TestCurrentUser(Guid.NewGuid()));
+        await approveHandler.Handle(new ApproveAppCommand(app.Id), CancellationToken.None);
 
         var ppmpItem = await dbContext.PpmpItems.SingleAsync();
         dbContext.Entry(ppmpItem).Property(x => x.GeneralDescription).CurrentValue = "Mutated After Approval";
@@ -456,11 +456,11 @@ public sealed class AnnualProcurementPlanWorkflowTests
         await dbContext.SaveChangesAsync();
 
         // Step 5: Publish and approve the Final APP
-        var publishHandler = new PublishAnnualProcurementPlanCommandHandler(dbContext, currentUser);
+        var publishHandler = new PublishAnnualProcurementPlanCommandHandler(dbContext);
         await publishHandler.Handle(new PublishAnnualProcurementPlanCommand(finalApp.Id), CancellationToken.None);
 
-        var approveHandler = new ApproveAnnualProcurementPlanCommandHandler(dbContext);
-        await approveHandler.Handle(new ApproveAppCommand(finalApp.Id, currentUser.GetUserId()), CancellationToken.None);
+        var approveHandler = new ApproveAnnualProcurementPlanCommandHandler(dbContext, currentUser);
+        await approveHandler.Handle(new ApproveAppCommand(finalApp.Id), CancellationToken.None);
 
         // Assert
         var approved = await dbContext.AnnualProcurementPlans.FindAsync(finalApp.Id);

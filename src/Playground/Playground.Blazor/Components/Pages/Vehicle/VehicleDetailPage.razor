@@ -3,6 +3,7 @@
 @using FSH.Modules.Vehicle.Contracts.v1.Maintenance
 @using FSH.Modules.Vehicle.Contracts.v1.Repairs
 @using FSH.Modules.Vehicle.Contracts.v1.Vehicles
+@using static FSH.Modules.Vehicle.Contracts.v1.Vehicles.VehicleStatusValues
 @using FSH.Playground.Blazor.ApiClient
 @inject IVehicleClient VehicleClient
 @inject ILookupClient LookupClient
@@ -53,12 +54,12 @@ else
                         <MudText Typo="Typo.caption" Class="mt-2">Acquisition Cost</MudText>
                         <MudText Typo="Typo.body2">@(_vehicle.AcquisitionCost?.ToString("N2") ?? "-")</MudText>
                         <MudStack Row="true" Spacing="1">
-                            @if (_vehicle.Status == "Active")
+                            @if (_vehicle.Status == Active)
                             {
                                 <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Warning" OnClick="Retire">Retire</MudButton>
                                 <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Error" OnClick="Decommission">Decommission</MudButton>
                             }
-                            else if (_vehicle.Status is "Retired" or "Decommissioned")
+                            else if (_vehicle.Status is Retired or Decommissioned)
                             {
                                 <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Success" OnClick="Reactivate">Reactivate</MudButton>
                             }
@@ -477,10 +478,10 @@ else
 
     private static Color StatusColor(string status) => status switch
     {
-        "Active" => Color.Success,
-        "UnderRepair" => Color.Warning,
-        "Retired" => Color.Info,
-        "Decommissioned" => Color.Error,
+        Active => Color.Success,
+        UnderRepair => Color.Warning,
+        Retired => Color.Info,
+        Decommissioned => Color.Error,
         _ => Color.Default
     };
 
@@ -495,7 +496,7 @@ else
 
     private static string DisplayVehicleStatus(string status) => status switch
     {
-        "UnderRepair" => "Under Repair",
+        UnderRepair => "Under Repair",
         _ => status
     };
 

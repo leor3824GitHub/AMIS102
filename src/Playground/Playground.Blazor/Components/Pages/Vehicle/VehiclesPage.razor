@@ -1,6 +1,7 @@
 @page "/vehicle/vehicles"
 @using FSH.Playground.Blazor.ApiClient
 @using FSH.Modules.Vehicle.Contracts.v1.Vehicles
+@using static FSH.Modules.Vehicle.Contracts.v1.Vehicles.VehicleStatusValues
 @inject IVehicleClient VehicleClient
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation
@@ -11,10 +12,10 @@
             <MudTextField @bind-Value="_query.Keyword" Label="Search" Placeholder="Plate, make, model"
                           Variant="Variant.Outlined" Size="Size.Small" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" />
             <MudSelect T="string" @bind-Value="_query.Status" Label="Status" Dense="true" Clearable="true">
-                <MudSelectItem Value="@("Active")">Active</MudSelectItem>
-                <MudSelectItem Value="@("UnderRepair")">Under Repair</MudSelectItem>
-                <MudSelectItem Value="@("Retired")">Retired</MudSelectItem>
-                <MudSelectItem Value="@("Decommissioned")">Decommissioned</MudSelectItem>
+                <MudSelectItem Value="@Active">Active</MudSelectItem>
+                <MudSelectItem Value="@UnderRepair">Under Repair</MudSelectItem>
+                <MudSelectItem Value="@Retired">Retired</MudSelectItem>
+                <MudSelectItem Value="@Decommissioned">Decommissioned</MudSelectItem>
             </MudSelect>
             <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="LoadVehicles" Disabled="_busy">
                 @if (_busy)
@@ -31,10 +32,10 @@
 <div class="mt-4">
     <MudStack Row="true" Spacing="1" Class="mb-3">
         <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined">Total: @_vehicles.Count</MudChip>
-        <MudChip T="string" Color="Color.Success" Variant="Variant.Outlined">Active: @_vehicles.Count(v => v.Status == "Active")</MudChip>
-        <MudChip T="string" Color="Color.Warning" Variant="Variant.Outlined">Under Repair: @_vehicles.Count(v => v.Status == "UnderRepair")</MudChip>
-        <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">Retired: @_vehicles.Count(v => v.Status == "Retired")</MudChip>
-        <MudChip T="string" Color="Color.Error" Variant="Variant.Outlined">Decommissioned: @_vehicles.Count(v => v.Status == "Decommissioned")</MudChip>
+        <MudChip T="string" Color="Color.Success" Variant="Variant.Outlined">Active: @_vehicles.Count(v => v.Status == Active)</MudChip>
+        <MudChip T="string" Color="Color.Warning" Variant="Variant.Outlined">Under Repair: @_vehicles.Count(v => v.Status == UnderRepair)</MudChip>
+        <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">Retired: @_vehicles.Count(v => v.Status == Retired)</MudChip>
+        <MudChip T="string" Color="Color.Error" Variant="Variant.Outlined">Decommissioned: @_vehicles.Count(v => v.Status == Decommissioned)</MudChip>
     </MudStack>
 
     <MudGrid Spacing="2">
@@ -104,7 +105,7 @@
                                             <MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Primary"
                                                            Size="Size.Small" OnClick="@(() => GoDetail(context.Id))" />
                                         </MudTooltip>
-                                        @if (context.Status == "Active")
+                                        @if (context.Status == Active)
                                         {
                                             <MudTooltip Text="Retire vehicle">
                                                 <MudIconButton Icon="@Icons.Material.Filled.RemoveCircle" Color="Color.Warning"
@@ -115,7 +116,7 @@
                                                                Size="Size.Small" OnClick="@(() => Decommission(context.Id))" />
                                             </MudTooltip>
                                         }
-                                        else if (context.Status is "Retired" or "Decommissioned")
+                                        else if (context.Status is Retired or Decommissioned)
                                         {
                                             <MudTooltip Text="Reactivate vehicle">
                                                 <MudIconButton Icon="@Icons.Material.Filled.RestartAlt" Color="Color.Success"
@@ -272,16 +273,16 @@
 
     private static Color StatusColor(string status) => status switch
     {
-        "Active" => Color.Success,
-        "UnderRepair" => Color.Warning,
-        "Retired" => Color.Info,
-        "Decommissioned" => Color.Error,
+        Active => Color.Success,
+        UnderRepair => Color.Warning,
+        Retired => Color.Info,
+        Decommissioned => Color.Error,
         _ => Color.Default
     };
 
     private static string DisplayStatus(string status) => status switch
     {
-        "UnderRepair" => "Under Repair",
+        UnderRepair => "Under Repair",
         _ => status
     };
 

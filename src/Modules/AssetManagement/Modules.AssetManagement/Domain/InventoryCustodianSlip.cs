@@ -42,6 +42,12 @@ public sealed class InventoryCustodianSlip : AggregateRoot<Guid>, IHasTenant, IA
     public AssetType AssetType { get; private set; }
 
     /// <summary>
+    /// COA asset category — distinguishes low-valued (≤ ₱5,000) from high-valued (> ₱5,000) SE items.
+    /// Determines the ICS number prefix: SPLV (LowValuedSemi) or SPHV (HighValuedSemi).
+    /// </summary>
+    public AssetCategory Category { get; private set; }
+
+    /// <summary>
     /// Current lifecycle status of this ICS.
     /// </summary>
     public ICSStatus Status { get; private set; } = ICSStatus.Active;
@@ -88,6 +94,7 @@ public sealed class InventoryCustodianSlip : AggregateRoot<Guid>, IHasTenant, IA
         string tenantId,
         string icsNo,
         DateOnly date,
+        AssetCategory category,
         string? fundCluster,
         Guid? issuedFromEmployeeId,
         Guid receivedByEmployeeId,
@@ -100,6 +107,7 @@ public sealed class InventoryCustodianSlip : AggregateRoot<Guid>, IHasTenant, IA
             ICSNo                = icsNo,
             Date                 = date,
             AssetType            = AssetType.SE,
+            Category             = category,
             FundCluster          = fundCluster,
             IssuedFromEmployeeId = issuedFromEmployeeId,
             ReceivedByEmployeeId = receivedByEmployeeId,

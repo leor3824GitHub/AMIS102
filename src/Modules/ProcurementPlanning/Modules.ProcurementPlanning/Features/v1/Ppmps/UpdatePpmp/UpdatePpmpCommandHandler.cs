@@ -1,3 +1,5 @@
+using System.Net;
+using FSH.Framework.Core.Exceptions;
 using FSH.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
 using FSH.Modules.ProcurementPlanning.Data;
 using FSH.Modules.ProcurementPlanning.Features.v1.Ppmps;
@@ -15,7 +17,7 @@ public sealed class UpdatePpmpCommandHandler(
             .Include(x => x.Items)
             .FirstOrDefaultAsync(x => x.Id == command.Id, cancellationToken)
             .ConfigureAwait(false)
-            ?? throw new KeyNotFoundException($"PPMP {command.Id} not found.");
+            ?? throw new CustomException($"PPMP {command.Id} not found.", Enumerable.Empty<string>(), HttpStatusCode.NotFound);
 
         ppmp.Update(
             command.FiscalYear,

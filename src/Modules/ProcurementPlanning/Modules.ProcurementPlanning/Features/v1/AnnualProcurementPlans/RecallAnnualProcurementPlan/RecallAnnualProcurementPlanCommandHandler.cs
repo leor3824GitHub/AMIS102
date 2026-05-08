@@ -1,3 +1,5 @@
+using System.Net;
+using FSH.Framework.Core.Exceptions;
 using FSH.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
 using FSH.Modules.ProcurementPlanning.Data;
 using Mediator;
@@ -13,7 +15,7 @@ public sealed class RecallAnnualProcurementPlanCommandHandler(
         var app = await dbContext.AnnualProcurementPlans
             .FirstOrDefaultAsync(x => x.Id == command.Id, cancellationToken)
             .ConfigureAwait(false)
-            ?? throw new KeyNotFoundException($"APP {command.Id} not found.");
+            ?? throw new CustomException($"APP {command.Id} not found.", Enumerable.Empty<string>(), HttpStatusCode.NotFound);
 
         app.Recall();
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);

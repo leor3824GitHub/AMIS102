@@ -161,6 +161,9 @@ internal static class ApiClientRegistration
         services.AddTransient<ISMRRClient>(sp =>
             new SMRRClient(ResolveClient(sp)));
 
+        services.AddTransient<ITangibleInventoryItemClient>(sp =>
+            new TangibleInventoryItemClient(ResolveClient(sp)));
+
         services.AddTransient<IICSClient>(sp =>
             new ICSClient(ResolveClient(sp)));
 

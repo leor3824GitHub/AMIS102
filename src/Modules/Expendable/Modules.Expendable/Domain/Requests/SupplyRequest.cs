@@ -49,6 +49,7 @@ public class SupplyRequest : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
     public string? RejectionReason { get; set; }
     public string? ApprovedBy { get; set; }
     public DateTimeOffset? ApprovedOnUtc { get; set; }
+    public DateTimeOffset? FulfilledOnUtc { get; set; }
     public Guid? WarehouseLocationId { get; set; }
     public byte[] Version { get; set; } = [];
 
@@ -177,6 +178,7 @@ public class SupplyRequest : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
             throw new InvalidOperationException("Only approved requests can be marked as fulfilled.");
 
         Status = SupplyRequestStatus.Fulfilled;
+        FulfilledOnUtc = DateTimeOffset.UtcNow;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
         Version = NewVersion();
     }
@@ -197,6 +199,7 @@ public class SupplyRequest : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
         }
 
         Status = SupplyRequestStatus.Fulfilled;
+        FulfilledOnUtc = DateTimeOffset.UtcNow;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
         Version = NewVersion();
     }

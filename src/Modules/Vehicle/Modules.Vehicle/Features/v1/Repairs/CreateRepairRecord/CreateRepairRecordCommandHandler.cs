@@ -26,7 +26,7 @@ public sealed class CreateRepairRecordCommandHandler(VehicleDbContext db, ICurre
 
         var record = RepairRecord.Create(tenantId, cmd.VehicleId, cmd.RepairDate,
             cmd.Description, cmd.Cost, cmd.VendorName, cmd.VendorContact, cmd.PartsUsed, cmd.Notes);
-        record.CreatedBy = currentUser.GetUserId().ToString();
+        record.SetCreatedBy(currentUser.GetUserId().ToString());
 
         db.RepairRecords.Add(record);
         await db.SaveChangesAsync(ct).ConfigureAwait(false);

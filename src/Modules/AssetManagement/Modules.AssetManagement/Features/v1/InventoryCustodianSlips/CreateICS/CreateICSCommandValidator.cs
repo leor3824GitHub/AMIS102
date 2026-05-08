@@ -8,6 +8,7 @@ public sealed class CreateICSCommandValidator : AbstractValidator<CreateICSComma
     {
         RuleFor(x => x.ICSNo).NotEmpty().MaximumLength(32);
         RuleFor(x => x.Date).NotEmpty();
+        RuleFor(x => x.Category).IsInEnum();
         RuleFor(x => x.FundCluster).MaximumLength(50);
         RuleFor(x => x.ReceivedByEmployeeId).NotEmpty();
         RuleFor(x => x.Items).NotEmpty().WithMessage("At least one item is required.");

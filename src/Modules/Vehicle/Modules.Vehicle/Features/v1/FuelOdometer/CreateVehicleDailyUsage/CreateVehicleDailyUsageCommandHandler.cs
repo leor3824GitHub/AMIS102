@@ -43,7 +43,7 @@ public sealed class CreateVehicleDailyUsageCommandHandler(VehicleDbContext db, I
             cmd.Destination,
             cmd.Remarks);
 
-        usage.CreatedBy = currentUser.GetUserId().ToString();
+        usage.SetCreatedBy(currentUser.GetUserId().ToString());
 
         db.VehicleDailyUsages.Add(usage);
         await db.SaveChangesAsync(ct).ConfigureAwait(false);

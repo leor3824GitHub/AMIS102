@@ -51,22 +51,14 @@
                 <tbody>
                     @foreach (var item in _list)
                     {
-                        var statusColor = item.Status switch
-                        {
-                            "OnHand" => Color.Success,
-                            "IssuedPAR" => Color.Info,
-                            "Transferred" => Color.Warning,
-                            "Disposed" => Color.Error,
-                            _ => Color.Default
-                        };
                         <tr>
                             <td><b>@item.PropertyCode</b></td>
                             <td>@item.PropertyNumber</td>
                             <td>@(item.Description.Length > 50 ? item.Description[..50] + "…" : item.Description)</td>
-                            <td>@(item.SerialNumber ?? "-")</td>
+                            <td>@(item.SerialNumber ?? "—")</td>
                             <td>@item.DateAcquired.ToString("MM/dd/yyyy")</td>
                             <td>₱@item.UnitCost.ToString("N2")</td>
-                            <td><MudChip T="string" Size="Size.Small" Color="@statusColor">@item.Status</MudChip></td>
+                            <td>@StatusChip(item.Status)</td>
                             <td><MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small"
                                                Color="Color.Primary" OnClick="@(() => ViewAsync(item.Id))" /></td>
                         </tr>
@@ -106,9 +98,7 @@
                 <MudItem xs="6"><MudText Typo="Typo.caption">Unit Cost</MudText><MudText><b>₱@_detail.UnitCost.ToString("N2")</b></MudText></MudItem>
                 <MudItem xs="6"><MudText Typo="Typo.caption">Est. Useful Life</MudText><MudText>@_detail.EstimatedUsefulLifeYears year(s)</MudText></MudItem>
                 <MudItem xs="6"><MudText Typo="Typo.caption">Status</MudText>
-                    <MudChip T="string" Size="Size.Small" Color="@(_detail.Status == "OnHand" ? Color.Success : _detail.Status == "Disposed" ? Color.Error : Color.Info)">
-                        @_detail.Status
-                    </MudChip>
+                    @StatusChip(_detail.Status)
                 </MudItem>
                 <MudItem xs="6"><MudText Typo="Typo.caption">Registered</MudText><MudText Typo="Typo.caption">@_detail.CreatedOnUtc.ToLocalTime().ToString("MM/dd/yyyy HH:mm")</MudText></MudItem>
             </MudGrid>
@@ -146,4 +136,22 @@
         try { _detail = await Client.GetAsync(id); }
         catch (Exception ex) { Snackbar.Add($"Load failed: {ex.Message}", Severity.Error); }
     }
+
+    private static RenderFragment StatusChip(string status) => __builder =>
+    {
+        var (label, color) = status switch
+        {
+            "OnHand"      => ("On Hand",       Color.Success),
+            "IssuedPAR"   => ("Issued (PAR)",  Color.Info),
+            "Transferred" => ("Transferred",   Color.Warning),
+            "Returned"    => ("Returned",       Color.Secondary),
+            "Disposed"    => ("Disposed",       Color.Error),
+            _             => (status,           Color.Default)
+        };
+        __builder.OpenComponent<MudChip<string>>(0);
+        __builder.AddAttribute(1, "Size", Size.Small);
+        __builder.AddAttribute(2, "Color", color);
+        __builder.AddAttribute(3, "ChildContent", (RenderFragment)(b => b.AddContent(0, label)));
+        __builder.CloseComponent();
+    };
 }

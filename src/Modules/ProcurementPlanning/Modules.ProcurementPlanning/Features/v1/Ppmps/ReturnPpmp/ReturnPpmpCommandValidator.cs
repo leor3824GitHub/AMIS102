@@ -9,6 +9,5 @@ public sealed class ReturnPpmpCommandValidator : AbstractValidator<ReturnPpmpCom
     {
         RuleFor(x => x.Id).NotEmpty();
         RuleFor(x => x.ReturnReason).NotEmpty().MaximumLength(1000);
-        RuleFor(x => x.ReturnedById).NotEmpty();
     }
 }

@@ -168,6 +168,11 @@
                                     <MudSelectItem Value="ReceiptType.Donation">Donation</MudSelectItem>
                                     <MudSelectItem Value="ReceiptType.Others">Others</MudSelectItem>
                                 </MudSelect>
+                                @if (_editForm.ReceiptType == ReceiptType.Others)
+                                {
+                                    <MudTextField @bind-Value="_editForm.OtherReceiptType" Label="Specify Receipt Type"
+                                                  Variant="Variant.Outlined" Required="true" MaxLength="100" />
+                                }
                                 <MudAutocomplete T="EmployeeReferenceDto"
                                                  @bind-Value="_editForm.ReceivedBy"
                                                  SearchFunc="SearchEmployees"
@@ -227,6 +232,11 @@
                                 <MudSelectItem Value="ReceiptType.Donation">Donation</MudSelectItem>
                                 <MudSelectItem Value="ReceiptType.Others">Others</MudSelectItem>
                             </MudSelect>
+                            @if (_form.ReceiptType == ReceiptType.Others)
+                            {
+                                <MudTextField @bind-Value="_form.OtherReceiptType" Label="Specify Receipt Type"
+                                              Variant="Variant.Outlined" Required="true" MaxLength="100" />
+                            }
                             <MudAutocomplete T="EmployeeReferenceDto"
                                              @bind-Value="_form.ReceivedBy"
                                              SearchFunc="SearchEmployees"
@@ -401,6 +411,11 @@
             Snackbar.Add("PPERR No., Date, and Received From are required.", Severity.Warning);
             return;
         }
+        if (_form.ReceiptType == ReceiptType.Others && string.IsNullOrWhiteSpace(_form.OtherReceiptType))
+        {
+            Snackbar.Add("Specify Receipt Type is required when Receipt Type is Others.", Severity.Warning);
+            return;
+        }
         if (_form.Items.Count == 0)
         {
             Snackbar.Add("Add at least one PPE line item.", Severity.Warning);
@@ -419,7 +434,7 @@
                 _form.ReceivedFrom,
                 _form.Address,
                 _form.ReceiptType,
-                null,
+                _form.OtherReceiptType,
                 null,
                 _form.ReceivedBy?.Id,
                 _form.NotedBy?.Id,
@@ -458,6 +473,7 @@
             DateNullable = detail.Date.ToDateTime(TimeOnly.MinValue),
             ReceivedFrom = detail.ReceivedFrom,
             Address      = detail.Address,
+            OtherReceiptType = detail.OtherReceiptType,
             ReceiptType  = Enum.TryParse<ReceiptType>(detail.ReceiptType, out var rt) ? rt : ReceiptType.Purchase,
         };
         _activeTab = 1; // Edit tab is index 1
@@ -471,6 +487,11 @@
             Snackbar.Add("PPERR No., Date, and Received From are required.", Severity.Warning);
             return;
         }
+        if (_editForm.ReceiptType == ReceiptType.Others && string.IsNullOrWhiteSpace(_editForm.OtherReceiptType))
+        {
+            Snackbar.Add("Specify Receipt Type is required when Receipt Type is Others.", Severity.Warning);
+            return;
+        }
         _busy = true;
         try
         {
@@ -480,7 +501,8 @@
                 _editForm.ReceivedFrom,
                 _editForm.Address,
                 _editForm.ReceiptType,
-                null, null,
+                _editForm.OtherReceiptType,
+                null,
                 _editForm.ReceivedBy?.Id,
                 _editForm.NotedBy?.Id));
 
@@ -538,6 +560,7 @@
         public string ReceivedFrom { get; set; } = string.Empty;
         public string? Address { get; set; }
         public ReceiptType ReceiptType { get; set; } = ReceiptType.Purchase;
+        public string? OtherReceiptType { get; set; }
         public EmployeeReferenceDto? ReceivedBy { get; set; }
         public EmployeeReferenceDto? NotedBy { get; set; }
         public List<LineItem> Items { get; set; } = [];

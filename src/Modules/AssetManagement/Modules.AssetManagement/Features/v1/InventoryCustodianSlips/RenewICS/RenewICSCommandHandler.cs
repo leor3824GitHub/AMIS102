@@ -61,6 +61,7 @@ public sealed class RenewICSCommandHandler : ICommandHandler<RenewICSCommand, Re
             tenantId,
             command.NewICSNo,
             command.Date,
+            oldIcs.Category,
             oldIcs.FundCluster,
             command.IssuedFromEmployeeId,
             oldIcs.ReceivedByEmployeeId,

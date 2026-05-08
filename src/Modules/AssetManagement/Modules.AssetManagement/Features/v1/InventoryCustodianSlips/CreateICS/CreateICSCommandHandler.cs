@@ -66,6 +66,7 @@ public sealed class CreateICSCommandHandler : ICommandHandler<CreateICSCommand, 
             tenantId,
             command.ICSNo,
             command.Date,
+            command.Category,
             command.FundCluster,
             command.IssuedFromEmployeeId,
             command.ReceivedByEmployeeId);

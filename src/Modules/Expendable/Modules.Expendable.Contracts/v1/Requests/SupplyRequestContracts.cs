@@ -22,6 +22,7 @@ public record SupplyRequestDto(
     string? RejectionReason,
     string? ApprovedBy,
     DateTimeOffset? ApprovedOnUtc,
+    DateTimeOffset? FulfilledOnUtc,
     Guid? WarehouseLocationId,
     List<SupplyRequestItemDto> Items,
     DateTimeOffset CreatedOnUtc,

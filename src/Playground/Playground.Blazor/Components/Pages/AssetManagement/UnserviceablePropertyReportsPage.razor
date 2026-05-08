@@ -85,7 +85,10 @@
                     }
 
                     <MudButton Variant="Variant.Filled" Color="Color.Error" FullWidth="true"
-                               OnClick="CreateAsync" Disabled="_busy">Create IIRUSP</MudButton>
+                               OnClick="CreateAsync" Disabled="_busy">
+                        @if (_busy) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" /> }
+                        Create IIRUSP
+                    </MudButton>
                 </MudStack>
             </MudCardContent>
         </MudCard>

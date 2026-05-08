@@ -83,7 +83,10 @@
                     }
 
                     <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
-                               OnClick="CreateAsync" Disabled="_busy">Create SMIR</MudButton>
+                               OnClick="CreateAsync" Disabled="_busy">
+                        @if (_busy) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" /> }
+                        Create SMIR
+                    </MudButton>
                 </MudStack>
             </MudCardContent>
         </MudCard>

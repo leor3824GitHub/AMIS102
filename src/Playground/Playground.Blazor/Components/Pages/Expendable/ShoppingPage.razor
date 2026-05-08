@@ -10,7 +10,6 @@
 @inject IEmployeesClient _employeesClient
 @inject ICartClient _cartClient
 @inject IInventoryClient _inventoryClient
-@inject IWarehouseClient _warehouseClient
 @inject AuthenticationStateProvider _authenticationStateProvider
 @inject NavigationManager _navigationManager
 @inject MasterDataService MasterDataService
@@ -226,7 +225,6 @@
     private string _searchKeyword = "";
     private bool _isLoading = false;
     private int _cartItemCount = 0;
-    private Guid? _warehouseLocationId = null;
     private Dictionary<Guid, int> _productBalances = new();
     private Dictionary<Guid, decimal> _productAveragePrices = new();
 
@@ -390,23 +388,31 @@
     {
         try
         {
-            // Find a warehouse location from inventory data, if available.
-            if (!_warehouseLocationId.HasValue || _warehouseLocationId == Guid.Empty)
+            // Aggregate available stock across ALL warehouses so the catalog shows total balance
+            var inventoryList = await _inventoryClient.SearchAsync(new SearchProductInventoryQuery
             {
-                var inventoryList = await _inventoryClient.SearchAsync(new SearchProductInventoryQuery
-                {
-                    PageNumber = 1,
-                    PageSize = 1000
-                });
+                PageNumber = 1,
+                PageSize = 1000
+            });
 
-                _warehouseLocationId = inventoryList.Items?.FirstOrDefault()?.WarehouseLocationId;
-            }
-
-            if (_warehouseLocationId.HasValue && _warehouseLocationId.Value != Guid.Empty)
+            if (inventoryList?.Items != null)
             {
-                var stockLevels = await _warehouseClient.StockLevelsAsync(_warehouseLocationId.Value, pageNumber: 1, pageSize: 1000);
-                _productBalances = stockLevels.Items?.ToDictionary(i => i.ProductId, i => i.QuantityAvailable) ?? new Dictionary<Guid, int>();
-                _productAveragePrices = stockLevels.Items?.ToDictionary(i => i.ProductId, i => (decimal)i.AverageUnitPrice) ?? new Dictionary<Guid, decimal>();
+                _productBalances = inventoryList.Items
+                    .GroupBy(i => i.ProductId)
+                    .ToDictionary(
+                        g => g.Key,
+                        g => g.Sum(i => i.QuantityAvailable));
+
+                _productAveragePrices = inventoryList.Items
+                    .GroupBy(i => i.ProductId)
+                    .ToDictionary(
+                        g => g.Key,
+                        g =>
+                        {
+                            var totalQty = g.Sum(i => i.QuantityOnHand);
+                            var totalValue = g.Sum(i => (decimal)i.TotalValue);
+                            return totalQty > 0 ? Math.Round(totalValue / totalQty, 4) : 0m;
+                        });
             }
             else
             {
@@ -416,13 +422,11 @@
         }
         catch (Exception ex)
         {
-            // fallback: show product minimum stock level as balance
-            _snackbar.Add($"Unable to load warehouse balance; fallback to product minimum stock: {ex.Message}", Severity.Warning);
+            _snackbar.Add($"Unable to load warehouse balance: {ex.Message}", Severity.Warning);
             _productBalances.Clear();
             _productAveragePrices.Clear();
         }
     }
-
 
     private async Task GetOrCreateCart()
     {

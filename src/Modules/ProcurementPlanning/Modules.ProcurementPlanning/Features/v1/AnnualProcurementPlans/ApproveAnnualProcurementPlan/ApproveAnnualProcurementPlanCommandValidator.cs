@@ -8,6 +8,5 @@ public sealed class ApproveAnnualProcurementPlanCommandValidator : AbstractValid
     public ApproveAnnualProcurementPlanCommandValidator()
     {
         RuleFor(x => x.Id).NotEmpty();
-        RuleFor(x => x.ApprovedById).NotEmpty();
     }
 }

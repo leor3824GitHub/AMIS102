@@ -2,11 +2,7 @@
 @using FSH.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans
 @using FSH.Playground.Blazor.ApiClient
 @using FSH.Playground.Blazor.Components.Shared
-@using Microsoft.AspNetCore.Components.Authorization
-@using System.Security.Claims
 @inject IAppClient AppClient
-@inject ILookupClient LookupClient
-@inject AuthenticationStateProvider AuthStateProvider
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 
@@ -364,28 +360,10 @@
     private bool _busy;
     private int _activeTab;
     private string? _approvedKeyword;
-    private Guid _approverId;
 
     protected override async Task OnInitializedAsync()
     {
-        await Task.WhenAll(LoadApproverAsync(), LoadQueueAsync(), LoadApprovedAsync());
-    }
-
-    private async Task LoadApproverAsync()
-    {
-        try
-        {
-            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-            var identityUserId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (!string.IsNullOrWhiteSpace(identityUserId))
-            {
-                var result = await LookupClient.EmployeesGetAsync(identityUserId: identityUserId, pageSize: 1);
-                var employee = result.Items?.FirstOrDefault();
-                if (employee is not null)
-                    _approverId = employee.Id;
-            }
-        }
-        catch { /* non-critical */ }
+        await Task.WhenAll(LoadQueueAsync(), LoadApprovedAsync());
     }
 
     private async Task LoadQueueAsync()
@@ -441,7 +419,7 @@
         _busy = true;
         try
         {
-            await AppClient.ApproveAsync(_detail.Id, _approverId);
+            await AppClient.ApproveAsync(_detail.Id);
             Snackbar.Add($"{_detail.AppNumber} approved successfully.", Severity.Success);
             await LoadQueueAsync();
         }
@@ -467,7 +445,7 @@
         _busy = true;
         try
         {
-            await AppClient.ReturnAsync(_detail.Id, reason, _approverId);
+            await AppClient.ReturnAsync(_detail.Id, reason);
             Snackbar.Add($"{_detail.AppNumber} returned for revision.", Severity.Warning);
             await LoadQueueAsync();
         }

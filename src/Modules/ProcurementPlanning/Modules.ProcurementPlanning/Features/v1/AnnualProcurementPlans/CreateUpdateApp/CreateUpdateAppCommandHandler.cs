@@ -1,4 +1,6 @@
+using System.Net;
 using FSH.Framework.Core.Context;
+using FSH.Framework.Core.Exceptions;
 using FSH.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
 using FSH.Modules.ProcurementPlanning.Data;
 using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans;
@@ -19,7 +21,7 @@ public sealed class CreateUpdateAppCommandHandler(
             .Include(x => x.LineItems)
             .FirstOrDefaultAsync(x => x.Id == command.Id && x.IsCurrentVersion, cancellationToken)
             .ConfigureAwait(false)
-            ?? throw new KeyNotFoundException($"APP {command.Id} not found or is not the current version.");
+            ?? throw new CustomException($"APP {command.Id} not found or is not the current version.", Enumerable.Empty<string>(), HttpStatusCode.NotFound);
 
         var userId = currentUser.GetUserId();
         var update = original.CreateUpdate(command.UpdateReason, userId);

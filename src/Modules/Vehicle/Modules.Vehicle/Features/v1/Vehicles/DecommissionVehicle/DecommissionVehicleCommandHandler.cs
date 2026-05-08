@@ -25,7 +25,7 @@ public sealed class DecommissionVehicleCommandHandler(VehicleDbContext db, ICurr
             throw new FluentValidation.ValidationException([new ValidationFailure(nameof(cmd.Id), ex.Message)]);
         }
 
-        vehicle.LastModifiedBy = currentUser.GetUserId().ToString();
+        vehicle.SetLastModifiedBy(currentUser.GetUserId().ToString());
         await db.SaveChangesAsync(ct).ConfigureAwait(false);
         return Unit.Value;
     }

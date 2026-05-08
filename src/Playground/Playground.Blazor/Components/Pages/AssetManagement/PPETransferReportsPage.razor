@@ -57,7 +57,7 @@
                                     <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
                                         <MudText Typo="Typo.body2"><b>@s.PPEIRNo</b></MudText>
                                         <MudSpacer />
-                                        <MudChip T="string" Size="Size.Small" Color="Color.Info" Label="true">@s.IssuanceType</MudChip>
+                                        <MudChip T="string" Size="Size.Small" Color="Color.Info" Label="true">@FormatIssuanceType(s.IssuanceType)</MudChip>
                                     </MudStack>
                                     <MudText Typo="Typo.caption" Color="Color.Secondary">
                                         @s.Date.ToString("MMM dd, yyyy") · @s.ItemCount item(s)
@@ -201,4 +201,12 @@
         catch (Exception ex) { Snackbar.Add($"Failed to load PTR: {ex.Message}", Severity.Error); }
         finally { _ptrBusy = false; }
     }
+
+    private static string FormatIssuanceType(string t) => t switch
+    {
+        "TransferCO" => "Transfer – CO",
+        "TransferRO" => "Transfer – RO",
+        "TransferPO" => "Transfer – PO",
+        _ => t
+    };
 }

@@ -3,6 +3,14 @@ using Mediator;
 
 namespace FSH.Modules.Vehicle.Contracts.v1.Vehicles;
 
+public static class VehicleStatusValues
+{
+    public const string Active = "Active";
+    public const string UnderRepair = "UnderRepair";
+    public const string Retired = "Retired";
+    public const string Decommissioned = "Decommissioned";
+}
+
 public record VehicleDto(
     Guid Id,
     string PlateNumber,

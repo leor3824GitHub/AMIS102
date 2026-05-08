@@ -26,15 +26,13 @@ public sealed class CreateVehicleCommandHandler(VehicleDbContext db, ICurrentUse
             throw new FluentValidation.ValidationException(
             [new ValidationFailure(nameof(cmd.PlateNumber), "A vehicle with this plate number already exists.")]);
 
-        if (!Enum.TryParse<VehicleType>(cmd.Type, ignoreCase: true, out var vehicleType))
-            throw new FluentValidation.ValidationException(
-            [new ValidationFailure(nameof(cmd.Type), $"Invalid vehicle type '{cmd.Type}'.")]);
+        Enum.TryParse<VehicleType>(cmd.Type, ignoreCase: true, out var vehicleType);
 
         var vehicle = VehicleEntity.Create(tenantId, cmd.PlateNumber, cmd.Make, cmd.Model,
             cmd.Year, vehicleType, cmd.Odometer, cmd.Notes,
             cmd.MotorNumber, cmd.ChassisNumber, cmd.NumberOfCylinders,
             cmd.EngineDisplacementCC, cmd.FuelType, cmd.VehicleUse, cmd.AcquisitionCost);
-        vehicle.CreatedBy = currentUser.GetUserId().ToString();
+        vehicle.SetCreatedBy(currentUser.GetUserId().ToString());
 
         db.Vehicles.Add(vehicle);
         await db.SaveChangesAsync(ct).ConfigureAwait(false);

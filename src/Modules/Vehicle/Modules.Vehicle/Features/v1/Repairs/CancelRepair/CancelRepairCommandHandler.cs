@@ -23,7 +23,7 @@ public sealed class CancelRepairCommandHandler(VehicleDbContext db, ICurrentUser
 
         var wasInProgress = record.Status == RepairStatus.InProgress;
         record.Cancel();
-        record.LastModifiedBy = currentUser.GetUserId().ToString();
+        record.SetLastModifiedBy(currentUser.GetUserId().ToString());
 
         // If we cancelled an in-progress repair, check if vehicle should be reactivated
         if (wasInProgress)

@@ -2,7 +2,7 @@
 @using FSH.Playground.Blazor.ApiClient
 @using static FSH.Playground.Blazor.ApiClient.AssetCategory
 @inject IICSClient Client
-@inject ISemiExpendablePropertyClient PropertyClient
+@inject ITangibleInventoryItemClient PropertyLookupClient
 @inject ILookupClient LookupClient
 @inject ISnackbar Snackbar
 
@@ -59,18 +59,23 @@
                                                OnClick="@(() => RemoveItem(idx))" />
                             </MudStack>
                             <MudStack Spacing="1">
-                                <MudAutocomplete T="SemiExpendablePropertySummaryDto"
-                                                 Value="li.SelectedProperty"
-                                                 ValueChanged="@(v => li.SelectedProperty = v)"
-                                                 SearchFunc="SearchOnHandProperties"
-                                                 ToStringFunc="@(x => x is null ? "" : $"{x.PropertyNo} – {x.ItemName}")"
-                                                 Label="Property (OnHand only)" Variant="Variant.Outlined" Dense="true"
-                                                 Required="true" Clearable="true" CoerceValue="true" ResetValueOnEmptyText="true" />
-                                @if (li.SelectedProperty is not null)
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                    <MudTextField @bind-Value="li.PropertyNo" Label="Property No." Variant="Variant.Outlined"
+                                                  Dense="true" MaxLength="50" Placeholder="e.g. SPLV-2026-01-0001"
+                                                  Class="flex-grow-1" />
+                                    <MudIconButton Icon="@Icons.Material.Filled.Search" Size="Size.Small" Color="Color.Primary"
+                                                   OnClick="@(() => LookupPropertyAsync(li))" />
+                                </MudStack>
+                                @if (li.LookedUpItem is not null)
                                 {
-                                    <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                        @li.SelectedProperty.ItemCode | Unit Cost: ₱@li.SelectedProperty.UnitCost.ToString("N2")
+                                    <MudText Typo="Typo.caption" Color="@(li.LookedUpItem.IsIssued ? Color.Error : Color.Success)">
+                                        @li.LookedUpItem.ItemName | ₱@li.LookedUpItem.UnitCost.ToString("N2")
+                                        @(li.LookedUpItem.IsIssued ? " — Already Issued" : " — Available")
                                     </MudText>
+                                }
+                                else if (li.LookupFailed)
+                                {
+                                    <MudText Typo="Typo.caption" Color="Color.Error">Property number not found.</MudText>
                                 }
                                 <MudTextField @bind-Value="li.Description" Label="Description (override)" Variant="Variant.Outlined"
                                               Dense="true" MaxLength="500" />
@@ -79,7 +84,10 @@
                     }
 
                     <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
-                               OnClick="CreateAsync" Disabled="_busy">Issue Properties (Create ICS)</MudButton>
+                               OnClick="CreateAsync" Disabled="_busy">
+                        @if (_busy) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" /> }
+                        Create ICS
+                    </MudButton>
                 </MudStack>
             </MudCardContent>
         </MudCard>
@@ -111,7 +119,7 @@
                             <tr>
                                 <th>ICS No.</th>
                                 <th>Date</th>
-                                <th>Received By (ID)</th>
+                                <th>Fund Cluster</th>
                                 <th>Items</th>
                                 <th></th>
                             </tr>
@@ -122,7 +130,7 @@
                                 <tr>
                                     <td><MudText Typo="Typo.body2"><b>@s.ICSNo</b></MudText></td>
                                     <td>@s.Date.ToString("MM/dd/yyyy")</td>
-                                    <td><MudText Typo="Typo.caption">@s.ReceivedByEmployeeId.ToString("D")[..8]…</MudText></td>
+                                    <td><MudText Typo="Typo.caption" Color="Color.Secondary">@(s.FundCluster ?? "—")</MudText></td>
                                     <td><MudChip T="string" Size="Size.Small" Color="Color.Info">@s.ItemCount items</MudChip></td>
                                     <td>
                                         <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small"
@@ -158,27 +166,38 @@
                 </MudCardHeader>
                 <MudCardContent>
                     <MudGrid Spacing="1" Class="mb-2">
-                        <MudItem xs="6">
-                            <MudText Typo="Typo.caption">Category</MudText>
+                        <MudItem xs="6" sm="3">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Category</MudText>
                             <MudChip T="string" Size="Size.Small"
                                      Color="@(_detail.Category == "LowValuedSemi" ? Color.Info : Color.Warning)">
-                                @(_detail.Category == "LowValuedSemi" ? "Low-Valued" : "High-Valued")
+                                @(_detail.Category == "LowValuedSemi" ? "Low-Valued Semi" : "High-Valued Semi")
                             </MudChip>
                         </MudItem>
                         @if (_detail.FundCluster is not null)
                         {
-                            <MudItem xs="6"><MudText Typo="Typo.caption">Fund Cluster</MudText><MudText Typo="Typo.body2">@_detail.FundCluster</MudText></MudItem>
+                            <MudItem xs="6" sm="3"><MudText Typo="Typo.caption" Color="Color.Secondary">Fund Cluster</MudText><MudText Typo="Typo.body2">@_detail.FundCluster</MudText></MudItem>
                         }
-                        <MudItem xs="12">
-                            <MudText Typo="Typo.caption">Received By (Employee ID)</MudText>
-                            <MudText Typo="Typo.body2">@_detail.ReceivedByEmployeeId</MudText>
+                        <MudItem xs="12" sm="6">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Created By</MudText>
+                            <MudText Typo="Typo.body2">@(_detail.CreatedBy ?? "—")</MudText>
+                        </MudItem>
+                        @if (_detailIssuedFrom is not null)
+                        {
+                            <MudItem xs="12" sm="6">
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">Issued From (Supply Officer)</MudText>
+                                <MudText Typo="Typo.body2">@FormatEmployee(_detailIssuedFrom)</MudText>
+                            </MudItem>
+                        }
+                        <MudItem xs="12" sm="6">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Received By (End-User)</MudText>
+                            <MudText Typo="Typo.body2">@(_detailReceivedBy is not null ? FormatEmployee(_detailReceivedBy) : _detail.ReceivedByEmployeeId.ToString())</MudText>
                         </MudItem>
                     </MudGrid>
                     <MudDivider Class="my-2" />
                     <MudText Typo="Typo.subtitle2" Class="mb-1">Issued Items</MudText>
                     <MudSimpleTable Dense="true" Striped="true">
                         <thead>
-                            <tr><th>#</th><th>Property No.</th><th>Item</th><th>Serial No.</th><th>Description</th><th>Unit Cost</th><th>Useful Life</th></tr>
+                            <tr><th>#</th><th>Property No.</th><th>Item</th><th>Description</th><th>Unit Cost</th><th>Useful Life</th></tr>
                         </thead>
                         <tbody>
                             @foreach (var item in _detail.Items.OrderBy(x => x.ItemNo))
@@ -190,7 +209,6 @@
                                         <MudText Typo="Typo.body2">@item.ItemName</MudText>
                                         <MudText Typo="Typo.caption" Color="Color.Secondary">@item.ItemCode</MudText>
                                     </td>
-                                    <td>@(item.SerialNo ?? "-")</td>
                                     <td>@(item.Description ?? "-")</td>
                                     <td>₱@item.UnitCost.ToString("N2")</td>
                                     <td>@(item.EstimatedUsefulLifeYears.HasValue ? $"{item.EstimatedUsefulLifeYears} yr(s)" : "-")</td>
@@ -199,7 +217,7 @@
                         </tbody>
                         <tfoot>
                             <tr>
-                                <td colspan="5" style="text-align:right"><b>Total Cost:</b></td>
+                                <td colspan="4" style="text-align:right"><b>Total Cost:</b></td>
                                 <td colspan="2"><b>₱@_detail.Items.Sum(x => x.UnitCost).ToString("N2")</b></td>
                             </tr>
                         </tfoot>
@@ -213,6 +231,8 @@
 @code {
     private List<ICSSummaryDto> _slips = [];
     private ICSDetailsDto? _detail;
+    private EmployeeReferenceDto? _detailReceivedBy;
+    private EmployeeReferenceDto? _detailIssuedFrom;
     private IcsForm _form = new();
     private string? _keyword;
     private bool _loading;
@@ -243,7 +263,18 @@
 
     private async Task ViewAsync(Guid id)
     {
-        try { _detail = await Client.GetAsync(id); }
+        _detailReceivedBy = null;
+        _detailIssuedFrom = null;
+        try
+        {
+            _detail = await Client.GetAsync(id);
+            if (_detail is not null)
+            {
+                _detailReceivedBy = await LookupClient.EmployeesGetAsync(_detail.ReceivedByEmployeeId);
+                if (_detail.IssuedFromEmployeeId.HasValue)
+                    _detailIssuedFrom = await LookupClient.EmployeesGetAsync(_detail.IssuedFromEmployeeId.Value);
+            }
+        }
         catch (Exception ex) { Snackbar.Add($"Load failed: {ex.Message}", Severity.Error); }
     }
 
@@ -262,10 +293,20 @@
         catch { return []; }
     }
 
-    private async Task<IEnumerable<SemiExpendablePropertySummaryDto>> SearchOnHandProperties(string? value, CancellationToken ct)
+    private async Task LookupPropertyAsync(IcsItemRow item)
     {
-        var response = await PropertyClient.SearchAsync(value, status: "OnHand", page: 1, pageSize: 20, ct: ct);
-        return response.Items;
+        var pno = item.PropertyNo?.Trim().ToUpperInvariant();
+        if (string.IsNullOrWhiteSpace(pno)) return;
+        try
+        {
+            item.LookedUpItem = await PropertyLookupClient.GetByPropertyNoAsync(pno);
+            item.LookupFailed = item.LookedUpItem is null;
+        }
+        catch
+        {
+            item.LookedUpItem = null;
+            item.LookupFailed = true;
+        }
     }
 
     private static string FormatEmployee(EmployeeReferenceDto? e) =>
@@ -278,16 +319,16 @@
             Snackbar.Add("ICS No., Date, and Received By are required.", Severity.Warning);
             return;
         }
-        if (_form.Items.Any(i => i.SelectedProperty is null))
+        if (_form.Items.Any(i => i.LookedUpItem is null || i.LookedUpItem.IsIssued))
         {
-            Snackbar.Add("All items must have a selected property.", Severity.Warning);
+            Snackbar.Add("All items must be looked up and available (not already issued).", Severity.Warning);
             return;
         }
         _busy = true;
         try
         {
             var items = _form.Items.Select(i => new CreateICSItemRequest(
-                i.SelectedProperty!.Id, i.Description)).ToList();
+                i.LookedUpItem!.Id, i.Description)).ToList();
 
             var result = await Client.CreateAsync(new CreateICSCommand(
                 _form.ICSNo,
@@ -323,7 +364,9 @@
 
     private sealed class IcsItemRow
     {
-        public SemiExpendablePropertySummaryDto? SelectedProperty { get; set; }
+        public string? PropertyNo { get; set; }
+        public TangibleInventoryItemDetailDto? LookedUpItem { get; set; }
+        public bool LookupFailed { get; set; }
         public string? Description { get; set; }
     }
 }
