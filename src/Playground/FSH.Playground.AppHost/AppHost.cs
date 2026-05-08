@@ -4,7 +4,7 @@ var builder = DistributedApplication.CreateBuilder(args);
 // Override LAN IP via env var MAUI_ANDROID_API_HOST when running on a different machine.
 const int ApiHttpPort = 5030;
 const int ApiHttpsPort = 7030;
-var lanHost = Environment.GetEnvironmentVariable("MAUI_ANDROID_API_HOST") ?? "192.168.0.120";
+var lanHost = Environment.GetEnvironmentVariable("MAUI_ANDROID_API_HOST") ?? "10.0.254.4";
 var androidApiBaseUrl = $"https://{lanHost}:{ApiHttpsPort}";
 var localApiBaseUrl = $"https://localhost:{ApiHttpsPort}";
 

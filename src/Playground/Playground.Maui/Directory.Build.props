@@ -14,6 +14,7 @@
     <TargetFramework></TargetFramework>
   </PropertyGroup>
 
+
   <!--
     MAUI apps are not NuGet packages and do not produce containers. Turn off the
     inherited packaging/container metadata so MAUI's own SDK targets win cleanly.
