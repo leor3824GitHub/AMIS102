@@ -17,5 +17,12 @@ public sealed class UpdateVehicleCommandValidator : AbstractValidator<UpdateVehi
             .Must(t => Enum.TryParse<VehicleType>(t, ignoreCase: true, out _))
             .WithMessage("Invalid vehicle type.");
         RuleFor(x => x.Notes).MaximumLength(2000).When(x => x.Notes != null);
+        RuleFor(x => x.MotorNumber).MaximumLength(100).When(x => x.MotorNumber != null);
+        RuleFor(x => x.ChassisNumber).MaximumLength(100).When(x => x.ChassisNumber != null);
+        RuleFor(x => x.NumberOfCylinders).GreaterThan(0).When(x => x.NumberOfCylinders != null);
+        RuleFor(x => x.EngineDisplacementCC).GreaterThan(0).When(x => x.EngineDisplacementCC != null);
+        RuleFor(x => x.FuelType).MaximumLength(50).When(x => x.FuelType != null);
+        RuleFor(x => x.VehicleUse).MaximumLength(100).When(x => x.VehicleUse != null);
+        RuleFor(x => x.AcquisitionCost).GreaterThanOrEqualTo(0).When(x => x.AcquisitionCost != null);
     }
 }

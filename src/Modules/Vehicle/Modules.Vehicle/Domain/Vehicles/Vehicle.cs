@@ -1,4 +1,5 @@
 using FSH.Framework.Core.Domain;
+using FSH.Modules.Vehicle.Domain.Events;
 using System.Security.Cryptography;
 
 namespace FSH.Modules.Vehicle.Domain.Vehicles;
@@ -96,6 +97,9 @@ public class Vehicle : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
             CreatedOnUtc = DateTimeOffset.UtcNow,
             Version = NewVersion()
         };
+
+        vehicle.AddDomainEvent(VehicleCreatedEvent.Create(vehicle.Id, tenantId, vehicle.PlateNumber, vehicle.Make, vehicle.Model, vehicle.Year));
+        return vehicle;
     }
 
     private static byte[] NewVersion() => RandomNumberGenerator.GetBytes(8);
@@ -171,6 +175,7 @@ public class Vehicle : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
         Status = VehicleStatus.Active;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
         Version = NewVersion();
+        AddDomainEvent(VehicleReactivatedEvent.Create(Id, TenantId, PlateNumber));
     }
 
     public void Retire()
@@ -184,6 +189,7 @@ public class Vehicle : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
         Status = VehicleStatus.Retired;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
         Version = NewVersion();
+        AddDomainEvent(VehicleRetiredEvent.Create(Id, TenantId, PlateNumber));
     }
 
     public void Decommission()
@@ -197,6 +203,7 @@ public class Vehicle : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
         Status = VehicleStatus.Decommissioned;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
         Version = NewVersion();
+        AddDomainEvent(VehicleDecommissionedEvent.Create(Id, TenantId, PlateNumber));
     }
 
     public void SoftDelete(string? deletedBy = null)

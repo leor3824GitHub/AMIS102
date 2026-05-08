@@ -382,10 +382,38 @@ else
 
             await Load();
         }
+        catch (ApiException apiEx)
+        {
+            var detail = ExtractProblemDetail(apiEx.Response);
+            Snackbar.Add(detail ?? apiEx.Message, Severity.Error);
+        }
         catch (Exception ex)
         {
             Snackbar.Add(ex.Message, Severity.Error);
         }
+    }
+
+    private static string? ExtractProblemDetail(string? response)
+    {
+        if (string.IsNullOrWhiteSpace(response)) return null;
+        try
+        {
+            using var json = System.Text.Json.JsonDocument.Parse(response);
+            if (json.RootElement.TryGetProperty("detail", out var detail) &&
+                detail.ValueKind == System.Text.Json.JsonValueKind.String)
+            {
+                return detail.GetString();
+            }
+
+            if (json.RootElement.TryGetProperty("title", out var title) &&
+                title.ValueKind == System.Text.Json.JsonValueKind.String)
+            {
+                return title.GetString();
+            }
+        }
+        catch { }
+
+        return null;
     }
 
     private static Guid? ParseGuid(string? text) => Guid.TryParse(text, out var id) ? id : null;
