@@ -47,15 +47,39 @@ public sealed class CreateSMIRCommandHandler : ICommandHandler<CreateSMIRCommand
             .ToDictionaryAsync(x => x.Id, cancellationToken)
             .ConfigureAwait(false);
 
+        var registryByInventoryItemId = await _dbContext.AssetRegistry
+            .Where(x => invItemIds.Contains(x.TangibleInventoryItemId))
+            .ToDictionaryAsync(x => x.TangibleInventoryItemId, cancellationToken)
+            .ConfigureAwait(false);
+
         foreach (var itemId in invItemIds)
         {
             if (!invItems.TryGetValue(itemId, out var invItem))
                 throw new NotFoundException($"TangibleInventoryItem with ID {itemId} not found.");
 
+            if (invItem.AssetType != AssetType.SE)
+                throw new InvalidOperationException(
+                    $"TangibleInventoryItem {invItem.PropertyNo} has AssetType '{invItem.AssetType}'. Only SE items can be transferred via SMIR.");
+
             if (invItem.IsIssued)
                 throw new InvalidOperationException(
                     $"TangibleInventoryItem {invItem.PropertyNo} is currently issued and cannot be transferred via SMIR. " +
                     "The employee must first return it via RRSP.");
+
+            if (!registryByInventoryItemId.ContainsKey(itemId))
+            {
+                var registry = AssetRegistry.Create(
+                    tenantId: invItem.TenantId,
+                    tangibleInventoryItemId: invItem.Id,
+                    itemId: invItem.ItemId,
+                    propertyNo: invItem.PropertyNo,
+                    assetType: invItem.AssetType,
+                    acquisitionDate: invItem.AcquisitionDate,
+                    unitCost: invItem.UnitCost);
+
+                _dbContext.AssetRegistry.Add(registry);
+                registryByInventoryItemId[itemId] = registry;
+            }
         }
 
         string tenantId = _currentUser.GetTenant() ?? string.Empty;
@@ -93,6 +117,26 @@ public sealed class CreateSMIRCommandHandler : ICommandHandler<CreateSMIRCommand
 
             // Mark the inventory item as issued — transferred out of the current tenant.
             invItem.MarkIssued();
+
+            var registry = registryByInventoryItemId[invItem.Id];
+            var previousCustodian = registry.CurrentCustodianId;
+            registry.TransferOut();
+
+            var history = AssetAssignmentHistory.Create(
+                tenantId,
+                registry.Id,
+                AssetAssignmentEventType.Transferred,
+                DateTimeOffset.UtcNow,
+                "SMIR",
+                smir.Id,
+                smir.SMIRNo,
+                previousCustodian,
+                null,
+                null,
+                command.Remarks);
+
+            _dbContext.AssetAssignmentHistory.Add(history);
+            registry.LinkCurrentAssignment(history.Id);
 
             itemNo++;
         }

@@ -75,7 +75,7 @@ public class Vehicle : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
         int? numberOfCylinders = null, int? engineDisplacementCC = null,
         string? fuelType = null, string? vehicleUse = null, decimal? acquisitionCost = null)
     {
-        return new Vehicle
+        var vehicle = new Vehicle
         {
             Id = Guid.NewGuid(),
             TenantId = tenantId,

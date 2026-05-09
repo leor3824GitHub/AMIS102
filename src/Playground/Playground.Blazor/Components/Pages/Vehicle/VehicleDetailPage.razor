@@ -12,7 +12,20 @@
 
 <FshPageHeader Title="Vehicle Details" Description="View and update a specific vehicle" />
 
-@if (_vehicle is null)
+@if (_isLoading)
+{
+    <div class="mt-4">
+        <MudGrid Spacing="2">
+            <MudItem xs="12" md="4">
+                <MudSkeleton Height="420px" Width="100%" />
+            </MudItem>
+            <MudItem xs="12" md="8">
+                <MudSkeleton Height="420px" Width="100%" />
+            </MudItem>
+        </MudGrid>
+    </div>
+}
+else if (_vehicle is null)
 {
     <MudAlert Severity="Severity.Warning" Class="mt-4">Vehicle not found.</MudAlert>
 }
@@ -34,6 +47,8 @@ else
                         <MudText Typo="Typo.body2">@(_vehicle.AssignedDepartment ?? "-")</MudText>
                         <MudText Typo="Typo.caption" Class="mt-2">Assigned Driver</MudText>
                         <MudText Typo="Typo.body2">@(_vehicle.AssignedDriver ?? "-")</MudText>
+                        <MudText Typo="Typo.caption" Class="mt-2">Accountable Officer Title</MudText>
+                        <MudText Typo="Typo.body2">@(_vehicle.AccountableOfficerTitle ?? "-")</MudText>
                         <MudText Typo="Typo.caption" Class="mt-2">Odometer</MudText>
                         <MudText Typo="Typo.body2">@_vehicle.Odometer km</MudText>
 
@@ -118,6 +133,11 @@ else
                                                  CoerceValue="true"
                                                  ResetValueOnEmptyText="true" />
                             </MudItem>
+                            <MudItem xs="12" sm="6">
+                                <MudTextField @bind-Value="_assignment.AccountableOfficerTitle"
+                                              Label="Accountable Officer Title"
+                                              Placeholder="e.g., Truck Driver" />
+                            </MudItem>
                         </MudGrid>
                         <MudButton Variant="Variant.Outlined" Color="Color.Primary" Class="mt-2" OnClick="AssignVehicle">Update Assignment</MudButton>
 
@@ -192,6 +212,7 @@ else
     private AssignmentModel _assignment = new();
     private EmployeeReferenceDto? _selectedDriver;
     private int _newOdometer;
+    private bool _isLoading;
 
     private List<RepairRecordDto> _repairs = [];
     private List<MaintenanceScheduleDto> _schedules = [];
@@ -201,6 +222,7 @@ else
 
     private async Task Load()
     {
+        _isLoading = true;
         try
         {
             _vehicle = await VehicleClient.GetVehicleAsync(Id);
@@ -232,7 +254,8 @@ else
                 DepartmentName = _vehicle.AssignedDepartment,
                 DepartmentIdText = _vehicle.AssignedDepartmentId?.ToString(),
                 DriverName = _vehicle.AssignedDriver,
-                DriverIdText = _vehicle.AssignedDriverId?.ToString()
+                DriverIdText = _vehicle.AssignedDriverId?.ToString(),
+                AccountableOfficerTitle = _vehicle.AccountableOfficerTitle
             };
 
             await HydrateAssignmentSelectionsAsync();
@@ -245,6 +268,10 @@ else
         catch (Exception ex)
         {
             Snackbar.Add($"Load failed: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
         }
     }
 
@@ -306,7 +333,8 @@ else
                 ParseGuid(_assignment.DepartmentIdText),
                 EmptyToNull(_assignment.DepartmentName),
                 ParseGuid(_assignment.DriverIdText),
-                EmptyToNull(_assignment.DriverName)));
+                EmptyToNull(_assignment.DriverName),
+                EmptyToNull(_assignment.AccountableOfficerTitle)));
 
             Snackbar.Add("Assignment updated.", Severity.Success);
             await Load();
@@ -411,7 +439,10 @@ else
                 return title.GetString();
             }
         }
-        catch { }
+        catch
+        {
+            // Ignore malformed/non-JSON error responses and fall back to default messaging.
+        }
 
         return null;
     }
@@ -436,6 +467,7 @@ else
         }
         catch
         {
+            // Fallback to an empty list when lookup endpoint is unavailable.
             return Enumerable.Empty<EmployeeReferenceDto>();
         }
     }
@@ -537,10 +569,7 @@ else
             return;
         }
 
-        foreach (var message in messages)
-        {
-            Snackbar.Add(message, Severity.Warning);
-        }
+        messages.ForEach(message => Snackbar.Add(message, Severity.Warning));
     }
 
     private static List<string> ExtractValidationMessages(string? response)
@@ -559,28 +588,19 @@ else
                 return [];
             }
 
-            var messages = new List<string>();
-            foreach (var property in errorsElement.EnumerateObject())
-            {
-                if (property.Value.ValueKind != System.Text.Json.JsonValueKind.Array)
-                {
-                    continue;
-                }
-
-                foreach (var errorItem in property.Value.EnumerateArray())
-                {
-                    var message = errorItem.GetString();
-                    if (!string.IsNullOrWhiteSpace(message))
-                    {
-                        messages.Add(message);
-                    }
-                }
-            }
-
-            return messages;
+            return errorsElement
+                .EnumerateObject()
+                .Select(property => property.Value)
+                .Where(value => value.ValueKind == System.Text.Json.JsonValueKind.Array)
+                .SelectMany(value => value.EnumerateArray())
+                .Select(errorItem => errorItem.GetString())
+                .Where(message => !string.IsNullOrWhiteSpace(message))
+                .Select(message => message!)
+                .ToList();
         }
         catch
         {
+            // Ignore malformed/non-JSON validation payloads and surface fallback toast message.
             return [];
         }
     }
@@ -610,5 +630,6 @@ else
         public string? DriverName { get; set; }
         public string? DepartmentIdText { get; set; }
         public string? DriverIdText { get; set; }
+        public string? AccountableOfficerTitle { get; set; }
     }
 }

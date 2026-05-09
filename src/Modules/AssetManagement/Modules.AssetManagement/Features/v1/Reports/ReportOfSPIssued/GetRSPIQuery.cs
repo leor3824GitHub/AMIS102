@@ -17,18 +17,45 @@ public sealed record GetRSPIQuery(
     int PageSize    = 20) : IQuery<PagedRSPIResponse>;
 
 public sealed record PagedRSPIResponse(
+    IReadOnlyList<RSPISignatoryDto> Signatories,
+    IReadOnlyList<RSPISectionDto> Sections,
     IReadOnlyList<RSPIItemDto> Items,
+    int PageLineCount,
+    decimal PageAmountTotal,
     int PageNumber,
     int PageSize,
-    int TotalCount);
+    int TotalCount,
+    decimal OverallAmountTotal);
+
+public sealed record RSPISignatoryDto(
+    int SortOrder,
+    string Label,
+    string Name,
+    string Title);
+
+public sealed record RSPISectionDto(
+    Guid ICSId,
+    string ICSNo,
+    DateOnly ICSDate,
+    string? FundCluster,
+    string ICSStatus,
+    int LineCount,
+    decimal AmountTotal);
 
 public sealed record RSPIItemDto(
     Guid ICSId,
     string ICSNo,
     DateOnly ICSDate,
     string ICSStatus,
+    string? FundCluster,
     Guid ReceivedByEmployeeId,
+    string ReceivedByEmployeeName,
+    string? ReceivedByEmployeePositionName,
+    string? ReceivedByEmployeeOfficeName,
     Guid? IssuedFromEmployeeId,
+    string? IssuedFromEmployeeName,
+    string? IssuedFromEmployeePositionName,
+    string? IssuedFromEmployeeOfficeName,
     Guid TangibleInventoryItemId,
     string PropertyNo,
     string ItemCode,

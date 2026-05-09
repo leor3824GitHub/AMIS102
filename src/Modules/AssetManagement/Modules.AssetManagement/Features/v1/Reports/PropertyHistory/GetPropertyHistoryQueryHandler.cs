@@ -235,9 +235,14 @@ public sealed class GetPropertyHistoryQueryHandler(AssetManagementDbContext dbCo
                 $"Method: {e.DisposalMethod}" + (e.ConditionRemarks is null ? "" : $" | {e.ConditionRemarks}")));
         }
 
-        // Determine current custodian from the most-recent active ICS/PAR (if still issued).
-        Guid? currentCustodianId = null;
-        if (header.IsIssued)
+        // Prefer registry as source of truth for current state; fallback to legacy reconstruction.
+        Guid? currentCustodianId = await dbContext.AssetRegistry
+            .Where(x => x.TangibleInventoryItemId == invItemId)
+            .Select(x => x.CurrentCustodianId)
+            .FirstOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        if (currentCustodianId is null && header.IsIssued)
         {
             var latestIcs = await (
                 from icsItem in dbContext.ICSItems.Where(x => x.TangibleInventoryItemId == invItemId)

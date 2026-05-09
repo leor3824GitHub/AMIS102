@@ -69,6 +69,7 @@ builder.Services.AddScoped<ICircuitTokenCache, CircuitTokenCache>();
 
 // Authorization header handler for API calls
 builder.Services.AddScoped<AuthorizationHeaderHandler>();
+builder.Services.AddScoped<ApiRetryHandler>();
 
 // Token refresh service for handling expired access tokens
 builder.Services.AddScoped<ITokenRefreshService, TokenRefreshService>();
@@ -113,6 +114,7 @@ builder.Services.AddHttpClient("ThemeClient", client =>
 // Configure HttpClient with authorization handler for API calls
 builder.Services.AddScoped(sp =>
 {
+    var retryHandler = sp.GetRequiredService<ApiRetryHandler>();
     var handler = sp.GetRequiredService<AuthorizationHeaderHandler>();
     var innerHandler = new HttpClientHandler();
 
@@ -127,8 +129,9 @@ builder.Services.AddScoped(sp =>
     }
 
     handler.InnerHandler = innerHandler;
+    retryHandler.InnerHandler = handler;
 
-    return new HttpClient(handler)
+    return new HttpClient(retryHandler)
     {
         BaseAddress = apiUri,
         Timeout = TimeSpan.FromSeconds(30) // Reduced from default 100s to speed up failures

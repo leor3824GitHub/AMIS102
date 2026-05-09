@@ -17,6 +17,8 @@ using FSH.Modules.AssetManagement.Features.v1.Reclassification.GetReclassificati
 using FSH.Modules.AssetManagement.Features.v1.Reclassification.ReclassifyProperties;
 using FSH.Modules.AssetManagement.Features.v1.PropertyIncidentReports.CreatePropertyIncidentReport;
 using FSH.Modules.AssetManagement.Features.v1.Reports.PropertyHistory;
+using FSH.Modules.AssetManagement.Features.v1.Reports.GenerateRegSPIPdf;
+using FSH.Modules.AssetManagement.Features.v1.Reports.GenerateRSPIPdf;
 using FSH.Modules.AssetManagement.Features.v1.Reports.RegistryOfSPIssued;
 using FSH.Modules.AssetManagement.Features.v1.Reports.ReportOfSPIssued;
 using FSH.Modules.AssetManagement.Features.v1.Reports.SemiExpendablePropertyCard;
@@ -63,6 +65,14 @@ using FSH.Modules.AssetManagement.Features.v1.TangibleInventory.DeleteTangibleIn
 using FSH.Modules.AssetManagement.Features.v1.TangibleInventory.GetByPropertyNo;
 using FSH.Modules.AssetManagement.Features.v1.TangibleInventory.GetTangibleInventories;
 using FSH.Modules.AssetManagement.Features.v1.TangibleInventory.GetTangibleInventoryById;
+using FSH.Modules.AssetManagement.Features.v1.AssetRegistryQueries.GetAssetsByCustodian;
+using FSH.Modules.AssetManagement.Features.v1.AssetRegistryQueries.GetAssetsByLocation;
+using FSH.Modules.AssetManagement.Features.v1.AssetRegistryQueries.GetAssetAssignmentTimeline;
+using FSH.Modules.AssetManagement.Features.v1.Locations.GetLocations;
+using FSH.Modules.AssetManagement.Features.v1.Locations.GetLocationById;
+using FSH.Modules.AssetManagement.Features.v1.Locations.CreateLocation;
+using FSH.Modules.AssetManagement.Features.v1.Locations.UpdateLocation;
+using FSH.Modules.AssetManagement.Features.v1.Locations.DeleteLocation;
 using Hangfire;
 using Hangfire.Common;
 using Microsoft.AspNetCore.Builder;
@@ -71,6 +81,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using QuestPDF.Infrastructure;
 
 namespace FSH.Modules.AssetManagement;
 
@@ -87,6 +98,13 @@ public class AssetManagementModule : IModule
         new("Create Tangible Inventory", "Create", "AssetManagement.TangibleInventory"),
         new("Update Tangible Inventory", "Update", "AssetManagement.TangibleInventory"),
         new("Delete Tangible Inventory", "Delete", "AssetManagement.TangibleInventory"),
+
+        new("View Asset Registry", "View", "AssetManagement.AssetRegistry", IsBasic: true),
+
+        new("View Locations", "View", "AssetManagement.Locations", IsBasic: true),
+        new("Create Locations", "Create", "AssetManagement.Locations"),
+        new("Update Locations", "Update", "AssetManagement.Locations"),
+        new("Delete Locations", "Delete", "AssetManagement.Locations"),
 
         new("View Inventory Custodian Slips",   "View",   "AssetManagement.InventoryCustodianSlips",   IsBasic: true),
         new("Create Inventory Custodian Slips", "Create", "AssetManagement.InventoryCustodianSlips"),
@@ -145,6 +163,8 @@ public class AssetManagementModule : IModule
     {
         ArgumentNullException.ThrowIfNull(builder);
 
+        QuestPDF.Settings.License = LicenseType.Community;
+
         PermissionConstants.Register(RegisteredPermissions);
         builder.Services.AddHeroDbContext<AssetManagementDbContext>();
         builder.Services.AddScoped<IDbInitializer, AssetManagementDbInitializer>();
@@ -180,6 +200,8 @@ public class AssetManagementModule : IModule
         var tangibleItemsGroup            = moduleGroup.MapGroup("/tangible-items");
         var tangibleInventoryGroup        = moduleGroup.MapGroup("/tangible-inventories");
         var tangibleInventoryItemsGroup    = moduleGroup.MapGroup("/tangible-inventory-items");
+        var assetRegistryGroup            = moduleGroup.MapGroup("/asset-registry");
+        var locationsGroup                = moduleGroup.MapGroup("/locations");
 
         // Semi-Expendable Items (Item Catalog)
         CreateSemiExpendableItemEndpoint.Map(semiExpendableItemsGroup);
@@ -196,6 +218,18 @@ public class AssetManagementModule : IModule
 
         // Tangible Inventory Items (scan/lookup by PropertyNo)
         GetTangibleInventoryItemByPropertyNoEndpoint.Map(tangibleInventoryItemsGroup);
+
+        // Asset Registry (current-state accountability queries)
+        GetAssetsByCustodianEndpoint.Map(assetRegistryGroup);
+        GetAssetsByLocationEndpoint.Map(assetRegistryGroup);
+        GetAssetAssignmentTimelineEndpoint.Map(assetRegistryGroup);
+
+        // Locations (asset placement master)
+        GetLocationsEndpoint.Map(locationsGroup);
+        GetLocationByIdEndpoint.Map(locationsGroup);
+        CreateLocationEndpoint.Map(locationsGroup);
+        UpdateLocationEndpoint.Map(locationsGroup);
+        DeleteLocationEndpoint.Map(locationsGroup);
 
         // Inventory Custodian Slips (ICS)
         CreateICSEndpoint.Map(icsGroup);
@@ -260,6 +294,8 @@ public class AssetManagementModule : IModule
         GetSPCEndpoint.Map(reportsGroup);
         GetRegSPIEndpoint.Map(reportsGroup);
         GetRSPIEndpoint.Map(reportsGroup);
+        GenerateRegSPIPdfEndpoint.Map(reportsGroup);
+        GenerateRSPIPdfEndpoint.Map(reportsGroup);
         GetPropertyHistoryEndpoint.Map(reportsGroup);
 
         // Tangible Items

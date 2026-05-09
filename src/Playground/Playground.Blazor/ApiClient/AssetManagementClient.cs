@@ -912,7 +912,8 @@ internal sealed class UnserviceablePropertyReportClient(HttpClient http) : IUnse
 
 // Asset Management Reports (SPC, RegSPI, RSPI, Property History)
 
-internal enum AssetCategory { LowValuedSemi = 0, HighValuedSemi = 1, PPE = 2 }
+internal enum AssetCategory { LowValuedSemi = 0, HighValuedSemi = 1 }
+internal enum AssetType { SE = 0, PPE = 1 }
 internal enum ICSStatus { Active = 0, Renewed = 1, CancelledByReturn = 2, Expired = 3 }
 
 internal sealed record SPCEntryDto(
@@ -936,44 +937,99 @@ internal sealed record RegSPIEntryDto(
     string ICSNo,
     DateOnly Date,
     string? FundCluster,
-    Guid PropertyId,
+    Guid TangibleInventoryItemId,
     string PropertyNo,
     string ItemCode,
     string ItemName,
-    string Category,
+    string AssetType,
     decimal UnitCost,
     int? EstimatedUsefulLifeYears,
     DateOnly? ExpiresOn,
-    string ICSStatus);
+    string ICSStatus,
+    Guid? IssuedFromEmployeeId,
+    string? IssuedFromEmployeeName,
+    string? IssuedFromEmployeePositionName,
+    string? IssuedFromEmployeeOfficeName);
+
+internal sealed record RegSPISignatoryDto(
+    int SortOrder,
+    string Label,
+    string Name,
+    string Title);
+
+internal sealed record RegSPISectionDto(
+    Guid ICSId,
+    string ICSNo,
+    DateOnly Date,
+    string? FundCluster,
+    string ICSStatus,
+    int LineCount,
+    decimal AmountTotal);
 
 internal sealed record PagedRegSPIResponse(
     Guid EmployeeId,
+    string? EmployeeNumber,
+    string EmployeeName,
+    string? EmployeeOfficeName,
+    string? EmployeeDepartmentName,
+    string? EmployeePositionName,
+    IReadOnlyList<RegSPISignatoryDto> Signatories,
+    IReadOnlyList<RegSPISectionDto> Sections,
     IReadOnlyList<RegSPIEntryDto> Items,
+    int PageLineCount,
+    decimal PageAmountTotal,
     int PageNumber,
     int PageSize,
-    int TotalCount);
+    int TotalCount,
+    decimal OverallAmountTotal);
 
 internal sealed record RSPIItemDto(
     Guid ICSId,
     string ICSNo,
     DateOnly ICSDate,
     string ICSStatus,
+    string? FundCluster,
     Guid ReceivedByEmployeeId,
+    string ReceivedByEmployeeName,
+    string? ReceivedByEmployeePositionName,
+    string? ReceivedByEmployeeOfficeName,
     Guid? IssuedFromEmployeeId,
-    Guid PropertyId,
+    string? IssuedFromEmployeeName,
+    string? IssuedFromEmployeePositionName,
+    string? IssuedFromEmployeeOfficeName,
+    Guid TangibleInventoryItemId,
     string PropertyNo,
-    string? SerialNo,
     string ItemCode,
     string ItemName,
-    string Category,
+    string AssetType,
     decimal UnitCost,
     DateOnly? ExpiresOn);
 
+internal sealed record RSPISignatoryDto(
+    int SortOrder,
+    string Label,
+    string Name,
+    string Title);
+
+internal sealed record RSPISectionDto(
+    Guid ICSId,
+    string ICSNo,
+    DateOnly ICSDate,
+    string? FundCluster,
+    string ICSStatus,
+    int LineCount,
+    decimal AmountTotal);
+
 internal sealed record PagedRSPIResponse(
+    IReadOnlyList<RSPISignatoryDto> Signatories,
+    IReadOnlyList<RSPISectionDto> Sections,
     IReadOnlyList<RSPIItemDto> Items,
+    int PageLineCount,
+    decimal PageAmountTotal,
     int PageNumber,
     int PageSize,
-    int TotalCount);
+    int TotalCount,
+    decimal OverallAmountTotal);
 
 internal sealed record PropertyHistoryEventDto(
     DateOnly EventDate,
@@ -997,8 +1053,10 @@ internal sealed record PropertyHistoryDto(
 internal interface IAssetManagementReportsClient
 {
     Task<SPCDto?> GetSPCAsync(Guid itemId, DateOnly? dateFrom = null, DateOnly? dateTo = null, CancellationToken ct = default);
-    Task<PagedRegSPIResponse?> GetRegSPIAsync(Guid employeeId, AssetCategory? category = null, ICSStatus? status = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
-    Task<PagedRSPIResponse?> GetRSPIAsync(DateOnly? dateFrom = null, DateOnly? dateTo = null, AssetCategory? category = null, bool activeOnly = true, int page = 1, int pageSize = 20, CancellationToken ct = default);
+    Task<PagedRegSPIResponse?> GetRegSPIAsync(Guid employeeId, AssetType? assetType = null, ICSStatus? status = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
+    Task<PagedRSPIResponse?> GetRSPIAsync(DateOnly? dateFrom = null, DateOnly? dateTo = null, AssetType? assetType = null, bool activeOnly = true, int page = 1, int pageSize = 20, CancellationToken ct = default);
+    Task<byte[]> GetRegSPIPdfAsync(Guid employeeId, AssetType? assetType = null, ICSStatus? status = null, int page = 1, int pageSize = 1000, CancellationToken ct = default);
+    Task<byte[]> GetRSPIPdfAsync(DateOnly? dateFrom = null, DateOnly? dateTo = null, AssetType? assetType = null, bool activeOnly = true, int page = 1, int pageSize = 1000, CancellationToken ct = default);
     Task<PropertyHistoryDto?> GetPropertyHistoryAsync(Guid propertyId, CancellationToken ct = default);
 }
 
@@ -1015,27 +1073,58 @@ internal sealed class AssetManagementReportsClient(HttpClient http) : IAssetMana
         return http.GetFromJsonAsync<SPCDto>($"{Base}/spc/{itemId}{qs}", ct);
     }
 
-    public Task<PagedRegSPIResponse?> GetRegSPIAsync(Guid employeeId, AssetCategory? category = null, ICSStatus? status = null, int page = 1, int pageSize = 20, CancellationToken ct = default)
+    public Task<PagedRegSPIResponse?> GetRegSPIAsync(Guid employeeId, AssetType? assetType = null, ICSStatus? status = null, int page = 1, int pageSize = 20, CancellationToken ct = default)
     {
         var q = HttpUtility.ParseQueryString(string.Empty);
         q["EmployeeId"] = employeeId.ToString();
-        if (category.HasValue) q["Category"] = ((int)category.Value).ToString(CultureInfo.InvariantCulture);
+        if (assetType.HasValue) q["AssetType"] = ((int)assetType.Value).ToString(CultureInfo.InvariantCulture);
         if (status.HasValue) q["Status"] = ((int)status.Value).ToString(CultureInfo.InvariantCulture);
         q["PageNumber"] = page.ToString(CultureInfo.InvariantCulture);
         q["PageSize"] = pageSize.ToString(CultureInfo.InvariantCulture);
         return http.GetFromJsonAsync<PagedRegSPIResponse>($"{Base}/reg-spi?{q}", ct);
     }
 
-    public Task<PagedRSPIResponse?> GetRSPIAsync(DateOnly? dateFrom = null, DateOnly? dateTo = null, AssetCategory? category = null, bool activeOnly = true, int page = 1, int pageSize = 20, CancellationToken ct = default)
+    public Task<PagedRSPIResponse?> GetRSPIAsync(DateOnly? dateFrom = null, DateOnly? dateTo = null, AssetType? assetType = null, bool activeOnly = true, int page = 1, int pageSize = 20, CancellationToken ct = default)
     {
         var q = HttpUtility.ParseQueryString(string.Empty);
         if (dateFrom.HasValue) q["DateFrom"] = dateFrom.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
         if (dateTo.HasValue) q["DateTo"] = dateTo.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-        if (category.HasValue) q["Category"] = ((int)category.Value).ToString(CultureInfo.InvariantCulture);
+        if (assetType.HasValue) q["AssetType"] = ((int)assetType.Value).ToString(CultureInfo.InvariantCulture);
         q["ActiveOnly"] = activeOnly ? "true" : "false";
         q["PageNumber"] = page.ToString(CultureInfo.InvariantCulture);
         q["PageSize"] = pageSize.ToString(CultureInfo.InvariantCulture);
         return http.GetFromJsonAsync<PagedRSPIResponse>($"{Base}/rspi?{q}", ct);
+    }
+
+    public async Task<byte[]> GetRegSPIPdfAsync(Guid employeeId, AssetType? assetType = null, ICSStatus? status = null, int page = 1, int pageSize = 1000, CancellationToken ct = default)
+    {
+        using var response = await http.PostAsJsonAsync($"{Base}/reg-spi/pdf", new
+        {
+            EmployeeId = employeeId,
+            AssetType = assetType,
+            Status = status,
+            PageNumber = page,
+            PageSize = pageSize
+        }, ct);
+
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadAsByteArrayAsync(ct);
+    }
+
+    public async Task<byte[]> GetRSPIPdfAsync(DateOnly? dateFrom = null, DateOnly? dateTo = null, AssetType? assetType = null, bool activeOnly = true, int page = 1, int pageSize = 1000, CancellationToken ct = default)
+    {
+        using var response = await http.PostAsJsonAsync($"{Base}/rspi/pdf", new
+        {
+            DateFrom = dateFrom,
+            DateTo = dateTo,
+            AssetType = assetType,
+            ActiveOnly = activeOnly,
+            PageNumber = page,
+            PageSize = pageSize
+        }, ct);
+
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadAsByteArrayAsync(ct);
     }
 
     public Task<PropertyHistoryDto?> GetPropertyHistoryAsync(Guid propertyId, CancellationToken ct = default) =>

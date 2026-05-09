@@ -87,6 +87,9 @@ public sealed record DeleteEmployeeCommand(Guid Id) : ICommand<Unit>;
 
 public sealed record GetEmployeeReferenceByIdQuery(Guid Id) : IQuery<EmployeeReferenceDto?>;
 
+public sealed record GetEmployeeReferencesByIdsQuery(IReadOnlyCollection<Guid> Ids)
+    : IQuery<IReadOnlyDictionary<Guid, EmployeeReferenceDto>>;
+
 public sealed record GetEmployeeReferenceByIdentityUserIdQuery(string IdentityUserId) : IQuery<EmployeeReferenceDto?>;
 
 public sealed class SearchEmployeeReferencesQuery : IPagedQuery, IQuery<PagedResponse<EmployeeReferenceDto>>

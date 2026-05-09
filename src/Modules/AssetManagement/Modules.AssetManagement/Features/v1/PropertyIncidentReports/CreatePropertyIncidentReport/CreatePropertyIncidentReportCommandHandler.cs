@@ -38,6 +38,11 @@ public sealed class CreatePropertyIncidentReportCommandHandler(AssetManagementDb
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
+        var registryByInventoryItemId = await dbContext.AssetRegistry
+            .Where(x => distinctIds.Contains(x.TangibleInventoryItemId))
+            .ToDictionaryAsync(x => x.TangibleInventoryItemId, cancellationToken)
+            .ConfigureAwait(false);
+
         var missingIds = distinctIds.Except(invItems.Select(x => x.Id)).ToList();
         if (missingIds.Count > 0)
         {
@@ -76,6 +81,40 @@ public sealed class CreatePropertyIncidentReportCommandHandler(AssetManagementDb
                 assetTypeAtTimeOfReport: invItem.AssetType);
 
             dbContext.PropertyIncidentItems.Add(item);
+
+            if (!registryByInventoryItemId.TryGetValue(invItem.Id, out var registry))
+            {
+                registry = AssetRegistry.Create(
+                    tenantId: invItem.TenantId,
+                    tangibleInventoryItemId: invItem.Id,
+                    itemId: invItem.ItemId,
+                    propertyNo: invItem.PropertyNo,
+                    assetType: invItem.AssetType,
+                    acquisitionDate: invItem.AcquisitionDate,
+                    unitCost: invItem.UnitCost);
+
+                dbContext.AssetRegistry.Add(registry);
+                registryByInventoryItemId[invItem.Id] = registry;
+            }
+
+            var currentCustodian = registry.CurrentCustodianId;
+            registry.MarkUnderInvestigation();
+
+            var history = AssetAssignmentHistory.Create(
+                tenantId,
+                registry.Id,
+                AssetAssignmentEventType.StatusChanged,
+                DateTimeOffset.UtcNow,
+                "PIR",
+                report.Id,
+                report.ReportNo,
+                currentCustodian,
+                currentCustodian,
+                registry.CurrentLocationId,
+                command.Remarks);
+
+            dbContext.AssetAssignmentHistory.Add(history);
+            registry.LinkCurrentAssignment(history.Id);
         }
 
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);

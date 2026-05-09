@@ -17,6 +17,16 @@ Scaffold `Playground.Maui` — the .NET MAUI mobile/desktop client (Android · i
 
 ---
 
+## Active Enhancement Workstream
+
+**AssetManagement Additive Overhaul (No Delete/Remove)**
+
+- Add unified current-state layer for tangible assets while preserving separate agency/legal documents (ICS, PAR, SMIR, PPEIR, RRSP, RRP).
+- Keep receipt and issuance document structures intact; write-through to `AssetRegistry` + `AssetAssignmentHistory` for current state and audit timeline.
+- Implement as additive changes only (no removal of existing entities/endpoints).
+
+---
+
 ## Overall Project Status
 
 | Layer                                                     | Status                          |
@@ -24,7 +34,7 @@ Scaffold `Playground.Maui` — the .NET MAUI mobile/desktop client (Android · i
 | Backend — Core Modules (Identity, Multitenancy, Auditing) | ✅ Complete                     |
 | Backend — MasterData Module                               | ✅ Complete                     |
 | Backend — Expendable Module                               | ✅ Complete                     |
-| Backend — AssetManagement Module                          | ✅ Complete                     |
+| Backend — AssetManagement Module                          | 🟡 Enhancement in progress      |
 | Backend — AssetProcurement Module                         | ✅ Complete                     |
 | Backend — Vehicle Module                                  | ✅ Complete                     |
 | Backend — Finance Module                                  | ✅ Complete                     |
@@ -114,6 +124,26 @@ Scaffold `Playground.Maui` — the .NET MAUI mobile/desktop client (Android · i
 - [x] Reports (property history, etc.)
 - [x] ICS expiry background job
 
+### Module: AssetManagement (Additive Overhaul)
+
+- [x] Added unified current-state entities: `AssetRegistry`, `AssetAssignmentHistory`, `Location`
+- [x] Added lifecycle/event enums: `AssetLifecycleState`, `AssetAssignmentEventType`, `LocationType`
+- [x] Added EF configurations for new entities with tenant-aware indexes and soft-delete filters
+- [x] Wired new DbSets into `AssetManagementDbContext`
+- [x] Receipt flow writes to registry: `CreateTangibleInventory`
+- [x] SE issuance/transfer/return flows write to registry + history: `CreateICS`, `CreateSMIR`, `CreateRRSP`
+- [x] PPE issuance/transfer/return flows write to registry + history: `CreatePAR`, `CreatePPEIR`, `CreateRRP`
+- [x] Incident flow writes to registry + history: `CreatePropertyIncidentReport`
+- [x] Unserviceable flow writes to registry + history: `CreateUnserviceablePropertyReport`
+- [x] Reclassification flow writes to registry + history: `ReclassifyProperties`
+- [x] ICS renewal/expiry flows write status history to registry timeline: `RenewICS`, `ICSExpiryJob`
+- [x] Property history query now reads current custodian from `AssetRegistry` first (legacy fallback retained)
+- [x] Add migration for new registry/history/location tables (`20260509113347_AddAssetRegistryAndLocation`)
+- [x] Extend registry/history writes to reclassification flow
+- [x] Add registry-focused query slices (assets by custodian/location + assignment timeline)
+- [x] Add/validate permissions and endpoint groups for new location/registry operations
+- [x] AssetManagement module test suite pass after overhaul additions (`AssetManagement.Tests`: 176/176)
+
 ### Module: AssetProcurement
 
 - [x] Asset Purchase Requests
@@ -187,6 +217,26 @@ Scaffold `Playground.Maui` — the .NET MAUI mobile/desktop client (Android · i
 ---
 
 ## In Progress
+
+### Backend: AssetManagement Additive Overhaul
+
+- [x] Migration generation and snapshot update (`Migrations.PostgreSQL/AssetManagement`)
+- [x] Reclassification integration with `AssetRegistry`
+- [x] Registry query slices + endpoint registration
+- [x] RSPI/RegSPI report projections enriched with employee display fields (name/position/office) while preserving ID fields
+- [x] PTR report projection enriched with officer display fields (name/position/office) while preserving ID fields
+- [x] RSPI/RegSPI report projections enriched with additive totals metadata for report summary rows
+- [x] RSPI/RegSPI report projections enriched with additive signatory block data from MasterData report signatories
+- [x] RSPI/RegSPI report projections enriched with additive ICS section-group metadata and deterministic print ordering
+- [x] RSPI/RegSPI report handler regression tests added (ordering, sections, signatories, totals)
+- [x] PTR report handler regression test added (officer display projection + item ordering)
+- [x] RSPI/RegSPI/PTR query validators added (pagination/date-range guardrails)
+- [x] RSPI/RegSPI/PTR employee lookup optimized to single bulk MasterData query (N+1 removed)
+- [x] Assignment history event semantics standardized across ICS/PAR/PPEIR (Assigned vs Transferred by prior custodian)
+- [x] PPEIR transfer guard hardened: requires issued item + existing registry + current custodian
+- [x] Ambiguous behavior documented: ICS expiry backfill and reclassification pre-change snapshot intent
+- [ ] Final visual print-layout parity signoff against approved ICS/PAR/SMIR/PPEIR templates (API/data-level cross-check completed; see `ASSETMANAGEMENT-REPORT-ALIGNMENT-CHECKLIST.md`)
+- [x] Full solution build gate revalidated after Vehicle compile fix
 
 ### Client: Playground.Maui
 
