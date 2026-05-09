@@ -320,6 +320,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.Expendable
                     RejectionReason = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     ApprovedBy = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
                     ApprovedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    FulfilledOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     WarehouseLocationId = table.Column<Guid>(type: "uuid", nullable: true),
                     Version = table.Column<byte[]>(type: "bytea", nullable: false),
                     CreatedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),

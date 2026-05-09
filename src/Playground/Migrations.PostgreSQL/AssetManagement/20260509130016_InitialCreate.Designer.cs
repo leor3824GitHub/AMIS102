@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FSH.Playground.Migrations.PostgreSQL.AssetManagement
 {
     [DbContext(typeof(AssetManagementDbContext))]
-    [Migration("20260509113347_AddAssetRegistryAndLocation")]
-    partial class AddAssetRegistryAndLocation
+    [Migration("20260509130016_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

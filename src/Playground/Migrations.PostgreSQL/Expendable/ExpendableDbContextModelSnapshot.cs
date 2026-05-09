@@ -674,9 +674,6 @@ namespace FSH.Playground.Migrations.PostgreSQL.Expendable
                     b.Property<DateTimeOffset?>("ApprovedOnUtc")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTimeOffset?>("FulfilledOnUtc")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("BusinessJustification")
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
@@ -702,6 +699,9 @@ namespace FSH.Playground.Migrations.PostgreSQL.Expendable
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
+
+                    b.Property<DateTimeOffset?>("FulfilledOnUtc")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("IsDeleted")
                         .ValueGeneratedOnAdd()

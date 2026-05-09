@@ -17,7 +17,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.Procurement
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.2")
+                .HasAnnotation("ProductVersion", "10.0.7")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -77,6 +77,11 @@ namespace FSH.Playground.Migrations.PostgreSQL.Procurement
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
                     b.Property<string>("TinNumber")
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)");
@@ -88,6 +93,8 @@ namespace FSH.Playground.Migrations.PostgreSQL.Procurement
                     b.HasIndex("SupplierId");
 
                     b.ToTable("CanvassQuotations", "procurement");
+
+                    b.HasAnnotation("Finbuckle:MultiTenant", true);
                 });
 
             modelBuilder.Entity("FSH.Modules.ProcurementAcquisition.Domain.Canvass.CanvassRequest", b =>
@@ -136,8 +143,12 @@ namespace FSH.Playground.Migrations.PostgreSQL.Procurement
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
                     b.Property<byte[]>("Version")
-                        .IsConcurrencyToken()
                         .IsRequired()
                         .HasColumnType("bytea");
 
@@ -145,12 +156,14 @@ namespace FSH.Playground.Migrations.PostgreSQL.Procurement
 
                     b.HasIndex("PurchaseRequestId");
 
-                    b.HasIndex("RivNumber")
-                        .IsUnique();
-
                     b.HasIndex("Status");
 
+                    b.HasIndex("TenantId", "RivNumber")
+                        .IsUnique();
+
                     b.ToTable("CanvassRequests", "procurement");
+
+                    b.HasAnnotation("Finbuckle:MultiTenant", true);
                 });
 
             modelBuilder.Entity("FSH.Modules.ProcurementAcquisition.Domain.PurchaseOrders.PurchaseOrder", b =>
@@ -255,7 +268,6 @@ namespace FSH.Playground.Migrations.PostgreSQL.Procurement
                         .HasColumnType("character varying(64)");
 
                     b.Property<byte[]>("Version")
-                        .IsConcurrencyToken()
                         .IsRequired()
                         .HasColumnType("bytea");
 
@@ -360,8 +372,12 @@ namespace FSH.Playground.Migrations.PostgreSQL.Procurement
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
                     b.Property<byte[]>("Version")
-                        .IsConcurrencyToken()
                         .IsRequired()
                         .HasColumnType("bytea");
 
@@ -369,12 +385,14 @@ namespace FSH.Playground.Migrations.PostgreSQL.Procurement
 
                     b.HasIndex("DepartmentId");
 
-                    b.HasIndex("PrNumber")
-                        .IsUnique();
-
                     b.HasIndex("Status");
 
+                    b.HasIndex("TenantId", "PrNumber")
+                        .IsUnique();
+
                     b.ToTable("PurchaseRequests", "procurement");
+
+                    b.HasAnnotation("Finbuckle:MultiTenant", true);
                 });
 
             modelBuilder.Entity("FSH.Modules.ProcurementAcquisition.Domain.Canvass.CanvassQuotation", b =>

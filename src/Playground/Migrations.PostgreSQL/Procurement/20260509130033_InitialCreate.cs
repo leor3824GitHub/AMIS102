@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace FSH.Playground.Migrations.PostgreSQL.Procurement
 {
     /// <inheritdoc />
-    public partial class InitialProcurement : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -20,6 +20,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.Procurement
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
                     RivNumber = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
                     PurchaseRequestId = table.Column<Guid>(type: "uuid", nullable: false),
                     ReturnDeadline = table.Column<DateOnly>(type: "date", nullable: false),
@@ -45,6 +46,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.Procurement
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
                     PoNumber = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
                     PoDate = table.Column<DateOnly>(type: "date", nullable: false),
                     PurchaseRequestId = table.Column<Guid>(type: "uuid", nullable: false),
@@ -83,6 +85,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.Procurement
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
                     PrNumber = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
                     PrDate = table.Column<DateOnly>(type: "date", nullable: false),
                     SaiNumber = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
@@ -120,6 +123,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.Procurement
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
                     CanvassRequestId = table.Column<Guid>(type: "uuid", nullable: false),
                     SupplierId = table.Column<Guid>(type: "uuid", nullable: false),
                     SupplierName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
@@ -168,23 +172,16 @@ namespace FSH.Playground.Migrations.PostgreSQL.Procurement
                 column: "PurchaseRequestId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_CanvassRequests_RivNumber",
-                schema: "procurement",
-                table: "CanvassRequests",
-                column: "RivNumber",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
                 name: "IX_CanvassRequests_Status",
                 schema: "procurement",
                 table: "CanvassRequests",
                 column: "Status");
 
             migrationBuilder.CreateIndex(
-                name: "IX_PurchaseOrders_PoNumber",
+                name: "IX_CanvassRequests_TenantId_RivNumber",
                 schema: "procurement",
-                table: "PurchaseOrders",
-                column: "PoNumber",
+                table: "CanvassRequests",
+                columns: new[] { "TenantId", "RivNumber" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -200,23 +197,30 @@ namespace FSH.Playground.Migrations.PostgreSQL.Procurement
                 column: "Status");
 
             migrationBuilder.CreateIndex(
+                name: "IX_PurchaseOrders_TenantId_PoNumber",
+                schema: "procurement",
+                table: "PurchaseOrders",
+                columns: new[] { "TenantId", "PoNumber" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_PurchaseRequests_DepartmentId",
                 schema: "procurement",
                 table: "PurchaseRequests",
                 column: "DepartmentId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_PurchaseRequests_PrNumber",
-                schema: "procurement",
-                table: "PurchaseRequests",
-                column: "PrNumber",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
                 name: "IX_PurchaseRequests_Status",
                 schema: "procurement",
                 table: "PurchaseRequests",
                 column: "Status");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PurchaseRequests_TenantId_PrNumber",
+                schema: "procurement",
+                table: "PurchaseRequests",
+                columns: new[] { "TenantId", "PrNumber" },
+                unique: true);
         }
 
         /// <inheritdoc />
