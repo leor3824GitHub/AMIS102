@@ -1,0 +1,282 @@
+@page "/asset-register/catalog"
+@using FSH.Playground.Blazor.ApiClient
+@inject IArCatalogClient Client
+@inject ISnackbar Snackbar
+
+<FshPageHeader Title="Property Item Catalog (Asset Register)"
+               Description="Manage the local SKU catalog used to mint property numbers and default asset attributes." />
+
+<MudGrid Spacing="3">
+    <!-- Create / Edit Form -->
+    <MudItem xs="12" md="4">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                <MudText Typo="Typo.h6" Class="mb-3">
+                    @(_editing is null ? "New Catalog Item" : $"Edit: {_editing.Code}")
+                </MudText>
+                <MudStack Spacing="2">
+                    <MudTextField @bind-Value="_form.Code" Label="Code" Variant="Variant.Outlined"
+                                  MaxLength="50" Disabled="_editing is not null" Required="true"
+                                  Placeholder="e.g. AIT-CMP-001" />
+                    <MudTextField @bind-Value="_form.Description" Label="Description" Variant="Variant.Outlined"
+                                  MaxLength="200" Required="true" />
+                    <MudTextField @bind-Value="_form.DefaultPropertyClass" Label="Default Property Class" Variant="Variant.Outlined"
+                                  MaxLength="50" Required="true" />
+                    <MudTextField @bind-Value="_form.DefaultCategoryCode" Label="Default Category Code" Variant="Variant.Outlined"
+                                  MaxLength="50" Required="true" />
+                    <MudTextField @bind-Value="_form.DefaultUnit" Label="Default Unit" Variant="Variant.Outlined"
+                                  MaxLength="50" Required="true" Placeholder="e.g. piece, set" />
+                    <MudTextField @bind-Value="_form.UacsObjectCode" Label="UACS Object Code (optional)" Variant="Variant.Outlined"
+                                  MaxLength="50" />
+                    <MudNumericField @bind-Value="_form.EstimatedUsefulLifeYears" Label="Estimated Useful Life (years)"
+                                     Variant="Variant.Outlined" Min="1" Max="50" T="int" Required="true" />
+                    <MudStack Row="true" Spacing="1" Class="mt-2">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                                   OnClick="SaveAsync" Disabled="_busy">
+                            @(_editing is null ? "Create" : "Update")
+                        </MudButton>
+                        @if (_editing is not null)
+                        {
+                            <MudButton Variant="Variant.Outlined" Color="Color.Default"
+                                       OnClick="ClearForm" Disabled="_busy">
+                                Cancel
+                            </MudButton>
+                        }
+                    </MudStack>
+                </MudStack>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    <!-- List -->
+    <MudItem xs="12" md="8">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3">
+                    <MudTextField @bind-Value="_keyword" Label="Search" Variant="Variant.Outlined" Dense="true"
+                                  Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Outlined.Search"
+                                  OnKeyDown="OnSearchKeyDown" Style="flex:1;" />
+                    <MudSelect @bind-Value="_activeFilter" Label="Active" Variant="Variant.Outlined" Dense="true"
+                               T="bool?" Clearable="true" Style="width:120px;">
+                        <MudSelectItem Value="@((bool?)null)">All</MudSelectItem>
+                        <MudSelectItem Value="@((bool?)true)">Active</MudSelectItem>
+                        <MudSelectItem Value="@((bool?)false)">Inactive</MudSelectItem>
+                    </MudSelect>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Primary" Dense="true"
+                               OnClick="LoadAsync" Disabled="_busy">Search</MudButton>
+                </MudStack>
+
+                @if (_busy)
+                {
+                    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+                }
+                else if (!string.IsNullOrEmpty(_error))
+                {
+                    <MudAlert Severity="Severity.Error" Dense="true">@_error</MudAlert>
+                }
+                else
+                {
+                    <MudTable Items="_items" Dense="true" Hover="true" Striped="true" T="ArCatalogItemDto">
+                        <HeaderContent>
+                            <MudTh>Code</MudTh>
+                            <MudTh>Description</MudTh>
+                            <MudTh>Unit</MudTh>
+                            <MudTh Style="text-align:right">Life (yr)</MudTh>
+                            <MudTh>Active</MudTh>
+                            <MudTh>Actions</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd><strong>@context.Code</strong></MudTd>
+                            <MudTd>@context.Description</MudTd>
+                            <MudTd>@context.DefaultUnit</MudTd>
+                            <MudTd Style="text-align:right">@context.EstimatedUsefulLifeYears</MudTd>
+                            <MudTd>
+                                <MudChip T="string" Size="Size.Small"
+                                         Color="@(context.IsActive ? Color.Success : Color.Default)"
+                                         Variant="Variant.Filled">
+                                    @(context.IsActive ? "Active" : "Inactive")
+                                </MudChip>
+                            </MudTd>
+                            <MudTd>
+                                <MudStack Row="true" Spacing="0">
+                                    <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small"
+                                                   Color="Color.Primary" OnClick="@(() => EditItem(context))" />
+                                    <MudIconButton Icon="@(context.IsActive ? Icons.Material.Outlined.ToggleOff : Icons.Material.Outlined.ToggleOn)"
+                                                   Size="Size.Small" Color="@(context.IsActive ? Color.Warning : Color.Success)"
+                                                   OnClick="@(() => ToggleActivationAsync(context))" />
+                                    <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small"
+                                                   Color="Color.Error" OnClick="@(() => DeleteAsync(context))" />
+                                </MudStack>
+                            </MudTd>
+                        </RowTemplate>
+                        <NoRecordsContent>
+                            <MudText Color="Color.Secondary">No catalog items found.</MudText>
+                        </NoRecordsContent>
+                    </MudTable>
+
+                    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mt-3">
+                        <MudText Typo="Typo.caption">Page @_page of @_totalPages (@_totalCount total)</MudText>
+                        <MudStack Row="true" Spacing="1">
+                            <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft" Size="Size.Small"
+                                           Disabled="_page <= 1 || _busy" OnClick="PrevPage" />
+                            <MudIconButton Icon="@Icons.Material.Filled.ChevronRight" Size="Size.Small"
+                                           Disabled="_page >= _totalPages || _busy" OnClick="NextPage" />
+                        </MudStack>
+                    </MudStack>
+                }
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private bool _busy;
+    private string? _error;
+    private string? _keyword;
+    private bool? _activeFilter = true;
+    private int _page = 1;
+    private int _totalPages = 1;
+    private int _totalCount;
+    private const int PageSize = 15;
+    private IReadOnlyList<ArCatalogItemDto> _items = [];
+    private ArCatalogItemDto? _editing;
+
+    private CatalogFormModel _form = new();
+
+    private sealed class CatalogFormModel
+    {
+        public string Code { get; set; } = "";
+        public string Description { get; set; } = "";
+        public string DefaultPropertyClass { get; set; } = "";
+        public string DefaultCategoryCode { get; set; } = "";
+        public string DefaultUnit { get; set; } = "piece";
+        public string? UacsObjectCode { get; set; }
+        public int EstimatedUsefulLifeYears { get; set; } = 10;
+    }
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            var result = await Client.SearchAsync(_keyword, _activeFilter, _page, PageSize);
+            _items = result.Items;
+            _totalCount = result.TotalCount;
+            _totalPages = result.TotalPages > 0 ? result.TotalPages : 1;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_form.Code) || string.IsNullOrWhiteSpace(_form.Description))
+        {
+            Snackbar.Add("Code and Description are required.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            if (_editing is null)
+            {
+                await Client.CreateAsync(new CreateArCatalogItemRequest(
+                    _form.Code, _form.Description, _form.DefaultPropertyClass,
+                    _form.DefaultCategoryCode, _form.DefaultUnit,
+                    _form.UacsObjectCode, _form.EstimatedUsefulLifeYears));
+                Snackbar.Add("Catalog item created.", Severity.Success);
+            }
+            else
+            {
+                await Client.UpdateAsync(_editing.Id, new UpdateArCatalogItemRequest(
+                    _form.Description, _form.DefaultPropertyClass, _form.DefaultCategoryCode,
+                    _form.DefaultUnit, _form.UacsObjectCode, _form.EstimatedUsefulLifeYears));
+                Snackbar.Add("Catalog item updated.", Severity.Success);
+            }
+
+            ClearForm();
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void EditItem(ArCatalogItemDto item)
+    {
+        _editing = item;
+        _form.Code = item.Code;
+        _form.Description = item.Description;
+        _form.DefaultPropertyClass = item.DefaultPropertyClass;
+        _form.DefaultCategoryCode = item.DefaultCategoryCode;
+        _form.DefaultUnit = item.DefaultUnit;
+        _form.UacsObjectCode = item.UacsObjectCode;
+        _form.EstimatedUsefulLifeYears = item.EstimatedUsefulLifeYears;
+    }
+
+    private void ClearForm()
+    {
+        _editing = null;
+        _form = new();
+    }
+
+    private async Task ToggleActivationAsync(ArCatalogItemDto item)
+    {
+        _busy = true;
+        try
+        {
+            await Client.SetActivationAsync(item.Id, !item.IsActive);
+            Snackbar.Add(item.IsActive ? "Item deactivated." : "Item activated.", Severity.Success);
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task DeleteAsync(ArCatalogItemDto item)
+    {
+        _busy = true;
+        try
+        {
+            await Client.DeleteAsync(item.Id);
+            Snackbar.Add("Catalog item deleted.", Severity.Success);
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task PrevPage() { _page--; await LoadAsync(); }
+    private async Task NextPage() { _page++; await LoadAsync(); }
+    private async Task OnSearchKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") { _page = 1; await LoadAsync(); }
+    }
+}

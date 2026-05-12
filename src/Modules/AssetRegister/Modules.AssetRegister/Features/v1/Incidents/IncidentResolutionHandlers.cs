@@ -18,8 +18,9 @@ public sealed class RecordIncidentRecoveryCommandHandler(AssetRegisterDbContext 
             ?? throw new KeyNotFoundException($"Incident item '{cmd.ItemId}' not found.");
         report.RecordRecovery(cmd.ItemId, cmd.RecoveredOn);
 
-        var asset = await db.AssetRegistries.FirstOrDefaultAsync(a => a.Id == item.AssetRegistryId, ct).ConfigureAwait(false);
-        asset?.MarkRecovered(report.Id);
+        var asset = await db.AssetRegistries.FirstOrDefaultAsync(a => a.Id == item.AssetRegistryId, ct).ConfigureAwait(false)
+            ?? throw new KeyNotFoundException($"Asset '{item.AssetRegistryId}' not found.");
+        asset.MarkRecovered(report.Id);
 
         await db.SaveChangesAsync(ct).ConfigureAwait(false);
         return IncidentMapper.ToDto(report);
@@ -39,8 +40,9 @@ public sealed class RecordIncidentSettlementCommandHandler(AssetRegisterDbContex
             ?? throw new KeyNotFoundException($"Incident item '{cmd.ItemId}' not found.");
         report.RecordSettlement(cmd.ItemId, cmd.Amount, cmd.SettledOn);
 
-        var asset = await db.AssetRegistries.FirstOrDefaultAsync(a => a.Id == item.AssetRegistryId, ct).ConfigureAwait(false);
-        asset?.Dispose(report.Id, Contracts.v1.DisposalMethod.Other);
+        var asset = await db.AssetRegistries.FirstOrDefaultAsync(a => a.Id == item.AssetRegistryId, ct).ConfigureAwait(false)
+            ?? throw new KeyNotFoundException($"Asset '{item.AssetRegistryId}' not found.");
+        asset.Dispose(report.Id, Contracts.v1.DisposalMethod.Other);
 
         await db.SaveChangesAsync(ct).ConfigureAwait(false);
         return IncidentMapper.ToDto(report);
@@ -60,8 +62,9 @@ public sealed class GrantIncidentReliefCommandHandler(AssetRegisterDbContext db)
             ?? throw new KeyNotFoundException($"Incident item '{cmd.ItemId}' not found.");
         report.GrantRelief(cmd.ItemId, cmd.GrantedOn, cmd.DecisionRef);
 
-        var asset = await db.AssetRegistries.FirstOrDefaultAsync(a => a.Id == item.AssetRegistryId, ct).ConfigureAwait(false);
-        asset?.Dispose(report.Id, Contracts.v1.DisposalMethod.Other);
+        var asset = await db.AssetRegistries.FirstOrDefaultAsync(a => a.Id == item.AssetRegistryId, ct).ConfigureAwait(false)
+            ?? throw new KeyNotFoundException($"Asset '{item.AssetRegistryId}' not found.");
+        asset.Dispose(report.Id, Contracts.v1.DisposalMethod.Other);
 
         await db.SaveChangesAsync(ct).ConfigureAwait(false);
         return IncidentMapper.ToDto(report);
@@ -81,8 +84,9 @@ public sealed class DerecognizeIncidentItemCommandHandler(AssetRegisterDbContext
             ?? throw new KeyNotFoundException($"Incident item '{cmd.ItemId}' not found.");
         report.MarkDerecognized(cmd.ItemId, cmd.RecordedOn);
 
-        var asset = await db.AssetRegistries.FirstOrDefaultAsync(a => a.Id == item.AssetRegistryId, ct).ConfigureAwait(false);
-        asset?.Dispose(report.Id, Contracts.v1.DisposalMethod.Other);
+        var asset = await db.AssetRegistries.FirstOrDefaultAsync(a => a.Id == item.AssetRegistryId, ct).ConfigureAwait(false)
+            ?? throw new KeyNotFoundException($"Asset '{item.AssetRegistryId}' not found.");
+        asset.Dispose(report.Id, Contracts.v1.DisposalMethod.Other);
 
         await db.SaveChangesAsync(ct).ConfigureAwait(false);
         return IncidentMapper.ToDto(report);

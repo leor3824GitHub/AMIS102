@@ -4,6 +4,7 @@ using FSH.Playground.Blazor;
 using FSH.Playground.Blazor.ApiClient;
 using FSH.Playground.Blazor.Components;
 using FSH.Playground.Blazor.Services;
+using FSH.Playground.Blazor.Services.AssetRegister;
 using FSH.Playground.Blazor.Services.Api;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -142,6 +143,7 @@ builder.Services.AddApiClients(builder.Configuration, builder.Environment);
 
 // Register MasterData service for Supplier and Category operations
 builder.Services.AddScoped<MasterDataService>();
+builder.Services.AddScoped<IAssetRegisterReportsClient, AssetRegisterReportsClient>();
 
 // Response Compression for static assets and API responses
 builder.Services.AddResponseCompression(options =>

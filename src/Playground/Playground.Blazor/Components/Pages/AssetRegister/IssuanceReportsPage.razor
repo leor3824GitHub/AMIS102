@@ -1,0 +1,439 @@
+@page "/asset-register/issuance"
+@using FSH.Playground.Blazor.ApiClient
+@inject IArIssuanceReportClient Client
+@inject ISnackbar Snackbar
+
+<FshPageHeader Title="Property Issuance Reports (SMIR / PPEIR)"
+               Description="Manage Semi-Expendable Issuance Records (SMIR) and PPE Issuance Reports (PPEIR) per COA 2022-004." />
+
+<MudGrid Spacing="3">
+    <!-- Filters -->
+    <MudItem xs="12">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                <MudGrid Spacing="2">
+                    <MudItem xs="12" md="4">
+                        <MudTextField @bind-Value="_keyword" Label="Report No. / Keyword" Variant="Variant.Outlined"
+                                      Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Outlined.Search"
+                                      OnKeyDown="OnSearchKeyDown" Immediate="false" />
+                    </MudItem>
+                    <MudItem xs="6" md="2">
+                        <MudSelect @bind-Value="_typeFilter" Label="Report Type" Variant="Variant.Outlined" T="int?" Clearable="true">
+                            <MudSelectItem Value="@((int?)null)">All</MudSelectItem>
+                            <MudSelectItem Value="@((int?)0)">SMIR (SE)</MudSelectItem>
+                            <MudSelectItem Value="@((int?)1)">PPEIR</MudSelectItem>
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="6" md="2">
+                        <MudSelect @bind-Value="_statusFilter" Label="Status" Variant="Variant.Outlined" T="int?" Clearable="true">
+                            <MudSelectItem Value="@((int?)null)">All</MudSelectItem>
+                            <MudSelectItem Value="@((int?)0)">Draft</MudSelectItem>
+                            <MudSelectItem Value="@((int?)1)">Posted</MudSelectItem>
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="2" Class="d-flex align-end">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                                   StartIcon="@Icons.Material.Outlined.Search" OnClick="LoadAsync" Disabled="_busy">
+                            Search
+                        </MudButton>
+                    </MudItem>
+                    <MudItem xs="12" md="2" Class="d-flex align-end">
+                        <MudButton Variant="Variant.Outlined" Color="Color.Success" FullWidth="true"
+                                   StartIcon="@Icons.Material.Outlined.Add" OnClick="@(() => _showCreateForm = !_showCreateForm)">
+                            New Draft
+                        </MudButton>
+                    </MudItem>
+                </MudGrid>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    <!-- Create Form -->
+    @if (_showCreateForm)
+    {
+        <MudItem xs="12" md="5">
+            <MudCard Elevation="2">
+                <MudCardHeader>
+                    <CardHeaderContent><MudText Typo="Typo.h6">Create Issuance Report Draft</MudText></CardHeaderContent>
+                    <CardHeaderActions>
+                        <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small"
+                                       OnClick="@(() => _showCreateForm = false)" />
+                    </CardHeaderActions>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudStack Spacing="2">
+                        <MudSelect @bind-Value="_createForm.ReportType" Label="Report Type" Variant="Variant.Outlined" T="int" Required="true">
+                            <MudSelectItem Value="0">SMIR (Semi-Expendable)</MudSelectItem>
+                            <MudSelectItem Value="1">PPEIR (PPE)</MudSelectItem>
+                        </MudSelect>
+                        <MudTextField @bind-Value="_createForm.FundCluster" Label="Fund Cluster" Variant="Variant.Outlined"
+                                      MaxLength="50" Required="true" />
+                        <MudDatePicker @bind-Date="_createForm.PeriodFromNullable" Label="Period From" Variant="Variant.Outlined"
+                                       DateFormat="MM/dd/yyyy" Required="true" />
+                        <MudDatePicker @bind-Date="_createForm.PeriodToNullable" Label="Period To" Variant="Variant.Outlined"
+                                       DateFormat="MM/dd/yyyy" Required="true" />
+                        <MudTextField @bind-Value="_createForm.PreparedByName" Label="Prepared By (Name)" Variant="Variant.Outlined"
+                                      MaxLength="100" Required="true" />
+                        <MudTextField @bind-Value="_createForm.PreparedByDesignation" Label="Prepared By (Designation)" Variant="Variant.Outlined"
+                                      MaxLength="100" />
+                        <MudButton Variant="Variant.Filled" Color="Color.Success" FullWidth="true"
+                                   OnClick="CreateDraftAsync" Disabled="_busy">
+                            Create Draft
+                        </MudButton>
+                    </MudStack>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    }
+
+    <!-- Results -->
+    <MudItem xs="12">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                @if (_busy)
+                {
+                    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+                }
+                else if (!string.IsNullOrEmpty(_error))
+                {
+                    <MudAlert Severity="Severity.Error" Dense="true">@_error</MudAlert>
+                }
+                else
+                {
+                    <MudTable Items="_items" Dense="true" Hover="true" Striped="true"
+                              OnRowClick="OnRowClick" T="ArIssuanceReportSummaryDto" RowClass="cursor-pointer">
+                        <HeaderContent>
+                            <MudTh>Report No.</MudTh>
+                            <MudTh>Type</MudTh>
+                            <MudTh>Status</MudTh>
+                            <MudTh>Period</MudTh>
+                            <MudTh Style="text-align:right">Lines</MudTh>
+                            <MudTh Style="text-align:right">Total Amount (₱)</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd><strong>@context.ReportNo</strong></MudTd>
+                            <MudTd>
+                                <MudChip T="string" Size="Size.Small"
+                                         Color="@(context.ReportType == 0 ? Color.Info : Color.Secondary)"
+                                         Variant="Variant.Outlined">
+                                    @(context.ReportType == 0 ? "SMIR" : "PPEIR")
+                                </MudChip>
+                            </MudTd>
+                            <MudTd>
+                                <MudChip T="string" Size="Size.Small"
+                                         Color="@(context.Status == 0 ? Color.Warning : Color.Success)"
+                                         Variant="Variant.Filled">
+                                    @(context.Status == 0 ? "Draft" : "Posted")
+                                </MudChip>
+                            </MudTd>
+                            <MudTd>@context.PeriodFromDate.ToString("yyyy-MM-dd") — @context.PeriodToDate.ToString("yyyy-MM-dd")</MudTd>
+                            <MudTd Style="text-align:right">@context.LineCount</MudTd>
+                            <MudTd Style="text-align:right">@context.TotalAmount.ToString("N2")</MudTd>
+                        </RowTemplate>
+                        <NoRecordsContent>
+                            <MudText Color="Color.Secondary">No issuance reports found.</MudText>
+                        </NoRecordsContent>
+                    </MudTable>
+
+                    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mt-3">
+                        <MudText Typo="Typo.caption">Page @_page of @_totalPages (@_totalCount total)</MudText>
+                        <MudStack Row="true" Spacing="1">
+                            <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft" Size="Size.Small"
+                                           Disabled="_page <= 1 || _busy" OnClick="PrevPage" />
+                            <MudIconButton Icon="@Icons.Material.Filled.ChevronRight" Size="Size.Small"
+                                           Disabled="_page >= _totalPages || _busy" OnClick="NextPage" />
+                        </MudStack>
+                    </MudStack>
+                }
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    <!-- Detail panel -->
+    @if (_selected is not null)
+    {
+        <MudItem xs="12">
+            <MudCard Elevation="2">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                            <MudText Typo="Typo.h6">@_selected.ReportNo</MudText>
+                            <MudChip T="string" Size="Size.Small"
+                                     Color="@(_selected.Status == 0 ? Color.Warning : Color.Success)"
+                                     Variant="Variant.Filled">
+                                @(_selected.Status == 0 ? "Draft" : "Posted")
+                            </MudChip>
+                        </MudStack>
+                    </CardHeaderContent>
+                    <CardHeaderActions>
+                        <MudStack Row="true" Spacing="1">
+                            <MudTooltip Text="View report in Reports Workspace">
+                                <MudIconButton Icon="@Icons.Material.Outlined.Preview" Size="Size.Small"
+                                               Href="@($"/asset-register/reports?issuanceReportId={_selected.Id}")" />
+                            </MudTooltip>
+                            <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small"
+                                           OnClick="@(() => _selected = null)" />
+                        </MudStack>
+                    </CardHeaderActions>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudGrid Class="mb-3">
+                        <MudItem xs="6" md="3">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Type</MudText>
+                            <MudText Typo="Typo.body2">@(_selected.ReportType == 0 ? "SMIR" : "PPEIR")</MudText>
+                        </MudItem>
+                        <MudItem xs="6" md="3">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Fund Cluster</MudText>
+                            <MudText Typo="Typo.body2">@_selected.FundCluster</MudText>
+                        </MudItem>
+                        <MudItem xs="6" md="3">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Period</MudText>
+                            <MudText Typo="Typo.body2">@_selected.PeriodFromDate.ToString("yyyy-MM-dd") → @_selected.PeriodToDate.ToString("yyyy-MM-dd")</MudText>
+                        </MudItem>
+                        <MudItem xs="6" md="3">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Prepared By</MudText>
+                            <MudText Typo="Typo.body2">@_selected.PreparedBy.PrintedName</MudText>
+                        </MudItem>
+                        @if (_selected.PostedBy is not null)
+                        {
+                            <MudItem xs="6" md="3">
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">Posted By / On</MudText>
+                                <MudText Typo="Typo.body2">@_selected.PostedBy.PrintedName — @_selected.PostedOn?.ToString("yyyy-MM-dd")</MudText>
+                            </MudItem>
+                        }
+                    </MudGrid>
+
+                    <MudText Typo="Typo.subtitle2" Class="mb-2">Lines (@_selected.Lines.Count)</MudText>
+                    <MudTable Items="_selected.Lines" Dense="true" Striped="true">
+                        <HeaderContent>
+                            <MudTh>Property No.</MudTh>
+                            <MudTh>Description</MudTh>
+                            <MudTh>Unit</MudTh>
+                            <MudTh Style="text-align:right">Qty</MudTh>
+                            <MudTh Style="text-align:right">Unit Cost (₱)</MudTh>
+                            <MudTh Style="text-align:right">Amount (₱)</MudTh>
+                            <MudTh>RC Code</MudTh>
+                            @if (_selected.Status == 0)
+                            {
+                                <MudTh>Remove</MudTh>
+                            }
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd>@context.Snapshot.PropertyNo</MudTd>
+                            <MudTd>@context.Snapshot.Description</MudTd>
+                            <MudTd>@context.Snapshot.Unit</MudTd>
+                            <MudTd Style="text-align:right">@context.SnapshotQuantityIssued</MudTd>
+                            <MudTd Style="text-align:right">@context.SnapshotUnitCost.ToString("N2")</MudTd>
+                            <MudTd Style="text-align:right">@context.SnapshotAmount.ToString("N2")</MudTd>
+                            <MudTd>@(context.SnapshotResponsibilityCenterCode ?? "—")</MudTd>
+                            @if (_selected.Status == 0)
+                            {
+                                <MudTd>
+                                    <MudIconButton Icon="@Icons.Material.Outlined.Remove" Size="Size.Small"
+                                                   Color="Color.Error"
+                                                   OnClick="@(() => RemoveLineAsync(context.Id))" />
+                                </MudTd>
+                            }
+                        </RowTemplate>
+                    </MudTable>
+
+                    <!-- Post action (Draft only) -->
+                    @if (_selected.Status == 0)
+                    {
+                        <MudDivider Class="my-3" />
+                        <MudText Typo="Typo.subtitle2" Class="mb-2">Post Report</MudText>
+                        <MudGrid Spacing="2">
+                            <MudItem xs="12" md="3">
+                                <MudTextField @bind-Value="_postForm.CertifiedByName" Label="Certified By (Name)" Variant="Variant.Outlined" MaxLength="100" Required="true" />
+                            </MudItem>
+                            <MudItem xs="12" md="3">
+                                <MudTextField @bind-Value="_postForm.CertifiedByDesignation" Label="Designation" Variant="Variant.Outlined" MaxLength="100" />
+                            </MudItem>
+                            <MudItem xs="12" md="3">
+                                <MudTextField @bind-Value="_postForm.PostedByName" Label="Posted By (Name)" Variant="Variant.Outlined" MaxLength="100" Required="true" />
+                            </MudItem>
+                            <MudItem xs="6" md="2">
+                                <MudDatePicker @bind-Date="_postForm.PostedOnNullable" Label="Posted On" Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" Required="true" />
+                            </MudItem>
+                            <MudItem xs="6" md="1" Class="d-flex align-end">
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                                           OnClick="PostReportAsync" Disabled="_busy">
+                                    Post
+                                </MudButton>
+                            </MudItem>
+                        </MudGrid>
+                    }
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    }
+</MudGrid>
+
+@code {
+    private bool _busy;
+    private string? _error;
+    private string? _keyword;
+    private int? _typeFilter;
+    private int? _statusFilter;
+    private int _page = 1;
+    private int _totalPages = 1;
+    private int _totalCount;
+    private const int PageSize = 15;
+    private IReadOnlyList<ArIssuanceReportSummaryDto> _items = [];
+    private ArIssuanceReportDto? _selected;
+    private bool _showCreateForm;
+
+    private CreateFormModel _createForm = new();
+    private PostFormModel _postForm = new();
+
+    private sealed class CreateFormModel
+    {
+        public int ReportType { get; set; }
+        public string FundCluster { get; set; } = "";
+        public DateTime? PeriodFromNullable { get; set; }
+        public DateTime? PeriodToNullable { get; set; }
+        public string PreparedByName { get; set; } = "";
+        public string? PreparedByDesignation { get; set; }
+    }
+
+    private sealed class PostFormModel
+    {
+        public string CertifiedByName { get; set; } = "";
+        public string? CertifiedByDesignation { get; set; }
+        public string PostedByName { get; set; } = "";
+        public DateTime? PostedOnNullable { get; set; }
+    }
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            var result = await Client.SearchAsync(_keyword, _typeFilter, _statusFilter, _page, PageSize);
+            _items = result.Items;
+            _totalCount = result.TotalCount;
+            _totalPages = result.TotalPages > 0 ? result.TotalPages : 1;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task OnRowClick(TableRowClickEventArgs<ArIssuanceReportSummaryDto> args)
+    {
+        _busy = true;
+        try
+        {
+            _selected = await Client.GetAsync(args.Item.Id);
+            _postForm = new();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task CreateDraftAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_createForm.PreparedByName) ||
+            !_createForm.PeriodFromNullable.HasValue || !_createForm.PeriodToNullable.HasValue)
+        {
+            Snackbar.Add("All required fields must be filled.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            var preparedBy = new ArEmployeeRefDto(Guid.Empty, _createForm.PreparedByName.Trim(), _createForm.PreparedByDesignation);
+            var req = new CreateIssuanceReportDraftRequest(
+                _createForm.ReportType,
+                _createForm.FundCluster,
+                DateOnly.FromDateTime(_createForm.PeriodFromNullable.Value),
+                DateOnly.FromDateTime(_createForm.PeriodToNullable.Value),
+                preparedBy);
+
+            _selected = await Client.CreateDraftAsync(req);
+            Snackbar.Add("Report draft created.", Severity.Success);
+            _showCreateForm = false;
+            _createForm = new();
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task RemoveLineAsync(Guid lineId)
+    {
+        if (_selected is null) return;
+        _busy = true;
+        try
+        {
+            _selected = await Client.RemoveLineAsync(_selected.Id, lineId);
+            Snackbar.Add("Line removed.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task PostReportAsync()
+    {
+        if (_selected is null || string.IsNullOrWhiteSpace(_postForm.CertifiedByName) ||
+            string.IsNullOrWhiteSpace(_postForm.PostedByName) || !_postForm.PostedOnNullable.HasValue)
+        {
+            Snackbar.Add("All post fields are required.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            var req = new PostIssuanceReportRequest(
+                new ArEmployeeRefDto(Guid.Empty, _postForm.CertifiedByName.Trim(), _postForm.CertifiedByDesignation),
+                new ArEmployeeRefDto(Guid.Empty, _postForm.PostedByName.Trim(), null),
+                DateOnly.FromDateTime(_postForm.PostedOnNullable.Value));
+            _selected = await Client.PostAsync(_selected.Id, req);
+            Snackbar.Add("Report posted.", Severity.Success);
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task PrevPage() { _page--; await LoadAsync(); }
+    private async Task NextPage() { _page++; await LoadAsync(); }
+    private async Task OnSearchKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") { _page = 1; await LoadAsync(); }
+    }
+}

@@ -163,5 +163,9 @@ public class AssetRegisterModule : IModule
         // Unserviceable property reports (IIRUSP / IIRUP) — Phase 4
         var unserviceable = moduleGroup.MapGroup("/unserviceable");
         Features.v1.Unserviceable.UnserviceableEndpoints.MapUnserviceableEndpoints(unserviceable);
+
+        // Report rendering endpoints (ICS/PAR, RSPI/PPEIR, RPCSEMEX/RPCPPE, RegSPI, RLSDDSP, IIRUSP/IIRUP) — Phase 5
+        var reports = moduleGroup.MapGroup("/reports");
+        Features.v1.Reports.ReportEndpoints.MapReportEndpoints(reports);
     }
 }

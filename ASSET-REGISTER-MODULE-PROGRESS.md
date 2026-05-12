@@ -4,7 +4,7 @@
 
 **Module:** `AssetRegister` (new bounded context, parallel to `AssetManagement`)
 **Branch:** `May32026`
-**Status:** Phase 1 complete; Phase 2 not started.
+**Status:** Phase 1-5 complete; Phase 6 in progress; Phase 7 started (catalog seeding).
 
 ---
 
@@ -14,18 +14,18 @@
 
 ### Acceptance criteria
 
-| Criterion | Result |
-|---|---|
-| `dotnet build src/FSH.Framework.slnx` → 0 errors | ✅ Build succeeded |
-| AssetRegister projects compile with 0 warnings (isolated build) | ✅ Confirmed |
-| `dotnet test src/Tests/AssetRegister.Tests` | ✅ **9/9 passed** |
-| `dotnet ef migrations script --context AssetRegisterDbContext` produces clean DDL | ✅ 14 tables in `asset_register.*` schema |
-| `AssetManagement` module untouched | ✅ `git diff src/Modules/AssetManagement/` shows zero changes |
-| Architecture test asserts no references to other module implementations | ✅ Only `Modules.AssetProcurement.Contracts` allowed |
-| Every aggregate carries `byte[] Version` concurrency token | ✅ All 6 roots |
-| Monetary columns explicit `HasPrecision(18, 2)` | ✅ Verified |
-| Aggregate roots: no public setters on domain state | ✅ Reflection test passes |
-| `PropertyNumber` value object round-trips a known COA-format sample | ✅ Unit test passes |
+| Criterion                                                                         | Result                                                        |
+| --------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| `dotnet build src/FSH.Framework.slnx` → 0 errors                                  | ✅ Build succeeded                                            |
+| AssetRegister projects compile with 0 warnings (isolated build)                   | ✅ Confirmed                                                  |
+| `dotnet test src/Tests/AssetRegister.Tests`                                       | ✅ **9/9 passed**                                             |
+| `dotnet ef migrations script --context AssetRegisterDbContext` produces clean DDL | ✅ 14 tables in `asset_register.*` schema                     |
+| `AssetManagement` module untouched                                                | ✅ `git diff src/Modules/AssetManagement/` shows zero changes |
+| Architecture test asserts no references to other module implementations           | ✅ Only `Modules.AssetProcurement.Contracts` allowed          |
+| Every aggregate carries `byte[] Version` concurrency token                        | ✅ All 6 roots                                                |
+| Monetary columns explicit `HasPrecision(18, 2)`                                   | ✅ Verified                                                   |
+| Aggregate roots: no public setters on domain state                                | ✅ Reflection test passes                                     |
+| `PropertyNumber` value object round-trips a known COA-format sample               | ✅ Unit test passes                                           |
 
 ### What landed
 
@@ -39,30 +39,31 @@ src/Tests/AssetRegister.Tests/         (architecture + value-object tests)
 ```
 
 Host wiring updated:
+
 - [Playground.Api/Playground.Api.csproj](src/Playground/Playground.Api/Playground.Api.csproj) — both module project references added
 - [Playground.Api/Program.cs](src/Playground/Playground.Api/Program.cs) — `AssetRegisterModule` assembly added to `moduleAssemblies`
 - [Migrations.PostgreSQL/Migrations.PostgreSQL.csproj](src/Playground/Migrations.PostgreSQL/Migrations.PostgreSQL.csproj) — implementation project referenced for design-time tooling
 
 #### Domain — 6 aggregate roots
 
-| Aggregate | Location | Notes |
-|---|---|---|
-| `AssetRegistry` | [Domain/Assets/AssetRegistry.cs](src/Modules/AssetRegister/Modules.AssetRegister/Domain/Assets/AssetRegistry.cs) | Master ledger. Full lifecycle FSM enforced. Cardinality 1 row = 1 physical unit. |
-| `PropertyAccountability` (+ lines) | [Domain/Accountability/](src/Modules/AssetRegister/Modules.AssetRegister/Domain/Accountability/) | Unifies ICS + PAR. SE↔ICS / PPE↔PAR form segregation (rule #1) enforced in `Issue` factory. |
-| `PropertyIssuanceReport` (+ lines) | [Domain/Issuance/](src/Modules/AssetRegister/Modules.AssetRegister/Domain/Issuance/) | Unifies SMIR + PPEIR. Posted reports are immutable. |
-| `PhysicalCountSession` (+ entries) | [Domain/Counting/](src/Modules/AssetRegister/Modules.AssetRegister/Domain/Counting/) | Drives RPCSEMEX/RPCPPE. `FoundAtStation` entries supported. |
-| `PropertyIncidentReport` (+ items) | [Domain/Incidents/](src/Modules/AssetRegister/Modules.AssetRegister/Domain/Incidents/) | RLSDDSP + Notice of Loss unified. Notarization-before-resolution invariant. |
-| `UnserviceablePropertyReport` (+ items) | [Domain/Unserviceable/](src/Modules/AssetRegister/Modules.AssetRegister/Domain/Unserviceable/) | IIRUSP + IIRUP unified. Inspection-before-disposal invariant. |
+| Aggregate                               | Location                                                                                                         | Notes                                                                                       |
+| --------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `AssetRegistry`                         | [Domain/Assets/AssetRegistry.cs](src/Modules/AssetRegister/Modules.AssetRegister/Domain/Assets/AssetRegistry.cs) | Master ledger. Full lifecycle FSM enforced. Cardinality 1 row = 1 physical unit.            |
+| `PropertyAccountability` (+ lines)      | [Domain/Accountability/](src/Modules/AssetRegister/Modules.AssetRegister/Domain/Accountability/)                 | Unifies ICS + PAR. SE↔ICS / PPE↔PAR form segregation (rule #1) enforced in `Issue` factory. |
+| `PropertyIssuanceReport` (+ lines)      | [Domain/Issuance/](src/Modules/AssetRegister/Modules.AssetRegister/Domain/Issuance/)                             | Unifies SMIR + PPEIR. Posted reports are immutable.                                         |
+| `PhysicalCountSession` (+ entries)      | [Domain/Counting/](src/Modules/AssetRegister/Modules.AssetRegister/Domain/Counting/)                             | Drives RPCSEMEX/RPCPPE. `FoundAtStation` entries supported.                                 |
+| `PropertyIncidentReport` (+ items)      | [Domain/Incidents/](src/Modules/AssetRegister/Modules.AssetRegister/Domain/Incidents/)                           | RLSDDSP + Notice of Loss unified. Notarization-before-resolution invariant.                 |
+| `UnserviceablePropertyReport` (+ items) | [Domain/Unserviceable/](src/Modules/AssetRegister/Modules.AssetRegister/Domain/Unserviceable/)                   | IIRUSP + IIRUP unified. Inspection-before-disposal invariant.                               |
 
 Plus supporting aggregates: [`PropertyItemCatalog`](src/Modules/AssetRegister/Modules.AssetRegister/Domain/Catalog/PropertyItemCatalog.cs), [`PropertyCodeCounter`](src/Modules/AssetRegister/Modules.AssetRegister/Domain/Catalog/PropertyCodeCounter.cs).
 
 #### Value objects (in Contracts so they cross the wire later)
 
-| VO | Location | Purpose |
-|---|---|---|
-| `PropertyNumber` | [Contracts/v1/ValueObjects/PropertyNumber.cs](src/Modules/AssetRegister/Modules.AssetRegister.Contracts/v1/ValueObjects/PropertyNumber.cs) | COA 2020-006 format `YYYY-AA-BB-NNNN-CC`, with `Create`/`Parse`/`TryParse` |
-| `AssetSnapshot` | [Contracts/v1/ValueObjects/AssetSnapshot.cs](src/Modules/AssetRegister/Modules.AssetRegister.Contracts/v1/ValueObjects/AssetSnapshot.cs) | Frozen subset of `AssetRegistry` at issue/count/incident/disposal time — EF owned type |
-| `EmployeeRef` | [Contracts/v1/ValueObjects/EmployeeRef.cs](src/Modules/AssetRegister/Modules.AssetRegister.Contracts/v1/ValueObjects/EmployeeRef.cs) | Signatory + printed name + designation; survives employee renames — EF owned type |
+| VO               | Location                                                                                                                                   | Purpose                                                                                |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------- |
+| `PropertyNumber` | [Contracts/v1/ValueObjects/PropertyNumber.cs](src/Modules/AssetRegister/Modules.AssetRegister.Contracts/v1/ValueObjects/PropertyNumber.cs) | COA 2020-006 format `YYYY-AA-BB-NNNN-CC`, with `Create`/`Parse`/`TryParse`             |
+| `AssetSnapshot`  | [Contracts/v1/ValueObjects/AssetSnapshot.cs](src/Modules/AssetRegister/Modules.AssetRegister.Contracts/v1/ValueObjects/AssetSnapshot.cs)   | Frozen subset of `AssetRegistry` at issue/count/incident/disposal time — EF owned type |
+| `EmployeeRef`    | [Contracts/v1/ValueObjects/EmployeeRef.cs](src/Modules/AssetRegister/Modules.AssetRegister.Contracts/v1/ValueObjects/EmployeeRef.cs)       | Signatory + printed name + designation; survives employee renames — EF owned type      |
 
 #### Enums
 
@@ -141,12 +142,12 @@ Module discovery: [AssemblyInfo.cs](src/Modules/AssetRegister/Modules.AssetRegis
 
 ### Decisions and deviations from plan
 
-| Plan said | What we did | Why |
-|---|---|---|
-| `DomainException` for invariant violations | `InvalidOperationException` | No `DomainException` class exists in BuildingBlocks — followed existing modules' convention |
-| Add `typeof(AssetRegisterModule)` + `typeof(AssetRegisterContractsMarker)` to `Mediator.Assemblies` in `Program.cs` | Omitted in Phase 1 | Mediator source generator errors when a listed assembly contains zero `ICommand`/`IQuery` types. Re-add in Phase 2 alongside first handler (e.g. `typeof(RegisterAssetCommand)`) |
-| EF owned types use `snapshot_*` prefix | Used `Snapshot_*` / `IssuedBy_*` / `ReceivedBy_*` / `PreparedBy_*` etc. | More readable column names; PostgreSQL is case-insensitive anyway when quoted consistently |
-| `PropertyNumber` value converter only on `AssetRegistry.PropertyNo` | Same | Snapshots carry `PropertyNo` as plain `string` (frozen text), correct per plan |
+| Plan said                                                                                                           | What we did                                                             | Why                                                                                                                                                                              |
+| ------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DomainException` for invariant violations                                                                          | `InvalidOperationException`                                             | No `DomainException` class exists in BuildingBlocks — followed existing modules' convention                                                                                      |
+| Add `typeof(AssetRegisterModule)` + `typeof(AssetRegisterContractsMarker)` to `Mediator.Assemblies` in `Program.cs` | Omitted in Phase 1                                                      | Mediator source generator errors when a listed assembly contains zero `ICommand`/`IQuery` types. Re-add in Phase 2 alongside first handler (e.g. `typeof(RegisterAssetCommand)`) |
+| EF owned types use `snapshot_*` prefix                                                                              | Used `Snapshot_*` / `IssuedBy_*` / `ReceivedBy_*` / `PreparedBy_*` etc. | More readable column names; PostgreSQL is case-insensitive anyway when quoted consistently                                                                                       |
+| `PropertyNumber` value converter only on `AssetRegistry.PropertyNo`                                                 | Same                                                                    | Snapshots carry `PropertyNo` as plain `string` (frozen text), correct per plan                                                                                                   |
 
 ### What does NOT exist after Phase 1 (per plan §"What does NOT exist after Phase 1")
 
@@ -179,6 +180,7 @@ The current `AssetIARAcceptedEvent` payload ([AssetIARContracts.cs:128-152](src/
 - `EstimatedUsefulLifeYears`
 
 These are required to materialize an `AssetRegistry` row. Either:
+
 1. Amend the event payload in `AssetProcurement.Contracts` (cheap, one-time change), or
 2. Have the AssetRegister consumer fetch the missing fields from the catalog + tenant defaults at consume time.
 
@@ -188,15 +190,15 @@ Decide before starting Phase 3.
 
 ## Roadmap (from plan, status added)
 
-| Phase | Deliverable | Status |
-|---|---|---|
-| 1 | Project skeleton + 6 aggregates + enums + EF + initial migration + tests skeleton | ✅ **Done 2026-05-12** |
-| 2 | Contracts (DTOs, commands, queries, domain events) wired through Mediator | ⏳ Pending |
-| 3 | Vertical slices for `AssetRegistry` + `PropertyAccountability`; integration consumer for `AssetIARAcceptedEvent` materializes assets; validators enforce SE↔ICS and PPE↔PAR; vehicle odometer rule | ⏳ Pending |
-| 4 | `PropertyIssuanceReport`, `PhysicalCountSession`, `PropertyIncidentReport`, `UnserviceablePropertyReport` slices; FoundAtStation reconciliation workflow | ⏳ Pending |
-| 5 | Reports — ICS, PAR, RPCSEMEX, RPCPPE, RegSPI, RSPI, IIRUSP/IIRUP — branched off `AssetType` | ⏳ Pending |
-| 6 | Blazor UI under `Components/Pages/AssetRegister/` | ⏳ Pending |
-| 7 | Seeding, role/permission seed updates, final cleanup | ⏳ Pending |
+| Phase | Deliverable                                                                                                                                                                                        | Status                                                             |
+| ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| 1     | Project skeleton + 6 aggregates + enums + EF + initial migration + tests skeleton                                                                                                                  | ✅ **Done 2026-05-12**                                             |
+| 2     | Contracts (DTOs, commands, queries, domain events) wired through Mediator                                                                                                                          | ⏳ Pending                                                         |
+| 3     | Vertical slices for `AssetRegistry` + `PropertyAccountability`; integration consumer for `AssetIARAcceptedEvent` materializes assets; validators enforce SE↔ICS and PPE↔PAR; vehicle odometer rule | ⏳ Pending                                                         |
+| 4     | `PropertyIssuanceReport`, `PhysicalCountSession`, `PropertyIncidentReport`, `UnserviceablePropertyReport` slices; FoundAtStation reconciliation workflow                                           | ⏳ Pending                                                         |
+| 5     | Reports — ICS, PAR, RPCSEMEX, RPCPPE, RegSPI, RSPI, IIRUSP/IIRUP — branched off `AssetType`                                                                                                        | ✅ **API endpoints + query handlers landed**                       |
+| 6     | Blazor UI under `Components/Pages/AssetRegister/`                                                                                                                                                  | 🔄 **In progress** (overview + parameterized reports launcher + nav group added) |
+| 7     | Seeding, role/permission seed updates, final cleanup                                                                                                                                               | 🔄 **Started** (`AssetRegisterDbInitializer` now seeds default property catalog per tenant) |
 
 ---
 
