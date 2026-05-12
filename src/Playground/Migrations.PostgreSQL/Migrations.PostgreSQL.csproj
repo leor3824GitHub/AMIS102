@@ -25,6 +25,7 @@
   <ProjectReference Include="..\..\Modules\Finance\Modules.Finance\Modules.Finance.csproj" />
   <ProjectReference Include="..\..\Modules\AssetManagement\Modules.AssetManagement\Modules.AssetManagement.csproj" />
   <ProjectReference Include="..\..\Modules\AssetProcurement\Modules.AssetProcurement\Modules.AssetProcurement.csproj" />
+  <ProjectReference Include="..\..\Modules\AssetRegister\Modules.AssetRegister\Modules.AssetRegister.csproj" />
   <ProjectReference Include="..\..\Modules\ProcurementPlanning\Modules.ProcurementPlanning\Modules.ProcurementPlanning.csproj" />
 	</ItemGroup>
 

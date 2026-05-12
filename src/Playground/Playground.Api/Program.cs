@@ -14,6 +14,7 @@ using FSH.Modules.Finance.Contracts.v1.DisbursementVouchers;
 using FSH.Modules.AssetManagement;
 using FSH.Modules.AssetProcurement;
 using FSH.Modules.AssetProcurement.Contracts.v1.AssetPurchaseRequests;
+using FSH.Modules.AssetRegister;
 using FSH.Modules.ProcurementPlanning;
 using FSH.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
 using FSH.Modules.Identity;
@@ -69,6 +70,7 @@ builder.Services.AddMediator(o =>
         typeof(AssetManagementModule),
         typeof(AssetProcurementModule),
         typeof(CreateAssetPurchaseRequestCommand),
+        // AssetRegister: no commands/queries in Phase 1; add to Mediator.Assemblies in Phase 2 alongside first handler.
         typeof(ProcurementPlanningModule),
         typeof(CreatePpmpCommand)];
 });
@@ -85,6 +87,7 @@ var moduleAssemblies = new Assembly[]
     typeof(FinanceModule).Assembly,
     typeof(AssetManagementModule).Assembly,
     typeof(AssetProcurementModule).Assembly,
+    typeof(AssetRegisterModule).Assembly,
     typeof(ProcurementPlanningModule).Assembly
 };
 
