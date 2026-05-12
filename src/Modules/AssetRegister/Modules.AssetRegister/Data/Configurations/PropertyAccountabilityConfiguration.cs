@@ -50,6 +50,15 @@ internal sealed class PropertyAccountabilityLineConfiguration : IEntityTypeConfi
         builder.OwnsOne(x => x.Snapshot, n => n.ConfigureSnapshot());
         builder.Navigation(x => x.Snapshot).IsRequired();
 
+        builder.OwnsOne(x => x.VehicleProfile, v =>
+        {
+            v.Property(p => p.OdometerAtIssue).HasColumnName("vehicle_odometer_at_issue");
+            v.Property(p => p.OdometerAtReturn).HasColumnName("vehicle_odometer_at_return");
+            v.Property(p => p.PlateNumber).HasMaxLength(32).HasColumnName("vehicle_plate_number");
+            v.Property(p => p.EngineNumber).HasMaxLength(64).HasColumnName("vehicle_engine_number");
+            v.Property(p => p.ChassisNumber).HasMaxLength(64).HasColumnName("vehicle_chassis_number");
+        });
+
         builder.HasIndex(x => new { x.AccountabilityId, x.LineStatus });
         builder.HasIndex(x => x.AssetRegistryId);
     }

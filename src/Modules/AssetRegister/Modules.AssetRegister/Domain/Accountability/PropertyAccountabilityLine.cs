@@ -18,6 +18,8 @@ public sealed class PropertyAccountabilityLine
     public AssetCondition? ReturnedConditionAtReturn { get; private set; }
     public Guid? LostOnIncidentId { get; private set; }
 
+    public VehicleAccountabilityProfile? VehicleProfile { get; private set; }
+
     private PropertyAccountabilityLine() { }
 
     internal static PropertyAccountabilityLine Create(
@@ -25,7 +27,8 @@ public sealed class PropertyAccountabilityLine
         Guid assetRegistryId,
         AssetSnapshot snapshot,
         string snapshotItemNo,
-        string? snapshotResponsibilityCenterCode) =>
+        string? snapshotResponsibilityCenterCode,
+        VehicleAccountabilityProfile? vehicleProfile = null) =>
         new()
         {
             Id = Guid.NewGuid(),
@@ -36,13 +39,16 @@ public sealed class PropertyAccountabilityLine
             SnapshotResponsibilityCenterCode = snapshotResponsibilityCenterCode,
             IssuedQty = 1,
             ReturnedQty = 0,
-            LineStatus = AccountabilityLineStatus.Active
+            LineStatus = AccountabilityLineStatus.Active,
+            VehicleProfile = vehicleProfile
         };
 
-    internal void MarkReturned(DateOnly returnedOn, AssetCondition conditionAtReturn)
+    internal void MarkReturned(DateOnly returnedOn, AssetCondition conditionAtReturn, int? odometerAtReturn = null)
     {
         if (LineStatus != AccountabilityLineStatus.Active)
             throw new InvalidOperationException("Only active accountability lines may be returned.");
+
+        VehicleProfile?.RecordReturn(odometerAtReturn);
 
         LineStatus = AccountabilityLineStatus.Returned;
         ReturnedQty = 1;

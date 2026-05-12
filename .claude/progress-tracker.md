@@ -35,6 +35,7 @@ Scaffold `Playground.Maui` — the .NET MAUI mobile/desktop client (Android · i
 | Backend — MasterData Module                               | ✅ Complete                     |
 | Backend — Expendable Module                               | ✅ Complete                     |
 | Backend — AssetManagement Module                          | 🟡 Enhancement in progress      |
+| Backend — AssetRegister Module (new bounded context)      | 🟡 Phases 1–4 complete          |
 | Backend — AssetProcurement Module                         | ✅ Complete                     |
 | Backend — Vehicle Module                                  | ✅ Complete                     |
 | Backend — Finance Module                                  | ✅ Complete                     |

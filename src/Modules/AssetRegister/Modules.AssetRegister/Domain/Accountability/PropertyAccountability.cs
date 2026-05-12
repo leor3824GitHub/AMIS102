@@ -43,7 +43,7 @@ public sealed class PropertyAccountability : AggregateRoot<Guid>, IHasTenant, IA
         EmployeeRef receivedBy,
         DateOnly issuedOn,
         DateOnly? expiresOn,
-        IEnumerable<(AssetRegistry asset, string itemNo, string? responsibilityCenterCode)> lines)
+        IEnumerable<(AssetRegistry asset, string itemNo, string? responsibilityCenterCode, VehicleAccountabilityProfile? vehicleProfile)> lines)
     {
         ArgumentNullException.ThrowIfNull(issuedBy);
         ArgumentNullException.ThrowIfNull(receivedBy);
@@ -55,7 +55,7 @@ public sealed class PropertyAccountability : AggregateRoot<Guid>, IHasTenant, IA
 
         // Rule #1: form segregation. SE flows on ICS, PPE flows on PAR.
         var expectedAssetType = type == AccountabilityType.SE_ICS ? AssetType.SE : AssetType.PPE;
-        foreach (var (asset, _, _) in materialized)
+        foreach (var (asset, _, _, _) in materialized)
         {
             if (asset.AssetType != expectedAssetType)
                 throw new InvalidOperationException(
@@ -92,10 +92,10 @@ public sealed class PropertyAccountability : AggregateRoot<Guid>, IHasTenant, IA
             CreatedOnUtc = DateTimeOffset.UtcNow
         };
 
-        foreach (var (asset, itemNo, rcCode) in materialized)
+        foreach (var (asset, itemNo, rcCode, vehicleProfile) in materialized)
         {
             accountability._lines.Add(PropertyAccountabilityLine.Create(
-                accountability.Id, asset.Id, asset.Snapshot(), itemNo, rcCode));
+                accountability.Id, asset.Id, asset.Snapshot(), itemNo, rcCode, vehicleProfile));
             accountability.AddDomainEvent(new AssetIssuedEvent(
                 asset.Id, accountability.Id, receivedBy.EmployeeId, tenantId));
         }
@@ -127,7 +127,9 @@ public sealed class PropertyAccountability : AggregateRoot<Guid>, IHasTenant, IA
         foreach (var line in _lines)
         {
             successor._lines.Add(PropertyAccountabilityLine.Create(
-                successor.Id, line.AssetRegistryId, line.Snapshot, line.SnapshotItemNo, line.SnapshotResponsibilityCenterCode));
+                successor.Id, line.AssetRegistryId, line.Snapshot,
+                line.SnapshotItemNo, line.SnapshotResponsibilityCenterCode,
+                line.VehicleProfile));
         }
 
         Status = AccountabilityStatus.Renewed;
@@ -136,16 +138,19 @@ public sealed class PropertyAccountability : AggregateRoot<Guid>, IHasTenant, IA
         return successor;
     }
 
-    public void ReturnLines(IEnumerable<Guid> lineIds, DateOnly returnedOn, AssetCondition conditionAtReturn)
+    public void ReturnLines(
+        IEnumerable<(Guid LineId, int? OdometerAtReturn)> returns,
+        DateOnly returnedOn,
+        AssetCondition conditionAtReturn)
     {
-        ArgumentNullException.ThrowIfNull(lineIds);
+        ArgumentNullException.ThrowIfNull(returns);
         if (Status != AccountabilityStatus.Active)
             throw new InvalidOperationException($"Only Active accountabilities may have lines returned (current: {Status}).");
 
-        var ids = new HashSet<Guid>(lineIds);
-        foreach (var line in _lines.Where(l => ids.Contains(l.Id)))
+        var byId = returns.ToDictionary(r => r.LineId, r => r.OdometerAtReturn);
+        foreach (var line in _lines.Where(l => byId.ContainsKey(l.Id)))
         {
-            line.MarkReturned(returnedOn, conditionAtReturn);
+            line.MarkReturned(returnedOn, conditionAtReturn, byId[line.Id]);
             AddDomainEvent(new AssetReturnedEvent(line.AssetRegistryId, Id, TenantId));
         }
 

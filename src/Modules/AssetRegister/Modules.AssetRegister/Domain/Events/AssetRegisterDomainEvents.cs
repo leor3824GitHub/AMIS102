@@ -1,14 +1,17 @@
 using FSH.Framework.Core.Domain;
 using FSH.Modules.AssetRegister.Contracts.v1;
+using Mediator;
 
 namespace FSH.Modules.AssetRegister.Domain.Events;
 
 /// <summary>
 /// In-process domain events used to coordinate state within the AssetRegister
-/// module. Dispatched on SaveChanges. Distinct from
-/// <c>AssetRegisterIntegrationEvents</c> which are published on the message bus.
+/// module. Dispatched on SaveChanges via <c>DomainEventsInterceptor</c>. Implements
+/// <c>Mediator.INotification</c> so the publisher can route events to handlers.
+/// Distinct from <c>AssetRegisterIntegrationEvents</c> which are published on the
+/// message bus.
 /// </summary>
-public abstract record AssetRegisterDomainEvent(string? TenantId, string? CorrelationId = null) : IDomainEvent
+public abstract record AssetRegisterDomainEvent(string? TenantId, string? CorrelationId = null) : IDomainEvent, INotification
 {
     public Guid EventId { get; } = Guid.NewGuid();
     public DateTimeOffset OccurredOnUtc { get; } = DateTimeOffset.UtcNow;
