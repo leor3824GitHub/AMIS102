@@ -1,13 +1,13 @@
-using FSH.Framework.Shared.Identity;
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.Auditing.Contracts.v1.GetAudits;
+using AMIS.Framework.Shared.Identity;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.Auditing.Contracts.v1.GetAudits;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.Auditing.Features.v1.GetAudits;
+namespace AMIS.Modules.Auditing.Features.v1.GetAudits;
 
 public static class GetAuditsEndpoint
 {
@@ -23,4 +23,5 @@ public static class GetAuditsEndpoint
             .RequirePermission(AuditingPermissionConstants.View);
     }
 }
+
 

@@ -1,10 +1,10 @@
-using FSH.Framework.Shared.Identity.Authorization;
+using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.MasterData.Features.v1.ModesOfProcurement.CreateModeOfProcurement;
+namespace AMIS.Modules.MasterData.Features.v1.ModesOfProcurement.CreateModeOfProcurement;
 
 public static class CreateModeOfProcurementEndpoint
 {
@@ -25,3 +25,4 @@ public static class CreateModeOfProcurementEndpoint
         return TypedResults.Created($"/api/v1/master-data/modes-of-procurement/{result.Id}", result);
     }
 }
+

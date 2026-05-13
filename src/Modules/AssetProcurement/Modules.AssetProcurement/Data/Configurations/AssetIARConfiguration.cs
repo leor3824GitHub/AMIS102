@@ -1,9 +1,9 @@
-using FSH.Modules.AssetProcurement.Domain.AssetInspectionAcceptanceReports;
+using AMIS.Modules.AssetProcurement.Domain.AssetInspectionAcceptanceReports;
 using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FSH.Modules.AssetProcurement.Data.Configurations;
+namespace AMIS.Modules.AssetProcurement.Data.Configurations;
 
 internal sealed class AssetIARConfiguration : IEntityTypeConfiguration<AssetInspectionAcceptanceReport>
 {
@@ -42,3 +42,4 @@ internal sealed class AssetIARConfiguration : IEntityTypeConfiguration<AssetInsp
         builder.HasIndex(x => x.CreatedOnUtc);
     }
 }
+

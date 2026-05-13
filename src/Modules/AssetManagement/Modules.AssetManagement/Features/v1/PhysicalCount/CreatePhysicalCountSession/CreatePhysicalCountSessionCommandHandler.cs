@@ -1,10 +1,10 @@
-using FSH.Framework.Core.Context;
-using FSH.Modules.AssetManagement.Data;
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Framework.Core.Context;
+using AMIS.Modules.AssetManagement.Data;
+using AMIS.Modules.AssetManagement.Domain;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.PhysicalCount.CreatePhysicalCountSession;
+namespace AMIS.Modules.AssetManagement.Features.v1.PhysicalCount.CreatePhysicalCountSession;
 
 public sealed class CreatePhysicalCountSessionCommandHandler(
     AssetManagementDbContext dbContext,
@@ -79,3 +79,4 @@ public sealed class CreatePhysicalCountSessionCommandHandler(
         return new CreatePhysicalCountSessionResult(session.Id, session.SessionNo, entriesCreated);
     }
 }
+

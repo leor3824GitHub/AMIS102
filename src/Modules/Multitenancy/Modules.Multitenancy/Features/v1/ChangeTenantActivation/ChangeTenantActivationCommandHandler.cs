@@ -1,9 +1,9 @@
-using FSH.Modules.Multitenancy.Contracts;
-using FSH.Modules.Multitenancy.Contracts.Dtos;
-using FSH.Modules.Multitenancy.Contracts.v1.ChangeTenantActivation;
+using AMIS.Modules.Multitenancy.Contracts;
+using AMIS.Modules.Multitenancy.Contracts.Dtos;
+using AMIS.Modules.Multitenancy.Contracts.v1.ChangeTenantActivation;
 using Mediator;
 
-namespace FSH.Modules.Multitenancy.Features.v1.ChangeTenantActivation;
+namespace AMIS.Modules.Multitenancy.Features.v1.ChangeTenantActivation;
 
 public sealed class ChangeTenantActivationCommandHandler : ICommandHandler<ChangeTenantActivationCommand, TenantLifecycleResultDto>
 {
@@ -40,3 +40,4 @@ public sealed class ChangeTenantActivationCommandHandler : ICommandHandler<Chang
         };
     }
 }
+

@@ -1,9 +1,9 @@
-using FSH.Framework.Core.Exceptions;
-using FSH.Modules.AssetManagement.Data;
+using AMIS.Framework.Core.Exceptions;
+using AMIS.Modules.AssetManagement.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.PhysicalCount.GetPhysicalCountSessionById;
+namespace AMIS.Modules.AssetManagement.Features.v1.PhysicalCount.GetPhysicalCountSessionById;
 
 public sealed class GetPhysicalCountSessionByIdQueryHandler(AssetManagementDbContext dbContext)
     : IQueryHandler<GetPhysicalCountSessionByIdQuery, PhysicalCountSessionDetailsDto>
@@ -54,3 +54,4 @@ public sealed class GetPhysicalCountSessionByIdQueryHandler(AssetManagementDbCon
             entries);
     }
 }
+

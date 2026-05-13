@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
 
-namespace FSH.Modules.Multitenancy.Data;
+namespace AMIS.Modules.Multitenancy.Data;
 
 public sealed class TenantDbContextFactory : IDesignTimeDbContextFactory<TenantDbContext>
 {
@@ -18,9 +18,9 @@ public sealed class TenantDbContextFactory : IDesignTimeDbContextFactory<TenantD
 
         var provider = configuration["DatabaseOptions:Provider"] ?? "POSTGRESQL";
         var connectionString = configuration["DatabaseOptions:ConnectionString"]
-            ?? "Host=localhost;Database=fsh-tenant;Username=postgres;Password=postgres";
+            ?? "Host=localhost;Database=AMIS-tenant;Username=postgres;Password=postgres";
         var migrationsAssembly = configuration["DatabaseOptions:MigrationsAssembly"]
-            ?? "FSH.Playground.Migrations.PostgreSQL";
+            ?? "AMIS.Playground.Migrations.PostgreSQL";
         var optionsBuilder = new DbContextOptionsBuilder<TenantDbContext>();
 
         switch (provider.ToUpperInvariant())
@@ -37,3 +37,4 @@ public sealed class TenantDbContextFactory : IDesignTimeDbContextFactory<TenantD
         return new TenantDbContext(optionsBuilder.Options);
     }
 }
+

@@ -1,7 +1,7 @@
-﻿using FluentValidation;
-using FSH.Modules.Identity.Contracts.v1.Tokens.TokenGeneration;
+using FluentValidation;
+using AMIS.Modules.Identity.Contracts.v1.Tokens.TokenGeneration;
 
-namespace FSH.Modules.Identity.Features.v1.Tokens.TokenGeneration;
+namespace AMIS.Modules.Identity.Features.v1.Tokens.TokenGeneration;
 
 public sealed class GenerateTokenCommandValidator : AbstractValidator<GenerateTokenCommand>
 {

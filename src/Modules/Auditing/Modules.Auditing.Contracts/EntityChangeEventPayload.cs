@@ -1,4 +1,4 @@
-﻿namespace FSH.Modules.Auditing.Contracts;
+namespace AMIS.Modules.Auditing.Contracts;
 
 public sealed record EntityChangeEventPayload(
     string DbContext,
@@ -10,3 +10,4 @@ public sealed record EntityChangeEventPayload(
     IReadOnlyList<PropertyChange> Changes,
     string? TransactionId
 );
+

@@ -1,8 +1,8 @@
 using System.Collections.ObjectModel;
 using System.Security.Cryptography;
-using FSH.Framework.Core.Domain;
+using AMIS.Framework.Core.Domain;
 
-namespace FSH.Modules.Expendable.Domain.Warehouse;
+namespace AMIS.Modules.Expendable.Domain.Warehouse;
 
 /// <summary>
 /// Central warehouse inventory ledger for a product at a specific location.
@@ -293,4 +293,5 @@ public enum ProductInventoryStatus
     Discontinued,    // No longer accepting new stock
     Archived         // Closed for analysis purposes
 }
+
 

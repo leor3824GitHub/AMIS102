@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.AssetRegister.Contracts.v1.Counting;
+using AMIS.Modules.AssetRegister.Contracts.v1.Counting;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Counting.ClosePhysicalCount;
+namespace AMIS.Modules.AssetRegister.Features.v1.Counting.ClosePhysicalCount;
 
 public sealed class ClosePhysicalCountCommandValidator : AbstractValidator<ClosePhysicalCountCommand>
 {
@@ -14,3 +14,4 @@ public sealed class ClosePhysicalCountCommandValidator : AbstractValidator<Close
         RuleFor(x => x.ApprovedBy.PrintedName).NotEmpty().When(x => x.ApprovedBy is not null).WithMessage("Approver printed name is required.");
     }
 }
+

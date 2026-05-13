@@ -1,4 +1,4 @@
-environment = "prod"
+﻿environment = "prod"
 region      = "us-east-1"
 
 vpc_cidr_block = "10.30.0.0/16"
@@ -27,8 +27,8 @@ private_subnets = {
 
 app_s3_bucket_name = "CHANGE_ME-app-prod-us-east-1"
 
-db_name     = "fshdb"
-db_username = "fshadmin"
+db_name     = "AMISdb"
+db_username = "AMISadmin"
 db_password = "CHANGE_ME_STRONG_PASSWORD"
 
 api_container_image = "CHANGE_ME_API_IMAGE"

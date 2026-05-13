@@ -1,5 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-using FSH.Modules.Identity.Authorization.Jwt;
+using AMIS.Modules.Identity.Authorization.Jwt;
 
 namespace Identity.Tests.Authorization;
 
@@ -233,3 +233,4 @@ public sealed class JwtOptionsTests
         results.ShouldContain(r => r.MemberNames.Contains(nameof(JwtOptions.SigningKey)));
     }
 }
+

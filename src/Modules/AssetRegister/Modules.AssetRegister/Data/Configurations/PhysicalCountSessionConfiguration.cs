@@ -1,10 +1,10 @@
-using FSH.Modules.AssetRegister.Contracts.v1.ValueObjects;
-using FSH.Modules.AssetRegister.Domain.Counting;
+using AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
+using AMIS.Modules.AssetRegister.Domain.Counting;
 using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FSH.Modules.AssetRegister.Data.Configurations;
+namespace AMIS.Modules.AssetRegister.Data.Configurations;
 
 internal sealed class PhysicalCountSessionConfiguration : IEntityTypeConfiguration<PhysicalCountSession>
 {
@@ -70,3 +70,4 @@ internal sealed class PhysicalCountEntryConfiguration : IEntityTypeConfiguration
         builder.HasIndex(x => x.AssetRegistryId);
     }
 }
+

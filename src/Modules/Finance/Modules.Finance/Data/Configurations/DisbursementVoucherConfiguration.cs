@@ -1,9 +1,9 @@
-using FSH.Modules.Finance.Contracts.v1.DisbursementVouchers;
-using FSH.Modules.Finance.Domain.DisbursementVouchers;
+using AMIS.Modules.Finance.Contracts.v1.DisbursementVouchers;
+using AMIS.Modules.Finance.Domain.DisbursementVouchers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FSH.Modules.Finance.Data.Configurations;
+namespace AMIS.Modules.Finance.Data.Configurations;
 
 public sealed class DisbursementVoucherConfiguration : IEntityTypeConfiguration<DisbursementVoucher>
 {
@@ -34,3 +34,4 @@ public sealed class DisbursementVoucherConfiguration : IEntityTypeConfiguration<
         builder.Property(x => x.Version).IsRowVersion();
     }
 }
+

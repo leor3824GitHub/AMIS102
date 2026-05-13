@@ -1,4 +1,4 @@
-# Module2-Expendable Integration Checklist
+﻿# Module2-Expendable Integration Checklist
 
 ## Pre-Integration Tasks
 
@@ -17,7 +17,7 @@
 ```bash
 dotnet sln add src/Modules/Expendable/Modules.Expendable.Contracts/Modules.Expendable.Contracts.csproj
 dotnet sln add src/Modules/Expendable/Modules.Expendable/Modules.Expendable.csproj
-dotnet build src/FSH.Framework.slnx
+dotnet build src/AMIS.Framework.slnx
 ```
 
 ### Step 2: Register Module in Application
@@ -231,7 +231,7 @@ dotnet ef migrations add SeedExpenableData
 ### Code Quality
 - [ ] No compilation warnings
 - [ ] No StyleCop violations
-- [ ] Code follows FSH conventions
+- [ ] Code follows AMIS conventions
 - [ ] All using statements correct
 - [ ] Namespaces properly organized
 - [ ] No TODO comments remaining (unless intentional)
@@ -350,3 +350,4 @@ For questions or issues during integration, refer to:
 - EXPENDABLE-MODULE-README.md
 - EXPENDABLE-QUICKSTART.md
 - MODULE-IMPLEMENTATION-SUMMARY.md
+

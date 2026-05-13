@@ -1,6 +1,6 @@
-using FSH.CLI.Models;
+using AMIS.CLI.Models;
 
-namespace FSH.CLI.Validation;
+namespace AMIS.CLI.Validation;
 
 internal static class OptionValidator
 {
@@ -72,3 +72,4 @@ internal sealed class OptionValidationResult
     public static OptionValidationResult Success() => new(true, []);
     public static OptionValidationResult Failure(IEnumerable<string> errors) => new(false, errors.ToList());
 }
+

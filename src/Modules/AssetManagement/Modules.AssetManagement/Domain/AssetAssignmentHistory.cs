@@ -1,6 +1,6 @@
-using FSH.Framework.Core.Domain;
+using AMIS.Framework.Core.Domain;
 
-namespace FSH.Modules.AssetManagement.Domain;
+namespace AMIS.Modules.AssetManagement.Domain;
 
 public sealed class AssetAssignmentHistory : BaseEntity<Guid>, IHasTenant
 {
@@ -48,3 +48,4 @@ public sealed class AssetAssignmentHistory : BaseEntity<Guid>, IHasTenant
         };
     }
 }
+

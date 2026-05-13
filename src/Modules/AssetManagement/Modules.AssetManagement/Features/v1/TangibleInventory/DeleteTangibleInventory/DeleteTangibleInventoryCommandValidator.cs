@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace FSH.Modules.AssetManagement.Features.v1.TangibleInventory.DeleteTangibleInventory;
+namespace AMIS.Modules.AssetManagement.Features.v1.TangibleInventory.DeleteTangibleInventory;
 
 public sealed class DeleteTangibleInventoryCommandValidator : AbstractValidator<DeleteTangibleInventoryCommand>
 {
@@ -9,3 +9,4 @@ public sealed class DeleteTangibleInventoryCommandValidator : AbstractValidator<
         RuleFor(x => x.Id).NotEmpty();
     }
 }
+

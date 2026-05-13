@@ -1,6 +1,6 @@
 using System.Net;
 
-namespace FSH.Playground.Blazor.Services.Api;
+namespace AMIS.Playground.Blazor.Services.Api;
 
 /// <summary>
 /// Retries transient failures for idempotent requests.
@@ -101,3 +101,4 @@ internal sealed class ApiRetryHandler(ILogger<ApiRetryHandler> logger) : Delegat
     private static bool IsTransientException(Exception ex) =>
         ex is HttpRequestException || ex is TaskCanceledException;
 }
+

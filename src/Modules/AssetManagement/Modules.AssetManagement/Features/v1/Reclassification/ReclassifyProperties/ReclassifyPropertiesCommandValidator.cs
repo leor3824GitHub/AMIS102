@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace FSH.Modules.AssetManagement.Features.v1.Reclassification.ReclassifyProperties;
+namespace AMIS.Modules.AssetManagement.Features.v1.Reclassification.ReclassifyProperties;
 
 public sealed class ReclassifyPropertiesCommandValidator : AbstractValidator<ReclassifyPropertiesCommand>
 {
@@ -11,3 +11,4 @@ public sealed class ReclassifyPropertiesCommandValidator : AbstractValidator<Rec
             .WithMessage("Notes must not exceed 500 characters.");
     }
 }
+

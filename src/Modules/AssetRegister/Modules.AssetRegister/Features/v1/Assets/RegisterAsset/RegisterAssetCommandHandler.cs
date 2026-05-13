@@ -1,11 +1,11 @@
-using FSH.Modules.AssetRegister.Contracts.v1.Assets;
-using FSH.Modules.AssetRegister.Data;
-using FSH.Modules.AssetRegister.Domain.Assets;
-using FSH.Modules.AssetRegister.Domain.Services;
+using AMIS.Modules.AssetRegister.Contracts.v1.Assets;
+using AMIS.Modules.AssetRegister.Data;
+using AMIS.Modules.AssetRegister.Domain.Assets;
+using AMIS.Modules.AssetRegister.Domain.Services;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Assets.RegisterAsset;
+namespace AMIS.Modules.AssetRegister.Features.v1.Assets.RegisterAsset;
 
 public sealed class RegisterAssetCommandHandler(
     AssetRegisterDbContext db,
@@ -48,3 +48,4 @@ public sealed class RegisterAssetCommandHandler(
         return AssetRegistryMapper.ToDto(asset);
     }
 }
+

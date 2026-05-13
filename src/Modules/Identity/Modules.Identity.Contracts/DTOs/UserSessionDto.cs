@@ -1,4 +1,4 @@
-namespace FSH.Modules.Identity.Contracts.DTOs;
+namespace AMIS.Modules.Identity.Contracts.DTOs;
 
 public class UserSessionDto
 {
@@ -18,3 +18,4 @@ public class UserSessionDto
     public bool IsActive { get; set; }
     public bool IsCurrentSession { get; set; }
 }
+

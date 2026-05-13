@@ -1,11 +1,11 @@
-using FSH.Framework.Core.Context;
-using FSH.Modules.MasterData.Contracts.v1.PropertyClasses;
-using FSH.Modules.MasterData.Data;
+using AMIS.Framework.Core.Context;
+using AMIS.Modules.MasterData.Contracts.v1.PropertyClasses;
+using AMIS.Modules.MasterData.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
 
-namespace FSH.Modules.MasterData.Features.v1.PropertyClasses.UpdatePropertyClass;
+namespace AMIS.Modules.MasterData.Features.v1.PropertyClasses.UpdatePropertyClass;
 
 public sealed class UpdatePropertyClassCommandHandler(MasterDataDbContext db, ICurrentUser currentUser)
     : ICommandHandler<UpdatePropertyClassCommand>
@@ -26,3 +26,4 @@ public sealed class UpdatePropertyClassCommandHandler(MasterDataDbContext db, IC
         return Unit.Value;
     }
 }
+

@@ -1,9 +1,9 @@
-using FSH.Modules.Identity.Contracts.DTOs;
-using FSH.Modules.Identity.Contracts.Services;
-using FSH.Modules.Identity.Contracts.v1.Roles.GetRoles;
+using AMIS.Modules.Identity.Contracts.DTOs;
+using AMIS.Modules.Identity.Contracts.Services;
+using AMIS.Modules.Identity.Contracts.v1.Roles.GetRoles;
 using Mediator;
 
-namespace FSH.Modules.Identity.Features.v1.Roles.GetRoles;
+namespace AMIS.Modules.Identity.Features.v1.Roles.GetRoles;
 
 public sealed class GetRolesQueryHandler : IQueryHandler<GetRolesQuery, IEnumerable<RoleDto>>
 {
@@ -19,3 +19,4 @@ public sealed class GetRolesQueryHandler : IQueryHandler<GetRolesQuery, IEnumera
         return await _roleService.GetRolesAsync(cancellationToken).ConfigureAwait(false);
     }
 }
+

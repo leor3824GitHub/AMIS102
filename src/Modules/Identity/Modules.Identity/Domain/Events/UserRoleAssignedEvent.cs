@@ -1,6 +1,6 @@
-using FSH.Framework.Core.Domain;
+using AMIS.Framework.Core.Domain;
 
-namespace FSH.Modules.Identity.Domain.Events;
+namespace AMIS.Modules.Identity.Domain.Events;
 
 /// <summary>Raised when roles are assigned to a user.</summary>
 public sealed record UserRoleAssignedEvent(
@@ -15,3 +15,4 @@ public sealed record UserRoleAssignedEvent(
     public static UserRoleAssignedEvent Create(string userId, IEnumerable<string> assignedRoles, string? correlationId = null, string? tenantId = null)
         => new(Guid.NewGuid(), DateTimeOffset.UtcNow, userId, assignedRoles.ToList().AsReadOnly(), correlationId, tenantId);
 }
+

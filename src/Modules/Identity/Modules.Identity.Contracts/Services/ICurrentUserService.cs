@@ -1,7 +1,7 @@
 using System.Security.Claims;
-using FSH.Framework.Core.Context;
+using AMIS.Framework.Core.Context;
 
-namespace FSH.Modules.Identity.Contracts.Services;
+namespace AMIS.Modules.Identity.Contracts.Services;
 
 /// <summary>
 /// Service interface for managing the current user context.
@@ -10,3 +10,4 @@ namespace FSH.Modules.Identity.Contracts.Services;
 public interface ICurrentUserService : ICurrentUser, ICurrentUserInitializer
 {
 }
+

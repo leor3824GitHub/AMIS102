@@ -1,7 +1,7 @@
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Modules.AssetManagement.Domain;
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.TangibleInventory.GetTangibleInventories;
+namespace AMIS.Modules.AssetManagement.Features.v1.TangibleInventory.GetTangibleInventories;
 
 public sealed record GetTangibleInventoriesQuery(
     string? Keyword,
@@ -27,3 +27,4 @@ public sealed record TangibleInventorySummaryDto(
     string? FundCluster,
     int SEItemCount,
     int PPEItemCount);
+

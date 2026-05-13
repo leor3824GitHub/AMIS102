@@ -1,6 +1,6 @@
-using FSH.Framework.Core.Domain;
+using AMIS.Framework.Core.Domain;
 
-namespace FSH.Modules.AssetManagement.Domain;
+namespace AMIS.Modules.AssetManagement.Domain;
 
 /// <summary>
 /// Report of Lost/Stolen/Damaged/Destroyed Semi-Expendable Property (RLSDDSP) —
@@ -85,3 +85,4 @@ public sealed class PropertyIncidentReport : AggregateRoot<Guid>, IHasTenant, IA
         };
     }
 }
+

@@ -1,10 +1,10 @@
-using FSH.Framework.Persistence;
-using FSH.Framework.Shared.Multitenancy;
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Framework.Persistence;
+using AMIS.Framework.Shared.Multitenancy;
+using AMIS.Modules.AssetManagement.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace FSH.Modules.AssetManagement.Data;
+namespace AMIS.Modules.AssetManagement.Data;
 
 internal sealed class AssetManagementDbInitializer(
     ILogger<AssetManagementDbInitializer> logger,
@@ -109,3 +109,4 @@ internal sealed class AssetManagementDbInitializer(
         }
     }
 }
+

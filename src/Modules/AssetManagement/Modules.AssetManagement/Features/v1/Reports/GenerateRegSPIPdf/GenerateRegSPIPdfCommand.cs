@@ -1,7 +1,7 @@
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Modules.AssetManagement.Domain;
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.Reports.GenerateRegSPIPdf;
+namespace AMIS.Modules.AssetManagement.Features.v1.Reports.GenerateRegSPIPdf;
 
 public sealed record GenerateRegSPIPdfCommand(
     Guid EmployeeId,
@@ -9,3 +9,4 @@ public sealed record GenerateRegSPIPdfCommand(
     ICSStatus? Status,
     int PageNumber = 1,
     int PageSize = 1000) : ICommand<byte[]>;
+

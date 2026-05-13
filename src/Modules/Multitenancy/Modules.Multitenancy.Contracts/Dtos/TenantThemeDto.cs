@@ -1,6 +1,6 @@
-using FSH.Framework.Shared.Storage;
+using AMIS.Framework.Shared.Storage;
 
-namespace FSH.Modules.Multitenancy.Contracts.Dtos;
+namespace AMIS.Modules.Multitenancy.Contracts.Dtos;
 
 public sealed record TenantThemeDto
 {
@@ -91,3 +91,4 @@ public sealed record LayoutDto
     public string BorderRadius { get; init; } = "4px";
     public int DefaultElevation { get; init; } = 1;
 }
+

@@ -68,7 +68,7 @@ The refactored `TemplateEngine` class maintains the exact same public API as bef
 - `ITemplateCache.cs` + `TemplateCache.cs` - Caching layer  
 - `TemplateServices.cs` - DI container
 - `TemplateEngineTests.cs` - Basic validation tests
-- `FSH.CLI.csproj` - Added Microsoft.Extensions.DependencyInjection
+- `AMIS.CLI.csproj` - Added Microsoft.Extensions.DependencyInjection
 
 ## Testing
 

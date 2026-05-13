@@ -1,10 +1,10 @@
-using FSH.Framework.Shared.Identity.Authorization;
+using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.MasterData.Features.v1.Suppliers.CreateSupplier;
+namespace AMIS.Modules.MasterData.Features.v1.Suppliers.CreateSupplier;
 
 public static class CreateSupplierEndpoint
 {
@@ -25,3 +25,4 @@ public static class CreateSupplierEndpoint
         return TypedResults.Created($"/api/v1/master-data/suppliers/{result.Id}", result);
     }
 }
+

@@ -1,7 +1,7 @@
-using FSH.Modules.Vehicle.Contracts.v1.Maintenance;
+using AMIS.Modules.Vehicle.Contracts.v1.Maintenance;
 using Mediator;
 
-namespace FSH.Modules.Vehicle.Features.v1.Maintenance.LogMaintenanceCompletion;
+namespace AMIS.Modules.Vehicle.Features.v1.Maintenance.LogMaintenanceCompletion;
 
 public sealed record LogMaintenanceCompletionCommand(
     Guid VehicleId,
@@ -13,3 +13,4 @@ public sealed record LogMaintenanceCompletionCommand(
     decimal? Cost,
     string? PerformedBy,
     string? Notes) : ICommand<LogMaintenanceCompletionResponse>;
+

@@ -1,25 +1,25 @@
 using Finbuckle.MultiTenant.Abstractions;
 using Finbuckle.MultiTenant.Identity.EntityFrameworkCore;
-using FSH.Framework.Eventing.Inbox;
-using FSH.Framework.Eventing.Outbox;
-using FSH.Framework.Persistence;
-using FSH.Framework.Shared.Multitenancy;
-using FSH.Framework.Shared.Persistence;
-using FSH.Modules.Identity.Domain;
+using AMIS.Framework.Eventing.Inbox;
+using AMIS.Framework.Eventing.Outbox;
+using AMIS.Framework.Persistence;
+using AMIS.Framework.Shared.Multitenancy;
+using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.Identity.Domain;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 
-namespace FSH.Modules.Identity.Data;
+namespace AMIS.Modules.Identity.Data;
 
-public class IdentityDbContext : MultiTenantIdentityDbContext<FshUser,
-    FshRole,
+public class IdentityDbContext : MultiTenantIdentityDbContext<AmisUser,
+    AmisRole,
     string,
     IdentityUserClaim<string>,
     IdentityUserRole<string>,
     IdentityUserLogin<string>,
-    FshRoleClaim,
+    AmisRoleClaim,
     IdentityUserToken<string>,
     IdentityUserPasskey<string>>
 {
@@ -79,3 +79,5 @@ public class IdentityDbContext : MultiTenantIdentityDbContext<FshUser,
         }
     }
 }
+
+

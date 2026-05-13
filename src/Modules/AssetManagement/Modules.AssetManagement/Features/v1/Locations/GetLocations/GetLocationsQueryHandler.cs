@@ -1,9 +1,9 @@
-using FSH.Modules.AssetManagement.Data;
-using FSH.Modules.AssetManagement.Features.v1.Locations;
+using AMIS.Modules.AssetManagement.Data;
+using AMIS.Modules.AssetManagement.Features.v1.Locations;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.Locations.GetLocations;
+namespace AMIS.Modules.AssetManagement.Features.v1.Locations.GetLocations;
 
 public sealed class GetLocationsQueryHandler(AssetManagementDbContext dbContext)
     : IQueryHandler<GetLocationsQuery, PagedLocationsResponse>
@@ -55,3 +55,4 @@ public sealed class GetLocationsQueryHandler(AssetManagementDbContext dbContext)
         return new PagedLocationsResponse(items, pageNumber, pageSize, totalCount);
     }
 }
+

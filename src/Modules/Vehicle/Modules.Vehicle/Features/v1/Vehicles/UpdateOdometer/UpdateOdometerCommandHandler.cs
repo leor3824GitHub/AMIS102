@@ -1,11 +1,11 @@
 using FluentValidation.Results;
-using FSH.Framework.Core.Context;
-using FSH.Modules.Vehicle.Contracts.v1.Vehicles;
-using FSH.Modules.Vehicle.Data;
+using AMIS.Framework.Core.Context;
+using AMIS.Modules.Vehicle.Contracts.v1.Vehicles;
+using AMIS.Modules.Vehicle.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.Vehicle.Features.v1.Vehicles.UpdateOdometer;
+namespace AMIS.Modules.Vehicle.Features.v1.Vehicles.UpdateOdometer;
 
 public sealed class UpdateOdometerCommandHandler(VehicleDbContext db, ICurrentUser currentUser)
     : ICommandHandler<UpdateOdometerCommand, Unit>
@@ -26,3 +26,4 @@ public sealed class UpdateOdometerCommandHandler(VehicleDbContext db, ICurrentUs
         return Unit.Value;
     }
 }
+

@@ -1,7 +1,7 @@
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
 
-namespace FSH.CLI.Services;
+namespace AMIS.CLI.Services;
 
 /// <summary>
 /// Compares package versions between current project and latest release.
@@ -127,7 +127,7 @@ internal static partial class VersionComparer
                 return true;
         }
 
-        // FSH-specific: certain packages are known to have breaking changes
+        // AMIS-specific: certain packages are known to have breaking changes
         // This can be expanded based on release notes
         return false;
     }
@@ -193,3 +193,4 @@ internal sealed record PackageUpdate(
 internal sealed record PackageChange(
     string Package,
     string Version);
+

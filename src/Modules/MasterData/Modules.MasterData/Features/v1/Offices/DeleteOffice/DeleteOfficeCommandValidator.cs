@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.MasterData.Contracts.v1.References;
+using AMIS.Modules.MasterData.Contracts.v1.References;
 
-namespace FSH.Modules.MasterData.Features.v1.Offices.DeleteOffice;
+namespace AMIS.Modules.MasterData.Features.v1.Offices.DeleteOffice;
 
 public sealed class DeleteOfficeCommandValidator : AbstractValidator<DeleteOfficeCommand>
 {
@@ -11,3 +11,4 @@ public sealed class DeleteOfficeCommandValidator : AbstractValidator<DeleteOffic
             .NotEmpty().WithMessage("Office id is required");
     }
 }
+

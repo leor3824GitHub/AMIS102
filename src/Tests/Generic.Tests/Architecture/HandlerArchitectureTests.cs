@@ -12,10 +12,10 @@ public sealed class HandlerArchitectureTests
 {
     private static readonly Assembly[] ModuleAssemblies =
     [
-        typeof(FSH.Modules.Auditing.AuditingModule).Assembly,
-        typeof(FSH.Modules.Expendable.ExpendableModule).Assembly,
-        typeof(FSH.Modules.Identity.IdentityModule).Assembly,
-        typeof(FSH.Modules.Multitenancy.MultitenancyModule).Assembly
+        typeof(AMIS.Modules.Auditing.AuditingModule).Assembly,
+        typeof(AMIS.Modules.Expendable.ExpendableModule).Assembly,
+        typeof(AMIS.Modules.Identity.IdentityModule).Assembly,
+        typeof(AMIS.Modules.Multitenancy.MultitenancyModule).Assembly
     ];
 
     [Fact]
@@ -224,3 +224,4 @@ public sealed class HandlerArchitectureTests
         return sb.ToString();
     }
 }
+

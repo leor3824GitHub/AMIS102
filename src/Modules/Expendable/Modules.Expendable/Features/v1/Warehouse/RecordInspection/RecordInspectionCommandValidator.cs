@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.Expendable.Contracts.v1.Warehouse;
+using AMIS.Modules.Expendable.Contracts.v1.Warehouse;
 
-namespace FSH.Modules.Expendable.Features.v1.Warehouse.RecordInspection;
+namespace AMIS.Modules.Expendable.Features.v1.Warehouse.RecordInspection;
 
 public sealed class RecordInspectionCommandValidator : AbstractValidator<RecordInspectionCommand>
 {
@@ -32,3 +32,4 @@ public sealed class RecordInspectionCommandValidator : AbstractValidator<RecordI
             .WithMessage("Notes cannot exceed 1000 characters");
     }
 }
+

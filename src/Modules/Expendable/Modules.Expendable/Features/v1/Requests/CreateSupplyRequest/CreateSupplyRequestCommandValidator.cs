@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.Expendable.Contracts.v1.Requests;
+using AMIS.Modules.Expendable.Contracts.v1.Requests;
 
-namespace FSH.Modules.Expendable.Features.v1.Requests.CreateSupplyRequest;
+namespace AMIS.Modules.Expendable.Features.v1.Requests.CreateSupplyRequest;
 
 public sealed class CreateSupplyRequestCommandValidator : AbstractValidator<CreateSupplyRequestCommand>
 {
@@ -15,3 +15,4 @@ public sealed class CreateSupplyRequestCommandValidator : AbstractValidator<Crea
             .MaximumLength(1000).WithMessage("Business justification must not exceed 1000 characters");
     }
 }
+

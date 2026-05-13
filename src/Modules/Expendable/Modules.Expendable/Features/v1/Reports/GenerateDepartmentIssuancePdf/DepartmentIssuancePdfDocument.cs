@@ -1,11 +1,11 @@
-using FSH.Modules.Expendable.Contracts.v1.Requests;
-using FSH.Modules.MasterData.Contracts.v1.OrganizationProfile;
-using FSH.Modules.MasterData.Contracts.v1.ReportSignatories;
+using AMIS.Modules.Expendable.Contracts.v1.Requests;
+using AMIS.Modules.MasterData.Contracts.v1.OrganizationProfile;
+using AMIS.Modules.MasterData.Contracts.v1.ReportSignatories;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 
-namespace FSH.Modules.Expendable.Features.v1.Reports.GenerateDepartmentIssuancePdf;
+namespace AMIS.Modules.Expendable.Features.v1.Reports.GenerateDepartmentIssuancePdf;
 
 internal sealed class DepartmentIssuancePdfDocument : IDocument
 {
@@ -237,3 +237,4 @@ internal sealed class DepartmentIssuancePdfDocument : IDocument
         return DateTimeOffset.UtcNow.ToString("yyyy-MM-dd");
     }
 }
+

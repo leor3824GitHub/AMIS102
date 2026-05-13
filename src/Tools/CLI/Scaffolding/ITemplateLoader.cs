@@ -1,6 +1,6 @@
-using FSH.CLI.Models;
+using AMIS.CLI.Models;
 
-namespace FSH.CLI.Scaffolding;
+namespace AMIS.CLI.Scaffolding;
 
 /// <summary>
 /// Loads templates from various sources (embedded resources, disk, etc.)

@@ -1,9 +1,9 @@
-using FSH.Modules.AssetRegister.Contracts.v1.Incidents;
-using FSH.Modules.AssetRegister.Data;
+using AMIS.Modules.AssetRegister.Contracts.v1.Incidents;
+using AMIS.Modules.AssetRegister.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Incidents.NotifyIncidentPolice;
+namespace AMIS.Modules.AssetRegister.Features.v1.Incidents.NotifyIncidentPolice;
 
 public sealed class NotifyIncidentPoliceCommandHandler(AssetRegisterDbContext db)
     : ICommandHandler<NotifyIncidentPoliceCommand, PropertyIncidentReportDto>
@@ -19,3 +19,4 @@ public sealed class NotifyIncidentPoliceCommandHandler(AssetRegisterDbContext db
         return IncidentMapper.ToDto(report);
     }
 }
+

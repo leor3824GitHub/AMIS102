@@ -1,7 +1,7 @@
-using FSH.Modules.Vehicle.Contracts.v1.Vehicles;
-using VehicleEntity = FSH.Modules.Vehicle.Domain.Vehicles.Vehicle;
+using AMIS.Modules.Vehicle.Contracts.v1.Vehicles;
+using VehicleEntity = AMIS.Modules.Vehicle.Domain.Vehicles.Vehicle;
 
-namespace FSH.Modules.Vehicle.Features.v1.Vehicles;
+namespace AMIS.Modules.Vehicle.Features.v1.Vehicles;
 
 internal static class VehicleMapper
 {
@@ -18,3 +18,4 @@ internal static class VehicleMapper
             v.CreatedOnUtc, v.CreatedBy,
             v.LastModifiedOnUtc, v.LastModifiedBy);
 }
+

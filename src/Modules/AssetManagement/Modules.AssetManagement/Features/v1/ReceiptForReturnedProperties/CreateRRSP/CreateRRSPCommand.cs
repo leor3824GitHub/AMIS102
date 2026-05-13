@@ -1,6 +1,6 @@
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.ReceiptForReturnedProperties.CreateRRSP;
+namespace AMIS.Modules.AssetManagement.Features.v1.ReceiptForReturnedProperties.CreateRRSP;
 
 /// <summary>
 /// Creates a Receipt for Returned Semi-Expendable Property (RRSP).
@@ -18,3 +18,4 @@ public sealed record CreateRRSPCommand(
     string? Remarks) : ICommand<CreateRRSPResult>;
 
 public sealed record CreateRRSPResult(Guid RRSPId, string RRSPNo, int ItemCount);
+

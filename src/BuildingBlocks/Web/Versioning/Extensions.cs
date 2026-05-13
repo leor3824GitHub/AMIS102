@@ -1,7 +1,7 @@
-﻿using Asp.Versioning;
+using Asp.Versioning;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace FSH.Framework.Web.Versioning;
+namespace AMIS.Framework.Web.Versioning;
 
 public static class Extensions
 {
@@ -23,3 +23,4 @@ public static class Extensions
         return services;
     }
 }
+

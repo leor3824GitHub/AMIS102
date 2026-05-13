@@ -1,7 +1,7 @@
 using Finbuckle.MultiTenant;
 using Finbuckle.MultiTenant.Abstractions;
-using FSH.Framework.Shared.Multitenancy;
-using FSH.Framework.Shared.Persistence;
+using AMIS.Framework.Shared.Multitenancy;
+using AMIS.Framework.Shared.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
@@ -9,7 +9,7 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 
-namespace FSH.Modules.Finance.Data;
+namespace AMIS.Modules.Finance.Data;
 
 public sealed class FinanceDbContextFactory : IDesignTimeDbContextFactory<FinanceDbContext>
 {
@@ -24,9 +24,9 @@ public sealed class FinanceDbContextFactory : IDesignTimeDbContextFactory<Financ
 
         var provider = configuration["DatabaseOptions:Provider"] ?? DbProviders.PostgreSQL;
         var connectionString = configuration["DatabaseOptions:ConnectionString"]
-            ?? "Host=localhost;Database=fsh-playground;Username=postgres;Password=postgres";
+            ?? "Host=localhost;Database=AMIS-playground;Username=postgres;Password=postgres";
         var migrationsAssembly = configuration["DatabaseOptions:MigrationsAssembly"]
-            ?? "FSH.Playground.Migrations.PostgreSQL";
+            ?? "AMIS.Playground.Migrations.PostgreSQL";
 
         var optionsBuilder = new DbContextOptionsBuilder<FinanceDbContext>();
 
@@ -83,3 +83,4 @@ public sealed class FinanceDbContextFactory : IDesignTimeDbContextFactory<Financ
         public IFileProvider ContentRootFileProvider { get; set; } = new PhysicalFileProvider(Directory.GetCurrentDirectory());
     }
 }
+

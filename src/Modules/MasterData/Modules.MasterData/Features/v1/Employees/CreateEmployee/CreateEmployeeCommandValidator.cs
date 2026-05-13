@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.MasterData.Contracts.v1.References;
+using AMIS.Modules.MasterData.Contracts.v1.References;
 
-namespace FSH.Modules.MasterData.Features.v1.Employees.CreateEmployee;
+namespace AMIS.Modules.MasterData.Features.v1.Employees.CreateEmployee;
 
 public sealed class CreateEmployeeCommandValidator : AbstractValidator<CreateEmployeeCommand>
 {

@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace FSH.Modules.Vehicle.Features.v1.Maintenance.LogMaintenanceCompletion;
+namespace AMIS.Modules.Vehicle.Features.v1.Maintenance.LogMaintenanceCompletion;
 
 public sealed class LogMaintenanceCompletionValidator : AbstractValidator<LogMaintenanceCompletionCommand>
 {
@@ -13,3 +13,4 @@ public sealed class LogMaintenanceCompletionValidator : AbstractValidator<LogMai
         RuleFor(x => x.Cost).GreaterThanOrEqualTo(0).When(x => x.Cost.HasValue);
     }
 }
+

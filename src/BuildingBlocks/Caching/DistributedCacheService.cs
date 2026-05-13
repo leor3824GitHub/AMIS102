@@ -4,7 +4,7 @@ using Microsoft.Extensions.Options;
 using System.Text;
 using System.Text.Json;
 
-namespace FSH.Framework.Caching;
+namespace AMIS.Framework.Caching;
 
 /// <summary>
 /// Implementation of <see cref="ICacheService"/> using distributed cache (Redis or in-memory).
@@ -144,3 +144,4 @@ public sealed class DistributedCacheService : ICacheService
             : prefix + key;
     }
 }
+

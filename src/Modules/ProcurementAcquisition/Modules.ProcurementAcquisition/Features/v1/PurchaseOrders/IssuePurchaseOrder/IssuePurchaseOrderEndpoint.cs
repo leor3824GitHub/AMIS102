@@ -1,11 +1,11 @@
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.IssuePurchaseOrder;
+namespace AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.IssuePurchaseOrder;
 
 public static class IssuePurchaseOrderEndpoint
 {
@@ -26,3 +26,4 @@ public static class IssuePurchaseOrderEndpoint
         return TypedResults.Ok(result);
     }
 }
+

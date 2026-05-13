@@ -1,11 +1,11 @@
-ï»¿namespace FSH.Modules.Auditing.Contracts;
+namespace AMIS.Modules.Auditing.Contracts;
 
 public interface IAuditEvent
 {
-    /// <summary>Event category (EntityChange, Security, Activity, Exceptionâ€¦)</summary>
+    /// <summary>Event category (EntityChange, Security, Activity, Exception…)</summary>
     AuditEventType EventType { get; }
 
-    /// <summary>Severity level (None, Info, Error, â€¦)</summary>
+    /// <summary>Severity level (None, Info, Error, …)</summary>
     AuditSeverity Severity { get; }
 
     /// <summary>UTC time when the event actually occurred.</summary>
@@ -33,3 +33,4 @@ public interface IAuditEvent
     /// <summary>Strongly-typed payload (EntityChange, Security, Activity, Exception, etc.).</summary>
     object Payload { get; }
 }
+

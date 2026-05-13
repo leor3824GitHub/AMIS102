@@ -1,8 +1,8 @@
 using FluentValidation;
-using FSH.Modules.AssetRegister.Contracts.v1;
-using FSH.Modules.AssetRegister.Contracts.v1.Receiving;
+using AMIS.Modules.AssetRegister.Contracts.v1;
+using AMIS.Modules.AssetRegister.Contracts.v1.Receiving;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Receiving.CreateReceivingReport;
+namespace AMIS.Modules.AssetRegister.Features.v1.Receiving.CreateReceivingReport;
 
 public sealed class CreateReceivingReportCommandValidator : AbstractValidator<CreateReceivingReportCommand>
 {
@@ -26,3 +26,4 @@ public sealed class CreateReceivingReportCommandValidator : AbstractValidator<Cr
         });
     }
 }
+

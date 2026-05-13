@@ -1,10 +1,10 @@
-using FSH.Modules.Vehicle.Contracts.v1.Maintenance;
-using FSH.Modules.Vehicle.Data;
-using FSH.Modules.Vehicle.Domain.Maintenance;
+using AMIS.Modules.Vehicle.Contracts.v1.Maintenance;
+using AMIS.Modules.Vehicle.Data;
+using AMIS.Modules.Vehicle.Domain.Maintenance;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.Vehicle.Features.v1.Maintenance.GetDueMaintenanceSchedules;
+namespace AMIS.Modules.Vehicle.Features.v1.Maintenance.GetDueMaintenanceSchedules;
 
 public sealed class GetDueMaintenanceSchedulesHandler(
     VehicleDbContext db) : IQueryHandler<GetDueMaintenanceSchedulesQuery, List<MaintenanceScheduleDto>>
@@ -39,3 +39,4 @@ public sealed class GetDueMaintenanceSchedulesHandler(
             .ToList();
     }
 }
+

@@ -1,10 +1,10 @@
-using FSH.Framework.Core.Context;
-using FSH.Modules.ProcurementAcquisition.Contracts.v1.Canvass;
-using FSH.Modules.ProcurementAcquisition.Data;
+using AMIS.Framework.Core.Context;
+using AMIS.Modules.ProcurementAcquisition.Contracts.v1.Canvass;
+using AMIS.Modules.ProcurementAcquisition.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.ProcurementAcquisition.Features.v1.Canvass.UpdateQuotation;
+namespace AMIS.Modules.ProcurementAcquisition.Features.v1.Canvass.UpdateQuotation;
 
 public sealed class UpdateQuotationCommandHandler(
     ProcurementDbContext dbContext,
@@ -45,3 +45,4 @@ public sealed class UpdateQuotationCommandHandler(
                 li.ItemNo, li.Description, li.Unit, li.Quantity, li.UnitPrice, li.Total)).ToList());
     }
 }
+

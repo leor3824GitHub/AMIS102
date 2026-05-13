@@ -1,6 +1,6 @@
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.PhysicalCount.GetPhysicalCountSessionById;
+namespace AMIS.Modules.AssetManagement.Features.v1.PhysicalCount.GetPhysicalCountSessionById;
 
 public sealed record GetPhysicalCountSessionByIdQuery(Guid Id) : IQuery<PhysicalCountSessionDetailsDto>;
 
@@ -32,3 +32,4 @@ public sealed record PhysicalCountEntryDto(
     bool IsScanned,
     DateTimeOffset? ScannedOnUtc,
     string? PhotoPath);
+

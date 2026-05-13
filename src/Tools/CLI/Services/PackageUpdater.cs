@@ -1,7 +1,7 @@
 using System.Xml.Linq;
-using FSH.CLI.Models;
+using AMIS.CLI.Models;
 
-namespace FSH.CLI.Services;
+namespace AMIS.CLI.Services;
 
 /// <summary>
 /// Service for updating package versions in a project.
@@ -59,7 +59,7 @@ internal sealed class PackageUpdater
                     if (versionAttr != null)
                     {
                         versionAttr.Value = update.ToVersion;
-                        result.Updated.Add($"{update.Package}: {update.FromVersion} → {update.ToVersion}");
+                        result.Updated.Add($"{update.Package}: {update.FromVersion} ? {update.ToVersion}");
                     }
                 }
             }
@@ -109,18 +109,18 @@ internal sealed class PackageUpdater
     }
 
     /// <summary>
-    /// Update the FSH manifest after a successful upgrade.
+    /// Update the AMIS manifest after a successful upgrade.
     /// </summary>
     public static async Task<bool> UpdateManifestAsync(
         string projectPath,
         string newVersion,
         CancellationToken cancellationToken = default)
     {
-        var manifest = FshManifest.TryLoad(projectPath);
+        var manifest = AMISManifest.TryLoad(projectPath);
         if (manifest == null)
             return false;
 
-        manifest.FshVersion = newVersion;
+        manifest.AMISVersion = newVersion;
         manifest.LastUpgradeAt = DateTimeOffset.UtcNow;
 
         // Update building blocks versions
@@ -215,7 +215,7 @@ internal sealed class PackageUpdater
             }
             else
             {
-                result.Updated.Add($"{update.Package}: {update.FromVersion} → {update.ToVersion}");
+                result.Updated.Add($"{update.Package}: {update.FromVersion} ? {update.ToVersion}");
             }
         }
 
@@ -258,3 +258,4 @@ internal sealed class UpdateResult
 
     public bool HasChanges => Updated.Count > 0 || Added.Count > 0;
 }
+

@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.MasterData.Contracts.v1.CapitalizationThresholds;
+using AMIS.Modules.MasterData.Contracts.v1.CapitalizationThresholds;
 
-namespace FSH.Modules.MasterData.Features.v1.CapitalizationThresholds.UpdateCapitalizationThreshold;
+namespace AMIS.Modules.MasterData.Features.v1.CapitalizationThresholds.UpdateCapitalizationThreshold;
 
 public sealed class UpdateCapitalizationThresholdCommandValidator : AbstractValidator<UpdateCapitalizationThresholdCommand>
 {
@@ -31,3 +31,4 @@ public sealed class UpdateCapitalizationThresholdCommandValidator : AbstractVali
             .NotEmpty();
     }
 }
+

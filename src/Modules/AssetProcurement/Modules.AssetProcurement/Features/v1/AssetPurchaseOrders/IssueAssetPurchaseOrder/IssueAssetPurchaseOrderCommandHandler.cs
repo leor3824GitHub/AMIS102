@@ -1,10 +1,10 @@
-using FSH.Modules.AssetProcurement.Contracts.v1.AssetPurchaseOrders;
-using FSH.Modules.AssetProcurement.Data;
-using FSH.Modules.AssetProcurement.Features.v1.AssetPurchaseOrders.CreateAssetPurchaseOrder;
+using AMIS.Modules.AssetProcurement.Contracts.v1.AssetPurchaseOrders;
+using AMIS.Modules.AssetProcurement.Data;
+using AMIS.Modules.AssetProcurement.Features.v1.AssetPurchaseOrders.CreateAssetPurchaseOrder;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetProcurement.Features.v1.AssetPurchaseOrders.IssueAssetPurchaseOrder;
+namespace AMIS.Modules.AssetProcurement.Features.v1.AssetPurchaseOrders.IssueAssetPurchaseOrder;
 
 public sealed class IssueAssetPurchaseOrderCommandHandler(
     AssetProcurementDbContext dbContext) : ICommandHandler<IssueAssetPurchaseOrderCommand, AssetPurchaseOrderDto>
@@ -20,3 +20,4 @@ public sealed class IssueAssetPurchaseOrderCommandHandler(
         return CreateAssetPurchaseOrderCommandHandler.MapToDto(po, string.Empty);
     }
 }
+

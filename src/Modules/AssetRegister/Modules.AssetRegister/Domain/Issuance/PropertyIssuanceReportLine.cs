@@ -1,6 +1,6 @@
-using FSH.Modules.AssetRegister.Contracts.v1.ValueObjects;
+using AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
 
-namespace FSH.Modules.AssetRegister.Domain.Issuance;
+namespace AMIS.Modules.AssetRegister.Domain.Issuance;
 
 public sealed class PropertyIssuanceReportLine
 {
@@ -39,3 +39,4 @@ public sealed class PropertyIssuanceReportLine
             SnapshotAmount = unitCost
         };
 }
+

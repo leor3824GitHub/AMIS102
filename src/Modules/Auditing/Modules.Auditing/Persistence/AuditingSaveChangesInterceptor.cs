@@ -1,8 +1,8 @@
-﻿using FSH.Modules.Auditing.Contracts;
+using AMIS.Modules.Auditing.Contracts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 
-namespace FSH.Modules.Auditing.Persistence;
+namespace AMIS.Modules.Auditing.Persistence;
 
 /// <summary>
 /// Captures EF Core entity changes at SaveChanges to produce an EntityChange event.
@@ -63,3 +63,4 @@ public sealed class AuditingSaveChangesInterceptor : SaveChangesInterceptor
         return result;
     }
 }
+

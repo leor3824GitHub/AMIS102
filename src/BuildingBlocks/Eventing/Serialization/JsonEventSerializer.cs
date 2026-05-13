@@ -1,7 +1,7 @@
 using System.Text.Json;
-using FSH.Framework.Eventing.Abstractions;
+using AMIS.Framework.Eventing.Abstractions;
 
-namespace FSH.Framework.Eventing.Serialization;
+namespace AMIS.Framework.Eventing.Serialization;
 
 /// <summary>
 /// System.Text.Json-based event serializer.
@@ -35,4 +35,5 @@ public sealed class JsonEventSerializer : IEventSerializer
         return result as IIntegrationEvent;
     }
 }
+
 

@@ -1,7 +1,7 @@
-using FSH.Modules.AssetManagement.Features.v1.TangibleItems.RegisterTangibleItem;
+using AMIS.Modules.AssetManagement.Features.v1.TangibleItems.RegisterTangibleItem;
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.TangibleItems.UpdateTangibleItem;
+namespace AMIS.Modules.AssetManagement.Features.v1.TangibleItems.UpdateTangibleItem;
 
 public sealed record UpdateTangibleItemCommand(
     Guid Id,
@@ -10,3 +10,4 @@ public sealed record UpdateTangibleItemCommand(
     decimal UnitCost,
     string? Remarks,
     Guid? PurchaseOrderId = null) : ICommand<TangibleItemDto>;
+

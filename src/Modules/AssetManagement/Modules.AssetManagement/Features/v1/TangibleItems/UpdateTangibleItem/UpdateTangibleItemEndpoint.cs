@@ -1,11 +1,11 @@
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.AssetManagement.Features.v1.TangibleItems.RegisterTangibleItem;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.AssetManagement.Features.v1.TangibleItems.RegisterTangibleItem;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.AssetManagement.Features.v1.TangibleItems.UpdateTangibleItem;
+namespace AMIS.Modules.AssetManagement.Features.v1.TangibleItems.UpdateTangibleItem;
 
 public static class UpdateTangibleItemEndpoint
 {
@@ -28,3 +28,4 @@ public static class UpdateTangibleItemEndpoint
         return TypedResults.Ok(result);
     }
 }
+

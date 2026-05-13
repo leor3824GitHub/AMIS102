@@ -1,9 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<RootNamespace>FSH.Modules.Expendable</RootNamespace>
-		<AssemblyName>FSH.Modules.Expendable</AssemblyName>
-		<PackageId>FullStackHero.Modules.Expendable</PackageId>
+		<RootNamespace>AMIS.Modules.Expendable</RootNamespace>
+		<AssemblyName>AMIS.Modules.Expendable</AssemblyName>
+		<PackageId>AMIS.Modules.Expendable</PackageId>
 		<NoWarn>$(NoWarn);CA1031;CA1812;CA2208;S3267;S3928;CA1062;CA1304;CA1308;CA1311;CA1862;CA2227</NoWarn>
 	</PropertyGroup>
 	<ItemGroup>
@@ -29,3 +29,4 @@
 	</ItemGroup>
 
 </Project>
+

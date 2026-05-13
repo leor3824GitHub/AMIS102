@@ -1,13 +1,13 @@
-# FSH .NET Starter Kit — AI Assistant Guide
+﻿# AMIS .NET Starter Kit — AI Assistant Guide
 
 > Modular Monolith · CQRS · DDD · Multi-Tenant · .NET 10
 
 ## Quick Start
 
 ```powershell
-dotnet build src/FSH.Framework.slnx              # Build (0 warnings required)
-dotnet test src/FSH.Framework.slnx               # Run tests
-dotnet run --project src/Playground/FSH.Playground.AppHost  # Run with Aspire
+dotnet build src/AMIS.Framework.slnx              # Build (0 warnings required)
+dotnet test src/AMIS.Framework.slnx               # Run tests
+dotnet run --project src/Playground/AMIS.Playground.AppHost  # Run with Aspire
 ```
 
 ## Project Layout
@@ -28,7 +28,7 @@ src/
 │   ├── ProcurementPlanning/    # Annual procurement planning
 │   └── ProcurementAcquisition/ # Purchase requests, orders, canvass
 ├── Playground/         # Reference application
-│   ├── FSH.Playground.AppHost/  # .NET Aspire orchestration
+│   ├── AMIS.Playground.AppHost/  # .NET Aspire orchestration
 │   ├── Playground.Api/          # API host
 │   ├── Playground.Blazor/       # Blazor UI client
 │   ├── Playground.Maui/         # .NET MAUI mobile/desktop client ← NEW
@@ -101,7 +101,7 @@ Delegate complex tasks to specialized agents.
 
 | Agent                | Expertise                                                  |
 | -------------------- | ---------------------------------------------------------- |
-| `code-reviewer`      | Review changes against FSH patterns + architecture rules   |
+| `code-reviewer`      | Review changes against AMIS patterns + architecture rules   |
 | `feature-scaffolder` | Generate complete feature slices from requirements         |
 | `module-creator`     | Create new modules with contracts, persistence, DI setup   |
 | `architecture-guard` | Verify layering, dependencies, module boundaries           |
@@ -161,8 +161,8 @@ Details: See `.claude/rules/architecture.md` | MAUI details: `.claude/rules/maui
 ## Before Committing
 
 ```powershell
-dotnet build src/FSH.Framework.slnx  # Must pass with 0 warnings
-dotnet test src/FSH.Framework.slnx   # All tests must pass
+dotnet build src/AMIS.Framework.slnx  # Must pass with 0 warnings
+dotnet test src/AMIS.Framework.slnx   # All tests must pass
 ```
 
 ## Documentation
@@ -177,3 +177,4 @@ dotnet test src/FSH.Framework.slnx   # All tests must pass
 **Philosophy:** This is a production-ready starter kit. Every pattern is battle-tested. Follow the conventions, and you'll ship faster.
 
 ---
+

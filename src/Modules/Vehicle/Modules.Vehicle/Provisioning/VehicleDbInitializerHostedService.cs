@@ -1,10 +1,10 @@
-using FSH.Framework.Persistence;
-using FSH.Modules.Vehicle.Data;
+using AMIS.Framework.Persistence;
+using AMIS.Modules.Vehicle.Data;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace FSH.Modules.Vehicle.Provisioning;
+namespace AMIS.Modules.Vehicle.Provisioning;
 
 internal sealed class VehicleDbInitializerHostedService : IHostedService
 {
@@ -50,3 +50,4 @@ internal sealed class VehicleDbInitializerHostedService : IHostedService
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 }
+

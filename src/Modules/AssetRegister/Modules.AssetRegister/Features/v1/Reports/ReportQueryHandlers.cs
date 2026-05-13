@@ -1,10 +1,10 @@
-using FSH.Modules.AssetRegister.Contracts.v1;
-using FSH.Modules.AssetRegister.Contracts.v1.Reports;
-using FSH.Modules.AssetRegister.Data;
+using AMIS.Modules.AssetRegister.Contracts.v1;
+using AMIS.Modules.AssetRegister.Contracts.v1.Reports;
+using AMIS.Modules.AssetRegister.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Reports;
+namespace AMIS.Modules.AssetRegister.Features.v1.Reports;
 
 public sealed class GetAccountabilityReportQueryHandler(AssetRegisterDbContext db)
     : IQueryHandler<GetAccountabilityReportQuery, AccountabilityReportDto?>

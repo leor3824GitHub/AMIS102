@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace FSH.Modules.Vehicle.Features.v1.Maintenance.UpdateMaintenanceLog;
+namespace AMIS.Modules.Vehicle.Features.v1.Maintenance.UpdateMaintenanceLog;
 
 public sealed class UpdateMaintenanceLogValidator : AbstractValidator<UpdateMaintenanceLogCommand>
 {
@@ -13,3 +13,4 @@ public sealed class UpdateMaintenanceLogValidator : AbstractValidator<UpdateMain
         RuleFor(x => x.Cost).GreaterThanOrEqualTo(0).When(x => x.Cost.HasValue);
     }
 }
+

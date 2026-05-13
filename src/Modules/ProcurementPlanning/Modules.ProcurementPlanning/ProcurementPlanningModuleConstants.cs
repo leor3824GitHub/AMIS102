@@ -1,4 +1,4 @@
-namespace FSH.Modules.ProcurementPlanning;
+namespace AMIS.Modules.ProcurementPlanning;
 
 public static class ProcurementPlanningModuleConstants
 {
@@ -32,3 +32,4 @@ public static class ProcurementPlanningModuleConstants
         }
     }
 }
+

@@ -1,8 +1,8 @@
-﻿using FSH.Modules.Identity.Contracts.Services;
-using FSH.Modules.Identity.Contracts.v1.Users.AssignUserRoles;
+using AMIS.Modules.Identity.Contracts.Services;
+using AMIS.Modules.Identity.Contracts.v1.Users.AssignUserRoles;
 using Mediator;
 
-namespace FSH.Modules.Identity.Features.v1.Users.AssignUserRoles;
+namespace AMIS.Modules.Identity.Features.v1.Users.AssignUserRoles;
 
 public sealed class AssignUserRolesCommandHandler(IUserService userService)
     : ICommandHandler<AssignUserRolesCommand, string>
@@ -15,3 +15,4 @@ public sealed class AssignUserRolesCommandHandler(IUserService userService)
     }
 
 }
+

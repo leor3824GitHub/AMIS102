@@ -1,12 +1,12 @@
-using FSH.Modules.AssetRegister.Contracts.v1;
-using FSH.Modules.AssetRegister.Contracts.v1.Accountability;
-using FSH.Modules.AssetRegister.Data;
-using FSH.Modules.AssetRegister.Domain.Assets;
-using FSH.Modules.AssetRegister.Domain.Services;
+using AMIS.Modules.AssetRegister.Contracts.v1;
+using AMIS.Modules.AssetRegister.Contracts.v1.Accountability;
+using AMIS.Modules.AssetRegister.Data;
+using AMIS.Modules.AssetRegister.Domain.Assets;
+using AMIS.Modules.AssetRegister.Domain.Services;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Accountability.RenewAccountability;
+namespace AMIS.Modules.AssetRegister.Features.v1.Accountability.RenewAccountability;
 
 public sealed class RenewAccountabilityCommandHandler(
     AssetRegisterDbContext db,
@@ -58,3 +58,4 @@ public sealed class RenewAccountabilityCommandHandler(
         return hasHigh ? AssetCategory.HighValuedSemi : AssetCategory.LowValuedSemi;
     }
 }
+

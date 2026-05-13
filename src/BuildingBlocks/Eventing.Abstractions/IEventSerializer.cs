@@ -1,4 +1,4 @@
-namespace FSH.Framework.Eventing.Abstractions;
+namespace AMIS.Framework.Eventing.Abstractions;
 
 /// <summary>
 /// Serializes and deserializes integration events for transport and storage (outbox).
@@ -9,3 +9,4 @@ public interface IEventSerializer
 
     IIntegrationEvent? Deserialize(string payload, string eventTypeName);
 }
+

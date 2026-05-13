@@ -1,6 +1,6 @@
-using FSH.Framework.Core.Domain;
+using AMIS.Framework.Core.Domain;
 
-namespace FSH.Modules.AssetManagement.Domain;
+namespace AMIS.Modules.AssetManagement.Domain;
 
 /// <summary>
 /// PPE Issuance Report (PPEIR) — the transaction document for inter-office/department
@@ -103,3 +103,4 @@ public sealed class PPEIssuanceReport : AggregateRoot<Guid>, IHasTenant, IAudita
         };
     }
 }
+

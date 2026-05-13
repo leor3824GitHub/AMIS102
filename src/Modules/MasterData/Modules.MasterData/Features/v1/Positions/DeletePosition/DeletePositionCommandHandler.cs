@@ -1,10 +1,10 @@
-using FSH.Framework.Core.Context;
-using FSH.Modules.MasterData.Contracts.v1.References;
-using FSH.Modules.MasterData.Data;
+using AMIS.Framework.Core.Context;
+using AMIS.Modules.MasterData.Contracts.v1.References;
+using AMIS.Modules.MasterData.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.MasterData.Features.v1.Positions.DeletePosition;
+namespace AMIS.Modules.MasterData.Features.v1.Positions.DeletePosition;
 
 public sealed class DeletePositionCommandHandler : ICommandHandler<DeletePositionCommand, Unit>
 {

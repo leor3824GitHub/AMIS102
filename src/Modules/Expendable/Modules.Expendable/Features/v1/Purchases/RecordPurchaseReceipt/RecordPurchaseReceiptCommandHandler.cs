@@ -1,9 +1,9 @@
-using FSH.Modules.Expendable.Contracts.v1.Purchases;
-using FSH.Modules.Expendable.Data;
+using AMIS.Modules.Expendable.Contracts.v1.Purchases;
+using AMIS.Modules.Expendable.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.Expendable.Features.v1.Purchases.RecordPurchaseReceipt;
+namespace AMIS.Modules.Expendable.Features.v1.Purchases.RecordPurchaseReceipt;
 
 public sealed class RecordPurchaseReceiptCommandHandler : ICommandHandler<RecordPurchaseReceiptCommand>
 {
@@ -30,3 +30,4 @@ public sealed class RecordPurchaseReceiptCommandHandler : ICommandHandler<Record
         return default;
     }
 }
+

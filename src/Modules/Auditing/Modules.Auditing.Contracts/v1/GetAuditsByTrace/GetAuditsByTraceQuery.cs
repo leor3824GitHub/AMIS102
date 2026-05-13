@@ -1,7 +1,7 @@
-using FSH.Modules.Auditing.Contracts.Dtos;
+using AMIS.Modules.Auditing.Contracts.Dtos;
 using Mediator;
 
-namespace FSH.Modules.Auditing.Contracts.v1.GetAuditsByTrace;
+namespace AMIS.Modules.Auditing.Contracts.v1.GetAuditsByTrace;
 
 public sealed class GetAuditsByTraceQuery : IQuery<IReadOnlyList<AuditSummaryDto>>
 {
@@ -11,4 +11,5 @@ public sealed class GetAuditsByTraceQuery : IQuery<IReadOnlyList<AuditSummaryDto
 
     public DateTime? ToUtc { get; init; }
 }
+
 

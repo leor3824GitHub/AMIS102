@@ -1,6 +1,6 @@
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.Reports.PropertyHistory;
+namespace AMIS.Modules.AssetManagement.Features.v1.Reports.PropertyHistory;
 
 /// <summary>
 /// Returns the complete lifecycle audit trail for a single tangible inventory item,
@@ -26,3 +26,4 @@ public sealed record PropertyHistoryEventDto(
     string DocumentType,
     string DocumentNo,
     string? Details);
+

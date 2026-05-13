@@ -1,12 +1,12 @@
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Framework.Shared.Persistence;
-using FSH.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.SearchPurchaseRequests;
+namespace AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.SearchPurchaseRequests;
 
 public static class SearchPurchaseRequestsEndpoint
 {
@@ -26,3 +26,4 @@ public static class SearchPurchaseRequestsEndpoint
         return TypedResults.Ok(result);
     }
 }
+

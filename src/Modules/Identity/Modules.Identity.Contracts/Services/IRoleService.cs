@@ -1,6 +1,6 @@
-using FSH.Modules.Identity.Contracts.DTOs;
+using AMIS.Modules.Identity.Contracts.DTOs;
 
-namespace FSH.Modules.Identity.Contracts.Services;
+namespace AMIS.Modules.Identity.Contracts.Services;
 
 public interface IRoleService
 {
@@ -11,3 +11,4 @@ public interface IRoleService
     Task<RoleDto> GetWithPermissionsAsync(string id, CancellationToken cancellationToken = default);
     Task<string> UpdatePermissionsAsync(string roleId, List<string> permissions, CancellationToken cancellationToken = default);
 }
+

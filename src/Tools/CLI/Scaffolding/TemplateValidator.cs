@@ -1,6 +1,6 @@
-using FSH.CLI.Models;
+using AMIS.CLI.Models;
 
-namespace FSH.CLI.Scaffolding;
+namespace AMIS.CLI.Scaffolding;
 
 /// <summary>
 /// Validates template structure and project configuration

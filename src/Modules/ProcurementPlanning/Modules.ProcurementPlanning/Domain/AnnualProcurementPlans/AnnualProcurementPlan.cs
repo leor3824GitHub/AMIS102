@@ -1,9 +1,9 @@
-using FSH.Framework.Core.Domain;
-using FSH.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
-using FSH.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
-using FSH.Modules.ProcurementPlanning.Domain.Ppmps;
+using AMIS.Framework.Core.Domain;
+using AMIS.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
+using AMIS.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
+using AMIS.Modules.ProcurementPlanning.Domain.Ppmps;
 
-namespace FSH.Modules.ProcurementPlanning.Domain.AnnualProcurementPlans;
+namespace AMIS.Modules.ProcurementPlanning.Domain.AnnualProcurementPlans;
 
 public sealed class AnnualProcurementPlan : AggregateRoot<Guid>, IAuditableEntity, ISoftDeletable
 {
@@ -253,3 +253,4 @@ public sealed class AnnualProcurementPlan : AggregateRoot<Guid>, IAuditableEntit
         _ => false
     };
 }
+

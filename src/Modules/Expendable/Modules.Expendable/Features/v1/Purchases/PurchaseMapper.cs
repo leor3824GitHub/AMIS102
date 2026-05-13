@@ -1,7 +1,7 @@
-using FSH.Modules.Expendable.Contracts.v1.Purchases;
-using FSH.Modules.Expendable.Domain.Purchases;
+using AMIS.Modules.Expendable.Contracts.v1.Purchases;
+using AMIS.Modules.Expendable.Domain.Purchases;
 
-namespace FSH.Modules.Expendable.Features.v1.Purchases;
+namespace AMIS.Modules.Expendable.Features.v1.Purchases;
 
 internal static class PurchaseMapper
 {
@@ -26,4 +26,5 @@ internal static class PurchaseMapper
             purchase.CreatedOnUtc,
             purchase.CreatedBy);
 }
+
 

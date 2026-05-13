@@ -1,7 +1,7 @@
 using System.Net.Http.Json;
-using FSH.Modules.MasterData.Contracts.v1.CapitalizationThresholds;
+using AMIS.Modules.MasterData.Contracts.v1.CapitalizationThresholds;
 
-namespace FSH.Playground.Blazor.ApiClient;
+namespace AMIS.Playground.Blazor.ApiClient;
 
 internal interface ICapitalizationThresholdClient
 {
@@ -43,3 +43,4 @@ internal sealed class CapitalizationThresholdClient(HttpClient http) : ICapitali
         response.EnsureSuccessStatusCode();
     }
 }
+

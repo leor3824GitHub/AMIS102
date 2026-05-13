@@ -1,6 +1,6 @@
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.PPEIssuanceReports.UpdatePPEIRDepreciation;
+namespace AMIS.Modules.AssetManagement.Features.v1.PPEIssuanceReports.UpdatePPEIRDepreciation;
 
 /// <summary>
 /// Allows ASD/F.O. Accounting Unit to record accumulated depreciation and book value
@@ -18,3 +18,4 @@ public sealed record PPEIRItemDepreciationRequest(
 public sealed record UpdatePPEIRDepreciationResult(
     Guid PPEIRId,
     int ItemsUpdated);
+

@@ -1,74 +1,74 @@
-﻿using Asp.Versioning;
-using FSH.Framework.Persistence;
-using FSH.Framework.Shared.Constants;
-using FSH.Framework.Web.Modules;
-using FSH.Modules.MasterData.Data;
-using FSH.Modules.MasterData.Features.v1.Departments.CreateDepartment;
-using FSH.Modules.MasterData.Features.v1.Departments.DeleteDepartment;
-using FSH.Modules.MasterData.Features.v1.Departments.UpdateDepartment;
-using FSH.Modules.MasterData.Features.v1.Employees.CreateEmployee;
-using FSH.Modules.MasterData.Features.v1.Employees.DeleteEmployee;
-using FSH.Modules.MasterData.Features.v1.Employees.GetMyEmployee;
-using FSH.Modules.MasterData.Features.v1.Employees.UpdateEmployee;
-using FSH.Modules.MasterData.Features.v1.Lookups;
-using FSH.Modules.MasterData.Features.v1.Offices.CreateOffice;
-using FSH.Modules.MasterData.Features.v1.Offices.DeleteOffice;
-using FSH.Modules.MasterData.Features.v1.Offices.GetOfficeById;
-using FSH.Modules.MasterData.Features.v1.Offices.UpdateOffice;
-using FSH.Modules.MasterData.Features.v1.Positions.CreatePosition;
-using FSH.Modules.MasterData.Features.v1.Positions.DeletePosition;
-using FSH.Modules.MasterData.Features.v1.Positions.GetPositionById;
-using FSH.Modules.MasterData.Features.v1.Positions.UpdatePosition;
-using FSH.Modules.MasterData.Features.v1.UnitOfMeasures.CreateUnitOfMeasure;
-using FSH.Modules.MasterData.Features.v1.UnitOfMeasures.DeleteUnitOfMeasure;
-using FSH.Modules.MasterData.Features.v1.UnitOfMeasures.GetUnitOfMeasureById;
-using FSH.Modules.MasterData.Features.v1.UnitOfMeasures.UpdateUnitOfMeasure;
-using FSH.Modules.MasterData.Features.v1.Departments.GetDepartmentById;
-using FSH.Modules.MasterData.Features.v1.Suppliers.CreateSupplier;
-using FSH.Modules.MasterData.Features.v1.Suppliers.DeleteSupplier;
-using FSH.Modules.MasterData.Features.v1.Suppliers.GetSuppliers;
-using FSH.Modules.MasterData.Features.v1.Suppliers.GetSupplierById;
-using FSH.Modules.MasterData.Features.v1.Suppliers.UpdateSupplier;
-using FSH.Modules.MasterData.Features.v1.Categories.CreateCategory;
-using FSH.Modules.MasterData.Features.v1.Categories.DeleteCategory;
-using FSH.Modules.MasterData.Features.v1.Categories.GetCategories;
-using FSH.Modules.MasterData.Features.v1.Categories.GetCategoryById;
-using FSH.Modules.MasterData.Features.v1.Categories.UpdateCategory;
-using FSH.Modules.MasterData.Features.v1.ModesOfProcurement.CreateModeOfProcurement;
-using FSH.Modules.MasterData.Features.v1.ModesOfProcurement.DeleteModeOfProcurement;
-using FSH.Modules.MasterData.Features.v1.ModesOfProcurement.GetModeOfProcurementById;
-using FSH.Modules.MasterData.Features.v1.ModesOfProcurement.GetModesOfProcurement;
-using FSH.Modules.MasterData.Features.v1.ModesOfProcurement.UpdateModeOfProcurement;
-using FSH.Modules.MasterData.Features.v1.ReportSignatories.GetReportSignatories;
-using FSH.Modules.MasterData.Features.v1.ReportSignatories.CreateReportSignatory;
-using FSH.Modules.MasterData.Features.v1.ReportSignatories.UpdateReportSignatory;
-using FSH.Modules.MasterData.Features.v1.ReportSignatories.DeleteReportSignatory;
-using FSH.Modules.MasterData.Features.v1.OrganizationProfile.GetOrganizationProfile;
-using FSH.Modules.MasterData.Features.v1.OrganizationProfile.UpsertOrganizationProfile;
-using FSH.Modules.MasterData.Features.v1.CapitalizationThresholds.CreateCapitalizationThreshold;
-using FSH.Modules.MasterData.Features.v1.CapitalizationThresholds.GetActiveThreshold;
-using FSH.Modules.MasterData.Features.v1.CapitalizationThresholds.GetCapitalizationThresholds;
-using FSH.Modules.MasterData.Features.v1.CapitalizationThresholds.SetActiveThreshold;
-using FSH.Modules.MasterData.Features.v1.CapitalizationThresholds.UpdateCapitalizationThreshold;
-using FSH.Modules.MasterData.Features.v1.PropertyClasses.GetPropertyClassTree;
-using FSH.Modules.MasterData.Features.v1.PropertyClasses.GetPropertyClassById;
-using FSH.Modules.MasterData.Features.v1.PropertyClasses.GetPropertyClassItems;
-using FSH.Modules.MasterData.Features.v1.PropertyClasses.CreatePropertyClass;
-using FSH.Modules.MasterData.Features.v1.PropertyClasses.UpdatePropertyClass;
-using FSH.Modules.MasterData.Features.v1.PropertyClasses.CreatePropertyClassItem;
-using FSH.Modules.MasterData.Features.v1.PropertyClasses.UpdatePropertyClassItem;
-using FSH.Framework.Eventing;
+using Asp.Versioning;
+using AMIS.Framework.Persistence;
+using AMIS.Framework.Shared.Constants;
+using AMIS.Framework.Web.Modules;
+using AMIS.Modules.MasterData.Data;
+using AMIS.Modules.MasterData.Features.v1.Departments.CreateDepartment;
+using AMIS.Modules.MasterData.Features.v1.Departments.DeleteDepartment;
+using AMIS.Modules.MasterData.Features.v1.Departments.UpdateDepartment;
+using AMIS.Modules.MasterData.Features.v1.Employees.CreateEmployee;
+using AMIS.Modules.MasterData.Features.v1.Employees.DeleteEmployee;
+using AMIS.Modules.MasterData.Features.v1.Employees.GetMyEmployee;
+using AMIS.Modules.MasterData.Features.v1.Employees.UpdateEmployee;
+using AMIS.Modules.MasterData.Features.v1.Lookups;
+using AMIS.Modules.MasterData.Features.v1.Offices.CreateOffice;
+using AMIS.Modules.MasterData.Features.v1.Offices.DeleteOffice;
+using AMIS.Modules.MasterData.Features.v1.Offices.GetOfficeById;
+using AMIS.Modules.MasterData.Features.v1.Offices.UpdateOffice;
+using AMIS.Modules.MasterData.Features.v1.Positions.CreatePosition;
+using AMIS.Modules.MasterData.Features.v1.Positions.DeletePosition;
+using AMIS.Modules.MasterData.Features.v1.Positions.GetPositionById;
+using AMIS.Modules.MasterData.Features.v1.Positions.UpdatePosition;
+using AMIS.Modules.MasterData.Features.v1.UnitOfMeasures.CreateUnitOfMeasure;
+using AMIS.Modules.MasterData.Features.v1.UnitOfMeasures.DeleteUnitOfMeasure;
+using AMIS.Modules.MasterData.Features.v1.UnitOfMeasures.GetUnitOfMeasureById;
+using AMIS.Modules.MasterData.Features.v1.UnitOfMeasures.UpdateUnitOfMeasure;
+using AMIS.Modules.MasterData.Features.v1.Departments.GetDepartmentById;
+using AMIS.Modules.MasterData.Features.v1.Suppliers.CreateSupplier;
+using AMIS.Modules.MasterData.Features.v1.Suppliers.DeleteSupplier;
+using AMIS.Modules.MasterData.Features.v1.Suppliers.GetSuppliers;
+using AMIS.Modules.MasterData.Features.v1.Suppliers.GetSupplierById;
+using AMIS.Modules.MasterData.Features.v1.Suppliers.UpdateSupplier;
+using AMIS.Modules.MasterData.Features.v1.Categories.CreateCategory;
+using AMIS.Modules.MasterData.Features.v1.Categories.DeleteCategory;
+using AMIS.Modules.MasterData.Features.v1.Categories.GetCategories;
+using AMIS.Modules.MasterData.Features.v1.Categories.GetCategoryById;
+using AMIS.Modules.MasterData.Features.v1.Categories.UpdateCategory;
+using AMIS.Modules.MasterData.Features.v1.ModesOfProcurement.CreateModeOfProcurement;
+using AMIS.Modules.MasterData.Features.v1.ModesOfProcurement.DeleteModeOfProcurement;
+using AMIS.Modules.MasterData.Features.v1.ModesOfProcurement.GetModeOfProcurementById;
+using AMIS.Modules.MasterData.Features.v1.ModesOfProcurement.GetModesOfProcurement;
+using AMIS.Modules.MasterData.Features.v1.ModesOfProcurement.UpdateModeOfProcurement;
+using AMIS.Modules.MasterData.Features.v1.ReportSignatories.GetReportSignatories;
+using AMIS.Modules.MasterData.Features.v1.ReportSignatories.CreateReportSignatory;
+using AMIS.Modules.MasterData.Features.v1.ReportSignatories.UpdateReportSignatory;
+using AMIS.Modules.MasterData.Features.v1.ReportSignatories.DeleteReportSignatory;
+using AMIS.Modules.MasterData.Features.v1.OrganizationProfile.GetOrganizationProfile;
+using AMIS.Modules.MasterData.Features.v1.OrganizationProfile.UpsertOrganizationProfile;
+using AMIS.Modules.MasterData.Features.v1.CapitalizationThresholds.CreateCapitalizationThreshold;
+using AMIS.Modules.MasterData.Features.v1.CapitalizationThresholds.GetActiveThreshold;
+using AMIS.Modules.MasterData.Features.v1.CapitalizationThresholds.GetCapitalizationThresholds;
+using AMIS.Modules.MasterData.Features.v1.CapitalizationThresholds.SetActiveThreshold;
+using AMIS.Modules.MasterData.Features.v1.CapitalizationThresholds.UpdateCapitalizationThreshold;
+using AMIS.Modules.MasterData.Features.v1.PropertyClasses.GetPropertyClassTree;
+using AMIS.Modules.MasterData.Features.v1.PropertyClasses.GetPropertyClassById;
+using AMIS.Modules.MasterData.Features.v1.PropertyClasses.GetPropertyClassItems;
+using AMIS.Modules.MasterData.Features.v1.PropertyClasses.CreatePropertyClass;
+using AMIS.Modules.MasterData.Features.v1.PropertyClasses.UpdatePropertyClass;
+using AMIS.Modules.MasterData.Features.v1.PropertyClasses.CreatePropertyClassItem;
+using AMIS.Modules.MasterData.Features.v1.PropertyClasses.UpdatePropertyClassItem;
+using AMIS.Framework.Eventing;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-namespace FSH.Modules.MasterData;
+namespace AMIS.Modules.MasterData;
 
 public class MasterDataModule : IModule
 {
-    private static readonly IReadOnlyList<FshPermission> RegisteredPermissions =
+    private static readonly IReadOnlyList<AmisPermission> RegisteredPermissions =
     [
         new("View Employee Lookup", "View", "MasterData.Lookup", IsBasic: true),
 
@@ -138,7 +138,7 @@ public class MasterDataModule : IModule
 
         services.AddHeroDbContext<MasterDataDbContext>();
         services.AddScoped<IDbInitializer, MasterDataDbInitializer>();
-        services.AddHostedService<FSH.Modules.MasterData.Provisioning.MasterDataDbInitializerHostedService>();
+        services.AddHostedService<AMIS.Modules.MasterData.Provisioning.MasterDataDbInitializerHostedService>();
         services.AddIntegrationEventHandlers(typeof(MasterDataModule).Assembly);
     }
 
@@ -226,6 +226,8 @@ public class MasterDataModule : IModule
         UpdatePropertyClassItemEndpoint.Map(propertyClassesGroup);
     }
 }
+
+
 
 
 

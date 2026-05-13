@@ -4,7 +4,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace FSH.Playground.Blazor.ApiClient;
+namespace AMIS.Playground.Blazor.ApiClient;
 
 /// <summary>
 /// Additional response types for MasterData API - paging wrappers
@@ -98,3 +98,4 @@ public static class Master_dataClientExtensions
         return JsonSerializer.Deserialize<PagedResponseOfSupplierDto>(content, options);
     }
 }
+

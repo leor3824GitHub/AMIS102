@@ -1,10 +1,10 @@
-using FSH.Framework.Shared.Persistence;
-using FSH.Modules.Multitenancy.Contracts.Dtos;
-using FSH.Modules.Multitenancy.Contracts.v1.GetTenants;
-using FSH.Modules.Multitenancy.Contracts;
+using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.Multitenancy.Contracts.Dtos;
+using AMIS.Modules.Multitenancy.Contracts.v1.GetTenants;
+using AMIS.Modules.Multitenancy.Contracts;
 using Mediator;
 
-namespace FSH.Modules.Multitenancy.Features.v1.GetTenants;
+namespace AMIS.Modules.Multitenancy.Features.v1.GetTenants;
 
 public sealed class GetTenantsQueryHandler(ITenantService tenantService)
     : IQueryHandler<GetTenantsQuery, PagedResponse<TenantDto>>
@@ -15,3 +15,4 @@ public sealed class GetTenantsQueryHandler(ITenantService tenantService)
         return await tenantService.GetAllAsync(query, cancellationToken).ConfigureAwait(false);
     }
 }
+

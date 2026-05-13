@@ -1,15 +1,15 @@
 using Finbuckle.MultiTenant.Abstractions;
-using FSH.Framework.Core.Exceptions;
-using FSH.Framework.Jobs.Services;
-using FSH.Framework.Shared.Multitenancy;
-using FSH.Modules.Multitenancy.Contracts.Dtos;
-using FSH.Modules.Multitenancy.Data;
+using AMIS.Framework.Core.Exceptions;
+using AMIS.Framework.Jobs.Services;
+using AMIS.Framework.Shared.Multitenancy;
+using AMIS.Modules.Multitenancy.Contracts.Dtos;
+using AMIS.Modules.Multitenancy.Data;
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-namespace FSH.Modules.Multitenancy.Provisioning;
+namespace AMIS.Modules.Multitenancy.Provisioning;
 
 public sealed class TenantProvisioningService : ITenantProvisioningService
 {
@@ -221,3 +221,4 @@ public sealed class TenantProvisioningService : ITenantProvisioningService
             steps);
     }
 }
+

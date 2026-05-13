@@ -1,8 +1,8 @@
 using System.Text.Json;
-using FSH.Framework.Blazor.UI.Theme;
+using AMIS.Framework.Blazor.UI.Theme;
 using Microsoft.Extensions.Caching.Distributed;
 
-namespace FSH.Playground.Blazor.Services;
+namespace AMIS.Playground.Blazor.Services;
 
 /// <summary>
 /// Factory for loading theme state, optimized for SSR scenarios.
@@ -212,3 +212,4 @@ internal sealed class CachedThemeStateFactory : IThemeStateFactory
         DefaultElevation = dto?.DefaultElevation ?? DefaultSettings.Layout.DefaultElevation
     };
 }
+

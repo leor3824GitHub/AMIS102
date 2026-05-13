@@ -1,10 +1,10 @@
-using FSH.Framework.Shared.Identity.Authorization;
+using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.MasterData.Features.v1.Categories.UpdateCategory;
+namespace AMIS.Modules.MasterData.Features.v1.Categories.UpdateCategory;
 
 public static class UpdateCategoryEndpoint
 {
@@ -27,3 +27,4 @@ public static class UpdateCategoryEndpoint
         return TypedResults.NoContent();
     }
 }
+

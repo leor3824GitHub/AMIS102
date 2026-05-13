@@ -1,10 +1,10 @@
-using FSH.Framework.Shared.Identity.Authorization;
+using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.MasterData.Features.v1.Categories.DeleteCategory;
+namespace AMIS.Modules.MasterData.Features.v1.Categories.DeleteCategory;
 
 public static class DeleteCategoryEndpoint
 {
@@ -25,3 +25,4 @@ public static class DeleteCategoryEndpoint
         return TypedResults.NoContent();
     }
 }
+

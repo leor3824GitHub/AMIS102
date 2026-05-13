@@ -1,4 +1,4 @@
-namespace FSH.Framework.Shared.Persistence;
+namespace AMIS.Framework.Shared.Persistence;
 
 /// <summary>
 /// Shared pagination and sorting contract that can be implemented
@@ -22,3 +22,4 @@ public interface IPagedQuery
     /// </summary>
     string? Sort { get; set; }
 }
+

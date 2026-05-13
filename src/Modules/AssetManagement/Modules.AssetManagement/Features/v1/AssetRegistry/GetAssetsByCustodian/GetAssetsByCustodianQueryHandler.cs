@@ -1,8 +1,8 @@
-using FSH.Modules.AssetManagement.Data;
+using AMIS.Modules.AssetManagement.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.AssetRegistryQueries.GetAssetsByCustodian;
+namespace AMIS.Modules.AssetManagement.Features.v1.AssetRegistryQueries.GetAssetsByCustodian;
 
 public sealed class GetAssetsByCustodianQueryHandler(AssetManagementDbContext dbContext)
     : IQueryHandler<GetAssetsByCustodianQuery, PagedAssetsByCustodianResponse>
@@ -50,3 +50,4 @@ public sealed class GetAssetsByCustodianQueryHandler(AssetManagementDbContext db
         return new PagedAssetsByCustodianResponse(items, pageNumber, pageSize, totalCount);
     }
 }
+

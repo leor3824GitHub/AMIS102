@@ -1,12 +1,12 @@
 @page "/vehicle/vehicles"
-@using FSH.Playground.Blazor.ApiClient
-@using FSH.Modules.Vehicle.Contracts.v1.Vehicles
-@using static FSH.Modules.Vehicle.Contracts.v1.Vehicles.VehicleStatusValues
+@using AMIS.Playground.Blazor.ApiClient
+@using AMIS.Modules.Vehicle.Contracts.v1.Vehicles
+@using static AMIS.Modules.Vehicle.Contracts.v1.Vehicles.VehicleStatusValues
 @inject IVehicleClient VehicleClient
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation
 
-<FshPageHeader Title="Vehicles" Description="Manage vehicle records and lifecycle">
+<AMISPageHeader Title="Vehicles" Description="Manage vehicle records and lifecycle">
     <ActionContent>
         <MudStack Row="true" Spacing="2" Style="width:100%; max-width: 700px;">
             <MudTextField @bind-Value="_query.Keyword" Label="Search" Placeholder="Plate, make, model"
@@ -27,7 +27,7 @@
             <MudButton Variant="Variant.Outlined" Color="Color.Default" OnClick="ClearFilters" Disabled="_busy">Clear</MudButton>
         </MudStack>
     </ActionContent>
-</FshPageHeader>
+</AMISPageHeader>
 
 <div class="mt-4">
     <MudStack Row="true" Spacing="1" Class="mb-3">
@@ -40,7 +40,7 @@
 
     <MudGrid Spacing="2">
         <MudItem xs="12" md="4">
-            <MudCard Class="fsh-card">
+            <MudCard Class="AMIS-card">
                 <MudCardContent>
                     <MudText Typo="Typo.h6" Class="mb-3">Create Vehicle</MudText>
                     <MudStack Spacing="2">
@@ -75,7 +75,7 @@
         </MudItem>
 
         <MudItem xs="12" md="8">
-            <MudCard Class="fsh-card">
+            <MudCard Class="AMIS-card">
                 <MudCardContent>
                     <MudText Typo="Typo.h6" Class="mb-2">Vehicle List</MudText>
                     @if (_vehicles.Count == 0)
@@ -376,3 +376,4 @@
         public decimal? AcquisitionCost { get; set; }
     }
 }
+

@@ -1,7 +1,7 @@
-using FSH.Framework.Shared.Persistence;
+using AMIS.Framework.Shared.Persistence;
 using Mediator;
 
-namespace FSH.Modules.AssetRegister.Contracts.v1.Catalog;
+namespace AMIS.Modules.AssetRegister.Contracts.v1.Catalog;
 
 public sealed record PropertyItemCatalogDto(
     Guid Id,
@@ -47,3 +47,4 @@ public sealed record SearchPropertyItemCatalogsQuery(
     bool? IsActive = null,
     int PageNumber = 1,
     int PageSize = 10) : IQuery<PagedResponse<PropertyItemCatalogDto>>;
+

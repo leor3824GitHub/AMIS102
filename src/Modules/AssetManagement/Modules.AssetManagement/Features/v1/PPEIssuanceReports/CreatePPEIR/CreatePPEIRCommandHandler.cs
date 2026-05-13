@@ -1,10 +1,10 @@
-using FSH.Framework.Core.Context;
-using FSH.Modules.AssetManagement.Data;
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Framework.Core.Context;
+using AMIS.Modules.AssetManagement.Data;
+using AMIS.Modules.AssetManagement.Domain;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.PPEIssuanceReports.CreatePPEIR;
+namespace AMIS.Modules.AssetManagement.Features.v1.PPEIssuanceReports.CreatePPEIR;
 
 public sealed class CreatePPEIRCommandHandler : ICommandHandler<CreatePPEIRCommand, CreatePPEIRResult>
 {
@@ -145,3 +145,4 @@ public sealed class CreatePPEIRCommandHandler : ICommandHandler<CreatePPEIRComma
         return new CreatePPEIRResult(ppeir.Id, ppeir.PPEIRNo, command.Items.Count);
     }
 }
+

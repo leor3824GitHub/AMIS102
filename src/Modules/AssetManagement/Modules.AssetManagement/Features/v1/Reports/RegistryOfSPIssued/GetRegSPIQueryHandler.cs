@@ -1,10 +1,10 @@
-using FSH.Modules.AssetManagement.Data;
-using FSH.Modules.MasterData.Contracts.v1.References;
-using FSH.Modules.MasterData.Contracts.v1.ReportSignatories;
+using AMIS.Modules.AssetManagement.Data;
+using AMIS.Modules.MasterData.Contracts.v1.References;
+using AMIS.Modules.MasterData.Contracts.v1.ReportSignatories;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.Reports.RegistryOfSPIssued;
+namespace AMIS.Modules.AssetManagement.Features.v1.Reports.RegistryOfSPIssued;
 
 public sealed class GetRegSPIQueryHandler(AssetManagementDbContext dbContext, IMediator mediator)
     : IQueryHandler<GetRegSPIQuery, PagedRegSPIResponse>
@@ -177,3 +177,4 @@ public sealed class GetRegSPIQueryHandler(AssetManagementDbContext dbContext, IM
         return string.IsNullOrWhiteSpace(fullName) ? null : fullName;
     }
 }
+

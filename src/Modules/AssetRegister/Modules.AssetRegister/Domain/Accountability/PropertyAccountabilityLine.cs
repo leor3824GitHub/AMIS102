@@ -1,7 +1,7 @@
-using FSH.Modules.AssetRegister.Contracts.v1;
-using FSH.Modules.AssetRegister.Contracts.v1.ValueObjects;
+using AMIS.Modules.AssetRegister.Contracts.v1;
+using AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
 
-namespace FSH.Modules.AssetRegister.Domain.Accountability;
+namespace AMIS.Modules.AssetRegister.Domain.Accountability;
 
 public sealed class PropertyAccountabilityLine
 {
@@ -65,3 +65,4 @@ public sealed class PropertyAccountabilityLine
         LostOnIncidentId = incidentReportId;
     }
 }
+

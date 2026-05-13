@@ -1,5 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-namespace FSH.Framework.Blazor.UI;
+using Microsoft.Extensions.DependencyInjection;
+namespace AMIS.Framework.Blazor.UI;
 
 public static class ServiceCollectionExtensions
 {
@@ -14,9 +14,10 @@ public static class ServiceCollectionExtensions
         });
 
         services.AddMudPopoverService();
-        services.AddScoped<FSH.Framework.Blazor.UI.Components.Feedback.Snackbar.FshSnackbar>();
-        services.AddSingleton(FSH.Framework.Blazor.UI.Theme.FshTheme.Build());
+        services.AddScoped<AMIS.Framework.Blazor.UI.Components.Feedback.Snackbar.AMISSnackbar>();
+        services.AddSingleton(AMIS.Framework.Blazor.UI.Theme.AMISTheme.Build());
 
         return services;
     }
 }
+

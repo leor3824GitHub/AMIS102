@@ -1,4 +1,4 @@
-﻿namespace FSH.Framework.Core.Domain;
+namespace AMIS.Framework.Core.Domain;
 
 /// <summary>
 /// Base domain event with correlation and tenant context.
@@ -27,3 +27,4 @@ public abstract record DomainEvent(
         return factory(Guid.NewGuid(), DateTimeOffset.UtcNow);
     }
 }
+

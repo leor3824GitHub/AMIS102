@@ -1,4 +1,4 @@
-﻿namespace FSH.Framework.Shared.Constants;
+namespace AMIS.Framework.Shared.Constants;
 public static class ActionConstants
 {
     public const string View = nameof(View);
@@ -11,3 +11,4 @@ public static class ActionConstants
     public const string Clean = nameof(Clean);
     public const string UpgradeSubscription = nameof(UpgradeSubscription);
 }
+

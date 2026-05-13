@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace FSH.Modules.Vehicle.Features.v1.Maintenance.DeactivateMaintenanceSchedule;
+namespace AMIS.Modules.Vehicle.Features.v1.Maintenance.DeactivateMaintenanceSchedule;
 
 public sealed class DeactivateMaintenanceScheduleValidator : AbstractValidator<DeactivateMaintenanceScheduleCommand>
 {

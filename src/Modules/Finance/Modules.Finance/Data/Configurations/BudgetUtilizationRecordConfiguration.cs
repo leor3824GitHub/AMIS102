@@ -1,9 +1,9 @@
-using FSH.Modules.Finance.Contracts.v1.BudgetUtilizationRecords;
-using FSH.Modules.Finance.Domain.BudgetUtilizationRecords;
+using AMIS.Modules.Finance.Contracts.v1.BudgetUtilizationRecords;
+using AMIS.Modules.Finance.Domain.BudgetUtilizationRecords;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FSH.Modules.Finance.Data.Configurations;
+namespace AMIS.Modules.Finance.Data.Configurations;
 
 public sealed class BudgetUtilizationRecordConfiguration : IEntityTypeConfiguration<BudgetUtilizationRecord>
 {
@@ -34,3 +34,4 @@ public sealed class BudgetUtilizationRecordConfiguration : IEntityTypeConfigurat
         builder.Property(x => x.Version).IsRowVersion();
     }
 }
+

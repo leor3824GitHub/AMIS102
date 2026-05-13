@@ -1,8 +1,8 @@
-using FSH.Framework.Shared.Persistence;
-using FSH.Modules.AssetRegister.Contracts.v1.ValueObjects;
+using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
 using Mediator;
 
-namespace FSH.Modules.AssetRegister.Contracts.v1.Accountability;
+namespace AMIS.Modules.AssetRegister.Contracts.v1.Accountability;
 
 public sealed record EmployeeRefDto(Guid EmployeeId, string PrintedName, string? Designation);
 
@@ -118,3 +118,4 @@ public sealed record SearchAccountabilitiesQuery(
     DateOnly? ToDate = null,
     int PageNumber = 1,
     int PageSize = 10) : IQuery<PagedResponse<PropertyAccountabilitySummaryDto>>;
+

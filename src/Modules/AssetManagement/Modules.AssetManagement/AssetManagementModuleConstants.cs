@@ -1,4 +1,4 @@
-namespace FSH.Modules.AssetManagement;
+namespace AMIS.Modules.AssetManagement;
 
 public static class AssetManagementModuleConstants
 {
@@ -150,3 +150,4 @@ public static class AssetManagementModuleConstants
 
     }
 }
+

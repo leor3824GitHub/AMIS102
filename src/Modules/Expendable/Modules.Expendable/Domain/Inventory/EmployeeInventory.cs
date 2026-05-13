@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
-using FSH.Framework.Core.Domain;
+using AMIS.Framework.Core.Domain;
 
-namespace FSH.Modules.Expendable.Domain.Inventory;
+namespace AMIS.Modules.Expendable.Domain.Inventory;
 
 /// <summary>Inventory batch for receipt traceability</summary>
 public class InventoryBatch
@@ -164,4 +164,5 @@ public class InventoryConsumption : BaseEntity<Guid>, IHasTenant, IAuditableEnti
         };
     }
 }
+
 

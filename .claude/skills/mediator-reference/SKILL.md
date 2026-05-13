@@ -1,12 +1,12 @@
----
+﻿---
 name: mediator-reference
-description: Mediator library patterns and interfaces for FSH. This project uses the Mediator source generator, NOT MediatR. Reference when implementing commands, queries, and handlers.
+description: Mediator library patterns and interfaces for AMIS. This project uses the Mediator source generator, NOT MediatR. Reference when implementing commands, queries, and handlers.
 user-invocable: false
 ---
 
 # Mediator Reference
 
-⚠️ **FSH uses the `Mediator` source generator library, NOT `MediatR`.**
+⚠️ **AMIS uses the `Mediator` source generator library, NOT `MediatR`.**
 
 These are different libraries with different interfaces. Using MediatR interfaces will cause build errors.
 
@@ -130,3 +130,4 @@ using Mediator;
 // ❌ Wrong
 using MediatR;
 ```
+

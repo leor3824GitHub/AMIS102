@@ -1,6 +1,6 @@
 @page "/expendable/products"
-@using FSH.Framework.Blazor.UI.Components.Cards
-@using FSH.Playground.Blazor.ApiClient
+@using AMIS.Framework.Blazor.UI.Components.Cards
+@using AMIS.Playground.Blazor.ApiClient
 @using System.IO
 @inherits ComponentBase
 @inject ISnackbar Snackbar
@@ -9,7 +9,7 @@
 @inject IMaster_dataClient MasterDataClient
 @inject ILookupClient LookupClient
 
-<FshPageHeader Title="Products" Description="Manage product catalog">
+<AMISPageHeader Title="Products" Description="Manage product catalog">
     <ActionContent>
         <MudStack Row="true" Spacing="2" Style="width: 100%; max-width: 400px;">
             <MudTextField @bind-Value="_searchKeyword" Label="Search" Placeholder="Search products..."
@@ -20,13 +20,13 @@
             </MudButton>
         </MudStack>
     </ActionContent>
-</FshPageHeader>
+</AMISPageHeader>
 
 <div class="mt-4">
     <MudGrid Spacing="2">
         <!-- Create/Edit Form -->
         <MudItem xs="12" md="4">
-            <MudCard Class="fsh-card">
+            <MudCard Class="AMIS-card">
                 <MudCardContent>
                     <MudText Typo="Typo.h6" Class="mb-3">@(EditingProduct != null ? "Edit Product" : "Create Product")</MudText>
                     <MudStack Spacing="3">
@@ -76,7 +76,7 @@
                                          Placeholder="Select a base product to create a variant of..." />
                         <MudTextField @bind-Value="_form.VariantName" Label="Variant Name"
                                       Placeholder="e.g., Red / Large"
-                                      HelperText="@(_selectedParentProduct != null ? "Required â€” enter a variant name" : "Optional â€” select a parent product first")"
+                                      HelperText="@(_selectedParentProduct != null ? "Required — enter a variant name" : "Optional — select a parent product first")"
                                       Required="@(_selectedParentProduct != null)" />
 
                         <!-- Image Upload Section -->
@@ -124,7 +124,7 @@
 
         <!-- Products List -->
         <MudItem xs="12" md="8">
-            <MudCard Class="fsh-card">
+            <MudCard Class="AMIS-card">
                 <MudCardContent>
                     <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-2">
                         <MudText Typo="Typo.h6">Products List</MudText>
@@ -712,3 +712,4 @@
         StateHasChanged();
     }
 }
+

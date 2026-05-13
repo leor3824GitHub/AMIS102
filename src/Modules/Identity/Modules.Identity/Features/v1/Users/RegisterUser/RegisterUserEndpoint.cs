@@ -1,12 +1,12 @@
-using FSH.Framework.Shared.Identity;
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.Identity.Contracts.v1.Users.RegisterUser;
+using AMIS.Framework.Shared.Identity;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.Identity.Contracts.v1.Users.RegisterUser;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.Identity.Features.v1.Users.RegisterUser;
+namespace AMIS.Modules.Identity.Features.v1.Users.RegisterUser;
 
 public static class RegisterUserEndpoint
 {
@@ -27,3 +27,4 @@ public static class RegisterUserEndpoint
         .WithDescription("Create a new user account.");
     }
 }
+

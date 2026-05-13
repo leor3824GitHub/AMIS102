@@ -1,4 +1,4 @@
-namespace FSH.Modules.AssetManagement.Domain;
+namespace AMIS.Modules.AssetManagement.Domain;
 
 /// <summary>
 /// Lifecycle status of a Physical Count Session.
@@ -11,3 +11,4 @@ public enum PhysicalCountStatus
     /// <summary>Session submitted; RPCPPE and ICF generated. No further entries allowed.</summary>
     Submitted = 1,
 }
+

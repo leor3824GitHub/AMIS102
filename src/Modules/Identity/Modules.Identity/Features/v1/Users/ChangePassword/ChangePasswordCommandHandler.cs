@@ -1,9 +1,9 @@
-using FSH.Framework.Core.Context;
-using FSH.Modules.Identity.Contracts.Services;
-using FSH.Modules.Identity.Contracts.v1.Users.ChangePassword;
+using AMIS.Framework.Core.Context;
+using AMIS.Modules.Identity.Contracts.Services;
+using AMIS.Modules.Identity.Contracts.v1.Users.ChangePassword;
 using Mediator;
 
-namespace FSH.Modules.Identity.Features.v1.Users.ChangePassword;
+namespace AMIS.Modules.Identity.Features.v1.Users.ChangePassword;
 
 public sealed class ChangePasswordCommandHandler : ICommandHandler<ChangePasswordCommand, string>
 {
@@ -32,3 +32,4 @@ public sealed class ChangePasswordCommandHandler : ICommandHandler<ChangePasswor
         return "password reset email sent";
     }
 }
+

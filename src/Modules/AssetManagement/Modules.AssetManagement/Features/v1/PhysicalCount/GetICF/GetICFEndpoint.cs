@@ -1,10 +1,10 @@
-using FSH.Framework.Shared.Identity.Authorization;
+using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.AssetManagement.Features.v1.PhysicalCount.GetICF;
+namespace AMIS.Modules.AssetManagement.Features.v1.PhysicalCount.GetICF;
 
 public static class GetICFEndpoint
 {
@@ -15,3 +15,4 @@ public static class GetICFEndpoint
         .WithSummary("Get the Inventory Count Form (ICF) for a physical count session (COA Circular 2020-006)")
         .RequirePermission(AssetManagementModuleConstants.Permissions.PhysicalCount.View);
 }
+

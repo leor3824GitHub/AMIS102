@@ -1,4 +1,4 @@
-namespace FSH.Framework.Web.RateLimiting;
+namespace AMIS.Framework.Web.RateLimiting;
 
 public sealed class FixedWindowPolicyOptions
 {
@@ -6,4 +6,5 @@ public sealed class FixedWindowPolicyOptions
     public int WindowSeconds { get; set; } = 60;
     public int QueueLimit { get; set; } = 0;
 }
+
 

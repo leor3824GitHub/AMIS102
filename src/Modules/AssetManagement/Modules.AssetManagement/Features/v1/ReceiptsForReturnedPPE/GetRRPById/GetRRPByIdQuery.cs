@@ -1,6 +1,6 @@
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.ReceiptsForReturnedPPE.GetRRPById;
+namespace AMIS.Modules.AssetManagement.Features.v1.ReceiptsForReturnedPPE.GetRRPById;
 
 public sealed record GetRRPByIdQuery(Guid Id) : IQuery<RRPDetailsDto>;
 
@@ -27,3 +27,4 @@ public sealed record RRPItemDto(
     int Quantity,
     decimal UnitCost,
     decimal TotalCost);
+

@@ -1,10 +1,10 @@
-using FSH.Framework.Persistence;
-using FSH.Modules.ProcurementAcquisition.Data;
+using AMIS.Framework.Persistence;
+using AMIS.Modules.ProcurementAcquisition.Data;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace FSH.Modules.ProcurementAcquisition.Provisioning;
+namespace AMIS.Modules.ProcurementAcquisition.Provisioning;
 
 /// <summary>
 /// Initializes the ProcurementAcquisition module database schema on app startup.
@@ -54,3 +54,4 @@ internal sealed class ProcurementDbInitializerHostedService : IHostedService
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 }
+

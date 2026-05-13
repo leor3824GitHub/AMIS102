@@ -1,4 +1,4 @@
----
+﻿---
 paths:
   - "src/BuildingBlocks/**/*"
 ---
@@ -20,7 +20,7 @@ Changes to BuildingBlocks affect ALL modules across the entire framework. These 
 - Make minimal, focused changes
 - Ensure backward compatibility
 - Update all affected modules
-- Run full test suite: `dotnet test src/FSH.Framework.slnx`
+- Run full test suite: `dotnet test src/AMIS.Framework.slnx`
 - Document the change
 
 ## Alternatives to Consider
@@ -34,3 +34,4 @@ Changes to BuildingBlocks affect ALL modules across the entire framework. These 
 ## If Not Approved
 
 Do not proceed. Suggest alternatives that don't require BuildingBlocks modifications.
+

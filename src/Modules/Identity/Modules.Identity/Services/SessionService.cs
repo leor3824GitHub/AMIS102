@@ -1,15 +1,15 @@
 using Finbuckle.MultiTenant.Abstractions;
-using FSH.Framework.Core.Context;
-using FSH.Framework.Shared.Multitenancy;
-using FSH.Modules.Identity.Contracts.DTOs;
-using FSH.Modules.Identity.Contracts.Services;
-using FSH.Modules.Identity.Data;
-using FSH.Modules.Identity.Domain;
+using AMIS.Framework.Core.Context;
+using AMIS.Framework.Shared.Multitenancy;
+using AMIS.Modules.Identity.Contracts.DTOs;
+using AMIS.Modules.Identity.Contracts.Services;
+using AMIS.Modules.Identity.Data;
+using AMIS.Modules.Identity.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using UAParser;
 
-namespace FSH.Modules.Identity.Services;
+namespace AMIS.Modules.Identity.Services;
 
 public sealed class SessionService : ISessionService
 {
@@ -350,3 +350,4 @@ public sealed class SessionService : ISessionService
         };
     }
 }
+

@@ -1,8 +1,8 @@
-﻿using FSH.Modules.MasterData.Domain;
+using AMIS.Modules.MasterData.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FSH.Modules.MasterData.Data.Configurations;
+namespace AMIS.Modules.MasterData.Data.Configurations;
 
 public sealed class DepartmentConfiguration : IEntityTypeConfiguration<Department>
 {
@@ -26,4 +26,5 @@ public sealed class DepartmentConfiguration : IEntityTypeConfiguration<Departmen
         builder.HasQueryFilter(x => !x.IsDeleted);
     }
 }
+
 

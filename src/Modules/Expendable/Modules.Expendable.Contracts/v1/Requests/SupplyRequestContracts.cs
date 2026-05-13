@@ -1,7 +1,7 @@
-using FSH.Framework.Shared.Persistence;
+using AMIS.Framework.Shared.Persistence;
 using Mediator;
 
-namespace FSH.Modules.Expendable.Contracts.v1.Requests;
+namespace AMIS.Modules.Expendable.Contracts.v1.Requests;
 
 public record SupplyRequestItemDto(
     Guid ProductId,
@@ -189,3 +189,4 @@ public record PhysicalCountItemDto(
     decimal ShortageValue,
     string? Remarks
 );
+

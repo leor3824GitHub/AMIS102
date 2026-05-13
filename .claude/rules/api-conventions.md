@@ -1,4 +1,4 @@
----
+﻿---
 paths:
   - "src/Modules/**/Features/**/*"
   - "src/Modules/**/*Endpoint*.cs"
@@ -6,7 +6,7 @@ paths:
 
 # API Conventions
 
-Rules for API endpoints in FSH.
+Rules for API endpoints in AMIS.
 
 ## Endpoint Requirements
 
@@ -85,3 +85,4 @@ Use `[AsParameters]` for complex queries:
 ```csharp
 endpoints.MapGet("/", async ([AsParameters] GetProductsQuery query, ...) => ...)
 ```
+

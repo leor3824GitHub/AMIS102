@@ -1,9 +1,9 @@
-using FSH.Framework.Core.Context;
-using FSH.Modules.AssetManagement.Data;
+using AMIS.Framework.Core.Context;
+using AMIS.Modules.AssetManagement.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.SemiExpendableItems.UpdateSemiExpendableItem;
+namespace AMIS.Modules.AssetManagement.Features.v1.SemiExpendableItems.UpdateSemiExpendableItem;
 
 public sealed class UpdatePropertyItemCatalogCommandHandler : ICommandHandler<UpdatePropertyItemCatalogCommand, Unit>
 {
@@ -56,3 +56,4 @@ public sealed class UpdatePropertyItemCatalogCommandHandler : ICommandHandler<Up
         return Unit.Value;
     }
 }
+

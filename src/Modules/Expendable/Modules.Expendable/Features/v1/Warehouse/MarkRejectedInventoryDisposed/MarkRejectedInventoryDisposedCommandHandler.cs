@@ -1,10 +1,10 @@
-using FSH.Framework.Caching;
-using FSH.Modules.Expendable.Contracts.v1.Warehouse;
-using FSH.Modules.Expendable.Data;
+using AMIS.Framework.Caching;
+using AMIS.Modules.Expendable.Contracts.v1.Warehouse;
+using AMIS.Modules.Expendable.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.Expendable.Features.v1.Warehouse.MarkRejectedInventoryDisposed;
+namespace AMIS.Modules.Expendable.Features.v1.Warehouse.MarkRejectedInventoryDisposed;
 
 public sealed class MarkRejectedInventoryDisposedCommandHandler : ICommandHandler<MarkRejectedInventoryDisposedCommand, MarkRejectedInventoryDisposedResponse>
 {
@@ -31,3 +31,4 @@ public sealed class MarkRejectedInventoryDisposedCommandHandler : ICommandHandle
         return new MarkRejectedInventoryDisposedResponse(rejected.Id, rejected.Status.ToString());
     }
 }
+

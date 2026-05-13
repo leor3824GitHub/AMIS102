@@ -1,13 +1,13 @@
 using System.Security.Claims;
-using FSH.Framework.Core.Exceptions;
-using FSH.Framework.Shared.Identity.Claims;
-using FSH.Modules.Identity.Contracts.v1.Users.GetUserProfile;
+using AMIS.Framework.Core.Exceptions;
+using AMIS.Framework.Shared.Identity.Claims;
+using AMIS.Modules.Identity.Contracts.v1.Users.GetUserProfile;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.Identity.Features.v1.Users.GetUserProfile;
+namespace AMIS.Modules.Identity.Features.v1.Users.GetUserProfile;
 
 public static class GetUserProfileEndpoint
 {
@@ -28,3 +28,4 @@ public static class GetUserProfileEndpoint
         .RequireAuthorization();
     }
 }
+

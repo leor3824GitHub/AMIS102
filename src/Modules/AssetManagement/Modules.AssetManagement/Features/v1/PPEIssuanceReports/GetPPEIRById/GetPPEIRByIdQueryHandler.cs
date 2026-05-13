@@ -1,8 +1,8 @@
-using FSH.Modules.AssetManagement.Data;
+using AMIS.Modules.AssetManagement.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.PPEIssuanceReports.GetPPEIRById;
+namespace AMIS.Modules.AssetManagement.Features.v1.PPEIssuanceReports.GetPPEIRById;
 
 public sealed class GetPPEIRByIdQueryHandler(AssetManagementDbContext dbContext)
     : IQueryHandler<GetPPEIRByIdQuery, PPEIRDetailsDto>
@@ -53,3 +53,4 @@ public sealed class GetPPEIRByIdQueryHandler(AssetManagementDbContext dbContext)
             items);
     }
 }
+

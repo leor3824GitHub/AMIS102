@@ -1,6 +1,6 @@
-using FSH.Framework.Core.Domain;
+using AMIS.Framework.Core.Domain;
 
-namespace FSH.Modules.Expendable.Domain.Purchases;
+namespace AMIS.Modules.Expendable.Domain.Purchases;
 
 /// <summary>Purchase status enumeration</summary>
 public enum PurchaseStatus
@@ -242,4 +242,5 @@ public class Purchase : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
         }
     }
 }
+
 

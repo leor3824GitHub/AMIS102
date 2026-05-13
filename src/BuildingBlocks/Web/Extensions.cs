@@ -1,20 +1,20 @@
-﻿using FSH.Framework.Caching;
-using FSH.Framework.Jobs;
-using FSH.Framework.Mailing;
-using FSH.Framework.Persistence;
-using FSH.Framework.Web.Auth;
-using FSH.Framework.Web.Cors;
-using FSH.Framework.Web.Exceptions;
-using FSH.Framework.Web.Health;
-using FSH.Framework.Web.Mediator.Behaviors;
-using FSH.Framework.Web.Modules;
-using FSH.Framework.Web.Observability.Logging.Serilog;
-using FSH.Framework.Web.Observability.OpenTelemetry;
-using FSH.Framework.Web.OpenApi;
-using FSH.Framework.Web.Origin;
-using FSH.Framework.Web.RateLimiting;
-using FSH.Framework.Web.Security;
-using FSH.Framework.Web.Versioning;
+using AMIS.Framework.Caching;
+using AMIS.Framework.Jobs;
+using AMIS.Framework.Mailing;
+using AMIS.Framework.Persistence;
+using AMIS.Framework.Web.Auth;
+using AMIS.Framework.Web.Cors;
+using AMIS.Framework.Web.Exceptions;
+using AMIS.Framework.Web.Health;
+using AMIS.Framework.Web.Mediator.Behaviors;
+using AMIS.Framework.Web.Modules;
+using AMIS.Framework.Web.Observability.Logging.Serilog;
+using AMIS.Framework.Web.Observability.OpenTelemetry;
+using AMIS.Framework.Web.OpenApi;
+using AMIS.Framework.Web.Origin;
+using AMIS.Framework.Web.RateLimiting;
+using AMIS.Framework.Web.Security;
+using AMIS.Framework.Web.Versioning;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
@@ -22,15 +22,15 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
 
-namespace FSH.Framework.Web;
+namespace AMIS.Framework.Web;
 
 public static class Extensions
 {
-    public static IHostApplicationBuilder AddHeroPlatform(this IHostApplicationBuilder builder, Action<FshPlatformOptions>? configure = null)
+    public static IHostApplicationBuilder AddHeroPlatform(this IHostApplicationBuilder builder, Action<AMISPlatformOptions>? configure = null)
     {
         ArgumentNullException.ThrowIfNull(builder);
 
-        var options = new FshPlatformOptions();
+        var options = new AMISPlatformOptions();
         configure?.Invoke(options);
 
         builder.Services.AddScoped<CurrentUserMiddleware>();
@@ -87,11 +87,11 @@ public static class Extensions
     }
 
 
-    public static WebApplication UseHeroPlatform(this WebApplication app, Action<FshPipelineOptions>? configure = null)
+    public static WebApplication UseHeroPlatform(this WebApplication app, Action<AMISPipelineOptions>? configure = null)
     {
         ArgumentNullException.ThrowIfNull(app);
 
-        var options = new FshPipelineOptions();
+        var options = new AMISPipelineOptions();
         configure?.Invoke(options);
 
         var corsEnabled = options.UseCors && IsCorsEnabled(app.Configuration);
@@ -131,7 +131,7 @@ public static class Extensions
         app.UseAuthentication();
 
         // If Auditing module is referenced, wire its HTTP middleware (request/response logging)
-        var auditMiddlewareType = Type.GetType("FSH.Modules.Auditing.AuditHttpMiddleware, FSH.Modules.Auditing");
+        var auditMiddlewareType = Type.GetType("AMIS.Modules.Auditing.AuditHttpMiddleware, AMIS.Modules.Auditing");
         if (auditMiddlewareType is not null)
         {
             app.UseMiddleware(auditMiddlewareType);
@@ -164,7 +164,7 @@ public static class Extensions
     }
 }
 
-public sealed class FshPlatformOptions
+public sealed class AMISPlatformOptions
 {
     public bool EnableCors { get; set; } = true;
     public bool EnableOpenApi { get; set; } = true;
@@ -174,10 +174,11 @@ public sealed class FshPlatformOptions
     public bool EnableOpenTelemetry { get; set; } = true;
 }
 
-public sealed class FshPipelineOptions
+public sealed class AMISPipelineOptions
 {
     public bool UseCors { get; set; } = true;
     public bool UseOpenApi { get; set; } = true;
     public bool ServeStaticFiles { get; set; } = true;
     public bool MapModules { get; set; } = true;
 }
+

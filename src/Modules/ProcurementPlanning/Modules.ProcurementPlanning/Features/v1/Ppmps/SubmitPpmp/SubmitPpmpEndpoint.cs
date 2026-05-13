@@ -1,11 +1,11 @@
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.SubmitPpmp;
+namespace AMIS.Modules.ProcurementPlanning.Features.v1.Ppmps.SubmitPpmp;
 
 public static class SubmitPpmpEndpoint
 {
@@ -22,3 +22,4 @@ public static class SubmitPpmpEndpoint
         return TypedResults.Ok(result);
     }
 }
+

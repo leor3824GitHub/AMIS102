@@ -1,4 +1,4 @@
-namespace FSH.Modules.Multitenancy.Contracts.Dtos;
+namespace AMIS.Modules.Multitenancy.Contracts.Dtos;
 
 public sealed class TenantStatusDto
 {
@@ -10,4 +10,5 @@ public sealed class TenantStatusDto
     public string AdminEmail { get; init; } = default!;
     public string? Issuer { get; init; }
 }
+
 

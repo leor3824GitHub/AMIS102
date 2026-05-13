@@ -1,9 +1,9 @@
 @page "/asset-register/catalog"
-@using FSH.Playground.Blazor.ApiClient
+@using AMIS.Playground.Blazor.ApiClient
 @inject IArCatalogClient Client
 @inject ISnackbar Snackbar
 
-<FshPageHeader Title="Property Item Catalog (Asset Register)"
+<AMISPageHeader Title="Property Item Catalog (Asset Register)"
                Description="Manage the local SKU catalog used to mint property numbers and default asset attributes." />
 
 <MudGrid Spacing="3">
@@ -280,3 +280,4 @@
         if (e.Key == "Enter") { _page = 1; await LoadAsync(); }
     }
 }
+

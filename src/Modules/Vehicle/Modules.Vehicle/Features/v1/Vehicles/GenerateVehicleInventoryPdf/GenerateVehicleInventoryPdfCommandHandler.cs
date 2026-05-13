@@ -1,10 +1,10 @@
-using FSH.Modules.MasterData.Contracts.v1.OrganizationProfile;
-using FSH.Modules.MasterData.Contracts.v1.ReportSignatories;
-using FSH.Modules.Vehicle.Contracts.v1.Vehicles;
+using AMIS.Modules.MasterData.Contracts.v1.OrganizationProfile;
+using AMIS.Modules.MasterData.Contracts.v1.ReportSignatories;
+using AMIS.Modules.Vehicle.Contracts.v1.Vehicles;
 using Mediator;
 using QuestPDF.Fluent;
 
-namespace FSH.Modules.Vehicle.Features.v1.Vehicles.GenerateVehicleInventoryPdf;
+namespace AMIS.Modules.Vehicle.Features.v1.Vehicles.GenerateVehicleInventoryPdf;
 
 public sealed class GenerateVehicleInventoryPdfCommandHandler(IMediator mediator)
     : ICommandHandler<GenerateVehicleInventoryPdfCommand, byte[]>
@@ -30,3 +30,4 @@ public sealed class GenerateVehicleInventoryPdfCommandHandler(IMediator mediator
             .GeneratePdf();
     }
 }
+

@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace FSH.Modules.AssetManagement.Features.v1.PropertyIncidentReports.CreatePropertyIncidentReport;
+namespace AMIS.Modules.AssetManagement.Features.v1.PropertyIncidentReports.CreatePropertyIncidentReport;
 
 public sealed class CreatePropertyIncidentReportCommandValidator
     : AbstractValidator<CreatePropertyIncidentReportCommand>
@@ -39,3 +39,4 @@ public sealed class CreatePropertyIncidentReportCommandValidator
             .NotEmpty();
     }
 }
+

@@ -1,13 +1,13 @@
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Framework.Shared.Multitenancy;
-using FSH.Modules.Multitenancy.Contracts.Dtos;
-using FSH.Modules.Multitenancy.Contracts.v1.GetTenantMigrations;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Framework.Shared.Multitenancy;
+using AMIS.Modules.Multitenancy.Contracts.Dtos;
+using AMIS.Modules.Multitenancy.Contracts.v1.GetTenantMigrations;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.Multitenancy.Features.v1.GetTenantMigrations;
+namespace AMIS.Modules.Multitenancy.Features.v1.GetTenantMigrations;
 
 public static class TenantMigrationsEndpoint
 {
@@ -31,4 +31,5 @@ public static class TenantMigrationsEndpoint
             .Produces(StatusCodes.Status403Forbidden);
     }
 }
+
 

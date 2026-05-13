@@ -1,15 +1,15 @@
 using Asp.Versioning;
-using FSH.Framework.Eventing.Abstractions;
-using FSH.Framework.Persistence;
-using FSH.Framework.Shared.Constants;
-using FSH.Framework.Web.Modules;
-using FSH.Modules.AssetProcurement.Contracts.v1.AssetInspectionAcceptanceReports;
-using FSH.Modules.AssetRegister.Data;
-using FSH.Modules.AssetRegister.Data.Services;
-using FSH.Modules.AssetRegister.Domain.Events;
-using FSH.Modules.AssetRegister.Domain.Services;
-using FSH.Modules.AssetRegister.Integration;
-using FSH.Modules.AssetRegister.Provisioning;
+using AMIS.Framework.Eventing.Abstractions;
+using AMIS.Framework.Persistence;
+using AMIS.Framework.Shared.Constants;
+using AMIS.Framework.Web.Modules;
+using AMIS.Modules.AssetProcurement.Contracts.v1.AssetInspectionAcceptanceReports;
+using AMIS.Modules.AssetRegister.Data;
+using AMIS.Modules.AssetRegister.Data.Services;
+using AMIS.Modules.AssetRegister.Domain.Events;
+using AMIS.Modules.AssetRegister.Domain.Services;
+using AMIS.Modules.AssetRegister.Integration;
+using AMIS.Modules.AssetRegister.Provisioning;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -17,11 +17,11 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-namespace FSH.Modules.AssetRegister;
+namespace AMIS.Modules.AssetRegister;
 
 public class AssetRegisterModule : IModule
 {
-    private static readonly IReadOnlyList<FshPermission> RegisteredPermissions =
+    private static readonly IReadOnlyList<AmisPermission> RegisteredPermissions =
     [
         new("View Assets",     "View",     "AssetRegister.Assets", IsBasic: true),
         new("Register Assets", "Register", "AssetRegister.Assets"),
@@ -181,3 +181,5 @@ public class AssetRegisterModule : IModule
         Features.v1.Reports.ReportEndpoints.MapReportEndpoints(reports);
     }
 }
+
+

@@ -1,12 +1,12 @@
-using FSH.Framework.Shared.Multitenancy;
-using FSH.Modules.Identity.Contracts.v1.Users.ResetPassword;
+using AMIS.Framework.Shared.Multitenancy;
+using AMIS.Modules.Identity.Contracts.v1.Users.ResetPassword;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.Identity.Features.v1.Users.ResetPassword;
+namespace AMIS.Modules.Identity.Features.v1.Users.ResetPassword;
 
 public static class ResetPasswordEndpoint
 {
@@ -27,3 +27,4 @@ public static class ResetPasswordEndpoint
         .AllowAnonymous();
     }
 }
+

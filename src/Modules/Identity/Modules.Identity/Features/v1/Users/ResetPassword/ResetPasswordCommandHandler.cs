@@ -1,8 +1,8 @@
-using FSH.Modules.Identity.Contracts.Services;
-using FSH.Modules.Identity.Contracts.v1.Users.ResetPassword;
+using AMIS.Modules.Identity.Contracts.Services;
+using AMIS.Modules.Identity.Contracts.v1.Users.ResetPassword;
 using Mediator;
 
-namespace FSH.Modules.Identity.Features.v1.Users.ResetPassword;
+namespace AMIS.Modules.Identity.Features.v1.Users.ResetPassword;
 
 public sealed class ResetPasswordCommandHandler : ICommandHandler<ResetPasswordCommand, string>
 {
@@ -22,3 +22,4 @@ public sealed class ResetPasswordCommandHandler : ICommandHandler<ResetPasswordC
         return "Password has been reset.";
     }
 }
+

@@ -1,10 +1,10 @@
-using FSH.Framework.Core.Context;
-using FSH.Modules.AssetManagement.Data;
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Framework.Core.Context;
+using AMIS.Modules.AssetManagement.Data;
+using AMIS.Modules.AssetManagement.Domain;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.PropertyAcknowledgementReceipts.CreatePAR;
+namespace AMIS.Modules.AssetManagement.Features.v1.PropertyAcknowledgementReceipts.CreatePAR;
 
 public sealed class CreatePARCommandHandler : ICommandHandler<CreatePARCommand, CreatePARResult>
 {
@@ -147,3 +147,4 @@ public sealed class CreatePARCommandHandler : ICommandHandler<CreatePARCommand, 
         return new CreatePARResult(par.Id, par.PARNo, command.Items.Count);
     }
 }
+

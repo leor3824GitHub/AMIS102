@@ -1,13 +1,13 @@
 using Finbuckle.MultiTenant.Abstractions;
-using FSH.Framework.Shared.Multitenancy;
-using FSH.Modules.Multitenancy.Contracts.Dtos;
-using FSH.Modules.Multitenancy.Contracts.v1.GetTenantMigrations;
-using FSH.Modules.Multitenancy.Data;
+using AMIS.Framework.Shared.Multitenancy;
+using AMIS.Modules.Multitenancy.Contracts.Dtos;
+using AMIS.Modules.Multitenancy.Contracts.v1.GetTenantMigrations;
+using AMIS.Modules.Multitenancy.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace FSH.Modules.Multitenancy.Features.v1.GetTenantMigrations;
+namespace AMIS.Modules.Multitenancy.Features.v1.GetTenantMigrations;
 
 public sealed class GetTenantMigrationsQueryHandler
     : IQueryHandler<GetTenantMigrationsQuery, IReadOnlyCollection<TenantMigrationStatusDto>>
@@ -74,3 +74,4 @@ public sealed class GetTenantMigrationsQueryHandler
         return tenantMigrationStatuses;
     }
 }
+

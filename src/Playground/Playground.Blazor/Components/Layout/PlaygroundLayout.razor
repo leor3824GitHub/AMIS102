@@ -1,14 +1,14 @@
 @inherits LayoutComponentBase
 @implements IDisposable
-@using FSH.Framework.Blazor.UI.Components.Button
-@using FSH.Framework.Blazor.UI.Components.Layouts
-@using FSH.Framework.Blazor.UI.Components.User
-@using FSH.Framework.Blazor.UI.Components.Dialogs
-@using FSH.Framework.Blazor.UI.Theme
-@using FSH.Playground.Blazor.Components.Pages
+@using AMIS.Framework.Blazor.UI.Components.Button
+@using AMIS.Framework.Blazor.UI.Components.Layouts
+@using AMIS.Framework.Blazor.UI.Components.User
+@using AMIS.Framework.Blazor.UI.Components.Dialogs
+@using AMIS.Framework.Blazor.UI.Theme
+@using AMIS.Playground.Blazor.Components.Pages
 @using Microsoft.AspNetCore.WebUtilities
-@using FSH.Playground.Blazor.Services
-@using FSH.Playground.Blazor.Services.Api
+@using AMIS.Playground.Blazor.Services
+@using AMIS.Playground.Blazor.Services.Api
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Security.Claims
 @inject IHttpContextAccessor HttpContextAccessor
@@ -16,11 +16,11 @@
 @inject IHttpClientFactory HttpClientFactory
 @inject NavigationManager Navigation
 @inject ISnackbar Snackbar
-@inject MudTheme FshTheme
+@inject MudTheme AMISTheme
 @inject ITenantThemeState TenantThemeState
 @inject IThemeStateFactory ThemeStateFactory
-@inject FSH.Playground.Blazor.ApiClient.IIdentityClient IdentityClient
-@inject FSH.Playground.Blazor.ApiClient.IOrganizationProfileClient OrgProfileClient
+@inject AMIS.Playground.Blazor.ApiClient.IIdentityClient IdentityClient
+@inject AMIS.Playground.Blazor.ApiClient.IOrganizationProfileClient OrgProfileClient
 @inject IUserProfileState UserProfileState
 @inject IDialogService DialogService
 @inject IAuthStateNotifier AuthStateNotifier
@@ -50,7 +50,7 @@ else
             <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
             <MudSpacer />
             <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle" />
-            <FshAccountMenu UserName="@_userName"
+            <AMISAccountMenu UserName="@_userName"
                             UserEmail="@_userEmail"
                             UserRole="@_userRole"
                             AvatarUrl="@_avatarUrl"
@@ -60,12 +60,12 @@ else
         </MudAppBar>
         <MudDrawer id="nav-drawer" @bind-Open="_drawerOpen" Elevation="0">
             <MudDrawerHeader>
-                <FshDrawerHeader Title="FSH Playground" />
+                <AMISDrawerHeader Title="AMIS Playground" />
             </MudDrawerHeader>
             <NavMenu />
         </MudDrawer>
         <MudMainContent Class="pt-20" Style="padding-left:0;padding-right:0;">
-            <MudContainer Class="fsh-section page-shell" MaxWidth="MaxWidth.False">
+            <MudContainer Class="AMIS-section page-shell" MaxWidth="MaxWidth.False">
                 @Body
             </MudContainer>
             <footer style="margin-top: 40px; padding: 16px; border-top: 1px solid var(--mud-palette-lines-default); display: flex; justify-content: flex-end; align-items: center; gap: 8px; font-size: 12px; color: var(--mud-palette-text-secondary);">
@@ -115,7 +115,7 @@ else
             var httpContext = HttpContextAccessor.HttpContext;
             if (httpContext is not null)
             {
-                var tenantId = httpContext.Request.Cookies["fsh_tenant"] ?? "root";
+                var tenantId = httpContext.Request.Cookies["AMIS_tenant"] ?? "root";
                 var themeSettings = await ThemeStateFactory.GetThemeAsync(tenantId);
                 _theme = themeSettings.ToMudTheme();
                 TenantThemeState.UpdateSettings(themeSettings);
@@ -283,13 +283,13 @@ else
                     MaxWidth = MaxWidth.Small,
                     FullWidth = true
                 };
-                await DialogService.ShowAsync<FSH.Playground.Blazor.Components.Shared.OrganizationProfileSetupDialog>(
+                await DialogService.ShowAsync<AMIS.Playground.Blazor.Components.Shared.OrganizationProfileSetupDialog>(
                     string.Empty, options);
             }
         }
         catch
         {
-            // Silently skip â€” don't block the user if the API is unavailable
+            // Silently skip — don't block the user if the API is unavailable
         }
     }
 
@@ -331,7 +331,7 @@ else
         try
         {
             var faviconUrl = TenantThemeState.Current.BrandAssets.FaviconUrl;
-            await JS.InvokeVoidAsync("FshTheme.setFavicon", faviconUrl);
+            await JS.InvokeVoidAsync("AMISTheme.setFavicon", faviconUrl);
         }
         catch (Exception ex)
         {
@@ -383,3 +383,4 @@ else
         Navigation.NavigateTo("/audits");
     }
 }
+

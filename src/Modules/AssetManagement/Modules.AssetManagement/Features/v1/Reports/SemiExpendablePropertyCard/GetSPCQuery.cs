@@ -1,6 +1,6 @@
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.Reports.SemiExpendablePropertyCard;
+namespace AMIS.Modules.AssetManagement.Features.v1.Reports.SemiExpendablePropertyCard;
 
 /// <summary>
 /// Generates a Semi-expendable Property Card (SPC) for a specific catalog item type.
@@ -28,3 +28,4 @@ public sealed record SPCEntryDto(
     decimal UnitCost,
     int RunningBalance,
     string? Remarks);
+

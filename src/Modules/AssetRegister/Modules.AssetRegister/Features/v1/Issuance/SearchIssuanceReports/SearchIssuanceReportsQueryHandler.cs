@@ -1,10 +1,10 @@
-using FSH.Framework.Shared.Persistence;
-using FSH.Modules.AssetRegister.Contracts.v1.Issuance;
-using FSH.Modules.AssetRegister.Data;
+using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.AssetRegister.Contracts.v1.Issuance;
+using AMIS.Modules.AssetRegister.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Issuance.SearchIssuanceReports;
+namespace AMIS.Modules.AssetRegister.Features.v1.Issuance.SearchIssuanceReports;
 
 public sealed class SearchIssuanceReportsQueryHandler(AssetRegisterDbContext db)
     : IQueryHandler<SearchIssuanceReportsQuery, PagedResponse<PropertyIssuanceReportSummaryDto>>
@@ -46,3 +46,4 @@ public sealed class SearchIssuanceReportsQueryHandler(AssetRegisterDbContext db)
         };
     }
 }
+

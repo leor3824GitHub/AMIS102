@@ -1,9 +1,9 @@
-using FSH.Modules.AssetManagement.Data;
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Modules.AssetManagement.Data;
+using AMIS.Modules.AssetManagement.Domain;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.InventoryCustodianSlips.GetExpiringICS;
+namespace AMIS.Modules.AssetManagement.Features.v1.InventoryCustodianSlips.GetExpiringICS;
 
 public sealed class GetExpiringICSQueryHandler(AssetManagementDbContext dbContext)
     : IQueryHandler<GetExpiringICSQuery, PagedExpiringICSResponse>
@@ -64,3 +64,4 @@ public sealed class GetExpiringICSQueryHandler(AssetManagementDbContext dbContex
         return new PagedExpiringICSResponse(result, pageNumber, pageSize, totalCount);
     }
 }
+

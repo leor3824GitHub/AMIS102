@@ -1,12 +1,12 @@
 @page "/expendable/warehouse"
-@using FSH.Framework.Blazor.UI.Components.Cards
-@using FSH.Playground.Blazor.ApiClient
+@using AMIS.Framework.Blazor.UI.Components.Cards
+@using AMIS.Playground.Blazor.ApiClient
 @inherits ComponentBase
 @inject ISnackbar Snackbar
 @inject IInventoryClient InventoryClient
 @inject IRejectedClient RejectedClient
 
-<FshPageHeader Title="Warehouse" Description="Inventory stock levels and rejected item disposition" />
+<AMISPageHeader Title="Warehouse" Description="Inventory stock levels and rejected item disposition" />
 
 <div class="mt-4">
     <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-4">
@@ -220,7 +220,7 @@
                 Return to Supplier
             </MudText>
             <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
-                @_actionRejected.ProductName â€” @_actionRejected.QuantityRejected rejected unit(s)
+                @_actionRejected.ProductName — @_actionRejected.QuantityRejected rejected unit(s)
             </MudText>
             <MudStack Spacing="3">
                 <MudNumericField T="int?" @bind-Value="_returnQty"
@@ -254,7 +254,7 @@
                 Dispose Rejected Inventory
             </MudText>
             <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
-                @_actionRejected.ProductName â€” @_actionRejected.QuantityRejected rejected unit(s)
+                @_actionRejected.ProductName — @_actionRejected.QuantityRejected rejected unit(s)
             </MudText>
             <MudStack Spacing="3">
                 <MudSelect T="string" @bind-Value="_disposeMethod" Label="Disposal Method"
@@ -338,7 +338,7 @@
                 {
                     var name = g.First().WarehouseLocationName;
                     var display = string.IsNullOrWhiteSpace(name)
-                        ? $"Warehouse {g.Key.ToString()[..8]}â€¦"
+                        ? $"Warehouse {g.Key.ToString()[..8]}…"
                         : name;
                     return new WarehouseOption(g.Key, display);
                 })
@@ -482,3 +482,4 @@
         finally { _isActioning = false; }
     }
 }
+

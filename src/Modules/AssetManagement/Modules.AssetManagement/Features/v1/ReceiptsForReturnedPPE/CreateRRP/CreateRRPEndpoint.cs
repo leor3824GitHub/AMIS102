@@ -1,11 +1,11 @@
-using FSH.Framework.Shared.Identity.Authorization;
+using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.AssetManagement.Features.v1.ReceiptsForReturnedPPE.CreateRRP;
+namespace AMIS.Modules.AssetManagement.Features.v1.ReceiptsForReturnedPPE.CreateRRP;
 
 public static class CreateRRPEndpoint
 {
@@ -19,3 +19,4 @@ public static class CreateRRPEndpoint
         .WithSummary("Create a Receipt for Returned Property (RRP)")
         .RequirePermission(AssetManagementModuleConstants.Permissions.ReceiptsForReturnedPPE.Create);
 }
+

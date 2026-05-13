@@ -1,9 +1,9 @@
 @page "/asset-register/physical-count"
-@using FSH.Playground.Blazor.ApiClient
+@using AMIS.Playground.Blazor.ApiClient
 @inject IArPhysicalCountClient Client
 @inject ISnackbar Snackbar
 
-<FshPageHeader Title="Physical Count Sessions (RPCSEMEX / RPCPPE)"
+<AMISPageHeader Title="Physical Count Sessions (RPCSEMEX / RPCPPE)"
                Description="Manage physical count sessions per COA 2022-004. Produces RPCSEMEX (SE) and RPCPPE (PPE) reports." />
 
 <MudGrid Spacing="3">
@@ -126,7 +126,7 @@
                             </MudTd>
                             <MudTd>@context.AsAt.ToString("yyyy-MM-dd")</MudTd>
                             <MudTd>@context.StartedOn.ToString("yyyy-MM-dd")</MudTd>
-                            <MudTd>@(context.ClosedOn?.ToString("yyyy-MM-dd") ?? "â€”")</MudTd>
+                            <MudTd>@(context.ClosedOn?.ToString("yyyy-MM-dd") ?? "—")</MudTd>
                             <MudTd Style="text-align:right">@context.EntryCount</MudTd>
                         </RowTemplate>
                         <NoRecordsContent>
@@ -205,7 +205,7 @@
                     <MudText Typo="Typo.subtitle2" Class="mb-2">
                         Count Entries (@_selected.Entries.Count)
                         <MudLink Href="@($"/asset-register/reports?sessionId={_selected.Id}")" Class="ml-2" Typo="Typo.caption">
-                            View Full Report â†’
+                            View Full Report ?
                         </MudLink>
                     </MudText>
 
@@ -214,17 +214,17 @@
                             <MudTh>Property No.</MudTh>
                             <MudTh>Article</MudTh>
                             <MudTh>Unit</MudTh>
-                            <MudTh Style="text-align:right">Unit Cost (â‚±)</MudTh>
+                            <MudTh Style="text-align:right">Unit Cost (?)</MudTh>
                             <MudTh>Condition</MudTh>
                             <MudTh>Scanned On</MudTh>
                         </HeaderContent>
                         <RowTemplate>
-                            <MudTd>@(context.Snapshot?.PropertyNo ?? "â€”")</MudTd>
+                            <MudTd>@(context.Snapshot?.PropertyNo ?? "—")</MudTd>
                             <MudTd>@context.SnapshotArticle</MudTd>
                             <MudTd>@context.SnapshotUnit</MudTd>
                             <MudTd Style="text-align:right">@context.SnapshotUnitCost.ToString("N2")</MudTd>
                             <MudTd>@FormatCountCondition(context.Condition)</MudTd>
-                            <MudTd>@(context.ScannedOnUtc?.LocalDateTime.ToString("yyyy-MM-dd HH:mm") ?? "â€”")</MudTd>
+                            <MudTd>@(context.ScannedOnUtc?.LocalDateTime.ToString("yyyy-MM-dd HH:mm") ?? "—")</MudTd>
                         </RowTemplate>
                     </MudTable>
                     @if (_selected.Entries.Count > 10)
@@ -414,3 +414,4 @@
     private static Color CountStatusColor(int v) => v switch { 0 => Color.Info, 1 => Color.Warning, 2 => Color.Success, _ => Color.Default };
     private static string FormatCountCondition(int v) => v switch { 0 => "Good", 1 => "Fair", 2 => "Poor", 3 => "Missing", 4 => "FoundAtStation", _ => v.ToString() };
 }
+

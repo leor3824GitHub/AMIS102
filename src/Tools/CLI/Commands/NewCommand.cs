@@ -1,13 +1,13 @@
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
-using FSH.CLI.Models;
-using FSH.CLI.Prompts;
-using FSH.CLI.Scaffolding;
-using FSH.CLI.UI;
-using FSH.CLI.Validation;
+using AMIS.CLI.Models;
+using AMIS.CLI.Prompts;
+using AMIS.CLI.Scaffolding;
+using AMIS.CLI.UI;
+using AMIS.CLI.Validation;
 using Spectre.Console.Cli;
 
-namespace FSH.CLI.Commands;
+namespace AMIS.CLI.Commands;
 
 [SuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Instantiated by Spectre.Console.Cli via reflection")]
 internal sealed class NewCommand : AsyncCommand<NewCommand.Settings>
@@ -74,10 +74,10 @@ internal sealed class NewCommand : AsyncCommand<NewCommand.Settings>
         [DefaultValue(null)]
         public bool? Git { get; set; }
 
-        [CommandOption("-v|--fsh-version")]
-        [Description("FullStackHero package version (e.g., 10.0.0 or 10.0.0-rc.1)")]
+        [CommandOption("-v|--AMIS-version")]
+        [Description("AMIS package version (e.g., 10.0.0 or 10.0.0-rc.1)")]
         [DefaultValue(null)]
-        public string? FshVersion { get; set; }
+        public string? AMISVersion { get; set; }
 
         [CommandOption("--no-interactive")]
         [Description("Disable interactive mode")]
@@ -107,7 +107,7 @@ internal sealed class NewCommand : AsyncCommand<NewCommand.Settings>
             }
             else
             {
-                options = ProjectWizard.Run(settings.Name, settings.FshVersion);
+                options = ProjectWizard.Run(settings.Name, settings.AMISVersion);
             }
 
             await SolutionGenerator.GenerateAsync(options, cancellationToken);
@@ -161,7 +161,7 @@ internal sealed class NewCommand : AsyncCommand<NewCommand.Settings>
             if (settings.Terraform.HasValue) options.IncludeTerraform = settings.Terraform.Value;
             if (settings.CI.HasValue) options.IncludeGitHubActions = settings.CI.Value;
             if (settings.Git.HasValue) options.InitializeGit = settings.Git.Value;
-            if (!string.IsNullOrEmpty(settings.FshVersion)) options.FrameworkVersion = settings.FshVersion;
+            if (!string.IsNullOrEmpty(settings.AMISVersion)) options.FrameworkVersion = settings.AMISVersion;
 
             return options;
         }
@@ -182,7 +182,7 @@ internal sealed class NewCommand : AsyncCommand<NewCommand.Settings>
             IncludeSampleModule = settings.Sample ?? false,
             IncludeTerraform = settings.Terraform ?? false,
             IncludeGitHubActions = settings.CI ?? false,
-            FrameworkVersion = settings.FshVersion
+            FrameworkVersion = settings.AMISVersion
         };
     }
 
@@ -215,3 +215,4 @@ internal sealed class NewCommand : AsyncCommand<NewCommand.Settings>
             _ => throw new ArgumentException($"Unknown database provider: {db}")
         };
 }
+

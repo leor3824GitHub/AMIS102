@@ -1,10 +1,10 @@
-using FSH.Modules.Vehicle.Contracts.v1.Maintenance;
-using FSH.Modules.Vehicle.Data;
-using FSH.Modules.Vehicle.Domain.Maintenance;
+using AMIS.Modules.Vehicle.Contracts.v1.Maintenance;
+using AMIS.Modules.Vehicle.Data;
+using AMIS.Modules.Vehicle.Domain.Maintenance;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.Vehicle.Features.v1.Maintenance.SearchMaintenanceLogs;
+namespace AMIS.Modules.Vehicle.Features.v1.Maintenance.SearchMaintenanceLogs;
 
 public sealed class SearchMaintenanceLogsHandler(
     VehicleDbContext db) : IQueryHandler<SearchMaintenanceLogsQuery, List<MaintenanceLogDto>>
@@ -37,3 +37,4 @@ public sealed class SearchMaintenanceLogsHandler(
             .ToList();
     }
 }
+

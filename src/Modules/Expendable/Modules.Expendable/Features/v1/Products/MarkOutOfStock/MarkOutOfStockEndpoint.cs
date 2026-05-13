@@ -1,11 +1,11 @@
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.Expendable.Contracts.v1.Products;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.Expendable.Contracts.v1.Products;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.Expendable.Features.v1.Products.MarkOutOfStock;
+namespace AMIS.Modules.Expendable.Features.v1.Products.MarkOutOfStock;
 
 public static class MarkOutOfStockEndpoint
 {
@@ -27,3 +27,4 @@ public static class MarkOutOfStockEndpoint
         return TypedResults.NoContent();
     }
 }
+

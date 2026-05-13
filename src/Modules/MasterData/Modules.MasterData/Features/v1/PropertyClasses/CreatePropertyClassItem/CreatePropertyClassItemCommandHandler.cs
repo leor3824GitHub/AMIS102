@@ -1,11 +1,11 @@
-using FSH.Framework.Core.Context;
-using FSH.Modules.MasterData.Contracts.v1.PropertyClasses;
-using FSH.Modules.MasterData.Data;
-using FSH.Modules.MasterData.Domain;
+using AMIS.Framework.Core.Context;
+using AMIS.Modules.MasterData.Contracts.v1.PropertyClasses;
+using AMIS.Modules.MasterData.Data;
+using AMIS.Modules.MasterData.Domain;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.MasterData.Features.v1.PropertyClasses.CreatePropertyClassItem;
+namespace AMIS.Modules.MasterData.Features.v1.PropertyClasses.CreatePropertyClassItem;
 
 public sealed class CreatePropertyClassItemCommandHandler(MasterDataDbContext db, ICurrentUser currentUser)
     : ICommandHandler<CreatePropertyClassItemCommand, Guid>
@@ -46,3 +46,4 @@ public sealed class CreatePropertyClassItemCommandHandler(MasterDataDbContext db
         return item.Id;
     }
 }
+

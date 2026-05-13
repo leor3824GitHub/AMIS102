@@ -1,6 +1,6 @@
 using System.Reflection;
-using FSH.Framework.Shared.Constants;
-using FSH.Modules.Expendable;
+using AMIS.Framework.Shared.Constants;
+using AMIS.Modules.Expendable;
 using Microsoft.Extensions.Hosting;
 
 namespace Generic.Tests.Expendable;
@@ -50,3 +50,4 @@ public sealed class PermissionRegistrationTests
         }
     }
 }
+

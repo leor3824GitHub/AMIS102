@@ -1,15 +1,15 @@
-using FSH.Modules.AssetRegister.Contracts.v1;
-using FSH.Modules.AssetRegister.Contracts.v1.Receiving;
-using FSH.Modules.AssetRegister.Contracts.v1.ValueObjects;
-using FSH.Modules.AssetRegister.Data;
-using FSH.Modules.AssetRegister.Domain.Assets;
-using FSH.Modules.AssetRegister.Domain.Catalog;
-using FSH.Modules.AssetRegister.Domain.Receiving;
-using FSH.Modules.AssetRegister.Domain.Services;
+using AMIS.Modules.AssetRegister.Contracts.v1;
+using AMIS.Modules.AssetRegister.Contracts.v1.Receiving;
+using AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
+using AMIS.Modules.AssetRegister.Data;
+using AMIS.Modules.AssetRegister.Domain.Assets;
+using AMIS.Modules.AssetRegister.Domain.Catalog;
+using AMIS.Modules.AssetRegister.Domain.Receiving;
+using AMIS.Modules.AssetRegister.Domain.Services;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Receiving.CreateReceivingReport;
+namespace AMIS.Modules.AssetRegister.Features.v1.Receiving.CreateReceivingReport;
 
 public sealed class CreateReceivingReportCommandHandler(
     AssetRegisterDbContext db,
@@ -93,3 +93,4 @@ public sealed class CreateReceivingReportCommandHandler(
             ? (AssetType.PPE, AssetCategory.PPE)
             : (AssetType.SE, AssetCategory.HighValuedSemi);
 }
+

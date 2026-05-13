@@ -1,11 +1,11 @@
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.AssetManagement.Domain;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.AssetManagement.Features.v1.Locations.GetLocations;
+namespace AMIS.Modules.AssetManagement.Features.v1.Locations.GetLocations;
 
 public static class GetLocationsEndpoint
 {
@@ -24,3 +24,4 @@ public static class GetLocationsEndpoint
         .WithSummary("Get paginated locations for asset accountability and placement")
         .RequirePermission(AssetManagementModuleConstants.Permissions.Locations.View);
 }
+

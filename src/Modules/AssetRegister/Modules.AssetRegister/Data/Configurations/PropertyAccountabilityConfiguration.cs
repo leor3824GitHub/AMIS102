@@ -1,9 +1,9 @@
-using FSH.Modules.AssetRegister.Domain.Accountability;
+using AMIS.Modules.AssetRegister.Domain.Accountability;
 using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FSH.Modules.AssetRegister.Data.Configurations;
+namespace AMIS.Modules.AssetRegister.Data.Configurations;
 
 internal sealed class PropertyAccountabilityConfiguration : IEntityTypeConfiguration<PropertyAccountability>
 {
@@ -63,3 +63,4 @@ internal sealed class PropertyAccountabilityLineConfiguration : IEntityTypeConfi
         builder.HasIndex(x => x.AssetRegistryId);
     }
 }
+

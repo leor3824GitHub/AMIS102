@@ -1,4 +1,4 @@
-# AMIS Progress Tracker
+﻿# AMIS Progress Tracker
 
 > Update this file after every meaningful implementation change.
 > Grouped by project and module.
@@ -52,7 +52,7 @@ Scaffold `Playground.Maui` — the .NET MAUI mobile/desktop client (Android · i
 ### Infrastructure
 
 - [x] Modular Monolith with 11 modules scaffolded and fully wired to `Playground.Api`
-- [x] .NET Aspire orchestration (`FSH.Playground.AppHost`)
+- [x] .NET Aspire orchestration (`AMIS.Playground.AppHost`)
 - [x] PostgreSQL migrations via `Migrations.PostgreSQL`
 - [x] OpenAPI + Scalar UI + NSwag client generation scripts
 - [x] Architecture tests (`src/Tests/Architecture.Tests`)
@@ -255,7 +255,7 @@ Scaffold `Playground.Maui` — the .NET MAUI mobile/desktop client (Android · i
 
 - [ ] **Phase 3** — MAUI Project Setup
   - `Playground.Maui.csproj` (Android · iOS · Windows)
-  - Add to `FSH.Framework.slnx`
+  - Add to `AMIS.Framework.slnx`
   - NuGet: CommunityToolkit.Maui, CommunityToolkit.Mvvm, ZXing.Net.MAUI, sqlite-net-pcl
   - `appsettings.json` (Api:BaseUrl, Api:TenantId)
   - `MauiProgram.cs`
@@ -347,3 +347,4 @@ Scaffold `Playground.Maui` — the .NET MAUI mobile/desktop client (Android · i
 - Use `/maui-feature` skill when adding any new MAUI screen.
 - Use `maui-reviewer` agent after any MAUI code changes.
 - Reference `MAUI-IMPLEMENTATION-PLAN.md` for full technical spec including DTO shapes, caching tables, and scan UX layout.
+

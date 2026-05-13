@@ -1,7 +1,7 @@
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Modules.AssetManagement.Domain;
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.TangibleInventory.UpdateTangibleInventory;
+namespace AMIS.Modules.AssetManagement.Features.v1.TangibleInventory.UpdateTangibleInventory;
 
 public sealed record UpdateTangibleInventoryCommand(
     Guid Id,
@@ -14,3 +14,4 @@ public sealed record UpdateTangibleInventoryCommand(
     string? FundCluster,
     Guid? ReceivedByEmployeeId,
     Guid? NotedByEmployeeId) : ICommand<Unit>;
+

@@ -1,11 +1,11 @@
----
+﻿---
 name: testing-guide
-description: Write unit tests, integration tests, and architecture tests for FSH features. Use when adding tests or understanding the testing strategy.
+description: Write unit tests, integration tests, and architecture tests for AMIS features. Use when adding tests or understanding the testing strategy.
 ---
 
 # Testing Guide
 
-FSH uses a layered testing strategy with architecture tests as guardrails.
+AMIS uses a layered testing strategy with architecture tests as guardrails.
 
 ## Test Project Structure
 
@@ -192,13 +192,13 @@ public class {Entity}Tests
 
 ```bash
 # Run all tests
-dotnet test src/FSH.Framework.slnx
+dotnet test src/AMIS.Framework.slnx
 
 # Run specific test project
 dotnet test src/Tests/Architecture.Tests
 
 # Run with coverage
-dotnet test src/FSH.Framework.slnx --collect:"XPlat Code Coverage"
+dotnet test src/AMIS.Framework.slnx --collect:"XPlat Code Coverage"
 
 # Run specific test
 dotnet test --filter "FullyQualifiedName~Create{Entity}HandlerTests"
@@ -221,3 +221,4 @@ dotnet test --filter "FullyQualifiedName~Create{Entity}HandlerTests"
 4. **Entities need tests** - Test factory methods and domain logic
 5. **Use FluentAssertions** - `.Should()` syntax
 6. **Use Moq for mocking** - `Mock<T>` pattern
+

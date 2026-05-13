@@ -1,6 +1,6 @@
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.AssetRegistryQueries.GetAssetsByCustodian;
+namespace AMIS.Modules.AssetManagement.Features.v1.AssetRegistryQueries.GetAssetsByCustodian;
 
 public sealed record GetAssetsByCustodianQuery(
     Guid CustodianId,

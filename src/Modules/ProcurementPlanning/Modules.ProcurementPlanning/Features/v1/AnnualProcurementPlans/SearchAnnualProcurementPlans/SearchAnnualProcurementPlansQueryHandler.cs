@@ -1,10 +1,10 @@
-﻿using FSH.Framework.Shared.Persistence;
-using FSH.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
-using FSH.Modules.ProcurementPlanning.Data;
+using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
+using AMIS.Modules.ProcurementPlanning.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.SearchAnnualProcurementPlans;
+namespace AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.SearchAnnualProcurementPlans;
 
 public sealed class SearchAnnualProcurementPlansQueryHandler(
     ProcurementPlanningDbContext dbContext) : IQueryHandler<SearchAnnualProcurementPlansQuery, PagedResponse<AnnualProcurementPlanSummaryDto>>

@@ -1,8 +1,8 @@
 @page "/tenants/{Id}"
-@using FSH.Playground.Blazor.ApiClient
-@using FSH.Framework.Blazor.UI.Components.Dialogs
-@using FSH.Framework.Shared.Constants
-@using FSH.Framework.Shared.Multitenancy
+@using AMIS.Playground.Blazor.ApiClient
+@using AMIS.Framework.Blazor.UI.Components.Dialogs
+@using AMIS.Framework.Shared.Constants
+@using AMIS.Framework.Shared.Multitenancy
 @using Microsoft.AspNetCore.Components.Authorization
 @inherits ComponentBase
 @inject ITenantsClient TenantsClient
@@ -20,7 +20,7 @@
 }
 else if (_loading)
 {
-    <FshPageHeader Title="Tenant Details"
+    <AMISPageHeader Title="Tenant Details"
                    Description="Loading tenant details..." />
     <MudStack AlignItems="AlignItems.Center" Class="pa-8">
         <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
@@ -29,7 +29,7 @@ else if (_loading)
 }
 else if (_tenant is null)
 {
-    <FshPageHeader Title="Tenant Details"
+    <AMISPageHeader Title="Tenant Details"
                    Description="Tenant not found" />
     <MudAlert Severity="Severity.Error" Class="mb-4">
         <MudText>Tenant not found.</MudText>
@@ -37,7 +37,7 @@ else if (_tenant is null)
 }
 else
 {
-    <FshPageHeader Title="Tenant Details"
+    <AMISPageHeader Title="Tenant Details"
                    Description="@($"Managing {_tenant.Name}")">
         <ActionContent>
             <MudButton Variant="Variant.Text"
@@ -63,9 +63,9 @@ else
                 </MudButton>
             }
         </ActionContent>
-    </FshPageHeader>
+    </AMISPageHeader>
 
-    <MudPaper Class="fsh-card pa-4 mb-4">
+    <MudPaper Class="AMIS-card pa-4 mb-4">
         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3">
             <MudAvatar Size="Size.Large" Class="tenant-avatar-lg">
                 @GetInitials(_tenant)
@@ -88,7 +88,7 @@ else
     <MudGrid GutterSize="3">
         @* Tenant Information *@
         <MudItem xs="12" md="6">
-            <MudPaper Class="fsh-card pa-4" Style="height: 100%;">
+            <MudPaper Class="AMIS-card pa-4" Style="height: 100%;">
                 <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
                     <MudIcon Icon="@Icons.Material.Filled.Info" Color="Color.Primary" />
                     <MudText Typo="Typo.h6" Class="fw-600">Tenant Information</MudText>
@@ -117,7 +117,7 @@ else
 
         @* Subscription Details *@
         <MudItem xs="12" md="6">
-            <MudPaper Class="fsh-card pa-4" Style="height: 100%;">
+            <MudPaper Class="AMIS-card pa-4" Style="height: 100%;">
                 <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
                     <MudIcon Icon="@Icons.Material.Filled.CardMembership" Color="Color.Primary" />
                     <MudText Typo="Typo.h6" Class="fw-600">Subscription Details</MudText>
@@ -164,7 +164,7 @@ else
 
         @* Database Configuration *@
         <MudItem xs="12" md="6">
-            <MudPaper Class="fsh-card pa-4" Style="height: 100%;">
+            <MudPaper Class="AMIS-card pa-4" Style="height: 100%;">
                 <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
                     <MudIcon Icon="@Icons.Material.Filled.Storage" Color="Color.Primary" />
                     <MudText Typo="Typo.h6" Class="fw-600">Database Configuration</MudText>
@@ -203,7 +203,7 @@ else
 
         @* Provisioning Status *@
         <MudItem xs="12" md="6">
-            <MudPaper Class="fsh-card pa-4" Style="height: 100%;">
+            <MudPaper Class="AMIS-card pa-4" Style="height: 100%;">
                 <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-3">
                     <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
                         <MudIcon Icon="@Icons.Material.Filled.BuildCircle" Color="Color.Primary" />
@@ -576,3 +576,4 @@ else
         }
     }
 }
+

@@ -1,12 +1,12 @@
 using FluentValidation.Results;
-using FSH.Framework.Core.Context;
-using FSH.Modules.Vehicle.Contracts.v1.Repairs;
-using FSH.Modules.Vehicle.Data;
-using FSH.Modules.Vehicle.Domain.Repairs;
+using AMIS.Framework.Core.Context;
+using AMIS.Modules.Vehicle.Contracts.v1.Repairs;
+using AMIS.Modules.Vehicle.Data;
+using AMIS.Modules.Vehicle.Domain.Repairs;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.Vehicle.Features.v1.Repairs.CancelRepair;
+namespace AMIS.Modules.Vehicle.Features.v1.Repairs.CancelRepair;
 
 public sealed class CancelRepairCommandHandler(VehicleDbContext db, ICurrentUser currentUser)
     : ICommandHandler<CancelRepairCommand, Unit>
@@ -43,3 +43,4 @@ public sealed class CancelRepairCommandHandler(VehicleDbContext db, ICurrentUser
         return Unit.Value;
     }
 }
+

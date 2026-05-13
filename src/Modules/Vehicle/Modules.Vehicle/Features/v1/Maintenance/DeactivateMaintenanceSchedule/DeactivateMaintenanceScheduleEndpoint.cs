@@ -1,10 +1,10 @@
-using FSH.Framework.Shared.Identity.Authorization;
+using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.Vehicle.Features.v1.Maintenance.DeactivateMaintenanceSchedule;
+namespace AMIS.Modules.Vehicle.Features.v1.Maintenance.DeactivateMaintenanceSchedule;
 
 public static class DeactivateMaintenanceScheduleEndpoint
 {
@@ -22,3 +22,4 @@ public static class DeactivateMaintenanceScheduleEndpoint
         .WithSummary("Deactivate a maintenance schedule")
         .RequirePermission(VehicleModuleConstants.Permissions.Maintenance.Update);
 }
+

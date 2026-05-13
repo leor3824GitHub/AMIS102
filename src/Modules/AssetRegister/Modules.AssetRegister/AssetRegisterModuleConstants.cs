@@ -1,4 +1,4 @@
-namespace FSH.Modules.AssetRegister;
+namespace AMIS.Modules.AssetRegister;
 
 public static class AssetRegisterModuleConstants
 {
@@ -68,3 +68,4 @@ public static class AssetRegisterModuleConstants
         }
     }
 }
+

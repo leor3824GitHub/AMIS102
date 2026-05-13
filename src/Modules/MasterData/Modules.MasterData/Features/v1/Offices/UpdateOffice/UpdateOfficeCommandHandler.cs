@@ -1,10 +1,10 @@
-using FSH.Framework.Core.Context;
-using FSH.Modules.MasterData.Contracts.v1.References;
-using FSH.Modules.MasterData.Data;
+using AMIS.Framework.Core.Context;
+using AMIS.Modules.MasterData.Contracts.v1.References;
+using AMIS.Modules.MasterData.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.MasterData.Features.v1.Offices.UpdateOffice;
+namespace AMIS.Modules.MasterData.Features.v1.Offices.UpdateOffice;
 
 public sealed class UpdateOfficeCommandHandler : ICommandHandler<UpdateOfficeCommand, OfficeReferenceDto>
 {
@@ -45,3 +45,4 @@ public sealed class UpdateOfficeCommandHandler : ICommandHandler<UpdateOfficeCom
         return new OfficeReferenceDto(office.Id, office.Code, office.Name, office.Description, office.Address, office.LocationCode, office.RegProvCode, office.IsActive, office.OfficeCode);
     }
 }
+

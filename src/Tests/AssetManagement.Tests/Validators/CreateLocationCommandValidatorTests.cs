@@ -1,5 +1,5 @@
-using FSH.Modules.AssetManagement.Domain;
-using FSH.Modules.AssetManagement.Features.v1.Locations.CreateLocation;
+using AMIS.Modules.AssetManagement.Domain;
+using AMIS.Modules.AssetManagement.Features.v1.Locations.CreateLocation;
 using Shouldly;
 using Xunit;
 
@@ -78,3 +78,4 @@ public sealed class CreateLocationCommandValidatorTests
             ParentLocationId: null,
             Description: "Primary storage area");
 }
+

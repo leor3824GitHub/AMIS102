@@ -1,4 +1,4 @@
-using FSH.Framework.Shared.Constants;
+using AMIS.Framework.Shared.Constants;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
@@ -7,7 +7,7 @@ using Microsoft.Extensions.Options;
 using System.Security.Claims;
 using System.Threading.RateLimiting;
 
-namespace FSH.Framework.Web.RateLimiting;
+namespace AMIS.Framework.Web.RateLimiting;
 
 public static class Extensions
 {
@@ -113,3 +113,4 @@ public static class Extensions
         return app;
     }
 }
+

@@ -1,7 +1,7 @@
-using FSH.Framework.Shared.Persistence;
+using AMIS.Framework.Shared.Persistence;
 using Mediator;
 
-namespace FSH.Modules.MasterData.Contracts.v1.References;
+namespace AMIS.Modules.MasterData.Contracts.v1.References;
 
 public sealed record EmployeeReferenceDto(
     Guid Id,
@@ -148,3 +148,4 @@ public sealed class ListUnitOfMeasureReferencesQuery : IPagedQuery, IQuery<Paged
 }
 
 public sealed record GetUnitOfMeasureReferenceByIdQuery(Guid Id) : IQuery<UnitOfMeasureReferenceDto?>;
+

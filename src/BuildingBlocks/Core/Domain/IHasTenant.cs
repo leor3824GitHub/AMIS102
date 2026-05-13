@@ -1,4 +1,4 @@
-﻿namespace FSH.Framework.Core.Domain;
+namespace AMIS.Framework.Core.Domain;
 
 /// <summary>
 /// Associates an entity with a tenant.
@@ -10,3 +10,4 @@ public interface IHasTenant
     /// </summary>
     string TenantId { get; }
 }
+

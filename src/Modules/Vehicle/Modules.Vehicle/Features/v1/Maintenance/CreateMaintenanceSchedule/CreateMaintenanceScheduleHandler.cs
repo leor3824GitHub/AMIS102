@@ -1,11 +1,11 @@
-using FSH.Framework.Core.Context;
-using FSH.Modules.Vehicle.Contracts.v1.Maintenance;
-using FSH.Modules.Vehicle.Data;
-using FSH.Modules.Vehicle.Domain.Maintenance;
+using AMIS.Framework.Core.Context;
+using AMIS.Modules.Vehicle.Contracts.v1.Maintenance;
+using AMIS.Modules.Vehicle.Data;
+using AMIS.Modules.Vehicle.Domain.Maintenance;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.Vehicle.Features.v1.Maintenance.CreateMaintenanceSchedule;
+namespace AMIS.Modules.Vehicle.Features.v1.Maintenance.CreateMaintenanceSchedule;
 
 public sealed class CreateMaintenanceScheduleHandler(
     VehicleDbContext db,
@@ -32,3 +32,4 @@ public sealed class CreateMaintenanceScheduleHandler(
         return new CreateMaintenanceScheduleResponse(schedule.Id);
     }
 }
+

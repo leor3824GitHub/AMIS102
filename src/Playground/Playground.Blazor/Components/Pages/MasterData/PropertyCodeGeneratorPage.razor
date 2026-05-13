@@ -1,12 +1,12 @@
 @page "/master-data/property-code-generator"
-@using FSH.Modules.MasterData.Contracts.v1.PropertyClasses
-@using FSH.Playground.Blazor.ApiClient
+@using AMIS.Modules.MasterData.Contracts.v1.PropertyClasses
+@using AMIS.Playground.Blazor.ApiClient
 @inject IPropertyClassClient PropertyClassClient
 @inject IOrganizationProfileClient OrgProfileClient
 @inject ISnackbar Snackbar
 @inject IJSRuntime JS
 
-<FshPageHeader Title="Property Code Generator"
+<AMISPageHeader Title="Property Code Generator"
                Description="Preview and plan PPE property codes before recording receipts. Format: {Year}-NFA-{Office}-{Class}-{Item}-{Seq}." />
 
 <MudGrid Spacing="3" Class="mt-3">
@@ -19,7 +19,7 @@
 
                             <MudTextField Value="@_officeCode" Label="Office Code (Annex E)"
                                           Variant="Variant.Outlined" ReadOnly="true"
-                                          HelperText="Master Data â†’ Organization Profile"
+                                          HelperText="Master Data ? Organization Profile"
                                           Adornment="@(_officeCode == "???" ? Adornment.End : Adornment.None)"
                                           AdornmentIcon="@Icons.Material.Outlined.Warning"
                                           AdornmentColor="Color.Warning" />
@@ -45,7 +45,7 @@
                                                  Value="_selectedClass"
                                                  ValueChanged="OnClassSelectedAsync"
                                                  SearchFunc="SearchClassesAsync"
-                                                 ToStringFunc="@(c => c is null ? string.Empty : $"{c.Code} â€” {c.Name}")"
+                                                 ToStringFunc="@(c => c is null ? string.Empty : $"{c.Code} — {c.Name}")"
                                                  Label="Property Class"
                                                  Variant="Variant.Outlined"
                                                  Placeholder="Type class code or name..."
@@ -58,7 +58,7 @@
                                                  Value="_selectedItem"
                                                  ValueChanged="OnItemSelectedAsync"
                                                  SearchFunc="SearchItemsInClassAsync"
-                                                 ToStringFunc="@(i => i is null ? string.Empty : $"{i.ItemCode} â€” {i.Name}")"
+                                                 ToStringFunc="@(i => i is null ? string.Empty : $"{i.ItemCode} — {i.Name}")"
                                                  Label="Category Code"
                                                  Variant="Variant.Outlined"
                                                  Placeholder="Type category code or name..."
@@ -74,7 +74,7 @@
                                                  Value="_selectedItem"
                                                  ValueChanged="OnItemSelectedAsync"
                                                  SearchFunc="SearchAllItemsAsync"
-                                                 ToStringFunc="@(i => i is null ? string.Empty : $"{i.ItemCode} â€” {i.Name}")"
+                                                 ToStringFunc="@(i => i is null ? string.Empty : $"{i.ItemCode} — {i.Name}")"
                                                  Label="Category Code"
                                                  Variant="Variant.Outlined"
                                                  Placeholder="Type category code or name..."
@@ -140,7 +140,7 @@
                                     </MudText>
                                 </MudStack>
                                 <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">
-                                    @SelectedClassName â€” @SelectedItemName
+                                    @SelectedClassName — @SelectedItemName
                                 </MudText>
                             </MudPaper>
 
@@ -262,7 +262,7 @@
     {
         if (string.IsNullOrWhiteSpace(code)) return string.Empty;
         var cls = _activeClasses.FirstOrDefault(c => c.Code == code);
-        return cls is null ? code : $"{cls.Code} â€” {cls.Name}";
+        return cls is null ? code : $"{cls.Code} — {cls.Name}";
     }
 
     private void SetMode(bool categoryFirst)
@@ -340,7 +340,8 @@
         }
         catch
         {
-            Snackbar.Add("Copy failed â€” use Ctrl+C on the text instead.", Severity.Warning);
+            Snackbar.Add("Copy failed — use Ctrl+C on the text instead.", Severity.Warning);
         }
     }
 }
+

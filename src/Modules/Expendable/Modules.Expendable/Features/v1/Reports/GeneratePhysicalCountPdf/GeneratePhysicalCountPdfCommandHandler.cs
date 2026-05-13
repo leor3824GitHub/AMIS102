@@ -1,13 +1,13 @@
-using FSH.Modules.Expendable.Contracts.v1.Reports;
-using FSH.Modules.Expendable.Contracts.v1.Requests;
-using FSH.Modules.Expendable.Data;
-using FSH.Modules.MasterData.Contracts.v1.OrganizationProfile;
-using FSH.Modules.MasterData.Contracts.v1.ReportSignatories;
+using AMIS.Modules.Expendable.Contracts.v1.Reports;
+using AMIS.Modules.Expendable.Contracts.v1.Requests;
+using AMIS.Modules.Expendable.Data;
+using AMIS.Modules.MasterData.Contracts.v1.OrganizationProfile;
+using AMIS.Modules.MasterData.Contracts.v1.ReportSignatories;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 using QuestPDF.Fluent;
 
-namespace FSH.Modules.Expendable.Features.v1.Reports.GeneratePhysicalCountPdf;
+namespace AMIS.Modules.Expendable.Features.v1.Reports.GeneratePhysicalCountPdf;
 
 public sealed class GeneratePhysicalCountPdfCommandHandler(
     ExpendableDbContext db,
@@ -83,3 +83,4 @@ public sealed class GeneratePhysicalCountPdfCommandHandler(
         return document.GeneratePdf();
     }
 }
+

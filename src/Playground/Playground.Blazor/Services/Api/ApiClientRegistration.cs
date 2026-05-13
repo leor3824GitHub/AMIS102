@@ -1,7 +1,7 @@
 using System.Net.Http;
-using FSH.Playground.Blazor.ApiClient;
+using AMIS.Playground.Blazor.ApiClient;
 
-namespace FSH.Playground.Blazor;
+namespace AMIS.Playground.Blazor;
 
 internal static class ApiClientRegistration
 {
@@ -249,3 +249,4 @@ internal static class ApiClientRegistration
         return services;
     }
 }
+

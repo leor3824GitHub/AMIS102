@@ -1,6 +1,6 @@
 using Mediator;
 
-namespace FSH.Modules.MasterData.Features.v1.ModesOfProcurement.GetModeOfProcurementById;
+namespace AMIS.Modules.MasterData.Features.v1.ModesOfProcurement.GetModeOfProcurementById;
 
 public sealed record GetModeOfProcurementByIdQuery(Guid Id) : IQuery<ModeOfProcurementDetailsDto>;
 
@@ -13,3 +13,4 @@ public sealed record ModeOfProcurementDetailsDto(
     string? CreatedBy,
     DateTimeOffset? LastModifiedOnUtc,
     string? LastModifiedBy);
+

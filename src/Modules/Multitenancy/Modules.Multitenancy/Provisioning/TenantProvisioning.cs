@@ -1,4 +1,4 @@
-namespace FSH.Modules.Multitenancy.Provisioning;
+namespace AMIS.Modules.Multitenancy.Provisioning;
 
 public sealed class TenantProvisioning
 {
@@ -60,3 +60,4 @@ public sealed class TenantProvisioning
         CompletedUtc = DateTime.UtcNow;
     }
 }
+

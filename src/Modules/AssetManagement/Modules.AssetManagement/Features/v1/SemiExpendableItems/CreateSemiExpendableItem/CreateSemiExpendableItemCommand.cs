@@ -1,6 +1,6 @@
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.SemiExpendableItems.CreateSemiExpendableItem;
+namespace AMIS.Modules.AssetManagement.Features.v1.SemiExpendableItems.CreateSemiExpendableItem;
 
 public sealed record CreatePropertyItemCatalogCommand(
     string Code,
@@ -19,3 +19,4 @@ public sealed record PropertyItemCatalogDto(
     string UnitOfMeasure,
     int? EstimatedUsefulLifeYears,
     bool IsActive);
+

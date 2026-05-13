@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace FSH.Modules.MasterData.Features.v1.Suppliers.DeleteSupplier;
+namespace AMIS.Modules.MasterData.Features.v1.Suppliers.DeleteSupplier;
 
 public sealed class DeleteSupplierCommandValidator : AbstractValidator<DeleteSupplierCommand>
 {
@@ -10,3 +10,4 @@ public sealed class DeleteSupplierCommandValidator : AbstractValidator<DeleteSup
             .NotEmpty().WithMessage("Supplier id is required");
     }
 }
+

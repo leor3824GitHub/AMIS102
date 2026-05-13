@@ -1,6 +1,6 @@
-using FSH.Modules.Auditing.Contracts;
-using FSH.Modules.Identity.Contracts;
-using FSH.Modules.Multitenancy.Contracts;
+using AMIS.Modules.Auditing.Contracts;
+using AMIS.Modules.Identity.Contracts;
+using AMIS.Modules.Multitenancy.Contracts;
 using NetArchTest.Rules;
 using Shouldly;
 using System.Reflection;
@@ -85,15 +85,15 @@ public class ContractsPurityTests
     {
         string[] moduleImplementations =
         [
-            "FSH.Modules.Auditing.Features",
-            "FSH.Modules.Auditing.Data",
-            "FSH.Modules.Auditing.Persistence",
-            "FSH.Modules.Identity.Features",
-            "FSH.Modules.Identity.Data",
-            "FSH.Modules.Identity.Persistence",
-            "FSH.Modules.Multitenancy.Features",
-            "FSH.Modules.Multitenancy.Data",
-            "FSH.Modules.Multitenancy.Persistence"
+            "AMIS.Modules.Auditing.Features",
+            "AMIS.Modules.Auditing.Data",
+            "AMIS.Modules.Auditing.Persistence",
+            "AMIS.Modules.Identity.Features",
+            "AMIS.Modules.Identity.Data",
+            "AMIS.Modules.Identity.Persistence",
+            "AMIS.Modules.Multitenancy.Features",
+            "AMIS.Modules.Multitenancy.Data",
+            "AMIS.Modules.Multitenancy.Persistence"
         ];
 
         foreach (var assembly in ContractsAssemblies)
@@ -177,3 +177,4 @@ public class ContractsPurityTests
         nonSealedTypes.ShouldNotBeNull();
     }
 }
+

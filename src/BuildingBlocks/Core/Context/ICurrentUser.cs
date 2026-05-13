@@ -1,6 +1,6 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 
-namespace FSH.Framework.Core.Context;
+namespace AMIS.Framework.Core.Context;
 
 /// <summary>
 /// Represents the current authenticated user context with access to user information and claims.

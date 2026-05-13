@@ -1,11 +1,11 @@
-using FSH.Modules.Expendable.Contracts.v1.Warehouse;
-using FSH.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.Expendable.Contracts.v1.Warehouse;
+using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.Expendable.Features.v1.Warehouse.GetProductInventory;
+namespace AMIS.Modules.Expendable.Features.v1.Warehouse.GetProductInventory;
 
 public static class GetProductInventoryEndpoint
 {
@@ -28,4 +28,5 @@ public static class GetProductInventoryEndpoint
         return result is not null ? TypedResults.Ok(result) : TypedResults.NotFound();
     }
 }
+
 

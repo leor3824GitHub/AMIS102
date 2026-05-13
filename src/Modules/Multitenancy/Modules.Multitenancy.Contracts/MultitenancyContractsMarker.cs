@@ -1,6 +1,7 @@
-namespace FSH.Modules.Multitenancy.Contracts;
+namespace AMIS.Modules.Multitenancy.Contracts;
 
 // Marker type for contract assembly scanning (Mediator, etc.)
 public sealed class MultitenancyContractsMarker
 {
 }
+

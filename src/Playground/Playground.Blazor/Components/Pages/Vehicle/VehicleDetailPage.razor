@@ -1,16 +1,16 @@
 @page "/vehicle/vehicles/{Id:guid}"
-@using FSH.Framework.Shared.Persistence
-@using FSH.Modules.Vehicle.Contracts.v1.Maintenance
-@using FSH.Modules.Vehicle.Contracts.v1.Repairs
-@using FSH.Modules.Vehicle.Contracts.v1.Vehicles
-@using static FSH.Modules.Vehicle.Contracts.v1.Vehicles.VehicleStatusValues
-@using FSH.Playground.Blazor.ApiClient
+@using AMIS.Framework.Shared.Persistence
+@using AMIS.Modules.Vehicle.Contracts.v1.Maintenance
+@using AMIS.Modules.Vehicle.Contracts.v1.Repairs
+@using AMIS.Modules.Vehicle.Contracts.v1.Vehicles
+@using static AMIS.Modules.Vehicle.Contracts.v1.Vehicles.VehicleStatusValues
+@using AMIS.Playground.Blazor.ApiClient
 @inject IVehicleClient VehicleClient
 @inject ILookupClient LookupClient
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation
 
-<FshPageHeader Title="Vehicle Details" Description="View and update a specific vehicle" />
+<AMISPageHeader Title="Vehicle Details" Description="View and update a specific vehicle" />
 
 @if (_isLoading)
 {
@@ -34,7 +34,7 @@ else
     <div class="mt-4">
         <MudGrid Spacing="2">
             <MudItem xs="12" md="4">
-                <MudCard Class="fsh-card">
+                <MudCard Class="AMIS-card">
                     <MudCardContent>
                         <MudText Typo="Typo.h6">@_vehicle.PlateNumber</MudText>
                         <MudText Typo="Typo.subtitle2">@_vehicle.Make @_vehicle.Model (@_vehicle.Year)</MudText>
@@ -633,3 +633,4 @@ else
         public string? AccountableOfficerTitle { get; set; }
     }
 }
+

@@ -1,10 +1,10 @@
 @page "/asset-register/receiving/ppe"
-@using FSH.Playground.Blazor.ApiClient
+@using AMIS.Playground.Blazor.ApiClient
 @inject IArReceivingReportClient Client
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 
-<FshPageHeader Title="PPE Receiving Reports (PPERR)"
+<AMISPageHeader Title="PPE Receiving Reports (PPERR)"
                Description="Record receipt of Property, Plant & Equipment. Each line materializes one or more AssetRegistry rows with auto-generated property numbers." />
 
 <MudGrid Spacing="3">
@@ -192,3 +192,4 @@
         _ => t.ToString(System.Globalization.CultureInfo.InvariantCulture)
     };
 }
+

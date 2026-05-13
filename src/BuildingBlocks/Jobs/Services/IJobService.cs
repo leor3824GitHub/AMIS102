@@ -1,6 +1,6 @@
-﻿using System.Linq.Expressions;
+using System.Linq.Expressions;
 
-namespace FSH.Framework.Jobs.Services;
+namespace AMIS.Framework.Jobs.Services;
 
 public interface IJobService
 {

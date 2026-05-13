@@ -1,13 +1,13 @@
-﻿using Finbuckle.MultiTenant.Abstractions;
+using Finbuckle.MultiTenant.Abstractions;
 using Finbuckle.MultiTenant.EntityFrameworkCore;
-using FSH.Framework.Core.Domain;
-using FSH.Framework.Shared.Multitenancy;
-using FSH.Framework.Shared.Persistence;
+using AMIS.Framework.Core.Domain;
+using AMIS.Framework.Shared.Multitenancy;
+using AMIS.Framework.Shared.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 
-namespace FSH.Framework.Persistence.Context;
+namespace AMIS.Framework.Persistence.Context;
 
 /// <summary>
 /// Base database context with multi-tenancy and soft delete support.
@@ -67,3 +67,4 @@ public class BaseDbContext(IMultiTenantContextAccessor<AppTenantInfo> multiTenan
         return result;
     }
 }
+

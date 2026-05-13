@@ -1,9 +1,9 @@
-using FSH.Modules.Finance.Contracts.v1.DisbursementVouchers;
-using FSH.Modules.Finance.Data;
+using AMIS.Modules.Finance.Contracts.v1.DisbursementVouchers;
+using AMIS.Modules.Finance.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.Finance.Features.v1.DisbursementVouchers.SearchDisbursementVouchers;
+namespace AMIS.Modules.Finance.Features.v1.DisbursementVouchers.SearchDisbursementVouchers;
 
 public sealed class SearchDisbursementVouchersQueryHandler(
     FinanceDbContext dbContext) : IQueryHandler<SearchDisbursementVouchersQuery, DisbursementVoucherSearchResult>
@@ -49,3 +49,4 @@ public sealed class SearchDisbursementVouchersQueryHandler(
         return new DisbursementVoucherSearchResult(items, totalCount, query.PageNumber, query.PageSize);
     }
 }
+

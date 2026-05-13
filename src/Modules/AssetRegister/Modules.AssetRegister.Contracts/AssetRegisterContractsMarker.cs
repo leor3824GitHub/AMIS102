@@ -1,3 +1,4 @@
-namespace FSH.Modules.AssetRegister.Contracts;
+namespace AMIS.Modules.AssetRegister.Contracts;
 
 public sealed class AssetRegisterContractsMarker;
+

@@ -1,4 +1,4 @@
-# Blazor Client to API Connection Architecture
+﻿# Blazor Client to API Connection Architecture
 
 ## Overview
 
@@ -142,7 +142,7 @@ builder.Services.AddAuthentication("Cookies")
         options.Cookie.HttpOnly = true;           // XSS protection
         options.Cookie.SecurePolicy = CookieSecurePolicy.Always;  // HTTPS only
         options.Cookie.SameSite = SameSiteMode.Strict;            // CSRF protection
-        options.Cookie.Name = ".FSH.Auth";
+        options.Cookie.Name = ".AMIS.Auth";
     });
 
 // Register authentication state provider
@@ -236,7 +236,7 @@ builder.Services.AddApiClients(builder.Configuration, builder.Environment);
 5. BFF extracts claims from JWT (subject, email, name, roles, tenant)
                         ↓
 6. BFF calls SignInAsync() to create secure auth cookie:
-   - Cookie name: ".FSH.Auth"
+   - Cookie name: ".AMIS.Auth"
    - Encrypted payload containing:
      * access_token claim
      * refresh_token claim
@@ -889,3 +889,4 @@ The Blazor-to-API connection uses a sophisticated, production-grade architecture
 ✅ **Developer-Friendly:** Typed clients, clear separation of concerns  
 
 The key insight: **BFF Pattern** normalizes authentication (cookies) between browser and Blazor, while API uses standard JWT bearer tokens. Each client type gets the appropriate security model.
+

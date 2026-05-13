@@ -1,6 +1,6 @@
-using FSH.Framework.Core.Domain;
+using AMIS.Framework.Core.Domain;
 
-namespace FSH.Modules.AssetManagement.Domain;
+namespace AMIS.Modules.AssetManagement.Domain;
 
 public sealed class Location : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 {
@@ -52,3 +52,4 @@ public sealed class Location : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
     }
 }
+

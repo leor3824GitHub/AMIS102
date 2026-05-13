@@ -1,57 +1,57 @@
 using Asp.Versioning;
-using FSH.Framework.Persistence;
-using FSH.Framework.Shared.Constants;
-using FSH.Framework.Shared.Persistence;
-using FSH.Framework.Web.Modules;
-using FSH.Modules.Vehicle.Data;
-using FSH.Modules.Vehicle.Features.v1.Vehicles.CreateVehicle;
-using FSH.Modules.Vehicle.Features.v1.Vehicles.UpdateVehicle;
-using FSH.Modules.Vehicle.Features.v1.Vehicles.AssignVehicle;
-using FSH.Modules.Vehicle.Features.v1.Vehicles.UpdateOdometer;
-using FSH.Modules.Vehicle.Features.v1.Vehicles.RetireVehicle;
-using FSH.Modules.Vehicle.Features.v1.Vehicles.DecommissionVehicle;
-using FSH.Modules.Vehicle.Features.v1.Vehicles.ReactivateVehicle;
-using FSH.Modules.Vehicle.Features.v1.Vehicles.DeleteVehicle;
-using FSH.Modules.Vehicle.Features.v1.Vehicles.GetVehicle;
-using FSH.Modules.Vehicle.Features.v1.Vehicles.SearchVehicles;
-using FSH.Modules.Vehicle.Features.v1.Vehicles.GetMotorVehicleInventory;
-using FSH.Modules.Vehicle.Features.v1.Vehicles.GenerateVehicleInventoryPdf;
-using FSH.Modules.Vehicle.Features.v1.FuelOdometer.CreateVehicleDailyUsage;
-using FSH.Modules.Vehicle.Features.v1.FuelOdometer.UpdateVehicleDailyUsage;
-using FSH.Modules.Vehicle.Features.v1.FuelOdometer.SearchVehicleDailyUsage;
-using FSH.Modules.Vehicle.Features.v1.FuelOdometer.GetVehicleDailyUsageSummary;
-using FSH.Modules.Vehicle.Features.v1.Repairs.CreateRepairRecord;
-using FSH.Modules.Vehicle.Features.v1.Repairs.UpdateRepairRecord;
-using FSH.Modules.Vehicle.Features.v1.Repairs.StartRepair;
-using FSH.Modules.Vehicle.Features.v1.Repairs.CompleteRepair;
-using FSH.Modules.Vehicle.Features.v1.Repairs.CancelRepair;
-using FSH.Modules.Vehicle.Features.v1.Repairs.DeleteRepairRecord;
-using FSH.Modules.Vehicle.Features.v1.Repairs.GetRepairRecord;
-using FSH.Modules.Vehicle.Features.v1.Repairs.SearchRepairRecords;
-using FSH.Modules.Vehicle.Features.v1.Maintenance.CreateMaintenanceSchedule;
-using FSH.Modules.Vehicle.Features.v1.Maintenance.UpdateMaintenanceSchedule;
-using FSH.Modules.Vehicle.Features.v1.Maintenance.DeactivateMaintenanceSchedule;
-using FSH.Modules.Vehicle.Features.v1.Maintenance.DeleteMaintenanceSchedule;
-using FSH.Modules.Vehicle.Features.v1.Maintenance.GetMaintenanceSchedule;
-using FSH.Modules.Vehicle.Features.v1.Maintenance.SearchMaintenanceSchedules;
-using FSH.Modules.Vehicle.Features.v1.Maintenance.GetDueMaintenanceSchedules;
-using FSH.Modules.Vehicle.Features.v1.Maintenance.LogMaintenanceCompletion;
-using FSH.Modules.Vehicle.Features.v1.Maintenance.UpdateMaintenanceLog;
-using FSH.Modules.Vehicle.Features.v1.Maintenance.DeleteMaintenanceLog;
-using FSH.Modules.Vehicle.Features.v1.Maintenance.GetMaintenanceLog;
-using FSH.Modules.Vehicle.Features.v1.Lookups;
-using FSH.Modules.Vehicle.Features.v1.Maintenance.SearchMaintenanceLogs;
+using AMIS.Framework.Persistence;
+using AMIS.Framework.Shared.Constants;
+using AMIS.Framework.Shared.Persistence;
+using AMIS.Framework.Web.Modules;
+using AMIS.Modules.Vehicle.Data;
+using AMIS.Modules.Vehicle.Features.v1.Vehicles.CreateVehicle;
+using AMIS.Modules.Vehicle.Features.v1.Vehicles.UpdateVehicle;
+using AMIS.Modules.Vehicle.Features.v1.Vehicles.AssignVehicle;
+using AMIS.Modules.Vehicle.Features.v1.Vehicles.UpdateOdometer;
+using AMIS.Modules.Vehicle.Features.v1.Vehicles.RetireVehicle;
+using AMIS.Modules.Vehicle.Features.v1.Vehicles.DecommissionVehicle;
+using AMIS.Modules.Vehicle.Features.v1.Vehicles.ReactivateVehicle;
+using AMIS.Modules.Vehicle.Features.v1.Vehicles.DeleteVehicle;
+using AMIS.Modules.Vehicle.Features.v1.Vehicles.GetVehicle;
+using AMIS.Modules.Vehicle.Features.v1.Vehicles.SearchVehicles;
+using AMIS.Modules.Vehicle.Features.v1.Vehicles.GetMotorVehicleInventory;
+using AMIS.Modules.Vehicle.Features.v1.Vehicles.GenerateVehicleInventoryPdf;
+using AMIS.Modules.Vehicle.Features.v1.FuelOdometer.CreateVehicleDailyUsage;
+using AMIS.Modules.Vehicle.Features.v1.FuelOdometer.UpdateVehicleDailyUsage;
+using AMIS.Modules.Vehicle.Features.v1.FuelOdometer.SearchVehicleDailyUsage;
+using AMIS.Modules.Vehicle.Features.v1.FuelOdometer.GetVehicleDailyUsageSummary;
+using AMIS.Modules.Vehicle.Features.v1.Repairs.CreateRepairRecord;
+using AMIS.Modules.Vehicle.Features.v1.Repairs.UpdateRepairRecord;
+using AMIS.Modules.Vehicle.Features.v1.Repairs.StartRepair;
+using AMIS.Modules.Vehicle.Features.v1.Repairs.CompleteRepair;
+using AMIS.Modules.Vehicle.Features.v1.Repairs.CancelRepair;
+using AMIS.Modules.Vehicle.Features.v1.Repairs.DeleteRepairRecord;
+using AMIS.Modules.Vehicle.Features.v1.Repairs.GetRepairRecord;
+using AMIS.Modules.Vehicle.Features.v1.Repairs.SearchRepairRecords;
+using AMIS.Modules.Vehicle.Features.v1.Maintenance.CreateMaintenanceSchedule;
+using AMIS.Modules.Vehicle.Features.v1.Maintenance.UpdateMaintenanceSchedule;
+using AMIS.Modules.Vehicle.Features.v1.Maintenance.DeactivateMaintenanceSchedule;
+using AMIS.Modules.Vehicle.Features.v1.Maintenance.DeleteMaintenanceSchedule;
+using AMIS.Modules.Vehicle.Features.v1.Maintenance.GetMaintenanceSchedule;
+using AMIS.Modules.Vehicle.Features.v1.Maintenance.SearchMaintenanceSchedules;
+using AMIS.Modules.Vehicle.Features.v1.Maintenance.GetDueMaintenanceSchedules;
+using AMIS.Modules.Vehicle.Features.v1.Maintenance.LogMaintenanceCompletion;
+using AMIS.Modules.Vehicle.Features.v1.Maintenance.UpdateMaintenanceLog;
+using AMIS.Modules.Vehicle.Features.v1.Maintenance.DeleteMaintenanceLog;
+using AMIS.Modules.Vehicle.Features.v1.Maintenance.GetMaintenanceLog;
+using AMIS.Modules.Vehicle.Features.v1.Lookups;
+using AMIS.Modules.Vehicle.Features.v1.Maintenance.SearchMaintenanceLogs;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-namespace FSH.Modules.Vehicle;
+namespace AMIS.Modules.Vehicle;
 
 public class VehicleModule : IModule
 {
-    private static readonly IReadOnlyList<FshPermission> RegisteredPermissions =
+    private static readonly IReadOnlyList<AmisPermission> RegisteredPermissions =
     [
         new("View Vehicle Lookup", "View", "Vehicle.Lookup", IsBasic: true),
 
@@ -159,3 +159,5 @@ public class VehicleModule : IModule
         SearchMaintenanceLogsEndpoint.Map(maintenanceGroup);
     }
 }
+
+

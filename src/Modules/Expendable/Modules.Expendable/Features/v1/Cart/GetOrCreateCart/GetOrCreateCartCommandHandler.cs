@@ -1,11 +1,11 @@
-using FSH.Framework.Core.Context;
-using FSH.Modules.Expendable.Contracts.v1.Cart;
-using FSH.Modules.Expendable.Data;
-using FSH.Modules.Expendable.Domain.Cart;
+using AMIS.Framework.Core.Context;
+using AMIS.Modules.Expendable.Contracts.v1.Cart;
+using AMIS.Modules.Expendable.Data;
+using AMIS.Modules.Expendable.Domain.Cart;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.Expendable.Features.v1.Cart.GetOrCreateCart;
+namespace AMIS.Modules.Expendable.Features.v1.Cart.GetOrCreateCart;
 
 public sealed class GetOrCreateCartCommandHandler : ICommandHandler<GetOrCreateCartCommand, EmployeeShoppingCartDto>
 {
@@ -37,3 +37,4 @@ public sealed class GetOrCreateCartCommandHandler : ICommandHandler<GetOrCreateC
         return cart.ToEmployeeShoppingCartDto();
     }
 }
+

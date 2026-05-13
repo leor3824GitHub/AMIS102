@@ -1,11 +1,11 @@
----
+﻿---
 paths:
   - "src/Tests/**/*"
 ---
 
 # Testing Rules
 
-Rules for tests in FSH.
+Rules for tests in AMIS.
 
 ## Test Organization
 
@@ -75,3 +75,4 @@ Architecture tests in `Architecture.Tests/` are mandatory and enforce:
 - Contracts don't depend on implementations
 
 These run on every build and PR.
+

@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace FSH.Modules.MasterData.Features.v1.Categories.DeleteCategory;
+namespace AMIS.Modules.MasterData.Features.v1.Categories.DeleteCategory;
 
 public sealed class DeleteCategoryCommandValidator : AbstractValidator<DeleteCategoryCommand>
 {
@@ -10,3 +10,4 @@ public sealed class DeleteCategoryCommandValidator : AbstractValidator<DeleteCat
             .NotEmpty().WithMessage("Category id is required");
     }
 }
+

@@ -1,4 +1,4 @@
-namespace FSH.Modules.Identity.Contracts.Services;
+namespace AMIS.Modules.Identity.Contracts.Services;
 
 /// <summary>
 /// Service for user status and lifecycle operations.
@@ -15,3 +15,4 @@ public interface IUserStatusService
     /// </summary>
     Task DeleteAsync(string userId);
 }
+

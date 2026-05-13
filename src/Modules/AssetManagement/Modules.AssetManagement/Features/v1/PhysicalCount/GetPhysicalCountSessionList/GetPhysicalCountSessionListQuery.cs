@@ -1,7 +1,7 @@
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Modules.AssetManagement.Domain;
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.PhysicalCount.GetPhysicalCountSessionList;
+namespace AMIS.Modules.AssetManagement.Features.v1.PhysicalCount.GetPhysicalCountSessionList;
 
 public sealed record GetPhysicalCountSessionListQuery(
     string? Keyword,
@@ -31,3 +31,4 @@ public sealed record PhysicalCountSessionSummaryDto(
     int FoundAtStation,
     int Pending,
     DateTimeOffset CreatedOnUtc);
+

@@ -1,4 +1,4 @@
-namespace FSH.Modules.AssetManagement.Domain;
+namespace AMIS.Modules.AssetManagement.Domain;
 
 /// <summary>
 /// Determines whether a received tangible item is classified as
@@ -20,3 +20,4 @@ public enum AssetType
     /// </summary>
     PPE = 1,
 }
+

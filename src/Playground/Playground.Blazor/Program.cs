@@ -1,11 +1,11 @@
-using FSH.Framework.Blazor.UI;
-using FSH.Framework.Blazor.UI.Theme;
-using FSH.Playground.Blazor;
-using FSH.Playground.Blazor.ApiClient;
-using FSH.Playground.Blazor.Components;
-using FSH.Playground.Blazor.Services;
-using FSH.Playground.Blazor.Services.AssetRegister;
-using FSH.Playground.Blazor.Services.Api;
+using AMIS.Framework.Blazor.UI;
+using AMIS.Framework.Blazor.UI.Theme;
+using AMIS.Playground.Blazor;
+using AMIS.Playground.Blazor.ApiClient;
+using AMIS.Playground.Blazor.Components;
+using AMIS.Playground.Blazor.Services;
+using AMIS.Playground.Blazor.Services.AssetRegister;
+using AMIS.Playground.Blazor.Services.Api;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server.Circuits;
@@ -43,7 +43,7 @@ builder.Services.AddAuthentication("Cookies")
         options.Cookie.HttpOnly = true; // Prevent JavaScript access (XSS protection)
         options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // HTTPS only
         options.Cookie.SameSite = SameSiteMode.Strict; // CSRF protection
-        options.Cookie.Name = ".FSH.Auth"; // Custom cookie name
+        options.Cookie.Name = ".AMIS.Auth"; // Custom cookie name
     });
 
 builder.Services.AddAuthorization();
@@ -204,3 +204,4 @@ app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
 await app.RunAsync();
+

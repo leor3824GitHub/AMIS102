@@ -1,4 +1,4 @@
-﻿namespace FSH.Modules.Auditing.Contracts;
+namespace AMIS.Modules.Auditing.Contracts;
 
 public sealed record ActivityEventPayload(
     ActivityKind Kind,
@@ -11,3 +11,4 @@ public sealed record ActivityEventPayload(
     object? RequestPreview,      // truncated/filtered snapshot (JSON-friendly)
     object? ResponsePreview
 );
+

@@ -1,4 +1,4 @@
-﻿namespace FSH.Framework.Shared.Constants;
+namespace AMIS.Framework.Shared.Constants;
 public static class ResourceConstants
 {
     public const string Tenants = nameof(Tenants);
@@ -10,3 +10,4 @@ public static class ResourceConstants
     public const string RoleClaims = nameof(RoleClaims);
     public const string AuditTrails = nameof(AuditTrails);
 }
+

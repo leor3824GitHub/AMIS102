@@ -1,10 +1,10 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace FSH.Playground.Migrations.PostgreSQL.Identity
+namespace AMIS.Playground.Migrations.PostgreSQL.Identity
 {
     /// <inheritdoc />
     public partial class InitialCreate : Migration
@@ -546,3 +546,4 @@ namespace FSH.Playground.Migrations.PostgreSQL.Identity
         }
     }
 }
+

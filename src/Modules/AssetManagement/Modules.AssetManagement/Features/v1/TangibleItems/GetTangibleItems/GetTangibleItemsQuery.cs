@@ -1,6 +1,6 @@
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.TangibleItems.GetTangibleItems;
+namespace AMIS.Modules.AssetManagement.Features.v1.TangibleItems.GetTangibleItems;
 
 public sealed record GetTangibleItemsQuery(
     string? Keyword = null,
@@ -29,3 +29,4 @@ public sealed record TangibleItemSummaryDto(
     decimal UnitCost,
     string? Remarks,
     Guid? PurchaseOrderId = null);
+

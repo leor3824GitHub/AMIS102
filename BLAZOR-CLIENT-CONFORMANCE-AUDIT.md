@@ -1,7 +1,7 @@
-# Blazor API Client Conformance Audit
+﻿# Blazor API Client Conformance Audit
 
 **Audit Date:** March 8, 2026  
-**Framework:** FSH .NET Starter Kit  
+**Framework:** AMIS .NET Starter Kit  
 **Reference Document:** [BLAZOR-API-CLIENT-GENERATION.md](BLAZOR-API-CLIENT-GENERATION.md)  
 **Status:** ⚠️ PARTIAL CONFORMANCE — Multiple issues identified
 
@@ -638,8 +638,9 @@ curl -s https://localhost:7030/openapi/v1.json | jq '.paths | keys' | grep -i se
 
 **Auditor:** Claude (AI Assistant)  
 **Date:** March 8, 2026  
-**Framework Version:** FSH .NET 10  
+**Framework Version:** AMIS .NET 10  
 **Overall Status:** ⚠️ **REQUIRES FIXES** — Do not deploy until wrapper clients are functional
 
 **Next Review:** After fixes implemented and tested
+
 

@@ -1,11 +1,11 @@
-using FSH.Framework.Shared.Identity.Authorization;
+using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.AssetManagement.Features.v1.PhysicalCount.AddFoundAtStationEntry;
+namespace AMIS.Modules.AssetManagement.Features.v1.PhysicalCount.AddFoundAtStationEntry;
 
 public static class AddFoundAtStationEntryEndpoint
 {
@@ -38,6 +38,7 @@ public sealed record AddFoundAtStationEntryBody(
     string PropertyNumber,
     string Description,
     decimal UnitCost,
-    FSH.Modules.AssetManagement.Domain.PhysicalCountCondition Condition,
+    AMIS.Modules.AssetManagement.Domain.PhysicalCountCondition Condition,
     string? Remarks,
     string? PhotoPath);
+

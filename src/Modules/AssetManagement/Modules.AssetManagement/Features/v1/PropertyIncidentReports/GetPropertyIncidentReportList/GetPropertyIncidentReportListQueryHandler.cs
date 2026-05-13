@@ -1,8 +1,8 @@
-using FSH.Modules.AssetManagement.Data;
+using AMIS.Modules.AssetManagement.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.PropertyIncidentReports.GetPropertyIncidentReportList;
+namespace AMIS.Modules.AssetManagement.Features.v1.PropertyIncidentReports.GetPropertyIncidentReportList;
 
 public sealed class GetPropertyIncidentReportListQueryHandler(AssetManagementDbContext dbContext)
     : IQueryHandler<GetPropertyIncidentReportListQuery, PagedPropertyIncidentReportListResponse>
@@ -82,3 +82,4 @@ public sealed class GetPropertyIncidentReportListQueryHandler(AssetManagementDbC
         return new PagedPropertyIncidentReportListResponse(result, pageNumber, pageSize, totalCount);
     }
 }
+

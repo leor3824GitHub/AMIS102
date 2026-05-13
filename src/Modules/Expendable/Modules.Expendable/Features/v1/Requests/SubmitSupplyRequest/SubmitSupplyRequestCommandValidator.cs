@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.Expendable.Contracts.v1.Requests;
+using AMIS.Modules.Expendable.Contracts.v1.Requests;
 
-namespace FSH.Modules.Expendable.Features.v1.Requests.SubmitSupplyRequest;
+namespace AMIS.Modules.Expendable.Features.v1.Requests.SubmitSupplyRequest;
 
 public sealed class SubmitSupplyRequestCommandValidator : AbstractValidator<SubmitSupplyRequestCommand>
 {
@@ -11,3 +11,4 @@ public sealed class SubmitSupplyRequestCommandValidator : AbstractValidator<Subm
             .NotEmpty().WithMessage("Request ID is required");
     }
 }
+

@@ -1,12 +1,12 @@
----
+﻿---
 name: code-reviewer
-description: Review code changes against FSH patterns and conventions. Use proactively after any code modifications to catch violations before commit.
+description: Review code changes against AMIS patterns and conventions. Use proactively after any code modifications to catch violations before commit.
 tools: Read, Grep, Glob, Bash
 disallowedTools: Write, Edit
 model: sonnet
 ---
 
-You are a code reviewer for the FullStackHero .NET Starter Kit. Your job is to review code changes and ensure they follow FSH patterns.
+You are a code reviewer for the AMIS (Asset Management Information System) .NET Starter Kit. Your job is to review code changes and ensure they follow AMIS patterns.
 
 ## Review Process
 
@@ -98,7 +98,7 @@ Only apply these checks when MAUI files are in the diff.
 - [Optional suggestions]
 
 ### Build Verification
-Run: `dotnet build src/FSH.Framework.slnx`
+Run: `dotnet build src/AMIS.Framework.slnx`
 Expected: 0 warnings
 ```
 
@@ -107,6 +107,7 @@ Expected: 0 warnings
 Suggest running:
 
 ```bash
-dotnet build src/FSH.Framework.slnx  # Verify 0 warnings
-dotnet test src/FSH.Framework.slnx   # Run tests
+dotnet build src/AMIS.Framework.slnx  # Verify 0 warnings
+dotnet test src/AMIS.Framework.slnx   # Run tests
 ```
+

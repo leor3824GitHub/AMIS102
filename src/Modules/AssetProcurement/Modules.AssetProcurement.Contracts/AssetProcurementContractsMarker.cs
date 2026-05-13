@@ -1,3 +1,4 @@
-namespace FSH.Modules.AssetProcurement.Contracts;
+namespace AMIS.Modules.AssetProcurement.Contracts;
 
 public sealed class AssetProcurementContractsMarker;
+

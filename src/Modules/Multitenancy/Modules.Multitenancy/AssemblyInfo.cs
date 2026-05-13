@@ -1,3 +1,5 @@
-using FSH.Framework.Web.Modules;
+using AMIS.Framework.Web.Modules;
 
-[assembly: FshModule(typeof(FSH.Modules.Multitenancy.MultitenancyModule), 200)]
+[assembly: AmisModule(typeof(AMIS.Modules.Multitenancy.MultitenancyModule), 200)]
+
+

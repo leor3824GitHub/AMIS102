@@ -1,10 +1,10 @@
 @page "/users"
-@using FSH.Playground.Blazor.ApiClient
-@using FSH.Framework.Blazor.UI.Components.Dialogs
-@using FSH.Framework.Blazor.UI.Components.Cards
+@using AMIS.Playground.Blazor.ApiClient
+@using AMIS.Framework.Blazor.UI.Components.Dialogs
+@using AMIS.Framework.Blazor.UI.Components.Cards
 @inherits ComponentBase
 @using System.Security.Claims
-@using FSH.Framework.Shared.Constants
+@using AMIS.Framework.Shared.Constants
 @using Microsoft.AspNetCore.Components.Authorization
 @inject IIdentityClient IdentityClient
 @inject IUsersClient UsersClient
@@ -13,7 +13,7 @@
 @inject IDialogService DialogService
 @inject AuthenticationStateProvider AuthenticationStateProvider
 
-<FshPageHeader Title="Users"
+<AMISPageHeader Title="Users"
                Description="Manage user accounts and permissions">
     <ActionContent>
         @if (_selectedUsers.Any())
@@ -50,33 +50,33 @@
             New User
         </MudButton>
     </ActionContent>
-</FshPageHeader>
+</AMISPageHeader>
 
 @* Stats Cards *@
 <MudGrid Class="mb-4">
     <MudItem xs="6" sm="3">
-        <FshStatCard Icon="@Icons.Material.Filled.People"
+        <AMISStatCard Icon="@Icons.Material.Filled.People"
                      IconColor="Color.Primary"
                      Value="@_stats.Total.ToString()"
                      Label="Total Users"
                      Badge="Total" />
     </MudItem>
     <MudItem xs="6" sm="3">
-        <FshStatCard Icon="@Icons.Material.Filled.CheckCircle"
+        <AMISStatCard Icon="@Icons.Material.Filled.CheckCircle"
                      IconColor="Color.Success"
                      Value="@_stats.Active.ToString()"
                      Label="Active Users"
                      Badge="Active" />
     </MudItem>
     <MudItem xs="6" sm="3">
-        <FshStatCard Icon="@Icons.Material.Filled.Cancel"
+        <AMISStatCard Icon="@Icons.Material.Filled.Cancel"
                      IconColor="Color.Error"
                      Value="@_stats.Inactive.ToString()"
                      Label="Inactive Users"
                      Badge="Inactive" />
     </MudItem>
     <MudItem xs="6" sm="3">
-        <FshStatCard Icon="@Icons.Material.Filled.MarkEmailUnread"
+        <AMISStatCard Icon="@Icons.Material.Filled.MarkEmailUnread"
                      IconColor="Color.Warning"
                      Value="@_stats.UnconfirmedEmail.ToString()"
                      Label="Pending Verification"
@@ -86,7 +86,7 @@
 
 @* Filter Panel *@
 <MudExpansionPanels Class="mb-4" Elevation="0">
-    <MudExpansionPanel Text="Filters" IsInitiallyExpanded="true" Class="fsh-card">
+    <MudExpansionPanel Text="Filters" IsInitiallyExpanded="true" Class="AMIS-card">
         <MudGrid GutterSize="2">
             <MudItem xs="12" sm="4">
                 <MudTextField @bind-Value="_filter.Search"
@@ -132,7 +132,7 @@
 </MudExpansionPanels>
 
 @* Data Grid *@
-<MudPaper Class="fsh-card pa-0" Style="overflow: hidden;">
+<MudPaper Class="AMIS-card pa-0" Style="overflow: hidden;">
     <MudDataGrid T="UserDto"
                  @ref="_dataGrid"
                  Items="_filtered"
@@ -742,3 +742,4 @@
         }
     }
 }
+

@@ -1,8 +1,8 @@
-using FSH.Modules.MasterData.Data;
+using AMIS.Modules.MasterData.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.MasterData.Features.v1.Suppliers.GetSupplierById;
+namespace AMIS.Modules.MasterData.Features.v1.Suppliers.GetSupplierById;
 
 public sealed class GetSupplierByIdQueryHandler : IQueryHandler<GetSupplierByIdQuery, SupplierDetailsDto>
 {
@@ -43,3 +43,4 @@ public sealed class GetSupplierByIdQueryHandler : IQueryHandler<GetSupplierByIdQ
             supplier.LastModifiedBy);
     }
 }
+

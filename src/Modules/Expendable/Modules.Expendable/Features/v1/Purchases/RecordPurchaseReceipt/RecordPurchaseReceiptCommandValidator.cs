@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.Expendable.Contracts.v1.Purchases;
+using AMIS.Modules.Expendable.Contracts.v1.Purchases;
 
-namespace FSH.Modules.Expendable.Features.v1.Purchases.RecordPurchaseReceipt;
+namespace AMIS.Modules.Expendable.Features.v1.Purchases.RecordPurchaseReceipt;
 
 public sealed class RecordPurchaseReceiptCommandValidator : AbstractValidator<RecordPurchaseReceiptCommand>
 {
@@ -24,3 +24,4 @@ public sealed class RecordPurchaseReceiptCommandValidator : AbstractValidator<Re
             .WithMessage("At least one unit must be recorded in receipt.");
     }
 }
+

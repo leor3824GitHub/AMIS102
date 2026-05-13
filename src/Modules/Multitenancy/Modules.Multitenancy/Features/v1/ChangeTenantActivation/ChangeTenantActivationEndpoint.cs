@@ -1,7 +1,7 @@
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Framework.Shared.Multitenancy;
-using FSH.Modules.Multitenancy.Contracts.Dtos;
-using FSH.Modules.Multitenancy.Contracts.v1.ChangeTenantActivation;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Framework.Shared.Multitenancy;
+using AMIS.Modules.Multitenancy.Contracts.Dtos;
+using AMIS.Modules.Multitenancy.Contracts.v1.ChangeTenantActivation;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.Multitenancy.Features.v1.ChangeTenantActivation;
+namespace AMIS.Modules.Multitenancy.Features.v1.ChangeTenantActivation;
 
 public static class ChangeTenantActivationEndpoint
 {
@@ -41,3 +41,4 @@ public static class ChangeTenantActivationEndpoint
         return TypedResults.Ok(result);
     }
 }
+

@@ -1,4 +1,4 @@
-﻿namespace FSH.Framework.Shared.Multitenancy;
+namespace AMIS.Framework.Shared.Multitenancy;
 
 public static class MultitenancyConstants
 {
@@ -24,3 +24,4 @@ public static class MultitenancyConstants
         public const string UpdateTheme = "Permissions.Tenants.UpdateTheme";
     }
 }
+

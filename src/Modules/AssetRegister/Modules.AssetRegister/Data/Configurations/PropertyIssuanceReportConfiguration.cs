@@ -1,9 +1,9 @@
-using FSH.Modules.AssetRegister.Domain.Issuance;
+using AMIS.Modules.AssetRegister.Domain.Issuance;
 using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FSH.Modules.AssetRegister.Data.Configurations;
+namespace AMIS.Modules.AssetRegister.Data.Configurations;
 
 internal sealed class PropertyIssuanceReportConfiguration : IEntityTypeConfiguration<PropertyIssuanceReport>
 {
@@ -55,3 +55,4 @@ internal sealed class PropertyIssuanceReportLineConfiguration : IEntityTypeConfi
         builder.HasIndex(x => x.AssetRegistryId);
     }
 }
+

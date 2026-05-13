@@ -1,4 +1,4 @@
-﻿namespace FSH.Modules.Auditing.Contracts;
+namespace AMIS.Modules.Auditing.Contracts;
 
 /// <summary>
 /// Deterministic JSON serialization for payloads (camelCase, enum-as-string, stable output).
@@ -7,3 +7,4 @@ public interface IAuditSerializer
 {
     string SerializePayload(object payload);
 }
+

@@ -1,8 +1,8 @@
-using FSH.Framework.Eventing.Abstractions;
+using AMIS.Framework.Eventing.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace FSH.Framework.Eventing.Outbox;
+namespace AMIS.Framework.Eventing.Outbox;
 
 /// <summary>
 /// EF Core-based outbox store for a specific DbContext.
@@ -80,4 +80,5 @@ public sealed class EfCoreOutboxStore<TDbContext> : IOutboxStore
         await _dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
     }
 }
+
 

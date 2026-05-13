@@ -1,6 +1,6 @@
-using FSH.Framework.Core.Domain;
+using AMIS.Framework.Core.Domain;
 
-namespace FSH.Modules.AssetManagement.Domain;
+namespace AMIS.Modules.AssetManagement.Domain;
 
 /// <summary>
 /// Inspection and Inventory Report of Unserviceable Semi-Expendable Property (IIRUSP) —
@@ -84,3 +84,4 @@ public sealed class UnserviceablePropertyReport : AggregateRoot<Guid>, IHasTenan
         };
     }
 }
+

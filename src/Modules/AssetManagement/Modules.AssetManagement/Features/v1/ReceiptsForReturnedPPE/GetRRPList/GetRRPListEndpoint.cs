@@ -1,10 +1,10 @@
-using FSH.Framework.Shared.Identity.Authorization;
+using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.AssetManagement.Features.v1.ReceiptsForReturnedPPE.GetRRPList;
+namespace AMIS.Modules.AssetManagement.Features.v1.ReceiptsForReturnedPPE.GetRRPList;
 
 public static class GetRRPListEndpoint
 {
@@ -18,3 +18,4 @@ public static class GetRRPListEndpoint
         .WithSummary("Get a paged list of Receipts for Returned PPE")
         .RequirePermission(AssetManagementModuleConstants.Permissions.ReceiptsForReturnedPPE.View);
 }
+

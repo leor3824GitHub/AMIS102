@@ -1,11 +1,11 @@
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.Vehicle.Contracts.v1.Maintenance;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.Vehicle.Contracts.v1.Maintenance;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.Vehicle.Features.v1.Maintenance.SearchMaintenanceSchedules;
+namespace AMIS.Modules.Vehicle.Features.v1.Maintenance.SearchMaintenanceSchedules;
 
 public static class SearchMaintenanceSchedulesEndpoint
 {
@@ -27,3 +27,4 @@ public static class SearchMaintenanceSchedulesEndpoint
         .WithSummary("Search maintenance schedules")
         .RequirePermission(VehicleModuleConstants.Permissions.Maintenance.View);
 }
+

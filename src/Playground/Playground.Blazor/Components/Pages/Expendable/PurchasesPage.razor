@@ -1,6 +1,6 @@
 @page "/expendable/purchases"
-@using FSH.Framework.Blazor.UI.Components.Cards
-@using FSH.Playground.Blazor.ApiClient
+@using AMIS.Framework.Blazor.UI.Components.Cards
+@using AMIS.Playground.Blazor.ApiClient
 @inherits ComponentBase
 @inject ISnackbar Snackbar
 @inject IExpendableClient ExpendableClient
@@ -8,14 +8,14 @@
 @inject IMaster_dataClient MasterDataClient
 @inject IInventoryClient InventoryClient
 
-<FshPageHeader Title="Purchase Orders" Description="Create, manage, and receive supply purchase orders">
+<AMISPageHeader Title="Purchase Orders" Description="Create, manage, and receive supply purchase orders">
     <ActionContent>
         <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
                    OnClick="OpenCreateDialog">
             New Purchase Order
         </MudButton>
     </ActionContent>
-</FshPageHeader>
+</AMISPageHeader>
 
 <div class="mt-4">
     <!-- Status Filter Chips -->
@@ -56,7 +56,7 @@
             </MudTd>
             <MudTd>@GetSupplierName(context.SupplierId)</MudTd>
             <MudTd>@context.OrderDate.ToString("MMM d, yyyy")</MudTd>
-            <MudTd>@(context.ExpectedDeliveryDate?.ToString("MMM d, yyyy") ?? "â€”")</MudTd>
+            <MudTd>@(context.ExpectedDeliveryDate?.ToString("MMM d, yyyy") ?? "—")</MudTd>
             <MudTd Style="text-align:right">$@context.TotalAmount.ToString("F2")</MudTd>
             <MudTd Style="text-align:center">@context.LineItems.Count</MudTd>
             <MudTd>@RenderStatusChip(context.Status)</MudTd>
@@ -170,7 +170,7 @@
         <MudPaper Class="pa-5" Elevation="24" Style="width: min(780px, 95vw); max-height: 90vh; overflow-y: auto;">
             <MudText Typo="Typo.h6" Class="mb-1">
                 <MudIcon Icon="@Icons.Material.Filled.PlaylistAdd" Class="mr-2" Color="Color.Primary" />
-                Line Items â€” @_editingPO.PurchaseOrderNumber
+                Line Items — @_editingPO.PurchaseOrderNumber
             </MudText>
             <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-4">
                 Supplier: @GetSupplierName(_editingPO.SupplierId)
@@ -268,7 +268,7 @@
         <MudPaper Class="pa-5" Elevation="24" Style="width: min(700px, 95vw); max-height: 90vh; overflow-y: auto;">
             <MudText Typo="Typo.h6" Class="mb-1">
                 <MudIcon Icon="@Icons.Material.Filled.MoveToInbox" Class="mr-2" Color="Color.Warning" />
-                Record Receipt â€” @_receiptPO.PurchaseOrderNumber
+                Record Receipt — @_receiptPO.PurchaseOrderNumber
             </MudText>
             <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-4">
                 Enter received and rejected quantities for each line item.
@@ -347,11 +347,11 @@
                 </MudItem>
                 <MudItem xs="6">
                     <MudText Typo="Typo.caption" Color="Color.Tertiary">Expected Delivery</MudText>
-                    <MudText Typo="Typo.body2">@(_detailPO.ExpectedDeliveryDate?.ToString("MMM d, yyyy") ?? "â€”")</MudText>
+                    <MudText Typo="Typo.body2">@(_detailPO.ExpectedDeliveryDate?.ToString("MMM d, yyyy") ?? "—")</MudText>
                 </MudItem>
                 <MudItem xs="6">
                     <MudText Typo="Typo.caption" Color="Color.Tertiary">Delivery Date</MudText>
-                    <MudText Typo="Typo.body2">@(_detailPO.DeliveryDate?.ToString("MMM d, yyyy") ?? "â€”")</MudText>
+                    <MudText Typo="Typo.body2">@(_detailPO.DeliveryDate?.ToString("MMM d, yyyy") ?? "—")</MudText>
                 </MudItem>
                 @if (!string.IsNullOrWhiteSpace(_detailPO.ReceivingNotes))
                 {
@@ -392,7 +392,7 @@
                         {
                             <MudChip T="string" Size="Size.Small" Color="Color.Error">@context.RejectedQuantity</MudChip>
                         }
-                        else { <MudText>â€”</MudText> }
+                        else { <MudText>—</MudText> }
                     </MudTd>
                 </RowTemplate>
                 <FooterContent>
@@ -416,7 +416,7 @@
         <MudPaper Class="pa-5" Elevation="24" Style="width: min(720px, 95vw); max-height: 90vh; overflow-y: auto;">
             <MudText Typo="Typo.h6" Class="mb-1">
                 <MudIcon Icon="@Icons.Material.Filled.FactCheck" Class="mr-2" Color="Color.Secondary" />
-                Record Inspection â€” @_inspectionPO.PurchaseOrderNumber
+                Record Inspection — @_inspectionPO.PurchaseOrderNumber
             </MudText>
             <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-4">
                 Enter accepted and rejected quantities for each received line item. Accepted items go to warehouse inventory.
@@ -456,7 +456,7 @@
                                           ValueChanged="@((string v) => SetInspectRejectionReason(context.ProductId, v))"
                                           Placeholder="Required" Dense="true" Margin="Margin.Dense" Variant="Variant.Outlined" />
                         }
-                        else { <MudText Typo="Typo.caption" Color="Color.Secondary">â€”</MudText> }
+                        else { <MudText Typo="Typo.caption" Color="Color.Secondary">—</MudText> }
                     </MudTd>
                 </RowTemplate>
             </MudTable>
@@ -591,7 +591,7 @@
                 {
                     var name = g.First().WarehouseLocationName;
                     var display = string.IsNullOrWhiteSpace(name)
-                        ? $"Warehouse {g.Key.ToString()[..8]}â€¦"
+                        ? $"Warehouse {g.Key.ToString()[..8]}…"
                         : name;
                     return new WarehouseOption(g.Key, display);
                 })
@@ -640,7 +640,7 @@
             var product = await ExpendableClient.ProductsGetAsync(productId);
             if (product != null) _productNames[productId] = $"{product.Name} ({product.Sku})";
         }
-        catch { _productNames[productId] = productId.ToString()[..8] + "â€¦"; }
+        catch { _productNames[productId] = productId.ToString()[..8] + "…"; }
     }
 
     private void SetStatusFilter(string? status)
@@ -652,10 +652,10 @@
     // ===== LOOKUP HELPERS =====
 
     private string GetSupplierName(string supplierId) =>
-        _supplierNames.TryGetValue(supplierId, out var name) ? name : supplierId[..Math.Min(8, supplierId.Length)] + "â€¦";
+        _supplierNames.TryGetValue(supplierId, out var name) ? name : supplierId[..Math.Min(8, supplierId.Length)] + "…";
 
     private string GetProductName(Guid productId) =>
-        _productNames.TryGetValue(productId, out var name) ? name : productId.ToString()[..8] + "â€¦";
+        _productNames.TryGetValue(productId, out var name) ? name : productId.ToString()[..8] + "…";
 
     // ===== AUTOCOMPLETE SEARCH FUNCS =====
 
@@ -1057,3 +1057,4 @@
         finally { _isActioning = false; }
     }
 }
+

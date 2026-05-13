@@ -1,5 +1,5 @@
-using FSH.Modules.AssetManagement.Domain;
-using FSH.Modules.AssetManagement.Features.v1.PPEIssuanceReports.CreatePPEIR;
+using AMIS.Modules.AssetManagement.Domain;
+using AMIS.Modules.AssetManagement.Features.v1.PPEIssuanceReports.CreatePPEIR;
 using Shouldly;
 using Xunit;
 
@@ -205,3 +205,4 @@ public sealed class CreatePPEIRCommandValidatorTests
             BillOfLadingNo: null,
             Items: [new CreatePPEIRItemRequest(Guid.NewGuid())]);
 }
+

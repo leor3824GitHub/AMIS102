@@ -1,17 +1,17 @@
 @page "/master-data/property-classes"
-@using FSH.Modules.MasterData.Contracts.v1.PropertyClasses
-@using FSH.Playground.Blazor.ApiClient
+@using AMIS.Modules.MasterData.Contracts.v1.PropertyClasses
+@using AMIS.Playground.Blazor.ApiClient
 @inject IPropertyClassClient Client
 @inject ISnackbar Snackbar
 
-<FshPageHeader Title="Property Classification & Category Library"
+<AMISPageHeader Title="Property Classification & Category Library"
                Description="Property classification & category codes used in property code generation" />
 
 <MudGrid Spacing="2" Class="mt-3">
 
     <!-- LEFT: Class list -->
     <MudItem xs="12" md="5">
-        <MudCard Class="fsh-card">
+        <MudCard Class="AMIS-card">
             <MudCardContent>
                 <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-3">
                     <MudText Typo="Typo.h6">Classifications</MudText>
@@ -78,7 +78,7 @@
         }
         else
         {
-            <MudCard Class="fsh-card">
+            <MudCard Class="AMIS-card">
                 <MudCardContent>
                     <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
                         <MudChip T="string" Color="Color.Primary" Label="true"
@@ -94,8 +94,8 @@
                                            @bind-IsExpanded="_itemFormExpanded">
                             <MudStack Spacing="2">
                                 <MudTextField @bind-Value="_itemForm.ItemCode"
-                                              Label="Category Code (1â€“2 chars)" Placeholder="e.g. 01"
-                                              HelperText="1â€“2 char sub-category code (e.g. 01, FM, WE)" CharacterCounter="true" MaxLength="2" />
+                                              Label="Category Code (1–2 chars)" Placeholder="e.g. 01"
+                                              HelperText="1–2 char sub-category code (e.g. 01, FM, WE)" CharacterCounter="true" MaxLength="2" />
                                 <MudTextField @bind-Value="_itemForm.Name"
                                               Label="Name" Placeholder="e.g. Computer and Accessories" />
                                 <!-- <MudTextField @bind-Value="_itemForm.Description" Label="Description" Lines="2" /> -->
@@ -177,8 +177,8 @@
     </TitleContent>
     <DialogContent>
         <MudStack Spacing="2" Class="pt-2">
-            <MudTextField @bind-Value="_classForm.Code" Label="Code (2â€“4 chars)" Placeholder="e.g. OE"
-                          HelperText="@(_editingClass is not null ? "Code cannot be changed after creation." : "2â€“4 char classification code (PPRCLSCD)")"
+            <MudTextField @bind-Value="_classForm.Code" Label="Code (2–4 chars)" Placeholder="e.g. OE"
+                          HelperText="@(_editingClass is not null ? "Code cannot be changed after creation." : "2–4 char classification code (PPRCLSCD)")"
                           Variant="Variant.Outlined"
                           CharacterCounter="true" MaxLength="4"
                           Required="true" RequiredError="Code is required"
@@ -455,3 +455,4 @@
         }
     }
 }
+

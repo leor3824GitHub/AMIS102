@@ -1,7 +1,7 @@
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Modules.AssetManagement.Domain;
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.SemiExpendableIssuanceRecords.CreateSMIR;
+namespace AMIS.Modules.AssetManagement.Features.v1.SemiExpendableIssuanceRecords.CreateSMIR;
 
 public sealed record CreateSMIRCommand(
     string SMIRNo,
@@ -22,3 +22,4 @@ public sealed record CreateSMIRResult(
     Guid SMIRId,
     string SMIRNo,
     int ItemCount);
+

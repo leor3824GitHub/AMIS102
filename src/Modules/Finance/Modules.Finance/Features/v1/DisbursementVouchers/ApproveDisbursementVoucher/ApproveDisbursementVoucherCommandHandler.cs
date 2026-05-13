@@ -1,10 +1,10 @@
-using FSH.Modules.Finance.Contracts.v1.DisbursementVouchers;
-using FSH.Modules.Finance.Data;
+using AMIS.Modules.Finance.Contracts.v1.DisbursementVouchers;
+using AMIS.Modules.Finance.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace FSH.Modules.Finance.Features.v1.DisbursementVouchers.ApproveDisbursementVoucher;
+namespace AMIS.Modules.Finance.Features.v1.DisbursementVouchers.ApproveDisbursementVoucher;
 
 public sealed class ApproveDisbursementVoucherCommandHandler(
     ILogger<ApproveDisbursementVoucherCommandHandler> logger,
@@ -25,3 +25,4 @@ public sealed class ApproveDisbursementVoucherCommandHandler(
         return Unit.Value;
     }
 }
+

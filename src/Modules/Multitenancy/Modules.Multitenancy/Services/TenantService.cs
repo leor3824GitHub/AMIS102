@@ -1,19 +1,19 @@
 using Finbuckle.MultiTenant.Abstractions;
-using FSH.Framework.Core.Exceptions;
-using FSH.Framework.Persistence;
-using FSH.Framework.Shared.Multitenancy;
-using FSH.Framework.Shared.Persistence;
-using FSH.Modules.Multitenancy.Contracts;
-using FSH.Modules.Multitenancy.Contracts.Dtos;
-using FSH.Modules.Multitenancy.Contracts.v1.GetTenants;
-using FSH.Modules.Multitenancy.Data;
-using FSH.Modules.Multitenancy.Features.v1.GetTenants;
-using FSH.Modules.Multitenancy.Provisioning;
+using AMIS.Framework.Core.Exceptions;
+using AMIS.Framework.Persistence;
+using AMIS.Framework.Shared.Multitenancy;
+using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.Multitenancy.Contracts;
+using AMIS.Modules.Multitenancy.Contracts.Dtos;
+using AMIS.Modules.Multitenancy.Contracts.v1.GetTenants;
+using AMIS.Modules.Multitenancy.Data;
+using AMIS.Modules.Multitenancy.Features.v1.GetTenants;
+using AMIS.Modules.Multitenancy.Provisioning;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
-namespace FSH.Modules.Multitenancy.Services;
+namespace AMIS.Modules.Multitenancy.Services;
 
 public sealed class TenantService : ITenantService
 {
@@ -175,3 +175,4 @@ public sealed class TenantService : ITenantService
         await _tenantStore.GetAsync(id).ConfigureAwait(false)
             ?? throw new NotFoundException($"{typeof(AppTenantInfo).Name} {id} Not Found.");
 }
+

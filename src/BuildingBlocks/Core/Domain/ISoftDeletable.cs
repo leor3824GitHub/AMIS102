@@ -1,4 +1,4 @@
-﻿namespace FSH.Framework.Core.Domain;
+namespace AMIS.Framework.Core.Domain;
 
 /// <summary>
 /// Marks an entity as supporting soft deletion.
@@ -20,3 +20,4 @@ public interface ISoftDeletable
     /// </summary>
     string? DeletedBy { get; }
 }
+

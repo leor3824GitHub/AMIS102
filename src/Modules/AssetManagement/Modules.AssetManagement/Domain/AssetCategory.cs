@@ -1,4 +1,4 @@
-namespace FSH.Modules.AssetManagement.Domain;
+namespace AMIS.Modules.AssetManagement.Domain;
 
 /// <summary>
 /// Classification of semi-expendable property per COA Circular 2022-004 Section 4.8.
@@ -31,3 +31,4 @@ public enum AssetCategory
     /// </summary>
     PPE = 2,
 }
+

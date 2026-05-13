@@ -1,9 +1,9 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<RootNamespace>FSH.Framework.Shared</RootNamespace>
-		<AssemblyName>FSH.Framework.Shared</AssemblyName>
-		<PackageId>FullStackHero.Framework.Shared</PackageId>
+		<RootNamespace>AMIS.Framework.Shared</RootNamespace>
+		<AssemblyName>AMIS.Framework.Shared</AssemblyName>
+		<PackageId>AMIS.Framework.Shared</PackageId>
 		<NoWarn>$(NoWarn);CA1716;CA1711;CA1019;CA1305;CA1002;CA2227</NoWarn>
 	</PropertyGroup>
 	<ItemGroup>
@@ -19,3 +19,4 @@
 	</ItemGroup>
 
 </Project>
+

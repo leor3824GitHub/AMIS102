@@ -1,10 +1,10 @@
-using FSH.Framework.Core.Context;
-using FSH.Framework.Core.Exceptions;
-using FSH.Modules.AssetManagement.Data;
+using AMIS.Framework.Core.Context;
+using AMIS.Framework.Core.Exceptions;
+using AMIS.Modules.AssetManagement.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.Locations.DeleteLocation;
+namespace AMIS.Modules.AssetManagement.Features.v1.Locations.DeleteLocation;
 
 public sealed class DeleteLocationCommandHandler(
     AssetManagementDbContext dbContext,
@@ -39,3 +39,4 @@ public sealed class DeleteLocationCommandHandler(
         return Unit.Value;
     }
 }
+

@@ -1,11 +1,11 @@
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.AssetRegister.Contracts.v1.Incidents;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.AssetRegister.Contracts.v1.Incidents;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Incidents.GetIncidentReport;
+namespace AMIS.Modules.AssetRegister.Features.v1.Incidents.GetIncidentReport;
 
 public static class GetIncidentReportEndpoint
 {
@@ -23,3 +23,4 @@ public static class GetIncidentReportEndpoint
         return result is null ? TypedResults.NotFound() : TypedResults.Ok(result);
     }
 }
+

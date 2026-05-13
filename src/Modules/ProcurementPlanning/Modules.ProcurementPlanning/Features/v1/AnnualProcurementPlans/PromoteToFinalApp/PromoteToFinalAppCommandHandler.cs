@@ -1,13 +1,13 @@
 using System.Net;
-using FSH.Framework.Core.Context;
-using FSH.Framework.Core.Exceptions;
-using FSH.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
-using FSH.Modules.ProcurementPlanning.Data;
-using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans;
+using AMIS.Framework.Core.Context;
+using AMIS.Framework.Core.Exceptions;
+using AMIS.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
+using AMIS.Modules.ProcurementPlanning.Data;
+using AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.PromoteToFinalApp;
+namespace AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.PromoteToFinalApp;
 
 public sealed class PromoteToFinalAppCommandHandler(
     ProcurementPlanningDbContext dbContext,
@@ -32,3 +32,4 @@ public sealed class PromoteToFinalAppCommandHandler(
         return await AppReadProjection.BuildDtoAsync(dbContext, finalApp.Id, cancellationToken).ConfigureAwait(false);
     }
 }
+

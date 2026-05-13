@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.AssetRegister.Contracts.v1.Incidents;
+using AMIS.Modules.AssetRegister.Contracts.v1.Incidents;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Incidents.FileIncidentReport;
+namespace AMIS.Modules.AssetRegister.Features.v1.Incidents.FileIncidentReport;
 
 public sealed class FileIncidentReportCommandValidator : AbstractValidator<FileIncidentReportCommand>
 {
@@ -22,3 +22,4 @@ public sealed class FileIncidentReportCommandValidator : AbstractValidator<FileI
         });
     }
 }
+

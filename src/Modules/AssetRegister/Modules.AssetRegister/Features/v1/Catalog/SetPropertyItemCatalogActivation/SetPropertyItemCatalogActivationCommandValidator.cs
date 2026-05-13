@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.AssetRegister.Contracts.v1.Catalog;
+using AMIS.Modules.AssetRegister.Contracts.v1.Catalog;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Catalog.SetPropertyItemCatalogActivation;
+namespace AMIS.Modules.AssetRegister.Features.v1.Catalog.SetPropertyItemCatalogActivation;
 
 public sealed class SetPropertyItemCatalogActivationCommandValidator : AbstractValidator<SetPropertyItemCatalogActivationCommand>
 {
@@ -10,3 +10,4 @@ public sealed class SetPropertyItemCatalogActivationCommandValidator : AbstractV
         RuleFor(x => x.Id).NotEmpty().WithMessage("Catalog item ID is required.");
     }
 }
+

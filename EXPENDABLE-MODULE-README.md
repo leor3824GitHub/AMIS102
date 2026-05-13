@@ -1,6 +1,6 @@
-# Module2-Expendable (Employee Online Shopping & Supply Request System)
+﻿# Module2-Expendable (Employee Online Shopping & Supply Request System)
 
-Complete vertical slice implementation following FSH (Full Stack Hero) DDD and EF Core multi-tenancy patterns.
+Complete vertical slice implementation following AMIS (Full Stack Hero) DDD and EF Core multi-tenancy patterns.
 
 ## Overview
 
@@ -388,3 +388,4 @@ All tables created in `expendable` schema for clear module separation.
 
 **Version**: 1.0  
 **Last Updated**: 2026-03-07
+

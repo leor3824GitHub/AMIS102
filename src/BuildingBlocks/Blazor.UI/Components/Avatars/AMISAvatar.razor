@@ -1,0 +1,16 @@
+<MudAvatar Src="@Src"
+           Text="@Text"
+           Size="@Size"
+           Class="@CssClass"
+           @attributes="AdditionalAttributes" />
+
+@code {
+    [Parameter] public string? Src { get; set; }
+    [Parameter] public string? Text { get; set; }
+    [Parameter] public Size Size { get; set; } = Size.Medium;
+    [Parameter] public string? Class { get; set; }
+    [Parameter(CaptureUnmatchedValues = true)] public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private string CssClass => string.IsNullOrWhiteSpace(Class) ? "AMIS-avatar" : $"AMIS-avatar {Class}";
+}
+

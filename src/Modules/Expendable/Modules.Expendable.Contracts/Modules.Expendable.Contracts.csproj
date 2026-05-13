@@ -1,9 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<RootNamespace>FSH.Modules.Expendable.Contracts</RootNamespace>
-		<AssemblyName>FSH.Modules.Expendable.Contracts</AssemblyName>
-		<PackageId>FullStackHero.Modules.Expendable.Contracts</PackageId>
+		<RootNamespace>AMIS.Modules.Expendable.Contracts</RootNamespace>
+		<AssemblyName>AMIS.Modules.Expendable.Contracts</AssemblyName>
+		<PackageId>AMIS.Modules.Expendable.Contracts</PackageId>
 		<NoWarn>$(NoWarn);CA1002;CA1056;CS1572;S2094</NoWarn>
 	</PropertyGroup>
 
@@ -17,3 +17,4 @@
 	</ItemGroup>
 
 </Project>
+

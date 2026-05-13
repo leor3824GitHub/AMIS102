@@ -1,11 +1,11 @@
-using FSH.Modules.Expendable.Contracts.v1.Products;
-using FSH.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.Expendable.Contracts.v1.Products;
+using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.Expendable.Features.v1.Products.ActivateProduct;
+namespace AMIS.Modules.Expendable.Features.v1.Products.ActivateProduct;
 
 public static class ActivateProductEndpoint
 {
@@ -28,4 +28,5 @@ public static class ActivateProductEndpoint
         return TypedResults.NoContent();
     }
 }
+
 

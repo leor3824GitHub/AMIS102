@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
-using FSH.Framework.Core.Domain;
+using AMIS.Framework.Core.Domain;
 
-namespace FSH.Modules.Expendable.Domain.Requests;
+namespace AMIS.Modules.Expendable.Domain.Requests;
 
 /// <summary>Supply request status enumeration</summary>
 public enum SupplyRequestStatus
@@ -223,4 +223,5 @@ public class SupplyRequest : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
         DeletedBy = deletedBy;
     }
 }
+
 

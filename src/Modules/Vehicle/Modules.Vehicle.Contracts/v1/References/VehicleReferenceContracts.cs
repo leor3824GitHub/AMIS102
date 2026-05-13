@@ -1,7 +1,7 @@
-using FSH.Framework.Shared.Persistence;
+using AMIS.Framework.Shared.Persistence;
 using Mediator;
 
-namespace FSH.Modules.Vehicle.Contracts.v1.References;
+namespace AMIS.Modules.Vehicle.Contracts.v1.References;
 
 public sealed record VehicleReferenceDto(
     Guid Id,
@@ -29,3 +29,4 @@ public sealed class SearchVehicleReferencesQuery : IPagedQuery, IQuery<PagedResp
     public int? PageSize { get; set; }
     public string? Sort { get; set; }
 }
+

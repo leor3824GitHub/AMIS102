@@ -1,9 +1,9 @@
-using FSH.Modules.Expendable.Domain.Cart;
+using AMIS.Modules.Expendable.Domain.Cart;
 using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FSH.Modules.Expendable.Data.Configurations;
+namespace AMIS.Modules.Expendable.Data.Configurations;
 
 public class EmployeeShoppingCartConfiguration : IEntityTypeConfiguration<EmployeeShoppingCart>
 {
@@ -50,4 +50,5 @@ public class EmployeeShoppingCartConfiguration : IEntityTypeConfiguration<Employ
         builder.HasQueryFilter("SoftDelete", p => !p.IsDeleted);
     }
 }
+
 

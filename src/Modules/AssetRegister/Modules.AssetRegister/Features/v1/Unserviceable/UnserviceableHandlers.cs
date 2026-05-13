@@ -1,12 +1,12 @@
-using FSH.Modules.AssetRegister.Contracts.v1.Unserviceable;
-using FSH.Modules.AssetRegister.Contracts.v1.ValueObjects;
-using FSH.Modules.AssetRegister.Data;
-using FSH.Modules.AssetRegister.Domain.Services;
-using FSH.Modules.AssetRegister.Domain.Unserviceable;
+using AMIS.Modules.AssetRegister.Contracts.v1.Unserviceable;
+using AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
+using AMIS.Modules.AssetRegister.Data;
+using AMIS.Modules.AssetRegister.Domain.Services;
+using AMIS.Modules.AssetRegister.Domain.Unserviceable;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Unserviceable;
+namespace AMIS.Modules.AssetRegister.Features.v1.Unserviceable;
 
 public sealed class CreateUnserviceableReportDraftCommandHandler(
     AssetRegisterDbContext db, IUnserviceableReportNumberGenerator numbers)
@@ -155,9 +155,9 @@ public sealed class GetUnserviceableReportQueryHandler(AssetRegisterDbContext db
 }
 
 public sealed class SearchUnserviceableReportsQueryHandler(AssetRegisterDbContext db)
-    : IQueryHandler<SearchUnserviceableReportsQuery, FSH.Framework.Shared.Persistence.PagedResponse<UnserviceablePropertyReportSummaryDto>>
+    : IQueryHandler<SearchUnserviceableReportsQuery, AMIS.Framework.Shared.Persistence.PagedResponse<UnserviceablePropertyReportSummaryDto>>
 {
-    public async ValueTask<FSH.Framework.Shared.Persistence.PagedResponse<UnserviceablePropertyReportSummaryDto>> Handle(
+    public async ValueTask<AMIS.Framework.Shared.Persistence.PagedResponse<UnserviceablePropertyReportSummaryDto>> Handle(
         SearchUnserviceableReportsQuery query, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(query);
@@ -183,7 +183,7 @@ public sealed class SearchUnserviceableReportsQueryHandler(AssetRegisterDbContex
                 r.Id, r.ReportNo, r.ReportType, r.Status, r.AsAt, r.Items.Count))
             .ToListAsync(ct).ConfigureAwait(false);
 
-        return new FSH.Framework.Shared.Persistence.PagedResponse<UnserviceablePropertyReportSummaryDto>
+        return new AMIS.Framework.Shared.Persistence.PagedResponse<UnserviceablePropertyReportSummaryDto>
         {
             Items = items,
             PageNumber = pageNumber,
@@ -193,3 +193,4 @@ public sealed class SearchUnserviceableReportsQueryHandler(AssetRegisterDbContex
         };
     }
 }
+

@@ -1,7 +1,7 @@
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Modules.AssetManagement.Domain;
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.PhysicalCount.AddFoundAtStationEntry;
+namespace AMIS.Modules.AssetManagement.Features.v1.PhysicalCount.AddFoundAtStationEntry;
 
 /// <summary>
 /// Adds a "Found at Station" entry for an asset discovered during the physical count
@@ -19,3 +19,4 @@ public sealed record AddFoundAtStationEntryCommand(
 public sealed record AddFoundAtStationEntryResult(
     Guid EntryId,
     string PropertyNumber);
+

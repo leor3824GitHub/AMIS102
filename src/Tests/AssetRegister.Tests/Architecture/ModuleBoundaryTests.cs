@@ -1,5 +1,5 @@
 using System.Reflection;
-using FSH.Modules.AssetRegister;
+using AMIS.Modules.AssetRegister;
 using Shouldly;
 using Xunit;
 
@@ -13,13 +13,13 @@ public sealed class ModuleBoundaryTests
         var asm = typeof(AssetRegisterModule).Assembly;
         var bannedPrefixes = new[]
         {
-            "FSH.Modules.AssetManagement",
-            "FSH.Modules.ProcurementAcquisition",
-            "FSH.Modules.ProcurementPlanning",
-            "FSH.Modules.Finance",
-            "FSH.Modules.Vehicle",
-            "FSH.Modules.Expendable",
-            "FSH.Modules.MasterData",
+            "AMIS.Modules.AssetManagement",
+            "AMIS.Modules.ProcurementAcquisition",
+            "AMIS.Modules.ProcurementPlanning",
+            "AMIS.Modules.Finance",
+            "AMIS.Modules.Vehicle",
+            "AMIS.Modules.Expendable",
+            "AMIS.Modules.MasterData",
         };
 
         var referenced = asm.GetReferencedAssemblies().Select(a => a.Name ?? string.Empty).ToList();
@@ -39,8 +39,8 @@ public sealed class ModuleBoundaryTests
         var asm = typeof(AssetRegisterModule).Assembly;
         var referenced = asm.GetReferencedAssemblies().Select(a => a.Name ?? string.Empty).ToList();
 
-        referenced.ShouldContain("FSH.Modules.AssetProcurement.Contracts");
-        referenced.ShouldNotContain("FSH.Modules.AssetProcurement",
+        referenced.ShouldContain("AMIS.Modules.AssetProcurement.Contracts");
+        referenced.ShouldNotContain("AMIS.Modules.AssetProcurement",
             customMessage: "Only AssetProcurement.Contracts may be referenced, not the implementation assembly.");
     }
 
@@ -82,3 +82,4 @@ public sealed class ModuleBoundaryTests
         }
     }
 }
+

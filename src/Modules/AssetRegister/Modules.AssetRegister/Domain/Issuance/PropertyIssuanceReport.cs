@@ -1,9 +1,9 @@
-using FSH.Framework.Core.Domain;
-using FSH.Modules.AssetRegister.Contracts.v1;
-using FSH.Modules.AssetRegister.Contracts.v1.ValueObjects;
-using FSH.Modules.AssetRegister.Domain.Events;
+using AMIS.Framework.Core.Domain;
+using AMIS.Modules.AssetRegister.Contracts.v1;
+using AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
+using AMIS.Modules.AssetRegister.Domain.Events;
 
-namespace FSH.Modules.AssetRegister.Domain.Issuance;
+namespace AMIS.Modules.AssetRegister.Domain.Issuance;
 
 public sealed class PropertyIssuanceReport : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 {
@@ -113,3 +113,4 @@ public sealed class PropertyIssuanceReport : AggregateRoot<Guid>, IHasTenant, IA
             throw new InvalidOperationException("Only Draft issuance reports may be modified. Posted reports are immutable.");
     }
 }
+

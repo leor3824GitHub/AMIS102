@@ -1,8 +1,8 @@
-using FSH.Framework.Shared.Persistence;
-using FSH.Modules.Identity.Contracts.DTOs;
+using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.Identity.Contracts.DTOs;
 using Mediator;
 
-namespace FSH.Modules.Identity.Contracts.v1.Users.SearchUsers;
+namespace AMIS.Modules.Identity.Contracts.v1.Users.SearchUsers;
 
 public sealed class SearchUsersQuery : IPagedQuery, IQuery<PagedResponse<UserDto>>
 {
@@ -20,3 +20,4 @@ public sealed class SearchUsersQuery : IPagedQuery, IQuery<PagedResponse<UserDto
 
     public string? RoleId { get; set; }
 }
+

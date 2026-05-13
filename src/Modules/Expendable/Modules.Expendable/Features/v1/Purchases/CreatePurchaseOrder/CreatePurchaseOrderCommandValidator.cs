@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.Expendable.Contracts.v1.Purchases;
+using AMIS.Modules.Expendable.Contracts.v1.Purchases;
 
-namespace FSH.Modules.Expendable.Features.v1.Purchases.CreatePurchaseOrder;
+namespace AMIS.Modules.Expendable.Features.v1.Purchases.CreatePurchaseOrder;
 
 public sealed class CreatePurchaseOrderCommandValidator : AbstractValidator<CreatePurchaseOrderCommand>
 {
@@ -23,3 +23,4 @@ public sealed class CreatePurchaseOrderCommandValidator : AbstractValidator<Crea
             .MaximumLength(200).WithMessage("Warehouse location name must not exceed 200 characters");
     }
 }
+

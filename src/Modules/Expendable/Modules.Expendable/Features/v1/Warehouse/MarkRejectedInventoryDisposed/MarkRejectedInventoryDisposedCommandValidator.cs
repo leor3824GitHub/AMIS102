@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.Expendable.Contracts.v1.Warehouse;
+using AMIS.Modules.Expendable.Contracts.v1.Warehouse;
 
-namespace FSH.Modules.Expendable.Features.v1.Warehouse.MarkRejectedInventoryDisposed;
+namespace AMIS.Modules.Expendable.Features.v1.Warehouse.MarkRejectedInventoryDisposed;
 
 public sealed class MarkRejectedInventoryDisposedCommandValidator : AbstractValidator<MarkRejectedInventoryDisposedCommand>
 {
@@ -19,3 +19,4 @@ public sealed class MarkRejectedInventoryDisposedCommandValidator : AbstractVali
             .WithMessage("Notes cannot exceed 500 characters");
     }
 }
+

@@ -4,24 +4,24 @@ using Finbuckle.MultiTenant.AspNetCore.Extensions;
 using Finbuckle.MultiTenant.EntityFrameworkCore.Stores;
 using Finbuckle.MultiTenant.Extensions;
 using Finbuckle.MultiTenant.Stores;
-using FSH.Framework.Persistence;
-using FSH.Framework.Shared.Constants;
-using FSH.Framework.Shared.Multitenancy;
-using FSH.Framework.Web.Modules;
-using FSH.Modules.Multitenancy.Contracts;
-using FSH.Modules.Multitenancy.Data;
-using FSH.Modules.Multitenancy.Features.v1.ChangeTenantActivation;
-using FSH.Modules.Multitenancy.Features.v1.CreateTenant;
-using FSH.Modules.Multitenancy.Features.v1.GetTenants;
-using FSH.Modules.Multitenancy.Features.v1.GetTenantStatus;
-using FSH.Modules.Multitenancy.Features.v1.GetTenantTheme;
-using FSH.Modules.Multitenancy.Features.v1.ResetTenantTheme;
-using FSH.Modules.Multitenancy.Features.v1.TenantProvisioning.GetTenantProvisioningStatus;
-using FSH.Modules.Multitenancy.Features.v1.TenantProvisioning.RetryTenantProvisioning;
-using FSH.Modules.Multitenancy.Features.v1.UpdateTenantTheme;
-using FSH.Modules.Multitenancy.Features.v1.UpgradeTenant;
-using FSH.Modules.Multitenancy.Provisioning;
-using FSH.Modules.Multitenancy.Services;
+using AMIS.Framework.Persistence;
+using AMIS.Framework.Shared.Constants;
+using AMIS.Framework.Shared.Multitenancy;
+using AMIS.Framework.Web.Modules;
+using AMIS.Modules.Multitenancy.Contracts;
+using AMIS.Modules.Multitenancy.Data;
+using AMIS.Modules.Multitenancy.Features.v1.ChangeTenantActivation;
+using AMIS.Modules.Multitenancy.Features.v1.CreateTenant;
+using AMIS.Modules.Multitenancy.Features.v1.GetTenants;
+using AMIS.Modules.Multitenancy.Features.v1.GetTenantStatus;
+using AMIS.Modules.Multitenancy.Features.v1.GetTenantTheme;
+using AMIS.Modules.Multitenancy.Features.v1.ResetTenantTheme;
+using AMIS.Modules.Multitenancy.Features.v1.TenantProvisioning.GetTenantProvisioningStatus;
+using AMIS.Modules.Multitenancy.Features.v1.TenantProvisioning.RetryTenantProvisioning;
+using AMIS.Modules.Multitenancy.Features.v1.UpdateTenantTheme;
+using AMIS.Modules.Multitenancy.Features.v1.UpgradeTenant;
+using AMIS.Modules.Multitenancy.Provisioning;
+using AMIS.Modules.Multitenancy.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -31,7 +31,7 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace FSH.Modules.Multitenancy;
+namespace AMIS.Modules.Multitenancy;
 
 public sealed class MultitenancyModule : IModule
 {
@@ -139,3 +139,4 @@ public sealed class MultitenancyModule : IModule
         ResetTenantThemeEndpoint.Map(group);
     }
 }
+

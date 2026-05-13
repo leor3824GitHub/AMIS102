@@ -1,5 +1,5 @@
-using FSH.Modules.AssetProcurement.Contracts.v1.AssetPurchaseRequests;
-using FSH.Modules.AssetProcurement.Features.v1.AssetPurchaseRequests.CreateAssetPurchaseRequest;
+using AMIS.Modules.AssetProcurement.Contracts.v1.AssetPurchaseRequests;
+using AMIS.Modules.AssetProcurement.Features.v1.AssetPurchaseRequests.CreateAssetPurchaseRequest;
 using Shouldly;
 using Xunit;
 
@@ -154,3 +154,4 @@ public sealed class CreateAssetPurchaseRequestCommandValidatorTests
                     EstimatedUnitCost: 75000m)
             ]);
 }
+

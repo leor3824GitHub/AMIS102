@@ -1,11 +1,11 @@
-using FSH.Framework.Persistence;
-using FSH.Modules.Expendable.Data;
+using AMIS.Framework.Persistence;
+using AMIS.Modules.Expendable.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace FSH.Modules.Expendable.Provisioning;
+namespace AMIS.Modules.Expendable.Provisioning;
 
 /// <summary>
 /// Initializes the Expendable module database schema and seeds data on app startup.
@@ -57,3 +57,4 @@ internal sealed class ExpendableDbInitializerHostedService : IHostedService
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 }
+

@@ -1,6 +1,6 @@
-using FSH.Modules.Multitenancy.Contracts.Dtos;
+using AMIS.Modules.Multitenancy.Contracts.Dtos;
 
-namespace FSH.Modules.Multitenancy.Provisioning;
+namespace AMIS.Modules.Multitenancy.Provisioning;
 
 public interface ITenantProvisioningService
 {
@@ -22,3 +22,4 @@ public interface ITenantProvisioningService
 
     Task MarkCompletedAsync(string tenantId, string correlationId, CancellationToken cancellationToken);
 }
+

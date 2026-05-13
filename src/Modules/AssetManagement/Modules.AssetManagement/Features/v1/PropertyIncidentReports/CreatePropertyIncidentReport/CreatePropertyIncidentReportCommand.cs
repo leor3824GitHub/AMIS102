@@ -1,7 +1,7 @@
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Modules.AssetManagement.Domain;
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.PropertyIncidentReports.CreatePropertyIncidentReport;
+namespace AMIS.Modules.AssetManagement.Features.v1.PropertyIncidentReports.CreatePropertyIncidentReport;
 
 /// <summary>
 /// Creates a Report of Lost/Stolen/Damaged/Destroyed Semi-Expendable Property (RLSDDSP).
@@ -21,3 +21,4 @@ public sealed record CreatePropertyIncidentReportCommand(
     IReadOnlyList<Guid> TangibleInventoryItemIds) : ICommand<CreatePropertyIncidentReportResult>;
 
 public sealed record CreatePropertyIncidentReportResult(Guid ReportId, string ReportNo, int ItemCount);
+

@@ -1,7 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using Finbuckle.MultiTenant.Abstractions;
 
-namespace FSH.Framework.Shared.Multitenancy;
+namespace AMIS.Framework.Shared.Multitenancy;
 
 public class AppTenantInfo : TenantInfo, IAppTenantInfo
 {
@@ -77,3 +77,4 @@ public class AppTenantInfo : TenantInfo, IAppTenantInfo
         set => ConnectionString = value ?? throw new InvalidOperationException("ConnectionString can't be null.");
     }
 }
+

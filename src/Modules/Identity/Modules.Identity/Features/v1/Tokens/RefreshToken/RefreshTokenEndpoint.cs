@@ -1,4 +1,4 @@
-using FSH.Modules.Identity.Contracts.v1.Tokens.RefreshToken;
+using AMIS.Modules.Identity.Contracts.v1.Tokens.RefreshToken;
 using Mediator;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.Identity.Features.v1.Tokens.RefreshToken;
+namespace AMIS.Modules.Identity.Features.v1.Tokens.RefreshToken;
 
 public static class RefreshTokenEndpoint
 {
@@ -34,4 +34,5 @@ public static class RefreshTokenEndpoint
             .Produces(StatusCodes.Status500InternalServerError);
     }
 }
+
 

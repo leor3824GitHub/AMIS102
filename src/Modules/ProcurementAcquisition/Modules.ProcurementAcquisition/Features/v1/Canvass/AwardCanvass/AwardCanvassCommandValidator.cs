@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.ProcurementAcquisition.Contracts.v1.Canvass;
+using AMIS.Modules.ProcurementAcquisition.Contracts.v1.Canvass;
 
-namespace FSH.Modules.ProcurementAcquisition.Features.v1.Canvass.AwardCanvass;
+namespace AMIS.Modules.ProcurementAcquisition.Features.v1.Canvass.AwardCanvass;
 
 public sealed class AwardCanvassCommandValidator : AbstractValidator<AwardCanvassCommand>
 {
@@ -11,3 +11,4 @@ public sealed class AwardCanvassCommandValidator : AbstractValidator<AwardCanvas
         RuleFor(x => x.AwardedQuotationId).NotEmpty();
     }
 }
+

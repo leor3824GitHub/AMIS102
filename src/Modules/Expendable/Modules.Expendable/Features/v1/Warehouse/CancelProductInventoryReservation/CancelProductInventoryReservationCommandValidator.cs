@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.Expendable.Contracts.v1.Warehouse;
+using AMIS.Modules.Expendable.Contracts.v1.Warehouse;
 
-namespace FSH.Modules.Expendable.Features.v1.Warehouse.CancelProductInventoryReservation;
+namespace AMIS.Modules.Expendable.Features.v1.Warehouse.CancelProductInventoryReservation;
 
 public sealed class CancelProductInventoryReservationCommandValidator : AbstractValidator<CancelProductInventoryReservationCommand>
 {
@@ -14,3 +14,4 @@ public sealed class CancelProductInventoryReservationCommandValidator : Abstract
             .GreaterThan(0).WithMessage("Quantity to release must be greater than 0");
     }
 }
+

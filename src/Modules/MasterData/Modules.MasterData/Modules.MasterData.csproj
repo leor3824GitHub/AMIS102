@@ -1,9 +1,9 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<RootNamespace>FSH.Modules.MasterData</RootNamespace>
-		<AssemblyName>FSH.Modules.MasterData</AssemblyName>
-		<PackageId>FullStackHero.Modules.MasterData</PackageId>
+		<RootNamespace>AMIS.Modules.MasterData</RootNamespace>
+		<AssemblyName>AMIS.Modules.MasterData</AssemblyName>
+		<PackageId>AMIS.Modules.MasterData</PackageId>
 		<NoWarn>$(NoWarn);CA1031;CA1812;CA2208;S3267;S3928;CA1062;CA1304;CA1308;CA1311;CA1862;CA2227</NoWarn>
 	</PropertyGroup>
 
@@ -30,4 +30,5 @@
 	</ItemGroup>
 
 </Project>
+
 

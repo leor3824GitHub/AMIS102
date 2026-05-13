@@ -1,12 +1,12 @@
-using FSH.Framework.Shared.Identity;
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.Identity.Contracts.v1.Sessions.GetMySessions;
+using AMIS.Framework.Shared.Identity;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.Identity.Contracts.v1.Sessions.GetMySessions;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.Identity.Features.v1.Sessions.GetMySessions;
+namespace AMIS.Modules.Identity.Features.v1.Sessions.GetMySessions;
 
 public static class GetMySessionsEndpoint
 {
@@ -20,3 +20,4 @@ public static class GetMySessionsEndpoint
         .WithDescription("Retrieve all active sessions for the currently authenticated user.");
     }
 }
+

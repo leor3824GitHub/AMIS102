@@ -1,11 +1,11 @@
 using System.Globalization;
-using FSH.Modules.AssetManagement.Features.v1.Reports.RegistryOfSPIssued;
+using AMIS.Modules.AssetManagement.Features.v1.Reports.RegistryOfSPIssued;
 using Mediator;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 
-namespace FSH.Modules.AssetManagement.Features.v1.Reports.GenerateRegSPIPdf;
+namespace AMIS.Modules.AssetManagement.Features.v1.Reports.GenerateRegSPIPdf;
 
 public sealed class GenerateRegSPIPdfCommandHandler(IMediator mediator)
     : ICommandHandler<GenerateRegSPIPdfCommand, byte[]>
@@ -102,3 +102,4 @@ public sealed class GenerateRegSPIPdfCommandHandler(IMediator mediator)
         }).GeneratePdf();
     }
 }
+

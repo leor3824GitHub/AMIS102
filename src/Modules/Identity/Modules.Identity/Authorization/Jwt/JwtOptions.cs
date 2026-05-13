@@ -1,6 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
-namespace FSH.Modules.Identity.Authorization.Jwt;
+namespace AMIS.Modules.Identity.Authorization.Jwt;
 
 public class JwtOptions : IValidatableObject
 {
@@ -33,3 +33,4 @@ public class JwtOptions : IValidatableObject
         }
     }
 }
+

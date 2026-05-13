@@ -1,15 +1,15 @@
 $files = @{}
 $files['e:\AMIS101\src\Modules\ProcurementPlanning\Modules.ProcurementPlanning\Features\v1\AnnualProcurementPlans\ConsolidatePpmps\ConsolidatePpmpsCommandHandler.cs'] = @'
 using System.Net;
-using FSH.Framework.Core.Context;
-using FSH.Framework.Core.Exceptions;
-using FSH.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
-using FSH.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
-using FSH.Modules.ProcurementPlanning.Data;
+using AMIS.Framework.Core.Context;
+using AMIS.Framework.Core.Exceptions;
+using AMIS.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
+using AMIS.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
+using AMIS.Modules.ProcurementPlanning.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.ConsolidatePpmps;
+namespace AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.ConsolidatePpmps;
 
 public sealed class ConsolidatePpmpsCommandHandler(
     ProcurementPlanningDbContext dbContext,
@@ -98,15 +98,15 @@ public sealed class ConsolidatePpmpsCommandHandler(
 '@
 $files['e:\AMIS101\src\Modules\ProcurementPlanning\Modules.ProcurementPlanning\Features\v1\AnnualProcurementPlans\DeleteAnnualProcurementPlan\DeleteAnnualProcurementPlanCommandHandler.cs'] = @'
 using System.Net;
-using FSH.Framework.Core.Context;
-using FSH.Framework.Core.Exceptions;
-using FSH.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
-using FSH.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
-using FSH.Modules.ProcurementPlanning.Data;
+using AMIS.Framework.Core.Context;
+using AMIS.Framework.Core.Exceptions;
+using AMIS.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
+using AMIS.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
+using AMIS.Modules.ProcurementPlanning.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.DeleteAnnualProcurementPlan;
+namespace AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.DeleteAnnualProcurementPlan;
 
 public sealed class DeleteAnnualProcurementPlanCommandHandler(
     ProcurementPlanningDbContext dbContext,
@@ -148,11 +148,11 @@ public sealed class DeleteAnnualProcurementPlanCommandHandler(
 }
 '@
 $files['e:\AMIS101\src\Modules\ProcurementPlanning\Modules.ProcurementPlanning\Features\v1\AnnualProcurementPlans\AppReadProjection.cs'] = @'
-using FSH.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
-using FSH.Modules.ProcurementPlanning.Data;
+using AMIS.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
+using AMIS.Modules.ProcurementPlanning.Data;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans;
+namespace AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans;
 
 internal static class AppReadProjection
 {
@@ -222,13 +222,13 @@ internal static class AppReadProjection
 }
 '@
 $files['e:\AMIS101\src\Modules\ProcurementPlanning\Modules.ProcurementPlanning\Features\v1\AnnualProcurementPlans\SearchAnnualProcurementPlans\SearchAnnualProcurementPlansQueryHandler.cs'] = @'
-using FSH.Framework.Shared.Persistence;
-using FSH.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
-using FSH.Modules.ProcurementPlanning.Data;
+using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
+using AMIS.Modules.ProcurementPlanning.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.SearchAnnualProcurementPlans;
+namespace AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.SearchAnnualProcurementPlans;
 
 public sealed class SearchAnnualProcurementPlansQueryHandler(
     ProcurementPlanningDbContext dbContext) : IQueryHandler<SearchAnnualProcurementPlansQuery, PagedResponse<AnnualProcurementPlanSummaryDto>>
@@ -322,12 +322,12 @@ public sealed class SearchAnnualProcurementPlansQueryHandler(
 }
 '@
 $files['e:\AMIS101\src\Modules\ProcurementPlanning\Modules.ProcurementPlanning\Features\v1\AnnualProcurementPlans\GetAppVersions\GetAppVersionsQueryHandler.cs'] = @'
-using FSH.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
-using FSH.Modules.ProcurementPlanning.Data;
+using AMIS.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
+using AMIS.Modules.ProcurementPlanning.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.GetAppVersions;
+namespace AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.GetAppVersions;
 
 public sealed class GetAppVersionsQueryHandler(
     ProcurementPlanningDbContext dbContext) : IQueryHandler<GetAppVersionsQuery, IReadOnlyList<AnnualProcurementPlanSummaryDto>>
@@ -392,16 +392,16 @@ public sealed class GetAppVersionsQueryHandler(
 }
 '@
 $files['e:\AMIS101\src\Modules\ProcurementPlanning\Modules.ProcurementPlanning\Features\v1\AnnualProcurementPlans\PublishAnnualProcurementPlan\PublishAnnualProcurementPlanCommandHandler.cs'] = @'
-using FSH.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
-using FSH.Modules.ProcurementPlanning.Data;
+using AMIS.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
+using AMIS.Modules.ProcurementPlanning.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.PublishAnnualProcurementPlan;
+namespace AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.PublishAnnualProcurementPlan;
 
 public sealed class PublishAnnualProcurementPlanCommandHandler(
     ProcurementPlanningDbContext dbContext,
-    FSH.Framework.Core.Context.ICurrentUser currentUser) : ICommandHandler<PublishAnnualProcurementPlanCommand, AnnualProcurementPlanDto>
+    AMIS.Framework.Core.Context.ICurrentUser currentUser) : ICommandHandler<PublishAnnualProcurementPlanCommand, AnnualProcurementPlanDto>
 {
     public async ValueTask<AnnualProcurementPlanDto> Handle(
         PublishAnnualProcurementPlanCommand command, CancellationToken cancellationToken)
@@ -420,12 +420,12 @@ public sealed class PublishAnnualProcurementPlanCommandHandler(
 }
 '@
 $files['e:\AMIS101\src\Modules\ProcurementPlanning\Modules.ProcurementPlanning\Features\v1\AnnualProcurementPlans\ApproveAnnualProcurementPlan\ApproveAnnualProcurementPlanCommandHandler.cs'] = @'
-using FSH.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
-using FSH.Modules.ProcurementPlanning.Data;
+using AMIS.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
+using AMIS.Modules.ProcurementPlanning.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.ApproveAnnualProcurementPlan;
+namespace AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.ApproveAnnualProcurementPlan;
 
 public sealed class ApproveAnnualProcurementPlanCommandHandler(
     ProcurementPlanningDbContext dbContext) : ICommandHandler<ApproveAppCommand, AnnualProcurementPlanDto>
@@ -449,3 +449,4 @@ foreach ($entry in $files.GetEnumerator()) {
     [System.IO.File]::WriteAllText($entry.Key, $entry.Value, [System.Text.Encoding]::UTF8)
 }
 Write-Output ("Updated {0} files." -f $files.Count)
+

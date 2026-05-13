@@ -1,11 +1,11 @@
 using Finbuckle.MultiTenant;
 using Finbuckle.MultiTenant.Abstractions;
 using Finbuckle.MultiTenant.AspNetCore.Extensions;
-using FSH.Modules.Multitenancy.Data;
+using AMIS.Modules.Multitenancy.Data;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace FSH.Modules.Multitenancy;
+namespace AMIS.Modules.Multitenancy;
 
 public static class Extensions
 {
@@ -17,3 +17,4 @@ public static class Extensions
         return app;
     }
 }
+

@@ -1,9 +1,9 @@
-using FSH.Modules.Expendable.Domain.Inventory;
+using AMIS.Modules.Expendable.Domain.Inventory;
 using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FSH.Modules.Expendable.Data.Configurations;
+namespace AMIS.Modules.Expendable.Data.Configurations;
 
 public class EmployeeInventoryConfiguration : IEntityTypeConfiguration<EmployeeInventory>
 {
@@ -76,4 +76,5 @@ public class InventoryConsumptionConfiguration : IEntityTypeConfiguration<Invent
 
     }
 }
+
 

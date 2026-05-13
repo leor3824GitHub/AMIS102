@@ -1,6 +1,6 @@
 @page "/groups/{GroupId:guid}/members"
-@using FSH.Playground.Blazor.ApiClient
-@using FSH.Framework.Blazor.UI.Components.Dialogs
+@using AMIS.Playground.Blazor.ApiClient
+@using AMIS.Framework.Blazor.UI.Components.Dialogs
 @inherits ComponentBase
 @inject IIdentityClient IdentityClient
 @inject IGroupsClient GroupsClient
@@ -8,7 +8,7 @@
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 
-<FshPageHeader Title="@($"Group Members - {_group?.Name ?? "Loading..."}")"
+<AMISPageHeader Title="@($"Group Members - {_group?.Name ?? "Loading..."}")"
                Description="@(_group?.Description ?? "Manage group membership")">
     <ActionContent>
         <MudButton Variant="Variant.Text"
@@ -24,7 +24,7 @@
             Add Members
         </MudButton>
     </ActionContent>
-</FshPageHeader>
+</AMISPageHeader>
 
 @* Group Info Card *@
 @if (_group is not null)
@@ -71,7 +71,7 @@
 }
 
 @* Members Grid *@
-<MudPaper Class="fsh-card pa-0" Style="overflow: hidden;">
+<MudPaper Class="AMIS-card pa-0" Style="overflow: hidden;">
     <MudDataGrid T="GroupMemberDto"
                  @ref="_dataGrid"
                  Items="_members"
@@ -316,3 +316,4 @@
         }
     }
 }
+

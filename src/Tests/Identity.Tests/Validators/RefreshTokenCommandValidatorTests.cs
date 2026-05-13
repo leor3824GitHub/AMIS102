@@ -1,5 +1,5 @@
-using FSH.Modules.Identity.Contracts.v1.Tokens.RefreshToken;
-using FSH.Modules.Identity.Features.v1.Tokens.RefreshToken;
+using AMIS.Modules.Identity.Contracts.v1.Tokens.RefreshToken;
+using AMIS.Modules.Identity.Features.v1.Tokens.RefreshToken;
 
 namespace Identity.Tests.Validators;
 
@@ -142,3 +142,4 @@ public sealed class RefreshTokenCommandValidatorTests
 
     #endregion
 }
+

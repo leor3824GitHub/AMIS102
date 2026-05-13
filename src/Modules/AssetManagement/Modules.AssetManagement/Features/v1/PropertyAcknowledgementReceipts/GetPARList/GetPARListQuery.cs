@@ -1,7 +1,7 @@
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Modules.AssetManagement.Domain;
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.PropertyAcknowledgementReceipts.GetPARList;
+namespace AMIS.Modules.AssetManagement.Features.v1.PropertyAcknowledgementReceipts.GetPARList;
 
 public sealed record GetPARListQuery(
     string? Keyword,
@@ -25,3 +25,4 @@ public sealed record PARSummaryDto(
     string PARType,
     Guid ReceivedByEmployeeId,
     int ItemCount);
+

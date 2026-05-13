@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace FSH.Modules.AssetManagement.Features.v1.SemiExpendableItems.CreateSemiExpendableItem;
+namespace AMIS.Modules.AssetManagement.Features.v1.SemiExpendableItems.CreateSemiExpendableItem;
 
 public sealed class CreatePropertyItemCatalogCommandValidator : AbstractValidator<CreatePropertyItemCatalogCommand>
 {
@@ -29,3 +29,4 @@ public sealed class CreatePropertyItemCatalogCommandValidator : AbstractValidato
             .When(x => x.EstimatedUsefulLifeYears.HasValue);
     }
 }
+

@@ -1,11 +1,11 @@
 @page "/vehicle/fuel-odometer"
-@using FSH.Framework.Shared.Persistence
-@using FSH.Modules.Vehicle.Contracts.v1.Vehicles
-@using FSH.Playground.Blazor.ApiClient
+@using AMIS.Framework.Shared.Persistence
+@using AMIS.Modules.Vehicle.Contracts.v1.Vehicles
+@using AMIS.Playground.Blazor.ApiClient
 @inject IVehicleClient VehicleClient
 @inject ISnackbar Snackbar
 
-<FshPageHeader Title="Fuel & Odometer Monitoring"
+<AMISPageHeader Title="Fuel & Odometer Monitoring"
                Description="Track and monitor daily fuel usage and odometer movement per vehicle" />
 
 <div class="mt-4">
@@ -28,7 +28,7 @@
 
                     <MudGrid Spacing="2">
                         <MudItem xs="12" md="4">
-                            <MudCard Class="fsh-card">
+                            <MudCard Class="AMIS-card">
                                 <MudCardContent>
                                     <MudText Typo="Typo.h6" Class="mb-3">Record Daily Usage</MudText>
                                     <MudStack Spacing="2">
@@ -44,7 +44,7 @@
                                                          HelperText="@(_isOdometerStartLocked ? "Carried forward from last record." : null)" />
                                         <MudNumericField T="int" Label="Odometer End" @bind-Value="_odometerEnd"
                                                          Variant="Variant.Outlined" Min="0" Immediate="true" Error="@HasOdometerValidationError"
-                                                         ErrorText="@OdometerValidationMessage" HelperText="Must be ≥ Odometer Start." />
+                                                         ErrorText="@OdometerValidationMessage" HelperText="Must be = Odometer Start." />
                                         <MudNumericField T="decimal" Label="Fuel (Liters)" @bind-Value="_fuelLiters"
                                                          Variant="Variant.Outlined" Min="0" Step="0.001m" />
                                         <MudNumericField T="decimal" Label="Fuel Cost (&#8369;)" @bind-Value="_fuelCost"
@@ -68,7 +68,7 @@
                                 </MudItem>
 
                                 <MudItem xs="12" md="8">
-                                    <MudCard Class="fsh-card">
+                                    <MudCard Class="AMIS-card">
                                         <MudCardContent>
                                             <MudStack Row="true" Spacing="2" Class="mb-3" AlignItems="AlignItems.End">
                                                 <MudDatePicker Label="From" @bind-Date="_fromDate" Variant="Variant.Outlined"
@@ -376,3 +376,4 @@
         _odometerEnd = 0;
     }
 }
+

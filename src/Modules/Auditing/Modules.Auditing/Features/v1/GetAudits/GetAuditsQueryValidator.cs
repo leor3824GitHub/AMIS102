@@ -1,8 +1,8 @@
 using FluentValidation;
-using FSH.Framework.Web.Validation;
-using FSH.Modules.Auditing.Contracts.v1.GetAudits;
+using AMIS.Framework.Web.Validation;
+using AMIS.Modules.Auditing.Contracts.v1.GetAudits;
 
-namespace FSH.Modules.Auditing.Features.v1.GetAudits;
+namespace AMIS.Modules.Auditing.Features.v1.GetAudits;
 
 public sealed class GetAuditsQueryValidator : AbstractValidator<GetAuditsQuery>
 {
@@ -15,4 +15,5 @@ public sealed class GetAuditsQueryValidator : AbstractValidator<GetAuditsQuery>
             .WithMessage("FromUtc must be less than or equal to ToUtc.");
     }
 }
+
 

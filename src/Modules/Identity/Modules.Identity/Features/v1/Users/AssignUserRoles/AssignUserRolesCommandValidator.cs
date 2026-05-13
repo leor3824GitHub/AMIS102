@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.Identity.Contracts.v1.Users.AssignUserRoles;
+using AMIS.Modules.Identity.Contracts.v1.Users.AssignUserRoles;
 
-namespace FSH.Modules.Identity.Features.v1.Users.AssignUserRoles;
+namespace AMIS.Modules.Identity.Features.v1.Users.AssignUserRoles;
 
 public sealed class AssignUserRolesCommandValidator : AbstractValidator<AssignUserRolesCommand>
 {
@@ -14,3 +14,4 @@ public sealed class AssignUserRolesCommandValidator : AbstractValidator<AssignUs
             .NotNull().WithMessage("User roles list is required.");
     }
 }
+

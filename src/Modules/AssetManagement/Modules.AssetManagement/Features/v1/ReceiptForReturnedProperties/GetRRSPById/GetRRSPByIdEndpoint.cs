@@ -1,10 +1,10 @@
-using FSH.Framework.Shared.Identity.Authorization;
+using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.AssetManagement.Features.v1.ReceiptForReturnedProperties.GetRRSPById;
+namespace AMIS.Modules.AssetManagement.Features.v1.ReceiptForReturnedProperties.GetRRSPById;
 
 public static class GetRRSPByIdEndpoint
 {
@@ -25,3 +25,4 @@ public static class GetRRSPByIdEndpoint
         return TypedResults.Ok(result);
     }
 }
+

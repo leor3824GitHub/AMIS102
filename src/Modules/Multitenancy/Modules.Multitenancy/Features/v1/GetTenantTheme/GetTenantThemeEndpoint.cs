@@ -1,13 +1,13 @@
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Framework.Shared.Multitenancy;
-using FSH.Modules.Multitenancy.Contracts.Dtos;
-using FSH.Modules.Multitenancy.Contracts.v1.GetTenantTheme;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Framework.Shared.Multitenancy;
+using AMIS.Modules.Multitenancy.Contracts.Dtos;
+using AMIS.Modules.Multitenancy.Contracts.v1.GetTenantTheme;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.Multitenancy.Features.v1.GetTenantTheme;
+namespace AMIS.Modules.Multitenancy.Features.v1.GetTenantTheme;
 
 public static class GetTenantThemeEndpoint
 {
@@ -24,3 +24,4 @@ public static class GetTenantThemeEndpoint
             .Produces(StatusCodes.Status403Forbidden);
     }
 }
+

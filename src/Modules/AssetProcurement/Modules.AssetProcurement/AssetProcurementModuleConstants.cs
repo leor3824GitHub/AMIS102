@@ -1,4 +1,4 @@
-namespace FSH.Modules.AssetProcurement;
+namespace AMIS.Modules.AssetProcurement;
 
 public static class AssetProcurementModuleConstants
 {
@@ -36,3 +36,4 @@ public static class AssetProcurementModuleConstants
         }
     }
 }
+

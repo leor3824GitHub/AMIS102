@@ -1,4 +1,4 @@
-namespace FSH.Framework.Eventing.RabbitMq;
+namespace AMIS.Framework.Eventing.RabbitMq;
 
 /// <summary>
 /// Configuration options for RabbitMQ event bus.
@@ -31,14 +31,14 @@ public sealed class RabbitMqOptions
     public string VirtualHost { get; set; } = "/";
 
     /// <summary>
-    /// Exchange name for publishing events. Default is "fsh.events".
+    /// Exchange name for publishing events. Default is "AMIS.events".
     /// </summary>
-    public string ExchangeName { get; set; } = "fsh.events";
+    public string ExchangeName { get; set; } = "AMIS.events";
 
     /// <summary>
-    /// Queue name prefix for consuming events. Default is "fsh".
+    /// Queue name prefix for consuming events. Default is "AMIS".
     /// </summary>
-    public string QueuePrefix { get; set; } = "fsh";
+    public string QueuePrefix { get; set; } = "AMIS";
 
     /// <summary>
     /// Enable SSL/TLS connection. Default is false.
@@ -55,3 +55,4 @@ public sealed class RabbitMqOptions
     /// </summary>
     public int PublishRetryDelayMs { get; set; } = 1000;
 }
+

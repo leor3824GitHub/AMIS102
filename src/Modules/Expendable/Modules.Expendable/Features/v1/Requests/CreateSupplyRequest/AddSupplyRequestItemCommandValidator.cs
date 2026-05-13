@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.Expendable.Contracts.v1.Requests;
+using AMIS.Modules.Expendable.Contracts.v1.Requests;
 
-namespace FSH.Modules.Expendable.Features.v1.Requests.CreateSupplyRequest;
+namespace AMIS.Modules.Expendable.Features.v1.Requests.CreateSupplyRequest;
 
 public sealed class AddSupplyRequestItemCommandValidator : AbstractValidator<AddSupplyRequestItemCommand>
 {
@@ -20,3 +20,4 @@ public sealed class AddSupplyRequestItemCommandValidator : AbstractValidator<Add
             .MaximumLength(500).WithMessage("Notes must not exceed 500 characters");
     }
 }
+

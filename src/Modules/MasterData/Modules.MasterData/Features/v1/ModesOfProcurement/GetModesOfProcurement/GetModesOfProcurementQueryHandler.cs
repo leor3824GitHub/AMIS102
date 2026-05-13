@@ -1,8 +1,8 @@
-using FSH.Modules.MasterData.Data;
+using AMIS.Modules.MasterData.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.MasterData.Features.v1.ModesOfProcurement.GetModesOfProcurement;
+namespace AMIS.Modules.MasterData.Features.v1.ModesOfProcurement.GetModesOfProcurement;
 
 public sealed class GetModesOfProcurementQueryHandler(MasterDataDbContext dbContext)
     : IQueryHandler<GetModesOfProcurementQuery, PagedResponseOfModeOfProcurementDto>
@@ -44,3 +44,4 @@ public sealed class GetModesOfProcurementQueryHandler(MasterDataDbContext dbCont
             totalCount);
     }
 }
+

@@ -1,5 +1,5 @@
-using FSH.Modules.Identity.Contracts.v1.Groups.CreateGroup;
-using FSH.Modules.Identity.Features.v1.Groups.CreateGroup;
+using AMIS.Modules.Identity.Contracts.v1.Groups.CreateGroup;
+using AMIS.Modules.Identity.Features.v1.Groups.CreateGroup;
 
 namespace Identity.Tests.Validators;
 
@@ -241,3 +241,4 @@ public sealed class CreateGroupCommandValidatorTests
 
     #endregion
 }
+

@@ -14,11 +14,11 @@
         "language": "C#",
         "type": "project"
     },
-    "identity": "FullStackHero.NET.StarterKit",
-    "name": "FullStackHero .NET Starter Kit",
+    "identity": "AMIS.NET.StarterKit",
+    "name": "AMIS .NET Starter Kit",
     "description": "The best way to start a full-stack .NET 9 Web App.",
-    "shortName": "fsh",
-    "sourceName": "FSH.Starter",
+    "shortName": "AMIS",
+    "sourceName": "AMIS.Starter",
     "preferNameDirectory": true,
     "sources": [
         {

@@ -1,9 +1,9 @@
-using FSH.Framework.Shared.Persistence;
-using FSH.Modules.Multitenancy.Contracts.Dtos;
-using FSH.Modules.Multitenancy.Contracts.v1.GetTenants;
-using FSH.Framework.Shared.Multitenancy;
+using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.Multitenancy.Contracts.Dtos;
+using AMIS.Modules.Multitenancy.Contracts.v1.GetTenants;
+using AMIS.Framework.Shared.Multitenancy;
 
-namespace FSH.Modules.Multitenancy.Contracts;
+namespace AMIS.Modules.Multitenancy.Contracts;
 
 public interface ITenantService
 {
@@ -27,3 +27,4 @@ public interface ITenantService
 
     Task SeedTenantAsync(AppTenantInfo tenant, CancellationToken cancellationToken);
 }
+

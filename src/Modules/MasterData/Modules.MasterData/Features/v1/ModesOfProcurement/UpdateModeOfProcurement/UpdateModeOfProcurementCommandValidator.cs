@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace FSH.Modules.MasterData.Features.v1.ModesOfProcurement.UpdateModeOfProcurement;
+namespace AMIS.Modules.MasterData.Features.v1.ModesOfProcurement.UpdateModeOfProcurement;
 
 public sealed class UpdateModeOfProcurementCommandValidator : AbstractValidator<UpdateModeOfProcurementCommand>
 {
@@ -17,3 +17,4 @@ public sealed class UpdateModeOfProcurementCommandValidator : AbstractValidator<
             .MaximumLength(1000).WithMessage("Description must not exceed 1000 characters.");
     }
 }
+

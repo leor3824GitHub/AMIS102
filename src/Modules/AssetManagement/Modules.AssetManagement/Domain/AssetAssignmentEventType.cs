@@ -1,4 +1,4 @@
-namespace FSH.Modules.AssetManagement.Domain;
+namespace AMIS.Modules.AssetManagement.Domain;
 
 /// <summary>
 /// Event type recorded in <see cref="AssetAssignmentHistory"/>.
@@ -10,3 +10,4 @@ public enum AssetAssignmentEventType
     Transferred = 2,
     StatusChanged = 3,
 }
+

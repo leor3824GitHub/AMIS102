@@ -1,11 +1,11 @@
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.AssetProcurement.Contracts.v1.AssetInspectionAcceptanceReports;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.AssetProcurement.Contracts.v1.AssetInspectionAcceptanceReports;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.AssetProcurement.Features.v1.AssetIARs.RejectAssetIAR;
+namespace AMIS.Modules.AssetProcurement.Features.v1.AssetIARs.RejectAssetIAR;
 
 public static class RejectAssetIAREndpoint
 {
@@ -23,3 +23,4 @@ public static class RejectAssetIAREndpoint
         return TypedResults.Ok(result);
     }
 }
+

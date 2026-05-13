@@ -1,7 +1,7 @@
-using FSH.Framework.Core.Domain;
+using AMIS.Framework.Core.Domain;
 using System.Security.Cryptography;
 
-namespace FSH.Modules.Vehicle.Domain.FuelOdometer;
+namespace AMIS.Modules.Vehicle.Domain.FuelOdometer;
 
 public sealed class VehicleDailyUsage : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 {
@@ -123,3 +123,4 @@ public sealed class VehicleDailyUsage : AggregateRoot<Guid>, IHasTenant, IAudita
 
     private static byte[] NewVersion() => RandomNumberGenerator.GetBytes(8);
 }
+

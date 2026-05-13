@@ -1,10 +1,10 @@
-using FSH.Modules.Expendable.Contracts.v1.Requests;
-using FSH.Modules.MasterData.Contracts.v1.OrganizationProfile;
+using AMIS.Modules.Expendable.Contracts.v1.Requests;
+using AMIS.Modules.MasterData.Contracts.v1.OrganizationProfile;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 
-namespace FSH.Modules.Expendable.Features.v1.Reports.GenerateEmployeeIssuancePdf;
+namespace AMIS.Modules.Expendable.Features.v1.Reports.GenerateEmployeeIssuancePdf;
 
 internal sealed class EmployeeIssuancePdfDocument : IDocument
 {
@@ -144,3 +144,4 @@ internal sealed class EmployeeIssuancePdfDocument : IDocument
         return string.Empty;
     }
 }
+

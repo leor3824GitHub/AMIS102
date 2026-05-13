@@ -1,6 +1,6 @@
-using FSH.Framework.Core.Domain;
+using AMIS.Framework.Core.Domain;
 
-namespace FSH.Modules.MasterData.Domain;
+namespace AMIS.Modules.MasterData.Domain;
 
 /// <summary>
 /// COA GAM Annex A sub-category within a PropertyClass.
@@ -60,3 +60,4 @@ public sealed class PropertyClassItem : BaseEntity<Guid>, IAuditableEntity
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
     }
 }
+

@@ -1,7 +1,7 @@
-using FSH.Framework.Shared.Persistence;
+using AMIS.Framework.Shared.Persistence;
 using Mediator;
 
-namespace FSH.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
+namespace AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Enums
@@ -133,3 +133,4 @@ public sealed class SearchPurchaseRequestsQuery : IQuery<PagedResponse<PurchaseR
     public int PageNumber { get; set; } = 1;
     public int PageSize { get; set; } = 10;
 }
+

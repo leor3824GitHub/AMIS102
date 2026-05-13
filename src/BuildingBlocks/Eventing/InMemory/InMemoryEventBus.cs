@@ -1,10 +1,10 @@
 using System.Reflection;
-using FSH.Framework.Eventing.Abstractions;
-using FSH.Framework.Eventing.Inbox;
+using AMIS.Framework.Eventing.Abstractions;
+using AMIS.Framework.Eventing.Inbox;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-namespace FSH.Framework.Eventing.InMemory;
+namespace AMIS.Framework.Eventing.InMemory;
 
 /// <summary>
 /// In-memory event bus implementation used for single-process deployments.
@@ -122,3 +122,4 @@ public sealed class InMemoryEventBus : IEventBus
         }
     }
 }
+

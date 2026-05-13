@@ -1,4 +1,4 @@
-namespace FSH.Framework.Jobs;
+namespace AMIS.Framework.Jobs;
 
 public class HangfireOptions
 {
@@ -6,3 +6,4 @@ public class HangfireOptions
     public string Password { get; set; } = "Secure1234!Me";
     public string Route { get; set; } = "/jobs";
 }
+

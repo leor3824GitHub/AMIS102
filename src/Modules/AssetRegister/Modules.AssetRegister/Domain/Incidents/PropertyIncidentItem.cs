@@ -1,7 +1,7 @@
-using FSH.Modules.AssetRegister.Contracts.v1;
-using FSH.Modules.AssetRegister.Contracts.v1.ValueObjects;
+using AMIS.Modules.AssetRegister.Contracts.v1;
+using AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
 
-namespace FSH.Modules.AssetRegister.Domain.Incidents;
+namespace AMIS.Modules.AssetRegister.Domain.Incidents;
 
 public sealed class PropertyIncidentItem
 {
@@ -44,3 +44,4 @@ public sealed class PropertyIncidentItem
         ResolvedOn = resolvedOn;
     }
 }
+

@@ -1,4 +1,4 @@
-namespace FSH.Framework.Web.Security;
+namespace AMIS.Framework.Web.Security;
 
 public sealed class SecurityHeadersOptions
 {
@@ -27,3 +27,4 @@ public sealed class SecurityHeadersOptions
     /// </summary>
     public string[] StyleSources { get; set; } = [];
 }
+

@@ -1,5 +1,5 @@
-using FSH.Modules.Identity.Contracts.v1.Roles.UpsertRole;
-using FSH.Modules.Identity.Features.v1.Roles.UpsertRole;
+using AMIS.Modules.Identity.Contracts.v1.Roles.UpsertRole;
+using AMIS.Modules.Identity.Features.v1.Roles.UpsertRole;
 
 namespace Identity.Tests.Validators;
 
@@ -117,3 +117,4 @@ public sealed class UpsertRoleCommandValidatorTests
 
     #endregion
 }
+

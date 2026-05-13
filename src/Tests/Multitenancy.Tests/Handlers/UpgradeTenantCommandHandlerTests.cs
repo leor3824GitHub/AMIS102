@@ -1,6 +1,6 @@
-using FSH.Modules.Multitenancy.Contracts;
-using FSH.Modules.Multitenancy.Contracts.v1.UpgradeTenant;
-using FSH.Modules.Multitenancy.Features.v1.UpgradeTenant;
+using AMIS.Modules.Multitenancy.Contracts;
+using AMIS.Modules.Multitenancy.Contracts.v1.UpgradeTenant;
+using AMIS.Modules.Multitenancy.Features.v1.UpgradeTenant;
 using NSubstitute;
 
 namespace Multitenancy.Tests.Handlers;
@@ -131,3 +131,4 @@ public sealed class UpgradeTenantCommandHandlerTests
 
     #endregion
 }
+

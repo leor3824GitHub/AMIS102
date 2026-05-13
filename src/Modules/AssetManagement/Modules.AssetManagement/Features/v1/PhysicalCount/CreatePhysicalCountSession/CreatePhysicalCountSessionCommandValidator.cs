@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Modules.AssetManagement.Domain;
 
-namespace FSH.Modules.AssetManagement.Features.v1.PhysicalCount.CreatePhysicalCountSession;
+namespace AMIS.Modules.AssetManagement.Features.v1.PhysicalCount.CreatePhysicalCountSession;
 
 public sealed class CreatePhysicalCountSessionCommandValidator : AbstractValidator<CreatePhysicalCountSessionCommand>
 {
@@ -16,3 +16,4 @@ public sealed class CreatePhysicalCountSessionCommandValidator : AbstractValidat
         RuleFor(x => x.ApprovedByEmployeeId).NotEmpty();
     }
 }
+

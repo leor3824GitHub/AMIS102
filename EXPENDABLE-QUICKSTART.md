@@ -1,4 +1,4 @@
-# Module2-Expendable Quick Start Guide
+﻿# Module2-Expendable Quick Start Guide
 
 ## For Developers
 
@@ -7,7 +7,7 @@
 #### 1. Build the Solution
 ```bash
 cd c:\AMIS101
-dotnet build src/FSH.Framework.slnx
+dotnet build src/AMIS.Framework.slnx
 ```
 
 #### 2. Create Database Migration
@@ -383,7 +383,7 @@ var cart = await mediator.Send(query);
 
 ### Resources
 
-- [FSH Documentation](https://fullstackhero.net)
+- [AMIS Documentation](https://AMIS (Asset Management Information System).net)
 - [Entity Framework Core Docs](https://docs.microsoft.com/en-us/ef/core)
 - [MediatR GitHub](https://github.com/jbogard/MediatR)
 - [FluentValidation Docs](https://fluentvalidation.net)
@@ -400,3 +400,4 @@ For issues or questions:
 
 **Last Updated**: March 7, 2026  
 **Version**: 1.0
+

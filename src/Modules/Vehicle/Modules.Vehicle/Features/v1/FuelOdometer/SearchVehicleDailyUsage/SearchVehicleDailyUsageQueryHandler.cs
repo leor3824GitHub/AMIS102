@@ -1,12 +1,12 @@
-using FSH.Framework.Persistence;
-using FSH.Framework.Shared.Persistence;
-using FSH.Modules.Vehicle.Contracts.v1.Vehicles;
-using FSH.Modules.Vehicle.Data;
-using FSH.Modules.Vehicle.Features.v1.FuelOdometer;
+using AMIS.Framework.Persistence;
+using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.Vehicle.Contracts.v1.Vehicles;
+using AMIS.Modules.Vehicle.Data;
+using AMIS.Modules.Vehicle.Features.v1.FuelOdometer;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.Vehicle.Features.v1.FuelOdometer.SearchVehicleDailyUsage;
+namespace AMIS.Modules.Vehicle.Features.v1.FuelOdometer.SearchVehicleDailyUsage;
 
 public sealed class SearchVehicleDailyUsageQueryHandler(VehicleDbContext db)
     : IQueryHandler<SearchVehicleDailyUsageQuery, PagedResponse<VehicleDailyUsageDto>>
@@ -29,3 +29,4 @@ public sealed class SearchVehicleDailyUsageQueryHandler(VehicleDbContext db)
         return await q.Select(x => x.ToDto()).ToPagedResponseAsync(query, ct).ConfigureAwait(false);
     }
 }
+

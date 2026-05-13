@@ -1,11 +1,11 @@
-using FSH.Modules.Auditing.Contracts;
-using FSH.Modules.Auditing.Contracts.Dtos;
-using FSH.Modules.Auditing.Contracts.v1.GetSecurityAudits;
-using FSH.Modules.Auditing.Persistence;
+using AMIS.Modules.Auditing.Contracts;
+using AMIS.Modules.Auditing.Contracts.Dtos;
+using AMIS.Modules.Auditing.Contracts.v1.GetSecurityAudits;
+using AMIS.Modules.Auditing.Persistence;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.Auditing.Features.v1.GetSecurityAudits;
+namespace AMIS.Modules.Auditing.Features.v1.GetSecurityAudits;
 
 public sealed class GetSecurityAuditsQueryHandler : IQueryHandler<GetSecurityAuditsQuery, IReadOnlyList<AuditSummaryDto>>
 {
@@ -74,4 +74,5 @@ public sealed class GetSecurityAuditsQueryHandler : IQueryHandler<GetSecurityAud
         return list;
     }
 }
+
 

@@ -1,8 +1,8 @@
 using System.Net.Http;
 using System.Net.Http.Json;
-using FSH.Modules.MasterData.Contracts.v1.ReportSignatories;
+using AMIS.Modules.MasterData.Contracts.v1.ReportSignatories;
 
-namespace FSH.Playground.Blazor.ApiClient;
+namespace AMIS.Playground.Blazor.ApiClient;
 
 internal interface IReportSignatoryClient
 {
@@ -47,3 +47,4 @@ internal sealed class ReportSignatoryClient(HttpClient httpClient) : IReportSign
         response.EnsureSuccessStatusCode();
     }
 }
+

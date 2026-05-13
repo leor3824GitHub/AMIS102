@@ -1,4 +1,4 @@
-﻿namespace FSH.Framework.Shared.Multitenancy;
+namespace AMIS.Framework.Shared.Multitenancy;
 
 public interface IAppTenantInfo
 {

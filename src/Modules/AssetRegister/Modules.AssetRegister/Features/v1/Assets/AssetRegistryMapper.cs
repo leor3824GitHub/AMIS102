@@ -1,7 +1,7 @@
-using FSH.Modules.AssetRegister.Contracts.v1.Assets;
-using FSH.Modules.AssetRegister.Domain.Assets;
+using AMIS.Modules.AssetRegister.Contracts.v1.Assets;
+using AMIS.Modules.AssetRegister.Domain.Assets;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Assets;
+namespace AMIS.Modules.AssetRegister.Features.v1.Assets;
 
 internal static class AssetRegistryMapper
 {
@@ -34,3 +34,4 @@ internal static class AssetRegistryMapper
             x.SourceIARId,
             x.SourcePurchaseOrderId);
 }
+

@@ -1,4 +1,4 @@
-namespace FSH.Modules.AssetRegister.Contracts.v1;
+namespace AMIS.Modules.AssetRegister.Contracts.v1;
 
 public enum AssetType
 {
@@ -148,3 +148,4 @@ public enum ReceiptType
     Donation = 2,
     Other = 3
 }
+

@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.Identity.Contracts.v1.Groups.DeleteGroup;
+using AMIS.Modules.Identity.Contracts.v1.Groups.DeleteGroup;
 
-namespace FSH.Modules.Identity.Features.v1.Groups.DeleteGroup;
+namespace AMIS.Modules.Identity.Features.v1.Groups.DeleteGroup;
 
 public sealed class DeleteGroupCommandValidator : AbstractValidator<DeleteGroupCommand>
 {
@@ -11,3 +11,4 @@ public sealed class DeleteGroupCommandValidator : AbstractValidator<DeleteGroupC
             .NotEmpty().WithMessage("Group ID is required.");
     }
 }
+

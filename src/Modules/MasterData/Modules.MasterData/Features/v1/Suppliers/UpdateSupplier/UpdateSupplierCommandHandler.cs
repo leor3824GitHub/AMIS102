@@ -1,9 +1,9 @@
-using FSH.Framework.Core.Context;
-using FSH.Modules.MasterData.Data;
+using AMIS.Framework.Core.Context;
+using AMIS.Modules.MasterData.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.MasterData.Features.v1.Suppliers.UpdateSupplier;
+namespace AMIS.Modules.MasterData.Features.v1.Suppliers.UpdateSupplier;
 
 public sealed class UpdateSupplierCommandHandler : ICommandHandler<UpdateSupplierCommand, Unit>
 {
@@ -61,3 +61,4 @@ public sealed class UpdateSupplierCommandHandler : ICommandHandler<UpdateSupplie
         return Unit.Value;
     }
 }
+

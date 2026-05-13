@@ -1,4 +1,4 @@
-namespace FSH.Playground.Blazor.Services.AssetRegister;
+namespace AMIS.Playground.Blazor.Services.AssetRegister;
 
 public sealed record AccountabilityReportLineDto(
     Guid LineId,
@@ -181,3 +181,4 @@ public sealed record UnserviceableReportDocumentDto(
     string AccountableOfficerDesignation,
     IReadOnlyCollection<UnserviceableReportItemDocumentDto> Items,
     decimal TotalCarryingAmount);
+

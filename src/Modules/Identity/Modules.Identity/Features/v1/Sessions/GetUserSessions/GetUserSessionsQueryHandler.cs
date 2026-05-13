@@ -1,9 +1,9 @@
-using FSH.Modules.Identity.Contracts.DTOs;
-using FSH.Modules.Identity.Contracts.Services;
-using FSH.Modules.Identity.Contracts.v1.Sessions.GetUserSessions;
+using AMIS.Modules.Identity.Contracts.DTOs;
+using AMIS.Modules.Identity.Contracts.Services;
+using AMIS.Modules.Identity.Contracts.v1.Sessions.GetUserSessions;
 using Mediator;
 
-namespace FSH.Modules.Identity.Features.v1.Sessions.GetUserSessions;
+namespace AMIS.Modules.Identity.Features.v1.Sessions.GetUserSessions;
 
 public sealed class GetUserSessionsQueryHandler : IQueryHandler<GetUserSessionsQuery, List<UserSessionDto>>
 {
@@ -19,3 +19,4 @@ public sealed class GetUserSessionsQueryHandler : IQueryHandler<GetUserSessionsQ
         return await _sessionService.GetUserSessionsForAdminAsync(query.UserId.ToString(), cancellationToken);
     }
 }
+

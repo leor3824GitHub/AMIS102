@@ -1,6 +1,6 @@
-using FSH.Modules.Identity.Contracts.DTOs;
+using AMIS.Modules.Identity.Contracts.DTOs;
 
-namespace FSH.Modules.Identity.Contracts.Services;
+namespace AMIS.Modules.Identity.Contracts.Services;
 
 public interface IPasswordExpiryService
 {
@@ -19,3 +19,4 @@ public interface IPasswordExpiryService
     /// <summary>Update the last password change date for a user.</summary>
     Task UpdateLastPasswordChangeDateAsync(string userId, CancellationToken cancellationToken = default);
 }
+

@@ -1,6 +1,6 @@
-using FSH.Framework.Core.Domain;
+using AMIS.Framework.Core.Domain;
 
-namespace FSH.Modules.AssetRegister.Domain.Catalog;
+namespace AMIS.Modules.AssetRegister.Domain.Catalog;
 
 /// <summary>
 /// Optimistic-concurrency counter used by every number generator. Unique key:
@@ -35,3 +35,4 @@ public sealed class PropertyCodeCounter : AggregateRoot<Guid>, IHasTenant
         return LastSerial;
     }
 }
+

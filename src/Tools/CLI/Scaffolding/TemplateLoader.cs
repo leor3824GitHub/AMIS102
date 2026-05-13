@@ -1,6 +1,6 @@
 using System.Reflection;
 
-namespace FSH.CLI.Scaffolding;
+namespace AMIS.CLI.Scaffolding;
 
 /// <summary>
 /// Loads templates from embedded resources and static sources
@@ -36,7 +36,7 @@ internal sealed class TemplateLoader : ITemplateLoader
             <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" />
             <PackageReference Include="Microsoft.AspNetCore.Components.Authorization" />
             <PackageReference Include="MudBlazor" />
-            <PackageReference Include="FullStackHero.Framework.Blazor.UI" />
+            <PackageReference Include="AMIS.Framework.Blazor.UI" />
           </ItemGroup>
 
         </Project>

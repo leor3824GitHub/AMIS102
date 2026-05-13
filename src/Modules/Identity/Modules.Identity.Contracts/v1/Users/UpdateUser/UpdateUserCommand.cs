@@ -1,7 +1,7 @@
-using FSH.Framework.Shared.Storage;
+using AMIS.Framework.Shared.Storage;
 using Mediator;
 
-namespace FSH.Modules.Identity.Contracts.v1.Users.UpdateUser;
+namespace AMIS.Modules.Identity.Contracts.v1.Users.UpdateUser;
 
 public class UpdateUserCommand : ICommand<Unit>
 {
@@ -13,3 +13,4 @@ public class UpdateUserCommand : ICommand<Unit>
     public FileUploadRequest? Image { get; set; }
     public bool DeleteCurrentImage { get; set; }
 }
+

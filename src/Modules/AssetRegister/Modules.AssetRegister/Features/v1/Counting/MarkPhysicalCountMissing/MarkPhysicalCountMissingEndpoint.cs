@@ -1,11 +1,11 @@
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.AssetRegister.Contracts.v1.Counting;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.AssetRegister.Contracts.v1.Counting;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Counting.MarkPhysicalCountMissing;
+namespace AMIS.Modules.AssetRegister.Features.v1.Counting.MarkPhysicalCountMissing;
 
 public static class MarkPhysicalCountMissingEndpoint
 {
@@ -24,3 +24,4 @@ public static class MarkPhysicalCountMissingEndpoint
         return TypedResults.Ok(result);
     }
 }
+

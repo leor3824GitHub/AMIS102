@@ -1,9 +1,9 @@
-using FSH.Modules.Expendable.Domain.Requests;
+using AMIS.Modules.Expendable.Domain.Requests;
 using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FSH.Modules.Expendable.Data.Configurations;
+namespace AMIS.Modules.Expendable.Data.Configurations;
 
 public class SupplyRequestConfiguration : IEntityTypeConfiguration<SupplyRequest>
 {
@@ -72,4 +72,5 @@ public class SupplyRequestConfiguration : IEntityTypeConfiguration<SupplyRequest
         builder.HasQueryFilter("SoftDelete", p => !p.IsDeleted);
     }
 }
+
 

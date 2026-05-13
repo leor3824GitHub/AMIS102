@@ -1,15 +1,15 @@
 using Finbuckle.MultiTenant.Abstractions;
-using FSH.Framework.Persistence;
-using FSH.Framework.Persistence.Context;
-using FSH.Framework.Shared.Multitenancy;
-using FSH.Framework.Shared.Persistence;
-using FSH.Modules.ProcurementPlanning.Domain.AnnualProcurementPlans;
-using FSH.Modules.ProcurementPlanning.Domain.Ppmps;
+using AMIS.Framework.Persistence;
+using AMIS.Framework.Persistence.Context;
+using AMIS.Framework.Shared.Multitenancy;
+using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.ProcurementPlanning.Domain.AnnualProcurementPlans;
+using AMIS.Modules.ProcurementPlanning.Domain.Ppmps;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 
-namespace FSH.Modules.ProcurementPlanning.Data;
+namespace AMIS.Modules.ProcurementPlanning.Data;
 
 public class ProcurementPlanningDbContext : BaseDbContext
 {
@@ -37,3 +37,4 @@ public class ProcurementPlanningDbContext : BaseDbContext
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ProcurementPlanningDbContext).Assembly);
     }
 }
+

@@ -1,10 +1,10 @@
 @page "/asset-register/assets"
-@using FSH.Playground.Blazor.ApiClient
+@using AMIS.Playground.Blazor.ApiClient
 @inject IAssetRegistryClient Client
 @inject ISnackbar Snackbar
 
-<FshPageHeader Title="Asset Registry"
-               Description="Master ledger of individual physical units — one row per asset (COA 2020-006, 2022-004)." />
+<AMISPageHeader Title="Asset Registry"
+               Description="Master ledger of individual physical units � one row per asset (COA 2020-006, 2022-004)." />
 
 <MudGrid Spacing="3">
     <!-- Search filters -->
@@ -66,7 +66,7 @@
                             <MudTh>Type</MudTh>
                             <MudTh>Description</MudTh>
                             <MudTh>Acquisition Date</MudTh>
-                            <MudTh Style="text-align:right">Unit Cost (₱)</MudTh>
+                            <MudTh Style="text-align:right">Unit Cost (?)</MudTh>
                             <MudTh>Lifecycle</MudTh>
                             <MudTh>Condition</MudTh>
                         </HeaderContent>
@@ -121,7 +121,7 @@
             <MudCard Elevation="2">
                 <MudCardHeader>
                     <CardHeaderContent>
-                        <MudText Typo="Typo.h6">@_selected.PropertyNo — Detail</MudText>
+                        <MudText Typo="Typo.h6">@_selected.PropertyNo � Detail</MudText>
                     </CardHeaderContent>
                     <CardHeaderActions>
                         <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small"
@@ -148,18 +148,18 @@
                         </MudItem>
                         <MudItem xs="6" md="2">
                             <MudText Typo="Typo.caption" Color="Color.Secondary">UACS Object Code</MudText>
-                            <MudText Typo="Typo.body2">@(_selected.UacsObjectCode ?? "—")</MudText>
+                            <MudText Typo="Typo.body2">@(_selected.UacsObjectCode ?? "�")</MudText>
                         </MudItem>
                         <MudItem xs="6" md="2">
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">Unit Cost (₱)</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Unit Cost (?)</MudText>
                             <MudText Typo="Typo.body2">@_selected.UnitCost.ToString("N2")</MudText>
                         </MudItem>
                         <MudItem xs="6" md="2">
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">Carrying Amount (₱)</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Carrying Amount (?)</MudText>
                             <MudText Typo="Typo.body2">@_selected.CarryingAmount.ToString("N2")</MudText>
                         </MudItem>
                         <MudItem xs="6" md="2">
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">Accum. Depreciation (₱)</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Accum. Depreciation (?)</MudText>
                             <MudText Typo="Typo.body2">@_selected.AccumulatedDepreciation.ToString("N2")</MudText>
                         </MudItem>
                         <MudItem xs="6" md="2">
@@ -343,3 +343,4 @@
     };
     private static string FormatCondition(int v) => v switch { 0 => "Good", 1 => "Fair", 2 => "Poor", 3 => "Unserviceable", _ => v.ToString() };
 }
+

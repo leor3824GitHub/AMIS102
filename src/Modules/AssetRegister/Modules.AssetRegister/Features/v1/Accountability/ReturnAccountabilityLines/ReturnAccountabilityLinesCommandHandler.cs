@@ -1,9 +1,9 @@
-using FSH.Modules.AssetRegister.Contracts.v1.Accountability;
-using FSH.Modules.AssetRegister.Data;
+using AMIS.Modules.AssetRegister.Contracts.v1.Accountability;
+using AMIS.Modules.AssetRegister.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Accountability.ReturnAccountabilityLines;
+namespace AMIS.Modules.AssetRegister.Features.v1.Accountability.ReturnAccountabilityLines;
 
 public sealed class ReturnAccountabilityLinesCommandHandler(AssetRegisterDbContext db)
     : ICommandHandler<ReturnAccountabilityLinesCommand, PropertyAccountabilityDto>
@@ -39,3 +39,4 @@ public sealed class ReturnAccountabilityLinesCommandHandler(AssetRegisterDbConte
         return AccountabilityMapper.ToDto(accountability);
     }
 }
+

@@ -1,11 +1,11 @@
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.Vehicle.Contracts.v1.Maintenance;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.Vehicle.Contracts.v1.Maintenance;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.Vehicle.Features.v1.Maintenance.GetMaintenanceSchedule;
+namespace AMIS.Modules.Vehicle.Features.v1.Maintenance.GetMaintenanceSchedule;
 
 public static class GetMaintenanceScheduleEndpoint
 {
@@ -23,3 +23,4 @@ public static class GetMaintenanceScheduleEndpoint
         .WithSummary("Get a maintenance schedule by ID")
         .RequirePermission(VehicleModuleConstants.Permissions.Maintenance.View);
 }
+

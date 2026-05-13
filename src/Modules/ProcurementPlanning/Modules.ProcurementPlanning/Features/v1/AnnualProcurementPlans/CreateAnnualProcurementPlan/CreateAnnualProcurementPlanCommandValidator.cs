@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
+using AMIS.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
 
-namespace FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.CreateAnnualProcurementPlan;
+namespace AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.CreateAnnualProcurementPlan;
 
 public sealed class CreateAnnualProcurementPlanCommandValidator : AbstractValidator<CreateAnnualProcurementPlanCommand>
 {
@@ -13,3 +13,4 @@ public sealed class CreateAnnualProcurementPlanCommandValidator : AbstractValida
             .WithMessage("Only Indicative APPs can be created directly. Use 'Promote to Final' to create a Final APP from an approved Indicative one.");
     }
 }
+

@@ -1,9 +1,9 @@
-using FSH.Framework.Core.Context;
-using FSH.Modules.AssetManagement.Data;
+using AMIS.Framework.Core.Context;
+using AMIS.Modules.AssetManagement.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.PPEIssuanceReports.UpdatePPEIRDepreciation;
+namespace AMIS.Modules.AssetManagement.Features.v1.PPEIssuanceReports.UpdatePPEIRDepreciation;
 
 public sealed class UpdatePPEIRDepreciationCommandHandler : ICommandHandler<UpdatePPEIRDepreciationCommand, UpdatePPEIRDepreciationResult>
 {
@@ -60,3 +60,4 @@ public sealed class UpdatePPEIRDepreciationCommandHandler : ICommandHandler<Upda
         return new UpdatePPEIRDepreciationResult(command.PPEIRId, ppeirItems.Count);
     }
 }
+

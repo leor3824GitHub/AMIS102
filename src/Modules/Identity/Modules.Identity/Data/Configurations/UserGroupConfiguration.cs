@@ -1,9 +1,9 @@
 using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;
-using FSH.Modules.Identity.Domain;
+using AMIS.Modules.Identity.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FSH.Modules.Identity.Data.Configurations;
+namespace AMIS.Modules.Identity.Data.Configurations;
 
 public class UserGroupConfiguration : IEntityTypeConfiguration<UserGroup>
 {
@@ -47,3 +47,4 @@ public class UserGroupConfiguration : IEntityTypeConfiguration<UserGroup>
         builder.HasIndex(ug => ug.GroupId);
     }
 }
+

@@ -1,7 +1,7 @@
-using FSH.Modules.Vehicle.Contracts.v1.Vehicles;
-using FSH.Modules.Vehicle.Domain.FuelOdometer;
+using AMIS.Modules.Vehicle.Contracts.v1.Vehicles;
+using AMIS.Modules.Vehicle.Domain.FuelOdometer;
 
-namespace FSH.Modules.Vehicle.Features.v1.FuelOdometer;
+namespace AMIS.Modules.Vehicle.Features.v1.FuelOdometer;
 
 internal static class VehicleDailyUsageMapper
 {
@@ -26,3 +26,4 @@ internal static class VehicleDailyUsageMapper
             usage.LastModifiedBy);
     }
 }
+

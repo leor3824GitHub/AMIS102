@@ -5,12 +5,12 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Globalization;
-using FSH.Framework.Shared.Persistence;
-using FSH.Modules.Expendable.Contracts.v1.Reports;
-using FSH.Modules.Expendable.Contracts.v1.Requests;
-using FSH.Modules.Expendable.Contracts.v1.Warehouse;
+using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.Expendable.Contracts.v1.Reports;
+using AMIS.Modules.Expendable.Contracts.v1.Requests;
+using AMIS.Modules.Expendable.Contracts.v1.Warehouse;
 
-namespace FSH.Playground.Blazor.ApiClient;
+namespace AMIS.Playground.Blazor.ApiClient;
 
 public interface IReportsClient
 {
@@ -206,3 +206,4 @@ public sealed class ReportsClient : IReportsClient
         return basePath + query;
     }
 }
+

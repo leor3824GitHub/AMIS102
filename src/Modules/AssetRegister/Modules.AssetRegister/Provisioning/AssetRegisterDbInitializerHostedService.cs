@@ -1,10 +1,10 @@
-using FSH.Framework.Persistence;
-using FSH.Modules.AssetRegister.Data;
+using AMIS.Framework.Persistence;
+using AMIS.Modules.AssetRegister.Data;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace FSH.Modules.AssetRegister.Provisioning;
+namespace AMIS.Modules.AssetRegister.Provisioning;
 
 internal sealed class AssetRegisterDbInitializerHostedService : IHostedService
 {
@@ -51,3 +51,4 @@ internal sealed class AssetRegisterDbInitializerHostedService : IHostedService
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 }
+

@@ -1,5 +1,5 @@
-using FSH.Modules.AssetManagement.Domain;
-using FSH.Modules.AssetManagement.Features.v1.PropertyAcknowledgementReceipts.CreatePAR;
+using AMIS.Modules.AssetManagement.Domain;
+using AMIS.Modules.AssetManagement.Features.v1.PropertyAcknowledgementReceipts.CreatePAR;
 using Shouldly;
 using Xunit;
 
@@ -206,3 +206,4 @@ public sealed class CreatePARCommandValidatorTests
             ApprovedByEmployeeId: Guid.NewGuid(),
             Items: [new CreatePARItemRequest(Guid.NewGuid(), 1, "unit", "Laptop computer")]);
 }
+

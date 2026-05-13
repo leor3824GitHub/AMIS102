@@ -1,10 +1,10 @@
-using FSH.Framework.Core.Context;
-using FSH.Modules.Expendable.Contracts.v1.Purchases;
-using FSH.Modules.Expendable.Data;
-using FSH.Modules.Expendable.Domain.Purchases;
+using AMIS.Framework.Core.Context;
+using AMIS.Modules.Expendable.Contracts.v1.Purchases;
+using AMIS.Modules.Expendable.Data;
+using AMIS.Modules.Expendable.Domain.Purchases;
 using Mediator;
 
-namespace FSH.Modules.Expendable.Features.v1.Purchases.CreatePurchaseOrder;
+namespace AMIS.Modules.Expendable.Features.v1.Purchases.CreatePurchaseOrder;
 
 public sealed class CreatePurchaseOrderCommandHandler : ICommandHandler<CreatePurchaseOrderCommand, PurchaseDto>
 {
@@ -39,3 +39,4 @@ public sealed class CreatePurchaseOrderCommandHandler : ICommandHandler<CreatePu
         return purchase.ToPurchaseDto();
     }
 }
+

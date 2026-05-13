@@ -1,11 +1,11 @@
-using FSH.Framework.Core.Context;
-using FSH.Framework.Core.Exceptions;
-using FSH.Modules.AssetManagement.Data;
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Framework.Core.Context;
+using AMIS.Framework.Core.Exceptions;
+using AMIS.Modules.AssetManagement.Data;
+using AMIS.Modules.AssetManagement.Domain;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.SemiExpendableIssuanceRecords.CreateSMIR;
+namespace AMIS.Modules.AssetManagement.Features.v1.SemiExpendableIssuanceRecords.CreateSMIR;
 
 public sealed class CreateSMIRCommandHandler : ICommandHandler<CreateSMIRCommand, CreateSMIRResult>
 {
@@ -146,3 +146,4 @@ public sealed class CreateSMIRCommandHandler : ICommandHandler<CreateSMIRCommand
         return new CreateSMIRResult(smir.Id, smir.SMIRNo, invItemIds.Count);
     }
 }
+

@@ -1,11 +1,11 @@
-using FSH.Framework.Core.Context;
-using FSH.Modules.AssetProcurement.Contracts.v1.AssetInspectionAcceptanceReports;
-using FSH.Modules.AssetProcurement.Data;
-using FSH.Modules.AssetProcurement.Domain.AssetInspectionAcceptanceReports;
+using AMIS.Framework.Core.Context;
+using AMIS.Modules.AssetProcurement.Contracts.v1.AssetInspectionAcceptanceReports;
+using AMIS.Modules.AssetProcurement.Data;
+using AMIS.Modules.AssetProcurement.Domain.AssetInspectionAcceptanceReports;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetProcurement.Features.v1.AssetIARs.CreateAssetIAR;
+namespace AMIS.Modules.AssetProcurement.Features.v1.AssetIARs.CreateAssetIAR;
 
 public sealed class CreateAssetIARCommandHandler(
     AssetProcurementDbContext dbContext,
@@ -94,3 +94,4 @@ public sealed class CreateAssetIARCommandHandler(
             iar.CreatedBy,
             iar.LastModifiedOnUtc);
 }
+

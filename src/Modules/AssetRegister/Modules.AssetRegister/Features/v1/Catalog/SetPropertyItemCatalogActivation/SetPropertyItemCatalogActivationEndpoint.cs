@@ -1,11 +1,11 @@
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.AssetRegister.Contracts.v1.Catalog;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.AssetRegister.Contracts.v1.Catalog;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Catalog.SetPropertyItemCatalogActivation;
+namespace AMIS.Modules.AssetRegister.Features.v1.Catalog.SetPropertyItemCatalogActivation;
 
 public static class SetPropertyItemCatalogActivationEndpoint
 {
@@ -24,3 +24,4 @@ public static class SetPropertyItemCatalogActivationEndpoint
         return TypedResults.Ok(result);
     }
 }
+

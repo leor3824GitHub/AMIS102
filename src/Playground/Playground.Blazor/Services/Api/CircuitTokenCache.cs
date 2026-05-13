@@ -1,4 +1,4 @@
-namespace FSH.Playground.Blazor.Services.Api;
+namespace AMIS.Playground.Blazor.Services.Api;
 
 /// <summary>
 /// Circuit-scoped cache for storing the current access token.
@@ -49,3 +49,4 @@ internal sealed class CircuitTokenCache : ICircuitTokenCache
         RefreshToken = null;
     }
 }
+

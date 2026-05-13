@@ -1,4 +1,4 @@
-namespace FSH.Modules.Vehicle;
+namespace AMIS.Modules.Vehicle;
 
 public static class VehicleModuleConstants
 {
@@ -44,3 +44,4 @@ public static class VehicleModuleConstants
         }
     }
 }
+

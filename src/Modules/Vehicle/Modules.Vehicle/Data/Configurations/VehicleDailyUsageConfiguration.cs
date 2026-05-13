@@ -1,10 +1,10 @@
 using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;
-using FSH.Modules.Vehicle.Domain.FuelOdometer;
+using AMIS.Modules.Vehicle.Domain.FuelOdometer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using VehicleEntity = FSH.Modules.Vehicle.Domain.Vehicles.Vehicle;
+using VehicleEntity = AMIS.Modules.Vehicle.Domain.Vehicles.Vehicle;
 
-namespace FSH.Modules.Vehicle.Data.Configurations;
+namespace AMIS.Modules.Vehicle.Data.Configurations;
 
 public sealed class VehicleDailyUsageConfiguration : IEntityTypeConfiguration<VehicleDailyUsage>
 {
@@ -33,3 +33,4 @@ public sealed class VehicleDailyUsageConfiguration : IEntityTypeConfiguration<Ve
         builder.HasQueryFilter("SoftDelete", x => !x.IsDeleted);
     }
 }
+

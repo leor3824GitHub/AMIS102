@@ -1,8 +1,8 @@
-using FSH.Framework.Core.Domain;
-using FSH.Modules.Vehicle.Domain.Events;
+using AMIS.Framework.Core.Domain;
+using AMIS.Modules.Vehicle.Domain.Events;
 using System.Security.Cryptography;
 
-namespace FSH.Modules.Vehicle.Domain.Vehicles;
+namespace AMIS.Modules.Vehicle.Domain.Vehicles;
 
 public enum VehicleType
 {
@@ -238,3 +238,4 @@ public class Vehicle : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
             throw new InvalidOperationException($"{label} ID and name must both be provided or both omitted.");
     }
 }
+

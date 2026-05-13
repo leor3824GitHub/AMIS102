@@ -1,6 +1,6 @@
 using Mediator;
 
-namespace FSH.Modules.MasterData.Features.v1.Employees.GetMyEmployee;
+namespace AMIS.Modules.MasterData.Features.v1.Employees.GetMyEmployee;
 
 public sealed record GetMyEmployeeQuery : IQuery<MyEmployeeDto>;
 
@@ -9,3 +9,4 @@ public sealed record MyEmployeeDto(
     string FullName,
     string? Department,
     string? Position);
+

@@ -1,11 +1,11 @@
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.AssetProcurement.Contracts.v1.AssetPurchaseOrders;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.AssetProcurement.Contracts.v1.AssetPurchaseOrders;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.AssetProcurement.Features.v1.AssetPurchaseOrders.CreateAssetPurchaseOrder;
+namespace AMIS.Modules.AssetProcurement.Features.v1.AssetPurchaseOrders.CreateAssetPurchaseOrder;
 
 public static class CreateAssetPurchaseOrderEndpoint
 {
@@ -26,3 +26,4 @@ public static class CreateAssetPurchaseOrderEndpoint
         return TypedResults.Created($"/api/v1/asset-procurement/purchase-orders/{result.Id}", result);
     }
 }
+

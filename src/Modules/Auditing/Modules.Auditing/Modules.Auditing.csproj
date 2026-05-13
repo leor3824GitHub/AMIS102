@@ -1,9 +1,9 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<RootNamespace>FSH.Modules.Auditing</RootNamespace>
-		<AssemblyName>FSH.Modules.Auditing</AssemblyName>
-		<PackageId>FullStackHero.Modules.Auditing</PackageId>
+		<RootNamespace>AMIS.Modules.Auditing</RootNamespace>
+		<AssemblyName>AMIS.Modules.Auditing</AssemblyName>
+		<PackageId>AMIS.Modules.Auditing</PackageId>
 		<NoWarn>$(NoWarn);CA1031;CA1812;CA1859;S3267</NoWarn>
 	</PropertyGroup>
 
@@ -14,3 +14,4 @@
 	</ItemGroup>
 
 </Project>
+

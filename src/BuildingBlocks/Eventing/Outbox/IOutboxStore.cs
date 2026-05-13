@@ -1,6 +1,6 @@
-using FSH.Framework.Eventing.Abstractions;
+using AMIS.Framework.Eventing.Abstractions;
 
-namespace FSH.Framework.Eventing.Outbox;
+namespace AMIS.Framework.Eventing.Outbox;
 
 /// <summary>
 /// Abstraction for persisting and reading outbox messages.
@@ -15,4 +15,5 @@ public interface IOutboxStore
 
     Task MarkAsFailedAsync(OutboxMessage message, string error, bool isDead, CancellationToken ct = default);
 }
+
 

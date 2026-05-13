@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace FSH.Modules.Multitenancy.Provisioning;
+namespace AMIS.Modules.Multitenancy.Provisioning;
 
 public sealed class TenantProvisioningStep
 {
@@ -50,3 +50,4 @@ public sealed class TenantProvisioningStep
         CompletedUtc = DateTime.UtcNow;
     }
 }
+

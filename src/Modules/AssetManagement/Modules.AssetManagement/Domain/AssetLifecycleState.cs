@@ -1,4 +1,4 @@
-namespace FSH.Modules.AssetManagement.Domain;
+namespace AMIS.Modules.AssetManagement.Domain;
 
 /// <summary>
 /// Current lifecycle state of a physical asset in the registry.
@@ -13,3 +13,4 @@ public enum AssetLifecycleState
     Unserviceable = 5,
     Disposed = 6,
 }
+

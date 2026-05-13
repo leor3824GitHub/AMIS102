@@ -1,4 +1,4 @@
-namespace FSH.Framework.Shared.Storage;
+namespace AMIS.Framework.Shared.Storage;
 
 /// <summary>
 /// Represents a file upload request with filename, content type, and data.
@@ -9,3 +9,4 @@ public class FileUploadRequest
     public string ContentType { get; set; } = default!;
     public List<byte> Data { get; set; } = [];
 }
+

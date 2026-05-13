@@ -1,12 +1,12 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using FSH.Framework.Shared.Persistence;
-using FSH.Modules.Auditing.Contracts;
-using FSH.Modules.Auditing.Contracts.Dtos;
+using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.Auditing.Contracts;
+using AMIS.Modules.Auditing.Contracts.Dtos;
 using Shouldly;
 using Xunit;
 
-namespace FSH.Modules.Auditing.Tests.Serialization;
+namespace AMIS.Modules.Auditing.Tests.Serialization;
 
 /// <summary>
 /// Reproduces the Blazor "Could not deserialize the response body stream"
@@ -72,3 +72,4 @@ public class PagedAuditResponseSerializationTests
         json.ShouldNotContain("\"EntityChange\"", customMessage: $"enums must serialize as numbers; JSON: {json}");
     }
 }
+

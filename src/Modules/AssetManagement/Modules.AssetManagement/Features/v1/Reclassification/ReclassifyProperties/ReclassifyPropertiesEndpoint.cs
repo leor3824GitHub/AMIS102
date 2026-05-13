@@ -1,10 +1,10 @@
-using FSH.Framework.Shared.Identity.Authorization;
+using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.AssetManagement.Features.v1.Reclassification.ReclassifyProperties;
+namespace AMIS.Modules.AssetManagement.Features.v1.Reclassification.ReclassifyProperties;
 
 public static class ReclassifyPropertiesEndpoint
 {
@@ -25,3 +25,4 @@ public static class ReclassifyPropertiesEndpoint
         return TypedResults.Created($"/api/v1/asset-management/reclassification/{result.RecordId}", result);
     }
 }
+

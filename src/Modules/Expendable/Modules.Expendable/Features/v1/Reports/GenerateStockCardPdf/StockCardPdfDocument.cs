@@ -1,10 +1,10 @@
-using FSH.Modules.Expendable.Contracts.v1.Warehouse;
-using FSH.Modules.MasterData.Contracts.v1.OrganizationProfile;
+using AMIS.Modules.Expendable.Contracts.v1.Warehouse;
+using AMIS.Modules.MasterData.Contracts.v1.OrganizationProfile;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 
-namespace FSH.Modules.Expendable.Features.v1.Reports.GenerateStockCardPdf;
+namespace AMIS.Modules.Expendable.Features.v1.Reports.GenerateStockCardPdf;
 
 internal sealed class StockCardPdfDocument : IDocument
 {
@@ -175,3 +175,4 @@ internal sealed class StockCardPdfDocument : IDocument
         });
     }
 }
+

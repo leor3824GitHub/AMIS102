@@ -1,7 +1,7 @@
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Modules.AssetManagement.Domain;
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.PropertyIncidentReports.GetPropertyIncidentReportList;
+namespace AMIS.Modules.AssetManagement.Features.v1.PropertyIncidentReports.GetPropertyIncidentReportList;
 
 public sealed record GetPropertyIncidentReportListQuery(
     string? Keyword,
@@ -27,3 +27,4 @@ public sealed record PropertyIncidentReportSummaryDto(
     Guid? AccountableEmployeeId,
     int ItemCount,
     DateTimeOffset CreatedOnUtc);
+

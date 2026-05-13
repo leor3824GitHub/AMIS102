@@ -1,6 +1,6 @@
-using FSH.Framework.Core.Domain;
+using AMIS.Framework.Core.Domain;
 
-namespace FSH.Modules.Multitenancy.Domain;
+namespace AMIS.Modules.Multitenancy.Domain;
 
 public class TenantTheme : BaseEntity<Guid>, IHasTenant, IAuditableEntity
 {
@@ -111,3 +111,4 @@ public class TenantTheme : BaseEntity<Guid>, IHasTenant, IAuditableEntity
         DefaultElevation = 1;
     }
 }
+

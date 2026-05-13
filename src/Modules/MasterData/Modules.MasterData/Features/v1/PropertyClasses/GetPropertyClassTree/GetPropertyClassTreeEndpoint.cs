@@ -1,11 +1,11 @@
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.MasterData.Contracts.v1.PropertyClasses;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.MasterData.Contracts.v1.PropertyClasses;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.MasterData.Features.v1.PropertyClasses.GetPropertyClassTree;
+namespace AMIS.Modules.MasterData.Features.v1.PropertyClasses.GetPropertyClassTree;
 
 public static class GetPropertyClassTreeEndpoint
 {
@@ -17,3 +17,4 @@ public static class GetPropertyClassTreeEndpoint
         .Produces<IReadOnlyList<PropertyClassDto>>(StatusCodes.Status200OK)
         .RequirePermission(MasterDataModuleConstants.Permissions.PropertyClasses.View);
 }
+

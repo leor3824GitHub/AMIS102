@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace FSH.Modules.Auditing.Contracts.Serialization;
+namespace AMIS.Modules.Auditing.Contracts.Serialization;
 
 /// <summary>
 /// Forces an enum to be serialized as its numeric underlying value, overriding any globally
@@ -52,3 +52,4 @@ public sealed class JsonNumericEnumConverter<TEnum> : JsonConverter<TEnum>
         }
     }
 }
+

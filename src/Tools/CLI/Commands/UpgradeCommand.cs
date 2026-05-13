@@ -1,14 +1,14 @@
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
-using FSH.CLI.Models;
-using FSH.CLI.Services;
+using AMIS.CLI.Models;
+using AMIS.CLI.Services;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
-namespace FSH.CLI.Commands;
+namespace AMIS.CLI.Commands;
 
 /// <summary>
-/// Check for and apply FSH framework upgrades.
+/// Check for and apply AMIS framework upgrades.
 /// </summary>
 [SuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Instantiated by Spectre.Console.Cli via reflection")]
 internal sealed class UpgradeCommand : AsyncCommand<UpgradeCommand.Settings>
@@ -17,7 +17,7 @@ internal sealed class UpgradeCommand : AsyncCommand<UpgradeCommand.Settings>
     internal sealed class Settings : CommandSettings
     {
         [CommandOption("-p|--path")]
-        [Description("Path to the FSH project (defaults to current directory)")]
+        [Description("Path to the AMIS project (defaults to current directory)")]
         [DefaultValue(".")]
         public string Path { get; set; } = ".";
 
@@ -55,20 +55,20 @@ internal sealed class UpgradeCommand : AsyncCommand<UpgradeCommand.Settings>
     protected override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
     {
         // Validate project has manifest
-        var manifest = FshManifest.TryLoad(settings.Path);
+        var manifest = AMISManifest.TryLoad(settings.Path);
         if (manifest == null)
         {
-            AnsiConsole.MarkupLine("[red]Error:[/] No FSH project found at this location.");
-            AnsiConsole.MarkupLine("[dim]This command requires a project created with FSH CLI 10.0.0 or later.[/]");
-            AnsiConsole.MarkupLine("[dim]The project must have a [yellow].fsh/manifest.json[/] file.[/]");
+            AnsiConsole.MarkupLine("[red]Error:[/] No AMIS project found at this location.");
+            AnsiConsole.MarkupLine("[dim]This command requires a project created with AMIS CLI 10.0.0 or later.[/]");
+            AnsiConsole.MarkupLine("[dim]The project must have a [yellow].AMIS/manifest.json[/] file.[/]");
             return 1;
         }
 
         // Show current status
         AnsiConsole.WriteLine();
-        AnsiConsole.MarkupLine("[blue]FSH Upgrade[/]");
+        AnsiConsole.MarkupLine("[blue]AMIS Upgrade[/]");
         AnsiConsole.MarkupLine($"[dim]Project:[/] {Path.GetFullPath(settings.Path)}");
-        AnsiConsole.MarkupLine($"[dim]Current version:[/] [yellow]{manifest.FshVersion}[/]");
+        AnsiConsole.MarkupLine($"[dim]Current version:[/] [yellow]{manifest.AMISVersion}[/]");
         AnsiConsole.WriteLine();
 
         // Determine mode
@@ -95,15 +95,15 @@ internal sealed class UpgradeCommand : AsyncCommand<UpgradeCommand.Settings>
     private static void ShowUsageHelp()
     {
         AnsiConsole.MarkupLine("[yellow]Usage:[/]");
-        AnsiConsole.MarkupLine("  [green]fsh upgrade --check[/]                    Check for available upgrades");
-        AnsiConsole.MarkupLine("  [green]fsh upgrade --apply[/]                    Apply available upgrades");
-        AnsiConsole.MarkupLine("  [green]fsh upgrade --apply --skip-breaking[/]    Apply safe updates only");
-        AnsiConsole.MarkupLine("  [green]fsh upgrade --apply --dry-run[/]          Preview changes without applying");
-        AnsiConsole.MarkupLine("  [green]fsh upgrade --check --include-prerelease[/]  Include prereleases");
+        AnsiConsole.MarkupLine("  [green]AMIS upgrade --check[/]                    Check for available upgrades");
+        AnsiConsole.MarkupLine("  [green]AMIS upgrade --apply[/]                    Apply available upgrades");
+        AnsiConsole.MarkupLine("  [green]AMIS upgrade --apply --skip-breaking[/]    Apply safe updates only");
+        AnsiConsole.MarkupLine("  [green]AMIS upgrade --apply --dry-run[/]          Preview changes without applying");
+        AnsiConsole.MarkupLine("  [green]AMIS upgrade --check --include-prerelease[/]  Include prereleases");
         AnsiConsole.WriteLine();
     }
 
-    private static async Task<int> CheckForUpgradesAsync(FshManifest manifest, Settings settings, CancellationToken cancellationToken)
+    private static async Task<int> CheckForUpgradesAsync(AMISManifest manifest, Settings settings, CancellationToken cancellationToken)
     {
         using var githubService = new GitHubReleaseService();
 
@@ -127,13 +127,13 @@ internal sealed class UpgradeCommand : AsyncCommand<UpgradeCommand.Settings>
 
         if (latestRelease == null)
         {
-            AnsiConsole.MarkupLine("[yellow]⚠[/] Could not fetch release information from GitHub.");
+            AnsiConsole.MarkupLine("[yellow]?[/] Could not fetch release information from GitHub.");
             AnsiConsole.MarkupLine("[dim]Check your internet connection or try again later.[/]");
             return 1;
         }
 
         var latestVersion = latestRelease.Version;
-        var comparison = VersionComparer.CompareVersions(manifest.FshVersion, latestVersion);
+        var comparison = VersionComparer.CompareVersions(manifest.AMISVersion, latestVersion);
 
         // Show version comparison
         var table = new Table()
@@ -141,7 +141,7 @@ internal sealed class UpgradeCommand : AsyncCommand<UpgradeCommand.Settings>
             .AddColumn("[blue]Version[/]")
             .AddColumn("[blue]Value[/]");
 
-        table.AddRow("Current", $"[yellow]{manifest.FshVersion}[/]");
+        table.AddRow("Current", $"[yellow]{manifest.AMISVersion}[/]");
         table.AddRow("Latest", comparison < 0 ? $"[green]{latestVersion}[/]" : $"[dim]{latestVersion}[/]");
 
         if (latestRelease.Prerelease)
@@ -154,7 +154,7 @@ internal sealed class UpgradeCommand : AsyncCommand<UpgradeCommand.Settings>
 
         if (comparison >= 0)
         {
-            AnsiConsole.MarkupLine("[green]✓[/] You're up to date!");
+            AnsiConsole.MarkupLine("[green]?[/] You're up to date!");
             return 0;
         }
 
@@ -223,7 +223,7 @@ internal sealed class UpgradeCommand : AsyncCommand<UpgradeCommand.Settings>
 
                 if (diff.HasBreakingChanges)
                 {
-                    AnsiConsole.MarkupLine("[yellow]⚠[/] Some updates may contain breaking changes.");
+                    AnsiConsole.MarkupLine("[yellow]?[/] Some updates may contain breaking changes.");
                 }
             }
         }
@@ -246,14 +246,14 @@ internal sealed class UpgradeCommand : AsyncCommand<UpgradeCommand.Settings>
         AnsiConsole.WriteLine();
         AnsiConsole.MarkupLine($"[dim]Release URL:[/] {latestRelease.HtmlUrl}");
         AnsiConsole.WriteLine();
-        AnsiConsole.MarkupLine("Run [green]fsh upgrade --apply[/] to upgrade.");
-        AnsiConsole.MarkupLine("Run [green]fsh upgrade --apply --skip-breaking[/] for safe updates only.");
+        AnsiConsole.MarkupLine("Run [green]AMIS upgrade --apply[/] to upgrade.");
+        AnsiConsole.MarkupLine("Run [green]AMIS upgrade --apply --skip-breaking[/] for safe updates only.");
         AnsiConsole.WriteLine();
 
         return 0;
     }
 
-    private static async Task<int> ApplyUpgradesAsync(FshManifest manifest, Settings settings, CancellationToken cancellationToken)
+    private static async Task<int> ApplyUpgradesAsync(AMISManifest manifest, Settings settings, CancellationToken cancellationToken)
     {
         using var githubService = new GitHubReleaseService();
 
@@ -281,15 +281,15 @@ internal sealed class UpgradeCommand : AsyncCommand<UpgradeCommand.Settings>
         }
 
         var latestVersion = latestRelease.Version;
-        var comparison = VersionComparer.CompareVersions(manifest.FshVersion, latestVersion);
+        var comparison = VersionComparer.CompareVersions(manifest.AMISVersion, latestVersion);
 
         if (comparison >= 0)
         {
-            AnsiConsole.MarkupLine("[green]✓[/] Already up to date!");
+            AnsiConsole.MarkupLine("[green]?[/] Already up to date!");
             return 0;
         }
 
-        AnsiConsole.MarkupLine($"[dim]Upgrading:[/] [yellow]{manifest.FshVersion}[/] → [green]{latestVersion}[/]");
+        AnsiConsole.MarkupLine($"[dim]Upgrading:[/] [yellow]{manifest.AMISVersion}[/] ? [green]{latestVersion}[/]");
         AnsiConsole.WriteLine();
 
         // Get package diff
@@ -320,7 +320,7 @@ internal sealed class UpgradeCommand : AsyncCommand<UpgradeCommand.Settings>
             if (!settings.DryRun)
             {
                 await PackageUpdater.UpdateManifestAsync(settings.Path, latestVersion, cancellationToken);
-                AnsiConsole.MarkupLine("[green]✓[/] Updated manifest version.");
+                AnsiConsole.MarkupLine("[green]?[/] Updated manifest version.");
             }
             return 0;
         }
@@ -400,7 +400,7 @@ internal sealed class UpgradeCommand : AsyncCommand<UpgradeCommand.Settings>
 
         if (backupPath == null)
         {
-            AnsiConsole.MarkupLine("[yellow]⚠[/] Could not create backup. Continue anyway?");
+            AnsiConsole.MarkupLine("[yellow]?[/] Could not create backup. Continue anyway?");
             if (!settings.Force)
             {
                 var continueAnyway = await AnsiConsole.ConfirmAsync("Continue without backup?", false, cancellationToken);
@@ -447,7 +447,7 @@ internal sealed class UpgradeCommand : AsyncCommand<UpgradeCommand.Settings>
 
         if (result.Success)
         {
-            AnsiConsole.MarkupLine("[green]✓[/] Packages updated successfully!");
+            AnsiConsole.MarkupLine("[green]?[/] Packages updated successfully!");
             AnsiConsole.WriteLine();
 
             if (result.Updated.Count > 0)
@@ -469,7 +469,7 @@ internal sealed class UpgradeCommand : AsyncCommand<UpgradeCommand.Settings>
             var manifestUpdated = await PackageUpdater.UpdateManifestAsync(settings.Path, latestVersion, cancellationToken);
             if (manifestUpdated)
             {
-                AnsiConsole.MarkupLine("[green]✓[/] Manifest updated.");
+                AnsiConsole.MarkupLine("[green]?[/] Manifest updated.");
             }
 
             // Show warnings
@@ -498,7 +498,7 @@ internal sealed class UpgradeCommand : AsyncCommand<UpgradeCommand.Settings>
         }
         else
         {
-            AnsiConsole.MarkupLine("[red]✗[/] Upgrade failed!");
+            AnsiConsole.MarkupLine("[red]?[/] Upgrade failed!");
 
             foreach (var error in result.Errors)
             {
@@ -515,11 +515,11 @@ internal sealed class UpgradeCommand : AsyncCommand<UpgradeCommand.Settings>
                     var restored = await PackageUpdater.RestoreBackupAsync(backupPath, cancellationToken);
                     if (restored)
                     {
-                        AnsiConsole.MarkupLine("[green]✓[/] Restored from backup.");
+                        AnsiConsole.MarkupLine("[green]?[/] Restored from backup.");
                     }
                     else
                     {
-                        AnsiConsole.MarkupLine($"[red]✗[/] Could not restore. Manual restore needed from: {backupPath}");
+                        AnsiConsole.MarkupLine($"[red]?[/] Could not restore. Manual restore needed from: {backupPath}");
                     }
                 }
             }
@@ -562,3 +562,4 @@ internal sealed class UpgradeCommand : AsyncCommand<UpgradeCommand.Settings>
         return notes[..maxLength] + "...";
     }
 }
+

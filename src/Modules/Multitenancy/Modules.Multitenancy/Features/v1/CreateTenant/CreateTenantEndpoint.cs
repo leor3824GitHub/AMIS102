@@ -1,13 +1,13 @@
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Framework.Shared.Multitenancy;
-using FSH.Modules.Multitenancy.Contracts.v1.CreateTenant;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Framework.Shared.Multitenancy;
+using AMIS.Modules.Multitenancy.Contracts.v1.CreateTenant;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.Multitenancy.Features.v1.CreateTenant;
+namespace AMIS.Modules.Multitenancy.Features.v1.CreateTenant;
 
 public static class CreateTenantEndpoint
 {
@@ -24,3 +24,4 @@ public static class CreateTenantEndpoint
             .Produces<CreateTenantCommandResponse>(StatusCodes.Status200OK);
     }
 }
+

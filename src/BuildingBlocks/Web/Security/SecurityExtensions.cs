@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Builder;
 
-namespace FSH.Framework.Web.Security;
+namespace AMIS.Framework.Web.Security;
 
 public static class SecurityExtensions
 {
@@ -10,4 +10,5 @@ public static class SecurityExtensions
         return app.UseMiddleware<SecurityHeadersMiddleware>();
     }
 }
+
 

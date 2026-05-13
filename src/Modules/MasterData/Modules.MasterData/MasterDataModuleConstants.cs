@@ -1,4 +1,4 @@
-﻿namespace FSH.Modules.MasterData;
+namespace AMIS.Modules.MasterData;
 
 public static class MasterDataModuleConstants
 {

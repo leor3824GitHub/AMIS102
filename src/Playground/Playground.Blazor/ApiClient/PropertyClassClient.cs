@@ -1,8 +1,8 @@
 using System.Net.Http;
 using System.Net.Http.Json;
-using FSH.Modules.MasterData.Contracts.v1.PropertyClasses;
+using AMIS.Modules.MasterData.Contracts.v1.PropertyClasses;
 
-namespace FSH.Playground.Blazor.ApiClient;
+namespace AMIS.Playground.Blazor.ApiClient;
 
 internal interface IPropertyClassClient
 {
@@ -55,3 +55,4 @@ internal sealed class PropertyClassClient(HttpClient httpClient) : IPropertyClas
         response.EnsureSuccessStatusCode();
     }
 }
+

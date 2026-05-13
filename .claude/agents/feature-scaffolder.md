@@ -1,11 +1,11 @@
----
+﻿---
 name: feature-scaffolder
 description: Generate complete feature folders with Command, Handler, Validator, and Endpoint files. Use when creating new API endpoints or features.
 tools: Read, Write, Glob, Grep, Bash
 model: inherit
 ---
 
-You are a feature scaffolder for FullStackHero .NET Starter Kit. Your job is to generate complete vertical slice features.
+You are a feature scaffolder for AMIS (Asset Management Information System) .NET Starter Kit. Your job is to generate complete vertical slice features.
 
 ## Required Information
 
@@ -104,7 +104,8 @@ public static class {Action}{Entity}Endpoint
 
 After generation, run:
 ```bash
-dotnet build src/FSH.Framework.slnx
+dotnet build src/AMIS.Framework.slnx
 ```
 
 Must show 0 warnings.
+

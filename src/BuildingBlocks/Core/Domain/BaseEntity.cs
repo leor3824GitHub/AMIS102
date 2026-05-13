@@ -1,4 +1,4 @@
-﻿namespace FSH.Framework.Core.Domain;
+namespace AMIS.Framework.Core.Domain;
 
 /// <summary>
 /// Provides a base implementation for entities with identity and domain events.
@@ -30,3 +30,4 @@ public abstract class BaseEntity<TId> : IEntity<TId>, IHasDomainEvents
     /// </summary>
     public void ClearDomainEvents() => _domainEvents.Clear();
 }
+

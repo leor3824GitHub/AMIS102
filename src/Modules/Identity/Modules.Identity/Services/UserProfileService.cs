@@ -1,23 +1,23 @@
 using Finbuckle.MultiTenant.Abstractions;
-using FSH.Framework.Core.Exceptions;
-using FSH.Framework.Shared.Multitenancy;
-using FSH.Framework.Shared.Storage;
-using FSH.Framework.Storage;
-using FSH.Framework.Storage.Services;
-using FSH.Framework.Web.Origin;
-using FSH.Modules.Identity.Contracts.DTOs;
-using FSH.Modules.Identity.Contracts.Services;
-using FSH.Modules.Identity.Domain;
+using AMIS.Framework.Core.Exceptions;
+using AMIS.Framework.Shared.Multitenancy;
+using AMIS.Framework.Shared.Storage;
+using AMIS.Framework.Storage;
+using AMIS.Framework.Storage.Services;
+using AMIS.Framework.Web.Origin;
+using AMIS.Modules.Identity.Contracts.DTOs;
+using AMIS.Modules.Identity.Contracts.Services;
+using AMIS.Modules.Identity.Domain;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
-namespace FSH.Modules.Identity.Services;
+namespace AMIS.Modules.Identity.Services;
 
 internal sealed class UserProfileService(
-    UserManager<FshUser> userManager,
-    SignInManager<FshUser> signInManager,
+    UserManager<AmisUser> userManager,
+    SignInManager<AmisUser> signInManager,
     IStorageService storageService,
     IMultiTenantContextAccessor<AppTenantInfo> multiTenantContextAccessor,
     IOptions<OriginOptions> originOptions,
@@ -79,7 +79,7 @@ internal sealed class UserProfileService(
         Uri imageUri = user.ImageUrl ?? null!;
         if ((image?.Data != null && image.Data.Count > 0) || deleteCurrentImage)
         {
-            var imageString = await storageService.UploadAsync<FshUser>(image, FileType.Image);
+            var imageString = await storageService.UploadAsync<AmisUser>(image, FileType.Image);
             user.ImageUrl = new Uri(imageString, UriKind.RelativeOrAbsolute);
             if (deleteCurrentImage && imageUri != null)
             {
@@ -107,7 +107,7 @@ internal sealed class UserProfileService(
     public async Task<bool> ExistsWithEmailAsync(string email, string? exceptId = null)
     {
         EnsureValidTenant();
-        return await userManager.FindByEmailAsync(email.Normalize()) is FshUser user && user.Id != exceptId;
+        return await userManager.FindByEmailAsync(email.Normalize()) is AmisUser user && user.Id != exceptId;
     }
 
     public async Task<bool> ExistsWithNameAsync(string name)
@@ -119,7 +119,7 @@ internal sealed class UserProfileService(
     public async Task<bool> ExistsWithPhoneNumberAsync(string phoneNumber, string? exceptId = null)
     {
         EnsureValidTenant();
-        return await userManager.Users.FirstOrDefaultAsync(x => x.PhoneNumber == phoneNumber) is FshUser user && user.Id != exceptId;
+        return await userManager.Users.FirstOrDefaultAsync(x => x.PhoneNumber == phoneNumber) is AmisUser user && user.Id != exceptId;
     }
 
     private void EnsureValidTenant()
@@ -161,3 +161,5 @@ internal sealed class UserProfileService(
         return $"{_originUrl.AbsoluteUri.TrimEnd('/')}/{originRelativePath}";
     }
 }
+
+

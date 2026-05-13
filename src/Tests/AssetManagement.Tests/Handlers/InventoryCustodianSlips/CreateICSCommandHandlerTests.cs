@@ -1,11 +1,11 @@
 using Finbuckle.MultiTenant;
 using Finbuckle.MultiTenant.Abstractions;
-using FSH.Framework.Core.Context;
-using FSH.Framework.Shared.Multitenancy;
-using FSH.Framework.Shared.Persistence;
-using FSH.Modules.AssetManagement.Data;
-using FSH.Modules.AssetManagement.Domain;
-using FSH.Modules.AssetManagement.Features.v1.InventoryCustodianSlips.CreateICS;
+using AMIS.Framework.Core.Context;
+using AMIS.Framework.Shared.Multitenancy;
+using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.AssetManagement.Data;
+using AMIS.Modules.AssetManagement.Domain;
+using AMIS.Modules.AssetManagement.Features.v1.InventoryCustodianSlips.CreateICS;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;

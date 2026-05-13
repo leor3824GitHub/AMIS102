@@ -1,8 +1,8 @@
-using FSH.Modules.AssetManagement.Data;
+using AMIS.Modules.AssetManagement.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.ReceiptsForReturnedPPE.GetRRPList;
+namespace AMIS.Modules.AssetManagement.Features.v1.ReceiptsForReturnedPPE.GetRRPList;
 
 public sealed class GetRRPListQueryHandler(AssetManagementDbContext dbContext)
     : IQueryHandler<GetRRPListQuery, PagedRRPResponse>
@@ -51,3 +51,4 @@ public sealed class GetRRPListQueryHandler(AssetManagementDbContext dbContext)
         return new PagedRRPResponse(result, pageNumber, pageSize, totalCount);
     }
 }
+

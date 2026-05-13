@@ -1,4 +1,4 @@
-namespace FSH.CLI.Models;
+namespace AMIS.CLI.Models;
 
 internal sealed class Preset
 {
@@ -98,3 +98,4 @@ internal static class Presets
         All.FirstOrDefault(p => p.Name.Equals(name, StringComparison.OrdinalIgnoreCase) ||
                                 p.Name.Replace(" ", string.Empty, StringComparison.Ordinal).Equals(name, StringComparison.OrdinalIgnoreCase));
 }
+

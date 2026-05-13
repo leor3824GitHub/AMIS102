@@ -1,4 +1,4 @@
-namespace FSH.Framework.Shared.Persistence;
+namespace AMIS.Framework.Shared.Persistence;
 
 public sealed class PagedResponse<T>
 {
@@ -16,4 +16,5 @@ public sealed class PagedResponse<T>
 
     public bool HasPrevious => PageNumber > 1;
 }
+
 

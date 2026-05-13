@@ -1,6 +1,6 @@
----
+﻿---
 name: query-patterns
-description: Query patterns including pagination, search, filtering, and specifications for FSH. Use when implementing GET endpoints that return lists or need filtering.
+description: Query patterns including pagination, search, filtering, and specifications for AMIS. Use when implementing GET endpoints that return lists or need filtering.
 ---
 
 # Query Patterns
@@ -185,3 +185,4 @@ public sealed record {Entity}Dto(
 3. **Soft delete filtering is automatic** - DeletedAt != null filtered out
 4. **Use `[AsParameters]`** - For query parameters in endpoints
 5. **Project to DTOs** - Never return entities directly
+

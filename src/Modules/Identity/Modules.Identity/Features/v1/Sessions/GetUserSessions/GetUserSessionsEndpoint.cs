@@ -1,12 +1,12 @@
-using FSH.Framework.Shared.Identity;
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.Identity.Contracts.v1.Sessions.GetUserSessions;
+using AMIS.Framework.Shared.Identity;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.Identity.Contracts.v1.Sessions.GetUserSessions;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.Identity.Features.v1.Sessions.GetUserSessions;
+namespace AMIS.Modules.Identity.Features.v1.Sessions.GetUserSessions;
 
 public static class GetUserSessionsEndpoint
 {
@@ -20,3 +20,4 @@ public static class GetUserSessionsEndpoint
         .WithDescription("Retrieve all active sessions for a specific user. Requires admin permission.");
     }
 }
+

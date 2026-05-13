@@ -1,4 +1,4 @@
-namespace FSH.Modules.Identity.Contracts.Services;
+namespace AMIS.Modules.Identity.Contracts.Services;
 
 public interface IPasswordHistoryService
 {
@@ -11,3 +11,4 @@ public interface IPasswordHistoryService
     /// <summary>Remove old password history entries beyond the configured retention count.</summary>
     Task CleanupOldPasswordHistoryAsync(string userId, CancellationToken cancellationToken = default);
 }
+

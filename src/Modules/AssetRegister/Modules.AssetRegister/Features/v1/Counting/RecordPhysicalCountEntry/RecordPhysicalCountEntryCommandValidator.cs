@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.AssetRegister.Contracts.v1.Counting;
+using AMIS.Modules.AssetRegister.Contracts.v1.Counting;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Counting.RecordPhysicalCountEntry;
+namespace AMIS.Modules.AssetRegister.Features.v1.Counting.RecordPhysicalCountEntry;
 
 public sealed class RecordPhysicalCountEntryCommandValidator : AbstractValidator<RecordPhysicalCountEntryCommand>
 {
@@ -15,3 +15,4 @@ public sealed class RecordPhysicalCountEntryCommandValidator : AbstractValidator
         RuleFor(x => x.LocationId).NotEmpty().WithMessage("Location ID is required.");
     }
 }
+

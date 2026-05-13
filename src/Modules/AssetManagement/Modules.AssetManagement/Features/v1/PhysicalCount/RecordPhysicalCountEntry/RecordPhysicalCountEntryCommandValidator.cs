@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Modules.AssetManagement.Domain;
 
-namespace FSH.Modules.AssetManagement.Features.v1.PhysicalCount.RecordPhysicalCountEntry;
+namespace AMIS.Modules.AssetManagement.Features.v1.PhysicalCount.RecordPhysicalCountEntry;
 
 public sealed class RecordPhysicalCountEntryCommandValidator : AbstractValidator<RecordPhysicalCountEntryCommand>
 {
@@ -26,3 +26,4 @@ public sealed class RecordPhysicalCountEntryCommandValidator : AbstractValidator
             .When(x => x.Condition.HasValue);
     }
 }
+

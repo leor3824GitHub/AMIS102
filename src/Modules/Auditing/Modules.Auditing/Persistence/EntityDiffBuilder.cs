@@ -1,8 +1,8 @@
-using FSH.Modules.Auditing.Contracts;
+using AMIS.Modules.Auditing.Contracts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 
-namespace FSH.Modules.Auditing.Persistence;
+namespace AMIS.Modules.Auditing.Persistence;
 
 /// <summary>
 /// Builds property-level diffs for EF Core entries. Skips navigations by default.
@@ -187,3 +187,4 @@ internal static class EntityDiffBuilder
     private static string ToSimpleTypeName(Type t) =>
         (Nullable.GetUnderlyingType(t) ?? t).Name;
 }
+

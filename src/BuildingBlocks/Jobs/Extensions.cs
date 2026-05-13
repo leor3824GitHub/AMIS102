@@ -1,6 +1,6 @@
-﻿using FSH.Framework.Core.Exceptions;
-using FSH.Framework.Jobs.Services;
-using FSH.Framework.Shared.Persistence;
+using AMIS.Framework.Core.Exceptions;
+using AMIS.Framework.Jobs.Services;
+using AMIS.Framework.Shared.Persistence;
 using Hangfire;
 using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Builder;
@@ -9,7 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Npgsql;
 
-namespace FSH.Framework.Jobs;
+namespace AMIS.Framework.Jobs;
 
 public static class Extensions
 {
@@ -54,7 +54,7 @@ public static class Extensions
                     throw new CustomException($"Hangfire storage provider {dbOptions.Provider} is not supported");
             }
 
-            config.UseFilter(new FshJobFilter(provider));
+            config.UseFilter(new AMISJobFilter(provider));
             config.UseFilter(new LogJobFilter());
             config.UseFilter(new HangfireTelemetryFilter());
         });
@@ -112,3 +112,4 @@ public static class Extensions
         return app.UseHangfireDashboard(hangfireOptions.Route, dashboardOptions);
     }
 }
+

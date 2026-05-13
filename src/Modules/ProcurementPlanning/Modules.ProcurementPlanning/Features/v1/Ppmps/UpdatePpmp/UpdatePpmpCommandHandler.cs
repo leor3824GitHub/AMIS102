@@ -1,12 +1,12 @@
 using System.Net;
-using FSH.Framework.Core.Exceptions;
-using FSH.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
-using FSH.Modules.ProcurementPlanning.Data;
-using FSH.Modules.ProcurementPlanning.Features.v1.Ppmps;
+using AMIS.Framework.Core.Exceptions;
+using AMIS.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
+using AMIS.Modules.ProcurementPlanning.Data;
+using AMIS.Modules.ProcurementPlanning.Features.v1.Ppmps;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.UpdatePpmp;
+namespace AMIS.Modules.ProcurementPlanning.Features.v1.Ppmps.UpdatePpmp;
 
 public sealed class UpdatePpmpCommandHandler(
     ProcurementPlanningDbContext dbContext) : ICommandHandler<UpdatePpmpCommand, PpmpDto>
@@ -29,3 +29,4 @@ public sealed class UpdatePpmpCommandHandler(
         return PpmpMapper.ToDto(ppmp);
     }
 }
+

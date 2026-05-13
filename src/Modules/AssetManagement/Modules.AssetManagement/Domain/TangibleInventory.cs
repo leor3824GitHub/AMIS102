@@ -1,6 +1,6 @@
-using FSH.Framework.Core.Domain;
+using AMIS.Framework.Core.Domain;
 
-namespace FSH.Modules.AssetManagement.Domain;
+namespace AMIS.Modules.AssetManagement.Domain;
 
 /// <summary>
 /// Unified Tangible Inventory receiving document — replaces both the
@@ -106,3 +106,4 @@ public sealed class TangibleInventory : AggregateRoot<Guid>, IHasTenant, IAudita
         };
     }
 }
+

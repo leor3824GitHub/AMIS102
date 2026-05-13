@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
+using AMIS.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
 
-namespace FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.CreateUpdateApp;
+namespace AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.CreateUpdateApp;
 
 public sealed class CreateUpdateAppCommandValidator : AbstractValidator<CreateUpdateAppCommand>
 {
@@ -11,3 +11,4 @@ public sealed class CreateUpdateAppCommandValidator : AbstractValidator<CreateUp
         RuleFor(x => x.UpdateReason).NotEmpty().MaximumLength(1000);
     }
 }
+

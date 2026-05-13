@@ -1,11 +1,11 @@
-using FSH.Framework.Persistence;
-using FSH.Framework.Shared.Persistence;
-using FSH.Modules.Expendable.Contracts.v1.Requests;
-using FSH.Modules.Expendable.Data;
+using AMIS.Framework.Persistence;
+using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.Expendable.Contracts.v1.Requests;
+using AMIS.Modules.Expendable.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.Expendable.Features.v1.Requests.GetEmployeeSupplyRequests;
+namespace AMIS.Modules.Expendable.Features.v1.Requests.GetEmployeeSupplyRequests;
 
 public sealed class GetEmployeeSupplyRequestsQueryHandler : IQueryHandler<GetEmployeeSupplyRequestsQuery, PagedResponse<SupplyRequestDto>>
 {
@@ -26,3 +26,4 @@ public sealed class GetEmployeeSupplyRequestsQueryHandler : IQueryHandler<GetEmp
         return await projected.ToPagedResponseAsync(query, cancellationToken).ConfigureAwait(false);
     }
 }
+

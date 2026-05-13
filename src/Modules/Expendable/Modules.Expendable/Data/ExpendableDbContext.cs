@@ -1,21 +1,21 @@
 using Finbuckle.MultiTenant.Abstractions;
-using FSH.Framework.Eventing.Inbox;
-using FSH.Framework.Eventing.Outbox;
-using FSH.Framework.Persistence.Context;
-using FSH.Framework.Persistence;
-using FSH.Framework.Shared.Multitenancy;
-using FSH.Framework.Shared.Persistence;
-using FSH.Modules.Expendable.Domain.Cart;
-using FSH.Modules.Expendable.Domain.Inventory;
-using FSH.Modules.Expendable.Domain.Products;
-using FSH.Modules.Expendable.Domain.Purchases;
-using FSH.Modules.Expendable.Domain.Requests;
-using FSH.Modules.Expendable.Domain.Warehouse;
+using AMIS.Framework.Eventing.Inbox;
+using AMIS.Framework.Eventing.Outbox;
+using AMIS.Framework.Persistence.Context;
+using AMIS.Framework.Persistence;
+using AMIS.Framework.Shared.Multitenancy;
+using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.Expendable.Domain.Cart;
+using AMIS.Modules.Expendable.Domain.Inventory;
+using AMIS.Modules.Expendable.Domain.Products;
+using AMIS.Modules.Expendable.Domain.Purchases;
+using AMIS.Modules.Expendable.Domain.Requests;
+using AMIS.Modules.Expendable.Domain.Warehouse;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 
-namespace FSH.Modules.Expendable.Data;
+namespace AMIS.Modules.Expendable.Data;
 
 public class ExpendableDbContext : BaseDbContext
 {
@@ -65,5 +65,6 @@ public class ExpendableDbContext : BaseDbContext
         modelBuilder.ApplyConfiguration(new InboxMessageConfiguration(ExpendableModuleConstants.SchemaName));
     }
 }
+
 
 

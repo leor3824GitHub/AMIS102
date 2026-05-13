@@ -1,13 +1,13 @@
-using FSH.Framework.Caching;
-using FSH.Modules.Expendable.Contracts.v1.Warehouse;
-using FSH.Modules.Expendable.Data;
-using FSH.Modules.Expendable.Domain.Inventory;
-using FSH.Modules.Expendable.Domain.Purchases;
-using FSH.Modules.Expendable.Domain.Warehouse;
+using AMIS.Framework.Caching;
+using AMIS.Modules.Expendable.Contracts.v1.Warehouse;
+using AMIS.Modules.Expendable.Data;
+using AMIS.Modules.Expendable.Domain.Inventory;
+using AMIS.Modules.Expendable.Domain.Purchases;
+using AMIS.Modules.Expendable.Domain.Warehouse;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.Expendable.Features.v1.Warehouse.RecordInspection;
+namespace AMIS.Modules.Expendable.Features.v1.Warehouse.RecordInspection;
 
 public sealed class RecordInspectionCommandHandler : ICommandHandler<RecordInspectionCommand, RecordInspectionResponse>
 {
@@ -136,3 +136,4 @@ public sealed class RecordInspectionCommandHandler : ICommandHandler<RecordInspe
         );
     }
 }
+

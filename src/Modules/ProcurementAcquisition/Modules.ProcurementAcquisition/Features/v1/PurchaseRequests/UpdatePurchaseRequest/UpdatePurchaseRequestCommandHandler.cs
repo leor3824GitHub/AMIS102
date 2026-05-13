@@ -1,11 +1,11 @@
-using FSH.Framework.Core.Context;
-using FSH.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
-using FSH.Modules.ProcurementAcquisition.Data;
-using FSH.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.CreatePurchaseRequest;
+using AMIS.Framework.Core.Context;
+using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
+using AMIS.Modules.ProcurementAcquisition.Data;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.CreatePurchaseRequest;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.UpdatePurchaseRequest;
+namespace AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.UpdatePurchaseRequest;
 
 public sealed class UpdatePurchaseRequestCommandHandler(
     ProcurementDbContext dbContext,
@@ -40,3 +40,4 @@ public sealed class UpdatePurchaseRequestCommandHandler(
         return CreatePurchaseRequestCommandHandler.MapToDto(pr);
     }
 }
+

@@ -1,4 +1,4 @@
-namespace FSH.Modules.Identity.Contracts.Services;
+namespace AMIS.Modules.Identity.Contracts.Services;
 
 /// <summary>
 /// Service for user permission operations.
@@ -20,3 +20,4 @@ public interface IUserPermissionService
     /// </summary>
     Task InvalidatePermissionCacheAsync(string userId, CancellationToken cancellationToken);
 }
+

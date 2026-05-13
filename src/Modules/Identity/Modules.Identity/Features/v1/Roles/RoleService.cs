@@ -1,18 +1,18 @@
 using Finbuckle.MultiTenant.Abstractions;
-using FSH.Framework.Core.Context;
-using FSH.Framework.Core.Exceptions;
-using FSH.Framework.Shared.Constants;
-using FSH.Framework.Shared.Multitenancy;
-using FSH.Modules.Identity.Contracts.DTOs;
-using FSH.Modules.Identity.Contracts.Services;
-using FSH.Modules.Identity.Data;
-using FSH.Modules.Identity.Domain;
+using AMIS.Framework.Core.Context;
+using AMIS.Framework.Core.Exceptions;
+using AMIS.Framework.Shared.Constants;
+using AMIS.Framework.Shared.Multitenancy;
+using AMIS.Modules.Identity.Contracts.DTOs;
+using AMIS.Modules.Identity.Contracts.Services;
+using AMIS.Modules.Identity.Data;
+using AMIS.Modules.Identity.Domain;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.Identity.Features.v1.Roles;
+namespace AMIS.Modules.Identity.Features.v1.Roles;
 
-public class RoleService(RoleManager<FshRole> roleManager,
+public class RoleService(RoleManager<AmisRole> roleManager,
     IdentityDbContext context,
     IMultiTenantContextAccessor<AppTenantInfo> multiTenantContextAccessor,
     ICurrentUser currentUser) : IRoleService
@@ -20,10 +20,10 @@ public class RoleService(RoleManager<FshRole> roleManager,
     public async Task<IEnumerable<RoleDto>> GetRolesAsync(CancellationToken cancellationToken = default)
     {
         if (roleManager is null)
-            throw new NotFoundException("RoleManager<FshRole> not resolved. Check Identity registration.");
+            throw new NotFoundException("RoleManager<AmisRole> not resolved. Check Identity registration.");
 
         if (roleManager.Roles is null)
-            throw new NotFoundException("Role store not configured. Ensure .AddRoles<FshRole>() and EF stores.");
+            throw new NotFoundException("Role store not configured. Ensure .AddRoles<AmisRole>() and EF stores.");
 
 
         var roles = await roleManager.Roles
@@ -35,7 +35,7 @@ public class RoleService(RoleManager<FshRole> roleManager,
 
     public async Task<RoleDto?> GetRoleAsync(string id, CancellationToken cancellationToken = default)
     {
-        FshRole? role = await roleManager.FindByIdAsync(id);
+        AmisRole? role = await roleManager.FindByIdAsync(id);
 
         _ = role ?? throw new NotFoundException("role not found");
 
@@ -44,7 +44,7 @@ public class RoleService(RoleManager<FshRole> roleManager,
 
     public async Task<RoleDto> CreateOrUpdateRoleAsync(string roleId, string name, string description, CancellationToken cancellationToken = default)
     {
-        FshRole? role = await roleManager.FindByIdAsync(roleId);
+        AmisRole? role = await roleManager.FindByIdAsync(roleId);
 
         if (role != null)
         {
@@ -54,7 +54,7 @@ public class RoleService(RoleManager<FshRole> roleManager,
         }
         else
         {
-            role = new FshRole(name, description);
+            role = new AmisRole(name, description);
             await roleManager.CreateAsync(role);
         }
 
@@ -63,7 +63,7 @@ public class RoleService(RoleManager<FshRole> roleManager,
 
     public async Task DeleteRoleAsync(string id, CancellationToken cancellationToken = default)
     {
-        FshRole? role = await roleManager.FindByIdAsync(id);
+        AmisRole? role = await roleManager.FindByIdAsync(id);
 
         _ = role ?? throw new NotFoundException("role not found");
 
@@ -100,7 +100,7 @@ public class RoleService(RoleManager<FshRole> roleManager,
         return "permissions updated";
     }
 
-    private static void ValidateRoleCanBeModified(FshRole role)
+    private static void ValidateRoleCanBeModified(AmisRole role)
     {
         if (role.Name == RoleConstants.Admin)
         {
@@ -116,7 +116,7 @@ public class RoleService(RoleManager<FshRole> roleManager,
         }
     }
 
-    private async Task RemoveRevokedPermissionsAsync(FshRole role, IList<System.Security.Claims.Claim> currentClaims, List<string> permissions, CancellationToken cancellationToken = default)
+    private async Task RemoveRevokedPermissionsAsync(AmisRole role, IList<System.Security.Claims.Claim> currentClaims, List<string> permissions, CancellationToken cancellationToken = default)
     {
         var claimsToRemove = currentClaims.Where(c => !permissions.Exists(p => p == c.Value));
 
@@ -132,7 +132,7 @@ public class RoleService(RoleManager<FshRole> roleManager,
         }
     }
 
-    private async Task AddNewPermissionsAsync(FshRole role, IList<System.Security.Claims.Claim> currentClaims, List<string> permissions, CancellationToken cancellationToken = default)
+    private async Task AddNewPermissionsAsync(AmisRole role, IList<System.Security.Claims.Claim> currentClaims, List<string> permissions, CancellationToken cancellationToken = default)
     {
         var newPermissions = permissions
             .Where(p => !string.IsNullOrEmpty(p) && !currentClaims.Any(c => c.Value == p))
@@ -140,7 +140,7 @@ public class RoleService(RoleManager<FshRole> roleManager,
 
         foreach (string permission in newPermissions)
         {
-            context.RoleClaims.Add(new FshRoleClaim
+            context.RoleClaims.Add(new AmisRoleClaim
             {
                 RoleId = role.Id,
                 ClaimType = ClaimConstants.Permission,
@@ -155,3 +155,5 @@ public class RoleService(RoleManager<FshRole> roleManager,
         }
     }
 }
+
+

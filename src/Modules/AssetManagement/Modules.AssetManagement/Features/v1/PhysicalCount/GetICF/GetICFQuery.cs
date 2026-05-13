@@ -1,6 +1,6 @@
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.PhysicalCount.GetICF;
+namespace AMIS.Modules.AssetManagement.Features.v1.PhysicalCount.GetICF;
 
 /// <summary>
 /// Returns the Inventory Count Form (ICF) for a submitted Physical Count Session.
@@ -33,3 +33,4 @@ public sealed record ICFLineItemDto(
     string? Remarks,
     string Result,
     bool IsScanned);
+

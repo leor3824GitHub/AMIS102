@@ -1,7 +1,7 @@
 @page "/sessions"
-@using FSH.Playground.Blazor.ApiClient
-@using FSH.Framework.Blazor.UI.Components.Dialogs
-@using FSH.Framework.Blazor.UI.Components.Cards
+@using AMIS.Playground.Blazor.ApiClient
+@using AMIS.Framework.Blazor.UI.Components.Dialogs
+@using AMIS.Framework.Blazor.UI.Components.Cards
 @inherits ComponentBase
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Components.Authorization
@@ -12,7 +12,7 @@
 @inject IDialogService DialogService
 @inject AuthenticationStateProvider AuthenticationStateProvider
 
-<FshPageHeader Title="Active Sessions"
+<AMISPageHeader Title="Active Sessions"
                Description="Manage your active sessions and connected devices">
     <ActionContent>
         <MudButton Variant="Variant.Filled"
@@ -23,33 +23,33 @@
             Logout All Other Devices
         </MudButton>
     </ActionContent>
-</FshPageHeader>
+</AMISPageHeader>
 
 @* Stats Cards *@
 <MudGrid Class="mb-4">
     <MudItem xs="6" sm="3">
-        <FshStatCard Icon="@Icons.Material.Filled.Devices"
+        <AMISStatCard Icon="@Icons.Material.Filled.Devices"
                      IconColor="Color.Primary"
                      Value="@_stats.Total.ToString()"
                      Label="Active Sessions"
                      Badge="Total" />
     </MudItem>
     <MudItem xs="6" sm="3">
-        <FshStatCard Icon="@Icons.Material.Filled.Computer"
+        <AMISStatCard Icon="@Icons.Material.Filled.Computer"
                      IconColor="Color.Info"
                      Value="@_stats.Desktop.ToString()"
                      Label="Desktop Sessions"
                      Badge="Desktop" />
     </MudItem>
     <MudItem xs="6" sm="3">
-        <FshStatCard Icon="@Icons.Material.Filled.PhoneAndroid"
+        <AMISStatCard Icon="@Icons.Material.Filled.PhoneAndroid"
                      IconColor="Color.Success"
                      Value="@_stats.Mobile.ToString()"
                      Label="Mobile Sessions"
                      Badge="Mobile" />
     </MudItem>
     <MudItem xs="6" sm="3">
-        <FshStatCard Icon="@Icons.Material.Filled.Tablet"
+        <AMISStatCard Icon="@Icons.Material.Filled.Tablet"
                      IconColor="Color.Warning"
                      Value="@_stats.Tablet.ToString()"
                      Label="Tablet Sessions"
@@ -58,7 +58,7 @@
 </MudGrid>
 
 @* Sessions List *@
-<MudPaper Class="fsh-card pa-0" Style="overflow: hidden;">
+<MudPaper Class="AMIS-card pa-0" Style="overflow: hidden;">
     @if (_loading)
     {
         <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
@@ -344,3 +344,4 @@
         return $"{(int)(timeSpan.TotalDays / 30)} month(s) ago";
     }
 }
+

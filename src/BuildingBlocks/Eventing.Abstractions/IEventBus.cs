@@ -1,4 +1,4 @@
-namespace FSH.Framework.Eventing.Abstractions;
+namespace AMIS.Framework.Eventing.Abstractions;
 
 /// <summary>
 /// Abstraction over an event bus. The initial provider is in-memory; additional providers
@@ -10,3 +10,4 @@ public interface IEventBus
 
     Task PublishAsync(IEnumerable<IIntegrationEvent> events, CancellationToken ct = default);
 }
+

@@ -1,6 +1,6 @@
-using FSH.Framework.Eventing.Abstractions;
+using AMIS.Framework.Eventing.Abstractions;
 
-namespace FSH.Modules.AssetRegister.Contracts.v1.IntegrationEvents;
+namespace AMIS.Modules.AssetRegister.Contracts.v1.IntegrationEvents;
 
 /// <summary>
 /// Integration events published by the AssetRegister module for consumption by
@@ -84,3 +84,4 @@ public static class AssetRegisterIntegrationEvents
         public string Source { get; } = "AssetRegister";
     }
 }
+

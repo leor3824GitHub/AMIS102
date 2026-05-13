@@ -1,11 +1,11 @@
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.Expendable.Contracts.v1.Requests;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.Expendable.Contracts.v1.Requests;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.Expendable.Features.v1.Requests.CancelSupplyRequest;
+namespace AMIS.Modules.Expendable.Features.v1.Requests.CancelSupplyRequest;
 
 public static class CancelSupplyRequestEndpoint
 {
@@ -27,3 +27,4 @@ public static class CancelSupplyRequestEndpoint
         return TypedResults.NoContent();
     }
 }
+

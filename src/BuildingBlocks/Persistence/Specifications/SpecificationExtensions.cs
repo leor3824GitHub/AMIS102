@@ -1,4 +1,4 @@
-namespace FSH.Framework.Persistence;
+namespace AMIS.Framework.Persistence;
 
 /// <summary>
 /// Extension methods to apply specifications to <see cref="IQueryable{T}"/> instances.
@@ -29,4 +29,5 @@ public static class SpecificationExtensions
         return SpecificationEvaluator.GetQuery(query, specification);
     }
 }
+
 

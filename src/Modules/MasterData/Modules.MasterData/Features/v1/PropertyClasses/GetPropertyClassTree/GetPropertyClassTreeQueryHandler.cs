@@ -1,9 +1,9 @@
-using FSH.Modules.MasterData.Contracts.v1.PropertyClasses;
-using FSH.Modules.MasterData.Data;
+using AMIS.Modules.MasterData.Contracts.v1.PropertyClasses;
+using AMIS.Modules.MasterData.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.MasterData.Features.v1.PropertyClasses.GetPropertyClassTree;
+namespace AMIS.Modules.MasterData.Features.v1.PropertyClasses.GetPropertyClassTree;
 
 public sealed class GetPropertyClassTreeQueryHandler(MasterDataDbContext db)
     : IQueryHandler<GetPropertyClassTreeQuery, IReadOnlyList<PropertyClassDto>>
@@ -34,3 +34,4 @@ public sealed class GetPropertyClassTreeQueryHandler(MasterDataDbContext db)
             .ConfigureAwait(false);
     }
 }
+

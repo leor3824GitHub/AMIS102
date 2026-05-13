@@ -1,9 +1,9 @@
-using FSH.Framework.Core.Exceptions;
-using FSH.Modules.AssetManagement.Data;
+using AMIS.Framework.Core.Exceptions;
+using AMIS.Modules.AssetManagement.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.InventoryCustodianSlips.GetICSById;
+namespace AMIS.Modules.AssetManagement.Features.v1.InventoryCustodianSlips.GetICSById;
 
 public sealed class GetICSByIdQueryHandler(AssetManagementDbContext dbContext)
     : IQueryHandler<GetICSByIdQuery, ICSDetailsDto>
@@ -56,3 +56,4 @@ public sealed class GetICSByIdQueryHandler(AssetManagementDbContext dbContext)
             items);
     }
 }
+

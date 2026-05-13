@@ -1,10 +1,10 @@
-using FSH.Modules.AssetRegister.Contracts.v1.Catalog;
-using FSH.Modules.AssetRegister.Data;
-using FSH.Modules.AssetRegister.Features.v1.Catalog.CreatePropertyItemCatalog;
+using AMIS.Modules.AssetRegister.Contracts.v1.Catalog;
+using AMIS.Modules.AssetRegister.Data;
+using AMIS.Modules.AssetRegister.Features.v1.Catalog.CreatePropertyItemCatalog;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Catalog.UpdatePropertyItemCatalog;
+namespace AMIS.Modules.AssetRegister.Features.v1.Catalog.UpdatePropertyItemCatalog;
 
 public sealed class UpdatePropertyItemCatalogCommandHandler(AssetRegisterDbContext db)
     : ICommandHandler<UpdatePropertyItemCatalogCommand, PropertyItemCatalogDto>
@@ -28,3 +28,4 @@ public sealed class UpdatePropertyItemCatalogCommandHandler(AssetRegisterDbConte
         return PropertyItemCatalogMapper.ToDto(entity);
     }
 }
+

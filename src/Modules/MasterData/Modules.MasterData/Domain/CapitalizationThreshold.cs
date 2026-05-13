@@ -1,6 +1,6 @@
-using FSH.Framework.Core.Domain;
+using AMIS.Framework.Core.Domain;
 
-namespace FSH.Modules.MasterData.Domain;
+namespace AMIS.Modules.MasterData.Domain;
 
 /// <summary>
 /// Shared reference data — COA sets this nationally, all tenants read the same threshold.
@@ -76,3 +76,4 @@ public sealed class CapitalizationThreshold : AggregateRoot<Guid>, IAuditableEnt
     public void Activate() => IsActive = true;
     public void Deactivate() => IsActive = false;
 }
+

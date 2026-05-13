@@ -1,7 +1,7 @@
-using FSH.Modules.Multitenancy.Contracts;
-using FSH.Modules.Multitenancy.Contracts.Dtos;
-using FSH.Modules.Multitenancy.Contracts.v1.ChangeTenantActivation;
-using FSH.Modules.Multitenancy.Features.v1.ChangeTenantActivation;
+using AMIS.Modules.Multitenancy.Contracts;
+using AMIS.Modules.Multitenancy.Contracts.Dtos;
+using AMIS.Modules.Multitenancy.Contracts.v1.ChangeTenantActivation;
+using AMIS.Modules.Multitenancy.Features.v1.ChangeTenantActivation;
 using NSubstitute;
 
 namespace Multitenancy.Tests.Handlers;
@@ -222,3 +222,4 @@ public sealed class ChangeTenantActivationCommandHandlerTests
 
     #endregion
 }
+

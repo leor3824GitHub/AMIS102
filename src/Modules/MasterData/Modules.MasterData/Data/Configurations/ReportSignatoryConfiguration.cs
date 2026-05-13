@@ -1,9 +1,9 @@
 using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;
-using FSH.Modules.MasterData.Domain;
+using AMIS.Modules.MasterData.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FSH.Modules.MasterData.Data.Configurations;
+namespace AMIS.Modules.MasterData.Data.Configurations;
 
 public sealed class ReportSignatoryConfiguration : IEntityTypeConfiguration<ReportSignatory>
 {
@@ -27,3 +27,4 @@ public sealed class ReportSignatoryConfiguration : IEntityTypeConfiguration<Repo
         builder.HasQueryFilter("SoftDelete", x => !x.IsDeleted);
     }
 }
+

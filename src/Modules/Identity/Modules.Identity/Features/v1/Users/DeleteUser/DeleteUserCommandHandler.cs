@@ -1,8 +1,8 @@
-using FSH.Modules.Identity.Contracts.Services;
-using FSH.Modules.Identity.Contracts.v1.Users.DeleteUser;
+using AMIS.Modules.Identity.Contracts.Services;
+using AMIS.Modules.Identity.Contracts.v1.Users.DeleteUser;
 using Mediator;
 
-namespace FSH.Modules.Identity.Features.v1.Users.DeleteUser;
+namespace AMIS.Modules.Identity.Features.v1.Users.DeleteUser;
 
 public sealed class DeleteUserCommandHandler : ICommandHandler<DeleteUserCommand, Unit>
 {
@@ -22,3 +22,4 @@ public sealed class DeleteUserCommandHandler : ICommandHandler<DeleteUserCommand
         return Unit.Value;
     }
 }
+

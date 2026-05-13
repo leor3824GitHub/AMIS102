@@ -1,10 +1,10 @@
-using FSH.Framework.Core.Context;
-using FSH.Framework.Core.Exceptions;
-using FSH.Modules.MasterData.Data;
+using AMIS.Framework.Core.Context;
+using AMIS.Framework.Core.Exceptions;
+using AMIS.Modules.MasterData.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.MasterData.Features.v1.Employees.GetMyEmployee;
+namespace AMIS.Modules.MasterData.Features.v1.Employees.GetMyEmployee;
 
 public sealed class GetMyEmployeeHandler(MasterDataDbContext dbContext, ICurrentUser currentUser)
     : IQueryHandler<GetMyEmployeeQuery, MyEmployeeDto>
@@ -27,3 +27,4 @@ public sealed class GetMyEmployeeHandler(MasterDataDbContext dbContext, ICurrent
         return employee ?? throw new NotFoundException("No employee profile found for the current user.");
     }
 }
+

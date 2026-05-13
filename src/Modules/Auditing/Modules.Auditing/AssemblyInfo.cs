@@ -1,3 +1,5 @@
-using FSH.Framework.Web.Modules;
+using AMIS.Framework.Web.Modules;
 
-[assembly: FshModule(typeof(FSH.Modules.Auditing.AuditingModule), 300)]
+[assembly: AmisModule(typeof(AMIS.Modules.Auditing.AuditingModule), 300)]
+
+

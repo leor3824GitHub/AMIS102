@@ -1,8 +1,8 @@
-using FSH.Modules.Identity.Contracts.Services;
-using FSH.Modules.Identity.Contracts.v1.Roles.UpdatePermissions;
+using AMIS.Modules.Identity.Contracts.Services;
+using AMIS.Modules.Identity.Contracts.v1.Roles.UpdatePermissions;
 using Mediator;
 
-namespace FSH.Modules.Identity.Features.v1.Roles.UpdateRolePermissions;
+namespace AMIS.Modules.Identity.Features.v1.Roles.UpdateRolePermissions;
 
 public sealed class UpdatePermissionsCommandHandler : ICommandHandler<UpdatePermissionsCommand, string>
 {
@@ -19,3 +19,4 @@ public sealed class UpdatePermissionsCommandHandler : ICommandHandler<UpdatePerm
         return await _roleService.UpdatePermissionsAsync(command.RoleId, command.Permissions, cancellationToken).ConfigureAwait(false);
     }
 }
+

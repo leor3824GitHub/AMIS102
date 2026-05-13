@@ -1,11 +1,11 @@
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.MasterData.Contracts.v1.References;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.MasterData.Contracts.v1.References;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.MasterData.Features.v1.Positions.DeletePosition;
+namespace AMIS.Modules.MasterData.Features.v1.Positions.DeletePosition;
 
 public static class DeletePositionEndpoint
 {

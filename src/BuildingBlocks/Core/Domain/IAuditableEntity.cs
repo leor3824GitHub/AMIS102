@@ -1,4 +1,4 @@
-﻿namespace FSH.Framework.Core.Domain;
+namespace AMIS.Framework.Core.Domain;
 
 /// <summary>
 /// Defines audit metadata for an entity.
@@ -25,3 +25,4 @@ public interface IAuditableEntity
     /// </summary>
     string? LastModifiedBy { get; }
 }
+

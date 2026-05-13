@@ -1,8 +1,8 @@
 @page "/login"
 @layout EmptyLayout
 @attribute [AllowAnonymous]
-@using FSH.Framework.Shared.Multitenancy
-@using FSH.Playground.Blazor.Services
+@using AMIS.Framework.Shared.Multitenancy
+@using AMIS.Playground.Blazor.Services
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
 @inject NavigationManager Navigation
@@ -18,7 +18,7 @@
             <div class="brand-icon">
                 <MudIcon Icon="@Icons.Material.Filled.Business" Size="Size.Small" />
             </div>
-            <span class="brand-name">fullstackhero</span>
+            <span class="brand-name">AMIS</span>
         </div>
 
         @* Login Card *@
@@ -139,3 +139,4 @@
         _showPassword = !_showPassword;
     }
 }
+

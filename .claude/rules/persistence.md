@@ -1,4 +1,4 @@
----
+﻿---
 paths:
   - "src/**/Persistence/**"
   - "src/**/Entities/**"
@@ -6,14 +6,14 @@ paths:
 
 # Persistence Rules
 
-EF Core patterns and repository usage in FSH.
+EF Core patterns and repository usage in AMIS.
 
 ## DbContext Pattern
 
 ### One DbContext Per Module
 
 ```csharp
-namespace FSH.Modules.Catalog.Persistence;
+namespace AMIS.Modules.Catalog.Persistence;
 
 public class CatalogDbContext(DbContextOptions<CatalogDbContext> options) 
     : BaseDbContext(options)
@@ -43,7 +43,7 @@ Inherited from `BuildingBlocks.Persistence`:
 ### Use Fluent API (NOT Data Annotations)
 
 ```csharp
-namespace FSH.Modules.Catalog.Persistence.Configurations;
+namespace AMIS.Modules.Catalog.Persistence.Configurations;
 
 public class ProductConfiguration : IEntityTypeConfiguration<Product>
 {
@@ -126,7 +126,7 @@ public class CreateProductHandler(IRepository<Product> productRepo)
 ### Creating Specifications
 
 ```csharp
-namespace FSH.Modules.Catalog.Specifications;
+namespace AMIS.Modules.Catalog.Specifications;
 
 public class ProductsByNameSpec : Specification<Product>
 {
@@ -288,7 +288,7 @@ dotnet ef database update \
 
 ### Migration Project Pattern
 
-FSH uses a separate migrations project (`Migrations.PostgreSQL`) to:
+AMIS uses a separate migrations project (`Migrations.PostgreSQL`) to:
 - Keep migrations out of module code
 - Support multiple database providers
 - Simplify deployment
@@ -405,7 +405,7 @@ var orders = await repo.ListAsync(spec, ct);
 ### ❌ Lazy Loading
 
 ```csharp
-// ❌ Lazy loading is DISABLED in FSH
+// ❌ Lazy loading is DISABLED in AMIS
 var order = await repo.GetByIdAsync(orderId, ct);
 var customer = order.Customer;  // ❌ NULL! Not loaded
 
@@ -429,3 +429,4 @@ var customer = order.Customer;  // ✅ Loaded
 ---
 
 For migration help: Use `migration-helper` agent or see EF Core docs.
+

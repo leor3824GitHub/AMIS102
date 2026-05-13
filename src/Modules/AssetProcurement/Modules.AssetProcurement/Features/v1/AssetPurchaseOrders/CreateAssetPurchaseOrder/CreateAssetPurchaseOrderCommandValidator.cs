@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.AssetProcurement.Contracts.v1.AssetPurchaseOrders;
+using AMIS.Modules.AssetProcurement.Contracts.v1.AssetPurchaseOrders;
 
-namespace FSH.Modules.AssetProcurement.Features.v1.AssetPurchaseOrders.CreateAssetPurchaseOrder;
+namespace AMIS.Modules.AssetProcurement.Features.v1.AssetPurchaseOrders.CreateAssetPurchaseOrder;
 
 public sealed class CreateAssetPurchaseOrderCommandValidator : AbstractValidator<CreateAssetPurchaseOrderCommand>
 {
@@ -24,3 +24,4 @@ public sealed class CreateAssetPurchaseOrderCommandValidator : AbstractValidator
         });
     }
 }
+

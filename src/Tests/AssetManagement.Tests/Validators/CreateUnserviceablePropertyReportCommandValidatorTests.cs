@@ -1,5 +1,5 @@
-using FSH.Modules.AssetManagement.Domain;
-using FSH.Modules.AssetManagement.Features.v1.UnserviceablePropertyReports.CreateUnserviceablePropertyReport;
+using AMIS.Modules.AssetManagement.Domain;
+using AMIS.Modules.AssetManagement.Features.v1.UnserviceablePropertyReports.CreateUnserviceablePropertyReport;
 using Shouldly;
 using Xunit;
 
@@ -93,3 +93,4 @@ public sealed class CreateUnserviceablePropertyReportCommandValidatorTests
             Remarks: null,
             Items: [new CreateUnserviceablePropertyItemRequest(Guid.NewGuid(), "Broken screen")]);
 }
+

@@ -1,6 +1,6 @@
-﻿using Mediator;
+using Mediator;
 
-namespace FSH.Modules.Identity.Contracts.v1.Users.ChangePassword;
+namespace AMIS.Modules.Identity.Contracts.v1.Users.ChangePassword;
 
 public class ChangePasswordCommand : ICommand<string>
 {

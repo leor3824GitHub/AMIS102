@@ -1,6 +1,6 @@
-using FSH.Framework.Core.Domain;
+using AMIS.Framework.Core.Domain;
 
-namespace FSH.Modules.Vehicle.Domain.Events;
+namespace AMIS.Modules.Vehicle.Domain.Events;
 
 public sealed record VehicleReactivatedEvent(
     Guid EventId,
@@ -14,3 +14,4 @@ public sealed record VehicleReactivatedEvent(
     public static VehicleReactivatedEvent Create(Guid vehicleId, string tenantId, string plateNumber, string? correlationId = null)
         => new(Guid.NewGuid(), DateTimeOffset.UtcNow, vehicleId, tenantId, plateNumber, correlationId);
 }
+

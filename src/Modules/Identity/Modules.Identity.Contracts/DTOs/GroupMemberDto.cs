@@ -1,4 +1,4 @@
-namespace FSH.Modules.Identity.Contracts.DTOs;
+namespace AMIS.Modules.Identity.Contracts.DTOs;
 
 public class GroupMemberDto
 {
@@ -10,3 +10,4 @@ public class GroupMemberDto
     public DateTime AddedAt { get; set; }
     public string? AddedBy { get; set; }
 }
+

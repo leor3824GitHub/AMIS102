@@ -1,14 +1,14 @@
 using Amazon.S3;
 using Amazon.S3.Model;
-using FSH.Framework.Shared.Storage;
-using FSH.Framework.Storage.DTOs;
-using FSH.Framework.Storage.Services;
+using AMIS.Framework.Shared.Storage;
+using AMIS.Framework.Storage.DTOs;
+using AMIS.Framework.Storage.Services;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Text.RegularExpressions;
 
-namespace FSH.Framework.Storage.S3;
+namespace AMIS.Framework.Storage.S3;
 
 internal sealed class S3StorageService : IStorageService
 {
@@ -223,3 +223,4 @@ internal sealed class S3StorageService : IStorageService
         return Regex.Replace(fileName, @"[^a-zA-Z0-9_\.-]", "_");
     }
 }
+

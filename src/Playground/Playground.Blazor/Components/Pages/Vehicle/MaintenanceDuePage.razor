@@ -1,28 +1,28 @@
 @page "/vehicle/maintenance/due"
-@using FSH.Modules.Vehicle.Contracts.v1.Maintenance
-@using FSH.Modules.Vehicle.Contracts.v1.Vehicles
+@using AMIS.Modules.Vehicle.Contracts.v1.Maintenance
+@using AMIS.Modules.Vehicle.Contracts.v1.Vehicles
 @inject IVehicleClient VehicleClient
 @inject ISnackbar Snackbar
 
-<FshPageHeader Title="Maintenance Due" Description="View upcoming and overdue schedules" />
+<AMISPageHeader Title="Maintenance Due" Description="View upcoming and overdue schedules" />
 
 <div class="mt-4">
     <MudGrid Class="mb-3" Spacing="2">
         <MudItem xs="6" sm="3">
-            <MudPaper Class="pa-3 fsh-card"><MudText Typo="Typo.caption">Total Due</MudText><MudText Typo="Typo.h6">@_items.Count</MudText></MudPaper>
+            <MudPaper Class="pa-3 AMIS-card"><MudText Typo="Typo.caption">Total Due</MudText><MudText Typo="Typo.h6">@_items.Count</MudText></MudPaper>
         </MudItem>
         <MudItem xs="6" sm="3">
-            <MudPaper Class="pa-3 fsh-card"><MudText Typo="Typo.caption">Overdue</MudText><MudText Typo="Typo.h6">@_items.Count(IsOverdue)</MudText></MudPaper>
+            <MudPaper Class="pa-3 AMIS-card"><MudText Typo="Typo.caption">Overdue</MudText><MudText Typo="Typo.h6">@_items.Count(IsOverdue)</MudText></MudPaper>
         </MudItem>
         <MudItem xs="6" sm="3">
-            <MudPaper Class="pa-3 fsh-card"><MudText Typo="Typo.caption">Upcoming</MudText><MudText Typo="Typo.h6">@_items.Count(x => !IsOverdue(x))</MudText></MudPaper>
+            <MudPaper Class="pa-3 AMIS-card"><MudText Typo="Typo.caption">Upcoming</MudText><MudText Typo="Typo.h6">@_items.Count(x => !IsOverdue(x))</MudText></MudPaper>
         </MudItem>
         <MudItem xs="6" sm="3">
-            <MudPaper Class="pa-3 fsh-card"><MudText Typo="Typo.caption">Window</MudText><MudText Typo="Typo.h6">@_daysAhead days</MudText></MudPaper>
+            <MudPaper Class="pa-3 AMIS-card"><MudText Typo="Typo.caption">Window</MudText><MudText Typo="Typo.h6">@_daysAhead days</MudText></MudPaper>
         </MudItem>
     </MudGrid>
 
-    <MudCard Class="fsh-card">
+    <MudCard Class="AMIS-card">
         <MudCardContent>
             <MudStack Row="true" Spacing="2" Class="mb-3">
                 <MudAutocomplete T="VehicleDto" @bind-Value="_selectedVehicle" Label="Vehicle (optional)"
@@ -141,3 +141,4 @@
         _daysAhead = 30;
     }
 }
+

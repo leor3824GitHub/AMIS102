@@ -1,10 +1,10 @@
 using System.Reflection;
-using FSH.CLI.Models;
-using FSH.CLI.UI;
-using FSH.CLI.Validation;
+using AMIS.CLI.Models;
+using AMIS.CLI.UI;
+using AMIS.CLI.Validation;
 using Spectre.Console;
 
-namespace FSH.CLI.Prompts;
+namespace AMIS.CLI.Prompts;
 
 internal static class ProjectWizard
 {
@@ -247,7 +247,7 @@ internal static class ProjectWizard
         var defaultVersion = GetDefaultFrameworkVersion();
 
         var useDefault = AnsiConsole.Confirm(
-            $"[dim]Use default FSH version[/] [cyan]{defaultVersion}[/][dim]?[/]",
+            $"[dim]Use default AMIS version[/] [cyan]{defaultVersion}[/][dim]?[/]",
             true);
 
         if (useDefault)
@@ -256,7 +256,7 @@ internal static class ProjectWizard
         }
 
         return AnsiConsole.Prompt(
-            new TextPrompt<string>("[dim]FSH version:[/]")
+            new TextPrompt<string>("[dim]AMIS version:[/]")
                 .PromptStyle(ConsoleTheme.PrimaryStyle)
                 .DefaultValue(defaultVersion)
                 .ValidationErrorMessage("[red]Invalid version[/]")
@@ -327,3 +327,4 @@ internal static class ProjectWizard
             _ => value.ToString()
         };
 }
+

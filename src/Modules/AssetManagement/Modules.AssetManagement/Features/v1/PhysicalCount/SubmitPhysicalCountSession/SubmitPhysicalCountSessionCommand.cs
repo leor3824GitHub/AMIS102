@@ -1,6 +1,6 @@
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.PhysicalCount.SubmitPhysicalCountSession;
+namespace AMIS.Modules.AssetManagement.Features.v1.PhysicalCount.SubmitPhysicalCountSession;
 
 public sealed record SubmitPhysicalCountSessionCommand(Guid SessionId) : ICommand<SubmitPhysicalCountSessionResult>;
 
@@ -12,3 +12,4 @@ public sealed record SubmitPhysicalCountSessionResult(
     int NotFound,
     int FoundAtStation,
     DateTimeOffset SubmittedOnUtc);
+

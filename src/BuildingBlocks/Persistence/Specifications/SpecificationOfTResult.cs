@@ -1,7 +1,7 @@
-using FSH.Framework.Persistence.Specifications;
+using AMIS.Framework.Persistence.Specifications;
 using System.Linq.Expressions;
 
-namespace FSH.Framework.Persistence;
+namespace AMIS.Framework.Persistence;
 
 /// <summary>
 /// Base specification that composes a query for <typeparamref name="T"/> and
@@ -24,4 +24,5 @@ public abstract class Specification<T, TResult> : Specification<T>, ISpecificati
         Selector = selector;
     }
 }
+
 

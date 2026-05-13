@@ -1,9 +1,9 @@
-using FSH.Framework.Eventing.Abstractions;
-using FSH.Framework.Mailing;
-using FSH.Framework.Mailing.Services;
-using FSH.Modules.Identity.Contracts.Events;
+using AMIS.Framework.Eventing.Abstractions;
+using AMIS.Framework.Mailing;
+using AMIS.Framework.Mailing.Services;
+using AMIS.Modules.Identity.Contracts.Events;
 
-namespace FSH.Modules.Identity.Events;
+namespace AMIS.Modules.Identity.Events;
 
 /// <summary>
 /// Sends a welcome email when a new user registers.
@@ -35,3 +35,4 @@ public sealed class UserRegisteredEmailHandler
         await _mailService.SendAsync(mail, ct).ConfigureAwait(false);
     }
 }
+

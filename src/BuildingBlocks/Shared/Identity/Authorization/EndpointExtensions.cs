@@ -1,6 +1,6 @@
-﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Builder;
 
-namespace FSH.Framework.Shared.Identity.Authorization;
+namespace AMIS.Framework.Shared.Identity.Authorization;
 
 public static class EndpointExtensions
 {

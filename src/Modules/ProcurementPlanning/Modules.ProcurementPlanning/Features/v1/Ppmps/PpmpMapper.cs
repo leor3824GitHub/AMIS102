@@ -1,7 +1,7 @@
-using FSH.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
-using FSH.Modules.ProcurementPlanning.Domain.Ppmps;
+using AMIS.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
+using AMIS.Modules.ProcurementPlanning.Domain.Ppmps;
 
-namespace FSH.Modules.ProcurementPlanning.Features.v1.Ppmps;
+namespace AMIS.Modules.ProcurementPlanning.Features.v1.Ppmps;
 
 internal static class PpmpMapper
 {
@@ -44,3 +44,4 @@ internal static class PpmpMapper
             r.ProcurementStart, r.ProcurementEnd, r.ExpectedDelivery,
             r.SourceOfFunds, r.EstimatedBudget, r.SupportingDocuments, r.Remarks);
 }
+

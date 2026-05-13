@@ -1,6 +1,6 @@
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.SemiExpendableItems.GetSemiExpendableItems;
+namespace AMIS.Modules.AssetManagement.Features.v1.SemiExpendableItems.GetSemiExpendableItems;
 
 public sealed record GetPropertyItemCatalogQuery(
     string? Keyword = null,
@@ -23,3 +23,4 @@ public sealed record PropertyItemCatalogSummaryDto(
     string UnitOfMeasure,
     int? EstimatedUsefulLifeYears,
     bool IsActive);
+

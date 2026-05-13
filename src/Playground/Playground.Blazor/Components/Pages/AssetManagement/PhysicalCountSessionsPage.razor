@@ -1,11 +1,11 @@
 @page "/asset-management/physical-count"
-@using FSH.Playground.Blazor.ApiClient
+@using AMIS.Playground.Blazor.ApiClient
 @inject IPhysicalCountClient Client
 @inject ILookupClient LookupClient
 @inject ISnackbar Snackbar
 @inject NavigationManager Nav
 
-<FshPageHeader Title="Physical Count"
+<AMISPageHeader Title="Physical Count"
                Description="Conduct physical inventory of PPE and semi-expendable property. Create a session to generate the asset checklist, then walk through the inventory using the scan or manual verification flow." />
 
 <MudGrid Spacing="3">
@@ -20,7 +20,7 @@
                     <MudDatePicker @bind-Date="_form.CountDateNullable" Label="Count Date" Variant="Variant.Outlined"
                                    DateFormat="MM/dd/yyyy" Required="true" />
                     <MudTextField @bind-Value="_form.StationOffice" Label="Station / Office" Variant="Variant.Outlined"
-                                  Required="true" MaxLength="200" Placeholder="e.g. IT Division â€“ Head Office" />
+                                  Required="true" MaxLength="200" Placeholder="e.g. IT Division – Head Office" />
                     <MudSelect @bind-Value="_form.Scope" Label="Scope" Variant="Variant.Outlined" T="string">
                         <MudSelectItem Value="@("PPEOnly")">PPE Items Only</MudSelectItem>
                         <MudSelectItem Value="@("SemiExpendableOnly")">Semi-Expendable Only</MudSelectItem>
@@ -206,3 +206,4 @@
         public EmployeeReferenceDto? ApprovedBy { get; set; }
     }
 }
+

@@ -1,14 +1,14 @@
 using FluentValidation.Results;
-using FSH.Framework.Core.Context;
-using FSH.Modules.Vehicle.Contracts.v1.Vehicles;
-using FSH.Modules.Vehicle.Data;
-using FSH.Modules.Vehicle.Domain.Vehicles;
-using FSH.Modules.Vehicle.Features.v1.Vehicles;
+using AMIS.Framework.Core.Context;
+using AMIS.Modules.Vehicle.Contracts.v1.Vehicles;
+using AMIS.Modules.Vehicle.Data;
+using AMIS.Modules.Vehicle.Domain.Vehicles;
+using AMIS.Modules.Vehicle.Features.v1.Vehicles;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
-using VehicleEntity = FSH.Modules.Vehicle.Domain.Vehicles.Vehicle;
+using VehicleEntity = AMIS.Modules.Vehicle.Domain.Vehicles.Vehicle;
 
-namespace FSH.Modules.Vehicle.Features.v1.Vehicles.CreateVehicle;
+namespace AMIS.Modules.Vehicle.Features.v1.Vehicles.CreateVehicle;
 
 public sealed class CreateVehicleCommandHandler(VehicleDbContext db, ICurrentUser currentUser)
     : ICommandHandler<CreateVehicleCommand, VehicleDto>
@@ -39,3 +39,4 @@ public sealed class CreateVehicleCommandHandler(VehicleDbContext db, ICurrentUse
         return vehicle.ToDto();
     }
 }
+

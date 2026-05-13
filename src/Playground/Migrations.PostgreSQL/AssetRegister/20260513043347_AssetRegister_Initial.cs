@@ -1,10 +1,10 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace FSH.Playground.Migrations.PostgreSQL.AssetRegister
+namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
 {
     /// <inheritdoc />
     public partial class AssetRegister_Initial : Migration
@@ -761,3 +761,4 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetRegister
         }
     }
 }
+

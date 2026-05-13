@@ -1,9 +1,9 @@
 @page "/tenants"
-@using FSH.Playground.Blazor.ApiClient
-@using FSH.Framework.Blazor.UI.Components.Dialogs
-@using FSH.Framework.Blazor.UI.Components.Cards
-@using FSH.Framework.Shared.Constants
-@using FSH.Framework.Shared.Multitenancy
+@using AMIS.Playground.Blazor.ApiClient
+@using AMIS.Framework.Blazor.UI.Components.Dialogs
+@using AMIS.Framework.Blazor.UI.Components.Cards
+@using AMIS.Framework.Shared.Constants
+@using AMIS.Framework.Shared.Multitenancy
 @using Microsoft.AspNetCore.Components.Authorization
 @inherits ComponentBase
 @inject IV1Client V1Client
@@ -21,7 +21,7 @@
 }
 else
 {
-    <FshPageHeader Title="Tenants"
+    <AMISPageHeader Title="Tenants"
                    Description="Manage organization tenants and subscriptions">
         <ActionContent>
             <MudButton Variant="Variant.Filled"
@@ -31,33 +31,33 @@ else
                 New Tenant
             </MudButton>
         </ActionContent>
-    </FshPageHeader>
+    </AMISPageHeader>
 
     @* Stats Cards *@
     <MudGrid Class="mb-4">
         <MudItem xs="6" sm="3">
-            <FshStatCard Icon="@Icons.Material.Filled.Business"
+            <AMISStatCard Icon="@Icons.Material.Filled.Business"
                          IconColor="Color.Primary"
                          Value="@_stats.Total.ToString()"
                          Label="Total Tenants"
                          Badge="Total" />
         </MudItem>
         <MudItem xs="6" sm="3">
-            <FshStatCard Icon="@Icons.Material.Filled.CheckCircle"
+            <AMISStatCard Icon="@Icons.Material.Filled.CheckCircle"
                          IconColor="Color.Success"
                          Value="@_stats.Active.ToString()"
                          Label="Active Tenants"
                          Badge="Active" />
         </MudItem>
         <MudItem xs="6" sm="3">
-            <FshStatCard Icon="@Icons.Material.Filled.Cancel"
+            <AMISStatCard Icon="@Icons.Material.Filled.Cancel"
                          IconColor="Color.Error"
                          Value="@_stats.Inactive.ToString()"
                          Label="Inactive Tenants"
                          Badge="Inactive" />
         </MudItem>
         <MudItem xs="6" sm="3">
-            <FshStatCard Icon="@Icons.Material.Filled.Warning"
+            <AMISStatCard Icon="@Icons.Material.Filled.Warning"
                          IconColor="Color.Warning"
                          Value="@_stats.ExpiringSoon.ToString()"
                          Label="Expiring in 30 days"
@@ -67,7 +67,7 @@ else
 
     @* Filter Panel *@
     <MudExpansionPanels Class="mb-4" Elevation="0">
-        <MudExpansionPanel Text="Filters" IsInitiallyExpanded="true" Class="fsh-card">
+        <MudExpansionPanel Text="Filters" IsInitiallyExpanded="true" Class="AMIS-card">
             <MudGrid GutterSize="2">
                 <MudItem xs="12" sm="4">
                     <MudTextField @bind-Value="_filter.Search"
@@ -106,7 +106,7 @@ else
     </MudExpansionPanels>
 
     @* Data Grid *@
-    <MudPaper Class="fsh-card pa-0" Style="overflow: hidden;">
+    <MudPaper Class="AMIS-card pa-0" Style="overflow: hidden;">
         <MudDataGrid T="TenantDto"
                      @ref="_dataGrid"
                      Items="_filtered"
@@ -523,3 +523,4 @@ else
         }
     }
 }
+

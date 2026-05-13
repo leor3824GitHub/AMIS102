@@ -1,11 +1,11 @@
-using FSH.Modules.AssetRegister.Contracts.v1;
-using FSH.Modules.AssetRegister.Contracts.v1.Counting;
-using FSH.Modules.AssetRegister.Contracts.v1.ValueObjects;
-using FSH.Modules.AssetRegister.Data;
+using AMIS.Modules.AssetRegister.Contracts.v1;
+using AMIS.Modules.AssetRegister.Contracts.v1.Counting;
+using AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
+using AMIS.Modules.AssetRegister.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Counting.ClosePhysicalCount;
+namespace AMIS.Modules.AssetRegister.Features.v1.Counting.ClosePhysicalCount;
 
 public sealed class ClosePhysicalCountCommandHandler(AssetRegisterDbContext db)
     : ICommandHandler<ClosePhysicalCountCommand, PhysicalCountSessionDto>
@@ -51,3 +51,4 @@ public sealed class ClosePhysicalCountCommandHandler(AssetRegisterDbContext db)
         return CountingMapper.ToDto(session);
     }
 }
+

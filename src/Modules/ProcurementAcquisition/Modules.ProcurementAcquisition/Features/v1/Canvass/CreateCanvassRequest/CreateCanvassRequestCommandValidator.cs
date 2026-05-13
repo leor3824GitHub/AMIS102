@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.ProcurementAcquisition.Contracts.v1.Canvass;
+using AMIS.Modules.ProcurementAcquisition.Contracts.v1.Canvass;
 
-namespace FSH.Modules.ProcurementAcquisition.Features.v1.Canvass.CreateCanvassRequest;
+namespace AMIS.Modules.ProcurementAcquisition.Features.v1.Canvass.CreateCanvassRequest;
 
 public sealed class CreateCanvassRequestCommandValidator : AbstractValidator<CreateCanvassRequestCommand>
 {
@@ -12,3 +12,4 @@ public sealed class CreateCanvassRequestCommandValidator : AbstractValidator<Cre
             .WithMessage("Return deadline must be a future date.");
     }
 }
+

@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
+using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
 
-namespace FSH.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.UpdatePurchaseRequest;
+namespace AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.UpdatePurchaseRequest;
 
 public sealed class UpdatePurchaseRequestCommandValidator : AbstractValidator<UpdatePurchaseRequestCommand>
 {
@@ -24,3 +24,4 @@ public sealed class UpdatePurchaseRequestCommandValidator : AbstractValidator<Up
         });
     }
 }
+

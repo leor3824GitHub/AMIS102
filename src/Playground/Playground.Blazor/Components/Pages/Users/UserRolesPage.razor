@@ -1,6 +1,6 @@
 @page "/users/{Id:guid}/roles"
-@using FSH.Playground.Blazor.ApiClient
-@using FSH.Framework.Blazor.UI.Components.Dialogs
+@using AMIS.Playground.Blazor.ApiClient
+@using AMIS.Framework.Blazor.UI.Components.Dialogs
 @inherits ComponentBase
 @inject IIdentityClient IdentityClient
 @inject IUsersClient UsersClient
@@ -8,7 +8,7 @@
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 
-<FshPageHeader Title="Manage User Roles"
+<AMISPageHeader Title="Manage User Roles"
                Description="Assign or remove roles for this user">
     <ActionContent>
         <MudButton Variant="Variant.Text"
@@ -18,11 +18,11 @@
             Back to Users
         </MudButton>
     </ActionContent>
-</FshPageHeader>
+</AMISPageHeader>
 
 @if (_loading)
 {
-    <MudPaper Class="fsh-card pa-8">
+    <MudPaper Class="AMIS-card pa-8">
         <MudStack AlignItems="AlignItems.Center" Spacing="4">
             <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
             <MudText Typo="Typo.body1">Loading user information...</MudText>
@@ -31,7 +31,7 @@
 }
 else if (_user is null)
 {
-    <MudPaper Class="fsh-card pa-8">
+    <MudPaper Class="AMIS-card pa-8">
         <MudStack AlignItems="AlignItems.Center" Spacing="4">
             <MudIcon Icon="@Icons.Material.Filled.PersonOff" Size="Size.Large" Color="Color.Error" />
             <MudText Typo="Typo.h6">User Not Found</MudText>
@@ -45,7 +45,7 @@ else if (_user is null)
 else
 {
     @* User Info Header *@
-    <MudPaper Class="fsh-card pa-4 mb-4">
+    <MudPaper Class="AMIS-card pa-4 mb-4">
         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="4">
             <MudAvatar Size="Size.Large" Class="user-avatar-large">
                 @if (!string.IsNullOrEmpty(_user.ImageUrl))
@@ -81,7 +81,7 @@ else
     </MudPaper>
 
     @* Current Roles *@
-    <MudPaper Class="fsh-card pa-4 mb-4">
+    <MudPaper Class="AMIS-card pa-4 mb-4">
         <MudStack Spacing="3">
             <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
                 <MudText Typo="Typo.h6" Class="fw-600">Current Roles</MudText>
@@ -118,7 +118,7 @@ else
     </MudPaper>
 
     @* Available Roles *@
-    <MudPaper Class="fsh-card pa-4">
+    <MudPaper Class="AMIS-card pa-4">
         <MudStack Spacing="3">
             <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
                 <MudText Typo="Typo.h6" Class="fw-600">Available Roles</MudText>
@@ -404,3 +404,4 @@ else
         return $"background-color: {color}; color: white;";
     }
 }
+

@@ -1,4 +1,4 @@
-namespace FSH.Modules.AssetManagement.Domain;
+namespace AMIS.Modules.AssetManagement.Domain;
 
 /// <summary>
 /// Nature/basis of a PPE Receiving Report (PPERR).
@@ -10,3 +10,4 @@ public enum PPEReceiptNature
     Donation = 2,
     Others   = 3,
 }
+

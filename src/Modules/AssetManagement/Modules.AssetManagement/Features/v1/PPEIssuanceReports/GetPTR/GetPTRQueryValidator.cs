@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace FSH.Modules.AssetManagement.Features.v1.PPEIssuanceReports.GetPTR;
+namespace AMIS.Modules.AssetManagement.Features.v1.PPEIssuanceReports.GetPTR;
 
 public sealed class GetPTRQueryValidator : AbstractValidator<GetPTRQuery>
 {

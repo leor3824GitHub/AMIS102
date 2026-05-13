@@ -1,4 +1,4 @@
-namespace FSH.Modules.AssetManagement.Domain;
+namespace AMIS.Modules.AssetManagement.Domain;
 
 /// <summary>
 /// Indicates whether a Property Acknowledgement Receipt (PAR) is issued
@@ -9,3 +9,4 @@ public enum PARType
     NewPurchase = 0,
     Transfer    = 1,
 }
+

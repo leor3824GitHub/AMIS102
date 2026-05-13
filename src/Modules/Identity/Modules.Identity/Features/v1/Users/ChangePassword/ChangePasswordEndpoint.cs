@@ -1,11 +1,11 @@
-using FSH.Modules.Identity.Contracts.v1.Users.ChangePassword;
+using AMIS.Modules.Identity.Contracts.v1.Users.ChangePassword;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.Identity.Features.v1.Users.ChangePassword;
+namespace AMIS.Modules.Identity.Features.v1.Users.ChangePassword;
 
 public static class ChangePasswordEndpoint
 {
@@ -25,3 +25,4 @@ public static class ChangePasswordEndpoint
         .RequireAuthorization();
     }
 }
+

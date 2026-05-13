@@ -1,10 +1,10 @@
-using FSH.Framework.Shared.Identity.Authorization;
+using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.AssetManagement.Features.v1.SemiExpendableItems.CreateSemiExpendableItem;
+namespace AMIS.Modules.AssetManagement.Features.v1.SemiExpendableItems.CreateSemiExpendableItem;
 
 public static class CreateSemiExpendableItemEndpoint
 {
@@ -25,3 +25,4 @@ public static class CreateSemiExpendableItemEndpoint
         return TypedResults.Created($"/api/v1/asset-management/item-catalog/{result.Id}", result);
     }
 }
+

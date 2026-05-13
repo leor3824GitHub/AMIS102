@@ -1,9 +1,9 @@
-using FSH.Modules.MasterData.Contracts.v1.ReportSignatories;
-using FSH.Modules.MasterData.Data;
+using AMIS.Modules.MasterData.Contracts.v1.ReportSignatories;
+using AMIS.Modules.MasterData.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.MasterData.Features.v1.ReportSignatories.GetReportSignatories;
+namespace AMIS.Modules.MasterData.Features.v1.ReportSignatories.GetReportSignatories;
 
 public sealed class GetReportSignatoriesQueryHandler(MasterDataDbContext db)
     : IQueryHandler<GetReportSignatoriesQuery, List<ReportSignatoryDto>>
@@ -26,3 +26,4 @@ public sealed class GetReportSignatoriesQueryHandler(MasterDataDbContext db)
             .ConfigureAwait(false);
     }
 }
+

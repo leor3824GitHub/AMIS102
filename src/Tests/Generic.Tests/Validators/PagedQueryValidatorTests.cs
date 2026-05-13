@@ -1,7 +1,7 @@
-using FSH.Modules.Auditing.Contracts.v1.GetAudits;
-using FSH.Modules.Auditing.Features.v1.GetAudits;
-using FSH.Modules.Identity.Contracts.v1.Users.SearchUsers;
-using FSH.Modules.Identity.Features.v1.Users.SearchUsers;
+using AMIS.Modules.Auditing.Contracts.v1.GetAudits;
+using AMIS.Modules.Auditing.Features.v1.GetAudits;
+using AMIS.Modules.Identity.Contracts.v1.Users.SearchUsers;
+using AMIS.Modules.Identity.Features.v1.Users.SearchUsers;
 
 namespace Generic.Tests.Validators;
 
@@ -233,3 +233,4 @@ public sealed class PagedQueryValidatorTests
         result.Errors.ShouldContain(e => e.PropertyName == "PageSize");
     }
 }
+

@@ -1,11 +1,11 @@
-using FSH.Framework.Core.Context;
-using FSH.Modules.AssetManagement.Data;
-using FSH.Modules.AssetManagement.Domain;
-using FSH.Modules.AssetManagement.Features.v1.Locations;
+using AMIS.Framework.Core.Context;
+using AMIS.Modules.AssetManagement.Data;
+using AMIS.Modules.AssetManagement.Domain;
+using AMIS.Modules.AssetManagement.Features.v1.Locations;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.Locations.CreateLocation;
+namespace AMIS.Modules.AssetManagement.Features.v1.Locations.CreateLocation;
 
 public sealed class CreateLocationCommandHandler(
     AssetManagementDbContext dbContext,
@@ -59,3 +59,4 @@ public sealed class CreateLocationCommandHandler(
             location.Description);
     }
 }
+

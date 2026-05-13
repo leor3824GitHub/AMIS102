@@ -1,39 +1,39 @@
 using Asp.Versioning;
-using FSH.Framework.Persistence;
-using FSH.Framework.Shared.Constants;
-using FSH.Framework.Web.Modules;
-using FSH.Modules.ProcurementAcquisition.Data;
-using FSH.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.CreatePurchaseRequest;
-using FSH.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.UpdatePurchaseRequest;
-using FSH.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.SubmitPurchaseRequest;
-using FSH.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.ApprovePurchaseRequest;
-using FSH.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.RejectPurchaseRequest;
-using FSH.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.CancelPurchaseRequest;
-using FSH.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.GetPurchaseRequest;
-using FSH.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.SearchPurchaseRequests;
-using FSH.Modules.ProcurementAcquisition.Features.v1.Canvass.CreateCanvassRequest;
-using FSH.Modules.ProcurementAcquisition.Features.v1.Canvass.AddQuotation;
-using FSH.Modules.ProcurementAcquisition.Features.v1.Canvass.UpdateQuotation;
-using FSH.Modules.ProcurementAcquisition.Features.v1.Canvass.AwardCanvass;
-using FSH.Modules.ProcurementAcquisition.Features.v1.Canvass.GetCanvassRequest;
-using FSH.Modules.ProcurementAcquisition.Features.v1.Canvass.SearchCanvassRequests;
-using FSH.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.CreatePurchaseOrder;
-using FSH.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.UpdatePurchaseOrder;
-using FSH.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.IssuePurchaseOrder;
-using FSH.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.CancelPurchaseOrder;
-using FSH.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.GetPurchaseOrder;
-using FSH.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.SearchPurchaseOrders;
+using AMIS.Framework.Persistence;
+using AMIS.Framework.Shared.Constants;
+using AMIS.Framework.Web.Modules;
+using AMIS.Modules.ProcurementAcquisition.Data;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.CreatePurchaseRequest;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.UpdatePurchaseRequest;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.SubmitPurchaseRequest;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.ApprovePurchaseRequest;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.RejectPurchaseRequest;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.CancelPurchaseRequest;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.GetPurchaseRequest;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.SearchPurchaseRequests;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.Canvass.CreateCanvassRequest;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.Canvass.AddQuotation;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.Canvass.UpdateQuotation;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.Canvass.AwardCanvass;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.Canvass.GetCanvassRequest;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.Canvass.SearchCanvassRequests;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.CreatePurchaseOrder;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.UpdatePurchaseOrder;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.IssuePurchaseOrder;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.CancelPurchaseOrder;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.GetPurchaseOrder;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.SearchPurchaseOrders;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-namespace FSH.Modules.ProcurementAcquisition;
+namespace AMIS.Modules.ProcurementAcquisition;
 
 public class ProcurementAcquisitionModule : IModule
 {
-    private static readonly IReadOnlyList<FshPermission> RegisteredPermissions =
+    private static readonly IReadOnlyList<AmisPermission> RegisteredPermissions =
     [
         new("View Purchase Requests", "View", "Procurement.PurchaseRequests", IsBasic: true),
         new("Create Purchase Requests", "Create", "Procurement.PurchaseRequests"),
@@ -65,7 +65,7 @@ public class ProcurementAcquisitionModule : IModule
 
         services.AddHeroDbContext<ProcurementDbContext>();
         services.AddScoped<IDbInitializer, ProcurementDbInitializer>();
-        services.AddHostedService<FSH.Modules.ProcurementAcquisition.Provisioning.ProcurementDbInitializerHostedService>();
+        services.AddHostedService<AMIS.Modules.ProcurementAcquisition.Provisioning.ProcurementDbInitializerHostedService>();
     }
 
     public void MapEndpoints(IEndpointRouteBuilder endpoints)
@@ -113,3 +113,5 @@ public class ProcurementAcquisitionModule : IModule
         SearchPurchaseOrdersEndpoint.Map(purchaseOrdersGroup);
     }
 }
+
+

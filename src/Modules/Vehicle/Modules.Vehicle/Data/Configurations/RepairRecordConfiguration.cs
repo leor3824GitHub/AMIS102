@@ -1,9 +1,9 @@
 using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;
-using FSH.Modules.Vehicle.Domain.Repairs;
+using AMIS.Modules.Vehicle.Domain.Repairs;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FSH.Modules.Vehicle.Data.Configurations;
+namespace AMIS.Modules.Vehicle.Data.Configurations;
 
 public class RepairRecordConfiguration : IEntityTypeConfiguration<RepairRecord>
 {
@@ -30,3 +30,4 @@ public class RepairRecordConfiguration : IEntityTypeConfiguration<RepairRecord>
         builder.HasQueryFilter("SoftDelete", r => !r.IsDeleted);
     }
 }
+

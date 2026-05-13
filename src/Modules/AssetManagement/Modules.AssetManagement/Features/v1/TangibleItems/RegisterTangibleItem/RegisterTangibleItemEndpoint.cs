@@ -1,10 +1,10 @@
-using FSH.Framework.Shared.Identity.Authorization;
+using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.AssetManagement.Features.v1.TangibleItems.RegisterTangibleItem;
+namespace AMIS.Modules.AssetManagement.Features.v1.TangibleItems.RegisterTangibleItem;
 
 public static class RegisterTangibleItemEndpoint
 {
@@ -25,3 +25,4 @@ public static class RegisterTangibleItemEndpoint
         return TypedResults.Created($"/api/v1/asset-management/tangible-items/{result.Id}", result);
     }
 }
+

@@ -1,5 +1,5 @@
-using FSH.Modules.AssetManagement.Domain;
-using FSH.Modules.AssetManagement.Features.v1.Locations.UpdateLocation;
+using AMIS.Modules.AssetManagement.Domain;
+using AMIS.Modules.AssetManagement.Features.v1.Locations.UpdateLocation;
 using Shouldly;
 using Xunit;
 
@@ -88,3 +88,4 @@ public sealed class UpdateLocationCommandValidatorTests
             ParentLocationId: null,
             Description: "Updated description");
 }
+

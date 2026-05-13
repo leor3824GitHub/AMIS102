@@ -2,7 +2,7 @@ using System.Globalization;
 using System.Net.Http.Json;
 using System.Text;
 
-namespace FSH.Playground.Blazor.Services.AssetRegister;
+namespace AMIS.Playground.Blazor.Services.AssetRegister;
 
 public interface IAssetRegisterReportsClient
 {
@@ -67,3 +67,4 @@ public sealed class AssetRegisterReportsClient(HttpClient httpClient) : IAssetRe
         return builder.ToString();
     }
 }
+

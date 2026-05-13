@@ -1,6 +1,6 @@
 using Mediator;
 
-namespace FSH.Modules.MasterData.Features.v1.Suppliers.GetSupplierById;
+namespace AMIS.Modules.MasterData.Features.v1.Suppliers.GetSupplierById;
 
 public sealed record GetSupplierByIdQuery(Guid Id) : IQuery<SupplierDetailsDto>;
 
@@ -21,3 +21,4 @@ public sealed record SupplierDetailsDto(
     string? CreatedBy,
     DateTimeOffset? LastModifiedOnUtc,
     string? LastModifiedBy);
+

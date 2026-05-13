@@ -1,13 +1,13 @@
-using FSH.Framework.Core.Context;
-using FSH.Framework.Core.Exceptions;
-using FSH.Modules.Identity.Contracts.DTOs;
-using FSH.Modules.Identity.Contracts.v1.Groups.CreateGroup;
-using FSH.Modules.Identity.Data;
-using FSH.Modules.Identity.Domain;
+using AMIS.Framework.Core.Context;
+using AMIS.Framework.Core.Exceptions;
+using AMIS.Modules.Identity.Contracts.DTOs;
+using AMIS.Modules.Identity.Contracts.v1.Groups.CreateGroup;
+using AMIS.Modules.Identity.Data;
+using AMIS.Modules.Identity.Domain;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.Identity.Features.v1.Groups.CreateGroup;
+namespace AMIS.Modules.Identity.Features.v1.Groups.CreateGroup;
 
 public sealed class CreateGroupCommandHandler : ICommandHandler<CreateGroupCommand, GroupDto>
 {
@@ -89,3 +89,4 @@ public sealed class CreateGroupCommandHandler : ICommandHandler<CreateGroupComma
         };
     }
 }
+

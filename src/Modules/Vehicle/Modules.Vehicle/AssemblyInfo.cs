@@ -1,3 +1,4 @@
-using FSH.Framework.Web.Modules;
+using AMIS.Framework.Web.Modules;
 
-[assembly: FshModule(typeof(FSH.Modules.Vehicle.VehicleModule), 450)]
+[assembly: AmisModule(typeof(AMIS.Modules.Vehicle.VehicleModule), 450)]
+

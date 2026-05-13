@@ -1,11 +1,11 @@
 using System.Globalization;
-using FSH.Modules.AssetManagement.Features.v1.Reports.ReportOfSPIssued;
+using AMIS.Modules.AssetManagement.Features.v1.Reports.ReportOfSPIssued;
 using Mediator;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 
-namespace FSH.Modules.AssetManagement.Features.v1.Reports.GenerateRSPIPdf;
+namespace AMIS.Modules.AssetManagement.Features.v1.Reports.GenerateRSPIPdf;
 
 public sealed class GenerateRSPIPdfCommandHandler(IMediator mediator)
     : ICommandHandler<GenerateRSPIPdfCommand, byte[]>
@@ -108,3 +108,4 @@ public sealed class GenerateRSPIPdfCommandHandler(IMediator mediator)
         }).GeneratePdf();
     }
 }
+

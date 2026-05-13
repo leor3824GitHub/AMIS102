@@ -1,9 +1,9 @@
-using FSH.Modules.AssetRegister.Contracts.v1.Accountability;
-using FSH.Modules.AssetRegister.Data;
+using AMIS.Modules.AssetRegister.Contracts.v1.Accountability;
+using AMIS.Modules.AssetRegister.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Accountability.GetAccountability;
+namespace AMIS.Modules.AssetRegister.Features.v1.Accountability.GetAccountability;
 
 public sealed class GetAccountabilityQueryHandler(AssetRegisterDbContext db)
     : IQueryHandler<GetAccountabilityQuery, PropertyAccountabilityDto?>
@@ -18,3 +18,4 @@ public sealed class GetAccountabilityQueryHandler(AssetRegisterDbContext db)
         return entity is null ? null : AccountabilityMapper.ToDto(entity);
     }
 }
+

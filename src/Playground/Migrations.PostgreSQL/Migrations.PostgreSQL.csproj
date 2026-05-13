@@ -1,8 +1,8 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<RootNamespace>FSH.Playground.Migrations.PostgreSQL</RootNamespace>
-		<AssemblyName>FSH.Playground.Migrations.PostgreSQL</AssemblyName>
+		<RootNamespace>AMIS.Playground.Migrations.PostgreSQL</RootNamespace>
+		<AssemblyName>AMIS.Playground.Migrations.PostgreSQL</AssemblyName>
 		<IsPackable>false</IsPackable>
 	</PropertyGroup>
 
@@ -35,3 +35,4 @@
 	</ItemGroup>
 
 </Project>
+

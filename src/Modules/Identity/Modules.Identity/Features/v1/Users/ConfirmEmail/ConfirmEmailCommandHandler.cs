@@ -1,8 +1,8 @@
-using FSH.Modules.Identity.Contracts.Services;
-using FSH.Modules.Identity.Contracts.v1.Users.ConfirmEmail;
+using AMIS.Modules.Identity.Contracts.Services;
+using AMIS.Modules.Identity.Contracts.v1.Users.ConfirmEmail;
 using Mediator;
 
-namespace FSH.Modules.Identity.Features.v1.Users.ConfirmEmail;
+namespace AMIS.Modules.Identity.Features.v1.Users.ConfirmEmail;
 
 public sealed class ConfirmEmailCommandHandler : ICommandHandler<ConfirmEmailCommand, string>
 {
@@ -21,3 +21,4 @@ public sealed class ConfirmEmailCommandHandler : ICommandHandler<ConfirmEmailCom
             .ConfigureAwait(false);
     }
 }
+

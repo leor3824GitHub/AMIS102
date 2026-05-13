@@ -1,8 +1,8 @@
-using FSH.Modules.MasterData.Domain;
+using AMIS.Modules.MasterData.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FSH.Modules.MasterData.Data.Configurations;
+namespace AMIS.Modules.MasterData.Data.Configurations;
 
 public sealed class PropertyClassConfiguration : IEntityTypeConfiguration<PropertyClass>
 {
@@ -24,3 +24,4 @@ public sealed class PropertyClassConfiguration : IEntityTypeConfiguration<Proper
         builder.HasIndex(x => x.IsActive);
     }
 }
+

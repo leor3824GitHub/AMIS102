@@ -1,12 +1,12 @@
-using FSH.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
-using FSH.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
-using FSH.Modules.ProcurementPlanning.Domain.Ppmps;
-using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.CreateAnnualProcurementPlan;
-using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.CreateUpdateApp;
-using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.ReturnAnnualProcurementPlan;
-using FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.CreatePpmp;
-using FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.CreateUpdatePpmp;
-using FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.ReturnPpmp;
+using AMIS.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
+using AMIS.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
+using AMIS.Modules.ProcurementPlanning.Domain.Ppmps;
+using AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.CreateAnnualProcurementPlan;
+using AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.CreateUpdateApp;
+using AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.ReturnAnnualProcurementPlan;
+using AMIS.Modules.ProcurementPlanning.Features.v1.Ppmps.CreatePpmp;
+using AMIS.Modules.ProcurementPlanning.Features.v1.Ppmps.CreateUpdatePpmp;
+using AMIS.Modules.ProcurementPlanning.Features.v1.Ppmps.ReturnPpmp;
 
 namespace Generic.Tests.ProcurementPlanning;
 
@@ -294,3 +294,4 @@ public sealed class ProcurementPlanningValidatorTests
         new("Laptop", ProjectType.Goods, 1, "lot", "Shopping",
             false, "01/2027", "03/2027", "04/2027", "General Fund", 80_000m, null, null);
 }
+

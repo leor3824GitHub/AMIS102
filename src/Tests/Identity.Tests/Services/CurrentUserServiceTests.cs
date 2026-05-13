@@ -1,7 +1,7 @@
 using System.Security.Claims;
-using FSH.Framework.Core.Exceptions;
-using FSH.Framework.Shared.Constants;
-using FSH.Modules.Identity.Services;
+using AMIS.Framework.Core.Exceptions;
+using AMIS.Framework.Shared.Constants;
+using AMIS.Modules.Identity.Services;
 
 namespace Identity.Tests.Services;
 
@@ -411,3 +411,4 @@ public sealed class CurrentUserServiceTests
 
     #endregion
 }
+

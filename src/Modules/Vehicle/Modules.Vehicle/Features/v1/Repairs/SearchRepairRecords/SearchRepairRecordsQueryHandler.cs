@@ -1,13 +1,13 @@
-using FSH.Framework.Persistence;
-using FSH.Framework.Shared.Persistence;
-using FSH.Modules.Vehicle.Contracts.v1.Repairs;
-using FSH.Modules.Vehicle.Data;
-using FSH.Modules.Vehicle.Domain.Repairs;
-using FSH.Modules.Vehicle.Features.v1.Repairs;
+using AMIS.Framework.Persistence;
+using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.Vehicle.Contracts.v1.Repairs;
+using AMIS.Modules.Vehicle.Data;
+using AMIS.Modules.Vehicle.Domain.Repairs;
+using AMIS.Modules.Vehicle.Features.v1.Repairs;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.Vehicle.Features.v1.Repairs.SearchRepairRecords;
+namespace AMIS.Modules.Vehicle.Features.v1.Repairs.SearchRepairRecords;
 
 public sealed class SearchRepairRecordsQueryHandler(VehicleDbContext db)
     : IQueryHandler<SearchRepairRecordsQuery, PagedResponse<RepairRecordDto>>
@@ -41,3 +41,4 @@ public sealed class SearchRepairRecordsQueryHandler(VehicleDbContext db)
         return await q.Select(r => r.ToDto()).ToPagedResponseAsync(query, ct).ConfigureAwait(false);
     }
 }
+

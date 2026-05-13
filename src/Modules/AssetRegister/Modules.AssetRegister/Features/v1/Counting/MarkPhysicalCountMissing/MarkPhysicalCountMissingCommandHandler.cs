@@ -1,9 +1,9 @@
-using FSH.Modules.AssetRegister.Contracts.v1.Counting;
-using FSH.Modules.AssetRegister.Data;
+using AMIS.Modules.AssetRegister.Contracts.v1.Counting;
+using AMIS.Modules.AssetRegister.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Counting.MarkPhysicalCountMissing;
+namespace AMIS.Modules.AssetRegister.Features.v1.Counting.MarkPhysicalCountMissing;
 
 public sealed class MarkPhysicalCountMissingCommandHandler(AssetRegisterDbContext db)
     : ICommandHandler<MarkPhysicalCountMissingCommand, PhysicalCountSessionDto>
@@ -24,3 +24,4 @@ public sealed class MarkPhysicalCountMissingCommandHandler(AssetRegisterDbContex
         return CountingMapper.ToDto(session);
     }
 }
+

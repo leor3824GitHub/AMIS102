@@ -1,7 +1,7 @@
 using System.Collections.ObjectModel;
-using FSH.Framework.Core.Domain;
+using AMIS.Framework.Core.Domain;
 
-namespace FSH.Modules.Expendable.Domain.Purchases;
+namespace AMIS.Modules.Expendable.Domain.Purchases;
 
 /// <summary>
 /// Quality control record for inspected purchase receipts.
@@ -165,4 +165,5 @@ public enum InspectionStatus
     Rejected,             // All units failed
     AcceptedWithDefects   // Accepted but defects noted (still usable)
 }
+
 

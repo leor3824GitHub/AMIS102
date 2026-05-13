@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.AssetRegister.Contracts.v1.Catalog;
+using AMIS.Modules.AssetRegister.Contracts.v1.Catalog;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Catalog.DeletePropertyItemCatalog;
+namespace AMIS.Modules.AssetRegister.Features.v1.Catalog.DeletePropertyItemCatalog;
 
 public sealed class DeletePropertyItemCatalogCommandValidator : AbstractValidator<DeletePropertyItemCatalogCommand>
 {
@@ -10,3 +10,4 @@ public sealed class DeletePropertyItemCatalogCommandValidator : AbstractValidato
         RuleFor(x => x.Id).NotEmpty().WithMessage("Catalog item ID is required.");
     }
 }
+

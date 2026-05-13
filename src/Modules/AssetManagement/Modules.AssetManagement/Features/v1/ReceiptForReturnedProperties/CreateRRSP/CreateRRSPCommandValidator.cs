@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace FSH.Modules.AssetManagement.Features.v1.ReceiptForReturnedProperties.CreateRRSP;
+namespace AMIS.Modules.AssetManagement.Features.v1.ReceiptForReturnedProperties.CreateRRSP;
 
 public sealed class CreateRRSPCommandValidator : AbstractValidator<CreateRRSPCommand>
 {
@@ -28,3 +28,4 @@ public sealed class CreateRRSPCommandValidator : AbstractValidator<CreateRRSPCom
             .MaximumLength(500);
     }
 }
+

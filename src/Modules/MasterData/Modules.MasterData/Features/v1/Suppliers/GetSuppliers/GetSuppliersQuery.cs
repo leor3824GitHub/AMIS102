@@ -1,6 +1,6 @@
 using Mediator;
 
-namespace FSH.Modules.MasterData.Features.v1.Suppliers.GetSuppliers;
+namespace AMIS.Modules.MasterData.Features.v1.Suppliers.GetSuppliers;
 
 public sealed record GetSuppliersQuery(
     string? Keyword = null,
@@ -26,3 +26,4 @@ public sealed record SupplierDto(
     string? Address,
     bool IsActive,
     string? OfficeCode = null);
+

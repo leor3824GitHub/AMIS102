@@ -1,11 +1,11 @@
-using FSH.Modules.Expendable.Contracts.v1.Purchases;
-using FSH.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.Expendable.Contracts.v1.Purchases;
+using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.Expendable.Features.v1.Purchases.CreatePurchaseOrder;
+namespace AMIS.Modules.Expendable.Features.v1.Purchases.CreatePurchaseOrder;
 
 public static class CreatePurchaseOrderEndpoint
 {
@@ -26,4 +26,5 @@ public static class CreatePurchaseOrderEndpoint
         return TypedResults.Created($"/api/v1/expendable/purchases/{result.Id}", result);
     }
 }
+
 

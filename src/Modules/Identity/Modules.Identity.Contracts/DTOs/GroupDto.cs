@@ -1,4 +1,4 @@
-namespace FSH.Modules.Identity.Contracts.DTOs;
+namespace AMIS.Modules.Identity.Contracts.DTOs;
 
 public class GroupDto
 {
@@ -12,3 +12,4 @@ public class GroupDto
     public IReadOnlyCollection<string>? RoleNames { get; set; }
     public DateTime CreatedAt { get; set; }
 }
+

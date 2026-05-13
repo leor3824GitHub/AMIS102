@@ -1,9 +1,9 @@
-using FSH.Modules.Expendable.Contracts.v1.Requests;
-using FSH.Modules.Expendable.Data;
+using AMIS.Modules.Expendable.Contracts.v1.Requests;
+using AMIS.Modules.Expendable.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.Expendable.Features.v1.Requests.GetSupplyRequest;
+namespace AMIS.Modules.Expendable.Features.v1.Requests.GetSupplyRequest;
 
 public sealed class GetSupplyRequestQueryHandler : IQueryHandler<GetSupplyRequestQuery, SupplyRequestDto?>
 {
@@ -22,3 +22,4 @@ public sealed class GetSupplyRequestQueryHandler : IQueryHandler<GetSupplyReques
         return request?.ToSupplyRequestDto();
     }
 }
+

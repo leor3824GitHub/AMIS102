@@ -1,10 +1,10 @@
-using FSH.Framework.Shared.Persistence;
-using FSH.Modules.AssetProcurement.Contracts.v1.AssetInspectionAcceptanceReports;
-using FSH.Modules.AssetProcurement.Data;
+using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.AssetProcurement.Contracts.v1.AssetInspectionAcceptanceReports;
+using AMIS.Modules.AssetProcurement.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetProcurement.Features.v1.AssetIARs.SearchAssetIARs;
+namespace AMIS.Modules.AssetProcurement.Features.v1.AssetIARs.SearchAssetIARs;
 
 public sealed class SearchAssetIARsQueryHandler(
     AssetProcurementDbContext dbContext) : IQueryHandler<SearchAssetIARsQuery, PagedResponse<AssetIARSummaryDto>>
@@ -64,3 +64,4 @@ public sealed class SearchAssetIARsQueryHandler(
         };
     }
 }
+

@@ -1,6 +1,6 @@
 using Mediator;
 
-namespace FSH.Modules.MasterData.Contracts.v1.OrganizationProfile;
+namespace AMIS.Modules.MasterData.Contracts.v1.OrganizationProfile;
 
 public sealed record OrganizationProfileDto(
     Guid Id,
@@ -18,3 +18,4 @@ public sealed record UpsertOrganizationProfileCommand(
     string? Address,
     string? LogoUrl,
     string? AnnexECode = null) : ICommand<OrganizationProfileDto>;
+

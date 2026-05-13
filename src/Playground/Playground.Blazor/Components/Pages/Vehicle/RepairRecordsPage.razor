@@ -1,10 +1,10 @@
 @page "/vehicle/repairs"
-@using FSH.Modules.Vehicle.Contracts.v1.Repairs
-@using FSH.Modules.Vehicle.Contracts.v1.Vehicles
+@using AMIS.Modules.Vehicle.Contracts.v1.Repairs
+@using AMIS.Modules.Vehicle.Contracts.v1.Vehicles
 @inject IVehicleClient VehicleClient
 @inject ISnackbar Snackbar
 
-<FshPageHeader Title="Repair Records" Description="Track repair jobs and status" />
+<AMISPageHeader Title="Repair Records" Description="Track repair jobs and status" />
 
 <div class="mt-4">
     <MudStack Row="true" Spacing="1" Class="mb-3">
@@ -17,7 +17,7 @@
 
     <MudGrid Spacing="2">
         <MudItem xs="12" md="4">
-            <MudCard Class="fsh-card">
+            <MudCard Class="AMIS-card">
                 <MudCardContent>
                     <MudText Typo="Typo.h6" Class="mb-2">Create Repair</MudText>
                     <MudStack Spacing="2">
@@ -37,7 +37,7 @@
         </MudItem>
 
         <MudItem xs="12" md="8">
-            <MudCard Class="fsh-card">
+            <MudCard Class="AMIS-card">
                 <MudCardContent>
                     <MudStack Row="true" Spacing="2" Class="mb-2">
                         <MudTextField @bind-Value="_query.Keyword" Label="Search" Placeholder="description or notes"
@@ -259,3 +259,4 @@
         public string? Notes { get; set; }
     }
 }
+

@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.AssetProcurement.Contracts.v1.AssetInspectionAcceptanceReports;
+using AMIS.Modules.AssetProcurement.Contracts.v1.AssetInspectionAcceptanceReports;
 
-namespace FSH.Modules.AssetProcurement.Features.v1.AssetIARs.CreateAssetIAR;
+namespace AMIS.Modules.AssetProcurement.Features.v1.AssetIARs.CreateAssetIAR;
 
 public sealed class CreateAssetIARCommandValidator : AbstractValidator<CreateAssetIARCommand>
 {
@@ -20,3 +20,4 @@ public sealed class CreateAssetIARCommandValidator : AbstractValidator<CreateAss
         });
     }
 }
+

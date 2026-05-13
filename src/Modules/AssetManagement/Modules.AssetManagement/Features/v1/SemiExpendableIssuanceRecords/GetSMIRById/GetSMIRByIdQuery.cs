@@ -1,7 +1,7 @@
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Modules.AssetManagement.Domain;
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.SemiExpendableIssuanceRecords.GetSMIRById;
+namespace AMIS.Modules.AssetManagement.Features.v1.SemiExpendableIssuanceRecords.GetSMIRById;
 
 public sealed record GetSMIRByIdQuery(Guid Id) : IQuery<SMIRDetailsDto>;
 
@@ -27,3 +27,4 @@ public sealed record SMIRItemDetailsDto(
     string? Description,
     decimal UnitCost,
     string AssetTypeAtTimeOfIssuance);
+

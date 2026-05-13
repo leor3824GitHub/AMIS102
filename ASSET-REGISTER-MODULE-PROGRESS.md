@@ -1,4 +1,4 @@
-# AssetRegister Module — Progress Log
+﻿﻿# AssetRegister Module — Progress Log
 
 > Companion to [ASSET-REGISTER-MODULE-PLAN.md](ASSET-REGISTER-MODULE-PLAN.md). Tracks what has actually shipped, phase by phase.
 
@@ -16,7 +16,7 @@
 
 | Criterion                                                                         | Result                                                        |
 | --------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| `dotnet build src/FSH.Framework.slnx` → 0 errors                                  | ✅ Build succeeded                                            |
+| `dotnet build src/AMIS.Framework.slnx` → 0 errors                                  | ✅ Build succeeded                                            |
 | AssetRegister projects compile with 0 warnings (isolated build)                   | ✅ Confirmed                                                  |
 | `dotnet test src/Tests/AssetRegister.Tests`                                       | ✅ **9/9 passed**                                             |
 | `dotnet ef migrations script --context AssetRegisterDbContext` produces clean DDL | ✅ 14 tables in `asset_register.*` schema                     |
@@ -29,7 +29,7 @@
 
 ### What landed
 
-#### Projects (3 new, all wired into `src/FSH.Framework.slnx`)
+#### Projects (3 new, all wired into `src/AMIS.Framework.slnx`)
 
 ```
 src/Modules/AssetRegister/
@@ -128,7 +128,7 @@ PropertyItemCatalog                      PropertyCodeCounters
 - Registers `AssetIARAcceptedEventConsumer` (Phase 1 stub that logs and ignores)
 - Reserves API group `api/v1/asset-register` with tag `"Asset Register"` (no routes yet — Phase 3)
 
-Module discovery: [AssemblyInfo.cs](src/Modules/AssetRegister/Modules.AssetRegister/AssemblyInfo.cs) carries `[FshModule(typeof(AssetRegisterModule), 760)]`.
+Module discovery: [AssemblyInfo.cs](src/Modules/AssetRegister/Modules.AssetRegister/AssemblyInfo.cs) carries `[AMISModule(typeof(AssetRegisterModule), 760)]`.
 
 #### Tests
 
@@ -206,7 +206,7 @@ Decide before starting Phase 3.
 
 ```powershell
 # Full build (should report 0 errors)
-dotnet build src/FSH.Framework.slnx
+dotnet build src/AMIS.Framework.slnx
 
 # AssetRegister tests
 dotnet test src/Tests/AssetRegister.Tests/AssetRegister.Tests.csproj
@@ -220,3 +220,4 @@ dotnet ef migrations script `
 # Confirm AssetManagement was not touched
 git diff --stat src/Modules/AssetManagement/
 ```
+

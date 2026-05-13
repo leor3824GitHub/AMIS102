@@ -1,11 +1,11 @@
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.AssetManagement.Features.v1.Locations;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.AssetManagement.Features.v1.Locations;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.AssetManagement.Features.v1.Locations.CreateLocation;
+namespace AMIS.Modules.AssetManagement.Features.v1.Locations.CreateLocation;
 
 public static class CreateLocationEndpoint
 {
@@ -21,3 +21,4 @@ public static class CreateLocationEndpoint
         .Produces(StatusCodes.Status400BadRequest)
         .RequirePermission(AssetManagementModuleConstants.Permissions.Locations.Create);
 }
+

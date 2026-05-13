@@ -1,8 +1,8 @@
-using FSH.Framework.Blazor.UI.Theme;
+using AMIS.Framework.Blazor.UI.Theme;
 using MudBlazor;
 using System.Text.Json.Serialization;
 
-namespace FSH.Playground.Blazor.Services;
+namespace AMIS.Playground.Blazor.Services;
 
 /// <summary>
 /// Implementation of ITenantThemeState that fetches/saves theme settings via the API.
@@ -398,3 +398,4 @@ internal sealed record LayoutApiDto
     [JsonPropertyName("defaultElevation")]
     public int DefaultElevation { get; init; }
 }
+

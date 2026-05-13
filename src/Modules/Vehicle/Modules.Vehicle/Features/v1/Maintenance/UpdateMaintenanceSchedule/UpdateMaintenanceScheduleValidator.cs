@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace FSH.Modules.Vehicle.Features.v1.Maintenance.UpdateMaintenanceSchedule;
+namespace AMIS.Modules.Vehicle.Features.v1.Maintenance.UpdateMaintenanceSchedule;
 
 public sealed class UpdateMaintenanceScheduleValidator : AbstractValidator<UpdateMaintenanceScheduleCommand>
 {
@@ -18,3 +18,4 @@ public sealed class UpdateMaintenanceScheduleValidator : AbstractValidator<Updat
         });
     }
 }
+

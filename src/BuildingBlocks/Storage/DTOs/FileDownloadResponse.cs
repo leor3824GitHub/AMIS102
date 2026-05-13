@@ -1,4 +1,4 @@
-namespace FSH.Framework.Storage.DTOs;
+namespace AMIS.Framework.Storage.DTOs;
 
 public sealed class FileDownloadResponse
 {
@@ -7,3 +7,4 @@ public sealed class FileDownloadResponse
     public required string FileName { get; init; }
     public long? ContentLength { get; init; }
 }
+

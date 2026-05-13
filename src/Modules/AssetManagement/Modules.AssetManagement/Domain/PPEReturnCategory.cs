@@ -1,4 +1,4 @@
-namespace FSH.Modules.AssetManagement.Domain;
+namespace AMIS.Modules.AssetManagement.Domain;
 
 /// <summary>
 /// Category of a returned PPE item in a Receipt for Returned Property (RRP).
@@ -12,3 +12,4 @@ public enum PPEReturnCategory
     /// <summary>Item is unserviceable/junked; forwarded to Accounting for net book value determination.</summary>
     Junked = 1,
 }
+

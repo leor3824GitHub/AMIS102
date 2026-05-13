@@ -1,13 +1,13 @@
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Framework.Shared.Persistence;
-using FSH.Modules.AssetRegister.Contracts.v1;
-using FSH.Modules.AssetRegister.Contracts.v1.Receiving;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.AssetRegister.Contracts.v1;
+using AMIS.Modules.AssetRegister.Contracts.v1.Receiving;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Receiving.SearchReceivingReports;
+namespace AMIS.Modules.AssetRegister.Features.v1.Receiving.SearchReceivingReports;
 
 public static class SearchReceivingReportsEndpoint
 {
@@ -34,3 +34,4 @@ public static class SearchReceivingReportsEndpoint
         return TypedResults.Ok(result);
     }
 }
+

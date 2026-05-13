@@ -1,16 +1,16 @@
 using Finbuckle.MultiTenant.Abstractions;
-using FSH.Framework.Core.Common;
-using FSH.Framework.Core.Exceptions;
-using FSH.Framework.Eventing.Outbox;
-using FSH.Framework.Jobs.Services;
-using FSH.Framework.Mailing;
-using FSH.Framework.Mailing.Services;
-using FSH.Framework.Shared.Constants;
-using FSH.Framework.Shared.Multitenancy;
-using FSH.Modules.Identity.Contracts.Events;
-using FSH.Modules.Identity.Contracts.Services;
-using FSH.Modules.Identity.Data;
-using FSH.Modules.Identity.Domain;
+using AMIS.Framework.Core.Common;
+using AMIS.Framework.Core.Exceptions;
+using AMIS.Framework.Eventing.Outbox;
+using AMIS.Framework.Jobs.Services;
+using AMIS.Framework.Mailing;
+using AMIS.Framework.Mailing.Services;
+using AMIS.Framework.Shared.Constants;
+using AMIS.Framework.Shared.Multitenancy;
+using AMIS.Modules.Identity.Contracts.Events;
+using AMIS.Modules.Identity.Contracts.Services;
+using AMIS.Modules.Identity.Data;
+using AMIS.Modules.Identity.Domain;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
@@ -19,10 +19,10 @@ using System.Globalization;
 using System.Security.Claims;
 using System.Text;
 
-namespace FSH.Modules.Identity.Services;
+namespace AMIS.Modules.Identity.Services;
 
 internal sealed class UserRegistrationService(
-    UserManager<FshUser> userManager,
+    UserManager<AmisUser> userManager,
     IdentityDbContext db,
     IJobService jobService,
     IMailService mailService,
@@ -121,13 +121,13 @@ internal sealed class UserRegistrationService(
             ?? throw new CustomException("Email claim is required for external authentication.");
     }
 
-    private async Task<FshUser> CreateUserFromPrincipalAsync(ClaimsPrincipal principal, string email)
+    private async Task<AmisUser> CreateUserFromPrincipalAsync(ClaimsPrincipal principal, string email)
     {
         var (firstName, lastName, userName) = ExtractUserInfoFromPrincipal(principal, email);
 
         userName = await EnsureUniqueUserNameAsync(userName);
 
-        var user = new FshUser
+        var user = new AmisUser
         {
             Email = email,
             UserName = userName,
@@ -183,7 +183,7 @@ internal sealed class UserRegistrationService(
         }
     }
 
-    private async Task<FshUser> CreateUserWithPasswordAsync(
+    private async Task<AmisUser> CreateUserWithPasswordAsync(
         string firstName,
         string lastName,
         string email,
@@ -191,7 +191,7 @@ internal sealed class UserRegistrationService(
         string password,
         string phoneNumber)
     {
-        var user = new FshUser
+        var user = new AmisUser
         {
             Email = email,
             FirstName = firstName,
@@ -214,7 +214,7 @@ internal sealed class UserRegistrationService(
     }
 
     private async Task AssignDefaultRoleAndGroupsAsync(
-        FshUser user,
+        AmisUser user,
         string source,
         CancellationToken cancellationToken = default)
     {
@@ -235,7 +235,7 @@ internal sealed class UserRegistrationService(
         }
     }
 
-    private async Task SendConfirmationEmailAsync(FshUser user, string origin, CancellationToken cancellationToken)
+    private async Task SendConfirmationEmailAsync(AmisUser user, string origin, CancellationToken cancellationToken)
     {
         if (string.IsNullOrEmpty(user.Email))
         {
@@ -254,7 +254,7 @@ internal sealed class UserRegistrationService(
     }
 
     private async Task PublishUserRegisteredAsync(
-        FshUser user,
+        AmisUser user,
         string source,
         CancellationToken cancellationToken = default)
     {
@@ -277,7 +277,7 @@ internal sealed class UserRegistrationService(
         await outboxStore.AddAsync(integrationEvent, cancellationToken).ConfigureAwait(false);
     }
 
-    private async Task<string> GetEmailVerificationUriAsync(FshUser user, string origin)
+    private async Task<string> GetEmailVerificationUriAsync(AmisUser user, string origin)
     {
         EnsureValidTenant();
 
@@ -361,3 +361,5 @@ internal sealed class UserRegistrationService(
             """;
     }
 }
+
+

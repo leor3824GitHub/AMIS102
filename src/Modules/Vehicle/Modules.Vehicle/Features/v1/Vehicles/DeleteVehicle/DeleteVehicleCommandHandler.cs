@@ -1,11 +1,11 @@
 using FluentValidation.Results;
-using FSH.Framework.Core.Context;
-using FSH.Modules.Vehicle.Contracts.v1.Vehicles;
-using FSH.Modules.Vehicle.Data;
+using AMIS.Framework.Core.Context;
+using AMIS.Modules.Vehicle.Contracts.v1.Vehicles;
+using AMIS.Modules.Vehicle.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.Vehicle.Features.v1.Vehicles.DeleteVehicle;
+namespace AMIS.Modules.Vehicle.Features.v1.Vehicles.DeleteVehicle;
 
 public sealed class DeleteVehicleCommandHandler(VehicleDbContext db, ICurrentUser currentUser)
     : ICommandHandler<DeleteVehicleCommand, Unit>
@@ -21,3 +21,4 @@ public sealed class DeleteVehicleCommandHandler(VehicleDbContext db, ICurrentUse
         return Unit.Value;
     }
 }
+

@@ -1,8 +1,8 @@
-﻿using FSH.Framework.Shared.Storage;
-using FSH.Modules.Identity.Contracts.DTOs;
+using AMIS.Framework.Shared.Storage;
+using AMIS.Modules.Identity.Contracts.DTOs;
 using System.Security.Claims;
 
-namespace FSH.Modules.Identity.Contracts.Services;
+namespace AMIS.Modules.Identity.Contracts.Services;
 
 public interface IUserService
 {

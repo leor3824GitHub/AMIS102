@@ -1,12 +1,12 @@
 using Finbuckle.MultiTenant;
 using Finbuckle.MultiTenant.Abstractions;
-using FSH.Framework.Shared.Multitenancy;
-using FSH.Modules.Multitenancy.Data;
+using AMIS.Framework.Shared.Multitenancy;
+using AMIS.Modules.Multitenancy.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
-namespace FSH.Modules.Multitenancy;
+namespace AMIS.Modules.Multitenancy;
 
 public sealed class TenantMigrationsHealthCheck : IHealthCheck
 {
@@ -72,3 +72,4 @@ public sealed class TenantMigrationsHealthCheck : IHealthCheck
         return HealthCheckResult.Healthy("Tenant migrations status collected.", details);
     }
 }
+

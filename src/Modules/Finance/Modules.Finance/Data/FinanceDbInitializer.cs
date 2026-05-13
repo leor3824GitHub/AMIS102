@@ -1,8 +1,8 @@
-using FSH.Framework.Persistence;
+using AMIS.Framework.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace FSH.Modules.Finance.Data;
+namespace AMIS.Modules.Finance.Data;
 
 public sealed class FinanceDbInitializer(
     ILogger<FinanceDbInitializer> logger,
@@ -19,3 +19,4 @@ public sealed class FinanceDbInitializer(
 
     public Task SeedAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 }
+

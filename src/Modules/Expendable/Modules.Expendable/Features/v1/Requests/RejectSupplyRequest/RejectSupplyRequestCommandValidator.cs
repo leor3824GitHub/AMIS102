@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.Expendable.Contracts.v1.Requests;
+using AMIS.Modules.Expendable.Contracts.v1.Requests;
 
-namespace FSH.Modules.Expendable.Features.v1.Requests.RejectSupplyRequest;
+namespace AMIS.Modules.Expendable.Features.v1.Requests.RejectSupplyRequest;
 
 public sealed class RejectSupplyRequestCommandValidator : AbstractValidator<RejectSupplyRequestCommand>
 {
@@ -15,3 +15,4 @@ public sealed class RejectSupplyRequestCommandValidator : AbstractValidator<Reje
             .MaximumLength(500).WithMessage("Reason must not exceed 500 characters");
     }
 }
+

@@ -1,4 +1,4 @@
-﻿namespace FSH.Modules.Auditing.Contracts;
+namespace AMIS.Modules.Auditing.Contracts;
 
 public interface IAuditClient
 {
@@ -25,3 +25,4 @@ public interface IAuditClient
         Exception ex, ExceptionArea area = ExceptionArea.None, string? routeOrLocation = null,
         AuditSeverity? severity = null, string? source = null, CancellationToken ct = default);
 }
+

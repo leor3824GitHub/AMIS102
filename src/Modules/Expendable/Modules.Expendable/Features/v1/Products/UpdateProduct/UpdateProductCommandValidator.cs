@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.Expendable.Contracts.v1.Products;
+using AMIS.Modules.Expendable.Contracts.v1.Products;
 
-namespace FSH.Modules.Expendable.Features.v1.Products.UpdateProduct;
+namespace AMIS.Modules.Expendable.Features.v1.Products.UpdateProduct;
 
 public sealed class UpdateProductCommandValidator : AbstractValidator<UpdateProductCommand>
 {
@@ -46,3 +46,4 @@ public sealed class UpdateProductCommandValidator : AbstractValidator<UpdateProd
             .WithMessage("Image URL must be a valid URL or data URL");
     }
 }
+

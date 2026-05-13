@@ -1,58 +1,93 @@
-# FullStackHero .NET 10 Starter Kit
+﻿# AMIS102
 
-An opinionated, production-first starter for building multi-tenant SaaS and enterprise APIs on .NET 10. You get ready-to-ship Identity, Multitenancy, Auditing, caching, mailing, jobs, storage, health, OpenAPI, and OpenTelemetry—wired through Minimal APIs, Mediator, and EF Core.
+AMIS102 is a modular, enterprise-ready Asset Management Information System built on .NET 10 and powered by the AMIS (Asset Management Information System) (AMIS) architecture foundation.
 
-## Why teams pick this
-- Modular vertical slices: drop `Modules.Identity`, `Modules.Multitenancy`, `Modules.Auditing` into any API and let the module loader wire endpoints.
-- Battle-tested building blocks: persistence + specifications, distributed caching, mailing, jobs via Hangfire, storage abstractions, and web host primitives (auth, rate limiting, versioning, CORS, exception handling).
-- Cloud-ready out of the box: Aspire AppHost spins up Postgres + Redis + the Playground API/Blazor with OTLP tracing enabled.
-- Multi-tenant from day one: Finbuckle-powered tenancy across Identity and your module DbContexts; helpers to migrate and seed tenant databases on startup.
-- Observability baked in: OpenTelemetry traces/metrics/logs, structured logging, health checks, and security/exception auditing.
+This repository extends the AMIS framework into a domain-focused implementation for government and enterprise operations, including procurement, fixed assets, expendables, vehicle management, finance, auditing, and multi-tenant administration.
 
-## Stack highlights
-- .NET 10, C# latest, Minimal APIs, Mediator for commands/queries, FluentValidation.
-- EF Core 10 with domain events + specifications; Postgres by default, SQL Server ready.
-- ASP.NET Identity with JWT issuance/refresh, roles/permissions, rate-limited auth endpoints.
-- Hangfire for background jobs; Redis-backed distributed cache; pluggable storage.
-- API versioning, rate limiting, CORS, security headers, OpenAPI (Swagger) + Scalar docs.
+## What this project delivers
 
-## Repository map
-- `src/BuildingBlocks` — Core abstractions (DDD primitives, exceptions), Persistence, Caching, Mailing, Jobs, Storage, Web host wiring.
-- `src/Modules` — `Identity`, `Multitenancy`, `Auditing` runtime + contracts projects.
-- `src/Playground` — Reference host (`Playground.Api`), Aspire app host (`FSH.Playground.AppHost`), Blazor UI, Postgres migrations.
-- `src/Tests` — Architecture tests that enforce layering and module boundaries.
-- `docs/framework` — Deep dives on architecture, modules, and developer recipes.
-- `terraform` — Infra as code scaffolding (optional starting point).
+- Modular monolith architecture with clear bounded contexts and vertical slices.
+- CQRS + DDD implementation using Minimal APIs, Mediator, FluentValidation, and EF Core.
+- Multi-tenant support from day one using Finbuckle.MultiTenant.
+- Built-in Identity, authorization permissions, auditing, caching, jobs, and OpenAPI docs.
+- Reference clients for API, Blazor, and .NET MAUI.
 
-## Run it now (Aspire)
-Prereqs: .NET 10 SDK, Aspire workload, Docker running (for Postgres/Redis).
+## Core modules in AMIS102
 
-1. Restore: `dotnet restore src/FSH.Framework.slnx`
-2. Start everything: `dotnet run --project src/Playground/FSH.Playground.AppHost`
-   - Aspire brings up Postgres + Redis containers, wires env vars, launches the Playground API and Blazor front end, and enables OTLP export on https://localhost:4317.
-3. Hit the API: `https://localhost:5285` (Swagger/Scalar and module endpoints under `/api/v1/...`).
+- Identity
+- Multitenancy
+- Auditing
+- MasterData
+- Expendable
+- AssetManagement
+- AssetProcurement
+- Vehicle
+- Finance
+- ProcurementPlanning
+- ProcurementAcquisition
 
-### Run the API only
-- Set env vars or appsettings for `DatabaseOptions__Provider`, `DatabaseOptions__ConnectionString`, `DatabaseOptions__MigrationsAssembly`, `CachingOptions__Redis`, and JWT options.
-- Run: `dotnet run --project src/Playground/Playground.Api`
-- The host applies migrations/seeding via `UseHeroMultiTenantDatabases()` and maps module endpoints via `UseHeroPlatform`.
+## Technology stack
 
-## Bring the framework into your API
-- Reference the building block and module projects you need.
-- In `Program.cs`:
-  - Register Mediator with assemblies containing your commands/queries and module handlers.
-  - Call `builder.AddHeroPlatform(...)` to enable auth, OpenAPI, caching, mailing, jobs, health, OTel, rate limiting.
-  - Call `builder.AddModules(moduleAssemblies)` and `app.UseHeroPlatform(p => p.MapModules = true);`.
-- Configure connection strings, Redis, JWT, CORS, and OTel endpoints via configuration. Example wiring lives in `src/Playground/Playground.Api/Program.cs`.
+- .NET 10, C# latest, Minimal APIs
+- Mediator (source-generated), FluentValidation
+- EF Core 10 with PostgreSQL (SQL Server-ready)
+- ASP.NET Identity + JWT auth
+- Redis distributed caching
+- Hangfire background jobs
+- OpenTelemetry + health checks + structured logging
 
-## Included modules
-- **Identity** — ASP.NET Identity + JWT issuance/refresh, user/role/permission management, profile image storage, login/refresh auditing, health checks.
-- **Multitenancy** — Tenant provisioning, migrations, status/upgrade APIs, tenant-aware EF Core contexts, health checks.
-- **Auditing** — Security/exception/activity auditing with queryable endpoints; plugs into global exception handling and Identity events.
+## Repository structure
 
-## Development notes
-- Target framework: `net10.0`; nullable enabled; analyzers on.
-- Tests: `dotnet test src/FSH.Framework.slnx` (includes architecture guardrails).
-- Want the deeper story? Start with `docs/framework/architecture.md` and the developer cookbook in `docs/framework/developer-cookbook.md`.
+- `src/BuildingBlocks` - Reusable framework packages (core, persistence, web, caching, jobs, mailing, etc.)
+- `src/Modules` - Business modules and feature slices
+- `src/Playground` - Executable hosts and clients
+- `src/Tests` - Architecture and module guardrail tests
+- `scripts` - Automation scripts (including OpenAPI client generation)
+- `terraform` - Infrastructure scaffolding
 
-Built and maintained by Mukesh Murugan for teams that want to ship faster without sacrificing architecture discipline.
+## Prerequisites
+
+- .NET 10 SDK
+- .NET Aspire workload (for AppHost mode)
+- Docker Desktop (for local Postgres and Redis when running Aspire)
+
+## Quick start
+
+1. Restore dependencies:
+   `dotnet restore src/AMIS.Framework.slnx`
+2. Build solution:
+   `dotnet build src/AMIS.Framework.slnx`
+3. Run full stack with Aspire:
+   `dotnet run --project src/Playground/AMIS.Playground.AppHost`
+
+Aspire will orchestrate the API, supporting services, and local infrastructure.
+
+## Alternative run modes
+
+- API only:
+  `dotnet run --project src/Playground/Playground.Api`
+- Build:
+  `dotnet build src/AMIS.Framework.slnx`
+- Test:
+  `dotnet test src/AMIS.Framework.slnx`
+
+## Development conventions
+
+- Use `ICommand<T>` and `IQuery<T>` (not MediatR `IRequest<T>`).
+- Handlers return `ValueTask<T>`.
+- Every command/query includes validation.
+- Endpoints enforce permissions explicitly.
+- Keep build output warning-free.
+
+## Notes on project identity
+
+This repository is AMIS102, implemented on top of the AMIS (Asset Management Information System) starter architecture. If you see references to AMIS in solution or framework package names, those refer to the underlying platform components used by AMIS102.
+
+## Additional docs
+
+- `CLAUDE.md` for implementation rules and coding conventions
+- `MAUI-IMPLEMENTATION-PLAN.md` for .NET MAUI roadmap
+- `ASSETMANAGEMENT-OVERHAUL-PLAN.md` and related planning docs for domain evolution
+
+AMIS102 is designed for production-focused teams that need fast delivery with strong architecture discipline.
+

@@ -1,10 +1,10 @@
-using FSH.Framework.Core.Context;
-using FSH.Framework.Web.Origin;
-using FSH.Modules.Identity.Contracts.Services;
+using AMIS.Framework.Core.Context;
+using AMIS.Framework.Web.Origin;
+using AMIS.Modules.Identity.Contracts.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 
-namespace FSH.Modules.Identity.Services;
+namespace AMIS.Modules.Identity.Services;
 
 /// <summary>
 /// Provides HTTP request context information through an abstraction.
@@ -57,3 +57,4 @@ internal sealed class RequestContextService : IRequestContextService
         }
     }
 }
+

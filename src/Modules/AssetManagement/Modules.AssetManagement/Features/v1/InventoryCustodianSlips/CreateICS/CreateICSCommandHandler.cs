@@ -1,10 +1,10 @@
-using FSH.Framework.Core.Context;
-using FSH.Modules.AssetManagement.Data;
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Framework.Core.Context;
+using AMIS.Modules.AssetManagement.Data;
+using AMIS.Modules.AssetManagement.Domain;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.InventoryCustodianSlips.CreateICS;
+namespace AMIS.Modules.AssetManagement.Features.v1.InventoryCustodianSlips.CreateICS;
 
 public sealed class CreateICSCommandHandler : ICommandHandler<CreateICSCommand, CreateICSResult>
 {
@@ -143,3 +143,4 @@ public sealed class CreateICSCommandHandler : ICommandHandler<CreateICSCommand, 
         return new CreateICSResult(ics.Id, ics.ICSNo, command.Items.Count);
     }
 }
+

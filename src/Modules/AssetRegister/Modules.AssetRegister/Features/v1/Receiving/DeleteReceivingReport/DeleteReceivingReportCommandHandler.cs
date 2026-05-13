@@ -1,9 +1,9 @@
-using FSH.Modules.AssetRegister.Contracts.v1.Receiving;
-using FSH.Modules.AssetRegister.Data;
+using AMIS.Modules.AssetRegister.Contracts.v1.Receiving;
+using AMIS.Modules.AssetRegister.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Receiving.DeleteReceivingReport;
+namespace AMIS.Modules.AssetRegister.Features.v1.Receiving.DeleteReceivingReport;
 
 public sealed class DeleteReceivingReportCommandHandler(AssetRegisterDbContext db)
     : ICommandHandler<DeleteReceivingReportCommand, Unit>
@@ -23,3 +23,4 @@ public sealed class DeleteReceivingReportCommandHandler(AssetRegisterDbContext d
         return Unit.Value;
     }
 }
+

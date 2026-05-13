@@ -1,11 +1,11 @@
-using FSH.Framework.Persistence;
-using FSH.Modules.Auditing.Contracts;
-using FSH.Modules.Auditing.Persistence;
+using AMIS.Framework.Persistence;
+using AMIS.Modules.Auditing.Contracts;
+using AMIS.Modules.Auditing.Persistence;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace FSH.Modules.Auditing;
+namespace AMIS.Modules.Auditing;
 
 public static class ServiceCollectionExtensions
 {
@@ -44,3 +44,4 @@ public static class ServiceCollectionExtensions
     public static IApplicationBuilder UseAuditHttp(this IApplicationBuilder app)
         => app.UseMiddleware<AuditHttpMiddleware>();
 }
+

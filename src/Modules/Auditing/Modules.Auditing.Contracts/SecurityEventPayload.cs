@@ -1,4 +1,4 @@
-﻿namespace FSH.Modules.Auditing.Contracts;
+namespace AMIS.Modules.Auditing.Contracts;
 
 public sealed record SecurityEventPayload(
     SecurityAction Action,
@@ -8,3 +8,4 @@ public sealed record SecurityEventPayload(
     string? ReasonCode,   // InvalidPassword, LockedOut, etc.
     IReadOnlyDictionary<string, object?>? ClaimsSnapshot
 );
+

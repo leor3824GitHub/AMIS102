@@ -1,10 +1,10 @@
-using FSH.Framework.Core.Context;
-using FSH.Modules.MasterData.Data;
-using FSH.Modules.MasterData.Domain;
+using AMIS.Framework.Core.Context;
+using AMIS.Modules.MasterData.Data;
+using AMIS.Modules.MasterData.Domain;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.MasterData.Features.v1.ModesOfProcurement.CreateModeOfProcurement;
+namespace AMIS.Modules.MasterData.Features.v1.ModesOfProcurement.CreateModeOfProcurement;
 
 public sealed class CreateModeOfProcurementCommandHandler : ICommandHandler<CreateModeOfProcurementCommand, ModeOfProcurementDto>
 {
@@ -45,3 +45,4 @@ public sealed class CreateModeOfProcurementCommandHandler : ICommandHandler<Crea
             entity.IsActive);
     }
 }
+

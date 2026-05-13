@@ -1,9 +1,9 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
+<Project Sdk="Microsoft.NET.Sdk.Razor">
 
 	<PropertyGroup>
-		<RootNamespace>FSH.Framework.Blazor.UI</RootNamespace>
-		<AssemblyName>FSH.Framework.Blazor.UI</AssemblyName>
-		<PackageId>FullStackHero.Framework.Blazor.UI</PackageId>
+		<RootNamespace>AMIS.Framework.Blazor.UI</RootNamespace>
+		<AssemblyName>AMIS.Framework.Blazor.UI</AssemblyName>
+		<PackageId>AMIS.Framework.Blazor.UI</PackageId>
 		<!-- MUD0002: MudBlazor analyzer false positives for valid component parameter usage in RenderFragment/component contexts -->
 		<NoWarn>$(NoWarn);MUD0002</NoWarn>
 	</PropertyGroup>
@@ -21,3 +21,4 @@
   </ItemGroup>
 
 </Project>
+

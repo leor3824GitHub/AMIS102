@@ -1,11 +1,11 @@
-using FSH.Framework.Shared.Multitenancy;
-using FSH.Modules.Multitenancy.Data;
+using AMIS.Framework.Shared.Multitenancy;
+using AMIS.Modules.Multitenancy.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace FSH.Modules.Multitenancy.Provisioning;
+namespace AMIS.Modules.Multitenancy.Provisioning;
 
 /// <summary>
 /// Initializes the tenant catalog database and seeds the root tenant on startup.
@@ -51,3 +51,4 @@ public sealed class TenantStoreInitializerHostedService : IHostedService
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 }
+

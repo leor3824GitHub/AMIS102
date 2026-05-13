@@ -1,4 +1,4 @@
-using FSH.Modules.AssetManagement.Features.v1.TangibleItems.RegisterTangibleItem;
+using AMIS.Modules.AssetManagement.Features.v1.TangibleItems.RegisterTangibleItem;
 using Shouldly;
 using Xunit;
 
@@ -174,3 +174,4 @@ public sealed class RegisterTangibleItemCommandValidatorTests
             UnitCost: 50000m,
             Remarks: null);
 }
+

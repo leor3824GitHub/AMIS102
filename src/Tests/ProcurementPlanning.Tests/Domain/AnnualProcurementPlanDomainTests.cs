@@ -1,7 +1,7 @@
-using FSH.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
-using FSH.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
-using FSH.Modules.ProcurementPlanning.Domain.AnnualProcurementPlans;
-using FSH.Modules.ProcurementPlanning.Domain.Ppmps;
+using AMIS.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
+using AMIS.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
+using AMIS.Modules.ProcurementPlanning.Domain.AnnualProcurementPlans;
+using AMIS.Modules.ProcurementPlanning.Domain.Ppmps;
 using Shouldly;
 using Xunit;
 
@@ -77,3 +77,4 @@ public sealed class AnnualProcurementPlanDomainTests
         return ppmp;
     }
 }
+

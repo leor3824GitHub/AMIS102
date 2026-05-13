@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Framework.Eventing.Inbox;
+namespace AMIS.Framework.Eventing.Inbox;
 
 /// <summary>
 /// EF Core-based inbox store for a specific DbContext.
@@ -38,4 +38,5 @@ public sealed class EfCoreInboxStore<TDbContext> : IInboxStore
         await _dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
     }
 }
+
 

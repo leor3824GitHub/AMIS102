@@ -1,10 +1,10 @@
-using FSH.Framework.Core.Context;
-using FSH.Modules.AssetManagement.Data;
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Framework.Core.Context;
+using AMIS.Modules.AssetManagement.Data;
+using AMIS.Modules.AssetManagement.Domain;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.TangibleItems.RegisterTangibleItem;
+namespace AMIS.Modules.AssetManagement.Features.v1.TangibleItems.RegisterTangibleItem;
 
 public sealed class RegisterTangibleItemCommandHandler(
     AssetManagementDbContext dbContext,
@@ -72,3 +72,4 @@ public sealed class RegisterTangibleItemCommandHandler(
             tangibleItem.CreatedOnUtc);
     }
 }
+

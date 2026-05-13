@@ -5,7 +5,7 @@ using Microsoft.Extensions.Options;
 using System.Text;
 using System.Text.Json;
 
-namespace FSH.Framework.Caching;
+namespace AMIS.Framework.Caching;
 
 /// <summary>
 /// A hybrid cache implementation combining L1 (in-memory) and L2 (distributed) caching.
@@ -214,3 +214,4 @@ public sealed class HybridCacheService : ICacheService
             : prefix + key;
     }
 }
+

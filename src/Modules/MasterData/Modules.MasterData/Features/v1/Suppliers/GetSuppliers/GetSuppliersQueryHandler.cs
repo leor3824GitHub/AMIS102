@@ -1,8 +1,8 @@
-using FSH.Modules.MasterData.Data;
+using AMIS.Modules.MasterData.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.MasterData.Features.v1.Suppliers.GetSuppliers;
+namespace AMIS.Modules.MasterData.Features.v1.Suppliers.GetSuppliers;
 
 public sealed class GetSuppliersQueryHandler(MasterDataDbContext dbContext) : IQueryHandler<GetSuppliersQuery, PagedResponseOfSupplierDto>
 {
@@ -60,3 +60,4 @@ public sealed class GetSuppliersQueryHandler(MasterDataDbContext dbContext) : IQ
             totalCount);
     }
 }
+

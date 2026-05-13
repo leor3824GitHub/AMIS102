@@ -1,6 +1,6 @@
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.PPEIssuanceReports.GetPTR;
+namespace AMIS.Modules.AssetManagement.Features.v1.PPEIssuanceReports.GetPTR;
 
 /// <summary>
 /// Property Transfer Report (PTR) — a read-only report derived from PPEIR data.
@@ -44,3 +44,4 @@ public sealed record PTRItemDto(
     decimal Amount,
     string? Condition,
     string? ReasonForTransfer);
+

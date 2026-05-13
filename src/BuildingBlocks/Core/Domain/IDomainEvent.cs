@@ -1,4 +1,4 @@
-﻿namespace FSH.Framework.Core.Domain;
+namespace AMIS.Framework.Core.Domain;
 
 /// <summary>
 /// Represents a domain event with correlation and tenant context.
@@ -25,3 +25,4 @@ public interface IDomainEvent
     /// </summary>
     string? TenantId { get; }
 }
+

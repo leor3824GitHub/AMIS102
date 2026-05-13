@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FSH.Framework.Eventing.Inbox;
+namespace AMIS.Framework.Eventing.Inbox;
 
 /// <summary>
 /// Inbox message to track processed integration events per handler for idempotent consumers.
@@ -48,3 +48,4 @@ public class InboxMessageConfiguration : IEntityTypeConfiguration<InboxMessage>
             .HasMaxLength(64);
     }
 }
+

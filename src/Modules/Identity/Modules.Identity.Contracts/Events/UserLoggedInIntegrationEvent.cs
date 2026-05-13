@@ -1,6 +1,6 @@
-using FSH.Framework.Eventing.Abstractions;
+using AMIS.Framework.Eventing.Abstractions;
 
-namespace FSH.Modules.Identity.Contracts.Events;
+namespace AMIS.Modules.Identity.Contracts.Events;
 
 /// <summary>
 /// Integration event raised when a user successfully logs in.
@@ -17,3 +17,4 @@ public sealed record UserLoggedInIntegrationEvent(
     string FirstName,
     string LastName)
     : IIntegrationEvent;
+

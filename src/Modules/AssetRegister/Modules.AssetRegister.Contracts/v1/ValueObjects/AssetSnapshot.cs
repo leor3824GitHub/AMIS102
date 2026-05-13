@@ -1,4 +1,4 @@
-namespace FSH.Modules.AssetRegister.Contracts.v1.ValueObjects;
+namespace AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
 
 /// <summary>
 /// Frozen subset of <c>AssetRegistry</c> captured at the moment of issue, count,
@@ -48,3 +48,4 @@ public sealed class AssetSnapshot
             Model = model
         };
 }
+

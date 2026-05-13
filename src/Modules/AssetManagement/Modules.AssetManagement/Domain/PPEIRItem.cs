@@ -1,6 +1,6 @@
-using FSH.Framework.Core.Domain;
+using AMIS.Framework.Core.Domain;
 
-namespace FSH.Modules.AssetManagement.Domain;
+namespace AMIS.Modules.AssetManagement.Domain;
 
 /// <summary>
 /// A line item within a PPE Issuance Report (PPEIR).
@@ -85,3 +85,4 @@ public sealed class PPEIRItem : BaseEntity<Guid>, IHasTenant
         BookValue = bookValue;
     }
 }
+

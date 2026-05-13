@@ -1,4 +1,4 @@
-﻿namespace FSH.Modules.Auditing.Contracts;
+namespace AMIS.Modules.Auditing.Contracts;
 
 /// <summary>
 /// Masks or hashes sensitive fields before persistence or externalization.
@@ -7,3 +7,4 @@ public interface IAuditMaskingService
 {
     object ApplyMasking(object payload);
 }
+

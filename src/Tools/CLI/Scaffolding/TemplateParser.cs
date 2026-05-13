@@ -1,7 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
 
-namespace FSH.CLI.Scaffolding;
+namespace AMIS.CLI.Scaffolding;
 
 /// <summary>
 /// Parses template syntax and normalizes project names

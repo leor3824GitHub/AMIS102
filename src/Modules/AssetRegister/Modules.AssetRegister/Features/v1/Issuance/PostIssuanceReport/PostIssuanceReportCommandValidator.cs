@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.AssetRegister.Contracts.v1.Issuance;
+using AMIS.Modules.AssetRegister.Contracts.v1.Issuance;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Issuance.PostIssuanceReport;
+namespace AMIS.Modules.AssetRegister.Features.v1.Issuance.PostIssuanceReport;
 
 public sealed class PostIssuanceReportCommandValidator : AbstractValidator<PostIssuanceReportCommand>
 {
@@ -17,3 +17,4 @@ public sealed class PostIssuanceReportCommandValidator : AbstractValidator<PostI
         RuleFor(x => x.PostedOn).NotEqual(default(DateOnly));
     }
 }
+

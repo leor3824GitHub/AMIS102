@@ -1,4 +1,4 @@
-# AssetRegister Module — Implementation Plan
+﻿# AssetRegister Module — Implementation Plan
 
 > New bounded context that introduces the unified asset domain model from `AMIS101-Unified-Asset-Refactoring_v2.md`, running in parallel with the existing `AssetManagement` module. **`AssetManagement` is not modified.**
 
@@ -125,7 +125,7 @@ src/Tests/Modules.AssetRegister.Tests/
 - Add representative types (`AssetRegisterModule`, `AssetRegisterContractsMarker`, a placeholder command type) to `Mediator.Assemblies`.
 - Append `typeof(AssetRegisterModule).Assembly` to `moduleAssemblies`.
 - Add both project references to `Playground.Api.csproj`.
-- Update `src/FSH.Framework.slnx` to include both projects.
+- Update `src/AMIS.Framework.slnx` to include both projects.
 
 ## 2. Module constants
 
@@ -785,7 +785,7 @@ All those land in Phase 3.
 
 ## Acceptance criteria — Phase 1
 
-- [ ] `dotnet build src/FSH.Framework.slnx` → 0 warnings, 0 errors.
+- [ ] `dotnet build src/AMIS.Framework.slnx` → 0 warnings, 0 errors.
 - [ ] `dotnet test` → existing tests pass; new architecture test passes.
 - [ ] `dotnet ef migrations script --context AssetRegisterDbContext` produces clean DDL for `asset_register.*` tables.
 - [ ] `AssetManagement` module untouched (`git diff` shows zero changes under `src/Modules/AssetManagement/**`).
@@ -823,3 +823,4 @@ All those land in Phase 3.
 - `AssetProcurement`, `Vehicle`, `Finance`, `MasterData`, `ProcurementPlanning`, `ProcurementAcquisition` — untouched (this module consumes one event from `AssetProcurement`, that's all).
 - MAUI client — separate effort.
 - Data migration from existing `AssetManagement` tables to `AssetRegister` — not in scope; if needed later it becomes its own phase.
+

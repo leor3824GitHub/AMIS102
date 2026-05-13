@@ -1,9 +1,9 @@
-using FSH.Modules.AssetRegister.Domain.Catalog;
+using AMIS.Modules.AssetRegister.Domain.Catalog;
 using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FSH.Modules.AssetRegister.Data.Configurations;
+namespace AMIS.Modules.AssetRegister.Data.Configurations;
 
 internal sealed class PropertyItemCatalogConfiguration : IEntityTypeConfiguration<PropertyItemCatalog>
 {
@@ -26,3 +26,4 @@ internal sealed class PropertyItemCatalogConfiguration : IEntityTypeConfiguratio
         builder.HasIndex(x => new { x.TenantId, x.Code }).IsUnique();
     }
 }
+

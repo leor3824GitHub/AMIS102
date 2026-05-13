@@ -1,7 +1,7 @@
-using FSH.Modules.Auditing.Contracts.Dtos;
+using AMIS.Modules.Auditing.Contracts.Dtos;
 using Mediator;
 
-namespace FSH.Modules.Auditing.Contracts.v1.GetAuditSummary;
+namespace AMIS.Modules.Auditing.Contracts.v1.GetAuditSummary;
 
 public sealed class GetAuditSummaryQuery : IQuery<AuditSummaryAggregateDto>
 {
@@ -11,4 +11,5 @@ public sealed class GetAuditSummaryQuery : IQuery<AuditSummaryAggregateDto>
 
     public string? TenantId { get; init; }
 }
+
 

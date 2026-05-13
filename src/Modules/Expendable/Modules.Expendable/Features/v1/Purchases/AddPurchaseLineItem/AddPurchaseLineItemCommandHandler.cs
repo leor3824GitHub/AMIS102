@@ -1,10 +1,10 @@
-using FSH.Framework.Core.Context;
-using FSH.Modules.Expendable.Contracts.v1.Purchases;
-using FSH.Modules.Expendable.Data;
+using AMIS.Framework.Core.Context;
+using AMIS.Modules.Expendable.Contracts.v1.Purchases;
+using AMIS.Modules.Expendable.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.Expendable.Features.v1.Purchases.AddPurchaseLineItem;
+namespace AMIS.Modules.Expendable.Features.v1.Purchases.AddPurchaseLineItem;
 
 public sealed class AddPurchaseLineItemCommandHandler : ICommandHandler<AddPurchaseLineItemCommand>
 {
@@ -32,3 +32,4 @@ public sealed class AddPurchaseLineItemCommandHandler : ICommandHandler<AddPurch
         return default;
     }
 }
+

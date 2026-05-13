@@ -1,10 +1,10 @@
-using FSH.Framework.Shared.Identity.Authorization;
+using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.AssetManagement.Features.v1.PropertyIncidentReports.CreatePropertyIncidentReport;
+namespace AMIS.Modules.AssetManagement.Features.v1.PropertyIncidentReports.CreatePropertyIncidentReport;
 
 public static class CreatePropertyIncidentReportEndpoint
 {
@@ -26,3 +26,4 @@ public static class CreatePropertyIncidentReportEndpoint
         return TypedResults.Created($"/api/v1/asset-management/property-incident-reports/{result.ReportId}", result);
     }
 }
+

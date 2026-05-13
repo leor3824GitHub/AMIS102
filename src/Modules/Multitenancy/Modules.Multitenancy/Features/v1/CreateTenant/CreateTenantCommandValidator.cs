@@ -1,9 +1,9 @@
-﻿using FluentValidation;
-using FSH.Framework.Persistence;
-using FSH.Modules.Multitenancy.Contracts;
-using FSH.Modules.Multitenancy.Contracts.v1.CreateTenant;
+using FluentValidation;
+using AMIS.Framework.Persistence;
+using AMIS.Modules.Multitenancy.Contracts;
+using AMIS.Modules.Multitenancy.Contracts.v1.CreateTenant;
 
-namespace FSH.Modules.Multitenancy.Features.v1.CreateTenant;
+namespace AMIS.Modules.Multitenancy.Features.v1.CreateTenant;
 
 public sealed class CreateTenantCommandValidator : AbstractValidator<CreateTenantCommand>
 {

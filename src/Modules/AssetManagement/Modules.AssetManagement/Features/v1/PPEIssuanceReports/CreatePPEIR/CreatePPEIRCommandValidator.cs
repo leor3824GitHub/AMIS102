@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace FSH.Modules.AssetManagement.Features.v1.PPEIssuanceReports.CreatePPEIR;
+namespace AMIS.Modules.AssetManagement.Features.v1.PPEIssuanceReports.CreatePPEIR;
 
 public sealed class CreatePPEIRCommandValidator : AbstractValidator<CreatePPEIRCommand>
 {
@@ -21,3 +21,4 @@ public sealed class CreatePPEIRCommandValidator : AbstractValidator<CreatePPEIRC
             item.RuleFor(x => x.TangibleInventoryItemId).NotEmpty());
     }
 }
+

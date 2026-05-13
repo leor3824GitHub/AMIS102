@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.MasterData.Contracts.v1.References;
+using AMIS.Modules.MasterData.Contracts.v1.References;
 
-namespace FSH.Modules.MasterData.Features.v1.Positions.UpdatePosition;
+namespace AMIS.Modules.MasterData.Features.v1.Positions.UpdatePosition;
 
 public sealed class UpdatePositionCommandValidator : AbstractValidator<UpdatePositionCommand>
 {

@@ -1,21 +1,21 @@
 using Finbuckle.MultiTenant.Abstractions;
-using FSH.Framework.Persistence;
-using FSH.Framework.Shared.Constants;
-using FSH.Framework.Shared.Multitenancy;
-using FSH.Framework.Web.Origin;
-using FSH.Modules.Identity.Domain;
+using AMIS.Framework.Persistence;
+using AMIS.Framework.Shared.Constants;
+using AMIS.Framework.Shared.Multitenancy;
+using AMIS.Framework.Web.Origin;
+using AMIS.Modules.Identity.Domain;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace FSH.Modules.Identity.Data;
+namespace AMIS.Modules.Identity.Data;
 
 internal sealed class IdentityDbInitializer(
     ILogger<IdentityDbInitializer> logger,
     IdentityDbContext context,
-    RoleManager<FshRole> roleManager,
-    UserManager<FshUser> userManager,
+    RoleManager<AmisRole> roleManager,
+    UserManager<AmisUser> userManager,
     TimeProvider timeProvider,
     IMultiTenantContextAccessor<AppTenantInfo> multiTenantContextAccessor,
     IOptions<OriginOptions> originSettings) : IDbInitializer
@@ -43,10 +43,10 @@ internal sealed class IdentityDbInitializer(
         foreach (string roleName in RoleConstants.DefaultRoles)
         {
             if (await roleManager.Roles.SingleOrDefaultAsync(r => r.Name == roleName, cancellationToken)
-                is not FshRole role)
+                is not AmisRole role)
             {
                 // create role
-                role = new FshRole(roleName, $"{roleName} Role for {tenantId} Tenant");
+                role = new AmisRole(roleName, $"{roleName} Role for {tenantId} Tenant");
                 await roleManager.CreateAsync(role);
             }
 
@@ -67,12 +67,12 @@ internal sealed class IdentityDbInitializer(
         }
     }
 
-    private async Task AssignPermissionsToRoleAsync(IdentityDbContext dbContext, IReadOnlyList<FshPermission> permissions, FshRole role, CancellationToken cancellationToken = default)
+    private async Task AssignPermissionsToRoleAsync(IdentityDbContext dbContext, IReadOnlyList<AmisPermission> permissions, AmisRole role, CancellationToken cancellationToken = default)
     {
         var currentClaims = await roleManager.GetClaimsAsync(role);
         var newClaims = permissions
             .Where(permission => !currentClaims.Any(c => c.Type == ClaimConstants.Permission && c.Value == permission.Name))
-            .Select(permission => new FshRoleClaim
+            .Select(permission => new AmisRoleClaim
             {
                 RoleId = role.Id,
                 ClaimType = ClaimConstants.Permission,
@@ -167,10 +167,10 @@ internal sealed class IdentityDbInitializer(
         }
 
         if (await userManager.Users.FirstOrDefaultAsync(u => u.Email == multiTenantContextAccessor.MultiTenantContext.TenantInfo!.AdminEmail, cancellationToken)
-            is not FshUser adminUser)
+            is not AmisUser adminUser)
         {
             string adminUserName = $"{multiTenantContextAccessor.MultiTenantContext.TenantInfo?.Id.Trim()}.{RoleConstants.Admin}".ToUpperInvariant();
-            adminUser = new FshUser
+            adminUser = new AmisUser
             {
                 FirstName = multiTenantContextAccessor.MultiTenantContext.TenantInfo?.Id.Trim().ToUpperInvariant(),
                 LastName = RoleConstants.Admin,
@@ -185,7 +185,7 @@ internal sealed class IdentityDbInitializer(
             };
 
             logger.LogInformation("Seeding Default Admin User for '{TenantId}' Tenant.", multiTenantContextAccessor.MultiTenantContext.TenantInfo?.Id);
-            var password = new PasswordHasher<FshUser>();
+            var password = new PasswordHasher<AmisUser>();
             adminUser.PasswordHash = password.HashPassword(adminUser, MultitenancyConstants.DefaultPassword);
             await userManager.CreateAsync(adminUser);
         }
@@ -198,3 +198,6 @@ internal sealed class IdentityDbInitializer(
         }
     }
 }
+
+
+

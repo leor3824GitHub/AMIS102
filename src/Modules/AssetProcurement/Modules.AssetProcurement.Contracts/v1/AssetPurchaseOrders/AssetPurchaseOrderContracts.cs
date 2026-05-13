@@ -1,7 +1,7 @@
-using FSH.Framework.Shared.Persistence;
+using AMIS.Framework.Shared.Persistence;
 using Mediator;
 
-namespace FSH.Modules.AssetProcurement.Contracts.v1.AssetPurchaseOrders;
+namespace AMIS.Modules.AssetProcurement.Contracts.v1.AssetPurchaseOrders;
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Enums
@@ -142,3 +142,4 @@ public sealed class SearchAssetPurchaseOrdersQuery : IQuery<PagedResponse<AssetP
     public int PageNumber { get; set; } = 1;
     public int PageSize { get; set; } = 10;
 }
+

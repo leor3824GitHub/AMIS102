@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server;
 
-namespace FSH.Playground.Blazor.Services;
+namespace AMIS.Playground.Blazor.Services;
 
 /// <summary>
 /// Simple authentication state provider that reads from cookie authentication.
@@ -15,3 +15,4 @@ namespace FSH.Playground.Blazor.Services;
 #pragma warning disable S2094 // Classes should not be empty - intentionally inherits all behavior from base class
 internal sealed class CookieAuthenticationStateProvider : ServerAuthenticationStateProvider;
 #pragma warning restore S2094
+

@@ -1,8 +1,8 @@
-using FSH.Modules.AssetRegister.Contracts.v1.Unserviceable;
-using FSH.Modules.AssetRegister.Domain.Unserviceable;
-using FSH.Modules.AssetRegister.Features.v1.Accountability;
+using AMIS.Modules.AssetRegister.Contracts.v1.Unserviceable;
+using AMIS.Modules.AssetRegister.Domain.Unserviceable;
+using AMIS.Modules.AssetRegister.Features.v1.Accountability;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Unserviceable;
+namespace AMIS.Modules.AssetRegister.Features.v1.Unserviceable;
 
 internal static class UnserviceableMapper
 {
@@ -23,3 +23,4 @@ internal static class UnserviceableMapper
             r.WitnessedOn,
             r.Items.Select(ToDto).ToList());
 }
+

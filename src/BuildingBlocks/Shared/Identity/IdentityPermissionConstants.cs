@@ -1,4 +1,4 @@
-namespace FSH.Framework.Shared.Identity;
+namespace AMIS.Framework.Shared.Identity;
 
 public static class IdentityPermissionConstants
 {
@@ -36,3 +36,4 @@ public static class IdentityPermissionConstants
         public const string ManageMembers = "Permissions.Groups.ManageMembers";
     }
 }
+

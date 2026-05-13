@@ -1,7 +1,7 @@
-using FSH.Framework.Shared.Persistence;
+using AMIS.Framework.Shared.Persistence;
 using Mediator;
 
-namespace FSH.Modules.Expendable.Contracts.v1.Products;
+namespace AMIS.Modules.Expendable.Contracts.v1.Products;
 
 public record ProductDto(
     Guid Id,
@@ -103,4 +103,5 @@ public sealed class GetProductCatalogCardsQuery : IPagedQuery, IQuery<PagedRespo
     public int? PageSize { get; set; }
     public string? Sort { get; set; }
 }
+
 

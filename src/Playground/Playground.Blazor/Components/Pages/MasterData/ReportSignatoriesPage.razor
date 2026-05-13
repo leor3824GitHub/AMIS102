@@ -1,13 +1,13 @@
 @page "/master-data/report-signatories"
-@using FSH.Modules.MasterData.Contracts.v1.ReportSignatories
-@using FSH.Playground.Blazor.ApiClient
+@using AMIS.Modules.MasterData.Contracts.v1.ReportSignatories
+@using AMIS.Playground.Blazor.ApiClient
 @using MudBlazor
 @inject IReportSignatoryClient SignatoryClient
 @inject ILookupClient LookupClient
 @inject ISnackbar Snackbar
 @inject IDialogService MudDialog
 
-<FshPageHeader Title="Report Signatories" Description="Configure signature blocks for printed government reports" />
+<AMISPageHeader Title="Report Signatories" Description="Configure signature blocks for printed government reports" />
 
 <MudGrid Spacing="3" Class="mt-2">
 
@@ -332,3 +332,4 @@
         _ => Color.Default
     };
 }
+

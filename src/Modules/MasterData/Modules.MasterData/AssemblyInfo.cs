@@ -1,3 +1,5 @@
-using FSH.Framework.Web.Modules;
+using AMIS.Framework.Web.Modules;
 
-[assembly: FshModule(typeof(FSH.Modules.MasterData.MasterDataModule), 500)]
+[assembly: AmisModule(typeof(AMIS.Modules.MasterData.MasterDataModule), 500)]
+
+

@@ -1,9 +1,9 @@
 @page "/users/{Id:guid}"
-@using FSH.Playground.Blazor.ApiClient
-@using FSH.Framework.Blazor.UI.Components.Dialogs
+@using AMIS.Playground.Blazor.ApiClient
+@using AMIS.Framework.Blazor.UI.Components.Dialogs
 @inherits ComponentBase
 @using System.Security.Claims
-@using FSH.Framework.Shared.Constants
+@using AMIS.Framework.Shared.Constants
 @using Microsoft.AspNetCore.Components.Authorization
 @inject IIdentityClient IdentityClient
 @inject IUsersClient UsersClient
@@ -12,7 +12,7 @@
 @inject IDialogService DialogService
 @inject AuthenticationStateProvider AuthenticationStateProvider
 
-<FshPageHeader Title="User Details"
+<AMISPageHeader Title="User Details"
                Description="@(_user != null ? $"{_user.FirstName} {_user.LastName}" : "Loading...")">
     <ActionContent>
         <MudButton Variant="Variant.Text"
@@ -31,11 +31,11 @@
             </MudButton>
         }
     </ActionContent>
-</FshPageHeader>
+</AMISPageHeader>
 
 @if (_loading)
 {
-    <MudPaper Class="fsh-card pa-8">
+    <MudPaper Class="AMIS-card pa-8">
         <MudStack AlignItems="AlignItems.Center" Spacing="4">
             <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
             <MudText Typo="Typo.body1">Loading user...</MudText>
@@ -44,7 +44,7 @@
 }
 else if (_user is null)
 {
-    <MudPaper Class="fsh-card pa-8">
+    <MudPaper Class="AMIS-card pa-8">
         <MudStack AlignItems="AlignItems.Center" Spacing="4">
             <MudIcon Icon="@Icons.Material.Outlined.PersonOff" Style="font-size: 64px; opacity: 0.3;" />
             <MudText Typo="Typo.h6">User not found</MudText>
@@ -60,7 +60,7 @@ else
     <MudGrid>
         @* Left Column - Profile Card *@
         <MudItem xs="12" md="4">
-            <MudPaper Class="fsh-card pa-0 profile-card" Style="overflow: hidden;">
+            <MudPaper Class="AMIS-card pa-0 profile-card" Style="overflow: hidden;">
                 @* Cover/Header *@
                 <div class="profile-cover">
                     <div class="profile-avatar">
@@ -182,7 +182,7 @@ else
             </MudGrid>
 
             @* Roles Card *@
-            <MudPaper Class="fsh-card pa-4 mb-4">
+            <MudPaper Class="AMIS-card pa-4 mb-4">
                 <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-3">
                     <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
                         <MudIcon Icon="@Icons.Material.Outlined.Security" Color="Color.Primary" />
@@ -209,7 +209,7 @@ else
             </MudPaper>
 
             @* Groups Card *@
-            <MudPaper Class="fsh-card pa-4 mb-4">
+            <MudPaper Class="AMIS-card pa-4 mb-4">
                 <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-3">
                     <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
                         <MudIcon Icon="@Icons.Material.Outlined.Groups" Color="Color.Primary" />
@@ -255,7 +255,7 @@ else
             <MudGrid>
                 @* Account Actions *@
                 <MudItem xs="12" md="6">
-                    <MudPaper Class="fsh-card pa-4" Style="height: 100%;">
+                    <MudPaper Class="AMIS-card pa-4" Style="height: 100%;">
                         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
                             <MudIcon Icon="@Icons.Material.Outlined.Settings" Color="Color.Primary" />
                             <MudText Typo="Typo.h6" Class="fw-600">Account Actions</MudText>
@@ -338,7 +338,7 @@ else
 
                 @* Danger Zone *@
                 <MudItem xs="12" md="6">
-                    <MudPaper Class="fsh-card pa-4 danger-zone" Style="height: 100%;">
+                    <MudPaper Class="AMIS-card pa-4 danger-zone" Style="height: 100%;">
                         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
                             <MudIcon Icon="@Icons.Material.Outlined.Warning" Color="Color.Error" />
                             <MudText Typo="Typo.h6" Class="fw-600" Color="Color.Error">Danger Zone</MudText>
@@ -632,3 +632,4 @@ else
         public string? Code { get; set; }
     }
 }
+

@@ -1,11 +1,11 @@
-using FSH.Modules.Expendable.Contracts.v1.Requests;
-using FSH.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.Expendable.Contracts.v1.Requests;
+using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.Expendable.Features.v1.Requests.SubmitSupplyRequest;
+namespace AMIS.Modules.Expendable.Features.v1.Requests.SubmitSupplyRequest;
 
 public static class SubmitSupplyRequestEndpoint
 {
@@ -28,4 +28,5 @@ public static class SubmitSupplyRequestEndpoint
         return TypedResults.NoContent();
     }
 }
+
 

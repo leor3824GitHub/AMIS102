@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace FSH.Modules.MasterData.Features.v1.Categories.CreateCategory;
+namespace AMIS.Modules.MasterData.Features.v1.Categories.CreateCategory;
 
 public sealed class CreateCategoryCommandValidator : AbstractValidator<CreateCategoryCommand>
 {
@@ -18,3 +18,4 @@ public sealed class CreateCategoryCommandValidator : AbstractValidator<CreateCat
             .MaximumLength(400).WithMessage("Description must not exceed 400 characters.");
     }
 }
+

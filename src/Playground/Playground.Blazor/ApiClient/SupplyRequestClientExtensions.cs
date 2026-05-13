@@ -2,9 +2,9 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using FSH.Modules.Expendable.Contracts.v1.Requests;
+using AMIS.Modules.Expendable.Contracts.v1.Requests;
 
-namespace FSH.Playground.Blazor.ApiClient;
+namespace AMIS.Playground.Blazor.ApiClient;
 
 public static class SupplyRequestClientExtensions
 {
@@ -58,3 +58,4 @@ public static class SupplyRequestClientExtensions
             ?? throw new InvalidOperationException("_httpClient is null."));
     }
 }
+

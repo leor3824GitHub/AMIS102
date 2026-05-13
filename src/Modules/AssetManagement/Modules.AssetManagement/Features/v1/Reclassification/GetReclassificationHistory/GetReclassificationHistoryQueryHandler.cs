@@ -1,8 +1,8 @@
-using FSH.Modules.AssetManagement.Data;
+using AMIS.Modules.AssetManagement.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.Reclassification.GetReclassificationHistory;
+namespace AMIS.Modules.AssetManagement.Features.v1.Reclassification.GetReclassificationHistory;
 
 public sealed class GetReclassificationHistoryQueryHandler(AssetManagementDbContext dbContext)
     : IQueryHandler<GetReclassificationHistoryQuery, PagedReclassificationHistoryResponse>
@@ -35,3 +35,4 @@ public sealed class GetReclassificationHistoryQueryHandler(AssetManagementDbCont
         return new PagedReclassificationHistoryResponse(items, pageNumber, pageSize, totalCount);
     }
 }
+

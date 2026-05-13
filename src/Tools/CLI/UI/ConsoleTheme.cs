@@ -1,10 +1,10 @@
 using Spectre.Console;
 
-namespace FSH.CLI.UI;
+namespace AMIS.CLI.UI;
 
 internal static class ConsoleTheme
 {
-    // FullStackHero brand color
+    // AMIS brand color
     public static Color Primary { get; } = new(62, 175, 124); // #3eaf7c
     public static Color Secondary { get; } = Color.White;
     public static Color Success { get; } = Color.Green;
@@ -24,7 +24,7 @@ internal static class ConsoleTheme
     public static void WriteBanner()
     {
         AnsiConsole.WriteLine();
-        AnsiConsole.MarkupLine($"[bold {Primary.ToMarkup()}]FSH[/] [dim]•[/] FullStackHero .NET Starter Kit");
+        AnsiConsole.MarkupLine($"[bold {Primary.ToMarkup()}]AMIS[/] [dim]•[/] AMIS .NET Starter Kit");
         AnsiConsole.WriteLine();
     }
 
@@ -54,3 +54,4 @@ internal static class ConsoleTheme
             ? $"  [dim]{key}:[/] [{Primary.ToMarkup()}]{value}[/]"
             : $"  [dim]{key}:[/] {value}");
 }
+

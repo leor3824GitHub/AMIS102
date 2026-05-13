@@ -1,16 +1,16 @@
 @page "/procurement/purchase-orders"
-@using FSH.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders
-@using FSH.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests
-@using FSH.Framework.Shared.Persistence
-@using FSH.Playground.Blazor.ApiClient
-@using PurchaseOrderContracts = FSH.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders
+@using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders
+@using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests
+@using AMIS.Framework.Shared.Persistence
+@using AMIS.Playground.Blazor.ApiClient
+@using PurchaseOrderContracts = AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders
 @inject IPurchaseOrderClient Client
 @inject IPurchaseRequestClient PurchaseRequestClient
 @inject IMaster_dataClient MasterDataClient
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 
-<FshPageHeader Title="Purchase Orders" Description="Create and manage purchase orders (PO)" />
+<AMISPageHeader Title="Purchase Orders" Description="Create and manage purchase orders (PO)" />
 
 <MudGrid Spacing="3">
     <!-- Form Panel -->
@@ -95,7 +95,7 @@
                                 </MudItem>
                                 <MudItem xs="12">
                                     <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                        Amount: ₱@((li.Quantity * li.UnitCost).ToString("N2"))
+                                        Amount: ?@((li.Quantity * li.UnitCost).ToString("N2"))
                                     </MudText>
                                 </MudItem>
                             </MudGrid>
@@ -107,7 +107,7 @@
                     @if (_form.LineItems.Any())
                     {
                         <MudPaper Class="pa-2" Style="background:var(--mud-palette-background-grey)">
-                            <MudText Typo="Typo.body2"><b>Total: ₱@_form.LineItems.Sum(li => li.Quantity * li.UnitCost).ToString("N2")</b></MudText>
+                            <MudText Typo="Typo.body2"><b>Total: ?@_form.LineItems.Sum(li => li.Quantity * li.UnitCost).ToString("N2")</b></MudText>
                         </MudPaper>
                     }
 
@@ -178,7 +178,7 @@
                                     <td>@item.PoDate.ToString("MM/dd/yyyy")</td>
                                     <td>@item.SupplierName</td>
                                     <td><MudText Typo="Typo.caption">@item.ModeOfProcurement.ToString().Replace("_"," ")</MudText></td>
-                                    <td style="text-align:right">₱@item.TotalAmount.ToString("N2")</td>
+                                    <td style="text-align:right">?@item.TotalAmount.ToString("N2")</td>
                                     <td>@PoStatusChip(item.Status)</td>
                                     <td>
                                         <MudStack Row="true" Spacing="0">
@@ -228,7 +228,7 @@
             <MudCard Elevation="1" Class="mt-3">
                 <MudCardContent>
                     <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3">
-                        <MudText Typo="Typo.h6" Class="flex-grow-1">@_detail.PoNumber — Details</MudText>
+                        <MudText Typo="Typo.h6" Class="flex-grow-1">@_detail.PoNumber � Details</MudText>
                         <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="@(() => _detail = null)" />
                     </MudStack>
                     <MudGrid Spacing="2">
@@ -268,19 +268,19 @@
                             {
                                 <tr>
                                     <td>@li.ItemNo</td>
-                                    <td>@(li.StockNumber ?? "—")</td>
+                                    <td>@(li.StockNumber ?? "�")</td>
                                     <td>@li.Description</td>
                                     <td>@li.Unit</td>
                                     <td style="text-align:right">@li.Quantity.ToString("N2")</td>
-                                    <td style="text-align:right">₱@li.UnitCost.ToString("N2")</td>
-                                    <td style="text-align:right">₱@li.Amount.ToString("N2")</td>
+                                    <td style="text-align:right">?@li.UnitCost.ToString("N2")</td>
+                                    <td style="text-align:right">?@li.Amount.ToString("N2")</td>
                                 </tr>
                             }
                         </tbody>
                         <tfoot>
                             <tr>
                                 <td colspan="6" style="text-align:right"><b>Total Amount:</b></td>
-                                <td style="text-align:right"><b>₱@_detail.TotalAmount.ToString("N2")</b></td>
+                                <td style="text-align:right"><b>?@_detail.TotalAmount.ToString("N2")</b></td>
                             </tr>
                         </tfoot>
                     </MudSimpleTable>
@@ -608,3 +608,4 @@
         public decimal UnitCost { get; set; }
     }
 }
+

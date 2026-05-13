@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.MasterData.Contracts.v1.PropertyClasses;
+using AMIS.Modules.MasterData.Contracts.v1.PropertyClasses;
 
-namespace FSH.Modules.MasterData.Features.v1.PropertyClasses.UpdatePropertyClass;
+namespace AMIS.Modules.MasterData.Features.v1.PropertyClasses.UpdatePropertyClass;
 
 public sealed class UpdatePropertyClassCommandValidator : AbstractValidator<UpdatePropertyClassCommand>
 {
@@ -12,3 +12,4 @@ public sealed class UpdatePropertyClassCommandValidator : AbstractValidator<Upda
         RuleFor(x => x.Description).MaximumLength(500).When(x => x.Description is not null);
     }
 }
+

@@ -1,10 +1,10 @@
-using FSH.Framework.Core.Exceptions;
-using FSH.Modules.Identity.Contracts.v1.Groups.RemoveUserFromGroup;
-using FSH.Modules.Identity.Data;
+using AMIS.Framework.Core.Exceptions;
+using AMIS.Modules.Identity.Contracts.v1.Groups.RemoveUserFromGroup;
+using AMIS.Modules.Identity.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.Identity.Features.v1.Groups.RemoveUserFromGroup;
+namespace AMIS.Modules.Identity.Features.v1.Groups.RemoveUserFromGroup;
 
 public sealed class RemoveUserFromGroupCommandHandler : ICommandHandler<RemoveUserFromGroupCommand, Unit>
 {
@@ -33,3 +33,4 @@ public sealed class RemoveUserFromGroupCommandHandler : ICommandHandler<RemoveUs
         return Unit.Value;
     }
 }
+

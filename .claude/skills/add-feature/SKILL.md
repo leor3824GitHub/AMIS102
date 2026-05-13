@@ -1,6 +1,6 @@
----
+﻿---
 name: add-feature
-description: Create a new API endpoint with Command, Handler, Validator, and Endpoint following FSH vertical slice architecture. Use when adding any new feature, API endpoint, or business operation.
+description: Create a new API endpoint with Command, Handler, Validator, and Endpoint following AMIS vertical slice architecture. Use when adding any new feature, API endpoint, or business operation.
 argument-hint: [ModuleName] [FeatureName]
 ---
 
@@ -101,8 +101,8 @@ entities.Map{Action}{Entity}Endpoint();
 ## Step 7: Verify
 
 ```bash
-dotnet build src/FSH.Framework.slnx  # Must be 0 warnings
-dotnet test src/FSH.Framework.slnx
+dotnet build src/AMIS.Framework.slnx  # Must be 0 warnings
+dotnet test src/AMIS.Framework.slnx
 ```
 
 ## Checklist
@@ -114,3 +114,4 @@ dotnet test src/FSH.Framework.slnx
 - [ ] Endpoint has `.WithName()` and `.WithSummary()`
 - [ ] DTOs in Contracts project, not internal
 - [ ] Build passes with 0 warnings
+

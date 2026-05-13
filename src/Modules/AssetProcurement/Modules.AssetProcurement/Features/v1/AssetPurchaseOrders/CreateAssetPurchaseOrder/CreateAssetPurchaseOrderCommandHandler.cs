@@ -1,11 +1,11 @@
-using FSH.Framework.Core.Context;
-using FSH.Modules.AssetProcurement.Contracts.v1.AssetPurchaseOrders;
-using FSH.Modules.AssetProcurement.Data;
-using FSH.Modules.AssetProcurement.Domain.AssetPurchaseOrders;
+using AMIS.Framework.Core.Context;
+using AMIS.Modules.AssetProcurement.Contracts.v1.AssetPurchaseOrders;
+using AMIS.Modules.AssetProcurement.Data;
+using AMIS.Modules.AssetProcurement.Domain.AssetPurchaseOrders;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetProcurement.Features.v1.AssetPurchaseOrders.CreateAssetPurchaseOrder;
+namespace AMIS.Modules.AssetProcurement.Features.v1.AssetPurchaseOrders.CreateAssetPurchaseOrder;
 
 public sealed class CreateAssetPurchaseOrderCommandHandler(
     AssetProcurementDbContext dbContext,
@@ -92,3 +92,4 @@ public sealed class CreateAssetPurchaseOrderCommandHandler(
             po.CreatedBy,
             po.LastModifiedOnUtc);
 }
+

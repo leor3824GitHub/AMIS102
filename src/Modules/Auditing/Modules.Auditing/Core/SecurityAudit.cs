@@ -1,6 +1,6 @@
-using FSH.Modules.Auditing.Contracts;
+using AMIS.Modules.Auditing.Contracts;
 
-namespace FSH.Modules.Auditing;
+namespace AMIS.Modules.Auditing;
 
 public sealed class SecurityAudit : ISecurityAudit
 {
@@ -30,4 +30,5 @@ public sealed class SecurityAudit : ISecurityAudit
             subjectId: userId, clientId: clientId, authMethod: "", reasonCode: reason, claims: null,
             severity: AuditSeverity.Information, source: "Identity", ct);
 }
+
 

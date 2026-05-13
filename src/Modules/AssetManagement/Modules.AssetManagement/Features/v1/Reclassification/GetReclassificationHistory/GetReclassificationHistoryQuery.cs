@@ -1,6 +1,6 @@
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.Reclassification.GetReclassificationHistory;
+namespace AMIS.Modules.AssetManagement.Features.v1.Reclassification.GetReclassificationHistory;
 
 public sealed record GetReclassificationHistoryQuery(int PageNumber = 1, int PageSize = 20)
     : IQuery<PagedReclassificationHistoryResponse>;
@@ -18,3 +18,4 @@ public sealed record PagedReclassificationHistoryResponse(
     int PageNumber,
     int PageSize,
     int TotalCount);
+

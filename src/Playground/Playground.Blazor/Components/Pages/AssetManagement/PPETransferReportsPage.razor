@@ -1,9 +1,9 @@
 @page "/asset-management/ppe-transfer-reports"
-@using FSH.Playground.Blazor.ApiClient
+@using AMIS.Playground.Blazor.ApiClient
 @inject IPPEIRClient Client
 @inject ISnackbar Snackbar
 
-<FshPageHeader Title="Property Transfer Reports (PTR)"
+<AMISPageHeader Title="Property Transfer Reports (PTR)"
                Description="Formal handover document for inter-office/department PPE transfers. Derived from approved PPEIR records." />
 
 <MudGrid Spacing="3">
@@ -25,9 +25,9 @@
                                Label="Transfer Type" Variant="Variant.Outlined"
                                Size="Size.Small" T="PPEIssuanceType?" Style="max-width:170px">
                         <MudSelectItem Value="@((PPEIssuanceType?)null)">All Types</MudSelectItem>
-                        <MudSelectItem Value="@((PPEIssuanceType?)PPEIssuanceType.TransferCO)">Transfer â€“ CO</MudSelectItem>
-                        <MudSelectItem Value="@((PPEIssuanceType?)PPEIssuanceType.TransferRO)">Transfer â€“ RO</MudSelectItem>
-                        <MudSelectItem Value="@((PPEIssuanceType?)PPEIssuanceType.TransferPO)">Transfer â€“ PO</MudSelectItem>
+                        <MudSelectItem Value="@((PPEIssuanceType?)PPEIssuanceType.TransferCO)">Transfer – CO</MudSelectItem>
+                        <MudSelectItem Value="@((PPEIssuanceType?)PPEIssuanceType.TransferRO)">Transfer – RO</MudSelectItem>
+                        <MudSelectItem Value="@((PPEIssuanceType?)PPEIssuanceType.TransferPO)">Transfer – PO</MudSelectItem>
                         <MudSelectItem Value="@((PPEIssuanceType?)PPEIssuanceType.Donation)">Donation</MudSelectItem>
                         <MudSelectItem Value="@((PPEIssuanceType?)PPEIssuanceType.Sale)">Sale</MudSelectItem>
                         <MudSelectItem Value="@((PPEIssuanceType?)PPEIssuanceType.Dumping)">Dumping</MudSelectItem>
@@ -60,7 +60,7 @@
                                         <MudChip T="string" Size="Size.Small" Color="Color.Info" Label="true">@FormatIssuanceType(s.IssuanceType)</MudChip>
                                     </MudStack>
                                     <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                        @s.Date.ToString("MMM dd, yyyy") Â· @s.ItemCount item(s)
+                                        @s.Date.ToString("MMM dd, yyyy") · @s.ItemCount item(s)
                                     </MudText>
                                 </MudStack>
                             </MudListItem>
@@ -126,7 +126,7 @@
                                 <th>Property No.</th>
                                 <th>Description</th>
                                 <th>Date Acquired</th>
-                                <th style="text-align:right">Amount (â‚±)</th>
+                                <th style="text-align:right">Amount (?)</th>
                                 <th>Condition</th>
                                 <th>Reason</th>
                             </tr>
@@ -141,15 +141,15 @@
                                         title="@item.Description">@item.Description</td>
                                     <td>@item.DateAcquired.ToString("MM/dd/yyyy")</td>
                                     <td style="text-align:right">@item.Amount.ToString("N2")</td>
-                                    <td><MudText Typo="Typo.caption">@(item.Condition ?? "â€”")</MudText></td>
-                                    <td><MudText Typo="Typo.caption">@(item.ReasonForTransfer ?? "â€”")</MudText></td>
+                                    <td><MudText Typo="Typo.caption">@(item.Condition ?? "—")</MudText></td>
+                                    <td><MudText Typo="Typo.caption">@(item.ReasonForTransfer ?? "—")</MudText></td>
                                 </tr>
                             }
                         </tbody>
                         <tfoot>
                             <tr>
                                 <td colspan="4" style="text-align:right"><b>Total:</b></td>
-                                <td style="text-align:right"><b>â‚±@_ptr.Items.Sum(x => x.Amount).ToString("N2")</b></td>
+                                <td style="text-align:right"><b>?@_ptr.Items.Sum(x => x.Amount).ToString("N2")</b></td>
                                 <td colspan="2"></td>
                             </tr>
                         </tfoot>
@@ -204,9 +204,10 @@
 
     private static string FormatIssuanceType(string t) => t switch
     {
-        "TransferCO" => "Transfer â€“ CO",
-        "TransferRO" => "Transfer â€“ RO",
-        "TransferPO" => "Transfer â€“ PO",
+        "TransferCO" => "Transfer – CO",
+        "TransferRO" => "Transfer – RO",
+        "TransferPO" => "Transfer – PO",
         _ => t
     };
 }
+

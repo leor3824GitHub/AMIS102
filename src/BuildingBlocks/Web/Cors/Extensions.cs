@@ -5,11 +5,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using AspNetCorsOptions = Microsoft.AspNetCore.Cors.Infrastructure.CorsOptions;
 
-namespace FSH.Framework.Web.Cors;
+namespace AMIS.Framework.Web.Cors;
 
 public static class Extensions
 {
-    private const string PolicyName = "FSHCorsPolicy";
+    private const string PolicyName = "AMISCorsPolicy";
 
     public static IServiceCollection AddHeroCors(
         this IServiceCollection services,
@@ -63,3 +63,4 @@ public static class Extensions
         app.UseCors(PolicyName);
     }
 }
+

@@ -1,10 +1,10 @@
-using FSH.Framework.Core.Context;
-using FSH.Modules.Expendable.Contracts.v1.Products;
-using FSH.Modules.Expendable.Data;
+using AMIS.Framework.Core.Context;
+using AMIS.Modules.Expendable.Contracts.v1.Products;
+using AMIS.Modules.Expendable.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.Expendable.Features.v1.Products.DeleteProduct;
+namespace AMIS.Modules.Expendable.Features.v1.Products.DeleteProduct;
 
 public sealed class DeleteProductCommandHandler : ICommandHandler<DeleteProductCommand>
 {
@@ -31,3 +31,4 @@ public sealed class DeleteProductCommandHandler : ICommandHandler<DeleteProductC
         return default;
     }
 }
+

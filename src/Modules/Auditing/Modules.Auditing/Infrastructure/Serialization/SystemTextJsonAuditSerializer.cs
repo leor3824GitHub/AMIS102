@@ -1,8 +1,8 @@
-using FSH.Modules.Auditing.Contracts;
+using AMIS.Modules.Auditing.Contracts;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace FSH.Modules.Auditing;
+namespace AMIS.Modules.Auditing;
 
 public sealed class SystemTextJsonAuditSerializer : IAuditSerializer
 {
@@ -16,4 +16,5 @@ public sealed class SystemTextJsonAuditSerializer : IAuditSerializer
 
     public string SerializePayload(object payload) => JsonSerializer.Serialize(payload, Opts);
 }
+
 

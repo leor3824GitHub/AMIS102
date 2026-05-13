@@ -1,10 +1,10 @@
-using FSH.Framework.Core.Context;
-using FSH.Modules.Expendable.Contracts.v1.Requests;
-using FSH.Modules.Expendable.Data;
-using FSH.Modules.Expendable.Domain.Requests;
+using AMIS.Framework.Core.Context;
+using AMIS.Modules.Expendable.Contracts.v1.Requests;
+using AMIS.Modules.Expendable.Data;
+using AMIS.Modules.Expendable.Domain.Requests;
 using Mediator;
 
-namespace FSH.Modules.Expendable.Features.v1.Requests.CreateSupplyRequest;
+namespace AMIS.Modules.Expendable.Features.v1.Requests.CreateSupplyRequest;
 
 public sealed class CreateSupplyRequestCommandHandler : ICommandHandler<CreateSupplyRequestCommand, SupplyRequestDto>
 {
@@ -40,3 +40,4 @@ public sealed class CreateSupplyRequestCommandHandler : ICommandHandler<CreateSu
         return request.ToSupplyRequestDto();
     }
 }
+

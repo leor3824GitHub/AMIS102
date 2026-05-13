@@ -1,6 +1,6 @@
-using FSH.Framework.Core.Domain;
+using AMIS.Framework.Core.Domain;
 
-namespace FSH.Modules.Expendable.Domain.Products;
+namespace AMIS.Modules.Expendable.Domain.Products;
 
 /// <summary>Product status enumeration</summary>
 public enum ProductStatus
@@ -168,4 +168,5 @@ public class Product : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
         DeletedBy = deletedBy;
     }
 }
+
 

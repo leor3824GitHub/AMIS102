@@ -1,8 +1,8 @@
 using System.Text.Json.Serialization;
-using FSH.Modules.Auditing.Contracts;
-using FSH.Modules.Auditing.Contracts.Serialization;
+using AMIS.Modules.Auditing.Contracts;
+using AMIS.Modules.Auditing.Contracts.Serialization;
 
-namespace FSH.Modules.Auditing.Contracts.Dtos;
+namespace AMIS.Modules.Auditing.Contracts.Dtos;
 
 public sealed class AuditSummaryDto
 {
@@ -33,4 +33,5 @@ public sealed class AuditSummaryDto
     [JsonConverter(typeof(JsonNumericEnumConverter<AuditTag>))]
     public AuditTag Tags { get; set; }
 }
+
 

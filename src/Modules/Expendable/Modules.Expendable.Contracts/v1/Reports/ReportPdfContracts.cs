@@ -1,6 +1,6 @@
 using Mediator;
 
-namespace FSH.Modules.Expendable.Contracts.v1.Reports;
+namespace AMIS.Modules.Expendable.Contracts.v1.Reports;
 
 public sealed class GenerateDepartmentIssuancePdfCommand : ICommand<byte[]>
 {
@@ -26,3 +26,4 @@ public sealed class GenerateEmployeeIssuancePdfCommand : ICommand<byte[]>
     public DateTimeOffset? From { get; set; }
     public DateTimeOffset? To { get; set; }
 }
+

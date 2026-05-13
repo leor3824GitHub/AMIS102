@@ -1,9 +1,9 @@
-using FSH.Framework.Core.Domain;
-using FSH.Modules.AssetRegister.Contracts.v1;
-using FSH.Modules.AssetRegister.Contracts.v1.ValueObjects;
-using FSH.Modules.AssetRegister.Domain.Events;
+using AMIS.Framework.Core.Domain;
+using AMIS.Modules.AssetRegister.Contracts.v1;
+using AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
+using AMIS.Modules.AssetRegister.Domain.Events;
 
-namespace FSH.Modules.AssetRegister.Domain.Incidents;
+namespace AMIS.Modules.AssetRegister.Domain.Incidents;
 
 public sealed class PropertyIncidentReport : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 {
@@ -174,3 +174,4 @@ public sealed class PropertyIncidentReport : AggregateRoot<Guid>, IHasTenant, IA
             throw new InvalidOperationException("RLSDDSP must be notarized before any resolution may be recorded.");
     }
 }
+

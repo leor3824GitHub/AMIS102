@@ -1,7 +1,7 @@
-﻿using Serilog;
+using Serilog;
 using Serilog.Core;
 
-namespace FSH.Framework.Web.Observability.Logging.Serilog;
+namespace AMIS.Framework.Web.Observability.Logging.Serilog;
 
 public static class StaticLogger
 {

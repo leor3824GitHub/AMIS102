@@ -1,9 +1,9 @@
-using FSH.Framework.Core.Context;
-using FSH.Modules.MasterData.Data;
+using AMIS.Framework.Core.Context;
+using AMIS.Modules.MasterData.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.MasterData.Features.v1.ModesOfProcurement.DeleteModeOfProcurement;
+namespace AMIS.Modules.MasterData.Features.v1.ModesOfProcurement.DeleteModeOfProcurement;
 
 public sealed class DeleteModeOfProcurementCommandHandler : ICommandHandler<DeleteModeOfProcurementCommand, Unit>
 {
@@ -37,3 +37,4 @@ public sealed class DeleteModeOfProcurementCommandHandler : ICommandHandler<Dele
         return Unit.Value;
     }
 }
+

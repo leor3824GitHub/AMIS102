@@ -1,4 +1,4 @@
-﻿namespace FSH.Framework.Web.Modules;
+namespace AMIS.Framework.Web.Modules;
 
 public interface IModuleConstants
 {

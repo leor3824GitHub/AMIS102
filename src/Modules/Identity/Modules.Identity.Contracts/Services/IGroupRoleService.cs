@@ -1,4 +1,4 @@
-namespace FSH.Modules.Identity.Contracts.Services;
+namespace AMIS.Modules.Identity.Contracts.Services;
 
 /// <summary>
 /// Service for retrieving roles derived from group memberships.
@@ -13,3 +13,4 @@ public interface IGroupRoleService
     /// <returns>List of distinct role names from all groups the user belongs to.</returns>
     Task<IReadOnlyList<string>> GetUserGroupRolesAsync(string userId, CancellationToken ct = default);
 }
+

@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace FSH.Modules.AssetManagement.Features.v1.TangibleInventory.UpdateTangibleInventory;
+namespace AMIS.Modules.AssetManagement.Features.v1.TangibleInventory.UpdateTangibleInventory;
 
 public sealed class UpdateTangibleInventoryCommandValidator : AbstractValidator<UpdateTangibleInventoryCommand>
 {
@@ -11,3 +11,4 @@ public sealed class UpdateTangibleInventoryCommandValidator : AbstractValidator<
         RuleFor(x => x.Address).MaximumLength(500);
     }
 }
+

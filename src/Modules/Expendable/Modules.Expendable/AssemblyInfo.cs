@@ -1,4 +1,6 @@
-using FSH.Framework.Web.Modules;
+using AMIS.Framework.Web.Modules;
 
-[assembly: FshModule(typeof(FSH.Modules.Expendable.ExpendableModule), 400)]
+[assembly: AmisModule(typeof(AMIS.Modules.Expendable.ExpendableModule), 400)]
+
+
 

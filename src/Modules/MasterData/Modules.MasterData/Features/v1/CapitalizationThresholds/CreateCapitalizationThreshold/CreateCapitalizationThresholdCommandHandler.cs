@@ -1,10 +1,10 @@
-using FSH.Framework.Core.Context;
-using FSH.Modules.MasterData.Contracts.v1.CapitalizationThresholds;
-using FSH.Modules.MasterData.Data;
-using FSH.Modules.MasterData.Domain;
+using AMIS.Framework.Core.Context;
+using AMIS.Modules.MasterData.Contracts.v1.CapitalizationThresholds;
+using AMIS.Modules.MasterData.Data;
+using AMIS.Modules.MasterData.Domain;
 using Mediator;
 
-namespace FSH.Modules.MasterData.Features.v1.CapitalizationThresholds.CreateCapitalizationThreshold;
+namespace AMIS.Modules.MasterData.Features.v1.CapitalizationThresholds.CreateCapitalizationThreshold;
 
 public sealed class CreateCapitalizationThresholdCommandHandler(MasterDataDbContext db, ICurrentUser currentUser)
     : ICommandHandler<CreateCapitalizationThresholdCommand, Guid>
@@ -26,3 +26,4 @@ public sealed class CreateCapitalizationThresholdCommandHandler(MasterDataDbCont
         return threshold.Id;
     }
 }
+

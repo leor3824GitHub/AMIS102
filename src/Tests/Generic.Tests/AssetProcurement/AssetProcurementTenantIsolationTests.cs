@@ -1,14 +1,14 @@
 using Finbuckle.MultiTenant;
 using Finbuckle.MultiTenant.Abstractions;
-using FSH.Framework.Shared.Multitenancy;
-using FSH.Framework.Shared.Persistence;
-using FSH.Modules.AssetProcurement.Contracts.v1.AssetInspectionAcceptanceReports;
-using FSH.Modules.AssetProcurement.Contracts.v1.AssetPurchaseOrders;
-using FSH.Modules.AssetProcurement.Contracts.v1.AssetPurchaseRequests;
-using FSH.Modules.AssetProcurement.Data;
-using FSH.Modules.AssetProcurement.Domain.AssetInspectionAcceptanceReports;
-using FSH.Modules.AssetProcurement.Domain.AssetPurchaseOrders;
-using FSH.Modules.AssetProcurement.Domain.AssetPurchaseRequests;
+using AMIS.Framework.Shared.Multitenancy;
+using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.AssetProcurement.Contracts.v1.AssetInspectionAcceptanceReports;
+using AMIS.Modules.AssetProcurement.Contracts.v1.AssetPurchaseOrders;
+using AMIS.Modules.AssetProcurement.Contracts.v1.AssetPurchaseRequests;
+using AMIS.Modules.AssetProcurement.Data;
+using AMIS.Modules.AssetProcurement.Domain.AssetInspectionAcceptanceReports;
+using AMIS.Modules.AssetProcurement.Domain.AssetPurchaseOrders;
+using AMIS.Modules.AssetProcurement.Domain.AssetPurchaseRequests;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
@@ -202,3 +202,4 @@ public sealed class AssetProcurementTenantIsolationTests
         public IFileProvider ContentRootFileProvider { get; set; } = new PhysicalFileProvider(Directory.GetCurrentDirectory());
     }
 }
+

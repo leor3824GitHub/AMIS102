@@ -1,11 +1,11 @@
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.AssetRegister.Contracts.v1.Catalog;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.AssetRegister.Contracts.v1.Catalog;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Catalog.CreatePropertyItemCatalog;
+namespace AMIS.Modules.AssetRegister.Features.v1.Catalog.CreatePropertyItemCatalog;
 
 public static class CreatePropertyItemCatalogEndpoint
 {
@@ -24,3 +24,4 @@ public static class CreatePropertyItemCatalogEndpoint
         return TypedResults.Created($"/api/v1/asset-register/catalog/{result.Id}", result);
     }
 }
+

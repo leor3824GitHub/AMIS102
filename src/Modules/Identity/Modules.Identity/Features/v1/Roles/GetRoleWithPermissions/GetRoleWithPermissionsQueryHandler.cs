@@ -1,9 +1,9 @@
-using FSH.Modules.Identity.Contracts.DTOs;
-using FSH.Modules.Identity.Contracts.Services;
-using FSH.Modules.Identity.Contracts.v1.Roles.GetRoleWithPermissions;
+using AMIS.Modules.Identity.Contracts.DTOs;
+using AMIS.Modules.Identity.Contracts.Services;
+using AMIS.Modules.Identity.Contracts.v1.Roles.GetRoleWithPermissions;
 using Mediator;
 
-namespace FSH.Modules.Identity.Features.v1.Roles.GetRoleWithPermissions;
+namespace AMIS.Modules.Identity.Features.v1.Roles.GetRoleWithPermissions;
 
 public sealed class GetRoleWithPermissionsQueryHandler : IQueryHandler<GetRoleWithPermissionsQuery, RoleDto>
 {
@@ -20,3 +20,4 @@ public sealed class GetRoleWithPermissionsQueryHandler : IQueryHandler<GetRoleWi
         return await _roleService.GetWithPermissionsAsync(query.Id, cancellationToken).ConfigureAwait(false);
     }
 }
+

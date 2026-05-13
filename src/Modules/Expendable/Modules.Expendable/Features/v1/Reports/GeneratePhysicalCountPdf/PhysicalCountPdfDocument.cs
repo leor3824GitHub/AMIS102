@@ -1,11 +1,11 @@
-using FSH.Modules.Expendable.Contracts.v1.Requests;
-using FSH.Modules.MasterData.Contracts.v1.OrganizationProfile;
-using FSH.Modules.MasterData.Contracts.v1.ReportSignatories;
+using AMIS.Modules.Expendable.Contracts.v1.Requests;
+using AMIS.Modules.MasterData.Contracts.v1.OrganizationProfile;
+using AMIS.Modules.MasterData.Contracts.v1.ReportSignatories;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 
-namespace FSH.Modules.Expendable.Features.v1.Reports.GeneratePhysicalCountPdf;
+namespace AMIS.Modules.Expendable.Features.v1.Reports.GeneratePhysicalCountPdf;
 
 internal sealed class PhysicalCountPdfDocument : IDocument
 {
@@ -176,3 +176,4 @@ internal sealed class PhysicalCountPdfDocument : IDocument
         });
     }
 }
+

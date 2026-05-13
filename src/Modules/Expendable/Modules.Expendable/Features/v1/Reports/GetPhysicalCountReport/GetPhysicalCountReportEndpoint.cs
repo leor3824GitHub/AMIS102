@@ -1,11 +1,11 @@
-using FSH.Modules.Expendable.Contracts.v1.Requests;
-using FSH.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.Expendable.Contracts.v1.Requests;
+using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.Expendable.Features.v1.Reports.GetPhysicalCountReport;
+namespace AMIS.Modules.Expendable.Features.v1.Reports.GetPhysicalCountReport;
 
 public static class GetPhysicalCountReportEndpoint
 {
@@ -25,3 +25,4 @@ public static class GetPhysicalCountReportEndpoint
         return TypedResults.Ok(result);
     }
 }
+

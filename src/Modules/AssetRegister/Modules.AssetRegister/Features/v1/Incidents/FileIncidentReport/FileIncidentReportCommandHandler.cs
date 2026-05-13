@@ -1,12 +1,12 @@
-using FSH.Modules.AssetRegister.Contracts.v1.Incidents;
-using FSH.Modules.AssetRegister.Contracts.v1.ValueObjects;
-using FSH.Modules.AssetRegister.Data;
-using FSH.Modules.AssetRegister.Domain.Incidents;
-using FSH.Modules.AssetRegister.Domain.Services;
+using AMIS.Modules.AssetRegister.Contracts.v1.Incidents;
+using AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
+using AMIS.Modules.AssetRegister.Data;
+using AMIS.Modules.AssetRegister.Domain.Incidents;
+using AMIS.Modules.AssetRegister.Domain.Services;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Incidents.FileIncidentReport;
+namespace AMIS.Modules.AssetRegister.Features.v1.Incidents.FileIncidentReport;
 
 public sealed class FileIncidentReportCommandHandler(
     AssetRegisterDbContext db,
@@ -71,3 +71,4 @@ public sealed class FileIncidentReportCommandHandler(
         return IncidentMapper.ToDto(report);
     }
 }
+

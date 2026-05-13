@@ -1,6 +1,6 @@
-using FSH.Framework.Core.Domain;
+using AMIS.Framework.Core.Domain;
 
-namespace FSH.Modules.MasterData.Domain;
+namespace AMIS.Modules.MasterData.Domain;
 
 /// <summary>
 /// Top-level COA GAM Annex A property classification (PPRCLSCD).
@@ -46,3 +46,4 @@ public sealed class PropertyClass : AggregateRoot<Guid>, IAuditableEntity
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
     }
 }
+

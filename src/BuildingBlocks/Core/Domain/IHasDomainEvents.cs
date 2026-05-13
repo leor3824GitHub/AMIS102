@@ -1,4 +1,4 @@
-﻿namespace FSH.Framework.Core.Domain;
+namespace AMIS.Framework.Core.Domain;
 
 /// <summary>
 /// Exposes domain events raised by an entity.
@@ -15,3 +15,4 @@ public interface IHasDomainEvents
     /// </summary>
     void ClearDomainEvents();
 }
+

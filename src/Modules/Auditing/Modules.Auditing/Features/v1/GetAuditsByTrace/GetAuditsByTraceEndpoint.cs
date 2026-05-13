@@ -1,12 +1,12 @@
-using FSH.Framework.Shared.Identity;
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.Auditing.Contracts.v1.GetAuditsByTrace;
+using AMIS.Framework.Shared.Identity;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.Auditing.Contracts.v1.GetAuditsByTrace;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.Auditing.Features.v1.GetAuditsByTrace;
+namespace AMIS.Modules.Auditing.Features.v1.GetAuditsByTrace;
 
 public static class GetAuditsByTraceEndpoint
 {
@@ -27,4 +27,5 @@ public static class GetAuditsByTraceEndpoint
             .RequirePermission(AuditingPermissionConstants.View);
     }
 }
+
 

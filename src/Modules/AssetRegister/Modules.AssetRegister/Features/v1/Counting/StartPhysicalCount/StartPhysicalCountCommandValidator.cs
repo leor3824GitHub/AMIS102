@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.AssetRegister.Contracts.v1.Counting;
+using AMIS.Modules.AssetRegister.Contracts.v1.Counting;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Counting.StartPhysicalCount;
+namespace AMIS.Modules.AssetRegister.Features.v1.Counting.StartPhysicalCount;
 
 public sealed class StartPhysicalCountCommandValidator : AbstractValidator<StartPhysicalCountCommand>
 {
@@ -18,3 +18,4 @@ public sealed class StartPhysicalCountCommandValidator : AbstractValidator<Start
         });
     }
 }
+

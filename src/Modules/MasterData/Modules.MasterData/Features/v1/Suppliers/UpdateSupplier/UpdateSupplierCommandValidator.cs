@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace FSH.Modules.MasterData.Features.v1.Suppliers.UpdateSupplier;
+namespace AMIS.Modules.MasterData.Features.v1.Suppliers.UpdateSupplier;
 
 public sealed class UpdateSupplierCommandValidator : AbstractValidator<UpdateSupplierCommand>
 {
@@ -43,3 +43,4 @@ public sealed class UpdateSupplierCommandValidator : AbstractValidator<UpdateSup
             .MaximumLength(400).WithMessage("Address must not exceed 400 characters.");
     }
 }
+

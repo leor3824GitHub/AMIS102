@@ -1,11 +1,11 @@
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.AssetProcurement.Contracts.v1.AssetPurchaseOrders;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.AssetProcurement.Contracts.v1.AssetPurchaseOrders;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.AssetProcurement.Features.v1.AssetPurchaseOrders.CancelAssetPurchaseOrder;
+namespace AMIS.Modules.AssetProcurement.Features.v1.AssetPurchaseOrders.CancelAssetPurchaseOrder;
 
 public static class CancelAssetPurchaseOrderEndpoint
 {
@@ -27,3 +27,4 @@ public static class CancelAssetPurchaseOrderEndpoint
         return TypedResults.Ok(result);
     }
 }
+

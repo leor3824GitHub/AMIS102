@@ -1,15 +1,15 @@
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
 
-namespace FSH.CLI.Services;
+namespace AMIS.CLI.Services;
 
 /// <summary>
-/// Service for fetching FSH release information from GitHub.
+/// Service for fetching AMIS release information from GitHub.
 /// </summary>
 internal sealed class GitHubReleaseService : IDisposable
 {
     private const string GitHubApiBase = "https://api.github.com";
-    private const string RepoOwner = "fullstackhero";
+    private const string RepoOwner = "AMIS";
     private const string RepoName = "dotnet-starter-kit";
 
     private readonly HttpClient _httpClient;
@@ -22,7 +22,7 @@ internal sealed class GitHubReleaseService : IDisposable
             BaseAddress = new Uri(GitHubApiBase),
             DefaultRequestHeaders =
             {
-                { "User-Agent", "FSH-CLI" },
+                { "User-Agent", "AMIS-CLI" },
                 { "Accept", "application/vnd.github+json" }
             }
         };
@@ -183,3 +183,4 @@ internal sealed class GitHubRelease
     /// </summary>
     public string Version => TagName.TrimStart('v', 'V');
 }
+

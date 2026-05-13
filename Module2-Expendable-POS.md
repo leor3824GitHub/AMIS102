@@ -1,4 +1,4 @@
-# Module 2: Expendable - Employee Online Shopping & Supply Request System
+﻿# Module 2: Expendable - Employee Online Shopping & Supply Request System
 
 ## Overview
 
@@ -2357,7 +2357,7 @@ endpoints.MapGet("/inventory/{employeeId}", handler)
 
 ```csharp
 public class ExpenableDbContext : 
-    MultiTenantIdentityDbContext<FshUser, FshRole>
+    MultiTenantIdentityDbContext<AMISUser, AMISRole>
 {
     public DbSet<Product> Products => Set<Product>();
     public DbSet<EmployeeShoppingCart> ShoppingCarts => Set<EmployeeShoppingCart>();

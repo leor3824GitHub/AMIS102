@@ -1,4 +1,4 @@
-﻿namespace FSH.Modules.Identity;
+namespace AMIS.Modules.Identity;
 
 public static class AuthenticationConstants
 {

@@ -1,7 +1,7 @@
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Modules.AssetManagement.Domain;
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.Reports.RegistryOfSPIssued;
+namespace AMIS.Modules.AssetManagement.Features.v1.Reports.RegistryOfSPIssued;
 
 /// <summary>
 /// Generates a Registry of Semi-Expendable Property Issued (RegSPI) for a specific employee.
@@ -64,3 +64,4 @@ public sealed record RegSPIEntryDto(
     string? IssuedFromEmployeeName,
     string? IssuedFromEmployeePositionName,
     string? IssuedFromEmployeeOfficeName);
+

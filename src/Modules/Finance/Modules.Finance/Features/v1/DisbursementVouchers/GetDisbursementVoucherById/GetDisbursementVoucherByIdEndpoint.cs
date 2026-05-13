@@ -1,11 +1,11 @@
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.Finance.Contracts.v1.DisbursementVouchers;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.Finance.Contracts.v1.DisbursementVouchers;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.Finance.Features.v1.DisbursementVouchers.GetDisbursementVoucherById;
+namespace AMIS.Modules.Finance.Features.v1.DisbursementVouchers.GetDisbursementVoucherById;
 
 public static class GetDisbursementVoucherByIdEndpoint
 {
@@ -16,3 +16,4 @@ public static class GetDisbursementVoucherByIdEndpoint
         .WithSummary("Get disbursement voucher by ID")
         .RequirePermission(FinanceModuleConstants.Permissions.DisbursementVouchers.View);
 }
+

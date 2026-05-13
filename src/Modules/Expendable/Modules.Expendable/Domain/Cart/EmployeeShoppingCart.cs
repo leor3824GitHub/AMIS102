@@ -1,6 +1,6 @@
-using FSH.Framework.Core.Domain;
+using AMIS.Framework.Core.Domain;
 
-namespace FSH.Modules.Expendable.Domain.Cart;
+namespace AMIS.Modules.Expendable.Domain.Cart;
 
 /// <summary>Shopping cart status enumeration</summary>
 public enum CartStatus
@@ -163,4 +163,5 @@ public class EmployeeShoppingCart : AggregateRoot<Guid>, IHasTenant, IAuditableE
         DeletedBy = deletedBy;
     }
 }
+
 

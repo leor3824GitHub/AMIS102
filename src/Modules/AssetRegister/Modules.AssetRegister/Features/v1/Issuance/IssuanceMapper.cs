@@ -1,8 +1,8 @@
-using FSH.Modules.AssetRegister.Contracts.v1.Issuance;
-using FSH.Modules.AssetRegister.Domain.Issuance;
-using FSH.Modules.AssetRegister.Features.v1.Accountability;
+using AMIS.Modules.AssetRegister.Contracts.v1.Issuance;
+using AMIS.Modules.AssetRegister.Domain.Issuance;
+using AMIS.Modules.AssetRegister.Features.v1.Accountability;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Issuance;
+namespace AMIS.Modules.AssetRegister.Features.v1.Issuance;
 
 internal static class IssuanceMapper
 {
@@ -19,3 +19,4 @@ internal static class IssuanceMapper
             r.PostedOn,
             r.Lines.Select(ToDto).ToList());
 }
+

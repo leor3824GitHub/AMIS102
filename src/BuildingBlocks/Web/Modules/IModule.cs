@@ -1,13 +1,13 @@
-ï»¿using Microsoft.AspNetCore.Routing;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Hosting;
 
-namespace FSH.Framework.Web.Modules;
+namespace AMIS.Framework.Web.Modules;
 
 public interface IModule
 {
-    // DI/Options/Health/etc. â€” donâ€™t depend on ASP.NET types here
+    // DI/Options/Health/etc. — don’t depend on ASP.NET types here
     void ConfigureServices(IHostApplicationBuilder builder);
 
-    // HTTP wiring â€” Minimal APIs only
+    // HTTP wiring — Minimal APIs only
     void MapEndpoints(IEndpointRouteBuilder endpoints);
 }

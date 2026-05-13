@@ -1,6 +1,6 @@
-using FSH.Framework.Core.Domain;
+using AMIS.Framework.Core.Domain;
 
-namespace FSH.Modules.Identity.Domain;
+namespace AMIS.Modules.Identity.Domain;
 
 public class Group : ISoftDeletable
 {
@@ -54,3 +54,4 @@ public class Group : ISoftDeletable
         ModifiedBy = modifiedBy;
     }
 }
+

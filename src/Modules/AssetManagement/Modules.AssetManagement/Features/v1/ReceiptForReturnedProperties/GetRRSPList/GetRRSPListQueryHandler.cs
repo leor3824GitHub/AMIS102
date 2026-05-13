@@ -1,8 +1,8 @@
-using FSH.Modules.AssetManagement.Data;
+using AMIS.Modules.AssetManagement.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.ReceiptForReturnedProperties.GetRRSPList;
+namespace AMIS.Modules.AssetManagement.Features.v1.ReceiptForReturnedProperties.GetRRSPList;
 
 public sealed class GetRRSPListQueryHandler(AssetManagementDbContext dbContext)
     : IQueryHandler<GetRRSPListQuery, PagedRRSPListResponse>
@@ -99,3 +99,4 @@ public sealed class GetRRSPListQueryHandler(AssetManagementDbContext dbContext)
         return new PagedRRSPListResponse(result, pageNumber, pageSize, totalCount);
     }
 }
+

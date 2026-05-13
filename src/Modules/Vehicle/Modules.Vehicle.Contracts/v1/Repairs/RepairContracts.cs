@@ -1,7 +1,7 @@
-using FSH.Framework.Shared.Persistence;
+using AMIS.Framework.Shared.Persistence;
 using Mediator;
 
-namespace FSH.Modules.Vehicle.Contracts.v1.Repairs;
+namespace AMIS.Modules.Vehicle.Contracts.v1.Repairs;
 
 public record RepairRecordDto(
     Guid Id,
@@ -63,3 +63,4 @@ public sealed class SearchRepairRecordsQuery : IPagedQuery, IQuery<PagedResponse
     public int? PageSize { get; set; }
     public string? Sort { get; set; }
 }
+

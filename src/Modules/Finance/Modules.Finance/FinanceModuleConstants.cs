@@ -1,4 +1,4 @@
-namespace FSH.Modules.Finance;
+namespace AMIS.Modules.Finance;
 
 public static class FinanceModuleConstants
 {
@@ -26,3 +26,4 @@ public static class FinanceModuleConstants
         }
     }
 }
+

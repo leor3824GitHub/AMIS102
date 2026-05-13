@@ -1,10 +1,10 @@
-using FSH.Framework.Persistence;
+using AMIS.Framework.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using FSH.Modules.Expendable.Domain.Products;
-using FSH.Framework.Shared.Multitenancy;
+using AMIS.Modules.Expendable.Domain.Products;
+using AMIS.Framework.Shared.Multitenancy;
 
-namespace FSH.Modules.Expendable.Data;
+namespace AMIS.Modules.Expendable.Data;
 
 /// <summary>
 /// Initializes the Expendable module database context.
@@ -79,3 +79,4 @@ internal sealed class ExpendableDbInitializer(
         logger.LogInformation("[{Tenant}] seeded expendable products.", context.TenantInfo?.Identifier);
     }
 }
+

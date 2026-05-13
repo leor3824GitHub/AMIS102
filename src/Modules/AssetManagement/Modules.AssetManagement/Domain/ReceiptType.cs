@@ -1,4 +1,4 @@
-namespace FSH.Modules.AssetManagement.Domain;
+namespace AMIS.Modules.AssetManagement.Domain;
 
 /// <summary>
 /// Basis of receipt for a Supplies and Materials Receiving Report (SMRR).
@@ -11,3 +11,4 @@ public enum ReceiptType
     Donation = 2,
     Others   = 3,
 }
+

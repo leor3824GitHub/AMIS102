@@ -1,7 +1,7 @@
-using FSH.Framework.Core;
-using FSH.Framework.Persistence;
-using FSH.Framework.Shared.Multitenancy;
-using FSH.Framework.Web;
+using AMIS.Framework.Core;
+using AMIS.Framework.Persistence;
+using AMIS.Framework.Shared.Multitenancy;
+using AMIS.Framework.Web;
 using NetArchTest.Rules;
 using Shouldly;
 using System.Reflection;
@@ -20,10 +20,10 @@ public class BuildingBlocksIndependenceTests
 
     private static readonly Assembly[] BuildingBlockAssemblies =
     [
-        typeof(IFshCore).Assembly,               // Core
+        typeof(IAMISCore).Assembly,               // Core
         typeof(IConnectionStringValidator).Assembly,  // Persistence
         typeof(IAppTenantInfo).Assembly,         // Shared
-        typeof(IFshWeb).Assembly                 // Web
+        typeof(IAMISWeb).Assembly                 // Web
     ];
 
     [Fact]
@@ -35,9 +35,9 @@ public class BuildingBlocksIndependenceTests
                 .InAssembly(assembly)
                 .ShouldNot()
                 .HaveDependencyOnAny(
-                    "FSH.Modules.Auditing",
-                    "FSH.Modules.Identity",
-                    "FSH.Modules.Multitenancy")
+                    "AMIS.Modules.Auditing",
+                    "AMIS.Modules.Identity",
+                    "AMIS.Modules.Multitenancy")
                 .GetResult();
 
             var failingTypes = result.FailingTypeNames ?? [];
@@ -57,7 +57,7 @@ public class BuildingBlocksIndependenceTests
                 .InAssembly(assembly)
                 .ShouldNot()
                 .HaveDependencyOnAny(
-                    "FSH.Playground",
+                    "AMIS.Playground",
                     "Playground.Api",
                     "Playground.Blazor")
                 .GetResult();
@@ -237,3 +237,4 @@ public class BuildingBlocksIndependenceTests
         }
     }
 }
+

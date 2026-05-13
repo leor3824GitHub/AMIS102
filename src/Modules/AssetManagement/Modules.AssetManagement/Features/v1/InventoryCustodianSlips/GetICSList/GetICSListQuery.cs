@@ -1,7 +1,7 @@
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Modules.AssetManagement.Domain;
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.InventoryCustodianSlips.GetICSList;
+namespace AMIS.Modules.AssetManagement.Features.v1.InventoryCustodianSlips.GetICSList;
 
 public sealed record GetICSListQuery(
     string? Keyword,
@@ -30,3 +30,4 @@ public sealed record ICSSummaryDto(
     Guid? IssuedFromEmployeeId,
     Guid ReceivedByEmployeeId,
     int ItemCount);
+

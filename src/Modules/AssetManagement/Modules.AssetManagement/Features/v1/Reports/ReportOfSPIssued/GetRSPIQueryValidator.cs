@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace FSH.Modules.AssetManagement.Features.v1.Reports.ReportOfSPIssued;
+namespace AMIS.Modules.AssetManagement.Features.v1.Reports.ReportOfSPIssued;
 
 public sealed class GetRSPIQueryValidator : AbstractValidator<GetRSPIQuery>
 {

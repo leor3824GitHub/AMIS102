@@ -1,4 +1,4 @@
-namespace FSH.Playground.Blazor.Services;
+namespace AMIS.Playground.Blazor.Services;
 
 /// <summary>
 /// Service for managing and sharing user profile state across components.
@@ -59,3 +59,4 @@ internal sealed class UserProfileState : IUserProfileState
         OnProfileChanged?.Invoke();
     }
 }
+

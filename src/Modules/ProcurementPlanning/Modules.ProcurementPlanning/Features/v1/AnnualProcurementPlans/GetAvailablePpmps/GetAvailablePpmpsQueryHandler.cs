@@ -1,10 +1,10 @@
-using FSH.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
-using FSH.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
-using FSH.Modules.ProcurementPlanning.Data;
+using AMIS.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
+using AMIS.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
+using AMIS.Modules.ProcurementPlanning.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.GetAvailablePpmps;
+namespace AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.GetAvailablePpmps;
 
 public sealed class GetAvailablePpmpsQueryHandler(
     ProcurementPlanningDbContext dbContext) : IQueryHandler<GetAvailablePpmpsForAppQuery, IReadOnlyList<PpmpSummaryDto>>
@@ -52,3 +52,4 @@ public sealed class GetAvailablePpmpsQueryHandler(
             .ConfigureAwait(false);
     }
 }
+

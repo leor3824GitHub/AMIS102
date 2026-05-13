@@ -1,4 +1,4 @@
----
+﻿---
 paths:
   - "src/Modules/**"
 ---
@@ -69,23 +69,23 @@ Notes:
 
 ```csharp
 // Reference another module's contracts only
-using FSH.Modules.Identity.Contracts;
+using AMIS.Modules.Identity.Contracts;
 ```
 
 ```csharp
 // Use BuildingBlocks
-using FSH.Framework.Persistence;
-using FSH.Framework.Web.Modules;
+using AMIS.Framework.Persistence;
+using AMIS.Framework.Web.Modules;
 ```
 
 ### Forbidden
 
 ```csharp
 // Direct reference to another module's implementation assembly internals
-using FSH.Modules.Identity;
-using FSH.Modules.Identity.Data;
-using FSH.Modules.Identity.Features;
-using FSH.Modules.Identity.Domain;
+using AMIS.Modules.Identity;
+using AMIS.Modules.Identity.Data;
+using AMIS.Modules.Identity.Features;
+using AMIS.Modules.Identity.Domain;
 ```
 
 Rule:
@@ -291,7 +291,7 @@ Follow the Mediator library, not MediatR.
 3. Add `ContractsMarker`, `ModuleConstants`, `DbContext`, `DbContextFactory`, and `DbInitializer`.
 4. Implement `IModule` with permissions, `AddHeroDbContext`, and endpoint grouping.
 5. Add at least one vertical slice under `Features/v1/...`.
-6. Add both projects to `src/FSH.Framework.slnx`.
+6. Add both projects to `src/AMIS.Framework.slnx`.
 7. Add both project references to `Playground.Api.csproj`.
 8. Update `Playground.Api/Program.cs` Mediator and `moduleAssemblies` wiring.
 9. Build and test the full solution.
@@ -299,8 +299,8 @@ Follow the Mediator library, not MediatR.
 ## Verification
 
 ```bash
-dotnet build src/FSH.Framework.slnx
-dotnet test src/FSH.Framework.slnx
+dotnet build src/AMIS.Framework.slnx
+dotnet test src/AMIS.Framework.slnx
 ```
 
 ## Practical Baseline
@@ -314,7 +314,7 @@ dotnet test src/FSH.Framework.slnx
 ### Permissions
 
 ```csharp
-namespace FSH.Modules.Catalog.Permissions;
+namespace AMIS.Modules.Catalog.Permissions;
 
 public static class CatalogPermissions
 {
@@ -331,7 +331,7 @@ public static class CatalogPermissions
 ### DTOs (in Contracts)
 
 ```csharp
-namespace FSH.Modules.Catalog.Contracts;
+namespace AMIS.Modules.Catalog.Contracts;
 
 public record ProductDto(
     Guid Id,
@@ -345,7 +345,7 @@ public record ProductDto(
 ### Events (in Contracts)
 
 ```csharp
-namespace FSH.Modules.Catalog.Contracts;
+namespace AMIS.Modules.Catalog.Contracts;
 
 public record ProductCreatedEvent(Guid ProductId, string Name) : DomainEvent;
 public record ProductUpdatedEvent(Guid ProductId) : DomainEvent;
@@ -363,3 +363,4 @@ public record ProductDeletedEvent(Guid ProductId) : DomainEvent;
 ---
 
 For scaffolding help: Use `/add-module` skill or `module-creator` agent.
+

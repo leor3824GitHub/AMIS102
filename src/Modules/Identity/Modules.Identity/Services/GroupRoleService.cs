@@ -1,8 +1,8 @@
-using FSH.Modules.Identity.Contracts.Services;
-using FSH.Modules.Identity.Data;
+using AMIS.Modules.Identity.Contracts.Services;
+using AMIS.Modules.Identity.Data;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.Identity.Services;
+namespace AMIS.Modules.Identity.Services;
 
 public sealed class GroupRoleService : IGroupRoleService
 {
@@ -38,3 +38,4 @@ public sealed class GroupRoleService : IGroupRoleService
         return groupRoles;
     }
 }
+

@@ -1,7 +1,7 @@
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Modules.AssetManagement.Domain;
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.TangibleInventory.GetTangibleInventoryById;
+namespace AMIS.Modules.AssetManagement.Features.v1.TangibleInventory.GetTangibleInventoryById;
 
 public sealed record GetTangibleInventoryByIdQuery(Guid Id) : IQuery<TangibleInventoryDetailDto>;
 
@@ -32,3 +32,4 @@ public sealed record TangibleInventoryItemDto(
     int Quantity,
     decimal UnitCost,
     decimal Amount);
+

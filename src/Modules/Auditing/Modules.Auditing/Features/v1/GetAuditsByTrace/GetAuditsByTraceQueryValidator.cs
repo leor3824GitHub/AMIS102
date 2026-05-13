@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.Auditing.Contracts.v1.GetAuditsByTrace;
+using AMIS.Modules.Auditing.Contracts.v1.GetAuditsByTrace;
 
-namespace FSH.Modules.Auditing.Features.v1.GetAuditsByTrace;
+namespace AMIS.Modules.Auditing.Features.v1.GetAuditsByTrace;
 
 public sealed class GetAuditsByTraceQueryValidator : AbstractValidator<GetAuditsByTraceQuery>
 {
@@ -15,4 +15,5 @@ public sealed class GetAuditsByTraceQueryValidator : AbstractValidator<GetAudits
             .WithMessage("FromUtc must be less than or equal to ToUtc.");
     }
 }
+
 

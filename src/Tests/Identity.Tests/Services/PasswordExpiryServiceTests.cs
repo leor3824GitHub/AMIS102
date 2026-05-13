@@ -1,7 +1,7 @@
-using FSH.Modules.Identity.Contracts.Services;
-using FSH.Modules.Identity.Data;
-using FSH.Modules.Identity.Domain;
-using FSH.Modules.Identity.Services;
+using AMIS.Modules.Identity.Contracts.Services;
+using AMIS.Modules.Identity.Data;
+using AMIS.Modules.Identity.Domain;
+using AMIS.Modules.Identity.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using NSubstitute;
@@ -13,12 +13,12 @@ namespace Identity.Tests.Services;
 /// </summary>
 public sealed class PasswordExpiryServiceTests
 {
-    private readonly UserManager<FshUser> _userManager;
+    private readonly UserManager<AmisUser> _userManager;
 
     public PasswordExpiryServiceTests()
     {
-        var userStore = Substitute.For<IUserStore<FshUser>>();
-        _userManager = Substitute.For<UserManager<FshUser>>(
+        var userStore = Substitute.For<IUserStore<AmisUser>>();
+        _userManager = Substitute.For<UserManager<AmisUser>>(
             userStore, null!, null!, null!, null!, null!, null!, null!, null!);
     }
 
@@ -27,9 +27,9 @@ public sealed class PasswordExpiryServiceTests
         return new PasswordExpiryService(_userManager, Options.Create(options));
     }
 
-    private static FshUser CreateUser(DateTime lastPasswordChangeDate)
+    private static AmisUser CreateUser(DateTime lastPasswordChangeDate)
     {
-        return new FshUser
+        return new AmisUser
         {
             Id = Guid.NewGuid().ToString(),
             Email = "test@example.com",
@@ -38,7 +38,7 @@ public sealed class PasswordExpiryServiceTests
         };
     }
 
-    private void SetupUserManager(FshUser user)
+    private void SetupUserManager(AmisUser user)
     {
         _userManager.FindByIdAsync(user.Id).Returns(user);
     }
@@ -152,7 +152,7 @@ public sealed class PasswordExpiryServiceTests
             PasswordExpiryDays = 90
         };
         var service = CreateService(options);
-        _userManager.FindByIdAsync(Arg.Any<string>()).Returns((FshUser?)null);
+        _userManager.FindByIdAsync(Arg.Any<string>()).Returns((AmisUser?)null);
 
         // Act
         var result = await service.IsPasswordExpiredAsync("nonexistent-user-id");
@@ -251,7 +251,7 @@ public sealed class PasswordExpiryServiceTests
             PasswordExpiryDays = 90
         };
         var service = CreateService(options);
-        _userManager.FindByIdAsync(Arg.Any<string>()).Returns((FshUser?)null);
+        _userManager.FindByIdAsync(Arg.Any<string>()).Returns((AmisUser?)null);
 
         // Act
         var result = await service.GetDaysUntilExpiryAsync("nonexistent-user-id");
@@ -375,7 +375,7 @@ public sealed class PasswordExpiryServiceTests
             PasswordExpiryWarningDays = 14
         };
         var service = CreateService(options);
-        _userManager.FindByIdAsync(Arg.Any<string>()).Returns((FshUser?)null);
+        _userManager.FindByIdAsync(Arg.Any<string>()).Returns((AmisUser?)null);
 
         // Act
         var result = await service.IsPasswordExpiringWithinWarningPeriodAsync("nonexistent-user-id");
@@ -514,7 +514,7 @@ public sealed class PasswordExpiryServiceTests
             PasswordExpiryDays = 90
         };
         var service = CreateService(options);
-        _userManager.FindByIdAsync(Arg.Any<string>()).Returns((FshUser?)null);
+        _userManager.FindByIdAsync(Arg.Any<string>()).Returns((AmisUser?)null);
 
         // Act
         var result = await service.GetPasswordExpiryStatusAsync("nonexistent-user-id");
@@ -558,14 +558,15 @@ public sealed class PasswordExpiryServiceTests
         // Arrange
         var options = new PasswordPolicyOptions();
         var service = CreateService(options);
-        _userManager.FindByIdAsync(Arg.Any<string>()).Returns((FshUser?)null);
+        _userManager.FindByIdAsync(Arg.Any<string>()).Returns((AmisUser?)null);
 
         // Act
         await service.UpdateLastPasswordChangeDateAsync("nonexistent-user-id");
 
         // Assert
-        await _userManager.DidNotReceive().UpdateAsync(Arg.Any<FshUser>());
+        await _userManager.DidNotReceive().UpdateAsync(Arg.Any<AmisUser>());
     }
 
     #endregion
 }
+

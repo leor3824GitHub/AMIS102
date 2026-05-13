@@ -1,6 +1,6 @@
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.AssetRegistryQueries.GetAssetAssignmentTimeline;
+namespace AMIS.Modules.AssetManagement.Features.v1.AssetRegistryQueries.GetAssetAssignmentTimeline;
 
 public sealed record GetAssetAssignmentTimelineQuery(
     Guid AssetRegistryId,

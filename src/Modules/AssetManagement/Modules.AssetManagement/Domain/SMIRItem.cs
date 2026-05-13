@@ -1,6 +1,6 @@
-using FSH.Framework.Core.Domain;
+using AMIS.Framework.Core.Domain;
 
-namespace FSH.Modules.AssetManagement.Domain;
+namespace AMIS.Modules.AssetManagement.Domain;
 
 /// <summary>
 /// A line item within a Semi-expendable Materials Issuance Record (SMIR).
@@ -53,3 +53,4 @@ public sealed class SMIRItem : BaseEntity<Guid>, IHasTenant
         };
     }
 }
+

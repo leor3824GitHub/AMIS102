@@ -1,5 +1,5 @@
-using FSH.Modules.AssetManagement.Domain;
-using FSH.Modules.AssetManagement.Features.v1.InventoryCustodianSlips.CreateICS;
+using AMIS.Modules.AssetManagement.Domain;
+using AMIS.Modules.AssetManagement.Features.v1.InventoryCustodianSlips.CreateICS;
 using Shouldly;
 using Xunit;
 
@@ -147,3 +147,4 @@ public sealed class CreateICSCommandValidatorTests
             ReceivedByEmployeeId: Guid.NewGuid(),
             Items: [new CreateICSItemRequest(Guid.NewGuid(), "Laptop")]);
 }
+

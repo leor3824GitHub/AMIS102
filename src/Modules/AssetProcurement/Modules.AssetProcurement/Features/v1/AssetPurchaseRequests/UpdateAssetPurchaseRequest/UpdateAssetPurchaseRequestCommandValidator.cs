@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.AssetProcurement.Contracts.v1.AssetPurchaseRequests;
+using AMIS.Modules.AssetProcurement.Contracts.v1.AssetPurchaseRequests;
 
-namespace FSH.Modules.AssetProcurement.Features.v1.AssetPurchaseRequests.UpdateAssetPurchaseRequest;
+namespace AMIS.Modules.AssetProcurement.Features.v1.AssetPurchaseRequests.UpdateAssetPurchaseRequest;
 
 public sealed class UpdateAssetPurchaseRequestCommandValidator : AbstractValidator<UpdateAssetPurchaseRequestCommand>
 {
@@ -24,3 +24,4 @@ public sealed class UpdateAssetPurchaseRequestCommandValidator : AbstractValidat
         });
     }
 }
+

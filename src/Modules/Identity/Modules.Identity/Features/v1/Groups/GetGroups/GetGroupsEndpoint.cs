@@ -1,12 +1,12 @@
-using FSH.Framework.Shared.Identity;
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.Identity.Contracts.v1.Groups.GetGroups;
+using AMIS.Framework.Shared.Identity;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.Identity.Contracts.v1.Groups.GetGroups;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.Identity.Features.v1.Groups.GetGroups;
+namespace AMIS.Modules.Identity.Features.v1.Groups.GetGroups;
 
 public static class GetGroupsEndpoint
 {
@@ -20,3 +20,4 @@ public static class GetGroupsEndpoint
         .WithDescription("Retrieve all groups for the current tenant with optional search filter.");
     }
 }
+

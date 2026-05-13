@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace FSH.Modules.AssetManagement.Features.v1.PPEIssuanceReports.UpdatePPEIRDepreciation;
+namespace AMIS.Modules.AssetManagement.Features.v1.PPEIssuanceReports.UpdatePPEIRDepreciation;
 
 public sealed class UpdatePPEIRDepreciationCommandValidator : AbstractValidator<UpdatePPEIRDepreciationCommand>
 {
@@ -20,3 +20,4 @@ public sealed class UpdatePPEIRDepreciationCommandValidator : AbstractValidator<
         });
     }
 }
+

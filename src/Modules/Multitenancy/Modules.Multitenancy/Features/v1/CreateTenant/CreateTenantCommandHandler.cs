@@ -1,9 +1,9 @@
-using FSH.Modules.Multitenancy.Contracts;
-using FSH.Modules.Multitenancy.Contracts.v1.CreateTenant;
-using FSH.Modules.Multitenancy.Provisioning;
+using AMIS.Modules.Multitenancy.Contracts;
+using AMIS.Modules.Multitenancy.Contracts.v1.CreateTenant;
+using AMIS.Modules.Multitenancy.Provisioning;
 using Mediator;
 
-namespace FSH.Modules.Multitenancy.Features.v1.CreateTenant;
+namespace AMIS.Modules.Multitenancy.Features.v1.CreateTenant;
 
 public sealed class CreateTenantCommandHandler(ITenantService tenantService, ITenantProvisioningService provisioningService)
     : ICommandHandler<CreateTenantCommand, CreateTenantCommandResponse>
@@ -28,3 +28,4 @@ public sealed class CreateTenantCommandHandler(ITenantService tenantService, ITe
             provisioning.Status.ToString());
     }
 }
+

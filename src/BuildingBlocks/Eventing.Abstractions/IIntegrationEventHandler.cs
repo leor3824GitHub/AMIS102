@@ -1,4 +1,4 @@
-namespace FSH.Framework.Eventing.Abstractions;
+namespace AMIS.Framework.Eventing.Abstractions;
 
 /// <summary>
 /// Handles a single integration event type.
@@ -9,3 +9,4 @@ public interface IIntegrationEventHandler<in TEvent>
 {
     Task HandleAsync(TEvent @event, CancellationToken ct = default);
 }
+

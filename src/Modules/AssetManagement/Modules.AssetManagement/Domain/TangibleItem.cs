@@ -1,6 +1,6 @@
-using FSH.Framework.Core.Domain;
+using AMIS.Framework.Core.Domain;
 
-namespace FSH.Modules.AssetManagement.Domain;
+namespace AMIS.Modules.AssetManagement.Domain;
 
 public sealed class TangibleItem : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 {
@@ -69,3 +69,4 @@ public sealed class TangibleItem : AggregateRoot<Guid>, IHasTenant, IAuditableEn
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
     }
 }
+

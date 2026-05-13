@@ -1,9 +1,9 @@
-using FSH.Modules.AssetRegister.Contracts.v1.Incidents;
-using FSH.Modules.AssetRegister.Data;
+using AMIS.Modules.AssetRegister.Contracts.v1.Incidents;
+using AMIS.Modules.AssetRegister.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Incidents;
+namespace AMIS.Modules.AssetRegister.Features.v1.Incidents;
 
 public sealed class RecordIncidentRecoveryCommandHandler(AssetRegisterDbContext db)
     : ICommandHandler<RecordIncidentRecoveryCommand, PropertyIncidentReportDto>
@@ -107,3 +107,4 @@ public sealed class CloseIncidentReportCommandHandler(AssetRegisterDbContext db)
         return IncidentMapper.ToDto(report);
     }
 }
+

@@ -1,9 +1,9 @@
-using FSH.Framework.Core.Context;
-using FSH.Modules.MasterData.Data;
+using AMIS.Framework.Core.Context;
+using AMIS.Modules.MasterData.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.MasterData.Features.v1.Suppliers.DeleteSupplier;
+namespace AMIS.Modules.MasterData.Features.v1.Suppliers.DeleteSupplier;
 
 public sealed class DeleteSupplierCommandHandler : ICommandHandler<DeleteSupplierCommand, Unit>
 {
@@ -37,3 +37,4 @@ public sealed class DeleteSupplierCommandHandler : ICommandHandler<DeleteSupplie
         return Unit.Value;
     }
 }
+

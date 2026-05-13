@@ -1,4 +1,4 @@
-﻿namespace FSH.Modules.Auditing.Contracts;
+namespace AMIS.Modules.Auditing.Contracts;
 
 public sealed record ExceptionEventPayload(
     ExceptionArea Area,
@@ -8,3 +8,4 @@ public sealed record ExceptionEventPayload(
     IReadOnlyDictionary<string, object?>? Data,
     string? RouteOrLocation
 );
+

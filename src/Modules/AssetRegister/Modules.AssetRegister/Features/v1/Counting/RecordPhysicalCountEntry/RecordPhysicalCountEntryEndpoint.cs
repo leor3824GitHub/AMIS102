@@ -1,11 +1,11 @@
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.AssetRegister.Contracts.v1.Counting;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.AssetRegister.Contracts.v1.Counting;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Counting.RecordPhysicalCountEntry;
+namespace AMIS.Modules.AssetRegister.Features.v1.Counting.RecordPhysicalCountEntry;
 
 public static class RecordPhysicalCountEntryEndpoint
 {
@@ -24,3 +24,4 @@ public static class RecordPhysicalCountEntryEndpoint
         return TypedResults.Ok(result);
     }
 }
+

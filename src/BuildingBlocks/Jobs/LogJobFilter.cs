@@ -4,7 +4,7 @@ using Hangfire.Server;
 using Hangfire.States;
 using Hangfire.Storage;
 
-namespace FSH.Framework.Jobs;
+namespace AMIS.Framework.Jobs;
 
 public class LogJobFilter : IClientFilter, IServerFilter, IElectStateFilter, IApplyStateFilter
 {
@@ -137,3 +137,4 @@ public class LogJobFilter : IClientFilter, IServerFilter, IElectStateFilter, IAp
         #pragma warning restore CA1031
     }
 }
+

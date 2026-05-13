@@ -1,6 +1,6 @@
 using Microsoft.Net.Http.Headers;
 
-namespace FSH.Modules.Auditing;
+namespace AMIS.Modules.Auditing;
 
 internal static class ContentTypeHelper
 {
@@ -17,4 +17,5 @@ internal static class ContentTypeHelper
         return allowed.Contains(type.Trim());
     }
 }
+
 

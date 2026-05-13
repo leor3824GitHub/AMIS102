@@ -1,10 +1,10 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using Serilog.Events;
 using Serilog.Filters;
 
-namespace FSH.Framework.Web.Observability.Logging.Serilog;
+namespace AMIS.Framework.Web.Observability.Logging.Serilog;
 
 public static class Extensions
 {

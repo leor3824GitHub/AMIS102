@@ -1,4 +1,4 @@
-namespace FSH.Framework.Shared.Auditing;
+namespace AMIS.Framework.Shared.Auditing;
 
 /// <summary>Marks a property that should be excluded from audit diffs and payloads.</summary>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
@@ -16,4 +16,5 @@ public sealed class AuditSensitiveAttribute : Attribute
     public AuditSensitiveAttribute(bool hash = false, bool redact = false)
         => (Hash, Redact) = (hash, redact);
 }
+
 

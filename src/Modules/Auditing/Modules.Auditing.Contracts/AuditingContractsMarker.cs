@@ -1,6 +1,7 @@
-namespace FSH.Modules.Auditing.Contracts;
+namespace AMIS.Modules.Auditing.Contracts;
 
 // Marker type for contract assembly scanning (Mediator, etc.)
 public sealed class AuditingContractsMarker
 {
 }
+

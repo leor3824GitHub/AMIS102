@@ -1,10 +1,10 @@
-using FSH.Framework.Shared.Identity.Authorization;
+using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.AssetManagement.Features.v1.PPEIssuanceReports.GetPPEIRById;
+namespace AMIS.Modules.AssetManagement.Features.v1.PPEIssuanceReports.GetPPEIRById;
 
 public static class GetPPEIRByIdEndpoint
 {
@@ -15,3 +15,4 @@ public static class GetPPEIRByIdEndpoint
         .WithSummary("Get a PPE Issuance Report by ID")
         .RequirePermission(AssetManagementModuleConstants.Permissions.PPEIssuanceReports.View);
 }
+

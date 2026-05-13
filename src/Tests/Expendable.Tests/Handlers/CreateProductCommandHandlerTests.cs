@@ -1,8 +1,8 @@
 using AutoFixture;
 using Shouldly;
-using FSH.Framework.Core.Context;
-using FSH.Modules.Expendable.Contracts.v1.Products;
-using FSH.Modules.Expendable.Features.v1.Products.CreateProduct;
+using AMIS.Framework.Core.Context;
+using AMIS.Modules.Expendable.Contracts.v1.Products;
+using AMIS.Modules.Expendable.Features.v1.Products.CreateProduct;
 using NSubstitute;
 using Xunit;
 
@@ -340,4 +340,5 @@ public sealed class CreateProductCommandHandlerTests
         result.Errors.ShouldBeEmpty();
     }
 }
+
 

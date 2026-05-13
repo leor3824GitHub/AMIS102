@@ -1,9 +1,9 @@
-using FSH.Modules.AssetManagement.Data;
-using FSH.Modules.AssetManagement.Features.v1.TangibleItems.RegisterTangibleItem;
+using AMIS.Modules.AssetManagement.Data;
+using AMIS.Modules.AssetManagement.Features.v1.TangibleItems.RegisterTangibleItem;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.TangibleItems.GetTangibleItemById;
+namespace AMIS.Modules.AssetManagement.Features.v1.TangibleItems.GetTangibleItemById;
 
 public sealed class GetTangibleItemByIdQueryHandler(AssetManagementDbContext dbContext)
     : IQueryHandler<GetTangibleItemByIdQuery, TangibleItemDto>
@@ -38,3 +38,4 @@ public sealed class GetTangibleItemByIdQueryHandler(AssetManagementDbContext dbC
             item.CreatedOnUtc);
     }
 }
+

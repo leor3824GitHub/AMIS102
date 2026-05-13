@@ -1,10 +1,10 @@
-using FSH.Framework.Shared.Identity.Authorization;
+using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.AssetManagement.Features.v1.InventoryCustodianSlips.GetICSList;
+namespace AMIS.Modules.AssetManagement.Features.v1.InventoryCustodianSlips.GetICSList;
 
 public static class GetICSListEndpoint
 {
@@ -15,3 +15,4 @@ public static class GetICSListEndpoint
         .WithSummary("Get a paginated list of Inventory Custodian Slips")
         .RequirePermission(AssetManagementModuleConstants.Permissions.InventoryCustodianSlips.View);
 }
+

@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.AssetRegister.Contracts.v1.Issuance;
+using AMIS.Modules.AssetRegister.Contracts.v1.Issuance;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Issuance.CreateIssuanceReportDraft;
+namespace AMIS.Modules.AssetRegister.Features.v1.Issuance.CreateIssuanceReportDraft;
 
 public sealed class CreateIssuanceReportDraftCommandValidator : AbstractValidator<CreateIssuanceReportDraftCommand>
 {
@@ -15,3 +15,4 @@ public sealed class CreateIssuanceReportDraftCommandValidator : AbstractValidato
         RuleFor(x => x.PreparedBy.PrintedName).NotEmpty().When(x => x.PreparedBy is not null);
     }
 }
+

@@ -1,10 +1,10 @@
-using FSH.Framework.Core.Context;
-using FSH.Modules.AssetManagement.Data;
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Framework.Core.Context;
+using AMIS.Modules.AssetManagement.Data;
+using AMIS.Modules.AssetManagement.Domain;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.ReceiptsForReturnedPPE.CreateRRP;
+namespace AMIS.Modules.AssetManagement.Features.v1.ReceiptsForReturnedPPE.CreateRRP;
 
 public sealed class CreateRRPCommandHandler : ICommandHandler<CreateRRPCommand, CreateRRPResult>
 {
@@ -164,3 +164,4 @@ public sealed class CreateRRPCommandHandler : ICommandHandler<CreateRRPCommand, 
         return new CreateRRPResult(rrp.Id, rrp.RRPNo, command.Items.Count);
     }
 }
+

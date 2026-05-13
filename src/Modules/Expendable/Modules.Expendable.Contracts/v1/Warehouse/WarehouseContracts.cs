@@ -1,8 +1,8 @@
-using FSH.Framework.Core.Abstractions;
-using FSH.Framework.Shared.Persistence;
+using AMIS.Framework.Core.Abstractions;
+using AMIS.Framework.Shared.Persistence;
 using Mediator;
 
-namespace FSH.Modules.Expendable.Contracts.v1.Warehouse;
+namespace AMIS.Modules.Expendable.Contracts.v1.Warehouse;
 
 // ============= COMMANDS (Write Operations) =============
 
@@ -220,4 +220,5 @@ public record StockCardLineDto(
     decimal BalanceUnitCost,
     decimal BalanceTotalCost
 );
+
 

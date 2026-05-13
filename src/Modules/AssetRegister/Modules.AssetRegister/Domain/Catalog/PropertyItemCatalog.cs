@@ -1,7 +1,7 @@
-using FSH.Framework.Core.Domain;
-using FSH.Modules.AssetRegister.Contracts.v1;
+using AMIS.Framework.Core.Domain;
+using AMIS.Modules.AssetRegister.Contracts.v1;
 
-namespace FSH.Modules.AssetRegister.Domain.Catalog;
+namespace AMIS.Modules.AssetRegister.Domain.Catalog;
 
 public sealed class PropertyItemCatalog : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 {
@@ -86,3 +86,4 @@ public sealed class PropertyItemCatalog : AggregateRoot<Guid>, IHasTenant, IAudi
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
     }
 }
+

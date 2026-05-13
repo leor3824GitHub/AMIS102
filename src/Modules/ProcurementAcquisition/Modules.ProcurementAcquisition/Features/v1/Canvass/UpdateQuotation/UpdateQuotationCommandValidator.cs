@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.ProcurementAcquisition.Contracts.v1.Canvass;
+using AMIS.Modules.ProcurementAcquisition.Contracts.v1.Canvass;
 
-namespace FSH.Modules.ProcurementAcquisition.Features.v1.Canvass.UpdateQuotation;
+namespace AMIS.Modules.ProcurementAcquisition.Features.v1.Canvass.UpdateQuotation;
 
 public sealed class UpdateQuotationCommandValidator : AbstractValidator<UpdateQuotationCommand>
 {
@@ -21,3 +21,4 @@ public sealed class UpdateQuotationCommandValidator : AbstractValidator<UpdateQu
         });
     }
 }
+

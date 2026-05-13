@@ -1,9 +1,9 @@
-using FSH.Modules.AssetRegister.Contracts.v1.Accountability;
-using FSH.Modules.AssetRegister.Data;
+using AMIS.Modules.AssetRegister.Contracts.v1.Accountability;
+using AMIS.Modules.AssetRegister.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Accountability.CancelAccountability;
+namespace AMIS.Modules.AssetRegister.Features.v1.Accountability.CancelAccountability;
 
 public sealed class CancelAccountabilityCommandHandler(AssetRegisterDbContext db)
     : ICommandHandler<CancelAccountabilityCommand, PropertyAccountabilityDto>
@@ -31,3 +31,4 @@ public sealed class CancelAccountabilityCommandHandler(AssetRegisterDbContext db
         return AccountabilityMapper.ToDto(accountability);
     }
 }
+

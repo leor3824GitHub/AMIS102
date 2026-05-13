@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.Expendable.Contracts.v1.Warehouse;
+using AMIS.Modules.Expendable.Contracts.v1.Warehouse;
 
-namespace FSH.Modules.Expendable.Features.v1.Warehouse.ReserveProductInventory;
+namespace AMIS.Modules.Expendable.Features.v1.Warehouse.ReserveProductInventory;
 
 public sealed class ReserveProductInventoryCommandValidator : AbstractValidator<ReserveProductInventoryCommand>
 {
@@ -14,3 +14,4 @@ public sealed class ReserveProductInventoryCommandValidator : AbstractValidator<
             .GreaterThan(0).WithMessage("Quantity to reserve must be greater than 0");
     }
 }
+

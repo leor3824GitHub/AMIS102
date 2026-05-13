@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace FSH.Modules.AssetManagement.Features.v1.Locations.DeleteLocation;
+namespace AMIS.Modules.AssetManagement.Features.v1.Locations.DeleteLocation;
 
 public sealed class DeleteLocationCommandValidator : AbstractValidator<DeleteLocationCommand>
 {
@@ -9,3 +9,4 @@ public sealed class DeleteLocationCommandValidator : AbstractValidator<DeleteLoc
         RuleFor(x => x.Id).NotEmpty();
     }
 }
+

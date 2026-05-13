@@ -1,4 +1,4 @@
-using FSH.Modules.Identity.Data;
+using AMIS.Modules.Identity.Data;
 
 namespace Identity.Tests.Data;
 
@@ -106,3 +106,4 @@ public sealed class PasswordPolicyOptionsTests
         options.PasswordExpiryDays.ShouldBe(value);
     }
 }
+

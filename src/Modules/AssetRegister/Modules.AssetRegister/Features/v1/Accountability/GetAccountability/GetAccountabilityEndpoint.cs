@@ -1,11 +1,11 @@
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.AssetRegister.Contracts.v1.Accountability;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.AssetRegister.Contracts.v1.Accountability;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Accountability.GetAccountability;
+namespace AMIS.Modules.AssetRegister.Features.v1.Accountability.GetAccountability;
 
 public static class GetAccountabilityEndpoint
 {
@@ -23,3 +23,4 @@ public static class GetAccountabilityEndpoint
         return result is null ? TypedResults.NotFound() : TypedResults.Ok(result);
     }
 }
+

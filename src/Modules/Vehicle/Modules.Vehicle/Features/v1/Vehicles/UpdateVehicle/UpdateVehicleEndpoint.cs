@@ -1,11 +1,11 @@
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.Vehicle.Contracts.v1.Vehicles;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.Vehicle.Contracts.v1.Vehicles;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.Vehicle.Features.v1.Vehicles.UpdateVehicle;
+namespace AMIS.Modules.Vehicle.Features.v1.Vehicles.UpdateVehicle;
 
 public static class UpdateVehicleEndpoint
 {
@@ -18,3 +18,4 @@ public static class UpdateVehicleEndpoint
         .Produces(StatusCodes.Status400BadRequest)
         .RequirePermission(VehicleModuleConstants.Permissions.Vehicles.Update);
 }
+

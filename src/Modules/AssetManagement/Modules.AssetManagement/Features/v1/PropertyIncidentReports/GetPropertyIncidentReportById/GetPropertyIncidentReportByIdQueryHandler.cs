@@ -1,9 +1,9 @@
-using FSH.Framework.Core.Exceptions;
-using FSH.Modules.AssetManagement.Data;
+using AMIS.Framework.Core.Exceptions;
+using AMIS.Modules.AssetManagement.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.PropertyIncidentReports.GetPropertyIncidentReportById;
+namespace AMIS.Modules.AssetManagement.Features.v1.PropertyIncidentReports.GetPropertyIncidentReportById;
 
 public sealed class GetPropertyIncidentReportByIdQueryHandler(AssetManagementDbContext dbContext)
     : IQueryHandler<GetPropertyIncidentReportByIdQuery, PropertyIncidentReportDetailsDto>
@@ -67,3 +67,4 @@ public sealed class GetPropertyIncidentReportByIdQueryHandler(AssetManagementDbC
             items);
     }
 }
+

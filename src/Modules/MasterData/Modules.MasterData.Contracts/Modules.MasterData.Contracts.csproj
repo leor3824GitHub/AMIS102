@@ -1,9 +1,9 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<RootNamespace>FSH.Modules.MasterData.Contracts</RootNamespace>
-		<AssemblyName>FSH.Modules.MasterData.Contracts</AssemblyName>
-		<PackageId>FullStackHero.Modules.MasterData.Contracts</PackageId>
+		<RootNamespace>AMIS.Modules.MasterData.Contracts</RootNamespace>
+		<AssemblyName>AMIS.Modules.MasterData.Contracts</AssemblyName>
+		<PackageId>AMIS.Modules.MasterData.Contracts</PackageId>
 		<NoWarn>$(NoWarn);CA1002;CA1056;CS1572;S2094</NoWarn>
 	</PropertyGroup>
 
@@ -17,4 +17,5 @@
 	</ItemGroup>
 
 </Project>
+
 

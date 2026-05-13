@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace FSH.Modules.MasterData.Features.v1.Categories.UpdateCategory;
+namespace AMIS.Modules.MasterData.Features.v1.Categories.UpdateCategory;
 
 public sealed class UpdateCategoryCommandValidator : AbstractValidator<UpdateCategoryCommand>
 {
@@ -21,3 +21,4 @@ public sealed class UpdateCategoryCommandValidator : AbstractValidator<UpdateCat
             .MaximumLength(400).WithMessage("Description must not exceed 400 characters.");
     }
 }
+

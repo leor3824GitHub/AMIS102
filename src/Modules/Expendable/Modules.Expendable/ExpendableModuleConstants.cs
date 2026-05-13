@@ -1,4 +1,4 @@
-namespace FSH.Modules.Expendable;
+namespace AMIS.Modules.Expendable;
 
 public static class ExpendableModuleConstants
 {
@@ -76,4 +76,5 @@ public static class ExpendableModuleConstants
         public const string InventoryTracking = $"{ModuleName}:InventoryTracking";
     }
 }
+
 

@@ -1,6 +1,6 @@
-using FSH.Modules.MasterData.Domain;
-using FSH.Modules.MasterData.Features.v1.Suppliers.CreateSupplier;
-using FSH.Modules.MasterData.Features.v1.Suppliers.UpdateSupplier;
+using AMIS.Modules.MasterData.Domain;
+using AMIS.Modules.MasterData.Features.v1.Suppliers.CreateSupplier;
+using AMIS.Modules.MasterData.Features.v1.Suppliers.UpdateSupplier;
 
 namespace Generic.Tests.MasterData;
 
@@ -64,3 +64,4 @@ public sealed class SupplierDomainAndValidatorTests
         result.IsValid.ShouldBeTrue();
     }
 }
+

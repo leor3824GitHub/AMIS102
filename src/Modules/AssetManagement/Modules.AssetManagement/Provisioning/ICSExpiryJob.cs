@@ -1,9 +1,9 @@
-using FSH.Modules.AssetManagement.Data;
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Modules.AssetManagement.Data;
+using AMIS.Modules.AssetManagement.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace FSH.Modules.AssetManagement.Provisioning;
+namespace AMIS.Modules.AssetManagement.Provisioning;
 
 /// <summary>
 /// Hangfire recurring job that marks Active ICS records as Expired when their
@@ -128,3 +128,4 @@ public sealed class ICSExpiryJob(AssetManagementDbContext dbContext, ILogger<ICS
         }
     }
 }
+

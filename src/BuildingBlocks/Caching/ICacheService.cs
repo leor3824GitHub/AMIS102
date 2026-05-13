@@ -1,4 +1,4 @@
-namespace FSH.Framework.Caching;
+namespace AMIS.Framework.Caching;
 
 /// <summary>
 /// Provides caching operations for storing and retrieving items from cache.
@@ -68,3 +68,4 @@ public interface ICacheService
     /// <param name="key">The unique cache key to refresh.</param>
     void RefreshItem(string key);
 }
+

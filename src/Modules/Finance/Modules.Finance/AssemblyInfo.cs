@@ -1,3 +1,5 @@
-using FSH.Framework.Web.Modules;
+using AMIS.Framework.Web.Modules;
 
-[assembly: FshModule(typeof(FSH.Modules.Finance.FinanceModule), 600)]
+[assembly: AmisModule(typeof(AMIS.Modules.Finance.FinanceModule), 600)]
+
+

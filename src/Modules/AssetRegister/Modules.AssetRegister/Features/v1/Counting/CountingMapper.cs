@@ -1,8 +1,8 @@
-using FSH.Modules.AssetRegister.Contracts.v1.Counting;
-using FSH.Modules.AssetRegister.Domain.Counting;
-using FSH.Modules.AssetRegister.Features.v1.Accountability;
+using AMIS.Modules.AssetRegister.Contracts.v1.Counting;
+using AMIS.Modules.AssetRegister.Domain.Counting;
+using AMIS.Modules.AssetRegister.Features.v1.Accountability;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Counting;
+namespace AMIS.Modules.AssetRegister.Features.v1.Counting;
 
 internal static class CountingMapper
 {
@@ -20,3 +20,4 @@ internal static class CountingMapper
             s.WitnessedBy is null ? null : AccountabilityMapper.ToDto(s.WitnessedBy),
             s.Entries.Select(ToDto).ToList());
 }
+

@@ -1,4 +1,4 @@
-namespace FSH.Modules.MasterData.Contracts.v1.Suppliers;
+namespace AMIS.Modules.MasterData.Contracts.v1.Suppliers;
 
 public record SupplierDto(
     Guid Id,
@@ -43,3 +43,4 @@ public record UpdateSupplierCommand(
 public record GetSupplierQuery(Guid Id);
 
 public record DeleteSupplierCommand(Guid Id);
+

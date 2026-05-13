@@ -1,12 +1,12 @@
 @page "/asset-management/semi-expendable-properties"
-@using FSH.Modules.MasterData.Contracts.v1.CapitalizationThresholds
-@using FSH.Playground.Blazor.ApiClient
+@using AMIS.Modules.MasterData.Contracts.v1.CapitalizationThresholds
+@using AMIS.Playground.Blazor.ApiClient
 @inject ISemiExpendablePropertyClient Client
 @inject IPropertyItemCatalogClient ItemClient
 @inject ICapitalizationThresholdClient ThresholdClient
 @inject ISnackbar Snackbar
 
-<FshPageHeader Title="Semi-Expendable Property Units" Description="Individual property units tracked per COA Circular 2022-004. Register manually or via SMRR." />
+<AMISPageHeader Title="Semi-Expendable Property Units" Description="Individual property units tracked per COA Circular 2022-004. Register manually or via SMRR." />
 
 <MudGrid Spacing="3">
     <!-- Register Form -->
@@ -23,7 +23,7 @@
                     <MudAutocomplete T="PropertyItemCatalogSummaryDto"
                                      @bind-Value="_form.SelectedItem"
                                      SearchFunc="SearchItems"
-                                     ToStringFunc="@(x => x is null ? "" : $"{x.Code} – {x.Name}")"
+                                     ToStringFunc="@(x => x is null ? "" : $"{x.Code} � {x.Name}")"
                                      Label="Category Code" Variant="Variant.Outlined"
                                      Required="true" Clearable="true"
                                      ResetValueOnEmptyText="true" CoerceValue="true"
@@ -32,7 +32,7 @@
                     <MudDatePicker @bind-Date="_form.AcquisitionDateNullable" Label="Acquisition Date"
                                    Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" Required="true" />
                     <MudNumericField Value="_form.UnitCost" ValueChanged="OnUnitCostChanged"
-                                     Label="Unit Cost (₱)" Variant="Variant.Outlined" T="decimal"
+                                     Label="Unit Cost (?)" Variant="Variant.Outlined" T="decimal"
                                      Required="true" Min="0.01m" Max="49999.99m" Format="N2" />
                     <MudSelect @bind-Value="_form.Category" Label="Property Class" Variant="Variant.Outlined">
                         <MudSelectItem Value="AssetCategory.LowValuedSemi">Low-Valued Semi-Expendable</MudSelectItem>
@@ -226,3 +226,4 @@
         public string? Remarks { get; set; }
     }
 }
+

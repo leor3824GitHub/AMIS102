@@ -1,14 +1,14 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
 	<PropertyGroup>
-		<RootNamespace>FSH.Playground.Api</RootNamespace>
-		<AssemblyName>FSH.Playground.Api</AssemblyName>
+		<RootNamespace>AMIS.Playground.Api</RootNamespace>
+		<AssemblyName>AMIS.Playground.Api</AssemblyName>
 		<IsPackable>false</IsPackable>
 
 		<!-- Container configuration -->
 		<ContainerPort>8080</ContainerPort>
 		<ContainerUser>root</ContainerUser>
-		<ContainerRepository>fsh-playground-api</ContainerRepository>
+		<ContainerRepository>AMIS-playground-api</ContainerRepository>
     	<PublishProfile>DefaultContainer</PublishProfile>
 	</PropertyGroup>
 
@@ -56,4 +56,5 @@
   </ItemGroup>
 
 </Project>
+
 

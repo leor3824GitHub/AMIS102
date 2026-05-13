@@ -2,7 +2,7 @@ using System.Globalization;
 using System.Net.Http.Json;
 using System.Text;
 
-namespace FSH.Playground.Blazor.ApiClient;
+namespace AMIS.Playground.Blazor.ApiClient;
 
 // ── Shared DTOs ────────────────────────────────────────────────────────────
 
@@ -944,3 +944,4 @@ internal static class ArUrlBuilder
         return sb.ToString();
     }
 }
+

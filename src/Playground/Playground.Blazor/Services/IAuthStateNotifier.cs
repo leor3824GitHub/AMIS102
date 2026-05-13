@@ -1,4 +1,4 @@
-namespace FSH.Playground.Blazor.Services;
+namespace AMIS.Playground.Blazor.Services;
 
 /// <summary>
 /// Service that notifies Blazor components when authentication state changes
@@ -27,3 +27,4 @@ internal sealed class AuthStateNotifier : IAuthStateNotifier
         SessionExpired?.Invoke(this, EventArgs.Empty);
     }
 }
+

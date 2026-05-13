@@ -1,7 +1,7 @@
-using FSH.Framework.Core.Domain;
+using AMIS.Framework.Core.Domain;
 using System.Security.Cryptography;
 
-namespace FSH.Modules.Vehicle.Domain.Maintenance;
+namespace AMIS.Modules.Vehicle.Domain.Maintenance;
 
 public class MaintenanceSchedule : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 {
@@ -113,3 +113,4 @@ public class MaintenanceSchedule : AggregateRoot<Guid>, IHasTenant, IAuditableEn
         LastModifiedBy = userId;
     }
 }
+

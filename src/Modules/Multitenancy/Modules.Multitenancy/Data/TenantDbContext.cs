@@ -1,10 +1,10 @@
 using Finbuckle.MultiTenant.EntityFrameworkCore.Stores;
-using FSH.Framework.Shared.Multitenancy;
-using FSH.Modules.Multitenancy.Domain;
-using FSH.Modules.Multitenancy.Provisioning;
+using AMIS.Framework.Shared.Multitenancy;
+using AMIS.Modules.Multitenancy.Domain;
+using AMIS.Modules.Multitenancy.Provisioning;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.Multitenancy.Data;
+namespace AMIS.Modules.Multitenancy.Data;
 
 public class TenantDbContext : EFCoreStoreDbContext<AppTenantInfo>
 {
@@ -30,3 +30,4 @@ public class TenantDbContext : EFCoreStoreDbContext<AppTenantInfo>
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(TenantDbContext).Assembly);
     }
 }
+

@@ -1,11 +1,11 @@
-using FSH.Framework.Shared.Identity.Authorization;
+using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.AssetManagement.Features.v1.PhysicalCount.RecordPhysicalCountEntry;
+namespace AMIS.Modules.AssetManagement.Features.v1.PhysicalCount.RecordPhysicalCountEntry;
 
 public static class RecordPhysicalCountEntryEndpoint
 {
@@ -32,9 +32,10 @@ public static class RecordPhysicalCountEntryEndpoint
 }
 
 public sealed record RecordPhysicalCountEntryRequest(
-    FSH.Modules.AssetManagement.Domain.PhysicalCountEntryResult Result,
-    FSH.Modules.AssetManagement.Domain.PhysicalCountCondition? Condition,
+    AMIS.Modules.AssetManagement.Domain.PhysicalCountEntryResult Result,
+    AMIS.Modules.AssetManagement.Domain.PhysicalCountCondition? Condition,
     int QuantityOnHand,
     string? Remarks,
     bool IsScanned,
     string? PhotoPath);
+

@@ -1,4 +1,4 @@
-namespace FSH.Modules.AssetRegister.Domain.Accountability;
+namespace AMIS.Modules.AssetRegister.Domain.Accountability;
 
 /// <summary>
 /// Owned-entity profile attached to a <see cref="PropertyAccountabilityLine"/> when the
@@ -41,3 +41,4 @@ public sealed class VehicleAccountabilityProfile
         OdometerAtReturn = odometerAtReturn;
     }
 }
+

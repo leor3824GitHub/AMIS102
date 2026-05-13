@@ -1,10 +1,10 @@
-using FSH.Modules.Vehicle.Contracts.v1.Vehicles;
-using FSH.Modules.Vehicle.Data;
-using FSH.Modules.Vehicle.Domain.Vehicles;
+using AMIS.Modules.Vehicle.Contracts.v1.Vehicles;
+using AMIS.Modules.Vehicle.Data;
+using AMIS.Modules.Vehicle.Domain.Vehicles;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.Vehicle.Features.v1.Vehicles.GetMotorVehicleInventory;
+namespace AMIS.Modules.Vehicle.Features.v1.Vehicles.GetMotorVehicleInventory;
 
 public sealed class GetMotorVehicleInventoryQueryHandler(VehicleDbContext db)
     : IQueryHandler<GetMotorVehicleInventoryQuery, List<MotorVehicleInventoryItemDto>>
@@ -69,3 +69,4 @@ public sealed class GetMotorVehicleInventoryQueryHandler(VehicleDbContext db)
         _                          => status.ToString().ToUpperInvariant()
     };
 }
+

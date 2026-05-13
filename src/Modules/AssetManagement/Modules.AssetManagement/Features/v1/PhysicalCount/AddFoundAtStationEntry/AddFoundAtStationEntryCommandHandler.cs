@@ -1,9 +1,9 @@
-using FSH.Modules.AssetManagement.Data;
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Modules.AssetManagement.Data;
+using AMIS.Modules.AssetManagement.Domain;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.PhysicalCount.AddFoundAtStationEntry;
+namespace AMIS.Modules.AssetManagement.Features.v1.PhysicalCount.AddFoundAtStationEntry;
 
 public sealed class AddFoundAtStationEntryCommandHandler(AssetManagementDbContext dbContext)
     : ICommandHandler<AddFoundAtStationEntryCommand, AddFoundAtStationEntryResult>
@@ -38,3 +38,4 @@ public sealed class AddFoundAtStationEntryCommandHandler(AssetManagementDbContex
         return new AddFoundAtStationEntryResult(entry.Id, entry.PropertyNumber);
     }
 }
+

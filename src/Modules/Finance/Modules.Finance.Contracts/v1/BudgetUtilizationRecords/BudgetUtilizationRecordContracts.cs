@@ -1,6 +1,6 @@
 using Mediator;
 
-namespace FSH.Modules.Finance.Contracts.v1.BudgetUtilizationRecords;
+namespace AMIS.Modules.Finance.Contracts.v1.BudgetUtilizationRecords;
 
 // Enums
 public enum BudgetUtilizationRecordStatus
@@ -80,3 +80,4 @@ public sealed record BudgetUtilizationRecordSearchResult(
     int TotalCount,
     int PageNumber,
     int PageSize);
+

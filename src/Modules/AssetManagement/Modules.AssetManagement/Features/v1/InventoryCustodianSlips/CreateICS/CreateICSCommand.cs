@@ -1,7 +1,7 @@
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Modules.AssetManagement.Domain;
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.InventoryCustodianSlips.CreateICS;
+namespace AMIS.Modules.AssetManagement.Features.v1.InventoryCustodianSlips.CreateICS;
 
 public sealed record CreateICSCommand(
     string ICSNo,
@@ -20,3 +20,4 @@ public sealed record CreateICSResult(
     Guid ICSId,
     string ICSNo,
     int ItemCount);
+

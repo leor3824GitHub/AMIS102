@@ -1,9 +1,9 @@
-using FSH.Framework.Core.Exceptions;
-using FSH.Modules.AssetManagement.Data;
+using AMIS.Framework.Core.Exceptions;
+using AMIS.Modules.AssetManagement.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.SemiExpendableIssuanceRecords.GetSMIRById;
+namespace AMIS.Modules.AssetManagement.Features.v1.SemiExpendableIssuanceRecords.GetSMIRById;
 
 public sealed class GetSMIRByIdQueryHandler(AssetManagementDbContext dbContext)
     : IQueryHandler<GetSMIRByIdQuery, SMIRDetailsDto>
@@ -65,3 +65,4 @@ public sealed class GetSMIRByIdQueryHandler(AssetManagementDbContext dbContext)
             items);
     }
 }
+

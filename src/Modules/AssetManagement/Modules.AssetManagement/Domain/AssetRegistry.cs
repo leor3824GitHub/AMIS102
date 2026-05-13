@@ -1,6 +1,6 @@
-using FSH.Framework.Core.Domain;
+using AMIS.Framework.Core.Domain;
 
-namespace FSH.Modules.AssetManagement.Domain;
+namespace AMIS.Modules.AssetManagement.Domain;
 
 /// <summary>
 /// Current-state record for a physical asset unit.
@@ -111,3 +111,4 @@ public sealed class AssetRegistry : AggregateRoot<Guid>, IHasTenant, IAuditableE
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
     }
 }
+

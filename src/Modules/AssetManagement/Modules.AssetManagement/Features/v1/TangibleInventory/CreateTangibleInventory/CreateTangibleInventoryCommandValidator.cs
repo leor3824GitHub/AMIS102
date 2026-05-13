@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Modules.AssetManagement.Domain;
 
-namespace FSH.Modules.AssetManagement.Features.v1.TangibleInventory.CreateTangibleInventory;
+namespace AMIS.Modules.AssetManagement.Features.v1.TangibleInventory.CreateTangibleInventory;
 
 public sealed class CreateTangibleInventoryCommandValidator : AbstractValidator<CreateTangibleInventoryCommand>
 {
@@ -30,3 +30,4 @@ internal sealed class CreateTangibleInventoryItemRequestValidator : AbstractVali
         RuleFor(x => x.Reference).MaximumLength(100);
     }
 }
+

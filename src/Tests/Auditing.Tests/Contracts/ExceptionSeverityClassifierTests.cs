@@ -1,4 +1,4 @@
-using FSH.Modules.Auditing.Contracts;
+using AMIS.Modules.Auditing.Contracts;
 
 namespace Auditing.Tests.Contracts;
 
@@ -145,3 +145,4 @@ public sealed class ExceptionSeverityClassifierTests
     {
     }
 }
+

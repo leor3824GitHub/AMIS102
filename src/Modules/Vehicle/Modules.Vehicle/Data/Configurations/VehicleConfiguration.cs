@@ -1,9 +1,9 @@
 using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using VehicleEntity = FSH.Modules.Vehicle.Domain.Vehicles.Vehicle;
+using VehicleEntity = AMIS.Modules.Vehicle.Domain.Vehicles.Vehicle;
 
-namespace FSH.Modules.Vehicle.Data.Configurations;
+namespace AMIS.Modules.Vehicle.Data.Configurations;
 
 public class VehicleConfiguration : IEntityTypeConfiguration<VehicleEntity>
 {
@@ -42,3 +42,4 @@ public class VehicleConfiguration : IEntityTypeConfiguration<VehicleEntity>
         builder.HasQueryFilter("SoftDelete", v => !v.IsDeleted);
     }
 }
+

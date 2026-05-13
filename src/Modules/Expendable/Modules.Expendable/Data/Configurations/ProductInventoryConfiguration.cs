@@ -1,9 +1,9 @@
-using FSH.Modules.Expendable.Domain.Warehouse;
+using AMIS.Modules.Expendable.Domain.Warehouse;
 using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FSH.Modules.Expendable.Data.Configurations;
+namespace AMIS.Modules.Expendable.Data.Configurations;
 
 /// <summary>
 /// Configuration for ProductInventory aggregate - central warehouse stock ledger.
@@ -96,4 +96,5 @@ public class ProductInventoryConfiguration : IEntityTypeConfiguration<ProductInv
         builder.HasQueryFilter("SoftDelete", p => !p.IsDeleted);
     }
 }
+
 

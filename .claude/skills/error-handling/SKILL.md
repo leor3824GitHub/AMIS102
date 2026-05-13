@@ -1,12 +1,12 @@
----
+﻿---
 name: error-handling
-description: Exception types, HTTP status mappings, and where to throw vs. handle errors in FSH handlers and services. Reference when implementing error cases in features.
+description: Exception types, HTTP status mappings, and where to throw vs. handle errors in AMIS handlers and services. Reference when implementing error cases in features.
 user-invocable: false
 ---
 
 # Error Handling
 
-FSH uses typed exceptions from `BuildingBlocks/Core/Exceptions`. They automatically map to HTTP responses — **never catch and re-wrap them** in handlers.
+AMIS uses typed exceptions from `BuildingBlocks/Core/Exceptions`. They automatically map to HTTP responses — **never catch and re-wrap them** in handlers.
 
 ## Exception Types
 
@@ -22,7 +22,7 @@ All inherit from `CustomException` which carries `HttpStatusCode StatusCode`.
 ## Namespace
 
 ```csharp
-using FSH.Framework.Core.Exceptions;
+using AMIS.Framework.Core.Exceptions;
 ```
 
 ## Usage Patterns
@@ -98,4 +98,5 @@ if (await repository.AnyAsync(new ProductByNameSpec(command.Name), ct))
 1. **Never swallow exceptions** — let them propagate to the global handler
 2. **Validators run first** — invalid input never reaches a handler
 3. **`NotFoundException` in handlers** — not endpoints; endpoints return the handler result
-4. **No `try/catch` in handlers** unless you are translating a third-party exception into a typed FSH exception
+4. **No `try/catch` in handlers** unless you are translating a third-party exception into a typed AMIS exception
+

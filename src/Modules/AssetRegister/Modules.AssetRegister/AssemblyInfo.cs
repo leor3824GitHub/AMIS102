@@ -1,3 +1,5 @@
-using FSH.Framework.Web.Modules;
+using AMIS.Framework.Web.Modules;
 
-[assembly: FshModule(typeof(FSH.Modules.AssetRegister.AssetRegisterModule), 760)]
+[assembly: AmisModule(typeof(AMIS.Modules.AssetRegister.AssetRegisterModule), 760)]
+
+

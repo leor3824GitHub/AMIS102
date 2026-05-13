@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.AssetRegister.Contracts.v1.Incidents;
+using AMIS.Modules.AssetRegister.Contracts.v1.Incidents;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Incidents.NotifyIncidentPolice;
+namespace AMIS.Modules.AssetRegister.Features.v1.Incidents.NotifyIncidentPolice;
 
 public sealed class NotifyIncidentPoliceCommandValidator : AbstractValidator<NotifyIncidentPoliceCommand>
 {
@@ -13,3 +13,4 @@ public sealed class NotifyIncidentPoliceCommandValidator : AbstractValidator<Not
         RuleFor(x => x.NotifiedOn).NotEqual(default(DateOnly)).WithMessage("Notification date must be provided.");
     }
 }
+

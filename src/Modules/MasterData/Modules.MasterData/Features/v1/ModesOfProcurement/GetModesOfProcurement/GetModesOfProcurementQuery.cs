@@ -1,6 +1,6 @@
 using Mediator;
 
-namespace FSH.Modules.MasterData.Features.v1.ModesOfProcurement.GetModesOfProcurement;
+namespace AMIS.Modules.MasterData.Features.v1.ModesOfProcurement.GetModesOfProcurement;
 
 public sealed record GetModesOfProcurementQuery(
     string? Keyword = null,
@@ -18,3 +18,4 @@ public sealed record ModeOfProcurementDto(
     string Name,
     string? Description,
     bool IsActive);
+

@@ -1,4 +1,4 @@
-using FSH.Modules.Multitenancy.Domain;
+using AMIS.Modules.Multitenancy.Domain;
 
 namespace Multitenancy.Tests.Domain;
 
@@ -388,3 +388,4 @@ public sealed class TenantThemeTests
 
     #endregion
 }
+

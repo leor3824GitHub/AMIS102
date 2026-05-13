@@ -1,10 +1,10 @@
-using FSH.Framework.Shared.Identity.Authorization;
+using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.AssetManagement.Features.v1.Locations.DeleteLocation;
+namespace AMIS.Modules.AssetManagement.Features.v1.Locations.DeleteLocation;
 
 public static class DeleteLocationEndpoint
 {
@@ -21,3 +21,4 @@ public static class DeleteLocationEndpoint
         .Produces(StatusCodes.Status404NotFound)
         .RequirePermission(AssetManagementModuleConstants.Permissions.Locations.Delete);
 }
+

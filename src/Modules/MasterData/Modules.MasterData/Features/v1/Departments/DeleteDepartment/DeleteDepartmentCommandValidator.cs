@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.MasterData.Contracts.v1.References;
+using AMIS.Modules.MasterData.Contracts.v1.References;
 
-namespace FSH.Modules.MasterData.Features.v1.Departments.DeleteDepartment;
+namespace AMIS.Modules.MasterData.Features.v1.Departments.DeleteDepartment;
 
 public sealed class DeleteDepartmentCommandValidator : AbstractValidator<DeleteDepartmentCommand>
 {

@@ -1,11 +1,11 @@
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.AssetRegister.Contracts.v1.Assets;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.AssetRegister.Contracts.v1.Assets;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Assets.UpdateAssetCondition;
+namespace AMIS.Modules.AssetRegister.Features.v1.Assets.UpdateAssetCondition;
 
 public static class UpdateAssetConditionEndpoint
 {
@@ -24,3 +24,4 @@ public static class UpdateAssetConditionEndpoint
         return TypedResults.Ok(result);
     }
 }
+

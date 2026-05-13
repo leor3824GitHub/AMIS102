@@ -1,12 +1,12 @@
-using FSH.Framework.Core.Context;
-using FSH.Modules.Finance.Contracts.v1.BudgetUtilizationRecords;
-using FSH.Modules.Finance.Data;
-using FSH.Modules.Finance.Domain.BudgetUtilizationRecords;
+using AMIS.Framework.Core.Context;
+using AMIS.Modules.Finance.Contracts.v1.BudgetUtilizationRecords;
+using AMIS.Modules.Finance.Data;
+using AMIS.Modules.Finance.Domain.BudgetUtilizationRecords;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace FSH.Modules.Finance.Features.v1.BudgetUtilizationRecords.CreateBudgetUtilizationRecord;
+namespace AMIS.Modules.Finance.Features.v1.BudgetUtilizationRecords.CreateBudgetUtilizationRecord;
 
 public sealed class CreateBudgetUtilizationRecordCommandHandler(
     ILogger<CreateBudgetUtilizationRecordCommandHandler> logger,
@@ -62,3 +62,4 @@ public sealed class CreateBudgetUtilizationRecordCommandHandler(
         return $"{prefix}{next:00000}";
     }
 }
+

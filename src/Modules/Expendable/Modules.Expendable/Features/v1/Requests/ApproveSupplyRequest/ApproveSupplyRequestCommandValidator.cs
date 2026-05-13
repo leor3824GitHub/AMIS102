@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.Expendable.Contracts.v1.Requests;
+using AMIS.Modules.Expendable.Contracts.v1.Requests;
 
-namespace FSH.Modules.Expendable.Features.v1.Requests.ApproveSupplyRequest;
+namespace AMIS.Modules.Expendable.Features.v1.Requests.ApproveSupplyRequest;
 
 public sealed class ApproveSupplyRequestCommandValidator : AbstractValidator<ApproveSupplyRequestCommand>
 {
@@ -21,3 +21,4 @@ public sealed class ApproveSupplyRequestCommandValidator : AbstractValidator<App
             .Must(kvp => kvp.Value >= 0).WithMessage("Approved quantity cannot be negative");
     }
 }
+

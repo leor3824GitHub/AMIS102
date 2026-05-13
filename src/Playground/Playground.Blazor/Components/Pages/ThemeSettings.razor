@@ -1,14 +1,14 @@
 @page "/settings/theme"
-@using FSH.Framework.Blazor.UI.Theme
-@using FSH.Framework.Blazor.UI.Components.Theme
-@using FSH.Framework.Blazor.UI.Components.Page
-@using FSH.Playground.Blazor.Services
+@using AMIS.Framework.Blazor.UI.Theme
+@using AMIS.Framework.Blazor.UI.Components.Theme
+@using AMIS.Framework.Blazor.UI.Components.Page
+@using AMIS.Playground.Blazor.Services
 @inject ITenantThemeState ThemeState
 @inject ISnackbar Snackbar
 
 <PageTitle>Theme Settings</PageTitle>
 
-<FshPageHeader Title="Theme Settings"
+<AMISPageHeader Title="Theme Settings"
                Description="Customize your application's appearance and branding">
     <ActionContent>
         <MudButton Variant="Variant.Outlined"
@@ -34,15 +34,15 @@
             }
         </MudButton>
     </ActionContent>
-</FshPageHeader>
+</AMISPageHeader>
 
-<FshThemeCustomizer @ref="_customizer"
+<AMISThemeCustomizer @ref="_customizer"
                     ThemeState="@ThemeState"
                     OnThemeSaved="@OnThemeSaved"
                     OnAssetUpload="@HandleAssetUpload" />
 
 @code {
-    private FshThemeCustomizer? _customizer;
+    private AMISThemeCustomizer? _customizer;
 
     private async Task SaveChanges()
     {
@@ -111,3 +111,4 @@
         }
     }
 }
+

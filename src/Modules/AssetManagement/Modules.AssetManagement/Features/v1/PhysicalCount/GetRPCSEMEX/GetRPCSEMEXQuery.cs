@@ -1,6 +1,6 @@
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.PhysicalCount.GetRPCSEMEX;
+namespace AMIS.Modules.AssetManagement.Features.v1.PhysicalCount.GetRPCSEMEX;
 
 /// <summary>
 /// Returns the Report on the Physical Count of Semi-Expendable Properties (RPCSEMEX)
@@ -46,3 +46,4 @@ public sealed record RPCSEMEXSummaryDto(
     decimal TotalUnitCost,
     int TotalShortage,
     int TotalOverage);
+

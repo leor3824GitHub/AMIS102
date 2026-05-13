@@ -1,7 +1,7 @@
-using FSH.Modules.Vehicle.Contracts.v1.Repairs;
-using FSH.Modules.Vehicle.Domain.Repairs;
+using AMIS.Modules.Vehicle.Contracts.v1.Repairs;
+using AMIS.Modules.Vehicle.Domain.Repairs;
 
-namespace FSH.Modules.Vehicle.Features.v1.Repairs;
+namespace AMIS.Modules.Vehicle.Features.v1.Repairs;
 
 internal static class RepairMapper
 {
@@ -12,3 +12,4 @@ internal static class RepairMapper
             r.CreatedOnUtc, r.CreatedBy,
             r.LastModifiedOnUtc, r.LastModifiedBy);
 }
+

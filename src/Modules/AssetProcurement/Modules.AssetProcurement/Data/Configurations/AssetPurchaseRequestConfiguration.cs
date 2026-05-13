@@ -1,9 +1,9 @@
-using FSH.Modules.AssetProcurement.Domain.AssetPurchaseRequests;
+using AMIS.Modules.AssetProcurement.Domain.AssetPurchaseRequests;
 using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FSH.Modules.AssetProcurement.Data.Configurations;
+namespace AMIS.Modules.AssetProcurement.Data.Configurations;
 
 internal sealed class AssetPurchaseRequestConfiguration : IEntityTypeConfiguration<AssetPurchaseRequest>
 {
@@ -43,3 +43,4 @@ internal sealed class AssetPurchaseRequestConfiguration : IEntityTypeConfigurati
         builder.HasIndex(x => x.CreatedOnUtc);
     }
 }
+

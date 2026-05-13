@@ -1,6 +1,6 @@
-﻿using FSH.Framework.Web.Modules;
+using AMIS.Framework.Web.Modules;
 
-namespace FSH.Modules.Identity;
+namespace AMIS.Modules.Identity;
 
 public sealed class IdentityModuleConstants : IModuleConstants
 {
@@ -12,3 +12,4 @@ public sealed class IdentityModuleConstants : IModuleConstants
     public const string SchemaName = "identity";
     public const int PasswordLength = 10;
 }
+

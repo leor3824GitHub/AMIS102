@@ -1,8 +1,8 @@
-using FSH.Modules.AssetManagement.Data;
+using AMIS.Modules.AssetManagement.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.AssetRegistryQueries.GetAssetsByLocation;
+namespace AMIS.Modules.AssetManagement.Features.v1.AssetRegistryQueries.GetAssetsByLocation;
 
 public sealed class GetAssetsByLocationQueryHandler(AssetManagementDbContext dbContext)
     : IQueryHandler<GetAssetsByLocationQuery, PagedAssetsByLocationResponse>
@@ -50,3 +50,4 @@ public sealed class GetAssetsByLocationQueryHandler(AssetManagementDbContext dbC
         return new PagedAssetsByLocationResponse(items, pageNumber, pageSize, totalCount);
     }
 }
+

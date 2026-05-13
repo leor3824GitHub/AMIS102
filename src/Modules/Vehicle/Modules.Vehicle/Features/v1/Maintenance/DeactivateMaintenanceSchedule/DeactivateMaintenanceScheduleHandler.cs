@@ -1,10 +1,10 @@
-using FSH.Framework.Core.Exceptions;
-using FSH.Modules.Vehicle.Data;
-using FSH.Modules.Vehicle.Domain.Maintenance;
+using AMIS.Framework.Core.Exceptions;
+using AMIS.Modules.Vehicle.Data;
+using AMIS.Modules.Vehicle.Domain.Maintenance;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.Vehicle.Features.v1.Maintenance.DeactivateMaintenanceSchedule;
+namespace AMIS.Modules.Vehicle.Features.v1.Maintenance.DeactivateMaintenanceSchedule;
 
 public sealed class DeactivateMaintenanceScheduleHandler(
     VehicleDbContext db) : ICommandHandler<DeactivateMaintenanceScheduleCommand, Unit>
@@ -23,3 +23,4 @@ public sealed class DeactivateMaintenanceScheduleHandler(
         return Unit.Value;
     }
 }
+

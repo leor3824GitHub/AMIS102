@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.Vehicle.Contracts.v1.Maintenance;
+using AMIS.Modules.Vehicle.Contracts.v1.Maintenance;
 
-namespace FSH.Modules.Vehicle.Features.v1.Maintenance.CreateMaintenanceSchedule;
+namespace AMIS.Modules.Vehicle.Features.v1.Maintenance.CreateMaintenanceSchedule;
 
 public sealed class CreateMaintenanceScheduleValidator : AbstractValidator<CreateMaintenanceScheduleCommand>
 {
@@ -19,3 +19,4 @@ public sealed class CreateMaintenanceScheduleValidator : AbstractValidator<Creat
         });
     }
 }
+

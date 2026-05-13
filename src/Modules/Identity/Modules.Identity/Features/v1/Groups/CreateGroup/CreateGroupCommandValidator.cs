@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.Identity.Contracts.v1.Groups.CreateGroup;
+using AMIS.Modules.Identity.Contracts.v1.Groups.CreateGroup;
 
-namespace FSH.Modules.Identity.Features.v1.Groups.CreateGroup;
+namespace AMIS.Modules.Identity.Features.v1.Groups.CreateGroup;
 
 public sealed class CreateGroupCommandValidator : AbstractValidator<CreateGroupCommand>
 {
@@ -15,3 +15,4 @@ public sealed class CreateGroupCommandValidator : AbstractValidator<CreateGroupC
             .MaximumLength(1024).WithMessage("Description must not exceed 1024 characters.");
     }
 }
+

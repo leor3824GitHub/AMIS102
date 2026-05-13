@@ -1,8 +1,8 @@
-using FSH.Modules.ProcurementPlanning.Domain.AnnualProcurementPlans;
+using AMIS.Modules.ProcurementPlanning.Domain.AnnualProcurementPlans;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FSH.Modules.ProcurementPlanning.Data.Configurations;
+namespace AMIS.Modules.ProcurementPlanning.Data.Configurations;
 
 internal sealed class AnnualProcurementPlanConfiguration : IEntityTypeConfiguration<AnnualProcurementPlan>
 {
@@ -77,3 +77,4 @@ internal sealed class AppLineItemConfiguration : IEntityTypeConfiguration<AppLin
         builder.HasIndex(x => new { x.AppId, x.SourcePpmpItemId }).IsUnique();
     }
 }
+

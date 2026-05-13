@@ -1,5 +1,5 @@
-using FSH.Modules.Finance.Contracts.v1.DisbursementVouchers;
-using FSH.Modules.Finance.Features.v1.DisbursementVouchers.CreateDisbursementVoucher;
+using AMIS.Modules.Finance.Contracts.v1.DisbursementVouchers;
+using AMIS.Modules.Finance.Features.v1.DisbursementVouchers.CreateDisbursementVoucher;
 using Shouldly;
 using Xunit;
 
@@ -100,3 +100,4 @@ public sealed class CreateDisbursementVoucherCommandValidatorTests
             ModeOfPayment: "Check",
             Remarks: null);
 }
+

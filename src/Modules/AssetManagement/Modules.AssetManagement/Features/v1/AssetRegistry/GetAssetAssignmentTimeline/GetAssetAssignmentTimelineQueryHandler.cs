@@ -1,8 +1,8 @@
-using FSH.Modules.AssetManagement.Data;
+using AMIS.Modules.AssetManagement.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.AssetRegistryQueries.GetAssetAssignmentTimeline;
+namespace AMIS.Modules.AssetManagement.Features.v1.AssetRegistryQueries.GetAssetAssignmentTimeline;
 
 public sealed class GetAssetAssignmentTimelineQueryHandler(AssetManagementDbContext dbContext)
     : IQueryHandler<GetAssetAssignmentTimelineQuery, PagedAssetAssignmentTimelineResponse>
@@ -44,3 +44,4 @@ public sealed class GetAssetAssignmentTimelineQueryHandler(AssetManagementDbCont
         return new PagedAssetAssignmentTimelineResponse(items, pageNumber, pageSize, totalCount);
     }
 }
+

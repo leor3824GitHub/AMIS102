@@ -1,11 +1,11 @@
-using FSH.Framework.Shared.Identity.Authorization;
+using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.AssetManagement.Features.v1.TangibleInventory.UpdateTangibleInventory;
+namespace AMIS.Modules.AssetManagement.Features.v1.TangibleInventory.UpdateTangibleInventory;
 
 public static class UpdateTangibleInventoryEndpoint
 {
@@ -22,3 +22,4 @@ public static class UpdateTangibleInventoryEndpoint
         .Produces(StatusCodes.Status404NotFound)
         .RequirePermission(AssetManagementModuleConstants.Permissions.TangibleInventory.Update);
 }
+

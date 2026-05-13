@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.Expendable.Contracts.v1.Cart;
+using AMIS.Modules.Expendable.Contracts.v1.Cart;
 
-namespace FSH.Modules.Expendable.Features.v1.Cart.AddToCart;
+namespace AMIS.Modules.Expendable.Features.v1.Cart.AddToCart;
 
 public sealed class AddToCartCommandValidator : AbstractValidator<AddToCartCommand>
 {
@@ -20,3 +20,4 @@ public sealed class AddToCartCommandValidator : AbstractValidator<AddToCartComma
             .GreaterThan(0).WithMessage("Unit price must be greater than zero");
     }
 }
+

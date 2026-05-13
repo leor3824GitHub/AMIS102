@@ -1,12 +1,12 @@
-using FSH.Framework.Core.Context;
-using FSH.Modules.Finance.Contracts.v1.DisbursementVouchers;
-using FSH.Modules.Finance.Data;
-using FSH.Modules.Finance.Domain.DisbursementVouchers;
+using AMIS.Framework.Core.Context;
+using AMIS.Modules.Finance.Contracts.v1.DisbursementVouchers;
+using AMIS.Modules.Finance.Data;
+using AMIS.Modules.Finance.Domain.DisbursementVouchers;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace FSH.Modules.Finance.Features.v1.DisbursementVouchers.CreateDisbursementVoucher;
+namespace AMIS.Modules.Finance.Features.v1.DisbursementVouchers.CreateDisbursementVoucher;
 
 public sealed class CreateDisbursementVoucherCommandHandler(
     ILogger<CreateDisbursementVoucherCommandHandler> logger,
@@ -62,3 +62,4 @@ public sealed class CreateDisbursementVoucherCommandHandler(
         return $"{prefix}{next:00000}";
     }
 }
+

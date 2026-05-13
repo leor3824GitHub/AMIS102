@@ -1,10 +1,10 @@
-using FSH.Framework.Core.Exceptions;
-using FSH.Modules.AssetManagement.Data;
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Framework.Core.Exceptions;
+using AMIS.Modules.AssetManagement.Data;
+using AMIS.Modules.AssetManagement.Domain;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.Reports.SemiExpendablePropertyCard;
+namespace AMIS.Modules.AssetManagement.Features.v1.Reports.SemiExpendablePropertyCard;
 
 public sealed class GetSPCQueryHandler(AssetManagementDbContext dbContext)
     : IQueryHandler<GetSPCQuery, SPCDto>
@@ -148,3 +148,4 @@ public sealed class GetSPCQueryHandler(AssetManagementDbContext dbContext)
         return new SPCDto(item.Id, item.Code, item.Name, finalEntries);
     }
 }
+

@@ -1,10 +1,10 @@
-using FSH.Framework.Core.Exceptions;
-using FSH.Modules.AssetManagement.Data;
-using FSH.Modules.AssetManagement.Features.v1.Locations;
+using AMIS.Framework.Core.Exceptions;
+using AMIS.Modules.AssetManagement.Data;
+using AMIS.Modules.AssetManagement.Features.v1.Locations;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.Locations.GetLocationById;
+namespace AMIS.Modules.AssetManagement.Features.v1.Locations.GetLocationById;
 
 public sealed class GetLocationByIdQueryHandler(AssetManagementDbContext dbContext)
     : IQueryHandler<GetLocationByIdQuery, LocationDto>
@@ -31,3 +31,4 @@ public sealed class GetLocationByIdQueryHandler(AssetManagementDbContext dbConte
         return location;
     }
 }
+

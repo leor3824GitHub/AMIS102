@@ -1,11 +1,11 @@
-using FSH.Modules.MasterData.Contracts.v1.OrganizationProfile;
-using FSH.Modules.MasterData.Contracts.v1.ReportSignatories;
-using FSH.Modules.Vehicle.Contracts.v1.Vehicles;
+using AMIS.Modules.MasterData.Contracts.v1.OrganizationProfile;
+using AMIS.Modules.MasterData.Contracts.v1.ReportSignatories;
+using AMIS.Modules.Vehicle.Contracts.v1.Vehicles;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 
-namespace FSH.Modules.Vehicle.Features.v1.Vehicles.GenerateVehicleInventoryPdf;
+namespace AMIS.Modules.Vehicle.Features.v1.Vehicles.GenerateVehicleInventoryPdf;
 
 internal sealed class VehicleInventoryPdfDocument : IDocument
 {
@@ -180,3 +180,4 @@ internal sealed class VehicleInventoryPdfDocument : IDocument
             : $"{v.AccountableOfficer}\n{v.AccountableOfficerTitle}";
     }
 }
+

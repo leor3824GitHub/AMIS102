@@ -1,6 +1,6 @@
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.PPEIssuanceReports.GetPPEIRById;
+namespace AMIS.Modules.AssetManagement.Features.v1.PPEIssuanceReports.GetPPEIRById;
 
 public sealed record GetPPEIRByIdQuery(Guid Id) : IQuery<PPEIRDetailsDto>;
 
@@ -32,3 +32,4 @@ public sealed record PPEIRItemDto(
     decimal AcquisitionCost,
     decimal? AccumulatedDepreciation,
     decimal? BookValue);
+

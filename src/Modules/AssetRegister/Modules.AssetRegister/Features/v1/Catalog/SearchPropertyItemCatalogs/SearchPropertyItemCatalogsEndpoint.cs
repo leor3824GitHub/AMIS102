@@ -1,12 +1,12 @@
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Framework.Shared.Persistence;
-using FSH.Modules.AssetRegister.Contracts.v1.Catalog;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.AssetRegister.Contracts.v1.Catalog;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Catalog.SearchPropertyItemCatalogs;
+namespace AMIS.Modules.AssetRegister.Features.v1.Catalog.SearchPropertyItemCatalogs;
 
 public static class SearchPropertyItemCatalogsEndpoint
 {
@@ -30,3 +30,4 @@ public static class SearchPropertyItemCatalogsEndpoint
         return TypedResults.Ok(result);
     }
 }
+

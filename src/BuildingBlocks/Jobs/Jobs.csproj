@@ -1,9 +1,9 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<RootNamespace>FSH.Framework.Jobs</RootNamespace>
-		<AssemblyName>FSH.Framework.Jobs</AssemblyName>
-		<PackageId>FullStackHero.Framework.Jobs</PackageId>
+		<RootNamespace>AMIS.Framework.Jobs</RootNamespace>
+		<AssemblyName>AMIS.Framework.Jobs</AssemblyName>
+		<PackageId>AMIS.Framework.Jobs</PackageId>
 		<NoWarn>$(NoWarn);CA1031;S3376;S3993</NoWarn>
 	</PropertyGroup>
 	
@@ -22,3 +22,4 @@
 	  <ProjectReference Include="..\Shared\Shared.csproj" />
 	</ItemGroup>
 </Project>
+

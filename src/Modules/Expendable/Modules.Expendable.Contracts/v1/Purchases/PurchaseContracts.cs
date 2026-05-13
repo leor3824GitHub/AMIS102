@@ -1,7 +1,7 @@
-using FSH.Framework.Shared.Persistence;
+using AMIS.Framework.Shared.Persistence;
 using Mediator;
 
-namespace FSH.Modules.Expendable.Contracts.v1.Purchases;
+namespace AMIS.Modules.Expendable.Contracts.v1.Purchases;
 
 public record PurchaseLineItemDto(
     Guid ProductId,
@@ -75,5 +75,6 @@ public sealed record GetPurchasesBySupplierQuery : IPagedQuery, IQuery<PagedResp
     public int? PageSize { get; set; }
     public string? Sort { get; set; }
 }
+
 
 

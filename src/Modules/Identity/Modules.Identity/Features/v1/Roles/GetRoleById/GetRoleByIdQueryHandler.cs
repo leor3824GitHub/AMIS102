@@ -1,9 +1,9 @@
-using FSH.Modules.Identity.Contracts.DTOs;
-using FSH.Modules.Identity.Contracts.Services;
-using FSH.Modules.Identity.Contracts.v1.Roles.GetRole;
+using AMIS.Modules.Identity.Contracts.DTOs;
+using AMIS.Modules.Identity.Contracts.Services;
+using AMIS.Modules.Identity.Contracts.v1.Roles.GetRole;
 using Mediator;
 
-namespace FSH.Modules.Identity.Features.v1.Roles.GetRoleById;
+namespace AMIS.Modules.Identity.Features.v1.Roles.GetRoleById;
 
 public sealed class GetRoleByIdQueryHandler : IQueryHandler<GetRoleQuery, RoleDto?>
 {
@@ -20,3 +20,4 @@ public sealed class GetRoleByIdQueryHandler : IQueryHandler<GetRoleQuery, RoleDt
         return await _roleService.GetRoleAsync(query.Id, cancellationToken).ConfigureAwait(false);
     }
 }
+

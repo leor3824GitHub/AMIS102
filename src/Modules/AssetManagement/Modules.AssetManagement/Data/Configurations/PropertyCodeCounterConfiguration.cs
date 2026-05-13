@@ -1,9 +1,9 @@
 using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Modules.AssetManagement.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FSH.Modules.AssetManagement.Data.Configurations;
+namespace AMIS.Modules.AssetManagement.Data.Configurations;
 
 public sealed class PropertyCodeCounterConfiguration : IEntityTypeConfiguration<PropertyCodeCounter>
 {
@@ -32,3 +32,4 @@ public sealed class PropertyCodeCounterConfiguration : IEntityTypeConfiguration<
         builder.HasIndex(x => new { x.TenantId, x.ClassCode, x.ItemCode, x.Year }).IsUnique();
     }
 }
+

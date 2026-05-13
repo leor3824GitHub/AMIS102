@@ -1,9 +1,9 @@
-using FSH.Framework.Shared.Storage;
-using FSH.Modules.Identity.Contracts.DTOs;
-using FSH.Modules.Identity.Contracts.Services;
+using AMIS.Framework.Shared.Storage;
+using AMIS.Modules.Identity.Contracts.DTOs;
+using AMIS.Modules.Identity.Contracts.Services;
 using System.Security.Claims;
 
-namespace FSH.Modules.Identity.Services;
+namespace AMIS.Modules.Identity.Services;
 
 /// <summary>
 /// Facade service that delegates to focused single-responsibility services.
@@ -92,3 +92,4 @@ internal sealed class UserService(
     public Task<bool> HasPermissionAsync(string userId, string permission, CancellationToken cancellationToken = default)
         => permissionService.HasPermissionAsync(userId, permission, cancellationToken);
 }
+

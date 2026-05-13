@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace FSH.Modules.AssetManagement.Features.v1.Locations.UpdateLocation;
+namespace AMIS.Modules.AssetManagement.Features.v1.Locations.UpdateLocation;
 
 public sealed class UpdateLocationCommandValidator : AbstractValidator<UpdateLocationCommand>
 {
@@ -18,3 +18,4 @@ public sealed class UpdateLocationCommandValidator : AbstractValidator<UpdateLoc
             .MaximumLength(500);
     }
 }
+

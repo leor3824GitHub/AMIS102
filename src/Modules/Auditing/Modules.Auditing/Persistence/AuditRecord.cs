@@ -1,4 +1,4 @@
-namespace FSH.Modules.Auditing;
+namespace AMIS.Modules.Auditing;
 
 public sealed class AuditRecord
 {
@@ -22,4 +22,5 @@ public sealed class AuditRecord
 
     public string PayloadJson { get; set; } = default!;
 }
+
 

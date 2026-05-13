@@ -1,8 +1,8 @@
-using FSH.Modules.AssetManagement.Data;
+using AMIS.Modules.AssetManagement.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.InventoryCustodianSlips.GetICSList;
+namespace AMIS.Modules.AssetManagement.Features.v1.InventoryCustodianSlips.GetICSList;
 
 public sealed class GetICSListQueryHandler(AssetManagementDbContext dbContext)
     : IQueryHandler<GetICSListQuery, PagedICSListResponse>
@@ -82,3 +82,4 @@ public sealed class GetICSListQueryHandler(AssetManagementDbContext dbContext)
         return new PagedICSListResponse(result, pageNumber, pageSize, totalCount);
     }
 }
+

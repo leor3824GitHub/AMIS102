@@ -1,6 +1,6 @@
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Modules.AssetManagement.Domain;
 
-namespace FSH.Modules.AssetManagement.Features.v1.Locations;
+namespace AMIS.Modules.AssetManagement.Features.v1.Locations;
 
 public sealed record LocationDto(
     Guid Id,

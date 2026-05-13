@@ -1,10 +1,10 @@
-using FSH.Framework.Persistence;
-using FSH.Framework.Shared.Multitenancy;
-using FSH.Modules.Multitenancy.Contracts.Dtos;
-using FSH.Modules.Multitenancy.Contracts.v1.GetTenants;
+using AMIS.Framework.Persistence;
+using AMIS.Framework.Shared.Multitenancy;
+using AMIS.Modules.Multitenancy.Contracts.Dtos;
+using AMIS.Modules.Multitenancy.Contracts.v1.GetTenants;
 using System.Linq.Expressions;
 
-namespace FSH.Modules.Multitenancy.Features.v1.GetTenants;
+namespace AMIS.Modules.Multitenancy.Features.v1.GetTenants;
 
 internal sealed class GetTenantsSpecification : Specification<AppTenantInfo, TenantDto>
 {
@@ -50,3 +50,4 @@ internal sealed class GetTenantsSpecification : Specification<AppTenantInfo, Ten
             SortMappings);
     }
 }
+

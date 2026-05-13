@@ -1,8 +1,8 @@
-using FSH.Modules.Identity.Contracts.Services;
-using FSH.Modules.Identity.Contracts.v1.Users.GetUserPermissions;
+using AMIS.Modules.Identity.Contracts.Services;
+using AMIS.Modules.Identity.Contracts.v1.Users.GetUserPermissions;
 using Mediator;
 
-namespace FSH.Modules.Identity.Features.v1.Users.GetUserPermissions;
+namespace AMIS.Modules.Identity.Features.v1.Users.GetUserPermissions;
 
 public sealed class GetCurrentUserPermissionsQueryHandler : IQueryHandler<GetCurrentUserPermissionsQuery, List<string>?>
 {
@@ -19,3 +19,4 @@ public sealed class GetCurrentUserPermissionsQueryHandler : IQueryHandler<GetCur
         return await _userService.GetPermissionsAsync(query.UserId, cancellationToken).ConfigureAwait(false);
     }
 }
+

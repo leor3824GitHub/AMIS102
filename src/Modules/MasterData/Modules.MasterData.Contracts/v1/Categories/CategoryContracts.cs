@@ -1,4 +1,4 @@
-namespace FSH.Modules.MasterData.Contracts.v1.Categories;
+namespace AMIS.Modules.MasterData.Contracts.v1.Categories;
 
 public record CategoryDto(
     Guid Id,
@@ -24,3 +24,4 @@ public record UpdateCategoryCommand(
 public record GetCategoryQuery(Guid Id);
 
 public record DeleteCategoryCommand(Guid Id);
+

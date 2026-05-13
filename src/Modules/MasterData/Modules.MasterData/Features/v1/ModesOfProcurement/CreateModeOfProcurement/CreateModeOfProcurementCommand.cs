@@ -1,6 +1,6 @@
 using Mediator;
 
-namespace FSH.Modules.MasterData.Features.v1.ModesOfProcurement.CreateModeOfProcurement;
+namespace AMIS.Modules.MasterData.Features.v1.ModesOfProcurement.CreateModeOfProcurement;
 
 public sealed record CreateModeOfProcurementCommand(
     string Name,
@@ -11,3 +11,4 @@ public sealed record ModeOfProcurementDto(
     string Name,
     string? Description,
     bool IsActive);
+

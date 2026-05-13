@@ -1,9 +1,9 @@
-﻿using FSH.Framework.Shared.Identity.Claims;
+using AMIS.Framework.Shared.Identity.Claims;
 using Microsoft.AspNetCore.Http;
 using Serilog.Core;
 using Serilog.Events;
 
-namespace FSH.Framework.Web.Observability.Logging.Serilog;
+namespace AMIS.Framework.Web.Observability.Logging.Serilog;
 
 public class HttpRequestContextEnricher : ILogEventEnricher
 {
@@ -43,3 +43,4 @@ public class HttpRequestContextEnricher : ILogEventEnricher
         }
     }
 }
+

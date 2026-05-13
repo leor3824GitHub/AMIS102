@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.MasterData.Contracts.v1.ReportSignatories;
+using AMIS.Modules.MasterData.Contracts.v1.ReportSignatories;
 
-namespace FSH.Modules.MasterData.Features.v1.ReportSignatories.CreateReportSignatory;
+namespace AMIS.Modules.MasterData.Features.v1.ReportSignatories.CreateReportSignatory;
 
 public sealed class CreateReportSignatoryCommandValidator : AbstractValidator<CreateReportSignatoryCommand>
 {
@@ -29,3 +29,4 @@ public sealed class CreateReportSignatoryCommandValidator : AbstractValidator<Cr
             .MaximumLength(200).WithMessage("Title must not exceed 200 characters.");
     }
 }
+

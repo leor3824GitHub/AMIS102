@@ -1,11 +1,11 @@
-using FSH.Framework.Shared.Storage;
-using FSH.Framework.Storage.DTOs;
-using FSH.Framework.Storage.Services;
+using AMIS.Framework.Shared.Storage;
+using AMIS.Framework.Storage.DTOs;
+using AMIS.Framework.Storage.Services;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.StaticFiles;
 using System.Text.RegularExpressions;
 
-namespace FSH.Framework.Storage.Local;
+namespace AMIS.Framework.Storage.Local;
 
 public class LocalStorageService : IStorageService
 {
@@ -121,3 +121,4 @@ public class LocalStorageService : IStorageService
         return Regex.Replace(fileName, @"[^a-zA-Z0-9_\.-]", "_");
     }
 }
+

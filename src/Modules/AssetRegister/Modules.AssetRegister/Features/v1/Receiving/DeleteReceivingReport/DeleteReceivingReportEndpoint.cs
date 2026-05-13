@@ -1,11 +1,11 @@
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.AssetRegister.Contracts.v1.Receiving;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.AssetRegister.Contracts.v1.Receiving;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Receiving.DeleteReceivingReport;
+namespace AMIS.Modules.AssetRegister.Features.v1.Receiving.DeleteReceivingReport;
 
 public static class DeleteReceivingReportEndpoint
 {
@@ -24,3 +24,4 @@ public static class DeleteReceivingReportEndpoint
         return TypedResults.NoContent();
     }
 }
+

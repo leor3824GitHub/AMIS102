@@ -1,11 +1,11 @@
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.AssetManagement.Domain;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.AssetManagement.Features.v1.PhysicalCount.GetPhysicalCountSessionList;
+namespace AMIS.Modules.AssetManagement.Features.v1.PhysicalCount.GetPhysicalCountSessionList;
 
 public static class GetPhysicalCountSessionListEndpoint
 {
@@ -19,3 +19,4 @@ public static class GetPhysicalCountSessionListEndpoint
         .WithSummary("List physical count sessions with progress summary")
         .RequirePermission(AssetManagementModuleConstants.Permissions.PhysicalCount.View);
 }
+

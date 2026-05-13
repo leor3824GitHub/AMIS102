@@ -1,9 +1,9 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<RootNamespace>FSH.Framework.Persistence</RootNamespace>
-		<AssemblyName>FSH.Framework.Persistence</AssemblyName>
-		<PackageId>FullStackHero.Framework.Persistence</PackageId>
+		<RootNamespace>AMIS.Framework.Persistence</RootNamespace>
+		<AssemblyName>AMIS.Framework.Persistence</AssemblyName>
+		<PackageId>AMIS.Framework.Persistence</PackageId>
 		<NoWarn>$(NoWarn);S4144;CS0618</NoWarn>
 	</PropertyGroup>
 
@@ -23,3 +23,4 @@
 	</ItemGroup>
 	
 </Project>
+

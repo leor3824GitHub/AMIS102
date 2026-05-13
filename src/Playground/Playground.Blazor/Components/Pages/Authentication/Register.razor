@@ -1,9 +1,9 @@
 @page "/register"
 @layout EmptyLayout
 @attribute [AllowAnonymous]
-@using FSH.Framework.Shared.Multitenancy
+@using AMIS.Framework.Shared.Multitenancy
 @using Microsoft.AspNetCore.Authorization
-@using FSH.Playground.Blazor.ApiClient
+@using AMIS.Playground.Blazor.ApiClient
 @inject NavigationManager Navigation
 @inject IIdentityClient IdentityClient
 @inject ISnackbar Snackbar
@@ -16,7 +16,7 @@
             <div class="brand-icon">
                 <MudIcon Icon="@Icons.Material.Filled.Business" Size="Size.Small" />
             </div>
-            <span class="brand-name">fullstackhero</span>
+            <span class="brand-name">AMIS</span>
         </div>
 
         @* Register Card *@
@@ -227,3 +227,4 @@
         }
     }
 }
+

@@ -1,7 +1,7 @@
-using FSH.Framework.Core.Domain;
+using AMIS.Framework.Core.Domain;
 using System.Security.Cryptography;
 
-namespace FSH.Modules.Vehicle.Domain.Repairs;
+namespace AMIS.Modules.Vehicle.Domain.Repairs;
 
 public enum RepairStatus
 {
@@ -115,3 +115,4 @@ public class RepairRecord : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
         LastModifiedBy = userId;
     }
 }
+

@@ -1,5 +1,5 @@
 @page "/asset-management/physical-count/{SessionId:guid}"
-@using FSH.Playground.Blazor.ApiClient
+@using AMIS.Playground.Blazor.ApiClient
 @using Microsoft.JSInterop
 @implements IDisposable
 @inject IPhysicalCountClient Client
@@ -708,3 +708,4 @@ else
 
     public void Dispose() => _dotNetRef?.Dispose();
 }
+

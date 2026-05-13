@@ -1,6 +1,6 @@
 using Mediator;
 
-namespace FSH.Modules.AssetRegister.Contracts.v1.Reports;
+namespace AMIS.Modules.AssetRegister.Contracts.v1.Reports;
 
 public sealed record AccountabilityReportLineDto(
     Guid LineId,

@@ -1,11 +1,11 @@
-using FSH.Framework.Persistence;
-using FSH.Framework.Shared.Persistence;
-using FSH.Modules.Expendable.Contracts.v1.Warehouse;
-using FSH.Modules.Expendable.Data;
+using AMIS.Framework.Persistence;
+using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.Expendable.Contracts.v1.Warehouse;
+using AMIS.Modules.Expendable.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.Expendable.Features.v1.Warehouse.GetRejectedInventory;
+namespace AMIS.Modules.Expendable.Features.v1.Warehouse.GetRejectedInventory;
 
 public sealed class GetRejectedInventoryQueryHandler : IQueryHandler<GetRejectedInventoryQuery, PagedResponse<RejectedInventoryDto>>
 {
@@ -32,3 +32,4 @@ public sealed class GetRejectedInventoryQueryHandler : IQueryHandler<GetRejected
         return await projected.ToPagedResponseAsync(query, cancellationToken).ConfigureAwait(false);
     }
 }
+

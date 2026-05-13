@@ -1,4 +1,4 @@
-namespace FSH.Framework.Eventing.Abstractions;
+namespace AMIS.Framework.Eventing.Abstractions;
 
 /// <summary>
 /// Base integration event contract used for cross-module and cross-service messaging.
@@ -24,3 +24,4 @@ public interface IIntegrationEvent
     /// </summary>
     string Source { get; }
 }
+

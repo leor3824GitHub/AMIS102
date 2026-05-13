@@ -1,10 +1,10 @@
-using FSH.Modules.Finance.Contracts.v1.BudgetUtilizationRecords;
-using FSH.Modules.Finance.Data;
+using AMIS.Modules.Finance.Contracts.v1.BudgetUtilizationRecords;
+using AMIS.Modules.Finance.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace FSH.Modules.Finance.Features.v1.BudgetUtilizationRecords.CancelBudgetUtilizationRecord;
+namespace AMIS.Modules.Finance.Features.v1.BudgetUtilizationRecords.CancelBudgetUtilizationRecord;
 
 public sealed class CancelBudgetUtilizationRecordCommandHandler(
     ILogger<CancelBudgetUtilizationRecordCommandHandler> logger,
@@ -25,3 +25,4 @@ public sealed class CancelBudgetUtilizationRecordCommandHandler(
         return Unit.Value;
     }
 }
+

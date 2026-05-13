@@ -1,6 +1,6 @@
-using FSH.Modules.Auditing.Contracts;
+using AMIS.Modules.Auditing.Contracts;
 
-namespace FSH.Modules.Auditing;
+namespace AMIS.Modules.Auditing;
 
 public sealed class DefaultAuditClient : IAuditClient
 {
@@ -56,4 +56,5 @@ public sealed class DefaultAuditClient : IAuditClient
             .WriteAsync(ct);
     }
 }
+
 

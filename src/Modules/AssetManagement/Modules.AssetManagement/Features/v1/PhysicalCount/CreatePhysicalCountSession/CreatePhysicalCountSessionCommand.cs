@@ -1,7 +1,7 @@
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Modules.AssetManagement.Domain;
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.PhysicalCount.CreatePhysicalCountSession;
+namespace AMIS.Modules.AssetManagement.Features.v1.PhysicalCount.CreatePhysicalCountSession;
 
 public sealed record CreatePhysicalCountSessionCommand(
     string SessionNo,
@@ -16,3 +16,4 @@ public sealed record CreatePhysicalCountSessionResult(
     Guid SessionId,
     string SessionNo,
     int EntriesCreated);
+

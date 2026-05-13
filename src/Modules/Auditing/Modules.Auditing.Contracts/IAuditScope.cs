@@ -1,4 +1,4 @@
-﻿namespace FSH.Modules.Auditing.Contracts;
+namespace AMIS.Modules.Auditing.Contracts;
 
 /// <summary>
 /// Ambient context for the current operation/request. 
@@ -33,3 +33,4 @@ public interface IAuditScope
         string? source = null,
         AuditTag? tags = null);
 }
+

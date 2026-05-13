@@ -1,10 +1,10 @@
-using FSH.Framework.Shared.Identity.Authorization;
+using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.AssetManagement.Features.v1.PPEIssuanceReports.GetPTR;
+namespace AMIS.Modules.AssetManagement.Features.v1.PPEIssuanceReports.GetPTR;
 
 public static class GetPTREndpoint
 {
@@ -15,3 +15,4 @@ public static class GetPTREndpoint
         .WithSummary("Get Property Transfer Report (PTR) derived from a PPEIR")
         .RequirePermission(AssetManagementModuleConstants.Permissions.PPEIssuanceReports.View);
 }
+

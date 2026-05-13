@@ -1,8 +1,8 @@
-using FSH.Framework.Eventing.Abstractions;
-using FSH.Modules.Identity.Contracts.Events;
+using AMIS.Framework.Eventing.Abstractions;
+using AMIS.Modules.Identity.Contracts.Events;
 using Microsoft.Extensions.Logging;
 
-namespace FSH.Modules.Identity.Events;
+namespace AMIS.Modules.Identity.Events;
 
 /// <summary>
 /// Example handler that logs when a token is generated.
@@ -35,3 +35,4 @@ public sealed class TokenGeneratedLogHandler
         return Task.CompletedTask;
     }
 }
+

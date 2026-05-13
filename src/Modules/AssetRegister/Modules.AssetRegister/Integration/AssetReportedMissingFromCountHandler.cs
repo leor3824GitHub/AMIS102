@@ -1,8 +1,8 @@
-using FSH.Modules.AssetRegister.Domain.Events;
+using AMIS.Modules.AssetRegister.Domain.Events;
 using Mediator;
 using Microsoft.Extensions.Logging;
 
-namespace FSH.Modules.AssetRegister.Integration;
+namespace AMIS.Modules.AssetRegister.Integration;
 
 /// <summary>
 /// Reacts to <see cref="AssetReportedMissingFromCountEvent"/> raised when a count session is
@@ -25,3 +25,4 @@ public sealed class AssetReportedMissingFromCountHandler(
         return ValueTask.CompletedTask;
     }
 }
+

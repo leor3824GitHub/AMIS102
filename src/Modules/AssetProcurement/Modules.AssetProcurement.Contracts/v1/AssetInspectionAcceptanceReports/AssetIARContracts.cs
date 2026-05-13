@@ -1,8 +1,8 @@
-using FSH.Framework.Eventing.Abstractions;
-using FSH.Framework.Shared.Persistence;
+using AMIS.Framework.Eventing.Abstractions;
+using AMIS.Framework.Shared.Persistence;
 using Mediator;
 
-namespace FSH.Modules.AssetProcurement.Contracts.v1.AssetInspectionAcceptanceReports;
+namespace AMIS.Modules.AssetProcurement.Contracts.v1.AssetInspectionAcceptanceReports;
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Enums
@@ -150,3 +150,4 @@ public sealed record AssetIARAcceptedEvent(
     public DateTime OccurredOnUtc { get; } = DateTime.UtcNow;
     public string Source { get; } = "AssetProcurement";
 }
+

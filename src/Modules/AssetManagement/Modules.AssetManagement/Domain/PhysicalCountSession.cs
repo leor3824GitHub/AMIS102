@@ -1,6 +1,6 @@
-using FSH.Framework.Core.Domain;
+using AMIS.Framework.Core.Domain;
 
-namespace FSH.Modules.AssetManagement.Domain;
+namespace AMIS.Modules.AssetManagement.Domain;
 
 /// <summary>
 /// A Physical Count Session — the top-level document that tracks a physical inventory
@@ -116,3 +116,4 @@ public sealed class PhysicalCountSession : AggregateRoot<Guid>, IHasTenant, IAud
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
     }
 }
+

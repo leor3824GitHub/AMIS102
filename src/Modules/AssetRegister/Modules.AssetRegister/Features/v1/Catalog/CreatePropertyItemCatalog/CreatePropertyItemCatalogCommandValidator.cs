@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.AssetRegister.Contracts.v1.Catalog;
+using AMIS.Modules.AssetRegister.Contracts.v1.Catalog;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Catalog.CreatePropertyItemCatalog;
+namespace AMIS.Modules.AssetRegister.Features.v1.Catalog.CreatePropertyItemCatalog;
 
 public sealed class CreatePropertyItemCatalogCommandValidator : AbstractValidator<CreatePropertyItemCatalogCommand>
 {
@@ -16,3 +16,4 @@ public sealed class CreatePropertyItemCatalogCommandValidator : AbstractValidato
         RuleFor(x => x.EstimatedUsefulLifeYears).GreaterThan(0).LessThanOrEqualTo(100);
     }
 }
+

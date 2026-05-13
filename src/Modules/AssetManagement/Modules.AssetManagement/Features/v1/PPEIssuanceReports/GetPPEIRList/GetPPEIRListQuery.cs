@@ -1,7 +1,7 @@
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Modules.AssetManagement.Domain;
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.PPEIssuanceReports.GetPPEIRList;
+namespace AMIS.Modules.AssetManagement.Features.v1.PPEIssuanceReports.GetPPEIRList;
 
 public sealed record GetPPEIRListQuery(
     string? Keyword,
@@ -24,3 +24,4 @@ public sealed record PPEIRSummaryDto(
     Guid IssuedToEmployeeId,
     string IssuanceType,
     int ItemCount);
+

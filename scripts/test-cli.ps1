@@ -1,4 +1,4 @@
-#!/usr/bin/env pwsh
+﻿#!/usr/bin/env pwsh
 # Test CLI locally without publishing to NuGet
 # Usage: ./scripts/test-cli.ps1 [-Version "10.0.0-rc.1"] [-Uninstall]
 
@@ -12,12 +12,12 @@ $ErrorActionPreference = "Stop"
 $ScriptDir = $PSScriptRoot
 if (-not $ScriptDir) { $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path }
 $RepoRoot = Split-Path -Parent $ScriptDir
-$CliProject = Join-Path $RepoRoot "src\Tools\CLI\FSH.CLI.csproj"
+$CliProject = Join-Path $RepoRoot "src\Tools\CLI\AMIS.CLI.csproj"
 $NupkgsDir = Join-Path $RepoRoot "artifacts\nupkgs"
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "  FSH CLI Local Test Script" -ForegroundColor Cyan
+Write-Host "  AMIS CLI Local Test Script" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Repo Root: $RepoRoot" -ForegroundColor Gray
@@ -25,8 +25,8 @@ Write-Host "CLI Project: $CliProject" -ForegroundColor Gray
 Write-Host ""
 
 # Uninstall existing CLI
-Write-Host "[1/4] Uninstalling existing fsh tool..." -ForegroundColor Yellow
-dotnet tool uninstall -g FullStackHero.CLI 2>$null
+Write-Host "[1/4] Uninstalling existing AMIS tool..." -ForegroundColor Yellow
+dotnet tool uninstall -g AMIS.CLI 2>$null
 if ($LASTEXITCODE -eq 0) {
     Write-Host "      Uninstalled successfully" -ForegroundColor Green
 } else {
@@ -72,7 +72,7 @@ if (-not $SkipBuild) {
 # Install from local package
 Write-Host ""
 Write-Host "[3/4] Installing CLI from local package..." -ForegroundColor Yellow
-$PackagePath = Get-ChildItem -Path $NupkgsDir -Filter "FullStackHero.CLI.*.nupkg" | Select-Object -First 1
+$PackagePath = Get-ChildItem -Path $NupkgsDir -Filter "AMIS.CLI.*.nupkg" | Select-Object -First 1
 
 if (-not $PackagePath) {
     Write-Host "No package found in $NupkgsDir" -ForegroundColor Red
@@ -80,7 +80,7 @@ if (-not $PackagePath) {
 }
 
 Write-Host "      Package: $($PackagePath.Name)" -ForegroundColor Gray
-dotnet tool install -g FullStackHero.CLI --add-source $NupkgsDir --version $Version
+dotnet tool install -g AMIS.CLI --add-source $NupkgsDir --version $Version
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Install failed!" -ForegroundColor Red
     exit 1
@@ -92,15 +92,15 @@ Write-Host ""
 Write-Host "[4/4] Verifying installation..." -ForegroundColor Yellow
 Write-Host ""
 
-$fshPath = Get-Command fsh -ErrorAction SilentlyContinue
-if ($fshPath) {
-    Write-Host "      fsh location: $($fshPath.Source)" -ForegroundColor Gray
+$AMISPath = Get-Command AMIS -ErrorAction SilentlyContinue
+if ($AMISPath) {
+    Write-Host "      AMIS location: $($AMISPath.Source)" -ForegroundColor Gray
     Write-Host ""
     Write-Host "----------------------------------------" -ForegroundColor Cyan
-    fsh --version
+    AMIS --version
     Write-Host "----------------------------------------" -ForegroundColor Cyan
 } else {
-    Write-Host "      Warning: 'fsh' command not found in PATH" -ForegroundColor Yellow
+    Write-Host "      Warning: 'AMIS' command not found in PATH" -ForegroundColor Yellow
     Write-Host "      You may need to restart your terminal" -ForegroundColor Yellow
 }
 
@@ -110,10 +110,11 @@ Write-Host "  CLI installed successfully!" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Green
 Write-Host ""
 Write-Host "Test commands:" -ForegroundColor Cyan
-Write-Host "  fsh --help" -ForegroundColor White
-Write-Host "  fsh new --help" -ForegroundColor White
-Write-Host "  fsh new MyApp" -ForegroundColor White
+Write-Host "  AMIS --help" -ForegroundColor White
+Write-Host "  AMIS new --help" -ForegroundColor White
+Write-Host "  AMIS new MyApp" -ForegroundColor White
 Write-Host ""
 Write-Host "To uninstall:" -ForegroundColor Cyan
 Write-Host "  ./scripts/test-cli.ps1 -Uninstall" -ForegroundColor White
 Write-Host ""
+

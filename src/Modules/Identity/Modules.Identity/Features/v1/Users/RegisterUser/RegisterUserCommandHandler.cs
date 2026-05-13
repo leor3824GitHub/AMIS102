@@ -1,8 +1,8 @@
-using FSH.Modules.Identity.Contracts.Services;
-using FSH.Modules.Identity.Contracts.v1.Users.RegisterUser;
+using AMIS.Modules.Identity.Contracts.Services;
+using AMIS.Modules.Identity.Contracts.v1.Users.RegisterUser;
 using Mediator;
 
-namespace FSH.Modules.Identity.Features.v1.Users.RegisterUser;
+namespace AMIS.Modules.Identity.Features.v1.Users.RegisterUser;
 
 public sealed class RegisterUserCommandHandler : ICommandHandler<RegisterUserCommand, RegisterUserResponse>
 {
@@ -31,3 +31,4 @@ public sealed class RegisterUserCommandHandler : ICommandHandler<RegisterUserCom
         return new RegisterUserResponse(userId);
     }
 }
+

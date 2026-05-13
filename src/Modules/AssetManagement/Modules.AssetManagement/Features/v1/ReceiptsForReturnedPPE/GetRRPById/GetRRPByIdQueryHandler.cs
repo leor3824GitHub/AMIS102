@@ -1,8 +1,8 @@
-using FSH.Modules.AssetManagement.Data;
+using AMIS.Modules.AssetManagement.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.ReceiptsForReturnedPPE.GetRRPById;
+namespace AMIS.Modules.AssetManagement.Features.v1.ReceiptsForReturnedPPE.GetRRPById;
 
 public sealed class GetRRPByIdQueryHandler(AssetManagementDbContext dbContext)
     : IQueryHandler<GetRRPByIdQuery, RRPDetailsDto>
@@ -48,3 +48,4 @@ public sealed class GetRRPByIdQueryHandler(AssetManagementDbContext dbContext)
             items);
     }
 }
+

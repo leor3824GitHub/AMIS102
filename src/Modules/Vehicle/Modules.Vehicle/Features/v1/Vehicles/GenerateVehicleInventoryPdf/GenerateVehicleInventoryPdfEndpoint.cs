@@ -1,11 +1,11 @@
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.Vehicle.Contracts.v1.Vehicles;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.Vehicle.Contracts.v1.Vehicles;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.Vehicle.Features.v1.Vehicles.GenerateVehicleInventoryPdf;
+namespace AMIS.Modules.Vehicle.Features.v1.Vehicles.GenerateVehicleInventoryPdf;
 
 public static class GenerateVehicleInventoryPdfEndpoint
 {
@@ -25,3 +25,4 @@ public static class GenerateVehicleInventoryPdfEndpoint
         return TypedResults.File(bytes, "application/pdf", "VehicleInventory.pdf");
     }
 }
+

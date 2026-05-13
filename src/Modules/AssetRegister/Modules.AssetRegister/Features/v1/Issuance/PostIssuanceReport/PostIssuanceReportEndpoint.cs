@@ -1,11 +1,11 @@
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.AssetRegister.Contracts.v1.Issuance;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.AssetRegister.Contracts.v1.Issuance;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Issuance.PostIssuanceReport;
+namespace AMIS.Modules.AssetRegister.Features.v1.Issuance.PostIssuanceReport;
 
 public static class PostIssuanceReportEndpoint
 {
@@ -24,3 +24,4 @@ public static class PostIssuanceReportEndpoint
         return TypedResults.Ok(result);
     }
 }
+

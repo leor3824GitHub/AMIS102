@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.AssetRegister.Contracts.v1.Accountability;
+using AMIS.Modules.AssetRegister.Contracts.v1.Accountability;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Accountability.CancelAccountability;
+namespace AMIS.Modules.AssetRegister.Features.v1.Accountability.CancelAccountability;
 
 public sealed class CancelAccountabilityCommandValidator : AbstractValidator<CancelAccountabilityCommand>
 {
@@ -11,3 +11,4 @@ public sealed class CancelAccountabilityCommandValidator : AbstractValidator<Can
         RuleFor(x => x.Reason).NotEmpty().MaximumLength(500);
     }
 }
+

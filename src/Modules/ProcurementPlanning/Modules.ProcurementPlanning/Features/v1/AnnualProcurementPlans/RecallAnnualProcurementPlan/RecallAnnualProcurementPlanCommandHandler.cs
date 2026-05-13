@@ -1,11 +1,11 @@
 using System.Net;
-using FSH.Framework.Core.Exceptions;
-using FSH.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
-using FSH.Modules.ProcurementPlanning.Data;
+using AMIS.Framework.Core.Exceptions;
+using AMIS.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
+using AMIS.Modules.ProcurementPlanning.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.RecallAnnualProcurementPlan;
+namespace AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.RecallAnnualProcurementPlan;
 
 public sealed class RecallAnnualProcurementPlanCommandHandler(
     ProcurementPlanningDbContext dbContext) : ICommandHandler<RecallAppCommand, AnnualProcurementPlanDto>
@@ -22,3 +22,4 @@ public sealed class RecallAnnualProcurementPlanCommandHandler(
         return await AppReadProjection.BuildDtoAsync(dbContext, app.Id, cancellationToken).ConfigureAwait(false);
     }
 }
+

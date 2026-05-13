@@ -1,7 +1,7 @@
 // Extends NSwag-generated partial classes with fields added after the last client generation.
 // Remove this file when the client is next regenerated from the OpenAPI spec.
 
-namespace FSH.Playground.Blazor.ApiClient
+namespace AMIS.Playground.Blazor.ApiClient
 {
     public partial class SupplyRequestDto
     {
@@ -97,3 +97,4 @@ namespace FSH.Playground.Blazor.ApiClient
         public string? OfficeCode { get; set; }
     }
 }
+

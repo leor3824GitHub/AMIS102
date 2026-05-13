@@ -1,4 +1,4 @@
-namespace FSH.Playground.Blazor.Components.Pages.ProcurementPlanning;
+namespace AMIS.Playground.Blazor.Components.Pages.ProcurementPlanning;
 
 public sealed class SelectablePpmp
 {
@@ -10,3 +10,4 @@ public sealed class SelectablePpmp
     public decimal TotalEstimatedBudget { get; init; }
     public bool Selected { get; set; }
 }
+

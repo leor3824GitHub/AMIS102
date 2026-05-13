@@ -1,4 +1,4 @@
-using FSH.Modules.Identity.Contracts.DTOs;
+using AMIS.Modules.Identity.Contracts.DTOs;
 
 namespace Identity.Tests.Services;
 
@@ -136,3 +136,4 @@ public sealed class PasswordExpiryStatusTests
         status.Status.ShouldBe("Valid");
     }
 }
+

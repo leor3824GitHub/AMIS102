@@ -1,4 +1,4 @@
-﻿namespace FSH.Framework.Shared.Constants;
+namespace AMIS.Framework.Shared.Constants;
 
 public static class ClaimConstants
 {
@@ -9,3 +9,4 @@ public static class ClaimConstants
     public const string IpAddress = "ipAddress";
     public const string Expiration = "exp";
 }
+

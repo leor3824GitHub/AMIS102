@@ -1,9 +1,9 @@
-using FSH.Modules.AssetRegister.Contracts.v1.Issuance;
-using FSH.Modules.AssetRegister.Data;
+using AMIS.Modules.AssetRegister.Contracts.v1.Issuance;
+using AMIS.Modules.AssetRegister.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Issuance.RemoveIssuanceReportLine;
+namespace AMIS.Modules.AssetRegister.Features.v1.Issuance.RemoveIssuanceReportLine;
 
 public sealed class RemoveIssuanceReportLineCommandHandler(AssetRegisterDbContext db)
     : ICommandHandler<RemoveIssuanceReportLineCommand, PropertyIssuanceReportDto>
@@ -21,3 +21,4 @@ public sealed class RemoveIssuanceReportLineCommandHandler(AssetRegisterDbContex
         return IssuanceMapper.ToDto(report);
     }
 }
+

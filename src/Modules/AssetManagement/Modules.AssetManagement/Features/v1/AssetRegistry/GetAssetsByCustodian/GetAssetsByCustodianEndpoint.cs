@@ -1,10 +1,10 @@
-using FSH.Framework.Shared.Identity.Authorization;
+using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.AssetManagement.Features.v1.AssetRegistryQueries.GetAssetsByCustodian;
+namespace AMIS.Modules.AssetManagement.Features.v1.AssetRegistryQueries.GetAssetsByCustodian;
 
 public static class GetAssetsByCustodianEndpoint
 {
@@ -22,3 +22,4 @@ public static class GetAssetsByCustodianEndpoint
         .WithSummary("Get paginated assets by current custodian from the unified asset registry")
         .RequirePermission(AssetManagementModuleConstants.Permissions.AssetRegistry.View);
 }
+

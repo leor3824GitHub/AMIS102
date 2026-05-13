@@ -1,8 +1,8 @@
-using FSH.Modules.MasterData.Data;
+using AMIS.Modules.MasterData.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.MasterData.Features.v1.Categories.GetCategoryById;
+namespace AMIS.Modules.MasterData.Features.v1.Categories.GetCategoryById;
 
 public sealed class GetCategoryByIdQueryHandler : IQueryHandler<GetCategoryByIdQuery, CategoryDetailsDto>
 {
@@ -37,3 +37,4 @@ public sealed class GetCategoryByIdQueryHandler : IQueryHandler<GetCategoryByIdQ
             category.LastModifiedBy);
     }
 }
+

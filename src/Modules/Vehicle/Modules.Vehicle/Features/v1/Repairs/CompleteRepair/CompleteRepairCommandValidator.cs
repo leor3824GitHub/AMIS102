@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.Vehicle.Contracts.v1.Repairs;
+using AMIS.Modules.Vehicle.Contracts.v1.Repairs;
 
-namespace FSH.Modules.Vehicle.Features.v1.Repairs.CompleteRepair;
+namespace AMIS.Modules.Vehicle.Features.v1.Repairs.CompleteRepair;
 
 public sealed class CompleteRepairCommandValidator : AbstractValidator<CompleteRepairCommand>
 {
@@ -13,3 +13,4 @@ public sealed class CompleteRepairCommandValidator : AbstractValidator<CompleteR
             .LessThanOrEqualTo(_ => DateTimeOffset.UtcNow.AddDays(1));
     }
 }
+

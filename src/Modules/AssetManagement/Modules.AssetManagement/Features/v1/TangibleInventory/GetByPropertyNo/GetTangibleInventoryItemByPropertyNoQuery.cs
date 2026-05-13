@@ -1,6 +1,6 @@
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.TangibleInventory.GetByPropertyNo;
+namespace AMIS.Modules.AssetManagement.Features.v1.TangibleInventory.GetByPropertyNo;
 
 public sealed record GetTangibleInventoryItemByPropertyNoQuery(string PropertyNo)
     : IQuery<TangibleInventoryItemDetailDto>;
@@ -16,3 +16,4 @@ public sealed record TangibleInventoryItemDetailDto(
     string? LinkedDocumentType,
     string? LinkedDocumentNo,
     Guid? LinkedDocumentId);
+

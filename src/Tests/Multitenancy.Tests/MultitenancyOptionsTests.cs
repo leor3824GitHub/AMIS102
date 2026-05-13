@@ -1,4 +1,4 @@
-using FSH.Modules.Multitenancy;
+using AMIS.Modules.Multitenancy;
 
 namespace Multitenancy.Tests;
 
@@ -74,3 +74,4 @@ public sealed class MultitenancyOptionsTests
         options.AutoProvisionOnStartup.ShouldBeFalse();
     }
 }
+

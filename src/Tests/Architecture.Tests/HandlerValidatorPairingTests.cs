@@ -1,6 +1,6 @@
-using FSH.Modules.Auditing;
-using FSH.Modules.Identity;
-using FSH.Modules.Multitenancy;
+using AMIS.Modules.Auditing;
+using AMIS.Modules.Identity;
+using AMIS.Modules.Multitenancy;
 using Mediator;
 using Shouldly;
 using System.Globalization;
@@ -210,4 +210,5 @@ public class HandlerValidatorPairingTests
         orphanedValidators.ShouldNotBeNull();
     }
 }
+
 

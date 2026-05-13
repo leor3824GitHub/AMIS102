@@ -1,4 +1,4 @@
-namespace FSH.Modules.MasterData.Contracts.v1.ModesOfProcurement;
+namespace AMIS.Modules.MasterData.Contracts.v1.ModesOfProcurement;
 
 public sealed record ModeOfProcurementDto(
     Guid Id,
@@ -19,3 +19,4 @@ public sealed record UpdateModeOfProcurementCommand(
 public sealed record GetModeOfProcurementQuery(Guid Id);
 
 public sealed record DeleteModeOfProcurementCommand(Guid Id);
+

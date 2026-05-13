@@ -1,4 +1,4 @@
-using FSH.Modules.AssetRegister.Contracts.v1.ValueObjects;
+using AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
 using Shouldly;
 using Xunit;
 
@@ -37,3 +37,4 @@ public sealed class PropertyNumberTests
         pn.ShouldBeNull();
     }
 }
+

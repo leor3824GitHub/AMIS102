@@ -1,6 +1,6 @@
 using Mediator;
 
-namespace FSH.Modules.MasterData.Contracts.v1.CapitalizationThresholds;
+namespace AMIS.Modules.MasterData.Contracts.v1.CapitalizationThresholds;
 
 public sealed record CapitalizationThresholdDto(
     Guid Id,
@@ -33,3 +33,4 @@ public sealed record UpdateCapitalizationThresholdCommand(
     DateOnly EffectivityDate) : ICommand<CapitalizationThresholdDto>;
 
 public sealed record SetActiveCapitalizationThresholdCommand(Guid Id) : ICommand;
+

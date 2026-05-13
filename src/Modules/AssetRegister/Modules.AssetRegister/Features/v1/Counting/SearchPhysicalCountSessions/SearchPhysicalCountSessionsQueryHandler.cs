@@ -1,10 +1,10 @@
-using FSH.Framework.Shared.Persistence;
-using FSH.Modules.AssetRegister.Contracts.v1.Counting;
-using FSH.Modules.AssetRegister.Data;
+using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.AssetRegister.Contracts.v1.Counting;
+using AMIS.Modules.AssetRegister.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Counting.SearchPhysicalCountSessions;
+namespace AMIS.Modules.AssetRegister.Features.v1.Counting.SearchPhysicalCountSessions;
 
 public sealed class SearchPhysicalCountSessionsQueryHandler(AssetRegisterDbContext db)
     : IQueryHandler<SearchPhysicalCountSessionsQuery, PagedResponse<PhysicalCountSessionSummaryDto>>
@@ -45,3 +45,4 @@ public sealed class SearchPhysicalCountSessionsQueryHandler(AssetRegisterDbConte
         };
     }
 }
+

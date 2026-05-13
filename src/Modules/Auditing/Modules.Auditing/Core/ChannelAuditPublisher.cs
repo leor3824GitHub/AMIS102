@@ -1,8 +1,8 @@
-using FSH.Modules.Auditing.Contracts;
+using AMIS.Modules.Auditing.Contracts;
 using Microsoft.AspNetCore.Http;
 using System.Threading.Channels;
 
-namespace FSH.Modules.Auditing;
+namespace AMIS.Modules.Auditing;
 
 /// <summary>
 /// Non-blocking publisher using a bounded channel. Writer is used on request path; reader is drained by a background worker.
@@ -99,3 +99,4 @@ public sealed class ChannelAuditPublisher : IAuditPublisher
 
     internal ChannelReader<AuditEnvelope> Reader => _channel.Reader;
 }
+

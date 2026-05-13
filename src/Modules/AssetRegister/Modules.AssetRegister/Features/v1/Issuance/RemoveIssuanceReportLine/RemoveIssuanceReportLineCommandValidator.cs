@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.AssetRegister.Contracts.v1.Issuance;
+using AMIS.Modules.AssetRegister.Contracts.v1.Issuance;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Issuance.RemoveIssuanceReportLine;
+namespace AMIS.Modules.AssetRegister.Features.v1.Issuance.RemoveIssuanceReportLine;
 
 public sealed class RemoveIssuanceReportLineCommandValidator : AbstractValidator<RemoveIssuanceReportLineCommand>
 {
@@ -11,3 +11,4 @@ public sealed class RemoveIssuanceReportLineCommandValidator : AbstractValidator
         RuleFor(x => x.LineId).NotEmpty().WithMessage("Line ID is required.");
     }
 }
+

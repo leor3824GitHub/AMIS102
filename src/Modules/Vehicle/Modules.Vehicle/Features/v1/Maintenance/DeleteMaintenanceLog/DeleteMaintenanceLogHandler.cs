@@ -1,10 +1,10 @@
-using FSH.Framework.Core.Exceptions;
-using FSH.Modules.Vehicle.Data;
-using FSH.Modules.Vehicle.Domain.Maintenance;
+using AMIS.Framework.Core.Exceptions;
+using AMIS.Modules.Vehicle.Data;
+using AMIS.Modules.Vehicle.Domain.Maintenance;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.Vehicle.Features.v1.Maintenance.DeleteMaintenanceLog;
+namespace AMIS.Modules.Vehicle.Features.v1.Maintenance.DeleteMaintenanceLog;
 
 public sealed class DeleteMaintenanceLogHandler(
     VehicleDbContext db) : ICommandHandler<DeleteMaintenanceLogCommand, Unit>
@@ -23,3 +23,4 @@ public sealed class DeleteMaintenanceLogHandler(
         return Unit.Value;
     }
 }
+

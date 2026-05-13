@@ -1,7 +1,7 @@
-using FSH.Framework.Core;
-using FSH.Modules.Auditing;
-using FSH.Modules.Identity;
-using FSH.Modules.Multitenancy;
+using AMIS.Framework.Core;
+using AMIS.Modules.Auditing;
+using AMIS.Modules.Identity;
+using AMIS.Modules.Multitenancy;
 using NetArchTest.Rules;
 using Shouldly;
 using System.Reflection;
@@ -11,7 +11,7 @@ namespace Architecture.Tests;
 
 /// <summary>
 /// Tests to enforce the layered dependency flow:
-/// Domain → Application → Infrastructure → Presentation
+/// Domain ? Application ? Infrastructure ? Presentation
 /// </summary>
 public class LayerDependencyTests
 {
@@ -22,7 +22,7 @@ public class LayerDependencyTests
         typeof(MultitenancyModule).Assembly
     ];
 
-    private static readonly Assembly CoreAssembly = typeof(IFshCore).Assembly;
+    private static readonly Assembly CoreAssembly = typeof(IAMISCore).Assembly;
 
     [Fact]
     public void Core_Should_Not_Depend_On_EntityFramework()
@@ -134,3 +134,4 @@ public class LayerDependencyTests
         }
     }
 }
+

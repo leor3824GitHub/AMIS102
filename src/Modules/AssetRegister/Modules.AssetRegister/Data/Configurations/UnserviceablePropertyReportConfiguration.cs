@@ -1,9 +1,9 @@
-using FSH.Modules.AssetRegister.Domain.Unserviceable;
+using AMIS.Modules.AssetRegister.Domain.Unserviceable;
 using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FSH.Modules.AssetRegister.Data.Configurations;
+namespace AMIS.Modules.AssetRegister.Data.Configurations;
 
 internal sealed class UnserviceablePropertyReportConfiguration : IEntityTypeConfiguration<UnserviceablePropertyReport>
 {
@@ -62,3 +62,4 @@ internal sealed class UnserviceablePropertyItemConfiguration : IEntityTypeConfig
         builder.HasIndex(x => x.AssetRegistryId);
     }
 }
+

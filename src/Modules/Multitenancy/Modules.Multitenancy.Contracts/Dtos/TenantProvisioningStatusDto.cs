@@ -1,4 +1,4 @@
-namespace FSH.Modules.Multitenancy.Contracts.Dtos;
+namespace AMIS.Modules.Multitenancy.Contracts.Dtos;
 
 public sealed record TenantProvisioningStepDto(
     string Step,
@@ -17,3 +17,4 @@ public sealed record TenantProvisioningStatusDto(
     DateTime? StartedUtc,
     DateTime? CompletedUtc,
     IReadOnlyCollection<TenantProvisioningStepDto> Steps);
+

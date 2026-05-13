@@ -1,11 +1,11 @@
----
+﻿---
 paths:
   - "src/**"
 ---
 
 # Architecture Rules
 
-FSH is a **Modular Monolith** — NOT microservices, NOT a traditional layered architecture.
+AMIS is a **Modular Monolith** — NOT microservices, NOT a traditional layered architecture.
 
 ## Core Principles
 
@@ -66,7 +66,7 @@ public class GetUserHandler : IQueryHandler<GetUserQuery, UserDto>
 }
 ```
 
-⚠️ **NOT MediatR:** FSH uses `Mediator` library (different interfaces!)
+⚠️ **NOT MediatR:** AMIS uses `Mediator` library (different interfaces!)
 
 ### 3. Domain-Driven Design
 
@@ -286,3 +286,4 @@ For implementation details, see:
 - `.claude/rules/modules.md` (module patterns)
 - `.claude/rules/persistence.md` (data access patterns)
 - `.claude/rules/maui.md` (MAUI client patterns)
+

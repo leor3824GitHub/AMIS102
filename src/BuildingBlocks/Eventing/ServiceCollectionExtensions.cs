@@ -1,15 +1,15 @@
-using FSH.Framework.Eventing.Abstractions;
-using FSH.Framework.Eventing.Inbox;
-using FSH.Framework.Eventing.InMemory;
-using FSH.Framework.Eventing.Outbox;
-using FSH.Framework.Eventing.RabbitMq;
-using FSH.Framework.Eventing.Serialization;
+using AMIS.Framework.Eventing.Abstractions;
+using AMIS.Framework.Eventing.Inbox;
+using AMIS.Framework.Eventing.InMemory;
+using AMIS.Framework.Eventing.Outbox;
+using AMIS.Framework.Eventing.RabbitMq;
+using AMIS.Framework.Eventing.Serialization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 
-namespace FSH.Framework.Eventing;
+namespace AMIS.Framework.Eventing;
 
 public static class ServiceCollectionExtensions
 {
@@ -105,4 +105,5 @@ public static class ServiceCollectionExtensions
         return services;
     }
 }
+
 

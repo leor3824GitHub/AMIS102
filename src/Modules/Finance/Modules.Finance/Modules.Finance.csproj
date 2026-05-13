@@ -1,9 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<RootNamespace>FSH.Modules.Finance</RootNamespace>
-		<AssemblyName>FSH.Modules.Finance</AssemblyName>
-		<PackageId>FullStackHero.Modules.Finance</PackageId>
+		<RootNamespace>AMIS.Modules.Finance</RootNamespace>
+		<AssemblyName>AMIS.Modules.Finance</AssemblyName>
+		<PackageId>AMIS.Modules.Finance</PackageId>
 		<NoWarn>$(NoWarn);CA1031;CA1812;CA2208;S3267;S3928;CA1062;CA1304;CA1308;CA1311;CA1862;CA2227</NoWarn>
 	</PropertyGroup>
 
@@ -28,3 +28,4 @@
 	</ItemGroup>
 
 </Project>
+

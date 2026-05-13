@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
+using AMIS.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
 
-namespace FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.ReturnAnnualProcurementPlan;
+namespace AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.ReturnAnnualProcurementPlan;
 
 public sealed class ReturnAnnualProcurementPlanCommandValidator : AbstractValidator<ReturnAppCommand>
 {
@@ -11,3 +11,4 @@ public sealed class ReturnAnnualProcurementPlanCommandValidator : AbstractValida
         RuleFor(x => x.ReturnReason).NotEmpty().MaximumLength(1000);
     }
 }
+

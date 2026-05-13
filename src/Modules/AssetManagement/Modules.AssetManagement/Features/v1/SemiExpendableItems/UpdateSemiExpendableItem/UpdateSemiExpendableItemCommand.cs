@@ -1,6 +1,6 @@
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.SemiExpendableItems.UpdateSemiExpendableItem;
+namespace AMIS.Modules.AssetManagement.Features.v1.SemiExpendableItems.UpdateSemiExpendableItem;
 
 public sealed record UpdatePropertyItemCatalogCommand(
     Guid Id,
@@ -11,3 +11,4 @@ public sealed record UpdatePropertyItemCatalogCommand(
     string UnitOfMeasure = "Piece",
     int? EstimatedUsefulLifeYears = null,
     bool IsActive = true) : ICommand;
+

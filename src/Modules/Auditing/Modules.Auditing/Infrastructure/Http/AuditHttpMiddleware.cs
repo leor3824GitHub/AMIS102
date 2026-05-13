@@ -1,9 +1,9 @@
-using FSH.Modules.Auditing.Contracts;
+using AMIS.Modules.Auditing.Contracts;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using System.Diagnostics;
 
-namespace FSH.Modules.Auditing;
+namespace AMIS.Modules.Auditing;
 
 public sealed class AuditHttpMiddleware
 {
@@ -168,3 +168,4 @@ public sealed class AuditHttpMiddleware
 
     private readonly record struct RequestCaptureContext(object? Preview, int Size);
 }
+

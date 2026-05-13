@@ -1,8 +1,8 @@
 @page "/procurement-planning/ppmps"
-@using FSH.Modules.ProcurementPlanning.Contracts.v1.Ppmps
-@using FSH.Framework.Shared.Persistence
-@using FSH.Playground.Blazor.ApiClient
-@using FSH.Playground.Blazor.Components.Shared
+@using AMIS.Modules.ProcurementPlanning.Contracts.v1.Ppmps
+@using AMIS.Framework.Shared.Persistence
+@using AMIS.Playground.Blazor.ApiClient
+@using AMIS.Playground.Blazor.Components.Shared
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Security.Claims
 @inject IPpmpClient PpmpClient
@@ -13,10 +13,10 @@
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 
-<FshPageHeader Title="Project Procurement Management Plan (PPMP)"
+<AMISPageHeader Title="Project Procurement Management Plan (PPMP)"
                Description="Manage per-section procurement plans for the fiscal year" />
 
-<!-- ══ Add / Edit Line Item Dialog ══════════════════════════════════ -->
+<!-- -- Add / Edit Line Item Dialog ---------------------------------- -->
 <MudDialog @bind-Visible="_itemDialogOpen"
            Options="@(new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseOnEscapeKey = true })">
     <TitleContent>
@@ -32,7 +32,7 @@
                 <MudAutocomplete T="string" @bind-Value="_itemForm.GeneralDescription" Label="Description / Objective"
                                  Variant="Variant.Outlined" SearchFunc="SearchDescriptions" ResetValueOnEmptyText="false"
                                  CoerceText="true" CoerceValue="true" Required="true"
-                                 HelperText="Start typing — previous descriptions will appear"
+                                 HelperText="Start typing � previous descriptions will appear"
                                  Placeholder="Describe the procurement item or objective" />
             </MudItem>
 
@@ -65,7 +65,7 @@
             </MudItem>
 
             <MudItem xs="12" sm="4">
-                <MudNumericField @bind-Value="_itemForm.EstimatedBudget" Label="Estimated Budget (₱)"
+                <MudNumericField @bind-Value="_itemForm.EstimatedBudget" Label="Estimated Budget (?)"
                                  Variant="Variant.Outlined" Min="0m" Format="N2" />
             </MudItem>
 
@@ -109,7 +109,7 @@
     <MudTabs @bind-ActivePanelIndex="_activeTab" Elevation="0" Rounded="false" ApplyEffectsToContainer="true"
              PanelClass="pa-4" Color="Color.Primary">
 
-        <!-- ══ LIST TAB ══════════════════════════════════════════════════ -->
+        <!-- -- LIST TAB -------------------------------------------------- -->
         <MudTabPanel Text="List" Icon="@Icons.Material.Outlined.ListAlt">
             <MudStack Row="true" Spacing="2" Class="mb-3" AlignItems="AlignItems.Center">
                 <MudTextField @bind-Value="_search" Placeholder="Search PPMP number or unit..."
@@ -177,7 +177,7 @@
                                 </td>
                                 <td>v@(row.VersionNumber)</td>
                                 <td>@StatusChip(row.Status)</td>
-                                <td>₱ @row.TotalEstimatedBudget.ToString("N2")</td>
+                                <td>? @row.TotalEstimatedBudget.ToString("N2")</td>
                                 <td @onclick:stopPropagation="true">
                                     @if (row.Status is PpmpStatus.Draft or PpmpStatus.Returned)
                                     {
@@ -212,11 +212,11 @@
             }
         </MudTabPanel>
 
-        <!-- ══ FORM TAB ══════════════════════════════════════════════════ -->
+        <!-- -- FORM TAB -------------------------------------------------- -->
         <MudTabPanel Text="@(_editing is null ? "+ New PPMP" : $"Edit {_editing.PpmpNumber}")"
                      Icon="@(_editing is null ? Icons.Material.Outlined.Add : Icons.Material.Outlined.Edit)">
 
-            <!-- ── Action bar ─────────────────────────────────────────── -->
+            <!-- -- Action bar ------------------------------------------- -->
             <MudPaper Elevation="0" Class="pa-3 mb-3 rounded"
                       Style="background:var(--mud-palette-background-grey); border:1px solid var(--mud-palette-lines-default)">
                 <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap">
@@ -244,7 +244,7 @@
                                 <MudChip T="Guid" Value="v.Id" Size="Size.Small"
                                          Color="@(v.IsCurrentVersion ? Color.Primary : Color.Default)"
                                          OnClick="@(() => LoadVersionAsync(v.Id))">
-                                    v@(v.VersionNumber) · @v.Status
+                                    v@(v.VersionNumber) � @v.Status
                                 </MudChip>
                             }
                         </MudChipSet>
@@ -304,11 +304,11 @@
                 </MudStack>
             </MudPaper>
 
-            <!-- ── Return reason alert ────────────────────────────────── -->
+            <!-- -- Return reason alert ---------------------------------- -->
             @if (_editing is not null && _editing.Status == PpmpStatus.Returned)
             {
                 <MudAlert Severity="Severity.Error" Dense="true" Class="mb-3" Icon="@Icons.Material.Filled.Undo">
-                    <strong>Returned for revision</strong> — please address the feedback and resubmit.
+                    <strong>Returned for revision</strong> � please address the feedback and resubmit.
                     @if (!string.IsNullOrWhiteSpace(_editing.ReturnReason))
                     {
                         <div Class="mt-1"><em>"@_editing.ReturnReason"</em></div>
@@ -334,7 +334,7 @@
                 </MudAlert>
             }
 
-            <!-- ── Details row ────────────────────────────────────────── -->
+            <!-- -- Details row ------------------------------------------ -->
             <MudGrid Spacing="2" Class="mb-3">
                 <MudItem xs="6" sm="3">
                     <MudNumericField @bind-Value="_form.FiscalYear" Label="Fiscal Year" Variant="Variant.Outlined"
@@ -359,7 +359,7 @@
                 </MudItem>
             </MudGrid>
 
-            <!-- ── Line Items (full width) ────────────────────────────── -->
+            <!-- -- Line Items (full width) ------------------------------ -->
             <MudItem xs="12">
                 <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
                     <MudText Typo="Typo.subtitle1" Style="font-weight:600">Line Items</MudText>
@@ -392,7 +392,7 @@
                                     <th style="width:70px">Unit</th>
                                     <th style="min-width:130px">Mode of Procurement</th>
                                     <th style="width:55px; text-align:center">Pre-Proc</th>
-                                    <th style="width:130px; text-align:right">Est. Budget (₱)</th>
+                                    <th style="width:130px; text-align:right">Est. Budget (?)</th>
                                     @if (!_isReadOnly)
                                     {
                                         <th style="width:80px; text-align:center">Actions</th>
@@ -440,7 +440,7 @@
                                             }
                                         </td>
                                         <td style="vertical-align:middle; text-align:right; font-weight:600">
-                                            ₱ @item.EstimatedBudget.ToString("N2")
+                                            ? @item.EstimatedBudget.ToString("N2")
                                         </td>
                                         @if (!_isReadOnly)
                                         {
@@ -462,7 +462,7 @@
                         <MudText Typo="Typo.subtitle2">Total Estimated Budget</MudText>
                         <MudSpacer />
                         <MudText Typo="Typo.subtitle2" Color="Color.Primary">
-                            ₱ @_form.Items.Sum(i => i.EstimatedBudget).ToString("N2")
+                            ? @_form.Items.Sum(i => i.EstimatedBudget).ToString("N2")
                         </MudText>
                     </MudStack>
                 }
@@ -472,7 +472,7 @@
 </MudCard>
 
 @code {
-    // ── State ────────────────────────────────────────────────────────
+    // -- State --------------------------------------------------------
     private int _activeTab;
     private List<PpmpSummaryDto> _items = [];
     private List<PpmpSummaryDto> _versions = [];
@@ -496,17 +496,17 @@
 
     private readonly int[] _fiscalYears = Enumerable.Range(DateTime.Now.Year - 2, 5).ToArray();
 
-    // ── Master data for autocomplete ─────────────────────────────────
+    // -- Master data for autocomplete ---------------------------------
     private List<string> _unitCodes = [];
     private List<string> _modeOfProcurementNames = [];
     private readonly HashSet<string> _usedDescriptions = new(StringComparer.OrdinalIgnoreCase);
 
-    // ── Item dialog state ────────────────────────────────────────────
+    // -- Item dialog state --------------------------------------------
     private bool _itemDialogOpen;
     private int? _editingItemIdx;
     private PpmpItemFormModel _itemForm = new();
 
-    // ── Form model ───────────────────────────────────────────────────
+    // -- Form model ---------------------------------------------------
     private PpmpFormModel _form = new();
 
     private sealed class PpmpFormModel
@@ -534,7 +534,7 @@
         public string Remarks { get; set; } = string.Empty;
     }
 
-    // ── Lifecycle ────────────────────────────────────────────────────
+    // -- Lifecycle ----------------------------------------------------
     protected override async Task OnInitializedAsync()
     {
         await Task.WhenAll(LoadDefaultsAsync(), LoadUnitsAsync(), LoadModesOfProcurementAsync(), LoadAsync());
@@ -623,7 +623,7 @@
         finally { _loading = false; }
     }
 
-    // ── Navigation ───────────────────────────────────────────────────
+    // -- Navigation ---------------------------------------------------
     private void StartNew()
     {
         _editing = null;
@@ -636,7 +636,7 @@
         _activeTab = 1;
     }
 
-    // ── Select / version loading ─────────────────────────────────────
+    // -- Select / version loading -------------------------------------
     private async Task SelectPpmpAsync(Guid id)
     {
         _busy = true;
@@ -695,7 +695,7 @@
             _usedDescriptions.Add(item.GeneralDescription);
     }
 
-    // ── Item dialog ──────────────────────────────────────────────────
+    // -- Item dialog --------------------------------------------------
     private void OpenAddItemDialog()
     {
         _editingItemIdx = null;
@@ -787,7 +787,7 @@
 
     private void CloseItemDialog() => _itemDialogOpen = false;
 
-    // ── Autocomplete search functions ────────────────────────────────
+    // -- Autocomplete search functions --------------------------------
     private Task<IEnumerable<string>> SearchUnits(string value, CancellationToken _)
     {
         if (string.IsNullOrWhiteSpace(value))
@@ -827,7 +827,7 @@
         return Task.FromResult<IEnumerable<string>>(matches);
     }
 
-    // ── CRUD ─────────────────────────────────────────────────────────
+    // -- CRUD ---------------------------------------------------------
     private void RemoveItem(int idx) => _form.Items.RemoveAt(idx);
 
     private void ClearForm()
@@ -1002,12 +1002,12 @@
         }
     }
 
-    // ── Filter / pagination ──────────────────────────────────────────
+    // -- Filter / pagination ------------------------------------------
     private async Task OnFilterChanged(int? val) { _filterFiscalYear = val; _page = 1; await LoadAsync(); }
     private async Task OnStatusFilterChanged(PpmpStatus? val) { _filterStatus = val; _page = 1; await LoadAsync(); }
     private async Task OnPageChanged(int page) { _page = page; await LoadAsync(); }
 
-    // ── Helpers ──────────────────────────────────────────────────────
+    // -- Helpers ------------------------------------------------------
     private RenderFragment StatusChip(PpmpStatus status) =>
         @<MudChip T="string" Size="Size.Small" Color="@StatusColor(status)" Icon="@StatusIcon(status)" Label="true">@status
         </MudChip>;
@@ -1034,3 +1034,4 @@
         _ => Icons.Material.Outlined.Circle
     };
 }
+

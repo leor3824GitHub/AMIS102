@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Framework.Persistence;
+namespace AMIS.Framework.Persistence;
 
 /// <summary>
 /// Internal evaluator that turns specifications into executable <see cref="IQueryable{T}"/> queries.
@@ -141,3 +141,4 @@ internal static class SpecificationEvaluator
             : ordered.ThenBy(order.KeySelector);
     }
 }
+

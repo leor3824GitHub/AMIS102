@@ -1,9 +1,9 @@
-using FSH.Modules.Auditing.Contracts;
-using FSH.Modules.Auditing.Contracts.Serialization;
+using AMIS.Modules.Auditing.Contracts;
+using AMIS.Modules.Auditing.Contracts.Serialization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace FSH.Modules.Auditing.Contracts.Dtos;
+namespace AMIS.Modules.Auditing.Contracts.Dtos;
 
 public sealed class AuditDetailDto
 {
@@ -43,4 +43,5 @@ public sealed class AuditDetailDto
     /// </summary>
     public JsonElement Payload { get; set; }
 }
+
 

@@ -1,10 +1,10 @@
-using FSH.Framework.Shared.Identity.Authorization;
+using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.AssetManagement.Features.v1.AssetRegistryQueries.GetAssetAssignmentTimeline;
+namespace AMIS.Modules.AssetManagement.Features.v1.AssetRegistryQueries.GetAssetAssignmentTimeline;
 
 public static class GetAssetAssignmentTimelineEndpoint
 {
@@ -21,3 +21,4 @@ public static class GetAssetAssignmentTimelineEndpoint
         .WithSummary("Get assignment and status timeline for a specific asset registry record")
         .RequirePermission(AssetManagementModuleConstants.Permissions.AssetRegistry.View);
 }
+

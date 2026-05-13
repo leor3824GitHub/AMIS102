@@ -1,14 +1,14 @@
 @page "/roles"
-@using FSH.Playground.Blazor.ApiClient
-@using FSH.Framework.Blazor.UI.Components.Dialogs
-@using FSH.Framework.Blazor.UI.Components.Cards
+@using AMIS.Playground.Blazor.ApiClient
+@using AMIS.Framework.Blazor.UI.Components.Dialogs
+@using AMIS.Framework.Blazor.UI.Components.Cards
 @inherits ComponentBase
 @inject IIdentityClient IdentityClient
 @inject NavigationManager Navigation
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 
-<FshPageHeader Title="Roles"
+<AMISPageHeader Title="Roles"
                Description="Manage roles and their permissions">
     <ActionContent>
         @if (_selectedRoles.Any())
@@ -33,33 +33,33 @@
             New Role
         </MudButton>
     </ActionContent>
-</FshPageHeader>
+</AMISPageHeader>
 
 @* Stats Cards *@
 <MudGrid Class="mb-4">
     <MudItem xs="6" sm="3">
-        <FshStatCard Icon="@Icons.Material.Filled.Security"
+        <AMISStatCard Icon="@Icons.Material.Filled.Security"
                      IconColor="Color.Primary"
                      Value="@_stats.Total.ToString()"
                      Label="Total Roles"
                      Badge="Total" />
     </MudItem>
     <MudItem xs="6" sm="3">
-        <FshStatCard Icon="@Icons.Material.Filled.AdminPanelSettings"
+        <AMISStatCard Icon="@Icons.Material.Filled.AdminPanelSettings"
                      IconColor="Color.Error"
                      Value="@_stats.SystemRolesCount.ToString()"
                      Label="System Roles"
                      Badge="System" />
     </MudItem>
     <MudItem xs="6" sm="3">
-        <FshStatCard Icon="@Icons.Material.Filled.Badge"
+        <AMISStatCard Icon="@Icons.Material.Filled.Badge"
                      IconColor="Color.Info"
                      Value="@_stats.CustomRolesCount.ToString()"
                      Label="Custom Roles"
                      Badge="Custom" />
     </MudItem>
     <MudItem xs="6" sm="3">
-        <FshStatCard Icon="@Icons.Material.Filled.Lock"
+        <AMISStatCard Icon="@Icons.Material.Filled.Lock"
                      IconColor="Color.Warning"
                      Value="@_stats.ProtectedRolesCount.ToString()"
                      Label="Protected Roles"
@@ -69,7 +69,7 @@
 
 @* Filter Panel *@
 <MudExpansionPanels Class="mb-4" Elevation="0">
-    <MudExpansionPanel Text="Filters" IsInitiallyExpanded="true" Class="fsh-card">
+    <MudExpansionPanel Text="Filters" IsInitiallyExpanded="true" Class="AMIS-card">
         <MudGrid GutterSize="2">
             <MudItem xs="12" sm="6">
                 <MudTextField @bind-Value="_filter.Search"
@@ -101,7 +101,7 @@
 </MudExpansionPanels>
 
 @* Roles Grid *@
-<MudPaper Class="fsh-card pa-0" Style="overflow: hidden;">
+<MudPaper Class="AMIS-card pa-0" Style="overflow: hidden;">
     <MudDataGrid T="RoleDto"
                  @ref="_dataGrid"
                  Items="_filtered"
@@ -444,3 +444,4 @@
         await LoadData();
     }
 }
+

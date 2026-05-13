@@ -1,9 +1,9 @@
-using FSH.Framework.Core.Context;
-using FSH.Modules.MasterData.Data;
+using AMIS.Framework.Core.Context;
+using AMIS.Modules.MasterData.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.MasterData.Features.v1.ModesOfProcurement.UpdateModeOfProcurement;
+namespace AMIS.Modules.MasterData.Features.v1.ModesOfProcurement.UpdateModeOfProcurement;
 
 public sealed class UpdateModeOfProcurementCommandHandler : ICommandHandler<UpdateModeOfProcurementCommand, Unit>
 {
@@ -50,3 +50,4 @@ public sealed class UpdateModeOfProcurementCommandHandler : ICommandHandler<Upda
         return Unit.Value;
     }
 }
+

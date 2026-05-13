@@ -1,6 +1,6 @@
 using Mediator;
 
-namespace FSH.Modules.MasterData.Contracts.v1.PropertyClasses;
+namespace AMIS.Modules.MasterData.Contracts.v1.PropertyClasses;
 
 // ── DTOs ─────────────────────────────────────────────────────────────────────
 
@@ -67,3 +67,4 @@ public sealed record UpdatePropertyClassItemCommand(
     string Name,
     string? Description,
     bool IsActive) : ICommand;
+

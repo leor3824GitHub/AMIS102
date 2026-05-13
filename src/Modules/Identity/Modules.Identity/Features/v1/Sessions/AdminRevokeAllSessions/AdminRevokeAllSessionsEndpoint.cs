@@ -1,12 +1,12 @@
-using FSH.Framework.Shared.Identity;
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.Identity.Contracts.v1.Sessions.AdminRevokeAllSessions;
+using AMIS.Framework.Shared.Identity;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.Identity.Contracts.v1.Sessions.AdminRevokeAllSessions;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.Identity.Features.v1.Sessions.AdminRevokeAllSessions;
+namespace AMIS.Modules.Identity.Features.v1.Sessions.AdminRevokeAllSessions;
 
 public static class AdminRevokeAllSessionsEndpoint
 {
@@ -23,3 +23,4 @@ public static class AdminRevokeAllSessionsEndpoint
         .WithDescription("Revoke all sessions for a specific user. Requires admin permission.");
     }
 }
+

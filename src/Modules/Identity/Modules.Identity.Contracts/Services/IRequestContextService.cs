@@ -1,6 +1,6 @@
-using FSH.Framework.Core.Context;
+using AMIS.Framework.Core.Context;
 
-namespace FSH.Modules.Identity.Contracts.Services;
+namespace AMIS.Modules.Identity.Contracts.Services;
 
 /// <summary>
 /// Service interface for accessing HTTP request context information.
@@ -9,3 +9,4 @@ namespace FSH.Modules.Identity.Contracts.Services;
 public interface IRequestContextService : IRequestContext
 {
 }
+

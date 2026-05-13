@@ -1,0 +1,4 @@
+/* AMISPageHeader Scoped Styles */
+.AMIS-page-header-wrapper ::deep .AMIS-page-header {
+    border-radius: 12px;
+}

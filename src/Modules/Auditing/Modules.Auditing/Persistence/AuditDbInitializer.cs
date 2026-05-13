@@ -1,8 +1,8 @@
-﻿using FSH.Framework.Persistence;
+using AMIS.Framework.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace FSH.Modules.Auditing.Persistence;
+namespace AMIS.Modules.Auditing.Persistence;
 
 internal sealed class AuditDbInitializer(
     ILogger<AuditDbInitializer> logger,

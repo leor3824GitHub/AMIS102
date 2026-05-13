@@ -1,9 +1,9 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace FSH.Playground.Migrations.PostgreSQL.Expendable
+namespace AMIS.Playground.Migrations.PostgreSQL.Expendable
 {
     /// <inheritdoc />
     public partial class InitialCreate : Migration
@@ -584,3 +584,4 @@ namespace FSH.Playground.Migrations.PostgreSQL.Expendable
         }
     }
 }
+

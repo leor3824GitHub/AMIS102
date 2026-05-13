@@ -1,15 +1,15 @@
 @page "/settings/profile"
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Components.Authorization
-@inject FSH.Playground.Blazor.ApiClient.IIdentityClient IdentityClient
-@inject FSH.Playground.Blazor.ApiClient.IEmployeesClient EmployeesClient
+@inject AMIS.Playground.Blazor.ApiClient.IIdentityClient IdentityClient
+@inject AMIS.Playground.Blazor.ApiClient.IEmployeesClient EmployeesClient
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthenticationStateProvider
-@inject FSH.Playground.Blazor.Services.IUserProfileState UserProfileState
+@inject AMIS.Playground.Blazor.Services.IUserProfileState UserProfileState
 
 <!-- Hero Section -->
-<FshPageHeader Title="Profile Settings"
+<AMISPageHeader Title="Profile Settings"
                Description="Manage your personal information, profile photo, and security settings" />
 
 @if (_loading)
@@ -433,8 +433,8 @@ else
     private bool _saving;
     private bool _changingPassword;
     private bool _loadingEmployee;
-    private FSH.Playground.Blazor.ApiClient.UserDto? _profile;
-    private FSH.Playground.Blazor.ApiClient.EmployeeReferenceDto? _employeeProfile;
+    private AMIS.Playground.Blazor.ApiClient.UserDto? _profile;
+    private AMIS.Playground.Blazor.ApiClient.EmployeeReferenceDto? _employeeProfile;
     private string? _avatarPreviewUrl;
     private bool _hasImageChanges;
     private bool _deleteCurrentImage;
@@ -501,7 +501,7 @@ else
         {
             _employeeProfile = await EmployeesClient.ByIdentityAsync(identityUserId);
         }
-        catch (FSH.Playground.Blazor.ApiClient.ApiException ex) when (ex.StatusCode == 404)
+        catch (AMIS.Playground.Blazor.ApiClient.ApiException ex) when (ex.StatusCode == 404)
         {
             _employeeProfile = null;
         }
@@ -616,7 +616,7 @@ else
         _saving = true;
         try
         {
-            var command = new FSH.Playground.Blazor.ApiClient.UpdateUserCommand
+            var command = new AMIS.Playground.Blazor.ApiClient.UpdateUserCommand
             {
                 Id = _profile?.Id ?? string.Empty,
                 FirstName = _profileModel.FirstName,
@@ -629,7 +629,7 @@ else
             // Add image upload if pending
             if (_pendingImageData is not null && _pendingImageFileName is not null && _pendingImageContentType is not null)
             {
-                command.Image = new FSH.Playground.Blazor.ApiClient.FileUploadRequest
+                command.Image = new AMIS.Playground.Blazor.ApiClient.FileUploadRequest
                 {
                     FileName = _pendingImageFileName,
                     ContentType = _pendingImageContentType,
@@ -648,7 +648,7 @@ else
             // Notify other components (e.g., header) about the profile change
             NotifyProfileChanged();
         }
-        catch (FSH.Playground.Blazor.ApiClient.ApiException ex)
+        catch (AMIS.Playground.Blazor.ApiClient.ApiException ex)
         {
             Snackbar.Add($"Failed to update profile: {ex.Message}", Severity.Error);
         }
@@ -703,7 +703,7 @@ else
         _changingPassword = true;
         try
         {
-            var command = new FSH.Playground.Blazor.ApiClient.ChangePasswordCommand
+            var command = new AMIS.Playground.Blazor.ApiClient.ChangePasswordCommand
             {
                 Password = _passwordModel.CurrentPassword,
                 NewPassword = _passwordModel.NewPassword,
@@ -715,7 +715,7 @@ else
             Snackbar.Add("Password changed successfully!", Severity.Success);
             ResetPasswordForm();
         }
-        catch (FSH.Playground.Blazor.ApiClient.ApiException ex)
+        catch (AMIS.Playground.Blazor.ApiClient.ApiException ex)
         {
             Snackbar.Add($"Failed to change password: {ex.Message}", Severity.Error);
         }
@@ -761,3 +761,4 @@ else
         public string? ConfirmPassword { get; set; }
     }
 }
+

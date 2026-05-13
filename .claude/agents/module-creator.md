@@ -1,11 +1,11 @@
----
+﻿﻿---
 name: module-creator
 description: Create new modules (bounded contexts) with complete project structure, DbContext, permissions, and registration. Use when adding a new business domain.
 tools: Read, Write, Glob, Grep, Bash
 model: inherit
 ---
 
-You are a module creator for FullStackHero .NET Starter Kit. Your job is to scaffold complete new modules.
+You are a module creator for AMIS (Asset Management Information System) .NET Starter Kit. Your job is to scaffold complete new modules.
 
 ## When to Create a New Module
 
@@ -83,9 +83,9 @@ src/Modules/{Name}/
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <RootNamespace>FSH.Modules.{Name}</RootNamespace>
-    <AssemblyName>FSH.Modules.{Name}</AssemblyName>
-    <PackageId>FullStackHero.Modules.{Name}</PackageId>
+    <RootNamespace>AMIS.Modules.{Name}</RootNamespace>
+    <AssemblyName>AMIS.Modules.{Name}</AssemblyName>
+    <PackageId>AMIS (Asset Management Information System).Modules.{Name}</PackageId>
     <NoWarn>$(NoWarn);CA1031;CA1812;CA2208;S3267;S3928;CA1062;CA1304;CA1308;CA1311;CA1862;CA2227</NoWarn>
   </PropertyGroup>
   <ItemGroup>
@@ -117,21 +117,21 @@ Start from the MasterData module as the minimum baseline. Add Eventing or other 
 
 ```csharp
 using Asp.Versioning;
-using FSH.Framework.Persistence;
-using FSH.Framework.Shared.Constants;
-using FSH.Framework.Web.Modules;
-using FSH.Modules.{Name}.Data;
+using AMIS.Framework.Persistence;
+using AMIS.Framework.Shared.Constants;
+using AMIS.Framework.Web.Modules;
+using AMIS.Modules.{Name}.Data;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-namespace FSH.Modules.{Name};
+namespace AMIS.Modules.{Name};
 
 public class {Name}Module : IModule
 {
-    private static readonly IReadOnlyList<FshPermission> RegisteredPermissions =
+    private static readonly IReadOnlyList<AMISPermission> RegisteredPermissions =
     [
         new("View {Entities}", "View", "{Name}.{Entity}", IsBasic: true),
         new("Create {Entities}", "Create", "{Name}.{Entity}"),
@@ -149,7 +149,7 @@ public class {Name}Module : IModule
         services.AddScoped<IDbInitializer, {Name}DbInitializer>();
 
         // Optional: only add when the module needs startup bootstrapping like Expendable.
-        // services.AddHostedService<FSH.Modules.{Name}.Provisioning.{Name}DbInitializerHostedService>();
+        // services.AddHostedService<AMIS.Modules.{Name}.Provisioning.{Name}DbInitializerHostedService>();
     }
 
     public void MapEndpoints(IEndpointRouteBuilder endpoints)
@@ -181,7 +181,7 @@ Use `IModule` with `ConfigureServices` and `MapEndpoints`. Do not use the old `E
 **{Name}ModuleConstants.cs:**
 
 ```csharp
-namespace FSH.Modules.{Name};
+namespace AMIS.Modules.{Name};
 
 public static class {Name}ModuleConstants
 {
@@ -210,16 +210,16 @@ MasterData uses only `SchemaName` and nested `Permissions`. Expendable also adds
 
 ```csharp
 using Finbuckle.MultiTenant.Abstractions;
-using FSH.Framework.Persistence;
-using FSH.Framework.Persistence.Context;
-using FSH.Framework.Shared.Multitenancy;
-using FSH.Framework.Shared.Persistence;
-using FSH.Modules.{Name}.Domain;
+using AMIS.Framework.Persistence;
+using AMIS.Framework.Persistence.Context;
+using AMIS.Framework.Shared.Multitenancy;
+using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.{Name}.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 
-namespace FSH.Modules.{Name}.Data;
+namespace AMIS.Modules.{Name}.Data;
 
 public class {Name}DbContext : BaseDbContext
 {
@@ -253,21 +253,21 @@ public class {Name}DbContext : BaseDbContext
 **Data/{Name}DbContextFactory.cs:**
 
 ```csharp
-using FSH.Framework.Persistence;
-using FSH.Framework.Shared.Multitenancy;
+using AMIS.Framework.Persistence;
+using AMIS.Framework.Shared.Multitenancy;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 
-namespace FSH.Modules.{Name}.Data;
+namespace AMIS.Modules.{Name}.Data;
 
 public sealed class {Name}DbContextFactory : IDesignTimeDbContextFactory<{Name}DbContext>
 {
     public {Name}DbContext CreateDbContext(string[] args)
     {
         var optionsBuilder = new DbContextOptionsBuilder<{Name}DbContext>();
-        var connectionString = "Host=localhost;Database=fsh;Username=postgres;Password=postgres";
+        var connectionString = "Host=localhost;Database=AMIS;Username=postgres;Password=postgres";
         optionsBuilder.UseNpgsql(connectionString);
 
         return new {Name}DbContext(
@@ -296,11 +296,11 @@ public sealed class {Name}DbContextFactory : IDesignTimeDbContextFactory<{Name}D
 **Data/Configurations/{Entity}Configuration.cs:**
 
 ```csharp
-using FSH.Modules.{Name}.Domain;
+using AMIS.Modules.{Name}.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FSH.Modules.{Name}.Data.Configurations;
+namespace AMIS.Modules.{Name}.Data.Configurations;
 
 public class {Entity}Configuration : IEntityTypeConfiguration<{Entity}>
 {
@@ -326,9 +326,9 @@ Use separate configuration classes in `Data/Configurations`. This is consistent 
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <RootNamespace>FSH.Modules.{Name}.Contracts</RootNamespace>
-    <AssemblyName>FSH.Modules.{Name}.Contracts</AssemblyName>
-    <PackageId>FullStackHero.Modules.{Name}.Contracts</PackageId>
+    <RootNamespace>AMIS.Modules.{Name}.Contracts</RootNamespace>
+    <AssemblyName>AMIS.Modules.{Name}.Contracts</AssemblyName>
+    <PackageId>AMIS (Asset Management Information System).Modules.{Name}.Contracts</PackageId>
     <NoWarn>$(NoWarn);CA1002;CA1056;CS1572;S2094</NoWarn>
   </PropertyGroup>
   <ItemGroup>
@@ -344,7 +344,7 @@ Use separate configuration classes in `Data/Configurations`. This is consistent 
 **{Name}ContractsMarker.cs:**
 
 ```csharp
-namespace FSH.Modules.{Name}.Contracts;
+namespace AMIS.Modules.{Name}.Contracts;
 
 public sealed class {Name}ContractsMarker;
 ```
@@ -356,10 +356,10 @@ Put public DTOs, public queries, public commands, and integration contracts unde
 **Domain/{Entity}.cs:**
 
 ```csharp
-using FSH.Framework.Core.Domain;
-using FSH.Framework.Shared.Persistence;
+using AMIS.Framework.Core.Domain;
+using AMIS.Framework.Shared.Persistence;
 
-namespace FSH.Modules.{Name}.Domain;
+namespace AMIS.Modules.{Name}.Domain;
 
 public class {Entity} : BaseEntity, IAuditable, IMustHaveTenant
 {
@@ -388,11 +388,11 @@ Use `Domain/` as the folder name. Keep it flat for simple modules like MasterDat
 **Data/{Name}DbInitializer.cs:**
 
 ```csharp
-using FSH.Framework.Persistence;
+using AMIS.Framework.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace FSH.Modules.{Name}.Data;
+namespace AMIS.Modules.{Name}.Data;
 
 internal sealed class {Name}DbInitializer(
     ILogger<{Name}DbInitializer> logger,
@@ -425,9 +425,9 @@ Only create `Provisioning/{Name}DbInitializerHostedService.cs` when the module n
 In `src/Playground/Playground.Api/Program.cs`:
 
 ```csharp
-using FSH.Modules.{Name};
-using FSH.Modules.{Name}.Contracts.{...};
-using FSH.Modules.{Name}.Features.v1.{...};
+using AMIS.Modules.{Name};
+using AMIS.Modules.{Name}.Contracts.{...};
+using AMIS.Modules.{Name}.Features.v1.{...};
 
 builder.Services.AddMediator(o =>
 {
@@ -479,8 +479,8 @@ In `src/Playground/Playground.Api/Playground.Api.csproj`:
 ### Step 10: Add to Solution
 
 ```bash
-dotnet sln src/FSH.Framework.slnx add src/Modules/{Name}/Modules.{Name}/Modules.{Name}.csproj
-dotnet sln src/FSH.Framework.slnx add src/Modules/{Name}/Modules.{Name}.Contracts/Modules.{Name}.Contracts.csproj
+dotnet sln src/AMIS.Framework.slnx add src/Modules/{Name}/Modules.{Name}/Modules.{Name}.csproj
+dotnet sln src/AMIS.Framework.slnx add src/Modules/{Name}/Modules.{Name}.Contracts/Modules.{Name}.Contracts.csproj
 ```
 
 ### Step 11: Build the Feature Surface
@@ -514,20 +514,20 @@ Keep public request/response contracts in `.Contracts/v1/...` when they must be 
 - [ ] Added to Mediator assemblies in `Program.cs`
 - [ ] Added to `moduleAssemblies` in `Program.cs`
 - [ ] ProjectReferences added to `Playground.Api.csproj`
-- [ ] Both projects added to `FSH.Framework.slnx`
+- [ ] Both projects added to `AMIS.Framework.slnx`
 - [ ] Build passes with 0 warnings
 
 ## Verification
 
 ```bash
-dotnet build src/FSH.Framework.slnx
-dotnet test src/FSH.Framework.slnx
+dotnet build src/AMIS.Framework.slnx
+dotnet test src/AMIS.Framework.slnx
 ```
 
 ## Key Patterns
 
 **Multi-Tenancy:** Tenant-aware entities implement `IMustHaveTenant`; `BaseDbContext` handles tenant-aware persistence.  
-**Permissions:** Define constants in `{Name}ModuleConstants`, register `FshPermission` instances in the module.  
+**Permissions:** Define constants in `{Name}ModuleConstants`, register `AMISPermission` instances in the module.  
 **API Versioning:** Use `NewApiVersionSet()` and resource groups under `api/v{version:apiVersion}/...`.  
 **DbContext:** Inherit `BaseDbContext` and register with `AddHeroDbContext<T>()`.  
 **Mediator:** Add representative types from the new module to the Mediator assembly list in `Playground.Api/Program.cs`.  
@@ -535,3 +535,4 @@ dotnet test src/FSH.Framework.slnx
 **Contracts:** Use a separate `.Contracts` project with a marker class, Mediator abstractions, Shared, and Eventing.Abstractions references.  
 **Vertical Slices:** Keep each use case self-contained in `Features/v1/...`.  
 **Module Variants:** MasterData is the lean baseline; Expendable is the richer pattern with subdomains, Eventing, and optional startup provisioning.
+

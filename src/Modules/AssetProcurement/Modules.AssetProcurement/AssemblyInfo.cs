@@ -1,3 +1,5 @@
-using FSH.Framework.Web.Modules;
+using AMIS.Framework.Web.Modules;
 
-[assembly: FshModule(typeof(FSH.Modules.AssetProcurement.AssetProcurementModule), 750)]
+[assembly: AmisModule(typeof(AMIS.Modules.AssetProcurement.AssetProcurementModule), 750)]
+
+

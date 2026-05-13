@@ -1,8 +1,8 @@
-using FSH.Modules.AssetManagement.Data;
+using AMIS.Modules.AssetManagement.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.PropertyAcknowledgementReceipts.GetPARList;
+namespace AMIS.Modules.AssetManagement.Features.v1.PropertyAcknowledgementReceipts.GetPARList;
 
 public sealed class GetPARListQueryHandler(AssetManagementDbContext dbContext)
     : IQueryHandler<GetPARListQuery, PagedPARResponse>
@@ -51,3 +51,4 @@ public sealed class GetPARListQueryHandler(AssetManagementDbContext dbContext)
         return new PagedPARResponse(result, pageNumber, pageSize, totalCount);
     }
 }
+

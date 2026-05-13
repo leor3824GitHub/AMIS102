@@ -1,10 +1,10 @@
-using FSH.Framework.Eventing.Abstractions;
-using FSH.Modules.Identity.Contracts.Events;
-using FSH.Modules.MasterData.Data;
+using AMIS.Framework.Eventing.Abstractions;
+using AMIS.Modules.Identity.Contracts.Events;
+using AMIS.Modules.MasterData.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace FSH.Modules.MasterData.Events;
+namespace AMIS.Modules.MasterData.Events;
 
 /// <summary>
 /// On every login, tries to auto-link the identity user to an unlinked employee profile
@@ -136,3 +136,4 @@ internal sealed class LinkEmployeeOnLoginHandler
             : fullName.ToLowerInvariant();
     }
 }
+

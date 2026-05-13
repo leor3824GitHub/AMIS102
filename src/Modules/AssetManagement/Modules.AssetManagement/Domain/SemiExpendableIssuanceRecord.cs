@@ -1,6 +1,6 @@
-using FSH.Framework.Core.Domain;
+using AMIS.Framework.Core.Domain;
 
-namespace FSH.Modules.AssetManagement.Domain;
+namespace AMIS.Modules.AssetManagement.Domain;
 
 /// <summary>
 /// Semi-expendable Materials Issuance Record (SMIR) — the transaction document that
@@ -94,3 +94,4 @@ public sealed class SemiExpendableIssuanceRecord : AggregateRoot<Guid>, IHasTena
         };
     }
 }
+

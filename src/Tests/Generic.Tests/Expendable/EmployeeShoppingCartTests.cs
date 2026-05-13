@@ -1,5 +1,5 @@
-using FSH.Modules.Expendable.Domain.Cart;
-using FSH.Modules.Expendable.Features.v1.Cart;
+using AMIS.Modules.Expendable.Domain.Cart;
+using AMIS.Modules.Expendable.Features.v1.Cart;
 
 namespace Generic.Tests.Expendable;
 
@@ -38,7 +38,7 @@ public sealed class EmployeeShoppingCartTests
     {
         // Arrange
         var validator = new UpdateCartItemQuantityCommandValidator();
-        var command = new FSH.Modules.Expendable.Contracts.v1.Cart.UpdateCartItemQuantityCommand(
+        var command = new AMIS.Modules.Expendable.Contracts.v1.Cart.UpdateCartItemQuantityCommand(
             Guid.NewGuid(),
             Guid.NewGuid(),
             0);
@@ -50,3 +50,4 @@ public sealed class EmployeeShoppingCartTests
         result.IsValid.ShouldBeTrue();
     }
 }
+

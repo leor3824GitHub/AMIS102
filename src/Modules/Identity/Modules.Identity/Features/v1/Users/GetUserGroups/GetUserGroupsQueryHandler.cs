@@ -1,11 +1,11 @@
-using FSH.Framework.Core.Exceptions;
-using FSH.Modules.Identity.Contracts.DTOs;
-using FSH.Modules.Identity.Contracts.v1.Users.GetUserGroups;
-using FSH.Modules.Identity.Data;
+using AMIS.Framework.Core.Exceptions;
+using AMIS.Modules.Identity.Contracts.DTOs;
+using AMIS.Modules.Identity.Contracts.v1.Users.GetUserGroups;
+using AMIS.Modules.Identity.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.Identity.Features.v1.Users.GetUserGroups;
+namespace AMIS.Modules.Identity.Features.v1.Users.GetUserGroups;
 
 public sealed class GetUserGroupsQueryHandler : IQueryHandler<GetUserGroupsQuery, IEnumerable<GroupDto>>
 {
@@ -79,3 +79,4 @@ public sealed class GetUserGroupsQueryHandler : IQueryHandler<GetUserGroupsQuery
         });
     }
 }
+

@@ -1,9 +1,9 @@
-using FSH.Framework.Core.Context;
-using FSH.Modules.AssetManagement.Data;
+using AMIS.Framework.Core.Context;
+using AMIS.Modules.AssetManagement.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.TangibleInventory.UpdateTangibleInventory;
+namespace AMIS.Modules.AssetManagement.Features.v1.TangibleInventory.UpdateTangibleInventory;
 
 public sealed class UpdateTangibleInventoryCommandHandler(
     AssetManagementDbContext dbContext,
@@ -53,3 +53,4 @@ public sealed class UpdateTangibleInventoryCommandHandler(
         return Unit.Value;
     }
 }
+

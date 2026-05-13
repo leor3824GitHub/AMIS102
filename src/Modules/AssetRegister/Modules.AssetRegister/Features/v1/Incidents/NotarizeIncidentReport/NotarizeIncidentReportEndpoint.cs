@@ -1,11 +1,11 @@
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.AssetRegister.Contracts.v1.Incidents;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.AssetRegister.Contracts.v1.Incidents;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Incidents.NotarizeIncidentReport;
+namespace AMIS.Modules.AssetRegister.Features.v1.Incidents.NotarizeIncidentReport;
 
 public static class NotarizeIncidentReportEndpoint
 {
@@ -24,3 +24,4 @@ public static class NotarizeIncidentReportEndpoint
         return TypedResults.Ok(result);
     }
 }
+

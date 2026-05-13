@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.Expendable.Contracts.v1.Purchases;
+using AMIS.Modules.Expendable.Contracts.v1.Purchases;
 
-namespace FSH.Modules.Expendable.Features.v1.Purchases.AddPurchaseLineItem;
+namespace AMIS.Modules.Expendable.Features.v1.Purchases.AddPurchaseLineItem;
 
 public sealed class AddPurchaseLineItemCommandValidator : AbstractValidator<AddPurchaseLineItemCommand>
 {
@@ -28,3 +28,4 @@ public sealed class AddPurchaseLineItemCommandValidator : AbstractValidator<AddP
             .GreaterThan(0).WithMessage("Unit price must be greater than zero");
     }
 }
+

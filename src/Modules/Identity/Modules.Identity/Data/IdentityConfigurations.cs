@@ -1,14 +1,14 @@
 using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;
-using FSH.Modules.Identity.Domain;
+using AMIS.Modules.Identity.Domain;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FSH.Modules.Identity.Data;
+namespace AMIS.Modules.Identity.Data;
 
-public class ApplicationUserConfig : IEntityTypeConfiguration<FshUser>
+public class ApplicationUserConfig : IEntityTypeConfiguration<AmisUser>
 {
-    public void Configure(EntityTypeBuilder<FshUser> builder)
+    public void Configure(EntityTypeBuilder<AmisUser> builder)
     {
         ArgumentNullException.ThrowIfNull(builder);
 
@@ -22,9 +22,9 @@ public class ApplicationUserConfig : IEntityTypeConfiguration<FshUser>
     }
 }
 
-public class ApplicationRoleConfig : IEntityTypeConfiguration<FshRole>
+public class ApplicationRoleConfig : IEntityTypeConfiguration<AmisRole>
 {
-    public void Configure(EntityTypeBuilder<FshRole> builder)
+    public void Configure(EntityTypeBuilder<AmisRole> builder)
     {
         ArgumentNullException.ThrowIfNull(builder);
 
@@ -35,9 +35,9 @@ public class ApplicationRoleConfig : IEntityTypeConfiguration<FshRole>
     }
 }
 
-public class ApplicationRoleClaimConfig : IEntityTypeConfiguration<FshRoleClaim>
+public class ApplicationRoleClaimConfig : IEntityTypeConfiguration<AmisRoleClaim>
 {
-    public void Configure(EntityTypeBuilder<FshRoleClaim> builder)
+    public void Configure(EntityTypeBuilder<AmisRoleClaim> builder)
     {
         ArgumentNullException.ThrowIfNull(builder);
 
@@ -94,3 +94,5 @@ public class IdentityUserTokenConfig : IEntityTypeConfiguration<IdentityUserToke
             .IsMultiTenant();
     }
 }
+
+

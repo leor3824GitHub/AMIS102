@@ -1,10 +1,10 @@
-using FSH.Framework.Shared.Identity.Authorization;
+using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.AssetManagement.Features.v1.Reports.GenerateRSPIPdf;
+namespace AMIS.Modules.AssetManagement.Features.v1.Reports.GenerateRSPIPdf;
 
 public static class GenerateRSPIPdfEndpoint
 {
@@ -25,3 +25,4 @@ public static class GenerateRSPIPdfEndpoint
         return TypedResults.File(bytes, "application/pdf", "RSPIReport.pdf");
     }
 }
+

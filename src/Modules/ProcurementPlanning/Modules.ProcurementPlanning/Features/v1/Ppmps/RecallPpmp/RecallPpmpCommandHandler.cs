@@ -1,11 +1,11 @@
 using System.Net;
-using FSH.Framework.Core.Exceptions;
-using FSH.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
-using FSH.Modules.ProcurementPlanning.Data;
+using AMIS.Framework.Core.Exceptions;
+using AMIS.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
+using AMIS.Modules.ProcurementPlanning.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.RecallPpmp;
+namespace AMIS.Modules.ProcurementPlanning.Features.v1.Ppmps.RecallPpmp;
 
 public sealed class RecallPpmpCommandHandler(
     ProcurementPlanningDbContext dbContext) : ICommandHandler<RecallPpmpCommand, PpmpDto>
@@ -23,3 +23,4 @@ public sealed class RecallPpmpCommandHandler(
         return PpmpMapper.ToDto(ppmp);
     }
 }
+

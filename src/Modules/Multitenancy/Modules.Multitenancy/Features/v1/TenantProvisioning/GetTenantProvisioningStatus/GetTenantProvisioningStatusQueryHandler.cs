@@ -1,9 +1,9 @@
-using FSH.Modules.Multitenancy.Contracts.Dtos;
-using FSH.Modules.Multitenancy.Contracts.v1.TenantProvisioning;
-using FSH.Modules.Multitenancy.Provisioning;
+using AMIS.Modules.Multitenancy.Contracts.Dtos;
+using AMIS.Modules.Multitenancy.Contracts.v1.TenantProvisioning;
+using AMIS.Modules.Multitenancy.Provisioning;
 using Mediator;
 
-namespace FSH.Modules.Multitenancy.Features.v1.TenantProvisioning.GetTenantProvisioningStatus;
+namespace AMIS.Modules.Multitenancy.Features.v1.TenantProvisioning.GetTenantProvisioningStatus;
 
 public sealed class GetTenantProvisioningStatusQueryHandler(ITenantProvisioningService provisioningService)
     : IQueryHandler<GetTenantProvisioningStatusQuery, TenantProvisioningStatusDto>
@@ -14,3 +14,4 @@ public sealed class GetTenantProvisioningStatusQueryHandler(ITenantProvisioningS
         return await provisioningService.GetStatusAsync(query.TenantId, cancellationToken).ConfigureAwait(false);
     }
 }
+

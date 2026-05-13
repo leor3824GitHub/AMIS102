@@ -1,29 +1,29 @@
-﻿using FSH.Framework.Web;
-using FSH.Framework.Web.Modules;
-using FSH.Modules.Auditing;
-using FSH.Modules.MasterData;
-using FSH.Modules.MasterData.Contracts.v1.References;
-using FSH.Modules.Expendable;
-using FSH.Modules.Expendable.Contracts.v1.Products;
-using FSH.Modules.Vehicle;
-using FSH.Modules.Vehicle.Contracts.v1.Vehicles;
-using FSH.Modules.ProcurementAcquisition;
-using FSH.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
-using FSH.Modules.Finance;
-using FSH.Modules.Finance.Contracts.v1.DisbursementVouchers;
-using FSH.Modules.AssetManagement;
-using FSH.Modules.AssetProcurement;
-using FSH.Modules.AssetProcurement.Contracts.v1.AssetPurchaseRequests;
-using FSH.Modules.AssetRegister;
-using FSH.Modules.AssetRegister.Contracts.v1.Assets;
-using FSH.Modules.ProcurementPlanning;
-using FSH.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
-using FSH.Modules.Identity;
-using FSH.Modules.Identity.Contracts.v1.Tokens.TokenGeneration;
-using FSH.Modules.Identity.Features.v1.Tokens.TokenGeneration;
-using FSH.Modules.Multitenancy;
-using FSH.Modules.Multitenancy.Contracts.v1.GetTenantStatus;
-using FSH.Modules.Multitenancy.Features.v1.GetTenantStatus;
+using AMIS.Framework.Web;
+using AMIS.Framework.Web.Modules;
+using AMIS.Modules.Auditing;
+using AMIS.Modules.MasterData;
+using AMIS.Modules.MasterData.Contracts.v1.References;
+using AMIS.Modules.Expendable;
+using AMIS.Modules.Expendable.Contracts.v1.Products;
+using AMIS.Modules.Vehicle;
+using AMIS.Modules.Vehicle.Contracts.v1.Vehicles;
+using AMIS.Modules.ProcurementAcquisition;
+using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
+using AMIS.Modules.Finance;
+using AMIS.Modules.Finance.Contracts.v1.DisbursementVouchers;
+using AMIS.Modules.AssetManagement;
+using AMIS.Modules.AssetProcurement;
+using AMIS.Modules.AssetProcurement.Contracts.v1.AssetPurchaseRequests;
+using AMIS.Modules.AssetRegister;
+using AMIS.Modules.AssetRegister.Contracts.v1.Assets;
+using AMIS.Modules.ProcurementPlanning;
+using AMIS.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
+using AMIS.Modules.Identity;
+using AMIS.Modules.Identity.Contracts.v1.Tokens.TokenGeneration;
+using AMIS.Modules.Identity.Features.v1.Tokens.TokenGeneration;
+using AMIS.Modules.Multitenancy;
+using AMIS.Modules.Multitenancy.Contracts.v1.GetTenantStatus;
+using AMIS.Modules.Multitenancy.Features.v1.GetTenantStatus;
 using System.Reflection;
 using System.Text.Json.Serialization;
 
@@ -56,8 +56,8 @@ builder.Services.AddMediator(o =>
         typeof(GenerateTokenCommandHandler),
         typeof(GetTenantStatusQuery),
         typeof(GetTenantStatusQueryHandler),
-        typeof(FSH.Modules.Auditing.Contracts.AuditEnvelope),
-        typeof(FSH.Modules.Auditing.Persistence.AuditDbContext),
+        typeof(AMIS.Modules.Auditing.Contracts.AuditEnvelope),
+        typeof(AMIS.Modules.Auditing.Persistence.AuditDbContext),
         typeof(CreateProductCommand),
         typeof(SearchEmployeeReferencesQuery),
         typeof(MasterDataModule),
@@ -114,3 +114,4 @@ app.MapGet("/", () => Results.Ok(new { message = "hello world!" }))
    .WithTags("PlayGround")
    .AllowAnonymous();
 await app.RunAsync();
+

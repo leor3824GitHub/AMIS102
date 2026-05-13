@@ -1,9 +1,9 @@
 @page "/asset-register/issuance"
-@using FSH.Playground.Blazor.ApiClient
+@using AMIS.Playground.Blazor.ApiClient
 @inject IArIssuanceReportClient Client
 @inject ISnackbar Snackbar
 
-<FshPageHeader Title="Property Issuance Reports (SMIR / PPEIR)"
+<AMISPageHeader Title="Property Issuance Reports (SMIR / PPEIR)"
                Description="Manage Semi-Expendable Issuance Records (SMIR) and PPE Issuance Reports (PPEIR) per COA 2022-004." />
 
 <MudGrid Spacing="3">
@@ -108,7 +108,7 @@
                             <MudTh>Status</MudTh>
                             <MudTh>Period</MudTh>
                             <MudTh Style="text-align:right">Lines</MudTh>
-                            <MudTh Style="text-align:right">Total Amount (₱)</MudTh>
+                            <MudTh Style="text-align:right">Total Amount (?)</MudTh>
                         </HeaderContent>
                         <RowTemplate>
                             <MudTd><strong>@context.ReportNo</strong></MudTd>
@@ -126,7 +126,7 @@
                                     @(context.Status == 0 ? "Draft" : "Posted")
                                 </MudChip>
                             </MudTd>
-                            <MudTd>@context.PeriodFromDate.ToString("yyyy-MM-dd") — @context.PeriodToDate.ToString("yyyy-MM-dd")</MudTd>
+                            <MudTd>@context.PeriodFromDate.ToString("yyyy-MM-dd") � @context.PeriodToDate.ToString("yyyy-MM-dd")</MudTd>
                             <MudTd Style="text-align:right">@context.LineCount</MudTd>
                             <MudTd Style="text-align:right">@context.TotalAmount.ToString("N2")</MudTd>
                         </RowTemplate>
@@ -188,7 +188,7 @@
                         </MudItem>
                         <MudItem xs="6" md="3">
                             <MudText Typo="Typo.caption" Color="Color.Secondary">Period</MudText>
-                            <MudText Typo="Typo.body2">@_selected.PeriodFromDate.ToString("yyyy-MM-dd") → @_selected.PeriodToDate.ToString("yyyy-MM-dd")</MudText>
+                            <MudText Typo="Typo.body2">@_selected.PeriodFromDate.ToString("yyyy-MM-dd") ? @_selected.PeriodToDate.ToString("yyyy-MM-dd")</MudText>
                         </MudItem>
                         <MudItem xs="6" md="3">
                             <MudText Typo="Typo.caption" Color="Color.Secondary">Prepared By</MudText>
@@ -198,7 +198,7 @@
                         {
                             <MudItem xs="6" md="3">
                                 <MudText Typo="Typo.caption" Color="Color.Secondary">Posted By / On</MudText>
-                                <MudText Typo="Typo.body2">@_selected.PostedBy.PrintedName — @_selected.PostedOn?.ToString("yyyy-MM-dd")</MudText>
+                                <MudText Typo="Typo.body2">@_selected.PostedBy.PrintedName � @_selected.PostedOn?.ToString("yyyy-MM-dd")</MudText>
                             </MudItem>
                         }
                     </MudGrid>
@@ -210,8 +210,8 @@
                             <MudTh>Description</MudTh>
                             <MudTh>Unit</MudTh>
                             <MudTh Style="text-align:right">Qty</MudTh>
-                            <MudTh Style="text-align:right">Unit Cost (₱)</MudTh>
-                            <MudTh Style="text-align:right">Amount (₱)</MudTh>
+                            <MudTh Style="text-align:right">Unit Cost (?)</MudTh>
+                            <MudTh Style="text-align:right">Amount (?)</MudTh>
                             <MudTh>RC Code</MudTh>
                             @if (_selected.Status == 0)
                             {
@@ -225,7 +225,7 @@
                             <MudTd Style="text-align:right">@context.SnapshotQuantityIssued</MudTd>
                             <MudTd Style="text-align:right">@context.SnapshotUnitCost.ToString("N2")</MudTd>
                             <MudTd Style="text-align:right">@context.SnapshotAmount.ToString("N2")</MudTd>
-                            <MudTd>@(context.SnapshotResponsibilityCenterCode ?? "—")</MudTd>
+                            <MudTd>@(context.SnapshotResponsibilityCenterCode ?? "�")</MudTd>
                             @if (_selected.Status == 0)
                             {
                                 <MudTd>
@@ -437,3 +437,4 @@
         if (e.Key == "Enter") { _page = 1; await LoadAsync(); }
     }
 }
+

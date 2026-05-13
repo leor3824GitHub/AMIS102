@@ -1,6 +1,6 @@
 using Mediator;
 
-namespace FSH.Modules.MasterData.Features.v1.Categories.UpdateCategory;
+namespace AMIS.Modules.MasterData.Features.v1.Categories.UpdateCategory;
 
 public sealed record UpdateCategoryCommand(
     Guid Id,
@@ -8,3 +8,4 @@ public sealed record UpdateCategoryCommand(
     string Name,
     string? Description = null,
     bool IsActive = true) : ICommand;
+

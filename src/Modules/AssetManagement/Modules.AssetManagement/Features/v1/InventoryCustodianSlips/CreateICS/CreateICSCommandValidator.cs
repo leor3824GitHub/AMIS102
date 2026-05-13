@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace FSH.Modules.AssetManagement.Features.v1.InventoryCustodianSlips.CreateICS;
+namespace AMIS.Modules.AssetManagement.Features.v1.InventoryCustodianSlips.CreateICS;
 
 public sealed class CreateICSCommandValidator : AbstractValidator<CreateICSCommand>
 {
@@ -24,3 +24,4 @@ internal sealed class CreateICSItemRequestValidator : AbstractValidator<CreateIC
         RuleFor(x => x.Description).MaximumLength(500);
     }
 }
+

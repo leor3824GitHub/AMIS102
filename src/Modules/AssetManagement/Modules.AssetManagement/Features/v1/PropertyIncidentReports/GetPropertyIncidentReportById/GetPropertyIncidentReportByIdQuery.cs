@@ -1,7 +1,7 @@
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Modules.AssetManagement.Domain;
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.PropertyIncidentReports.GetPropertyIncidentReportById;
+namespace AMIS.Modules.AssetManagement.Features.v1.PropertyIncidentReports.GetPropertyIncidentReportById;
 
 public sealed record GetPropertyIncidentReportByIdQuery(Guid Id) : IQuery<PropertyIncidentReportDetailsDto>;
 
@@ -27,3 +27,4 @@ public sealed record PropertyIncidentItemDetailsDto(
     string? Description,
     decimal UnitCost,
     string AssetTypeAtTimeOfReport);
+

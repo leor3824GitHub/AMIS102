@@ -1,9 +1,9 @@
-using FSH.Framework.Core.Context;
-using FSH.Modules.MasterData.Data;
+using AMIS.Framework.Core.Context;
+using AMIS.Modules.MasterData.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.MasterData.Features.v1.Categories.DeleteCategory;
+namespace AMIS.Modules.MasterData.Features.v1.Categories.DeleteCategory;
 
 public sealed class DeleteCategoryCommandHandler : ICommandHandler<DeleteCategoryCommand, Unit>
 {
@@ -37,3 +37,4 @@ public sealed class DeleteCategoryCommandHandler : ICommandHandler<DeleteCategor
         return Unit.Value;
     }
 }
+

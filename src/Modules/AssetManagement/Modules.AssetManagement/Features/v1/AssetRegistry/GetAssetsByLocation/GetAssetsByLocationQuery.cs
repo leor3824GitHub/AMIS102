@@ -1,6 +1,6 @@
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.AssetRegistryQueries.GetAssetsByLocation;
+namespace AMIS.Modules.AssetManagement.Features.v1.AssetRegistryQueries.GetAssetsByLocation;
 
 public sealed record GetAssetsByLocationQuery(
     Guid LocationId,

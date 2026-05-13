@@ -1,6 +1,6 @@
-using FSH.Modules.Identity.Contracts.DTOs;
+using AMIS.Modules.Identity.Contracts.DTOs;
 
-namespace FSH.Modules.Identity.Contracts.Services;
+namespace AMIS.Modules.Identity.Contracts.Services;
 
 public interface ISessionService
 {
@@ -70,3 +70,4 @@ public interface ISessionService
     Task CleanupExpiredSessionsAsync(
         CancellationToken cancellationToken = default);
 }
+

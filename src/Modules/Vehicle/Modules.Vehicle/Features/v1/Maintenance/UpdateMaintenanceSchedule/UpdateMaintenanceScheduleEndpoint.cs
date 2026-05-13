@@ -1,11 +1,11 @@
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.Vehicle.Contracts.v1.Maintenance;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.Vehicle.Contracts.v1.Maintenance;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.Vehicle.Features.v1.Maintenance.UpdateMaintenanceSchedule;
+namespace AMIS.Modules.Vehicle.Features.v1.Maintenance.UpdateMaintenanceSchedule;
 
 public static class UpdateMaintenanceScheduleEndpoint
 {
@@ -32,3 +32,4 @@ public static class UpdateMaintenanceScheduleEndpoint
         .WithSummary("Update an existing maintenance schedule")
         .RequirePermission(VehicleModuleConstants.Permissions.Maintenance.Update);
 }
+

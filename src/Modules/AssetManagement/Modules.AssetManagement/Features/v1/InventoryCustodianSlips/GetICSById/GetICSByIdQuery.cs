@@ -1,6 +1,6 @@
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.InventoryCustodianSlips.GetICSById;
+namespace AMIS.Modules.AssetManagement.Features.v1.InventoryCustodianSlips.GetICSById;
 
 public sealed record GetICSByIdQuery(Guid Id) : IQuery<ICSDetailsDto>;
 
@@ -32,3 +32,4 @@ public sealed record ICSItemDetailsDto(
     decimal UnitCost,
     int? EstimatedUsefulLifeYears,
     string AssetTypeAtTimeOfIssuance);
+

@@ -1,10 +1,10 @@
-using FSH.Framework.Shared.Persistence;
-using FSH.Modules.AssetRegister.Contracts.v1.Catalog;
-using FSH.Modules.AssetRegister.Data;
+using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.AssetRegister.Contracts.v1.Catalog;
+using AMIS.Modules.AssetRegister.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Catalog.SearchPropertyItemCatalogs;
+namespace AMIS.Modules.AssetRegister.Features.v1.Catalog.SearchPropertyItemCatalogs;
 
 public sealed class SearchPropertyItemCatalogsQueryHandler(AssetRegisterDbContext db)
     : IQueryHandler<SearchPropertyItemCatalogsQuery, PagedResponse<PropertyItemCatalogDto>>
@@ -46,3 +46,4 @@ public sealed class SearchPropertyItemCatalogsQueryHandler(AssetRegisterDbContex
         };
     }
 }
+

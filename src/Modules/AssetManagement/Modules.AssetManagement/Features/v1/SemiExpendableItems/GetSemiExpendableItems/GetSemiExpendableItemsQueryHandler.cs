@@ -1,8 +1,8 @@
-using FSH.Modules.AssetManagement.Data;
+using AMIS.Modules.AssetManagement.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.SemiExpendableItems.GetSemiExpendableItems;
+namespace AMIS.Modules.AssetManagement.Features.v1.SemiExpendableItems.GetSemiExpendableItems;
 
 public sealed class GetPropertyItemCatalogQueryHandler(AssetManagementDbContext dbContext)
     : IQueryHandler<GetPropertyItemCatalogQuery, PagedPropertyItemCatalogResponse>
@@ -50,3 +50,4 @@ public sealed class GetPropertyItemCatalogQueryHandler(AssetManagementDbContext 
         return new PagedPropertyItemCatalogResponse(items, pageNumber, pageSize, totalCount);
     }
 }
+

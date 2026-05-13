@@ -1,4 +1,4 @@
-# MasterData Module - Complete Analysis
+﻿# MasterData Module - Complete Analysis
 
 **Status:** ✅ **FULLY IMPLEMENTED UP TO API LEVEL**
 
@@ -9,7 +9,7 @@
 | Property      | Value                                |
 | ------------- | ------------------------------------ |
 | **Location**  | `src/Modules/MasterData/`            |
-| **Namespace** | `FSH.Modules.MasterData`             |
+| **Namespace** | `AMIS.Modules.MasterData`             |
 | **API Route** | `api/v1/master-data`                 |
 | **Version**   | v1                                   |
 | **Type**      | Bounded Context (Multi-tenant aware) |
@@ -481,6 +481,7 @@ The **MasterData Module is fully implemented and production-ready**:
 - ✅ All endpoints mapped and tested
 - ✅ Proper multi-tenancy and soft-delete support
 - ✅ Comprehensive permission structure
-- ✅ Follows FSH.Framework patterns precisely
+- ✅ Follows AMIS.Framework patterns precisely
 - ✅ No build warnings in this module
 - ✅ Ready for integration testing and deployment
+

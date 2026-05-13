@@ -1,6 +1,6 @@
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.ReceiptForReturnedProperties.GetRRSPById;
+namespace AMIS.Modules.AssetManagement.Features.v1.ReceiptForReturnedProperties.GetRRSPById;
 
 public sealed record GetRRSPByIdQuery(Guid Id) : IQuery<RRSPDetailsDto>;
 
@@ -26,3 +26,4 @@ public sealed record RRSPItemDetailsDto(
     string? Description,
     decimal UnitCost,
     string AssetTypeAtTimeOfReturn);
+

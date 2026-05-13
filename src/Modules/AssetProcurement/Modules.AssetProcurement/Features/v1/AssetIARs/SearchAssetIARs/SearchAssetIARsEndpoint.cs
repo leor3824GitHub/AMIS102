@@ -1,12 +1,12 @@
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Framework.Shared.Persistence;
-using FSH.Modules.AssetProcurement.Contracts.v1.AssetInspectionAcceptanceReports;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.AssetProcurement.Contracts.v1.AssetInspectionAcceptanceReports;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.AssetProcurement.Features.v1.AssetIARs.SearchAssetIARs;
+namespace AMIS.Modules.AssetProcurement.Features.v1.AssetIARs.SearchAssetIARs;
 
 public static class SearchAssetIARsEndpoint
 {
@@ -26,3 +26,4 @@ public static class SearchAssetIARsEndpoint
         return TypedResults.Ok(result);
     }
 }
+

@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
+using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
 
-namespace FSH.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.RejectPurchaseRequest;
+namespace AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.RejectPurchaseRequest;
 
 public sealed class RejectPurchaseRequestCommandValidator : AbstractValidator<RejectPurchaseRequestCommand>
 {
@@ -11,3 +11,4 @@ public sealed class RejectPurchaseRequestCommandValidator : AbstractValidator<Re
         RuleFor(x => x.Reason).NotEmpty().MaximumLength(1000);
     }
 }
+

@@ -1,9 +1,9 @@
-using FSH.Modules.AssetManagement.Data;
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Modules.AssetManagement.Data;
+using AMIS.Modules.AssetManagement.Domain;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.PhysicalCount.GetPhysicalCountSessionList;
+namespace AMIS.Modules.AssetManagement.Features.v1.PhysicalCount.GetPhysicalCountSessionList;
 
 public sealed class GetPhysicalCountSessionListQueryHandler(AssetManagementDbContext dbContext)
     : IQueryHandler<GetPhysicalCountSessionListQuery, PagedPhysicalCountSessionResponse>
@@ -72,3 +72,4 @@ public sealed class GetPhysicalCountSessionListQueryHandler(AssetManagementDbCon
         return new PagedPhysicalCountSessionResponse(items, pageNumber, pageSize, totalCount);
     }
 }
+

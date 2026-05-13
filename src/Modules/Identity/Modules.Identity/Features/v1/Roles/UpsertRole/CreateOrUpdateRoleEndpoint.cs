@@ -1,13 +1,13 @@
-using FSH.Framework.Shared.Identity;
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.Identity.Contracts.v1.Roles.UpsertRole;
+using AMIS.Framework.Shared.Identity;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.Identity.Contracts.v1.Roles.UpsertRole;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.Identity.Features.v1.Roles.UpsertRole;
+namespace AMIS.Modules.Identity.Features.v1.Roles.UpsertRole;
 
 public static class CreateOrUpdateRoleEndpoint
 {
@@ -21,3 +21,4 @@ public static class CreateOrUpdateRoleEndpoint
         .WithDescription("Create a new role or update an existing role's name and description.");
     }
 }
+

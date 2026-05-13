@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.Vehicle.Contracts.v1.Vehicles;
+using AMIS.Modules.Vehicle.Contracts.v1.Vehicles;
 
-namespace FSH.Modules.Vehicle.Features.v1.FuelOdometer.CreateVehicleDailyUsage;
+namespace AMIS.Modules.Vehicle.Features.v1.FuelOdometer.CreateVehicleDailyUsage;
 
 public sealed class CreateVehicleDailyUsageCommandValidator : AbstractValidator<CreateVehicleDailyUsageCommand>
 {
@@ -20,3 +20,4 @@ public sealed class CreateVehicleDailyUsageCommandValidator : AbstractValidator<
         RuleFor(x => x.Remarks).MaximumLength(1000).When(x => x.Remarks is not null);
     }
 }
+

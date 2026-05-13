@@ -1,0 +1,10 @@
+/* AMISStatCard Scoped Styles */
+.AMIS-stat-card-wrapper ::deep .AMIS-stat-card {
+    border-radius: 12px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.AMIS-stat-card-wrapper ::deep .AMIS-stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}

@@ -1,9 +1,9 @@
 using System.Diagnostics;
-using FSH.CLI.Models;
-using FSH.CLI.UI;
+using AMIS.CLI.Models;
+using AMIS.CLI.UI;
 using Spectre.Console;
 
-namespace FSH.CLI.Scaffolding;
+namespace AMIS.CLI.Scaffolding;
 
 internal static class SolutionGenerator
 {
@@ -86,9 +86,9 @@ internal static class SolutionGenerator
         ConsoleTheme.WriteStep("Common files");
         await CreateCommonFilesAsync(projectPath, options);
 
-        // Create FSH manifest for upgrade tracking
-        ConsoleTheme.WriteStep("FSH manifest");
-        await CreateFshManifestAsync(projectPath, options);
+        // Create AMIS manifest for upgrade tracking
+        ConsoleTheme.WriteStep("AMIS manifest");
+        await CreateAMISManifestAsync(projectPath, options);
 
         // Initialize git repository if enabled
         if (options.InitializeGit)
@@ -108,7 +108,7 @@ internal static class SolutionGenerator
     {
         var directories = new List<string>
         {
-            ".fsh",
+            ".AMIS",
             "src",
             $"src/{options.Name}.Api",
             $"src/{options.Name}.Api/Properties",
@@ -426,10 +426,10 @@ internal static class SolutionGenerator
         }
     }
 
-    private static Task CreateFshManifestAsync(string projectPath, ProjectOptions options)
+    private static Task CreateAMISManifestAsync(string projectPath, ProjectOptions options)
     {
         var cliVersion = GetCliVersion();
-        var fshVersion = options.FrameworkVersion ?? cliVersion;
+        var AMISVersion = options.FrameworkVersion ?? cliVersion;
 
         // Determine which modules are included
         var modules = new List<string> { "identity", "multitenancy", "auditing" };
@@ -438,12 +438,12 @@ internal static class SolutionGenerator
             modules.Add("catalog");
         }
 
-        var manifest = new FshManifest
+        var manifest = new AMISManifest
         {
-            FshVersion = fshVersion,
+            AMISVersion = AMISVersion,
             CreatedAt = DateTimeOffset.UtcNow,
             CliVersion = cliVersion,
-            Options = new FshManifestOptions
+            Options = new AMISManifestOptions
             {
                 Type = options.Type.ToString().ToLowerInvariant(),
                 Architecture = options.Architecture.ToString().ToLowerInvariant(),
@@ -454,14 +454,14 @@ internal static class SolutionGenerator
                 IncludeTerraform = options.IncludeTerraform,
                 IncludeGitHubActions = options.IncludeGitHubActions
             },
-            Tracking = new FshManifestTracking
+            Tracking = new AMISManifestTracking
             {
                 BuildingBlocks = new Dictionary<string, string>
                 {
-                    ["Core"] = fshVersion,
-                    ["Web"] = fshVersion,
-                    ["Persistence"] = fshVersion,
-                    ["Infrastructure"] = fshVersion
+                    ["Core"] = AMISVersion,
+                    ["Web"] = AMISVersion,
+                    ["Persistence"] = AMISVersion,
+                    ["Infrastructure"] = AMISVersion
                 },
                 Customizations = []
             }
@@ -496,7 +496,8 @@ internal static class SolutionGenerator
         }
 
         AnsiConsole.WriteLine();
-        AnsiConsole.MarkupLine("[dim]Docs:[/] https://fullstackhero.net");
+        AnsiConsole.MarkupLine("[dim]Docs:[/] https://AMIS.net");
         AnsiConsole.WriteLine();
     }
 }
+

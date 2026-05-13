@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.Expendable.Contracts.v1.Warehouse;
+using AMIS.Modules.Expendable.Contracts.v1.Warehouse;
 
-namespace FSH.Modules.Expendable.Features.v1.Warehouse.IssueFromProductInventory;
+namespace AMIS.Modules.Expendable.Features.v1.Warehouse.IssueFromProductInventory;
 
 public sealed class IssueFromProductInventoryCommandValidator : AbstractValidator<IssueFromProductInventoryCommand>
 {
@@ -14,3 +14,4 @@ public sealed class IssueFromProductInventoryCommandValidator : AbstractValidato
             .GreaterThan(0).WithMessage("Quantity to issue must be greater than 0");
     }
 }
+

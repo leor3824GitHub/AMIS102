@@ -1,13 +1,13 @@
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Framework.Shared.Persistence;
-using FSH.Modules.Vehicle.Contracts.v1.Repairs;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.Vehicle.Contracts.v1.Repairs;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.Vehicle.Features.v1.Repairs.SearchRepairRecords;
+namespace AMIS.Modules.Vehicle.Features.v1.Repairs.SearchRepairRecords;
 
 public static class SearchRepairRecordsEndpoint
 {
@@ -19,3 +19,4 @@ public static class SearchRepairRecordsEndpoint
         .Produces<PagedResponse<RepairRecordDto>>()
         .RequirePermission(VehicleModuleConstants.Permissions.Repairs.View);
 }
+

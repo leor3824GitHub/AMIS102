@@ -1,6 +1,6 @@
-using FSH.Modules.Auditing;
-using FSH.Modules.Identity;
-using FSH.Modules.Multitenancy;
+using AMIS.Modules.Auditing;
+using AMIS.Modules.Identity;
+using AMIS.Modules.Multitenancy;
 using NetArchTest.Rules;
 using Shouldly;
 using System.Reflection;
@@ -243,3 +243,4 @@ public partial class ApiVersioningTests
     [GeneratedRegex(@"^v\d+$", RegexOptions.IgnoreCase)]
     private static partial Regex VersionFolderRegex();
 }
+

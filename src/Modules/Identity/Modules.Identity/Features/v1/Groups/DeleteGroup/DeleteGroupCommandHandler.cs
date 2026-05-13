@@ -1,11 +1,11 @@
-using FSH.Framework.Core.Context;
-using FSH.Framework.Core.Exceptions;
-using FSH.Modules.Identity.Contracts.v1.Groups.DeleteGroup;
-using FSH.Modules.Identity.Data;
+using AMIS.Framework.Core.Context;
+using AMIS.Framework.Core.Exceptions;
+using AMIS.Modules.Identity.Contracts.v1.Groups.DeleteGroup;
+using AMIS.Modules.Identity.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.Identity.Features.v1.Groups.DeleteGroup;
+namespace AMIS.Modules.Identity.Features.v1.Groups.DeleteGroup;
 
 public sealed class DeleteGroupCommandHandler : ICommandHandler<DeleteGroupCommand, Unit>
 {
@@ -41,3 +41,4 @@ public sealed class DeleteGroupCommandHandler : ICommandHandler<DeleteGroupComma
         return Unit.Value;
     }
 }
+

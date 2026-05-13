@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.Expendable.Contracts.v1.Requests;
+using AMIS.Modules.Expendable.Contracts.v1.Requests;
 
-namespace FSH.Modules.Expendable.Features.v1.Requests.CreateSupplyRequest;
+namespace AMIS.Modules.Expendable.Features.v1.Requests.CreateSupplyRequest;
 
 public sealed class RemoveSupplyRequestItemCommandValidator : AbstractValidator<RemoveSupplyRequestItemCommand>
 {
@@ -14,3 +14,4 @@ public sealed class RemoveSupplyRequestItemCommandValidator : AbstractValidator<
             .NotEmpty().WithMessage("Product ID is required");
     }
 }
+

@@ -5,9 +5,9 @@
 @using System.Text
 @using System.Text.Json
 @using MudBlazor
-@using FSH.Framework.Blazor.UI.Components.Cards
+@using AMIS.Framework.Blazor.UI.Components.Cards
 <!-- Hero Section -->
-<FshPageHeader Title="Audit Center"
+<AMISPageHeader Title="Audit Center"
                Description="Comprehensive audit trail with advanced analytics, filtering, and insights">
     <ActionContent>
         <MudMenu Icon="@Icons.Material.Filled.Download" Variant="Variant.Filled" Color="Color.Primary" Label="Export">
@@ -30,35 +30,35 @@
                        OnClick="ReloadTable"
                        Title="Refresh Data" />
     </ActionContent>
-</FshPageHeader>
+</AMISPageHeader>
 
 <!-- Summary Dashboard Cards -->
 @if (_showSummary && _summary != null)
 {
     <MudGrid Class="mb-4" Spacing="3">
         <MudItem xs="12" sm="6" md="3">
-            <FshStatCard Icon="@Icons.Material.Filled.Event"
+            <AMISStatCard Icon="@Icons.Material.Filled.Event"
                          IconColor="Color.Primary"
                          Value="@GetTotalEvents().ToString()"
                          Label="Total Events"
                          Badge="Total" />
         </MudItem>
         <MudItem xs="12" sm="6" md="3">
-            <FshStatCard Icon="@Icons.Material.Filled.Error"
+            <AMISStatCard Icon="@Icons.Material.Filled.Error"
                          IconColor="Color.Error"
                          Value="@GetEventsBySeverity("Error").ToString()"
                          Label="Error Events"
                          Badge="Errors" />
         </MudItem>
         <MudItem xs="12" sm="6" md="3">
-            <FshStatCard Icon="@Icons.Material.Filled.Security"
+            <AMISStatCard Icon="@Icons.Material.Filled.Security"
                          IconColor="Color.Warning"
                          Value="@GetEventsByType("Security").ToString()"
                          Label="Security Events"
                          Badge="Security" />
         </MudItem>
         <MudItem xs="12" sm="6" md="3">
-            <FshStatCard Icon="@Icons.Material.Filled.Source"
+            <AMISStatCard Icon="@Icons.Material.Filled.Source"
                          IconColor="Color.Info"
                          Value="@GetSourcesCount().ToString()"
                          Label="Unique Sources"
@@ -251,7 +251,7 @@
 
 <!-- Main Data Table -->
 <MudPaper Class="table-card" Elevation="2">
-    <MudTable T="FSH.Playground.Blazor.ApiClient.AuditSummaryDto"
+    <MudTable T="AMIS.Playground.Blazor.ApiClient.AuditSummaryDto"
               @ref="_table"
               Class="audit-table"
               ServerData="LoadAudits"
@@ -265,10 +265,10 @@
               Breakpoint="Breakpoint.Sm"
               Elevation="0">
         <HeaderContent>
-            <MudTh><MudTableSortLabel SortLabel="OccurredAtUtc" T="FSH.Playground.Blazor.ApiClient.AuditSummaryDto">Timestamp</MudTableSortLabel></MudTh>
-            <MudTh><MudTableSortLabel SortLabel="EventType" T="FSH.Playground.Blazor.ApiClient.AuditSummaryDto">Event Type</MudTableSortLabel></MudTh>
-            <MudTh><MudTableSortLabel SortLabel="Severity" T="FSH.Playground.Blazor.ApiClient.AuditSummaryDto">Severity</MudTableSortLabel></MudTh>
-            <MudTh><MudTableSortLabel SortLabel="UserName" T="FSH.Playground.Blazor.ApiClient.AuditSummaryDto">User</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortLabel="OccurredAtUtc" T="AMIS.Playground.Blazor.ApiClient.AuditSummaryDto">Timestamp</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortLabel="EventType" T="AMIS.Playground.Blazor.ApiClient.AuditSummaryDto">Event Type</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortLabel="Severity" T="AMIS.Playground.Blazor.ApiClient.AuditSummaryDto">Severity</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortLabel="UserName" T="AMIS.Playground.Blazor.ApiClient.AuditSummaryDto">User</MudTableSortLabel></MudTh>
             <MudTh>Tenant</MudTh>
             <MudTh>Source</MudTh>
             <MudTh>Tracking</MudTh>
@@ -643,18 +643,18 @@
     private readonly AuditSeverityOption[] _severities = Enum.GetValues(typeof(AuditSeverityOption)).Cast<AuditSeverityOption>().Where(v => v != AuditSeverityOption.None).ToArray();
 
     private FilterDto _filter = new();
-    private MudTable<FSH.Playground.Blazor.ApiClient.AuditSummaryDto>? _table;
-    private IReadOnlyList<FSH.Playground.Blazor.ApiClient.AuditSummaryDto> _currentPage = Array.Empty<FSH.Playground.Blazor.ApiClient.AuditSummaryDto>();
+    private MudTable<AMIS.Playground.Blazor.ApiClient.AuditSummaryDto>? _table;
+    private IReadOnlyList<AMIS.Playground.Blazor.ApiClient.AuditSummaryDto> _currentPage = Array.Empty<AMIS.Playground.Blazor.ApiClient.AuditSummaryDto>();
     private TableState _lastState = new() { SortLabel = "OccurredAtUtc", SortDirection = SortDirection.Descending, PageSize = 25 };
     private int _pageSize = 25;
     private bool _loading;
     private int _totalCount;
-    private readonly Dictionary<Guid, FSH.Playground.Blazor.ApiClient.AuditDetailDto> _detailCache = new();
+    private readonly Dictionary<Guid, AMIS.Playground.Blazor.ApiClient.AuditDetailDto> _detailCache = new();
     private readonly HashSet<Guid> _expanded = new();
 
     // Summary dashboard
     private bool _showSummary = true;
-    private FSH.Playground.Blazor.ApiClient.AuditSummaryAggregateDto? _summary;
+    private AMIS.Playground.Blazor.ApiClient.AuditSummaryAggregateDto? _summary;
 
     // UI state
     private bool _filtersExpanded = false;
@@ -664,10 +664,10 @@
     private bool _showRelatedDialog = false;
     private bool _loadingRelated = false;
     private string _relatedType = "correlation";
-    private List<FSH.Playground.Blazor.ApiClient.AuditSummaryDto> _relatedEvents = new();
+    private List<AMIS.Playground.Blazor.ApiClient.AuditSummaryDto> _relatedEvents = new();
 
-    [Inject] private FSH.Playground.Blazor.ApiClient.IV1Client V1Client { get; set; } = default!;
-    [Inject] private FSH.Playground.Blazor.ApiClient.IAuditsClient AuditsClient { get; set; } = default!;
+    [Inject] private AMIS.Playground.Blazor.ApiClient.IV1Client V1Client { get; set; } = default!;
+    [Inject] private AMIS.Playground.Blazor.ApiClient.IAuditsClient AuditsClient { get; set; } = default!;
     [Inject] private ISnackbar Snackbar { get; set; } = default!;
     [Inject] private NavigationManager NavigationManager { get; set; } = default!;
 
@@ -692,7 +692,7 @@
         }
     }
 
-    private async Task<TableData<FSH.Playground.Blazor.ApiClient.AuditSummaryDto>> LoadAudits(TableState state, CancellationToken cancellationToken)
+    private async Task<TableData<AMIS.Playground.Blazor.ApiClient.AuditSummaryDto>> LoadAudits(TableState state, CancellationToken cancellationToken)
     {
         _loading = true;
         try
@@ -722,7 +722,7 @@
                 search: string.IsNullOrWhiteSpace(_filter.Search) ? null : _filter.Search,
                 cancellationToken: cancellationToken);
 
-            _currentPage = result.Items?.ToList() ?? new List<FSH.Playground.Blazor.ApiClient.AuditSummaryDto>();
+            _currentPage = result.Items?.ToList() ?? new List<AMIS.Playground.Blazor.ApiClient.AuditSummaryDto>();
             _totalCount = (int)result.TotalCount;
             _expanded.Clear();
             _detailCache.Clear();
@@ -730,7 +730,7 @@
             // Reload summary when filters change
             await LoadSummaryAsync();
 
-            return new TableData<FSH.Playground.Blazor.ApiClient.AuditSummaryDto>
+            return new TableData<AMIS.Playground.Blazor.ApiClient.AuditSummaryDto>
             {
                 Items = _currentPage,
                 TotalItems = _totalCount
@@ -739,9 +739,9 @@
         catch (Exception ex)
         {
             Snackbar.Add($"Failed to load audits: {ex.Message}", Severity.Error);
-            return new TableData<FSH.Playground.Blazor.ApiClient.AuditSummaryDto>
+            return new TableData<AMIS.Playground.Blazor.ApiClient.AuditSummaryDto>
             {
-                Items = Array.Empty<FSH.Playground.Blazor.ApiClient.AuditSummaryDto>(),
+                Items = Array.Empty<AMIS.Playground.Blazor.ApiClient.AuditSummaryDto>(),
                 TotalItems = 0
             };
         }
@@ -798,7 +798,7 @@
         _table?.ReloadServerData();
     }
 
-    private async Task ToggleDetail(FSH.Playground.Blazor.ApiClient.AuditSummaryDto audit)
+    private async Task ToggleDetail(AMIS.Playground.Blazor.ApiClient.AuditSummaryDto audit)
     {
         if (_expanded.Contains(audit.Id))
         {
@@ -845,7 +845,7 @@
                 fromUtc: _filter.FromUtc,
                 toUtc: _filter.ToUtc);
 
-            _relatedEvents = events?.ToList() ?? new List<FSH.Playground.Blazor.ApiClient.AuditSummaryDto>();
+            _relatedEvents = events?.ToList() ?? new List<AMIS.Playground.Blazor.ApiClient.AuditSummaryDto>();
         }
         catch (Exception ex)
         {
@@ -875,7 +875,7 @@
                 fromUtc: _filter.FromUtc,
                 toUtc: _filter.ToUtc);
 
-            _relatedEvents = events?.ToList() ?? new List<FSH.Playground.Blazor.ApiClient.AuditSummaryDto>();
+            _relatedEvents = events?.ToList() ?? new List<AMIS.Playground.Blazor.ApiClient.AuditSummaryDto>();
         }
         catch (Exception ex)
         {
@@ -907,10 +907,10 @@
 
     private bool IsExpanded(Guid id) => _expanded.Contains(id);
 
-    private bool TryGetDetail(Guid id, out FSH.Playground.Blazor.ApiClient.AuditDetailDto? detail) =>
+    private bool TryGetDetail(Guid id, out AMIS.Playground.Blazor.ApiClient.AuditDetailDto? detail) =>
         _detailCache.TryGetValue(id, out detail);
 
-    private static string FormatPayload(FSH.Playground.Blazor.ApiClient.JsonElement payload) =>
+    private static string FormatPayload(AMIS.Playground.Blazor.ApiClient.JsonElement payload) =>
         JsonSerializer.Serialize(payload, new JsonSerializerOptions { WriteIndented = true });
 
     private Task OnRowsPerPageChanged(int size)
@@ -974,7 +974,7 @@
     {
         try
         {
-            var items = new List<FSH.Playground.Blazor.ApiClient.AuditSummaryDto>();
+            var items = new List<AMIS.Playground.Blazor.ApiClient.AuditSummaryDto>();
             var remaining = Math.Min(_totalCount, ApiPageSizeLimit);
             var page = 1;
 
@@ -996,7 +996,7 @@
                     traceId: string.IsNullOrWhiteSpace(_filter.TraceId) ? null : _filter.TraceId,
                     search: string.IsNullOrWhiteSpace(_filter.Search) ? null : _filter.Search);
 
-                var pageItems = result.Items?.ToList() ?? new List<FSH.Playground.Blazor.ApiClient.AuditSummaryDto>();
+                var pageItems = result.Items?.ToList() ?? new List<AMIS.Playground.Blazor.ApiClient.AuditSummaryDto>();
                 if (pageItems.Count == 0)
                 {
                     break;
@@ -1029,7 +1029,7 @@
         }
     }
 
-    private static byte[] BuildCsv(IEnumerable<FSH.Playground.Blazor.ApiClient.AuditSummaryDto> items)
+    private static byte[] BuildCsv(IEnumerable<AMIS.Playground.Blazor.ApiClient.AuditSummaryDto> items)
     {
         var sb = new StringBuilder();
         sb.AppendLine("OccurredAtUtc,EventType,Severity,UserName,UserId,TenantId,Source,CorrelationId,TraceId");
@@ -1180,3 +1180,4 @@
         Critical = 6
     }
 }
+

@@ -2,7 +2,7 @@ using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FSH.Modules.Auditing.Persistence;
+namespace AMIS.Modules.Auditing.Persistence;
 
 public class AuditRecordConfiguration : IEntityTypeConfiguration<AuditRecord>
 {
@@ -21,3 +21,4 @@ public class AuditRecordConfiguration : IEntityTypeConfiguration<AuditRecord>
         builder.HasIndex(x => x.OccurredAtUtc);
     }
 }
+

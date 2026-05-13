@@ -1,6 +1,6 @@
 using System.Linq.Expressions;
 
-namespace FSH.Framework.Persistence;
+namespace AMIS.Framework.Persistence;
 
 /// <summary>
 /// Normalized representation of an ordering expression for specifications.
@@ -10,4 +10,5 @@ public sealed record OrderExpression<T>(
     Expression<Func<T, object>> KeySelector,
     bool Descending)
     where T : class;
+
 

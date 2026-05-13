@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.AssetRegister.Contracts.v1.Accountability;
+using AMIS.Modules.AssetRegister.Contracts.v1.Accountability;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Accountability.ReturnAccountabilityLines;
+namespace AMIS.Modules.AssetRegister.Features.v1.Accountability.ReturnAccountabilityLines;
 
 public sealed class ReturnAccountabilityLinesCommandValidator : AbstractValidator<ReturnAccountabilityLinesCommand>
 {
@@ -17,3 +17,4 @@ public sealed class ReturnAccountabilityLinesCommandValidator : AbstractValidato
         });
     }
 }
+

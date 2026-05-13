@@ -1,8 +1,8 @@
-using FSH.Framework.Persistence;
+using AMIS.Framework.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace FSH.Modules.AssetProcurement.Data;
+namespace AMIS.Modules.AssetProcurement.Data;
 
 internal sealed class AssetProcurementDbInitializer(
     ILogger<AssetProcurementDbInitializer> logger,
@@ -23,3 +23,4 @@ internal sealed class AssetProcurementDbInitializer(
         return Task.CompletedTask;
     }
 }
+

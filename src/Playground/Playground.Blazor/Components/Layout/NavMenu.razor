@@ -1,10 +1,10 @@
-@using FSH.Framework.Shared.Constants
-@using FSH.Framework.Shared.Multitenancy
+@using AMIS.Framework.Shared.Constants
+@using AMIS.Framework.Shared.Multitenancy
 @using Microsoft.AspNetCore.Components.Authorization
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthenticationStateProvider
 
-<nav class="fsh-nav">
+<nav class="AMIS-nav">
     <MudNavMenu Class="pa-2" Rounded="true" Margin="Margin.Dense" Color="Color.Primary">
         <!-- Home - Root Item -->
         <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.Home">
@@ -12,7 +12,7 @@
         </MudNavLink>
 
         <!-- Administration Section -->
-        <div class="fsh-nav-section-title">Administration</div>
+        <div class="AMIS-nav-section-title">Administration</div>
 
         <MudNavLink Href="/users" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Person">
             Users
@@ -266,7 +266,7 @@
         </MudNavGroup>
 
         <!-- Communication Section -->
-        <div class="fsh-nav-section-title">Communication</div>
+        <div class="AMIS-nav-section-title">Communication</div>
 
         <MudNavLink Href="/chat" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Chat">
             Chat
@@ -277,7 +277,7 @@
         </MudNavLink>
 
         <!-- System Section -->
-        <div class="fsh-nav-section-title">System</div>
+        <div class="AMIS-nav-section-title">System</div>
 
         <MudNavLink Href="/health" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.MonitorHeart">
             Health
@@ -288,7 +288,7 @@
         </MudNavLink>
 
         <!-- Settings Section -->
-        <div class="fsh-nav-section-title">Settings</div>
+        <div class="AMIS-nav-section-title">Settings</div>
 
         <MudNavLink Href="/settings/profile" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.ManageAccounts">
             Account
@@ -376,3 +376,4 @@
         }
     }
 }
+

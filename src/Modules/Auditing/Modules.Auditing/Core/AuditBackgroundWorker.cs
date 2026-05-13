@@ -1,9 +1,9 @@
 using System.Threading.Channels;
-using FSH.Modules.Auditing.Contracts;
+using AMIS.Modules.Auditing.Contracts;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace FSH.Modules.Auditing;
+namespace AMIS.Modules.Auditing;
 
 /// <summary>
 /// Drains the channel and writes to the configured sink in batches.
@@ -130,4 +130,5 @@ public sealed class AuditBackgroundWorker : BackgroundService
         }
     }
 }
+
 

@@ -1,8 +1,8 @@
-using FSH.Modules.AssetManagement.Data;
+using AMIS.Modules.AssetManagement.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.SemiExpendableIssuanceRecords.GetSMIRList;
+namespace AMIS.Modules.AssetManagement.Features.v1.SemiExpendableIssuanceRecords.GetSMIRList;
 
 public sealed class GetSMIRListQueryHandler(AssetManagementDbContext dbContext)
     : IQueryHandler<GetSMIRListQuery, PagedSMIRListResponse>
@@ -81,3 +81,4 @@ public sealed class GetSMIRListQueryHandler(AssetManagementDbContext dbContext)
         return new PagedSMIRListResponse(result, pageNumber, pageSize, totalCount);
     }
 }
+

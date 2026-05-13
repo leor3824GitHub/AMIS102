@@ -1,7 +1,7 @@
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Modules.AssetManagement.Domain;
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.SemiExpendableIssuanceRecords.GetSMIRList;
+namespace AMIS.Modules.AssetManagement.Features.v1.SemiExpendableIssuanceRecords.GetSMIRList;
 
 public sealed record GetSMIRListQuery(
     string? Keyword,
@@ -28,3 +28,4 @@ public sealed record SMIRSummaryDto(
     Guid? IssuedByEmployeeId,
     int ItemCount,
     DateTimeOffset CreatedOnUtc);
+

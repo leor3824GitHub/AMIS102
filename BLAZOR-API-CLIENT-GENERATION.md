@@ -1,7 +1,7 @@
-# Blazor API Client Generation Guide
+﻿# Blazor API Client Generation Guide
 
 > **Last Updated:** March 8, 2026  
-> **Framework:** FSH .NET Starter Kit (Modular Monolith with CQRS + DDD)  
+> **Framework:** AMIS .NET Starter Kit (Modular Monolith with CQRS + DDD)  
 > **Tool:** NSwag 14.6.3 (Local dotnet tool)
 
 ---
@@ -52,7 +52,7 @@
 │ • DTO records (CreatePurchaseOrderCommand, etc.)                  │
 │ • HTTP method wrappers (async, with serialization/deserialization)│
 │ • Bearer token support                                            │
-│ • Namespace: FSH.Playground.Blazor.ApiClient                      │
+│ • Namespace: AMIS.Playground.Blazor.ApiClient                      │
 │ • Output: ApiClient/Generated.cs (~1500 lines, single file)       │
 └────────────────────┬─────────────────────────────────────────────┘
                      │
@@ -118,7 +118,7 @@ git commit -m "chore: regenerated API clients from updated spec"
 ### What Gets Generated
 - **File:** `src/Playground/Playground.Blazor/ApiClient/Generated.cs`
 - **Size:** ~1500 lines (single file, multiple client classes)
-- **Namespace:** `FSH.Playground.Blazor.ApiClient`
+- **Namespace:** `AMIS.Playground.Blazor.ApiClient`
 - **Types:** Client interfaces/classes, DTO records, API exceptions
 
 ---
@@ -144,7 +144,7 @@ app.UseHeroOpenApi("/openapi/{documentName}.json");
 ```json
 {
   "OpenApi": {
-    "Title": "FSH Playground API",
+    "Title": "AMIS Playground API",
     "Version": "v1",
     "Description": "API for...",
     "Contact": {
@@ -193,7 +193,7 @@ app.UseHeroOpenApi("/openapi/{documentName}.json");
       "httpClientType": "System.Net.Http.HttpClient",
       
       // Output Configuration
-      "namespace": "FSH.Playground.Blazor.ApiClient",
+      "namespace": "AMIS.Playground.Blazor.ApiClient",
       "output": "../../src/Playground/Playground.Blazor/ApiClient/Generated.cs",
       
       // Client Organization
@@ -914,11 +914,12 @@ services.AddTransient<ITokenClient>(sp =>
 ## Related Documentation
 
 - **[ARCHITECTURE_ANALYSIS.md](ARCHITECTURE_ANALYSIS.md)** — System design & DDD layering
-- **[FSH Mediator Reference](CLAUDE.md#the-pattern)** — Commands, queries, handlers
+- **[AMIS Mediator Reference](CLAUDE.md#the-pattern)** — Commands, queries, handlers
 - **[API Conventions](c:\AMIS101\.claude\rules\api-conventions.md)** — Endpoint design patterns
 
 ---
 
 **Last Updated:** March 8, 2026  
 **Maintained by:** Architecture Team  
-**Questions?** Refer to troubleshooting section or check FSH Discord/GitHub issues
+**Questions?** Refer to troubleshooting section or check AMIS Discord/GitHub issues
+

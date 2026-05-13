@@ -1,4 +1,4 @@
-namespace FSH.Modules.Identity.Services;
+namespace AMIS.Modules.Identity.Services;
 
 /// <summary>
 /// Classifies device types based on user agent device family strings.
@@ -40,3 +40,4 @@ public static class DeviceTypeClassifier
         return Desktop;
     }
 }
+

@@ -1,17 +1,17 @@
 @page "/procurement-planning/ppmp-approvals"
-@using FSH.Modules.ProcurementPlanning.Contracts.v1.Ppmps
-@using FSH.Playground.Blazor.ApiClient
-@using FSH.Playground.Blazor.Components.Shared
+@using AMIS.Modules.ProcurementPlanning.Contracts.v1.Ppmps
+@using AMIS.Playground.Blazor.ApiClient
+@using AMIS.Playground.Blazor.Components.Shared
 @inject IPpmpClient PpmpClient
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 
-<FshPageHeader Title="PPMP Approval Queue"
+<AMISPageHeader Title="PPMP Approval Queue"
                Description="Review and approve submitted procurement plans" />
 
 <MudGrid Spacing="3">
 
-    <!-- ══ LEFT: Queue ══════════════════════════════════════════════ -->
+    <!-- -- LEFT: Queue ---------------------------------------------- -->
     <MudItem xs="12" md="4">
         <MudCard Elevation="1">
             <MudTabs Rounded="false" PanelClass="pa-0" @bind-ActivePanelIndex="_activeTab"
@@ -63,7 +63,7 @@
                                                 <MudText Typo="Typo.caption">FY @item.FiscalYear</MudText>
                                                 <MudSpacer />
                                                 <MudText Typo="Typo.caption" Style="font-weight:600; color:var(--mud-palette-primary)">
-                                                    ₱ @item.TotalEstimatedBudget.ToString("N0")
+                                                    ? @item.TotalEstimatedBudget.ToString("N0")
                                                 </MudText>
                                             </MudStack>
                                         </MudStack>
@@ -134,7 +134,7 @@
                                                 <MudText Typo="Typo.caption">FY @item.FiscalYear</MudText>
                                                 <MudSpacer />
                                                 <MudText Typo="Typo.caption" Style="font-weight:600; color:var(--mud-palette-success)">
-                                                    ₱ @item.TotalEstimatedBudget.ToString("N0")
+                                                    ? @item.TotalEstimatedBudget.ToString("N0")
                                                 </MudText>
                                             </MudStack>
                                         </MudStack>
@@ -150,7 +150,7 @@
         </MudCard>
     </MudItem>
 
-    <!-- ══ RIGHT: Review Pane ════════════════════════════════════════ -->
+    <!-- -- RIGHT: Review Pane ---------------------------------------- -->
     <MudItem xs="12" md="8">
         @if (_detail is null)
         {
@@ -173,7 +173,7 @@
                             <MudStack Spacing="0">
                                 <MudText Typo="Typo.h6" Style="font-weight:700">@_detail.PpmpNumber</MudText>
                                 <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                    Submitted for approval · v@(_detail.VersionNumber)
+                                    Submitted for approval � v@(_detail.VersionNumber)
                                 </MudText>
                             </MudStack>
                             <MudSpacer />
@@ -204,7 +204,7 @@
                         <MudItem xs="6" sm="3">
                             <MudText Typo="Typo.caption" Color="Color.Secondary">Total Budget</MudText>
                             <MudText Typo="Typo.body2" Style="font-weight:600; color:var(--mud-palette-primary)">
-                                ₱ @_detail.TotalEstimatedBudget.ToString("N2")
+                                ? @_detail.TotalEstimatedBudget.ToString("N2")
                             </MudText>
                         </MudItem>
                         <MudItem xs="12">
@@ -226,7 +226,7 @@
                                     <th>Unit</th>
                                     <th>Mode</th>
                                     <th style="width:80px">Schedule</th>
-                                    <th style="text-align:right">Budget (₱)</th>
+                                    <th style="text-align:right">Budget (?)</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -250,10 +250,10 @@
                                             <MudText Typo="Typo.caption">@item.ModeOfProcurement</MudText>
                                         </td>
                                         <td>
-                                            <MudText Typo="Typo.caption">@item.ProcurementStart – @item.ProcurementEnd</MudText>
+                                            <MudText Typo="Typo.caption">@item.ProcurementStart � @item.ProcurementEnd</MudText>
                                             <MudText Typo="Typo.caption" Color="Color.Secondary">Del: @item.ExpectedDelivery</MudText>
                                         </td>
-                                        <td style="text-align:right; font-weight:600">₱ @item.EstimatedBudget.ToString("N2")</td>
+                                        <td style="text-align:right; font-weight:600">? @item.EstimatedBudget.ToString("N2")</td>
                                     </tr>
                                 }
                             </tbody>
@@ -267,14 +267,14 @@
                         <MudText Typo="Typo.subtitle2">Total Estimated Budget</MudText>
                         <MudSpacer />
                         <MudText Typo="Typo.subtitle1" Color="Color.Primary" Style="font-weight:700">
-                            ₱ @_detail.TotalEstimatedBudget.ToString("N2")
+                            ? @_detail.TotalEstimatedBudget.ToString("N2")
                         </MudText>
                     </MudStack>
                 </MudCardContent>
 
                 <MudDivider />
 
-                <!-- Action bar — only for Submitted PPMPs -->
+                <!-- Action bar � only for Submitted PPMPs -->
                 @if (_detail.Status == PpmpStatus.Submitted)
                 {
                     <MudCardActions Class="pa-3">
@@ -294,8 +294,8 @@
                         </MudButton>
                         <MudSpacer />
                         <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mr-2">
-                            @_detail.Items.Count item@(_detail.Items.Count != 1 ? "s" : "") ·
-                            ₱ @_detail.TotalEstimatedBudget.ToString("N2") total
+                            @_detail.Items.Count item@(_detail.Items.Count != 1 ? "s" : "") �
+                            ? @_detail.TotalEstimatedBudget.ToString("N2") total
                         </MudText>
                     </MudCardActions>
                 }
@@ -412,3 +412,4 @@
         finally { _busy = false; }
     }
 }
+

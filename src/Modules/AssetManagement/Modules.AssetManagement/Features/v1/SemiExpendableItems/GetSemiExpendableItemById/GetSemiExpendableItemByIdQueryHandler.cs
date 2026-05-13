@@ -1,8 +1,8 @@
-using FSH.Modules.AssetManagement.Data;
+using AMIS.Modules.AssetManagement.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.SemiExpendableItems.GetSemiExpendableItemById;
+namespace AMIS.Modules.AssetManagement.Features.v1.SemiExpendableItems.GetSemiExpendableItemById;
 
 public sealed class GetPropertyItemCatalogByIdQueryHandler(AssetManagementDbContext dbContext)
     : IQueryHandler<GetPropertyItemCatalogByIdQuery, PropertyItemCatalogDetailsDto>
@@ -33,3 +33,4 @@ public sealed class GetPropertyItemCatalogByIdQueryHandler(AssetManagementDbCont
             item.LastModifiedBy);
     }
 }
+

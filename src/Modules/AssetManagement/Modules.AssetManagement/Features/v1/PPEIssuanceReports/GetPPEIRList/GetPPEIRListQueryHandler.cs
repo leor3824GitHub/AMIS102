@@ -1,8 +1,8 @@
-using FSH.Modules.AssetManagement.Data;
+using AMIS.Modules.AssetManagement.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.PPEIssuanceReports.GetPPEIRList;
+namespace AMIS.Modules.AssetManagement.Features.v1.PPEIssuanceReports.GetPPEIRList;
 
 public sealed class GetPPEIRListQueryHandler(AssetManagementDbContext dbContext)
     : IQueryHandler<GetPPEIRListQuery, PagedPPEIRResponse>
@@ -50,3 +50,4 @@ public sealed class GetPPEIRListQueryHandler(AssetManagementDbContext dbContext)
         return new PagedPPEIRResponse(result, pageNumber, pageSize, totalCount);
     }
 }
+

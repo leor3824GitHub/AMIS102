@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.AssetRegister.Contracts.v1.Counting;
+using AMIS.Modules.AssetRegister.Contracts.v1.Counting;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Counting.ReconcilePhysicalCount;
+namespace AMIS.Modules.AssetRegister.Features.v1.Counting.ReconcilePhysicalCount;
 
 public sealed class ReconcilePhysicalCountCommandValidator : AbstractValidator<ReconcilePhysicalCountCommand>
 {
@@ -10,3 +10,4 @@ public sealed class ReconcilePhysicalCountCommandValidator : AbstractValidator<R
         RuleFor(x => x.SessionId).NotEmpty().WithMessage("Physical count session ID is required.");
     }
 }
+

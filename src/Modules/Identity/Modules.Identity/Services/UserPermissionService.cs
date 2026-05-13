@@ -1,17 +1,17 @@
-using FSH.Framework.Caching;
-using FSH.Framework.Core.Exceptions;
-using FSH.Framework.Shared.Constants;
-using FSH.Modules.Identity.Contracts.Services;
-using FSH.Modules.Identity.Data;
-using FSH.Modules.Identity.Domain;
+using AMIS.Framework.Caching;
+using AMIS.Framework.Core.Exceptions;
+using AMIS.Framework.Shared.Constants;
+using AMIS.Modules.Identity.Contracts.Services;
+using AMIS.Modules.Identity.Data;
+using AMIS.Modules.Identity.Domain;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.Identity.Services;
+namespace AMIS.Modules.Identity.Services;
 
 internal sealed class UserPermissionService(
-    UserManager<FshUser> userManager,
-    RoleManager<FshRole> roleManager,
+    UserManager<AmisUser> userManager,
+    RoleManager<AmisRole> roleManager,
     IdentityDbContext db,
     ICacheService cache) : IUserPermissionService
 {
@@ -60,3 +60,5 @@ internal sealed class UserPermissionService(
         return cache.RemoveItemAsync(GetPermissionCacheKey(userId), cancellationToken);
     }
 }
+
+

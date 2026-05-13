@@ -1,13 +1,13 @@
-using FSH.Framework.Shared.Identity;
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.Identity.Contracts.v1.Sessions.AdminRevokeSession;
+using AMIS.Framework.Shared.Identity;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.Identity.Contracts.v1.Sessions.AdminRevokeSession;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.Identity.Features.v1.Sessions.AdminRevokeSession;
+namespace AMIS.Modules.Identity.Features.v1.Sessions.AdminRevokeSession;
 
 public static class AdminRevokeSessionEndpoint
 {
@@ -30,3 +30,4 @@ public static class AdminRevokeSessionEndpoint
         return result ? TypedResults.Ok() : TypedResults.NotFound();
     }
 }
+

@@ -1,8 +1,8 @@
-﻿using FSH.Framework.Mailing.Services;
+using AMIS.Framework.Mailing.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
-namespace FSH.Framework.Mailing;
+namespace AMIS.Framework.Mailing;
 
 public static class Extensions
 {

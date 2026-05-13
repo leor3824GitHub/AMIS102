@@ -1,13 +1,13 @@
-using FSH.Modules.Expendable.Contracts.v1.Reports;
-using FSH.Modules.Expendable.Contracts.v1.Requests;
-using FSH.Modules.Expendable.Domain.Requests;
-using FSH.Modules.Expendable.Data;
-using FSH.Modules.MasterData.Contracts.v1.OrganizationProfile;
+using AMIS.Modules.Expendable.Contracts.v1.Reports;
+using AMIS.Modules.Expendable.Contracts.v1.Requests;
+using AMIS.Modules.Expendable.Domain.Requests;
+using AMIS.Modules.Expendable.Data;
+using AMIS.Modules.MasterData.Contracts.v1.OrganizationProfile;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 using QuestPDF.Fluent;
 
-namespace FSH.Modules.Expendable.Features.v1.Reports.GenerateEmployeeIssuancePdf;
+namespace AMIS.Modules.Expendable.Features.v1.Reports.GenerateEmployeeIssuancePdf;
 
 public sealed class GenerateEmployeeIssuancePdfCommandHandler(
     ExpendableDbContext db,
@@ -76,3 +76,4 @@ public sealed class GenerateEmployeeIssuancePdfCommandHandler(
             .GeneratePdf();
     }
 }
+

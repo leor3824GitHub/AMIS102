@@ -1,21 +1,21 @@
 using Finbuckle.MultiTenant.Abstractions;
-using FSH.Framework.Persistence;
-using FSH.Framework.Persistence.Context;
-using FSH.Framework.Shared.Multitenancy;
-using FSH.Framework.Shared.Persistence;
-using FSH.Modules.AssetRegister.Domain.Accountability;
-using FSH.Modules.AssetRegister.Domain.Assets;
-using FSH.Modules.AssetRegister.Domain.Catalog;
-using FSH.Modules.AssetRegister.Domain.Counting;
-using FSH.Modules.AssetRegister.Domain.Incidents;
-using FSH.Modules.AssetRegister.Domain.Issuance;
-using FSH.Modules.AssetRegister.Domain.Receiving;
-using FSH.Modules.AssetRegister.Domain.Unserviceable;
+using AMIS.Framework.Persistence;
+using AMIS.Framework.Persistence.Context;
+using AMIS.Framework.Shared.Multitenancy;
+using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.AssetRegister.Domain.Accountability;
+using AMIS.Modules.AssetRegister.Domain.Assets;
+using AMIS.Modules.AssetRegister.Domain.Catalog;
+using AMIS.Modules.AssetRegister.Domain.Counting;
+using AMIS.Modules.AssetRegister.Domain.Incidents;
+using AMIS.Modules.AssetRegister.Domain.Issuance;
+using AMIS.Modules.AssetRegister.Domain.Receiving;
+using AMIS.Modules.AssetRegister.Domain.Unserviceable;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 
-namespace FSH.Modules.AssetRegister.Data;
+namespace AMIS.Modules.AssetRegister.Data;
 
 public class AssetRegisterDbContext : BaseDbContext
 {
@@ -47,3 +47,4 @@ public class AssetRegisterDbContext : BaseDbContext
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AssetRegisterDbContext).Assembly);
     }
 }
+

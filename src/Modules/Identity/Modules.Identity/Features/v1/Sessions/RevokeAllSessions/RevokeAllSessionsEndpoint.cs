@@ -1,12 +1,12 @@
-using FSH.Framework.Shared.Identity;
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.Identity.Contracts.v1.Sessions.RevokeAllSessions;
+using AMIS.Framework.Shared.Identity;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.Identity.Contracts.v1.Sessions.RevokeAllSessions;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.Identity.Features.v1.Sessions.RevokeAllSessions;
+namespace AMIS.Modules.Identity.Features.v1.Sessions.RevokeAllSessions;
 
 public static class RevokeAllSessionsEndpoint
 {
@@ -23,3 +23,4 @@ public static class RevokeAllSessionsEndpoint
         .WithDescription("Revoke all sessions for the currently authenticated user except the current one.");
     }
 }
+

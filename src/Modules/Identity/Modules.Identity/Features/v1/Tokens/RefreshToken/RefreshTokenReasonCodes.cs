@@ -1,4 +1,4 @@
-namespace FSH.Modules.Identity.Features.v1.Tokens.RefreshToken;
+namespace AMIS.Modules.Identity.Features.v1.Tokens.RefreshToken;
 
 internal static class RefreshTokenReasonCodes
 {
@@ -7,3 +7,4 @@ internal static class RefreshTokenReasonCodes
     internal const string SubjectMismatch = "RefreshTokenSubjectMismatch";
     internal const string RefreshTokenRotated = "RefreshTokenRotated";
 }
+

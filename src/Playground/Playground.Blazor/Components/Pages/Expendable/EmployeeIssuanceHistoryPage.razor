@@ -1,7 +1,7 @@
 @page "/expendable/reports/employee"
-@using FSH.Framework.Blazor.UI.Components.Cards
-@using FSH.Modules.Expendable.Contracts.v1.Requests
-@using FSH.Playground.Blazor.ApiClient
+@using AMIS.Framework.Blazor.UI.Components.Cards
+@using AMIS.Modules.Expendable.Contracts.v1.Requests
+@using AMIS.Playground.Blazor.ApiClient
 @using System.Globalization
 @using System.Text
 @inherits ComponentBase
@@ -11,8 +11,8 @@
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JS
 
-<FshPageHeader Title="Employee Issuance History" Description="Office supplies issued per employee">
-</FshPageHeader>
+<AMISPageHeader Title="Employee Issuance History" Description="Office supplies issued per employee">
+</AMISPageHeader>
 
 <div class="mt-4">
     <MudCard Class="mb-4">
@@ -87,7 +87,7 @@
             <MudTd DataLabel="Department">@GetDepartmentDisplay(issuance.DepartmentId)</MudTd>
             <MudTd DataLabel="Fulfilled On">@issuance.FulfilledOnUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</MudTd>
             <MudTd DataLabel="Items">@issuance.Items.Count</MudTd>
-            <MudTd DataLabel="Total Value">₱@issuance.TotalValue.ToString("N2")</MudTd>
+            <MudTd DataLabel="Total Value">?@issuance.TotalValue.ToString("N2")</MudTd>
             <MudTd>
                 <MudIconButton Icon="@Icons.Material.Filled.ExpandMore" Size="Size.Small"
                                OnClick="@(() => ToggleExpand(issuance.RequestId))" />
@@ -111,8 +111,8 @@
                                 <MudTd DataLabel="Product">@item.ProductName</MudTd>
                                 <MudTd DataLabel="Code">@item.ProductCode</MudTd>
                                 <MudTd DataLabel="Qty">@item.QuantityIssued</MudTd>
-                                <MudTd DataLabel="Avg Cost">₱@item.UnitPrice.ToString("N4")</MudTd>
-                                <MudTd DataLabel="Total">₱@item.TotalValue.ToString("N2")</MudTd>
+                                <MudTd DataLabel="Avg Cost">?@item.UnitPrice.ToString("N4")</MudTd>
+                                <MudTd DataLabel="Total">?@item.TotalValue.ToString("N2")</MudTd>
                             </RowTemplate>
                         </MudTable>
                     </td>
@@ -478,3 +478,4 @@
         }
     }
 }
+

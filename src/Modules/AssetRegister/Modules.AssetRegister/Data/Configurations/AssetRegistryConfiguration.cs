@@ -1,10 +1,10 @@
-using FSH.Modules.AssetRegister.Contracts.v1.ValueObjects;
-using FSH.Modules.AssetRegister.Domain.Assets;
+using AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
+using AMIS.Modules.AssetRegister.Domain.Assets;
 using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FSH.Modules.AssetRegister.Data.Configurations;
+namespace AMIS.Modules.AssetRegister.Data.Configurations;
 
 internal sealed class AssetRegistryConfiguration : IEntityTypeConfiguration<AssetRegistry>
 {
@@ -47,3 +47,4 @@ internal sealed class AssetRegistryConfiguration : IEntityTypeConfiguration<Asse
         builder.HasIndex(x => new { x.TenantId, x.CurrentCustodianId });
     }
 }
+

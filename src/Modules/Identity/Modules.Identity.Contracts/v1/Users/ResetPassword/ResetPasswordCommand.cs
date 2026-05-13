@@ -1,6 +1,6 @@
 using Mediator;
 
-namespace FSH.Modules.Identity.Contracts.v1.Users.ResetPassword;
+namespace AMIS.Modules.Identity.Contracts.v1.Users.ResetPassword;
 
 public class ResetPasswordCommand : ICommand<string>
 {
@@ -10,3 +10,4 @@ public class ResetPasswordCommand : ICommand<string>
 
     public string Token { get; set; } = default!;
 }
+

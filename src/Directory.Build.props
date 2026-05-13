@@ -38,14 +38,14 @@
 	<PropertyGroup>
 		<!-- Default NuGet metadata -->
 		<Authors>Mukesh Murugan</Authors>
-		<Company>FullStackHero</Company>
+		<Company>AMIS</Company>
 		<Version>10.0.0-rc.1</Version>
-		<RepositoryUrl>https://github.com/fullstackhero/dotnet-starter-kit</RepositoryUrl>
-		<PackageTags>FSH;FullStackHero;Modular;CQRS;VerticalSlice;DotNet;CleanArchitecture</PackageTags>
+		<RepositoryUrl>https://github.com/AMIS/dotnet-starter-kit</RepositoryUrl>
+		<PackageTags>AMIS;AMIS;Modular;CQRS;VerticalSlice;DotNet;CleanArchitecture</PackageTags>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
-		<PackageProjectUrl>https://fullstackhero.net</PackageProjectUrl>
-		<Description>FullStackHero .NET Starter Kit - A production-ready modular .NET framework for building enterprise applications</Description>
+		<PackageProjectUrl>https://AMIS.net</PackageProjectUrl>
+		<Description>AMIS .NET Starter Kit - A production-ready modular .NET framework for building enterprise applications</Description>
 		<!-- Enable NuGet pack globally (overridden in Playground/Tests) -->
 		<IsPackable>true</IsPackable>
 	</PropertyGroup>
@@ -55,3 +55,4 @@
 		<None Include="$(MSBuildThisFileDirectory)../README.md" Pack="true" PackagePath="/" />
 	</ItemGroup>
 </Project>
+

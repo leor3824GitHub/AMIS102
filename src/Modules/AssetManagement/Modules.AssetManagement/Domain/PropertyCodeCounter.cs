@@ -1,6 +1,6 @@
-using FSH.Framework.Core.Domain;
+using AMIS.Framework.Core.Domain;
 
-namespace FSH.Modules.AssetManagement.Domain;
+namespace AMIS.Modules.AssetManagement.Domain;
 
 /// <summary>
 /// Tracks the last-used sequence number for property code generation per tenant,
@@ -50,3 +50,4 @@ public sealed class PropertyCodeCounter : BaseEntity<Guid>, IHasTenant
         return LastSequence;
     }
 }
+

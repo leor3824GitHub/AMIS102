@@ -1,7 +1,7 @@
-using FSH.Framework.Shared.Persistence;
+using AMIS.Framework.Shared.Persistence;
 using Mediator;
 
-namespace FSH.Modules.ProcurementAcquisition.Contracts.v1.Canvass;
+namespace AMIS.Modules.ProcurementAcquisition.Contracts.v1.Canvass;
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Enums
@@ -112,3 +112,4 @@ public sealed class SearchCanvassRequestsQuery : IQuery<PagedResponse<CanvassReq
     public int PageNumber { get; set; } = 1;
     public int PageSize { get; set; } = 10;
 }
+

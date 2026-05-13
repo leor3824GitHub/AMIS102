@@ -1,6 +1,6 @@
-using FSH.Framework.Core.Domain;
+using AMIS.Framework.Core.Domain;
 
-namespace FSH.Modules.ProcurementAcquisition.Domain.Canvass;
+namespace AMIS.Modules.ProcurementAcquisition.Domain.Canvass;
 
 public sealed class CanvassQuotationLineItem
 {
@@ -114,3 +114,4 @@ public sealed class CanvassQuotation : AggregateRoot<Guid>, IHasTenant, IAuditab
 
     public void ClearAwarded() => IsAwarded = false;
 }
+

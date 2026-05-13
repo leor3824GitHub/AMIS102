@@ -1,10 +1,10 @@
-using FSH.Framework.Shared.Identity.Authorization;
+using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.AssetManagement.Features.v1.AssetRegistryQueries.GetAssetsByLocation;
+namespace AMIS.Modules.AssetManagement.Features.v1.AssetRegistryQueries.GetAssetsByLocation;
 
 public static class GetAssetsByLocationEndpoint
 {
@@ -22,3 +22,4 @@ public static class GetAssetsByLocationEndpoint
         .WithSummary("Get paginated assets by current location from the unified asset registry")
         .RequirePermission(AssetManagementModuleConstants.Permissions.AssetRegistry.View);
 }
+

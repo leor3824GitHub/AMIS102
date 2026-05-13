@@ -12,14 +12,14 @@ public class PlaygroundArchitectureTests
         // Assemblies / namespaces that represent Playground hosts.
         string[] playgroundNamespaces =
         {
-            "FSH.Playground.Api",
+            "AMIS.Playground.Api",
             "Playground.Blazor"
         };
 
         var result = Types
             .InCurrentDomain()
             .That()
-            .ResideInNamespace("FSH.Modules")
+            .ResideInNamespace("AMIS.Modules")
             .Should()
             .NotHaveDependencyOnAny(playgroundNamespaces)
             .GetResult();
@@ -38,18 +38,18 @@ public class PlaygroundArchitectureTests
         // but should not directly reference feature or data-layer namespaces.
         string[] forbiddenNamespaces =
         {
-            "FSH.Modules.Auditing.Features",
-            "FSH.Modules.Auditing.Data",
-            "FSH.Modules.Identity.Features",
-            "FSH.Modules.Identity.Data",
-            "FSH.Modules.Multitenancy.Features",
-            "FSH.Modules.Multitenancy.Data"
+            "AMIS.Modules.Auditing.Features",
+            "AMIS.Modules.Auditing.Data",
+            "AMIS.Modules.Identity.Features",
+            "AMIS.Modules.Identity.Data",
+            "AMIS.Modules.Multitenancy.Features",
+            "AMIS.Modules.Multitenancy.Data"
         };
 
         var hostResult = Types
             .InCurrentDomain()
             .That()
-            .ResideInNamespace("FSH.Playground")
+            .ResideInNamespace("AMIS.Playground")
             .Or()
             .ResideInNamespace("Playground.Blazor")
             .Should()
@@ -85,3 +85,4 @@ internal static class ModuleArchitectureTestsFixture
         return directory.FullName;
     }
 }
+

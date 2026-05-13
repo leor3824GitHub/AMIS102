@@ -1,7 +1,7 @@
-using FSH.Framework.Core.Domain;
-using FSH.Modules.Finance.Contracts.v1.DisbursementVouchers;
+using AMIS.Framework.Core.Domain;
+using AMIS.Modules.Finance.Contracts.v1.DisbursementVouchers;
 
-namespace FSH.Modules.Finance.Domain.DisbursementVouchers;
+namespace AMIS.Modules.Finance.Domain.DisbursementVouchers;
 
 public sealed class DisbursementVoucher : AggregateRoot<Guid>, IAuditableEntity
 {
@@ -106,3 +106,4 @@ public sealed class DisbursementVoucher : AggregateRoot<Guid>, IAuditableEntity
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
     }
 }
+

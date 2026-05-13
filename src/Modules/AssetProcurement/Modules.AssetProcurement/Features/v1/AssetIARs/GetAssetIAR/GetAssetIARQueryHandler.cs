@@ -1,10 +1,10 @@
-using FSH.Modules.AssetProcurement.Contracts.v1.AssetInspectionAcceptanceReports;
-using FSH.Modules.AssetProcurement.Data;
-using FSH.Modules.AssetProcurement.Features.v1.AssetIARs.CreateAssetIAR;
+using AMIS.Modules.AssetProcurement.Contracts.v1.AssetInspectionAcceptanceReports;
+using AMIS.Modules.AssetProcurement.Data;
+using AMIS.Modules.AssetProcurement.Features.v1.AssetIARs.CreateAssetIAR;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetProcurement.Features.v1.AssetIARs.GetAssetIAR;
+namespace AMIS.Modules.AssetProcurement.Features.v1.AssetIARs.GetAssetIAR;
 
 public sealed class GetAssetIARQueryHandler(
     AssetProcurementDbContext dbContext) : IQueryHandler<GetAssetIARQuery, AssetIARDto?>
@@ -28,3 +28,4 @@ public sealed class GetAssetIARQueryHandler(
         return CreateAssetIARCommandHandler.MapToDto(iar, poNumber);
     }
 }
+

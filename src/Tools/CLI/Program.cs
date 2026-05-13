@@ -1,15 +1,15 @@
-using FSH.CLI.Commands;
+using AMIS.CLI.Commands;
 using Spectre.Console.Cli;
 
 var app = new CommandApp();
 
 app.Configure(config =>
 {
-    config.SetApplicationName("fsh");
+    config.SetApplicationName("AMIS");
     config.SetApplicationVersion(GetVersion());
 
     config.AddCommand<NewCommand>("new")
-        .WithDescription("Create a new FullStackHero project")
+        .WithDescription("Create a new AMIS project")
         .WithExample("new")
         .WithExample("new", "MyApp")
         .WithExample("new", "MyApp", "--preset", "quickstart")
@@ -22,7 +22,7 @@ app.Configure(config =>
         .WithExample("version", "--json");
 
     config.AddCommand<UpgradeCommand>("upgrade")
-        .WithDescription("Check for and apply FSH framework upgrades")
+        .WithDescription("Check for and apply AMIS framework upgrades")
         .WithExample("upgrade", "--check")
         .WithExample("upgrade", "--apply")
         .WithExample("upgrade", "--apply", "--skip-breaking")
@@ -37,3 +37,4 @@ static string GetVersion()
     var version = assembly.GetName().Version;
     return version?.ToString(3) ?? "1.0.0";
 }
+

@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.Identity.Contracts.v1.Sessions.RevokeAllSessions;
+using AMIS.Modules.Identity.Contracts.v1.Sessions.RevokeAllSessions;
 
-namespace FSH.Modules.Identity.Features.v1.Sessions.RevokeAllSessions;
+namespace AMIS.Modules.Identity.Features.v1.Sessions.RevokeAllSessions;
 
 public sealed class RevokeAllSessionsCommandValidator : AbstractValidator<RevokeAllSessionsCommand>
 {
@@ -11,3 +11,4 @@ public sealed class RevokeAllSessionsCommandValidator : AbstractValidator<Revoke
         // This validator exists for consistency and potential future validation rules
     }
 }
+

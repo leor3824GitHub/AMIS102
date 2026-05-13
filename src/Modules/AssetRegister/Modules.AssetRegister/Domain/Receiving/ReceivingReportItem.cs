@@ -1,4 +1,4 @@
-namespace FSH.Modules.AssetRegister.Domain.Receiving;
+namespace AMIS.Modules.AssetRegister.Domain.Receiving;
 
 public sealed class ReceivingReportItem
 {
@@ -59,3 +59,4 @@ public sealed class ReceivingReportItem
         };
     }
 }
+

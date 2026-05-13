@@ -1,13 +1,13 @@
 @page "/master-data/unit-of-measures"
-@using FSH.Framework.Blazor.UI.Components.Cards
-@using FSH.Playground.Blazor.ApiClient
+@using AMIS.Framework.Blazor.UI.Components.Cards
+@using AMIS.Playground.Blazor.ApiClient
 @inherits ComponentBase
 @inject ISnackbar Snackbar
 @inject IMaster_dataClient MasterDataClient
 @inject ILookupClient LookupClient
 @inject IOrganizationProfileClient OrgProfileClient
 
-<FshPageHeader Title="Units of Measure" Description="Manage units of measure">
+<AMISPageHeader Title="Units of Measure" Description="Manage units of measure">
     <ActionContent>
         <MudStack Row="true" Spacing="2" Style="width: 100%; max-width: 400px;">
             <MudTextField @bind-Value="_searchKeyword" Label="Search" Placeholder="Search units..."
@@ -18,13 +18,13 @@
             </MudButton>
         </MudStack>
     </ActionContent>
-</FshPageHeader>
+</AMISPageHeader>
 
 <div class="mt-4">
     <MudGrid Spacing="2">
         <!-- Create/Edit Form -->
         <MudItem xs="12" sm="6" md="4" Style="min-height: 100%;">
-            <MudCard Class="fsh-card">
+            <MudCard Class="AMIS-card">
                 <MudCardContent>
                     <MudText Typo="Typo.h6" Class="mb-3">@(EditingUnitOfMeasure != null ? "Edit Unit of Measure" : "Create Unit of Measure")</MudText>
                     <MudStack Spacing="3">
@@ -58,7 +58,7 @@
 
         <!-- Units of Measure List -->
         <MudItem xs="12" sm="6" md="8">
-            <MudCard Class="fsh-card">
+            <MudCard Class="AMIS-card">
                 <MudCardContent>
                     <MudStack Row="true" Spacing="1" Class="mb-3" AlignItems="AlignItems.Center">
                         <MudText Typo="Typo.h6" Class="flex-grow-1">Units of Measure List</MudText>
@@ -99,7 +99,7 @@
                                             }
                                             else
                                             {
-                                                <MudTooltip Text="@(string.IsNullOrWhiteSpace(unit.OfficeCode) ? "Shared record — read only" : "Owned by another office — read only")">
+                                                <MudTooltip Text="@(string.IsNullOrWhiteSpace(unit.OfficeCode) ? "Shared record � read only" : "Owned by another office � read only")">
                                                     <MudIconButton Icon="@Icons.Material.Filled.Lock" Size="Size.Small" Color="Color.Default" Disabled="true" />
                                                 </MudTooltip>
                                             }
@@ -126,9 +126,9 @@
 
 @code {
     private UnitOfMeasureForm _form = new();
-    private FSH.Playground.Blazor.ApiClient.UnitOfMeasureReferenceDto? EditingUnitOfMeasure { get; set; }
-    private List<FSH.Playground.Blazor.ApiClient.UnitOfMeasureReferenceDto> _unitOfMeasures = new();
-    private List<FSH.Playground.Blazor.ApiClient.UnitOfMeasureReferenceDto> _allUnitOfMeasures = new();
+    private AMIS.Playground.Blazor.ApiClient.UnitOfMeasureReferenceDto? EditingUnitOfMeasure { get; set; }
+    private List<AMIS.Playground.Blazor.ApiClient.UnitOfMeasureReferenceDto> _unitOfMeasures = new();
+    private List<AMIS.Playground.Blazor.ApiClient.UnitOfMeasureReferenceDto> _allUnitOfMeasures = new();
     private bool _initialized = false;
     private bool _isLoading = false;
     private string _searchKeyword = string.Empty;
@@ -307,7 +307,7 @@
         }
     }
 
-    private async Task EditUnitOfMeasure(FSH.Playground.Blazor.ApiClient.UnitOfMeasureReferenceDto unit)
+    private async Task EditUnitOfMeasure(AMIS.Playground.Blazor.ApiClient.UnitOfMeasureReferenceDto unit)
     {
         EditingUnitOfMeasure = unit;
         _form = new UnitOfMeasureForm
@@ -394,6 +394,7 @@
     private string SortIcon(string field)
     {
         if (_sortField != field) return string.Empty;
-        return _sortAscending ? "▲" : "▼";
+        return _sortAscending ? "?" : "?";
     }
 }
+

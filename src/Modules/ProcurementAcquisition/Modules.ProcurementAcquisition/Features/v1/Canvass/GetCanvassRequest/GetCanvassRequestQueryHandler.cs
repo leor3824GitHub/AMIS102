@@ -1,9 +1,9 @@
-using FSH.Modules.ProcurementAcquisition.Contracts.v1.Canvass;
-using FSH.Modules.ProcurementAcquisition.Data;
+using AMIS.Modules.ProcurementAcquisition.Contracts.v1.Canvass;
+using AMIS.Modules.ProcurementAcquisition.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.ProcurementAcquisition.Features.v1.Canvass.GetCanvassRequest;
+namespace AMIS.Modules.ProcurementAcquisition.Features.v1.Canvass.GetCanvassRequest;
 
 public sealed class GetCanvassRequestQueryHandler(ProcurementDbContext dbContext)
     : IQueryHandler<GetCanvassRequestQuery, CanvassRequestDto?>
@@ -48,3 +48,4 @@ public sealed class GetCanvassRequestQueryHandler(ProcurementDbContext dbContext
             canvass.CreatedBy);
     }
 }
+

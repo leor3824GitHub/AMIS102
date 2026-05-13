@@ -1,8 +1,8 @@
-using FSH.Modules.AssetManagement.Domain;
-using FSH.Modules.AssetManagement.Features.v1.Locations;
+using AMIS.Modules.AssetManagement.Domain;
+using AMIS.Modules.AssetManagement.Features.v1.Locations;
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.Locations.GetLocations;
+namespace AMIS.Modules.AssetManagement.Features.v1.Locations.GetLocations;
 
 public sealed record GetLocationsQuery(
     string? Keyword,

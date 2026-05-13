@@ -3,12 +3,12 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text;
-using FSH.Framework.Shared.Persistence;
-using FSH.Modules.Vehicle.Contracts.v1.Maintenance;
-using FSH.Modules.Vehicle.Contracts.v1.Repairs;
-using FSH.Modules.Vehicle.Contracts.v1.Vehicles;
+using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.Vehicle.Contracts.v1.Maintenance;
+using AMIS.Modules.Vehicle.Contracts.v1.Repairs;
+using AMIS.Modules.Vehicle.Contracts.v1.Vehicles;
 
-namespace FSH.Playground.Blazor.ApiClient;
+namespace AMIS.Playground.Blazor.ApiClient;
 
 internal interface IVehicleClient
 {

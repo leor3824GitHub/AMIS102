@@ -1,4 +1,4 @@
-namespace FSH.Modules.AssetManagement.Domain;
+namespace AMIS.Modules.AssetManagement.Domain;
 
 /// <summary>
 /// Nature of the semi-expendable property issuance, per the PPEIR/SMIR form field
@@ -22,3 +22,4 @@ public enum SMIRIssuanceType
     /// <summary>Any other nature of issuance not listed above.</summary>
     Others = 4,
 }
+

@@ -1,11 +1,11 @@
 using Finbuckle.MultiTenant;
 using Finbuckle.MultiTenant.Abstractions;
-using FSH.Framework.Shared.Multitenancy;
-using FSH.Modules.Auditing.Contracts;
+using AMIS.Framework.Shared.Multitenancy;
+using AMIS.Modules.Auditing.Contracts;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-namespace FSH.Modules.Auditing.Persistence;
+namespace AMIS.Modules.Auditing.Persistence;
 
 /// <summary>
 /// Persists audit envelopes into SQL using EF Core.
@@ -71,3 +71,4 @@ public sealed class SqlAuditSink : IAuditSink
         }
     }
 }
+

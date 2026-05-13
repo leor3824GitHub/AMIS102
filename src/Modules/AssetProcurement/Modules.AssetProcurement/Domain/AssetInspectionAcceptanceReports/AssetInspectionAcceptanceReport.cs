@@ -1,7 +1,7 @@
-using FSH.Framework.Core.Domain;
-using FSH.Modules.AssetProcurement.Contracts.v1.AssetInspectionAcceptanceReports;
+using AMIS.Framework.Core.Domain;
+using AMIS.Modules.AssetProcurement.Contracts.v1.AssetInspectionAcceptanceReports;
 
-namespace FSH.Modules.AssetProcurement.Domain.AssetInspectionAcceptanceReports;
+namespace AMIS.Modules.AssetProcurement.Domain.AssetInspectionAcceptanceReports;
 
 public sealed class AssetIARLineItem
 {
@@ -168,3 +168,4 @@ public sealed class AssetInspectionAcceptanceReport : AggregateRoot<Guid>, IHasT
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
     }
 }
+

@@ -1,4 +1,4 @@
-# OpenAPI Client Generation
+﻿# OpenAPI Client Generation
 
 Use NSwag (local dotnet tool) to generate typed C# clients + DTOs from the Playground API spec.
 
@@ -15,7 +15,7 @@ This restores the local tool, ensures the output directory exists, and runs NSwa
 
 ## Output
 - Clients + DTOs: `src/Playground/Playground.Blazor/ApiClient/Generated.cs` (single file; multiple client types grouped by first path segment after the base path, e.g., `/api/v1/identity/*` -> `IdentityClient`).
-- Namespace: `FSH.Playground.Blazor.ApiClient`
+- Namespace: `AMIS.Playground.Blazor.ApiClient`
 - Client grouping: `MultipleClientsFromPathSegments`; ensure Minimal API routes keep module-specific first segments.
 - Bearer auth: configure `HttpClient` (via DI) with the bearer token; generated clients use injected `HttpClient`. Base URLs are not baked into the generated code (`useBaseUrl: false`), so `HttpClient.BaseAddress` must be set by the app (see `Program.cs`).
 
@@ -27,3 +27,4 @@ Use `./scripts/openapi/check-openapi-drift.ps1 -SpecUrl "<spec-url>"` to regener
 ## Tips
 - If the API changes, rerun the script with the updated spec URL (e.g., staging/prod).
 - Commit regenerated clients alongside related API changes to keep UI consumers in sync.
+

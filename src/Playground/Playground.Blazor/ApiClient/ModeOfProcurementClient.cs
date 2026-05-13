@@ -1,9 +1,9 @@
 using System.Net.Http.Json;
 using System.Web;
 using System.Globalization;
-using FSH.Modules.MasterData.Contracts.v1.ModesOfProcurement;
+using AMIS.Modules.MasterData.Contracts.v1.ModesOfProcurement;
 
-namespace FSH.Playground.Blazor.ApiClient;
+namespace AMIS.Playground.Blazor.ApiClient;
 
 internal sealed record ModeOfProcurementPagedResponse(
     ICollection<ModeOfProcurementDto>? Items,
@@ -75,3 +75,4 @@ internal sealed class ModeOfProcurementClient(HttpClient httpClient) : IModeOfPr
         response.EnsureSuccessStatusCode();
     }
 }
+

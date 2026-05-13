@@ -1,9 +1,9 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<RootNamespace>FSH.Modules.Identity.Contracts</RootNamespace>
-		<AssemblyName>FSH.Modules.Identity.Contracts</AssemblyName>
-		<PackageId>FullStackHero.Modules.Identity.Contracts</PackageId>
+		<RootNamespace>AMIS.Modules.Identity.Contracts</RootNamespace>
+		<AssemblyName>AMIS.Modules.Identity.Contracts</AssemblyName>
+		<PackageId>AMIS.Modules.Identity.Contracts</PackageId>
 		<NoWarn>$(NoWarn);CA1002;CA1056;CS1572;S2094</NoWarn>
 	</PropertyGroup>
 
@@ -17,3 +17,4 @@
 	</ItemGroup>
 
 </Project>
+

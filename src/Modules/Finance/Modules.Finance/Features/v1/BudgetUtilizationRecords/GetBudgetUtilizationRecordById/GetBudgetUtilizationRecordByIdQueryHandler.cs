@@ -1,9 +1,9 @@
-using FSH.Modules.Finance.Contracts.v1.BudgetUtilizationRecords;
-using FSH.Modules.Finance.Data;
+using AMIS.Modules.Finance.Contracts.v1.BudgetUtilizationRecords;
+using AMIS.Modules.Finance.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.Finance.Features.v1.BudgetUtilizationRecords.GetBudgetUtilizationRecordById;
+namespace AMIS.Modules.Finance.Features.v1.BudgetUtilizationRecords.GetBudgetUtilizationRecordById;
 
 public sealed class GetBudgetUtilizationRecordByIdQueryHandler(
     FinanceDbContext dbContext) : IQueryHandler<GetBudgetUtilizationRecordByIdQuery, BudgetUtilizationRecordDto>
@@ -35,3 +35,4 @@ public sealed class GetBudgetUtilizationRecordByIdQueryHandler(
             bur.LastModifiedOnUtc?.DateTime);
     }
 }
+

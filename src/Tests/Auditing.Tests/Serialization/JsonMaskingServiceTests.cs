@@ -1,6 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using FSH.Modules.Auditing;
+using AMIS.Modules.Auditing;
 
 namespace Auditing.Tests.Serialization;
 
@@ -381,3 +381,4 @@ public sealed class JsonMaskingServiceTests
 
     #endregion
 }
+

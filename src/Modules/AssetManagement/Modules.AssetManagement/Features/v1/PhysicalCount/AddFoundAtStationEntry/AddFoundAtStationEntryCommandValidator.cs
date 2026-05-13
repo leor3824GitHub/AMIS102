@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace FSH.Modules.AssetManagement.Features.v1.PhysicalCount.AddFoundAtStationEntry;
+namespace AMIS.Modules.AssetManagement.Features.v1.PhysicalCount.AddFoundAtStationEntry;
 
 public sealed class AddFoundAtStationEntryCommandValidator : AbstractValidator<AddFoundAtStationEntryCommand>
 {
@@ -15,3 +15,4 @@ public sealed class AddFoundAtStationEntryCommandValidator : AbstractValidator<A
         RuleFor(x => x.PhotoPath).MaximumLength(500).When(x => x.PhotoPath is not null);
     }
 }
+

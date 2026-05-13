@@ -1,9 +1,9 @@
-using FSH.Modules.Expendable.Contracts.v1.Products;
-using FSH.Modules.Expendable.Data;
+using AMIS.Modules.Expendable.Contracts.v1.Products;
+using AMIS.Modules.Expendable.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.Expendable.Features.v1.Products.GetProduct;
+namespace AMIS.Modules.Expendable.Features.v1.Products.GetProduct;
 
 public sealed class GetProductQueryHandler : IQueryHandler<GetProductQuery, ProductDto?>
 {
@@ -22,3 +22,4 @@ public sealed class GetProductQueryHandler : IQueryHandler<GetProductQuery, Prod
         return product?.ToProductDto();
     }
 }
+

@@ -1,30 +1,30 @@
 using Asp.Versioning;
-using FSH.Framework.Persistence;
-using FSH.Framework.Shared.Constants;
-using FSH.Framework.Web.Modules;
-using FSH.Modules.Finance.Data;
-using FSH.Modules.Finance.Features.v1.DisbursementVouchers.CreateDisbursementVoucher;
-using FSH.Modules.Finance.Features.v1.DisbursementVouchers.GetDisbursementVoucherById;
-using FSH.Modules.Finance.Features.v1.DisbursementVouchers.SearchDisbursementVouchers;
-using FSH.Modules.Finance.Features.v1.DisbursementVouchers.ApproveDisbursementVoucher;
-using FSH.Modules.Finance.Features.v1.DisbursementVouchers.PayDisbursementVoucher;
-using FSH.Modules.Finance.Features.v1.DisbursementVouchers.CancelDisbursementVoucher;
-using FSH.Modules.Finance.Features.v1.BudgetUtilizationRecords.CreateBudgetUtilizationRecord;
-using FSH.Modules.Finance.Features.v1.BudgetUtilizationRecords.GetBudgetUtilizationRecordById;
-using FSH.Modules.Finance.Features.v1.BudgetUtilizationRecords.SearchBudgetUtilizationRecords;
-using FSH.Modules.Finance.Features.v1.BudgetUtilizationRecords.ObligateBudgetUtilizationRecord;
-using FSH.Modules.Finance.Features.v1.BudgetUtilizationRecords.CancelBudgetUtilizationRecord;
+using AMIS.Framework.Persistence;
+using AMIS.Framework.Shared.Constants;
+using AMIS.Framework.Web.Modules;
+using AMIS.Modules.Finance.Data;
+using AMIS.Modules.Finance.Features.v1.DisbursementVouchers.CreateDisbursementVoucher;
+using AMIS.Modules.Finance.Features.v1.DisbursementVouchers.GetDisbursementVoucherById;
+using AMIS.Modules.Finance.Features.v1.DisbursementVouchers.SearchDisbursementVouchers;
+using AMIS.Modules.Finance.Features.v1.DisbursementVouchers.ApproveDisbursementVoucher;
+using AMIS.Modules.Finance.Features.v1.DisbursementVouchers.PayDisbursementVoucher;
+using AMIS.Modules.Finance.Features.v1.DisbursementVouchers.CancelDisbursementVoucher;
+using AMIS.Modules.Finance.Features.v1.BudgetUtilizationRecords.CreateBudgetUtilizationRecord;
+using AMIS.Modules.Finance.Features.v1.BudgetUtilizationRecords.GetBudgetUtilizationRecordById;
+using AMIS.Modules.Finance.Features.v1.BudgetUtilizationRecords.SearchBudgetUtilizationRecords;
+using AMIS.Modules.Finance.Features.v1.BudgetUtilizationRecords.ObligateBudgetUtilizationRecord;
+using AMIS.Modules.Finance.Features.v1.BudgetUtilizationRecords.CancelBudgetUtilizationRecord;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-namespace FSH.Modules.Finance;
+namespace AMIS.Modules.Finance;
 
 public class FinanceModule : IModule
 {
-    private static readonly IReadOnlyList<FshPermission> RegisteredPermissions =
+    private static readonly IReadOnlyList<AmisPermission> RegisteredPermissions =
     [
         new("View Disbursement Vouchers", "View", "Finance.DisbursementVouchers", IsBasic: false),
         new("Create Disbursement Vouchers", "Create", "Finance.DisbursementVouchers"),
@@ -82,3 +82,5 @@ public class FinanceModule : IModule
         CancelBudgetUtilizationRecordEndpoint.Map(burGroup);
     }
 }
+
+

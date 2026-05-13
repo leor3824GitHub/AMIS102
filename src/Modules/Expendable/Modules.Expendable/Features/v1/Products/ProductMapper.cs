@@ -1,7 +1,7 @@
-using FSH.Modules.Expendable.Contracts.v1.Products;
-using FSH.Modules.Expendable.Domain.Products;
+using AMIS.Modules.Expendable.Contracts.v1.Products;
+using AMIS.Modules.Expendable.Domain.Products;
 
-namespace FSH.Modules.Expendable.Features.v1.Products;
+namespace AMIS.Modules.Expendable.Features.v1.Products;
 
 internal static class ProductMapper
 {
@@ -41,4 +41,5 @@ internal static class ProductMapper
             product.ParentProductId,
             product.VariantName);
 }
+
 

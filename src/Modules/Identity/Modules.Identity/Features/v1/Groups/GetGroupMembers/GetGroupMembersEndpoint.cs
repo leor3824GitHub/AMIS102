@@ -1,12 +1,12 @@
-using FSH.Framework.Shared.Identity;
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.Identity.Contracts.v1.Groups.GetGroupMembers;
+using AMIS.Framework.Shared.Identity;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.Identity.Contracts.v1.Groups.GetGroupMembers;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.Identity.Features.v1.Groups.GetGroupMembers;
+namespace AMIS.Modules.Identity.Features.v1.Groups.GetGroupMembers;
 
 public static class GetGroupMembersEndpoint
 {
@@ -20,3 +20,4 @@ public static class GetGroupMembersEndpoint
         .WithDescription("Retrieve all users that belong to a specific group.");
     }
 }
+

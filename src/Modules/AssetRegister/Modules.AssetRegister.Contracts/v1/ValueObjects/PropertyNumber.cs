@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace FSH.Modules.AssetRegister.Contracts.v1.ValueObjects;
+namespace AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
 
 /// <summary>
 /// COA Circular 2020-006 property number: YYYY-AA-BB-NNNN-CC.
@@ -70,3 +70,4 @@ public sealed record PropertyNumber
 
     public override string ToString() => Value;
 }
+

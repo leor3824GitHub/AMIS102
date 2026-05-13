@@ -1,12 +1,12 @@
-using FSH.Framework.Shared.Identity;
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.Identity.Contracts.v1.Users.DeleteUser;
+using AMIS.Framework.Shared.Identity;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.Identity.Contracts.v1.Users.DeleteUser;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.Identity.Features.v1.Users.DeleteUser;
+namespace AMIS.Modules.Identity.Features.v1.Users.DeleteUser;
 
 public static class DeleteUserEndpoint
 {
@@ -23,3 +23,4 @@ public static class DeleteUserEndpoint
         .WithDescription("Delete a user by unique identifier.");
     }
 }
+

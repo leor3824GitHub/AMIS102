@@ -1,13 +1,13 @@
-using FSH.Framework.Persistence;
-using FSH.Framework.Shared.Persistence;
-using FSH.Modules.Vehicle.Contracts.v1.Vehicles;
-using FSH.Modules.Vehicle.Data;
-using FSH.Modules.Vehicle.Domain.Vehicles;
-using FSH.Modules.Vehicle.Features.v1.Vehicles;
+using AMIS.Framework.Persistence;
+using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.Vehicle.Contracts.v1.Vehicles;
+using AMIS.Modules.Vehicle.Data;
+using AMIS.Modules.Vehicle.Domain.Vehicles;
+using AMIS.Modules.Vehicle.Features.v1.Vehicles;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.Vehicle.Features.v1.Vehicles.SearchVehicles;
+namespace AMIS.Modules.Vehicle.Features.v1.Vehicles.SearchVehicles;
 
 public sealed class SearchVehiclesQueryHandler(VehicleDbContext db)
     : IQueryHandler<SearchVehiclesQuery, PagedResponse<VehicleDto>>
@@ -39,3 +39,4 @@ public sealed class SearchVehiclesQueryHandler(VehicleDbContext db)
         return await q.Select(v => v.ToDto()).ToPagedResponseAsync(query, ct).ConfigureAwait(false);
     }
 }
+

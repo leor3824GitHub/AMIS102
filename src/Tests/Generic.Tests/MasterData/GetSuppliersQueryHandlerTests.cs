@@ -1,10 +1,10 @@
 using Finbuckle.MultiTenant;
 using Finbuckle.MultiTenant.Abstractions;
-using FSH.Framework.Shared.Multitenancy;
-using FSH.Framework.Shared.Persistence;
-using FSH.Modules.MasterData.Data;
-using FSH.Modules.MasterData.Domain;
-using FSH.Modules.MasterData.Features.v1.Suppliers.GetSuppliers;
+using AMIS.Framework.Shared.Multitenancy;
+using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.MasterData.Data;
+using AMIS.Modules.MasterData.Domain;
+using AMIS.Modules.MasterData.Features.v1.Suppliers.GetSuppliers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
@@ -96,3 +96,4 @@ public sealed class GetSuppliersQueryHandlerTests
         public IFileProvider ContentRootFileProvider { get; set; } = new PhysicalFileProvider(Directory.GetCurrentDirectory());
     }
 }
+

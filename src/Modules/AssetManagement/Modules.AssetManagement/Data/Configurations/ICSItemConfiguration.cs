@@ -1,9 +1,9 @@
 using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Modules.AssetManagement.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FSH.Modules.AssetManagement.Data.Configurations;
+namespace AMIS.Modules.AssetManagement.Data.Configurations;
 
 public sealed class ICSItemConfiguration : IEntityTypeConfiguration<ICSItem>
 {
@@ -35,3 +35,4 @@ public sealed class ICSItemConfiguration : IEntityTypeConfiguration<ICSItem>
             .OnDelete(DeleteBehavior.Restrict);
     }
 }
+

@@ -1,5 +1,5 @@
-using FSH.Modules.Finance.Contracts.v1.BudgetUtilizationRecords;
-using FSH.Modules.Finance.Domain.BudgetUtilizationRecords;
+using AMIS.Modules.Finance.Contracts.v1.BudgetUtilizationRecords;
+using AMIS.Modules.Finance.Domain.BudgetUtilizationRecords;
 
 namespace Generic.Tests.Finance;
 
@@ -92,3 +92,4 @@ public sealed class BudgetUtilizationRecordDomainTests
         amount: 50000m,
         remarks: null);
 }
+

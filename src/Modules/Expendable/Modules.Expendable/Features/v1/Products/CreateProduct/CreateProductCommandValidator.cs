@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.Expendable.Contracts.v1.Products;
+using AMIS.Modules.Expendable.Contracts.v1.Products;
 
-namespace FSH.Modules.Expendable.Features.v1.Products.CreateProduct;
+namespace AMIS.Modules.Expendable.Features.v1.Products.CreateProduct;
 
 public sealed class CreateProductCommandValidator : AbstractValidator<CreateProductCommand>
 {
@@ -57,3 +57,4 @@ public sealed class CreateProductCommandValidator : AbstractValidator<CreateProd
             .WithMessage("Variant name is required when creating a product variant.");
     }
 }
+

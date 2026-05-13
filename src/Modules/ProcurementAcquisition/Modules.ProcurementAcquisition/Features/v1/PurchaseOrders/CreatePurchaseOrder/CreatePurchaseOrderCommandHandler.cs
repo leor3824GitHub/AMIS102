@@ -1,11 +1,11 @@
-using FSH.Framework.Core.Context;
-using FSH.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders;
-using FSH.Modules.ProcurementAcquisition.Data;
-using FSH.Modules.ProcurementAcquisition.Domain.PurchaseOrders;
+using AMIS.Framework.Core.Context;
+using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders;
+using AMIS.Modules.ProcurementAcquisition.Data;
+using AMIS.Modules.ProcurementAcquisition.Domain.PurchaseOrders;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.CreatePurchaseOrder;
+namespace AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.CreatePurchaseOrder;
 
 public sealed class CreatePurchaseOrderCommandHandler(
     ProcurementDbContext dbContext,
@@ -131,3 +131,4 @@ public sealed class CreatePurchaseOrderCommandHandler(
         return NumberToWords(number / 1_000_000_000) + " Billion" + (number % 1_000_000_000 != 0 ? " " + NumberToWords(number % 1_000_000_000) : string.Empty);
     }
 }
+

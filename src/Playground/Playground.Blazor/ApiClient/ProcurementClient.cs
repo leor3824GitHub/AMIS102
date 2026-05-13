@@ -1,13 +1,13 @@
 using System.Globalization;
 using System.Net.Http.Json;
 using System.Web;
-using FSH.Framework.Shared.Persistence;
-using FSH.Modules.ProcurementAcquisition.Contracts.v1.Canvass;
-using FSH.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders;
-using FSH.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
-using PurchaseOrderContracts = FSH.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders;
+using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.ProcurementAcquisition.Contracts.v1.Canvass;
+using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders;
+using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
+using PurchaseOrderContracts = AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders;
 
-namespace FSH.Playground.Blazor.ApiClient;
+namespace AMIS.Playground.Blazor.ApiClient;
 
 // ── Purchase Requests ─────────────────────────────────────────────────────────
 
@@ -192,3 +192,4 @@ internal sealed class PurchaseOrderClient(HttpClient http) : IPurchaseOrderClien
 
     private sealed record CancelPoBody(string? Reason);
 }
+

@@ -1,8 +1,8 @@
-﻿using FluentValidation;
-using FSH.Framework.Storage;
-using FSH.Framework.Shared.Storage;
+using FluentValidation;
+using AMIS.Framework.Storage;
+using AMIS.Framework.Shared.Storage;
 
-namespace FSH.Modules.Identity.Features.v1.Users;
+namespace AMIS.Modules.Identity.Features.v1.Users;
 
 public sealed class UserImageValidator : AbstractValidator<FileUploadRequest>
 {

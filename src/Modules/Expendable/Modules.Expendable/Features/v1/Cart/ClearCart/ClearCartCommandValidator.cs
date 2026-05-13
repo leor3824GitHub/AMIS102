@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.Expendable.Contracts.v1.Cart;
+using AMIS.Modules.Expendable.Contracts.v1.Cart;
 
-namespace FSH.Modules.Expendable.Features.v1.Cart.ClearCart;
+namespace AMIS.Modules.Expendable.Features.v1.Cart.ClearCart;
 
 public sealed class ClearCartCommandValidator : AbstractValidator<ClearCartCommand>
 {
@@ -11,3 +11,4 @@ public sealed class ClearCartCommandValidator : AbstractValidator<ClearCartComma
             .NotEmpty().WithMessage("Cart ID is required");
     }
 }
+

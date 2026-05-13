@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.MasterData.Contracts.v1.References;
+using AMIS.Modules.MasterData.Contracts.v1.References;
 
-namespace FSH.Modules.MasterData.Features.v1.UnitOfMeasures.UpdateUnitOfMeasure;
+namespace AMIS.Modules.MasterData.Features.v1.UnitOfMeasures.UpdateUnitOfMeasure;
 
 public sealed class UpdateUnitOfMeasureCommandValidator : AbstractValidator<UpdateUnitOfMeasureCommand>
 {

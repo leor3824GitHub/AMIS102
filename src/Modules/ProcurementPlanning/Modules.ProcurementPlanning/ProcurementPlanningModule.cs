@@ -1,44 +1,44 @@
 using Asp.Versioning;
-using FSH.Framework.Persistence;
-using FSH.Framework.Shared.Constants;
-using FSH.Framework.Web.Modules;
-using FSH.Modules.ProcurementPlanning.Data;
-using FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.CreatePpmp;
-using FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.UpdatePpmp;
-using FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.SubmitPpmp;
-using FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.ApprovePpmp;
-using FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.RecallPpmp;
-using FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.ReturnPpmp;
-using FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.CreateUpdatePpmp;
-using FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.PromoteToFinalPpmp;
-using FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.GetPpmp;
-using FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.GetPpmpVersions;
-using FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.SearchPpmps;
-using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.CreateAnnualProcurementPlan;
-using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.ConsolidatePpmps;
-using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.PublishAnnualProcurementPlan;
-using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.ApproveAnnualProcurementPlan;
-using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.RecallAnnualProcurementPlan;
-using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.ReturnAnnualProcurementPlan;
-using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.CreateUpdateApp;
-using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.PromoteToFinalApp;
-using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.DeleteAnnualProcurementPlan;
-using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.GetAnnualProcurementPlan;
-using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.GetAppVersions;
-using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.GetAvailablePpmps;
-using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.SearchAnnualProcurementPlans;
-using FSH.Modules.ProcurementPlanning.Provisioning;
+using AMIS.Framework.Persistence;
+using AMIS.Framework.Shared.Constants;
+using AMIS.Framework.Web.Modules;
+using AMIS.Modules.ProcurementPlanning.Data;
+using AMIS.Modules.ProcurementPlanning.Features.v1.Ppmps.CreatePpmp;
+using AMIS.Modules.ProcurementPlanning.Features.v1.Ppmps.UpdatePpmp;
+using AMIS.Modules.ProcurementPlanning.Features.v1.Ppmps.SubmitPpmp;
+using AMIS.Modules.ProcurementPlanning.Features.v1.Ppmps.ApprovePpmp;
+using AMIS.Modules.ProcurementPlanning.Features.v1.Ppmps.RecallPpmp;
+using AMIS.Modules.ProcurementPlanning.Features.v1.Ppmps.ReturnPpmp;
+using AMIS.Modules.ProcurementPlanning.Features.v1.Ppmps.CreateUpdatePpmp;
+using AMIS.Modules.ProcurementPlanning.Features.v1.Ppmps.PromoteToFinalPpmp;
+using AMIS.Modules.ProcurementPlanning.Features.v1.Ppmps.GetPpmp;
+using AMIS.Modules.ProcurementPlanning.Features.v1.Ppmps.GetPpmpVersions;
+using AMIS.Modules.ProcurementPlanning.Features.v1.Ppmps.SearchPpmps;
+using AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.CreateAnnualProcurementPlan;
+using AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.ConsolidatePpmps;
+using AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.PublishAnnualProcurementPlan;
+using AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.ApproveAnnualProcurementPlan;
+using AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.RecallAnnualProcurementPlan;
+using AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.ReturnAnnualProcurementPlan;
+using AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.CreateUpdateApp;
+using AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.PromoteToFinalApp;
+using AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.DeleteAnnualProcurementPlan;
+using AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.GetAnnualProcurementPlan;
+using AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.GetAppVersions;
+using AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.GetAvailablePpmps;
+using AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.SearchAnnualProcurementPlans;
+using AMIS.Modules.ProcurementPlanning.Provisioning;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-namespace FSH.Modules.ProcurementPlanning;
+namespace AMIS.Modules.ProcurementPlanning;
 
 public class ProcurementPlanningModule : IModule
 {
-    private static readonly IReadOnlyList<FshPermission> RegisteredPermissions =
+    private static readonly IReadOnlyList<AmisPermission> RegisteredPermissions =
     [
         new("View PPMPs",    "View",    "ProcurementPlanning.Ppmps", IsBasic: true),
         new("Create PPMPs",  "Create",  "ProcurementPlanning.Ppmps"),
@@ -118,3 +118,5 @@ public class ProcurementPlanningModule : IModule
         SearchAnnualProcurementPlansEndpoint.Map(appGroup);
     }
 }
+
+

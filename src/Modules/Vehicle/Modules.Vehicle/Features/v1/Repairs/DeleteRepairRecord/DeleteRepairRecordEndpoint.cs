@@ -1,11 +1,11 @@
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.Vehicle.Contracts.v1.Repairs;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.Vehicle.Contracts.v1.Repairs;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.Vehicle.Features.v1.Repairs.DeleteRepairRecord;
+namespace AMIS.Modules.Vehicle.Features.v1.Repairs.DeleteRepairRecord;
 
 public static class DeleteRepairRecordEndpoint
 {
@@ -20,3 +20,4 @@ public static class DeleteRepairRecordEndpoint
         .Produces(StatusCodes.Status204NoContent)
         .RequirePermission(VehicleModuleConstants.Permissions.Repairs.Delete);
 }
+

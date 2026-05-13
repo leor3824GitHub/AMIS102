@@ -1,4 +1,4 @@
----
+﻿---
 name: add-entity
 description: Create a domain entity with multi-tenancy, auditing, soft-delete, and domain events. Use when adding new database entities to a module.
 argument-hint: [ModuleName] [EntityName]
@@ -6,7 +6,7 @@ argument-hint: [ModuleName] [EntityName]
 
 # Add Entity
 
-Create a domain entity following FSH patterns with full multi-tenancy support.
+Create a domain entity following AMIS patterns with full multi-tenancy support.
 
 ## Entity Template
 
@@ -162,3 +162,4 @@ dotnet ef database update \
 - [ ] EF configuration created
 - [ ] Added to DbContext
 - [ ] Migration created
+

@@ -1,6 +1,6 @@
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.InventoryCustodianSlips.RenewICS;
+namespace AMIS.Modules.AssetManagement.Features.v1.InventoryCustodianSlips.RenewICS;
 
 /// <summary>
 /// Renews an existing active ICS by issuing a new ICS for the same custodian and
@@ -20,3 +20,4 @@ public sealed record RenewICSResult(
     string NewICSNo,
     Guid OldICSId,
     int ItemCount);
+

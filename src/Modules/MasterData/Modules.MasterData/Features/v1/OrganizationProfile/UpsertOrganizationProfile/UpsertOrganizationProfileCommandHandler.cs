@@ -1,10 +1,10 @@
-using FSH.Framework.Core.Context;
-using FSH.Modules.MasterData.Contracts.v1.OrganizationProfile;
-using FSH.Modules.MasterData.Data;
+using AMIS.Framework.Core.Context;
+using AMIS.Modules.MasterData.Contracts.v1.OrganizationProfile;
+using AMIS.Modules.MasterData.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.MasterData.Features.v1.OrganizationProfile.UpsertOrganizationProfile;
+namespace AMIS.Modules.MasterData.Features.v1.OrganizationProfile.UpsertOrganizationProfile;
 
 public sealed class UpsertOrganizationProfileCommandHandler(MasterDataDbContext db, ICurrentUser currentUser)
     : ICommandHandler<UpsertOrganizationProfileCommand, OrganizationProfileDto>
@@ -35,3 +35,4 @@ public sealed class UpsertOrganizationProfileCommandHandler(MasterDataDbContext 
         return new OrganizationProfileDto(existing.Id, existing.Name, existing.ShortName, existing.Address, existing.LogoUrl, existing.AnnexECode);
     }
 }
+

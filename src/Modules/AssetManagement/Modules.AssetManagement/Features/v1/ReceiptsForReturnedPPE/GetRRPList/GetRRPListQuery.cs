@@ -1,7 +1,7 @@
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Modules.AssetManagement.Domain;
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.ReceiptsForReturnedPPE.GetRRPList;
+namespace AMIS.Modules.AssetManagement.Features.v1.ReceiptsForReturnedPPE.GetRRPList;
 
 public sealed record GetRRPListQuery(
     string? Keyword,
@@ -25,3 +25,4 @@ public sealed record RRPSummaryDto(
     string ReturnCategory,
     Guid ReturnedByEmployeeId,
     int ItemCount);
+

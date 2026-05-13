@@ -1,7 +1,7 @@
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Modules.AssetManagement.Domain;
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.Reports.ReportOfSPIssued;
+namespace AMIS.Modules.AssetManagement.Features.v1.Reports.ReportOfSPIssued;
 
 /// <summary>
 /// Generates a Report of Semi-Expendable Property Issued (RSPI) for a period.
@@ -63,3 +63,4 @@ public sealed record RSPIItemDto(
     string AssetType,
     decimal UnitCost,
     DateOnly? ExpiresOn);
+

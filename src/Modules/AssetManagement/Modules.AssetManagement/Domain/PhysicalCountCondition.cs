@@ -1,4 +1,4 @@
-namespace FSH.Modules.AssetManagement.Domain;
+namespace AMIS.Modules.AssetManagement.Domain;
 
 /// <summary>
 /// Observed physical condition of an asset during a Physical Count Session.
@@ -21,3 +21,4 @@ public enum PhysicalCountCondition
     /// <summary>Asset is serviceable but no longer needed by the office.</summary>
     NoLongerNeeded = 4,
 }
+

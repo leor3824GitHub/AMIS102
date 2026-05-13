@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
 	<PropertyGroup>
-		<RootNamespace>FSH.Playground.Blazor</RootNamespace>
-		<AssemblyName>FSH.Playground.Blazor</AssemblyName>
+		<RootNamespace>AMIS.Playground.Blazor</RootNamespace>
+		<AssemblyName>AMIS.Playground.Blazor</AssemblyName>
 		<IsPackable>false</IsPackable>
 
 		<!-- .NET 10 Performance Optimizations -->
@@ -14,7 +14,7 @@
 		<!-- Container configuration -->
 		<ContainerPort>8080</ContainerPort>
 		<ContainerUser>root</ContainerUser>
-		<ContainerRepository>fsh-playground-blazor</ContainerRepository>
+		<ContainerRepository>AMIS-playground-blazor</ContainerRepository>
     	<PublishProfile>DefaultContainer</PublishProfile>
 	</PropertyGroup>
 
@@ -44,3 +44,4 @@
     <NoWarn>$(NoWarn);MUD0002;S3260;S2933;S3459;S3923;S108;S1144;S4487;CA1031;CA5394;CA1812</NoWarn>
   </PropertyGroup>
 </Project>
+

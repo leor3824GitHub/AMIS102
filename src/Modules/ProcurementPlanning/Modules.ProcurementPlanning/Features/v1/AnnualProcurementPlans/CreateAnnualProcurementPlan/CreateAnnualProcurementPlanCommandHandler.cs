@@ -1,14 +1,14 @@
 using System.Net;
-using FSH.Framework.Core.Context;
-using FSH.Framework.Core.Exceptions;
-using FSH.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
-using FSH.Modules.ProcurementPlanning.Data;
-using FSH.Modules.ProcurementPlanning.Domain.AnnualProcurementPlans;
-using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans;
+using AMIS.Framework.Core.Context;
+using AMIS.Framework.Core.Exceptions;
+using AMIS.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
+using AMIS.Modules.ProcurementPlanning.Data;
+using AMIS.Modules.ProcurementPlanning.Domain.AnnualProcurementPlans;
+using AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.CreateAnnualProcurementPlan;
+namespace AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.CreateAnnualProcurementPlan;
 
 public sealed class CreateAnnualProcurementPlanCommandHandler(
     ProcurementPlanningDbContext dbContext,
@@ -58,3 +58,4 @@ public sealed class CreateAnnualProcurementPlanCommandHandler(
         return $"{prefix}{next:000}";
     }
 }
+

@@ -1,6 +1,6 @@
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.Reclassification.ReclassifyProperties;
+namespace AMIS.Modules.AssetManagement.Features.v1.Reclassification.ReclassifyProperties;
 
 /// <summary>
 /// Applies the currently active capitalization threshold policy to all non-deleted
@@ -12,3 +12,4 @@ namespace FSH.Modules.AssetManagement.Features.v1.Reclassification.ReclassifyPro
 public sealed record ReclassifyPropertiesCommand(string? Notes) : ICommand<ReclassifyPropertiesResult>;
 
 public sealed record ReclassifyPropertiesResult(Guid RecordId, int TotalReclassified);
+

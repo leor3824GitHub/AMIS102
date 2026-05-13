@@ -1,19 +1,19 @@
 using Finbuckle.MultiTenant.Abstractions;
-using FSH.Framework.Caching;
-using FSH.Framework.Core.Context;
-using FSH.Framework.Core.Exceptions;
-using FSH.Framework.Shared.Multitenancy;
-using FSH.Framework.Storage;
-using FSH.Framework.Shared.Storage;
-using FSH.Framework.Storage.Services;
-using FSH.Modules.Multitenancy.Contracts;
-using FSH.Modules.Multitenancy.Contracts.Dtos;
-using FSH.Modules.Multitenancy.Data;
-using FSH.Modules.Multitenancy.Domain;
+using AMIS.Framework.Caching;
+using AMIS.Framework.Core.Context;
+using AMIS.Framework.Core.Exceptions;
+using AMIS.Framework.Shared.Multitenancy;
+using AMIS.Framework.Storage;
+using AMIS.Framework.Shared.Storage;
+using AMIS.Framework.Storage.Services;
+using AMIS.Modules.Multitenancy.Contracts;
+using AMIS.Modules.Multitenancy.Contracts.Dtos;
+using AMIS.Modules.Multitenancy.Data;
+using AMIS.Modules.Multitenancy.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace FSH.Modules.Multitenancy.Services;
+namespace AMIS.Modules.Multitenancy.Services;
 
 public sealed class TenantThemeService : ITenantThemeService
 {
@@ -347,3 +347,4 @@ public sealed class TenantThemeService : ITenantThemeService
         return userId == Guid.Empty ? null : userId.ToString();
     }
 }
+

@@ -1,4 +1,4 @@
-namespace FSH.Modules.AssetManagement.Domain;
+namespace AMIS.Modules.AssetManagement.Domain;
 
 /// <summary>
 /// Nature of the incident documented in the RLSDDSP
@@ -18,3 +18,4 @@ public enum PropertyIncidentType
     /// <summary>Property was physically destroyed (fire, flood, calamity, etc.).</summary>
     Destroyed = 3,
 }
+

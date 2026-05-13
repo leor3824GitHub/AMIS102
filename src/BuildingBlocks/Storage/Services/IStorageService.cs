@@ -1,7 +1,7 @@
-using FSH.Framework.Shared.Storage;
-using FSH.Framework.Storage.DTOs;
+using AMIS.Framework.Shared.Storage;
+using AMIS.Framework.Storage.DTOs;
 
-namespace FSH.Framework.Storage.Services;
+namespace AMIS.Framework.Storage.Services;
 
 public interface IStorageService
 {

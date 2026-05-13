@@ -1,4 +1,4 @@
-namespace FSH.Framework.Storage.S3;
+namespace AMIS.Framework.Storage.S3;
 
 public sealed class S3StorageOptions
 {
@@ -8,3 +8,4 @@ public sealed class S3StorageOptions
     public bool PublicRead { get; set; } = true;
     public string? PublicBaseUrl { get; set; }
 }
+

@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace FSH.Modules.AssetManagement.Features.v1.Reports.GenerateRSPIPdf;
+namespace AMIS.Modules.AssetManagement.Features.v1.Reports.GenerateRSPIPdf;
 
 public sealed class GenerateRSPIPdfCommandValidator : AbstractValidator<GenerateRSPIPdfCommand>
 {
@@ -17,3 +17,4 @@ public sealed class GenerateRSPIPdfCommandValidator : AbstractValidator<Generate
             .WithMessage("DateFrom cannot be later than DateTo.");
     }
 }
+

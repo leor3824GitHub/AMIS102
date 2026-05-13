@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.AssetRegister.Contracts.v1.Incidents;
+using AMIS.Modules.AssetRegister.Contracts.v1.Incidents;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Incidents.NotarizeIncidentReport;
+namespace AMIS.Modules.AssetRegister.Features.v1.Incidents.NotarizeIncidentReport;
 
 public sealed class NotarizeIncidentReportCommandValidator : AbstractValidator<NotarizeIncidentReportCommand>
 {
@@ -15,3 +15,4 @@ public sealed class NotarizeIncidentReportCommandValidator : AbstractValidator<N
         RuleFor(x => x.SeriesOf).NotEmpty().MaximumLength(64).WithMessage("Series of must be provided and not exceed 64 characters.");
     }
 }
+

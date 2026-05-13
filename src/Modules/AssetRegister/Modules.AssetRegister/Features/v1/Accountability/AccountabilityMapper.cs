@@ -1,8 +1,8 @@
-using FSH.Modules.AssetRegister.Contracts.v1.Accountability;
-using FSH.Modules.AssetRegister.Contracts.v1.ValueObjects;
-using FSH.Modules.AssetRegister.Domain.Accountability;
+using AMIS.Modules.AssetRegister.Contracts.v1.Accountability;
+using AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
+using AMIS.Modules.AssetRegister.Domain.Accountability;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Accountability;
+namespace AMIS.Modules.AssetRegister.Features.v1.Accountability;
 
 internal static class AccountabilityMapper
 {
@@ -31,3 +31,4 @@ internal static class AccountabilityMapper
             ToDto(a.IssuedBy), ToDto(a.ReceivedBy),
             a.Lines.Select(ToDto).ToList());
 }
+

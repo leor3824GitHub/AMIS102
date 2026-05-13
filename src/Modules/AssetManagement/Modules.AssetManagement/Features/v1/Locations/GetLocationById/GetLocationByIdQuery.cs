@@ -1,6 +1,6 @@
-using FSH.Modules.AssetManagement.Features.v1.Locations;
+using AMIS.Modules.AssetManagement.Features.v1.Locations;
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.Locations.GetLocationById;
+namespace AMIS.Modules.AssetManagement.Features.v1.Locations.GetLocationById;
 
 public sealed record GetLocationByIdQuery(Guid Id) : IQuery<LocationDto>;

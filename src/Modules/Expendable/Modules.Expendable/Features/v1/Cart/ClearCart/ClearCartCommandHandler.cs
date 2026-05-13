@@ -1,10 +1,10 @@
-using FSH.Framework.Core.Context;
-using FSH.Modules.Expendable.Contracts.v1.Cart;
-using FSH.Modules.Expendable.Data;
+using AMIS.Framework.Core.Context;
+using AMIS.Modules.Expendable.Contracts.v1.Cart;
+using AMIS.Modules.Expendable.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.Expendable.Features.v1.Cart.ClearCart;
+namespace AMIS.Modules.Expendable.Features.v1.Cart.ClearCart;
 
 public sealed class ClearCartCommandHandler : ICommandHandler<ClearCartCommand>
 {
@@ -32,3 +32,4 @@ public sealed class ClearCartCommandHandler : ICommandHandler<ClearCartCommand>
         return default;
     }
 }
+

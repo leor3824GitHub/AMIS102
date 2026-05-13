@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Modules.AssetManagement.Domain;
 
-namespace FSH.Modules.AssetManagement.Features.v1.SemiExpendableIssuanceRecords.CreateSMIR;
+namespace AMIS.Modules.AssetManagement.Features.v1.SemiExpendableIssuanceRecords.CreateSMIR;
 
 public sealed class CreateSMIRCommandValidator : AbstractValidator<CreateSMIRCommand>
 {
@@ -33,3 +33,4 @@ internal sealed class CreateSMIRItemRequestValidator : AbstractValidator<CreateS
         RuleFor(x => x.Description).MaximumLength(500);
     }
 }
+

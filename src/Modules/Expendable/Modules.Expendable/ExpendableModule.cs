@@ -1,70 +1,70 @@
 using Asp.Versioning;
-using FSH.Framework.Persistence;
-using FSH.Framework.Shared.Constants;
-using FSH.Framework.Shared.Persistence;
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Framework.Web.Modules;
-using FSH.Modules.Expendable.Contracts.v1.Cart;
-using FSH.Modules.Expendable.Contracts.v1.Products;
-using FSH.Modules.Expendable.Contracts.v1.Purchases;
-using FSH.Modules.Expendable.Contracts.v1.Requests;
-using FSH.Modules.Expendable.Contracts.v1.Warehouse;
-using FSH.Modules.Expendable.Data;
-using FSH.Modules.Expendable.Features.v1.Products.CreateProduct;
-using FSH.Modules.Expendable.Features.v1.Products.UpdateProduct;
-using FSH.Modules.Expendable.Features.v1.Products.ActivateProduct;
-using FSH.Modules.Expendable.Features.v1.Products.DeactivateProduct;
-using FSH.Modules.Expendable.Features.v1.Products.DiscontinueProduct;
-using FSH.Modules.Expendable.Features.v1.Products.MarkOutOfStock;
-using FSH.Modules.Expendable.Features.v1.Products.DeleteProduct;
-using FSH.Modules.Expendable.Features.v1.Products.GetProduct;
-using FSH.Modules.Expendable.Features.v1.Products.GetProductCatalogCards;
-using FSH.Modules.Expendable.Features.v1.Products.ListActiveProducts;
-using FSH.Modules.Expendable.Features.v1.Products.SearchProducts;
-using FSH.Modules.Expendable.Features.v1.Purchases.CreatePurchaseOrder;
-using FSH.Modules.Expendable.Features.v1.Purchases.AddPurchaseLineItem;
-using FSH.Modules.Expendable.Features.v1.Purchases.RemovePurchaseLineItem;
-using FSH.Modules.Expendable.Features.v1.Purchases.SubmitPurchaseOrder;
-using FSH.Modules.Expendable.Features.v1.Purchases.ApprovePurchaseOrder;
-using FSH.Modules.Expendable.Features.v1.Purchases.RecordPurchaseReceipt;
-using FSH.Modules.Expendable.Features.v1.Purchases.CancelPurchaseOrder;
-using FSH.Modules.Expendable.Features.v1.Purchases.GetPurchase;
-using FSH.Modules.Expendable.Features.v1.Purchases.GetPurchasesBySupplier;
-using FSH.Modules.Expendable.Features.v1.Purchases.SearchPurchases;
-using FSH.Modules.Expendable.Features.v1.Requests.CreateSupplyRequest;
-using FSH.Modules.Expendable.Features.v1.Requests.SubmitSupplyRequest;
-using FSH.Modules.Expendable.Features.v1.Requests.ApproveSupplyRequest;
-using FSH.Modules.Expendable.Features.v1.Requests.GetSupplyRequest;
-using FSH.Modules.Expendable.Features.v1.Requests.SearchSupplyRequests;
-using FSH.Modules.Expendable.Features.v1.Requests.RejectSupplyRequest;
-using FSH.Modules.Expendable.Features.v1.Requests.GetEmployeeSupplyRequests;
-using FSH.Modules.Expendable.Features.v1.Requests.FulfillSupplyRequest;
-using FSH.Modules.Expendable.Features.v1.Requests.CancelSupplyRequest;
-using FSH.Modules.Expendable.Features.v1.Reports.GetDepartmentIssuanceReport;
-using FSH.Modules.Expendable.Features.v1.Reports.GetEmployeeIssuanceHistory;
-using FSH.Modules.Expendable.Features.v1.Reports.GetPhysicalCountReport;
-using FSH.Modules.Expendable.Features.v1.Reports.GetStockCard;
-using FSH.Modules.Expendable.Features.v1.Reports.GenerateDepartmentIssuancePdf;
-using FSH.Modules.Expendable.Features.v1.Reports.GeneratePhysicalCountPdf;
-using FSH.Modules.Expendable.Features.v1.Reports.GenerateStockCardPdf;
-using FSH.Modules.Expendable.Features.v1.Reports.GenerateEmployeeIssuancePdf;
-using FSH.Modules.Expendable.Features.v1.Cart.GetOrCreateCart;
-using FSH.Modules.Expendable.Features.v1.Cart.AddToCart;
-using FSH.Modules.Expendable.Features.v1.Cart.GetCart;
-using FSH.Modules.Expendable.Features.v1.Cart.ConvertCartToRequest;
-using FSH.Modules.Expendable.Features.v1.Cart.RemoveFromCart;
-using FSH.Modules.Expendable.Features.v1.Cart.ClearCart;
-using FSH.Modules.Expendable.Features.v1.Warehouse.RecordInspection;
-using FSH.Modules.Expendable.Features.v1.Warehouse.ReserveProductInventory;
-using FSH.Modules.Expendable.Features.v1.Warehouse.CancelProductInventoryReservation;
-using FSH.Modules.Expendable.Features.v1.Warehouse.IssueFromProductInventory;
-using FSH.Modules.Expendable.Features.v1.Warehouse.MarkRejectedInventoryReturned;
-using FSH.Modules.Expendable.Features.v1.Warehouse.MarkRejectedInventoryDisposed;
-using FSH.Modules.Expendable.Features.v1.Warehouse.GetProductInventory;
-using FSH.Modules.Expendable.Features.v1.Warehouse.SearchProductInventory;
-using FSH.Modules.Expendable.Features.v1.Warehouse.GetWarehouseStockLevels;
-using FSH.Modules.Expendable.Features.v1.Warehouse.GetRejectedInventory;
-using FSH.Modules.Expendable.Features.v1.Warehouse.GetPendingInspections;
+using AMIS.Framework.Persistence;
+using AMIS.Framework.Shared.Constants;
+using AMIS.Framework.Shared.Persistence;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Framework.Web.Modules;
+using AMIS.Modules.Expendable.Contracts.v1.Cart;
+using AMIS.Modules.Expendable.Contracts.v1.Products;
+using AMIS.Modules.Expendable.Contracts.v1.Purchases;
+using AMIS.Modules.Expendable.Contracts.v1.Requests;
+using AMIS.Modules.Expendable.Contracts.v1.Warehouse;
+using AMIS.Modules.Expendable.Data;
+using AMIS.Modules.Expendable.Features.v1.Products.CreateProduct;
+using AMIS.Modules.Expendable.Features.v1.Products.UpdateProduct;
+using AMIS.Modules.Expendable.Features.v1.Products.ActivateProduct;
+using AMIS.Modules.Expendable.Features.v1.Products.DeactivateProduct;
+using AMIS.Modules.Expendable.Features.v1.Products.DiscontinueProduct;
+using AMIS.Modules.Expendable.Features.v1.Products.MarkOutOfStock;
+using AMIS.Modules.Expendable.Features.v1.Products.DeleteProduct;
+using AMIS.Modules.Expendable.Features.v1.Products.GetProduct;
+using AMIS.Modules.Expendable.Features.v1.Products.GetProductCatalogCards;
+using AMIS.Modules.Expendable.Features.v1.Products.ListActiveProducts;
+using AMIS.Modules.Expendable.Features.v1.Products.SearchProducts;
+using AMIS.Modules.Expendable.Features.v1.Purchases.CreatePurchaseOrder;
+using AMIS.Modules.Expendable.Features.v1.Purchases.AddPurchaseLineItem;
+using AMIS.Modules.Expendable.Features.v1.Purchases.RemovePurchaseLineItem;
+using AMIS.Modules.Expendable.Features.v1.Purchases.SubmitPurchaseOrder;
+using AMIS.Modules.Expendable.Features.v1.Purchases.ApprovePurchaseOrder;
+using AMIS.Modules.Expendable.Features.v1.Purchases.RecordPurchaseReceipt;
+using AMIS.Modules.Expendable.Features.v1.Purchases.CancelPurchaseOrder;
+using AMIS.Modules.Expendable.Features.v1.Purchases.GetPurchase;
+using AMIS.Modules.Expendable.Features.v1.Purchases.GetPurchasesBySupplier;
+using AMIS.Modules.Expendable.Features.v1.Purchases.SearchPurchases;
+using AMIS.Modules.Expendable.Features.v1.Requests.CreateSupplyRequest;
+using AMIS.Modules.Expendable.Features.v1.Requests.SubmitSupplyRequest;
+using AMIS.Modules.Expendable.Features.v1.Requests.ApproveSupplyRequest;
+using AMIS.Modules.Expendable.Features.v1.Requests.GetSupplyRequest;
+using AMIS.Modules.Expendable.Features.v1.Requests.SearchSupplyRequests;
+using AMIS.Modules.Expendable.Features.v1.Requests.RejectSupplyRequest;
+using AMIS.Modules.Expendable.Features.v1.Requests.GetEmployeeSupplyRequests;
+using AMIS.Modules.Expendable.Features.v1.Requests.FulfillSupplyRequest;
+using AMIS.Modules.Expendable.Features.v1.Requests.CancelSupplyRequest;
+using AMIS.Modules.Expendable.Features.v1.Reports.GetDepartmentIssuanceReport;
+using AMIS.Modules.Expendable.Features.v1.Reports.GetEmployeeIssuanceHistory;
+using AMIS.Modules.Expendable.Features.v1.Reports.GetPhysicalCountReport;
+using AMIS.Modules.Expendable.Features.v1.Reports.GetStockCard;
+using AMIS.Modules.Expendable.Features.v1.Reports.GenerateDepartmentIssuancePdf;
+using AMIS.Modules.Expendable.Features.v1.Reports.GeneratePhysicalCountPdf;
+using AMIS.Modules.Expendable.Features.v1.Reports.GenerateStockCardPdf;
+using AMIS.Modules.Expendable.Features.v1.Reports.GenerateEmployeeIssuancePdf;
+using AMIS.Modules.Expendable.Features.v1.Cart.GetOrCreateCart;
+using AMIS.Modules.Expendable.Features.v1.Cart.AddToCart;
+using AMIS.Modules.Expendable.Features.v1.Cart.GetCart;
+using AMIS.Modules.Expendable.Features.v1.Cart.ConvertCartToRequest;
+using AMIS.Modules.Expendable.Features.v1.Cart.RemoveFromCart;
+using AMIS.Modules.Expendable.Features.v1.Cart.ClearCart;
+using AMIS.Modules.Expendable.Features.v1.Warehouse.RecordInspection;
+using AMIS.Modules.Expendable.Features.v1.Warehouse.ReserveProductInventory;
+using AMIS.Modules.Expendable.Features.v1.Warehouse.CancelProductInventoryReservation;
+using AMIS.Modules.Expendable.Features.v1.Warehouse.IssueFromProductInventory;
+using AMIS.Modules.Expendable.Features.v1.Warehouse.MarkRejectedInventoryReturned;
+using AMIS.Modules.Expendable.Features.v1.Warehouse.MarkRejectedInventoryDisposed;
+using AMIS.Modules.Expendable.Features.v1.Warehouse.GetProductInventory;
+using AMIS.Modules.Expendable.Features.v1.Warehouse.SearchProductInventory;
+using AMIS.Modules.Expendable.Features.v1.Warehouse.GetWarehouseStockLevels;
+using AMIS.Modules.Expendable.Features.v1.Warehouse.GetRejectedInventory;
+using AMIS.Modules.Expendable.Features.v1.Warehouse.GetPendingInspections;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -73,11 +73,11 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-namespace FSH.Modules.Expendable;
+namespace AMIS.Modules.Expendable;
 
 public class ExpendableModule : IModule
 {
-    private static readonly IReadOnlyList<FshPermission> RegisteredPermissions =
+    private static readonly IReadOnlyList<AmisPermission> RegisteredPermissions =
     [
         new("View Expendable", "View", "Expendable"),
         new("Create Expendable", "Create", "Expendable"),
@@ -139,7 +139,7 @@ public class ExpendableModule : IModule
         services.AddScoped<IDbInitializer, ExpendableDbInitializer>();
 
         // Register hosted service to initialize core database schema on app startup
-        services.AddHostedService<FSH.Modules.Expendable.Provisioning.ExpendableDbInitializerHostedService>();
+        services.AddHostedService<AMIS.Modules.Expendable.Provisioning.ExpendableDbInitializerHostedService>();
 
         // Fluent Validation will be auto-discovered
     }
@@ -235,3 +235,5 @@ public class ExpendableModule : IModule
         GenerateEmployeeIssuancePdfEndpoint.Map(reportsGroup);
     }
 }
+
+

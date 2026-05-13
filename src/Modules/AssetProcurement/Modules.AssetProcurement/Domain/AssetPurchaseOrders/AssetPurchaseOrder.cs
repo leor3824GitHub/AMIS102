@@ -1,7 +1,7 @@
-using FSH.Framework.Core.Domain;
-using FSH.Modules.AssetProcurement.Contracts.v1.AssetPurchaseOrders;
+using AMIS.Framework.Core.Domain;
+using AMIS.Modules.AssetProcurement.Contracts.v1.AssetPurchaseOrders;
 
-namespace FSH.Modules.AssetProcurement.Domain.AssetPurchaseOrders;
+namespace AMIS.Modules.AssetProcurement.Domain.AssetPurchaseOrders;
 
 public sealed class AssetPurchaseOrderLineItem
 {
@@ -184,3 +184,4 @@ public sealed class AssetPurchaseOrder : AggregateRoot<Guid>, IHasTenant, IAudit
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
     }
 }
+

@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.Vehicle.Contracts.v1.Repairs;
+using AMIS.Modules.Vehicle.Contracts.v1.Repairs;
 
-namespace FSH.Modules.Vehicle.Features.v1.Repairs.UpdateRepairRecord;
+namespace AMIS.Modules.Vehicle.Features.v1.Repairs.UpdateRepairRecord;
 
 public sealed class UpdateRepairRecordCommandValidator : AbstractValidator<UpdateRepairRecordCommand>
 {
@@ -17,3 +17,4 @@ public sealed class UpdateRepairRecordCommandValidator : AbstractValidator<Updat
         RuleFor(x => x.Notes).MaximumLength(2000).When(x => x.Notes != null);
     }
 }
+

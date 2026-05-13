@@ -1,7 +1,7 @@
-﻿using Mediator;
+using Mediator;
 using System.Text.Json.Serialization;
 
-namespace FSH.Modules.Identity.Contracts.v1.Users.RegisterUser;
+namespace AMIS.Modules.Identity.Contracts.v1.Users.RegisterUser;
 
 public class RegisterUserCommand : ICommand<RegisterUserResponse>
 {

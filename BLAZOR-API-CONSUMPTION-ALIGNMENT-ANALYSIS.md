@@ -1,9 +1,9 @@
-# Blazor API Consumption Architecture Analysis
+﻿# Blazor API Consumption Architecture Analysis
 
 ## ForgotPassword.razor vs MasterData Module Alignment
 
 **Analysis Date:** March 21, 2026  
-**Context:** FSH .NET Modular Monolith with auto-generated NSwag clients  
+**Context:** AMIS .NET Modular Monolith with auto-generated NSwag clients  
 **Reference Documents:**
 
 - [BLAZOR-API-CLIENT-GENERATION.md](BLAZOR-API-CLIENT-GENERATION.md) — Official framework pattern
@@ -17,7 +17,7 @@
 
 **🔴 CRITICAL MISALIGNMENT DETECTED**
 
-The `ForgotPassword.razor` component uses an **undocumented antipattern** for API consumption that **VIOLATES the official FSH architecture** defined in `BLAZOR-API-CLIENT-GENERATION.md`. While MasterData and other domain modules correctly use auto-generated NSwag typed clients, ForgotPassword uses raw `IHttpClientFactory` with manual HTTP requests.
+The `ForgotPassword.razor` component uses an **undocumented antipattern** for API consumption that **VIOLATES the official AMIS architecture** defined in `BLAZOR-API-CLIENT-GENERATION.md`. While MasterData and other domain modules correctly use auto-generated NSwag typed clients, ForgotPassword uses raw `IHttpClientFactory` with manual HTTP requests.
 
 ### Violation of Documented Standards
 
@@ -33,7 +33,7 @@ From **BLAZOR-API-CLIENT-GENERATION.md (The Official Pattern):**
 
 ---
 
-## 📋 Official FSH Architecture Standards
+## 📋 Official AMIS Architecture Standards
 
 ### From BLAZOR-API-CLIENT-GENERATION.md
 
@@ -258,7 +258,7 @@ private async Task SendResetRequestAsync()
 
 ---
 
-### 2. MasterData Components (✅ Standard FSH Approach)
+### 2. MasterData Components (✅ Standard AMIS Approach)
 
 **DepartmentsPage.razor (List):**
 
@@ -446,11 +446,11 @@ await IdentityClient.ForgotPasswordAsync(_model.Tenant, request);
 
 ---
 
-## Why This Matters for FSH Architecture
+## Why This Matters for AMIS Architecture
 
 ### 1. **Modular Monolith Contract Pattern**
 
-FSH modules expose Contracts via OpenAPI and generated clients:
+AMIS modules expose Contracts via OpenAPI and generated clients:
 
 - **Register.razor** → Uses `IIdentityClient` (Identity contract)
 - **DepartmentsPage.razor** → Uses `IMaster_dataClient` (MasterData contract)
@@ -472,7 +472,7 @@ ForgotPassword breaks this: endpoint is implemented but component doesn't use th
 
 ### 3. **Multi-Tenancy Integration**
 
-FSH handles tenant context at the client level:
+AMIS handles tenant context at the client level:
 
 ```csharp
 // Auto-injected by generated client
@@ -553,7 +553,7 @@ request.Headers.Add(MultitenancyConstants.Identifier, tenant);
 | Error handling standardized   | ❌             | ✅         | Custom if/else logic               |
 | Discoverable in IDE           | ❌             | ✅         | Intellisense available             |
 | Unit testable                 | ⚠️ Limited     | ✅         | Mock typed client interface        |
-| Follows FSH patterns          | ❌             | ✅         | Vertical slice complete            |
+| Follows AMIS patterns          | ❌             | ✅         | Vertical slice complete            |
 | OpenAPI spec reflects reality | ❌             | ✅         | Client implementation matches spec |
 
 ---
@@ -574,7 +574,7 @@ public async Task<NoContent> ForgotPasswordAsync(ForgotPasswordRequest request)
 }
 ```
 
-✅ Endpoint exists and follows FSH vertical slice pattern.
+✅ Endpoint exists and follows AMIS vertical slice pattern.
 
 ### Step 2: OpenAPI Spec Generation
 
@@ -752,7 +752,7 @@ private async Task SendResetRequestAsync()
 
 ## Standards Compliance Matrix
 
-### Official FSH Architecture Requirements (from Project Docs)
+### Official AMIS Architecture Requirements (from Project Docs)
 
 | Requirement                                  | Source Doc                            | ForgotPassword                         | MasterData                    | Verdict             |
 | -------------------------------------------- | ------------------------------------- | -------------------------------------- | ----------------------------- | ------------------- |
@@ -777,9 +777,9 @@ private async Task SendResetRequestAsync()
 | **Documented Pattern**    | ❌ No (undocumented)           | ✅ Yes                                 | ❌ Violates docs |
 | **Audit Status**          | Not listed (likely pre-audit)  | ✅ Conforming                          | ❌ Out of scope  |
 | **Maintainability Score** | 🔴 2/10 (manual sync required) | 🟢 9/10 (auto-generated)               | ❌ Violates docs |
-| **FSH Compliance**        | 🔴 0%                          | 🟢 100%                                | ❌ CRITICAL      |
+| **AMIS Compliance**        | 🔴 0%                          | 🟢 100%                                | ❌ CRITICAL      |
 
-**Verdict:** ForgotPassword.razor is an undocumented antipattern that violates multiple official FSH architecture standards documented in the project.
+**Verdict:** ForgotPassword.razor is an undocumented antipattern that violates multiple official AMIS architecture standards documented in the project.
 
 ---
 
@@ -961,4 +961,5 @@ These official project documents establish and validate the architecture:
 6. **Type Safety** - Magic strings and dynamic objects are error-prone.
 7. **Performance** - Missing automatic token refresh and caching benefits.
 
-**Action Required:** Align ForgotPassword.razor with the documented FSH architecture pattern.
+**Action Required:** Align ForgotPassword.razor with the documented AMIS architecture pattern.
+

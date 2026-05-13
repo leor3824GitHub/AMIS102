@@ -1,4 +1,4 @@
-namespace FSH.CLI.Models;
+namespace AMIS.CLI.Models;
 
 internal sealed class ProjectOptions
 {
@@ -15,7 +15,7 @@ internal sealed class ProjectOptions
     public string OutputPath { get; set; } = ".";
 
     /// <summary>
-    /// Version of FullStackHero packages to use. If null, uses the CLI's version.
+    /// Version of AMIS packages to use. If null, uses the CLI's version.
     /// </summary>
     public string? FrameworkVersion { get; set; }
 }
@@ -39,3 +39,4 @@ internal enum DatabaseProvider
     SqlServer,
     SQLite
 }
+

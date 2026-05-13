@@ -1,0 +1,135 @@
+@namespace AMIS.Framework.Blazor.UI.Components.User
+@inherits AMIS.Framework.Blazor.UI.Components.Base.AMISComponentBase
+
+<div class="AMIS-account-menu">
+    <MudMenu AnchorOrigin="Origin.BottomRight"
+             TransformOrigin="Origin.TopRight"
+             PopoverClass="AMIS-account-popover"
+             Dense="false">
+        <ActivatorContent>
+            <MudButton Class="AMIS-account-trigger" Variant="Variant.Text" Color="Color.Inherit">
+                <MudAvatar Size="Size.Small" Class="AMIS-trigger-avatar">
+                    @if (!string.IsNullOrEmpty(AvatarUrl))
+                    {
+                        <MudImage Src="@AvatarUrl" Alt="@UserName" />
+                    }
+                    else
+                    {
+                        @GetInitials(UserName)
+                    }
+                </MudAvatar>
+                <MudIcon Icon="@Icons.Material.Filled.KeyboardArrowDown" Size="Size.Small" Class="AMIS-trigger-arrow" />
+            </MudButton>
+        </ActivatorContent>
+        <ChildContent>
+            <div class="AMIS-account-dropdown">
+                <!-- User profile header -->
+                <div class="AMIS-dropdown-header">
+                    <MudAvatar Size="Size.Large" Class="AMIS-header-avatar">
+                        @if (!string.IsNullOrEmpty(AvatarUrl))
+                        {
+                            <MudImage Src="@AvatarUrl" Alt="@UserName" />
+                        }
+                        else
+                        {
+                            @GetInitials(UserName)
+                        }
+                    </MudAvatar>
+                    <div class="AMIS-header-info">
+                        <span class="AMIS-header-name">@UserName</span>
+                        <span class="AMIS-header-email">@UserEmail</span>
+                        @if (!string.IsNullOrEmpty(UserRole))
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined" Class="AMIS-header-role">@UserRole</MudChip>
+                        }
+                    </div>
+                </div>
+
+                <MudDivider Class="my-0" />
+
+                <!-- Menu items -->
+                <div class="AMIS-dropdown-menu">
+                    <MudMenuItem Icon="@Icons.Material.Outlined.Person" OnClick="@HandleProfileClick" Class="AMIS-menu-item">
+                        <div class="AMIS-menu-item-content">
+                            <span class="AMIS-menu-item-text">Profile</span>
+                            <span class="AMIS-menu-item-desc">View and edit your profile</span>
+                        </div>
+                    </MudMenuItem>
+                    <MudMenuItem Icon="@Icons.Material.Outlined.History" OnClick="@HandleAuditingClick" Class="AMIS-menu-item">
+                        <div class="AMIS-menu-item-content">
+                            <span class="AMIS-menu-item-text">Activity Log</span>
+                            <span class="AMIS-menu-item-desc">View your recent activity</span>
+                        </div>
+                    </MudMenuItem>
+                </div>
+
+                <MudDivider Class="my-0" />
+
+                <!-- Sign out -->
+                <div class="AMIS-dropdown-footer">
+                    <MudMenuItem Icon="@Icons.Material.Outlined.Logout" OnClick="@HandleLogoutClick" Class="AMIS-menu-item AMIS-menu-item-danger">
+                        Sign out
+                    </MudMenuItem>
+                </div>
+            </div>
+        </ChildContent>
+    </MudMenu>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public string UserName { get; set; } = "User";
+
+    [Parameter]
+    public string? UserEmail { get; set; }
+
+    [Parameter]
+    public string? UserRole { get; set; }
+
+    [Parameter]
+    public string? AvatarUrl { get; set; }
+
+    [Parameter]
+    public EventCallback OnProfileClick { get; set; }
+
+    [Parameter]
+    public EventCallback OnAuditingClick { get; set; }
+
+    [Parameter]
+    public EventCallback OnLogoutClick { get; set; }
+
+    private static string GetInitials(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return "U";
+
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length >= 2)
+            return $"{parts[0][0]}{parts[1][0]}".ToUpperInvariant();
+
+        return name.Length >= 2 ? name[..2].ToUpperInvariant() : name.ToUpperInvariant();
+    }
+
+    private async Task HandleProfileClick()
+    {
+        if (OnProfileClick.HasDelegate)
+            await OnProfileClick.InvokeAsync();
+        else
+            Navigation.NavigateTo("/profile");
+    }
+
+    private async Task HandleAuditingClick()
+    {
+        if (OnAuditingClick.HasDelegate)
+            await OnAuditingClick.InvokeAsync();
+        else
+            Navigation.NavigateTo("/audits");
+    }
+
+    private async Task HandleLogoutClick()
+    {
+        if (OnLogoutClick.HasDelegate)
+            await OnLogoutClick.InvokeAsync();
+    }
+}
+

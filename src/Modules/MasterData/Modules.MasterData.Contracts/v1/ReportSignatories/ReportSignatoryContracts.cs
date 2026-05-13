@@ -1,6 +1,6 @@
 using Mediator;
 
-namespace FSH.Modules.MasterData.Contracts.v1.ReportSignatories;
+namespace AMIS.Modules.MasterData.Contracts.v1.ReportSignatories;
 
 public sealed record ReportSignatoryDto(
     Guid Id,
@@ -31,3 +31,4 @@ public sealed record UpdateReportSignatoryCommand(
     bool IsActive) : ICommand<ReportSignatoryDto>;
 
 public sealed record DeleteReportSignatoryCommand(Guid Id) : ICommand<Unit>;
+

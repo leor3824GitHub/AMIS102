@@ -1,13 +1,13 @@
-using FSH.Framework.Persistence;
-using FSH.Framework.Shared.Persistence;
-using FSH.Modules.Vehicle.Contracts.v1.References;
-using FSH.Modules.Vehicle.Data;
-using FSH.Modules.Vehicle.Domain.Vehicles;
+using AMIS.Framework.Persistence;
+using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.Vehicle.Contracts.v1.References;
+using AMIS.Modules.Vehicle.Data;
+using AMIS.Modules.Vehicle.Domain.Vehicles;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace FSH.Modules.Vehicle.Features.v1.Lookups;
+namespace AMIS.Modules.Vehicle.Features.v1.Lookups;
 
 public sealed class GetVehicleReferenceByIdQueryHandler(VehicleDbContext dbContext)
     : IQueryHandler<GetVehicleReferenceByIdQuery, VehicleReferenceDto?>
@@ -100,3 +100,4 @@ public sealed class SearchVehicleReferencesQueryHandler(VehicleDbContext dbConte
         }
     }
 }
+

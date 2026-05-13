@@ -1,10 +1,10 @@
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
-using FSH.CLI.Models;
+using AMIS.CLI.Models;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
-namespace FSH.CLI.Commands;
+namespace AMIS.CLI.Commands;
 
 /// <summary>
 /// Display CLI and project version information.
@@ -21,7 +21,7 @@ internal sealed class VersionCommand : AsyncCommand<VersionCommand.Settings>
     internal sealed class Settings : CommandSettings
     {
         [CommandOption("-p|--path")]
-        [Description("Path to the FSH project (defaults to current directory)")]
+        [Description("Path to the AMIS project (defaults to current directory)")]
         [DefaultValue(".")]
         public string Path { get; set; } = ".";
 
@@ -34,7 +34,7 @@ internal sealed class VersionCommand : AsyncCommand<VersionCommand.Settings>
     protected override Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
     {
         var cliVersion = GetCliVersion();
-        var manifest = FshManifest.TryLoad(settings.Path);
+        var manifest = AMISManifest.TryLoad(settings.Path);
 
         if (settings.Json)
         {
@@ -48,7 +48,7 @@ internal sealed class VersionCommand : AsyncCommand<VersionCommand.Settings>
         return Task.FromResult(0);
     }
 
-    private static void OutputTable(string cliVersion, FshManifest? manifest, string path)
+    private static void OutputTable(string cliVersion, AMISManifest? manifest, string path)
     {
         AnsiConsole.WriteLine();
 
@@ -57,11 +57,11 @@ internal sealed class VersionCommand : AsyncCommand<VersionCommand.Settings>
             .AddColumn("[blue]Component[/]")
             .AddColumn("[blue]Version[/]");
 
-        table.AddRow("FSH CLI", $"[green]{cliVersion}[/]");
+        table.AddRow("AMIS CLI", $"[green]{cliVersion}[/]");
 
         if (manifest != null)
         {
-            table.AddRow("Project FSH Version", $"[green]{manifest.FshVersion}[/]");
+            table.AddRow("Project AMIS Version", $"[green]{manifest.AMISVersion}[/]");
             table.AddRow("Project Created", $"[dim]{manifest.CreatedAt:yyyy-MM-dd HH:mm}[/]");
             table.AddRow("Project Type", $"[dim]{manifest.Options.Type}[/]");
             table.AddRow("Architecture", $"[dim]{manifest.Options.Architecture}[/]");
@@ -100,21 +100,21 @@ internal sealed class VersionCommand : AsyncCommand<VersionCommand.Settings>
         {
             AnsiConsole.Write(table);
             AnsiConsole.WriteLine();
-            AnsiConsole.MarkupLine($"[dim]No FSH project found at:[/] [yellow]{Path.GetFullPath(path)}[/]");
-            AnsiConsole.MarkupLine("[dim]Run [green]fsh new[/] to create a new project.[/]");
+            AnsiConsole.MarkupLine($"[dim]No AMIS project found at:[/] [yellow]{Path.GetFullPath(path)}[/]");
+            AnsiConsole.MarkupLine("[dim]Run [green]AMIS new[/] to create a new project.[/]");
         }
 
         AnsiConsole.WriteLine();
     }
 
-    private static void OutputJson(string cliVersion, FshManifest? manifest)
+    private static void OutputJson(string cliVersion, AMISManifest? manifest)
     {
         var output = new
         {
             cliVersion,
             project = manifest != null ? new
             {
-                fshVersion = manifest.FshVersion,
+                AMISVersion = manifest.AMISVersion,
                 createdAt = manifest.CreatedAt,
                 type = manifest.Options.Type,
                 architecture = manifest.Options.Architecture,
@@ -135,3 +135,4 @@ internal sealed class VersionCommand : AsyncCommand<VersionCommand.Settings>
         return version?.ToString(3) ?? "1.0.0";
     }
 }
+

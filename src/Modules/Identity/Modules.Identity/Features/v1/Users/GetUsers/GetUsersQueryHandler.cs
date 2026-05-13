@@ -1,9 +1,9 @@
-using FSH.Modules.Identity.Contracts.DTOs;
-using FSH.Modules.Identity.Contracts.Services;
-using FSH.Modules.Identity.Contracts.v1.Users.GetUsers;
+using AMIS.Modules.Identity.Contracts.DTOs;
+using AMIS.Modules.Identity.Contracts.Services;
+using AMIS.Modules.Identity.Contracts.v1.Users.GetUsers;
 using Mediator;
 
-namespace FSH.Modules.Identity.Features.v1.Users.GetUsers;
+namespace AMIS.Modules.Identity.Features.v1.Users.GetUsers;
 
 public sealed class GetUsersQueryHandler : IQueryHandler<GetUsersQuery, List<UserDto>>
 {
@@ -19,3 +19,4 @@ public sealed class GetUsersQueryHandler : IQueryHandler<GetUsersQuery, List<Use
         return await _userService.GetListAsync(cancellationToken).ConfigureAwait(false);
     }
 }
+

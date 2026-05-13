@@ -1,10 +1,10 @@
-using FSH.Framework.Shared.Identity.Authorization;
+using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.AssetManagement.Features.v1.PhysicalCount.GetPhysicalCountSessionById;
+namespace AMIS.Modules.AssetManagement.Features.v1.PhysicalCount.GetPhysicalCountSessionById;
 
 public static class GetPhysicalCountSessionByIdEndpoint
 {
@@ -15,3 +15,4 @@ public static class GetPhysicalCountSessionByIdEndpoint
         .WithSummary("Get a physical count session with all its checklist entries")
         .RequirePermission(AssetManagementModuleConstants.Permissions.PhysicalCount.View);
 }
+

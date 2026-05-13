@@ -1,9 +1,9 @@
-using FSH.Framework.Core.Context;
-using FSH.Modules.AssetManagement.Data;
+using AMIS.Framework.Core.Context;
+using AMIS.Modules.AssetManagement.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.TangibleItems.DeleteTangibleItem;
+namespace AMIS.Modules.AssetManagement.Features.v1.TangibleItems.DeleteTangibleItem;
 
 public sealed class DeleteTangibleItemCommandHandler(
     AssetManagementDbContext dbContext,
@@ -31,3 +31,4 @@ public sealed class DeleteTangibleItemCommandHandler(
         return Unit.Value;
     }
 }
+

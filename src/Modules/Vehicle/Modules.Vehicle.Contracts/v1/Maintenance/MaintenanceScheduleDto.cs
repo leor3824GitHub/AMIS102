@@ -1,4 +1,4 @@
-namespace FSH.Modules.Vehicle.Contracts.v1.Maintenance;
+namespace AMIS.Modules.Vehicle.Contracts.v1.Maintenance;
 
 public sealed record MaintenanceScheduleDto(
     Guid Id,
@@ -36,3 +36,4 @@ public sealed record MaintenanceScheduleSearchRequest(
     string? MaintenanceType,
     Guid? VehicleId,
     bool? IsActive);
+

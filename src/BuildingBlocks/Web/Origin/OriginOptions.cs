@@ -1,4 +1,4 @@
-﻿namespace FSH.Framework.Web.Origin;
+namespace AMIS.Framework.Web.Origin;
 
 public class OriginOptions
 {

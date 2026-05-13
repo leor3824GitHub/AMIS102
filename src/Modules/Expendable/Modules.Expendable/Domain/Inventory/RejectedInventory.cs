@@ -1,6 +1,6 @@
-using FSH.Framework.Core.Domain;
+using AMIS.Framework.Core.Domain;
 
-namespace FSH.Modules.Expendable.Domain.Inventory;
+namespace AMIS.Modules.Expendable.Domain.Inventory;
 
 /// <summary>
 /// Tracks rejected inventory awaiting return to supplier or disposal.
@@ -141,4 +141,5 @@ public enum RejectedInventoryStatus
     ReturnedToSupplier,       // Shipped back for credit
     Disposed                  // Written off, destroyed, or donated
 }
+
 

@@ -1,4 +1,4 @@
-namespace FSH.Framework.Caching;
+namespace AMIS.Framework.Caching;
 
 /// <summary>
 /// Extension methods for <see cref="ICacheService"/> providing cache-aside pattern implementations.
@@ -70,3 +70,4 @@ public static class CacheServiceExtensions
         return value;
     }
 }
+

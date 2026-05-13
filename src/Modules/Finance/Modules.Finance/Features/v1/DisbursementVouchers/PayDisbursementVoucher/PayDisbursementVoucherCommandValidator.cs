@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.Finance.Contracts.v1.DisbursementVouchers;
+using AMIS.Modules.Finance.Contracts.v1.DisbursementVouchers;
 
-namespace FSH.Modules.Finance.Features.v1.DisbursementVouchers.PayDisbursementVoucher;
+namespace AMIS.Modules.Finance.Features.v1.DisbursementVouchers.PayDisbursementVoucher;
 
 public sealed class PayDisbursementVoucherCommandValidator : AbstractValidator<PayDisbursementVoucherCommand>
 {
@@ -11,3 +11,4 @@ public sealed class PayDisbursementVoucherCommandValidator : AbstractValidator<P
         RuleFor(x => x.Remarks).MaximumLength(500);
     }
 }
+

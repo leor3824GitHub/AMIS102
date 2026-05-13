@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace FSH.Modules.AssetManagement.Features.v1.Reports.GenerateRegSPIPdf;
+namespace AMIS.Modules.AssetManagement.Features.v1.Reports.GenerateRegSPIPdf;
 
 public sealed class GenerateRegSPIPdfCommandValidator : AbstractValidator<GenerateRegSPIPdfCommand>
 {
@@ -16,3 +16,4 @@ public sealed class GenerateRegSPIPdfCommandValidator : AbstractValidator<Genera
             .InclusiveBetween(1, 5000);
     }
 }
+

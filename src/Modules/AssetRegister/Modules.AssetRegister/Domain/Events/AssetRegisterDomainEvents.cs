@@ -1,8 +1,8 @@
-using FSH.Framework.Core.Domain;
-using FSH.Modules.AssetRegister.Contracts.v1;
+using AMIS.Framework.Core.Domain;
+using AMIS.Modules.AssetRegister.Contracts.v1;
 using Mediator;
 
-namespace FSH.Modules.AssetRegister.Domain.Events;
+namespace AMIS.Modules.AssetRegister.Domain.Events;
 
 /// <summary>
 /// In-process domain events used to coordinate state within the AssetRegister
@@ -112,3 +112,4 @@ public sealed record UnserviceableReportSubmittedEvent(
     UnserviceableReportType ReportType,
     string? TenantId,
     string? CorrelationId = null) : AssetRegisterDomainEvent(TenantId, CorrelationId);
+

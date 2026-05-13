@@ -1,7 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
-using FSH.CLI.Models;
+using AMIS.CLI.Models;
 
-namespace FSH.CLI.Scaffolding;
+namespace AMIS.CLI.Scaffolding;
 
 /// <summary>
 /// Renders templates with variable substitution
@@ -89,18 +89,18 @@ internal sealed class TemplateRenderer : ITemplateRenderer
               </PropertyGroup>
 
               <ItemGroup>
-                <!-- FullStackHero Framework packages -->
-                <PackageReference Include="FullStackHero.Framework.Core" />
-                <PackageReference Include="FullStackHero.Framework.Persistence" />
-                <PackageReference Include="FullStackHero.Framework.Caching" />
-                <PackageReference Include="FullStackHero.Framework.Web" />
-                <!-- FullStackHero Modules -->
-                <PackageReference Include="FullStackHero.Modules.Identity" />
-                <PackageReference Include="FullStackHero.Modules.Identity.Contracts" />
-                <PackageReference Include="FullStackHero.Modules.Multitenancy" />
-                <PackageReference Include="FullStackHero.Modules.Multitenancy.Contracts" />
-                <PackageReference Include="FullStackHero.Modules.Auditing" />
-                <PackageReference Include="FullStackHero.Modules.Auditing.Contracts" />
+                <!-- AMIS Framework packages -->
+                <PackageReference Include="AMIS.Framework.Core" />
+                <PackageReference Include="AMIS.Framework.Persistence" />
+                <PackageReference Include="AMIS.Framework.Caching" />
+                <PackageReference Include="AMIS.Framework.Web" />
+                <!-- AMIS Modules -->
+                <PackageReference Include="AMIS.Modules.Identity" />
+                <PackageReference Include="AMIS.Modules.Identity.Contracts" />
+                <PackageReference Include="AMIS.Modules.Multitenancy" />
+                <PackageReference Include="AMIS.Modules.Multitenancy.Contracts" />
+                <PackageReference Include="AMIS.Modules.Auditing" />
+                <PackageReference Include="AMIS.Modules.Auditing.Contracts" />
                 <!-- Mediator -->
                 <PackageReference Include="Mediator.Abstractions" />
                 <PackageReference Include="Mediator.SourceGenerator">
@@ -136,8 +136,8 @@ internal sealed class TemplateRenderer : ITemplateRenderer
                 : string.Empty;
 
             return $$"""
-                {{serverlessModuleUsing}}using FSH.Framework.Web;
-                using FSH.Framework.Web.Modules;
+                {{serverlessModuleUsing}}using AMIS.Framework.Web;
+                using AMIS.Framework.Web.Modules;
                 using System.Reflection;
 
                 var builder = WebApplication.CreateBuilder(args);
@@ -145,7 +145,7 @@ internal sealed class TemplateRenderer : ITemplateRenderer
                 // Add AWS Lambda hosting
                 builder.Services.AddAWSLambdaHosting(LambdaEventSource.RestApi);
 
-                // Add FSH Platform
+                // Add AMIS Platform
                 builder.AddHeroPlatform(platform =>
                 {
                     platform.EnableOpenApi = true;
@@ -161,7 +161,7 @@ internal sealed class TemplateRenderer : ITemplateRenderer
 
                 var app = builder.Build();
 
-                // Use FSH Platform
+                // Use AMIS Platform
                 app.UseHeroPlatform(platform =>
                 {
                     platform.MapModules = true;
@@ -180,15 +180,15 @@ internal sealed class TemplateRenderer : ITemplateRenderer
             : string.Empty;
 
         return $$"""
-            {{sampleModuleUsing}}using FSH.Framework.Web;
-            using FSH.Framework.Web.Modules;
-            using FSH.Modules.Auditing;
-            using FSH.Modules.Identity;
-            using FSH.Modules.Identity.Contracts.v1.Tokens.TokenGeneration;
-            using FSH.Modules.Identity.Features.v1.Tokens.TokenGeneration;
-            using FSH.Modules.Multitenancy;
-            using FSH.Modules.Multitenancy.Contracts.v1.GetTenantStatus;
-            using FSH.Modules.Multitenancy.Features.v1.GetTenantStatus;
+            {{sampleModuleUsing}}using AMIS.Framework.Web;
+            using AMIS.Framework.Web.Modules;
+            using AMIS.Modules.Auditing;
+            using AMIS.Modules.Identity;
+            using AMIS.Modules.Identity.Contracts.v1.Tokens.TokenGeneration;
+            using AMIS.Modules.Identity.Features.v1.Tokens.TokenGeneration;
+            using AMIS.Modules.Multitenancy;
+            using AMIS.Modules.Multitenancy.Contracts.v1.GetTenantStatus;
+            using AMIS.Modules.Multitenancy.Features.v1.GetTenantStatus;
             using System.Reflection;
 
             var builder = WebApplication.CreateBuilder(args);
@@ -202,11 +202,11 @@ internal sealed class TemplateRenderer : ITemplateRenderer
                     typeof(GenerateTokenCommandHandler),
                     typeof(GetTenantStatusQuery),
                     typeof(GetTenantStatusQueryHandler),
-                    typeof(FSH.Modules.Auditing.Contracts.AuditEnvelope),
-                    typeof(FSH.Modules.Auditing.Persistence.AuditDbContext)];
+                    typeof(AMIS.Modules.Auditing.Contracts.AuditEnvelope),
+                    typeof(AMIS.Modules.Auditing.Persistence.AuditDbContext)];
             });
 
-            // FSH Module assemblies
+            // AMIS Module assemblies
             var moduleAssemblies = new Assembly[]
             {
                 typeof(IdentityModule).Assembly,
@@ -214,7 +214,7 @@ internal sealed class TemplateRenderer : ITemplateRenderer
                 typeof(AuditingModule).Assembly{{sampleModuleAssembly}}
             };
 
-            // Add FSH Platform
+            // Add AMIS Platform
             builder.AddHeroPlatform(platform =>
             {
                 platform.EnableOpenApi = true;
@@ -231,7 +231,7 @@ internal sealed class TemplateRenderer : ITemplateRenderer
             // Apply tenant database migrations
             app.UseHeroMultiTenantDatabases();
 
-            // Use FSH Platform
+            // Use AMIS Platform
             app.UseHeroPlatform(platform =>
             {
                 platform.MapModules = true;
@@ -530,7 +530,7 @@ internal sealed class TemplateRenderer : ITemplateRenderer
                 "Enabled": true,
                 "Title": "{{options.Name}} API",
                 "Version": "v1",
-                "Description": "{{options.Name}} API built with FullStackHero .NET Starter Kit.",
+                "Description": "{{options.Name}} API built with AMIS .NET Starter Kit.",
                 "Contact": {
                   "Name": "Your Name",
                   "Url": "https://yourwebsite.com",
@@ -691,7 +691,7 @@ internal sealed class TemplateRenderer : ITemplateRenderer
             <MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
                 <MudText Typo="Typo.h3" Class="mb-4">Welcome to {{options.Name}}</MudText>
                 <MudText Typo="Typo.body1">
-                    Built with FullStackHero .NET Starter Kit
+                    Built with AMIS .NET Starter Kit
                 </MudText>
             </MudContainer>
             """;
@@ -1194,7 +1194,7 @@ jobs:
 
         return $$"""
             using {{options.Name}}.Catalog.Features.v1.Products;
-            using FSH.Framework.Web.Modules;
+            using AMIS.Framework.Web.Modules;
             using Microsoft.AspNetCore.Builder;
             using Microsoft.AspNetCore.Http;
             using Microsoft.AspNetCore.Routing;
@@ -1234,9 +1234,9 @@ jobs:
               </PropertyGroup>
 
               <ItemGroup>
-                <PackageReference Include="FullStackHero.Framework.Core" />
-                <PackageReference Include="FullStackHero.Framework.Persistence" />
-                <PackageReference Include="FullStackHero.Framework.Web" />
+                <PackageReference Include="AMIS.Framework.Core" />
+                <PackageReference Include="AMIS.Framework.Persistence" />
+                <PackageReference Include="AMIS.Framework.Web" />
               </ItemGroup>
 
               <ItemGroup>
@@ -1302,7 +1302,7 @@ jobs:
         return $$"""
             # {{options.Name}}
 
-            A {{archDescription}} application built with [FullStackHero .NET Starter Kit](https://fullstackhero.net).
+            A {{archDescription}} application built with [AMIS .NET Starter Kit](https://AMIS.net).
 
             ## Getting Started
 
@@ -1410,26 +1410,26 @@ jobs:
                 <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
               </PropertyGroup>
 
-              <ItemGroup Label="FullStackHero Framework">
-                <PackageVersion Include="FullStackHero.Framework.Core" Version="{{version}}" />
-                <PackageVersion Include="FullStackHero.Framework.Shared" Version="{{version}}" />
-                <PackageVersion Include="FullStackHero.Framework.Persistence" Version="{{version}}" />
-                <PackageVersion Include="FullStackHero.Framework.Caching" Version="{{version}}" />
-                <PackageVersion Include="FullStackHero.Framework.Mailing" Version="{{version}}" />
-                <PackageVersion Include="FullStackHero.Framework.Jobs" Version="{{version}}" />
-                <PackageVersion Include="FullStackHero.Framework.Storage" Version="{{version}}" />
-                <PackageVersion Include="FullStackHero.Framework.Eventing" Version="{{version}}" />
-                <PackageVersion Include="FullStackHero.Framework.Web" Version="{{version}}" />
-                <PackageVersion Include="FullStackHero.Framework.Blazor.UI" Version="{{version}}" />
+              <ItemGroup Label="AMIS Framework">
+                <PackageVersion Include="AMIS.Framework.Core" Version="{{version}}" />
+                <PackageVersion Include="AMIS.Framework.Shared" Version="{{version}}" />
+                <PackageVersion Include="AMIS.Framework.Persistence" Version="{{version}}" />
+                <PackageVersion Include="AMIS.Framework.Caching" Version="{{version}}" />
+                <PackageVersion Include="AMIS.Framework.Mailing" Version="{{version}}" />
+                <PackageVersion Include="AMIS.Framework.Jobs" Version="{{version}}" />
+                <PackageVersion Include="AMIS.Framework.Storage" Version="{{version}}" />
+                <PackageVersion Include="AMIS.Framework.Eventing" Version="{{version}}" />
+                <PackageVersion Include="AMIS.Framework.Web" Version="{{version}}" />
+                <PackageVersion Include="AMIS.Framework.Blazor.UI" Version="{{version}}" />
               </ItemGroup>
 
-              <ItemGroup Label="FullStackHero Modules">
-                <PackageVersion Include="FullStackHero.Modules.Identity" Version="{{version}}" />
-                <PackageVersion Include="FullStackHero.Modules.Identity.Contracts" Version="{{version}}" />
-                <PackageVersion Include="FullStackHero.Modules.Multitenancy" Version="{{version}}" />
-                <PackageVersion Include="FullStackHero.Modules.Multitenancy.Contracts" Version="{{version}}" />
-                <PackageVersion Include="FullStackHero.Modules.Auditing" Version="{{version}}" />
-                <PackageVersion Include="FullStackHero.Modules.Auditing.Contracts" Version="{{version}}" />
+              <ItemGroup Label="AMIS Modules">
+                <PackageVersion Include="AMIS.Modules.Identity" Version="{{version}}" />
+                <PackageVersion Include="AMIS.Modules.Identity.Contracts" Version="{{version}}" />
+                <PackageVersion Include="AMIS.Modules.Multitenancy" Version="{{version}}" />
+                <PackageVersion Include="AMIS.Modules.Multitenancy.Contracts" Version="{{version}}" />
+                <PackageVersion Include="AMIS.Modules.Auditing" Version="{{version}}" />
+                <PackageVersion Include="AMIS.Modules.Auditing.Contracts" Version="{{version}}" />
               </ItemGroup>
 
               <ItemGroup Label="Aspire">

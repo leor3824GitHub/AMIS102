@@ -1,6 +1,6 @@
-using FSH.Framework.Core.Domain;
+using AMIS.Framework.Core.Domain;
 
-namespace FSH.Modules.AssetManagement.Domain;
+namespace AMIS.Modules.AssetManagement.Domain;
 
 /// <summary>
 /// A line item within a Receipt for Returned Semi-Expendable Property.
@@ -53,3 +53,4 @@ public sealed class RRSPItem : BaseEntity<Guid>, IHasTenant
         };
     }
 }
+

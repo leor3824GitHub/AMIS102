@@ -1,11 +1,11 @@
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.MasterData.Contracts.v1.References;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.MasterData.Contracts.v1.References;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.MasterData.Features.v1.UnitOfMeasures.GetUnitOfMeasureById;
+namespace AMIS.Modules.MasterData.Features.v1.UnitOfMeasures.GetUnitOfMeasureById;
 
 public static class GetUnitOfMeasureByIdEndpoint
 {

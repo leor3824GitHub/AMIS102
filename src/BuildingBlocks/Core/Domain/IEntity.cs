@@ -1,4 +1,4 @@
-﻿namespace FSH.Framework.Core.Domain;
+namespace AMIS.Framework.Core.Domain;
 
 /// <summary>
 /// Represents an entity with a strongly-typed identifier.
@@ -11,3 +11,4 @@ public interface IEntity<out TId>
     /// </summary>
     TId Id { get; }
 }
+

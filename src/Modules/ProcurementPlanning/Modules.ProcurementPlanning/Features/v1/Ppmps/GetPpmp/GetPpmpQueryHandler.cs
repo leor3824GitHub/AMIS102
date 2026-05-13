@@ -1,12 +1,12 @@
 using System.Net;
-using FSH.Framework.Core.Exceptions;
-using FSH.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
-using FSH.Modules.ProcurementPlanning.Data;
-using FSH.Modules.ProcurementPlanning.Features.v1.Ppmps;
+using AMIS.Framework.Core.Exceptions;
+using AMIS.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
+using AMIS.Modules.ProcurementPlanning.Data;
+using AMIS.Modules.ProcurementPlanning.Features.v1.Ppmps;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.GetPpmp;
+namespace AMIS.Modules.ProcurementPlanning.Features.v1.Ppmps.GetPpmp;
 
 public sealed class GetPpmpQueryHandler(
     ProcurementPlanningDbContext dbContext) : IQueryHandler<GetPpmpQuery, PpmpDto>
@@ -23,3 +23,4 @@ public sealed class GetPpmpQueryHandler(
         return PpmpMapper.ToDto(ppmp);
     }
 }
+

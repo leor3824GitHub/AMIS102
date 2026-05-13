@@ -1,10 +1,10 @@
-using FSH.Framework.Core.Context;
-using FSH.Modules.MasterData.Data;
-using FSH.Modules.MasterData.Domain;
+using AMIS.Framework.Core.Context;
+using AMIS.Modules.MasterData.Data;
+using AMIS.Modules.MasterData.Domain;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.MasterData.Features.v1.Suppliers.CreateSupplier;
+namespace AMIS.Modules.MasterData.Features.v1.Suppliers.CreateSupplier;
 
 public sealed class CreateSupplierCommandHandler : ICommandHandler<CreateSupplierCommand, SupplierDto>
 {
@@ -64,3 +64,4 @@ public sealed class CreateSupplierCommandHandler : ICommandHandler<CreateSupplie
             supplier.OfficeCode);
     }
 }
+

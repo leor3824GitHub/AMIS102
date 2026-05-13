@@ -1,8 +1,8 @@
-using FSH.Modules.MasterData.Contracts.v1.References;
-using FSH.Modules.MasterData.Domain;
+using AMIS.Modules.MasterData.Contracts.v1.References;
+using AMIS.Modules.MasterData.Domain;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.MasterData.Features.v1.Employees;
+namespace AMIS.Modules.MasterData.Features.v1.Employees;
 
 internal static class EmployeeReferenceDtoFactory
 {

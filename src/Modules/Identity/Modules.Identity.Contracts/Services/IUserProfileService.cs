@@ -1,7 +1,7 @@
-using FSH.Framework.Shared.Storage;
-using FSH.Modules.Identity.Contracts.DTOs;
+using AMIS.Framework.Shared.Storage;
+using AMIS.Modules.Identity.Contracts.DTOs;
 
-namespace FSH.Modules.Identity.Contracts.Services;
+namespace AMIS.Modules.Identity.Contracts.Services;
 
 /// <summary>
 /// Service for user profile operations.
@@ -43,3 +43,4 @@ public interface IUserProfileService
     /// </summary>
     Task<bool> ExistsWithPhoneNumberAsync(string phoneNumber, string? exceptId = null);
 }
+

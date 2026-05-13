@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.Expendable.Contracts.v1.Purchases;
+using AMIS.Modules.Expendable.Contracts.v1.Purchases;
 
-namespace FSH.Modules.Expendable.Features.v1.Purchases;
+namespace AMIS.Modules.Expendable.Features.v1.Purchases;
 
 public sealed class CreatePurchaseOrderCommandValidator : AbstractValidator<CreatePurchaseOrderCommand>
 {
@@ -110,4 +110,5 @@ public sealed class CancelPurchaseOrderCommandValidator : AbstractValidator<Canc
             .NotEmpty().WithMessage("Purchase ID is required");
     }
 }
+
 

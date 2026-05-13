@@ -1,6 +1,6 @@
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.ReceiptForReturnedProperties.GetRRSPList;
+namespace AMIS.Modules.AssetManagement.Features.v1.ReceiptForReturnedProperties.GetRRSPList;
 
 public sealed record GetRRSPListQuery(
     string? Keyword,
@@ -27,3 +27,4 @@ public sealed record RRSPSummaryDto(
     Guid ReturnedByEmployeeId,
     int ItemCount,
     DateTimeOffset CreatedOnUtc);
+

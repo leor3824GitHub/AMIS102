@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace FSH.Modules.AssetManagement.Features.v1.PropertyAcknowledgementReceipts.CreatePAR;
+namespace AMIS.Modules.AssetManagement.Features.v1.PropertyAcknowledgementReceipts.CreatePAR;
 
 public sealed class CreatePARCommandValidator : AbstractValidator<CreatePARCommand>
 {
@@ -27,3 +27,4 @@ internal sealed class CreatePARItemRequestValidator : AbstractValidator<CreatePA
         RuleFor(x => x.ItemDescription).NotEmpty().MaximumLength(500);
     }
 }
+

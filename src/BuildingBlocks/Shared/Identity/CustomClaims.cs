@@ -1,4 +1,4 @@
-﻿namespace FSH.Framework.Shared.Constants;
+namespace AMIS.Framework.Shared.Constants;
 
 public static class CustomClaims
 {

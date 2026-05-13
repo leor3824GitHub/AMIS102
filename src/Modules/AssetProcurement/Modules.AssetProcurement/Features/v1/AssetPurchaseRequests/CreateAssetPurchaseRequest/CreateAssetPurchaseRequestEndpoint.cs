@@ -1,11 +1,11 @@
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.AssetProcurement.Contracts.v1.AssetPurchaseRequests;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.AssetProcurement.Contracts.v1.AssetPurchaseRequests;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.AssetProcurement.Features.v1.AssetPurchaseRequests.CreateAssetPurchaseRequest;
+namespace AMIS.Modules.AssetProcurement.Features.v1.AssetPurchaseRequests.CreateAssetPurchaseRequest;
 
 public static class CreateAssetPurchaseRequestEndpoint
 {
@@ -26,3 +26,4 @@ public static class CreateAssetPurchaseRequestEndpoint
         return TypedResults.Created($"/api/v1/asset-procurement/purchase-requests/{result.Id}", result);
     }
 }
+

@@ -1,4 +1,4 @@
-﻿namespace Multitenancy.Tests;
+namespace Multitenancy.Tests;
 
 //public class TenantLifecycleTests : IClassFixture<WebApplicationFactory<Program>>
 //{

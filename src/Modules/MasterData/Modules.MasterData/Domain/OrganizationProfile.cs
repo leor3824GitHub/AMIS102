@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
-using FSH.Framework.Core.Domain;
+using AMIS.Framework.Core.Domain;
 
-namespace FSH.Modules.MasterData.Domain;
+namespace AMIS.Modules.MasterData.Domain;
 
 public sealed class OrganizationProfile : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 {
@@ -61,3 +61,4 @@ public sealed class OrganizationProfile : AggregateRoot<Guid>, IHasTenant, IAudi
 
     private static byte[] NewVersion() => RandomNumberGenerator.GetBytes(8);
 }
+

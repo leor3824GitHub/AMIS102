@@ -1,5 +1,5 @@
-using FSH.Modules.Identity.Contracts.v1.Groups.UpdateGroup;
-using FSH.Modules.Identity.Features.v1.Groups.UpdateGroup;
+using AMIS.Modules.Identity.Contracts.v1.Groups.UpdateGroup;
+using AMIS.Modules.Identity.Features.v1.Groups.UpdateGroup;
 
 namespace Identity.Tests.Validators;
 
@@ -304,3 +304,4 @@ public sealed class UpdateGroupCommandValidatorTests
 
     #endregion
 }
+

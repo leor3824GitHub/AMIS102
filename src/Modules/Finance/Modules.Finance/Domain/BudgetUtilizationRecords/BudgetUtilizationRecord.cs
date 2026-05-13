@@ -1,7 +1,7 @@
-using FSH.Framework.Core.Domain;
-using FSH.Modules.Finance.Contracts.v1.BudgetUtilizationRecords;
+using AMIS.Framework.Core.Domain;
+using AMIS.Modules.Finance.Contracts.v1.BudgetUtilizationRecords;
 
-namespace FSH.Modules.Finance.Domain.BudgetUtilizationRecords;
+namespace AMIS.Modules.Finance.Domain.BudgetUtilizationRecords;
 
 public sealed class BudgetUtilizationRecord : AggregateRoot<Guid>, IAuditableEntity
 {
@@ -95,3 +95,4 @@ public sealed class BudgetUtilizationRecord : AggregateRoot<Guid>, IAuditableEnt
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
     }
 }
+

@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace FSH.Modules.AssetManagement.Features.v1.ReceiptsForReturnedPPE.CreateRRP;
+namespace AMIS.Modules.AssetManagement.Features.v1.ReceiptsForReturnedPPE.CreateRRP;
 
 public sealed class CreateRRPCommandValidator : AbstractValidator<CreateRRPCommand>
 {
@@ -24,3 +24,4 @@ public sealed class CreateRRPCommandValidator : AbstractValidator<CreateRRPComma
         });
     }
 }
+

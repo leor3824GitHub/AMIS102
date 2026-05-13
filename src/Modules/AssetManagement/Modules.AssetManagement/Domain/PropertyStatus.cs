@@ -1,4 +1,4 @@
-namespace FSH.Modules.AssetManagement.Domain;
+namespace AMIS.Modules.AssetManagement.Domain;
 
 /// <summary>
 /// Lifecycle status of a tracked semi-expendable property unit.
@@ -23,3 +23,4 @@ public enum PropertyStatus
     /// <summary>Reported lost, stolen, damaged, or destroyed via RLSDDSP.</summary>
     LostStolenDamaged = 5,
 }
+

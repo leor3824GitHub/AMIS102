@@ -1,7 +1,7 @@
-using FSH.Framework.Core.Domain;
+using AMIS.Framework.Core.Domain;
 using System.Security.Cryptography;
 
-namespace FSH.Modules.Vehicle.Domain.Maintenance;
+namespace AMIS.Modules.Vehicle.Domain.Maintenance;
 
 public class MaintenanceLog : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 {
@@ -84,3 +84,4 @@ public class MaintenanceLog : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
         LastModifiedBy = userId;
     }
 }
+

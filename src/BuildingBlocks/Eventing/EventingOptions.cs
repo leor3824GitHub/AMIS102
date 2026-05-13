@@ -1,4 +1,4 @@
-namespace FSH.Framework.Eventing;
+namespace AMIS.Framework.Eventing;
 
 /// <summary>
 /// Configuration options for the eventing building block.
@@ -37,4 +37,5 @@ public sealed class EventingOptions
     /// </summary>
     public bool UseHostedServiceDispatcher { get; set; } = true;
 }
+
 

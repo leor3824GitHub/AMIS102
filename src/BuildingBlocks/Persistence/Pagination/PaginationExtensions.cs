@@ -1,8 +1,8 @@
-using FSH.Framework.Shared.Persistence;
+using AMIS.Framework.Shared.Persistence;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
-namespace FSH.Framework.Persistence;
+namespace AMIS.Framework.Persistence;
 
 /// <summary>
 /// Extension methods for converting IQueryable results to paginated responses.
@@ -85,3 +85,4 @@ public static class PaginationExtensions
         };
     }
 }
+

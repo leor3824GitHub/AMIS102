@@ -1,4 +1,4 @@
-################################################################################
+﻿################################################################################
 # General Variables
 ################################################################################
 
@@ -378,8 +378,8 @@ variable "redis_transit_encryption_enabled" {
 
 variable "container_registry" {
   type        = string
-  description = "Container registry URL (e.g., ghcr.io/fullstackhero)."
-  default     = "ghcr.io/fullstackhero"
+  description = "Container registry URL (e.g., ghcr.io/amis)."
+  default     = "ghcr.io/amis"
 }
 
 variable "container_image_tag" {
@@ -390,13 +390,13 @@ variable "container_image_tag" {
 variable "api_image_name" {
   type        = string
   description = "API container image name (without registry or tag)."
-  default     = "fsh-playground-api"
+  default     = "AMIS-playground-api"
 }
 
 variable "blazor_image_name" {
   type        = string
   description = "Blazor container image name (without registry or tag)."
-  default     = "fsh-playground-blazor"
+  default     = "AMIS-playground-blazor"
 }
 
 ################################################################################

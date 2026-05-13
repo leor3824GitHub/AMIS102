@@ -1,9 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<RootNamespace>FSH.Modules.AssetManagement.Contracts</RootNamespace>
-		<AssemblyName>FSH.Modules.AssetManagement.Contracts</AssemblyName>
-		<PackageId>FullStackHero.Modules.AssetManagement.Contracts</PackageId>
+		<RootNamespace>AMIS.Modules.AssetManagement.Contracts</RootNamespace>
+		<AssemblyName>AMIS.Modules.AssetManagement.Contracts</AssemblyName>
+		<PackageId>AMIS.Modules.AssetManagement.Contracts</PackageId>
 		<NoWarn>$(NoWarn);CA1002;CA1056;CS1572;S2094</NoWarn>
 	</PropertyGroup>
 
@@ -17,3 +17,4 @@
 	</ItemGroup>
 
 </Project>
+

@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.AssetRegister.Contracts.v1.Issuance;
+using AMIS.Modules.AssetRegister.Contracts.v1.Issuance;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Issuance.AddIssuanceReportLines;
+namespace AMIS.Modules.AssetRegister.Features.v1.Issuance.AddIssuanceReportLines;
 
 public sealed class AddIssuanceReportLinesCommandValidator : AbstractValidator<AddIssuanceReportLinesCommand>
 {
@@ -12,3 +12,4 @@ public sealed class AddIssuanceReportLinesCommandValidator : AbstractValidator<A
         RuleForEach(x => x.AccountabilityLineIds).NotEmpty();
     }
 }
+

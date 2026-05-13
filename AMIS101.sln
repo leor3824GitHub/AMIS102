@@ -1,4 +1,4 @@
-Microsoft Visual Studio Solution File, Format Version 12.00
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.2.0
 MinimumVisualStudioVersion = 10.0.40219.1
@@ -30,7 +30,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Web", "src\BuildingBlocks\W
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Playground", "Playground", "{DD2E34D7-CE95-3BC7-E860-2C2827134A59}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FSH.Playground.AppHost", "src\Playground\FSH.Playground.AppHost\FSH.Playground.AppHost.csproj", "{C9C6BBEC-84BC-FDDF-BDB3-B50521FFAD3A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AMIS.Playground.AppHost", "src\Playground\AMIS.Playground.AppHost\AMIS.Playground.AppHost.csproj", "{C9C6BBEC-84BC-FDDF-BDB3-B50521FFAD3A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Migrations.PostgreSQL", "src\Playground\Migrations.PostgreSQL\Migrations.PostgreSQL.csproj", "{9A37164F-C18C-CFAE-A716-32CF322A180B}"
 EndProject
@@ -58,7 +58,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tools", "Tools", "{DCB6FCB8
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CLI", "CLI", "{595A8DF0-35C1-37D1-FB29-EFF5A1762FCD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FSH.CLI", "src\Tools\CLI\FSH.CLI.csproj", "{0BA0E142-5F91-A37B-7DDB-4B35079B4DC1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AMIS.CLI", "src\Tools\CLI\AMIS.CLI.csproj", "{0BA0E142-5F91-A37B-7DDB-4B35079B4DC1}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Modules", "Modules", "{EC447DCF-ABFA-6E24-52A5-D7FD48A5C558}"
 EndProject

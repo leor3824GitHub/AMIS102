@@ -1,11 +1,11 @@
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Web;
-using FSH.Framework.Shared.Persistence;
-using FSH.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
-using FSH.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
+using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
+using AMIS.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
 
-namespace FSH.Playground.Blazor.ApiClient;
+namespace AMIS.Playground.Blazor.ApiClient;
 
 file static class HttpExtensions
 {
@@ -279,3 +279,4 @@ internal sealed class AppClient(HttpClient http) : IAppClient
         await r.EnsureApiSuccessAsync(ct);
     }
 }
+

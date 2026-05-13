@@ -1,11 +1,11 @@
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.RecallPpmp;
+namespace AMIS.Modules.ProcurementPlanning.Features.v1.Ppmps.RecallPpmp;
 
 public static class RecallPpmpEndpoint
 {
@@ -23,3 +23,4 @@ public static class RecallPpmpEndpoint
         return TypedResults.Ok(result);
     }
 }
+

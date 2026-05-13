@@ -1,6 +1,6 @@
-using FSH.Modules.Identity.Contracts.DTOs;
+using AMIS.Modules.Identity.Contracts.DTOs;
 
-namespace FSH.Modules.Identity.Contracts.Services;
+namespace AMIS.Modules.Identity.Contracts.Services;
 
 /// <summary>
 /// Service for user role management.
@@ -17,3 +17,4 @@ public interface IUserRoleService
     /// </summary>
     Task<List<UserRoleDto>> GetUserRolesAsync(string userId, CancellationToken cancellationToken);
 }
+

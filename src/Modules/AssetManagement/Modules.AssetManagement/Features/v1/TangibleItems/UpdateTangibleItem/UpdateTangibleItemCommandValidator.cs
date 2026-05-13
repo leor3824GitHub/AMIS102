@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace FSH.Modules.AssetManagement.Features.v1.TangibleItems.UpdateTangibleItem;
+namespace AMIS.Modules.AssetManagement.Features.v1.TangibleItems.UpdateTangibleItem;
 
 public sealed class UpdateTangibleItemCommandValidator : AbstractValidator<UpdateTangibleItemCommand>
 {
@@ -23,3 +23,4 @@ public sealed class UpdateTangibleItemCommandValidator : AbstractValidator<Updat
             .MaximumLength(500).WithMessage("Remarks must not exceed 500 characters.");
     }
 }
+

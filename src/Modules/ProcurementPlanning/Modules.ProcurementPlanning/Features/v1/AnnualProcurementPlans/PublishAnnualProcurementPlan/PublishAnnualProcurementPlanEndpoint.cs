@@ -1,11 +1,11 @@
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.PublishAnnualProcurementPlan;
+namespace AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.PublishAnnualProcurementPlan;
 
 public static class PublishAnnualProcurementPlanEndpoint
 {
@@ -22,3 +22,4 @@ public static class PublishAnnualProcurementPlanEndpoint
         return TypedResults.Ok(result);
     }
 }
+

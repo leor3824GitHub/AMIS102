@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.Identity.Contracts.v1.Groups.RemoveUserFromGroup;
+using AMIS.Modules.Identity.Contracts.v1.Groups.RemoveUserFromGroup;
 
-namespace FSH.Modules.Identity.Features.v1.Groups.RemoveUserFromGroup;
+namespace AMIS.Modules.Identity.Features.v1.Groups.RemoveUserFromGroup;
 
 public sealed class RemoveUserFromGroupCommandValidator : AbstractValidator<RemoveUserFromGroupCommand>
 {
@@ -14,3 +14,4 @@ public sealed class RemoveUserFromGroupCommandValidator : AbstractValidator<Remo
             .NotEmpty().WithMessage("User ID is required.");
     }
 }
+

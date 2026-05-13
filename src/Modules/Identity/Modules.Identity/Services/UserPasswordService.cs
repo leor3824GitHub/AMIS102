@@ -1,21 +1,21 @@
 using Finbuckle.MultiTenant.Abstractions;
-using FSH.Framework.Core.Exceptions;
-using FSH.Framework.Jobs.Services;
-using FSH.Framework.Mailing;
-using FSH.Framework.Mailing.Services;
-using FSH.Framework.Shared.Multitenancy;
-using FSH.Modules.Identity.Contracts.Services;
-using FSH.Modules.Identity.Data;
-using FSH.Modules.Identity.Domain;
+using AMIS.Framework.Core.Exceptions;
+using AMIS.Framework.Jobs.Services;
+using AMIS.Framework.Mailing;
+using AMIS.Framework.Mailing.Services;
+using AMIS.Framework.Shared.Multitenancy;
+using AMIS.Modules.Identity.Contracts.Services;
+using AMIS.Modules.Identity.Data;
+using AMIS.Modules.Identity.Domain;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
 using System.Collections.ObjectModel;
 using System.Text;
 
-namespace FSH.Modules.Identity.Services;
+namespace AMIS.Modules.Identity.Services;
 
 internal sealed class UserPasswordService(
-    UserManager<FshUser> userManager,
+    UserManager<AmisUser> userManager,
     IdentityDbContext db,
     IJobService jobService,
     IMailService mailService,
@@ -109,3 +109,5 @@ internal sealed class UserPasswordService(
         }
     }
 }
+
+

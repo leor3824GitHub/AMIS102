@@ -1,4 +1,4 @@
-################################################################################
+﻿################################################################################
 # Environment Settings
 ################################################################################
 
@@ -54,7 +54,7 @@ enable_flow_logs = true
 # S3 Configuration
 ################################################################################
 
-app_s3_bucket_name        = "staging-fsh-app-bucket"
+app_s3_bucket_name        = "staging-AMIS-app-bucket"
 app_s3_enable_public_read = false
 app_s3_enable_cloudfront  = true
 
@@ -62,8 +62,8 @@ app_s3_enable_cloudfront  = true
 # Database Configuration
 ################################################################################
 
-db_name     = "fshdb"
-db_username = "fshadmin"
+db_name     = "AMISdb"
+db_username = "AMISadmin"
 
 # Use AWS Secrets Manager for password (recommended)
 db_manage_master_user_password = true
@@ -87,9 +87,9 @@ redis_node_type = "cache.t3.small"
 container_image_tag = "staging"
 
 # Optional: Override defaults if needed
-# container_registry = "ghcr.io/fullstackhero"
-# api_image_name     = "fsh-playground-api"
-# blazor_image_name  = "fsh-playground-blazor"
+# container_registry = "ghcr.io/amis"
+# api_image_name     = "AMIS-playground-api"
+# blazor_image_name  = "AMIS-playground-blazor"
 
 ################################################################################
 # Service Configuration

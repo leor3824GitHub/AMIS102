@@ -1,8 +1,8 @@
-using FSH.Modules.Identity.Domain;
+using AMIS.Modules.Identity.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FSH.Modules.Identity.Data.Configurations;
+namespace AMIS.Modules.Identity.Data.Configurations;
 
 public class UserSessionConfiguration : IEntityTypeConfiguration<UserSession>
 {
@@ -77,3 +77,4 @@ public class UserSessionConfiguration : IEntityTypeConfiguration<UserSession>
         builder.HasIndex(s => new { s.UserId, s.IsRevoked });
     }
 }
+

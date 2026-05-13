@@ -1,10 +1,10 @@
-using FSH.Framework.Core.Domain;
-using FSH.Modules.AssetRegister.Contracts.v1;
-using FSH.Modules.AssetRegister.Contracts.v1.ValueObjects;
-using FSH.Modules.AssetRegister.Domain.Catalog;
-using FSH.Modules.AssetRegister.Domain.Events;
+using AMIS.Framework.Core.Domain;
+using AMIS.Modules.AssetRegister.Contracts.v1;
+using AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
+using AMIS.Modules.AssetRegister.Domain.Catalog;
+using AMIS.Modules.AssetRegister.Domain.Events;
 
-namespace FSH.Modules.AssetRegister.Domain.Assets;
+namespace AMIS.Modules.AssetRegister.Domain.Assets;
 
 public sealed class AssetRegistry : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 {
@@ -254,3 +254,4 @@ public sealed class AssetRegistry : AggregateRoot<Guid>, IHasTenant, IAuditableE
             throw new InvalidOperationException("Disposed assets are terminal and may not be mutated.");
     }
 }
+

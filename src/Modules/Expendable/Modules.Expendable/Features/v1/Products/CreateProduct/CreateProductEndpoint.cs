@@ -1,12 +1,12 @@
-using FSH.Modules.Expendable.Contracts.v1.Products;
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.Expendable.Data;
+using AMIS.Modules.Expendable.Contracts.v1.Products;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.Expendable.Data;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.Expendable.Features.v1.Products.CreateProduct;
+namespace AMIS.Modules.Expendable.Features.v1.Products.CreateProduct;
 
 public static class CreateProductEndpoint
 {
@@ -27,4 +27,5 @@ public static class CreateProductEndpoint
         return TypedResults.Created($"/api/v1/expendable/products/{result.Id}", result);
     }
 }
+
 

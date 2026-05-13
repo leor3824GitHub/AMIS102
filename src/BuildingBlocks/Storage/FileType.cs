@@ -1,4 +1,4 @@
-﻿namespace FSH.Framework.Storage;
+namespace AMIS.Framework.Storage;
 
 public enum FileType
 {

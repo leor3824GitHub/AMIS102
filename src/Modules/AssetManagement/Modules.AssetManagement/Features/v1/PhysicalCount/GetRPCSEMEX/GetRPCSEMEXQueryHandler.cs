@@ -1,11 +1,11 @@
 using System.Net;
-using FSH.Framework.Core.Exceptions;
-using FSH.Modules.AssetManagement.Data;
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Framework.Core.Exceptions;
+using AMIS.Modules.AssetManagement.Data;
+using AMIS.Modules.AssetManagement.Domain;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.PhysicalCount.GetRPCSEMEX;
+namespace AMIS.Modules.AssetManagement.Features.v1.PhysicalCount.GetRPCSEMEX;
 
 public sealed class GetRPCSEMEXQueryHandler(AssetManagementDbContext dbContext)
     : IQueryHandler<GetRPCSEMEXQuery, RPCSEMEXReportDto>
@@ -121,3 +121,4 @@ public sealed class GetRPCSEMEXQueryHandler(AssetManagementDbContext dbContext)
             summary);
     }
 }
+

@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace FSH.Modules.MasterData.Features.v1.Suppliers.CreateSupplier;
+namespace AMIS.Modules.MasterData.Features.v1.Suppliers.CreateSupplier;
 
 public sealed class CreateSupplierCommandValidator : AbstractValidator<CreateSupplierCommand>
 {
@@ -40,3 +40,4 @@ public sealed class CreateSupplierCommandValidator : AbstractValidator<CreateSup
             .MaximumLength(400).WithMessage("Address must not exceed 400 characters.");
     }
 }
+

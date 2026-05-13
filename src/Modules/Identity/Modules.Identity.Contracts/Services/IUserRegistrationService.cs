@@ -1,6 +1,6 @@
 using System.Security.Claims;
 
-namespace FSH.Modules.Identity.Contracts.Services;
+namespace AMIS.Modules.Identity.Contracts.Services;
 
 /// <summary>
 /// Service for user registration and external authentication.
@@ -36,3 +36,4 @@ public interface IUserRegistrationService
     /// </summary>
     Task<string> ConfirmPhoneNumberAsync(string userId, string code);
 }
+

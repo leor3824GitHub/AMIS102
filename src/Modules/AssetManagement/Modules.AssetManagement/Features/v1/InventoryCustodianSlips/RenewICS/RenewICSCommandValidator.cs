@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Modules.AssetManagement.Domain;
 
-namespace FSH.Modules.AssetManagement.Features.v1.InventoryCustodianSlips.RenewICS;
+namespace AMIS.Modules.AssetManagement.Features.v1.InventoryCustodianSlips.RenewICS;
 
 public sealed class RenewICSCommandValidator : AbstractValidator<RenewICSCommand>
 {
@@ -23,3 +23,4 @@ public sealed class RenewICSCommandValidator : AbstractValidator<RenewICSCommand
             .WithMessage("ICS number must match the format SPLV-YYYY-MM-NNNN or SPHV-YYYY-MM-NNNN.");
     }
 }
+

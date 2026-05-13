@@ -1,6 +1,6 @@
 using Mediator;
 
-namespace FSH.Modules.Finance.Contracts.v1.DisbursementVouchers;
+namespace AMIS.Modules.Finance.Contracts.v1.DisbursementVouchers;
 
 // Enums
 public enum DisbursementVoucherStatus
@@ -86,3 +86,4 @@ public sealed record DisbursementVoucherSearchResult(
     int TotalCount,
     int PageNumber,
     int PageSize);
+

@@ -1,9 +1,9 @@
 using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;
-using FSH.Modules.AssetRegister.Domain.Receiving;
+using AMIS.Modules.AssetRegister.Domain.Receiving;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FSH.Modules.AssetRegister.Data.Configurations;
+namespace AMIS.Modules.AssetRegister.Data.Configurations;
 
 internal sealed class ReceivingReportConfiguration : IEntityTypeConfiguration<ReceivingReport>
 {
@@ -56,3 +56,4 @@ internal sealed class ReceivingReportItemConfiguration : IEntityTypeConfiguratio
         builder.HasIndex(x => x.CatalogItemId);
     }
 }
+

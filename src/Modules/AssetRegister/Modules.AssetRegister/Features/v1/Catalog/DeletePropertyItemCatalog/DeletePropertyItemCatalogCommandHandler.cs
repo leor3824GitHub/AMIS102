@@ -1,9 +1,9 @@
-using FSH.Modules.AssetRegister.Contracts.v1.Catalog;
-using FSH.Modules.AssetRegister.Data;
+using AMIS.Modules.AssetRegister.Contracts.v1.Catalog;
+using AMIS.Modules.AssetRegister.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Catalog.DeletePropertyItemCatalog;
+namespace AMIS.Modules.AssetRegister.Features.v1.Catalog.DeletePropertyItemCatalog;
 
 public sealed class DeletePropertyItemCatalogCommandHandler(AssetRegisterDbContext db)
     : ICommandHandler<DeletePropertyItemCatalogCommand>
@@ -23,3 +23,4 @@ public sealed class DeletePropertyItemCatalogCommandHandler(AssetRegisterDbConte
         return Unit.Value;
     }
 }
+

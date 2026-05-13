@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 
-namespace FSH.CLI.Scaffolding;
+namespace AMIS.CLI.Scaffolding;
 
 /// <summary>
 /// In-memory cache for templates

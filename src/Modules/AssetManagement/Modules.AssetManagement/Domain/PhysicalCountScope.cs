@@ -1,4 +1,4 @@
-namespace FSH.Modules.AssetManagement.Domain;
+namespace AMIS.Modules.AssetManagement.Domain;
 
 /// <summary>
 /// Defines which asset track is covered by a Physical Count Session.
@@ -14,3 +14,4 @@ public enum PhysicalCountScope
     /// <summary>Both PPE and Semi-Expendable properties are counted in the same session.</summary>
     Both = 2,
 }
+

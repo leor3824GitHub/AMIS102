@@ -1,4 +1,4 @@
-namespace FSH.Framework.Blazor.UI.Theme;
+namespace AMIS.Framework.Blazor.UI.Theme;
 
 /// <summary>
 /// Service for managing tenant theme state in Blazor applications.
@@ -53,3 +53,4 @@ public interface ITenantThemeState
     /// </summary>
     void ToggleDarkMode();
 }
+

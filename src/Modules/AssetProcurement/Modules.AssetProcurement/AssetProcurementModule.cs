@@ -1,40 +1,40 @@
 using Asp.Versioning;
-using FSH.Framework.Persistence;
-using FSH.Framework.Shared.Constants;
-using FSH.Framework.Web.Modules;
-using FSH.Modules.AssetProcurement.Data;
-using FSH.Modules.AssetProcurement.Features.v1.AssetPurchaseRequests.CreateAssetPurchaseRequest;
-using FSH.Modules.AssetProcurement.Features.v1.AssetPurchaseRequests.UpdateAssetPurchaseRequest;
-using FSH.Modules.AssetProcurement.Features.v1.AssetPurchaseRequests.SubmitAssetPurchaseRequest;
-using FSH.Modules.AssetProcurement.Features.v1.AssetPurchaseRequests.ApproveAssetPurchaseRequest;
-using FSH.Modules.AssetProcurement.Features.v1.AssetPurchaseRequests.RejectAssetPurchaseRequest;
-using FSH.Modules.AssetProcurement.Features.v1.AssetPurchaseRequests.CancelAssetPurchaseRequest;
-using FSH.Modules.AssetProcurement.Features.v1.AssetPurchaseRequests.GetAssetPurchaseRequest;
-using FSH.Modules.AssetProcurement.Features.v1.AssetPurchaseRequests.SearchAssetPurchaseRequests;
-using FSH.Modules.AssetProcurement.Features.v1.AssetPurchaseOrders.CreateAssetPurchaseOrder;
-using FSH.Modules.AssetProcurement.Features.v1.AssetPurchaseOrders.UpdateAssetPurchaseOrder;
-using FSH.Modules.AssetProcurement.Features.v1.AssetPurchaseOrders.IssueAssetPurchaseOrder;
-using FSH.Modules.AssetProcurement.Features.v1.AssetPurchaseOrders.CancelAssetPurchaseOrder;
-using FSH.Modules.AssetProcurement.Features.v1.AssetPurchaseOrders.GetAssetPurchaseOrder;
-using FSH.Modules.AssetProcurement.Features.v1.AssetPurchaseOrders.SearchAssetPurchaseOrders;
-using FSH.Modules.AssetProcurement.Features.v1.AssetIARs.CreateAssetIAR;
-using FSH.Modules.AssetProcurement.Features.v1.AssetIARs.UpdateAssetIAR;
-using FSH.Modules.AssetProcurement.Features.v1.AssetIARs.AcceptAssetIAR;
-using FSH.Modules.AssetProcurement.Features.v1.AssetIARs.RejectAssetIAR;
-using FSH.Modules.AssetProcurement.Features.v1.AssetIARs.GetAssetIAR;
-using FSH.Modules.AssetProcurement.Features.v1.AssetIARs.SearchAssetIARs;
-using FSH.Modules.AssetProcurement.Provisioning;
+using AMIS.Framework.Persistence;
+using AMIS.Framework.Shared.Constants;
+using AMIS.Framework.Web.Modules;
+using AMIS.Modules.AssetProcurement.Data;
+using AMIS.Modules.AssetProcurement.Features.v1.AssetPurchaseRequests.CreateAssetPurchaseRequest;
+using AMIS.Modules.AssetProcurement.Features.v1.AssetPurchaseRequests.UpdateAssetPurchaseRequest;
+using AMIS.Modules.AssetProcurement.Features.v1.AssetPurchaseRequests.SubmitAssetPurchaseRequest;
+using AMIS.Modules.AssetProcurement.Features.v1.AssetPurchaseRequests.ApproveAssetPurchaseRequest;
+using AMIS.Modules.AssetProcurement.Features.v1.AssetPurchaseRequests.RejectAssetPurchaseRequest;
+using AMIS.Modules.AssetProcurement.Features.v1.AssetPurchaseRequests.CancelAssetPurchaseRequest;
+using AMIS.Modules.AssetProcurement.Features.v1.AssetPurchaseRequests.GetAssetPurchaseRequest;
+using AMIS.Modules.AssetProcurement.Features.v1.AssetPurchaseRequests.SearchAssetPurchaseRequests;
+using AMIS.Modules.AssetProcurement.Features.v1.AssetPurchaseOrders.CreateAssetPurchaseOrder;
+using AMIS.Modules.AssetProcurement.Features.v1.AssetPurchaseOrders.UpdateAssetPurchaseOrder;
+using AMIS.Modules.AssetProcurement.Features.v1.AssetPurchaseOrders.IssueAssetPurchaseOrder;
+using AMIS.Modules.AssetProcurement.Features.v1.AssetPurchaseOrders.CancelAssetPurchaseOrder;
+using AMIS.Modules.AssetProcurement.Features.v1.AssetPurchaseOrders.GetAssetPurchaseOrder;
+using AMIS.Modules.AssetProcurement.Features.v1.AssetPurchaseOrders.SearchAssetPurchaseOrders;
+using AMIS.Modules.AssetProcurement.Features.v1.AssetIARs.CreateAssetIAR;
+using AMIS.Modules.AssetProcurement.Features.v1.AssetIARs.UpdateAssetIAR;
+using AMIS.Modules.AssetProcurement.Features.v1.AssetIARs.AcceptAssetIAR;
+using AMIS.Modules.AssetProcurement.Features.v1.AssetIARs.RejectAssetIAR;
+using AMIS.Modules.AssetProcurement.Features.v1.AssetIARs.GetAssetIAR;
+using AMIS.Modules.AssetProcurement.Features.v1.AssetIARs.SearchAssetIARs;
+using AMIS.Modules.AssetProcurement.Provisioning;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-namespace FSH.Modules.AssetProcurement;
+namespace AMIS.Modules.AssetProcurement;
 
 public class AssetProcurementModule : IModule
 {
-    private static readonly IReadOnlyList<FshPermission> RegisteredPermissions =
+    private static readonly IReadOnlyList<AmisPermission> RegisteredPermissions =
     [
         new("View Asset Purchase Requests",   "View",    "AssetProcurement.AssetPurchaseRequests", IsBasic: true),
         new("Create Asset Purchase Requests", "Create",  "AssetProcurement.AssetPurchaseRequests"),
@@ -114,3 +114,5 @@ public class AssetProcurementModule : IModule
         SearchAssetIARsEndpoint.Map(iarGroup);
     }
 }
+
+

@@ -1,9 +1,9 @@
-using FSH.Modules.Finance.Contracts.v1.BudgetUtilizationRecords;
-using FSH.Modules.Finance.Data;
+using AMIS.Modules.Finance.Contracts.v1.BudgetUtilizationRecords;
+using AMIS.Modules.Finance.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.Finance.Features.v1.BudgetUtilizationRecords.SearchBudgetUtilizationRecords;
+namespace AMIS.Modules.Finance.Features.v1.BudgetUtilizationRecords.SearchBudgetUtilizationRecords;
 
 public sealed class SearchBudgetUtilizationRecordsQueryHandler(
     FinanceDbContext dbContext) : IQueryHandler<SearchBudgetUtilizationRecordsQuery, BudgetUtilizationRecordSearchResult>
@@ -52,3 +52,4 @@ public sealed class SearchBudgetUtilizationRecordsQueryHandler(
         return new BudgetUtilizationRecordSearchResult(items, totalCount, query.PageNumber, query.PageSize);
     }
 }
+

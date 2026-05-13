@@ -1,4 +1,4 @@
-# Procurement Planning Domain Fix Plan
+﻿# Procurement Planning Domain Fix Plan
 
 **Module:** `Modules.ProcurementPlanning`
 **Date:** 2026-04-29
@@ -193,7 +193,7 @@ A new column `SourcePpmpVersionChainId` (`uuid NOT NULL`) must be added to the `
 ```
 dotnet ef migrations add AddAppItemSourcePpmpVersionChainId \
   --project src/Modules/ProcurementPlanning/Modules.ProcurementPlanning \
-  --startup-project src/Playground/FSH.Playground.AppHost
+  --startup-project src/Playground/AMIS.Playground.AppHost
 ```
 
 **Backfill for existing data:**
@@ -286,7 +286,7 @@ New column `PpmpFamilyId` (`uuid NOT NULL`) on the `Ppmps` table.
 ```
 dotnet ef migrations add AddPpmpFamilyId \
   --project src/Modules/ProcurementPlanning/Modules.ProcurementPlanning \
-  --startup-project src/Playground/FSH.Playground.AppHost
+  --startup-project src/Playground/AMIS.Playground.AppHost
 ```
 
 **Backfill for existing data:**
@@ -574,3 +574,4 @@ The `SourcePpmpId` and `SourcePpmpItemId` foreign keys provide traceability back
 | `Unit` / `SourceOfFunds` as free text | `PpmpItems` | Add reference lookup tables from MasterData | Medium |
 | Single return/approval stored (history loss) | `Ppmps`, `AnnualProcurementPlans` | Add `PpmpEvents` audit table if full trail needed | Low |
 | `AppItems` BCNF violations | `AppItems` | Leave — intentional snapshot pattern | — |
+

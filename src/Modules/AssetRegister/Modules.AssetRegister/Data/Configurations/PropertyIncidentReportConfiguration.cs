@@ -1,9 +1,9 @@
-using FSH.Modules.AssetRegister.Domain.Incidents;
+using AMIS.Modules.AssetRegister.Domain.Incidents;
 using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FSH.Modules.AssetRegister.Data.Configurations;
+namespace AMIS.Modules.AssetRegister.Data.Configurations;
 
 internal sealed class PropertyIncidentReportConfiguration : IEntityTypeConfiguration<PropertyIncidentReport>
 {
@@ -64,3 +64,4 @@ internal sealed class PropertyIncidentItemConfiguration : IEntityTypeConfigurati
         builder.HasIndex(x => x.AssetRegistryId);
     }
 }
+

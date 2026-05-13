@@ -1,12 +1,12 @@
 @page "/master-data/capitalization-thresholds"
-@using FSH.Modules.MasterData.Contracts.v1.CapitalizationThresholds
-@using FSH.Playground.Blazor.ApiClient
+@using AMIS.Modules.MasterData.Contracts.v1.CapitalizationThresholds
+@using AMIS.Playground.Blazor.ApiClient
 @using MudBlazor
 @inject ICapitalizationThresholdClient Client
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 
-<FshPageHeader Title="Capitalization Thresholds"
+<AMISPageHeader Title="Capitalization Thresholds"
                Description="COA circular-based thresholds that determine item classification: Expendable, Semi-Expendable, or PPE" />
 
 <!-- Active Threshold Summary Banner -->
@@ -26,20 +26,20 @@
                 <MudPaper Outlined="true" Class="pa-3 text-center">
                     <MudText Typo="Typo.caption" Color="Color.Secondary">EXPENDABLE</MudText>
                     <MudText Typo="Typo.body2">Consumable items (any cost)</MudText>
-                    <MudText Typo="Typo.caption" Color="Color.Tertiary">→ RSMI on issuance</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Tertiary">? RSMI on issuance</MudText>
                 </MudPaper>
             </MudItem>
             <MudItem xs="12" sm="4">
                 <MudPaper Outlined="true" Class="pa-3 text-center">
                     <MudText Typo="Typo.caption" Color="Color.Warning">SEMI-EXPENDABLE</MudText>
                     <MudText Typo="Typo.body2">
-                        Durable, cost &lt; <b>₱@_active.CapitalizationAmount.ToString("N2")</b>
+                        Durable, cost &lt; <b>?@_active.CapitalizationAmount.ToString("N2")</b>
                     </MudText>
                     <MudText Typo="Typo.caption" Color="Color.Tertiary">
-                        Low-valued ≤ ₱@_active.SemiExpendableLowValueThreshold.ToString("N2") → ICS
+                        Low-valued = ?@_active.SemiExpendableLowValueThreshold.ToString("N2") ? ICS
                     </MudText>
                     <MudText Typo="Typo.caption" Color="Color.Tertiary">
-                        High-valued > ₱@_active.SemiExpendableLowValueThreshold.ToString("N2") → ICS (enhanced accountability)
+                        High-valued > ?@_active.SemiExpendableLowValueThreshold.ToString("N2") ? ICS (enhanced accountability)
                     </MudText>
                 </MudPaper>
             </MudItem>
@@ -47,9 +47,9 @@
                 <MudPaper Outlined="true" Class="pa-3 text-center">
                     <MudText Typo="Typo.caption" Color="Color.Error">PPE / FIXED ASSET</MudText>
                     <MudText Typo="Typo.body2">
-                        Durable, cost ≥ <b>₱@_active.CapitalizationAmount.ToString("N2")</b>
+                        Durable, cost = <b>?@_active.CapitalizationAmount.ToString("N2")</b>
                     </MudText>
-                    <MudText Typo="Typo.caption" Color="Color.Tertiary">→ PAR + depreciation schedule</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Tertiary">? PAR + depreciation schedule</MudText>
                 </MudPaper>
             </MudItem>
         </MudGrid>
@@ -94,7 +94,7 @@ else if (_loaded)
                                      Variant="Variant.Outlined"
                                      Format="N2"
                                      Adornment="Adornment.Start"
-                                     AdornmentText="₱"
+                                     AdornmentText="?"
                                      Min="1"
                                      Required="true"
                                      HelperText="Items at or above this amount are capitalized as PPE" />
@@ -104,10 +104,10 @@ else if (_loaded)
                                      Variant="Variant.Outlined"
                                      Format="N2"
                                      Adornment="Adornment.Start"
-                                     AdornmentText="₱"
+                                     AdornmentText="?"
                                      Min="1"
                                      Required="true"
-                                     HelperText="Items at or below this amount are low-valued semi-expendable (§4.8)" />
+                                     HelperText="Items at or below this amount are low-valued semi-expendable (�4.8)" />
 
                     <MudDatePicker @bind-Date="_form.EffectivityDateNullable"
                                    Label="Effectivity Date"
@@ -177,11 +177,11 @@ else if (_loaded)
                                     <td>
                                         <MudText Typo="Typo.body2"><b>@t.CircularName</b></MudText>
                                         <MudText Typo="Typo.caption" Color="Color.Secondary" Style="max-width:260px;white-space:normal">
-                                            @(t.Description.Length > 80 ? t.Description[..80] + "…" : t.Description)
+                                            @(t.Description.Length > 80 ? t.Description[..80] + "�" : t.Description)
                                         </MudText>
                                     </td>
-                                    <td style="text-align:right">₱@t.CapitalizationAmount.ToString("N2")</td>
-                                    <td style="text-align:right">₱@t.SemiExpendableLowValueThreshold.ToString("N2")</td>
+                                    <td style="text-align:right">?@t.CapitalizationAmount.ToString("N2")</td>
+                                    <td style="text-align:right">?@t.SemiExpendableLowValueThreshold.ToString("N2")</td>
                                     <td>@t.EffectivityDate.ToString("MMM dd, yyyy")</td>
                                     <td>
                                         @if (t.IsActive)
@@ -366,3 +366,4 @@ else if (_loaded)
         public DateTime? EffectivityDateNullable { get; set; }
     }
 }
+

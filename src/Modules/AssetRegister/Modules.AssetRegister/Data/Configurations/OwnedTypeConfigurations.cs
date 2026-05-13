@@ -1,8 +1,8 @@
-using FSH.Modules.AssetRegister.Contracts.v1.ValueObjects;
+using AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FSH.Modules.AssetRegister.Data.Configurations;
+namespace AMIS.Modules.AssetRegister.Data.Configurations;
 
 internal static class OwnedTypeConfigurations
 {
@@ -36,3 +36,4 @@ internal static class OwnedTypeConfigurations
         return builder;
     }
 }
+

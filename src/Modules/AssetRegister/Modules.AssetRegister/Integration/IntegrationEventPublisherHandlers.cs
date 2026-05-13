@@ -1,10 +1,10 @@
-using FSH.Framework.Eventing.Abstractions;
-using FSH.Modules.AssetRegister.Contracts.v1.IntegrationEvents;
-using FSH.Modules.AssetRegister.Data;
-using FSH.Modules.AssetRegister.Domain.Events;
+using AMIS.Framework.Eventing.Abstractions;
+using AMIS.Modules.AssetRegister.Contracts.v1.IntegrationEvents;
+using AMIS.Modules.AssetRegister.Data;
+using AMIS.Modules.AssetRegister.Domain.Events;
 using Mediator;
 
-namespace FSH.Modules.AssetRegister.Integration;
+namespace AMIS.Modules.AssetRegister.Integration;
 
 /// <summary>
 /// Subscribes to in-process domain events (raised by aggregates and dispatched on
@@ -79,3 +79,4 @@ public sealed class IncidentReportFiledIntegrationPublisher(
             @event.TenantId, @event.CorrelationId ?? string.Empty), ct).ConfigureAwait(false);
     }
 }
+

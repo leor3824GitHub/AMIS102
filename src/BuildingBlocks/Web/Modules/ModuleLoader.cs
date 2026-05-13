@@ -1,9 +1,9 @@
-﻿using FluentValidation;
+using FluentValidation;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Hosting;
 using System.Reflection;
 
-namespace FSH.Framework.Web.Modules;
+namespace AMIS.Framework.Web.Modules;
 
 public static class ModuleLoader
 {
@@ -29,7 +29,7 @@ public static class ModuleLoader
                 : AppDomain.CurrentDomain.GetAssemblies();
 
             var moduleRegistrations = source
-                .SelectMany(a => a.GetCustomAttributes<FshModuleAttribute>())
+                .SelectMany(a => a.GetCustomAttributes<AmisModuleAttribute>())
                 .Where(r => typeof(IModule).IsAssignableFrom(r.ModuleType))
                 .DistinctBy(r => r.ModuleType)
                 .OrderBy(r => r.Order)
@@ -61,3 +61,5 @@ public static class ModuleLoader
         return endpoints;
     }
 }
+
+

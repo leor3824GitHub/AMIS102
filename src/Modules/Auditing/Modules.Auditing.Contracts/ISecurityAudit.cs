@@ -1,4 +1,4 @@
-﻿namespace FSH.Modules.Auditing.Contracts;
+namespace AMIS.Modules.Auditing.Contracts;
 
 public interface ISecurityAudit
 {
@@ -7,3 +7,4 @@ public interface ISecurityAudit
     ValueTask TokenIssuedAsync(string userId, string userName, string clientId, string tokenFingerprint, DateTime expiresUtc, CancellationToken ct = default);
     ValueTask TokenRevokedAsync(string userId, string clientId, string reason, CancellationToken ct = default);
 }
+

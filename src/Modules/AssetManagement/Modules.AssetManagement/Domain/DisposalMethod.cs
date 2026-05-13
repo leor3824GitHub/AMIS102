@@ -1,4 +1,4 @@
-namespace FSH.Modules.AssetManagement.Domain;
+namespace AMIS.Modules.AssetManagement.Domain;
 
 /// <summary>
 /// Method of disposal used in the Inspection and Inventory Report of
@@ -22,3 +22,4 @@ public enum DisposalMethod
     /// <summary>Other disposal method not covered above.</summary>
     Others = 4,
 }
+

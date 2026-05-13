@@ -1,15 +1,15 @@
 using Finbuckle.MultiTenant.Abstractions;
-using FSH.Framework.Persistence;
-using FSH.Framework.Persistence.Context;
-using FSH.Framework.Shared.Multitenancy;
-using FSH.Framework.Shared.Persistence;
-using FSH.Modules.Finance.Domain.BudgetUtilizationRecords;
-using FSH.Modules.Finance.Domain.DisbursementVouchers;
+using AMIS.Framework.Persistence;
+using AMIS.Framework.Persistence.Context;
+using AMIS.Framework.Shared.Multitenancy;
+using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.Finance.Domain.BudgetUtilizationRecords;
+using AMIS.Modules.Finance.Domain.DisbursementVouchers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 
-namespace FSH.Modules.Finance.Data;
+namespace AMIS.Modules.Finance.Data;
 
 public class FinanceDbContext : BaseDbContext
 {
@@ -35,3 +35,4 @@ public class FinanceDbContext : BaseDbContext
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(FinanceDbContext).Assembly);
     }
 }
+

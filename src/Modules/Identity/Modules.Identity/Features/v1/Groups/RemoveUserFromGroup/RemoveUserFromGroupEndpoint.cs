@@ -1,12 +1,12 @@
-using FSH.Framework.Shared.Identity;
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.Identity.Contracts.v1.Groups.RemoveUserFromGroup;
+using AMIS.Framework.Shared.Identity;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.Identity.Contracts.v1.Groups.RemoveUserFromGroup;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.Identity.Features.v1.Groups.RemoveUserFromGroup;
+namespace AMIS.Modules.Identity.Features.v1.Groups.RemoveUserFromGroup;
 
 public static class RemoveUserFromGroupEndpoint
 {
@@ -20,3 +20,4 @@ public static class RemoveUserFromGroupEndpoint
         .WithDescription("Remove a specific user from a group.");
     }
 }
+

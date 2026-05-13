@@ -1,8 +1,8 @@
-using FSH.Modules.MasterData.Data;
+using AMIS.Modules.MasterData.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.MasterData.Features.v1.ModesOfProcurement.GetModeOfProcurementById;
+namespace AMIS.Modules.MasterData.Features.v1.ModesOfProcurement.GetModeOfProcurementById;
 
 public sealed class GetModeOfProcurementByIdQueryHandler : IQueryHandler<GetModeOfProcurementByIdQuery, ModeOfProcurementDetailsDto>
 {
@@ -35,3 +35,4 @@ public sealed class GetModeOfProcurementByIdQueryHandler : IQueryHandler<GetMode
             entity.LastModifiedBy);
     }
 }
+

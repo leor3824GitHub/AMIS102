@@ -1,6 +1,6 @@
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.SemiExpendableItems.GetSemiExpendableItemById;
+namespace AMIS.Modules.AssetManagement.Features.v1.SemiExpendableItems.GetSemiExpendableItemById;
 
 public sealed record GetPropertyItemCatalogByIdQuery(Guid Id) : IQuery<PropertyItemCatalogDetailsDto>;
 
@@ -17,3 +17,4 @@ public sealed record PropertyItemCatalogDetailsDto(
     string? CreatedBy,
     DateTimeOffset? LastModifiedOnUtc,
     string? LastModifiedBy);
+

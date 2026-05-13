@@ -1,9 +1,9 @@
-using FSH.Framework.Core.Exceptions;
-using FSH.Modules.AssetManagement.Data;
+using AMIS.Framework.Core.Exceptions;
+using AMIS.Modules.AssetManagement.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.ReceiptForReturnedProperties.GetRRSPById;
+namespace AMIS.Modules.AssetManagement.Features.v1.ReceiptForReturnedProperties.GetRRSPById;
 
 public sealed class GetRRSPByIdQueryHandler(AssetManagementDbContext dbContext)
     : IQueryHandler<GetRRSPByIdQuery, RRSPDetailsDto>
@@ -70,3 +70,4 @@ public sealed class GetRRSPByIdQueryHandler(AssetManagementDbContext dbContext)
             items);
     }
 }
+

@@ -1,8 +1,8 @@
-using FSH.Modules.Auditing.Contracts;
+using AMIS.Modules.Auditing.Contracts;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
-namespace FSH.Modules.Auditing;
+namespace AMIS.Modules.Auditing;
 
 /// <summary>
 /// Simple masking by field-name convention or attributes.
@@ -55,4 +55,5 @@ public sealed class JsonMaskingService : IAuditMaskingService
     private static bool ShouldMask(string key)
         => _maskKeywords.Any(k => key.Contains(k, StringComparison.OrdinalIgnoreCase));
 }
+
 

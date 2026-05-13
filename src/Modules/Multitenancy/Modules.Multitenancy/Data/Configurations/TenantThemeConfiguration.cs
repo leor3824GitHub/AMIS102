@@ -1,9 +1,9 @@
-using FSH.Framework.Shared.Multitenancy;
-using FSH.Modules.Multitenancy.Domain;
+using AMIS.Framework.Shared.Multitenancy;
+using AMIS.Modules.Multitenancy.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FSH.Modules.Multitenancy.Data.Configurations;
+namespace AMIS.Modules.Multitenancy.Data.Configurations;
 
 public class TenantThemeConfiguration : IEntityTypeConfiguration<TenantTheme>
 {
@@ -68,3 +68,4 @@ public class TenantThemeConfiguration : IEntityTypeConfiguration<TenantTheme>
         builder.Property(t => t.LastModifiedBy).HasMaxLength(256);
     }
 }
+

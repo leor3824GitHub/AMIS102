@@ -1,7 +1,7 @@
-using FSH.Modules.Auditing.Contracts;
+using AMIS.Modules.Auditing.Contracts;
 using System.Diagnostics;
 
-namespace FSH.Modules.Auditing;
+namespace AMIS.Modules.Auditing;
 
 /// <summary>
 /// Fluent entry-point to create and publish audit events.
@@ -204,3 +204,4 @@ public static class Audit
         public ValueTask PublishAsync(IAuditEvent auditEvent, CancellationToken ct = default) => ValueTask.CompletedTask;
     }
 }
+

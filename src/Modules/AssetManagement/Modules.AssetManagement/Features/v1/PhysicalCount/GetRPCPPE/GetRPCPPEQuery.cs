@@ -1,6 +1,6 @@
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.PhysicalCount.GetRPCPPE;
+namespace AMIS.Modules.AssetManagement.Features.v1.PhysicalCount.GetRPCPPE;
 
 /// <summary>
 /// Returns the Report on the Physical Count of PPE (RPCPPE) for a Physical Count Session.
@@ -58,3 +58,4 @@ public sealed record RPCPPESummaryDto(
     decimal? TotalBookValue,
     int TotalShortage,
     int TotalOverage);
+

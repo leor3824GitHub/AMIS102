@@ -1,7 +1,7 @@
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Modules.AssetManagement.Domain;
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.TangibleInventory.CreateTangibleInventory;
+namespace AMIS.Modules.AssetManagement.Features.v1.TangibleInventory.CreateTangibleInventory;
 
 public sealed record CreateTangibleInventoryCommand(
     string ReportNo,
@@ -28,3 +28,4 @@ public sealed record CreateTangibleInventoryResult(
     string ReportNo,
     int SEItemCount,
     int PPEItemCount);
+

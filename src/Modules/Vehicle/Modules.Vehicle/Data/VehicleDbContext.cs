@@ -1,17 +1,17 @@
 using Finbuckle.MultiTenant.Abstractions;
-using FSH.Framework.Persistence.Context;
-using FSH.Framework.Persistence;
-using FSH.Framework.Shared.Multitenancy;
-using FSH.Framework.Shared.Persistence;
-using FSH.Modules.Vehicle.Domain.FuelOdometer;
-using FSH.Modules.Vehicle.Domain.Maintenance;
-using FSH.Modules.Vehicle.Domain.Repairs;
-using VehicleEntity = FSH.Modules.Vehicle.Domain.Vehicles.Vehicle;
+using AMIS.Framework.Persistence.Context;
+using AMIS.Framework.Persistence;
+using AMIS.Framework.Shared.Multitenancy;
+using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.Vehicle.Domain.FuelOdometer;
+using AMIS.Modules.Vehicle.Domain.Maintenance;
+using AMIS.Modules.Vehicle.Domain.Repairs;
+using VehicleEntity = AMIS.Modules.Vehicle.Domain.Vehicles.Vehicle;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 
-namespace FSH.Modules.Vehicle.Data;
+namespace AMIS.Modules.Vehicle.Data;
 
 public class VehicleDbContext : BaseDbContext
 {
@@ -38,3 +38,4 @@ public class VehicleDbContext : BaseDbContext
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(VehicleDbContext).Assembly);
     }
 }
+

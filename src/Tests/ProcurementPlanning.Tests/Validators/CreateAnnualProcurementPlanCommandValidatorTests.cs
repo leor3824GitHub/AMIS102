@@ -1,5 +1,5 @@
-using FSH.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
-using FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.CreateAnnualProcurementPlan;
+using AMIS.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
+using AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.CreateAnnualProcurementPlan;
 using Shouldly;
 using Xunit;
 
@@ -36,3 +36,4 @@ public sealed class CreateAnnualProcurementPlanCommandValidatorTests
         result.Errors.ShouldContain(e => e.PropertyName == nameof(command.FiscalYear));
     }
 }
+

@@ -1,8 +1,8 @@
-using FSH.Modules.MasterData.Domain;
+using AMIS.Modules.MasterData.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FSH.Modules.MasterData.Data.Configurations;
+namespace AMIS.Modules.MasterData.Data.Configurations;
 
 public sealed class SupplierConfiguration : IEntityTypeConfiguration<Supplier>
 {
@@ -31,3 +31,4 @@ public sealed class SupplierConfiguration : IEntityTypeConfiguration<Supplier>
         builder.HasQueryFilter(x => !x.IsDeleted);
     }
 }
+

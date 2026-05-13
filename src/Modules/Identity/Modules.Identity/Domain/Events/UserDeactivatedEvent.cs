@@ -1,6 +1,6 @@
-using FSH.Framework.Core.Domain;
+using AMIS.Framework.Core.Domain;
 
-namespace FSH.Modules.Identity.Domain.Events;
+namespace AMIS.Modules.Identity.Domain.Events;
 
 /// <summary>Raised when a user account is deactivated.</summary>
 public sealed record UserDeactivatedEvent(
@@ -16,3 +16,4 @@ public sealed record UserDeactivatedEvent(
     public static UserDeactivatedEvent Create(string userId, string? deactivatedBy = null, string? reason = null, string? correlationId = null, string? tenantId = null)
         => new(Guid.NewGuid(), DateTimeOffset.UtcNow, userId, deactivatedBy, reason, correlationId, tenantId);
 }
+

@@ -1,13 +1,13 @@
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Framework.Shared.Persistence;
-using FSH.Modules.Vehicle.Contracts.v1.Vehicles;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.Vehicle.Contracts.v1.Vehicles;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.Vehicle.Features.v1.Vehicles.SearchVehicles;
+namespace AMIS.Modules.Vehicle.Features.v1.Vehicles.SearchVehicles;
 
 public static class SearchVehiclesEndpoint
 {
@@ -19,3 +19,4 @@ public static class SearchVehiclesEndpoint
         .Produces<PagedResponse<VehicleDto>>()
         .RequirePermission(VehicleModuleConstants.Permissions.Vehicles.View);
 }
+

@@ -1,7 +1,7 @@
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Modules.AssetManagement.Domain;
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.UnserviceablePropertyReports.CreateUnserviceablePropertyReport;
+namespace AMIS.Modules.AssetManagement.Features.v1.UnserviceablePropertyReports.CreateUnserviceablePropertyReport;
 
 /// <summary>
 /// Creates an Inspection and Inventory Report of Unserviceable Semi-Expendable
@@ -22,3 +22,4 @@ public sealed record CreateUnserviceablePropertyItemRequest(
     string? ConditionRemarks);
 
 public sealed record CreateUnserviceablePropertyReportResult(Guid ReportId, string ReportNo, int ItemCount);
+

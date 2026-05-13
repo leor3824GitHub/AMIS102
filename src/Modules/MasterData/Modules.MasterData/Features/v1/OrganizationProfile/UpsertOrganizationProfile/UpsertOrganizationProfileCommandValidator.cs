@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.MasterData.Contracts.v1.OrganizationProfile;
+using AMIS.Modules.MasterData.Contracts.v1.OrganizationProfile;
 
-namespace FSH.Modules.MasterData.Features.v1.OrganizationProfile.UpsertOrganizationProfile;
+namespace AMIS.Modules.MasterData.Features.v1.OrganizationProfile.UpsertOrganizationProfile;
 
 public sealed class UpsertOrganizationProfileCommandValidator : AbstractValidator<UpsertOrganizationProfileCommand>
 {
@@ -13,3 +13,4 @@ public sealed class UpsertOrganizationProfileCommandValidator : AbstractValidato
         RuleFor(x => x.LogoUrl).MaximumLength(500).When(x => x.LogoUrl is not null);
     }
 }
+

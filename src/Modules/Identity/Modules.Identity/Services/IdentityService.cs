@@ -1,26 +1,26 @@
 using Finbuckle.MultiTenant.Abstractions;
-using FSH.Framework.Core.Exceptions;
-using FSH.Framework.Shared.Constants;
-using FSH.Framework.Shared.Multitenancy;
-using FSH.Modules.Identity.Contracts.Services;
-using FSH.Modules.Identity.Domain;
+using AMIS.Framework.Core.Exceptions;
+using AMIS.Framework.Shared.Constants;
+using AMIS.Framework.Shared.Multitenancy;
+using AMIS.Modules.Identity.Contracts.Services;
+using AMIS.Modules.Identity.Domain;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
-namespace FSH.Modules.Identity.Services;
+namespace AMIS.Modules.Identity.Services;
 
 public sealed class IdentityService : IIdentityService
 {
-    private readonly UserManager<FshUser> _userManager;
+    private readonly UserManager<AmisUser> _userManager;
     private readonly ILogger<IdentityService> _logger;
     private readonly IMultiTenantContextAccessor<AppTenantInfo>? _multiTenantContextAccessor;
     private readonly IGroupRoleService _groupRoleService;
 
     public IdentityService(
-        UserManager<FshUser> userManager,
+        UserManager<AmisUser> userManager,
         IMultiTenantContextAccessor<AppTenantInfo>? multiTenantContextAccessor,
         ILogger<IdentityService> logger,
         IGroupRoleService groupRoleService)
@@ -129,7 +129,7 @@ public sealed class IdentityService : IIdentityService
         return tenant;
     }
 
-    private async Task<FshUser> FindAndValidateUserByCredentialsAsync(string email, string password)
+    private async Task<AmisUser> FindAndValidateUserByCredentialsAsync(string email, string password)
     {
         var user = await _userManager.FindByEmailAsync(email.Trim().Normalize());
         if (user is null || !await _userManager.CheckPasswordAsync(user, password))
@@ -140,7 +140,7 @@ public sealed class IdentityService : IIdentityService
         return user;
     }
 
-    private async Task<FshUser?> FindUserByRefreshTokenAsync(string refreshToken, string tenantId, CancellationToken ct)
+    private async Task<AmisUser?> FindUserByRefreshTokenAsync(string refreshToken, string tenantId, CancellationToken ct)
     {
         var hashedToken = HashToken(refreshToken);
 
@@ -160,7 +160,7 @@ public sealed class IdentityService : IIdentityService
         return user;
     }
 
-    private void ValidateRefreshTokenExpiry(FshUser user)
+    private void ValidateRefreshTokenExpiry(AmisUser user)
     {
         if (user.RefreshTokenExpiryTime <= DateTime.UtcNow)
         {
@@ -171,7 +171,7 @@ public sealed class IdentityService : IIdentityService
         }
     }
 
-    private static void ValidateUserStatus(FshUser user)
+    private static void ValidateUserStatus(AmisUser user)
     {
         if (!user.IsActive)
         {
@@ -202,14 +202,14 @@ public sealed class IdentityService : IIdentityService
         }
     }
 
-    private async Task<List<Claim>> BuildUserClaimsAsync(FshUser user, string tenantId, CancellationToken ct)
+    private async Task<List<Claim>> BuildUserClaimsAsync(AmisUser user, string tenantId, CancellationToken ct)
     {
         var claims = CreateBasicClaims(user, tenantId);
         await AddRoleClaimsAsync(claims, user, ct);
         return claims;
     }
 
-    private static List<Claim> CreateBasicClaims(FshUser user, string tenantId) =>
+    private static List<Claim> CreateBasicClaims(AmisUser user, string tenantId) =>
     [
         new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
         new(ClaimTypes.NameIdentifier, user.Id),
@@ -222,7 +222,7 @@ public sealed class IdentityService : IIdentityService
         new(ClaimConstants.ImageUrl, user.ImageUrl?.ToString() ?? string.Empty)
     ];
 
-    private async Task AddRoleClaimsAsync(List<Claim> claims, FshUser user, CancellationToken ct)
+    private async Task AddRoleClaimsAsync(List<Claim> claims, AmisUser user, CancellationToken ct)
     {
         var directRoles = await _userManager.GetRolesAsync(user);
         var groupRoles = await _groupRoleService.GetUserGroupRolesAsync(user.Id, ct);
@@ -238,3 +238,5 @@ public sealed class IdentityService : IIdentityService
         return Convert.ToBase64String(hash);
     }
 }
+
+

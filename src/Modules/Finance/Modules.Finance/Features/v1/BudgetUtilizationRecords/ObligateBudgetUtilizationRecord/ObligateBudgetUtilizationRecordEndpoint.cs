@@ -1,11 +1,11 @@
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.Finance.Contracts.v1.BudgetUtilizationRecords;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.Finance.Contracts.v1.BudgetUtilizationRecords;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.Finance.Features.v1.BudgetUtilizationRecords.ObligateBudgetUtilizationRecord;
+namespace AMIS.Modules.Finance.Features.v1.BudgetUtilizationRecords.ObligateBudgetUtilizationRecord;
 
 public static class ObligateBudgetUtilizationRecordEndpoint
 {
@@ -19,3 +19,4 @@ public static class ObligateBudgetUtilizationRecordEndpoint
         .WithSummary("Obligate a budget utilization record")
         .RequirePermission(FinanceModuleConstants.Permissions.BudgetUtilizationRecords.Obligate);
 }
+

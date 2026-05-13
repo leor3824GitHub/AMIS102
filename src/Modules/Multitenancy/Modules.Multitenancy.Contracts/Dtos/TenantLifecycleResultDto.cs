@@ -1,4 +1,4 @@
-namespace FSH.Modules.Multitenancy.Contracts.Dtos;
+namespace AMIS.Modules.Multitenancy.Contracts.Dtos;
 
 public sealed class TenantLifecycleResultDto
 {
@@ -10,3 +10,4 @@ public sealed class TenantLifecycleResultDto
 
     public string Message { get; set; } = string.Empty;
 }
+

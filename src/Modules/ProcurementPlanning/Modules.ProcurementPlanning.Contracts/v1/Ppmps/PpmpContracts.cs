@@ -1,7 +1,7 @@
-using FSH.Framework.Shared.Persistence;
+using AMIS.Framework.Shared.Persistence;
 using Mediator;
 
-namespace FSH.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
+namespace AMIS.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
 
 // ── Shared Enums ─────────────────────────────────────────────────────────────
 
@@ -159,3 +159,4 @@ public sealed record SearchPpmpsQuery : IQuery<PagedResponse<PpmpSummaryDto>>
     public int PageNumber { get; init; } = 1;
     public int PageSize { get; init; } = 20;
 }
+

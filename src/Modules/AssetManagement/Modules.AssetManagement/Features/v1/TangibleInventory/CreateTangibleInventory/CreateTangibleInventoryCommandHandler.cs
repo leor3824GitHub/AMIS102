@@ -1,11 +1,11 @@
-using FSH.Framework.Core.Context;
-using FSH.Modules.AssetManagement.Data;
-using FSH.Modules.AssetManagement.Domain;
-using FSH.Modules.MasterData.Contracts.v1.CapitalizationThresholds;
+using AMIS.Framework.Core.Context;
+using AMIS.Modules.AssetManagement.Data;
+using AMIS.Modules.AssetManagement.Domain;
+using AMIS.Modules.MasterData.Contracts.v1.CapitalizationThresholds;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.TangibleInventory.CreateTangibleInventory;
+namespace AMIS.Modules.AssetManagement.Features.v1.TangibleInventory.CreateTangibleInventory;
 
 public sealed class CreateTangibleInventoryCommandHandler(
     AssetManagementDbContext dbContext,
@@ -141,3 +141,4 @@ public sealed class CreateTangibleInventoryCommandHandler(
         return new CreateTangibleInventoryResult(inventory.Id, inventory.ReportNo, seCount, ppeCount);
     }
 }
+

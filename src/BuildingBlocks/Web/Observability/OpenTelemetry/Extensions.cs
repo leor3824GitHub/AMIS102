@@ -11,9 +11,9 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using System.Diagnostics;
-using static FSH.Framework.Web.Observability.OpenTelemetry.OpenTelemetryOptions;
+using static AMIS.Framework.Web.Observability.OpenTelemetry.OpenTelemetryOptions;
 
-namespace FSH.Framework.Web.Observability.OpenTelemetry;
+namespace AMIS.Framework.Web.Observability.OpenTelemetry;
 
 public static class Extensions
 {
@@ -119,7 +119,7 @@ public static class Extensions
                         }
                     })
                     .AddSource(builder.Environment.ApplicationName)
-                    .AddSource("FSH.Hangfire");
+                    .AddSource("AMIS.Hangfire");
 
                 if (options.Exporter.Otlp.Enabled)
                 {
@@ -185,3 +185,4 @@ public static class Extensions
         };
     }
 }
+

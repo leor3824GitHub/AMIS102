@@ -1,4 +1,4 @@
-namespace FSH.Modules.AssetRegister.Contracts.v1.ValueObjects;
+namespace AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
 
 /// <summary>
 /// Captures signatory identity + printed name + designation at the moment of
@@ -20,3 +20,4 @@ public sealed class EmployeeRef
             Designation = designation
         };
 }
+

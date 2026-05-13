@@ -1,10 +1,10 @@
-using FSH.Framework.Core.Context;
-using FSH.Modules.MasterData.Contracts.v1.ReportSignatories;
-using FSH.Modules.MasterData.Data;
+using AMIS.Framework.Core.Context;
+using AMIS.Modules.MasterData.Contracts.v1.ReportSignatories;
+using AMIS.Modules.MasterData.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.MasterData.Features.v1.ReportSignatories.UpdateReportSignatory;
+namespace AMIS.Modules.MasterData.Features.v1.ReportSignatories.UpdateReportSignatory;
 
 public sealed class UpdateReportSignatoryCommandHandler(MasterDataDbContext db, ICurrentUser currentUser)
     : ICommandHandler<UpdateReportSignatoryCommand, ReportSignatoryDto>
@@ -39,3 +39,4 @@ public sealed class UpdateReportSignatoryCommandHandler(MasterDataDbContext db, 
         return new ReportSignatoryDto(entity.Id, entity.ReportType, entity.SortOrder, entity.Label, entity.Name, entity.Title, entity.IsActive);
     }
 }
+

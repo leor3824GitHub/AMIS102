@@ -1,13 +1,13 @@
-using FSH.Framework.Shared.Persistence;
-using FSH.Modules.Expendable.Contracts.v1.Requests;
-using FSH.Framework.Shared.Identity.Authorization;
+using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.Expendable.Contracts.v1.Requests;
+using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.Expendable.Features.v1.Reports.GetEmployeeIssuanceHistory;
+namespace AMIS.Modules.Expendable.Features.v1.Reports.GetEmployeeIssuanceHistory;
 
 public static class GetEmployeeIssuanceHistoryEndpoint
 {
@@ -27,3 +27,4 @@ public static class GetEmployeeIssuanceHistoryEndpoint
         return TypedResults.Ok(result);
     }
 }
+

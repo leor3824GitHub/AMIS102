@@ -1,14 +1,14 @@
-using FSH.Modules.AssetRegister.Contracts.v1;
-using FSH.Modules.AssetRegister.Contracts.v1.Counting;
-using FSH.Modules.AssetRegister.Data;
-using FSH.Modules.AssetRegister.Domain.Assets;
-using FSH.Modules.AssetRegister.Domain.Catalog;
-using FSH.Modules.AssetRegister.Domain.Services;
+using AMIS.Modules.AssetRegister.Contracts.v1;
+using AMIS.Modules.AssetRegister.Contracts.v1.Counting;
+using AMIS.Modules.AssetRegister.Data;
+using AMIS.Modules.AssetRegister.Domain.Assets;
+using AMIS.Modules.AssetRegister.Domain.Catalog;
+using AMIS.Modules.AssetRegister.Domain.Services;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Counting.ReconcilePhysicalCount;
+namespace AMIS.Modules.AssetRegister.Features.v1.Counting.ReconcilePhysicalCount;
 
 public sealed class ReconcilePhysicalCountCommandHandler(
     AssetRegisterDbContext db,
@@ -96,3 +96,4 @@ public sealed class ReconcilePhysicalCountCommandHandler(
             : (AssetType.SE, AssetCategory.LowValuedSemi);
     }
 }
+

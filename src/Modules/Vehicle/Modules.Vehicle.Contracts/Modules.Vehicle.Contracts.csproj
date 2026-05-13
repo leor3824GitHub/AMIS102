@@ -1,9 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<RootNamespace>FSH.Modules.Vehicle.Contracts</RootNamespace>
-		<AssemblyName>FSH.Modules.Vehicle.Contracts</AssemblyName>
-		<PackageId>FullStackHero.Modules.Vehicle.Contracts</PackageId>
+		<RootNamespace>AMIS.Modules.Vehicle.Contracts</RootNamespace>
+		<AssemblyName>AMIS.Modules.Vehicle.Contracts</AssemblyName>
+		<PackageId>AMIS.Modules.Vehicle.Contracts</PackageId>
 		<NoWarn>$(NoWarn);CA1002;CA1056;CS1572;S2094</NoWarn>
 	</PropertyGroup>
 
@@ -17,3 +17,4 @@
 	</ItemGroup>
 
 </Project>
+

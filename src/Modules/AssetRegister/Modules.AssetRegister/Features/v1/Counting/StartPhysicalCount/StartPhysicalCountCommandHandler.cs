@@ -1,12 +1,12 @@
 using System.Globalization;
-using FSH.Modules.AssetRegister.Contracts.v1.Counting;
-using FSH.Modules.AssetRegister.Contracts.v1.ValueObjects;
-using FSH.Modules.AssetRegister.Data;
-using FSH.Modules.AssetRegister.Data.Services;
-using FSH.Modules.AssetRegister.Domain.Counting;
+using AMIS.Modules.AssetRegister.Contracts.v1.Counting;
+using AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
+using AMIS.Modules.AssetRegister.Data;
+using AMIS.Modules.AssetRegister.Data.Services;
+using AMIS.Modules.AssetRegister.Domain.Counting;
 using Mediator;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Counting.StartPhysicalCount;
+namespace AMIS.Modules.AssetRegister.Features.v1.Counting.StartPhysicalCount;
 
 public sealed class StartPhysicalCountCommandHandler(
     AssetRegisterDbContext db, CounterAllocator allocator)
@@ -33,3 +33,4 @@ public sealed class StartPhysicalCountCommandHandler(
         return CountingMapper.ToDto(session);
     }
 }
+

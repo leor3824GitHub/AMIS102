@@ -1,9 +1,9 @@
 @page "/asset-management/ppe-items"
-@using FSH.Playground.Blazor.ApiClient
+@using AMIS.Playground.Blazor.ApiClient
 @inject IPPEItemClient Client
 @inject ISnackbar Snackbar
 
-<FshPageHeader Title="PPE Items"
+<AMISPageHeader Title="PPE Items"
                Description="View all Property, Plant & Equipment items registered in the system. Items are created automatically when a PPERR is submitted." />
 
 <MudCard Elevation="1">
@@ -54,10 +54,10 @@
                         <tr>
                             <td><b>@item.PropertyCode</b></td>
                             <td>@item.PropertyNumber</td>
-                            <td>@(item.Description.Length > 50 ? item.Description[..50] + "â€¦" : item.Description)</td>
-                            <td>@(item.SerialNumber ?? "â€”")</td>
+                            <td>@(item.Description.Length > 50 ? item.Description[..50] + "…" : item.Description)</td>
+                            <td>@(item.SerialNumber ?? "—")</td>
                             <td>@item.DateAcquired.ToString("MM/dd/yyyy")</td>
-                            <td>â‚±@item.UnitCost.ToString("N2")</td>
+                            <td>?@item.UnitCost.ToString("N2")</td>
                             <td>@StatusChip(item.Status)</td>
                             <td><MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small"
                                                Color="Color.Primary" OnClick="@(() => ViewAsync(item.Id))" /></td>
@@ -81,7 +81,7 @@
         <MudCardHeader>
             <CardHeaderContent>
                 <MudStack Row="true" AlignItems="AlignItems.Center">
-                    <MudText Typo="Typo.h6">@_detail.PropertyCode â€” @_detail.PropertyNumber</MudText>
+                    <MudText Typo="Typo.h6">@_detail.PropertyCode — @_detail.PropertyNumber</MudText>
                     <MudSpacer />
                     <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="@(() => _detail = null)" />
                 </MudStack>
@@ -95,7 +95,7 @@
                     <MudItem xs="6"><MudText Typo="Typo.caption">Serial No.</MudText><MudText>@_detail.SerialNumber</MudText></MudItem>
                 }
                 <MudItem xs="6"><MudText Typo="Typo.caption">Date Acquired</MudText><MudText>@_detail.DateAcquired.ToString("MMMM dd, yyyy")</MudText></MudItem>
-                <MudItem xs="6"><MudText Typo="Typo.caption">Unit Cost</MudText><MudText><b>â‚±@_detail.UnitCost.ToString("N2")</b></MudText></MudItem>
+                <MudItem xs="6"><MudText Typo="Typo.caption">Unit Cost</MudText><MudText><b>?@_detail.UnitCost.ToString("N2")</b></MudText></MudItem>
                 <MudItem xs="6"><MudText Typo="Typo.caption">Est. Useful Life</MudText><MudText>@_detail.EstimatedUsefulLifeYears year(s)</MudText></MudItem>
                 <MudItem xs="6"><MudText Typo="Typo.caption">Status</MudText>
                     @StatusChip(_detail.Status)
@@ -155,3 +155,4 @@
         __builder.CloseComponent();
     };
 }
+

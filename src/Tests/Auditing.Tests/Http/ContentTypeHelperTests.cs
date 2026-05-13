@@ -17,8 +17,8 @@ public sealed class ContentTypeHelperTests
     // Use reflection to access internal static class
     private static bool IsJsonLike(string? contentType, ISet<string> allowed)
     {
-        var assembly = typeof(FSH.Modules.Auditing.AuditingModule).Assembly;
-        var helperType = assembly.GetType("FSH.Modules.Auditing.ContentTypeHelper");
+        var assembly = typeof(AMIS.Modules.Auditing.AuditingModule).Assembly;
+        var helperType = assembly.GetType("AMIS.Modules.Auditing.ContentTypeHelper");
         helperType.ShouldNotBeNull("ContentTypeHelper type should exist");
 
         var method = helperType.GetMethod("IsJsonLike", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
@@ -202,3 +202,4 @@ public sealed class ContentTypeHelperTests
         result.ShouldBeFalse();
     }
 }
+

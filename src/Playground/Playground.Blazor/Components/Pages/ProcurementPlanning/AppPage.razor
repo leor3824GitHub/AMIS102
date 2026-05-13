@@ -1,21 +1,21 @@
 @page "/procurement-planning/apps"
-@using FSH.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans
-@using FSH.Modules.ProcurementPlanning.Contracts.v1.Ppmps
-@using FSH.Framework.Shared.Persistence
-@using FSH.Playground.Blazor.ApiClient
-@using FSH.Playground.Blazor.Components.Shared
+@using AMIS.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans
+@using AMIS.Modules.ProcurementPlanning.Contracts.v1.Ppmps
+@using AMIS.Framework.Shared.Persistence
+@using AMIS.Playground.Blazor.ApiClient
+@using AMIS.Playground.Blazor.Components.Shared
 @inject IAppClient AppClient
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 
-<FshPageHeader Title="Annual Procurement Plan (APP)"
+<AMISPageHeader Title="Annual Procurement Plan (APP)"
                Description="Consolidate approved PPMPs and manage the annual procurement plan" />
 
 <MudCard Elevation="1">
     <MudTabs @bind-ActivePanelIndex="_activeTab" Elevation="0" Rounded="false" ApplyEffectsToContainer="true"
              PanelClass="pa-4" Color="Color.Primary">
 
-        <!-- ══ LIST TAB ══════════════════════════════════════════════════ -->
+        <!-- -- LIST TAB -------------------------------------------------- -->
         <MudTabPanel Text="List" Icon="@Icons.Material.Outlined.ListAlt">
             <MudStack Row="true" Spacing="2" Class="mb-3" AlignItems="AlignItems.Center">
                 <MudTextField @bind-Value="_search" Placeholder="Search APP number..." Adornment="Adornment.Start"
@@ -89,7 +89,7 @@
                                 <td>@StatusChip(row.Status)</td>
                                 <td style="text-align:right">@row.ItemCount</td>
                                 <td style="text-align:right; font-weight:600">
-                                    ₱ @row.TotalEstimatedBudget.ToString("N2")
+                                    ? @row.TotalEstimatedBudget.ToString("N2")
                                 </td>
                                 <td @onclick:stopPropagation="true">
                                     @if (row.Status == AppStatus.Draft)
@@ -124,11 +124,11 @@
             }
         </MudTabPanel>
 
-        <!-- ══ DETAIL / CREATE TAB ══════════════════════════════════════ -->
+        <!-- -- DETAIL / CREATE TAB -------------------------------------- -->
         <MudTabPanel Text="@(_editing is null ? "+ New APP" : $"Manage {_editing.AppNumber}")"
                      Icon="@(_editing is null ? Icons.Material.Outlined.Add : Icons.Material.Outlined.Description)">
 
-            <!-- ── Action bar ─────────────────────────────────────────── -->
+            <!-- -- Action bar ------------------------------------------- -->
             <MudPaper Elevation="0" Class="pa-3 mb-3 rounded"
                       Style="background:var(--mud-palette-background-grey); border:1px solid var(--mud-palette-lines-default)">
                 <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap">
@@ -138,7 +138,7 @@
                         <MudStack Spacing="0">
                             <MudText Typo="Typo.subtitle1" Style="font-weight:700">@(_editing.AppNumber)</MudText>
                             <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                FY @(_editing.FiscalYear) · v@(_editing.VersionNumber) · @(_editing.Phase)
+                                FY @(_editing.FiscalYear) � v@(_editing.VersionNumber) � @(_editing.Phase)
                             </MudText>
                         </MudStack>
                         @StatusChip(_editing.Status)
@@ -158,7 +158,7 @@
                                 <MudChip T="Guid" Value="v.Id" Size="Size.Small"
                                          Color="@(v.IsCurrentVersion ? Color.Primary : Color.Default)"
                                          OnClick="@(() => LoadVersionAsync(v.Id))">
-                                    v@(v.VersionNumber) · @v.Status
+                                    v@(v.VersionNumber) � @v.Status
                                 </MudChip>
                             }
                         </MudChipSet>
@@ -226,7 +226,7 @@
                 </MudStack>
             </MudPaper>
 
-            <!-- ── Status alerts ──────────────────────────────────────── -->
+            <!-- -- Status alerts ---------------------------------------- -->
             @if (_editing is not null && _editing.Status == AppStatus.Returned)
             {
                 <MudAlert Severity="Severity.Error" Dense="true" Class="mb-3">
@@ -265,7 +265,7 @@
 
             @if (_editing is null)
             {
-                        <!-- ── New APP form ─────────────────────────────────────── -->
+                        <!-- -- New APP form --------------------------------------- -->
                         <MudGrid Spacing="2" Class="mb-3">
                             <MudItem xs="12" sm="4">
                                 <MudNumericField @bind-Value="_newFiscalYear" Label="Fiscal Year *" Variant="Variant.Outlined"
@@ -285,7 +285,7 @@
                     }
                     else
                     {
-                        <!-- ── APP meta summary ───────────────────────────────── -->
+                        <!-- -- APP meta summary --------------------------------- -->
                         <MudGrid Spacing="2" Class="mb-4">
                             <MudItem xs="6" sm="3">
                                 <MudText Typo="Typo.caption" Color="Color.Secondary">APP Number</MudText>
@@ -304,7 +304,7 @@
                             <MudItem xs="6" sm="3">
                                 <MudText Typo="Typo.caption" Color="Color.Secondary">Total Budget</MudText>
                                 <MudText Typo="Typo.body2" Color="Color.Primary" Style="font-weight:700">
-                                    ₱ @_editing.TotalEstimatedBudget.ToString("N2")
+                                    ? @_editing.TotalEstimatedBudget.ToString("N2")
                                 </MudText>
                             </MudItem>
                             @if (_editing.ConsolidatedOn.HasValue)
@@ -324,7 +324,7 @@
                             }
                         </MudGrid>
 
-                        <!-- ── Consolidation Panel (Draft or Returned) ───────────────── -->
+                        <!-- -- Consolidation Panel (Draft or Returned) ----------------- -->
                         @if (_editing.Status is AppStatus.Draft or AppStatus.Returned)
                         {
                             <MudExpansionPanels Elevation="0" Class="mb-4">
@@ -360,7 +360,7 @@
                                                     <th>Office</th>
                                                     <th>End-User / Section</th>
                                                     <th style="text-align:right">Items</th>
-                                                    <th style="text-align:right">Budget (₱)</th>
+                                                    <th style="text-align:right">Budget (?)</th>
                                                     <th style="width:110px"></th>
                                                 </tr>
                                             </thead>
@@ -385,7 +385,7 @@
                                                         <td>@ppmp.EndUserUnit</td>
                                                         <td style="text-align:right">@ppmp.ItemCount</td>
                                                         <td style="text-align:right; font-weight:600">
-                                                            ₱ @ppmp.TotalEstimatedBudget.ToString("N2")
+                                                            ? @ppmp.TotalEstimatedBudget.ToString("N2")
                                                         </td>
                                                         <td>
                                                             @if (isConsolidated)
@@ -404,8 +404,8 @@
 
                                         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
                                             <MudText Typo="Typo.caption">
-                                                @_selectedPpmpIds.Count of @selectablePpmps.Count available selected ·
-                                                ₱ @selectablePpmps.Where(p => _selectedPpmpIds.Contains(p.Id)).Sum(p =>
+                                                @_selectedPpmpIds.Count of @selectablePpmps.Count available selected �
+                                                ? @selectablePpmps.Where(p => _selectedPpmpIds.Contains(p.Id)).Sum(p =>
                                                                                 p.TotalEstimatedBudget).ToString("N2") to add
                                             </MudText>
                                             <MudSpacer />
@@ -424,7 +424,7 @@
                             </MudExpansionPanels>
                         }
 
-                        <!-- ── Consolidated Items Table ───────────────────────── -->
+                        <!-- -- Consolidated Items Table ------------------------- -->
                         <MudText Typo="Typo.subtitle2" Style="font-weight:600" Class="mb-2">
                             Consolidated Items (@_editing.Items.Count)
                         </MudText>
@@ -448,11 +448,11 @@
                                                 @officeGroup.Key
                                             </MudText>
                                             <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                                · @officeGroup.First().EndUserUnit
+                                                � @officeGroup.First().EndUserUnit
                                             </MudText>
                                             <MudSpacer />
                                             <MudText Typo="Typo.caption" Style="font-weight:600; color:var(--mud-palette-primary)">
-                                                ₱ @officeGroup.Sum(i => i.EstimatedBudget).ToString("N2")
+                                                ? @officeGroup.Sum(i => i.EstimatedBudget).ToString("N2")
                                             </MudText>
                                         </MudStack>
                                     </div>
@@ -468,7 +468,7 @@
                                                     <th style="text-align:right">Qty</th>
                                                     <th>Unit</th>
                                                     <th style="width:120px">Schedule</th>
-                                                    <th style="text-align:right; width:130px">Budget (₱)</th>
+                                                    <th style="text-align:right; width:130px">Budget (?)</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -494,13 +494,13 @@
                                                         <td style="text-align:right">@item.Quantity.ToString("N2")</td>
                                                         <td style="font-family:monospace">@item.Unit</td>
                                                         <td>
-                                                            <MudText Typo="Typo.caption">@item.ProcurementStart – @item.ProcurementEnd
+                                                            <MudText Typo="Typo.caption">@item.ProcurementStart � @item.ProcurementEnd
                                                             </MudText>
                                                             <MudText Typo="Typo.caption" Color="Color.Secondary">Del: @item.ExpectedDelivery
                                                             </MudText>
                                                         </td>
                                                         <td style="text-align:right; font-weight:600">
-                                                            ₱ @item.EstimatedBudget.ToString("N2")
+                                                            ? @item.EstimatedBudget.ToString("N2")
                                                         </td>
                                                     </tr>
                                                 }
@@ -526,7 +526,7 @@
                                         <MudText Typo="Typo.caption" Color="Color.Secondary">(@typeGroup.Count() items)</MudText>
                                         <MudSpacer />
                                         <MudText Typo="Typo.body2" Style="font-weight:600">
-                                            ₱ @typeGroup.Sum(i => i.EstimatedBudget).ToString("N2")
+                                            ? @typeGroup.Sum(i => i.EstimatedBudget).ToString("N2")
                                         </MudText>
                                     </MudStack>
                                 }
@@ -535,7 +535,7 @@
                                     <MudText Typo="Typo.subtitle1" Style="font-weight:700">Grand Total</MudText>
                                     <MudSpacer />
                                     <MudText Typo="Typo.subtitle1" Color="Color.Primary" Style="font-weight:700">
-                                        ₱ @_editing.TotalEstimatedBudget.ToString("N2")
+                                        ? @_editing.TotalEstimatedBudget.ToString("N2")
                                     </MudText>
                                 </MudStack>
                             </MudStack>
@@ -546,7 +546,7 @@
         </MudCard>
 
 @code {
-    // ── State ────────────────────────────────────────────────────────
+    // -- State --------------------------------------------------------
     private int _activeTab;
     private List<AnnualProcurementPlanSummaryDto> _items = [];
     private List<AnnualProcurementPlanSummaryDto> _versions = [];
@@ -564,11 +564,11 @@
     private const int PageSize = 15;
     private Guid _selectedVersionId;
 
-    // ── New APP form ─────────────────────────────────────────────────
+    // -- New APP form -------------------------------------------------
     private int _newFiscalYear = DateTime.Now.Year + 1;
     private AppPhase _newPhase = AppPhase.Indicative;
 
-    // ── Consolidation state ──────────────────────────────────────────
+    // -- Consolidation state ------------------------------------------
     private List<PpmpSummaryDto> _availablePpmps = [];
     private readonly HashSet<Guid> _selectedPpmpIds = [];
 
@@ -576,7 +576,7 @@
 
     protected override async Task OnInitializedAsync() => await LoadAsync();
 
-    // ── Load list ────────────────────────────────────────────────────
+    // -- Load list ----------------------------------------------------
     private async Task LoadAsync()
     {
         _loading = true;
@@ -593,7 +593,7 @@
         finally { _loading = false; }
     }
 
-    // ── Select / version ─────────────────────────────────────────────
+    // -- Select / version ---------------------------------------------
     private async Task SelectAppAsync(Guid id)
     {
         _busy = true;
@@ -637,7 +637,7 @@
         finally { _loadingPpmps = false; }
     }
 
-    // ── New APP ──────────────────────────────────────────────────────
+    // -- New APP ------------------------------------------------------
     private void StartNew()
     {
         _editing = null;
@@ -676,7 +676,7 @@
         _activeTab = 0;
     }
 
-    // ── Consolidation ────────────────────────────────────────────────
+    // -- Consolidation ------------------------------------------------
     private void TogglePpmpSelection(Guid id)
     {
         if (!_selectedPpmpIds.Add(id))
@@ -707,7 +707,7 @@
         finally { _busy = false; }
     }
 
-    // ── Workflow actions ─────────────────────────────────────────────
+    // -- Workflow actions ---------------------------------------------
     private async Task PublishAsync()
     {
         if (_editing is null) return;
@@ -796,7 +796,7 @@
         }
     }
 
-    // ── Delete ──────────────────────────────────────────────────────
+    // -- Delete ------------------------------------------------------
     private async Task DeleteAsync()
     {
         if (_editing is null) return;
@@ -836,7 +836,7 @@
         finally { _busy = false; }
     }
 
-    // ── Quick actions from list ──────────────────────────────────────
+    // -- Quick actions from list --------------------------------------
     private async Task QuickPublishAsync(AnnualProcurementPlanSummaryDto row)
     {
         var confirmed = await DialogService.ShowMessageBox(
@@ -879,13 +879,13 @@
         finally { _busy = false; }
     }
 
-    // ── Filter / pagination ──────────────────────────────────────────
+    // -- Filter / pagination ------------------------------------------
     private async Task OnFyFilterChanged(int? val) { _filterFiscalYear = val; _page = 1; await LoadAsync(); }
     private async Task OnStatusFilterChanged(AppStatus? val) { _filterStatus = val; _page = 1; await LoadAsync(); }
     private async Task OnPhaseFilterChanged(AppPhase? val) { _filterPhase = val; _page = 1; await LoadAsync(); }
     private async Task OnPageChanged(int page) { _page = page; await LoadAsync(); }
 
-    // ── Helpers ──────────────────────────────────────────────────────
+    // -- Helpers ------------------------------------------------------
     private RenderFragment StatusChip(AppStatus status) =>
         @<MudChip T="string" Size="Size.Small" Color="@StatusColor(status)" Icon="@StatusIcon(status)" Label="true">@status
         </MudChip>;
@@ -918,3 +918,4 @@
         _ => Color.Default
     };
 }
+

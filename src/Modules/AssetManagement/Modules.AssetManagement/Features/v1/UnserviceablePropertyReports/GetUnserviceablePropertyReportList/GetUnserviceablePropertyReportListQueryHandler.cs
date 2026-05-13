@@ -1,8 +1,8 @@
-using FSH.Modules.AssetManagement.Data;
+using AMIS.Modules.AssetManagement.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.UnserviceablePropertyReports.GetUnserviceablePropertyReportList;
+namespace AMIS.Modules.AssetManagement.Features.v1.UnserviceablePropertyReports.GetUnserviceablePropertyReportList;
 
 public sealed class GetUnserviceablePropertyReportListQueryHandler(AssetManagementDbContext dbContext)
     : IQueryHandler<GetUnserviceablePropertyReportListQuery, PagedUnserviceablePropertyReportListResponse>
@@ -82,3 +82,4 @@ public sealed class GetUnserviceablePropertyReportListQueryHandler(AssetManageme
         return new PagedUnserviceablePropertyReportListResponse(result, pageNumber, pageSize, totalCount);
     }
 }
+

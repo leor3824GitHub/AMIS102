@@ -1,4 +1,4 @@
-﻿namespace FSH.Modules.Auditing.Contracts;
+namespace AMIS.Modules.Auditing.Contracts;
 
 public sealed class AuditHttpOptions
 {
@@ -22,3 +22,4 @@ public sealed class AuditHttpOptions
 
     public AuditSeverity MinExceptionSeverity { get; set; } = AuditSeverity.Error;
 }
+

@@ -1,9 +1,9 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace FSH.Playground.Migrations.PostgreSQL.Finance
+namespace AMIS.Playground.Migrations.PostgreSQL.Finance
 {
     /// <inheritdoc />
     public partial class InitialFinance : Migration
@@ -139,3 +139,4 @@ namespace FSH.Playground.Migrations.PostgreSQL.Finance
         }
     }
 }
+

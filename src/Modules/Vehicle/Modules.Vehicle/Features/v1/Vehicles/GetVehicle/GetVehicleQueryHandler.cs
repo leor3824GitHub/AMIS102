@@ -1,10 +1,10 @@
-using FSH.Modules.Vehicle.Contracts.v1.Vehicles;
-using FSH.Modules.Vehicle.Data;
-using FSH.Modules.Vehicle.Features.v1.Vehicles;
+using AMIS.Modules.Vehicle.Contracts.v1.Vehicles;
+using AMIS.Modules.Vehicle.Data;
+using AMIS.Modules.Vehicle.Features.v1.Vehicles;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.Vehicle.Features.v1.Vehicles.GetVehicle;
+namespace AMIS.Modules.Vehicle.Features.v1.Vehicles.GetVehicle;
 
 public sealed class GetVehicleQueryHandler(VehicleDbContext db)
     : IQueryHandler<GetVehicleQuery, VehicleDto?>
@@ -18,3 +18,4 @@ public sealed class GetVehicleQueryHandler(VehicleDbContext db)
         return vehicle?.ToDto();
     }
 }
+

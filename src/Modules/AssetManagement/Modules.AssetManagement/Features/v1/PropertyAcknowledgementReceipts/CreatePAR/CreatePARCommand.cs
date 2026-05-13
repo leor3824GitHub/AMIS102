@@ -1,7 +1,7 @@
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Modules.AssetManagement.Domain;
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.PropertyAcknowledgementReceipts.CreatePAR;
+namespace AMIS.Modules.AssetManagement.Features.v1.PropertyAcknowledgementReceipts.CreatePAR;
 
 public sealed record CreatePARCommand(
     string PARNo,
@@ -22,3 +22,4 @@ public sealed record CreatePARResult(
     Guid PARId,
     string PARNo,
     int ItemCount);
+

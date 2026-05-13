@@ -1,4 +1,4 @@
-namespace FSH.Modules.Identity.Contracts.Services;
+namespace AMIS.Modules.Identity.Contracts.Services;
 
 /// <summary>
 /// Service for user password operations.
@@ -20,3 +20,4 @@ public interface IUserPasswordService
     /// </summary>
     Task ChangePasswordAsync(string password, string newPassword, string confirmNewPassword, string userId);
 }
+

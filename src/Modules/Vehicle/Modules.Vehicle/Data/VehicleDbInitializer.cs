@@ -1,11 +1,11 @@
-using FSH.Framework.Persistence;
-using FSH.Framework.Shared.Multitenancy;
-using FSH.Modules.Vehicle.Domain.Vehicles;
+using AMIS.Framework.Persistence;
+using AMIS.Framework.Shared.Multitenancy;
+using AMIS.Modules.Vehicle.Domain.Vehicles;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using VehicleEntity = FSH.Modules.Vehicle.Domain.Vehicles.Vehicle;
+using VehicleEntity = AMIS.Modules.Vehicle.Domain.Vehicles.Vehicle;
 
-namespace FSH.Modules.Vehicle.Data;
+namespace AMIS.Modules.Vehicle.Data;
 
 internal sealed class VehicleDbInitializer(
     ILogger<VehicleDbInitializer> logger,
@@ -77,3 +77,4 @@ internal sealed class VehicleDbInitializer(
         logger.LogInformation("[{Tenant}] vehicle module seed completed", context.TenantInfo?.Identifier);
     }
 }
+

@@ -1,14 +1,14 @@
 @page "/groups"
-@using FSH.Playground.Blazor.ApiClient
-@using FSH.Framework.Blazor.UI.Components.Dialogs
-@using FSH.Framework.Blazor.UI.Components.Cards
+@using AMIS.Playground.Blazor.ApiClient
+@using AMIS.Framework.Blazor.UI.Components.Dialogs
+@using AMIS.Framework.Blazor.UI.Components.Cards
 @inherits ComponentBase
 @inject IIdentityClient IdentityClient
 @inject NavigationManager Navigation
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 
-<FshPageHeader Title="Groups"
+<AMISPageHeader Title="Groups"
                Description="Manage user groups and role assignments">
     <ActionContent>
         @if (_selectedGroups.Any())
@@ -33,33 +33,33 @@
             New Group
         </MudButton>
     </ActionContent>
-</FshPageHeader>
+</AMISPageHeader>
 
 @* Stats Cards *@
 <MudGrid Class="mb-4">
     <MudItem xs="6" sm="3">
-        <FshStatCard Icon="@Icons.Material.Filled.Groups"
+        <AMISStatCard Icon="@Icons.Material.Filled.Groups"
                      IconColor="Color.Primary"
                      Value="@_stats.Total.ToString()"
                      Label="Total Groups"
                      Badge="Total" />
     </MudItem>
     <MudItem xs="6" sm="3">
-        <FshStatCard Icon="@Icons.Material.Filled.Lock"
+        <AMISStatCard Icon="@Icons.Material.Filled.Lock"
                      IconColor="Color.Warning"
                      Value="@_stats.SystemGroups.ToString()"
                      Label="System Groups"
                      Badge="System" />
     </MudItem>
     <MudItem xs="6" sm="3">
-        <FshStatCard Icon="@Icons.Material.Filled.GroupAdd"
+        <AMISStatCard Icon="@Icons.Material.Filled.GroupAdd"
                      IconColor="Color.Success"
                      Value="@_stats.DefaultGroups.ToString()"
                      Label="Default Groups"
                      Badge="Default" />
     </MudItem>
     <MudItem xs="6" sm="3">
-        <FshStatCard Icon="@Icons.Material.Filled.Edit"
+        <AMISStatCard Icon="@Icons.Material.Filled.Edit"
                      IconColor="Color.Info"
                      Value="@_stats.CustomGroups.ToString()"
                      Label="Custom Groups"
@@ -69,7 +69,7 @@
 
 @* Filter Panel *@
 <MudExpansionPanels Class="mb-4" Elevation="0">
-    <MudExpansionPanel Text="Filters" IsInitiallyExpanded="true" Class="fsh-card">
+    <MudExpansionPanel Text="Filters" IsInitiallyExpanded="true" Class="AMIS-card">
         <MudGrid GutterSize="2">
             <MudItem xs="12" sm="6">
                 <MudTextField @bind-Value="_filter.Search"
@@ -101,7 +101,7 @@
 </MudExpansionPanels>
 
 @* Groups Grid *@
-<MudPaper Class="fsh-card pa-0" Style="overflow: hidden;">
+<MudPaper Class="AMIS-card pa-0" Style="overflow: hidden;">
     <MudDataGrid T="GroupDto"
                  @ref="_dataGrid"
                  Items="_filtered"
@@ -472,3 +472,4 @@
         await LoadData();
     }
 }
+

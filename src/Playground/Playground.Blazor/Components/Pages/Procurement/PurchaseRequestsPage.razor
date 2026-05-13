@@ -1,8 +1,8 @@
 @page "/procurement/purchase-requests"
-@using FSH.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests
-@using FSH.Framework.Shared.Persistence
-@using FSH.Playground.Blazor.ApiClient
-@using FSH.Playground.Blazor.Components.Shared
+@using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests
+@using AMIS.Framework.Shared.Persistence
+@using AMIS.Playground.Blazor.ApiClient
+@using AMIS.Playground.Blazor.Components.Shared
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Components.Authorization
 @inject IPurchaseRequestClient Client
@@ -12,7 +12,7 @@
 @inject IDialogService DialogService
 @inject AuthenticationStateProvider AuthStateProvider
 
-<FshPageHeader Title="Purchase Requests" Description="Manage procurement purchase requests (PR)" />
+<AMISPageHeader Title="Purchase Requests" Description="Manage procurement purchase requests (PR)" />
 
 <MudGrid Spacing="3">
     <!-- Form Panel -->
@@ -166,7 +166,7 @@
                                             @item.PrType
                                         </MudChip>
                                     </td>
-                                    <td style="text-align:right">₱@item.TotalEstimatedCost.ToString("N2")</td>
+                                    <td style="text-align:right">?@item.TotalEstimatedCost.ToString("N2")</td>
                                     <td>@StatusChip(item.Status)</td>
                                     <td>
                                         <MudStack Row="true" Spacing="0">
@@ -540,3 +540,4 @@
         public decimal EstimatedUnitCost { get; set; }
     }
 }
+

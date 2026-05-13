@@ -1,13 +1,13 @@
-using FSH.Framework.Shared.Identity;
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.Identity.Contracts.v1.Groups.UpdateGroup;
+using AMIS.Framework.Shared.Identity;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.Identity.Contracts.v1.Groups.UpdateGroup;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.Identity.Features.v1.Groups.UpdateGroup;
+namespace AMIS.Modules.Identity.Features.v1.Groups.UpdateGroup;
 
 public static class UpdateGroupEndpoint
 {
@@ -27,3 +27,4 @@ public sealed record UpdateGroupRequest(
     string? Description,
     bool IsDefault,
     IReadOnlyList<string>? RoleIds);
+

@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace FSH.Modules.AssetManagement.Features.v1.Locations.CreateLocation;
+namespace AMIS.Modules.AssetManagement.Features.v1.Locations.CreateLocation;
 
 public sealed class CreateLocationCommandValidator : AbstractValidator<CreateLocationCommand>
 {
@@ -16,3 +16,4 @@ public sealed class CreateLocationCommandValidator : AbstractValidator<CreateLoc
             .MaximumLength(500);
     }
 }
+

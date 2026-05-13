@@ -1,10 +1,10 @@
-using FSH.Modules.AssetRegister.Contracts.v1.Issuance;
-using FSH.Modules.AssetRegister.Contracts.v1.ValueObjects;
-using FSH.Modules.AssetRegister.Data;
+using AMIS.Modules.AssetRegister.Contracts.v1.Issuance;
+using AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
+using AMIS.Modules.AssetRegister.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Issuance.PostIssuanceReport;
+namespace AMIS.Modules.AssetRegister.Features.v1.Issuance.PostIssuanceReport;
 
 public sealed class PostIssuanceReportCommandHandler(AssetRegisterDbContext db)
     : ICommandHandler<PostIssuanceReportCommand, PropertyIssuanceReportDto>
@@ -25,3 +25,4 @@ public sealed class PostIssuanceReportCommandHandler(AssetRegisterDbContext db)
         return IssuanceMapper.ToDto(report);
     }
 }
+

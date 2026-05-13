@@ -1,12 +1,12 @@
-﻿using FSH.Framework.Persistence;
-using FSH.Framework.Shared.Persistence;
-using FSH.Modules.MasterData.Contracts.v1.References;
-using FSH.Modules.MasterData.Data;
+using AMIS.Framework.Persistence;
+using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.MasterData.Contracts.v1.References;
+using AMIS.Modules.MasterData.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace FSH.Modules.MasterData.Features.v1.Lookups;
+namespace AMIS.Modules.MasterData.Features.v1.Lookups;
 
 public sealed class GetEmployeeReferenceByIdQueryHandler(MasterDataDbContext dbContext)
     : IQueryHandler<GetEmployeeReferenceByIdQuery, EmployeeReferenceDto?>
@@ -266,7 +266,7 @@ internal static class MasterDataLookupQueryBuilder
 {
     internal static IQueryable<EmployeeReferenceDto> BuildEmployeeReferenceQuery(
         MasterDataDbContext dbContext,
-        System.Linq.Expressions.Expression<Func<FSH.Modules.MasterData.Domain.EmployeeProfile, bool>>? employeeFilter = null,
+        System.Linq.Expressions.Expression<Func<AMIS.Modules.MasterData.Domain.EmployeeProfile, bool>>? employeeFilter = null,
         string? keyword = null,
         string? identityUserId = null,
         Guid? officeId = null,
@@ -331,6 +331,7 @@ internal static class MasterDataLookupQueryBuilder
                 employee.OfficeCode));
     }
 }
+
 
 
 

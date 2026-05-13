@@ -1,10 +1,10 @@
-using FSH.Framework.Shared.Identity.Authorization;
+using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.MasterData.Features.v1.Suppliers.UpdateSupplier;
+namespace AMIS.Modules.MasterData.Features.v1.Suppliers.UpdateSupplier;
 
 public static class UpdateSupplierEndpoint
 {
@@ -27,3 +27,4 @@ public static class UpdateSupplierEndpoint
         return TypedResults.NoContent();
     }
 }
+

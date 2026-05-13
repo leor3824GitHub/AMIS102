@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <RootNamespace>FSH.Modules.AssetProcurement.Contracts</RootNamespace>
-    <AssemblyName>FSH.Modules.AssetProcurement.Contracts</AssemblyName>
-    <PackageId>FullStackHero.Modules.AssetProcurement.Contracts</PackageId>
+    <RootNamespace>AMIS.Modules.AssetProcurement.Contracts</RootNamespace>
+    <AssemblyName>AMIS.Modules.AssetProcurement.Contracts</AssemblyName>
+    <PackageId>AMIS.Modules.AssetProcurement.Contracts</PackageId>
     <NoWarn>$(NoWarn);CA1002;CA1056;CS1572;S2094</NoWarn>
   </PropertyGroup>
   <ItemGroup>
@@ -13,3 +13,4 @@
     <ProjectReference Include="..\..\..\BuildingBlocks\Shared\Shared.csproj" />
   </ItemGroup>
 </Project>
+

@@ -1,15 +1,15 @@
 @page "/finance/budget-utilization-records"
-@using FSH.Modules.Finance.Contracts.v1.BudgetUtilizationRecords
-@using FSH.Modules.Finance.Contracts.v1.DisbursementVouchers
-@using FSH.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders
-@using FSH.Playground.Blazor.ApiClient
+@using AMIS.Modules.Finance.Contracts.v1.BudgetUtilizationRecords
+@using AMIS.Modules.Finance.Contracts.v1.DisbursementVouchers
+@using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders
+@using AMIS.Playground.Blazor.ApiClient
 @inject IBudgetUtilizationRecordClient Client
 @inject IDisbursementVoucherClient DvClient
 @inject IPurchaseOrderClient PurchaseOrderClient
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 
-<FshPageHeader Title="Budget Utilization Records" Description="Create and manage budget utilization records (BUR)" />
+<AMISPageHeader Title="Budget Utilization Records" Description="Create and manage budget utilization records (BUR)" />
 
 <MudGrid Spacing="3">
     <!-- Form Panel -->
@@ -56,7 +56,7 @@
                     <MudDivider Class="my-1" />
                     <MudText Typo="Typo.subtitle2">Details</MudText>
                     <MudTextField @bind-Value="_form.Particulars" Label="Particulars" Variant="Variant.Outlined" Required="true" Lines="3" />
-                    <MudNumericField @bind-Value="_form.Amount" Label="Amount (₱)" Variant="Variant.Outlined" Required="true" Min="0.01m" Format="N2" />
+                    <MudNumericField @bind-Value="_form.Amount" Label="Amount (?)" Variant="Variant.Outlined" Required="true" Min="0.01m" Format="N2" />
                     <MudTextField @bind-Value="_form.Remarks" Label="Remarks (optional)" Variant="Variant.Outlined" Lines="2" />
 
                     <MudStack Row="true" Spacing="2" Class="mt-2">
@@ -122,7 +122,7 @@
                                     <td>@item.BurDate.ToString("MM/dd/yyyy")</td>
                                     <td><MudText Typo="Typo.caption">@item.PurchaseOrderNumber</MudText></td>
                                     <td><MudText Typo="Typo.caption">@item.AllotmentClass</MudText></td>
-                                    <td style="text-align:right">₱@item.Amount.ToString("N2")</td>
+                                    <td style="text-align:right">?@item.Amount.ToString("N2")</td>
                                     <td>@BurStatusChip(item.Status)</td>
                                     <td>
                                         <MudStack Row="true" Spacing="0">
@@ -168,7 +168,7 @@
             <MudCard Elevation="1" Class="mt-3">
                 <MudCardContent>
                     <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3">
-                        <MudText Typo="Typo.h6" Class="flex-grow-1">@_detail.BurNumber — Details</MudText>
+                        <MudText Typo="Typo.h6" Class="flex-grow-1">@_detail.BurNumber � Details</MudText>
                         <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="@(() => _detail = null)" />
                     </MudStack>
                     <MudGrid Spacing="2">
@@ -220,7 +220,7 @@
                         <MudItem xs="12">
                             <MudDivider />
                             <MudStack Row="true" JustifyContent="JustifyContent.FlexEnd" Class="mt-2">
-                                <MudText Typo="Typo.h6">Amount: <b>₱@_detail.Amount.ToString("N2")</b></MudText>
+                                <MudText Typo="Typo.h6">Amount: <b>?@_detail.Amount.ToString("N2")</b></MudText>
                             </MudStack>
                         </MudItem>
                     </MudGrid>
@@ -300,13 +300,13 @@
         if (po is null) return string.Empty;
         return string.IsNullOrWhiteSpace(po.SupplierName)
             ? po.PoNumber
-            : $"{po.PoNumber} — {po.SupplierName}";
+            : $"{po.PoNumber} � {po.SupplierName}";
     }
 
     private static string FormatDv(DisbursementVoucherListItemDto? dv)
     {
         if (dv is null) return string.Empty;
-        return $"{dv.DvNumber} — {dv.Payee}";
+        return $"{dv.DvNumber} � {dv.Payee}";
     }
 
     private async Task LoadAsync()
@@ -417,3 +417,4 @@
         public string? Remarks { get; set; }
     }
 }
+

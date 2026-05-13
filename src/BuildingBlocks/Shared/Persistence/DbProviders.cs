@@ -1,4 +1,4 @@
-namespace FSH.Framework.Shared.Persistence;
+namespace AMIS.Framework.Shared.Persistence;
 
 /// <summary>
 /// Supported database providers for the starter kit.
@@ -15,3 +15,4 @@ public static class DbProviders
     /// </summary>
     public const string MSSQL = "MSSQL";
 }
+

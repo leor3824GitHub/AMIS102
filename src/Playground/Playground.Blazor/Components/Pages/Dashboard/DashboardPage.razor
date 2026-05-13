@@ -4,44 +4,44 @@
 @attribute [Authorize]
 @attribute [StreamRendering(true)]
 @using System.Linq
-@using FSH.Framework.Blazor.UI.Components.Cards
+@using AMIS.Framework.Blazor.UI.Components.Cards
 @inherits ComponentBase
-@inject FSH.Playground.Blazor.ApiClient.IV1Client V1Client
-@inject FSH.Playground.Blazor.ApiClient.IIdentityClient IdentityClient
+@inject AMIS.Playground.Blazor.ApiClient.IV1Client V1Client
+@inject AMIS.Playground.Blazor.ApiClient.IIdentityClient IdentityClient
 @inject ISnackbar Snackbar
 
-<FshPageHeader Title="Dashboard"
+<AMISPageHeader Title="Dashboard"
                Description="Overview of your system metrics and recent activity" />
 
 <div class="dashboard-shell">
     <MudGrid>
         <MudItem xs="12" sm="6" md="3">
-            <FshStatCard Icon="@Icons.Material.Filled.People"
+            <AMISStatCard Icon="@Icons.Material.Filled.People"
                          IconColor="Color.Primary"
                          Value="@_summary.Users.ToString()"
                          Label="Total Users" />
         </MudItem>
         <MudItem xs="12" sm="6" md="3">
-            <FshStatCard Icon="@Icons.Material.Filled.Security"
+            <AMISStatCard Icon="@Icons.Material.Filled.Security"
                          IconColor="Color.Secondary"
                          Value="@_summary.Roles.ToString()"
                          Label="Total Roles" />
         </MudItem>
         <MudItem xs="12" sm="6" md="3">
-            <FshStatCard Icon="@Icons.Material.Filled.Business"
+            <AMISStatCard Icon="@Icons.Material.Filled.Business"
                          IconColor="Color.Info"
                          Value="@_summary.Tenants.ToString()"
                          Label="Total Tenants" />
         </MudItem>
         <MudItem xs="12" sm="6" md="3">
-            <FshStatCard Icon="@Icons.Material.Filled.History"
+            <AMISStatCard Icon="@Icons.Material.Filled.History"
                          IconColor="Color.Warning"
                          Value="@_recentAudits.Count.ToString()"
                          Label="Recent Audits" />
         </MudItem>
     </MudGrid>
 
-    <MudPaper Class="fsh-card pa-4 mt-4">
+    <MudPaper Class="AMIS-card pa-4 mt-4">
         <MudText Typo="Typo.h6" Class="mb-2">Recent Audits</MudText>
         <MudTable Items="_recentAudits" Dense="true">
             <HeaderContent>
@@ -62,7 +62,7 @@
 
 @code {
     private SummaryDto _summary = new();
-    private List<FSH.Playground.Blazor.ApiClient.AuditSummaryDto> _recentAudits = new();
+    private List<AMIS.Playground.Blazor.ApiClient.AuditSummaryDto> _recentAudits = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -77,12 +77,12 @@
             var result = await V1Client.AuditsGetAsync(pageNumber: 1, pageSize: 5);
             if (result is null)
             {
-                _recentAudits = new List<FSH.Playground.Blazor.ApiClient.AuditSummaryDto>();
+                _recentAudits = new List<AMIS.Playground.Blazor.ApiClient.AuditSummaryDto>();
                 _summary.RecentAudits = 0;
                 return;
             }
 
-            _recentAudits = result.Items?.ToList() ?? new List<FSH.Playground.Blazor.ApiClient.AuditSummaryDto>();
+            _recentAudits = result.Items?.ToList() ?? new List<AMIS.Playground.Blazor.ApiClient.AuditSummaryDto>();
             _summary.RecentAudits = (int)result.TotalCount;
         }
         catch (Exception ex)
@@ -118,3 +118,4 @@
         public int RecentAudits { get; set; }
     }
 }
+

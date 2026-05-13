@@ -1,6 +1,6 @@
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.PropertyAcknowledgementReceipts.GetPARById;
+namespace AMIS.Modules.AssetManagement.Features.v1.PropertyAcknowledgementReceipts.GetPARById;
 
 public sealed record GetPARByIdQuery(Guid Id) : IQuery<PARDetailsDto>;
 
@@ -28,3 +28,4 @@ public sealed record PARItemDto(
     decimal TotalCost,
     int EstimatedUsefulLifeYears,
     DateOnly DateAcquired);
+

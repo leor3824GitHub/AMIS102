@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.Identity.Contracts.v1.Users.ConfirmEmail;
+using AMIS.Modules.Identity.Contracts.v1.Users.ConfirmEmail;
 
-namespace FSH.Modules.Identity.Features.v1.Users.ConfirmEmail;
+namespace AMIS.Modules.Identity.Features.v1.Users.ConfirmEmail;
 
 public sealed class ConfirmEmailCommandValidator : AbstractValidator<ConfirmEmailCommand>
 {
@@ -17,3 +17,4 @@ public sealed class ConfirmEmailCommandValidator : AbstractValidator<ConfirmEmai
             .NotEmpty().WithMessage("Tenant is required.");
     }
 }
+

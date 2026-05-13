@@ -1,4 +1,4 @@
-namespace FSH.Modules.AssetManagement.Domain;
+namespace AMIS.Modules.AssetManagement.Domain;
 
 /// <summary>
 /// Nature of a PPE Issuance Report (PPEIR) — the reason for the inter-office transfer.
@@ -14,3 +14,4 @@ public enum PPEIssuanceType
     Sale        = 6,
     Others      = 7,
 }
+

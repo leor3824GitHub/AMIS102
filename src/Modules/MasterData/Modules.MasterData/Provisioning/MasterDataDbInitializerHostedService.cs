@@ -1,11 +1,11 @@
-using FSH.Framework.Persistence;
-using FSH.Modules.MasterData.Data;
+using AMIS.Framework.Persistence;
+using AMIS.Modules.MasterData.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace FSH.Modules.MasterData.Provisioning;
+namespace AMIS.Modules.MasterData.Provisioning;
 
 /// <summary>
 /// Initializes the MasterData module database schema and seeds data on app startup.
@@ -57,3 +57,4 @@ internal sealed class MasterDataDbInitializerHostedService : IHostedService
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 }
+

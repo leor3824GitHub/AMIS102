@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
+using AMIS.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
 
-namespace FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.CreateUpdatePpmp;
+namespace AMIS.Modules.ProcurementPlanning.Features.v1.Ppmps.CreateUpdatePpmp;
 
 public sealed class CreateUpdatePpmpCommandValidator : AbstractValidator<CreateUpdatePpmpCommand>
 {
@@ -11,3 +11,4 @@ public sealed class CreateUpdatePpmpCommandValidator : AbstractValidator<CreateU
         RuleFor(x => x.UpdateReason).NotEmpty().MaximumLength(1000);
     }
 }
+

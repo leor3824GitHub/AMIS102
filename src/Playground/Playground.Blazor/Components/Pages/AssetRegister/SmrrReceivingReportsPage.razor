@@ -1,10 +1,10 @@
 @page "/asset-register/receiving/smrr"
-@using FSH.Playground.Blazor.ApiClient
+@using AMIS.Playground.Blazor.ApiClient
 @inject IArReceivingReportClient Client
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 
-<FshPageHeader Title="Supplies and Materials Receiving Reports (SMRR)"
+<AMISPageHeader Title="Supplies and Materials Receiving Reports (SMRR)"
                Description="Record receipt of supplies and semi-expendable materials. Each line materializes one or more AssetRegistry rows for accountability tracking." />
 
 <MudGrid Spacing="3">
@@ -192,3 +192,4 @@
         _ => t.ToString(System.Globalization.CultureInfo.InvariantCulture)
     };
 }
+

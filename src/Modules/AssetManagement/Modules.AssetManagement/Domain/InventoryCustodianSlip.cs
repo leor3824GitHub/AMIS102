@@ -1,6 +1,6 @@
-using FSH.Framework.Core.Domain;
+using AMIS.Framework.Core.Domain;
 
-namespace FSH.Modules.AssetManagement.Domain;
+namespace AMIS.Modules.AssetManagement.Domain;
 
 /// <summary>
 /// Inventory Custodian Slip (ICS) — COA Circular 2022-004 Annex A.3.
@@ -148,3 +148,4 @@ public sealed class InventoryCustodianSlip : AggregateRoot<Guid>, IHasTenant, IA
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
     }
 }
+

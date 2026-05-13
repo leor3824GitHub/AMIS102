@@ -1,6 +1,6 @@
 using Mediator;
 
-namespace FSH.Modules.MasterData.Features.v1.Categories.CreateCategory;
+namespace AMIS.Modules.MasterData.Features.v1.Categories.CreateCategory;
 
 public sealed record CreateCategoryCommand(
     string Code,
@@ -15,3 +15,4 @@ public sealed record CategoryDto(
     string? Description,
     bool IsActive,
     string? OfficeCode = null);
+

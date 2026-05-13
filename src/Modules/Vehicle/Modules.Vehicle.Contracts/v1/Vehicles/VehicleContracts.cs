@@ -1,7 +1,7 @@
-using FSH.Framework.Shared.Persistence;
+using AMIS.Framework.Shared.Persistence;
 using Mediator;
 
-namespace FSH.Modules.Vehicle.Contracts.v1.Vehicles;
+namespace AMIS.Modules.Vehicle.Contracts.v1.Vehicles;
 
 public static class VehicleStatusValues
 {
@@ -197,3 +197,4 @@ public record MotorVehicleInventoryItemDto(
     string? AccountableOfficer, // AssignedDriver
     string? AccountableOfficerTitle
 );
+

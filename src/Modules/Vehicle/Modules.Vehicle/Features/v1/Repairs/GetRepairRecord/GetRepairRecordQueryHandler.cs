@@ -1,10 +1,10 @@
-using FSH.Modules.Vehicle.Contracts.v1.Repairs;
-using FSH.Modules.Vehicle.Data;
-using FSH.Modules.Vehicle.Features.v1.Repairs;
+using AMIS.Modules.Vehicle.Contracts.v1.Repairs;
+using AMIS.Modules.Vehicle.Data;
+using AMIS.Modules.Vehicle.Features.v1.Repairs;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.Vehicle.Features.v1.Repairs.GetRepairRecord;
+namespace AMIS.Modules.Vehicle.Features.v1.Repairs.GetRepairRecord;
 
 public sealed class GetRepairRecordQueryHandler(VehicleDbContext db)
     : IQueryHandler<GetRepairRecordQuery, RepairRecordDto?>
@@ -18,3 +18,4 @@ public sealed class GetRepairRecordQueryHandler(VehicleDbContext db)
         return record?.ToDto();
     }
 }
+

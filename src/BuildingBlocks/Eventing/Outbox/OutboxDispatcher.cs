@@ -1,8 +1,8 @@
-using FSH.Framework.Eventing.Abstractions;
+using AMIS.Framework.Eventing.Abstractions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace FSH.Framework.Eventing.Outbox;
+namespace AMIS.Framework.Eventing.Outbox;
 
 /// <summary>
 /// Dispatches outbox messages via the configured event bus.
@@ -99,3 +99,4 @@ public sealed class OutboxDispatcher
             deadLetterCount);
     }
 }
+

@@ -1,7 +1,7 @@
-using FSH.Framework.Core.Domain;
-using FSH.Modules.ProcurementAcquisition.Contracts.v1.Canvass;
+using AMIS.Framework.Core.Domain;
+using AMIS.Modules.ProcurementAcquisition.Contracts.v1.Canvass;
 
-namespace FSH.Modules.ProcurementAcquisition.Domain.Canvass;
+namespace AMIS.Modules.ProcurementAcquisition.Domain.Canvass;
 
 public sealed class CanvassRequest : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 {
@@ -69,3 +69,4 @@ public sealed class CanvassRequest : AggregateRoot<Guid>, IHasTenant, IAuditable
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
     }
 }
+

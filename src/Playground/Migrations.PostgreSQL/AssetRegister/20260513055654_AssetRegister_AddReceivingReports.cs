@@ -1,9 +1,9 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace FSH.Playground.Migrations.PostgreSQL.AssetRegister
+namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
 {
     /// <inheritdoc />
     public partial class AssetRegister_AddReceivingReports : Migration
@@ -112,3 +112,4 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetRegister
         }
     }
 }
+

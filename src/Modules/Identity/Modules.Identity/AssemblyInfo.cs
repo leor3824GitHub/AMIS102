@@ -1,5 +1,7 @@
 using System.Runtime.CompilerServices;
-using FSH.Framework.Web.Modules;
+using AMIS.Framework.Web.Modules;
 
-[assembly: FshModule(typeof(FSH.Modules.Identity.IdentityModule), 100)]
+[assembly: AmisModule(typeof(AMIS.Modules.Identity.IdentityModule), 100)]
 [assembly: InternalsVisibleTo("Identity.Tests")]
+
+

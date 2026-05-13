@@ -1,11 +1,11 @@
-using FSH.Framework.Core.Exceptions;
-using FSH.Modules.Vehicle.Contracts.v1.Maintenance;
-using FSH.Modules.Vehicle.Data;
-using FSH.Modules.Vehicle.Domain.Maintenance;
+using AMIS.Framework.Core.Exceptions;
+using AMIS.Modules.Vehicle.Contracts.v1.Maintenance;
+using AMIS.Modules.Vehicle.Data;
+using AMIS.Modules.Vehicle.Domain.Maintenance;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.Vehicle.Features.v1.Maintenance.UpdateMaintenanceLog;
+namespace AMIS.Modules.Vehicle.Features.v1.Maintenance.UpdateMaintenanceLog;
 
 public sealed class UpdateMaintenanceLogHandler(
     VehicleDbContext db) : ICommandHandler<UpdateMaintenanceLogCommand, MaintenanceLogDto>
@@ -42,3 +42,4 @@ public sealed class UpdateMaintenanceLogHandler(
             log.Notes);
     }
 }
+

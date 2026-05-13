@@ -1,8 +1,8 @@
-using FSH.Framework.Shared.Persistence;
-using FSH.Modules.Expendable.Contracts.v1.Requests;
+using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.Expendable.Contracts.v1.Requests;
 using Mediator;
 
-namespace FSH.Modules.Expendable.Contracts.v1.Cart;
+namespace AMIS.Modules.Expendable.Contracts.v1.Cart;
 
 public record CartItemDto(
     Guid ProductId,
@@ -47,4 +47,5 @@ public record ClearCartCommand(Guid CartId) : ICommand<Unit>;
 public record GetEmployeeCartQuery(string EmployeeId) : IQuery<EmployeeShoppingCartDto?>;
 
 public record GetCartQuery(Guid CartId) : IQuery<EmployeeShoppingCartDto?>;
+
 

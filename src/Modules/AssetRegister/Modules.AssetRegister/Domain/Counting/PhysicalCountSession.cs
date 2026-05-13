@@ -1,10 +1,10 @@
-using FSH.Framework.Core.Domain;
-using FSH.Modules.AssetRegister.Contracts.v1;
-using FSH.Modules.AssetRegister.Contracts.v1.ValueObjects;
-using FSH.Modules.AssetRegister.Domain.Assets;
-using FSH.Modules.AssetRegister.Domain.Events;
+using AMIS.Framework.Core.Domain;
+using AMIS.Modules.AssetRegister.Contracts.v1;
+using AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
+using AMIS.Modules.AssetRegister.Domain.Assets;
+using AMIS.Modules.AssetRegister.Domain.Events;
 
-namespace FSH.Modules.AssetRegister.Domain.Counting;
+namespace AMIS.Modules.AssetRegister.Domain.Counting;
 
 public sealed class PhysicalCountSession : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 {
@@ -176,3 +176,4 @@ public sealed class PhysicalCountSession : AggregateRoot<Guid>, IHasTenant, IAud
             throw new InvalidOperationException($"AssetType {assetType} is outside session scope {Scope}.");
     }
 }
+

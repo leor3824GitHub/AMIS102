@@ -1,4 +1,4 @@
-namespace FSH.Modules.Identity.Domain;
+namespace AMIS.Modules.Identity.Domain;
 
 public class PasswordHistory
 {
@@ -8,7 +8,7 @@ public class PasswordHistory
     public DateTime CreatedAt { get; private set; }
 
     // Navigation property (init for EF Core materialization)
-    public virtual FshUser? User { get; init; }
+    public virtual AmisUser? User { get; init; }
 
     private PasswordHistory() { } // EF Core
 
@@ -22,3 +22,5 @@ public class PasswordHistory
         };
     }
 }
+
+

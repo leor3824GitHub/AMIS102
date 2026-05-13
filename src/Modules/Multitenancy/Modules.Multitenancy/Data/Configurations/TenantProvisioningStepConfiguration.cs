@@ -1,9 +1,9 @@
-using FSH.Framework.Shared.Multitenancy;
-using FSH.Modules.Multitenancy.Provisioning;
+using AMIS.Framework.Shared.Multitenancy;
+using AMIS.Modules.Multitenancy.Provisioning;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FSH.Modules.Multitenancy.Data.Configurations;
+namespace AMIS.Modules.Multitenancy.Data.Configurations;
 
 public class TenantProvisioningStepConfiguration : IEntityTypeConfiguration<TenantProvisioningStep>
 {
@@ -12,3 +12,4 @@ public class TenantProvisioningStepConfiguration : IEntityTypeConfiguration<Tena
         builder.ToTable("TenantProvisioningSteps", MultitenancyConstants.Schema);
     }
 }
+

@@ -1,4 +1,4 @@
-namespace FSH.Modules.AssetManagement.Domain;
+namespace AMIS.Modules.AssetManagement.Domain;
 
 public enum LocationType
 {
@@ -8,3 +8,4 @@ public enum LocationType
     Department = 3,
     Other = 4,
 }
+

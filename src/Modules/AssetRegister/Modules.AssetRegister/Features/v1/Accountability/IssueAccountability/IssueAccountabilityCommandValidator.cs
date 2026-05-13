@@ -1,8 +1,8 @@
 using FluentValidation;
-using FSH.Modules.AssetRegister.Contracts.v1;
-using FSH.Modules.AssetRegister.Contracts.v1.Accountability;
+using AMIS.Modules.AssetRegister.Contracts.v1;
+using AMIS.Modules.AssetRegister.Contracts.v1.Accountability;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Accountability.IssueAccountability;
+namespace AMIS.Modules.AssetRegister.Features.v1.Accountability.IssueAccountability;
 
 public sealed class IssueAccountabilityCommandValidator : AbstractValidator<IssueAccountabilityCommand>
 {
@@ -40,3 +40,4 @@ public sealed class IssueAccountabilityCommandValidator : AbstractValidator<Issu
         });
     }
 }
+

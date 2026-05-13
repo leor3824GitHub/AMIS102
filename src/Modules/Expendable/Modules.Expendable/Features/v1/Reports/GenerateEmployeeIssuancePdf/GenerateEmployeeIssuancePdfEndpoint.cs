@@ -1,11 +1,11 @@
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.Expendable.Contracts.v1.Reports;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.Expendable.Contracts.v1.Reports;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.Expendable.Features.v1.Reports.GenerateEmployeeIssuancePdf;
+namespace AMIS.Modules.Expendable.Features.v1.Reports.GenerateEmployeeIssuancePdf;
 
 public static class GenerateEmployeeIssuancePdfEndpoint
 {
@@ -25,3 +25,4 @@ public static class GenerateEmployeeIssuancePdfEndpoint
         return TypedResults.File(bytes, "application/pdf", "EmployeeIssuanceHistory.pdf");
     }
 }
+

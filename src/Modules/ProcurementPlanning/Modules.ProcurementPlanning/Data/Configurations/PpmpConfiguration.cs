@@ -1,8 +1,8 @@
-using FSH.Modules.ProcurementPlanning.Domain.Ppmps;
+using AMIS.Modules.ProcurementPlanning.Domain.Ppmps;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FSH.Modules.ProcurementPlanning.Data.Configurations;
+namespace AMIS.Modules.ProcurementPlanning.Data.Configurations;
 
 internal sealed class PpmpConfiguration : IEntityTypeConfiguration<Ppmp>
 {
@@ -50,3 +50,4 @@ internal sealed class PpmpItemConfiguration : IEntityTypeConfiguration<PpmpItem>
         builder.HasIndex(x => x.PpmpId);
     }
 }
+

@@ -1,4 +1,4 @@
-﻿namespace FSH.Framework.Caching;
+namespace AMIS.Framework.Caching;
 
 public sealed class CachingOptions
 {
@@ -18,5 +18,6 @@ public sealed class CachingOptions
     public TimeSpan? DefaultAbsoluteExpiration { get; set; } = TimeSpan.FromMinutes(15);
 
     /// <summary>Optional prefix (env/tenant/app) applied to all keys.</summary>
-    public string? KeyPrefix { get; set; } = "fsh_";
+    public string? KeyPrefix { get; set; } = "AMIS_";
 }
+

@@ -1,10 +1,10 @@
-using FSH.Framework.Persistence;
-using FSH.Framework.Shared.Multitenancy;
-using FSH.Modules.AssetRegister.Domain.Catalog;
+using AMIS.Framework.Persistence;
+using AMIS.Framework.Shared.Multitenancy;
+using AMIS.Modules.AssetRegister.Domain.Catalog;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace FSH.Modules.AssetRegister.Data;
+namespace AMIS.Modules.AssetRegister.Data;
 
 internal sealed class AssetRegisterDbInitializer(
     ILogger<AssetRegisterDbInitializer> logger,
@@ -59,3 +59,4 @@ internal sealed class AssetRegisterDbInitializer(
         logger.LogInformation("[{Tenant}] seeded asset register property item catalog with {Count} defaults", tenantId, seedItems.Length);
     }
 }
+

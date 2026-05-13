@@ -1,11 +1,11 @@
-using FSH.Framework.Core.Exceptions;
-using FSH.Modules.Identity.Contracts.DTOs;
-using FSH.Modules.Identity.Contracts.v1.Groups.GetGroupMembers;
-using FSH.Modules.Identity.Data;
+using AMIS.Framework.Core.Exceptions;
+using AMIS.Modules.Identity.Contracts.DTOs;
+using AMIS.Modules.Identity.Contracts.v1.Groups.GetGroupMembers;
+using AMIS.Modules.Identity.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.Identity.Features.v1.Groups.GetGroupMembers;
+namespace AMIS.Modules.Identity.Features.v1.Groups.GetGroupMembers;
 
 public sealed class GetGroupMembersQueryHandler : IQueryHandler<GetGroupMembersQuery, IEnumerable<GroupMemberDto>>
 {
@@ -50,3 +50,4 @@ public sealed class GetGroupMembersQueryHandler : IQueryHandler<GetGroupMembersQ
         return memberships;
     }
 }
+

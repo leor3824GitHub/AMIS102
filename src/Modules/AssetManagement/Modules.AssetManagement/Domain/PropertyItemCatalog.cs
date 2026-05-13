@@ -1,6 +1,6 @@
-using FSH.Framework.Core.Domain;
+using AMIS.Framework.Core.Domain;
 
-namespace FSH.Modules.AssetManagement.Domain;
+namespace AMIS.Modules.AssetManagement.Domain;
 
 /// <summary>
 /// Unified master catalog entry for any trackable property — both semi-expendable and PPE.
@@ -87,3 +87,4 @@ public sealed class PropertyItemCatalog : AggregateRoot<Guid>, IHasTenant, IAudi
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
     }
 }
+

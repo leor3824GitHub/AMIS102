@@ -1,12 +1,12 @@
-using FSH.Framework.Shared.Identity;
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.Identity.Contracts.v1.Users.GetUserRoles;
+using AMIS.Framework.Shared.Identity;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.Identity.Contracts.v1.Users.GetUserRoles;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.Identity.Features.v1.Users.GetUserRoles;
+namespace AMIS.Modules.Identity.Features.v1.Users.GetUserRoles;
 
 public static class GetUserRolesEndpoint
 {
@@ -20,3 +20,4 @@ public static class GetUserRolesEndpoint
         .WithDescription("Retrieve the roles assigned to a specific user.");
     }
 }
+

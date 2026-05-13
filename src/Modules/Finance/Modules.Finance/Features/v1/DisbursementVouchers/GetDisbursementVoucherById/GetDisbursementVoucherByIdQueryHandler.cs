@@ -1,9 +1,9 @@
-using FSH.Modules.Finance.Contracts.v1.DisbursementVouchers;
-using FSH.Modules.Finance.Data;
+using AMIS.Modules.Finance.Contracts.v1.DisbursementVouchers;
+using AMIS.Modules.Finance.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.Finance.Features.v1.DisbursementVouchers.GetDisbursementVoucherById;
+namespace AMIS.Modules.Finance.Features.v1.DisbursementVouchers.GetDisbursementVoucherById;
 
 public sealed class GetDisbursementVoucherByIdQueryHandler(
     FinanceDbContext dbContext) : IQueryHandler<GetDisbursementVoucherByIdQuery, DisbursementVoucherDto>
@@ -36,3 +36,4 @@ public sealed class GetDisbursementVoucherByIdQueryHandler(
             dv.LastModifiedOnUtc?.DateTime);
     }
 }
+

@@ -1,7 +1,7 @@
-﻿using Hangfire;
+using Hangfire;
 using System.Linq.Expressions;
 
-namespace FSH.Framework.Jobs.Services;
+namespace AMIS.Framework.Jobs.Services;
 
 public class HangfireService : IJobService
 {

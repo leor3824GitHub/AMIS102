@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.Identity.Contracts.v1.Users.RegisterUser;
+using AMIS.Modules.Identity.Contracts.v1.Users.RegisterUser;
 
-namespace FSH.Modules.Identity.Features.v1.Users.RegisterUser;
+namespace AMIS.Modules.Identity.Features.v1.Users.RegisterUser;
 
 public sealed class RegisterUserCommandValidator : AbstractValidator<RegisterUserCommand>
 {
@@ -37,3 +37,4 @@ public sealed class RegisterUserCommandValidator : AbstractValidator<RegisterUse
             .When(x => x.PhoneNumber is not null);
     }
 }
+

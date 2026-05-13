@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 
-namespace FSH.Framework.Web.Security;
+namespace AMIS.Framework.Web.Security;
 
 public sealed class SecurityHeadersMiddleware(RequestDelegate next, IOptions<SecurityHeadersOptions> options)
 {
@@ -51,3 +51,4 @@ public sealed class SecurityHeadersMiddleware(RequestDelegate next, IOptions<Sec
         return next(context);
     }
 }
+

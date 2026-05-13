@@ -1,14 +1,14 @@
-﻿using Finbuckle.MultiTenant.Abstractions;
-using FSH.Framework.Persistence;
-using FSH.Framework.Persistence.Context;
-using FSH.Framework.Shared.Multitenancy;
-using FSH.Framework.Shared.Persistence;
-using FSH.Modules.MasterData.Domain;
+using Finbuckle.MultiTenant.Abstractions;
+using AMIS.Framework.Persistence;
+using AMIS.Framework.Persistence.Context;
+using AMIS.Framework.Shared.Multitenancy;
+using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.MasterData.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 
-namespace FSH.Modules.MasterData.Data;
+namespace AMIS.Modules.MasterData.Data;
 
 public class MasterDataDbContext : BaseDbContext
 {
@@ -45,5 +45,6 @@ public class MasterDataDbContext : BaseDbContext
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(MasterDataDbContext).Assembly);
     }
 }
+
 
 

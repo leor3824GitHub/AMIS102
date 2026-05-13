@@ -1,11 +1,11 @@
 using FluentValidation.Results;
-using FSH.Framework.Core.Context;
-using FSH.Modules.Vehicle.Contracts.v1.Vehicles;
-using FSH.Modules.Vehicle.Data;
+using AMIS.Framework.Core.Context;
+using AMIS.Modules.Vehicle.Contracts.v1.Vehicles;
+using AMIS.Modules.Vehicle.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.Vehicle.Features.v1.Vehicles.AssignVehicle;
+namespace AMIS.Modules.Vehicle.Features.v1.Vehicles.AssignVehicle;
 
 public sealed class AssignVehicleCommandHandler(VehicleDbContext db, ICurrentUser currentUser)
     : ICommandHandler<AssignVehicleCommand, Unit>
@@ -22,3 +22,4 @@ public sealed class AssignVehicleCommandHandler(VehicleDbContext db, ICurrentUse
         return Unit.Value;
     }
 }
+

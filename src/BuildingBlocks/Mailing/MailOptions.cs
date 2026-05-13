@@ -1,4 +1,4 @@
-﻿namespace FSH.Framework.Mailing;
+namespace AMIS.Framework.Mailing;
 
 public class MailOptions
 {
@@ -23,3 +23,4 @@ public class SendGridOptions
     public string? From { get; set; }
     public string? DisplayName { get; set; }
 }
+

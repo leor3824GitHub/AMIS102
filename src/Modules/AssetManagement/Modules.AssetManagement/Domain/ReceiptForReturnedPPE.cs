@@ -1,6 +1,6 @@
-using FSH.Framework.Core.Domain;
+using AMIS.Framework.Core.Domain;
 
-namespace FSH.Modules.AssetManagement.Domain;
+namespace AMIS.Modules.AssetManagement.Domain;
 
 /// <summary>
 /// Receipt for Returned Property (RRP) — in-office return of PPE accountability.
@@ -87,3 +87,4 @@ public sealed class ReceiptForReturnedPPE : AggregateRoot<Guid>, IHasTenant, IAu
         };
     }
 }
+

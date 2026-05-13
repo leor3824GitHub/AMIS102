@@ -1,4 +1,4 @@
-namespace FSH.Modules.Multitenancy.Provisioning;
+namespace AMIS.Modules.Multitenancy.Provisioning;
 
 public enum TenantProvisioningStatus
 {
@@ -7,3 +7,4 @@ public enum TenantProvisioningStatus
     Completed = 2,
     Failed = 3
 }
+

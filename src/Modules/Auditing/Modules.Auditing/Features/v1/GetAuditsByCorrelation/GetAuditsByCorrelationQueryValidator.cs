@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.Auditing.Contracts.v1.GetAuditsByCorrelation;
+using AMIS.Modules.Auditing.Contracts.v1.GetAuditsByCorrelation;
 
-namespace FSH.Modules.Auditing.Features.v1.GetAuditsByCorrelation;
+namespace AMIS.Modules.Auditing.Features.v1.GetAuditsByCorrelation;
 
 public sealed class GetAuditsByCorrelationQueryValidator : AbstractValidator<GetAuditsByCorrelationQuery>
 {
@@ -15,4 +15,5 @@ public sealed class GetAuditsByCorrelationQueryValidator : AbstractValidator<Get
             .WithMessage("FromUtc must be less than or equal to ToUtc.");
     }
 }
+
 

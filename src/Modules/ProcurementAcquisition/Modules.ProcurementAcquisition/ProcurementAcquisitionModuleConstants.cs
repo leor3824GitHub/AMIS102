@@ -1,4 +1,4 @@
-namespace FSH.Modules.ProcurementAcquisition;
+namespace AMIS.Modules.ProcurementAcquisition;
 
 public static class ProcurementAcquisitionModuleConstants
 {
@@ -36,3 +36,4 @@ public static class ProcurementAcquisitionModuleConstants
         }
     }
 }
+

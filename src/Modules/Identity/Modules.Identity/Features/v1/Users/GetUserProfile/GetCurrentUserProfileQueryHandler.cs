@@ -1,9 +1,9 @@
-using FSH.Modules.Identity.Contracts.DTOs;
-using FSH.Modules.Identity.Contracts.Services;
-using FSH.Modules.Identity.Contracts.v1.Users.GetUserProfile;
+using AMIS.Modules.Identity.Contracts.DTOs;
+using AMIS.Modules.Identity.Contracts.Services;
+using AMIS.Modules.Identity.Contracts.v1.Users.GetUserProfile;
 using Mediator;
 
-namespace FSH.Modules.Identity.Features.v1.Users.GetUserProfile;
+namespace AMIS.Modules.Identity.Features.v1.Users.GetUserProfile;
 
 public sealed class GetCurrentUserProfileQueryHandler : IQueryHandler<GetCurrentUserProfileQuery, UserDto>
 {
@@ -20,3 +20,4 @@ public sealed class GetCurrentUserProfileQueryHandler : IQueryHandler<GetCurrent
         return await _userService.GetAsync(query.UserId, cancellationToken).ConfigureAwait(false);
     }
 }
+

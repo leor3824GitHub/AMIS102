@@ -1,8 +1,8 @@
 // Add this hosted service class once in your auditing module
-using FSH.Modules.Auditing.Contracts;
+using AMIS.Modules.Auditing.Contracts;
 using Microsoft.Extensions.Hosting;
 
-namespace FSH.Modules.Auditing;
+namespace AMIS.Modules.Auditing;
 
 public sealed class AuditingConfigurator : IHostedService
 {
@@ -27,4 +27,5 @@ public sealed class AuditingConfigurator : IHostedService
     }
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 }
+
 

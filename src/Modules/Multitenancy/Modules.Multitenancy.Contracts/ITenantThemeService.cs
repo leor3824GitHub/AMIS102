@@ -1,6 +1,6 @@
-using FSH.Modules.Multitenancy.Contracts.Dtos;
+using AMIS.Modules.Multitenancy.Contracts.Dtos;
 
-namespace FSH.Modules.Multitenancy.Contracts;
+namespace AMIS.Modules.Multitenancy.Contracts;
 
 public interface ITenantThemeService
 {
@@ -39,3 +39,4 @@ public interface ITenantThemeService
     /// </summary>
     Task InvalidateCacheAsync(string tenantId, CancellationToken ct = default);
 }
+

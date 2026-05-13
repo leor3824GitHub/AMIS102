@@ -1,7 +1,7 @@
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Modules.AssetManagement.Domain;
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.UnserviceablePropertyReports.GetUnserviceablePropertyReportById;
+namespace AMIS.Modules.AssetManagement.Features.v1.UnserviceablePropertyReports.GetUnserviceablePropertyReportById;
 
 public sealed record GetUnserviceablePropertyReportByIdQuery(Guid Id) : IQuery<UnserviceablePropertyReportDetailsDto>;
 
@@ -27,3 +27,4 @@ public sealed record UnserviceablePropertyItemDetailsDto(
     decimal UnitCost,
     string AssetTypeAtTimeOfReport,
     string? ConditionRemarks);
+

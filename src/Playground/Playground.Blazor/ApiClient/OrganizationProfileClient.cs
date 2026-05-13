@@ -1,9 +1,9 @@
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
-using FSH.Modules.MasterData.Contracts.v1.OrganizationProfile;
+using AMIS.Modules.MasterData.Contracts.v1.OrganizationProfile;
 
-namespace FSH.Playground.Blazor.ApiClient;
+namespace AMIS.Playground.Blazor.ApiClient;
 
 internal interface IOrganizationProfileClient
 {
@@ -30,3 +30,4 @@ internal sealed class OrganizationProfileClient(HttpClient httpClient) : IOrgani
         return result ?? throw new InvalidOperationException("Empty response.");
     }
 }
+

@@ -1,9 +1,9 @@
-using FSH.Playground.Blazor.Services;
+using AMIS.Playground.Blazor.Services;
 using Microsoft.AspNetCore.Authentication;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 
-namespace FSH.Playground.Blazor.Services.Api;
+namespace AMIS.Playground.Blazor.Services.Api;
 
 /// <summary>
 /// Delegating handler that adds the JWT token to API requests and handles 401 responses
@@ -305,3 +305,4 @@ internal sealed class AuthorizationHeaderHandler : DelegatingHandler
         return clone;
     }
 }
+

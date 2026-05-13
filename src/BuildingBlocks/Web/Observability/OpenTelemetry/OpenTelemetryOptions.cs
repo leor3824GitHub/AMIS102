@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace FSH.Framework.Web.Observability.OpenTelemetry;
+namespace AMIS.Framework.Web.Observability.OpenTelemetry;
 
 public sealed class OpenTelemetryOptions
 {
@@ -102,3 +102,4 @@ public sealed class OpenTelemetryOptions
     }
 
 }
+

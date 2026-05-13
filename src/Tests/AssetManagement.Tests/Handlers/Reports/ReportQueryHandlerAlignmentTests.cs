@@ -1,14 +1,14 @@
 using Finbuckle.MultiTenant;
 using Finbuckle.MultiTenant.Abstractions;
-using FSH.Framework.Shared.Multitenancy;
-using FSH.Framework.Shared.Persistence;
-using FSH.Modules.AssetManagement.Data;
-using FSH.Modules.AssetManagement.Domain;
-using FSH.Modules.AssetManagement.Features.v1.PPEIssuanceReports.GetPTR;
-using FSH.Modules.AssetManagement.Features.v1.Reports.RegistryOfSPIssued;
-using FSH.Modules.AssetManagement.Features.v1.Reports.ReportOfSPIssued;
-using FSH.Modules.MasterData.Contracts.v1.References;
-using FSH.Modules.MasterData.Contracts.v1.ReportSignatories;
+using AMIS.Framework.Shared.Multitenancy;
+using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.AssetManagement.Data;
+using AMIS.Modules.AssetManagement.Domain;
+using AMIS.Modules.AssetManagement.Features.v1.PPEIssuanceReports.GetPTR;
+using AMIS.Modules.AssetManagement.Features.v1.Reports.RegistryOfSPIssued;
+using AMIS.Modules.AssetManagement.Features.v1.Reports.ReportOfSPIssued;
+using AMIS.Modules.MasterData.Contracts.v1.References;
+using AMIS.Modules.MasterData.Contracts.v1.ReportSignatories;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
@@ -443,3 +443,4 @@ public sealed class ReportQueryHandlerAlignmentTests
         public IFileProvider ContentRootFileProvider { get; set; } = new PhysicalFileProvider(Directory.GetCurrentDirectory());
     }
 }
+

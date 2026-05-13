@@ -1,9 +1,9 @@
 @page "/asset-register/unserviceable"
-@using FSH.Playground.Blazor.ApiClient
+@using AMIS.Playground.Blazor.ApiClient
 @inject IArUnserviceableReportClient Client
 @inject ISnackbar Snackbar
 
-<FshPageHeader Title="Unserviceable Property Reports (IIRUSP / IIRUP)"
+<AMISPageHeader Title="Unserviceable Property Reports (IIRUSP / IIRUP)"
                Description="Report, inspect, and dispose of unserviceable property per COA 2022-004 Annex A.10." />
 
 <MudGrid Spacing="3">
@@ -183,7 +183,7 @@
                         </MudItem>
                         <MudItem xs="6" md="4">
                             <MudText Typo="Typo.caption" Color="Color.Secondary">Accountable Officer</MudText>
-                            <MudText Typo="Typo.body2">@_selected.AccountableOfficer.PrintedName (@(_selected.AccountableOfficer.Designation ?? "—"))</MudText>
+                            <MudText Typo="Typo.body2">@_selected.AccountableOfficer.PrintedName (@(_selected.AccountableOfficer.Designation ?? "�"))</MudText>
                         </MudItem>
                         @if (_selected.ApprovedBy is not null)
                         {
@@ -196,7 +196,7 @@
                         {
                             <MudItem xs="6" md="4">
                                 <MudText Typo="Typo.caption" Color="Color.Secondary">Inspected By / On</MudText>
-                                <MudText Typo="Typo.body2">@_selected.InspectedBy.PrintedName — @_selected.InspectedOn?.ToString("yyyy-MM-dd")</MudText>
+                                <MudText Typo="Typo.body2">@_selected.InspectedBy.PrintedName � @_selected.InspectedOn?.ToString("yyyy-MM-dd")</MudText>
                             </MudItem>
                         }
                     </MudGrid>
@@ -207,9 +207,9 @@
                             <MudTh>Property No.</MudTh>
                             <MudTh>Description</MudTh>
                             <MudTh>Date Acquired</MudTh>
-                            <MudTh Style="text-align:right">Acq. Cost (₱)</MudTh>
-                            <MudTh Style="text-align:right">Accum. Depr. (₱)</MudTh>
-                            <MudTh Style="text-align:right">Carrying Amt (₱)</MudTh>
+                            <MudTh Style="text-align:right">Acq. Cost (?)</MudTh>
+                            <MudTh Style="text-align:right">Accum. Depr. (?)</MudTh>
+                            <MudTh Style="text-align:right">Carrying Amt (?)</MudTh>
                             <MudTh>Disposal Method</MudTh>
                         </HeaderContent>
                         <RowTemplate>
@@ -240,7 +240,7 @@
                         </MudStack>
                     }
 
-                    <!-- Submit (Draft → Submitted) -->
+                    <!-- Submit (Draft ? Submitted) -->
                     @if (_selected.Status == 0 && _selected.Items.Count > 0)
                     {
                         <MudDivider Class="my-3" />
@@ -457,3 +457,4 @@
         _ => v.ToString()
     };
 }
+

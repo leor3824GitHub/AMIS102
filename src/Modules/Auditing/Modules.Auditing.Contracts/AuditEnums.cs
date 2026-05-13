@@ -1,4 +1,4 @@
-﻿namespace FSH.Modules.Auditing.Contracts;
+namespace AMIS.Modules.Auditing.Contracts;
 
 /// <summary>
 /// High-level classification of audit events.
@@ -109,3 +109,4 @@ public enum AuditTag
     Authentication = 1 << 5,
     Authorization = 1 << 6
 }
+

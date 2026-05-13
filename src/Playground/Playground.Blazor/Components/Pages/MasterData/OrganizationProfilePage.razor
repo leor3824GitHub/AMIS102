@@ -1,12 +1,12 @@
 @page "/master-data/organization-profile"
-@using FSH.Modules.MasterData.Contracts.v1.OrganizationProfile
-@using FSH.Playground.Blazor.ApiClient
+@using AMIS.Modules.MasterData.Contracts.v1.OrganizationProfile
+@using AMIS.Playground.Blazor.ApiClient
 @using MudBlazor
 @inject IOrganizationProfileClient OrgProfileClient
 @inject ILookupClient LookupClient
 @inject ISnackbar Snackbar
 
-<FshPageHeader Title="Organization Profile"
+<AMISPageHeader Title="Organization Profile"
                Description="Agency information printed on official government reports" />
 
 <MudGrid Spacing="3" Class="mt-2">
@@ -27,7 +27,7 @@
                               CoerceText="true"
                               CoerceValue="false"
                               MinCharacters="1"
-                              HelperText="Type to search offices â€” selecting one auto-fills the office code" />
+                              HelperText="Type to search offices — selecting one auto-fills the office code" />
 
                 <MudTextField @bind-Value="_form.ShortName"
                               Label="Short Name / Acronym"
@@ -59,7 +59,7 @@
                               Placeholder="e.g. 00B"
                               Adornment="Adornment.Start"
                               AdornmentIcon="@Icons.Material.Filled.Tag"
-                              HelperText="Auto-filled from office selection â€” used in property code generation" />
+                              HelperText="Auto-filled from office selection — used in property code generation" />
 
                 <MudButton Variant="Variant.Filled"
                            Color="Color.Primary"
@@ -122,7 +122,7 @@
         }
         catch
         {
-            // No profile yet â€” start with empty form
+            // No profile yet — start with empty form
         }
     }
 
@@ -192,3 +192,4 @@
         public string AnnexECode { get; set; } = string.Empty;
     }
 }
+

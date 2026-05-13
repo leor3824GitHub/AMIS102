@@ -1,4 +1,4 @@
-namespace FSH.Modules.Identity.Data;
+namespace AMIS.Modules.Identity.Data;
 
 public class PasswordPolicyOptions
 {
@@ -14,3 +14,4 @@ public class PasswordPolicyOptions
     /// <summary>Set to false to disable password expiry enforcement</summary>
     public bool EnforcePasswordExpiry { get; set; } = true;
 }
+

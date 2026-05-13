@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 
-namespace FSH.Framework.Caching;
+namespace AMIS.Framework.Caching;
 
 /// <summary>
 /// Extension methods for registering caching services in the dependency injection container.
@@ -11,7 +11,7 @@ namespace FSH.Framework.Caching;
 public static class Extensions
 {
     /// <summary>
-    /// Adds FullStackHero caching services to the service collection.
+    /// Adds AMIS caching services to the service collection.
     /// Configures a hybrid L1/L2 cache with in-memory (L1) and Redis or distributed memory (L2).
     /// </summary>
     /// <param name="services">The service collection to add caching services to.</param>
@@ -63,3 +63,4 @@ public static class Extensions
         return services;
     }
 }
+

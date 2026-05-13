@@ -1,7 +1,7 @@
-using FSH.Modules.AssetRegister.Contracts.v1;
-using FSH.Modules.AssetRegister.Contracts.v1.ValueObjects;
+using AMIS.Modules.AssetRegister.Contracts.v1;
+using AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
 
-namespace FSH.Modules.AssetRegister.Domain.Services;
+namespace AMIS.Modules.AssetRegister.Domain.Services;
 
 /// <summary>
 /// Mints a COA 2020-006 PropertyNumber. Implementations operate against
@@ -65,3 +65,4 @@ public interface ICurrentReplacementCostCalculator
 {
     Task<decimal> ComputeAsync(Guid assetRegistryId, DateOnly asOf, CancellationToken ct);
 }
+

@@ -1,4 +1,4 @@
-namespace FSH.Modules.AssetManagement.Domain;
+namespace AMIS.Modules.AssetManagement.Domain;
 
 /// <summary>
 /// Lifecycle status of an Inventory Custodian Slip (ICS).
@@ -26,3 +26,4 @@ public enum ICSStatus
     /// </summary>
     Expired = 3,
 }
+

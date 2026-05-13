@@ -1,10 +1,10 @@
-using FSH.Framework.Persistence;
-using FSH.Modules.ProcurementPlanning.Data;
+using AMIS.Framework.Persistence;
+using AMIS.Modules.ProcurementPlanning.Data;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace FSH.Modules.ProcurementPlanning.Provisioning;
+namespace AMIS.Modules.ProcurementPlanning.Provisioning;
 
 internal sealed class ProcurementPlanningDbInitializerHostedService : IHostedService
 {
@@ -50,3 +50,4 @@ internal sealed class ProcurementPlanningDbInitializerHostedService : IHostedSer
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 }
+

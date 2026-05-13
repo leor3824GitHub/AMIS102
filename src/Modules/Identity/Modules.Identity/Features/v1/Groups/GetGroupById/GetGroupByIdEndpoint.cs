@@ -1,12 +1,12 @@
-using FSH.Framework.Shared.Identity;
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.Identity.Contracts.v1.Groups.GetGroupById;
+using AMIS.Framework.Shared.Identity;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.Identity.Contracts.v1.Groups.GetGroupById;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.Identity.Features.v1.Groups.GetGroupById;
+namespace AMIS.Modules.Identity.Features.v1.Groups.GetGroupById;
 
 public static class GetGroupByIdEndpoint
 {
@@ -20,3 +20,4 @@ public static class GetGroupByIdEndpoint
         .WithDescription("Retrieve a specific group by its ID including roles and member count.");
     }
 }
+

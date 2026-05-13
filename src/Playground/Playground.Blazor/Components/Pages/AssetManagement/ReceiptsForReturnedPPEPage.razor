@@ -1,11 +1,11 @@
 @page "/asset-management/receipts-for-returned-ppe"
-@using FSH.Playground.Blazor.ApiClient
+@using AMIS.Playground.Blazor.ApiClient
 @inject IRRPClient Client
 @inject IPPEItemClient PPEItemClient
 @inject ILookupClient LookupClient
 @inject ISnackbar Snackbar
 
-<FshPageHeader Title="Receipts for Returned PPE (RRP)"
+<AMISPageHeader Title="Receipts for Returned PPE (RRP)"
                Description="Record return of PPE items. Serviceable items revert to OnHand; Junked items are disposed." />
 
 <MudGrid Spacing="3">
@@ -67,13 +67,13 @@
                                                  Value="li.SelectedPPEItem"
                                                  ValueChanged="@(v => li.SelectedPPEItem = v)"
                                                  SearchFunc="SearchIssuedPPEItems"
-                                                 ToStringFunc="@(x => x is null ? "" : $"{x.PropertyCode} – {x.Description[..Math.Min(40, x.Description.Length)]}")"
+                                                 ToStringFunc="@(x => x is null ? "" : $"{x.PropertyCode} � {x.Description[..Math.Min(40, x.Description.Length)]}")"
                                                  Label="PPE Item" Variant="Variant.Outlined" Dense="true"
                                                  Required="true" Clearable="true" CoerceValue="true" ResetValueOnEmptyText="true" />
                                 @if (li.SelectedPPEItem is not null)
                                 {
                                     <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                        Status: @li.SelectedPPEItem.Status | ₱@li.SelectedPPEItem.UnitCost.ToString("N2")
+                                        Status: @li.SelectedPPEItem.Status | ?@li.SelectedPPEItem.UnitCost.ToString("N2")
                                     </MudText>
                                 }
                                 <MudTextField @bind-Value="li.SourceDocumentRef" Label="Source Doc Ref (PAR/PTR No.)"
@@ -149,7 +149,7 @@
                 <MudCardHeader>
                     <CardHeaderContent>
                         <MudStack Row="true" AlignItems="AlignItems.Center">
-                            <MudText Typo="Typo.h6">@_detail.RRPNo — @_detail.Date.ToString("MMMM dd, yyyy")</MudText>
+                            <MudText Typo="Typo.h6">@_detail.RRPNo � @_detail.Date.ToString("MMMM dd, yyyy")</MudText>
                             <MudChip T="string" Size="Size.Small" Color="@(_detail.ReturnCategory == "Serviceable" ? Color.Success : Color.Error)">
                                 @_detail.ReturnCategory
                             </MudChip>
@@ -182,15 +182,15 @@
                                     <td>@item.Description</td>
                                     <td>@(item.SourceDocumentRef ?? "-")</td>
                                     <td>@item.Quantity</td>
-                                    <td>₱@item.UnitCost.ToString("N2")</td>
-                                    <td><b>₱@item.TotalCost.ToString("N2")</b></td>
+                                    <td>?@item.UnitCost.ToString("N2")</td>
+                                    <td><b>?@item.TotalCost.ToString("N2")</b></td>
                                 </tr>
                             }
                         </tbody>
                         <tfoot>
                             <tr>
                                 <td colspan="6" style="text-align:right"><b>Total:</b></td>
-                                <td><b>₱@_detail.Items.Sum(x => x.TotalCost).ToString("N2")</b></td>
+                                <td><b>?@_detail.Items.Sum(x => x.TotalCost).ToString("N2")</b></td>
                             </tr>
                         </tfoot>
                     </MudSimpleTable>
@@ -312,3 +312,4 @@
         public int Quantity { get; set; } = 1;
     }
 }
+

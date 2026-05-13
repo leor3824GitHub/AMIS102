@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.Vehicle.Contracts.v1.Vehicles;
+using AMIS.Modules.Vehicle.Contracts.v1.Vehicles;
 
-namespace FSH.Modules.Vehicle.Features.v1.Vehicles.AssignVehicle;
+namespace AMIS.Modules.Vehicle.Features.v1.Vehicles.AssignVehicle;
 
 public sealed class AssignVehicleCommandValidator : AbstractValidator<AssignVehicleCommand>
 {
@@ -23,3 +23,4 @@ public sealed class AssignVehicleCommandValidator : AbstractValidator<AssignVehi
     private static bool HaveMatchingPair(Guid? id, string? name) =>
         id.HasValue == !string.IsNullOrWhiteSpace(name);
 }
+

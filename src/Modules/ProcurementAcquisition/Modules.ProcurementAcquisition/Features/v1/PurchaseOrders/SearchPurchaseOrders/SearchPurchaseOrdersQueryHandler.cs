@@ -1,10 +1,10 @@
-using FSH.Framework.Shared.Persistence;
-using FSH.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders;
-using FSH.Modules.ProcurementAcquisition.Data;
+using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders;
+using AMIS.Modules.ProcurementAcquisition.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.SearchPurchaseOrders;
+namespace AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.SearchPurchaseOrders;
 
 public sealed class SearchPurchaseOrdersQueryHandler(ProcurementDbContext dbContext)
     : IQueryHandler<SearchPurchaseOrdersQuery, PagedResponse<PurchaseOrderSummaryDto>>
@@ -69,3 +69,4 @@ public sealed class SearchPurchaseOrdersQueryHandler(ProcurementDbContext dbCont
         };
     }
 }
+

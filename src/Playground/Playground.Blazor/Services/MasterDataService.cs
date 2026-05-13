@@ -1,8 +1,8 @@
-using FSH.Playground.Blazor.ApiClient;
-using ApiClient = FSH.Playground.Blazor.ApiClient;
+using AMIS.Playground.Blazor.ApiClient;
+using ApiClient = AMIS.Playground.Blazor.ApiClient;
 using System.Net.Http.Json;
 
-namespace FSH.Playground.Blazor.Services;
+namespace AMIS.Playground.Blazor.Services;
 
 /// <summary>
 /// Wrapper service for MasterData API Client operations
@@ -141,3 +141,4 @@ public class MasterDataService
         await _client.CategoriesDeleteAsync(id, cancellationToken);
     }
 }
+

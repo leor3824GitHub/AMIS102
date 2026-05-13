@@ -1,14 +1,14 @@
-using FSH.Framework.Eventing.Abstractions;
-using FSH.Modules.AssetProcurement.Contracts.v1.AssetInspectionAcceptanceReports;
-using FSH.Modules.AssetRegister.Contracts.v1;
-using FSH.Modules.AssetRegister.Data;
-using FSH.Modules.AssetRegister.Domain.Assets;
-using FSH.Modules.AssetRegister.Domain.Catalog;
-using FSH.Modules.AssetRegister.Domain.Services;
+using AMIS.Framework.Eventing.Abstractions;
+using AMIS.Modules.AssetProcurement.Contracts.v1.AssetInspectionAcceptanceReports;
+using AMIS.Modules.AssetRegister.Contracts.v1;
+using AMIS.Modules.AssetRegister.Data;
+using AMIS.Modules.AssetRegister.Domain.Assets;
+using AMIS.Modules.AssetRegister.Domain.Catalog;
+using AMIS.Modules.AssetRegister.Domain.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace FSH.Modules.AssetRegister.Integration;
+namespace AMIS.Modules.AssetRegister.Integration;
 
 /// <summary>
 /// Materializes one <see cref="AssetRegistry"/> row per accepted physical unit
@@ -134,3 +134,4 @@ internal sealed class AssetIARAcceptedEventConsumer(
             : (AssetType.SE, AssetCategory.LowValuedSemi);
     }
 }
+

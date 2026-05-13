@@ -1,11 +1,11 @@
-using FSH.Framework.Core.Context;
-using FSH.Framework.Core.Exceptions;
-using FSH.Modules.AssetManagement.Data;
-using FSH.Modules.AssetManagement.Features.v1.Locations;
+using AMIS.Framework.Core.Context;
+using AMIS.Framework.Core.Exceptions;
+using AMIS.Modules.AssetManagement.Data;
+using AMIS.Modules.AssetManagement.Features.v1.Locations;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.Locations.UpdateLocation;
+namespace AMIS.Modules.AssetManagement.Features.v1.Locations.UpdateLocation;
 
 public sealed class UpdateLocationCommandHandler(
     AssetManagementDbContext dbContext,
@@ -65,3 +65,4 @@ public sealed class UpdateLocationCommandHandler(
             location.Description);
     }
 }
+

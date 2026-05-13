@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.MasterData.Contracts.v1.References;
+using AMIS.Modules.MasterData.Contracts.v1.References;
 
-namespace FSH.Modules.MasterData.Features.v1.Offices.UpdateOffice;
+namespace AMIS.Modules.MasterData.Features.v1.Offices.UpdateOffice;
 
 public sealed class UpdateOfficeCommandValidator : AbstractValidator<UpdateOfficeCommand>
 {
@@ -22,3 +22,4 @@ public sealed class UpdateOfficeCommandValidator : AbstractValidator<UpdateOffic
             .MaximumLength(400).WithMessage("Description must not exceed 400 characters");
     }
 }
+

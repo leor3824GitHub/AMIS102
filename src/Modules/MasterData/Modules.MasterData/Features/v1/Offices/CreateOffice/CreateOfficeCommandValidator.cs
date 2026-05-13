@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.MasterData.Contracts.v1.References;
+using AMIS.Modules.MasterData.Contracts.v1.References;
 
-namespace FSH.Modules.MasterData.Features.v1.Offices.CreateOffice;
+namespace AMIS.Modules.MasterData.Features.v1.Offices.CreateOffice;
 
 public sealed class CreateOfficeCommandValidator : AbstractValidator<CreateOfficeCommand>
 {
@@ -19,3 +19,4 @@ public sealed class CreateOfficeCommandValidator : AbstractValidator<CreateOffic
             .MaximumLength(400).WithMessage("Description must not exceed 400 characters");
     }
 }
+

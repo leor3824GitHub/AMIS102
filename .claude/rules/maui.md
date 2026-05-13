@@ -1,4 +1,4 @@
----
+﻿---
 paths:
   - "src/Playground/Playground.Maui/**"
 ---
@@ -13,7 +13,7 @@ paths:
 src/Playground/Playground.Maui/
 ```
 
-Added to `src/FSH.Framework.slnx`. Targets: `net10.0-android`, `net10.0-ios`, `net10.0-windows10.0.19041.0`.
+Added to `src/AMIS.Framework.slnx`. Targets: `net10.0-android`, `net10.0-ios`, `net10.0-windows10.0.19041.0`.
 
 ---
 
@@ -528,3 +528,4 @@ If you need platform-specific behavior (e.g., custom keyboard behavior on Androi
 | Hard-code colors or font sizes inline in XAML     | Define in `Resources/Styles/Styles.xaml`                              |
 | Use `Task.Run()` for I/O operations               | Use `async/await` directly; `Task.Run()` causes deadlocks in MAUI     |
 | Test performance only on emulator/simulator       | Always validate on a real low-end physical device                     |
+

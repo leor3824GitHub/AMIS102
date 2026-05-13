@@ -1,9 +1,9 @@
 using System.Text.RegularExpressions;
 using FluentValidation;
-using FSH.Modules.Multitenancy.Contracts.Dtos;
-using FSH.Modules.Multitenancy.Contracts.v1.UpdateTenantTheme;
+using AMIS.Modules.Multitenancy.Contracts.Dtos;
+using AMIS.Modules.Multitenancy.Contracts.v1.UpdateTenantTheme;
 
-namespace FSH.Modules.Multitenancy.Features.v1.UpdateTenantTheme;
+namespace AMIS.Modules.Multitenancy.Features.v1.UpdateTenantTheme;
 
 public partial class UpdateTenantThemeCommandValidator : AbstractValidator<UpdateTenantThemeCommand>
 {
@@ -97,3 +97,4 @@ public partial class UpdateTenantThemeCommandValidator : AbstractValidator<Updat
         }
     }
 }
+

@@ -1,8 +1,8 @@
-using FSH.Modules.AssetManagement.Data;
+using AMIS.Modules.AssetManagement.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.PropertyAcknowledgementReceipts.GetPARById;
+namespace AMIS.Modules.AssetManagement.Features.v1.PropertyAcknowledgementReceipts.GetPARById;
 
 public sealed class GetPARByIdQueryHandler(AssetManagementDbContext dbContext)
     : IQueryHandler<GetPARByIdQuery, PARDetailsDto>
@@ -51,3 +51,4 @@ public sealed class GetPARByIdQueryHandler(AssetManagementDbContext dbContext)
             items);
     }
 }
+

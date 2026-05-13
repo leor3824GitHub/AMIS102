@@ -1,4 +1,4 @@
-namespace FSH.CLI.Scaffolding;
+namespace AMIS.CLI.Scaffolding;
 
 /// <summary>
 /// Caching layer for templates

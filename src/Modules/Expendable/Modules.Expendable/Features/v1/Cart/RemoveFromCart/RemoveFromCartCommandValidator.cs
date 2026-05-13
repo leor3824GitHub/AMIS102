@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.Expendable.Contracts.v1.Cart;
+using AMIS.Modules.Expendable.Contracts.v1.Cart;
 
-namespace FSH.Modules.Expendable.Features.v1.Cart.RemoveFromCart;
+namespace AMIS.Modules.Expendable.Features.v1.Cart.RemoveFromCart;
 
 public sealed class RemoveFromCartCommandValidator : AbstractValidator<RemoveFromCartCommand>
 {
@@ -14,3 +14,4 @@ public sealed class RemoveFromCartCommandValidator : AbstractValidator<RemoveFro
             .NotEmpty().WithMessage("Product ID is required");
     }
 }
+

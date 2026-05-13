@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.Identity.Contracts.v1.Sessions.AdminRevokeSession;
+using AMIS.Modules.Identity.Contracts.v1.Sessions.AdminRevokeSession;
 
-namespace FSH.Modules.Identity.Features.v1.Sessions.AdminRevokeSession;
+namespace AMIS.Modules.Identity.Features.v1.Sessions.AdminRevokeSession;
 
 public sealed class AdminRevokeSessionCommandValidator : AbstractValidator<AdminRevokeSessionCommand>
 {
@@ -18,3 +18,4 @@ public sealed class AdminRevokeSessionCommandValidator : AbstractValidator<Admin
             .When(x => x.Reason is not null);
     }
 }
+

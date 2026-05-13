@@ -7,7 +7,7 @@
             "type": "process",
             "args": [
                 "build",
-                "${workspaceFolder}/src/FSH.Framework.slnx",
+                "${workspaceFolder}/src/AMIS.Framework.slnx",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary"
             ],
@@ -23,7 +23,7 @@
             "type": "process",
             "args": [
                 "test",
-                "${workspaceFolder}/src/FSH.Framework.slnx"
+                "${workspaceFolder}/src/AMIS.Framework.slnx"
             ],
             "problemMatcher": "$msCompile",
             "group": "test"
@@ -35,7 +35,7 @@
             "args": [
                 "run",
                 "--project",
-                "${workspaceFolder}/src/Playground/FSH.Playground.AppHost"
+                "${workspaceFolder}/src/Playground/AMIS.Playground.AppHost"
             ],
             "problemMatcher": "$msCompile",
             "group": "none"
@@ -58,7 +58,7 @@
             "type": "process",
             "args": [
                 "clean",
-                "${workspaceFolder}/src/FSH.Framework.slnx"
+                "${workspaceFolder}/src/AMIS.Framework.slnx"
             ],
             "problemMatcher": "$msCompile"
         },
@@ -68,9 +68,10 @@
             "type": "process",
             "args": [
                 "restore",
-                "${workspaceFolder}/src/FSH.Framework.slnx"
+                "${workspaceFolder}/src/AMIS.Framework.slnx"
             ],
             "problemMatcher": "$msCompile"
         }
     ]
 }
+

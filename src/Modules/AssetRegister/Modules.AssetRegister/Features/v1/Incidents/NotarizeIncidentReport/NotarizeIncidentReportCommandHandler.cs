@@ -1,9 +1,9 @@
-using FSH.Modules.AssetRegister.Contracts.v1.Incidents;
-using FSH.Modules.AssetRegister.Data;
+using AMIS.Modules.AssetRegister.Contracts.v1.Incidents;
+using AMIS.Modules.AssetRegister.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Incidents.NotarizeIncidentReport;
+namespace AMIS.Modules.AssetRegister.Features.v1.Incidents.NotarizeIncidentReport;
 
 public sealed class NotarizeIncidentReportCommandHandler(AssetRegisterDbContext db)
     : ICommandHandler<NotarizeIncidentReportCommand, PropertyIncidentReportDto>
@@ -19,3 +19,4 @@ public sealed class NotarizeIncidentReportCommandHandler(AssetRegisterDbContext 
         return IncidentMapper.ToDto(report);
     }
 }
+

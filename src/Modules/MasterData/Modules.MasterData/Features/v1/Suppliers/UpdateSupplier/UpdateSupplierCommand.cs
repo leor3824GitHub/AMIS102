@@ -1,6 +1,6 @@
 using Mediator;
 
-namespace FSH.Modules.MasterData.Features.v1.Suppliers.UpdateSupplier;
+namespace AMIS.Modules.MasterData.Features.v1.Suppliers.UpdateSupplier;
 
 public sealed record UpdateSupplierCommand(
     Guid Id,
@@ -14,3 +14,4 @@ public sealed record UpdateSupplierCommand(
     string? Phone = null,
     string? Address = null,
     bool IsActive = true) : ICommand;
+

@@ -1,11 +1,11 @@
-# FSH.CLI - FullStackHero Command Line Interface
+# AMIS.CLI - AMIS (Asset Management Information System) Command Line Interface
 
-A powerful CLI tool for creating and managing FullStackHero .NET projects.
+A powerful CLI tool for creating and managing AMIS (Asset Management Information System) .NET projects.
 
 ## Installation
 
 ```bash
-dotnet tool install -g FSH.CLI
+dotnet tool install -g AMIS.CLI
 ```
 
 ## Usage
@@ -14,13 +14,13 @@ dotnet tool install -g FSH.CLI
 
 ```bash
 # Interactive wizard
-fsh new
+AMIS new
 
 # Using a preset
-fsh new MyApp --preset quickstart
+AMIS new MyApp --preset quickstart
 
 # Full customization (non-interactive)
-fsh new MyApp --type api-blazor --arch monolith --db postgres
+AMIS new MyApp --type api-blazor --arch monolith --db postgres
 ```
 
 ### Presets
@@ -57,3 +57,4 @@ fsh new MyApp --type api-blazor --arch monolith --db postgres
 ## License
 
 MIT
+

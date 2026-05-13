@@ -1,6 +1,6 @@
-using FSH.Framework.Core.Domain;
+using AMIS.Framework.Core.Domain;
 
-namespace FSH.Modules.AssetManagement.Domain;
+namespace AMIS.Modules.AssetManagement.Domain;
 
 /// <summary>
 /// Receipt for Returned Semi-Expendable Property (RRSP) — COA Circular 2022-004 Annex A.4.
@@ -76,3 +76,4 @@ public sealed class ReceiptForReturnedProperty : AggregateRoot<Guid>, IHasTenant
         };
     }
 }
+

@@ -1,9 +1,9 @@
 using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;
-using FSH.Modules.Vehicle.Domain.Maintenance;
+using AMIS.Modules.Vehicle.Domain.Maintenance;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FSH.Modules.Vehicle.Data.Configurations;
+namespace AMIS.Modules.Vehicle.Data.Configurations;
 
 public class MaintenanceScheduleConfiguration : IEntityTypeConfiguration<MaintenanceSchedule>
 {
@@ -26,3 +26,4 @@ public class MaintenanceScheduleConfiguration : IEntityTypeConfiguration<Mainten
         builder.HasQueryFilter("SoftDelete", s => !s.IsDeleted);
     }
 }
+

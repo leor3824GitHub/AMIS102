@@ -1,13 +1,13 @@
 @page "/master-data/departments"
-@using FSH.Framework.Blazor.UI.Components.Cards
-@using FSH.Playground.Blazor.ApiClient
+@using AMIS.Framework.Blazor.UI.Components.Cards
+@using AMIS.Playground.Blazor.ApiClient
 @inherits ComponentBase
 @inject ISnackbar Snackbar
 @inject IMaster_dataClient MasterDataClient
 @inject ILookupClient LookupClient
 @inject IOrganizationProfileClient OrgProfileClient
 
-<FshPageHeader Title="Departments" Description="Manage departments">
+<AMISPageHeader Title="Departments" Description="Manage departments">
     <ActionContent>
         <MudStack Row="true" Spacing="2" Style="width: 100%; max-width: 400px;">
             <MudTextField @bind-Value="_searchKeyword" Label="Search" Placeholder="Search departments..."
@@ -18,13 +18,13 @@
             </MudButton>
         </MudStack>
     </ActionContent>
-</FshPageHeader>
+</AMISPageHeader>
 
 <div class="mt-4">
     <MudGrid Spacing="2">
         <!-- Create/Edit Form -->
         <MudItem xs="12" sm="6" md="4" Style="min-height: 100%;">
-            <MudCard Class="fsh-card">
+            <MudCard Class="AMIS-card">
                 <MudCardContent>
                     <MudText Typo="Typo.h6" Class="mb-3">@(EditingDepartment != null ? "Edit Department" : "Create Department")</MudText>
                     <MudStack Spacing="3">
@@ -60,7 +60,7 @@
 
         <!-- Departments List -->
         <MudItem xs="12" sm="6" md="8">
-            <MudCard Class="fsh-card">
+            <MudCard Class="AMIS-card">
                 <MudCardContent>
                     <MudStack Row="true" Spacing="1" Class="mb-3" AlignItems="AlignItems.Center">
                         <MudText Typo="Typo.h6" Class="flex-grow-1">Departments List</MudText>
@@ -101,7 +101,7 @@
                                             }
                                             else
                                             {
-                                                <MudTooltip Text="@(string.IsNullOrWhiteSpace(department.OfficeCode) ? "Shared record — read only" : "Owned by another office — read only")">
+                                                <MudTooltip Text="@(string.IsNullOrWhiteSpace(department.OfficeCode) ? "Shared record � read only" : "Owned by another office � read only")">
                                                     <MudIconButton Icon="@Icons.Material.Filled.Lock" Size="Size.Small" Color="Color.Default" Disabled="true" />
                                                 </MudTooltip>
                                             }
@@ -128,9 +128,9 @@
 
 @code {
     private DepartmentForm _form = new();
-    private FSH.Playground.Blazor.ApiClient.DepartmentReferenceDto? EditingDepartment { get; set; }
-    private List<FSH.Playground.Blazor.ApiClient.DepartmentReferenceDto> _departments = new();
-    private List<FSH.Playground.Blazor.ApiClient.DepartmentReferenceDto> _allDepartments = new();
+    private AMIS.Playground.Blazor.ApiClient.DepartmentReferenceDto? EditingDepartment { get; set; }
+    private List<AMIS.Playground.Blazor.ApiClient.DepartmentReferenceDto> _departments = new();
+    private List<AMIS.Playground.Blazor.ApiClient.DepartmentReferenceDto> _allDepartments = new();
     private bool _initialized = false;
     private bool _isLoading = false;
     private string _searchKeyword = string.Empty;
@@ -311,7 +311,7 @@
         }
     }
 
-    private async Task EditDepartment(FSH.Playground.Blazor.ApiClient.DepartmentReferenceDto department)
+    private async Task EditDepartment(AMIS.Playground.Blazor.ApiClient.DepartmentReferenceDto department)
     {
         EditingDepartment = department;
         _form = new DepartmentForm
@@ -399,6 +399,7 @@
     private string SortIcon(string field)
     {
         if (_sortField != field) return string.Empty;
-        return _sortAscending ? "▲" : "▼";
+        return _sortAscending ? "?" : "?";
     }
 }
+

@@ -1,4 +1,4 @@
-using FSH.Modules.AssetManagement.Features.v1.ReceiptForReturnedProperties.CreateRRSP;
+using AMIS.Modules.AssetManagement.Features.v1.ReceiptForReturnedProperties.CreateRRSP;
 using Shouldly;
 using Xunit;
 
@@ -131,3 +131,4 @@ public sealed class CreateRRSPCommandValidatorTests
             ReturnedByEmployeeId: Guid.NewGuid(),
             Remarks: null);
 }
+

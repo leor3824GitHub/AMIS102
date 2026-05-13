@@ -1,10 +1,10 @@
-using FSH.Framework.Caching;
-using FSH.Modules.Expendable.Contracts.v1.Warehouse;
-using FSH.Modules.Expendable.Data;
+using AMIS.Framework.Caching;
+using AMIS.Modules.Expendable.Contracts.v1.Warehouse;
+using AMIS.Modules.Expendable.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.Expendable.Features.v1.Warehouse.IssueFromProductInventory;
+namespace AMIS.Modules.Expendable.Features.v1.Warehouse.IssueFromProductInventory;
 
 public sealed class IssueFromProductInventoryCommandHandler : ICommandHandler<IssueFromProductInventoryCommand, IssueFromProductInventoryResponse>
 {
@@ -39,3 +39,4 @@ public sealed class IssueFromProductInventoryCommandHandler : ICommandHandler<Is
         return response;
     }
 }
+

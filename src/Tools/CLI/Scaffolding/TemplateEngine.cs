@@ -1,7 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
-using FSH.CLI.Models;
+using AMIS.CLI.Models;
 
-namespace FSH.CLI.Scaffolding;
+namespace AMIS.CLI.Scaffolding;
 
 /// <summary>
 /// Refactored TemplateEngine that delegates to focused services

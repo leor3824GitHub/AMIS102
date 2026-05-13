@@ -1,11 +1,11 @@
-using FSH.Modules.AssetRegister.Contracts.v1.Issuance;
-using FSH.Modules.AssetRegister.Contracts.v1.ValueObjects;
-using FSH.Modules.AssetRegister.Data;
-using FSH.Modules.AssetRegister.Domain.Issuance;
-using FSH.Modules.AssetRegister.Domain.Services;
+using AMIS.Modules.AssetRegister.Contracts.v1.Issuance;
+using AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
+using AMIS.Modules.AssetRegister.Data;
+using AMIS.Modules.AssetRegister.Domain.Issuance;
+using AMIS.Modules.AssetRegister.Domain.Services;
 using Mediator;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Issuance.CreateIssuanceReportDraft;
+namespace AMIS.Modules.AssetRegister.Features.v1.Issuance.CreateIssuanceReportDraft;
 
 public sealed class CreateIssuanceReportDraftCommandHandler(
     AssetRegisterDbContext db,
@@ -28,3 +28,4 @@ public sealed class CreateIssuanceReportDraftCommandHandler(
         return IssuanceMapper.ToDto(report);
     }
 }
+

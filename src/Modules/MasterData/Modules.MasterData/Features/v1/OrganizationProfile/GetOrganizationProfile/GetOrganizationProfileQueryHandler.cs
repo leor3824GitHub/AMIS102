@@ -1,9 +1,9 @@
-using FSH.Modules.MasterData.Contracts.v1.OrganizationProfile;
-using FSH.Modules.MasterData.Data;
+using AMIS.Modules.MasterData.Contracts.v1.OrganizationProfile;
+using AMIS.Modules.MasterData.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.MasterData.Features.v1.OrganizationProfile.GetOrganizationProfile;
+namespace AMIS.Modules.MasterData.Features.v1.OrganizationProfile.GetOrganizationProfile;
 
 public sealed class GetOrganizationProfileQueryHandler(MasterDataDbContext db)
     : IQueryHandler<GetOrganizationProfileQuery, OrganizationProfileDto?>
@@ -21,3 +21,4 @@ public sealed class GetOrganizationProfileQueryHandler(MasterDataDbContext db)
             : new OrganizationProfileDto(entity.Id, entity.Name, entity.ShortName, entity.Address, entity.LogoUrl, entity.AnnexECode);
     }
 }
+

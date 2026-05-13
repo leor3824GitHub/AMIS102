@@ -1,4 +1,4 @@
----
+﻿﻿---
 name: add-module
 description: Create a new module (bounded context) using this repo's actual module structure, host wiring, permissions, contracts, and DbContext patterns.
 argument-hint: "[ModuleName]"
@@ -58,9 +58,9 @@ src/Modules/{Name}/
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <RootNamespace>FSH.Modules.{Name}</RootNamespace>
-        <AssemblyName>FSH.Modules.{Name}</AssemblyName>
-        <PackageId>FullStackHero.Modules.{Name}</PackageId>
+        <RootNamespace>AMIS.Modules.{Name}</RootNamespace>
+        <AssemblyName>AMIS.Modules.{Name}</AssemblyName>
+        <PackageId>AMIS (Asset Management Information System).Modules.{Name}</PackageId>
         <NoWarn>$(NoWarn);CA1031;CA1812;CA2208;S3267;S3928;CA1062;CA1304;CA1308;CA1311;CA1862;CA2227</NoWarn>
     </PropertyGroup>
     <ItemGroup>
@@ -93,9 +93,9 @@ src/Modules/{Name}/
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <RootNamespace>FSH.Modules.{Name}.Contracts</RootNamespace>
-        <AssemblyName>FSH.Modules.{Name}.Contracts</AssemblyName>
-        <PackageId>FullStackHero.Modules.{Name}.Contracts</PackageId>
+        <RootNamespace>AMIS.Modules.{Name}.Contracts</RootNamespace>
+        <AssemblyName>AMIS.Modules.{Name}.Contracts</AssemblyName>
+        <PackageId>AMIS (Asset Management Information System).Modules.{Name}.Contracts</PackageId>
         <NoWarn>$(NoWarn);CA1002;CA1056;CS1572;S2094</NoWarn>
     </PropertyGroup>
     <ItemGroup>
@@ -111,7 +111,7 @@ src/Modules/{Name}/
 ## Step 2: Add Contracts Marker
 
 ```csharp
-namespace FSH.Modules.{Name}.Contracts;
+namespace AMIS.Modules.{Name}.Contracts;
 
 public sealed class {Name}ContractsMarker;
 ```
@@ -120,13 +120,13 @@ public sealed class {Name}ContractsMarker;
 
 ```csharp
 using Asp.Versioning;
-using FSH.Framework.Persistence;
-using FSH.Framework.Shared.Constants;
-using FSH.Framework.Web.Modules;
+using AMIS.Framework.Persistence;
+using AMIS.Framework.Shared.Constants;
+using AMIS.Framework.Web.Modules;
 
 public class {Name}Module : IModule
 {
-        private static readonly IReadOnlyList<FshPermission> RegisteredPermissions =
+        private static readonly IReadOnlyList<AMISPermission> RegisteredPermissions =
         [
                 new("View {Entities}", "View", "{Name}.{Entity}", IsBasic: true),
                 new("Create {Entities}", "Create", "{Name}.{Entity}"),
@@ -307,8 +307,8 @@ Keep using the host pipeline that already exists:
 ## Step 12: Add To Solution
 
 ```bash
-dotnet sln src/FSH.Framework.slnx add src/Modules/{Name}/Modules.{Name}/Modules.{Name}.csproj
-dotnet sln src/FSH.Framework.slnx add src/Modules/{Name}/Modules.{Name}.Contracts/Modules.{Name}.Contracts.csproj
+dotnet sln src/AMIS.Framework.slnx add src/Modules/{Name}/Modules.{Name}/Modules.{Name}.csproj
+dotnet sln src/AMIS.Framework.slnx add src/Modules/{Name}/Modules.{Name}.Contracts/Modules.{Name}.Contracts.csproj
 ```
 
 ## Step 13: Reference From API
@@ -341,8 +341,8 @@ See the `migration-helper` agent for the full context name list.
 ## Step 15: Verify
 
 ```bash
-dotnet build src/FSH.Framework.slnx
-dotnet test src/FSH.Framework.slnx
+dotnet build src/AMIS.Framework.slnx
+dotnet test src/AMIS.Framework.slnx
 ```
 
 ## Checklist
@@ -369,3 +369,4 @@ dotnet test src/FSH.Framework.slnx
 - Use MasterData as the lean baseline.
 - Use Expendable as the richer example with subdomains and optional provisioning.
 - Prefer actual repo modules over older generic examples if they disagree.
+

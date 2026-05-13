@@ -2,7 +2,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace FSH.Playground.Blazor.ApiClient;
+namespace AMIS.Playground.Blazor.ApiClient;
 
 public static class ProductsClientExtensions
 {
@@ -44,3 +44,4 @@ public static class ProductsClientExtensions
         response.EnsureSuccessStatusCode();
     }
 }
+

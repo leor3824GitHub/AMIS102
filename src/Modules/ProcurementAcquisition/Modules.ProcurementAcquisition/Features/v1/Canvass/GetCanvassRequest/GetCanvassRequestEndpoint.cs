@@ -1,11 +1,11 @@
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.ProcurementAcquisition.Contracts.v1.Canvass;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.ProcurementAcquisition.Contracts.v1.Canvass;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.ProcurementAcquisition.Features.v1.Canvass.GetCanvassRequest;
+namespace AMIS.Modules.ProcurementAcquisition.Features.v1.Canvass.GetCanvassRequest;
 
 public static class GetCanvassRequestEndpoint
 {
@@ -26,3 +26,4 @@ public static class GetCanvassRequestEndpoint
         return result is null ? TypedResults.NotFound() : TypedResults.Ok(result);
     }
 }
+

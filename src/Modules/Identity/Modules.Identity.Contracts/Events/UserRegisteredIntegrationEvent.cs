@@ -1,6 +1,6 @@
-using FSH.Framework.Eventing.Abstractions;
+using AMIS.Framework.Eventing.Abstractions;
 
-namespace FSH.Modules.Identity.Contracts.Events;
+namespace AMIS.Modules.Identity.Contracts.Events;
 
 /// <summary>
 /// Integration event raised when a new user is registered.
@@ -16,4 +16,5 @@ public sealed record UserRegisteredIntegrationEvent(
     string FirstName,
     string LastName)
     : IIntegrationEvent;
+
 

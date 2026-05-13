@@ -1,6 +1,6 @@
-﻿using FSH.Framework.Core.Domain;
+using AMIS.Framework.Core.Domain;
 
-namespace FSH.Modules.MasterData.Domain;
+namespace AMIS.Modules.MasterData.Domain;
 
 public sealed class Office : AggregateRoot<Guid>, IAuditableEntity
 {
@@ -53,4 +53,5 @@ public sealed class Office : AggregateRoot<Guid>, IAuditableEntity
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
     }
 }
+
 

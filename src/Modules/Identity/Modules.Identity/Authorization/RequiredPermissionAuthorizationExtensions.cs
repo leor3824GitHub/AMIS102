@@ -1,8 +1,8 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
-namespace FSH.Modules.Identity.Authorization;
+namespace AMIS.Modules.Identity.Authorization;
 
 public static class RequiredPermissionDefaults
 {
@@ -34,3 +34,4 @@ public static class RequiredPermissionAuthorizationExtensions
         return builder;
     }
 }
+

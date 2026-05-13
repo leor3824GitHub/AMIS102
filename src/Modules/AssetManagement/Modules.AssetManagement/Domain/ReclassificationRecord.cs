@@ -1,6 +1,6 @@
-using FSH.Framework.Core.Domain;
+using AMIS.Framework.Core.Domain;
 
-namespace FSH.Modules.AssetManagement.Domain;
+namespace AMIS.Modules.AssetManagement.Domain;
 
 /// <summary>
 /// An immutable audit record of a bulk reclassification run triggered by a threshold change.
@@ -52,3 +52,4 @@ public sealed class ReclassificationRecord : AggregateRoot<Guid>, IHasTenant, IA
         };
     }
 }
+

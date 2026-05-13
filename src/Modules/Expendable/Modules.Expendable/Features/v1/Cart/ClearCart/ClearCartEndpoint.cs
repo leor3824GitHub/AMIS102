@@ -1,11 +1,11 @@
-using FSH.Modules.Expendable.Contracts.v1.Cart;
-using FSH.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.Expendable.Contracts.v1.Cart;
+using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.Expendable.Features.v1.Cart.ClearCart;
+namespace AMIS.Modules.Expendable.Features.v1.Cart.ClearCart;
 
 public static class ClearCartEndpoint
 {
@@ -28,4 +28,5 @@ public static class ClearCartEndpoint
         return TypedResults.NoContent();
     }
 }
+
 

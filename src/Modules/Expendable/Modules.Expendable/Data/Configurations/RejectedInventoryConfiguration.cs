@@ -1,9 +1,9 @@
-using FSH.Modules.Expendable.Domain.Inventory;
+using AMIS.Modules.Expendable.Domain.Inventory;
 using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FSH.Modules.Expendable.Data.Configurations;
+namespace AMIS.Modules.Expendable.Data.Configurations;
 
 /// <summary>
 /// Configuration for RejectedInventory aggregate - failed QC inventory tracking.
@@ -94,4 +94,5 @@ public class RejectedInventoryConfiguration : IEntityTypeConfiguration<RejectedI
         builder.HasQueryFilter("SoftDelete", p => !p.IsDeleted);
     }
 }
+
 

@@ -1,5 +1,5 @@
-using FSH.Modules.Finance.Contracts.v1.DisbursementVouchers;
-using FSH.Modules.Finance.Domain.DisbursementVouchers;
+using AMIS.Modules.Finance.Contracts.v1.DisbursementVouchers;
+using AMIS.Modules.Finance.Domain.DisbursementVouchers;
 using Shouldly;
 using Xunit;
 
@@ -111,3 +111,4 @@ public sealed class DisbursementVoucherDomainTests
             modeOfPayment: "Check",
             remarks: null);
 }
+

@@ -1,9 +1,9 @@
-using FSH.Modules.AssetRegister.Contracts.v1.Issuance;
-using FSH.Modules.AssetRegister.Data;
+using AMIS.Modules.AssetRegister.Contracts.v1.Issuance;
+using AMIS.Modules.AssetRegister.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Issuance.GetIssuanceReport;
+namespace AMIS.Modules.AssetRegister.Features.v1.Issuance.GetIssuanceReport;
 
 public sealed class GetIssuanceReportQueryHandler(AssetRegisterDbContext db)
     : IQueryHandler<GetIssuanceReportQuery, PropertyIssuanceReportDto?>
@@ -18,3 +18,4 @@ public sealed class GetIssuanceReportQueryHandler(AssetRegisterDbContext db)
         return report is null ? null : IssuanceMapper.ToDto(report);
     }
 }
+

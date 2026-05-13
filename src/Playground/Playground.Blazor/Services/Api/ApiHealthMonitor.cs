@@ -1,6 +1,6 @@
-using FSH.Playground.Blazor.ApiClient;
+using AMIS.Playground.Blazor.ApiClient;
 
-namespace FSH.Playground.Blazor.Services.Api;
+namespace AMIS.Playground.Blazor.Services.Api;
 
 public interface IApiHealthMonitor
 {
@@ -105,3 +105,4 @@ internal sealed class ApiHealthMonitor : IApiHealthMonitor, IDisposable
         StopMonitoring();
     }
 }
+

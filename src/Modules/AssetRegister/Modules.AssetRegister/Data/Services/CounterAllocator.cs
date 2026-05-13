@@ -1,7 +1,7 @@
-using FSH.Modules.AssetRegister.Domain.Catalog;
+using AMIS.Modules.AssetRegister.Domain.Catalog;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetRegister.Data.Services;
+namespace AMIS.Modules.AssetRegister.Data.Services;
 
 /// <summary>
 /// Allocates the next serial against a (year, month, key) row in PropertyCodeCounter
@@ -45,3 +45,4 @@ public sealed class CounterAllocator(AssetRegisterDbContext db)
             $"Failed to allocate next serial for counter '{counterKey}' after {MaxAttempts} attempts.");
     }
 }
+

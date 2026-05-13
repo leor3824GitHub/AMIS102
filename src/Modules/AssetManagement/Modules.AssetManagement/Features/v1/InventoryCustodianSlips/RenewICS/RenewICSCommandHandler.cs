@@ -1,11 +1,11 @@
-using FSH.Framework.Core.Context;
-using FSH.Framework.Core.Exceptions;
-using FSH.Modules.AssetManagement.Data;
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Framework.Core.Context;
+using AMIS.Framework.Core.Exceptions;
+using AMIS.Modules.AssetManagement.Data;
+using AMIS.Modules.AssetManagement.Domain;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.InventoryCustodianSlips.RenewICS;
+namespace AMIS.Modules.AssetManagement.Features.v1.InventoryCustodianSlips.RenewICS;
 
 public sealed class RenewICSCommandHandler : ICommandHandler<RenewICSCommand, RenewICSResult>
 {
@@ -127,3 +127,4 @@ public sealed class RenewICSCommandHandler : ICommandHandler<RenewICSCommand, Re
         return new RenewICSResult(newIcs.Id, newIcs.ICSNo, oldIcs.Id, oldItems.Count);
     }
 }
+

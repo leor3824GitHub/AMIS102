@@ -1,8 +1,8 @@
-using FSH.Framework.Shared.Persistence;
-using FSH.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
+using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
 using Mediator;
 
-namespace FSH.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
+namespace AMIS.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
 
 // ── Enums ─────────────────────────────────────────────────────────────────────
 
@@ -122,3 +122,4 @@ public sealed record SearchAnnualProcurementPlansQuery : IQuery<PagedResponse<An
     public int PageNumber { get; init; } = 1;
     public int PageSize { get; init; } = 20;
 }
+

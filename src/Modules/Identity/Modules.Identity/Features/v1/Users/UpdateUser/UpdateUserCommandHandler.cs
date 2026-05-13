@@ -1,8 +1,8 @@
-using FSH.Modules.Identity.Contracts.Services;
-using FSH.Modules.Identity.Contracts.v1.Users.UpdateUser;
+using AMIS.Modules.Identity.Contracts.Services;
+using AMIS.Modules.Identity.Contracts.v1.Users.UpdateUser;
 using Mediator;
 
-namespace FSH.Modules.Identity.Features.v1.Users.UpdateUser;
+namespace AMIS.Modules.Identity.Features.v1.Users.UpdateUser;
 
 public sealed class UpdateUserCommandHandler : ICommandHandler<UpdateUserCommand, Unit>
 {
@@ -28,3 +28,4 @@ public sealed class UpdateUserCommandHandler : ICommandHandler<UpdateUserCommand
         return Unit.Value;
     }
 }
+

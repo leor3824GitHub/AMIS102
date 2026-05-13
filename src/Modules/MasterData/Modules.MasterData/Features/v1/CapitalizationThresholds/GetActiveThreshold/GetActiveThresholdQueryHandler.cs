@@ -1,9 +1,9 @@
-using FSH.Modules.MasterData.Contracts.v1.CapitalizationThresholds;
-using FSH.Modules.MasterData.Data;
+using AMIS.Modules.MasterData.Contracts.v1.CapitalizationThresholds;
+using AMIS.Modules.MasterData.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.MasterData.Features.v1.CapitalizationThresholds.GetActiveThreshold;
+namespace AMIS.Modules.MasterData.Features.v1.CapitalizationThresholds.GetActiveThreshold;
 
 public sealed class GetActiveThresholdQueryHandler(MasterDataDbContext db)
     : IQueryHandler<GetActiveCapitalizationThresholdQuery, CapitalizationThresholdDto?>
@@ -28,3 +28,4 @@ public sealed class GetActiveThresholdQueryHandler(MasterDataDbContext db)
             threshold.IsActive);
     }
 }
+

@@ -1,9 +1,9 @@
-using FSH.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
-using FSH.Modules.ProcurementPlanning.Data;
+using AMIS.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
+using AMIS.Modules.ProcurementPlanning.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.GetAnnualProcurementPlan;
+namespace AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.GetAnnualProcurementPlan;
 
 public sealed class GetAnnualProcurementPlanQueryHandler(
     ProcurementPlanningDbContext dbContext) : IQueryHandler<GetAnnualProcurementPlanQuery, AnnualProcurementPlanDto>
@@ -12,3 +12,4 @@ public sealed class GetAnnualProcurementPlanQueryHandler(
         GetAnnualProcurementPlanQuery query, CancellationToken cancellationToken)
         => await AppReadProjection.BuildDtoAsync(dbContext, query.Id, cancellationToken).ConfigureAwait(false);
 }
+

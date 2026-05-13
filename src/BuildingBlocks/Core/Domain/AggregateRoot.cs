@@ -1,4 +1,4 @@
-﻿namespace FSH.Framework.Core.Domain;
+namespace AMIS.Framework.Core.Domain;
 
 /// <summary>
 /// Represents an aggregate root in the domain model.
@@ -8,3 +8,4 @@ public abstract class AggregateRoot<TId> : BaseEntity<TId>
 {
     // Put aggregate-wide behaviors/helpers here if needed
 }
+

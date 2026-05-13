@@ -1,6 +1,6 @@
 using Shouldly;
-using VehicleAggregate = FSH.Modules.Vehicle.Domain.Vehicles.Vehicle;
-using VehicleType = FSH.Modules.Vehicle.Domain.Vehicles.VehicleType;
+using VehicleAggregate = AMIS.Modules.Vehicle.Domain.Vehicles.Vehicle;
+using VehicleType = AMIS.Modules.Vehicle.Domain.Vehicles.VehicleType;
 using Xunit;
 
 namespace Vehicle.Tests.Domain;
@@ -46,7 +46,7 @@ public sealed class VehicleDomainTests
 
         vehicle.Reactivate();
 
-        vehicle.Status.ShouldBe(FSH.Modules.Vehicle.Domain.Vehicles.VehicleStatus.Active);
+        vehicle.Status.ShouldBe(AMIS.Modules.Vehicle.Domain.Vehicles.VehicleStatus.Active);
     }
 
     private static VehicleAggregate CreateVehicle() =>

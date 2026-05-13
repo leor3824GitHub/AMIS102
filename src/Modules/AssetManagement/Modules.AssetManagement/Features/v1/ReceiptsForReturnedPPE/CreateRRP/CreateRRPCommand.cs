@@ -1,7 +1,7 @@
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Modules.AssetManagement.Domain;
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.ReceiptsForReturnedPPE.CreateRRP;
+namespace AMIS.Modules.AssetManagement.Features.v1.ReceiptsForReturnedPPE.CreateRRP;
 
 public sealed record CreateRRPCommand(
     string RRPNo,
@@ -22,3 +22,4 @@ public sealed record CreateRRPResult(
     Guid RRPId,
     string RRPNo,
     int ItemCount);
+

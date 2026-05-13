@@ -1,5 +1,5 @@
 @page "/asset-management/reports"
-@using FSH.Playground.Blazor.ApiClient
+@using AMIS.Playground.Blazor.ApiClient
 @using System.Text
 @inject IJSRuntime JS
 @inject IAssetManagementReportsClient Client
@@ -8,7 +8,7 @@
 @inject ILookupClient LookupClient
 @inject ISnackbar Snackbar
 
-<FshPageHeader Title="Semi-Expendable Property Reports"
+<AMISPageHeader Title="Semi-Expendable Property Reports"
                Description="COA Circular 2022-004 prescribed reports: Property Card, Registry of Issued, Report of Issued, and Property History." />
 
 <style>
@@ -30,7 +30,7 @@
                             <MudAutocomplete T="PropertyItemCatalogSummaryDto"
                                              @bind-Value="_spc.SelectedItem"
                                              SearchFunc="SearchItems"
-                                             ToStringFunc="@(x => x is null ? "" : $"{x.Code} – {x.Name}")"
+                                             ToStringFunc="@(x => x is null ? "" : $"{x.Code} � {x.Name}")"
                                              Label="Item" Variant="Variant.Outlined"
                                              Required="true" Clearable="true" ResetValueOnEmptyText="true" CoerceValue="true" />
                             <MudDatePicker @bind-Date="_spc.DateFromNullable" Label="Date From" Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" />
@@ -53,7 +53,7 @@
                     <MudCard Elevation="1">
                         <MudCardHeader>
                             <CardHeaderContent>
-                                <MudText Typo="Typo.h6">@_spc.Result.ItemCode — @_spc.Result.ItemName</MudText>
+                                <MudText Typo="Typo.h6">@_spc.Result.ItemCode � @_spc.Result.ItemName</MudText>
                             </CardHeaderContent>
                         </MudCardHeader>
                         <MudCardContent>
@@ -85,7 +85,7 @@
                                                 <td><MudText Typo="Typo.caption">@e.DocumentNo</MudText></td>
                                                 <td style="text-align:right">@(e.QuantityIn > 0 ? e.QuantityIn.ToString() : "-")</td>
                                                 <td style="text-align:right">@(e.QuantityOut > 0 ? e.QuantityOut.ToString() : "-")</td>
-                                                <td style="text-align:right">₱@e.UnitCost.ToString("N2")</td>
+                                                <td style="text-align:right">?@e.UnitCost.ToString("N2")</td>
                                                 <td style="text-align:right"><b>@e.RunningBalance</b></td>
                                                 <td><MudText Typo="Typo.caption">@(e.Remarks ?? "-")</MudText></td>
                                             </tr>
@@ -184,9 +184,9 @@
 
                             <MudStack Row="true" Spacing="1" Class="mb-2" AlignItems="AlignItems.Center">
                                 <MudChip T="string" Size="Size.Small" Color="Color.Success">Displayed Lines: @FilteredRegSPILineCount</MudChip>
-                                <MudChip T="string" Size="Size.Small" Color="Color.Secondary">Displayed Total: ₱@FilteredRegSPIAmountTotal.ToString("N2")</MudChip>
-                                <MudChip T="string" Size="Size.Small" Color="Color.Info">API Page Total: ₱@_regspi.Result.PageAmountTotal.ToString("N2")</MudChip>
-                                <MudChip T="string" Size="Size.Small" Color="Color.Dark">Overall: ₱@_regspi.Result.OverallAmountTotal.ToString("N2")</MudChip>
+                                <MudChip T="string" Size="Size.Small" Color="Color.Secondary">Displayed Total: ?@FilteredRegSPIAmountTotal.ToString("N2")</MudChip>
+                                <MudChip T="string" Size="Size.Small" Color="Color.Info">API Page Total: ?@_regspi.Result.PageAmountTotal.ToString("N2")</MudChip>
+                                <MudChip T="string" Size="Size.Small" Color="Color.Dark">Overall: ?@_regspi.Result.OverallAmountTotal.ToString("N2")</MudChip>
                             </MudStack>
 
                             @if (GetFilteredRegSPIItems().Count == 0)
@@ -218,7 +218,7 @@
                                                     <td>@(string.IsNullOrWhiteSpace(s.FundCluster) ? "-" : s.FundCluster)</td>
                                                     <td><MudChip T="string" Size="Size.Small" Color="@ICSStatusColor(s.ICSStatus)">@s.ICSStatus</MudChip></td>
                                                     <td style="text-align:right">@s.LineCount</td>
-                                                    <td style="text-align:right">₱@s.AmountTotal.ToString("N2")</td>
+                                                    <td style="text-align:right">?@s.AmountTotal.ToString("N2")</td>
                                                 </tr>
                                             }
                                         </tbody>
@@ -260,7 +260,7 @@
                                                         <MudText Typo="Typo.caption" Color="Color.Secondary">@(string.Join(" | ", new[] { e.IssuedFromEmployeePositionName, e.IssuedFromEmployeeOfficeName }.Where(x => !string.IsNullOrWhiteSpace(x))))</MudText>
                                                     }
                                                 </td>
-                                                <td style="text-align:right">₱@e.UnitCost.ToString("N2")</td>
+                                                <td style="text-align:right">?@e.UnitCost.ToString("N2")</td>
                                                 <td><MudChip T="string" Size="Size.Small" Color="@ICSStatusColor(e.ICSStatus)">@e.ICSStatus</MudChip></td>
                                                 <td>@(e.ExpiresOn?.ToString("MM/dd/yyyy") ?? "-")</td>
                                             </tr>
@@ -360,9 +360,9 @@
 
                             <MudStack Row="true" Spacing="1" Class="mb-2" AlignItems="AlignItems.Center">
                                 <MudChip T="string" Size="Size.Small" Color="Color.Success">Displayed Lines: @FilteredRSPILineCount</MudChip>
-                                <MudChip T="string" Size="Size.Small" Color="Color.Secondary">Displayed Total: ₱@FilteredRSPIAmountTotal.ToString("N2")</MudChip>
-                                <MudChip T="string" Size="Size.Small" Color="Color.Info">API Page Total: ₱@_rspi.Result.PageAmountTotal.ToString("N2")</MudChip>
-                                <MudChip T="string" Size="Size.Small" Color="Color.Dark">Overall: ₱@_rspi.Result.OverallAmountTotal.ToString("N2")</MudChip>
+                                <MudChip T="string" Size="Size.Small" Color="Color.Secondary">Displayed Total: ?@FilteredRSPIAmountTotal.ToString("N2")</MudChip>
+                                <MudChip T="string" Size="Size.Small" Color="Color.Info">API Page Total: ?@_rspi.Result.PageAmountTotal.ToString("N2")</MudChip>
+                                <MudChip T="string" Size="Size.Small" Color="Color.Dark">Overall: ?@_rspi.Result.OverallAmountTotal.ToString("N2")</MudChip>
                             </MudStack>
 
                             @if (GetFilteredRSPIItems().Count == 0)
@@ -394,7 +394,7 @@
                                                     <td>@(string.IsNullOrWhiteSpace(s.FundCluster) ? "-" : s.FundCluster)</td>
                                                     <td><MudChip T="string" Size="Size.Small" Color="@ICSStatusColor(s.ICSStatus)">@s.ICSStatus</MudChip></td>
                                                     <td style="text-align:right">@s.LineCount</td>
-                                                    <td style="text-align:right">₱@s.AmountTotal.ToString("N2")</td>
+                                                    <td style="text-align:right">?@s.AmountTotal.ToString("N2")</td>
                                                 </tr>
                                             }
                                         </tbody>
@@ -445,7 +445,7 @@
                                                 </td>
                                                 <td><MudChip T="string" Size="Size.Small" Color="Color.Default">@e.AssetType</MudChip></td>
                                                 <td><MudChip T="string" Size="Size.Small" Color="@SEValueClassColor(e.ICSNo, e.AssetType)">@GetSEValueClass(e.ICSNo, e.AssetType)</MudChip></td>
-                                                <td style="text-align:right">₱@e.UnitCost.ToString("N2")</td>
+                                                <td style="text-align:right">?@e.UnitCost.ToString("N2")</td>
                                                 <td><MudChip T="string" Size="Size.Small" Color="@ICSStatusColor(e.ICSStatus)">@e.ICSStatus</MudChip></td>
                                             </tr>
                                         }
@@ -502,7 +502,7 @@
                             <MudAutocomplete T="SemiExpendablePropertySummaryDto"
                                              @bind-Value="_history.SelectedProperty"
                                              SearchFunc="SearchAllProperties"
-                                             ToStringFunc="@(x => x is null ? "" : $"{x.PropertyNo} – {x.ItemName}")"
+                                             ToStringFunc="@(x => x is null ? "" : $"{x.PropertyNo} � {x.ItemName}")"
                                              Label="Property" Variant="Variant.Outlined"
                                              Required="true" Clearable="true" ResetValueOnEmptyText="true" CoerceValue="true" />
                             <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
@@ -525,11 +525,11 @@
                         <MudCardHeader>
                             <CardHeaderContent>
                                 <MudStack Spacing="0">
-                                    <MudText Typo="Typo.h6">@_history.Result.PropertyNo — @_history.Result.ItemName</MudText>
+                                    <MudText Typo="Typo.h6">@_history.Result.PropertyNo � @_history.Result.ItemName</MudText>
                                     <MudText Typo="Typo.caption" Color="Color.Secondary">
                                         @_history.Result.ItemCode
                                         @if (!string.IsNullOrWhiteSpace(_history.Result.SerialNo)) { <text> | S/N: @_history.Result.SerialNo</text> }
-                                        | @_history.Result.Category | ₱@_history.Result.UnitCost.ToString("N2")
+                                        | @_history.Result.Category | ?@_history.Result.UnitCost.ToString("N2")
                                     </MudText>
                                     <MudChip T="string" Size="Size.Small" Color="@PropertyStatusColor(_history.Result.CurrentStatus)" Class="mt-1">
                                         @_history.Result.CurrentStatus
@@ -578,7 +578,7 @@
 </MudTabs>
 
 @code {
-    // ─── SPC state ────────────────────────────────────────────────────────────
+    // --- SPC state ------------------------------------------------------------
     private readonly SpcState _spc = new();
     private sealed class SpcState
     {
@@ -589,7 +589,7 @@
         public SPCDto? Result { get; set; }
     }
 
-    // ─── RegSPI state ─────────────────────────────────────────────────────────
+    // --- RegSPI state ---------------------------------------------------------
     private readonly RegSpiState _regspi = new();
     private sealed class RegSpiState
     {
@@ -603,7 +603,7 @@
     }
     private int RegSPITotalPages => _regspi.Result is null ? 1 : Math.Max(1, (int)Math.Ceiling(_regspi.Result.TotalCount / 20.0));
 
-    // ─── RSPI state ───────────────────────────────────────────────────────────
+    // --- RSPI state -----------------------------------------------------------
     private readonly RspiState _rspi = new();
     private sealed class RspiState
     {
@@ -618,7 +618,7 @@
     }
     private int RSPITotalPages => _rspi.Result is null ? 1 : Math.Max(1, (int)Math.Ceiling(_rspi.Result.TotalCount / 20.0));
 
-    // ─── Property History state ───────────────────────────────────────────────
+    // --- Property History state -----------------------------------------------
     private readonly HistoryState _history = new();
     private sealed class HistoryState
     {
@@ -627,7 +627,7 @@
         public PropertyHistoryDto? Result { get; set; }
     }
 
-    // ─── Data loaders ─────────────────────────────────────────────────────────
+    // --- Data loaders ---------------------------------------------------------
 
     private async Task LoadSPCAsync()
     {
@@ -697,7 +697,7 @@
         finally { _history.Loading = false; }
     }
 
-    // ─── Search helpers ───────────────────────────────────────────────────────
+    // --- Search helpers -------------------------------------------------------
 
     private async Task<IEnumerable<PropertyItemCatalogSummaryDto>> SearchItems(string? value, CancellationToken ct)
     {
@@ -726,7 +726,7 @@
     private static string FormatEmployee(EmployeeReferenceDto? e) =>
         e is null ? "" : $"{e.FirstName} {e.LastName} ({e.EmployeeNumber})";
 
-    // ─── Color helpers ────────────────────────────────────────────────────────
+    // --- Color helpers --------------------------------------------------------
 
     private static Color DocTypeColor(string docType) => docType switch
     {
@@ -1046,3 +1046,4 @@
         NormalizeRSPIFilters();
     }
 }
+

@@ -1,7 +1,7 @@
 using System.Globalization;
 using MudBlazor;
 
-namespace FSH.Framework.Blazor.UI.Theme;
+namespace AMIS.Framework.Blazor.UI.Theme;
 
 /// <summary>
 /// Client-side representation of tenant theme settings.
@@ -226,3 +226,4 @@ public sealed class LayoutSettings
         DefaultElevation = DefaultElevation
     };
 }
+

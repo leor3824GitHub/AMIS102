@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.Expendable.Contracts.v1.Cart;
+using AMIS.Modules.Expendable.Contracts.v1.Cart;
 
-namespace FSH.Modules.Expendable.Features.v1.Cart;
+namespace AMIS.Modules.Expendable.Features.v1.Cart;
 
 public sealed class AddToCartCommandValidator : AbstractValidator<AddToCartCommand>
 {
@@ -50,4 +50,5 @@ public sealed class ConvertCartToSupplyRequestCommandValidator : AbstractValidat
             .MaximumLength(1000).WithMessage("Business justification must not exceed 1000 characters");
     }
 }
+
 

@@ -1,7 +1,7 @@
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Modules.AssetManagement.Domain;
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.InventoryCustodianSlips.GetExpiringICS;
+namespace AMIS.Modules.AssetManagement.Features.v1.InventoryCustodianSlips.GetExpiringICS;
 
 /// <summary>
 /// Returns Active ICS records whose <see cref="InventoryCustodianSlip.ExpiresOn"/> falls
@@ -29,3 +29,4 @@ public sealed record PagedExpiringICSResponse(
     int PageNumber,
     int PageSize,
     int TotalCount);
+

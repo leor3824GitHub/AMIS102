@@ -1,10 +1,10 @@
-using FSH.Framework.Shared.Identity.Authorization;
+using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.MasterData.Features.v1.Categories.GetCategoryById;
+namespace AMIS.Modules.MasterData.Features.v1.Categories.GetCategoryById;
 
 public static class GetCategoryByIdEndpoint
 {
@@ -25,3 +25,4 @@ public static class GetCategoryByIdEndpoint
         return TypedResults.Ok(result);
     }
 }
+

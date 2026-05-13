@@ -1,9 +1,9 @@
-using FSH.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
-using FSH.Modules.ProcurementAcquisition.Data;
+using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
+using AMIS.Modules.ProcurementAcquisition.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.GetPurchaseRequest;
+namespace AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.GetPurchaseRequest;
 
 public sealed class GetPurchaseRequestQueryHandler(ProcurementDbContext dbContext)
     : IQueryHandler<GetPurchaseRequestQuery, PurchaseRequestDto?>
@@ -44,3 +44,4 @@ public sealed class GetPurchaseRequestQueryHandler(ProcurementDbContext dbContex
             pr.LastModifiedOnUtc);
     }
 }
+

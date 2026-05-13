@@ -1,6 +1,7 @@
-namespace FSH.Playground.Blazor.Services.Api;
+namespace AMIS.Playground.Blazor.Services.Api;
 
 internal static class ApiClients
 {
-    public const string FSH = "fshapi";
+    public const string AMIS = "AMISapi";
 }
+

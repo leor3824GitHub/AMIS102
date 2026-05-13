@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
+using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
 
-namespace FSH.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.SubmitPurchaseRequest;
+namespace AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.SubmitPurchaseRequest;
 
 public sealed class SubmitPurchaseRequestCommandValidator : AbstractValidator<SubmitPurchaseRequestCommand>
 {
@@ -10,3 +10,4 @@ public sealed class SubmitPurchaseRequestCommandValidator : AbstractValidator<Su
         RuleFor(x => x.Id).NotEmpty();
     }
 }
+

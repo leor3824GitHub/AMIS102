@@ -1,10 +1,10 @@
-using FSH.Modules.AssetRegister.Contracts.v1.Assets;
-using FSH.Modules.AssetRegister.Contracts.v1.ValueObjects;
-using FSH.Modules.AssetRegister.Data;
+using AMIS.Modules.AssetRegister.Contracts.v1.Assets;
+using AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
+using AMIS.Modules.AssetRegister.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Assets.GetAssetByPropertyNo;
+namespace AMIS.Modules.AssetRegister.Features.v1.Assets.GetAssetByPropertyNo;
 
 public sealed class GetAssetByPropertyNoQueryHandler(AssetRegisterDbContext db)
     : IQueryHandler<GetAssetByPropertyNoQuery, AssetRegistryDto?>
@@ -24,3 +24,4 @@ public sealed class GetAssetByPropertyNoQueryHandler(AssetRegisterDbContext db)
         return asset is null ? null : AssetRegistryMapper.ToDto(asset);
     }
 }
+

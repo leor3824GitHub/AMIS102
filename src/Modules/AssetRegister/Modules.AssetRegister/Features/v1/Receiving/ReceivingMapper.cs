@@ -1,9 +1,9 @@
-using FSH.Modules.AssetRegister.Contracts.v1.Accountability;
-using FSH.Modules.AssetRegister.Contracts.v1.Receiving;
-using FSH.Modules.AssetRegister.Contracts.v1.ValueObjects;
-using FSH.Modules.AssetRegister.Domain.Receiving;
+using AMIS.Modules.AssetRegister.Contracts.v1.Accountability;
+using AMIS.Modules.AssetRegister.Contracts.v1.Receiving;
+using AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
+using AMIS.Modules.AssetRegister.Domain.Receiving;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Receiving;
+namespace AMIS.Modules.AssetRegister.Features.v1.Receiving;
 
 internal static class ReceivingMapper
 {
@@ -24,3 +24,4 @@ internal static class ReceivingMapper
             ToDto(r.ReceivedBy), ToDtoOrNull(r.NotedBy), r.DateReceived,
             r.Items.Select(ToDto).ToList());
 }
+

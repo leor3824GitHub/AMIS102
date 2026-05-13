@@ -1,9 +1,9 @@
-using FSH.Framework.Core.Exceptions;
-using FSH.Modules.AssetManagement.Data;
+using AMIS.Framework.Core.Exceptions;
+using AMIS.Modules.AssetManagement.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.UnserviceablePropertyReports.GetUnserviceablePropertyReportById;
+namespace AMIS.Modules.AssetManagement.Features.v1.UnserviceablePropertyReports.GetUnserviceablePropertyReportById;
 
 public sealed class GetUnserviceablePropertyReportByIdQueryHandler(AssetManagementDbContext dbContext)
     : IQueryHandler<GetUnserviceablePropertyReportByIdQuery, UnserviceablePropertyReportDetailsDto>
@@ -66,3 +66,4 @@ public sealed class GetUnserviceablePropertyReportByIdQueryHandler(AssetManageme
             items);
     }
 }
+

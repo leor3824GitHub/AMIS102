@@ -1,12 +1,12 @@
-using FSH.Framework.Core.Context;
-using FSH.Framework.Core.Exceptions;
-using FSH.Modules.AssetManagement.Data;
-using FSH.Modules.AssetManagement.Domain;
-using FSH.Modules.MasterData.Contracts.v1.CapitalizationThresholds;
+using AMIS.Framework.Core.Context;
+using AMIS.Framework.Core.Exceptions;
+using AMIS.Modules.AssetManagement.Data;
+using AMIS.Modules.AssetManagement.Domain;
+using AMIS.Modules.MasterData.Contracts.v1.CapitalizationThresholds;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.Reclassification.ReclassifyProperties;
+namespace AMIS.Modules.AssetManagement.Features.v1.Reclassification.ReclassifyProperties;
 
 public sealed class ReclassifyPropertiesCommandHandler : ICommandHandler<ReclassifyPropertiesCommand, ReclassifyPropertiesResult>
 {
@@ -120,3 +120,4 @@ public sealed class ReclassifyPropertiesCommandHandler : ICommandHandler<Reclass
         return new ReclassifyPropertiesResult(record.Id, totalReclassified);
     }
 }
+

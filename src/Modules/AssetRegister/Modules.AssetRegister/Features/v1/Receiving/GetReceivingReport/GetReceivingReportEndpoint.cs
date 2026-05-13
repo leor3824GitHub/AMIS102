@@ -1,11 +1,11 @@
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.AssetRegister.Contracts.v1.Receiving;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.AssetRegister.Contracts.v1.Receiving;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Receiving.GetReceivingReport;
+namespace AMIS.Modules.AssetRegister.Features.v1.Receiving.GetReceivingReport;
 
 public static class GetReceivingReportEndpoint
 {
@@ -24,3 +24,4 @@ public static class GetReceivingReportEndpoint
         return result is null ? TypedResults.NotFound() : TypedResults.Ok(result);
     }
 }
+

@@ -1,5 +1,5 @@
-using FSH.Modules.AssetManagement.Domain;
-using FSH.Modules.AssetManagement.Features.v1.SemiExpendableIssuanceRecords.CreateSMIR;
+using AMIS.Modules.AssetManagement.Domain;
+using AMIS.Modules.AssetManagement.Features.v1.SemiExpendableIssuanceRecords.CreateSMIR;
 using Shouldly;
 using Xunit;
 
@@ -200,3 +200,4 @@ public sealed class CreateSMIRCommandValidatorTests
             Remarks: null,
             Items: [new CreateSMIRItemRequest(Guid.NewGuid(), "Laptop")]);
 }
+

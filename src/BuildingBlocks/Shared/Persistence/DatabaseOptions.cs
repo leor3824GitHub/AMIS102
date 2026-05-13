@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace FSH.Framework.Shared.Persistence;
+namespace AMIS.Framework.Shared.Persistence;
 
 /// <summary>
 /// Configuration options for database provider selection and connection information.
@@ -31,3 +31,4 @@ public class DatabaseOptions : IValidatableObject
         }
     }
 }
+

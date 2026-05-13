@@ -1,6 +1,6 @@
-﻿using System.Net;
+using System.Net;
 
-namespace FSH.Framework.Core.Exceptions;
+namespace AMIS.Framework.Core.Exceptions;
 
 /// <summary>
 /// Exception representing a 404 Not Found error.
@@ -44,3 +44,4 @@ public class NotFoundException : CustomException
     {
     }
 }
+

@@ -1,6 +1,6 @@
-﻿using System.Net;
+using System.Net;
 
-namespace FSH.Framework.Core.Exceptions;
+namespace AMIS.Framework.Core.Exceptions;
 /// <summary>
 /// Exception representing a 401 Unauthorized error (authentication failure).
 /// </summary>
@@ -43,3 +43,4 @@ public class UnauthorizedException : CustomException
     {
     }
 }
+

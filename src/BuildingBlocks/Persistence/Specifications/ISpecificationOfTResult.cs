@@ -1,6 +1,6 @@
 using System.Linq.Expressions;
 
-namespace FSH.Framework.Persistence;
+namespace AMIS.Framework.Persistence;
 
 /// <summary>
 /// Projected specification that composes a query for <typeparamref name="T"/>
@@ -20,4 +20,5 @@ public interface ISpecification<T, TResult> : ISpecification<T>
     /// </summary>
     Expression<Func<T, TResult>> Selector { get; }
 }
+
 

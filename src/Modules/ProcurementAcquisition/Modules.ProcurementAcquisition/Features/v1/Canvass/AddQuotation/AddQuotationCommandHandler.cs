@@ -1,11 +1,11 @@
-using FSH.Framework.Core.Context;
-using FSH.Modules.ProcurementAcquisition.Contracts.v1.Canvass;
-using FSH.Modules.ProcurementAcquisition.Data;
-using FSH.Modules.ProcurementAcquisition.Domain.Canvass;
+using AMIS.Framework.Core.Context;
+using AMIS.Modules.ProcurementAcquisition.Contracts.v1.Canvass;
+using AMIS.Modules.ProcurementAcquisition.Data;
+using AMIS.Modules.ProcurementAcquisition.Domain.Canvass;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.ProcurementAcquisition.Features.v1.Canvass.AddQuotation;
+namespace AMIS.Modules.ProcurementAcquisition.Features.v1.Canvass.AddQuotation;
 
 public sealed class AddQuotationCommandHandler(
     ProcurementDbContext dbContext,
@@ -64,3 +64,4 @@ public sealed class AddQuotationCommandHandler(
         ?? dbContext.TenantInfo?.Identifier
         ?? throw new InvalidOperationException("Tenant ID required.");
 }
+

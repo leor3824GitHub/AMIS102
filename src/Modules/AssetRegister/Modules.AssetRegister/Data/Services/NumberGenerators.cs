@@ -1,9 +1,9 @@
 using System.Globalization;
-using FSH.Modules.AssetRegister.Contracts.v1;
-using FSH.Modules.AssetRegister.Contracts.v1.ValueObjects;
-using FSH.Modules.AssetRegister.Domain.Services;
+using AMIS.Modules.AssetRegister.Contracts.v1;
+using AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
+using AMIS.Modules.AssetRegister.Domain.Services;
 
-namespace FSH.Modules.AssetRegister.Data.Services;
+namespace AMIS.Modules.AssetRegister.Data.Services;
 
 internal sealed class PropertyNumberGenerator(AssetRegisterDbContext db, CounterAllocator allocator) : IPropertyNumberGenerator
 {
@@ -109,3 +109,4 @@ internal sealed class CurrentReplacementCostCalculator(AssetRegisterDbContext db
         return asset.UnitCost;
     }
 }
+

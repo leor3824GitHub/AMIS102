@@ -1,0 +1,57 @@
+::deep .AMIS-confirm-dialog {
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+::deep .AMIS-confirm-dialog .mud-dialog-title {
+    padding: 24px 24px 0 24px;
+}
+
+::deep .AMIS-confirm-dialog .mud-dialog-content {
+    padding: 16px 24px;
+}
+
+::deep .AMIS-confirm-dialog .mud-dialog-actions {
+    padding: 16px 24px 24px 24px;
+}
+
+.AMIS-dialog-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.AMIS-dialog-icon {
+    flex-shrink: 0;
+}
+
+.AMIS-dialog-title {
+    font-weight: 600;
+    color: var(--mud-palette-text-primary);
+}
+
+.AMIS-dialog-content {
+    padding-top: 8px;
+}
+
+.AMIS-dialog-message {
+    color: var(--mud-palette-text-secondary);
+    line-height: 1.6;
+}
+
+.AMIS-dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    width: 100%;
+}
+
+.AMIS-dialog-btn-cancel {
+    font-weight: 500;
+}
+
+.AMIS-dialog-btn-confirm {
+    font-weight: 600;
+    border-radius: 8px;
+    padding: 8px 20px;
+}

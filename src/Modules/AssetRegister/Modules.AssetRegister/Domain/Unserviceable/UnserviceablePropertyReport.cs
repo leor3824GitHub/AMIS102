@@ -1,10 +1,10 @@
-using FSH.Framework.Core.Domain;
-using FSH.Modules.AssetRegister.Contracts.v1;
-using FSH.Modules.AssetRegister.Contracts.v1.ValueObjects;
-using FSH.Modules.AssetRegister.Domain.Assets;
-using FSH.Modules.AssetRegister.Domain.Events;
+using AMIS.Framework.Core.Domain;
+using AMIS.Modules.AssetRegister.Contracts.v1;
+using AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
+using AMIS.Modules.AssetRegister.Domain.Assets;
+using AMIS.Modules.AssetRegister.Domain.Events;
 
-namespace FSH.Modules.AssetRegister.Domain.Unserviceable;
+namespace AMIS.Modules.AssetRegister.Domain.Unserviceable;
 
 public sealed class UnserviceablePropertyReport : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 {
@@ -150,3 +150,4 @@ public sealed class UnserviceablePropertyReport : AggregateRoot<Guid>, IHasTenan
         _items.FirstOrDefault(i => i.Id == itemId)
             ?? throw new InvalidOperationException($"Unserviceable item '{itemId}' not found.");
 }
+

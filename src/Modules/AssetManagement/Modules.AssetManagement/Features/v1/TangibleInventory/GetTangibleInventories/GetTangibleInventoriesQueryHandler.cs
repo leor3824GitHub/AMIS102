@@ -1,9 +1,9 @@
-using FSH.Modules.AssetManagement.Data;
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Modules.AssetManagement.Data;
+using AMIS.Modules.AssetManagement.Domain;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.TangibleInventory.GetTangibleInventories;
+namespace AMIS.Modules.AssetManagement.Features.v1.TangibleInventory.GetTangibleInventories;
 
 public sealed class GetTangibleInventoriesQueryHandler(AssetManagementDbContext dbContext)
     : IQueryHandler<GetTangibleInventoriesQuery, PagedTangibleInventoriesResponse>
@@ -98,3 +98,4 @@ public sealed class GetTangibleInventoriesQueryHandler(AssetManagementDbContext 
         return new PagedTangibleInventoriesResponse(result, pageNumber, pageSize, totalCount);
     }
 }
+

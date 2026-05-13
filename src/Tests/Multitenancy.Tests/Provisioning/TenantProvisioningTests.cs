@@ -1,4 +1,4 @@
-using FSH.Modules.Multitenancy.Provisioning;
+using AMIS.Modules.Multitenancy.Provisioning;
 
 namespace Multitenancy.Tests.Provisioning;
 
@@ -359,3 +359,4 @@ public sealed class TenantProvisioningTests
 
     #endregion
 }
+

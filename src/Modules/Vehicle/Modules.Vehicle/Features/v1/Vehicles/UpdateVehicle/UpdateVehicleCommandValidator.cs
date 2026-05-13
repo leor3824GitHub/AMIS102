@@ -1,8 +1,8 @@
 using FluentValidation;
-using FSH.Modules.Vehicle.Contracts.v1.Vehicles;
-using FSH.Modules.Vehicle.Domain.Vehicles;
+using AMIS.Modules.Vehicle.Contracts.v1.Vehicles;
+using AMIS.Modules.Vehicle.Domain.Vehicles;
 
-namespace FSH.Modules.Vehicle.Features.v1.Vehicles.UpdateVehicle;
+namespace AMIS.Modules.Vehicle.Features.v1.Vehicles.UpdateVehicle;
 
 public sealed class UpdateVehicleCommandValidator : AbstractValidator<UpdateVehicleCommand>
 {
@@ -26,3 +26,4 @@ public sealed class UpdateVehicleCommandValidator : AbstractValidator<UpdateVehi
         RuleFor(x => x.AcquisitionCost).GreaterThanOrEqualTo(0).When(x => x.AcquisitionCost != null);
     }
 }
+

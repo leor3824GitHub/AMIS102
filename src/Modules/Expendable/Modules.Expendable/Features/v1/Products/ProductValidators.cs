@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.Expendable.Contracts.v1.Products;
+using AMIS.Modules.Expendable.Contracts.v1.Products;
 
-namespace FSH.Modules.Expendable.Features.v1.Products;
+namespace AMIS.Modules.Expendable.Features.v1.Products;
 
 public sealed class CreateProductCommandValidator : AbstractValidator<CreateProductCommand>
 {
@@ -66,4 +66,5 @@ public sealed class DeleteProductCommandValidator : AbstractValidator<DeleteProd
             .NotEmpty().WithMessage("Product ID is required");
     }
 }
+
 

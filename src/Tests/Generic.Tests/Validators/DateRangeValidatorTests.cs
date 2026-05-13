@@ -1,15 +1,15 @@
-using FSH.Modules.Auditing.Contracts.v1.GetAudits;
-using FSH.Modules.Auditing.Contracts.v1.GetAuditsByCorrelation;
-using FSH.Modules.Auditing.Contracts.v1.GetAuditsByTrace;
-using FSH.Modules.Auditing.Contracts.v1.GetAuditSummary;
-using FSH.Modules.Auditing.Contracts.v1.GetExceptionAudits;
-using FSH.Modules.Auditing.Contracts.v1.GetSecurityAudits;
-using FSH.Modules.Auditing.Features.v1.GetAudits;
-using FSH.Modules.Auditing.Features.v1.GetAuditsByCorrelation;
-using FSH.Modules.Auditing.Features.v1.GetAuditsByTrace;
-using FSH.Modules.Auditing.Features.v1.GetAuditSummary;
-using FSH.Modules.Auditing.Features.v1.GetExceptionAudits;
-using FSH.Modules.Auditing.Features.v1.GetSecurityAudits;
+using AMIS.Modules.Auditing.Contracts.v1.GetAudits;
+using AMIS.Modules.Auditing.Contracts.v1.GetAuditsByCorrelation;
+using AMIS.Modules.Auditing.Contracts.v1.GetAuditsByTrace;
+using AMIS.Modules.Auditing.Contracts.v1.GetAuditSummary;
+using AMIS.Modules.Auditing.Contracts.v1.GetExceptionAudits;
+using AMIS.Modules.Auditing.Contracts.v1.GetSecurityAudits;
+using AMIS.Modules.Auditing.Features.v1.GetAudits;
+using AMIS.Modules.Auditing.Features.v1.GetAuditsByCorrelation;
+using AMIS.Modules.Auditing.Features.v1.GetAuditsByTrace;
+using AMIS.Modules.Auditing.Features.v1.GetAuditSummary;
+using AMIS.Modules.Auditing.Features.v1.GetExceptionAudits;
+using AMIS.Modules.Auditing.Features.v1.GetSecurityAudits;
 
 namespace Generic.Tests.Validators;
 
@@ -274,3 +274,4 @@ public sealed class DateRangeValidatorTests
         result.IsValid.ShouldBeTrue();
     }
 }
+

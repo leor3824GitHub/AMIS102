@@ -1,4 +1,4 @@
-namespace FSH.Framework.Eventing.Inbox;
+namespace AMIS.Framework.Eventing.Inbox;
 
 /// <summary>
 /// Abstraction for idempotent consumer tracking.
@@ -9,4 +9,5 @@ public interface IInboxStore
 
     Task MarkProcessedAsync(Guid eventId, string handlerName, string? tenantId, string eventType, CancellationToken ct = default);
 }
+
 

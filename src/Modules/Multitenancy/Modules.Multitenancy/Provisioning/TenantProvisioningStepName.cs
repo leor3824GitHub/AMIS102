@@ -1,4 +1,4 @@
-namespace FSH.Modules.Multitenancy.Provisioning;
+namespace AMIS.Modules.Multitenancy.Provisioning;
 
 public enum TenantProvisioningStepName
 {
@@ -7,3 +7,4 @@ public enum TenantProvisioningStepName
     Seeding = 3,
     CacheWarm = 4
 }
+

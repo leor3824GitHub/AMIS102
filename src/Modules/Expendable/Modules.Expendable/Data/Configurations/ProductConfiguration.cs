@@ -1,9 +1,9 @@
-using FSH.Modules.Expendable.Domain.Products;
+using AMIS.Modules.Expendable.Domain.Products;
 using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FSH.Modules.Expendable.Data.Configurations;
+namespace AMIS.Modules.Expendable.Data.Configurations;
 
 public class ProductConfiguration : IEntityTypeConfiguration<Product>
 {
@@ -67,4 +67,5 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
         builder.HasQueryFilter("SoftDelete", p => !p.IsDeleted);
     }
 }
+
 

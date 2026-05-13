@@ -1,8 +1,8 @@
-using FSH.Framework.Shared.Multitenancy;
+using AMIS.Framework.Shared.Multitenancy;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FSH.Modules.Multitenancy.Data.Configurations;
+namespace AMIS.Modules.Multitenancy.Data.Configurations;
 
 public class AppTenantInfoConfiguration : IEntityTypeConfiguration<AppTenantInfo>
 {
@@ -11,3 +11,4 @@ public class AppTenantInfoConfiguration : IEntityTypeConfiguration<AppTenantInfo
         builder.ToTable("Tenants", MultitenancyConstants.Schema);
     }
 }
+

@@ -1,4 +1,4 @@
-﻿namespace FSH.Modules.Auditing.Contracts;
+namespace AMIS.Modules.Auditing.Contracts;
 
 /// <summary>
 /// A single property delta for entity-change auditing.
@@ -10,3 +10,4 @@ public sealed record PropertyChange(
     object? NewValue,
     bool IsSensitive    // true => value already masked/hashed
 );
+

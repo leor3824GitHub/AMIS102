@@ -1,5 +1,5 @@
-using FSH.Modules.Vehicle.Contracts.v1.Vehicles;
-using FSH.Modules.Vehicle.Features.v1.Vehicles.AssignVehicle;
+using AMIS.Modules.Vehicle.Contracts.v1.Vehicles;
+using AMIS.Modules.Vehicle.Features.v1.Vehicles.AssignVehicle;
 using Shouldly;
 using Xunit;
 

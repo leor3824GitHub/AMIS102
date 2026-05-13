@@ -1,15 +1,15 @@
 @page "/procurement/canvass-requests"
-@using FSH.Modules.ProcurementAcquisition.Contracts.v1.Canvass
-@using FSH.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests
-@using FSH.Framework.Shared.Persistence
-@using FSH.Playground.Blazor.ApiClient
+@using AMIS.Modules.ProcurementAcquisition.Contracts.v1.Canvass
+@using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests
+@using AMIS.Framework.Shared.Persistence
+@using AMIS.Playground.Blazor.ApiClient
 @inject ICanvassRequestClient Client
 @inject IPurchaseRequestClient PurchaseRequestClient
 @inject IMaster_dataClient MasterDataClient
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 
-<FshPageHeader Title="Canvass Requests (RIV)" Description="Request for Issuance of Voucher â€” manage supplier quotations and award" />
+<AMISPageHeader Title="Canvass Requests (RIV)" Description="Request for Issuance of Voucher — manage supplier quotations and award" />
 
 <MudGrid Spacing="3">
     <!-- Create Form -->
@@ -215,8 +215,8 @@
                                                                         <MudText Typo="Typo.caption" Color="Color.Secondary">@q.SupplierAddress</MudText>
                                                                     </td>
                                                                     <td>@q.QuotationDate.ToString("MM/dd/yyyy")</td>
-                                                                    <td style="text-align:right">â‚±@q.LineItems.Sum(li => li.Total).ToString("N2")</td>
-                                                                    <td>@(q.DeliveryTerms ?? "â€”")</td>
+                                                                    <td style="text-align:right">?@q.LineItems.Sum(li => li.Total).ToString("N2")</td>
+                                                                    <td>@(q.DeliveryTerms ?? "—")</td>
                                                                     <td>
                                                                         @if (q.IsAwarded)
                                                                         {
@@ -495,3 +495,4 @@
         public decimal UnitPrice { get; set; }
     }
 }
+

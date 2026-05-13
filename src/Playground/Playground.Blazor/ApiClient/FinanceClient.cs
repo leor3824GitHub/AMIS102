@@ -1,9 +1,9 @@
 using System.Net.Http.Json;
 using System.Web;
-using FSH.Modules.Finance.Contracts.v1.BudgetUtilizationRecords;
-using FSH.Modules.Finance.Contracts.v1.DisbursementVouchers;
+using AMIS.Modules.Finance.Contracts.v1.BudgetUtilizationRecords;
+using AMIS.Modules.Finance.Contracts.v1.DisbursementVouchers;
 
-namespace FSH.Playground.Blazor.ApiClient;
+namespace AMIS.Playground.Blazor.ApiClient;
 
 // ── Disbursement Vouchers ─────────────────────────────────────────────────────
 
@@ -119,3 +119,4 @@ internal sealed class BudgetUtilizationRecordClient(HttpClient http) : IBudgetUt
     private sealed record RemarksBody(string Remarks);
     private sealed record CreateIdResponse(Guid Id);
 }
+

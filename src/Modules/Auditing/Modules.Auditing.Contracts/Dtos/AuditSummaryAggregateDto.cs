@@ -1,6 +1,6 @@
-using FSH.Modules.Auditing.Contracts;
+using AMIS.Modules.Auditing.Contracts;
 
-namespace FSH.Modules.Auditing.Contracts.Dtos;
+namespace AMIS.Modules.Auditing.Contracts.Dtos;
 
 public sealed class AuditSummaryAggregateDto
 {
@@ -16,3 +16,4 @@ public sealed class AuditSummaryAggregateDto
     public IDictionary<string, long> EventsByTenant { get; init; } =
         new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase);
 }
+

@@ -1,25 +1,25 @@
 using System.Linq.Expressions;
-using FSH.Framework.Core.Context;
-using FSH.Framework.Persistence;
-using FSH.Framework.Shared.Persistence;
-using FSH.Modules.Identity.Contracts.DTOs;
-using FSH.Modules.Identity.Contracts.v1.Users.SearchUsers;
-using FSH.Modules.Identity.Data;
-using FSH.Modules.Identity.Domain;
+using AMIS.Framework.Core.Context;
+using AMIS.Framework.Persistence;
+using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.Identity.Contracts.DTOs;
+using AMIS.Modules.Identity.Contracts.v1.Users.SearchUsers;
+using AMIS.Modules.Identity.Data;
+using AMIS.Modules.Identity.Domain;
 using Mediator;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.Identity.Features.v1.Users.SearchUsers;
+namespace AMIS.Modules.Identity.Features.v1.Users.SearchUsers;
 
 public sealed class SearchUsersQueryHandler : IQueryHandler<SearchUsersQuery, PagedResponse<UserDto>>
 {
-    private readonly UserManager<FshUser> _userManager;
+    private readonly UserManager<AmisUser> _userManager;
     private readonly IdentityDbContext _dbContext;
     private readonly IRequestContext _requestContext;
 
     public SearchUsersQueryHandler(
-        UserManager<FshUser> userManager,
+        UserManager<AmisUser> userManager,
         IdentityDbContext dbContext,
         IRequestContext requestContext)
     {
@@ -32,7 +32,7 @@ public sealed class SearchUsersQueryHandler : IQueryHandler<SearchUsersQuery, Pa
     {
         ArgumentNullException.ThrowIfNull(query);
 
-        IQueryable<FshUser> users = _userManager.Users.AsNoTracking();
+        IQueryable<AmisUser> users = _userManager.Users.AsNoTracking();
 
         // Apply filters
         if (!string.IsNullOrWhiteSpace(query.Search))
@@ -108,7 +108,7 @@ public sealed class SearchUsersQueryHandler : IQueryHandler<SearchUsersQuery, Pa
         };
     }
 
-    private static readonly Dictionary<string, Expression<Func<FshUser, object?>>> SortableFields = new(StringComparer.OrdinalIgnoreCase)
+    private static readonly Dictionary<string, Expression<Func<AmisUser, object?>>> SortableFields = new(StringComparer.OrdinalIgnoreCase)
     {
         ["firstname"] = u => u.FirstName,
         ["lastname"] = u => u.LastName,
@@ -117,7 +117,7 @@ public sealed class SearchUsersQueryHandler : IQueryHandler<SearchUsersQuery, Pa
         ["isactive"] = u => u.IsActive
     };
 
-    private static IQueryable<FshUser> ApplySorting(IQueryable<FshUser> query, string? sort)
+    private static IQueryable<AmisUser> ApplySorting(IQueryable<AmisUser> query, string? sort)
     {
         if (string.IsNullOrWhiteSpace(sort))
         {
@@ -125,7 +125,7 @@ public sealed class SearchUsersQueryHandler : IQueryHandler<SearchUsersQuery, Pa
         }
 
         var sortParts = sort.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        IOrderedQueryable<FshUser>? orderedQuery = null;
+        IOrderedQueryable<AmisUser>? orderedQuery = null;
 
         foreach (var part in sortParts)
         {
@@ -149,10 +149,10 @@ public sealed class SearchUsersQueryHandler : IQueryHandler<SearchUsersQuery, Pa
         return (field, descending);
     }
 
-    private static IOrderedQueryable<FshUser> ApplySortExpression(
-        IQueryable<FshUser> query,
-        IOrderedQueryable<FshUser>? orderedQuery,
-        Expression<Func<FshUser, object?>> selector,
+    private static IOrderedQueryable<AmisUser> ApplySortExpression(
+        IQueryable<AmisUser> query,
+        IOrderedQueryable<AmisUser>? orderedQuery,
+        Expression<Func<AmisUser, object?>> selector,
         bool descending)
     {
         if (orderedQuery is null)
@@ -189,3 +189,5 @@ public sealed class SearchUsersQueryHandler : IQueryHandler<SearchUsersQuery, Pa
         return $"{origin}/{relativePath}";
     }
 }
+
+

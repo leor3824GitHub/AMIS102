@@ -1,7 +1,7 @@
-using FSH.Modules.Vehicle.Contracts.v1.Maintenance;
+using AMIS.Modules.Vehicle.Contracts.v1.Maintenance;
 using Mediator;
 
-namespace FSH.Modules.Vehicle.Features.v1.Maintenance.SearchMaintenanceLogs;
+namespace AMIS.Modules.Vehicle.Features.v1.Maintenance.SearchMaintenanceLogs;
 
 public sealed record SearchMaintenanceLogsQuery(
     string? MaintenanceType,
@@ -9,3 +9,4 @@ public sealed record SearchMaintenanceLogsQuery(
     Guid? ScheduleId,
     DateOnly? PerformedDateFrom,
     DateOnly? PerformedDateTo) : IQuery<List<MaintenanceLogDto>>;
+

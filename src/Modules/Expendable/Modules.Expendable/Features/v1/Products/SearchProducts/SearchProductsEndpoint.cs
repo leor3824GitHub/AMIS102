@@ -1,12 +1,12 @@
-using FSH.Modules.Expendable.Contracts.v1.Products;
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Framework.Shared.Persistence;
+using AMIS.Modules.Expendable.Contracts.v1.Products;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Framework.Shared.Persistence;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.Expendable.Features.v1.Products.SearchProducts;
+namespace AMIS.Modules.Expendable.Features.v1.Products.SearchProducts;
 
 public static class SearchProductsEndpoint
 {
@@ -49,4 +49,5 @@ public static class SearchProductsEndpoint
         return TypedResults.Ok(result);
     }
 }
+
 

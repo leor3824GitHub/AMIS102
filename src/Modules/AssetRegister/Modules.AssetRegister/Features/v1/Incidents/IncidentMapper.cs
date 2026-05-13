@@ -1,8 +1,8 @@
-using FSH.Modules.AssetRegister.Contracts.v1.Incidents;
-using FSH.Modules.AssetRegister.Domain.Incidents;
-using FSH.Modules.AssetRegister.Features.v1.Accountability;
+using AMIS.Modules.AssetRegister.Contracts.v1.Incidents;
+using AMIS.Modules.AssetRegister.Domain.Incidents;
+using AMIS.Modules.AssetRegister.Features.v1.Accountability;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Incidents;
+namespace AMIS.Modules.AssetRegister.Features.v1.Incidents;
 
 internal static class IncidentMapper
 {
@@ -22,3 +22,4 @@ internal static class IncidentMapper
             r.AmountSettled, r.SettledOn, r.RecoveredOn,
             r.Items.Select(ToDto).ToList());
 }
+

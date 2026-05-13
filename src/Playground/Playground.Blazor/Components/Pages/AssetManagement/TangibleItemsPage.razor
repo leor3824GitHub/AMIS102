@@ -1,12 +1,12 @@
 @page "/asset-management/tangible-items"
-@using FSH.Playground.Blazor.ApiClient
-@using FSH.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders
+@using AMIS.Playground.Blazor.ApiClient
+@using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders
 @inject ITangibleItemClient Client
 @inject IPropertyItemCatalogClient ItemClient
 @inject IPurchaseOrderClient PoClient
 @inject ISnackbar Snackbar
 
-<FshPageHeader Title="Tangible Items" Description="Register and manage tangible property items in inventory." />
+<AMISPageHeader Title="Tangible Items" Description="Register and manage tangible property items in inventory." />
 
 <MudGrid Spacing="3">
     <!-- Register / Edit Form -->
@@ -47,7 +47,7 @@
                                      Max="9999"
                                      T="int" />
                     <MudNumericField @bind-Value="_form.UnitCost"
-                                     Label="Unit Cost (₱)"
+                                     Label="Unit Cost (?)"
                                      Variant="Variant.Outlined"
                                      Required="true"
                                      Min="0.01m"
@@ -61,7 +61,7 @@
                     <MudAutocomplete T="PurchaseOrderSummaryDto"
                                      @bind-Value="_form.SelectedPurchaseOrder"
                                      SearchFunc="SearchPurchaseOrdersAsync"
-                                     ToStringFunc="@(x => x is null ? "" : $"{x.PoNumber} – {x.SupplierName}")"
+                                     ToStringFunc="@(x => x is null ? "" : $"{x.PoNumber} � {x.SupplierName}")"
                                      Label="Purchase Order (optional)"
                                      Variant="Variant.Outlined"
                                      Clearable="true"
@@ -265,7 +265,7 @@
 
         if (_editing is null && string.IsNullOrWhiteSpace(_form.PropertyClass))
         {
-            Snackbar.Add("Use the ✨ generator to assign the Property No. so the Property Class is captured.", Severity.Warning);
+            Snackbar.Add("Use the ? generator to assign the Property No. so the Property Class is captured.", Severity.Warning);
             return;
         }
 
@@ -358,3 +358,4 @@
         public PurchaseOrderSummaryDto? SelectedPurchaseOrder { get; set; }
     }
 }
+

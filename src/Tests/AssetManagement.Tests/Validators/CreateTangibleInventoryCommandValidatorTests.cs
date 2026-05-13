@@ -1,5 +1,5 @@
-using FSH.Modules.AssetManagement.Domain;
-using FSH.Modules.AssetManagement.Features.v1.TangibleInventory.CreateTangibleInventory;
+using AMIS.Modules.AssetManagement.Domain;
+using AMIS.Modules.AssetManagement.Features.v1.TangibleInventory.CreateTangibleInventory;
 using Shouldly;
 using Xunit;
 
@@ -211,3 +211,4 @@ public sealed class CreateTangibleInventoryCommandValidatorTests
             NotedByEmployeeId: Guid.NewGuid(),
             Items: [new CreateTangibleInventoryItemRequest(Guid.NewGuid(), "PO-2025-001")]);
 }
+

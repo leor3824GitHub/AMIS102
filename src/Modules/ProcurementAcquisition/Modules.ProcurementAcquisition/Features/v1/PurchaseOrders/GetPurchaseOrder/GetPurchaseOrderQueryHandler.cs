@@ -1,10 +1,10 @@
-using FSH.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders;
-using FSH.Modules.ProcurementAcquisition.Data;
-using FSH.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.CreatePurchaseOrder;
+using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders;
+using AMIS.Modules.ProcurementAcquisition.Data;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.CreatePurchaseOrder;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.GetPurchaseOrder;
+namespace AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.GetPurchaseOrder;
 
 public sealed class GetPurchaseOrderQueryHandler(ProcurementDbContext dbContext)
     : IQueryHandler<GetPurchaseOrderQuery, PurchaseOrderDto?>
@@ -19,3 +19,4 @@ public sealed class GetPurchaseOrderQueryHandler(ProcurementDbContext dbContext)
         return po is null ? null : CreatePurchaseOrderCommandHandler.MapToDto(po);
     }
 }
+

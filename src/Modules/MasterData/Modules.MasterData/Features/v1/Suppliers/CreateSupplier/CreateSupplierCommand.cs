@@ -1,6 +1,6 @@
 using Mediator;
 
-namespace FSH.Modules.MasterData.Features.v1.Suppliers.CreateSupplier;
+namespace AMIS.Modules.MasterData.Features.v1.Suppliers.CreateSupplier;
 
 public sealed record CreateSupplierCommand(
     string Code,
@@ -27,3 +27,4 @@ public sealed record SupplierDto(
     string? Address,
     bool IsActive,
     string? OfficeCode = null);
+

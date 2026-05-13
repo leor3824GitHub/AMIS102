@@ -1,10 +1,10 @@
-using FSH.Framework.Shared.Identity.Authorization;
+using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.AssetManagement.Features.v1.Reclassification.GetReclassificationHistory;
+namespace AMIS.Modules.AssetManagement.Features.v1.Reclassification.GetReclassificationHistory;
 
 public static class GetReclassificationHistoryEndpoint
 {
@@ -24,3 +24,4 @@ public static class GetReclassificationHistoryEndpoint
         return TypedResults.Ok(result);
     }
 }
+

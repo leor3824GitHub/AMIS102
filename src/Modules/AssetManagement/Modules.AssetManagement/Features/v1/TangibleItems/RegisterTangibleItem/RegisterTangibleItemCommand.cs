@@ -1,6 +1,6 @@
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.TangibleItems.RegisterTangibleItem;
+namespace AMIS.Modules.AssetManagement.Features.v1.TangibleItems.RegisterTangibleItem;
 
 public sealed record RegisterTangibleItemCommand(
     Guid ItemId,
@@ -27,3 +27,4 @@ public sealed record TangibleItemDto(
     string? Remarks,
     Guid? PurchaseOrderId,
     DateTimeOffset CreatedOnUtc);
+

@@ -1,10 +1,10 @@
-using FSH.Framework.Core.Exceptions;
-using FSH.Modules.AssetManagement.Data;
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Framework.Core.Exceptions;
+using AMIS.Modules.AssetManagement.Data;
+using AMIS.Modules.AssetManagement.Domain;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.TangibleInventory.GetByPropertyNo;
+namespace AMIS.Modules.AssetManagement.Features.v1.TangibleInventory.GetByPropertyNo;
 
 public sealed class GetTangibleInventoryItemByPropertyNoHandler(AssetManagementDbContext dbContext)
     : IQueryHandler<GetTangibleInventoryItemByPropertyNoQuery, TangibleInventoryItemDetailDto>
@@ -102,3 +102,4 @@ public sealed class GetTangibleInventoryItemByPropertyNoHandler(AssetManagementD
             linkedDocumentId);
     }
 }
+

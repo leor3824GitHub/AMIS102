@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.Finance.Contracts.v1.BudgetUtilizationRecords;
+using AMIS.Modules.Finance.Contracts.v1.BudgetUtilizationRecords;
 
-namespace FSH.Modules.Finance.Features.v1.BudgetUtilizationRecords.CreateBudgetUtilizationRecord;
+namespace AMIS.Modules.Finance.Features.v1.BudgetUtilizationRecords.CreateBudgetUtilizationRecord;
 
 public sealed class CreateBudgetUtilizationRecordCommandValidator : AbstractValidator<CreateBudgetUtilizationRecordCommand>
 {
@@ -18,3 +18,4 @@ public sealed class CreateBudgetUtilizationRecordCommandValidator : AbstractVali
         RuleFor(x => x.Remarks).MaximumLength(500);
     }
 }
+

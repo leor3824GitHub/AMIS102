@@ -1,9 +1,9 @@
 @page "/asset-management/item-catalog"
-@using FSH.Playground.Blazor.ApiClient
+@using AMIS.Playground.Blazor.ApiClient
 @inject IPropertyItemCatalogClient Client
 @inject ISnackbar Snackbar
 
-<FshPageHeader Title="Property Item Catalog" Description="Unified item catalog for all property types (semi-expendable and PPE). Capitalization threshold determines classification at receipt." />
+<AMISPageHeader Title="Property Item Catalog" Description="Unified item catalog for all property types (semi-expendable and PPE). Capitalization threshold determines classification at receipt." />
 
 <MudGrid Spacing="3">
     <!-- Form Panel -->
@@ -209,3 +209,4 @@
         public bool IsActive { get; set; } = true;
     }
 }
+

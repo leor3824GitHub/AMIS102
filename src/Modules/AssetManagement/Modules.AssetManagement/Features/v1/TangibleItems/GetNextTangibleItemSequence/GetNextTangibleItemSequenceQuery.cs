@@ -1,8 +1,8 @@
-using FSH.Modules.AssetManagement.Data;
+using AMIS.Modules.AssetManagement.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.TangibleItems.GetNextTangibleItemSequence;
+namespace AMIS.Modules.AssetManagement.Features.v1.TangibleItems.GetNextTangibleItemSequence;
 
 public sealed record GetNextTangibleItemSequenceQuery(
     int Year,
@@ -34,3 +34,4 @@ public sealed class GetNextTangibleItemSequenceQueryHandler(AssetManagementDbCon
         return new NextTangibleItemSequenceResponse(next);
     }
 }
+

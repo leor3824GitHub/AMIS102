@@ -1,10 +1,10 @@
-using FSH.Framework.Caching;
-using FSH.Modules.Expendable.Contracts.v1.Warehouse;
-using FSH.Modules.Expendable.Data;
+using AMIS.Framework.Caching;
+using AMIS.Modules.Expendable.Contracts.v1.Warehouse;
+using AMIS.Modules.Expendable.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.Expendable.Features.v1.Warehouse.GetProductInventory;
+namespace AMIS.Modules.Expendable.Features.v1.Warehouse.GetProductInventory;
 
 public sealed class GetProductInventoryQueryHandler : IQueryHandler<GetProductInventoryQuery, ProductInventoryDto?>
 {
@@ -37,3 +37,4 @@ public sealed class GetProductInventoryQueryHandler : IQueryHandler<GetProductIn
         return dto;
     }
 }
+

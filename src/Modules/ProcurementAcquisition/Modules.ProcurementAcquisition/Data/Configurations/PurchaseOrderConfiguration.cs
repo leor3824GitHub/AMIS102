@@ -1,9 +1,9 @@
 using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;
-using FSH.Modules.ProcurementAcquisition.Domain.PurchaseOrders;
+using AMIS.Modules.ProcurementAcquisition.Domain.PurchaseOrders;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FSH.Modules.ProcurementAcquisition.Data.Configurations;
+namespace AMIS.Modules.ProcurementAcquisition.Data.Configurations;
 
 public sealed class PurchaseOrderConfiguration : IEntityTypeConfiguration<PurchaseOrder>
 {
@@ -47,3 +47,4 @@ public sealed class PurchaseOrderConfiguration : IEntityTypeConfiguration<Purcha
         });
     }
 }
+

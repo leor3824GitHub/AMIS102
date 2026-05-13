@@ -1,6 +1,6 @@
-using FSH.Modules.Auditing.Contracts;
+using AMIS.Modules.Auditing.Contracts;
 
-namespace FSH.Modules.Auditing;
+namespace AMIS.Modules.Auditing;
 
 /// <summary>
 /// Immutable, minimal scope implementation. Create per request/operation.
@@ -42,4 +42,5 @@ public sealed record DefaultAuditScope(
             Tags = tags ?? this.Tags
         };
 }
+
 

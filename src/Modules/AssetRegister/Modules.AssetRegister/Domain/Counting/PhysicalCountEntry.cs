@@ -1,7 +1,7 @@
-using FSH.Modules.AssetRegister.Contracts.v1;
-using FSH.Modules.AssetRegister.Contracts.v1.ValueObjects;
+using AMIS.Modules.AssetRegister.Contracts.v1;
+using AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
 
-namespace FSH.Modules.AssetRegister.Domain.Counting;
+namespace AMIS.Modules.AssetRegister.Domain.Counting;
 
 public sealed class PhysicalCountEntry
 {
@@ -102,3 +102,4 @@ public sealed class PhysicalCountEntry
         AssetRegistryId = assetRegistryId;
     }
 }
+

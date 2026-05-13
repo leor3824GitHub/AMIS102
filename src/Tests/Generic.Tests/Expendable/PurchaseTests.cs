@@ -1,4 +1,4 @@
-using FSH.Modules.Expendable.Domain.Purchases;
+using AMIS.Modules.Expendable.Domain.Purchases;
 
 namespace Generic.Tests.Expendable;
 
@@ -49,3 +49,4 @@ public sealed class PurchaseTests
         action.ShouldThrow<InvalidOperationException>();
     }
 }
+

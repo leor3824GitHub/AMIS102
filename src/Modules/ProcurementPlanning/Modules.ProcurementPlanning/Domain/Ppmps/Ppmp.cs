@@ -1,7 +1,7 @@
-using FSH.Framework.Core.Domain;
-using FSH.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
+using AMIS.Framework.Core.Domain;
+using AMIS.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
 
-namespace FSH.Modules.ProcurementPlanning.Domain.Ppmps;
+namespace AMIS.Modules.ProcurementPlanning.Domain.Ppmps;
 
 // Domain-internal parameter object. Handlers map PpmpItemRequest → PpmpItemData before calling domain methods.
 public sealed record PpmpItemData(
@@ -331,3 +331,4 @@ public sealed class Ppmp : AggregateRoot<Guid>, IAuditableEntity, ISoftDeletable
             _items.Add(PpmpItem.Create(Id, itemNo++, d));
     }
 }
+

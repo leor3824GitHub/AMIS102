@@ -1,8 +1,8 @@
-using FSH.Framework.Core.Domain;
-using FSH.Modules.AssetRegister.Contracts.v1;
-using FSH.Modules.AssetRegister.Contracts.v1.ValueObjects;
+using AMIS.Framework.Core.Domain;
+using AMIS.Modules.AssetRegister.Contracts.v1;
+using AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
 
-namespace FSH.Modules.AssetRegister.Domain.Receiving;
+namespace AMIS.Modules.AssetRegister.Domain.Receiving;
 
 /// <summary>
 /// Receiving document for incoming property:
@@ -101,3 +101,4 @@ public sealed class ReceivingReport : AggregateRoot<Guid>, IHasTenant, IAuditabl
         return item;
     }
 }
+

@@ -1,8 +1,8 @@
-using FSH.Modules.MasterData.Data;
+using AMIS.Modules.MasterData.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.MasterData.Features.v1.Categories.GetCategories;
+namespace AMIS.Modules.MasterData.Features.v1.Categories.GetCategories;
 
 public sealed class GetCategoriesQueryHandler(MasterDataDbContext dbContext) : IQueryHandler<GetCategoriesQuery, PagedResponseOfCategoryDto>
 {
@@ -49,3 +49,4 @@ public sealed class GetCategoriesQueryHandler(MasterDataDbContext dbContext) : I
             totalCount);
     }
 }
+

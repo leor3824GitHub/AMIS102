@@ -1,15 +1,15 @@
-using FSH.Framework.Core.Context;
-using FSH.Framework.Core.Exceptions;
-using FSH.Modules.Auditing.Contracts;
-using FSH.Modules.Identity.Contracts.Services;
-using FSH.Modules.Identity.Contracts.v1.Tokens.RefreshToken;
+using AMIS.Framework.Core.Context;
+using AMIS.Framework.Core.Exceptions;
+using AMIS.Modules.Auditing.Contracts;
+using AMIS.Modules.Identity.Contracts.Services;
+using AMIS.Modules.Identity.Contracts.v1.Tokens.RefreshToken;
 using Mediator;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics.Metrics;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
-namespace FSH.Modules.Identity.Features.v1.Tokens.RefreshToken;
+namespace AMIS.Modules.Identity.Features.v1.Tokens.RefreshToken;
 
 public sealed class RefreshTokenCommandHandler
     : ICommandHandler<RefreshTokenCommand, RefreshTokenCommandResponse>
@@ -21,7 +21,7 @@ public sealed class RefreshTokenCommandHandler
     private readonly ISessionService _sessionService;
     private readonly ILogger<RefreshTokenCommandHandler> _logger;
 
-    private static readonly Meter RefreshMeter = new("FSH.Modules.Identity.Refresh", "1.0.0");
+    private static readonly Meter RefreshMeter = new("AMIS.Modules.Identity.Refresh", "1.0.0");
     private static readonly Counter<long> RefreshRequestsCounter = RefreshMeter.CreateCounter<long>("identity_refresh_requests_total");
     private static readonly Counter<long> RefreshSuccessCounter = RefreshMeter.CreateCounter<long>("identity_refresh_success_total");
     private static readonly Counter<long> RefreshFailuresCounter = RefreshMeter.CreateCounter<long>("identity_refresh_failures_total");
@@ -148,3 +148,4 @@ public sealed class RefreshTokenCommandHandler
         return Convert.ToHexString(hash.AsSpan(0, 8));
     }
 }
+

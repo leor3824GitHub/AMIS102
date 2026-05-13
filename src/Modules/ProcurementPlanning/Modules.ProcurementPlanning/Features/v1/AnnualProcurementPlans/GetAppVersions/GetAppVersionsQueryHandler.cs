@@ -1,9 +1,9 @@
-﻿using FSH.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
-using FSH.Modules.ProcurementPlanning.Data;
+using AMIS.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
+using AMIS.Modules.ProcurementPlanning.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.GetAppVersions;
+namespace AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.GetAppVersions;
 
 public sealed class GetAppVersionsQueryHandler(
     ProcurementPlanningDbContext dbContext) : IQueryHandler<GetAppVersionsQuery, IReadOnlyList<AnnualProcurementPlanSummaryDto>>

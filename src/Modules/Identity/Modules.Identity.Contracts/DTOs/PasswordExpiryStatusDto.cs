@@ -1,4 +1,4 @@
-namespace FSH.Modules.Identity.Contracts.DTOs;
+namespace AMIS.Modules.Identity.Contracts.DTOs;
 
 public sealed class PasswordExpiryStatusDto
 {
@@ -14,3 +14,4 @@ public sealed class PasswordExpiryStatusDto
         _ => "Valid"
     };
 }
+

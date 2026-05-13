@@ -1,7 +1,7 @@
-using FSH.Modules.Vehicle.Contracts.v1.Maintenance;
+using AMIS.Modules.Vehicle.Contracts.v1.Maintenance;
 using Mediator;
 
-namespace FSH.Modules.Vehicle.Features.v1.Maintenance.UpdateMaintenanceSchedule;
+namespace AMIS.Modules.Vehicle.Features.v1.Maintenance.UpdateMaintenanceSchedule;
 
 public sealed record UpdateMaintenanceScheduleCommand(
     Guid ScheduleId,
@@ -11,3 +11,4 @@ public sealed record UpdateMaintenanceScheduleCommand(
     int? IntervalMileage,
     DateOnly? DueDate,
     int? DueMileage) : ICommand<MaintenanceScheduleDto>;
+

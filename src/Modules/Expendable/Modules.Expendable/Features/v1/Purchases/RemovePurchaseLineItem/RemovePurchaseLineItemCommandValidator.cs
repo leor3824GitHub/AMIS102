@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.Expendable.Contracts.v1.Purchases;
+using AMIS.Modules.Expendable.Contracts.v1.Purchases;
 
-namespace FSH.Modules.Expendable.Features.v1.Purchases.RemovePurchaseLineItem;
+namespace AMIS.Modules.Expendable.Features.v1.Purchases.RemovePurchaseLineItem;
 
 public sealed class RemovePurchaseLineItemCommandValidator : AbstractValidator<RemovePurchaseLineItemCommand>
 {
@@ -14,3 +14,4 @@ public sealed class RemovePurchaseLineItemCommandValidator : AbstractValidator<R
             .NotEmpty().WithMessage("Product ID is required");
     }
 }
+

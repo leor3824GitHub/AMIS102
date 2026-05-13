@@ -1,11 +1,11 @@
-using FSH.Modules.Vehicle.Contracts.v1.Vehicles;
-using FSH.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.Vehicle.Contracts.v1.Vehicles;
+using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.Vehicle.Features.v1.Vehicles.GetMotorVehicleInventory;
+namespace AMIS.Modules.Vehicle.Features.v1.Vehicles.GetMotorVehicleInventory;
 
 public static class GetMotorVehicleInventoryEndpoint
 {
@@ -25,3 +25,4 @@ public static class GetMotorVehicleInventoryEndpoint
         return TypedResults.Ok(result);
     }
 }
+

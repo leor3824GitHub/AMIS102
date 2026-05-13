@@ -1,6 +1,6 @@
 @page "/expendable/reports/department"
-@using FSH.Modules.Expendable.Contracts.v1.Requests
-@using FSH.Playground.Blazor.ApiClient
+@using AMIS.Modules.Expendable.Contracts.v1.Requests
+@using AMIS.Playground.Blazor.ApiClient
 @using System.Globalization
 @using System.Text
 @inherits ComponentBase
@@ -413,3 +413,4 @@ else if (!_loading)
     private static string Quote(string? v) =>
         string.IsNullOrEmpty(v) ? "\"\"" : $"\"{v.Replace("\"", "\"\"")}\"";
 }
+

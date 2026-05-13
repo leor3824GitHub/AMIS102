@@ -1,8 +1,8 @@
 using FluentValidation;
-using FSH.Modules.AssetRegister.Contracts.v1;
-using FSH.Modules.AssetRegister.Contracts.v1.Assets;
+using AMIS.Modules.AssetRegister.Contracts.v1;
+using AMIS.Modules.AssetRegister.Contracts.v1.Assets;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Assets.RegisterAsset;
+namespace AMIS.Modules.AssetRegister.Features.v1.Assets.RegisterAsset;
 
 public sealed class RegisterAssetCommandValidator : AbstractValidator<RegisterAssetCommand>
 {
@@ -30,3 +30,4 @@ public sealed class RegisterAssetCommandValidator : AbstractValidator<RegisterAs
             .WithMessage("AssetType and Category must align: SE → LowValuedSemi/HighValuedSemi, PPE → PPE.");
     }
 }
+

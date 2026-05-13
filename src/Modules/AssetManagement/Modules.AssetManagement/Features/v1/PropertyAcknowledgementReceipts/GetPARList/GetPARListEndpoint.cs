@@ -1,10 +1,10 @@
-using FSH.Framework.Shared.Identity.Authorization;
+using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.AssetManagement.Features.v1.PropertyAcknowledgementReceipts.GetPARList;
+namespace AMIS.Modules.AssetManagement.Features.v1.PropertyAcknowledgementReceipts.GetPARList;
 
 public static class GetPARListEndpoint
 {
@@ -18,3 +18,4 @@ public static class GetPARListEndpoint
         .WithSummary("Get a paged list of Property Acknowledgement Receipts")
         .RequirePermission(AssetManagementModuleConstants.Permissions.PropertyAcknowledgementReceipts.View);
 }
+

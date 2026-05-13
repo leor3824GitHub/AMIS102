@@ -1,7 +1,7 @@
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Modules.AssetManagement.Domain;
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.PPEIssuanceReports.CreatePPEIR;
+namespace AMIS.Modules.AssetManagement.Features.v1.PPEIssuanceReports.CreatePPEIR;
 
 public sealed record CreatePPEIRCommand(
     string PPEIRNo,
@@ -24,3 +24,4 @@ public sealed record CreatePPEIRResult(
     Guid PPEIRId,
     string PPEIRNo,
     int ItemCount);
+

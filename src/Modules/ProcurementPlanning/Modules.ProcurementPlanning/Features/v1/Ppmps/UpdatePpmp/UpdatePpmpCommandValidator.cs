@@ -1,8 +1,8 @@
 using FluentValidation;
-using FSH.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
-using FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.CreatePpmp;
+using AMIS.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
+using AMIS.Modules.ProcurementPlanning.Features.v1.Ppmps.CreatePpmp;
 
-namespace FSH.Modules.ProcurementPlanning.Features.v1.Ppmps.UpdatePpmp;
+namespace AMIS.Modules.ProcurementPlanning.Features.v1.Ppmps.UpdatePpmp;
 
 public sealed class UpdatePpmpCommandValidator : AbstractValidator<UpdatePpmpCommand>
 {
@@ -17,3 +17,4 @@ public sealed class UpdatePpmpCommandValidator : AbstractValidator<UpdatePpmpCom
         RuleForEach(x => x.Items).SetValidator(new PpmpItemRequestValidator());
     }
 }
+

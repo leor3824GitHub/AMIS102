@@ -1,13 +1,13 @@
 using System.Net;
-using FSH.Framework.Caching;
-using FSH.Framework.Core.Context;
-using FSH.Framework.Core.Exceptions;
-using FSH.Modules.Expendable.Contracts.v1.Requests;
-using FSH.Modules.Expendable.Data;
+using AMIS.Framework.Caching;
+using AMIS.Framework.Core.Context;
+using AMIS.Framework.Core.Exceptions;
+using AMIS.Modules.Expendable.Contracts.v1.Requests;
+using AMIS.Modules.Expendable.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.Expendable.Features.v1.Requests.ApproveSupplyRequest;
+namespace AMIS.Modules.Expendable.Features.v1.Requests.ApproveSupplyRequest;
 
 public sealed class ApproveSupplyRequestCommandHandler : ICommandHandler<ApproveSupplyRequestCommand>
 {
@@ -82,3 +82,4 @@ public sealed class ApproveSupplyRequestCommandHandler : ICommandHandler<Approve
         return default;
     }
 }
+

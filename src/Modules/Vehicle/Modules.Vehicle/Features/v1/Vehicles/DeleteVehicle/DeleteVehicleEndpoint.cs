@@ -1,11 +1,11 @@
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Modules.Vehicle.Contracts.v1.Vehicles;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.Vehicle.Contracts.v1.Vehicles;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.Vehicle.Features.v1.Vehicles.DeleteVehicle;
+namespace AMIS.Modules.Vehicle.Features.v1.Vehicles.DeleteVehicle;
 
 public static class DeleteVehicleEndpoint
 {
@@ -20,3 +20,4 @@ public static class DeleteVehicleEndpoint
         .Produces(StatusCodes.Status204NoContent)
         .RequirePermission(VehicleModuleConstants.Permissions.Vehicles.Delete);
 }
+

@@ -1,9 +1,9 @@
-using FSH.Framework.Core.Context;
-using FSH.Modules.AssetManagement.Data;
+using AMIS.Framework.Core.Context;
+using AMIS.Modules.AssetManagement.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.TangibleInventory.DeleteTangibleInventory;
+namespace AMIS.Modules.AssetManagement.Features.v1.TangibleInventory.DeleteTangibleInventory;
 
 public sealed class DeleteTangibleInventoryCommandHandler(
     AssetManagementDbContext dbContext,
@@ -29,3 +29,4 @@ public sealed class DeleteTangibleInventoryCommandHandler(
         return Unit.Value;
     }
 }
+

@@ -1,5 +1,5 @@
-using FSH.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
-using FSH.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.CreatePurchaseRequest;
+using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.CreatePurchaseRequest;
 using Shouldly;
 using Xunit;
 
@@ -137,3 +137,4 @@ public sealed class CreatePurchaseRequestCommandValidatorTests
                 new CreatePurchaseRequestLineItemRequest(5, "box", "Ballpen black", 80m)
             ]);
 }
+

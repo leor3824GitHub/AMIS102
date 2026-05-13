@@ -1,9 +1,9 @@
-using FSH.Modules.Expendable.Domain.Purchases;
+using AMIS.Modules.Expendable.Domain.Purchases;
 using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FSH.Modules.Expendable.Data.Configurations;
+namespace AMIS.Modules.Expendable.Data.Configurations;
 
 /// <summary>
 /// Configuration for PurchaseInspection aggregate - quality control gate.
@@ -77,4 +77,5 @@ public class PurchaseInspectionConfiguration : IEntityTypeConfiguration<Purchase
         builder.HasQueryFilter("SoftDelete", p => !p.IsDeleted);
     }
 }
+
 

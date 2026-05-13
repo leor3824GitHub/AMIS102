@@ -1,11 +1,11 @@
 @page "/master-data/modes-of-procurement"
-@using FSH.Modules.MasterData.Contracts.v1.ModesOfProcurement
-@using FSH.Framework.Blazor.UI.Components.Cards
-@using FSH.Playground.Blazor.ApiClient
+@using AMIS.Modules.MasterData.Contracts.v1.ModesOfProcurement
+@using AMIS.Framework.Blazor.UI.Components.Cards
+@using AMIS.Playground.Blazor.ApiClient
 @inject IModeOfProcurementClient ModeClient
 @inject ISnackbar Snackbar
 
-<FshPageHeader Title="Modes of Procurement" Description="Manage procurement modes used across planning and purchasing">
+<AMISPageHeader Title="Modes of Procurement" Description="Manage procurement modes used across planning and purchasing">
     <ActionContent>
         <MudStack Row="true" Spacing="2" Style="width: 100%; max-width: 400px;">
             <MudTextField @bind-Value="_searchKeyword" Label="Search" Placeholder="Search modes..."
@@ -16,12 +16,12 @@
             </MudButton>
         </MudStack>
     </ActionContent>
-</FshPageHeader>
+</AMISPageHeader>
 
 <div class="mt-4">
     <MudGrid Spacing="2">
         <MudItem xs="12" sm="5" md="4">
-            <MudCard Class="fsh-card">
+            <MudCard Class="AMIS-card">
                 <MudCardContent>
                     <MudText Typo="Typo.h6" Class="mb-3">@(EditingMode is null ? "Create Mode" : "Edit Mode")</MudText>
                     <MudStack Spacing="3">
@@ -49,7 +49,7 @@
         </MudItem>
 
         <MudItem xs="12" sm="7" md="8">
-            <MudCard Class="fsh-card">
+            <MudCard Class="AMIS-card">
                 <MudCardContent>
                     <MudStack Row="true" Spacing="1" Class="mb-3" AlignItems="AlignItems.Center">
                         <MudText Typo="Typo.h6" Class="flex-grow-1">Modes List</MudText>

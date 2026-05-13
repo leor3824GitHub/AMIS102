@@ -1,8 +1,8 @@
-using FSH.Modules.AssetManagement.Data;
+using AMIS.Modules.AssetManagement.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.TangibleInventory.GetTangibleInventoryById;
+namespace AMIS.Modules.AssetManagement.Features.v1.TangibleInventory.GetTangibleInventoryById;
 
 public sealed class GetTangibleInventoryByIdQueryHandler(AssetManagementDbContext dbContext)
     : IQueryHandler<GetTangibleInventoryByIdQuery, TangibleInventoryDetailDto>
@@ -57,3 +57,4 @@ public sealed class GetTangibleInventoryByIdQueryHandler(AssetManagementDbContex
             itemDtos);
     }
 }
+

@@ -1,11 +1,11 @@
-using FSH.Framework.Core.Context;
-using FSH.Modules.ProcurementAcquisition.Contracts.v1.Canvass;
-using FSH.Modules.ProcurementAcquisition.Data;
-using FSH.Modules.ProcurementAcquisition.Features.v1.Canvass.CreateCanvassRequest;
+using AMIS.Framework.Core.Context;
+using AMIS.Modules.ProcurementAcquisition.Contracts.v1.Canvass;
+using AMIS.Modules.ProcurementAcquisition.Data;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.Canvass.CreateCanvassRequest;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.ProcurementAcquisition.Features.v1.Canvass.AwardCanvass;
+namespace AMIS.Modules.ProcurementAcquisition.Features.v1.Canvass.AwardCanvass;
 
 public sealed class AwardCanvassCommandHandler(
     ProcurementDbContext dbContext,
@@ -42,3 +42,4 @@ public sealed class AwardCanvassCommandHandler(
         return CreateCanvassRequestCommandHandler.MapToDto(canvass, pr?.PrNumber ?? string.Empty);
     }
 }
+

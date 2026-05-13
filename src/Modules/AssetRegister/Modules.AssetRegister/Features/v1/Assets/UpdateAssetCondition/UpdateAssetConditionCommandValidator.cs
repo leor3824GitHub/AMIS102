@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.AssetRegister.Contracts.v1.Assets;
+using AMIS.Modules.AssetRegister.Contracts.v1.Assets;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Assets.UpdateAssetCondition;
+namespace AMIS.Modules.AssetRegister.Features.v1.Assets.UpdateAssetCondition;
 
 public sealed class UpdateAssetConditionCommandValidator : AbstractValidator<UpdateAssetConditionCommand>
 {
@@ -10,3 +10,4 @@ public sealed class UpdateAssetConditionCommandValidator : AbstractValidator<Upd
         RuleFor(x => x.AssetRegistryId).NotEmpty().WithMessage("Asset registry ID is required.");
     }
 }
+

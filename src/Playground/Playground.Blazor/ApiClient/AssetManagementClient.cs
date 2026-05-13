@@ -3,7 +3,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Web;
 
-namespace FSH.Playground.Blazor.ApiClient;
+namespace AMIS.Playground.Blazor.ApiClient;
 
 internal enum ReceiptType
 {
@@ -1857,3 +1857,4 @@ internal sealed class TangibleItemClient(HttpClient http) : ITangibleItemClient
 
     private sealed record NextSequenceResponse(int NextSequence);
 }
+

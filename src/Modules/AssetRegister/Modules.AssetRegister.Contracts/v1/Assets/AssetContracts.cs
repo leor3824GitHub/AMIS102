@@ -1,7 +1,7 @@
-using FSH.Framework.Shared.Persistence;
+using AMIS.Framework.Shared.Persistence;
 using Mediator;
 
-namespace FSH.Modules.AssetRegister.Contracts.v1.Assets;
+namespace AMIS.Modules.AssetRegister.Contracts.v1.Assets;
 
 public sealed record AssetRegistryDto(
     Guid Id,
@@ -85,3 +85,4 @@ public sealed record SearchAssetsQuery(
     Guid? CatalogItemId = null,
     int PageNumber = 1,
     int PageSize = 10) : IQuery<PagedResponse<AssetRegistrySummaryDto>>;
+

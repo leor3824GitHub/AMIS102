@@ -1,4 +1,4 @@
-# MAUI Implementation Plan
+﻿# MAUI Implementation Plan
 
 ## .NET MAUI Mobile/Desktop Client for AMIS
 
@@ -153,7 +153,7 @@ src/Playground/Playground.Maui/
 1. Add `GetMyEmployee` vertical slice (Query + Handler + Endpoint) in `MasterData` module.
 2. Handler reads `ClaimTypes.NameIdentifier` from `ICurrentUser`, queries `EmployeeProfile` table.
 3. Follow existing employee feature patterns; add permission to `MasterDataPermissions.Employees`.
-4. Build and verify: `dotnet build src/FSH.Framework.slnx` — 0 warnings.
+4. Build and verify: `dotnet build src/AMIS.Framework.slnx` — 0 warnings.
 
 ### Phase 2 — Backend: `/tangible-inventory-items/by-property-no/{propertyNo}` _(AssetManagement)_
 
@@ -165,7 +165,7 @@ src/Playground/Playground.Maui/
 ### Phase 3 — MAUI Project Setup _(parallel with Phases 1–2)_
 
 9. Create `Playground.Maui.csproj` with multi-platform targets.
-10. Add to `src/FSH.Framework.slnx`.
+10. Add to `src/AMIS.Framework.slnx`.
 11. Install NuGet packages:
     - `CommunityToolkit.Maui` — UI controls, toasts
     - `CommunityToolkit.Mvvm` — source-generated MVVM
@@ -479,7 +479,7 @@ private async Task NavigateToAssetDetail(string propertyNo) =>
 
 | #   | Test                           | Pass criteria                                               |
 | --- | ------------------------------ | ----------------------------------------------------------- |
-| 1   | Build                          | `dotnet build src/FSH.Framework.slnx` — 0 warnings          |
+| 1   | Build                          | `dotnet build src/AMIS.Framework.slnx` — 0 warnings          |
 | 2   | `/employees/me`                | Returns correct `EmployeeId` for logged-in user             |
 | 3   | `/by-property-no/{propertyNo}` | Returns item data; 404 for unknown PropertyNo               |
 | 4   | Android — Login                | Credentials → tokens stored in SecureStorage → Shell shown  |
@@ -494,3 +494,4 @@ private async Task NavigateToAssetDetail(string propertyNo) =>
 | 13  | Windows — Manual entry         | Camera section shows fallback message; Search box works     |
 | 14  | Windows — Login                | Credentials stored in PasswordVault (not SecureStorage)     |
 | 15  | Logout                         | Tokens cleared, SQLite cache wiped, Login page shown        |
+

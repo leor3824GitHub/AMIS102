@@ -1,9 +1,9 @@
-using FSH.Framework.Core.Context;
-using FSH.Modules.MasterData.Data;
+using AMIS.Framework.Core.Context;
+using AMIS.Modules.MasterData.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.MasterData.Features.v1.Categories.UpdateCategory;
+namespace AMIS.Modules.MasterData.Features.v1.Categories.UpdateCategory;
 
 public sealed class UpdateCategoryCommandHandler : ICommandHandler<UpdateCategoryCommand, Unit>
 {
@@ -50,3 +50,4 @@ public sealed class UpdateCategoryCommandHandler : ICommandHandler<UpdateCategor
         return Unit.Value;
     }
 }
+

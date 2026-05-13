@@ -1,9 +1,9 @@
 using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;
-using FSH.Modules.ProcurementAcquisition.Domain.Canvass;
+using AMIS.Modules.ProcurementAcquisition.Domain.Canvass;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FSH.Modules.ProcurementAcquisition.Data.Configurations;
+namespace AMIS.Modules.ProcurementAcquisition.Data.Configurations;
 
 public sealed class CanvassRequestConfiguration : IEntityTypeConfiguration<CanvassRequest>
 {
@@ -31,3 +31,4 @@ public sealed class CanvassRequestConfiguration : IEntityTypeConfiguration<Canva
             .OnDelete(DeleteBehavior.Cascade);
     }
 }
+

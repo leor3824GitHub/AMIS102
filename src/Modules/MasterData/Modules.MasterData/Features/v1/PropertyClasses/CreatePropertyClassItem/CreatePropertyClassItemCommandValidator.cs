@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.MasterData.Contracts.v1.PropertyClasses;
+using AMIS.Modules.MasterData.Contracts.v1.PropertyClasses;
 
-namespace FSH.Modules.MasterData.Features.v1.PropertyClasses.CreatePropertyClassItem;
+namespace AMIS.Modules.MasterData.Features.v1.PropertyClasses.CreatePropertyClassItem;
 
 public sealed class CreatePropertyClassItemCommandValidator : AbstractValidator<CreatePropertyClassItemCommand>
 {
@@ -14,3 +14,4 @@ public sealed class CreatePropertyClassItemCommandValidator : AbstractValidator<
         RuleFor(x => x.Description).MaximumLength(500).When(x => x.Description is not null);
     }
 }
+

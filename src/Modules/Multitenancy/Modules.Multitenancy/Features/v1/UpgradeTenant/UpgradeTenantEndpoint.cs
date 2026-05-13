@@ -1,13 +1,13 @@
-using FSH.Framework.Shared.Identity.Authorization;
-using FSH.Framework.Shared.Multitenancy;
-using FSH.Modules.Multitenancy.Contracts.v1.UpgradeTenant;
+using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Framework.Shared.Multitenancy;
+using AMIS.Modules.Multitenancy.Contracts.v1.UpgradeTenant;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.Multitenancy.Features.v1.UpgradeTenant;
+namespace AMIS.Modules.Multitenancy.Features.v1.UpgradeTenant;
 
 public static class UpgradeTenantEndpoint
 {
@@ -34,3 +34,4 @@ public static class UpgradeTenantEndpoint
         return TypedResults.Ok(result);
     }
 }
+

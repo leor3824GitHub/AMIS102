@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace FSH.Modules.AssetManagement.Features.v1.Reports.RegistryOfSPIssued;
+namespace AMIS.Modules.AssetManagement.Features.v1.Reports.RegistryOfSPIssued;
 
 public sealed class GetRegSPIQueryValidator : AbstractValidator<GetRegSPIQuery>
 {

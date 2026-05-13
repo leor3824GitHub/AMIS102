@@ -1,6 +1,6 @@
-using FSH.Framework.Core.Domain;
+using AMIS.Framework.Core.Domain;
 
-namespace FSH.Modules.AssetManagement.Domain;
+namespace AMIS.Modules.AssetManagement.Domain;
 
 /// <summary>
 /// Property Acknowledgement Receipt (PAR) — in-office movement of accountability.
@@ -72,3 +72,4 @@ public sealed class PropertyAcknowledgementReceipt : AggregateRoot<Guid>, IHasTe
         };
     }
 }
+

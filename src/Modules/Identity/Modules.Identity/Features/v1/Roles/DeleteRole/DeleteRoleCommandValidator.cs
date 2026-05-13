@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.Identity.Contracts.v1.Roles.DeleteRole;
+using AMIS.Modules.Identity.Contracts.v1.Roles.DeleteRole;
 
-namespace FSH.Modules.Identity.Features.v1.Roles.DeleteRole;
+namespace AMIS.Modules.Identity.Features.v1.Roles.DeleteRole;
 
 public sealed class DeleteRoleCommandValidator : AbstractValidator<DeleteRoleCommand>
 {
@@ -11,3 +11,4 @@ public sealed class DeleteRoleCommandValidator : AbstractValidator<DeleteRoleCom
             .NotEmpty().WithMessage("Role ID is required.");
     }
 }
+

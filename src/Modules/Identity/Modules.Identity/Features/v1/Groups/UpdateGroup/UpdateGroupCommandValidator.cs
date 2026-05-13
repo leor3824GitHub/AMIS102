@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.Identity.Contracts.v1.Groups.UpdateGroup;
+using AMIS.Modules.Identity.Contracts.v1.Groups.UpdateGroup;
 
-namespace FSH.Modules.Identity.Features.v1.Groups.UpdateGroup;
+namespace AMIS.Modules.Identity.Features.v1.Groups.UpdateGroup;
 
 public sealed class UpdateGroupCommandValidator : AbstractValidator<UpdateGroupCommand>
 {
@@ -18,3 +18,4 @@ public sealed class UpdateGroupCommandValidator : AbstractValidator<UpdateGroupC
             .MaximumLength(1024).WithMessage("Description must not exceed 1024 characters.");
     }
 }
+

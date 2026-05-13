@@ -1,4 +1,4 @@
-namespace FSH.Modules.Vehicle.Contracts.v1.Maintenance;
+namespace AMIS.Modules.Vehicle.Contracts.v1.Maintenance;
 
 public sealed record MaintenanceLogDto(
     Guid Id,
@@ -44,3 +44,4 @@ public sealed record MaintenanceLogSearchRequest(
 public sealed record DueMaintenanceScheduleSearchRequest(
     Guid? VehicleId,
     int DaysAhead = 30);
+

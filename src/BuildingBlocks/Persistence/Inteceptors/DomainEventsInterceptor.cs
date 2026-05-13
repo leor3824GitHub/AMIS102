@@ -1,9 +1,9 @@
-﻿using FSH.Framework.Core.Domain;
+using AMIS.Framework.Core.Domain;
 using Mediator;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Logging;
 
-namespace FSH.Framework.Persistence.Inteceptors;
+namespace AMIS.Framework.Persistence.Inteceptors;
 
 /// <summary>
 /// Entity Framework interceptor that automatically publishes domain events after saving changes.

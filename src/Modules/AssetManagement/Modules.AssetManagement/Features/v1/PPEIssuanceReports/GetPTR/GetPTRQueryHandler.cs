@@ -1,9 +1,9 @@
-using FSH.Modules.AssetManagement.Data;
-using FSH.Modules.MasterData.Contracts.v1.References;
+using AMIS.Modules.AssetManagement.Data;
+using AMIS.Modules.MasterData.Contracts.v1.References;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.PPEIssuanceReports.GetPTR;
+namespace AMIS.Modules.AssetManagement.Features.v1.PPEIssuanceReports.GetPTR;
 
 public sealed class GetPTRQueryHandler(AssetManagementDbContext dbContext, IMediator mediator)
     : IQueryHandler<GetPTRQuery, PTRDto>
@@ -93,3 +93,4 @@ public sealed class GetPTRQueryHandler(AssetManagementDbContext dbContext, IMedi
         return string.IsNullOrWhiteSpace(fullName) ? fallbackId.ToString() : fullName;
     }
 }
+

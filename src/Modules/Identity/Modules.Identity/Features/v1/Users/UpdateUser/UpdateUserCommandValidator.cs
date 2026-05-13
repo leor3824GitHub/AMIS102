@@ -1,8 +1,8 @@
-﻿using FluentValidation;
-using FSH.Framework.Storage;
-using FSH.Modules.Identity.Contracts.v1.Users.UpdateUser;
+using FluentValidation;
+using AMIS.Framework.Storage;
+using AMIS.Modules.Identity.Contracts.v1.Users.UpdateUser;
 
-namespace FSH.Modules.Identity.Features.v1.Users.UpdateUser;
+namespace AMIS.Modules.Identity.Features.v1.Users.UpdateUser;
 
 public sealed class UpdateUserCommandValidator : AbstractValidator<UpdateUserCommand>
 {

@@ -1,6 +1,6 @@
-using FSH.Framework.Core.Domain;
+using AMIS.Framework.Core.Domain;
 
-namespace FSH.Modules.AssetManagement.Domain;
+namespace AMIS.Modules.AssetManagement.Domain;
 
 /// <summary>
 /// A single asset verification record within a Physical Count Session.
@@ -151,3 +151,4 @@ public sealed class PhysicalCountEntry : BaseEntity<Guid>, IHasTenant
         Remarks = remarks;
     }
 }
+

@@ -1,7 +1,7 @@
 using FluentValidation;
-using FSH.Modules.Identity.Contracts.v1.Groups.AddUsersToGroup;
+using AMIS.Modules.Identity.Contracts.v1.Groups.AddUsersToGroup;
 
-namespace FSH.Modules.Identity.Features.v1.Groups.AddUsersToGroup;
+namespace AMIS.Modules.Identity.Features.v1.Groups.AddUsersToGroup;
 
 public sealed class AddUsersToGroupCommandValidator : AbstractValidator<AddUsersToGroupCommand>
 {
@@ -16,3 +16,4 @@ public sealed class AddUsersToGroupCommandValidator : AbstractValidator<AddUsers
             .WithMessage("User IDs cannot be empty or whitespace.");
     }
 }
+

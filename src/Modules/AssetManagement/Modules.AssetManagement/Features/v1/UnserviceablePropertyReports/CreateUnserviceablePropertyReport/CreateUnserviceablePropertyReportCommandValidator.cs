@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace FSH.Modules.AssetManagement.Features.v1.UnserviceablePropertyReports.CreateUnserviceablePropertyReport;
+namespace AMIS.Modules.AssetManagement.Features.v1.UnserviceablePropertyReports.CreateUnserviceablePropertyReport;
 
 public sealed class CreateUnserviceablePropertyReportCommandValidator
     : AbstractValidator<CreateUnserviceablePropertyReportCommand>
@@ -33,3 +33,4 @@ public sealed class CreateUnserviceablePropertyReportCommandValidator
         });
     }
 }
+

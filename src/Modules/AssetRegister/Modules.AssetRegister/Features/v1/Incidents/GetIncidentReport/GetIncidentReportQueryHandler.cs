@@ -1,9 +1,9 @@
-using FSH.Modules.AssetRegister.Contracts.v1.Incidents;
-using FSH.Modules.AssetRegister.Data;
+using AMIS.Modules.AssetRegister.Contracts.v1.Incidents;
+using AMIS.Modules.AssetRegister.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetRegister.Features.v1.Incidents.GetIncidentReport;
+namespace AMIS.Modules.AssetRegister.Features.v1.Incidents.GetIncidentReport;
 
 public sealed class GetIncidentReportQueryHandler(AssetRegisterDbContext db)
     : IQueryHandler<GetIncidentReportQuery, PropertyIncidentReportDto?>
@@ -18,3 +18,4 @@ public sealed class GetIncidentReportQueryHandler(AssetRegisterDbContext db)
         return report is null ? null : IncidentMapper.ToDto(report);
     }
 }
+

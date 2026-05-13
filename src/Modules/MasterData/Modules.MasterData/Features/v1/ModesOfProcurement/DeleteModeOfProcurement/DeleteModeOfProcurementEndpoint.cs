@@ -1,10 +1,10 @@
-using FSH.Framework.Shared.Identity.Authorization;
+using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace FSH.Modules.MasterData.Features.v1.ModesOfProcurement.DeleteModeOfProcurement;
+namespace AMIS.Modules.MasterData.Features.v1.ModesOfProcurement.DeleteModeOfProcurement;
 
 public static class DeleteModeOfProcurementEndpoint
 {
@@ -25,3 +25,4 @@ public static class DeleteModeOfProcurementEndpoint
         return TypedResults.NoContent();
     }
 }
+

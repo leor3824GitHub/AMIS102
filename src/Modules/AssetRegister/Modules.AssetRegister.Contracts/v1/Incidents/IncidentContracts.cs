@@ -1,8 +1,8 @@
-using FSH.Framework.Shared.Persistence;
-using FSH.Modules.AssetRegister.Contracts.v1.Accountability;
+using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.AssetRegister.Contracts.v1.Accountability;
 using Mediator;
 
-namespace FSH.Modules.AssetRegister.Contracts.v1.Incidents;
+namespace AMIS.Modules.AssetRegister.Contracts.v1.Incidents;
 
 public sealed record PropertyIncidentItemDto(
     Guid Id,
@@ -119,3 +119,4 @@ public sealed record SearchIncidentReportsQuery(
     DateOnly? ToDate = null,
     int PageNumber = 1,
     int PageSize = 10) : IQuery<PagedResponse<PropertyIncidentReportSummaryDto>>;
+

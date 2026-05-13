@@ -1,4 +1,4 @@
-namespace FSH.Modules.Multitenancy;
+namespace AMIS.Modules.Multitenancy;
 
 /// <summary>
 /// Options controlling multitenancy behavior at startup.
@@ -24,3 +24,4 @@ public sealed class MultitenancyOptions
     /// </summary>
     public bool UseDistributedCacheStore { get; set; } = true;
 }
+

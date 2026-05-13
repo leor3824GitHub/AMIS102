@@ -1,6 +1,6 @@
 using Mediator;
 
-namespace FSH.Modules.MasterData.Features.v1.Categories.GetCategories;
+namespace AMIS.Modules.MasterData.Features.v1.Categories.GetCategories;
 
 public sealed record GetCategoriesQuery(
     string? Keyword = null,
@@ -20,3 +20,4 @@ public sealed record CategoryDto(
     string? Description,
     bool IsActive,
     string? OfficeCode = null);
+

@@ -1,12 +1,12 @@
 using Amazon;
 using Amazon.S3;
-using FSH.Framework.Storage.Local;
-using FSH.Framework.Storage.S3;
-using FSH.Framework.Storage.Services;
+using AMIS.Framework.Storage.Local;
+using AMIS.Framework.Storage.S3;
+using AMIS.Framework.Storage.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace FSH.Framework.Storage;
+namespace AMIS.Framework.Storage;
 
 public static class Extensions
 {
@@ -51,3 +51,4 @@ public static class Extensions
         return services;
     }
 }
+

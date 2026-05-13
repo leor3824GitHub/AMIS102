@@ -1,0 +1,167 @@
+.AMIS-account-menu {
+    display: flex;
+    align-items: center;
+    margin-left: 8px;
+}
+
+/* Trigger button */
+::deep .AMIS-account-trigger {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 24px;
+    min-width: auto;
+    text-transform: none;
+    transition: background-color 0.2s ease;
+}
+
+::deep .AMIS-account-trigger:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+::deep .AMIS-trigger-avatar {
+    width: 32px;
+    height: 32px;
+    font-size: 13px;
+    font-weight: 600;
+    background: linear-gradient(135deg, var(--mud-palette-primary), var(--mud-palette-secondary));
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+::deep .AMIS-trigger-arrow {
+    opacity: 0.7;
+    margin-left: 2px;
+}
+
+/* Popover container */
+::deep .AMIS-account-popover {
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    min-width: 280px;
+    margin-top: 8px;
+}
+
+.AMIS-account-dropdown {
+    background: var(--mud-palette-surface);
+}
+
+/* Header section */
+.AMIS-dropdown-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 20px;
+    background: linear-gradient(135deg, rgba(var(--mud-palette-primary-rgb), 0.08), rgba(var(--mud-palette-secondary-rgb), 0.04));
+}
+
+::deep .AMIS-header-avatar {
+    width: 52px;
+    height: 52px;
+    font-size: 18px;
+    font-weight: 600;
+    background: linear-gradient(135deg, var(--mud-palette-primary), var(--mud-palette-secondary));
+    color: white;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(var(--mud-palette-primary-rgb), 0.3);
+}
+
+.AMIS-header-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    flex: 1;
+}
+
+.AMIS-header-name {
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--mud-palette-text-primary);
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.AMIS-header-email {
+    font-size: 13px;
+    color: var(--mud-palette-text-secondary);
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+::deep .AMIS-header-role {
+    margin-top: 6px;
+    height: 22px;
+    font-size: 11px;
+    font-weight: 500;
+    align-self: flex-start;
+}
+
+/* Menu sections */
+.AMIS-dropdown-menu {
+    padding: 8px;
+}
+
+.AMIS-dropdown-footer {
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.02);
+}
+
+/* Menu items */
+::deep .AMIS-menu-item {
+    border-radius: 8px;
+    margin: 2px 0;
+    padding: 10px 12px;
+    transition: all 0.15s ease;
+}
+
+::deep .AMIS-menu-item:hover {
+    background: rgba(var(--mud-palette-primary-rgb), 0.08);
+}
+
+::deep .AMIS-menu-item .mud-icon-root {
+    margin-right: 12px;
+    color: var(--mud-palette-text-secondary);
+}
+
+::deep .AMIS-menu-item:hover .mud-icon-root {
+    color: var(--mud-palette-primary);
+}
+
+.AMIS-menu-item-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.AMIS-menu-item-text {
+    font-weight: 500;
+    font-size: 14px;
+    color: var(--mud-palette-text-primary);
+}
+
+.AMIS-menu-item-desc {
+    font-size: 12px;
+    color: var(--mud-palette-text-secondary);
+    line-height: 1.3;
+}
+
+/* Danger item (sign out) */
+::deep .AMIS-menu-item-danger {
+    color: var(--mud-palette-error);
+}
+
+::deep .AMIS-menu-item-danger:hover {
+    background: rgba(var(--mud-palette-error-rgb), 0.08);
+}
+
+::deep .AMIS-menu-item-danger .mud-icon-root {
+    color: var(--mud-palette-error);
+}

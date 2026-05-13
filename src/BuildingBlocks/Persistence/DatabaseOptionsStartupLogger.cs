@@ -1,9 +1,9 @@
-using FSH.Framework.Shared.Persistence;
+using AMIS.Framework.Shared.Persistence;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace FSH.Framework.Persistence;
+namespace AMIS.Framework.Persistence;
 
 /// <summary>
 /// Hosted service that logs database configuration options during application startup.
@@ -35,8 +35,8 @@ public sealed class DatabaseOptionsStartupLogger : IHostedService
     {
         var options = _options.Value;
         _logger.LogInformation("current db provider: {Provider}", options.Provider);
-        _logger.LogInformation("for docs: https://www.fullstackhero.net");
-        _logger.LogInformation("sponsor: https://opencollective.com/fullstackhero");
+        _logger.LogInformation("for docs: https://www.AMIS.net");
+        _logger.LogInformation("sponsor: https://opencollective.com/AMIS");
         return Task.CompletedTask;
     }
 
@@ -47,4 +47,5 @@ public sealed class DatabaseOptionsStartupLogger : IHostedService
     /// <returns>A completed task.</returns>
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 }
+
 

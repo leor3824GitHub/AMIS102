@@ -1,7 +1,7 @@
-using FSH.Modules.Expendable.Contracts.v1.Cart;
-using FSH.Modules.Expendable.Domain.Cart;
+using AMIS.Modules.Expendable.Contracts.v1.Cart;
+using AMIS.Modules.Expendable.Domain.Cart;
 
-namespace FSH.Modules.Expendable.Features.v1.Cart;
+namespace AMIS.Modules.Expendable.Features.v1.Cart;
 
 internal static class CartMapper
 {
@@ -19,4 +19,5 @@ internal static class CartMapper
                 x.LineTotal)).ToList(),
             cart.CreatedOnUtc);
 }
+
 

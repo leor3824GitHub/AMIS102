@@ -1,4 +1,4 @@
-namespace FSH.Modules.AssetManagement.Domain;
+namespace AMIS.Modules.AssetManagement.Domain;
 
 /// <summary>
 /// The verification outcome of a single asset during a Physical Count Session.
@@ -17,3 +17,4 @@ public enum PhysicalCountEntryResult
     /// </summary>
     FoundAtStation = 2,
 }
+

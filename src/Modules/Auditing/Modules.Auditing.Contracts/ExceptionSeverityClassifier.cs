@@ -1,4 +1,4 @@
-﻿namespace FSH.Modules.Auditing.Contracts;
+namespace AMIS.Modules.Auditing.Contracts;
 
 public static class ExceptionSeverityClassifier
 {
@@ -10,3 +10,4 @@ public static class ExceptionSeverityClassifier
             _ => AuditSeverity.Error
         };
 }
+

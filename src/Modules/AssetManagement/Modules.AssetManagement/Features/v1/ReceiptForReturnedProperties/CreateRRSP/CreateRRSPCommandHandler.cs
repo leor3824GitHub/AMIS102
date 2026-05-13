@@ -1,11 +1,11 @@
-using FSH.Framework.Core.Context;
-using FSH.Framework.Core.Exceptions;
-using FSH.Modules.AssetManagement.Data;
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Framework.Core.Context;
+using AMIS.Framework.Core.Exceptions;
+using AMIS.Modules.AssetManagement.Data;
+using AMIS.Modules.AssetManagement.Domain;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace FSH.Modules.AssetManagement.Features.v1.ReceiptForReturnedProperties.CreateRRSP;
+namespace AMIS.Modules.AssetManagement.Features.v1.ReceiptForReturnedProperties.CreateRRSP;
 
 public sealed class CreateRRSPCommandHandler(AssetManagementDbContext dbContext, ICurrentUser currentUser)
     : ICommandHandler<CreateRRSPCommand, CreateRRSPResult>
@@ -147,3 +147,4 @@ public sealed class CreateRRSPCommandHandler(AssetManagementDbContext dbContext,
         return new CreateRRSPResult(rrsp.Id, rrsp.RRSPNo, icsItems.Count);
     }
 }
+

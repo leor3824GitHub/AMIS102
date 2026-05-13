@@ -1,4 +1,4 @@
-################################################################################
+﻿################################################################################
 # General Variables
 ################################################################################
 
@@ -274,7 +274,7 @@ variable "redis_automatic_failover_enabled" {
 variable "container_registry" {
   type        = string
   description = "Container registry URL."
-  default     = "ghcr.io/fullstackhero"
+  default     = "ghcr.io/amis"
 }
 
 variable "container_image_tag" {
@@ -285,13 +285,13 @@ variable "container_image_tag" {
 variable "api_image_name" {
   type        = string
   description = "API container image name."
-  default     = "fsh-playground-api"
+  default     = "AMIS-playground-api"
 }
 
 variable "blazor_image_name" {
   type        = string
   description = "Blazor container image name."
-  default     = "fsh-playground-blazor"
+  default     = "AMIS-playground-blazor"
 }
 
 ################################################################################

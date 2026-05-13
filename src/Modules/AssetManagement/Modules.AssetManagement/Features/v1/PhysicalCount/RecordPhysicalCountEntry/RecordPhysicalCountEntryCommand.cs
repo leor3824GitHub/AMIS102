@@ -1,7 +1,7 @@
-using FSH.Modules.AssetManagement.Domain;
+using AMIS.Modules.AssetManagement.Domain;
 using Mediator;
 
-namespace FSH.Modules.AssetManagement.Features.v1.PhysicalCount.RecordPhysicalCountEntry;
+namespace AMIS.Modules.AssetManagement.Features.v1.PhysicalCount.RecordPhysicalCountEntry;
 
 public sealed record RecordPhysicalCountEntryCommand(
     Guid SessionId,
@@ -21,3 +21,4 @@ public sealed record RecordPhysicalCountEntryResult(
     string Result,
     string? Condition,
     bool IsScanned);
+

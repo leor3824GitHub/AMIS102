@@ -1,4 +1,4 @@
-################################################################################
+﻿################################################################################
 # Environment Settings
 ################################################################################
 
@@ -63,7 +63,7 @@ flow_logs_retention_days = 90
 # S3 Configuration
 ################################################################################
 
-app_s3_bucket_name                = "prod-fsh-app-bucket"
+app_s3_bucket_name                = "prod-AMIS-app-bucket"
 app_s3_versioning_enabled         = true
 app_s3_enable_public_read         = false
 app_s3_enable_cloudfront          = true
@@ -74,8 +74,8 @@ app_s3_enable_intelligent_tiering = true
 # Database Configuration
 ################################################################################
 
-db_name     = "fshdb"
-db_username = "fshadmin"
+db_name     = "AMISdb"
+db_username = "AMISadmin"
 
 # Use AWS Secrets Manager for password (mandatory for production)
 db_manage_master_user_password = true
@@ -106,9 +106,9 @@ redis_automatic_failover_enabled = true
 container_image_tag = "latest"
 
 # Optional: Override defaults if needed
-# container_registry = "ghcr.io/fullstackhero"
-# api_image_name     = "fsh-playground-api"
-# blazor_image_name  = "fsh-playground-blazor"
+# container_registry = "ghcr.io/amis"
+# api_image_name     = "AMIS-playground-api"
+# blazor_image_name  = "AMIS-playground-blazor"
 
 ################################################################################
 # Service Configuration (Production - no Spot for stability)

@@ -1,13 +1,13 @@
 @page "/roles/{Id:guid}/permissions"
-@using FSH.Playground.Blazor.ApiClient
-@using FSH.Framework.Blazor.UI.Components.Dialogs
+@using AMIS.Playground.Blazor.ApiClient
+@using AMIS.Framework.Blazor.UI.Components.Dialogs
 @inherits ComponentBase
 @inject IIdentityClient IdentityClient
 @inject NavigationManager Navigation
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 
-<FshPageHeader Title="Manage Role Permissions"
+<AMISPageHeader Title="Manage Role Permissions"
                Description="Configure what actions this role can perform">
     <ActionContent>
         <MudButton Variant="Variant.Text"
@@ -17,11 +17,11 @@
             Back to Roles
         </MudButton>
     </ActionContent>
-</FshPageHeader>
+</AMISPageHeader>
 
 @if (_loading)
 {
-    <MudPaper Class="fsh-card pa-8">
+    <MudPaper Class="AMIS-card pa-8">
         <MudStack AlignItems="AlignItems.Center" Spacing="4">
             <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
             <MudText Typo="Typo.body1">Loading role information...</MudText>
@@ -30,7 +30,7 @@
 }
 else if (_role is null)
 {
-    <MudPaper Class="fsh-card pa-8">
+    <MudPaper Class="AMIS-card pa-8">
         <MudStack AlignItems="AlignItems.Center" Spacing="4">
             <MudIcon Icon="@Icons.Material.Filled.ErrorOutline" Size="Size.Large" Color="Color.Error" />
             <MudText Typo="Typo.h6">Role Not Found</MudText>
@@ -44,7 +44,7 @@ else if (_role is null)
 else
 {
     @* Role Info Header *@
-    <MudPaper Class="fsh-card pa-4 mb-4">
+    <MudPaper Class="AMIS-card pa-4 mb-4">
         <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
             <MudStack Spacing="0">
                 <MudText Typo="Typo.h5" Class="fw-700">@_role.Name</MudText>
@@ -173,7 +173,7 @@ else
     </MudGrid>
 
     @* Search and Bulk Actions *@
-    <MudPaper Class="fsh-card pa-4 mb-4">
+    <MudPaper Class="AMIS-card pa-4 mb-4">
         <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
             <MudTextField @bind-Value="_searchTerm"
                           Placeholder="Search permissions..."
@@ -224,7 +224,7 @@ else
             <MudExpansionPanel @key="categoryKey"
                                IsExpanded="@_expandedCategories.Contains(categoryKey)"
                                IsExpandedChanged="@((bool expanded) => OnCategoryExpandedChanged(categoryKey, expanded))"
-                               Class="fsh-card mb-3 permission-category">
+                               Class="AMIS-card mb-3 permission-category">
                 <TitleContent>
                     <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Style="width: 100%;">
                         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3">
@@ -297,7 +297,7 @@ else
 
     @if (!FilteredGroups.Any())
     {
-        <MudPaper Class="fsh-card pa-8">
+        <MudPaper Class="AMIS-card pa-8">
             <MudStack AlignItems="AlignItems.Center" Spacing="4">
                 <MudIcon Icon="@Icons.Material.Filled.SearchOff" Size="Size.Large" Color="Color.Default" />
                 <MudText Typo="Typo.h6">No permissions found</MudText>
@@ -665,3 +665,4 @@ else
         _ => $"Manage {category.ToLowerInvariant()}"
     };
 }
+

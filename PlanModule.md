@@ -1,4 +1,4 @@
-# Multi-Module Library Architecture Plan
+﻿﻿# Multi-Module Library Architecture Plan
 
 ## Overview
 
@@ -252,7 +252,7 @@ public sealed record SearchEmployeesQuery(
 **File:** `src/Modules/Library/Data/LibraryDbContext.cs`
 ```csharp
 public class LibraryDbContext : 
-    MultiTenantIdentityDbContext<FshUser, FshRole>
+    MultiTenantIdentityDbContext<AMISUser, AMISRole>
 {
     public DbSet<Employee> Employees => Set<Employee>();
     public DbSet<Office> Offices => Set<Office>();
@@ -501,7 +501,7 @@ public class PPEIssue : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 **File:** `src/Modules/PPE/Data/PPEDbContext.cs`
 ```csharp
 public class PPEDbContext : 
-    MultiTenantIdentityDbContext<FshUser, FshRole>
+    MultiTenantIdentityDbContext<AMISUser, AMISRole>
 {
     public DbSet<PPEIssue> PPEIssues => Set<PPEIssue>();
     
@@ -857,8 +857,8 @@ public void Modules_Handlers_Should_Be_Sealed()
 
 ### 14. Verification Checklist
 
-- [ ] Build passes: `dotnet build src/FSH.Framework.slnx` (0 warnings)
-- [ ] All tests pass: `dotnet test src/FSH.Framework.slnx`
+- [ ] Build passes: `dotnet build src/AMIS.Framework.slnx` (0 warnings)
+- [ ] All tests pass: `dotnet test src/AMIS.Framework.slnx`
 - [ ] Module 1 cannot reference Library internals (compile error if tries)
 - [ ] Module 2 cannot reference Library internals (compile error if tries)
 - [ ] No circular dependencies detected by architecture tests
@@ -960,3 +960,4 @@ src/Tests/
 6. Write tests for each module
 7. Run architecture tests to verify no circular dependencies
 8. Deploy with zero build warnings
+
