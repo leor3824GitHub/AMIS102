@@ -11,7 +11,7 @@ public static class GetPhysicalCountReportEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapGet("/physical-count", GetReport)
-            .WithName(nameof(GetPhysicalCountReportQuery))
+            .WithName("Expendable_GetPhysicalCountReport")
             .WithSummary("Physical count report listing all products with system inventory balances")
             .Produces<List<PhysicalCountItemDto>>(StatusCodes.Status200OK)
             .RequirePermission(ExpendableModuleConstants.Permissions.Inventory.ViewReports);

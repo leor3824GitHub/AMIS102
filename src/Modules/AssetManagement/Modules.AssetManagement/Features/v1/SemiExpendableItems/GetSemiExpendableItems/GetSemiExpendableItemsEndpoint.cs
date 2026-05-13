@@ -10,7 +10,7 @@ public static class GetSemiExpendableItemsEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapGet("/", GetItemCatalog)
-            .WithName(nameof(GetPropertyItemCatalogQuery))
+            .WithName("AssetManagement_GetSemiExpendableItems")
             .WithSummary("Get paginated list of item catalog entries")
             .Produces<PagedPropertyItemCatalogResponse>(StatusCodes.Status200OK)
             .RequirePermission(AssetManagementModuleConstants.Permissions.SemiExpendableItems.View);

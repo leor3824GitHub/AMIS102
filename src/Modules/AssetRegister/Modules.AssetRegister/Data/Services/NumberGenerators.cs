@@ -72,6 +72,17 @@ internal sealed class IssuanceReportNumberGenerator(AssetRegisterDbContext db, C
     }
 }
 
+internal sealed class ReceivingReportNumberGenerator(AssetRegisterDbContext db, CounterAllocator allocator) : IReceivingReportNumberGenerator
+{
+    public async Task<string> NextAsync(ReceivingDocumentKind kind, DateOnly date, CancellationToken ct)
+    {
+        var prefix = kind == ReceivingDocumentKind.PPERR ? "PPERR" : "SMRR";
+        var tenantId = db.TenantInfo?.Identifier ?? string.Empty;
+        var serial = await allocator.NextSerialAsync(tenantId, date.Year, date.Month, prefix, ct).ConfigureAwait(false);
+        return $"{prefix}-{date.Year:D4}-{date.Month:D2}-{serial.ToString("D4", CultureInfo.InvariantCulture)}";
+    }
+}
+
 internal sealed class UnserviceableReportNumberGenerator(AssetRegisterDbContext db, CounterAllocator allocator) : IUnserviceableReportNumberGenerator
 {
     public async Task<string> NextAsync(UnserviceableReportType type, DateOnly asAt, CancellationToken ct)

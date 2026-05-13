@@ -1,0 +1,226 @@
+@using FSH.Playground.Blazor.ApiClient
+@inject IArReceivingReportClient Client
+@inject IArCatalogClient CatalogClient
+@inject ILookupClient LookupClient
+@inject ISnackbar Snackbar
+
+<MudCard Elevation="2">
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudText Typo="Typo.h6">@Title</MudText>
+        </CardHeaderContent>
+    </MudCardHeader>
+    <MudCardContent>
+        <MudGrid Spacing="2">
+            <MudItem xs="12" md="3">
+                <MudDatePicker @bind-Date="_date" Label="Date" Variant="Variant.Outlined" Required="true" />
+            </MudItem>
+            <MudItem xs="12" md="3">
+                <MudSelect @bind-Value="_receiptType" Label="Type" Variant="Variant.Outlined" T="int" Required="true">
+                    <MudSelectItem Value="0">Purchase</MudSelectItem>
+                    <MudSelectItem Value="1">Transfer</MudSelectItem>
+                    <MudSelectItem Value="2">Donation</MudSelectItem>
+                    <MudSelectItem Value="3">Other</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+            @if (_receiptType == 3)
+            {
+                <MudItem xs="12" md="3">
+                    <MudTextField @bind-Value="_otherReceiptType" Label="Specify Other" Variant="Variant.Outlined" Required="true" />
+                </MudItem>
+            }
+            <MudItem xs="12" md="3">
+                <MudTextField @bind-Value="_fundCluster" Label="Fund Cluster" Variant="Variant.Outlined" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudTextField @bind-Value="_receivedFrom" Label="Received From" Variant="Variant.Outlined" Required="true" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudTextField @bind-Value="_address" Label="Address" Variant="Variant.Outlined" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudAutocomplete T="EmployeeReferenceDto" @bind-Value="_receivedBy" Label="Received By" Variant="Variant.Outlined"
+                                 SearchFunc="SearchEmployeesAsync" ToStringFunc="FormatEmployee"
+                                 Required="true" CoerceText="false" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudAutocomplete T="EmployeeReferenceDto" @bind-Value="_notedBy" Label="Noted By (optional)" Variant="Variant.Outlined"
+                                 SearchFunc="SearchEmployeesAsync" ToStringFunc="FormatEmployee"
+                                 CoerceText="false" />
+            </MudItem>
+            @if (DocumentKind == 1)
+            {
+                <MudItem xs="12" md="3">
+                    <MudDatePicker @bind-Date="_dateReceived" Label="Date Received" Variant="Variant.Outlined" />
+                </MudItem>
+            }
+
+            <MudItem xs="12">
+                <MudDivider Class="my-2" />
+                <MudText Typo="Typo.subtitle1">Items</MudText>
+            </MudItem>
+
+            @foreach (var item in _lines)
+            {
+                <MudItem xs="12">
+                    <MudPaper Elevation="0" Class="pa-2" Style="background: var(--mud-palette-surface);">
+                        <MudGrid Spacing="2">
+                            <MudItem xs="12" md="3">
+                                <MudAutocomplete T="ArCatalogItemDto" Value="item.Catalog"
+                                                 ValueChanged="@(c => OnCatalogChosen(item, c))"
+                                                 Label="Property Item" Variant="Variant.Outlined"
+                                                 SearchFunc="SearchCatalogAsync"
+                                                 ToStringFunc="@(c => c is null ? string.Empty : $"{c.Code} — {c.Description}")"
+                                                 Required="true" CoerceText="false" />
+                            </MudItem>
+                            <MudItem xs="12" md="2">
+                                <MudTextField @bind-Value="item.Reference" Label="Reference" Variant="Variant.Outlined" />
+                            </MudItem>
+                            <MudItem xs="12" md="3">
+                                <MudTextField @bind-Value="item.Description" Label="Description" Variant="Variant.Outlined" Required="true" />
+                            </MudItem>
+                            <MudItem xs="12" md="2">
+                                <MudDatePicker @bind-Date="item.AcquisitionDate" Label="Date Acquired" Variant="Variant.Outlined" Required="true" />
+                            </MudItem>
+                            <MudItem xs="6" md="1">
+                                <MudNumericField @bind-Value="item.Quantity" Label="Qty" Variant="Variant.Outlined" Min="1" />
+                            </MudItem>
+                            <MudItem xs="6" md="1">
+                                <MudNumericField @bind-Value="item.UnitCost" Label="Unit Cost" Variant="Variant.Outlined"
+                                                 Format="N2" Min="0" />
+                            </MudItem>
+                            <MudItem xs="12" Class="d-flex justify-end">
+                                <MudButton Color="Color.Error" Size="Size.Small" OnClick="@(() => RemoveLine(item))"
+                                           StartIcon="@Icons.Material.Outlined.Delete">Remove line</MudButton>
+                            </MudItem>
+                        </MudGrid>
+                    </MudPaper>
+                </MudItem>
+            }
+
+            <MudItem xs="12">
+                <MudButton OnClick="AddLine" StartIcon="@Icons.Material.Outlined.Add" Variant="Variant.Outlined" Color="Color.Primary">
+                    Add line
+                </MudButton>
+            </MudItem>
+
+            <MudItem xs="12" Class="d-flex justify-end">
+                <MudButton OnClick="OnCancel" Variant="Variant.Text" Class="mr-2">Cancel</MudButton>
+                <MudButton OnClick="SaveAsync" Variant="Variant.Filled" Color="Color.Success"
+                           Disabled="_busy" StartIcon="@Icons.Material.Outlined.Save">
+                    @(_busy ? "Saving..." : "Save")
+                </MudButton>
+            </MudItem>
+        </MudGrid>
+    </MudCardContent>
+</MudCard>
+
+@code {
+    [Parameter] public int DocumentKind { get; set; }
+    [Parameter] public string Title { get; set; } = "Create Receiving Report";
+    [Parameter] public EventCallback<ArReceivingReportDto> OnCreated { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    private DateTime? _date = DateTime.Today;
+    private int _receiptType;
+    private string? _otherReceiptType;
+    private string? _fundCluster;
+    private string _receivedFrom = string.Empty;
+    private string? _address;
+    private EmployeeReferenceDto? _receivedBy;
+    private EmployeeReferenceDto? _notedBy;
+    private DateTime? _dateReceived;
+    private bool _busy;
+
+    private readonly List<LineModel> _lines = [new()];
+
+    private sealed class LineModel
+    {
+        public ArCatalogItemDto? Catalog { get; set; }
+        public string? Reference { get; set; }
+        public string Description { get; set; } = string.Empty;
+        public DateTime? AcquisitionDate { get; set; } = DateTime.Today;
+        public int Quantity { get; set; } = 1;
+        public decimal UnitCost { get; set; }
+    }
+
+    private void AddLine() => _lines.Add(new LineModel());
+    private void RemoveLine(LineModel m) { if (_lines.Count > 1) _lines.Remove(m); }
+
+    private static string FormatEmployee(EmployeeReferenceDto? e) =>
+        e is null ? string.Empty : $"{e.LastName}, {e.FirstName} ({e.EmployeeNumber})";
+
+    private static string PrintedName(EmployeeReferenceDto e) => $"{e.FirstName} {e.LastName}".Trim();
+
+    private void OnCatalogChosen(LineModel line, ArCatalogItemDto? c)
+    {
+        line.Catalog = c;
+        if (c is not null && string.IsNullOrWhiteSpace(line.Description))
+            line.Description = c.Description;
+    }
+
+    private async Task<IEnumerable<ArCatalogItemDto>> SearchCatalogAsync(string value, CancellationToken ct)
+    {
+        try
+        {
+            var res = await CatalogClient.SearchAsync(value, isActive: true, page: 1, pageSize: 20, ct: ct);
+            return res.Items;
+        }
+        catch { return []; }
+    }
+
+    private async Task<IEnumerable<EmployeeReferenceDto>> SearchEmployeesAsync(string value, CancellationToken ct)
+    {
+        try
+        {
+            var result = await LookupClient.EmployeesGetAsync(
+                keyword: string.IsNullOrWhiteSpace(value) ? null : value,
+                isActive: true, pageNumber: 1, pageSize: 20, cancellationToken: ct);
+            return result?.Items ?? [];
+        }
+        catch { return []; }
+    }
+
+    private async Task SaveAsync()
+    {
+        if (_date is null || _receivedBy is null)
+        {
+            Snackbar.Add("Date and Received By are required.", Severity.Warning);
+            return;
+        }
+        if (_lines.Any(l => l.Catalog is null || string.IsNullOrWhiteSpace(l.Description) || l.Quantity <= 0 || l.UnitCost <= 0))
+        {
+            Snackbar.Add("Each line needs a catalog item, description, quantity, and unit cost.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            var request = new CreateReceivingReportRequest(
+                DocumentKind,
+                DateOnly.FromDateTime(_date.Value),
+                _receivedFrom,
+                _address,
+                _receiptType,
+                _receiptType == 3 ? _otherReceiptType : null,
+                _fundCluster,
+                new ArEmployeeRefDto(_receivedBy.Id, PrintedName(_receivedBy), _receivedBy.PositionName),
+                _notedBy is null ? null : new ArEmployeeRefDto(_notedBy.Id, PrintedName(_notedBy), _notedBy.PositionName),
+                _dateReceived is null ? null : DateOnly.FromDateTime(_dateReceived.Value),
+                _lines.Select(l => new CreateReceivingReportItemRequest(
+                    l.Catalog!.Id, l.Reference, l.Description,
+                    DateOnly.FromDateTime(l.AcquisitionDate ?? DateTime.Today),
+                    l.Quantity, l.UnitCost,
+                    SerialNo: null, Brand: null, Model: null)).ToList());
+
+            var created = await Client.CreateAsync(request);
+            await OnCreated.InvokeAsync(created);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Save failed: {ex.Message}", Severity.Error);
+        }
+        finally { _busy = false; }
+    }
+}

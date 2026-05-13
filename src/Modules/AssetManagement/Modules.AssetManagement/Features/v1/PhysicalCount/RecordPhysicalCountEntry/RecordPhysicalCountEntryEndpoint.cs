@@ -26,7 +26,7 @@ public static class RecordPhysicalCountEntryEndpoint
             var result = await mediator.Send(command, ct);
             return TypedResults.Ok(result);
         })
-        .WithName(nameof(RecordPhysicalCountEntryCommand))
+        .WithName("AssetManagement_RecordPhysicalCountEntry")
         .WithSummary("Record the physical count result for a single asset entry (manual or camera scan)")
         .RequirePermission(AssetManagementModuleConstants.Permissions.PhysicalCount.Update);
 }

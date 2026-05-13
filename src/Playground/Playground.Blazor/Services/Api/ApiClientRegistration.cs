@@ -243,6 +243,8 @@ internal static class ApiClientRegistration
             new ArIssuanceReportClient(ResolveClient(sp)));
         services.AddTransient<IArUnserviceableReportClient>(sp =>
             new ArUnserviceableReportClient(ResolveClient(sp)));
+        services.AddTransient<IArReceivingReportClient>(sp =>
+            new ArReceivingReportClient(ResolveClient(sp)));
 
         return services;
     }

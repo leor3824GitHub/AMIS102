@@ -386,7 +386,12 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetRegister
                     LineStatus = table.Column<int>(type: "integer", nullable: false),
                     ReturnedOn = table.Column<DateOnly>(type: "date", nullable: true),
                     ReturnedConditionAtReturn = table.Column<int>(type: "integer", nullable: true),
-                    LostOnIncidentId = table.Column<Guid>(type: "uuid", nullable: true)
+                    LostOnIncidentId = table.Column<Guid>(type: "uuid", nullable: true),
+                    vehicle_odometer_at_issue = table.Column<int>(type: "integer", nullable: true),
+                    vehicle_odometer_at_return = table.Column<int>(type: "integer", nullable: true),
+                    vehicle_plate_number = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: true),
+                    vehicle_engine_number = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
+                    vehicle_chassis_number = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true)
                 },
                 constraints: table =>
                 {

@@ -3,6 +3,7 @@ using System;
 using FSH.Modules.AssetRegister.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FSH.Playground.Migrations.PostgreSQL.AssetRegister
 {
     [DbContext(typeof(AssetRegisterDbContext))]
-    partial class AssetRegisterDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260513043347_AssetRegister_Initial")]
+    partial class AssetRegister_Initial
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -831,133 +834,6 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetRegister
                     b.ToTable("PropertyIssuanceReportLines", "asset_register");
                 });
 
-            modelBuilder.Entity("FSH.Modules.AssetRegister.Domain.Receiving.ReceivingReport", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Address")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTimeOffset>("CreatedOnUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateOnly>("Date")
-                        .HasColumnType("date");
-
-                    b.Property<DateOnly?>("DateReceived")
-                        .HasColumnType("date");
-
-                    b.Property<int>("DocumentKind")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("FundCluster")
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTimeOffset?>("LastModifiedOnUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("OtherReceiptType")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<int>("ReceiptType")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("ReceivedFrom")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<string>("ReportNo")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
-
-                    b.Property<string>("TenantId")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<byte[]>("Version")
-                        .IsConcurrencyToken()
-                        .IsRequired()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("bytea");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TenantId", "ReportNo")
-                        .IsUnique();
-
-                    b.HasIndex("TenantId", "DocumentKind", "Date");
-
-                    b.ToTable("ReceivingReports", "asset_register");
-
-                    b.HasAnnotation("Finbuckle:MultiTenant", true);
-                });
-
-            modelBuilder.Entity("FSH.Modules.AssetRegister.Domain.Receiving.ReceivingReportItem", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateOnly>("AcquisitionDate")
-                        .HasColumnType("date");
-
-                    b.Property<string>("Brand")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<Guid>("CatalogItemId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<string>("Model")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Reference")
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
-
-                    b.Property<Guid>("ReportId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("SerialNo")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<decimal>("UnitCost")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("numeric(18,2)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CatalogItemId");
-
-                    b.HasIndex("ReportId");
-
-                    b.ToTable("ReceivingReportItems", "asset_register");
-                });
-
             modelBuilder.Entity("FSH.Modules.AssetRegister.Domain.Unserviceable.UnserviceablePropertyItem", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1770,79 +1646,6 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetRegister
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("FSH.Modules.AssetRegister.Domain.Receiving.ReceivingReport", b =>
-                {
-                    b.OwnsOne("FSH.Modules.AssetRegister.Contracts.v1.ValueObjects.EmployeeRef", "NotedBy", b1 =>
-                        {
-                            b1.Property<Guid>("ReceivingReportId")
-                                .HasColumnType("uuid");
-
-                            b1.Property<string>("Designation")
-                                .HasMaxLength(200)
-                                .HasColumnType("character varying(200)")
-                                .HasColumnName("NotedBy_Designation");
-
-                            b1.Property<Guid>("EmployeeId")
-                                .HasColumnType("uuid")
-                                .HasColumnName("NotedBy_EmployeeId");
-
-                            b1.Property<string>("PrintedName")
-                                .IsRequired()
-                                .HasMaxLength(200)
-                                .HasColumnType("character varying(200)")
-                                .HasColumnName("NotedBy_PrintedName");
-
-                            b1.HasKey("ReceivingReportId");
-
-                            b1.ToTable("ReceivingReports", "asset_register");
-
-                            b1.WithOwner()
-                                .HasForeignKey("ReceivingReportId");
-                        });
-
-                    b.OwnsOne("FSH.Modules.AssetRegister.Contracts.v1.ValueObjects.EmployeeRef", "ReceivedBy", b1 =>
-                        {
-                            b1.Property<Guid>("ReceivingReportId")
-                                .HasColumnType("uuid");
-
-                            b1.Property<string>("Designation")
-                                .HasMaxLength(200)
-                                .HasColumnType("character varying(200)")
-                                .HasColumnName("ReceivedBy_Designation");
-
-                            b1.Property<Guid>("EmployeeId")
-                                .HasColumnType("uuid")
-                                .HasColumnName("ReceivedBy_EmployeeId");
-
-                            b1.Property<string>("PrintedName")
-                                .IsRequired()
-                                .HasMaxLength(200)
-                                .HasColumnType("character varying(200)")
-                                .HasColumnName("ReceivedBy_PrintedName");
-
-                            b1.HasKey("ReceivingReportId");
-
-                            b1.ToTable("ReceivingReports", "asset_register");
-
-                            b1.WithOwner()
-                                .HasForeignKey("ReceivingReportId");
-                        });
-
-                    b.Navigation("NotedBy");
-
-                    b.Navigation("ReceivedBy")
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("FSH.Modules.AssetRegister.Domain.Receiving.ReceivingReportItem", b =>
-                {
-                    b.HasOne("FSH.Modules.AssetRegister.Domain.Receiving.ReceivingReport", null)
-                        .WithMany("Items")
-                        .HasForeignKey("ReportId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("FSH.Modules.AssetRegister.Domain.Unserviceable.UnserviceablePropertyItem", b =>
                 {
                     b.HasOne("FSH.Modules.AssetRegister.Domain.Unserviceable.UnserviceablePropertyReport", null)
@@ -2065,11 +1868,6 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetRegister
             modelBuilder.Entity("FSH.Modules.AssetRegister.Domain.Issuance.PropertyIssuanceReport", b =>
                 {
                     b.Navigation("Lines");
-                });
-
-            modelBuilder.Entity("FSH.Modules.AssetRegister.Domain.Receiving.ReceivingReport", b =>
-                {
-                    b.Navigation("Items");
                 });
 
             modelBuilder.Entity("FSH.Modules.AssetRegister.Domain.Unserviceable.UnserviceablePropertyReport", b =>

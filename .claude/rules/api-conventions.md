@@ -14,10 +14,32 @@ Every endpoint MUST have:
 
 ```csharp
 endpoints.MapPost("/", handler)
-    .WithName(nameof(CommandOrQuery))      // Required: Unique name
-    .WithSummary("Description")             // Required: OpenAPI description
-    .RequirePermission(Permission)          // Required: Or .AllowAnonymous()
+    .WithName("{Module}_{Action}{Entity}")  // Required: GLOBALLY unique name
+    .WithSummary("Description")              // Required: OpenAPI description
+    .RequirePermission(Permission)           // Required: Or .AllowAnonymous()
 ```
+
+## Endpoint Names Must Be Globally Unique
+
+ASP.NET Core requires `WithName(...)` values to be unique across the **entire application** — not just within a module. If two endpoints share a name, `DataSourceDependentMatcher.CreateMatcher` throws at startup, and the cached exception is rethrown on **every** request (including `/health/ready`). Every endpoint returns 500 with a generic "An unexpected error occurred" until fixed.
+
+### Rule
+
+- **Prefix every endpoint name with its module** to guarantee uniqueness: `"AssetRegister_CreatePropertyItemCatalog"`, `"AssetManagement_UpdateSemiExpendableItem"`, `"Expendable_GetPhysicalCountReport"`.
+- **Do NOT use `nameof(SomeCommand)` as the name** when that command type lives in a Contracts package shared across modules. Two modules consuming the same contract type will both produce the same string and collide.
+- A bare `nameof(LocalCommand)` is acceptable only when the command type is `internal` to a single module and its name is unique across the codebase. If in doubt, prefix.
+
+### Detection
+
+Before committing endpoint changes, run:
+
+```bash
+grep -rh "\.WithName(" src/Modules src/BuildingBlocks --include="*.cs" \
+  | sed -E 's/.*\.WithName\(([^)]+)\).*/\1/' \
+  | sort | uniq -c | sort -rn | awk '$1 > 1'
+```
+
+Any output means a duplicate exists and the app will fail to serve any request.
 
 ## HTTP Method Mapping
 

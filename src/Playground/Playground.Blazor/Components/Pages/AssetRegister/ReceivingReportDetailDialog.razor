@@ -1,0 +1,90 @@
+@using FSH.Playground.Blazor.ApiClient
+
+<MudDialog>
+    <DialogContent>
+        <MudGrid Spacing="2">
+            <MudItem xs="12" md="6">
+                <MudText Typo="Typo.subtitle2">Report No.</MudText>
+                <MudText Typo="Typo.body1"><b>@Report.ReportNo</b></MudText>
+            </MudItem>
+            <MudItem xs="6" md="3">
+                <MudText Typo="Typo.subtitle2">Kind</MudText>
+                <MudText Typo="Typo.body1">@(Report.DocumentKind == 0 ? "PPERR" : "SMRR")</MudText>
+            </MudItem>
+            <MudItem xs="6" md="3">
+                <MudText Typo="Typo.subtitle2">Date</MudText>
+                <MudText Typo="Typo.body1">@Report.Date.ToString("MM/dd/yyyy")</MudText>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudText Typo="Typo.subtitle2">Received From</MudText>
+                <MudText Typo="Typo.body1">@Report.ReceivedFrom</MudText>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudText Typo="Typo.subtitle2">Address</MudText>
+                <MudText Typo="Typo.body1">@(Report.Address ?? "—")</MudText>
+            </MudItem>
+            <MudItem xs="6" md="3">
+                <MudText Typo="Typo.subtitle2">Receipt Type</MudText>
+                <MudText Typo="Typo.body1">@ReceiptTypeLabel(Report.ReceiptType)@(Report.OtherReceiptType is null ? string.Empty : $" — {Report.OtherReceiptType}")</MudText>
+            </MudItem>
+            <MudItem xs="6" md="3">
+                <MudText Typo="Typo.subtitle2">Fund Cluster</MudText>
+                <MudText Typo="Typo.body1">@(Report.FundCluster ?? "—")</MudText>
+            </MudItem>
+            <MudItem xs="6" md="3">
+                <MudText Typo="Typo.subtitle2">Received By</MudText>
+                <MudText Typo="Typo.body1">@Report.ReceivedBy.PrintedName</MudText>
+            </MudItem>
+            <MudItem xs="6" md="3">
+                <MudText Typo="Typo.subtitle2">Noted By</MudText>
+                <MudText Typo="Typo.body1">@(Report.NotedBy?.PrintedName ?? "—")</MudText>
+            </MudItem>
+
+            <MudItem xs="12">
+                <MudDivider Class="my-2" />
+                <MudText Typo="Typo.subtitle1">Items</MudText>
+                <MudSimpleTable Dense="true" Hover="true">
+                    <thead>
+                        <tr>
+                            <th>Reference</th>
+                            <th>Description</th>
+                            <th>Date Acquired</th>
+                            <th>Qty</th>
+                            <th class="text-right">Unit Cost</th>
+                            <th class="text-right">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var line in Report.Items)
+                        {
+                            <tr>
+                                <td>@(line.Reference ?? "—")</td>
+                                <td>@line.Description</td>
+                                <td>@line.AcquisitionDate.ToString("MM/dd/yyyy")</td>
+                                <td>@line.Quantity</td>
+                                <td class="text-right">@line.UnitCost.ToString("N2")</td>
+                                <td class="text-right">@line.Amount.ToString("N2")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </MudSimpleTable>
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Close">Close</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public ArReceivingReportDto Report { get; set; } = default!;
+
+    private void Close() => MudDialog.Close();
+
+    private static string ReceiptTypeLabel(int t) => t switch
+    {
+        0 => "Purchase", 1 => "Transfer", 2 => "Donation", 3 => "Other",
+        _ => t.ToString(System.Globalization.CultureInfo.InvariantCulture)
+    };
+}

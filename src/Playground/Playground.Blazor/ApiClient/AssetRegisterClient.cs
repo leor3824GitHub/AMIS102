@@ -6,14 +6,14 @@ namespace FSH.Playground.Blazor.ApiClient;
 
 // ── Shared DTOs ────────────────────────────────────────────────────────────
 
-internal sealed record ArPagedResponse<T>(
+public sealed record ArPagedResponse<T>(
     IReadOnlyList<T> Items,
     int PageNumber,
     int PageSize,
     int TotalCount,
     int TotalPages);
 
-internal sealed record ArEmployeeRefDto(Guid EmployeeId, string PrintedName, string? Designation);
+public sealed record ArEmployeeRefDto(Guid EmployeeId, string PrintedName, string? Designation);
 
 internal sealed record ArAssetSnapshotDto(
     string PropertyNo,
@@ -800,6 +800,122 @@ internal sealed class ArUnserviceableReportClient(HttpClient http) : IArUnservic
         var resp = await http.PostAsJsonAsync($"{Base}/{id}/submit", request, ct);
         resp.EnsureSuccessStatusCode();
         return (await resp.Content.ReadFromJsonAsync<ArUnserviceableReportDto>(cancellationToken: ct))!;
+    }
+}
+
+// ── Receiving Reports (PPERR / SMRR) ───────────────────────────────────────
+
+public sealed record ArReceivingReportSummaryDto(
+    Guid Id,
+    int DocumentKind,
+    string ReportNo,
+    DateOnly Date,
+    string ReceivedFrom,
+    int ReceiptType,
+    int ItemCount,
+    decimal TotalAmount);
+
+public sealed record ArReceivingReportItemDto(
+    Guid Id,
+    Guid ReportId,
+    Guid CatalogItemId,
+    string? Reference,
+    string Description,
+    DateOnly AcquisitionDate,
+    int Quantity,
+    decimal UnitCost,
+    decimal Amount,
+    string? SerialNo,
+    string? Brand,
+    string? Model);
+
+public sealed record ArReceivingReportDto(
+    Guid Id,
+    int DocumentKind,
+    string ReportNo,
+    DateOnly Date,
+    string ReceivedFrom,
+    string? Address,
+    int ReceiptType,
+    string? OtherReceiptType,
+    string? FundCluster,
+    ArEmployeeRefDto ReceivedBy,
+    ArEmployeeRefDto? NotedBy,
+    DateOnly? DateReceived,
+    IReadOnlyCollection<ArReceivingReportItemDto> Items);
+
+public sealed record CreateReceivingReportItemRequest(
+    Guid CatalogItemId,
+    string? Reference,
+    string Description,
+    DateOnly AcquisitionDate,
+    int Quantity,
+    decimal UnitCost,
+    string? SerialNo,
+    string? Brand,
+    string? Model);
+
+public sealed record CreateReceivingReportRequest(
+    int DocumentKind,
+    DateOnly Date,
+    string ReceivedFrom,
+    string? Address,
+    int ReceiptType,
+    string? OtherReceiptType,
+    string? FundCluster,
+    ArEmployeeRefDto ReceivedBy,
+    ArEmployeeRefDto? NotedBy,
+    DateOnly? DateReceived,
+    IReadOnlyList<CreateReceivingReportItemRequest> Items);
+
+public interface IArReceivingReportClient
+{
+    Task<ArPagedResponse<ArReceivingReportSummaryDto>> SearchAsync(
+        string? keyword = null, int? documentKind = null, int? receiptType = null,
+        DateOnly? fromDate = null, DateOnly? toDate = null,
+        int page = 1, int pageSize = 20, CancellationToken ct = default);
+    Task<ArReceivingReportDto?> GetAsync(Guid id, CancellationToken ct = default);
+    Task<ArReceivingReportDto> CreateAsync(CreateReceivingReportRequest request, CancellationToken ct = default);
+    Task DeleteAsync(Guid id, CancellationToken ct = default);
+}
+
+public sealed class ArReceivingReportClient(HttpClient http) : IArReceivingReportClient
+{
+    private const string Base = "api/v1/asset-register/receiving";
+
+    public async Task<ArPagedResponse<ArReceivingReportSummaryDto>> SearchAsync(
+        string? keyword = null, int? documentKind = null, int? receiptType = null,
+        DateOnly? fromDate = null, DateOnly? toDate = null,
+        int page = 1, int pageSize = 20, CancellationToken ct = default)
+    {
+        var url = ArUrlBuilder.Build(Base, new()
+        {
+            ["keyword"] = keyword,
+            ["documentKind"] = documentKind?.ToString(CultureInfo.InvariantCulture),
+            ["receiptType"] = receiptType?.ToString(CultureInfo.InvariantCulture),
+            ["fromDate"] = fromDate?.ToString("o", CultureInfo.InvariantCulture),
+            ["toDate"] = toDate?.ToString("o", CultureInfo.InvariantCulture),
+            ["pageNumber"] = page.ToString(CultureInfo.InvariantCulture),
+            ["pageSize"] = pageSize.ToString(CultureInfo.InvariantCulture),
+        });
+        var result = await http.GetFromJsonAsync<ArPagedResponse<ArReceivingReportSummaryDto>>(url, ct);
+        return result ?? new ArPagedResponse<ArReceivingReportSummaryDto>([], page, pageSize, 0, 0);
+    }
+
+    public Task<ArReceivingReportDto?> GetAsync(Guid id, CancellationToken ct = default) =>
+        http.GetFromJsonAsync<ArReceivingReportDto>($"{Base}/{id}", ct);
+
+    public async Task<ArReceivingReportDto> CreateAsync(CreateReceivingReportRequest request, CancellationToken ct = default)
+    {
+        var resp = await http.PostAsJsonAsync(Base, request, ct);
+        resp.EnsureSuccessStatusCode();
+        return (await resp.Content.ReadFromJsonAsync<ArReceivingReportDto>(cancellationToken: ct))!;
+    }
+
+    public async Task DeleteAsync(Guid id, CancellationToken ct = default)
+    {
+        var resp = await http.DeleteAsync($"{Base}/{id}", ct);
+        resp.EnsureSuccessStatusCode();
     }
 }
 

@@ -1,0 +1,194 @@
+@page "/asset-register/receiving/smrr"
+@using FSH.Playground.Blazor.ApiClient
+@inject IArReceivingReportClient Client
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<FshPageHeader Title="Supplies and Materials Receiving Reports (SMRR)"
+               Description="Record receipt of supplies and semi-expendable materials. Each line materializes one or more AssetRegistry rows for accountability tracking." />
+
+<MudGrid Spacing="3">
+    <MudItem xs="12">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                <MudGrid Spacing="2">
+                    <MudItem xs="12" md="4">
+                        <MudTextField @bind-Value="_keyword" Label="Report No. / Received From" Variant="Variant.Outlined"
+                                      Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Outlined.Search"
+                                      OnKeyDown="OnSearchKeyDown" Immediate="false" />
+                    </MudItem>
+                    <MudItem xs="6" md="2">
+                        <MudSelect @bind-Value="_receiptTypeFilter" Label="Type" Variant="Variant.Outlined" T="int?" Clearable="true">
+                            <MudSelectItem Value="@((int?)null)">All</MudSelectItem>
+                            <MudSelectItem Value="@((int?)0)">Purchase</MudSelectItem>
+                            <MudSelectItem Value="@((int?)1)">Transfer</MudSelectItem>
+                            <MudSelectItem Value="@((int?)2)">Donation</MudSelectItem>
+                            <MudSelectItem Value="@((int?)3)">Other</MudSelectItem>
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="2" Class="d-flex align-end">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                                   StartIcon="@Icons.Material.Outlined.Search" OnClick="LoadAsync" Disabled="_busy">
+                            Search
+                        </MudButton>
+                    </MudItem>
+                    <MudItem xs="12" md="2" Class="d-flex align-end">
+                        <MudButton Variant="Variant.Outlined" Color="Color.Success" FullWidth="true"
+                                   StartIcon="@Icons.Material.Outlined.Add" OnClick="@(() => _showCreateForm = !_showCreateForm)">
+                            New SMRR
+                        </MudButton>
+                    </MudItem>
+                </MudGrid>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    @if (_showCreateForm)
+    {
+        <MudItem xs="12">
+            <ReceivingReportForm DocumentKind="SmrrDocumentKind"
+                                 Title="Create SMRR (Supplies and Materials Receiving Report)"
+                                 OnCreated="OnCreatedAsync"
+                                 OnCancel="@(() => _showCreateForm = false)" />
+        </MudItem>
+    }
+
+    <MudItem xs="12">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                @if (_busy)
+                {
+                    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+                }
+                else if (_items.Count == 0)
+                {
+                    <MudAlert Severity="Severity.Info">No SMRR yet.</MudAlert>
+                }
+                else
+                {
+                    <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                        <thead>
+                            <tr>
+                                <th>SMRR No.</th>
+                                <th>Date</th>
+                                <th>Received From</th>
+                                <th>Type</th>
+                                <th>Lines</th>
+                                <th class="text-right">Amount</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var r in _items)
+                            {
+                                <tr>
+                                    <td><b>@r.ReportNo</b></td>
+                                    <td>@r.Date.ToString("MM/dd/yyyy")</td>
+                                    <td>@r.ReceivedFrom</td>
+                                    <td>@ReceiptTypeLabel(r.ReceiptType)</td>
+                                    <td><MudChip T="string" Size="Size.Small" Color="Color.Info">@r.ItemCount lines</MudChip></td>
+                                    <td class="text-right">@r.TotalAmount.ToString("N2")</td>
+                                    <td>
+                                        <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small"
+                                                       Color="Color.Primary" OnClick="@(() => ViewAsync(r.Id))" />
+                                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                                       Color="Color.Error" OnClick="@(() => DeleteAsync(r.Id, r.ReportNo))" />
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </MudSimpleTable>
+                    <MudPagination Count="@TotalPages" Selected="_page" ShowFirstButton="true" ShowLastButton="true"
+                                   SelectedChanged="@(async p => { _page = p; await LoadAsync(); })" />
+                }
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private const int SmrrDocumentKind = 1;
+    private string? _keyword;
+    private int? _receiptTypeFilter;
+    private bool _busy;
+    private bool _showCreateForm;
+    private int _page = 1;
+    private const int PageSize = 20;
+    private int _totalCount;
+    private int TotalPages => (int)Math.Ceiling(_totalCount / (double)PageSize);
+
+    private List<ArReceivingReportSummaryDto> _items = [];
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _busy = true;
+        try
+        {
+            var resp = await Client.SearchAsync(_keyword, SmrrDocumentKind, _receiptTypeFilter,
+                page: _page, pageSize: PageSize);
+            _items = resp.Items.ToList();
+            _totalCount = resp.TotalCount;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load: {ex.Message}", Severity.Error);
+        }
+        finally { _busy = false; }
+    }
+
+    private async Task OnSearchKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await LoadAsync();
+    }
+
+    private async Task OnCreatedAsync(ArReceivingReportDto created)
+    {
+        _showCreateForm = false;
+        Snackbar.Add($"Created {created.ReportNo}", Severity.Success);
+        await LoadAsync();
+    }
+
+    private async Task ViewAsync(Guid id)
+    {
+        try
+        {
+            var detail = await Client.GetAsync(id);
+            if (detail is null) { Snackbar.Add("Report not found.", Severity.Warning); return; }
+            var parameters = new DialogParameters { ["Report"] = detail };
+            await DialogService.ShowAsync<ReceivingReportDetailDialog>("Receiving Report", parameters);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task DeleteAsync(Guid id, string reportNo)
+    {
+        var ok = await DialogService.ShowMessageBox(
+            "Delete?", $"Delete {reportNo}? This will also delete its lines.",
+            yesText: "Delete", cancelText: "Cancel");
+        if (ok != true) return;
+        try
+        {
+            await Client.DeleteAsync(id);
+            Snackbar.Add("Deleted.", Severity.Success);
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Delete failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private static string ReceiptTypeLabel(int t) => t switch
+    {
+        0 => "Purchase",
+        1 => "Transfer",
+        2 => "Donation",
+        3 => "Other",
+        _ => t.ToString(System.Globalization.CultureInfo.InvariantCulture)
+    };
+}

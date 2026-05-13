@@ -132,3 +132,19 @@ public enum DisposalMethod
     Destruction = 2,
     Other = 3
 }
+
+public enum ReceivingDocumentKind
+{
+    /// <summary>PPE Receiving Report — capital assets above the capitalization threshold.</summary>
+    PPERR = 0,
+    /// <summary>Supplies and Materials Receiving Report — semi-expendable.</summary>
+    SMRR = 1
+}
+
+public enum ReceiptType
+{
+    Purchase = 0,
+    Transfer = 1,
+    Donation = 2,
+    Other = 3
+}

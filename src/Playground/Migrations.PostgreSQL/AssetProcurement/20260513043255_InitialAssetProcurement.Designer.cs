@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FSH.Playground.Migrations.PostgreSQL.AssetProcurement
 {
     [DbContext(typeof(AssetProcurementDbContext))]
-    [Migration("20260426125957_InitialAssetProcurement")]
+    [Migration("20260513043255_InitialAssetProcurement")]
     partial class InitialAssetProcurement
     {
         /// <inheritdoc />
@@ -20,7 +20,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetProcurement
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.2")
+                .HasAnnotation("ProductVersion", "10.0.7")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -95,6 +95,11 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetProcurement
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
                     b.Property<byte[]>("Version")
                         .IsConcurrencyToken()
                         .IsRequired()
@@ -105,14 +110,16 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetProcurement
 
                     b.HasIndex("CreatedOnUtc");
 
-                    b.HasIndex("IarNumber")
+                    b.HasIndex("TenantId", "IarNumber")
                         .IsUnique();
 
-                    b.HasIndex("PurchaseOrderId");
+                    b.HasIndex("TenantId", "PurchaseOrderId");
 
-                    b.HasIndex("Status");
+                    b.HasIndex("TenantId", "Status");
 
                     b.ToTable("AssetIARs", "asset_procurement");
+
+                    b.HasAnnotation("Finbuckle:MultiTenant", true);
                 });
 
             modelBuilder.Entity("FSH.Modules.AssetProcurement.Domain.AssetPurchaseOrders.AssetPurchaseOrder", b =>
@@ -206,6 +213,11 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetProcurement
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)");
 
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
                     b.Property<byte[]>("Version")
                         .IsConcurrencyToken()
                         .IsRequired()
@@ -216,14 +228,16 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetProcurement
 
                     b.HasIndex("CreatedOnUtc");
 
-                    b.HasIndex("PoNumber")
+                    b.HasIndex("TenantId", "PoNumber")
                         .IsUnique();
 
-                    b.HasIndex("PurchaseRequestId");
+                    b.HasIndex("TenantId", "PurchaseRequestId");
 
-                    b.HasIndex("Status");
+                    b.HasIndex("TenantId", "Status");
 
                     b.ToTable("AssetPurchaseOrders", "asset_procurement");
+
+                    b.HasAnnotation("Finbuckle:MultiTenant", true);
                 });
 
             modelBuilder.Entity("FSH.Modules.AssetProcurement.Domain.AssetPurchaseRequests.AssetPurchaseRequest", b =>
@@ -311,6 +325,11 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetProcurement
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
                     b.Property<byte[]>("Version")
                         .IsConcurrencyToken()
                         .IsRequired()
@@ -321,14 +340,16 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetProcurement
 
                     b.HasIndex("CreatedOnUtc");
 
-                    b.HasIndex("DepartmentId");
+                    b.HasIndex("TenantId", "DepartmentId");
 
-                    b.HasIndex("PrNumber")
+                    b.HasIndex("TenantId", "PrNumber")
                         .IsUnique();
 
-                    b.HasIndex("Status");
+                    b.HasIndex("TenantId", "Status");
 
                     b.ToTable("AssetPurchaseRequests", "asset_procurement");
+
+                    b.HasAnnotation("Finbuckle:MultiTenant", true);
                 });
 
             modelBuilder.Entity("FSH.Modules.AssetProcurement.Domain.AssetInspectionAcceptanceReports.AssetInspectionAcceptanceReport", b =>
