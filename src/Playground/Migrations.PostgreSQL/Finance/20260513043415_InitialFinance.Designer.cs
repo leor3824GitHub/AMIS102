@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FSH.Playground.Migrations.PostgreSQL.Finance
 {
     [DbContext(typeof(FinanceDbContext))]
-    [Migration("20260410020351_InitialFinance")]
+    [Migration("20260513043415_InitialFinance")]
     partial class InitialFinance
     {
         /// <inheritdoc />
@@ -20,7 +20,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.Finance
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.2")
+                .HasAnnotation("ProductVersion", "10.0.7")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);

@@ -10,7 +10,7 @@ public static class UpdateSemiExpendableItemEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapPut("/{id:guid}", UpdateItemCatalogEntry)
-            .WithName(nameof(UpdatePropertyItemCatalogCommand))
+            .WithName("AssetManagement_UpdateSemiExpendableItem")
             .WithSummary("Update item catalog entry")
             .Produces(StatusCodes.Status204NoContent)
             .Produces(StatusCodes.Status400BadRequest)

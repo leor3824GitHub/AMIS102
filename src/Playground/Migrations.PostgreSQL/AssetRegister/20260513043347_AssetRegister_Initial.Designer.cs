@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FSH.Playground.Migrations.PostgreSQL.AssetRegister
 {
     [DbContext(typeof(AssetRegisterDbContext))]
-    [Migration("20260512091248_AssetRegister_Initial")]
+    [Migration("20260513043347_AssetRegister_Initial")]
     partial class AssetRegister_Initial
     {
         /// <inheritdoc />
@@ -1108,8 +1108,46 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetRegister
                                 .HasForeignKey("PropertyAccountabilityLineId");
                         });
 
+                    b.OwnsOne("FSH.Modules.AssetRegister.Domain.Accountability.VehicleAccountabilityProfile", "VehicleProfile", b1 =>
+                        {
+                            b1.Property<Guid>("PropertyAccountabilityLineId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("ChassisNumber")
+                                .HasMaxLength(64)
+                                .HasColumnType("character varying(64)")
+                                .HasColumnName("vehicle_chassis_number");
+
+                            b1.Property<string>("EngineNumber")
+                                .HasMaxLength(64)
+                                .HasColumnType("character varying(64)")
+                                .HasColumnName("vehicle_engine_number");
+
+                            b1.Property<int?>("OdometerAtIssue")
+                                .HasColumnType("integer")
+                                .HasColumnName("vehicle_odometer_at_issue");
+
+                            b1.Property<int?>("OdometerAtReturn")
+                                .HasColumnType("integer")
+                                .HasColumnName("vehicle_odometer_at_return");
+
+                            b1.Property<string>("PlateNumber")
+                                .HasMaxLength(32)
+                                .HasColumnType("character varying(32)")
+                                .HasColumnName("vehicle_plate_number");
+
+                            b1.HasKey("PropertyAccountabilityLineId");
+
+                            b1.ToTable("PropertyAccountabilityLines", "asset_register");
+
+                            b1.WithOwner()
+                                .HasForeignKey("PropertyAccountabilityLineId");
+                        });
+
                     b.Navigation("Snapshot")
                         .IsRequired();
+
+                    b.Navigation("VehicleProfile");
                 });
 
             modelBuilder.Entity("FSH.Modules.AssetRegister.Domain.Counting.PhysicalCountEntry", b =>

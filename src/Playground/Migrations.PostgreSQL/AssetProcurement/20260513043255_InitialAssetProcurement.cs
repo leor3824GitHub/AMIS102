@@ -20,6 +20,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetProcurement
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     IarNumber = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
                     IarDate = table.Column<DateOnly>(type: "date", nullable: false),
                     PurchaseOrderId = table.Column<Guid>(type: "uuid", nullable: false),
@@ -53,6 +54,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetProcurement
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     PoNumber = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
                     PoDate = table.Column<DateOnly>(type: "date", nullable: false),
                     PurchaseRequestId = table.Column<Guid>(type: "uuid", nullable: false),
@@ -90,6 +92,7 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetProcurement
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     PrNumber = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
                     PrDate = table.Column<DateOnly>(type: "date", nullable: false),
                     SaiNumber = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
@@ -128,23 +131,23 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetProcurement
                 column: "CreatedOnUtc");
 
             migrationBuilder.CreateIndex(
-                name: "IX_AssetIARs_IarNumber",
+                name: "IX_AssetIARs_TenantId_IarNumber",
                 schema: "asset_procurement",
                 table: "AssetIARs",
-                column: "IarNumber",
+                columns: new[] { "TenantId", "IarNumber" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_AssetIARs_PurchaseOrderId",
+                name: "IX_AssetIARs_TenantId_PurchaseOrderId",
                 schema: "asset_procurement",
                 table: "AssetIARs",
-                column: "PurchaseOrderId");
+                columns: new[] { "TenantId", "PurchaseOrderId" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_AssetIARs_Status",
+                name: "IX_AssetIARs_TenantId_Status",
                 schema: "asset_procurement",
                 table: "AssetIARs",
-                column: "Status");
+                columns: new[] { "TenantId", "Status" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_AssetPurchaseOrders_CreatedOnUtc",
@@ -153,23 +156,23 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetProcurement
                 column: "CreatedOnUtc");
 
             migrationBuilder.CreateIndex(
-                name: "IX_AssetPurchaseOrders_PoNumber",
+                name: "IX_AssetPurchaseOrders_TenantId_PoNumber",
                 schema: "asset_procurement",
                 table: "AssetPurchaseOrders",
-                column: "PoNumber",
+                columns: new[] { "TenantId", "PoNumber" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_AssetPurchaseOrders_PurchaseRequestId",
+                name: "IX_AssetPurchaseOrders_TenantId_PurchaseRequestId",
                 schema: "asset_procurement",
                 table: "AssetPurchaseOrders",
-                column: "PurchaseRequestId");
+                columns: new[] { "TenantId", "PurchaseRequestId" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_AssetPurchaseOrders_Status",
+                name: "IX_AssetPurchaseOrders_TenantId_Status",
                 schema: "asset_procurement",
                 table: "AssetPurchaseOrders",
-                column: "Status");
+                columns: new[] { "TenantId", "Status" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_AssetPurchaseRequests_CreatedOnUtc",
@@ -178,23 +181,23 @@ namespace FSH.Playground.Migrations.PostgreSQL.AssetProcurement
                 column: "CreatedOnUtc");
 
             migrationBuilder.CreateIndex(
-                name: "IX_AssetPurchaseRequests_DepartmentId",
+                name: "IX_AssetPurchaseRequests_TenantId_DepartmentId",
                 schema: "asset_procurement",
                 table: "AssetPurchaseRequests",
-                column: "DepartmentId");
+                columns: new[] { "TenantId", "DepartmentId" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_AssetPurchaseRequests_PrNumber",
+                name: "IX_AssetPurchaseRequests_TenantId_PrNumber",
                 schema: "asset_procurement",
                 table: "AssetPurchaseRequests",
-                column: "PrNumber",
+                columns: new[] { "TenantId", "PrNumber" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_AssetPurchaseRequests_Status",
+                name: "IX_AssetPurchaseRequests_TenantId_Status",
                 schema: "asset_procurement",
                 table: "AssetPurchaseRequests",
-                column: "Status");
+                columns: new[] { "TenantId", "Status" });
         }
 
         /// <inheritdoc />

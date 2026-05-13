@@ -10,7 +10,7 @@ public static class CreateSemiExpendableItemEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapPost("/", CreateItemCatalogEntry)
-            .WithName(nameof(CreatePropertyItemCatalogCommand))
+            .WithName("AssetManagement_CreateSemiExpendableItem")
             .WithSummary("Create item catalog entry (SE or PPE)")
             .Produces<PropertyItemCatalogDto>(StatusCodes.Status201Created)
             .Produces(StatusCodes.Status400BadRequest)

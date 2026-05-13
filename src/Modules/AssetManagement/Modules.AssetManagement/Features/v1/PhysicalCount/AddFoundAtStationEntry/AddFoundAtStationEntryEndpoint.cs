@@ -29,7 +29,7 @@ public static class AddFoundAtStationEntryEndpoint
             return TypedResults.Created(
                 $"/api/v1/asset-management/physical-count/{sessionId}/entries/{result.EntryId}", result);
         })
-        .WithName(nameof(AddFoundAtStationEntryCommand))
+        .WithName("AssetManagement_AddFoundAtStationEntry")
         .WithSummary("Add a 'Found at Station' entry for an asset not on the pre-generated checklist")
         .RequirePermission(AssetManagementModuleConstants.Permissions.PhysicalCount.Update);
 }
