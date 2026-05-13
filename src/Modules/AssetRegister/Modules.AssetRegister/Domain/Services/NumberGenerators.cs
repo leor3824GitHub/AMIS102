@@ -51,6 +51,12 @@ public interface IUnserviceableReportNumberGenerator
     Task<string> NextAsync(UnserviceableReportType type, DateOnly asAt, CancellationToken ct);
 }
 
+public interface IReceivingReportNumberGenerator
+{
+    /// <summary>PPERR-YYYY-MM-NNNN or SMRR-YYYY-MM-NNNN.</summary>
+    Task<string> NextAsync(ReceivingDocumentKind kind, DateOnly date, CancellationToken ct);
+}
+
 /// <summary>
 /// Computes current replacement cost per COA 2022-004 §4.19 for incident-report
 /// snapshotting.

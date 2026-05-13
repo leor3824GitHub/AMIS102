@@ -59,5 +59,12 @@ public static class AssetRegisterModuleConstants
             public const string Update = "Permissions.AssetRegister.Catalog.Update";
             public const string Delete = "Permissions.AssetRegister.Catalog.Delete";
         }
+
+        public static class Receiving
+        {
+            public const string View   = "Permissions.AssetRegister.Receiving.View";
+            public const string Create = "Permissions.AssetRegister.Receiving.Create";
+            public const string Delete = "Permissions.AssetRegister.Receiving.Delete";
+        }
     }
 }

@@ -9,6 +9,7 @@ using FSH.Modules.AssetRegister.Domain.Catalog;
 using FSH.Modules.AssetRegister.Domain.Counting;
 using FSH.Modules.AssetRegister.Domain.Incidents;
 using FSH.Modules.AssetRegister.Domain.Issuance;
+using FSH.Modules.AssetRegister.Domain.Receiving;
 using FSH.Modules.AssetRegister.Domain.Unserviceable;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
@@ -26,6 +27,7 @@ public class AssetRegisterDbContext : BaseDbContext
     public DbSet<PhysicalCountSession> PhysicalCountSessions => Set<PhysicalCountSession>();
     public DbSet<PropertyIncidentReport> PropertyIncidentReports => Set<PropertyIncidentReport>();
     public DbSet<UnserviceablePropertyReport> UnserviceablePropertyReports => Set<UnserviceablePropertyReport>();
+    public DbSet<ReceivingReport> ReceivingReports => Set<ReceivingReport>();
 
     public AssetRegisterDbContext(
         IMultiTenantContextAccessor<AppTenantInfo> multiTenantContextAccessor,

@@ -54,6 +54,10 @@ public class AssetRegisterModule : IModule
         new("Create Property Catalog", "Create", "AssetRegister.Catalog"),
         new("Update Property Catalog", "Update", "AssetRegister.Catalog"),
         new("Delete Property Catalog", "Delete", "AssetRegister.Catalog"),
+
+        new("View Receiving Reports",   "View",   "AssetRegister.Receiving", IsBasic: true),
+        new("Create Receiving Reports", "Create", "AssetRegister.Receiving"),
+        new("Delete Receiving Reports", "Delete", "AssetRegister.Receiving"),
     ];
 
     public void ConfigureServices(IHostApplicationBuilder builder)
@@ -75,6 +79,7 @@ public class AssetRegisterModule : IModule
         services.AddScoped<IIncidentNumberGenerator, IncidentNumberGenerator>();
         services.AddScoped<IIssuanceReportNumberGenerator, IssuanceReportNumberGenerator>();
         services.AddScoped<IUnserviceableReportNumberGenerator, UnserviceableReportNumberGenerator>();
+        services.AddScoped<IReceivingReportNumberGenerator, ReceivingReportNumberGenerator>();
         services.AddScoped<ICurrentReplacementCostCalculator, CurrentReplacementCostCalculator>();
 
         // Inbound integration consumer (Phase 3f) — materializes accepted IAR lines.
@@ -163,6 +168,13 @@ public class AssetRegisterModule : IModule
         // Unserviceable property reports (IIRUSP / IIRUP) — Phase 4
         var unserviceable = moduleGroup.MapGroup("/unserviceable");
         Features.v1.Unserviceable.UnserviceableEndpoints.MapUnserviceableEndpoints(unserviceable);
+
+        // Receiving reports (PPERR / SMRR)
+        var receiving = moduleGroup.MapGroup("/receiving");
+        Features.v1.Receiving.CreateReceivingReport.CreateReceivingReportEndpoint.Map(receiving);
+        Features.v1.Receiving.DeleteReceivingReport.DeleteReceivingReportEndpoint.Map(receiving);
+        Features.v1.Receiving.GetReceivingReport.GetReceivingReportEndpoint.Map(receiving);
+        Features.v1.Receiving.SearchReceivingReports.SearchReceivingReportsEndpoint.Map(receiving);
 
         // Report rendering endpoints (ICS/PAR, RSPI/PPEIR, RPCSEMEX/RPCPPE, RegSPI, RLSDDSP, IIRUSP/IIRUP) — Phase 5
         var reports = moduleGroup.MapGroup("/reports");
