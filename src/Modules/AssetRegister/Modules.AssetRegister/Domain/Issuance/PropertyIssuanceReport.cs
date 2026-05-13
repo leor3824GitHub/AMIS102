@@ -8,7 +8,6 @@ namespace AMIS.Modules.AssetRegister.Domain.Issuance;
 public sealed class PropertyIssuanceReport : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 {
     public string TenantId { get; private set; } = default!;
-    public byte[] Version { get; set; } = [];
 
     public string ReportNo { get; private set; } = default!;
     public IssuanceReportType ReportType { get; private set; }

@@ -1,10 +1,14 @@
 @page "/asset-register/assets"
 @using AMIS.Playground.Blazor.ApiClient
+@using AssetType = AMIS.Modules.AssetRegister.Contracts.v1.AssetType
+@using AssetCategory = AMIS.Modules.AssetRegister.Contracts.v1.AssetCategory
+@using AssetCondition = AMIS.Modules.AssetRegister.Contracts.v1.AssetCondition
+@using LifecycleState = AMIS.Modules.AssetRegister.Contracts.v1.LifecycleState
 @inject IAssetRegistryClient Client
 @inject ISnackbar Snackbar
 
 <AMISPageHeader Title="Asset Registry"
-               Description="Master ledger of individual physical units — one row per asset (COA 2020-006, 2022-004)." />
+               Description="Master ledger of individual physical units ï¿½ one row per asset (COA 2020-006, 2022-004)." />
 
 <MudGrid Spacing="3">
     <!-- Search filters -->
@@ -18,20 +22,20 @@
                                       OnKeyDown="OnSearchKeyDown" Immediate="false" />
                     </MudItem>
                     <MudItem xs="6" md="3">
-                        <MudSelect @bind-Value="_assetTypeFilter" Label="Asset Type" Variant="Variant.Outlined" T="int?" Clearable="true">
-                            <MudSelectItem Value="@((int?)null)">All</MudSelectItem>
-                            <MudSelectItem Value="@((int?)0)">SE (Semi-Expendable)</MudSelectItem>
-                            <MudSelectItem Value="@((int?)1)">PPE (Property, Plant & Equipment)</MudSelectItem>
+                        <MudSelect @bind-Value="_assetTypeFilter" Label="Asset Type" Variant="Variant.Outlined" T="AssetType?" Clearable="true">
+                            <MudSelectItem Value="@((AssetType?)null)">All</MudSelectItem>
+                            <MudSelectItem Value="@((AssetType?)AssetType.SE)">SE (Semi-Expendable)</MudSelectItem>
+                            <MudSelectItem Value="@((AssetType?)AssetType.PPE)">PPE (Property, Plant & Equipment)</MudSelectItem>
                         </MudSelect>
                     </MudItem>
                     <MudItem xs="6" md="3">
-                        <MudSelect @bind-Value="_lifecycleFilter" Label="Lifecycle State" Variant="Variant.Outlined" T="int?" Clearable="true">
-                            <MudSelectItem Value="@((int?)null)">All</MudSelectItem>
-                            <MudSelectItem Value="@((int?)0)">InStock</MudSelectItem>
-                            <MudSelectItem Value="@((int?)1)">Issued</MudSelectItem>
-                            <MudSelectItem Value="@((int?)2)">UnderInvestigation</MudSelectItem>
-                            <MudSelectItem Value="@((int?)3)">Unserviceable</MudSelectItem>
-                            <MudSelectItem Value="@((int?)4)">Disposed</MudSelectItem>
+                        <MudSelect @bind-Value="_lifecycleFilter" Label="Lifecycle State" Variant="Variant.Outlined" T="LifecycleState?" Clearable="true">
+                            <MudSelectItem Value="@((LifecycleState?)null)">All</MudSelectItem>
+                            <MudSelectItem Value="@((LifecycleState?)LifecycleState.Available)">Available</MudSelectItem>
+                            <MudSelectItem Value="@((LifecycleState?)LifecycleState.Assigned)">Assigned</MudSelectItem>
+                            <MudSelectItem Value="@((LifecycleState?)LifecycleState.UnderInvestigation)">Under Investigation</MudSelectItem>
+                            <MudSelectItem Value="@((LifecycleState?)LifecycleState.Unserviceable)">Unserviceable</MudSelectItem>
+                            <MudSelectItem Value="@((LifecycleState?)LifecycleState.Disposed)">Disposed</MudSelectItem>
                         </MudSelect>
                     </MudItem>
                     <MudItem xs="12" md="2" Class="d-flex align-end">
@@ -76,7 +80,7 @@
                             </MudTd>
                             <MudTd>
                                 <MudChip T="string" Size="Size.Small"
-                                         Color="@(context.AssetType == 0 ? Color.Info : Color.Secondary)"
+                                         Color="@(context.AssetType == AssetType.SE ? Color.Info : Color.Secondary)"
                                          Variant="Variant.Outlined">
                                     @FormatAssetType(context.AssetType)
                                 </MudChip>
@@ -121,7 +125,7 @@
             <MudCard Elevation="2">
                 <MudCardHeader>
                     <CardHeaderContent>
-                        <MudText Typo="Typo.h6">@_selected.PropertyNo — Detail</MudText>
+                        <MudText Typo="Typo.h6">@_selected.PropertyNo ï¿½ Detail</MudText>
                     </CardHeaderContent>
                     <CardHeaderActions>
                         <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small"
@@ -148,7 +152,7 @@
                         </MudItem>
                         <MudItem xs="6" md="2">
                             <MudText Typo="Typo.caption" Color="Color.Secondary">UACS Object Code</MudText>
-                            <MudText Typo="Typo.body2">@(_selected.UacsObjectCode ?? "—")</MudText>
+                            <MudText Typo="Typo.body2">@(_selected.UacsObjectCode ?? "ï¿½")</MudText>
                         </MudItem>
                         <MudItem xs="6" md="2">
                             <MudText Typo="Typo.caption" Color="Color.Secondary">Unit Cost (?)</MudText>
@@ -212,11 +216,10 @@
                     <MudDivider Class="my-3" />
                     <MudText Typo="Typo.subtitle2" Class="mb-2">Update Condition</MudText>
                     <MudStack Row="true" Spacing="2" AlignItems="AlignItems.End">
-                        <MudSelect @bind-Value="_newCondition" Label="New Condition" Variant="Variant.Outlined" T="int" Style="min-width:200px;">
-                            <MudSelectItem Value="0">Good</MudSelectItem>
-                            <MudSelectItem Value="1">Fair</MudSelectItem>
-                            <MudSelectItem Value="2">Poor</MudSelectItem>
-                            <MudSelectItem Value="3">Unserviceable</MudSelectItem>
+                        <MudSelect @bind-Value="_newCondition" Label="New Condition" Variant="Variant.Outlined" T="AssetCondition" Style="min-width:200px;">
+                            <MudSelectItem Value="AssetCondition.InGoodCondition">In Good Condition</MudSelectItem>
+                            <MudSelectItem Value="AssetCondition.NeedingRepair">Needing Repair</MudSelectItem>
+                            <MudSelectItem Value="AssetCondition.Unserviceable">Unserviceable</MudSelectItem>
                         </MudSelect>
                         <MudButton Variant="Variant.Outlined" Color="Color.Primary"
                                    OnClick="UpdateConditionAsync" Disabled="_busy">
@@ -233,15 +236,15 @@
     private bool _busy;
     private string? _error;
     private string? _keyword;
-    private int? _assetTypeFilter;
-    private int? _lifecycleFilter;
+    private AssetType? _assetTypeFilter;
+    private LifecycleState? _lifecycleFilter;
     private int _page = 1;
     private int _totalPages = 1;
     private int _totalCount;
     private const int PageSize = 15;
     private IReadOnlyList<AssetRegistrySummaryDto> _items = [];
     private AssetRegistryDto? _selected;
-    private int _newCondition;
+    private AssetCondition _newCondition;
 
     protected override async Task OnInitializedAsync() => await LoadAsync();
 
@@ -315,32 +318,43 @@
         if (e.Key == "Enter") { _page = 1; await LoadAsync(); }
     }
 
-    private static string FormatAssetType(int v) => v switch { 0 => "SE", 1 => "PPE", _ => v.ToString() };
-    private static string FormatCategory(int v) => v switch
+    private static string FormatAssetType(AssetType v) => v switch
     {
-        0 => "LowValuedSemi",
-        1 => "HighValuedSemi",
-        2 => "PPE",
+        AssetType.SE => "SE",
+        AssetType.PPE => "PPE",
         _ => v.ToString()
     };
-    private static string FormatLifecycle(int v) => v switch
+    private static string FormatCategory(AssetCategory v) => v switch
     {
-        0 => "InStock",
-        1 => "Issued",
-        2 => "UnderInvestigation",
-        3 => "Unserviceable",
-        4 => "Disposed",
+        AssetCategory.LowValuedSemi => "Low-Valued Semi",
+        AssetCategory.HighValuedSemi => "High-Valued Semi",
+        AssetCategory.PPE => "PPE",
         _ => v.ToString()
     };
-    private static Color LifecycleColor(int v) => v switch
+    private static string FormatLifecycle(LifecycleState v) => v switch
     {
-        0 => Color.Default,
-        1 => Color.Success,
-        2 => Color.Warning,
-        3 => Color.Error,
-        4 => Color.Dark,
+        LifecycleState.Available => "Available",
+        LifecycleState.Assigned => "Assigned",
+        LifecycleState.UnderInvestigation => "Under Investigation",
+        LifecycleState.Unserviceable => "Unserviceable",
+        LifecycleState.Disposed => "Disposed",
+        _ => v.ToString()
+    };
+    private static Color LifecycleColor(LifecycleState v) => v switch
+    {
+        LifecycleState.Available => Color.Default,
+        LifecycleState.Assigned => Color.Success,
+        LifecycleState.UnderInvestigation => Color.Warning,
+        LifecycleState.Unserviceable => Color.Error,
+        LifecycleState.Disposed => Color.Dark,
         _ => Color.Default
     };
-    private static string FormatCondition(int v) => v switch { 0 => "Good", 1 => "Fair", 2 => "Poor", 3 => "Unserviceable", _ => v.ToString() };
+    private static string FormatCondition(AssetCondition v) => v switch
+    {
+        AssetCondition.InGoodCondition => "Good",
+        AssetCondition.NeedingRepair => "Needs Repair",
+        AssetCondition.Unserviceable => "Unserviceable",
+        _ => v.ToString()
+    };
 }
 

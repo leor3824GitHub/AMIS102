@@ -15,7 +15,11 @@ internal sealed class PropertyAccountabilityConfiguration : IEntityTypeConfigura
 
         builder.HasKey(x => x.Id);
         builder.Property(x => x.TenantId).IsRequired().HasMaxLength(50);
-        builder.Property(x => x.Version).IsRowVersion();
+        builder.Property<uint>("xmin")
+            .HasColumnName("xmin")
+            .HasColumnType("xid")
+            .ValueGeneratedOnAddOrUpdate()
+            .IsConcurrencyToken();
         builder.Property(x => x.DocumentNo).IsRequired().HasMaxLength(64);
         builder.Property(x => x.FundCluster).IsRequired().HasMaxLength(64);
         builder.Property(x => x.CancellationReason).HasMaxLength(500);

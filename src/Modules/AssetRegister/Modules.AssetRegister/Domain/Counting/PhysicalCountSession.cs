@@ -9,7 +9,6 @@ namespace AMIS.Modules.AssetRegister.Domain.Counting;
 public sealed class PhysicalCountSession : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 {
     public string TenantId { get; private set; } = default!;
-    public byte[] Version { get; set; } = [];
 
     public string Code { get; private set; } = default!;
     public PhysicalCountScope Scope { get; private set; }

@@ -21,7 +21,7 @@ public sealed class AssetRegisterReportsClient(HttpClient httpClient) : IAssetRe
         Guid? custodianId = null,
         CancellationToken cancellationToken = default)
     {
-        var url = BuildUrl("/api/v1/asset-register/reports/regspi", new Dictionary<string, string?>
+        var url = BuildUrl("api/v1/asset-register/reports/regspi", new Dictionary<string, string?>
         {
             ["asOfDate"] = asOfDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
             ["custodianId"] = custodianId?.ToString()
@@ -31,19 +31,19 @@ public sealed class AssetRegisterReportsClient(HttpClient httpClient) : IAssetRe
     }
 
     public Task<PhysicalCountReportDto?> GetPhysicalCountReportAsync(Guid sessionId, CancellationToken cancellationToken = default)
-        => httpClient.GetFromJsonAsync<PhysicalCountReportDto>($"/api/v1/asset-register/reports/count/{sessionId}", cancellationToken);
+        => httpClient.GetFromJsonAsync<PhysicalCountReportDto>($"api/v1/asset-register/reports/count/{sessionId}", cancellationToken);
 
     public Task<IssuanceReportDocumentDto?> GetIssuanceReportAsync(Guid reportId, CancellationToken cancellationToken = default)
-        => httpClient.GetFromJsonAsync<IssuanceReportDocumentDto>($"/api/v1/asset-register/reports/issuance/{reportId}", cancellationToken);
+        => httpClient.GetFromJsonAsync<IssuanceReportDocumentDto>($"api/v1/asset-register/reports/issuance/{reportId}", cancellationToken);
 
     public Task<AccountabilityReportDto?> GetAccountabilityReportAsync(Guid accountabilityId, CancellationToken cancellationToken = default)
-        => httpClient.GetFromJsonAsync<AccountabilityReportDto>($"/api/v1/asset-register/reports/accountability/{accountabilityId}", cancellationToken);
+        => httpClient.GetFromJsonAsync<AccountabilityReportDto>($"api/v1/asset-register/reports/accountability/{accountabilityId}", cancellationToken);
 
     public Task<IncidentReportDocumentDto?> GetIncidentReportAsync(Guid incidentReportId, CancellationToken cancellationToken = default)
-        => httpClient.GetFromJsonAsync<IncidentReportDocumentDto>($"/api/v1/asset-register/reports/incidents/{incidentReportId}", cancellationToken);
+        => httpClient.GetFromJsonAsync<IncidentReportDocumentDto>($"api/v1/asset-register/reports/incidents/{incidentReportId}", cancellationToken);
 
     public Task<UnserviceableReportDocumentDto?> GetUnserviceableReportAsync(Guid reportId, CancellationToken cancellationToken = default)
-        => httpClient.GetFromJsonAsync<UnserviceableReportDocumentDto>($"/api/v1/asset-register/reports/unserviceable/{reportId}", cancellationToken);
+        => httpClient.GetFromJsonAsync<UnserviceableReportDocumentDto>($"api/v1/asset-register/reports/unserviceable/{reportId}", cancellationToken);
 
     private static string BuildUrl(string path, Dictionary<string, string?> query)
     {

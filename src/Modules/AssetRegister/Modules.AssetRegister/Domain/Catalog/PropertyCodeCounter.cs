@@ -14,7 +14,6 @@ public sealed class PropertyCodeCounter : AggregateRoot<Guid>, IHasTenant
     public int Month { get; private set; }
     public string CounterKey { get; private set; } = default!;
     public int LastSerial { get; private set; }
-    public byte[] RowVersion { get; set; } = [];
 
     private PropertyCodeCounter() { }
 

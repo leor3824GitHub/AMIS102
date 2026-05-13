@@ -1,6 +1,14 @@
 using System.Globalization;
 using System.Net.Http.Json;
 using System.Text;
+// AssetRegister contract enums. Cannot use `using namespace` alone because
+// AssetManagementClient.cs declares enums of the same name (AssetType,
+// AssetCategory, DisposalMethod, PropertyIncidentType, ReceiptType) in the
+// same ApiClient namespace; same-namespace types shadow `using` aliases per
+// C# name-resolution rules. Each conflicting type is fully-qualified at the
+// point of use below. Non-conflicting types come in via the namespace import.
+using AMIS.Modules.AssetRegister.Contracts.v1;
+using ArContracts = AMIS.Modules.AssetRegister.Contracts.v1;
 
 namespace AMIS.Playground.Blazor.ApiClient;
 
@@ -18,7 +26,7 @@ public sealed record ArEmployeeRefDto(Guid EmployeeId, string PrintedName, strin
 internal sealed record ArAssetSnapshotDto(
     string PropertyNo,
     string Description,
-    int AssetType,
+    ArContracts.AssetType AssetType,
     decimal UnitCost,
     string Unit,
     int EstimatedUsefulLifeYears,
@@ -33,20 +41,20 @@ internal sealed record ArAssetSnapshotDto(
 internal sealed record AssetRegistrySummaryDto(
     Guid Id,
     string PropertyNo,
-    int AssetType,
+    ArContracts.AssetType AssetType,
     string Description,
     decimal UnitCost,
     DateOnly AcquisitionDate,
-    int LifecycleState,
-    int CurrentCondition,
+    LifecycleState LifecycleState,
+    ArContracts.AssetCondition CurrentCondition,
     Guid? CurrentCustodianId);
 
 internal sealed record AssetRegistryDto(
     Guid Id,
     string PropertyNo,
     Guid ItemId,
-    int AssetType,
-    int Category,
+    ArContracts.AssetType AssetType,
+    ArContracts.AssetCategory Category,
     string PropertyClass,
     string CategoryCode,
     string Description,
@@ -62,8 +70,8 @@ internal sealed record AssetRegistryDto(
     decimal AccumulatedDepreciation,
     decimal AccumulatedImpairmentLosses,
     decimal CarryingAmount,
-    int LifecycleState,
-    int CurrentCondition,
+    LifecycleState LifecycleState,
+    ArContracts.AssetCondition CurrentCondition,
     Guid? CurrentCustodianId,
     Guid? CurrentLocationId,
     Guid? CurrentAccountabilityId,
@@ -72,8 +80,8 @@ internal sealed record AssetRegistryDto(
 
 internal sealed record RegisterAssetRequest(
     Guid CatalogItemId,
-    int AssetType,
-    int Category,
+    ArContracts.AssetType AssetType,
+    ArContracts.AssetCategory Category,
     string Description,
     string FundCluster,
     DateOnly AcquisitionDate,
@@ -87,28 +95,28 @@ internal sealed record RegisterAssetRequest(
     Guid? SourceIARId = null,
     Guid? SourcePurchaseOrderId = null);
 
-internal sealed record UpdateAssetConditionRequest(int Condition);
+internal sealed record UpdateAssetConditionRequest(ArContracts.AssetCondition Condition);
 
 internal interface IAssetRegistryClient
 {
-    Task<ArPagedResponse<AssetRegistrySummaryDto>> SearchAsync(string? keyword = null, int? assetType = null, int? lifecycleState = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
+    Task<ArPagedResponse<AssetRegistrySummaryDto>> SearchAsync(string? keyword = null, ArContracts.AssetType? assetType = null, LifecycleState? lifecycleState = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
     Task<AssetRegistryDto?> GetAsync(Guid id, CancellationToken ct = default);
     Task<AssetRegistryDto?> GetByPropertyNoAsync(string propertyNo, CancellationToken ct = default);
     Task<AssetRegistryDto> RegisterAsync(RegisterAssetRequest request, CancellationToken ct = default);
-    Task<AssetRegistryDto> UpdateConditionAsync(Guid id, int condition, CancellationToken ct = default);
+    Task<AssetRegistryDto> UpdateConditionAsync(Guid id, ArContracts.AssetCondition condition, CancellationToken ct = default);
 }
 
 internal sealed class AssetRegistryClient(HttpClient http) : IAssetRegistryClient
 {
     private const string Base = "api/v1/asset-register/assets";
 
-    public async Task<ArPagedResponse<AssetRegistrySummaryDto>> SearchAsync(string? keyword = null, int? assetType = null, int? lifecycleState = null, int page = 1, int pageSize = 20, CancellationToken ct = default)
+    public async Task<ArPagedResponse<AssetRegistrySummaryDto>> SearchAsync(string? keyword = null, ArContracts.AssetType? assetType = null, LifecycleState? lifecycleState = null, int page = 1, int pageSize = 20, CancellationToken ct = default)
     {
         var url = ArUrlBuilder.Build(Base, new()
         {
             ["keyword"] = keyword,
-            ["assetType"] = assetType?.ToString(CultureInfo.InvariantCulture),
-            ["lifecycleState"] = lifecycleState?.ToString(CultureInfo.InvariantCulture),
+            ["assetType"] = assetType?.ToString(),
+            ["lifecycleState"] = lifecycleState?.ToString(),
             ["pageNumber"] = page.ToString(CultureInfo.InvariantCulture),
             ["pageSize"] = pageSize.ToString(CultureInfo.InvariantCulture),
         });
@@ -129,7 +137,7 @@ internal sealed class AssetRegistryClient(HttpClient http) : IAssetRegistryClien
         return (await resp.Content.ReadFromJsonAsync<AssetRegistryDto>(cancellationToken: ct))!;
     }
 
-    public async Task<AssetRegistryDto> UpdateConditionAsync(Guid id, int condition, CancellationToken ct = default)
+    public async Task<AssetRegistryDto> UpdateConditionAsync(Guid id, ArContracts.AssetCondition condition, CancellationToken ct = default)
     {
         var resp = await http.PutAsJsonAsync($"{Base}/{id}/condition", new UpdateAssetConditionRequest(condition), ct);
         resp.EnsureSuccessStatusCode();
@@ -230,8 +238,8 @@ internal sealed class ArCatalogClient(HttpClient http) : IArCatalogClient
 internal sealed record ArAccountabilitySummaryDto(
     Guid Id,
     string DocumentNo,
-    int AccountabilityType,
-    int Status,
+    AccountabilityType AccountabilityType,
+    AccountabilityStatus Status,
     DateOnly IssuedOn,
     DateOnly? ExpiresOn,
     int LineCount);
@@ -245,19 +253,19 @@ internal sealed record ArAccountabilityLineDto(
     string? SnapshotResponsibilityCenterCode,
     int IssuedQty,
     int ReturnedQty,
-    int LineStatus,
+    AccountabilityLineStatus LineStatus,
     DateOnly? ReturnedOn,
-    int? ReturnedConditionAtReturn,
+    ArContracts.AssetCondition? ReturnedConditionAtReturn,
     Guid? LostOnIncidentId);
 
 internal sealed record ArAccountabilityDto(
     Guid Id,
     string DocumentNo,
-    int AccountabilityType,
+    AccountabilityType AccountabilityType,
     string FundCluster,
     DateOnly IssuedOn,
     DateOnly? ExpiresOn,
-    int Status,
+    AccountabilityStatus Status,
     string? CancellationReason,
     Guid? SupersededByAccountabilityId,
     Guid? SupersedesAccountabilityId,
@@ -276,7 +284,7 @@ internal sealed record IssueAccountabilityLineRequest(
     string? ChassisNumber = null);
 
 internal sealed record IssueAccountabilityRequest(
-    int AccountabilityType,
+    AccountabilityType AccountabilityType,
     string FundCluster,
     ArEmployeeRefDto IssuedBy,
     ArEmployeeRefDto ReceivedBy,
@@ -289,7 +297,7 @@ internal sealed record ReturnAccountabilityLineRequest(Guid LineId, int? Odomete
 internal sealed record ReturnAccountabilityLinesRequest(
     IReadOnlyList<ReturnAccountabilityLineRequest> Lines,
     DateOnly ReturnedOn,
-    int ConditionAtReturn);
+    ArContracts.ArContracts.AssetCondition ConditionAtReturn);
 
 internal sealed record CancelAccountabilityRequest(string Reason);
 
@@ -297,7 +305,7 @@ internal sealed record RenewAccountabilityRequest(DateOnly NewIssuedOn, DateOnly
 
 internal interface IArAccountabilityClient
 {
-    Task<ArPagedResponse<ArAccountabilitySummaryDto>> SearchAsync(string? keyword = null, int? type = null, int? status = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
+    Task<ArPagedResponse<ArAccountabilitySummaryDto>> SearchAsync(string? keyword = null, AccountabilityType? type = null, AccountabilityStatus? status = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
     Task<ArAccountabilityDto?> GetAsync(Guid id, CancellationToken ct = default);
     Task<ArAccountabilityDto> IssueAsync(IssueAccountabilityRequest request, CancellationToken ct = default);
     Task<ArAccountabilityDto> ReturnLinesAsync(Guid id, ReturnAccountabilityLinesRequest request, CancellationToken ct = default);
@@ -309,13 +317,13 @@ internal sealed class ArAccountabilityClient(HttpClient http) : IArAccountabilit
 {
     private const string Base = "api/v1/asset-register/accountability";
 
-    public async Task<ArPagedResponse<ArAccountabilitySummaryDto>> SearchAsync(string? keyword = null, int? type = null, int? status = null, int page = 1, int pageSize = 20, CancellationToken ct = default)
+    public async Task<ArPagedResponse<ArAccountabilitySummaryDto>> SearchAsync(string? keyword = null, AccountabilityType? type = null, AccountabilityStatus? status = null, int page = 1, int pageSize = 20, CancellationToken ct = default)
     {
         var url = ArUrlBuilder.Build(Base, new()
         {
             ["keyword"] = keyword,
-            ["type"] = type?.ToString(CultureInfo.InvariantCulture),
-            ["status"] = status?.ToString(CultureInfo.InvariantCulture),
+            ["type"] = type?.ToString(),
+            ["status"] = status?.ToString(),
             ["pageNumber"] = page.ToString(CultureInfo.InvariantCulture),
             ["pageSize"] = pageSize.ToString(CultureInfo.InvariantCulture),
         });
@@ -360,8 +368,8 @@ internal sealed class ArAccountabilityClient(HttpClient http) : IArAccountabilit
 internal sealed record ArPhysicalCountSummaryDto(
     Guid Id,
     string Code,
-    int Scope,
-    int Status,
+    PhysicalCountScope Scope,
+    PhysicalCountStatus Status,
     DateOnly AsAt,
     DateOnly StartedOn,
     DateOnly? ClosedOn,
@@ -375,7 +383,7 @@ internal sealed record ArPhysicalCountEntryDto(
     string SnapshotArticle,
     string SnapshotUnit,
     decimal SnapshotUnitCost,
-    int Condition,
+    PhysicalCountCondition Condition,
     DateTimeOffset? ScannedOnUtc,
     string? PhotoPath,
     Guid? ScannedByEmployeeId,
@@ -385,8 +393,8 @@ internal sealed record ArPhysicalCountEntryDto(
 internal sealed record ArPhysicalCountSessionDto(
     Guid Id,
     string Code,
-    int Scope,
-    int Status,
+    PhysicalCountScope Scope,
+    PhysicalCountStatus Status,
     string FundCluster,
     DateOnly StartedOn,
     DateOnly? ClosedOn,
@@ -399,7 +407,7 @@ internal sealed record ArPhysicalCountSessionDto(
 
 internal sealed record StartPhysicalCountRequest(
     string Code,
-    int Scope,
+    PhysicalCountScope Scope,
     string FundCluster,
     DateOnly AsAt,
     DateOnly StartedOn,
@@ -411,7 +419,7 @@ internal sealed record ArRecordPhysicalCountEntryRequest(
     string Article,
     string Unit,
     decimal UnitCost,
-    int Condition,
+    PhysicalCountCondition Condition,
     Guid LocationId,
     string? Remarks = null);
 
@@ -422,7 +430,7 @@ internal sealed record ClosePhysicalCountRequest(
 
 internal interface IArPhysicalCountClient
 {
-    Task<ArPagedResponse<ArPhysicalCountSummaryDto>> SearchAsync(string? keyword = null, int? status = null, int? scope = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
+    Task<ArPagedResponse<ArPhysicalCountSummaryDto>> SearchAsync(string? keyword = null, PhysicalCountStatus? status = null, PhysicalCountScope? scope = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
     Task<ArPhysicalCountSessionDto?> GetAsync(Guid id, CancellationToken ct = default);
     Task<ArPhysicalCountSessionDto> StartAsync(StartPhysicalCountRequest request, CancellationToken ct = default);
     Task<ArPhysicalCountSessionDto> RecordEntryAsync(Guid sessionId, ArRecordPhysicalCountEntryRequest request, CancellationToken ct = default);
@@ -433,13 +441,13 @@ internal sealed class ArPhysicalCountClient(HttpClient http) : IArPhysicalCountC
 {
     private const string Base = "api/v1/asset-register/counting";
 
-    public async Task<ArPagedResponse<ArPhysicalCountSummaryDto>> SearchAsync(string? keyword = null, int? status = null, int? scope = null, int page = 1, int pageSize = 20, CancellationToken ct = default)
+    public async Task<ArPagedResponse<ArPhysicalCountSummaryDto>> SearchAsync(string? keyword = null, PhysicalCountStatus? status = null, PhysicalCountScope? scope = null, int page = 1, int pageSize = 20, CancellationToken ct = default)
     {
         var url = ArUrlBuilder.Build(Base, new()
         {
             ["keyword"] = keyword,
-            ["status"] = status?.ToString(CultureInfo.InvariantCulture),
-            ["scope"] = scope?.ToString(CultureInfo.InvariantCulture),
+            ["status"] = status?.ToString(),
+            ["scope"] = scope?.ToString(),
             ["pageNumber"] = page.ToString(CultureInfo.InvariantCulture),
             ["pageSize"] = pageSize.ToString(CultureInfo.InvariantCulture),
         });
@@ -477,8 +485,8 @@ internal sealed class ArPhysicalCountClient(HttpClient http) : IArPhysicalCountC
 internal sealed record ArIncidentReportSummaryDto(
     Guid Id,
     string IncidentNo,
-    int IncidentType,
-    int Status,
+    ArContracts.PropertyIncidentType IncidentType,
+    PropertyIncidentStatus Status,
     DateOnly IncidentDate,
     int ItemCount);
 
@@ -489,13 +497,13 @@ internal sealed record ArIncidentReportItemDto(
     ArAssetSnapshotDto Snapshot,
     decimal SnapshotAcquisitionCost,
     decimal SnapshotCurrentReplacementCost,
-    int ItemResolution,
+    IncidentItemResolution ItemResolution,
     DateOnly? ResolvedOn);
 
 internal sealed record ArIncidentReportDto(
     Guid Id,
     string IncidentNo,
-    int IncidentType,
+    ArContracts.PropertyIncidentType IncidentType,
     DateOnly IncidentDate,
     string FundCluster,
     string DepartmentOffice,
@@ -507,7 +515,7 @@ internal sealed record ArIncidentReportDto(
     DateOnly? PoliceNotifiedOn,
     string? PoliceBlotterRef,
     DateOnly? NotarizedOn,
-    int Status,
+    PropertyIncidentStatus Status,
     decimal? AmountSettled,
     DateOnly? RecoveredOn,
     IReadOnlyCollection<ArIncidentReportItemDto> Items);
@@ -515,7 +523,7 @@ internal sealed record ArIncidentReportDto(
 internal sealed record FileIncidentItemRequest(Guid AssetRegistryId, Guid? AccountabilityLineId = null);
 
 internal sealed record FileIncidentReportRequest(
-    int IncidentType,
+    ArContracts.PropertyIncidentType IncidentType,
     DateOnly IncidentDate,
     string FundCluster,
     string DepartmentOffice,
@@ -530,7 +538,7 @@ internal sealed record NotarizeIncidentRequest(DateOnly NotarizedOn, string DocN
 
 internal interface IArIncidentReportClient
 {
-    Task<ArPagedResponse<ArIncidentReportSummaryDto>> SearchAsync(string? keyword = null, int? incidentType = null, int? status = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
+    Task<ArPagedResponse<ArIncidentReportSummaryDto>> SearchAsync(string? keyword = null, ArContracts.PropertyIncidentType? incidentType = null, PropertyIncidentStatus? status = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
     Task<ArIncidentReportDto?> GetAsync(Guid id, CancellationToken ct = default);
     Task<ArIncidentReportDto> FileAsync(FileIncidentReportRequest request, CancellationToken ct = default);
     Task<ArIncidentReportDto> NotifyPoliceAsync(Guid id, NotifyPoliceRequest request, CancellationToken ct = default);
@@ -542,7 +550,7 @@ internal sealed class ArIncidentReportClient(HttpClient http) : IArIncidentRepor
 {
     private const string Base = "api/v1/asset-register/incidents";
 
-    public async Task<ArPagedResponse<ArIncidentReportSummaryDto>> SearchAsync(string? keyword = null, int? incidentType = null, int? status = null, int page = 1, int pageSize = 20, CancellationToken ct = default)
+    public async Task<ArPagedResponse<ArIncidentReportSummaryDto>> SearchAsync(string? keyword = null, ArContracts.PropertyIncidentType? incidentType = null, PropertyIncidentStatus? status = null, int page = 1, int pageSize = 20, CancellationToken ct = default)
     {
         var url = ArUrlBuilder.Build(Base, new()
         {
@@ -593,8 +601,8 @@ internal sealed class ArIncidentReportClient(HttpClient http) : IArIncidentRepor
 internal sealed record ArIssuanceReportSummaryDto(
     Guid Id,
     string ReportNo,
-    int ReportType,
-    int Status,
+    IssuanceReportType ReportType,
+    IssuanceReportStatus Status,
     DateOnly PeriodFromDate,
     DateOnly PeriodToDate,
     int LineCount,
@@ -615,11 +623,11 @@ internal sealed record ArIssuanceReportLineDto(
 internal sealed record ArIssuanceReportDto(
     Guid Id,
     string ReportNo,
-    int ReportType,
+    IssuanceReportType ReportType,
     string FundCluster,
     DateOnly PeriodFromDate,
     DateOnly PeriodToDate,
-    int Status,
+    IssuanceReportStatus Status,
     ArEmployeeRefDto PreparedBy,
     ArEmployeeRefDto? CertifiedBy,
     ArEmployeeRefDto? PostedBy,
@@ -627,7 +635,7 @@ internal sealed record ArIssuanceReportDto(
     IReadOnlyCollection<ArIssuanceReportLineDto> Lines);
 
 internal sealed record CreateIssuanceReportDraftRequest(
-    int ReportType,
+    IssuanceReportType ReportType,
     string FundCluster,
     DateOnly PeriodFromDate,
     DateOnly PeriodToDate,
@@ -642,7 +650,7 @@ internal sealed record PostIssuanceReportRequest(
 
 internal interface IArIssuanceReportClient
 {
-    Task<ArPagedResponse<ArIssuanceReportSummaryDto>> SearchAsync(string? keyword = null, int? reportType = null, int? status = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
+    Task<ArPagedResponse<ArIssuanceReportSummaryDto>> SearchAsync(string? keyword = null, IssuanceReportType? reportType = null, IssuanceReportStatus? status = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
     Task<ArIssuanceReportDto?> GetAsync(Guid id, CancellationToken ct = default);
     Task<ArIssuanceReportDto> CreateDraftAsync(CreateIssuanceReportDraftRequest request, CancellationToken ct = default);
     Task<ArIssuanceReportDto> AddLinesAsync(Guid id, IReadOnlyList<Guid> accountabilityLineIds, CancellationToken ct = default);
@@ -654,7 +662,7 @@ internal sealed class ArIssuanceReportClient(HttpClient http) : IArIssuanceRepor
 {
     private const string Base = "api/v1/asset-register/issuance";
 
-    public async Task<ArPagedResponse<ArIssuanceReportSummaryDto>> SearchAsync(string? keyword = null, int? reportType = null, int? status = null, int page = 1, int pageSize = 20, CancellationToken ct = default)
+    public async Task<ArPagedResponse<ArIssuanceReportSummaryDto>> SearchAsync(string? keyword = null, IssuanceReportType? reportType = null, IssuanceReportStatus? status = null, int page = 1, int pageSize = 20, CancellationToken ct = default)
     {
         var url = ArUrlBuilder.Build(Base, new()
         {
@@ -705,8 +713,8 @@ internal sealed class ArIssuanceReportClient(HttpClient http) : IArIssuanceRepor
 internal sealed record ArUnserviceableReportSummaryDto(
     Guid Id,
     string ReportNo,
-    int ReportType,
-    int Status,
+    UnserviceableReportType ReportType,
+    UnserviceableReportStatus Status,
     DateOnly AsAt,
     int ItemCount);
 
@@ -720,18 +728,18 @@ internal sealed record ArUnserviceableReportItemDto(
     decimal SnapshotAccumulatedDepreciation,
     decimal SnapshotCarryingAmount,
     string? Remarks,
-    int? DisposalMethod,
+    ArContracts.DisposalMethod? DisposalMethod,
     decimal? AppraisedValue,
     DateOnly? DisposalRecordedOn);
 
 internal sealed record ArUnserviceableReportDto(
     Guid Id,
     string ReportNo,
-    int ReportType,
+    UnserviceableReportType ReportType,
     DateOnly AsAt,
     string FundCluster,
     string Station,
-    int Status,
+    UnserviceableReportStatus Status,
     ArEmployeeRefDto AccountableOfficer,
     ArEmployeeRefDto? ApprovedBy,
     ArEmployeeRefDto? InspectedBy,
@@ -753,7 +761,7 @@ internal sealed record SubmitUnserviceableReportRequest(ArEmployeeRefDto Approve
 
 internal interface IArUnserviceableReportClient
 {
-    Task<ArPagedResponse<ArUnserviceableReportSummaryDto>> SearchAsync(string? keyword = null, int? reportType = null, int? status = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
+    Task<ArPagedResponse<ArUnserviceableReportSummaryDto>> SearchAsync(string? keyword = null, UnserviceableReportType? reportType = null, UnserviceableReportStatus? status = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
     Task<ArUnserviceableReportDto?> GetAsync(Guid id, CancellationToken ct = default);
     Task<ArUnserviceableReportDto> CreateDraftAsync(CreateUnserviceableReportRequest request, CancellationToken ct = default);
     Task<ArUnserviceableReportDto> AddItemAsync(Guid id, AddUnserviceableReportItemRequest request, CancellationToken ct = default);
@@ -764,7 +772,7 @@ internal sealed class ArUnserviceableReportClient(HttpClient http) : IArUnservic
 {
     private const string Base = "api/v1/asset-register/unserviceable";
 
-    public async Task<ArPagedResponse<ArUnserviceableReportSummaryDto>> SearchAsync(string? keyword = null, int? reportType = null, int? status = null, int page = 1, int pageSize = 20, CancellationToken ct = default)
+    public async Task<ArPagedResponse<ArUnserviceableReportSummaryDto>> SearchAsync(string? keyword = null, UnserviceableReportType? reportType = null, UnserviceableReportStatus? status = null, int page = 1, int pageSize = 20, CancellationToken ct = default)
     {
         var url = ArUrlBuilder.Build(Base, new()
         {

@@ -8,7 +8,6 @@ namespace AMIS.Modules.AssetRegister.Domain.Incidents;
 public sealed class PropertyIncidentReport : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 {
     public string TenantId { get; private set; } = default!;
-    public byte[] Version { get; set; } = [];
 
     public string IncidentNo { get; private set; } = default!;
     public PropertyIncidentType IncidentType { get; private set; }
@@ -99,6 +98,8 @@ public sealed class PropertyIncidentReport : AggregateRoot<Guid>, IHasTenant, IA
 
     public void NotifyPolice(string station, DateOnly notifiedOn, string blotterRef)
     {
+        if (Status == PropertyIncidentStatus.Closed)
+            throw new InvalidOperationException("Cannot notify police on a closed incident report.");
         PoliceNotified = true;
         PoliceStation = station;
         PoliceNotifiedOn = notifiedOn;
@@ -108,6 +109,10 @@ public sealed class PropertyIncidentReport : AggregateRoot<Guid>, IHasTenant, IA
 
     public void Notarize(DateOnly notarizedOn, string docNo, string pageNo, string bookNo, string seriesOf)
     {
+        if (Status == PropertyIncidentStatus.Closed)
+            throw new InvalidOperationException("Cannot notarize a closed incident report.");
+        if (NotarizedOn is not null)
+            throw new InvalidOperationException("Incident report is already notarized.");
         NotarizedOn = notarizedOn;
         NotaryDocNo = docNo;
         NotaryPageNo = pageNo;

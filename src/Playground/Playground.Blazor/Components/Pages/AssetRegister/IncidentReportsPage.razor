@@ -1,5 +1,8 @@
 @page "/asset-register/incidents"
 @using AMIS.Playground.Blazor.ApiClient
+@using PropertyIncidentType = AMIS.Modules.AssetRegister.Contracts.v1.PropertyIncidentType
+@using PropertyIncidentStatus = AMIS.Modules.AssetRegister.Contracts.v1.PropertyIncidentStatus
+@using IncidentItemResolution = AMIS.Modules.AssetRegister.Contracts.v1.IncidentItemResolution
 @inject IArIncidentReportClient Client
 @inject ISnackbar Snackbar
 
@@ -18,21 +21,21 @@
                                       OnKeyDown="OnSearchKeyDown" Immediate="false" />
                     </MudItem>
                     <MudItem xs="6" md="2">
-                        <MudSelect @bind-Value="_typeFilter" Label="Incident Type" Variant="Variant.Outlined" T="int?" Clearable="true">
-                            <MudSelectItem Value="@((int?)null)">All</MudSelectItem>
-                            <MudSelectItem Value="@((int?)0)">Loss</MudSelectItem>
-                            <MudSelectItem Value="@((int?)1)">Damage</MudSelectItem>
+                        <MudSelect @bind-Value="_typeFilter" Label="Incident Type" Variant="Variant.Outlined" T="PropertyIncidentType?" Clearable="true">
+                            <MudSelectItem Value="@((PropertyIncidentType?)null)">All</MudSelectItem>
+                            <MudSelectItem Value="@((PropertyIncidentType?)PropertyIncidentType.Lost)">Lost</MudSelectItem>
+                            <MudSelectItem Value="@((PropertyIncidentType?)PropertyIncidentType.Stolen)">Stolen</MudSelectItem>
+                            <MudSelectItem Value="@((PropertyIncidentType?)PropertyIncidentType.Damaged)">Damaged</MudSelectItem>
+                            <MudSelectItem Value="@((PropertyIncidentType?)PropertyIncidentType.Destroyed)">Destroyed</MudSelectItem>
                         </MudSelect>
                     </MudItem>
                     <MudItem xs="6" md="2">
-                        <MudSelect @bind-Value="_statusFilter" Label="Status" Variant="Variant.Outlined" T="int?" Clearable="true">
-                            <MudSelectItem Value="@((int?)null)">All</MudSelectItem>
-                            <MudSelectItem Value="@((int?)0)">Filed</MudSelectItem>
-                            <MudSelectItem Value="@((int?)1)">PoliceNotified</MudSelectItem>
-                            <MudSelectItem Value="@((int?)2)">Notarized</MudSelectItem>
-                            <MudSelectItem Value="@((int?)3)">UnderInvestigation</MudSelectItem>
-                            <MudSelectItem Value="@((int?)4)">Resolved</MudSelectItem>
-                            <MudSelectItem Value="@((int?)5)">Closed</MudSelectItem>
+                        <MudSelect @bind-Value="_statusFilter" Label="Status" Variant="Variant.Outlined" T="PropertyIncidentStatus?" Clearable="true">
+                            <MudSelectItem Value="@((PropertyIncidentStatus?)null)">All</MudSelectItem>
+                            <MudSelectItem Value="@((PropertyIncidentStatus?)PropertyIncidentStatus.Filed)">Filed</MudSelectItem>
+                            <MudSelectItem Value="@((PropertyIncidentStatus?)PropertyIncidentStatus.UnderInvestigation)">Under Investigation</MudSelectItem>
+                            <MudSelectItem Value="@((PropertyIncidentStatus?)PropertyIncidentStatus.Resolved)">Resolved</MudSelectItem>
+                            <MudSelectItem Value="@((PropertyIncidentStatus?)PropertyIncidentStatus.Closed)">Closed</MudSelectItem>
                         </MudSelect>
                     </MudItem>
                     <MudItem xs="12" md="2" Class="d-flex align-end">
@@ -73,7 +76,7 @@
                             <MudTd><strong>@context.IncidentNo</strong></MudTd>
                             <MudTd>
                                 <MudChip T="string" Size="Size.Small"
-                                         Color="@(context.IncidentType == 0 ? Color.Warning : Color.Error)"
+                                         Color="@IncidentTypeColor(context.IncidentType)"
                                          Variant="Variant.Outlined">
                                     @FormatIncidentType(context.IncidentType)
                                 </MudChip>
@@ -157,7 +160,7 @@
                         {
                             <MudItem xs="6" md="4">
                                 <MudText Typo="Typo.caption" Color="Color.Secondary">Police</MudText>
-                                <MudText Typo="Typo.body2">@_selected.PoliceStation — @_selected.PoliceNotifiedOn?.ToString("yyyy-MM-dd")</MudText>
+                                <MudText Typo="Typo.body2">@_selected.PoliceStation ï¿½ @_selected.PoliceNotifiedOn?.ToString("yyyy-MM-dd")</MudText>
                                 <MudText Typo="Typo.caption">Blotter: @_selected.PoliceBlotterRef</MudText>
                             </MudItem>
                         }
@@ -193,12 +196,12 @@
                             <MudTd Style="text-align:right">@context.SnapshotAcquisitionCost.ToString("N2")</MudTd>
                             <MudTd Style="text-align:right">@context.SnapshotCurrentReplacementCost.ToString("N2")</MudTd>
                             <MudTd>@FormatItemResolution(context.ItemResolution)</MudTd>
-                            <MudTd>@(context.ResolvedOn?.ToString("yyyy-MM-dd") ?? "—")</MudTd>
+                            <MudTd>@(context.ResolvedOn?.ToString("yyyy-MM-dd") ?? "ï¿½")</MudTd>
                         </RowTemplate>
                     </MudTable>
 
-                    <!-- Police notify (Filed = 0 and not yet notified) -->
-                    @if (_selected.Status == 0 && !_selected.PoliceNotified)
+                    <!-- Police notify (Filed and not yet notified) -->
+                    @if (_selected.Status == PropertyIncidentStatus.Filed && !_selected.PoliceNotified)
                     {
                         <MudDivider Class="my-3" />
                         <MudText Typo="Typo.subtitle2" Class="mb-2">Notify Police</MudText>
@@ -221,8 +224,8 @@
                         </MudGrid>
                     }
 
-                    <!-- Close (only if status >= 2/Notarized) -->
-                    @if (_selected.Status >= 2 && _selected.Status < 5)
+                    <!-- Close (only if resolved but not yet closed) -->
+                    @if (_selected.Status == PropertyIncidentStatus.Resolved)
                     {
                         <MudDivider Class="my-3" />
                         <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="CloseReportAsync" Disabled="_busy">
@@ -239,8 +242,8 @@
     private bool _busy;
     private string? _error;
     private string? _keyword;
-    private int? _typeFilter;
-    private int? _statusFilter;
+    private PropertyIncidentType? _typeFilter;
+    private PropertyIncidentStatus? _statusFilter;
     private int _page = 1;
     private int _totalPages = 1;
     private int _totalCount;
@@ -352,34 +355,45 @@
         if (e.Key == "Enter") { _page = 1; await LoadAsync(); }
     }
 
-    private static string FormatIncidentType(int v) => v switch { 0 => "Loss", 1 => "Damage", _ => v.ToString() };
-    private static string FormatIncidentStatus(int v) => v switch
+    private static string FormatIncidentType(PropertyIncidentType v) => v switch
     {
-        0 => "Filed",
-        1 => "PoliceNotified",
-        2 => "Notarized",
-        3 => "UnderInvestigation",
-        4 => "Resolved",
-        5 => "Closed",
+        PropertyIncidentType.Lost => "Lost",
+        PropertyIncidentType.Stolen => "Stolen",
+        PropertyIncidentType.Damaged => "Damaged",
+        PropertyIncidentType.Destroyed => "Destroyed",
         _ => v.ToString()
     };
-    private static Color IncidentStatusColor(int v) => v switch
+    private static Color IncidentTypeColor(PropertyIncidentType v) => v switch
     {
-        0 => Color.Info,
-        1 => Color.Warning,
-        2 => Color.Primary,
-        3 => Color.Warning,
-        4 => Color.Success,
-        5 => Color.Dark,
+        PropertyIncidentType.Lost => Color.Warning,
+        PropertyIncidentType.Stolen => Color.Error,
+        PropertyIncidentType.Damaged => Color.Warning,
+        PropertyIncidentType.Destroyed => Color.Error,
         _ => Color.Default
     };
-    private static string FormatItemResolution(int v) => v switch
+    private static string FormatIncidentStatus(PropertyIncidentStatus v) => v switch
     {
-        0 => "Pending",
-        1 => "Recovered",
-        2 => "Settled",
-        3 => "ReliefGranted",
-        4 => "Derecognized",
+        PropertyIncidentStatus.Filed => "Filed",
+        PropertyIncidentStatus.UnderInvestigation => "Under Investigation",
+        PropertyIncidentStatus.Resolved => "Resolved",
+        PropertyIncidentStatus.Closed => "Closed",
+        _ => v.ToString()
+    };
+    private static Color IncidentStatusColor(PropertyIncidentStatus v) => v switch
+    {
+        PropertyIncidentStatus.Filed => Color.Info,
+        PropertyIncidentStatus.UnderInvestigation => Color.Warning,
+        PropertyIncidentStatus.Resolved => Color.Success,
+        PropertyIncidentStatus.Closed => Color.Dark,
+        _ => Color.Default
+    };
+    private static string FormatItemResolution(IncidentItemResolution v) => v switch
+    {
+        IncidentItemResolution.Pending => "Pending",
+        IncidentItemResolution.Recovered => "Recovered",
+        IncidentItemResolution.Paid => "Settled",
+        IncidentItemResolution.ReliefGranted => "Relief Granted",
+        IncidentItemResolution.Derecognized => "Derecognized",
         _ => v.ToString()
     };
 }

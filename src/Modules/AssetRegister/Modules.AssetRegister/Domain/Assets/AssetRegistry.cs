@@ -9,7 +9,6 @@ namespace AMIS.Modules.AssetRegister.Domain.Assets;
 public sealed class AssetRegistry : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 {
     public string TenantId { get; private set; } = default!;
-    public byte[] Version { get; set; } = [];
 
     // identity & classification
     public PropertyNumber PropertyNo { get; private set; } = default!;

@@ -15,7 +15,6 @@ namespace AMIS.Modules.AssetRegister.Domain.Receiving;
 public sealed class ReceivingReport : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 {
     public string TenantId { get; private set; } = default!;
-    public byte[] Version { get; set; } = [];
 
     public ReceivingDocumentKind DocumentKind { get; private set; }
     public string ReportNo { get; private set; } = default!;

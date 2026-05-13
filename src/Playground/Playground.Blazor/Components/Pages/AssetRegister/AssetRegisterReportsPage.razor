@@ -1,5 +1,19 @@
 @page "/asset-register/reports"
 @using AMIS.Playground.Blazor.Services.AssetRegister
+@using AccountabilityType = AMIS.Modules.AssetRegister.Contracts.v1.AccountabilityType
+@using AccountabilityStatus = AMIS.Modules.AssetRegister.Contracts.v1.AccountabilityStatus
+@using AccountabilityLineStatus = AMIS.Modules.AssetRegister.Contracts.v1.AccountabilityLineStatus
+@using AssetType = AMIS.Modules.AssetRegister.Contracts.v1.AssetType
+@using DisposalMethod = AMIS.Modules.AssetRegister.Contracts.v1.DisposalMethod
+@using IssuanceReportType = AMIS.Modules.AssetRegister.Contracts.v1.IssuanceReportType
+@using IssuanceReportStatus = AMIS.Modules.AssetRegister.Contracts.v1.IssuanceReportStatus
+@using PhysicalCountStatus = AMIS.Modules.AssetRegister.Contracts.v1.PhysicalCountStatus
+@using PhysicalCountCondition = AMIS.Modules.AssetRegister.Contracts.v1.PhysicalCountCondition
+@using PropertyIncidentType = AMIS.Modules.AssetRegister.Contracts.v1.PropertyIncidentType
+@using PropertyIncidentStatus = AMIS.Modules.AssetRegister.Contracts.v1.PropertyIncidentStatus
+@using IncidentItemResolution = AMIS.Modules.AssetRegister.Contracts.v1.IncidentItemResolution
+@using UnserviceableReportType = AMIS.Modules.AssetRegister.Contracts.v1.UnserviceableReportType
+@using UnserviceableReportStatus = AMIS.Modules.AssetRegister.Contracts.v1.UnserviceableReportStatus
 @inject IAssetRegisterReportsClient ReportsClient
 
 <MudText Typo="Typo.h4" GutterBottom="true">Asset Register Reports</MudText>
@@ -610,121 +624,122 @@
         }
     }
 
-    private static string FormatAccountabilityStatus(int status) => status switch
+    private static string FormatAccountabilityStatus(AccountabilityStatus v) => v switch
     {
-        0 => "Draft",
-        1 => "Issued",
-        2 => "Returned",
-        3 => "Cancelled",
-        _ => $"Unknown ({status})"
+        AccountabilityStatus.Active => "Active",
+        AccountabilityStatus.Renewed => "Renewed",
+        AccountabilityStatus.Returned => "Returned",
+        AccountabilityStatus.Cancelled => "Cancelled",
+        _ => v.ToString()
     };
 
-    private static string FormatAccountabilityType(int type) => type switch
+    private static string FormatAccountabilityType(AccountabilityType v) => v switch
     {
-        0 => "ICS",
-        1 => "PAR",
-        _ => $"Unknown ({type})"
+        AccountabilityType.SE_ICS => "ICS",
+        AccountabilityType.PPE_PAR => "PAR",
+        _ => v.ToString()
     };
 
-    private static string FormatLineStatus(int status) => status switch
+    private static string FormatLineStatus(AccountabilityLineStatus v) => v switch
     {
-        0 => "Issued",
-        1 => "Partially Returned",
-        2 => "Fully Returned",
-        _ => $"Unknown ({status})"
+        AccountabilityLineStatus.Active => "Active",
+        AccountabilityLineStatus.Returned => "Returned",
+        AccountabilityLineStatus.Lost => "Lost",
+        _ => v.ToString()
     };
 
-    private static string FormatPhysicalCountStatus(int status) => status switch
+    private static string FormatPhysicalCountStatus(PhysicalCountStatus v) => v switch
     {
-        0 => "Draft",
-        1 => "Open",
-        2 => "Closed",
-        3 => "Reconciled",
-        _ => $"Unknown ({status})"
+        PhysicalCountStatus.Ongoing => "Ongoing",
+        PhysicalCountStatus.Reconciled => "Reconciled",
+        PhysicalCountStatus.Closed => "Closed",
+        _ => v.ToString()
     };
 
-    private static string FormatPhysicalCountCondition(int condition) => condition switch
+    private static string FormatPhysicalCountCondition(PhysicalCountCondition v) => v switch
     {
-        0 => "Good",
-        1 => "Needs Repair",
-        2 => "Unserviceable",
-        3 => "Missing",
-        4 => "Found at Station",
-        _ => $"Unknown ({condition})"
+        PhysicalCountCondition.InGoodCondition => "Good",
+        PhysicalCountCondition.NeedingRepair => "Needs Repair",
+        PhysicalCountCondition.Unserviceable => "Unserviceable",
+        PhysicalCountCondition.Missing => "Missing",
+        PhysicalCountCondition.FoundAtStation => "Found at Station",
+        _ => v.ToString()
     };
 
-    private static string FormatIssuanceStatus(int status) => status switch
+    private static string FormatIssuanceStatus(IssuanceReportStatus v) => v switch
     {
-        0 => "Draft",
-        1 => "Posted",
-        2 => "Cancelled",
-        _ => $"Unknown ({status})"
+        IssuanceReportStatus.Draft => "Draft",
+        IssuanceReportStatus.Posted => "Posted",
+        _ => v.ToString()
     };
 
-    private static string FormatIssuanceType(int type) => type switch
+    private static string FormatIssuanceType(IssuanceReportType v) => v switch
     {
-        0 => "RSPI",
-        1 => "PPEIR",
-        _ => $"Unknown ({type})"
+        IssuanceReportType.SMIR => "SMIR",
+        IssuanceReportType.PPEIR => "PPEIR",
+        _ => v.ToString()
     };
 
-    private static string FormatIncidentStatus(int status) => status switch
+    private static string FormatIncidentStatus(PropertyIncidentStatus v) => v switch
     {
-        0 => "Draft",
-        1 => "Filed",
-        2 => "Under Investigation",
-        3 => "Resolved",
-        _ => $"Unknown ({status})"
+        PropertyIncidentStatus.Filed => "Filed",
+        PropertyIncidentStatus.UnderInvestigation => "Under Investigation",
+        PropertyIncidentStatus.Resolved => "Resolved",
+        PropertyIncidentStatus.Closed => "Closed",
+        _ => v.ToString()
     };
 
-    private static string FormatIncidentType(int type) => type switch
+    private static string FormatIncidentType(PropertyIncidentType v) => v switch
     {
-        0 => "Loss",
-        1 => "Damage",
-        2 => "Theft",
-        _ => $"Unknown ({type})"
+        PropertyIncidentType.Lost => "Lost",
+        PropertyIncidentType.Stolen => "Stolen",
+        PropertyIncidentType.Damaged => "Damaged",
+        PropertyIncidentType.Destroyed => "Destroyed",
+        _ => v.ToString()
     };
 
-    private static string FormatIncidentResolution(int resolution) => resolution switch
+    private static string FormatIncidentResolution(IncidentItemResolution v) => v switch
     {
-        0 => "Pending",
-        1 => "Repaired",
-        2 => "Replaced",
-        3 => "Write-off",
-        _ => $"Unknown ({resolution})"
+        IncidentItemResolution.Pending => "Pending",
+        IncidentItemResolution.Recovered => "Recovered",
+        IncidentItemResolution.Paid => "Paid",
+        IncidentItemResolution.ReliefGranted => "Relief Granted",
+        IncidentItemResolution.Derecognized => "Derecognized",
+        _ => v.ToString()
     };
 
-    private static string FormatUnserviceableStatus(int status) => status switch
+    private static string FormatUnserviceableStatus(UnserviceableReportStatus v) => v switch
     {
-        0 => "Draft",
-        1 => "Inspected",
-        2 => "Approved",
-        3 => "Disposed",
-        _ => $"Unknown ({status})"
+        UnserviceableReportStatus.Draft => "Draft",
+        UnserviceableReportStatus.Submitted => "Submitted",
+        UnserviceableReportStatus.InspectionDone => "Inspection Done",
+        UnserviceableReportStatus.DisposalRecorded => "Disposal Recorded",
+        UnserviceableReportStatus.Closed => "Closed",
+        _ => v.ToString()
     };
 
-    private static string FormatUnserviceableType(int type) => type switch
+    private static string FormatUnserviceableType(UnserviceableReportType v) => v switch
     {
-        0 => "IIRUSP",
-        1 => "IIRUP",
-        _ => $"Unknown ({type})"
+        UnserviceableReportType.IIRUSP => "IIRUSP",
+        UnserviceableReportType.IIRUP => "IIRUP",
+        _ => v.ToString()
     };
 
-    private static string FormatDisposalMethod(int? method) => method switch
+    private static string FormatDisposalMethod(DisposalMethod? method) => method switch
     {
         null => "-",
-        0 => "Transfer",
-        1 => "Sale",
-        2 => "Destruction",
-        3 => "Other",
-        _ => $"Unknown ({method})"
+        DisposalMethod.Sale => "Sale",
+        DisposalMethod.Transfer => "Transfer",
+        DisposalMethod.Destruction => "Destruction",
+        DisposalMethod.Other => "Other",
+        _ => method.ToString() ?? "-"
     };
 
-    private static string FormatAssetType(int assetType) => assetType switch
+    private static string FormatAssetType(AssetType v) => v switch
     {
-        0 => "SE",
-        1 => "PPE",
-        _ => $"Unknown ({assetType})"
+        AssetType.SE => "SE",
+        AssetType.PPE => "PPE",
+        _ => v.ToString()
     };
 }
 

@@ -16,7 +16,11 @@ internal sealed class AssetRegistryConfiguration : IEntityTypeConfiguration<Asse
 
         builder.HasKey(x => x.Id);
         builder.Property(x => x.TenantId).IsRequired().HasMaxLength(50);
-        builder.Property(x => x.Version).IsRowVersion();
+        builder.Property<uint>("xmin")
+            .HasColumnName("xmin")
+            .HasColumnType("xid")
+            .ValueGeneratedOnAddOrUpdate()
+            .IsConcurrencyToken();
 
         // PropertyNumber VO → string column
         builder.Property(x => x.PropertyNo)

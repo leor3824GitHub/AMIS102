@@ -1,5 +1,8 @@
 @page "/asset-register/physical-count"
 @using AMIS.Playground.Blazor.ApiClient
+@using PhysicalCountStatus = AMIS.Modules.AssetRegister.Contracts.v1.PhysicalCountStatus
+@using PhysicalCountScope = AMIS.Modules.AssetRegister.Contracts.v1.PhysicalCountScope
+@using PhysicalCountCondition = AMIS.Modules.AssetRegister.Contracts.v1.PhysicalCountCondition
 @inject IArPhysicalCountClient Client
 @inject ISnackbar Snackbar
 
@@ -18,19 +21,19 @@
                                       OnKeyDown="OnSearchKeyDown" Immediate="false" />
                     </MudItem>
                     <MudItem xs="6" md="2">
-                        <MudSelect @bind-Value="_statusFilter" Label="Status" Variant="Variant.Outlined" T="int?" Clearable="true">
-                            <MudSelectItem Value="@((int?)null)">All</MudSelectItem>
-                            <MudSelectItem Value="@((int?)0)">Open</MudSelectItem>
-                            <MudSelectItem Value="@((int?)1)">Reconciled</MudSelectItem>
-                            <MudSelectItem Value="@((int?)2)">Closed</MudSelectItem>
+                        <MudSelect @bind-Value="_statusFilter" Label="Status" Variant="Variant.Outlined" T="PhysicalCountStatus?" Clearable="true">
+                            <MudSelectItem Value="@((PhysicalCountStatus?)null)">All</MudSelectItem>
+                            <MudSelectItem Value="@((PhysicalCountStatus?)PhysicalCountStatus.Ongoing)">Ongoing</MudSelectItem>
+                            <MudSelectItem Value="@((PhysicalCountStatus?)PhysicalCountStatus.Reconciled)">Reconciled</MudSelectItem>
+                            <MudSelectItem Value="@((PhysicalCountStatus?)PhysicalCountStatus.Closed)">Closed</MudSelectItem>
                         </MudSelect>
                     </MudItem>
                     <MudItem xs="6" md="2">
-                        <MudSelect @bind-Value="_scopeFilter" Label="Scope" Variant="Variant.Outlined" T="int?" Clearable="true">
-                            <MudSelectItem Value="@((int?)null)">All</MudSelectItem>
-                            <MudSelectItem Value="@((int?)0)">SemiExpendable</MudSelectItem>
-                            <MudSelectItem Value="@((int?)1)">PPE</MudSelectItem>
-                            <MudSelectItem Value="@((int?)2)">All Assets</MudSelectItem>
+                        <MudSelect @bind-Value="_scopeFilter" Label="Scope" Variant="Variant.Outlined" T="PhysicalCountScope?" Clearable="true">
+                            <MudSelectItem Value="@((PhysicalCountScope?)null)">All</MudSelectItem>
+                            <MudSelectItem Value="@((PhysicalCountScope?)PhysicalCountScope.SEOnly)">Semi-Expendable</MudSelectItem>
+                            <MudSelectItem Value="@((PhysicalCountScope?)PhysicalCountScope.PPEOnly)">PPE</MudSelectItem>
+                            <MudSelectItem Value="@((PhysicalCountScope?)PhysicalCountScope.Both)">All Assets</MudSelectItem>
                         </MudSelect>
                     </MudItem>
                     <MudItem xs="12" md="2" Class="d-flex align-end">
@@ -126,7 +129,7 @@
                             </MudTd>
                             <MudTd>@context.AsAt.ToString("yyyy-MM-dd")</MudTd>
                             <MudTd>@context.StartedOn.ToString("yyyy-MM-dd")</MudTd>
-                            <MudTd>@(context.ClosedOn?.ToString("yyyy-MM-dd") ?? "—")</MudTd>
+                            <MudTd>@(context.ClosedOn?.ToString("yyyy-MM-dd") ?? "ï¿½")</MudTd>
                             <MudTd Style="text-align:right">@context.EntryCount</MudTd>
                         </RowTemplate>
                         <NoRecordsContent>
@@ -219,12 +222,12 @@
                             <MudTh>Scanned On</MudTh>
                         </HeaderContent>
                         <RowTemplate>
-                            <MudTd>@(context.Snapshot?.PropertyNo ?? "—")</MudTd>
+                            <MudTd>@(context.Snapshot?.PropertyNo ?? "ï¿½")</MudTd>
                             <MudTd>@context.SnapshotArticle</MudTd>
                             <MudTd>@context.SnapshotUnit</MudTd>
                             <MudTd Style="text-align:right">@context.SnapshotUnitCost.ToString("N2")</MudTd>
                             <MudTd>@FormatCountCondition(context.Condition)</MudTd>
-                            <MudTd>@(context.ScannedOnUtc?.LocalDateTime.ToString("yyyy-MM-dd HH:mm") ?? "—")</MudTd>
+                            <MudTd>@(context.ScannedOnUtc?.LocalDateTime.ToString("yyyy-MM-dd HH:mm") ?? "ï¿½")</MudTd>
                         </RowTemplate>
                     </MudTable>
                     @if (_selected.Entries.Count > 10)
@@ -234,8 +237,8 @@
                         </MudText>
                     }
 
-                    <!-- Close session (only if Open = 0) -->
-                    @if (_selected.Status == 0)
+                    <!-- Close session (only if Ongoing) -->
+                    @if (_selected.Status == PhysicalCountStatus.Ongoing)
                     {
                         <MudDivider Class="my-3" />
                         <MudText Typo="Typo.subtitle2" Class="mb-2">Close Session</MudText>
@@ -267,8 +270,8 @@
     private bool _busy;
     private string? _error;
     private string? _keyword;
-    private int? _statusFilter;
-    private int? _scopeFilter;
+    private PhysicalCountStatus? _statusFilter;
+    private PhysicalCountScope? _scopeFilter;
     private int _page = 1;
     private int _totalPages = 1;
     private int _totalCount;
@@ -283,7 +286,7 @@
     private sealed class StartFormModel
     {
         public string Code { get; set; } = "";
-        public int Scope { get; set; }
+        public PhysicalCountScope Scope { get; set; }
         public string FundCluster { get; set; } = "";
         public DateTime? AsAtNullable { get; set; }
         public DateTime? StartedOnNullable { get; set; }
@@ -409,9 +412,35 @@
         if (e.Key == "Enter") { _page = 1; await LoadAsync(); }
     }
 
-    private static string FormatScope(int v) => v switch { 0 => "Semi-Expendable", 1 => "PPE", 2 => "All Assets", _ => v.ToString() };
-    private static string FormatCountStatus(int v) => v switch { 0 => "Open", 1 => "Reconciled", 2 => "Closed", _ => v.ToString() };
-    private static Color CountStatusColor(int v) => v switch { 0 => Color.Info, 1 => Color.Warning, 2 => Color.Success, _ => Color.Default };
-    private static string FormatCountCondition(int v) => v switch { 0 => "Good", 1 => "Fair", 2 => "Poor", 3 => "Missing", 4 => "FoundAtStation", _ => v.ToString() };
+    private static string FormatScope(PhysicalCountScope v) => v switch
+    {
+        PhysicalCountScope.PPEOnly => "PPE",
+        PhysicalCountScope.SEOnly => "Semi-Expendable",
+        PhysicalCountScope.Both => "All Assets",
+        _ => v.ToString()
+    };
+    private static string FormatCountStatus(PhysicalCountStatus v) => v switch
+    {
+        PhysicalCountStatus.Ongoing => "Ongoing",
+        PhysicalCountStatus.Reconciled => "Reconciled",
+        PhysicalCountStatus.Closed => "Closed",
+        _ => v.ToString()
+    };
+    private static Color CountStatusColor(PhysicalCountStatus v) => v switch
+    {
+        PhysicalCountStatus.Ongoing => Color.Info,
+        PhysicalCountStatus.Reconciled => Color.Warning,
+        PhysicalCountStatus.Closed => Color.Success,
+        _ => Color.Default
+    };
+    private static string FormatCountCondition(PhysicalCountCondition v) => v switch
+    {
+        PhysicalCountCondition.InGoodCondition => "Good",
+        PhysicalCountCondition.NeedingRepair => "Needs Repair",
+        PhysicalCountCondition.Unserviceable => "Unserviceable",
+        PhysicalCountCondition.Missing => "Missing",
+        PhysicalCountCondition.FoundAtStation => "Found at Station",
+        _ => v.ToString()
+    };
 }
 

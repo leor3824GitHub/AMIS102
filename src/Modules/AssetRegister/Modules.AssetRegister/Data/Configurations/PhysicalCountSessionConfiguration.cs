@@ -16,7 +16,11 @@ internal sealed class PhysicalCountSessionConfiguration : IEntityTypeConfigurati
 
         builder.HasKey(x => x.Id);
         builder.Property(x => x.TenantId).IsRequired().HasMaxLength(50);
-        builder.Property(x => x.Version).IsRowVersion();
+        builder.Property<uint>("xmin")
+            .HasColumnName("xmin")
+            .HasColumnType("xid")
+            .ValueGeneratedOnAddOrUpdate()
+            .IsConcurrencyToken();
         builder.Property(x => x.Code).IsRequired().HasMaxLength(64);
         builder.Property(x => x.FundCluster).IsRequired().HasMaxLength(64);
         builder.Property(x => x.Remarks).HasMaxLength(2000);

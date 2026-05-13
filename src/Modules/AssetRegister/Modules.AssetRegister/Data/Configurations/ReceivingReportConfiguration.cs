@@ -15,7 +15,11 @@ internal sealed class ReceivingReportConfiguration : IEntityTypeConfiguration<Re
 
         builder.HasKey(x => x.Id);
         builder.Property(x => x.TenantId).IsRequired().HasMaxLength(50);
-        builder.Property(x => x.Version).IsRowVersion();
+        builder.Property<uint>("xmin")
+            .HasColumnName("xmin")
+            .HasColumnType("xid")
+            .ValueGeneratedOnAddOrUpdate()
+            .IsConcurrencyToken();
         builder.Property(x => x.ReportNo).IsRequired().HasMaxLength(64);
         builder.Property(x => x.ReceivedFrom).IsRequired().HasMaxLength(200);
         builder.Property(x => x.Address).HasMaxLength(500);

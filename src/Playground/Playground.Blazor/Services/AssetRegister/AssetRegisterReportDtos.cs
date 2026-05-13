@@ -1,3 +1,5 @@
+using AMIS.Modules.AssetRegister.Contracts.v1;
+
 namespace AMIS.Playground.Blazor.Services.AssetRegister;
 
 public sealed record AccountabilityReportLineDto(
@@ -11,15 +13,15 @@ public sealed record AccountabilityReportLineDto(
     string? ResponsibilityCenterCode,
     int IssuedQty,
     int ReturnedQty,
-    int LineStatus,
+    AccountabilityLineStatus LineStatus,
     DateOnly? ReturnedOn,
-    int? ReturnedConditionAtReturn);
+    AssetCondition? ReturnedConditionAtReturn);
 
 public sealed record AccountabilityReportDto(
     Guid AccountabilityId,
     string DocumentNo,
-    int AccountabilityType,
-    int Status,
+    AccountabilityType AccountabilityType,
+    AccountabilityStatus Status,
     string FundCluster,
     DateOnly IssuedOn,
     DateOnly? ExpiresOn,
@@ -45,7 +47,7 @@ public sealed record RegSpiRowDto(
     Guid AssetRegistryId,
     string PropertyNo,
     string Description,
-    int AssetType,
+    AssetType AssetType,
     string Unit,
     decimal UnitCost,
     int Quantity,
@@ -54,7 +56,7 @@ public sealed record RegSpiRowDto(
 
 public sealed record RegSpiReportDto(
     DateOnly AsOfDate,
-    int? AssetType,
+    AssetType? AssetType,
     Guid? CustodianId,
     IReadOnlyCollection<RegSpiRowDto> Rows,
     int TotalItems,
@@ -64,11 +66,11 @@ public sealed record PhysicalCountReportEntryDto(
     Guid EntryId,
     Guid? AssetRegistryId,
     string? PropertyNo,
-    int? AssetType,
+    AssetType? AssetType,
     string Article,
     string Unit,
     decimal UnitCost,
-    int Condition,
+    PhysicalCountCondition Condition,
     Guid LocationId,
     DateTimeOffset? ScannedOnUtc,
     Guid? ScannedByEmployeeId,
@@ -77,8 +79,8 @@ public sealed record PhysicalCountReportEntryDto(
 public sealed record PhysicalCountReportDto(
     Guid SessionId,
     string Code,
-    int Scope,
-    int Status,
+    PhysicalCountScope Scope,
+    PhysicalCountStatus Status,
     string FundCluster,
     DateOnly AsAt,
     DateOnly StartedOn,
@@ -106,8 +108,8 @@ public sealed record IssuanceReportLineDocumentDto(
 public sealed record IssuanceReportDocumentDto(
     Guid ReportId,
     string ReportNo,
-    int ReportType,
-    int Status,
+    IssuanceReportType ReportType,
+    IssuanceReportStatus Status,
     string FundCluster,
     DateOnly PeriodFromDate,
     DateOnly PeriodToDate,
@@ -129,17 +131,17 @@ public sealed record IncidentReportItemDocumentDto(
     Guid AssetRegistryId,
     string PropertyNo,
     string Description,
-    int AssetType,
+    AssetType AssetType,
     decimal AcquisitionCost,
     decimal CurrentReplacementCost,
-    int Resolution,
+    IncidentItemResolution Resolution,
     DateOnly? ResolvedOn);
 
 public sealed record IncidentReportDocumentDto(
     Guid IncidentReportId,
     string IncidentNo,
-    int IncidentType,
-    int Status,
+    PropertyIncidentType IncidentType,
+    PropertyIncidentStatus Status,
     DateOnly IncidentDate,
     string FundCluster,
     string DepartmentOffice,
@@ -156,13 +158,13 @@ public sealed record UnserviceableReportItemDocumentDto(
     Guid AssetRegistryId,
     string PropertyNo,
     string Description,
-    int AssetType,
+    AssetType AssetType,
     DateOnly DateAcquired,
     decimal AcquisitionCost,
     decimal AccumulatedDepreciation,
     decimal AccumulatedImpairmentLosses,
     decimal CarryingAmount,
-    int? DisposalMethod,
+    DisposalMethod? DisposalMethod,
     DateOnly? DisposalRecordedOn,
     string? SaleORNo,
     decimal? SaleAmount,
@@ -171,8 +173,8 @@ public sealed record UnserviceableReportItemDocumentDto(
 public sealed record UnserviceableReportDocumentDto(
     Guid ReportId,
     string ReportNo,
-    int ReportType,
-    int Status,
+    UnserviceableReportType ReportType,
+    UnserviceableReportStatus Status,
     DateOnly AsAt,
     string FundCluster,
     string Station,
@@ -181,4 +183,3 @@ public sealed record UnserviceableReportDocumentDto(
     string AccountableOfficerDesignation,
     IReadOnlyCollection<UnserviceableReportItemDocumentDto> Items,
     decimal TotalCarryingAmount);
-

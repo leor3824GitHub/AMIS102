@@ -1,5 +1,8 @@
 @page "/asset-register/unserviceable"
 @using AMIS.Playground.Blazor.ApiClient
+@using UnserviceableReportType = AMIS.Modules.AssetRegister.Contracts.v1.UnserviceableReportType
+@using UnserviceableReportStatus = AMIS.Modules.AssetRegister.Contracts.v1.UnserviceableReportStatus
+@using DisposalMethod = AMIS.Modules.AssetRegister.Contracts.v1.DisposalMethod
 @inject IArUnserviceableReportClient Client
 @inject ISnackbar Snackbar
 
@@ -18,19 +21,20 @@
                                       OnKeyDown="OnSearchKeyDown" Immediate="false" />
                     </MudItem>
                     <MudItem xs="6" md="2">
-                        <MudSelect @bind-Value="_typeFilter" Label="Report Type" Variant="Variant.Outlined" T="int?" Clearable="true">
-                            <MudSelectItem Value="@((int?)null)">All</MudSelectItem>
-                            <MudSelectItem Value="@((int?)0)">IIRUSP (SE)</MudSelectItem>
-                            <MudSelectItem Value="@((int?)1)">IIRUP (PPE)</MudSelectItem>
+                        <MudSelect @bind-Value="_typeFilter" Label="Report Type" Variant="Variant.Outlined" T="UnserviceableReportType?" Clearable="true">
+                            <MudSelectItem Value="@((UnserviceableReportType?)null)">All</MudSelectItem>
+                            <MudSelectItem Value="@((UnserviceableReportType?)UnserviceableReportType.IIRUSP)">IIRUSP (SE)</MudSelectItem>
+                            <MudSelectItem Value="@((UnserviceableReportType?)UnserviceableReportType.IIRUP)">IIRUP (PPE)</MudSelectItem>
                         </MudSelect>
                     </MudItem>
                     <MudItem xs="6" md="2">
-                        <MudSelect @bind-Value="_statusFilter" Label="Status" Variant="Variant.Outlined" T="int?" Clearable="true">
-                            <MudSelectItem Value="@((int?)null)">All</MudSelectItem>
-                            <MudSelectItem Value="@((int?)0)">Draft</MudSelectItem>
-                            <MudSelectItem Value="@((int?)1)">Submitted</MudSelectItem>
-                            <MudSelectItem Value="@((int?)2)">Inspected</MudSelectItem>
-                            <MudSelectItem Value="@((int?)3)">Disposed</MudSelectItem>
+                        <MudSelect @bind-Value="_statusFilter" Label="Status" Variant="Variant.Outlined" T="UnserviceableReportStatus?" Clearable="true">
+                            <MudSelectItem Value="@((UnserviceableReportStatus?)null)">All</MudSelectItem>
+                            <MudSelectItem Value="@((UnserviceableReportStatus?)UnserviceableReportStatus.Draft)">Draft</MudSelectItem>
+                            <MudSelectItem Value="@((UnserviceableReportStatus?)UnserviceableReportStatus.Submitted)">Submitted</MudSelectItem>
+                            <MudSelectItem Value="@((UnserviceableReportStatus?)UnserviceableReportStatus.InspectionDone)">Inspection Done</MudSelectItem>
+                            <MudSelectItem Value="@((UnserviceableReportStatus?)UnserviceableReportStatus.DisposalRecorded)">Disposal Recorded</MudSelectItem>
+                            <MudSelectItem Value="@((UnserviceableReportStatus?)UnserviceableReportStatus.Closed)">Closed</MudSelectItem>
                         </MudSelect>
                     </MudItem>
                     <MudItem xs="12" md="2" Class="d-flex align-end">
@@ -110,9 +114,9 @@
                             <MudTd><strong>@context.ReportNo</strong></MudTd>
                             <MudTd>
                                 <MudChip T="string" Size="Size.Small"
-                                         Color="@(context.ReportType == 0 ? Color.Info : Color.Secondary)"
+                                         Color="@(context.ReportType == UnserviceableReportType.IIRUSP ? Color.Info : Color.Secondary)"
                                          Variant="Variant.Outlined">
-                                    @(context.ReportType == 0 ? "IIRUSP" : "IIRUP")
+                                    @(context.ReportType == UnserviceableReportType.IIRUSP ? "IIRUSP" : "IIRUP")
                                 </MudChip>
                             </MudTd>
                             <MudTd>
@@ -167,7 +171,7 @@
                     <MudGrid Class="mb-3">
                         <MudItem xs="6" md="3">
                             <MudText Typo="Typo.caption" Color="Color.Secondary">Report Type</MudText>
-                            <MudText Typo="Typo.body2">@(_selected.ReportType == 0 ? "IIRUSP (SE)" : "IIRUP (PPE)")</MudText>
+                            <MudText Typo="Typo.body2">@(_selected.ReportType == UnserviceableReportType.IIRUSP ? "IIRUSP (SE)" : "IIRUP (PPE)")</MudText>
                         </MudItem>
                         <MudItem xs="6" md="3">
                             <MudText Typo="Typo.caption" Color="Color.Secondary">As At</MudText>
@@ -183,7 +187,7 @@
                         </MudItem>
                         <MudItem xs="6" md="4">
                             <MudText Typo="Typo.caption" Color="Color.Secondary">Accountable Officer</MudText>
-                            <MudText Typo="Typo.body2">@_selected.AccountableOfficer.PrintedName (@(_selected.AccountableOfficer.Designation ?? "—"))</MudText>
+                            <MudText Typo="Typo.body2">@_selected.AccountableOfficer.PrintedName (@(_selected.AccountableOfficer.Designation ?? "ï¿½"))</MudText>
                         </MudItem>
                         @if (_selected.ApprovedBy is not null)
                         {
@@ -196,7 +200,7 @@
                         {
                             <MudItem xs="6" md="4">
                                 <MudText Typo="Typo.caption" Color="Color.Secondary">Inspected By / On</MudText>
-                                <MudText Typo="Typo.body2">@_selected.InspectedBy.PrintedName — @_selected.InspectedOn?.ToString("yyyy-MM-dd")</MudText>
+                                <MudText Typo="Typo.body2">@_selected.InspectedBy.PrintedName ï¿½ @_selected.InspectedOn?.ToString("yyyy-MM-dd")</MudText>
                             </MudItem>
                         }
                     </MudGrid>
@@ -223,8 +227,8 @@
                         </RowTemplate>
                     </MudTable>
 
-                    <!-- Add item (Draft only = 0) -->
-                    @if (_selected.Status == 0)
+                    <!-- Add item (Draft only) -->
+                    @if (_selected.Status == UnserviceableReportStatus.Draft)
                     {
                         <MudDivider Class="my-3" />
                         <MudText Typo="Typo.subtitle2" Class="mb-2">Add Asset Item</MudText>
@@ -240,8 +244,8 @@
                         </MudStack>
                     }
 
-                    <!-- Submit (Draft ? Submitted) -->
-                    @if (_selected.Status == 0 && _selected.Items.Count > 0)
+                    <!-- Submit (Draft â†’ Submitted) -->
+                    @if (_selected.Status == UnserviceableReportStatus.Draft && _selected.Items.Count > 0)
                     {
                         <MudDivider Class="my-3" />
                         <MudText Typo="Typo.subtitle2" Class="mb-2">Submit for Approval</MudText>
@@ -266,8 +270,8 @@
     private bool _busy;
     private string? _error;
     private string? _keyword;
-    private int? _typeFilter;
-    private int? _statusFilter;
+    private UnserviceableReportType? _typeFilter;
+    private UnserviceableReportStatus? _statusFilter;
     private int _page = 1;
     private int _totalPages = 1;
     private int _totalCount;
@@ -289,7 +293,7 @@
 
     private sealed class CreateFormModel
     {
-        public int ReportType { get; set; }
+        public UnserviceableReportType ReportType { get; set; }
         public string FundCluster { get; set; } = "";
         public string Station { get; set; } = "";
         public DateTime? AsAtNullable { get; set; }
@@ -431,29 +435,30 @@
         if (e.Key == "Enter") { _page = 1; await LoadAsync(); }
     }
 
-    private static string FormatUnserviceableStatus(int v) => v switch
+    private static string FormatUnserviceableStatus(UnserviceableReportStatus v) => v switch
     {
-        0 => "Draft",
-        1 => "Submitted",
-        2 => "Inspected",
-        3 => "Disposed",
+        UnserviceableReportStatus.Draft => "Draft",
+        UnserviceableReportStatus.Submitted => "Submitted",
+        UnserviceableReportStatus.InspectionDone => "Inspection Done",
+        UnserviceableReportStatus.DisposalRecorded => "Disposal Recorded",
+        UnserviceableReportStatus.Closed => "Closed",
         _ => v.ToString()
     };
-    private static Color UnserviceableStatusColor(int v) => v switch
+    private static Color UnserviceableStatusColor(UnserviceableReportStatus v) => v switch
     {
-        0 => Color.Default,
-        1 => Color.Warning,
-        2 => Color.Info,
-        3 => Color.Success,
+        UnserviceableReportStatus.Draft => Color.Default,
+        UnserviceableReportStatus.Submitted => Color.Warning,
+        UnserviceableReportStatus.InspectionDone => Color.Info,
+        UnserviceableReportStatus.DisposalRecorded => Color.Primary,
+        UnserviceableReportStatus.Closed => Color.Success,
         _ => Color.Default
     };
-    private static string FormatDisposalMethod(int v) => v switch
+    private static string FormatDisposalMethod(DisposalMethod v) => v switch
     {
-        0 => "PublicAuction",
-        1 => "Donation",
-        2 => "Destruction",
-        3 => "BurningOfWaste",
-        4 => "Other",
+        DisposalMethod.Sale => "Sale",
+        DisposalMethod.Transfer => "Transfer",
+        DisposalMethod.Destruction => "Destruction",
+        DisposalMethod.Other => "Other",
         _ => v.ToString()
     };
 }

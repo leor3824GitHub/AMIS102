@@ -9,7 +9,6 @@ namespace AMIS.Modules.AssetRegister.Domain.Accountability;
 public sealed class PropertyAccountability : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 {
     public string TenantId { get; private set; } = default!;
-    public byte[] Version { get; set; } = [];
 
     public string DocumentNo { get; private set; } = default!;
     public AccountabilityType AccountabilityType { get; private set; }

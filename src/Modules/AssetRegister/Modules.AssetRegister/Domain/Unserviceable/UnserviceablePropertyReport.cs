@@ -9,7 +9,6 @@ namespace AMIS.Modules.AssetRegister.Domain.Unserviceable;
 public sealed class UnserviceablePropertyReport : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 {
     public string TenantId { get; private set; } = default!;
-    public byte[] Version { get; set; } = [];
 
     public string ReportNo { get; private set; } = default!;
     public UnserviceableReportType ReportType { get; private set; }

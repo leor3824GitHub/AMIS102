@@ -16,7 +16,11 @@ internal sealed class PropertyCodeCounterConfiguration : IEntityTypeConfiguratio
         builder.HasKey(x => x.Id);
         builder.Property(x => x.TenantId).IsRequired().HasMaxLength(50);
         builder.Property(x => x.CounterKey).IsRequired().HasMaxLength(32);
-        builder.Property(x => x.RowVersion).IsRowVersion();
+        builder.Property<uint>("xmin")
+            .HasColumnName("xmin")
+            .HasColumnType("xid")
+            .ValueGeneratedOnAddOrUpdate()
+            .IsConcurrencyToken();
 
         builder.HasIndex(x => new { x.TenantId, x.Year, x.Month, x.CounterKey }).IsUnique();
     }

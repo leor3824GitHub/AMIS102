@@ -1,4 +1,5 @@
 @page "/asset-register/accountability"
+@using AMIS.Modules.AssetRegister.Contracts.v1
 @using AMIS.Playground.Blazor.ApiClient
 @inject IArAccountabilityClient Client
 @inject ISnackbar Snackbar
@@ -18,20 +19,19 @@
                                       OnKeyDown="OnSearchKeyDown" Immediate="false" />
                     </MudItem>
                     <MudItem xs="6" md="2">
-                        <MudSelect @bind-Value="_typeFilter" Label="Type" Variant="Variant.Outlined" T="int?" Clearable="true">
-                            <MudSelectItem Value="@((int?)null)">All</MudSelectItem>
-                            <MudSelectItem Value="@((int?)0)">ICS (SE)</MudSelectItem>
-                            <MudSelectItem Value="@((int?)1)">PAR (PPE)</MudSelectItem>
+                        <MudSelect @bind-Value="_typeFilter" Label="Type" Variant="Variant.Outlined" T="AccountabilityType?" Clearable="true">
+                            <MudSelectItem Value="@((AccountabilityType?)null)">All</MudSelectItem>
+                            <MudSelectItem Value="@((AccountabilityType?)AccountabilityType.SE_ICS)">ICS (SE)</MudSelectItem>
+                            <MudSelectItem Value="@((AccountabilityType?)AccountabilityType.PPE_PAR)">PAR (PPE)</MudSelectItem>
                         </MudSelect>
                     </MudItem>
                     <MudItem xs="6" md="2">
-                        <MudSelect @bind-Value="_statusFilter" Label="Status" Variant="Variant.Outlined" T="int?" Clearable="true">
-                            <MudSelectItem Value="@((int?)null)">All</MudSelectItem>
-                            <MudSelectItem Value="@((int?)0)">Active</MudSelectItem>
-                            <MudSelectItem Value="@((int?)1)">PartiallyReturned</MudSelectItem>
-                            <MudSelectItem Value="@((int?)2)">FullyReturned</MudSelectItem>
-                            <MudSelectItem Value="@((int?)3)">Cancelled</MudSelectItem>
-                            <MudSelectItem Value="@((int?)4)">Superseded</MudSelectItem>
+                        <MudSelect @bind-Value="_statusFilter" Label="Status" Variant="Variant.Outlined" T="AccountabilityStatus?" Clearable="true">
+                            <MudSelectItem Value="@((AccountabilityStatus?)null)">All</MudSelectItem>
+                            <MudSelectItem Value="@((AccountabilityStatus?)AccountabilityStatus.Active)">Active</MudSelectItem>
+                            <MudSelectItem Value="@((AccountabilityStatus?)AccountabilityStatus.Renewed)">Renewed</MudSelectItem>
+                            <MudSelectItem Value="@((AccountabilityStatus?)AccountabilityStatus.Returned)">Returned</MudSelectItem>
+                            <MudSelectItem Value="@((AccountabilityStatus?)AccountabilityStatus.Cancelled)">Cancelled</MudSelectItem>
                         </MudSelect>
                     </MudItem>
                     <MudItem xs="12" md="2" Class="d-flex align-end">
@@ -73,9 +73,9 @@
                             <MudTd><strong>@context.DocumentNo</strong></MudTd>
                             <MudTd>
                                 <MudChip T="string" Size="Size.Small"
-                                         Color="@(context.AccountabilityType == 0 ? Color.Info : Color.Secondary)"
+                                         Color="@(context.AccountabilityType == AccountabilityType.SE_ICS ? Color.Info : Color.Secondary)"
                                          Variant="Variant.Outlined">
-                                    @(context.AccountabilityType == 0 ? "ICS" : "PAR")
+                                    @(context.AccountabilityType == AccountabilityType.SE_ICS ? "ICS" : "PAR")
                                 </MudChip>
                             </MudTd>
                             <MudTd>
@@ -86,7 +86,7 @@
                                 </MudChip>
                             </MudTd>
                             <MudTd>@context.IssuedOn.ToString("yyyy-MM-dd")</MudTd>
-                            <MudTd>@(context.ExpiresOn?.ToString("yyyy-MM-dd") ?? "—")</MudTd>
+                            <MudTd>@(context.ExpiresOn?.ToString("yyyy-MM-dd") ?? "ï¿½")</MudTd>
                             <MudTd Style="text-align:right">@context.LineCount</MudTd>
                         </RowTemplate>
                         <NoRecordsContent>
@@ -119,7 +119,7 @@
                     <CardHeaderContent>
                         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
                             <MudText Typo="Typo.h6">
-                                @(_selected.AccountabilityType == 0 ? "ICS" : "PAR") — @_selected.DocumentNo
+                                @(_selected.AccountabilityType == AccountabilityType.SE_ICS ? "ICS" : "PAR") â€” @_selected.DocumentNo
                             </MudText>
                             <MudChip T="string" Size="Size.Small" Color="@StatusColor(_selected.Status)" Variant="Variant.Filled">
                                 @FormatStatus(_selected.Status)
@@ -139,7 +139,7 @@
                         </MudItem>
                         <MudItem xs="6" md="3">
                             <MudText Typo="Typo.caption" Color="Color.Secondary">Expires On</MudText>
-                            <MudText Typo="Typo.body2">@(_selected.ExpiresOn?.ToString("yyyy-MM-dd") ?? "—")</MudText>
+                            <MudText Typo="Typo.body2">@(_selected.ExpiresOn?.ToString("yyyy-MM-dd") ?? "ï¿½")</MudText>
                         </MudItem>
                         <MudItem xs="6" md="3">
                             <MudText Typo="Typo.caption" Color="Color.Secondary">Fund Cluster</MudText>
@@ -147,11 +147,11 @@
                         </MudItem>
                         <MudItem xs="12" md="6">
                             <MudText Typo="Typo.caption" Color="Color.Secondary">Issued By</MudText>
-                            <MudText Typo="Typo.body2">@_selected.IssuedBy.PrintedName (@(_selected.IssuedBy.Designation ?? "—"))</MudText>
+                            <MudText Typo="Typo.body2">@_selected.IssuedBy.PrintedName (@(_selected.IssuedBy.Designation ?? "ï¿½"))</MudText>
                         </MudItem>
                         <MudItem xs="12" md="6">
                             <MudText Typo="Typo.caption" Color="Color.Secondary">Received By</MudText>
-                            <MudText Typo="Typo.body2">@_selected.ReceivedBy.PrintedName (@(_selected.ReceivedBy.Designation ?? "—"))</MudText>
+                            <MudText Typo="Typo.body2">@_selected.ReceivedBy.PrintedName (@(_selected.ReceivedBy.Designation ?? "ï¿½"))</MudText>
                         </MudItem>
                         @if (!string.IsNullOrEmpty(_selected.CancellationReason))
                         {
@@ -183,12 +183,12 @@
                             <MudTd Style="text-align:right">@context.ReturnedQty</MudTd>
                             <MudTd Style="text-align:right">@context.Snapshot.UnitCost.ToString("N2")</MudTd>
                             <MudTd>@FormatLineStatus(context.LineStatus)</MudTd>
-                            <MudTd>@(context.ReturnedOn?.ToString("yyyy-MM-dd") ?? "—")</MudTd>
+                            <MudTd>@(context.ReturnedOn?.ToString("yyyy-MM-dd") ?? "ï¿½")</MudTd>
                         </RowTemplate>
                     </MudTable>
 
-                    <!-- Cancel action (only for Active status = 0) -->
-                    @if (_selected.Status == 0)
+                    <!-- Cancel action (only for Active) -->
+                    @if (_selected.Status == AccountabilityStatus.Active)
                     {
                         <MudDivider Class="my-3" />
                         <MudText Typo="Typo.subtitle2" Class="mb-2">Cancel Accountability</MudText>
@@ -211,8 +211,8 @@
     private bool _busy;
     private string? _error;
     private string? _keyword;
-    private int? _typeFilter;
-    private int? _statusFilter;
+    private AccountabilityType? _typeFilter;
+    private AccountabilityStatus? _statusFilter;
     private int _page = 1;
     private int _totalPages = 1;
     private int _totalCount;
@@ -299,29 +299,27 @@
         if (e.Key == "Enter") { _page = 1; await LoadAsync(); }
     }
 
-    private static string FormatStatus(int v) => v switch
+    private static string FormatStatus(AccountabilityStatus v) => v switch
     {
-        0 => "Active",
-        1 => "PartiallyReturned",
-        2 => "FullyReturned",
-        3 => "Cancelled",
-        4 => "Superseded",
+        AccountabilityStatus.Active => "Active",
+        AccountabilityStatus.Renewed => "Renewed",
+        AccountabilityStatus.Returned => "Returned",
+        AccountabilityStatus.Cancelled => "Cancelled",
         _ => v.ToString()
     };
-    private static Color StatusColor(int v) => v switch
+    private static Color StatusColor(AccountabilityStatus v) => v switch
     {
-        0 => Color.Success,
-        1 => Color.Warning,
-        2 => Color.Info,
-        3 => Color.Error,
-        4 => Color.Dark,
+        AccountabilityStatus.Active => Color.Success,
+        AccountabilityStatus.Renewed => Color.Warning,
+        AccountabilityStatus.Returned => Color.Info,
+        AccountabilityStatus.Cancelled => Color.Error,
         _ => Color.Default
     };
-    private static string FormatLineStatus(int v) => v switch
+    private static string FormatLineStatus(AccountabilityLineStatus v) => v switch
     {
-        0 => "Active",
-        1 => "Returned",
-        2 => "Lost",
+        AccountabilityLineStatus.Active => "Active",
+        AccountabilityLineStatus.Returned => "Returned",
+        AccountabilityLineStatus.Lost => "Lost",
         _ => v.ToString()
     };
 }

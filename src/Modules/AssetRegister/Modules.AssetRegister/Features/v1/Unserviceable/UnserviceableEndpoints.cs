@@ -19,7 +19,7 @@ public static class UnserviceableEndpoints
                 var r = await mediator.Send(cmd, ct);
                 return TypedResults.Created($"/api/v1/asset-register/unserviceable/{r.Id}", r);
             })
-            .WithName(nameof(CreateUnserviceableReportDraftCommand))
+            .WithName("AssetRegister_CreateUnserviceableReportDraft")
             .WithSummary("Create a draft unserviceable property report (IIRUSP/IIRUP)")
             .Produces<UnserviceablePropertyReportDto>(StatusCodes.Status201Created)
             .RequirePermission(AssetRegisterModuleConstants.Permissions.Unserviceable.File);
@@ -30,7 +30,7 @@ public static class UnserviceableEndpoints
                 if (id != cmd.ReportId) return TypedResults.BadRequest("Route id and body id must match.");
                 return (IResult)TypedResults.Ok(await mediator.Send(cmd, ct));
             })
-            .WithName(nameof(AddUnserviceableReportItemCommand))
+            .WithName("AssetRegister_AddUnserviceableReportItem")
             .WithSummary("Add an item to a draft unserviceable report")
             .Produces<UnserviceablePropertyReportDto>()
             .RequirePermission(AssetRegisterModuleConstants.Permissions.Unserviceable.File);
@@ -41,7 +41,7 @@ public static class UnserviceableEndpoints
                 if (id != cmd.ReportId) return TypedResults.BadRequest("Route id and body id must match.");
                 return (IResult)TypedResults.Ok(await mediator.Send(cmd, ct));
             })
-            .WithName(nameof(SubmitUnserviceableReportCommand))
+            .WithName("AssetRegister_SubmitUnserviceableReport")
             .WithSummary("Submit a draft unserviceable report")
             .Produces<UnserviceablePropertyReportDto>()
             .RequirePermission(AssetRegisterModuleConstants.Permissions.Unserviceable.File);
@@ -52,7 +52,7 @@ public static class UnserviceableEndpoints
                 if (id != cmd.ReportId) return TypedResults.BadRequest("Route id and body id must match.");
                 return (IResult)TypedResults.Ok(await mediator.Send(cmd, ct));
             })
-            .WithName(nameof(RecordUnserviceableInspectionCommand))
+            .WithName("AssetRegister_RecordUnserviceableInspection")
             .WithSummary("Record inspection decisions per item")
             .Produces<UnserviceablePropertyReportDto>()
             .RequirePermission(AssetRegisterModuleConstants.Permissions.Unserviceable.Dispose);
@@ -63,14 +63,14 @@ public static class UnserviceableEndpoints
                 if (id != cmd.ReportId) return TypedResults.BadRequest("Route id and body id must match.");
                 return (IResult)TypedResults.Ok(await mediator.Send(cmd, ct));
             })
-            .WithName(nameof(RecordUnserviceableDisposalCommand))
+            .WithName("AssetRegister_RecordUnserviceableDisposal")
             .WithSummary("Record disposal records — flips assets to Disposed")
             .Produces<UnserviceablePropertyReportDto>()
             .RequirePermission(AssetRegisterModuleConstants.Permissions.Unserviceable.Dispose);
 
         endpoints.MapPost("/{id:guid}/close", async (Guid id, IMediator mediator, CancellationToken ct) =>
                 TypedResults.Ok(await mediator.Send(new CloseUnserviceableReportCommand(id), ct)))
-            .WithName(nameof(CloseUnserviceableReportCommand))
+            .WithName("AssetRegister_CloseUnserviceableReport")
             .WithSummary("Close a fully disposed unserviceable report")
             .Produces<UnserviceablePropertyReportDto>()
             .RequirePermission(AssetRegisterModuleConstants.Permissions.Unserviceable.Dispose);
@@ -80,7 +80,7 @@ public static class UnserviceableEndpoints
                 var r = await mediator.Send(new GetUnserviceableReportQuery(id), ct);
                 return r is null ? (IResult)TypedResults.NotFound() : TypedResults.Ok(r);
             })
-            .WithName(nameof(GetUnserviceableReportQuery))
+            .WithName("AssetRegister_GetUnserviceableReport")
             .WithSummary("Get an unserviceable report by id")
             .Produces<UnserviceablePropertyReportDto>()
             .Produces(StatusCodes.Status404NotFound)
@@ -101,7 +101,7 @@ public static class UnserviceableEndpoints
                     keyword, reportType, status, fromDate, toDate, pageNumber, pageSize), ct);
                 return TypedResults.Ok(r);
             })
-            .WithName(nameof(SearchUnserviceableReportsQuery))
+            .WithName("AssetRegister_SearchUnserviceableReports")
             .WithSummary("Search unserviceable reports")
             .Produces<PagedResponse<UnserviceablePropertyReportSummaryDto>>()
             .RequirePermission(AssetRegisterModuleConstants.Permissions.Unserviceable.View);
