@@ -49,7 +49,7 @@ public sealed class UpdateVehicleDailyUsageCommandHandler(VehicleDbContext db, I
             cmd.Destination,
             cmd.Remarks);
 
-        usage.LastModifiedBy = currentUser.GetUserId().ToString();
+        usage.SetLastModifiedBy(currentUser.GetUserId().ToString());
 
         await db.SaveChangesAsync(ct).ConfigureAwait(false);
 

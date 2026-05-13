@@ -84,7 +84,10 @@
                     }
 
                     <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
-                               OnClick="CreateAsync" Disabled="_busy || !_form.PropertyInspectorCertified">Create RRP</MudButton>
+                               OnClick="CreateAsync" Disabled="_busy || !_form.PropertyInspectorCertified">
+                        @if (_busy) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" /> }
+                        Create RRP
+                    </MudButton>
                 </MudStack>
             </MudCardContent>
         </MudCard>

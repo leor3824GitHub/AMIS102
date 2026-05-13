@@ -23,23 +23,60 @@ public sealed class GetRPCPPEQueryHandler(AssetManagementDbContext dbContext)
         if (session.Scope == PhysicalCountScope.SemiExpendableOnly)
             throw new CustomException("RPCPPE is only applicable to sessions that include PPE items.", Array.Empty<string>(), HttpStatusCode.UnprocessableEntity);
 
-        // Load PPE checklist entries — join to TangibleInventoryItem to filter AssetType == PPE.
-        var ppeEntries = await (
-            from e in dbContext.PhysicalCountEntries.Where(x => x.SessionId == query.SessionId && x.TangibleInventoryItemId != null)
-            join inv in dbContext.TangibleInventoryItems
-                on e.TangibleInventoryItemId equals inv.Id
-            where inv.AssetType == AssetType.PPE
-            orderby e.PropertyNumber
-            select new
-            {
-                Entry = e,
-                inv.PropertyNo,
-                inv.AcquisitionDate,
-            })
+        // Load all entries for this session up front. We'll classify them in memory
+        // — avoids LINQ-to-SQL join quirks with nullable Guid foreign keys.
+        var sessionEntries = await dbContext.PhysicalCountEntries
+            .Where(x => x.SessionId == query.SessionId)
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
-        var invItemIds = ppeEntries.Select(e => e.Entry.TangibleInventoryItemId!.Value).Distinct().ToList();
+        var linkedInvIds = sessionEntries
+            .Where(e => e.TangibleInventoryItemId.HasValue)
+            .Select(e => e.TangibleInventoryItemId!.Value)
+            .Distinct()
+            .ToList();
+
+        // Look up PropertyCode + AcquisitionDate + AssetType for every linked inventory item.
+        var invInfo = linkedInvIds.Count == 0
+            ? new Dictionary<Guid, (string PropertyNo, DateOnly AcquisitionDate, AssetType AssetType)>()
+            : (await dbContext.TangibleInventoryItems
+                .Where(inv => linkedInvIds.Contains(inv.Id))
+                .Select(inv => new { inv.Id, inv.PropertyNo, inv.AcquisitionDate, inv.AssetType })
+                .ToListAsync(cancellationToken)
+                .ConfigureAwait(false))
+            .ToDictionary(x => x.Id, x => (x.PropertyNo, x.AcquisitionDate, x.AssetType));
+
+        // RPCPPE eligibility:
+        //   1. Linked to a PPE TangibleInventoryItem  → standard checklist row, OR
+        //   2. Found-at-Station entry (not linked)    → discovered during the count.
+        // For PPEOnly sessions every linked entry is PPE by construction; for Both
+        // scope sessions we must check AssetType == PPE.
+        var allEntries = sessionEntries
+            .Select(e =>
+            {
+                if (e.TangibleInventoryItemId.HasValue
+                    && invInfo.TryGetValue(e.TangibleInventoryItemId.Value, out var info)
+                    && info.AssetType == AssetType.PPE)
+                {
+                    return new { Entry = e, PropertyCode = (string?)info.PropertyNo, AcquisitionDate = (DateOnly?)info.AcquisitionDate, Include = true };
+                }
+
+                if (e.TangibleInventoryItemId == null && e.Result == PhysicalCountEntryResult.FoundAtStation)
+                {
+                    return new { Entry = e, PropertyCode = (string?)null, AcquisitionDate = (DateOnly?)null, Include = true };
+                }
+
+                return new { Entry = e, PropertyCode = (string?)null, AcquisitionDate = (DateOnly?)null, Include = false };
+            })
+            .Where(x => x.Include)
+            .OrderBy(r => r.Entry.PropertyNumber, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        var invItemIds = allEntries
+            .Where(e => e.Entry.TangibleInventoryItemId.HasValue)
+            .Select(e => e.Entry.TangibleInventoryItemId!.Value)
+            .Distinct()
+            .ToList();
 
         // Load most-recent depreciation per inventory item from PPEIRItems.
         var allDeprRows = await (
@@ -61,7 +98,7 @@ public sealed class GetRPCPPEQueryHandler(AssetManagementDbContext dbContext)
             .GroupBy(x => x.TangibleInventoryItemId)
             .ToDictionary(g => g.Key, g => g.First());
 
-        var lineItems = ppeEntries.Select((row, idx) =>
+        var lineItems = allEntries.Select((row, idx) =>
         {
             var e = row.Entry;
             bool isFoundAtStation = e.Result == PhysicalCountEntryResult.FoundAtStation;
@@ -71,14 +108,14 @@ public sealed class GetRPCPPEQueryHandler(AssetManagementDbContext dbContext)
             int shortage = Math.Max(0, perCard - onHand);
             int overage  = Math.Max(0, onHand - perCard);
 
-            depreciationData.TryGetValue(e.TangibleInventoryItemId!.Value, out var depr);
+            depreciationData.TryGetValue(e.TangibleInventoryItemId ?? Guid.Empty, out var depr);
 
             return new RPCPPELineItemDto(
                 LineNo:                  idx + 1,
-                PropertyCode:            row.PropertyNo,
+                PropertyCode:            row.PropertyCode ?? string.Empty,
                 Description:             e.Description,
                 PropertyNumber:          e.PropertyNumber,
-                DateAcquired:            row.AcquisitionDate,
+                DateAcquired:            row.AcquisitionDate ?? session.CountDate,
                 UnitCost:                e.UnitCost,
                 AccumulatedDepreciation: depr?.AccumulatedDepreciation,
                 BookValue:               depr?.BookValue,

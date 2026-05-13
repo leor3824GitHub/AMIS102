@@ -1,4 +1,6 @@
+using System.Net;
 using FSH.Framework.Core.Context;
+using FSH.Framework.Core.Exceptions;
 using FSH.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
 using FSH.Modules.ProcurementPlanning.Data;
 using FSH.Modules.ProcurementPlanning.Features.v1.Ppmps;
@@ -17,7 +19,7 @@ public sealed class CreateUpdatePpmpCommandHandler(
             .Include(x => x.Items)
             .FirstOrDefaultAsync(x => x.Id == command.Id && x.IsCurrentVersion, cancellationToken)
             .ConfigureAwait(false)
-            ?? throw new KeyNotFoundException($"PPMP {command.Id} not found or is not the current version.");
+            ?? throw new CustomException($"PPMP {command.Id} not found or is not the current version.", Enumerable.Empty<string>(), HttpStatusCode.NotFound);
 
         var userId = currentUser.GetUserId();
         var update = original.CreateUpdate(command.UpdateReason, userId);

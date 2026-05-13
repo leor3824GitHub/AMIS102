@@ -1,0 +1,729 @@
+@page "/asset-register/reports"
+@using FSH.Playground.Blazor.Services.AssetRegister
+@inject IAssetRegisterReportsClient ReportsClient
+
+<MudText Typo="Typo.h4" GutterBottom="true">Asset Register Reports</MudText>
+<MudText Typo="Typo.body2" Class="mb-4">
+    Render report data in-page using concrete IDs and optional filters.
+</MudText>
+
+<MudGrid>
+    <MudItem xs="12" md="6">
+        <MudTextField Label="Accountability Id" @bind-Value="_accountabilityId" Variant="Variant.Outlined" FullWidth="true" />
+    </MudItem>
+    <MudItem xs="12" md="6">
+        <MudTextField Label="Issuance Report Id" @bind-Value="_issuanceReportId" Variant="Variant.Outlined" FullWidth="true" />
+    </MudItem>
+    <MudItem xs="12" md="6">
+        <MudTextField Label="Physical Count Session Id" @bind-Value="_sessionId" Variant="Variant.Outlined" FullWidth="true" />
+    </MudItem>
+    <MudItem xs="12" md="6">
+        <MudTextField Label="Incident Report Id" @bind-Value="_incidentReportId" Variant="Variant.Outlined" FullWidth="true" />
+    </MudItem>
+    <MudItem xs="12" md="6">
+        <MudTextField Label="Unserviceable Report Id" @bind-Value="_unserviceableReportId" Variant="Variant.Outlined" FullWidth="true" />
+    </MudItem>
+    <MudItem xs="12" md="6">
+        <MudTextField Label="Custodian Id (optional, RegSPI)" @bind-Value="_custodianId" Variant="Variant.Outlined" FullWidth="true" />
+    </MudItem>
+    <MudItem xs="12" sm="6" md="4">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" OnClick="RenderRegSpiAsync" Disabled="_isLoadingRegSpi">
+            @if (_isLoadingRegSpi)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+            }
+            Render RegSPI
+        </MudButton>
+    </MudItem>
+    <MudItem xs="12" sm="6" md="4">
+        <MudButton Variant="Variant.Filled" Color="Color.Info" FullWidth="true" OnClick="RenderPhysicalCountAsync" Disabled="_isLoadingPhysicalCount">
+            @if (_isLoadingPhysicalCount)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+            }
+            Render RPCSEMEX / RPCPPE
+        </MudButton>
+    </MudItem>
+    <MudItem xs="12" sm="6" md="4">
+        <MudButton Variant="Variant.Filled" Color="Color.Tertiary" FullWidth="true" OnClick="RenderIssuanceAsync" Disabled="_isLoadingIssuance">
+            @if (_isLoadingIssuance)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+            }
+            Render RSPI / PPEIR
+        </MudButton>
+    </MudItem>
+    <MudItem xs="12" sm="6" md="4">
+        <MudButton Variant="Variant.Filled" Color="Color.Secondary" FullWidth="true" OnClick="RenderAccountabilityAsync" Disabled="_isLoadingAccountability">
+            @if (_isLoadingAccountability)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+            }
+            Render ICS / PAR
+        </MudButton>
+    </MudItem>
+    <MudItem xs="12" sm="6" md="4">
+        <MudButton Variant="Variant.Filled" Color="Color.Warning" FullWidth="true" OnClick="RenderIncidentAsync" Disabled="_isLoadingIncident">
+            @if (_isLoadingIncident)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+            }
+            Render RLSDDSP
+        </MudButton>
+    </MudItem>
+    <MudItem xs="12" sm="6" md="4">
+        <MudButton Variant="Variant.Filled" Color="Color.Error" FullWidth="true" OnClick="RenderUnserviceableAsync" Disabled="_isLoadingUnserviceable">
+            @if (_isLoadingUnserviceable)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+            }
+            Render IIRUSP / IIRUP
+        </MudButton>
+    </MudItem>
+</MudGrid>
+
+<MudAlert Severity="Severity.Info" Dense="true" Class="mt-4">
+    Enter valid GUID values before rendering a report that requires an ID.
+</MudAlert>
+
+<MudGrid Class="mt-4" Spacing="3">
+    <MudItem xs="12">
+        <MudCard>
+            <MudCardHeader>
+                <MudText Typo="Typo.h6">RegSPI Report Preview</MudText>
+            </MudCardHeader>
+            <MudCardContent>
+                @if (!string.IsNullOrWhiteSpace(_regSpiError))
+                {
+                    <MudAlert Severity="Severity.Error" Dense="true">@_regSpiError</MudAlert>
+                }
+                else if (_regSpiReport is null)
+                {
+                    <MudAlert Severity="Severity.Info" Dense="true">Click "Render RegSPI" to load the report preview.</MudAlert>
+                }
+                else
+                {
+                    <MudStack Row="true" Spacing="1" Class="mb-3">
+                        <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined">As Of: @_regSpiReport.AsOfDate.ToString("yyyy-MM-dd")</MudChip>
+                        <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">Items: @_regSpiReport.TotalItems</MudChip>
+                        <MudChip T="string" Color="Color.Success" Variant="Variant.Outlined">Amount: @_regSpiReport.TotalAmount.ToString("N2")</MudChip>
+                    </MudStack>
+
+                    <MudTable Items="_regSpiReport.Rows" Dense="true" Hover="true" Striped="true">
+                        <HeaderContent>
+                            <MudTh>Document No</MudTh>
+                            <MudTh>Issued On</MudTh>
+                            <MudTh>Custodian</MudTh>
+                            <MudTh>Property No</MudTh>
+                            <MudTh>Description</MudTh>
+                            <MudTh>Unit</MudTh>
+                            <MudTh>Qty</MudTh>
+                            <MudTh>Unit Cost</MudTh>
+                            <MudTh>Amount</MudTh>
+                            <MudTh>RC Code</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd>@context.DocumentNo</MudTd>
+                            <MudTd>@context.IssuedOn.ToString("yyyy-MM-dd")</MudTd>
+                            <MudTd>@context.CustodianName</MudTd>
+                            <MudTd>@context.PropertyNo</MudTd>
+                            <MudTd>@context.Description</MudTd>
+                            <MudTd>@context.Unit</MudTd>
+                            <MudTd>@context.Quantity</MudTd>
+                            <MudTd>@context.UnitCost.ToString("N2")</MudTd>
+                            <MudTd>@context.Amount.ToString("N2")</MudTd>
+                            <MudTd>@context.ResponsibilityCenterCode</MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                }
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    <MudItem xs="12">
+        <MudCard>
+            <MudCardHeader>
+                <MudText Typo="Typo.h6">ICS / PAR Report Preview</MudText>
+            </MudCardHeader>
+            <MudCardContent>
+                @if (!string.IsNullOrWhiteSpace(_accountabilityError))
+                {
+                    <MudAlert Severity="Severity.Error" Dense="true">@_accountabilityError</MudAlert>
+                }
+                else if (_accountabilityReport is null)
+                {
+                    <MudAlert Severity="Severity.Info" Dense="true">Click "Render ICS / PAR" to load the report preview.</MudAlert>
+                }
+                else
+                {
+                    <MudGrid Class="mb-3">
+                        <MudItem xs="12" md="4"><MudText Typo="Typo.body2"><strong>Document No:</strong> @_accountabilityReport.DocumentNo</MudText></MudItem>
+                        <MudItem xs="12" md="4"><MudText Typo="Typo.body2"><strong>Status:</strong> @FormatAccountabilityStatus(_accountabilityReport.Status)</MudText></MudItem>
+                        <MudItem xs="12" md="4"><MudText Typo="Typo.body2"><strong>Type:</strong> @FormatAccountabilityType(_accountabilityReport.AccountabilityType)</MudText></MudItem>
+                        <MudItem xs="12" md="4"><MudText Typo="Typo.body2"><strong>Issued On:</strong> @_accountabilityReport.IssuedOn.ToString("yyyy-MM-dd")</MudText></MudItem>
+                        <MudItem xs="12" md="4"><MudText Typo="Typo.body2"><strong>Issued By:</strong> @_accountabilityReport.IssuedByName</MudText></MudItem>
+                        <MudItem xs="12" md="4"><MudText Typo="Typo.body2"><strong>Received By:</strong> @_accountabilityReport.ReceivedByName</MudText></MudItem>
+                    </MudGrid>
+
+                    <MudStack Row="true" Spacing="1" Class="mb-3">
+                        <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">Issued Qty: @_accountabilityReport.TotalIssuedQty</MudChip>
+                        <MudChip T="string" Color="Color.Warning" Variant="Variant.Outlined">Returned Qty: @_accountabilityReport.TotalReturnedQty</MudChip>
+                        <MudChip T="string" Color="Color.Success" Variant="Variant.Outlined">Total Amount: @_accountabilityReport.TotalAmount.ToString("N2")</MudChip>
+                    </MudStack>
+
+                    <MudTable Items="_accountabilityReport.Lines" Dense="true" Hover="true" Striped="true">
+                        <HeaderContent>
+                            <MudTh>Property No</MudTh>
+                            <MudTh>Description</MudTh>
+                            <MudTh>Unit</MudTh>
+                            <MudTh>Issued</MudTh>
+                            <MudTh>Returned</MudTh>
+                            <MudTh>Unit Cost</MudTh>
+                            <MudTh>Status</MudTh>
+                            <MudTh>Returned On</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd>@context.PropertyNo</MudTd>
+                            <MudTd>@context.Description</MudTd>
+                            <MudTd>@context.Unit</MudTd>
+                            <MudTd>@context.IssuedQty</MudTd>
+                            <MudTd>@context.ReturnedQty</MudTd>
+                            <MudTd>@context.UnitCost.ToString("N2")</MudTd>
+                            <MudTd>@FormatLineStatus(context.LineStatus)</MudTd>
+                            <MudTd>@(context.ReturnedOn?.ToString("yyyy-MM-dd") ?? "-")</MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                }
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    <MudItem xs="12">
+        <MudCard>
+            <MudCardHeader>
+                <MudText Typo="Typo.h6">RPCSEMEX / RPCPPE Report Preview</MudText>
+            </MudCardHeader>
+            <MudCardContent>
+                @if (!string.IsNullOrWhiteSpace(_physicalCountError))
+                {
+                    <MudAlert Severity="Severity.Error" Dense="true">@_physicalCountError</MudAlert>
+                }
+                else if (_physicalCountReport is null)
+                {
+                    <MudAlert Severity="Severity.Info" Dense="true">Click "Render RPCSEMEX / RPCPPE" to load the report preview.</MudAlert>
+                }
+                else
+                {
+                    <MudGrid Class="mb-3">
+                        <MudItem xs="12" md="4"><MudText Typo="Typo.body2"><strong>Code:</strong> @_physicalCountReport.Code</MudText></MudItem>
+                        <MudItem xs="12" md="4"><MudText Typo="Typo.body2"><strong>Status:</strong> @FormatPhysicalCountStatus(_physicalCountReport.Status)</MudText></MudItem>
+                        <MudItem xs="12" md="4"><MudText Typo="Typo.body2"><strong>As At:</strong> @_physicalCountReport.AsAt.ToString("yyyy-MM-dd")</MudText></MudItem>
+                    </MudGrid>
+
+                    <MudStack Row="true" Spacing="1" Class="mb-3">
+                        <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">Total Entries: @_physicalCountReport.TotalEntries</MudChip>
+                        <MudChip T="string" Color="Color.Warning" Variant="Variant.Outlined">Missing: @_physicalCountReport.TotalMissing</MudChip>
+                        <MudChip T="string" Color="Color.Error" Variant="Variant.Outlined">Unserviceable: @_physicalCountReport.TotalUnserviceable</MudChip>
+                        <MudChip T="string" Color="Color.Success" Variant="Variant.Outlined">Book Value: @_physicalCountReport.TotalBookValue.ToString("N2")</MudChip>
+                    </MudStack>
+
+                    <MudTable Items="_physicalCountReport.Entries" Dense="true" Hover="true" Striped="true">
+                        <HeaderContent>
+                            <MudTh>Property No</MudTh>
+                            <MudTh>Article</MudTh>
+                            <MudTh>Unit</MudTh>
+                            <MudTh>Condition</MudTh>
+                            <MudTh>Unit Cost</MudTh>
+                            <MudTh>Scanned On</MudTh>
+                            <MudTh>Remarks</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd>@context.PropertyNo</MudTd>
+                            <MudTd>@context.Article</MudTd>
+                            <MudTd>@context.Unit</MudTd>
+                            <MudTd>@FormatPhysicalCountCondition(context.Condition)</MudTd>
+                            <MudTd>@context.UnitCost.ToString("N2")</MudTd>
+                            <MudTd>@(context.ScannedOnUtc?.ToLocalTime().ToString("yyyy-MM-dd HH:mm") ?? "-")</MudTd>
+                            <MudTd>@context.Remarks</MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                }
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    <MudItem xs="12">
+        <MudCard>
+            <MudCardHeader>
+                <MudText Typo="Typo.h6">RSPI / PPEIR Report Preview</MudText>
+            </MudCardHeader>
+            <MudCardContent>
+                @if (!string.IsNullOrWhiteSpace(_issuanceError))
+                {
+                    <MudAlert Severity="Severity.Error" Dense="true">@_issuanceError</MudAlert>
+                }
+                else if (_issuanceReport is null)
+                {
+                    <MudAlert Severity="Severity.Info" Dense="true">Click "Render RSPI / PPEIR" to load the report preview.</MudAlert>
+                }
+                else
+                {
+                    <MudGrid Class="mb-3">
+                        <MudItem xs="12" md="4"><MudText Typo="Typo.body2"><strong>Report No:</strong> @_issuanceReport.ReportNo</MudText></MudItem>
+                        <MudItem xs="12" md="4"><MudText Typo="Typo.body2"><strong>Status:</strong> @FormatIssuanceStatus(_issuanceReport.Status)</MudText></MudItem>
+                        <MudItem xs="12" md="4"><MudText Typo="Typo.body2"><strong>Type:</strong> @FormatIssuanceType(_issuanceReport.ReportType)</MudText></MudItem>
+                        <MudItem xs="12" md="4"><MudText Typo="Typo.body2"><strong>Period:</strong> @_issuanceReport.PeriodFromDate.ToString("yyyy-MM-dd") to @_issuanceReport.PeriodToDate.ToString("yyyy-MM-dd")</MudText></MudItem>
+                        <MudItem xs="12" md="4"><MudText Typo="Typo.body2"><strong>Prepared By:</strong> @_issuanceReport.PreparedByName</MudText></MudItem>
+                        <MudItem xs="12" md="4"><MudText Typo="Typo.body2"><strong>Total Amount:</strong> @_issuanceReport.TotalAmount.ToString("N2")</MudText></MudItem>
+                    </MudGrid>
+
+                    <MudTable Items="_issuanceReport.Lines" Dense="true" Hover="true" Striped="true">
+                        <HeaderContent>
+                            <MudTh>Property No</MudTh>
+                            <MudTh>Description</MudTh>
+                            <MudTh>Unit</MudTh>
+                            <MudTh>Qty</MudTh>
+                            <MudTh>Unit Cost</MudTh>
+                            <MudTh>Amount</MudTh>
+                            <MudTh>RC Code</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd>@context.PropertyNo</MudTd>
+                            <MudTd>@context.Description</MudTd>
+                            <MudTd>@context.Unit</MudTd>
+                            <MudTd>@context.QuantityIssued</MudTd>
+                            <MudTd>@context.UnitCost.ToString("N2")</MudTd>
+                            <MudTd>@context.Amount.ToString("N2")</MudTd>
+                            <MudTd>@context.ResponsibilityCenterCode</MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                }
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    <MudItem xs="12">
+        <MudCard>
+            <MudCardHeader>
+                <MudText Typo="Typo.h6">RLSDDSP Report Preview</MudText>
+            </MudCardHeader>
+            <MudCardContent>
+                @if (!string.IsNullOrWhiteSpace(_incidentError))
+                {
+                    <MudAlert Severity="Severity.Error" Dense="true">@_incidentError</MudAlert>
+                }
+                else if (_incidentReport is null)
+                {
+                    <MudAlert Severity="Severity.Info" Dense="true">Click "Render RLSDDSP" to load the report preview.</MudAlert>
+                }
+                else
+                {
+                    <MudGrid Class="mb-3">
+                        <MudItem xs="12" md="4"><MudText Typo="Typo.body2"><strong>Incident No:</strong> @_incidentReport.IncidentNo</MudText></MudItem>
+                        <MudItem xs="12" md="4"><MudText Typo="Typo.body2"><strong>Status:</strong> @FormatIncidentStatus(_incidentReport.Status)</MudText></MudItem>
+                        <MudItem xs="12" md="4"><MudText Typo="Typo.body2"><strong>Type:</strong> @FormatIncidentType(_incidentReport.IncidentType)</MudText></MudItem>
+                        <MudItem xs="12" md="4"><MudText Typo="Typo.body2"><strong>Incident Date:</strong> @_incidentReport.IncidentDate.ToString("yyyy-MM-dd")</MudText></MudItem>
+                        <MudItem xs="12" md="4"><MudText Typo="Typo.body2"><strong>Officer:</strong> @_incidentReport.AccountableOfficerName</MudText></MudItem>
+                        <MudItem xs="12" md="4"><MudText Typo="Typo.body2"><strong>Total Replacement Cost:</strong> @_incidentReport.TotalCurrentReplacementCost.ToString("N2")</MudText></MudItem>
+                    </MudGrid>
+
+                    <MudTable Items="_incidentReport.Items" Dense="true" Hover="true" Striped="true">
+                        <HeaderContent>
+                            <MudTh>Property No</MudTh>
+                            <MudTh>Description</MudTh>
+                            <MudTh>Asset Type</MudTh>
+                            <MudTh>Acquisition Cost</MudTh>
+                            <MudTh>Current Replacement</MudTh>
+                            <MudTh>Resolution</MudTh>
+                            <MudTh>Resolved On</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd>@context.PropertyNo</MudTd>
+                            <MudTd>@context.Description</MudTd>
+                            <MudTd>@FormatAssetType(context.AssetType)</MudTd>
+                            <MudTd>@context.AcquisitionCost.ToString("N2")</MudTd>
+                            <MudTd>@context.CurrentReplacementCost.ToString("N2")</MudTd>
+                            <MudTd>@FormatIncidentResolution(context.Resolution)</MudTd>
+                            <MudTd>@(context.ResolvedOn?.ToString("yyyy-MM-dd") ?? "-")</MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                }
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    <MudItem xs="12">
+        <MudCard>
+            <MudCardHeader>
+                <MudText Typo="Typo.h6">IIRUSP / IIRUP Report Preview</MudText>
+            </MudCardHeader>
+            <MudCardContent>
+                @if (!string.IsNullOrWhiteSpace(_unserviceableError))
+                {
+                    <MudAlert Severity="Severity.Error" Dense="true">@_unserviceableError</MudAlert>
+                }
+                else if (_unserviceableReport is null)
+                {
+                    <MudAlert Severity="Severity.Info" Dense="true">Click "Render IIRUSP / IIRUP" to load the report preview.</MudAlert>
+                }
+                else
+                {
+                    <MudGrid Class="mb-3">
+                        <MudItem xs="12" md="4"><MudText Typo="Typo.body2"><strong>Report No:</strong> @_unserviceableReport.ReportNo</MudText></MudItem>
+                        <MudItem xs="12" md="4"><MudText Typo="Typo.body2"><strong>Status:</strong> @FormatUnserviceableStatus(_unserviceableReport.Status)</MudText></MudItem>
+                        <MudItem xs="12" md="4"><MudText Typo="Typo.body2"><strong>Type:</strong> @FormatUnserviceableType(_unserviceableReport.ReportType)</MudText></MudItem>
+                        <MudItem xs="12" md="4"><MudText Typo="Typo.body2"><strong>As At:</strong> @_unserviceableReport.AsAt.ToString("yyyy-MM-dd")</MudText></MudItem>
+                        <MudItem xs="12" md="4"><MudText Typo="Typo.body2"><strong>Station:</strong> @_unserviceableReport.Station</MudText></MudItem>
+                        <MudItem xs="12" md="4"><MudText Typo="Typo.body2"><strong>Total Carrying Amount:</strong> @_unserviceableReport.TotalCarryingAmount.ToString("N2")</MudText></MudItem>
+                    </MudGrid>
+
+                    <MudTable Items="_unserviceableReport.Items" Dense="true" Hover="true" Striped="true">
+                        <HeaderContent>
+                            <MudTh>Property No</MudTh>
+                            <MudTh>Description</MudTh>
+                            <MudTh>Asset Type</MudTh>
+                            <MudTh>Date Acquired</MudTh>
+                            <MudTh>Acquisition Cost</MudTh>
+                            <MudTh>Carrying Amount</MudTh>
+                            <MudTh>Disposal Method</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd>@context.PropertyNo</MudTd>
+                            <MudTd>@context.Description</MudTd>
+                            <MudTd>@FormatAssetType(context.AssetType)</MudTd>
+                            <MudTd>@context.DateAcquired.ToString("yyyy-MM-dd")</MudTd>
+                            <MudTd>@context.AcquisitionCost.ToString("N2")</MudTd>
+                            <MudTd>@context.CarryingAmount.ToString("N2")</MudTd>
+                            <MudTd>@FormatDisposalMethod(context.DisposalMethod)</MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                }
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private string _accountabilityId = string.Empty;
+    private string _issuanceReportId = string.Empty;
+    private string _sessionId = string.Empty;
+    private string _incidentReportId = string.Empty;
+    private string _unserviceableReportId = string.Empty;
+    private string _custodianId = string.Empty;
+    private bool _isLoadingRegSpi;
+    private bool _isLoadingAccountability;
+    private bool _isLoadingPhysicalCount;
+    private bool _isLoadingIssuance;
+    private bool _isLoadingIncident;
+    private bool _isLoadingUnserviceable;
+    private string? _regSpiError;
+    private string? _accountabilityError;
+    private string? _physicalCountError;
+    private string? _issuanceError;
+    private string? _incidentError;
+    private string? _unserviceableError;
+    private RegSpiReportDto? _regSpiReport;
+    private AccountabilityReportDto? _accountabilityReport;
+    private PhysicalCountReportDto? _physicalCountReport;
+    private IssuanceReportDocumentDto? _issuanceReport;
+    private IncidentReportDocumentDto? _incidentReport;
+    private UnserviceableReportDocumentDto? _unserviceableReport;
+
+    private async Task RenderRegSpiAsync()
+    {
+        _regSpiError = null;
+        _isLoadingRegSpi = true;
+
+        try
+        {
+            Guid? custodianId = Guid.TryParse(_custodianId, out var parsedCustodianId)
+                ? parsedCustodianId
+                : null;
+
+            _regSpiReport = await ReportsClient.GetRegSpiReportAsync(
+                DateOnly.FromDateTime(DateTime.Today),
+                custodianId);
+
+            if (_regSpiReport is null)
+            {
+                _regSpiError = "No RegSPI data was returned.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _regSpiError = $"Failed to render RegSPI: {ex.Message}";
+            _regSpiReport = null;
+        }
+        finally
+        {
+            _isLoadingRegSpi = false;
+        }
+    }
+
+    private async Task RenderPhysicalCountAsync()
+    {
+        _physicalCountError = null;
+        if (Guid.TryParse(_sessionId, out var sessionId))
+        {
+            _isLoadingPhysicalCount = true;
+            try
+            {
+                _physicalCountReport = await ReportsClient.GetPhysicalCountReportAsync(sessionId);
+                if (_physicalCountReport is null)
+                {
+                    _physicalCountError = "No physical count report data was returned.";
+                }
+            }
+            catch (Exception ex)
+            {
+                _physicalCountError = $"Failed to render RPCSEMEX/RPCPPE: {ex.Message}";
+                _physicalCountReport = null;
+            }
+            finally
+            {
+                _isLoadingPhysicalCount = false;
+            }
+        }
+        else
+        {
+            _physicalCountError = "A valid Physical Count Session Id is required.";
+        }
+    }
+
+    private async Task RenderIssuanceAsync()
+    {
+        _issuanceError = null;
+        if (Guid.TryParse(_issuanceReportId, out var reportId))
+        {
+            _isLoadingIssuance = true;
+            try
+            {
+                _issuanceReport = await ReportsClient.GetIssuanceReportAsync(reportId);
+                if (_issuanceReport is null)
+                {
+                    _issuanceError = "No issuance report data was returned.";
+                }
+            }
+            catch (Exception ex)
+            {
+                _issuanceError = $"Failed to render RSPI/PPEIR: {ex.Message}";
+                _issuanceReport = null;
+            }
+            finally
+            {
+                _isLoadingIssuance = false;
+            }
+        }
+        else
+        {
+            _issuanceError = "A valid Issuance Report Id is required.";
+        }
+    }
+
+    private async Task RenderAccountabilityAsync()
+    {
+        _accountabilityError = null;
+        if (Guid.TryParse(_accountabilityId, out var accountabilityId))
+        {
+            _isLoadingAccountability = true;
+            try
+            {
+                _accountabilityReport = await ReportsClient.GetAccountabilityReportAsync(accountabilityId);
+                if (_accountabilityReport is null)
+                {
+                    _accountabilityError = "No accountability report data was returned.";
+                }
+            }
+            catch (Exception ex)
+            {
+                _accountabilityError = $"Failed to render ICS/PAR: {ex.Message}";
+                _accountabilityReport = null;
+            }
+            finally
+            {
+                _isLoadingAccountability = false;
+            }
+        }
+        else
+        {
+            _accountabilityError = "A valid Accountability Id is required.";
+        }
+    }
+
+    private async Task RenderIncidentAsync()
+    {
+        _incidentError = null;
+        if (Guid.TryParse(_incidentReportId, out var incidentReportId))
+        {
+            _isLoadingIncident = true;
+            try
+            {
+                _incidentReport = await ReportsClient.GetIncidentReportAsync(incidentReportId);
+                if (_incidentReport is null)
+                {
+                    _incidentError = "No incident report data was returned.";
+                }
+            }
+            catch (Exception ex)
+            {
+                _incidentError = $"Failed to render RLSDDSP: {ex.Message}";
+                _incidentReport = null;
+            }
+            finally
+            {
+                _isLoadingIncident = false;
+            }
+        }
+        else
+        {
+            _incidentError = "A valid Incident Report Id is required.";
+        }
+    }
+
+    private async Task RenderUnserviceableAsync()
+    {
+        _unserviceableError = null;
+        if (Guid.TryParse(_unserviceableReportId, out var reportId))
+        {
+            _isLoadingUnserviceable = true;
+            try
+            {
+                _unserviceableReport = await ReportsClient.GetUnserviceableReportAsync(reportId);
+                if (_unserviceableReport is null)
+                {
+                    _unserviceableError = "No unserviceable report data was returned.";
+                }
+            }
+            catch (Exception ex)
+            {
+                _unserviceableError = $"Failed to render IIRUSP/IIRUP: {ex.Message}";
+                _unserviceableReport = null;
+            }
+            finally
+            {
+                _isLoadingUnserviceable = false;
+            }
+        }
+        else
+        {
+            _unserviceableError = "A valid Unserviceable Report Id is required.";
+        }
+    }
+
+    private static string FormatAccountabilityStatus(int status) => status switch
+    {
+        0 => "Draft",
+        1 => "Issued",
+        2 => "Returned",
+        3 => "Cancelled",
+        _ => $"Unknown ({status})"
+    };
+
+    private static string FormatAccountabilityType(int type) => type switch
+    {
+        0 => "ICS",
+        1 => "PAR",
+        _ => $"Unknown ({type})"
+    };
+
+    private static string FormatLineStatus(int status) => status switch
+    {
+        0 => "Issued",
+        1 => "Partially Returned",
+        2 => "Fully Returned",
+        _ => $"Unknown ({status})"
+    };
+
+    private static string FormatPhysicalCountStatus(int status) => status switch
+    {
+        0 => "Draft",
+        1 => "Open",
+        2 => "Closed",
+        3 => "Reconciled",
+        _ => $"Unknown ({status})"
+    };
+
+    private static string FormatPhysicalCountCondition(int condition) => condition switch
+    {
+        0 => "Good",
+        1 => "Needs Repair",
+        2 => "Unserviceable",
+        3 => "Missing",
+        4 => "Found at Station",
+        _ => $"Unknown ({condition})"
+    };
+
+    private static string FormatIssuanceStatus(int status) => status switch
+    {
+        0 => "Draft",
+        1 => "Posted",
+        2 => "Cancelled",
+        _ => $"Unknown ({status})"
+    };
+
+    private static string FormatIssuanceType(int type) => type switch
+    {
+        0 => "RSPI",
+        1 => "PPEIR",
+        _ => $"Unknown ({type})"
+    };
+
+    private static string FormatIncidentStatus(int status) => status switch
+    {
+        0 => "Draft",
+        1 => "Filed",
+        2 => "Under Investigation",
+        3 => "Resolved",
+        _ => $"Unknown ({status})"
+    };
+
+    private static string FormatIncidentType(int type) => type switch
+    {
+        0 => "Loss",
+        1 => "Damage",
+        2 => "Theft",
+        _ => $"Unknown ({type})"
+    };
+
+    private static string FormatIncidentResolution(int resolution) => resolution switch
+    {
+        0 => "Pending",
+        1 => "Repaired",
+        2 => "Replaced",
+        3 => "Write-off",
+        _ => $"Unknown ({resolution})"
+    };
+
+    private static string FormatUnserviceableStatus(int status) => status switch
+    {
+        0 => "Draft",
+        1 => "Inspected",
+        2 => "Approved",
+        3 => "Disposed",
+        _ => $"Unknown ({status})"
+    };
+
+    private static string FormatUnserviceableType(int type) => type switch
+    {
+        0 => "IIRUSP",
+        1 => "IIRUP",
+        _ => $"Unknown ({type})"
+    };
+
+    private static string FormatDisposalMethod(int? method) => method switch
+    {
+        null => "-",
+        0 => "Transfer",
+        1 => "Sale",
+        2 => "Destruction",
+        3 => "Other",
+        _ => $"Unknown ({method})"
+    };
+
+    private static string FormatAssetType(int assetType) => assetType switch
+    {
+        0 => "SE",
+        1 => "PPE",
+        _ => $"Unknown ({assetType})"
+    };
+}

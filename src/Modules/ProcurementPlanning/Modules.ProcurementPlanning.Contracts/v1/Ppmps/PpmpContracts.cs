@@ -128,11 +128,11 @@ public sealed record UpdatePpmpCommand(
 
 public sealed record SubmitPpmpCommand(Guid Id) : ICommand<PpmpDto>;
 
-public sealed record ApprovePpmpCommand(Guid Id, Guid ApprovedById) : ICommand<PpmpDto>;
+public sealed record ApprovePpmpCommand(Guid Id) : ICommand<PpmpDto>;
 
 public sealed record RecallPpmpCommand(Guid Id) : ICommand<PpmpDto>;
 
-public sealed record ReturnPpmpCommand(Guid Id, string ReturnReason, Guid ReturnedById) : ICommand<PpmpDto>;
+public sealed record ReturnPpmpCommand(Guid Id, string ReturnReason) : ICommand<PpmpDto>;
 
 /// <summary>Promotes an Approved Indicative PPMP to a new Final draft (per-phase version reset to 1).</summary>
 public sealed record PromoteToFinalPpmpCommand(Guid Id) : ICommand<PpmpDto>;

@@ -5,47 +5,100 @@
              xmlns:svc="clr-namespace:Playground.Maui.Services"
              x:DataType="vm:InventoryViewModel"
              x:Class="Playground.Maui.Features.Inventory.InventoryPage"
-             Title="My Inventory">
-    <RefreshView IsRefreshing="{Binding IsLoading}" Command="{Binding LoadCommand}">
-        <ScrollView>
-            <VerticalStackLayout Padding="16" Spacing="8">
-                <Label Text="{Binding CacheNotice}"
-                       IsVisible="{Binding CacheNotice, Converter={StaticResource IsNotNullConverter}}"
-                       FontSize="12"
-                       TextColor="{StaticResource Secondary}" />
+             Title="My Inventory"
+             BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource OffBlack}}">
 
-                <Label Text="Inventory Custodian Slips (ICS)" FontAttributes="Bold" FontSize="16" />
-                <CollectionView ItemsSource="{Binding IcsItems}" EmptyView="No ICS records found.">
-                    <CollectionView.ItemTemplate>
-                        <DataTemplate x:DataType="svc:ICSSummaryDto">
-                            <Border Margin="0,4" Padding="12" StrokeShape="RoundRectangle 8">
-                                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
-                                    <Label Grid.Row="0" Grid.Column="0" Text="{Binding ICSNo}" FontAttributes="Bold" />
-                                    <Label Grid.Row="0" Grid.Column="1" Text="{Binding Status}" />
-                                    <Label Grid.Row="1" Grid.Column="0" Text="{Binding Date}" FontSize="12" />
-                                    <Label Grid.Row="1" Grid.Column="1" Text="{Binding ItemCount, StringFormat='{0} items'}" FontSize="12" />
-                                </Grid>
-                            </Border>
-                        </DataTemplate>
-                    </CollectionView.ItemTemplate>
-                </CollectionView>
+    <Grid RowDefinitions="Auto,*">
 
-                <Label Text="Property Acknowledgement Receipts (PAR)" FontAttributes="Bold" FontSize="16" Margin="0,16,0,0" />
-                <CollectionView ItemsSource="{Binding ParItems}" EmptyView="No PAR records found.">
-                    <CollectionView.ItemTemplate>
-                        <DataTemplate x:DataType="svc:PARSummaryDto">
-                            <Border Margin="0,4" Padding="12" StrokeShape="RoundRectangle 8">
-                                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
-                                    <Label Grid.Row="0" Grid.Column="0" Text="{Binding PARNo}" FontAttributes="Bold" />
-                                    <Label Grid.Row="0" Grid.Column="1" Text="{Binding PARType}" />
-                                    <Label Grid.Row="1" Grid.Column="0" Text="{Binding Date}" FontSize="12" />
-                                    <Label Grid.Row="1" Grid.Column="1" Text="{Binding ItemCount, StringFormat='{0} items'}" FontSize="12" />
-                                </Grid>
-                            </Border>
-                        </DataTemplate>
-                    </CollectionView.ItemTemplate>
-                </CollectionView>
-            </VerticalStackLayout>
-        </ScrollView>
-    </RefreshView>
+        <!-- Error banner -->
+        <Border Grid.Row="0"
+                IsVisible="{Binding ErrorMessage, Converter={StaticResource IsNotNullConverter}}"
+                Stroke="Transparent"
+                StrokeShape="RoundRectangle 10"
+                BackgroundColor="{StaticResource DangerLight}"
+                Padding="14,10"
+                Margin="16,12,16,0">
+            <Label Text="{Binding ErrorMessage}"
+                   FontSize="12"
+                   TextColor="{StaticResource Danger}" />
+        </Border>
+
+        <RefreshView Grid.Row="1" IsRefreshing="{Binding IsLoading}" Command="{Binding LoadCommand}">
+            <CollectionView ItemsSource="{Binding IcsItems}"
+                            EmptyView="No ICS records found.">
+                <CollectionView.Header>
+                    <VerticalStackLayout Padding="0,16,0,0">
+                        <Label Text="INVENTORY CUSTODIAN SLIPS"
+                               Style="{StaticResource SectionHeaderStyle}" />
+                    </VerticalStackLayout>
+                </CollectionView.Header>
+                <CollectionView.Footer>
+                    <VerticalStackLayout Padding="0,0,0,16">
+                        <Label Text="PROPERTY ACKNOWLEDGEMENT RECEIPTS"
+                               Style="{StaticResource SectionHeaderStyle}"
+                               Margin="20,20,20,10" />
+                        <CollectionView ItemsSource="{Binding ParItems}"
+                                        EmptyView="No PAR records found."
+                                        HeightRequest="400">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate x:DataType="svc:PARSummaryDto">
+                                    <Border Style="{StaticResource CardBorderStyle}"
+                                            Margin="16,4" Padding="16,14">
+                                        <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" RowSpacing="4">
+                                            <Label Grid.Row="0" Grid.Column="0"
+                                                   Text="{Binding PARNo}"
+                                                   FontFamily="InterSemiBold" FontSize="15" />
+                                            <Border Grid.Row="0" Grid.Column="1"
+                                                    Stroke="Transparent"
+                                                    StrokeShape="RoundRectangle 10"
+                                                    BackgroundColor="{AppThemeBinding Light={StaticResource PrimaryLight}, Dark={StaticResource Tertiary}}"
+                                                    Padding="8,3">
+                                                <Label Text="{Binding PARType}"
+                                                       FontFamily="InterSemiBold" FontSize="11"
+                                                       TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+                                            </Border>
+                                            <Label Grid.Row="1" Grid.Column="0"
+                                                   Text="{Binding Date}"
+                                                   Style="{StaticResource CaptionStyle}" />
+                                            <Label Grid.Row="1" Grid.Column="1"
+                                                   Text="{Binding ItemCount, StringFormat='{0} items'}"
+                                                   Style="{StaticResource CaptionStyle}" />
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </VerticalStackLayout>
+                </CollectionView.Footer>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="svc:ICSSummaryDto">
+                        <Border Style="{StaticResource CardBorderStyle}"
+                                Margin="16,4" Padding="16,14">
+                            <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" RowSpacing="4">
+                                <Label Grid.Row="0" Grid.Column="0"
+                                       Text="{Binding ICSNo}"
+                                       FontFamily="InterSemiBold" FontSize="15" />
+                                <Border Grid.Row="0" Grid.Column="1"
+                                        Stroke="Transparent"
+                                        StrokeShape="RoundRectangle 10"
+                                        BackgroundColor="{AppThemeBinding Light={StaticResource PrimaryLight}, Dark={StaticResource Tertiary}}"
+                                        Padding="8,3">
+                                    <Label Text="{Binding Status}"
+                                           FontFamily="InterSemiBold" FontSize="11"
+                                           TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+                                </Border>
+                                <Label Grid.Row="1" Grid.Column="0"
+                                       Text="{Binding Date}"
+                                       Style="{StaticResource CaptionStyle}" />
+                                <Label Grid.Row="1" Grid.Column="1"
+                                       Text="{Binding ItemCount, StringFormat='{0} items'}"
+                                       Style="{StaticResource CaptionStyle}" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </RefreshView>
+
+    </Grid>
 </ContentPage>

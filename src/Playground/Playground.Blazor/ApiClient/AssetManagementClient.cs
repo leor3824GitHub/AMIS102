@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Net.Http.Json;
+using System.Text.Json;
 using System.Web;
 
 namespace FSH.Playground.Blazor.ApiClient;
@@ -296,46 +297,49 @@ internal sealed class SemiExpendablePropertyClient(HttpClient http) : ISemiExpen
     }
 }
 
-// Receiving Reports (SMRR)
+// Receiving Reports (Tangible Inventory / SMRR)
 
 internal sealed record CreateSMRRItemRequest(
     Guid TangibleItemId,
     string? Reference);
 
 internal sealed record CreateSMRRCommand(
-    string SMRRNo,
+    string ReportNo,
     DateOnly Date,
     string ReceivedFrom,
     string? Address,
     ReceiptType ReceiptType,
     string? OtherReceiptType,
     string? FundCluster,
-    string? ReceivedBy,
-    string? NotedBy,
+    Guid? ReceivedByEmployeeId,
+    Guid? NotedByEmployeeId,
     IReadOnlyList<CreateSMRRItemRequest> Items);
 
 internal sealed record CreateSMRRResult(
-    Guid SMRRId,
-    string SMRRNo,
-    int ItemCount);
+    Guid TangibleInventoryId,
+    string ReportNo,
+    int SEItemCount,
+    int PPEItemCount);
 
 internal sealed record SMRRSummaryDto(
     Guid Id,
-    string SMRRNo,
+    string ReportNo,
     DateOnly Date,
     string ReceivedFrom,
     string ReceiptType,
     string? FundCluster,
-    int ItemCount);
+    int SEItemCount,
+    int PPEItemCount);
 
 internal sealed record SMRRItemDetailsDto(
     Guid Id,
-    Guid SemiExpendablePropertyId,
-    string PropertyNo,
+    Guid TangibleItemId,
     string? Reference,
+    string AssetType,
+    decimal ThresholdAmountUsed,
+    bool IsIssued,
+    string PropertyNo,
     Guid ItemId,
-    string ItemCode,
-    string ItemName,
     string? Description,
     DateOnly AcquisitionDate,
     int Quantity,
@@ -344,17 +348,15 @@ internal sealed record SMRRItemDetailsDto(
 
 internal sealed record SMRRDetailsDto(
     Guid Id,
-    string SMRRNo,
+    string ReportNo,
     DateOnly Date,
     string ReceivedFrom,
     string? Address,
     string ReceiptType,
     string? OtherReceiptType,
     string? FundCluster,
-    string? ReceivedBy,
-    string? NotedBy,
-    DateTimeOffset CreatedOnUtc,
-    string? CreatedBy,
+    Guid? ReceivedByEmployeeId,
+    Guid? NotedByEmployeeId,
     IReadOnlyList<SMRRItemDetailsDto> Items);
 
 internal sealed record PagedSMRRsResponse(
@@ -363,16 +365,30 @@ internal sealed record PagedSMRRsResponse(
     int PageSize,
     int TotalCount);
 
+internal sealed record UpdateSMRRCommand(
+    Guid Id,
+    string ReportNo,
+    DateOnly Date,
+    string ReceivedFrom,
+    string? Address,
+    ReceiptType ReceiptType,
+    string? OtherReceiptType,
+    string? FundCluster,
+    Guid? ReceivedByEmployeeId,
+    Guid? NotedByEmployeeId);
+
 internal interface ISMRRClient
 {
     Task<PagedSMRRsResponse> SearchAsync(string? keyword = null, DateOnly? dateFrom = null, DateOnly? dateTo = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
     Task<SMRRDetailsDto?> GetAsync(Guid id, CancellationToken ct = default);
     Task<CreateSMRRResult> CreateAsync(CreateSMRRCommand command, CancellationToken ct = default);
+    Task UpdateAsync(Guid id, UpdateSMRRCommand command, CancellationToken ct = default);
+    Task DeleteAsync(Guid id, CancellationToken ct = default);
 }
 
 internal sealed class SMRRClient(HttpClient http) : ISMRRClient
 {
-    private const string Base = "api/v1/asset-management/receiving-reports";
+    private const string Base = "api/v1/asset-management/tangible-inventories";
 
     public Task<PagedSMRRsResponse> SearchAsync(string? keyword = null, DateOnly? dateFrom = null, DateOnly? dateTo = null, int page = 1, int pageSize = 20, CancellationToken ct = default)
     {
@@ -394,12 +410,51 @@ internal sealed class SMRRClient(HttpClient http) : ISMRRClient
         r.EnsureSuccessStatusCode();
         return (await r.Content.ReadFromJsonAsync<CreateSMRRResult>(ct))!;
     }
+
+    public async Task UpdateAsync(Guid id, UpdateSMRRCommand command, CancellationToken ct = default)
+    {
+        using var r = await http.PutAsJsonAsync($"{Base}/{id}", command, ct);
+        r.EnsureSuccessStatusCode();
+    }
+
+    public async Task DeleteAsync(Guid id, CancellationToken ct = default)
+    {
+        using var r = await http.DeleteAsync($"{Base}/{id}", ct);
+        r.EnsureSuccessStatusCode();
+    }
+}
+
+// Tangible Inventory Item lookup (by property number)
+
+internal sealed record TangibleInventoryItemDetailDto(
+    Guid Id,
+    string PropertyNo,
+    string ItemName,
+    string? Description,
+    decimal UnitCost,
+    string AssetType,
+    bool IsIssued,
+    string? LinkedDocumentType,
+    string? LinkedDocumentNo,
+    Guid? LinkedDocumentId);
+
+internal interface ITangibleInventoryItemClient
+{
+    Task<TangibleInventoryItemDetailDto?> GetByPropertyNoAsync(string propertyNo, CancellationToken ct = default);
+}
+
+internal sealed class TangibleInventoryItemClient(HttpClient http) : ITangibleInventoryItemClient
+{
+    private const string Base = "api/v1/asset-management/tangible-inventory-items";
+
+    public Task<TangibleInventoryItemDetailDto?> GetByPropertyNoAsync(string propertyNo, CancellationToken ct = default) =>
+        http.GetFromJsonAsync<TangibleInventoryItemDetailDto>($"{Base}/by-property-no/{Uri.EscapeDataString(propertyNo)}", ct);
 }
 
 // Inventory Custodian Slips (ICS)
 
 internal sealed record CreateICSItemRequest(
-    Guid SemiExpendablePropertyId,
+    Guid TangibleInventoryItemId,
     string? Description);
 
 internal sealed record CreateICSCommand(
@@ -428,11 +483,10 @@ internal sealed record ICSSummaryDto(
 internal sealed record ICSItemDetailsDto(
     Guid Id,
     int ItemNo,
-    Guid SemiExpendablePropertyId,
+    Guid TangibleInventoryItemId,
     string PropertyNo,
     string ItemCode,
     string ItemName,
-    string? SerialNo,
     string? Description,
     decimal UnitCost,
     int? EstimatedUsefulLifeYears);
@@ -858,7 +912,8 @@ internal sealed class UnserviceablePropertyReportClient(HttpClient http) : IUnse
 
 // Asset Management Reports (SPC, RegSPI, RSPI, Property History)
 
-internal enum AssetCategory { LowValuedSemi = 0, HighValuedSemi = 1, PPE = 2 }
+internal enum AssetCategory { LowValuedSemi = 0, HighValuedSemi = 1 }
+internal enum AssetType { SE = 0, PPE = 1 }
 internal enum ICSStatus { Active = 0, Renewed = 1, CancelledByReturn = 2, Expired = 3 }
 
 internal sealed record SPCEntryDto(
@@ -882,44 +937,99 @@ internal sealed record RegSPIEntryDto(
     string ICSNo,
     DateOnly Date,
     string? FundCluster,
-    Guid PropertyId,
+    Guid TangibleInventoryItemId,
     string PropertyNo,
     string ItemCode,
     string ItemName,
-    string Category,
+    string AssetType,
     decimal UnitCost,
     int? EstimatedUsefulLifeYears,
     DateOnly? ExpiresOn,
-    string ICSStatus);
+    string ICSStatus,
+    Guid? IssuedFromEmployeeId,
+    string? IssuedFromEmployeeName,
+    string? IssuedFromEmployeePositionName,
+    string? IssuedFromEmployeeOfficeName);
+
+internal sealed record RegSPISignatoryDto(
+    int SortOrder,
+    string Label,
+    string Name,
+    string Title);
+
+internal sealed record RegSPISectionDto(
+    Guid ICSId,
+    string ICSNo,
+    DateOnly Date,
+    string? FundCluster,
+    string ICSStatus,
+    int LineCount,
+    decimal AmountTotal);
 
 internal sealed record PagedRegSPIResponse(
     Guid EmployeeId,
+    string? EmployeeNumber,
+    string EmployeeName,
+    string? EmployeeOfficeName,
+    string? EmployeeDepartmentName,
+    string? EmployeePositionName,
+    IReadOnlyList<RegSPISignatoryDto> Signatories,
+    IReadOnlyList<RegSPISectionDto> Sections,
     IReadOnlyList<RegSPIEntryDto> Items,
+    int PageLineCount,
+    decimal PageAmountTotal,
     int PageNumber,
     int PageSize,
-    int TotalCount);
+    int TotalCount,
+    decimal OverallAmountTotal);
 
 internal sealed record RSPIItemDto(
     Guid ICSId,
     string ICSNo,
     DateOnly ICSDate,
     string ICSStatus,
+    string? FundCluster,
     Guid ReceivedByEmployeeId,
+    string ReceivedByEmployeeName,
+    string? ReceivedByEmployeePositionName,
+    string? ReceivedByEmployeeOfficeName,
     Guid? IssuedFromEmployeeId,
-    Guid PropertyId,
+    string? IssuedFromEmployeeName,
+    string? IssuedFromEmployeePositionName,
+    string? IssuedFromEmployeeOfficeName,
+    Guid TangibleInventoryItemId,
     string PropertyNo,
-    string? SerialNo,
     string ItemCode,
     string ItemName,
-    string Category,
+    string AssetType,
     decimal UnitCost,
     DateOnly? ExpiresOn);
 
+internal sealed record RSPISignatoryDto(
+    int SortOrder,
+    string Label,
+    string Name,
+    string Title);
+
+internal sealed record RSPISectionDto(
+    Guid ICSId,
+    string ICSNo,
+    DateOnly ICSDate,
+    string? FundCluster,
+    string ICSStatus,
+    int LineCount,
+    decimal AmountTotal);
+
 internal sealed record PagedRSPIResponse(
+    IReadOnlyList<RSPISignatoryDto> Signatories,
+    IReadOnlyList<RSPISectionDto> Sections,
     IReadOnlyList<RSPIItemDto> Items,
+    int PageLineCount,
+    decimal PageAmountTotal,
     int PageNumber,
     int PageSize,
-    int TotalCount);
+    int TotalCount,
+    decimal OverallAmountTotal);
 
 internal sealed record PropertyHistoryEventDto(
     DateOnly EventDate,
@@ -943,8 +1053,10 @@ internal sealed record PropertyHistoryDto(
 internal interface IAssetManagementReportsClient
 {
     Task<SPCDto?> GetSPCAsync(Guid itemId, DateOnly? dateFrom = null, DateOnly? dateTo = null, CancellationToken ct = default);
-    Task<PagedRegSPIResponse?> GetRegSPIAsync(Guid employeeId, AssetCategory? category = null, ICSStatus? status = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
-    Task<PagedRSPIResponse?> GetRSPIAsync(DateOnly? dateFrom = null, DateOnly? dateTo = null, AssetCategory? category = null, bool activeOnly = true, int page = 1, int pageSize = 20, CancellationToken ct = default);
+    Task<PagedRegSPIResponse?> GetRegSPIAsync(Guid employeeId, AssetType? assetType = null, ICSStatus? status = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
+    Task<PagedRSPIResponse?> GetRSPIAsync(DateOnly? dateFrom = null, DateOnly? dateTo = null, AssetType? assetType = null, bool activeOnly = true, int page = 1, int pageSize = 20, CancellationToken ct = default);
+    Task<byte[]> GetRegSPIPdfAsync(Guid employeeId, AssetType? assetType = null, ICSStatus? status = null, int page = 1, int pageSize = 1000, CancellationToken ct = default);
+    Task<byte[]> GetRSPIPdfAsync(DateOnly? dateFrom = null, DateOnly? dateTo = null, AssetType? assetType = null, bool activeOnly = true, int page = 1, int pageSize = 1000, CancellationToken ct = default);
     Task<PropertyHistoryDto?> GetPropertyHistoryAsync(Guid propertyId, CancellationToken ct = default);
 }
 
@@ -961,27 +1073,58 @@ internal sealed class AssetManagementReportsClient(HttpClient http) : IAssetMana
         return http.GetFromJsonAsync<SPCDto>($"{Base}/spc/{itemId}{qs}", ct);
     }
 
-    public Task<PagedRegSPIResponse?> GetRegSPIAsync(Guid employeeId, AssetCategory? category = null, ICSStatus? status = null, int page = 1, int pageSize = 20, CancellationToken ct = default)
+    public Task<PagedRegSPIResponse?> GetRegSPIAsync(Guid employeeId, AssetType? assetType = null, ICSStatus? status = null, int page = 1, int pageSize = 20, CancellationToken ct = default)
     {
         var q = HttpUtility.ParseQueryString(string.Empty);
         q["EmployeeId"] = employeeId.ToString();
-        if (category.HasValue) q["Category"] = ((int)category.Value).ToString(CultureInfo.InvariantCulture);
+        if (assetType.HasValue) q["AssetType"] = ((int)assetType.Value).ToString(CultureInfo.InvariantCulture);
         if (status.HasValue) q["Status"] = ((int)status.Value).ToString(CultureInfo.InvariantCulture);
         q["PageNumber"] = page.ToString(CultureInfo.InvariantCulture);
         q["PageSize"] = pageSize.ToString(CultureInfo.InvariantCulture);
         return http.GetFromJsonAsync<PagedRegSPIResponse>($"{Base}/reg-spi?{q}", ct);
     }
 
-    public Task<PagedRSPIResponse?> GetRSPIAsync(DateOnly? dateFrom = null, DateOnly? dateTo = null, AssetCategory? category = null, bool activeOnly = true, int page = 1, int pageSize = 20, CancellationToken ct = default)
+    public Task<PagedRSPIResponse?> GetRSPIAsync(DateOnly? dateFrom = null, DateOnly? dateTo = null, AssetType? assetType = null, bool activeOnly = true, int page = 1, int pageSize = 20, CancellationToken ct = default)
     {
         var q = HttpUtility.ParseQueryString(string.Empty);
         if (dateFrom.HasValue) q["DateFrom"] = dateFrom.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
         if (dateTo.HasValue) q["DateTo"] = dateTo.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-        if (category.HasValue) q["Category"] = ((int)category.Value).ToString(CultureInfo.InvariantCulture);
+        if (assetType.HasValue) q["AssetType"] = ((int)assetType.Value).ToString(CultureInfo.InvariantCulture);
         q["ActiveOnly"] = activeOnly ? "true" : "false";
         q["PageNumber"] = page.ToString(CultureInfo.InvariantCulture);
         q["PageSize"] = pageSize.ToString(CultureInfo.InvariantCulture);
         return http.GetFromJsonAsync<PagedRSPIResponse>($"{Base}/rspi?{q}", ct);
+    }
+
+    public async Task<byte[]> GetRegSPIPdfAsync(Guid employeeId, AssetType? assetType = null, ICSStatus? status = null, int page = 1, int pageSize = 1000, CancellationToken ct = default)
+    {
+        using var response = await http.PostAsJsonAsync($"{Base}/reg-spi/pdf", new
+        {
+            EmployeeId = employeeId,
+            AssetType = assetType,
+            Status = status,
+            PageNumber = page,
+            PageSize = pageSize
+        }, ct);
+
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadAsByteArrayAsync(ct);
+    }
+
+    public async Task<byte[]> GetRSPIPdfAsync(DateOnly? dateFrom = null, DateOnly? dateTo = null, AssetType? assetType = null, bool activeOnly = true, int page = 1, int pageSize = 1000, CancellationToken ct = default)
+    {
+        using var response = await http.PostAsJsonAsync($"{Base}/rspi/pdf", new
+        {
+            DateFrom = dateFrom,
+            DateTo = dateTo,
+            AssetType = assetType,
+            ActiveOnly = activeOnly,
+            PageNumber = page,
+            PageSize = pageSize
+        }, ct);
+
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadAsByteArrayAsync(ct);
     }
 
     public Task<PropertyHistoryDto?> GetPropertyHistoryAsync(Guid propertyId, CancellationToken ct = default) =>
@@ -995,62 +1138,159 @@ internal enum PARType { NewPurchase = 0, Transfer = 1 }
 internal enum PPEIssuanceType { TransferCO = 0, TransferRO = 1, TransferPO = 2, Donation = 3, Dumping = 4, Destruction = 5, Sale = 6, Others = 7 }
 internal enum PPEReturnCategory { Serviceable = 0, Junked = 1 }
 
-// PPE Receiving Reports (PPERR)
+// PPE Receiving Reports (PPERR — uses same tangible-inventories endpoint, filtered to PPE asset type)
 
 internal sealed record CreatePPERRItemRequest(
-    string? ClassCode,
-    string? ItemCode,
-    string? PropertyCode,
-    string Description,
-    string? SerialNumber,
-    DateOnly DateAcquired,
-    int Quantity,
-    decimal UnitCost,
-    int EstimatedUsefulLifeYears);
+    Guid TangibleItemId,
+    string? Reference);
 
 internal sealed record CreatePPERRCommand(
-    string PPERRNo,
+    string ReportNo,
     DateOnly Date,
     string ReceivedFrom,
-    string Address,
-    PPEReceiptNature ReceiptNature,
-    Guid ReceivedByEmployeeId,
-    Guid NotedByEmployeeId,
+    string? Address,
+    ReceiptType ReceiptType,
+    string? OtherReceiptType,
+    string? FundCluster,
+    Guid? ReceivedByEmployeeId,
+    Guid? NotedByEmployeeId,
     IReadOnlyList<CreatePPERRItemRequest> Items);
 
-internal sealed record CreatePPERRResult(Guid PPERRId, string PPERRNo, int PPEItemsCreated);
+internal sealed record CreatePPERRResult(
+    Guid TangibleInventoryId,
+    string ReportNo,
+    int SEItemCount,
+    int PPEItemCount);
 
-internal sealed record PPERRSummaryDto(Guid Id, string PPERRNo, DateOnly Date, string ReceivedFrom, string ReceiptNature, int ItemCount);
+internal sealed record PPERRSummaryDto(
+    Guid Id,
+    string ReportNo,
+    DateOnly Date,
+    string ReceivedFrom,
+    string ReceiptType,
+    string? FundCluster,
+    int SEItemCount,
+    int PPEItemCount);
 
-internal sealed record PPERRItemDto(Guid Id, int ItemNo, string PropertyCode, string Description, DateOnly DateAcquired, int Quantity, decimal UnitCost, decimal Amount);
+internal sealed record PPERRItemDto(
+    Guid Id,
+    Guid TangibleItemId,
+    string? Reference,
+    string AssetType,
+    decimal ThresholdAmountUsed,
+    bool IsIssued,
+    string PropertyNo,
+    Guid ItemId,
+    string? Description,
+    DateOnly AcquisitionDate,
+    int Quantity,
+    decimal UnitCost,
+    decimal Amount);
 
 internal sealed record PPERRDetailsDto(
-    Guid Id, string PPERRNo, DateOnly Date,
-    string ReceivedFrom, string Address, string ReceiptNature,
-    Guid ReceivedByEmployeeId, Guid NotedByEmployeeId,
-    DateTimeOffset CreatedOnUtc, string? CreatedBy,
+    Guid Id,
+    string ReportNo,
+    DateOnly Date,
+    string ReceivedFrom,
+    string? Address,
+    string ReceiptType,
+    string? OtherReceiptType,
+    string? FundCluster,
+    Guid? ReceivedByEmployeeId,
+    Guid? NotedByEmployeeId,
     IReadOnlyList<PPERRItemDto> Items);
 
 internal sealed record PagedPPERRResponse(IReadOnlyList<PPERRSummaryDto> Items, int PageNumber, int PageSize, int TotalCount);
 
+internal sealed record UpdatePPERRCommand(
+    string ReportNo,
+    DateOnly Date,
+    string ReceivedFrom,
+    string? Address,
+    ReceiptType ReceiptType,
+    string? OtherReceiptType,
+    string? FundCluster,
+    Guid? ReceivedByEmployeeId,
+    Guid? NotedByEmployeeId);
+
 internal interface IPPERRClient
 {
-    Task<PagedPPERRResponse> SearchAsync(string? keyword = null, DateOnly? dateFrom = null, DateOnly? dateTo = null, PPEReceiptNature? receiptNature = null, int page = 1, int pageSize = 15, CancellationToken ct = default);
+    Task<PagedPPERRResponse> SearchAsync(string? keyword = null, DateOnly? dateFrom = null, DateOnly? dateTo = null, int page = 1, int pageSize = 15, CancellationToken ct = default);
     Task<PPERRDetailsDto?> GetAsync(Guid id, CancellationToken ct = default);
     Task<CreatePPERRResult> CreateAsync(CreatePPERRCommand command, CancellationToken ct = default);
+    Task UpdateAsync(Guid id, UpdatePPERRCommand command, CancellationToken ct = default);
+    Task DeleteAsync(Guid id, CancellationToken ct = default);
 }
 
 internal sealed class PPERRClient(HttpClient http) : IPPERRClient
 {
-    private const string Base = "api/v1/asset-management/ppe-receiving-reports";
+    private const string Base = "api/v1/asset-management/tangible-inventories";
 
-    public Task<PagedPPERRResponse> SearchAsync(string? keyword = null, DateOnly? dateFrom = null, DateOnly? dateTo = null, PPEReceiptNature? receiptNature = null, int page = 1, int pageSize = 15, CancellationToken ct = default)
+    private static async Task EnsureSuccessWithDetailsAsync(HttpResponseMessage response, CancellationToken ct)
+    {
+        if (response.IsSuccessStatusCode)
+        {
+            return;
+        }
+
+        var body = await response.Content.ReadAsStringAsync(ct);
+        if (!string.IsNullOrWhiteSpace(body))
+        {
+            try
+            {
+                using var doc = JsonDocument.Parse(body);
+                if (doc.RootElement.TryGetProperty("errors", out var errors) && errors.ValueKind == JsonValueKind.Object)
+                {
+                    foreach (var fieldError in errors.EnumerateObject())
+                    {
+                        if (fieldError.Value.ValueKind == JsonValueKind.Array)
+                        {
+                            foreach (var item in fieldError.Value.EnumerateArray())
+                            {
+                                var message = item.GetString();
+                                if (!string.IsNullOrWhiteSpace(message))
+                                {
+                                    throw new InvalidOperationException(message);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (doc.RootElement.TryGetProperty("detail", out var detailElement))
+                {
+                    var detail = detailElement.GetString();
+                    if (!string.IsNullOrWhiteSpace(detail))
+                    {
+                        throw new InvalidOperationException(detail);
+                    }
+                }
+
+                if (doc.RootElement.TryGetProperty("title", out var titleElement))
+                {
+                    var title = titleElement.GetString();
+                    if (!string.IsNullOrWhiteSpace(title))
+                    {
+                        throw new InvalidOperationException(title);
+                    }
+                }
+            }
+            catch (JsonException)
+            {
+                // Ignore parsing failures and fall back to status code.
+            }
+        }
+
+        response.EnsureSuccessStatusCode();
+    }
+
+    public Task<PagedPPERRResponse> SearchAsync(string? keyword = null, DateOnly? dateFrom = null, DateOnly? dateTo = null, int page = 1, int pageSize = 15, CancellationToken ct = default)
     {
         var q = HttpUtility.ParseQueryString(string.Empty);
         if (!string.IsNullOrWhiteSpace(keyword)) q["Keyword"] = keyword;
         if (dateFrom.HasValue) q["DateFrom"] = dateFrom.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
         if (dateTo.HasValue) q["DateTo"] = dateTo.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-        if (receiptNature.HasValue) q["ReceiptNature"] = ((int)receiptNature.Value).ToString(CultureInfo.InvariantCulture);
+        q["AssetType"] = "PPE";
         q["PageNumber"] = page.ToString(CultureInfo.InvariantCulture);
         q["PageSize"] = pageSize.ToString(CultureInfo.InvariantCulture);
         return http.GetFromJsonAsync<PagedPPERRResponse>($"{Base}?{q}", ct)!;
@@ -1062,8 +1302,20 @@ internal sealed class PPERRClient(HttpClient http) : IPPERRClient
     public async Task<CreatePPERRResult> CreateAsync(CreatePPERRCommand command, CancellationToken ct = default)
     {
         using var r = await http.PostAsJsonAsync(Base, command, ct);
-        r.EnsureSuccessStatusCode();
+        await EnsureSuccessWithDetailsAsync(r, ct);
         return (await r.Content.ReadFromJsonAsync<CreatePPERRResult>(ct))!;
+    }
+
+    public async Task UpdateAsync(Guid id, UpdatePPERRCommand command, CancellationToken ct = default)
+    {
+        using var r = await http.PutAsJsonAsync($"{Base}/{id}", command, ct);
+        await EnsureSuccessWithDetailsAsync(r, ct);
+    }
+
+    public async Task DeleteAsync(Guid id, CancellationToken ct = default)
+    {
+        using var r = await http.DeleteAsync($"{Base}/{id}", ct);
+        await EnsureSuccessWithDetailsAsync(r, ct);
     }
 }
 
@@ -1405,6 +1657,24 @@ internal sealed record RPCPPEReportDto(
     IReadOnlyList<RPCPPELineItemDto> Items,
     RPCPPESummaryDto Summary);
 
+// RPCSEMEX report DTOs (Semi-Expendable equivalent of RPCPPE — no depreciation/book value)
+internal sealed record RPCSEMEXLineItemDto(
+    int LineNo, string PropertyCode, string Description, string PropertyNumber,
+    DateOnly DateAcquired, decimal UnitCost,
+    int QuantityPerCard, int QuantityOnHand, int Shortage, int Overage,
+    string? Condition, string? Remarks, string Result, bool IsScanned);
+
+internal sealed record RPCSEMEXSummaryDto(
+    int TotalItems, int Found, int NotFound, int FoundAtStation, int Pending,
+    decimal TotalUnitCost, int TotalShortage, int TotalOverage);
+
+internal sealed record RPCSEMEXReportDto(
+    Guid SessionId, string SessionNo, DateOnly CountDate, string StationOffice,
+    Guid PreparedByEmployeeId, Guid CertifiedByEmployeeId, Guid ApprovedByEmployeeId,
+    DateTimeOffset? SubmittedOnUtc,
+    IReadOnlyList<RPCSEMEXLineItemDto> Items,
+    RPCSEMEXSummaryDto Summary);
+
 internal interface IPhysicalCountClient
 {
     Task<PagedPhysicalCountSessionResponse> SearchAsync(string? keyword = null, int page = 1, int pageSize = 15, string? status = null, CancellationToken ct = default);
@@ -1414,6 +1684,7 @@ internal interface IPhysicalCountClient
     Task<AddFoundAtStationEntryResult> AddFoundAtStationAsync(Guid sessionId, AddFoundAtStationEntryRequest request, CancellationToken ct = default);
     Task<SubmitPhysicalCountSessionResult> SubmitAsync(Guid sessionId, CancellationToken ct = default);
     Task<RPCPPEReportDto?> GetRPCPPEAsync(Guid sessionId, CancellationToken ct = default);
+    Task<RPCSEMEXReportDto?> GetRPCSEMEXAsync(Guid sessionId, CancellationToken ct = default);
 }
 
 internal sealed class PhysicalCountClient(HttpClient http) : IPhysicalCountClient
@@ -1463,6 +1734,9 @@ internal sealed class PhysicalCountClient(HttpClient http) : IPhysicalCountClien
 
     public Task<RPCPPEReportDto?> GetRPCPPEAsync(Guid sessionId, CancellationToken ct = default) =>
         http.GetFromJsonAsync<RPCPPEReportDto>($"{Base}/{sessionId}/rpcppe", ct);
+
+    public Task<RPCSEMEXReportDto?> GetRPCSEMEXAsync(Guid sessionId, CancellationToken ct = default) =>
+        http.GetFromJsonAsync<RPCSEMEXReportDto>($"{Base}/{sessionId}/rpcsemex", ct);
 }
 
 // Tangible Items

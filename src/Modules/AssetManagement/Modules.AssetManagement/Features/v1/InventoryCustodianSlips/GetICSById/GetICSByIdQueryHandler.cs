@@ -42,7 +42,7 @@ public sealed class GetICSByIdQueryHandler(AssetManagementDbContext dbContext)
             ics.Id,
             ics.ICSNo,
             ics.Date,
-            ics.AssetType.ToString(),
+            ics.Category.ToString(),
             ics.Status.ToString(),
             ics.ExpiresOn,
             ics.FundCluster,

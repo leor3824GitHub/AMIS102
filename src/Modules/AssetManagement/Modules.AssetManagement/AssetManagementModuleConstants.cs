@@ -131,6 +131,21 @@ public static class AssetManagementModuleConstants
         {
             public const string View   = "Permissions.AssetManagement.TangibleInventory.View";
             public const string Create = "Permissions.AssetManagement.TangibleInventory.Create";
+            public const string Update = "Permissions.AssetManagement.TangibleInventory.Update";
+            public const string Delete = "Permissions.AssetManagement.TangibleInventory.Delete";
+        }
+
+        public static class AssetRegistry
+        {
+            public const string View = "Permissions.AssetManagement.AssetRegistry.View";
+        }
+
+        public static class Locations
+        {
+            public const string View = "Permissions.AssetManagement.Locations.View";
+            public const string Create = "Permissions.AssetManagement.Locations.Create";
+            public const string Update = "Permissions.AssetManagement.Locations.Update";
+            public const string Delete = "Permissions.AssetManagement.Locations.Delete";
         }
 
     }

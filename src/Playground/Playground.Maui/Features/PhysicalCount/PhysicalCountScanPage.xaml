@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Playground.Maui.Features.PhysicalCount"
+             xmlns:zxing="clr-namespace:ZXing.Net.Maui.Controls;assembly=ZXing.Net.MAUI.Controls"
+             xmlns:zxingcore="clr-namespace:ZXing.Net.Maui;assembly=ZXing.Net.MAUI"
+             x:DataType="vm:PhysicalCountScanViewModel"
+             x:Class="Playground.Maui.Features.PhysicalCount.PhysicalCountScanPage"
+             Title="Scan Property Barcode">
+
+    <Grid RowDefinitions="*,Auto">
+
+        <!-- Camera viewfinder fills available space -->
+        <zxing:CameraBarcodeReaderView Grid.Row="0"
+                                       x:Name="BarcodeReader"
+                                       IsVisible="{Binding IsCameraAvailable}"
+                                       IsDetecting="True"
+                                       BarcodesDetected="OnBarcodeDetected">
+            <zxing:CameraBarcodeReaderView.Options>
+                <zxingcore:BarcodeReaderOptions Formats="QrCode,Code128,Code39,DataMatrix"
+                                                AutoRotate="True"
+                                                Multiple="False" />
+            </zxing:CameraBarcodeReaderView.Options>
+        </zxing:CameraBarcodeReaderView>
+
+        <!-- No camera placeholder -->
+        <VerticalStackLayout Grid.Row="0"
+                             IsVisible="{Binding IsCameraAvailable, Converter={StaticResource InvertedBoolConverter}}"
+                             VerticalOptions="Center" HorizontalOptions="Center"
+                             Spacing="12" Padding="32">
+            <Border StrokeShape="RoundRectangle 24"
+                    Stroke="Transparent"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray950}}"
+                    WidthRequest="80" HeightRequest="80"
+                    HorizontalOptions="Center">
+                <Label Text="CAM"
+                       FontFamily="InterBold" FontSize="18"
+                       TextColor="{StaticResource Gray400}"
+                       HorizontalOptions="Center" VerticalOptions="Center" />
+            </Border>
+            <Label Text="Camera not available on this device."
+                   FontSize="14"
+                   TextColor="{StaticResource Gray400}"
+                   HorizontalOptions="Center"
+                   HorizontalTextAlignment="Center" />
+            <Label Text="Tap Cancel and use manual entry instead."
+                   FontSize="13"
+                   TextColor="{StaticResource Gray400}"
+                   HorizontalOptions="Center"
+                   HorizontalTextAlignment="Center" />
+        </VerticalStackLayout>
+
+        <!-- Cancel bar -->
+        <Border Grid.Row="1"
+                Stroke="Transparent"
+                BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray950}}"
+                Padding="20,14,20,28">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="20,20,0,0" />
+            </Border.StrokeShape>
+            <Border.Shadow>
+                <Shadow Brush="Black" Offset="0,-4" Radius="12" Opacity="0.06" />
+            </Border.Shadow>
+            <Button Text="Cancel"
+                    Command="{Binding CancelCommand}"
+                    HorizontalOptions="Fill" />
+        </Border>
+
+    </Grid>
+</ContentPage>

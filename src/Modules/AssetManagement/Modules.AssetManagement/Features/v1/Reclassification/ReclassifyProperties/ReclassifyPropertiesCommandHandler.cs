@@ -36,7 +36,14 @@ public sealed class ReclassifyPropertiesCommandHandler : ICommandHandler<Reclass
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
+        var invItemIds = invItems.Select(x => x.Id).ToList();
+        var registryByInventoryItemId = await _dbContext.AssetRegistry
+            .Where(x => invItemIds.Contains(x.TangibleInventoryItemId))
+            .ToDictionaryAsync(x => x.TangibleInventoryItemId, cancellationToken)
+            .ConfigureAwait(false);
+
         int totalReclassified = 0;
+        var reclassifiedItemIds = new HashSet<Guid>();
         string tenantId = _currentUser.GetTenant() ?? string.Empty;
         string userId = _currentUser.GetUserId().ToString();
 
@@ -48,14 +55,65 @@ public sealed class ReclassifyPropertiesCommandHandler : ICommandHandler<Reclass
 
             if (invItem.AssetType != correctAssetType || invItem.ThresholdAmountUsed != threshold.CapitalizationAmount)
             {
+                var previousAssetType = invItem.AssetType;
                 invItem.Reclassify(correctAssetType, threshold.CapitalizationAmount);
+
+                if (!registryByInventoryItemId.TryGetValue(invItem.Id, out var registry))
+                {
+                    // Snapshot the pre-change classification first, then apply the new
+                    // threshold-derived classification below. This preserves transition
+                    // semantics for first-time registry materialization.
+                    registry = AssetRegistry.Create(
+                        tenantId: invItem.TenantId,
+                        tangibleInventoryItemId: invItem.Id,
+                        itemId: invItem.ItemId,
+                        propertyNo: invItem.PropertyNo,
+                        assetType: previousAssetType,
+                        acquisitionDate: invItem.AcquisitionDate,
+                        unitCost: invItem.UnitCost);
+
+                    _dbContext.AssetRegistry.Add(registry);
+                    registryByInventoryItemId[invItem.Id] = registry;
+                }
+
+                registry.ReclassifyAssetType(correctAssetType);
                 totalReclassified++;
+                reclassifiedItemIds.Add(invItem.Id);
             }
         }
 
         var record = ReclassificationRecord.Create(tenantId, threshold.Id, totalReclassified, command.Notes);
         record.CreatedBy = userId;
         _dbContext.ReclassificationRecords.Add(record);
+
+        foreach (var invItem in invItems)
+        {
+            if (!reclassifiedItemIds.Contains(invItem.Id))
+            {
+                continue;
+            }
+
+            if (!registryByInventoryItemId.TryGetValue(invItem.Id, out var registry))
+            {
+                continue;
+            }
+
+            var history = AssetAssignmentHistory.Create(
+                tenantId,
+                registry.Id,
+                AssetAssignmentEventType.StatusChanged,
+                DateTimeOffset.UtcNow,
+                "RECLASSIFICATION",
+                record.Id,
+                record.Id.ToString(),
+                registry.CurrentCustodianId,
+                registry.CurrentCustodianId,
+                registry.CurrentLocationId,
+                command.Notes);
+
+            _dbContext.AssetAssignmentHistory.Add(history);
+            registry.LinkCurrentAssignment(history.Id);
+        }
 
         await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 

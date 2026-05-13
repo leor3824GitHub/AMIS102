@@ -96,7 +96,7 @@
                     <MudTd><MudText Typo="Typo.body2" Style="font-weight:500">@context.RequestNumber</MudText></MudTd>
                     <MudTd>@GetEmployeeName(context.EmployeeId)</MudTd>
                     <MudTd>@GetDepartmentName(context.DepartmentId)</MudTd>
-                    <MudTd>@(context.ApprovedOnUtc?.ToString("MMM d, yyyy") ?? "-")</MudTd>
+                    <MudTd>@(context.FulfilledOnUtc?.ToString("MMM d, yyyy") ?? context.ApprovedOnUtc?.ToString("MMM d, yyyy") ?? "-")</MudTd>
                     <MudTd>@context.Items.Count item(s)</MudTd>
                     <MudTd>
                         <MudChip T="string" Size="Size.Small" Color="Color.Success" Icon="@Icons.Material.Filled.Done">

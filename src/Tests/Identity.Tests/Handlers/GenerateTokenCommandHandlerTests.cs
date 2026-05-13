@@ -134,7 +134,7 @@ public sealed class GenerateTokenCommandHandlerTests
         await _securityAudit.Received(1).LoginSucceededAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
         await _securityAudit.Received(1).TokenIssuedAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<DateTime>(), Arg.Any<CancellationToken>());
         await _outboxStore.Received(1).AddAsync(Arg.Any<TokenGeneratedIntegrationEvent>(), Arg.Any<CancellationToken>());
-        await _outboxStore.Received(1).AddAsync(Arg.Any<UserLoggedInIntegrationEvent>(), Arg.Any<CancellationToken>());
+        await _eventBus.Received(1).PublishAsync(Arg.Any<UserLoggedInIntegrationEvent>(), Arg.Any<CancellationToken>());
     }
 
     #endregion
@@ -146,7 +146,7 @@ public sealed class GenerateTokenCommandHandlerTests
     {
         // Arrange
         var command = new GenerateTokenCommand("user@example.com", "wrongpassword");
-        
+
         _requestContext.IpAddress.Returns("192.168.1.1");
         _requestContext.ClientId.Returns("test-client");
 
@@ -165,7 +165,7 @@ public sealed class GenerateTokenCommandHandlerTests
     {
         // Arrange
         var command = new GenerateTokenCommand("user@example.com", "wrongpassword");
-        
+
         _requestContext.IpAddress.Returns("192.168.1.1");
         _requestContext.ClientId.Returns("test-client");
 
@@ -230,7 +230,7 @@ public sealed class GenerateTokenCommandHandlerTests
         await _tokenService.Received(1).IssueAsync(userId, claims, null, cancellationToken);
         await _identityService.Received(1).StoreRefreshTokenAsync(userId, token.RefreshToken, token.RefreshTokenExpiresAt, cancellationToken);
         await _outboxStore.Received(1).AddAsync(Arg.Any<TokenGeneratedIntegrationEvent>(), cancellationToken);
-        await _outboxStore.Received(1).AddAsync(Arg.Any<UserLoggedInIntegrationEvent>(), cancellationToken);
+        await _eventBus.Received(1).PublishAsync(Arg.Any<UserLoggedInIntegrationEvent>(), cancellationToken);
     }
 
     #endregion

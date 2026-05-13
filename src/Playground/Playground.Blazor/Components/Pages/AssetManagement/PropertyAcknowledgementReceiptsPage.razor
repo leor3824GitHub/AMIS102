@@ -85,7 +85,10 @@
                     }
 
                     <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
-                               OnClick="CreateAsync" Disabled="_busy">Create PAR</MudButton>
+                               OnClick="CreateAsync" Disabled="_busy">
+                        @if (_busy) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" /> }
+                        Create PAR
+                    </MudButton>
                 </MudStack>
             </MudCardContent>
         </MudCard>
@@ -122,7 +125,7 @@
                                 <tr>
                                     <td><b>@s.PARNo</b></td>
                                     <td>@s.Date.ToString("MM/dd/yyyy")</td>
-                                    <td>@s.PARType</td>
+                                    <td>@FormatPARType(s.PARType)</td>
                                     <td><MudChip T="string" Size="Size.Small" Color="Color.Info">@s.ItemCount items</MudChip></td>
                                     <td><MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small"
                                                        Color="Color.Primary" OnClick="@(() => ViewAsync(s.Id))" /></td>
@@ -154,8 +157,30 @@
                 </MudCardHeader>
                 <MudCardContent>
                     <MudGrid Spacing="1">
-                        <MudItem xs="6"><MudText Typo="Typo.caption">PAR Type</MudText><MudText>@_detail.PARType</MudText></MudItem>
-                        <MudItem xs="6"><MudText Typo="Typo.caption">Created</MudText><MudText Typo="Typo.caption">@_detail.CreatedOnUtc.ToLocalTime().ToString("MM/dd/yyyy HH:mm")</MudText></MudItem>
+                        <MudItem xs="6" sm="3">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">PAR Type</MudText>
+                            <MudText>@FormatPARType(_detail.PARType)</MudText>
+                        </MudItem>
+                        <MudItem xs="6" sm="3">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Date</MudText>
+                            <MudText>@_detail.Date.ToString("MMMM dd, yyyy")</MudText>
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Received From</MudText>
+                            <MudText Typo="Typo.body2">@(_detailReceivedFrom is not null ? FormatEmployee(_detailReceivedFrom) : _detail.ReceivedFromEmployeeId.ToString())</MudText>
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Received By</MudText>
+                            <MudText Typo="Typo.body2">@(_detailReceivedBy is not null ? FormatEmployee(_detailReceivedBy) : _detail.ReceivedByEmployeeId.ToString())</MudText>
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Approved By</MudText>
+                            <MudText Typo="Typo.body2">@(_detailApprovedBy is not null ? FormatEmployee(_detailApprovedBy) : _detail.ApprovedByEmployeeId.ToString())</MudText>
+                        </MudItem>
+                        <MudItem xs="12" sm="3">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Created</MudText>
+                            <MudText Typo="Typo.caption">@_detail.CreatedOnUtc.ToLocalTime().ToString("MM/dd/yyyy HH:mm")</MudText>
+                        </MudItem>
                     </MudGrid>
                     <MudDivider Class="my-2" />
                     <MudText Typo="Typo.subtitle2" Class="mb-1">Line Items</MudText>
@@ -193,6 +218,9 @@
 @code {
     private List<PARSummaryDto> _list = [];
     private PARDetailsDto? _detail;
+    private EmployeeReferenceDto? _detailReceivedFrom;
+    private EmployeeReferenceDto? _detailReceivedBy;
+    private EmployeeReferenceDto? _detailApprovedBy;
     private ParForm _form = new();
     private string? _keyword;
     private bool _loading, _busy;
@@ -221,7 +249,19 @@
 
     private async Task ViewAsync(Guid id)
     {
-        try { _detail = await Client.GetAsync(id); }
+        _detailReceivedFrom = null;
+        _detailReceivedBy = null;
+        _detailApprovedBy = null;
+        try
+        {
+            _detail = await Client.GetAsync(id);
+            if (_detail is not null)
+            {
+                _detailReceivedFrom = await LookupClient.EmployeesGetAsync(_detail.ReceivedFromEmployeeId);
+                _detailReceivedBy = await LookupClient.EmployeesGetAsync(_detail.ReceivedByEmployeeId);
+                _detailApprovedBy = await LookupClient.EmployeesGetAsync(_detail.ApprovedByEmployeeId);
+            }
+        }
         catch (Exception ex) { Snackbar.Add($"Load failed: {ex.Message}", Severity.Error); }
     }
 
@@ -274,6 +314,12 @@
 
     private static string FormatEmployee(EmployeeReferenceDto? e) =>
         e is null ? "" : $"{e.LastName}, {e.FirstName} ({e.EmployeeNumber})";
+
+    private static string FormatPARType(string t) => t switch
+    {
+        "NewPurchase" => "New Purchase",
+        _ => t
+    };
 
     private sealed class ParForm
     {

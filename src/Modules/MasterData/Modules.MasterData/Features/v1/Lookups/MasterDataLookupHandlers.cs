@@ -19,6 +19,31 @@ public sealed class GetEmployeeReferenceByIdQueryHandler(MasterDataDbContext dbC
     }
 }
 
+public sealed class GetEmployeeReferencesByIdsQueryHandler(MasterDataDbContext dbContext)
+    : IQueryHandler<GetEmployeeReferencesByIdsQuery, IReadOnlyDictionary<Guid, EmployeeReferenceDto>>
+{
+    public async ValueTask<IReadOnlyDictionary<Guid, EmployeeReferenceDto>> Handle(GetEmployeeReferencesByIdsQuery query, CancellationToken cancellationToken)
+    {
+        var employeeIds = query.Ids
+            .Where(x => x != Guid.Empty)
+            .Distinct()
+            .ToList();
+
+        if (employeeIds.Count == 0)
+        {
+            return new Dictionary<Guid, EmployeeReferenceDto>();
+        }
+
+        var employees = await MasterDataLookupQueryBuilder.BuildEmployeeReferenceQuery(
+                dbContext,
+                employeeFilter: e => employeeIds.Contains(e.Id))
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        return employees.ToDictionary(x => x.Id);
+    }
+}
+
 public sealed class GetEmployeeReferenceByIdentityUserIdQueryHandler(MasterDataDbContext dbContext)
     : IQueryHandler<GetEmployeeReferenceByIdentityUserIdQuery, EmployeeReferenceDto?>
 {

@@ -5,6 +5,9 @@
     <OutputType>Exe</OutputType>
     <RootNamespace>Playground.Maui</RootNamespace>
     <AssemblyName>Playground.Maui</AssemblyName>
+    <!-- Pin MAUI to .NET 10 line. Without this, UseMaui auto-references 9.0.30 which crashes on
+         Android due to AndroidX/Material ID collision in NavigationRootManager_ElementBasedFragment. -->
+    <MauiVersion>10.0.60</MauiVersion>
     <UseMaui>true</UseMaui>
     <SingleProject>true</SingleProject>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -21,9 +24,12 @@
     <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">26.0</SupportedOSPlatformVersion>
     <!-- iOS -->
     <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">16.0</SupportedOSPlatformVersion>
-    <!-- Windows -->
+    <!-- Windows — version baked into TFM; keep min-version in sync -->
     <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.19041.0</SupportedOSPlatformVersion>
     <TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.19041.0</TargetPlatformMinVersion>
+    <!-- Run unpackaged with WinAppSDK bundled so dotnet run / Aspire don't need WinAppRuntime installed system-wide -->
+    <WindowsPackageType Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">None</WindowsPackageType>
+    <WindowsAppSDKSelfContained Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">true</WindowsAppSDKSelfContained>
 
     <!-- CommunityToolkit.Maui source gen -->
     <EnableMauiCommunityToolkit>true</EnableMauiCommunityToolkit>
@@ -35,6 +41,9 @@
     <MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#512BD4" BaseSize="128,128" />
     <MauiImage Include="Resources\Images\*" />
     <MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
+    <MauiFont Include="Resources\Fonts\Inter-Regular.ttf" />
+    <MauiFont Include="Resources\Fonts\Inter-SemiBold.ttf" />
+    <MauiFont Include="Resources\Fonts\Inter-Bold.ttf" />
   </ItemGroup>
 
   <ItemGroup>
@@ -47,7 +56,18 @@
     <PackageReference Include="ZXing.Net.Maui.Controls" />
     <PackageReference Include="sqlite-net-pcl" />
     <PackageReference Include="SQLitePCLRaw.bundle_green" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" />
     <PackageReference Include="Microsoft.Extensions.Http" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" />
+  </ItemGroup>
+
+  <!-- Android-only: Google ML Kit on-device text recognition (OCR) -->
+  <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
+    <PackageReference Include="Xamarin.Google.MLKit.TextRecognition" />
+    <!-- Force-align the AndroidX.SavedState.Ktx version with what ML Kit pulls (1.4.0.2);
+         otherwise R8 sees duplicate androidx/savedstate/ViewKt classes. -->
+    <PackageReference Include="Xamarin.AndroidX.SavedState.SavedState.Ktx" />
   </ItemGroup>
 
 </Project>

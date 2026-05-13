@@ -1,3 +1,4 @@
+using FSH.Framework.Core.Exceptions;
 using FSH.Modules.Vehicle.Contracts.v1.Maintenance;
 using FSH.Modules.Vehicle.Data;
 using FSH.Modules.Vehicle.Domain.Maintenance;
@@ -11,10 +12,10 @@ public sealed class GetMaintenanceScheduleHandler(
 {
     public async ValueTask<MaintenanceScheduleDto> Handle(
         GetMaintenanceScheduleQuery query,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
-        var schedule = await db.MaintenanceSchedules.FirstOrDefaultAsync(x => x.Id == query.ScheduleId, ct)
-            ?? throw new ApplicationException($"Maintenance schedule {query.ScheduleId} not found");
+        var schedule = await db.MaintenanceSchedules.FirstOrDefaultAsync(x => x.Id == query.ScheduleId, cancellationToken)
+            ?? throw new NotFoundException($"Maintenance schedule {query.ScheduleId} not found");
 
         return new MaintenanceScheduleDto(
             schedule.Id,

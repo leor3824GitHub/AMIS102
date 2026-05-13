@@ -4,35 +4,110 @@
              xmlns:vm="clr-namespace:Playground.Maui.Features.Auth"
              x:DataType="vm:LoginViewModel"
              x:Class="Playground.Maui.Features.Auth.LoginPage"
-             Title="Sign In">
+             Title=""
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{StaticResource PrimaryLight}">
+
     <ScrollView>
-        <VerticalStackLayout Padding="32" Spacing="16" VerticalOptions="Center">
-            <Label Text="AMIS Mobile"
-                   FontSize="28"
-                   FontAttributes="Bold"
-                   HorizontalOptions="Center" />
+        <VerticalStackLayout Padding="32,72,32,40" Spacing="0">
 
-            <Entry Placeholder="Email"
-                   Text="{Binding Email}"
-                   Keyboard="Email"
-                   AutomationId="EmailEntry" />
+            <!-- Branding -->
+            <VerticalStackLayout Spacing="12" HorizontalOptions="Center" Margin="0,0,0,48">
+                <Border StrokeShape="RoundRectangle 20"
+                        Stroke="Transparent"
+                        BackgroundColor="{StaticResource Primary}"
+                        WidthRequest="80" HeightRequest="80"
+                        HorizontalOptions="Center">
+                    <Label Text="A"
+                           FontSize="36" FontAttributes="Bold"
+                           TextColor="{StaticResource White}"
+                           HorizontalOptions="Center" VerticalOptions="Center" />
+                </Border>
+                <Label Text="AMIS Mobile"
+                       Style="{StaticResource TitleStyle}"
+                       FontSize="22"
+                       HorizontalOptions="Center" />
+            </VerticalStackLayout>
 
-            <Entry Placeholder="Password"
-                   Text="{Binding Password}"
-                   IsPassword="True"
-                   AutomationId="PasswordEntry" />
+            <!-- Tenant -->
+            <Label Text="TENANT"
+                   Style="{StaticResource FieldLabelStyle}"
+                   Margin="0,0,0,6" />
+            <Border StrokeShape="RoundRectangle 12"
+                    Stroke="{StaticResource Gray100}"
+                    BackgroundColor="{StaticResource White}"
+                    Padding="16,0"
+                    Margin="0,0,0,16">
+                <Entry Placeholder="e.g. root"
+                       Text="{Binding Tenant}"
+                       AutomationId="TenantEntry" />
+            </Border>
 
+            <!-- Email -->
+            <Label Text="EMAIL"
+                   Style="{StaticResource FieldLabelStyle}"
+                   Margin="0,0,0,6" />
+            <Border StrokeShape="RoundRectangle 12"
+                    Stroke="{StaticResource Gray100}"
+                    BackgroundColor="{StaticResource White}"
+                    Padding="16,0"
+                    Margin="0,0,0,16">
+                <Entry Placeholder="Enter your email"
+                       Text="{Binding Email}"
+                       Keyboard="Email"
+                       AutomationId="EmailEntry" />
+            </Border>
+
+            <!-- Password -->
+            <Label Text="PASSWORD"
+                   Style="{StaticResource FieldLabelStyle}"
+                   Margin="0,0,0,6" />
+            <Border StrokeShape="RoundRectangle 12"
+                    Stroke="{StaticResource Gray100}"
+                    BackgroundColor="{StaticResource White}"
+                    Padding="16,0"
+                    Margin="0,0,0,32">
+                <Grid ColumnDefinitions="*,44">
+                    <Entry Grid.Column="0"
+                           Placeholder="Enter your password"
+                           Text="{Binding Password}"
+                           IsPassword="{Binding IsPasswordVisible, Converter={StaticResource InvertedBoolConverter}}"
+                           AutomationId="PasswordEntry" />
+                    <ImageButton Grid.Column="1"
+                                 Source="eye.svg"
+                                 Command="{Binding TogglePasswordVisibilityCommand}"
+                                 BackgroundColor="Transparent"
+                                 WidthRequest="24" HeightRequest="24"
+                                 HorizontalOptions="Center" VerticalOptions="Center" />
+                </Grid>
+            </Border>
+
+            <!-- Error -->
             <Label Text="{Binding ErrorMessage}"
                    TextColor="{StaticResource Danger}"
+                   FontSize="13"
+                   HorizontalOptions="Center"
+                   HorizontalTextAlignment="Center"
+                   Margin="0,0,0,12"
                    IsVisible="{Binding ErrorMessage, Converter={StaticResource IsNotNullConverter}}" />
 
+            <!-- Spinner -->
             <ActivityIndicator IsRunning="{Binding IsLoading}"
                                IsVisible="{Binding IsLoading}"
-                               HorizontalOptions="Center" />
+                               HorizontalOptions="Center"
+                               Margin="0,0,0,12" />
 
+            <!-- Sign In -->
             <Button Text="Sign In"
                     Command="{Binding LoginCommand}"
-                    IsEnabled="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
+                    IsEnabled="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}"
+                    HeightRequest="52"
+                    CornerRadius="12"
+                    FontFamily="InterSemiBold"
+                    FontSize="16"
+                    Margin="0,0,0,0" />
+
         </VerticalStackLayout>
     </ScrollView>
+
 </ContentPage>

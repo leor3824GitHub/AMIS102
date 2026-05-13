@@ -46,6 +46,11 @@ public sealed class CreateICSCommandHandler : ICommandHandler<CreateICSCommand, 
             .ToDictionaryAsync(x => x.Id, cancellationToken)
             .ConfigureAwait(false);
 
+        var registryByInventoryItemId = await _dbContext.AssetRegistry
+            .Where(x => itemIds.Contains(x.TangibleInventoryItemId))
+            .ToDictionaryAsync(x => x.TangibleInventoryItemId, cancellationToken)
+            .ConfigureAwait(false);
+
         foreach (var itemId in itemIds)
         {
             if (!invItems.TryGetValue(itemId, out var invItem))
@@ -58,19 +63,36 @@ public sealed class CreateICSCommandHandler : ICommandHandler<CreateICSCommand, 
             if (invItem.IsIssued)
                 throw new InvalidOperationException(
                     $"TangibleInventoryItem {invItem.PropertyNo} is already issued.");
+
+            if (!registryByInventoryItemId.ContainsKey(itemId))
+            {
+                var registry = AssetRegistry.Create(
+                    tenantId: invItem.TenantId,
+                    tangibleInventoryItemId: invItem.Id,
+                    itemId: invItem.ItemId,
+                    propertyNo: invItem.PropertyNo,
+                    assetType: invItem.AssetType,
+                    acquisitionDate: invItem.AcquisitionDate,
+                    unitCost: invItem.UnitCost);
+
+                _dbContext.AssetRegistry.Add(registry);
+                registryByInventoryItemId[itemId] = registry;
+            }
         }
 
         string tenantId = _currentUser.GetTenant() ?? string.Empty;
+        string userId = _currentUser.GetUserId().ToString();
 
         var ics = InventoryCustodianSlip.Create(
             tenantId,
             command.ICSNo,
             command.Date,
+            command.Category,
             command.FundCluster,
             command.IssuedFromEmployeeId,
             command.ReceivedByEmployeeId);
 
-        ics.CreatedBy = _currentUser.GetUserId().ToString();
+        ics.CreatedBy = userId;
         _dbContext.InventoryCustodianSlips.Add(ics);
 
         int itemNo = 1;
@@ -90,6 +112,29 @@ public sealed class CreateICSCommandHandler : ICommandHandler<CreateICSCommand, 
 
             _dbContext.ICSItems.Add(icsItem);
             invItem.MarkIssued();
+
+            var registry = registryByInventoryItemId[invItem.Id];
+            var previousCustodian = registry.CurrentCustodianId;
+            registry.AssignTo(command.ReceivedByEmployeeId, null);
+            var eventType = previousCustodian.HasValue
+                ? AssetAssignmentEventType.Transferred
+                : AssetAssignmentEventType.Assigned;
+
+            var history = AssetAssignmentHistory.Create(
+                tenantId,
+                registry.Id,
+                eventType,
+                DateTimeOffset.UtcNow,
+                "ICS",
+                ics.Id,
+                ics.ICSNo,
+                previousCustodian,
+                command.ReceivedByEmployeeId,
+                null,
+                null);
+
+            _dbContext.AssetAssignmentHistory.Add(history);
+            registry.LinkCurrentAssignment(history.Id);
             itemNo++;
         }
 

@@ -46,6 +46,11 @@ public sealed class CreateRRPCommandHandler : ICommandHandler<CreateRRPCommand, 
             .ToDictionaryAsync(x => x.Id, cancellationToken)
             .ConfigureAwait(false);
 
+        var registryByInventoryItemId = await _dbContext.AssetRegistry
+            .Where(x => requestedIds.Contains(x.TangibleInventoryItemId))
+            .ToDictionaryAsync(x => x.TangibleInventoryItemId, cancellationToken)
+            .ConfigureAwait(false);
+
         foreach (var itemId in requestedIds)
         {
             if (!invItems.TryGetValue(itemId, out var invItem))
@@ -61,6 +66,7 @@ public sealed class CreateRRPCommandHandler : ICommandHandler<CreateRRPCommand, 
         }
 
         string tenantId = _currentUser.GetTenant() ?? string.Empty;
+        string userId = _currentUser.GetUserId().ToString();
 
         var rrp = ReceiptForReturnedPPE.Create(
             tenantId,
@@ -72,7 +78,7 @@ public sealed class CreateRRPCommandHandler : ICommandHandler<CreateRRPCommand, 
             command.SignedByEmployeeId,
             command.PropertyInspectorCertified);
 
-        rrp.CreatedBy = _currentUser.GetUserId().ToString();
+        rrp.CreatedBy = userId;
         _dbContext.ReceiptsForReturnedPPE.Add(rrp);
 
         foreach (var (itemRequest, itemNo) in command.Items.Select((r, i) => (r, i + 1)))
@@ -92,9 +98,64 @@ public sealed class CreateRRPCommandHandler : ICommandHandler<CreateRRPCommand, 
 
             _dbContext.RRPItems.Add(rrpItem);
 
+            if (!registryByInventoryItemId.TryGetValue(invItem.Id, out var registry))
+            {
+                registry = AssetRegistry.Create(
+                    tenantId: invItem.TenantId,
+                    tangibleInventoryItemId: invItem.Id,
+                    itemId: invItem.ItemId,
+                    propertyNo: invItem.PropertyNo,
+                    assetType: invItem.AssetType,
+                    acquisitionDate: invItem.AcquisitionDate,
+                    unitCost: invItem.UnitCost);
+
+                _dbContext.AssetRegistry.Add(registry);
+                registryByInventoryItemId[invItem.Id] = registry;
+            }
+
+            var previousCustodian = registry.CurrentCustodianId;
+
             if (command.ReturnCategory == PPEReturnCategory.Serviceable)
             {
                 invItem.MarkReturned();
+                registry.ReturnToStock();
+
+                var history = AssetAssignmentHistory.Create(
+                    tenantId,
+                    registry.Id,
+                    AssetAssignmentEventType.Returned,
+                    DateTimeOffset.UtcNow,
+                    "RRP",
+                    rrp.Id,
+                    rrp.RRPNo,
+                    previousCustodian,
+                    null,
+                    null,
+                    "Serviceable PPE returned to stock.");
+
+                _dbContext.AssetAssignmentHistory.Add(history);
+                registry.LinkCurrentAssignment(history.Id);
+            }
+            else
+            {
+                invItem.MarkReturned();
+                registry.MarkDisposed();
+
+                var history = AssetAssignmentHistory.Create(
+                    tenantId,
+                    registry.Id,
+                    AssetAssignmentEventType.StatusChanged,
+                    DateTimeOffset.UtcNow,
+                    "RRP",
+                    rrp.Id,
+                    rrp.RRPNo,
+                    previousCustodian,
+                    null,
+                    null,
+                    "Junked PPE marked as disposed.");
+
+                _dbContext.AssetAssignmentHistory.Add(history);
+                registry.LinkCurrentAssignment(history.Id);
             }
         }
 

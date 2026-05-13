@@ -1,0 +1,28 @@
+<Project>
+  <!--
+    Import the parent Directory.Build.props so we keep central package management,
+    Sonar analyzer, code-style enforcement, etc.
+  -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <!--
+    The parent Directory.Build.props sets <TargetFramework>net10.0</TargetFramework>,
+    which collides with MAUI's <TargetFrameworks>net10.0-android;net10.0-ios;net10.0-windows...</TargetFrameworks>.
+    Clear the singular property so the MAUI csproj's plural property is honored.
+  -->
+  <PropertyGroup>
+    <TargetFramework></TargetFramework>
+  </PropertyGroup>
+
+
+  <!--
+    MAUI apps are not NuGet packages and do not produce containers. Turn off the
+    inherited packaging/container metadata so MAUI's own SDK targets win cleanly.
+  -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <IsPublishable>true</IsPublishable>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <ContainerImageTags></ContainerImageTags>
+  </PropertyGroup>
+</Project>

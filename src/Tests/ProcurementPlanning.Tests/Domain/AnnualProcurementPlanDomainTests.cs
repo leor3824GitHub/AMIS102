@@ -1,5 +1,7 @@
 using FSH.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
+using FSH.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
 using FSH.Modules.ProcurementPlanning.Domain.AnnualProcurementPlans;
+using FSH.Modules.ProcurementPlanning.Domain.Ppmps;
 using Shouldly;
 using Xunit;
 
@@ -20,25 +22,58 @@ public sealed class AnnualProcurementPlanDomainTests
     }
 
     [Fact]
-    public void ValidateForConsolidation_WhenApproved_Throws()
+    public void ValidateForConsolidation_WhenDraft_DoesNotThrow()
     {
         var app = AnnualProcurementPlan.Create("APP-2025-001", 2025, AppPhase.Indicative);
-        // Manually reflect status change for test — Approve transitions through ForApproval
-        // so we test the guard directly via the validation method on a "Published" equivalent:
-        // We test that Draft/Returned are allowed by NOT throwing
         var act = () => app.ValidateForConsolidation([]);
 
         act.ShouldNotThrow();
     }
 
     [Fact]
-    public void ConsolidatePpmps_WhenApproved_Throws()
+    public void ConsolidatePpmps_WhenPublished_Throws()
     {
         var app = AnnualProcurementPlan.Create("APP-2025-001", 2025, AppPhase.Indicative);
-        app.Approve(Guid.NewGuid());
+        var ppmp = CreateApprovedPpmp(app.FiscalYear, PpmpPhase.Indicative);
 
-        var act = () => app.ConsolidatePpmps([], Guid.NewGuid());
+        app.ConsolidatePpmps([ppmp], Guid.NewGuid());
+        app.Publish();
+
+        var act = () => app.ConsolidatePpmps([ppmp], Guid.NewGuid());
 
         act.ShouldThrow<InvalidOperationException>();
+    }
+
+    private static Ppmp CreateApprovedPpmp(int fiscalYear, PpmpPhase phase)
+    {
+        var ppmp = Ppmp.Create(
+            ppmpNumber: $"PPMP-{fiscalYear}-001",
+            fiscalYear: fiscalYear,
+            phase: phase,
+            officeCode: "OFFICE-1",
+            endUserUnit: "End User Unit",
+            preparedById: Guid.NewGuid(),
+            items:
+            [
+                new PpmpItemData(
+                    GeneralDescription: "Office supplies",
+                    ProjectType: ProjectType.Goods,
+                    Quantity: 1,
+                    Unit: "lot",
+                    ModeOfProcurement: "Shopping",
+                    PreProcurementConference: false,
+                    ProcurementStart: "Jan",
+                    ProcurementEnd: "Feb",
+                    ExpectedDelivery: "Mar",
+                    SourceOfFunds: "General Fund",
+                    EstimatedBudget: 1000m,
+                    SupportingDocuments: null,
+                    Remarks: null)
+            ]);
+
+        ppmp.Submit();
+        ppmp.Approve(Guid.NewGuid());
+
+        return ppmp;
     }
 }

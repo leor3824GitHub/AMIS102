@@ -44,6 +44,11 @@ public class AssetManagementDbContext : BaseDbContext
     public DbSet<TangibleInventory>                TangibleInventories               => Set<TangibleInventory>();
     public DbSet<TangibleInventoryItem>            TangibleInventoryItems            => Set<TangibleInventoryItem>();
 
+    // Current-state registry and assignment history
+    public DbSet<AssetRegistry>                    AssetRegistry                     => Set<AssetRegistry>();
+    public DbSet<AssetAssignmentHistory>           AssetAssignmentHistory            => Set<AssetAssignmentHistory>();
+    public DbSet<Location>                         Locations                         => Set<Location>();
+
     public AssetManagementDbContext(
         IMultiTenantContextAccessor<AppTenantInfo> multiTenantContextAccessor,
         DbContextOptions<AssetManagementDbContext> options,

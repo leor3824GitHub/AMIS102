@@ -1,4 +1,4 @@
-using FSH.Framework.Core.Context;
+using FSH.Framework.Core.Exceptions;
 using FSH.Modules.Vehicle.Contracts.v1.Maintenance;
 using FSH.Modules.Vehicle.Data;
 using FSH.Modules.Vehicle.Domain.Maintenance;
@@ -12,10 +12,10 @@ public sealed class UpdateMaintenanceScheduleHandler(
 {
     public async ValueTask<MaintenanceScheduleDto> Handle(
         UpdateMaintenanceScheduleCommand command,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
-        var schedule = await db.MaintenanceSchedules.FirstOrDefaultAsync(x => x.Id == command.ScheduleId, ct)
-            ?? throw new ApplicationException($"Maintenance schedule {command.ScheduleId} not found");
+        var schedule = await db.MaintenanceSchedules.FirstOrDefaultAsync(x => x.Id == command.ScheduleId, cancellationToken)
+            ?? throw new NotFoundException($"Maintenance schedule {command.ScheduleId} not found");
 
         schedule.Update(
             command.MaintenanceType,
@@ -26,7 +26,7 @@ public sealed class UpdateMaintenanceScheduleHandler(
             command.DueMileage);
 
         db.MaintenanceSchedules.Update(schedule);
-        await db.SaveChangesAsync(ct);
+        await db.SaveChangesAsync(cancellationToken);
 
         return new MaintenanceScheduleDto(
             schedule.Id,

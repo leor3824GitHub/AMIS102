@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Playground.Maui.Features.PhysicalCount"
+             x:DataType="vm:PhysicalCountMarkEntryViewModel"
+             x:Class="Playground.Maui.Features.PhysicalCount.PhysicalCountMarkEntryPage"
+             Title="Mark Entry"
+             BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource OffBlack}}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="0,16,0,32" Spacing="0">
+
+            <ActivityIndicator IsRunning="{Binding IsLoading}"
+                               IsVisible="{Binding IsLoading}"
+                               Margin="0,0,0,8" />
+
+            <Label Text="{Binding ErrorMessage}"
+                   IsVisible="{Binding ErrorMessage, Converter={StaticResource IsNotNullConverter}}"
+                   TextColor="{StaticResource Danger}"
+                   FontSize="13"
+                   Margin="20,0,20,12" />
+
+            <!-- Asset info header card -->
+            <Border Style="{StaticResource CardBorderStyle}" Margin="16,0" Padding="20">
+                <VerticalStackLayout Spacing="4">
+                    <Label Text="{Binding PropertyNo}"
+                           Style="{StaticResource CaptionStyle}" />
+                    <Label Text="{Binding DisplayDescription}"
+                           FontFamily="InterSemiBold" FontSize="16" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Count details card -->
+            <Label Text="COUNT DETAILS"
+                   Style="{StaticResource SectionHeaderStyle}"
+                   Margin="20,20,20,10" />
+
+            <Border Style="{StaticResource CardBorderStyle}" Margin="16,0" Padding="20">
+                <VerticalStackLayout Spacing="0">
+
+                    <!-- Result -->
+                    <VerticalStackLayout Spacing="4" Padding="0,0,0,14">
+                        <Label Text="RESULT" Style="{StaticResource FieldLabelStyle}" />
+                        <Picker ItemsSource="{Binding Results}"
+                                SelectedIndex="{Binding SelectedResultIndex}"
+                                Title="Select result" />
+                    </VerticalStackLayout>
+
+                    <BoxView HeightRequest="1"
+                             Color="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}" />
+
+                    <!-- Condition -->
+                    <VerticalStackLayout Spacing="4" Padding="0,14,0,14">
+                        <Label Text="CONDITION" Style="{StaticResource FieldLabelStyle}" />
+                        <Picker ItemsSource="{Binding Conditions}"
+                                SelectedIndex="{Binding SelectedConditionIndex}"
+                                Title="Select condition" />
+                    </VerticalStackLayout>
+
+                    <BoxView HeightRequest="1"
+                             Color="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}" />
+
+                    <!-- Quantity -->
+                    <VerticalStackLayout Spacing="4" Padding="0,14,0,14">
+                        <Label Text="QUANTITY ON HAND" Style="{StaticResource FieldLabelStyle}" />
+                        <Entry Keyboard="Numeric"
+                               Text="{Binding QuantityOnHand}"
+                               Placeholder="1" />
+                    </VerticalStackLayout>
+
+                    <BoxView HeightRequest="1"
+                             Color="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}" />
+
+                    <!-- Remarks -->
+                    <VerticalStackLayout Spacing="4" Padding="0,14,0,0">
+                        <Label Text="REMARKS (optional)" Style="{StaticResource FieldLabelStyle}" />
+                        <Editor Text="{Binding Remarks}"
+                                Placeholder="e.g. found in storage room"
+                                HeightRequest="80"
+                                AutoSize="TextChanges" />
+                    </VerticalStackLayout>
+
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Action buttons -->
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="12" Margin="16,20,16,0">
+                <Button Grid.Column="0"
+                        Text="Cancel"
+                        Command="{Binding CancelCommand}"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}"
+                        TextColor="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource White}}" />
+                <Button Grid.Column="1"
+                        Text="Save"
+                        Command="{Binding SaveCommand}"
+                        IsEnabled="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
+            </Grid>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

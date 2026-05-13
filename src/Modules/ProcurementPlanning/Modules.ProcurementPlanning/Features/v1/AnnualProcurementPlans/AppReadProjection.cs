@@ -1,4 +1,6 @@
-﻿using FSH.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
+﻿using System.Net;
+using FSH.Framework.Core.Exceptions;
+using FSH.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
 using FSH.Modules.ProcurementPlanning.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,7 +17,7 @@ internal static class AppReadProjection
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == appId, cancellationToken)
             .ConfigureAwait(false)
-            ?? throw new KeyNotFoundException($"APP {appId} not found.");
+            ?? throw new CustomException($"APP {appId} not found.", Enumerable.Empty<string>(), HttpStatusCode.NotFound);
 
         var items = await dbContext.AppLineItems
             .AsNoTracking()

@@ -182,7 +182,7 @@
                     }
                     else
                     {
-                        @if (_editing.Status == AppStatus.Draft && _editing.Items.Count > 0)
+                        @if ((_editing.Status is AppStatus.Draft or AppStatus.Returned) && _editing.Items.Count > 0)
                         {
                             <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Publish"
                                        OnClick="PublishAsync" Disabled="_busy" Size="Size.Small">
@@ -235,7 +235,7 @@
                     {
                         <div Class="mt-1"><em>"@_editing.ReturnReason"</em></div>
                     }
-                    Use <strong>Create Update</strong> to create a new version.
+                    Use <strong>Create Update</strong> to create a new version, or re-consolidate PPMPs below and re-publish to resubmit for approval.
                 </MudAlert>
             }
             else if (_editing is not null && _editing.Status == AppStatus.Draft && _editing.Items.Count == 0)
@@ -274,7 +274,6 @@
                             <MudItem xs="12" sm="4">
                                 <MudSelect @bind-Value="_newPhase" Label="Phase *" Variant="Variant.Outlined" T="AppPhase">
                                     <MudSelectItem Value="AppPhase.Indicative">Indicative</MudSelectItem>
-                                    <MudSelectItem Value="AppPhase.Final">Final</MudSelectItem>
                                 </MudSelect>
                             </MudItem>
                             <MudItem xs="12" sm="4" Style="display:flex;align-items:center">
@@ -325,8 +324,8 @@
                             }
                         </MudGrid>
 
-                        <!-- ── Consolidation Panel (Draft only) ───────────────── -->
-                        @if (_editing.Status == AppStatus.Draft)
+                        <!-- ── Consolidation Panel (Draft or Returned) ───────────────── -->
+                        @if (_editing.Status is AppStatus.Draft or AppStatus.Returned)
                         {
                             <MudExpansionPanels Elevation="0" Class="mb-4">
                                 <MudExpansionPanel Text="Consolidate PPMPs" Icon="@Icons.Material.Outlined.LibraryAdd"

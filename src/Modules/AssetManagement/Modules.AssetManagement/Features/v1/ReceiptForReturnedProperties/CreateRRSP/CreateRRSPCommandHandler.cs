@@ -58,8 +58,14 @@ public sealed class CreateRRSPCommandHandler(AssetManagementDbContext dbContext,
             .ToDictionaryAsync(x => x.Id, cancellationToken)
             .ConfigureAwait(false);
 
+        var registryByInventoryItemId = await dbContext.AssetRegistry
+            .Where(x => invItemIds.Contains(x.TangibleInventoryItemId))
+            .ToDictionaryAsync(x => x.TangibleInventoryItemId, cancellationToken)
+            .ConfigureAwait(false);
+
         // 5. Create the RRSP header.
         string tenantId = currentUser.GetTenant() ?? string.Empty;
+        string userId = currentUser.GetUserId().ToString();
 
         var rrsp = ReceiptForReturnedProperty.Create(
             tenantId,
@@ -71,6 +77,7 @@ public sealed class CreateRRSPCommandHandler(AssetManagementDbContext dbContext,
             command.ReturnedByEmployeeId,
             command.Remarks);
 
+        rrsp.CreatedBy = userId;
         dbContext.ReceiptForReturnedProperties.Add(rrsp);
 
         // 6. Create RRSP items and mark each inventory item returned.
@@ -96,6 +103,40 @@ public sealed class CreateRRSPCommandHandler(AssetManagementDbContext dbContext,
             dbContext.RRSPItems.Add(rrspItem);
 
             invItem.MarkReturned();
+
+            if (!registryByInventoryItemId.TryGetValue(invItem.Id, out var registry))
+            {
+                registry = AssetRegistry.Create(
+                    tenantId: invItem.TenantId,
+                    tangibleInventoryItemId: invItem.Id,
+                    itemId: invItem.ItemId,
+                    propertyNo: invItem.PropertyNo,
+                    assetType: invItem.AssetType,
+                    acquisitionDate: invItem.AcquisitionDate,
+                    unitCost: invItem.UnitCost);
+
+                dbContext.AssetRegistry.Add(registry);
+                registryByInventoryItemId[invItem.Id] = registry;
+            }
+
+            var previousCustodian = registry.CurrentCustodianId;
+            registry.ReturnToStock();
+
+            var history = AssetAssignmentHistory.Create(
+                tenantId,
+                registry.Id,
+                AssetAssignmentEventType.Returned,
+                DateTimeOffset.UtcNow,
+                "RRSP",
+                rrsp.Id,
+                rrsp.RRSPNo,
+                previousCustodian,
+                null,
+                null,
+                command.Remarks);
+
+            dbContext.AssetAssignmentHistory.Add(history);
+            registry.LinkCurrentAssignment(history.Id);
         }
 
         // 7. Cancel the ICS.

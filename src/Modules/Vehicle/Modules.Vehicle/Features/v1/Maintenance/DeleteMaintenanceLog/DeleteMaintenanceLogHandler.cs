@@ -1,3 +1,4 @@
+using FSH.Framework.Core.Exceptions;
 using FSH.Modules.Vehicle.Data;
 using FSH.Modules.Vehicle.Domain.Maintenance;
 using Mediator;
@@ -10,14 +11,14 @@ public sealed class DeleteMaintenanceLogHandler(
 {
     public async ValueTask<Unit> Handle(
         DeleteMaintenanceLogCommand command,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
-        var log = await db.MaintenanceLogs.FirstOrDefaultAsync(x => x.Id == command.LogId, ct)
-            ?? throw new ApplicationException($"Maintenance log {command.LogId} not found");
+        var log = await db.MaintenanceLogs.FirstOrDefaultAsync(x => x.Id == command.LogId, cancellationToken)
+            ?? throw new NotFoundException($"Maintenance log {command.LogId} not found");
 
         log.SoftDelete();
         db.MaintenanceLogs.Update(log);
-        await db.SaveChangesAsync(ct);
+        await db.SaveChangesAsync(cancellationToken);
 
         return Unit.Value;
     }

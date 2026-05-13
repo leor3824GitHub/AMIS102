@@ -46,6 +46,11 @@ public sealed class CreatePPEIRCommandHandler : ICommandHandler<CreatePPEIRComma
             .ToDictionaryAsync(x => x.Id, cancellationToken)
             .ConfigureAwait(false);
 
+        var registryByInventoryItemId = await _dbContext.AssetRegistry
+            .Where(x => requestedItemIds.Contains(x.TangibleInventoryItemId))
+            .ToDictionaryAsync(x => x.TangibleInventoryItemId, cancellationToken)
+            .ConfigureAwait(false);
+
         foreach (var itemId in requestedItemIds)
         {
             if (!invItems.TryGetValue(itemId, out var invItem))
@@ -54,9 +59,24 @@ public sealed class CreatePPEIRCommandHandler : ICommandHandler<CreatePPEIRComma
             if (invItem.AssetType != AssetType.PPE)
                 throw new InvalidOperationException(
                     $"TangibleInventoryItem {invItem.PropertyNo} has AssetType '{invItem.AssetType}'. Only PPE items can be transferred via PPEIR.");
+
+            if (!invItem.IsIssued)
+                throw new InvalidOperationException(
+                    $"TangibleInventoryItem {invItem.PropertyNo} is not yet issued. Only currently issued PPE items can be transferred via PPEIR.");
+
+            if (!registryByInventoryItemId.TryGetValue(itemId, out var registry))
+                throw new InvalidOperationException(
+                    $"TangibleInventoryItem {invItem.PropertyNo} has no asset registry record. Create or reconcile its assignment before transfer.");
+
+            if (!registry.CurrentCustodianId.HasValue)
+            {
+                throw new InvalidOperationException(
+                    $"TangibleInventoryItem {invItem.PropertyNo} has no current custodian in the asset registry and cannot be transferred via PPEIR.");
+            }
         }
 
         string tenantId = _currentUser.GetTenant() ?? string.Empty;
+        string userId = _currentUser.GetUserId().ToString();
 
         var ppeir = PPEIssuanceReport.Create(
             tenantId,
@@ -72,7 +92,7 @@ public sealed class CreatePPEIRCommandHandler : ICommandHandler<CreatePPEIRComma
             command.DriverName,
             command.BillOfLadingNo);
 
-        ppeir.CreatedBy = _currentUser.GetUserId().ToString();
+        ppeir.CreatedBy = userId;
         _dbContext.PPEIssuanceReports.Add(ppeir);
 
         int itemNo = 1;
@@ -92,6 +112,31 @@ public sealed class CreatePPEIRCommandHandler : ICommandHandler<CreatePPEIRComma
                 invItem.UnitCost);
 
             _dbContext.PPEIRItems.Add(ppeirItem);
+
+            invItem.MarkIssued();
+
+            var registry = registryByInventoryItemId[invItem.Id];
+            var previousCustodian = registry.CurrentCustodianId;
+            registry.TransferOut();
+            var eventType = previousCustodian.HasValue
+                ? AssetAssignmentEventType.Transferred
+                : AssetAssignmentEventType.Assigned;
+
+            var history = AssetAssignmentHistory.Create(
+                tenantId,
+                registry.Id,
+                eventType,
+                DateTimeOffset.UtcNow,
+                "PPEIR",
+                ppeir.Id,
+                ppeir.PPEIRNo,
+                previousCustodian,
+                command.IssuedToEmployeeId,
+                null,
+                null);
+
+            _dbContext.AssetAssignmentHistory.Add(history);
+            registry.LinkCurrentAssignment(history.Id);
             itemNo++;
         }
 

@@ -68,9 +68,9 @@ internal interface IPpmpClient
     Task<PpmpDto> CreateAsync(CreatePpmpCommand command, CancellationToken ct = default);
     Task<PpmpDto> UpdateAsync(Guid id, UpdatePpmpCommand command, CancellationToken ct = default);
     Task<PpmpDto> SubmitAsync(Guid id, CancellationToken ct = default);
-    Task<PpmpDto> ApproveAsync(Guid id, Guid approvedById, CancellationToken ct = default);
+    Task<PpmpDto> ApproveAsync(Guid id, CancellationToken ct = default);
     Task<PpmpDto> RecallAsync(Guid id, CancellationToken ct = default);
-    Task<PpmpDto> ReturnAsync(Guid id, string returnReason, Guid returnedById, CancellationToken ct = default);
+    Task<PpmpDto> ReturnAsync(Guid id, string returnReason, CancellationToken ct = default);
     Task<PpmpDto> PromoteToFinalAsync(Guid id, CancellationToken ct = default);
     Task<PpmpDto> CreateUpdateAsync(Guid id, string reason, CancellationToken ct = default);
 }
@@ -121,10 +121,10 @@ internal sealed class PpmpClient(HttpClient http) : IPpmpClient
         return (await r.Content.ReadFromJsonAsync<PpmpDto>(ct))!;
     }
 
-    public async Task<PpmpDto> ApproveAsync(Guid id, Guid approvedById, CancellationToken ct = default)
+    public async Task<PpmpDto> ApproveAsync(Guid id, CancellationToken ct = default)
     {
         using var r = await http.PostAsJsonAsync($"{Base}/{id}/approve",
-            new ApprovePpmpCommand(id, approvedById), ct);
+            new ApprovePpmpCommand(id), ct);
         await r.EnsureApiSuccessAsync(ct);
         return (await r.Content.ReadFromJsonAsync<PpmpDto>(ct))!;
     }
@@ -136,10 +136,10 @@ internal sealed class PpmpClient(HttpClient http) : IPpmpClient
         return (await r.Content.ReadFromJsonAsync<PpmpDto>(ct))!;
     }
 
-    public async Task<PpmpDto> ReturnAsync(Guid id, string returnReason, Guid returnedById, CancellationToken ct = default)
+    public async Task<PpmpDto> ReturnAsync(Guid id, string returnReason, CancellationToken ct = default)
     {
         using var r = await http.PostAsJsonAsync($"{Base}/{id}/return",
-            new ReturnPpmpCommand(id, returnReason, returnedById), ct);
+            new ReturnPpmpCommand(id, returnReason), ct);
         await r.EnsureApiSuccessAsync(ct);
         return (await r.Content.ReadFromJsonAsync<PpmpDto>(ct))!;
     }
@@ -173,9 +173,9 @@ internal interface IAppClient
     Task<AnnualProcurementPlanDto> CreateAsync(CreateAnnualProcurementPlanCommand command, CancellationToken ct = default);
     Task<AnnualProcurementPlanDto> ConsolidateAsync(Guid id, IReadOnlyList<Guid> ppmpIds, CancellationToken ct = default);
     Task<AnnualProcurementPlanDto> PublishAsync(Guid id, CancellationToken ct = default);
-    Task<AnnualProcurementPlanDto> ApproveAsync(Guid id, Guid approvedById, CancellationToken ct = default);
+    Task<AnnualProcurementPlanDto> ApproveAsync(Guid id, CancellationToken ct = default);
     Task<AnnualProcurementPlanDto> RecallAsync(Guid id, CancellationToken ct = default);
-    Task<AnnualProcurementPlanDto> ReturnAsync(Guid id, string returnReason, Guid returnedById, CancellationToken ct = default);
+    Task<AnnualProcurementPlanDto> ReturnAsync(Guid id, string returnReason, CancellationToken ct = default);
     Task<AnnualProcurementPlanDto> PromoteToFinalAsync(Guid id, CancellationToken ct = default);
     Task<AnnualProcurementPlanDto> CreateUpdateAsync(Guid id, string reason, CancellationToken ct = default);
     Task DeleteAsync(Guid id, CancellationToken ct = default);
@@ -235,10 +235,10 @@ internal sealed class AppClient(HttpClient http) : IAppClient
         return (await r.Content.ReadFromJsonAsync<AnnualProcurementPlanDto>(ct))!;
     }
 
-    public async Task<AnnualProcurementPlanDto> ApproveAsync(Guid id, Guid approvedById, CancellationToken ct = default)
+    public async Task<AnnualProcurementPlanDto> ApproveAsync(Guid id, CancellationToken ct = default)
     {
         using var r = await http.PostAsJsonAsync($"{Base}/{id}/approve",
-            new ApproveAppCommand(id, approvedById), ct);
+            new ApproveAppCommand(id), ct);
         await r.EnsureApiSuccessAsync(ct);
         return (await r.Content.ReadFromJsonAsync<AnnualProcurementPlanDto>(ct))!;
     }
@@ -250,10 +250,10 @@ internal sealed class AppClient(HttpClient http) : IAppClient
         return (await r.Content.ReadFromJsonAsync<AnnualProcurementPlanDto>(ct))!;
     }
 
-    public async Task<AnnualProcurementPlanDto> ReturnAsync(Guid id, string returnReason, Guid returnedById, CancellationToken ct = default)
+    public async Task<AnnualProcurementPlanDto> ReturnAsync(Guid id, string returnReason, CancellationToken ct = default)
     {
         using var r = await http.PostAsJsonAsync($"{Base}/{id}/return",
-            new ReturnAppCommand(id, returnReason, returnedById), ct);
+            new ReturnAppCommand(id, returnReason), ct);
         await r.EnsureApiSuccessAsync(ct);
         return (await r.Content.ReadFromJsonAsync<AnnualProcurementPlanDto>(ct))!;
     }

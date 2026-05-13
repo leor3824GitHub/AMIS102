@@ -135,6 +135,36 @@
             </MudNavLink>
         </MudNavGroup>
 
+        <MudNavGroup Title="Asset Register" Icon="@Icons.Material.Outlined.FolderSpecial" @bind-Expanded="_assetRegisterExpanded">
+            <MudNavLink Href="/asset-register" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.Home">
+                Overview
+            </MudNavLink>
+            <MudNavLink Href="/asset-register/assets" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Inventory2">
+                Asset Registry
+            </MudNavLink>
+            <MudNavLink Href="/asset-register/accountability" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.AssignmentInd">
+                ICS / PAR
+            </MudNavLink>
+            <MudNavLink Href="/asset-register/catalog" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.LibraryBooks">
+                Property Catalog
+            </MudNavLink>
+            <MudNavLink Href="/asset-register/physical-count" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.FactCheck">
+                Physical Count
+            </MudNavLink>
+            <MudNavLink Href="/asset-register/incidents" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.ReportProblem">
+                Incident Reports
+            </MudNavLink>
+            <MudNavLink Href="/asset-register/issuance" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Receipt">
+                Issuance Reports
+            </MudNavLink>
+            <MudNavLink Href="/asset-register/unserviceable" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.DeleteSweep">
+                Unserviceable Reports
+            </MudNavLink>
+            <MudNavLink Href="/asset-register/reports" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Assessment">
+                Reports Workspace
+            </MudNavLink>
+        </MudNavGroup>
+
         <MudNavGroup Title="Procurement Planning" Icon="@Icons.Material.Outlined.Assignment" @bind-Expanded="_procurementPlanningExpanded">
             <MudNavLink Href="/procurement-planning/ppmps" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.ListAlt">
                 PPMP
@@ -282,6 +312,7 @@
     private bool _procurementExpanded;
     private bool _financeExpanded;
     private bool _assetManagementExpanded;
+    private bool _assetRegisterExpanded;
     private bool _seExpanded;
     private bool _ppeExpanded;
 
@@ -296,6 +327,7 @@
         _masterDataExpanded = uri.Contains("/master-data", StringComparison.OrdinalIgnoreCase)
                            || uri.Contains("/masterdata", StringComparison.OrdinalIgnoreCase);
         _assetManagementExpanded = uri.Contains("/asset-management", StringComparison.OrdinalIgnoreCase);
+        _assetRegisterExpanded = uri.Contains("/asset-register", StringComparison.OrdinalIgnoreCase);
         _seExpanded = uri.Contains("/asset-management/receiving-reports", StringComparison.OrdinalIgnoreCase)
                    || uri.Contains("/asset-management/inventory-custodian-slips", StringComparison.OrdinalIgnoreCase)
                    || uri.Contains("/asset-management/issuance-records", StringComparison.OrdinalIgnoreCase)

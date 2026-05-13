@@ -54,6 +54,12 @@ public sealed class RenewICSCommandHandler : ICommandHandler<RenewICSCommand, Re
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
+        var tangibleInventoryItemIds = oldItems.Select(x => x.TangibleInventoryItemId).Distinct().ToList();
+        var registryByInventoryItemId = await _dbContext.AssetRegistry
+            .Where(x => tangibleInventoryItemIds.Contains(x.TangibleInventoryItemId))
+            .ToDictionaryAsync(x => x.TangibleInventoryItemId, cancellationToken)
+            .ConfigureAwait(false);
+
         string tenantId = _currentUser.GetTenant() ?? string.Empty;
         string userId = _currentUser.GetUserId().ToString();
 
@@ -61,6 +67,7 @@ public sealed class RenewICSCommandHandler : ICommandHandler<RenewICSCommand, Re
             tenantId,
             command.NewICSNo,
             command.Date,
+            oldIcs.Category,
             oldIcs.FundCluster,
             command.IssuedFromEmployeeId,
             oldIcs.ReceivedByEmployeeId,
@@ -90,6 +97,30 @@ public sealed class RenewICSCommandHandler : ICommandHandler<RenewICSCommand, Re
         // Mark the old ICS as renewed and cross-link it to the new one.
         oldIcs.MarkRenewed(newIcs.Id);
         oldIcs.LastModifiedBy = userId;
+
+        foreach (var oldItem in oldItems)
+        {
+            if (!registryByInventoryItemId.TryGetValue(oldItem.TangibleInventoryItemId, out var registry))
+            {
+                continue;
+            }
+
+            var history = AssetAssignmentHistory.Create(
+                tenantId,
+                registry.Id,
+                AssetAssignmentEventType.StatusChanged,
+                DateTimeOffset.UtcNow,
+                "ICS-RENEWAL",
+                newIcs.Id,
+                newIcs.ICSNo,
+                registry.CurrentCustodianId,
+                registry.CurrentCustodianId,
+                registry.CurrentLocationId,
+                $"ICS renewed from {oldIcs.ICSNo} to {newIcs.ICSNo}.");
+
+            _dbContext.AssetAssignmentHistory.Add(history);
+            registry.LinkCurrentAssignment(history.Id);
+        }
 
         await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 

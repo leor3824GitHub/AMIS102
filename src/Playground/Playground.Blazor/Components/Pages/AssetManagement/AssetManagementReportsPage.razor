@@ -1,5 +1,7 @@
 @page "/asset-management/reports"
 @using FSH.Playground.Blazor.ApiClient
+@using System.Text
+@inject IJSRuntime JS
 @inject IAssetManagementReportsClient Client
 @inject IPropertyItemCatalogClient ItemClient
 @inject ISemiExpendablePropertyClient PropertyClient
@@ -9,12 +11,18 @@
 <FshPageHeader Title="Semi-Expendable Property Reports"
                Description="COA Circular 2022-004 prescribed reports: Property Card, Registry of Issued, Report of Issued, and Property History." />
 
+<style>
+    @@media print {
+        .no-print { display: none !important; }
+    }
+</style>
+
 <MudTabs Elevation="1" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-3">
 
     <!-- TAB 1: SPC -->
     <MudTabPanel Text="Property Card (SPC)" Icon="@Icons.Material.Outlined.TableChart">
         <MudGrid Spacing="3">
-            <MudItem xs="12" md="4">
+            <MudItem xs="12" md="4" Class="no-print">
                 <MudCard Elevation="1">
                     <MudCardContent>
                         <MudStack Spacing="2">
@@ -106,11 +114,17 @@
                                              ToStringFunc="FormatEmployee"
                                              Label="Employee" Variant="Variant.Outlined"
                                              Required="true" Clearable="true" ResetValueOnEmptyText="true" CoerceValue="true" />
-                            <MudSelect @bind-Value="_regspi.Category" Label="Category" Variant="Variant.Outlined" T="AssetCategory?">
-                                <MudSelectItem T="AssetCategory?" Value="null">All Categories</MudSelectItem>
-                                <MudSelectItem T="AssetCategory?" Value="AssetCategory.LowValuedSemi">Low-Valued</MudSelectItem>
-                                <MudSelectItem T="AssetCategory?" Value="AssetCategory.HighValuedSemi">High-Valued</MudSelectItem>
+                            <MudSelect Value="_regspi.AssetType" ValueChanged="OnRegSPIAssetTypeChanged" Label="Asset Type" Variant="Variant.Outlined" T="AssetType?">
+                                <MudSelectItem T="AssetType?" Value="null">All Types</MudSelectItem>
+                                <MudSelectItem T="AssetType?" Value="AssetType.SE">SE</MudSelectItem>
+                                <MudSelectItem T="AssetType?" Value="AssetType.PPE">PPE</MudSelectItem>
                             </MudSelect>
+                            <MudSelect Value="_regspi.SEValueClass" ValueChanged="OnRegSPISEValueClassChanged" Label="SE Value Class" Variant="Variant.Outlined" T="string">
+                                <MudSelectItem T="string" Value='@("All")'>All</MudSelectItem>
+                                <MudSelectItem T="string" Value='@("Low-Valued")'>Low-Valued (SPLV)</MudSelectItem>
+                                <MudSelectItem T="string" Value='@("High-Valued")'>High-Valued (SPHV)</MudSelectItem>
+                            </MudSelect>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">SE low/high value is inferred from ICS number prefix: SPLV = Low-Valued, SPHV = High-Valued.</MudText>
                             <MudSelect @bind-Value="_regspi.Status" Label="ICS Status" Variant="Variant.Outlined" T="ICSStatus?">
                                 <MudSelectItem T="ICSStatus?" Value="null">All Statuses</MudSelectItem>
                                 <MudSelectItem T="ICSStatus?" Value="ICSStatus.Active">Active</MudSelectItem>
@@ -136,12 +150,81 @@
                 {
                     <MudCard Elevation="1">
                         <MudCardContent>
-                            @if (_regspi.Result.Items.Count == 0)
+                            <MudStack Row="true" Spacing="1" Class="mb-2 no-print" AlignItems="AlignItems.Center">
+                                <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Print" OnClick="PrintReportAsync">
+                                    Print
+                                </MudButton>
+                                <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.PictureAsPdf" OnClick="DownloadRegSPIPdfAsync">
+                                    Download PDF
+                                </MudButton>
+                                <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Download" OnClick="ExportRegSPICsvAsync">
+                                    Export CSV
+                                </MudButton>
+                            </MudStack>
+
+                            <MudStack Row="true" Spacing="1" Class="mb-2" AlignItems="AlignItems.Center">
+                                <MudChip T="string" Size="Size.Small" Color="Color.Primary">@(_regspi.Result.EmployeeName)</MudChip>
+                                @if (!string.IsNullOrWhiteSpace(_regspi.Result.EmployeeNumber))
+                                {
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Info">#@_regspi.Result.EmployeeNumber</MudChip>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(_regspi.Result.EmployeeOfficeName))
+                                {
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Default">@_regspi.Result.EmployeeOfficeName</MudChip>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(_regspi.Result.EmployeeDepartmentName))
+                                {
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Default">@_regspi.Result.EmployeeDepartmentName</MudChip>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(_regspi.Result.EmployeePositionName))
+                                {
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Secondary">@_regspi.Result.EmployeePositionName</MudChip>
+                                }
+                            </MudStack>
+
+                            <MudStack Row="true" Spacing="1" Class="mb-2" AlignItems="AlignItems.Center">
+                                <MudChip T="string" Size="Size.Small" Color="Color.Success">Displayed Lines: @FilteredRegSPILineCount</MudChip>
+                                <MudChip T="string" Size="Size.Small" Color="Color.Secondary">Displayed Total: ₱@FilteredRegSPIAmountTotal.ToString("N2")</MudChip>
+                                <MudChip T="string" Size="Size.Small" Color="Color.Info">API Page Total: ₱@_regspi.Result.PageAmountTotal.ToString("N2")</MudChip>
+                                <MudChip T="string" Size="Size.Small" Color="Color.Dark">Overall: ₱@_regspi.Result.OverallAmountTotal.ToString("N2")</MudChip>
+                            </MudStack>
+
+                            @if (GetFilteredRegSPIItems().Count == 0)
                             {
                                 <MudAlert Severity="Severity.Info">No issued properties found for this employee.</MudAlert>
                             }
                             else
                             {
+                                @if (GetFilteredRegSPISections().Count > 0)
+                                {
+                                    <MudText Typo="Typo.subtitle2" Class="mb-1">ICS Sections</MudText>
+                                    <MudSimpleTable Dense="true" Striped="true" Hover="true" Class="mb-2">
+                                        <thead>
+                                            <tr>
+                                                <th>ICS No.</th>
+                                                <th>Date</th>
+                                                <th>Fund Cluster</th>
+                                                <th>Status</th>
+                                                <th style="text-align:right">Lines</th>
+                                                <th style="text-align:right">Amount</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var s in GetFilteredRegSPISections())
+                                            {
+                                                <tr>
+                                                    <td>@s.ICSNo</td>
+                                                    <td>@s.Date.ToString("MM/dd/yyyy")</td>
+                                                    <td>@(string.IsNullOrWhiteSpace(s.FundCluster) ? "-" : s.FundCluster)</td>
+                                                    <td><MudChip T="string" Size="Size.Small" Color="@ICSStatusColor(s.ICSStatus)">@s.ICSStatus</MudChip></td>
+                                                    <td style="text-align:right">@s.LineCount</td>
+                                                    <td style="text-align:right">₱@s.AmountTotal.ToString("N2")</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </MudSimpleTable>
+                                }
+
                                 <MudSimpleTable Dense="true" Striped="true" Hover="true">
                                     <thead>
                                         <tr>
@@ -149,14 +232,16 @@
                                             <th>Date</th>
                                             <th>Property No.</th>
                                             <th>Item</th>
-                                            <th>Category</th>
+                                            <th>Asset Type</th>
+                                            <th>SE Value</th>
+                                            <th>Issued From</th>
                                             <th style="text-align:right">Unit Cost</th>
                                             <th>Status</th>
                                             <th>Expires</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach (var e in _regspi.Result.Items)
+                                        @foreach (var e in GetFilteredRegSPIItems())
                                         {
                                             <tr>
                                                 <td><MudText Typo="Typo.caption">@e.ICSNo</MudText></td>
@@ -166,7 +251,15 @@
                                                     <MudText Typo="Typo.body2">@e.ItemName</MudText>
                                                     <MudText Typo="Typo.caption" Color="Color.Secondary">@e.ItemCode</MudText>
                                                 </td>
-                                                <td><MudChip T="string" Size="Size.Small" Color="Color.Default">@e.Category</MudChip></td>
+                                                <td><MudChip T="string" Size="Size.Small" Color="Color.Default">@e.AssetType</MudChip></td>
+                                                <td><MudChip T="string" Size="Size.Small" Color="@SEValueClassColor(e.ICSNo, e.AssetType)">@GetSEValueClass(e.ICSNo, e.AssetType)</MudChip></td>
+                                                <td>
+                                                    <MudText Typo="Typo.caption">@(string.IsNullOrWhiteSpace(e.IssuedFromEmployeeName) ? "-" : e.IssuedFromEmployeeName)</MudText>
+                                                    @if (!string.IsNullOrWhiteSpace(e.IssuedFromEmployeePositionName) || !string.IsNullOrWhiteSpace(e.IssuedFromEmployeeOfficeName))
+                                                    {
+                                                        <MudText Typo="Typo.caption" Color="Color.Secondary">@(string.Join(" | ", new[] { e.IssuedFromEmployeePositionName, e.IssuedFromEmployeeOfficeName }.Where(x => !string.IsNullOrWhiteSpace(x))))</MudText>
+                                                    }
+                                                </td>
                                                 <td style="text-align:right">₱@e.UnitCost.ToString("N2")</td>
                                                 <td><MudChip T="string" Size="Size.Small" Color="@ICSStatusColor(e.ICSStatus)">@e.ICSStatus</MudChip></td>
                                                 <td>@(e.ExpiresOn?.ToString("MM/dd/yyyy") ?? "-")</td>
@@ -174,13 +267,38 @@
                                         }
                                     </tbody>
                                 </MudSimpleTable>
-                                <MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-2">
-                                    <MudText Typo="Typo.caption">@_regspi.Result.TotalCount total</MudText>
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-2 no-print">
+                                    <MudText Typo="Typo.caption">Showing @GetFilteredRegSPIItems().Count of @_regspi.Result.Items.Count items on this page (@_regspi.Result.TotalCount total)</MudText>
                                     <MudSpacer />
                                     <MudPagination Count="@RegSPITotalPages" Selected="_regspi.Page"
                                                    ShowFirstButton="true" ShowLastButton="true"
                                                    SelectedChanged="@(async p => await LoadRegSPIAsync(p))" />
                                 </MudStack>
+
+                                @if (_regspi.Result.Signatories.Count > 0)
+                                {
+                                    <MudDivider Class="my-2" />
+                                    <MudText Typo="Typo.subtitle2" Class="mb-1">Signatories</MudText>
+                                    <MudSimpleTable Dense="true">
+                                        <thead>
+                                            <tr>
+                                                <th>Label</th>
+                                                <th>Name</th>
+                                                <th>Title</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var signatory in _regspi.Result.Signatories)
+                                            {
+                                                <tr>
+                                                    <td>@signatory.Label</td>
+                                                    <td>@signatory.Name</td>
+                                                    <td>@signatory.Title</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </MudSimpleTable>
+                                }
                             }
                         </MudCardContent>
                     </MudCard>
@@ -192,18 +310,24 @@
     <!-- TAB 3: RSPI -->
     <MudTabPanel Text="Report of Issued (RSPI)" Icon="@Icons.Material.Outlined.ListAlt">
         <MudGrid Spacing="3">
-            <MudItem xs="12" md="4">
+            <MudItem xs="12" md="4" Class="no-print">
                 <MudCard Elevation="1">
                     <MudCardContent>
                         <MudStack Spacing="2">
                             <MudText Typo="Typo.subtitle2">Filter</MudText>
                             <MudDatePicker @bind-Date="_rspi.DateFromNullable" Label="Date From" Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" />
                             <MudDatePicker @bind-Date="_rspi.DateToNullable" Label="Date To" Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" />
-                            <MudSelect @bind-Value="_rspi.Category" Label="Category" Variant="Variant.Outlined" T="AssetCategory?">
-                                <MudSelectItem T="AssetCategory?" Value="null">All Categories</MudSelectItem>
-                                <MudSelectItem T="AssetCategory?" Value="AssetCategory.LowValuedSemi">Low-Valued</MudSelectItem>
-                                <MudSelectItem T="AssetCategory?" Value="AssetCategory.HighValuedSemi">High-Valued</MudSelectItem>
+                            <MudSelect Value="_rspi.AssetType" ValueChanged="OnRSPIAssetTypeChanged" Label="Asset Type" Variant="Variant.Outlined" T="AssetType?">
+                                <MudSelectItem T="AssetType?" Value="null">All Types</MudSelectItem>
+                                <MudSelectItem T="AssetType?" Value="AssetType.SE">SE</MudSelectItem>
+                                <MudSelectItem T="AssetType?" Value="AssetType.PPE">PPE</MudSelectItem>
                             </MudSelect>
+                            <MudSelect Value="_rspi.SEValueClass" ValueChanged="OnRSPISEValueClassChanged" Label="SE Value Class" Variant="Variant.Outlined" T="string">
+                                <MudSelectItem T="string" Value='@("All")'>All</MudSelectItem>
+                                <MudSelectItem T="string" Value='@("Low-Valued")'>Low-Valued (SPLV)</MudSelectItem>
+                                <MudSelectItem T="string" Value='@("High-Valued")'>High-Valued (SPHV)</MudSelectItem>
+                            </MudSelect>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">SE low/high value is inferred from ICS number prefix: SPLV = Low-Valued, SPHV = High-Valued.</MudText>
                             <MudCheckBox @bind-Value="_rspi.ActiveOnly" Label="Active ICS only" T="bool" />
                             <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
                                        OnClick="@(() => LoadRSPIAsync(1))" Disabled="_rspi.Loading">
@@ -222,51 +346,143 @@
                 {
                     <MudCard Elevation="1">
                         <MudCardContent>
-                            @if (_rspi.Result.Items.Count == 0)
+                            <MudStack Row="true" Spacing="1" Class="mb-2 no-print" AlignItems="AlignItems.Center">
+                                <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Print" OnClick="PrintReportAsync">
+                                    Print
+                                </MudButton>
+                                <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.PictureAsPdf" OnClick="DownloadRSPIPdfAsync">
+                                    Download PDF
+                                </MudButton>
+                                <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Download" OnClick="ExportRSPICsvAsync">
+                                    Export CSV
+                                </MudButton>
+                            </MudStack>
+
+                            <MudStack Row="true" Spacing="1" Class="mb-2" AlignItems="AlignItems.Center">
+                                <MudChip T="string" Size="Size.Small" Color="Color.Success">Displayed Lines: @FilteredRSPILineCount</MudChip>
+                                <MudChip T="string" Size="Size.Small" Color="Color.Secondary">Displayed Total: ₱@FilteredRSPIAmountTotal.ToString("N2")</MudChip>
+                                <MudChip T="string" Size="Size.Small" Color="Color.Info">API Page Total: ₱@_rspi.Result.PageAmountTotal.ToString("N2")</MudChip>
+                                <MudChip T="string" Size="Size.Small" Color="Color.Dark">Overall: ₱@_rspi.Result.OverallAmountTotal.ToString("N2")</MudChip>
+                            </MudStack>
+
+                            @if (GetFilteredRSPIItems().Count == 0)
                             {
                                 <MudAlert Severity="Severity.Info">No issued properties match the filters.</MudAlert>
                             }
                             else
                             {
+                                @if (GetFilteredRSPISections().Count > 0)
+                                {
+                                    <MudText Typo="Typo.subtitle2" Class="mb-1">ICS Sections</MudText>
+                                    <MudSimpleTable Dense="true" Striped="true" Hover="true" Class="mb-2">
+                                        <thead>
+                                            <tr>
+                                                <th>ICS No.</th>
+                                                <th>Date</th>
+                                                <th>Fund Cluster</th>
+                                                <th>Status</th>
+                                                <th style="text-align:right">Lines</th>
+                                                <th style="text-align:right">Amount</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var s in GetFilteredRSPISections())
+                                            {
+                                                <tr>
+                                                    <td>@s.ICSNo</td>
+                                                    <td>@s.ICSDate.ToString("MM/dd/yyyy")</td>
+                                                    <td>@(string.IsNullOrWhiteSpace(s.FundCluster) ? "-" : s.FundCluster)</td>
+                                                    <td><MudChip T="string" Size="Size.Small" Color="@ICSStatusColor(s.ICSStatus)">@s.ICSStatus</MudChip></td>
+                                                    <td style="text-align:right">@s.LineCount</td>
+                                                    <td style="text-align:right">₱@s.AmountTotal.ToString("N2")</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </MudSimpleTable>
+                                }
+
                                 <MudSimpleTable Dense="true" Striped="true" Hover="true">
                                     <thead>
                                         <tr>
                                             <th>ICS No.</th>
                                             <th>ICS Date</th>
+                                            <th>Fund Cluster</th>
                                             <th>Property No.</th>
                                             <th>Item</th>
-                                            <th>S/N</th>
-                                            <th>Category</th>
+                                            <th>Issued To</th>
+                                            <th>Issued From</th>
+                                            <th>Asset Type</th>
+                                            <th>SE Value</th>
                                             <th style="text-align:right">Unit Cost</th>
                                             <th>ICS Status</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach (var e in _rspi.Result.Items)
+                                        @foreach (var e in GetFilteredRSPIItems())
                                         {
                                             <tr>
                                                 <td><MudText Typo="Typo.caption">@e.ICSNo</MudText></td>
                                                 <td>@e.ICSDate.ToString("MM/dd/yyyy")</td>
+                                                <td>@(string.IsNullOrWhiteSpace(e.FundCluster) ? "-" : e.FundCluster)</td>
                                                 <td><b>@e.PropertyNo</b></td>
                                                 <td>
                                                     <MudText Typo="Typo.body2">@e.ItemName</MudText>
                                                     <MudText Typo="Typo.caption" Color="Color.Secondary">@e.ItemCode</MudText>
                                                 </td>
-                                                <td><MudText Typo="Typo.caption">@(e.SerialNo ?? "-")</MudText></td>
-                                                <td><MudChip T="string" Size="Size.Small" Color="Color.Default">@e.Category</MudChip></td>
+                                                <td>
+                                                    <MudText Typo="Typo.caption">@e.ReceivedByEmployeeName</MudText>
+                                                    @if (!string.IsNullOrWhiteSpace(e.ReceivedByEmployeePositionName) || !string.IsNullOrWhiteSpace(e.ReceivedByEmployeeOfficeName))
+                                                    {
+                                                        <MudText Typo="Typo.caption" Color="Color.Secondary">@(string.Join(" | ", new[] { e.ReceivedByEmployeePositionName, e.ReceivedByEmployeeOfficeName }.Where(x => !string.IsNullOrWhiteSpace(x))))</MudText>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    <MudText Typo="Typo.caption">@(string.IsNullOrWhiteSpace(e.IssuedFromEmployeeName) ? "-" : e.IssuedFromEmployeeName)</MudText>
+                                                    @if (!string.IsNullOrWhiteSpace(e.IssuedFromEmployeePositionName) || !string.IsNullOrWhiteSpace(e.IssuedFromEmployeeOfficeName))
+                                                    {
+                                                        <MudText Typo="Typo.caption" Color="Color.Secondary">@(string.Join(" | ", new[] { e.IssuedFromEmployeePositionName, e.IssuedFromEmployeeOfficeName }.Where(x => !string.IsNullOrWhiteSpace(x))))</MudText>
+                                                    }
+                                                </td>
+                                                <td><MudChip T="string" Size="Size.Small" Color="Color.Default">@e.AssetType</MudChip></td>
+                                                <td><MudChip T="string" Size="Size.Small" Color="@SEValueClassColor(e.ICSNo, e.AssetType)">@GetSEValueClass(e.ICSNo, e.AssetType)</MudChip></td>
                                                 <td style="text-align:right">₱@e.UnitCost.ToString("N2")</td>
                                                 <td><MudChip T="string" Size="Size.Small" Color="@ICSStatusColor(e.ICSStatus)">@e.ICSStatus</MudChip></td>
                                             </tr>
                                         }
                                     </tbody>
                                 </MudSimpleTable>
-                                <MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-2">
-                                    <MudText Typo="Typo.caption">@_rspi.Result.TotalCount total</MudText>
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-2 no-print">
+                                    <MudText Typo="Typo.caption">Showing @GetFilteredRSPIItems().Count of @_rspi.Result.Items.Count items on this page (@_rspi.Result.TotalCount total)</MudText>
                                     <MudSpacer />
                                     <MudPagination Count="@RSPITotalPages" Selected="_rspi.Page"
                                                    ShowFirstButton="true" ShowLastButton="true"
                                                    SelectedChanged="@(async p => await LoadRSPIAsync(p))" />
                                 </MudStack>
+
+                                @if (_rspi.Result.Signatories.Count > 0)
+                                {
+                                    <MudDivider Class="my-2" />
+                                    <MudText Typo="Typo.subtitle2" Class="mb-1">Signatories</MudText>
+                                    <MudSimpleTable Dense="true">
+                                        <thead>
+                                            <tr>
+                                                <th>Label</th>
+                                                <th>Name</th>
+                                                <th>Title</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var signatory in _rspi.Result.Signatories)
+                                            {
+                                                <tr>
+                                                    <td>@signatory.Label</td>
+                                                    <td>@signatory.Name</td>
+                                                    <td>@signatory.Title</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </MudSimpleTable>
+                                }
                             }
                         </MudCardContent>
                     </MudCard>
@@ -278,7 +494,7 @@
     <!-- TAB 4: Property History -->
     <MudTabPanel Text="Property History" Icon="@Icons.Material.Outlined.Timeline">
         <MudGrid Spacing="3">
-            <MudItem xs="12" md="4">
+            <MudItem xs="12" md="4" Class="no-print">
                 <MudCard Elevation="1">
                     <MudCardContent>
                         <MudStack Spacing="2">
@@ -378,7 +594,8 @@
     private sealed class RegSpiState
     {
         public EmployeeReferenceDto? SelectedEmployee { get; set; }
-        public AssetCategory? Category { get; set; }
+        public AssetType? AssetType { get; set; }
+        public string SEValueClass { get; set; } = "All";
         public ICSStatus? Status { get; set; }
         public bool Loading { get; set; }
         public PagedRegSPIResponse? Result { get; set; }
@@ -392,7 +609,8 @@
     {
         public DateTime? DateFromNullable { get; set; }
         public DateTime? DateToNullable { get; set; }
-        public AssetCategory? Category { get; set; }
+        public AssetType? AssetType { get; set; }
+        public string SEValueClass { get; set; } = "All";
         public bool ActiveOnly { get; set; } = true;
         public bool Loading { get; set; }
         public PagedRSPIResponse? Result { get; set; }
@@ -430,13 +648,16 @@
     private async Task LoadRegSPIAsync(int page)
     {
         if (_regspi.SelectedEmployee is null) return;
+
+        NormalizeRegSPIFilters();
+
         _regspi.Loading = true;
         _regspi.Page = page;
         try
         {
             _regspi.Result = await Client.GetRegSPIAsync(
                 _regspi.SelectedEmployee.Id,
-                _regspi.Category,
+                _regspi.AssetType,
                 _regspi.Status,
                 page, 20);
         }
@@ -446,6 +667,8 @@
 
     private async Task LoadRSPIAsync(int page)
     {
+        NormalizeRSPIFilters();
+
         _rspi.Loading = true;
         _rspi.Page = page;
         try
@@ -453,7 +676,7 @@
             _rspi.Result = await Client.GetRSPIAsync(
                 _rspi.DateFromNullable.HasValue ? DateOnly.FromDateTime(_rspi.DateFromNullable.Value) : null,
                 _rspi.DateToNullable.HasValue ? DateOnly.FromDateTime(_rspi.DateToNullable.Value) : null,
-                _rspi.Category,
+                _rspi.AssetType,
                 _rspi.ActiveOnly,
                 page, 20);
         }
@@ -545,4 +768,281 @@
         "Disposed"    => Color.Dark,
         _             => Color.Error   // Lost/Stolen/Damaged/Destroyed
     };
+
+    private int FilteredRegSPILineCount => GetFilteredRegSPIItems().Count;
+
+    private decimal FilteredRegSPIAmountTotal => GetFilteredRegSPIItems().Sum(x => x.UnitCost);
+
+    private IReadOnlyList<RegSPIEntryDto> GetFilteredRegSPIItems() => _regspi.Result?.Items
+        .Where(x => MatchesSEValueClassFilter(x.ICSNo, x.AssetType, _regspi.SEValueClass))
+        .ToList() ?? [];
+
+    private IReadOnlyList<RegSPISectionDto> GetFilteredRegSPISections()
+    {
+        var filteredItems = GetFilteredRegSPIItems();
+
+        return (_regspi.Result?.Sections ?? [])
+            .Select(section => new RegSPISectionDto(
+                section.ICSId,
+                section.ICSNo,
+                section.Date,
+                section.FundCluster,
+                section.ICSStatus,
+                filteredItems.Count(item => item.ICSId == section.ICSId),
+                filteredItems.Where(item => item.ICSId == section.ICSId).Sum(item => item.UnitCost)))
+            .Where(section => section.LineCount > 0)
+            .ToList();
+    }
+
+    private int FilteredRSPILineCount => GetFilteredRSPIItems().Count;
+
+    private decimal FilteredRSPIAmountTotal => GetFilteredRSPIItems().Sum(x => x.UnitCost);
+
+    private IReadOnlyList<RSPIItemDto> GetFilteredRSPIItems() => _rspi.Result?.Items
+        .Where(x => MatchesSEValueClassFilter(x.ICSNo, x.AssetType, _rspi.SEValueClass))
+        .ToList() ?? [];
+
+    private IReadOnlyList<RSPISectionDto> GetFilteredRSPISections()
+    {
+        var filteredItems = GetFilteredRSPIItems();
+
+        return (_rspi.Result?.Sections ?? [])
+            .Select(section => new RSPISectionDto(
+                section.ICSId,
+                section.ICSNo,
+                section.ICSDate,
+                section.FundCluster,
+                section.ICSStatus,
+                filteredItems.Count(item => item.ICSId == section.ICSId),
+                filteredItems.Where(item => item.ICSId == section.ICSId).Sum(item => item.UnitCost)))
+            .Where(section => section.LineCount > 0)
+            .ToList();
+    }
+
+    private static string GetSEValueClass(string icsNo, string assetType)
+    {
+        if (!string.Equals(assetType, "SE", StringComparison.OrdinalIgnoreCase))
+        {
+            return "N/A";
+        }
+
+        if (icsNo.StartsWith("SPLV", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Low-Valued";
+        }
+
+        if (icsNo.StartsWith("SPHV", StringComparison.OrdinalIgnoreCase))
+        {
+            return "High-Valued";
+        }
+
+        return "SE (Unspecified)";
+    }
+
+    private static Color SEValueClassColor(string icsNo, string assetType)
+    {
+        var valueClass = GetSEValueClass(icsNo, assetType);
+
+        return valueClass switch
+        {
+            "Low-Valued" => Color.Success,
+            "High-Valued" => Color.Warning,
+            "N/A" => Color.Default,
+            _ => Color.Info
+        };
+    }
+
+    private static bool MatchesSEValueClassFilter(string icsNo, string assetType, string selectedValueClass)
+    {
+        if (string.Equals(selectedValueClass, "All", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        var valueClass = GetSEValueClass(icsNo, assetType);
+        return string.Equals(valueClass, selectedValueClass, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private async Task PrintReportAsync() => await JS.InvokeVoidAsync("print");
+
+    private async Task DownloadRegSPIPdfAsync()
+    {
+        if (_regspi.SelectedEmployee is null)
+        {
+            Snackbar.Add("Select an employee first.", Severity.Info);
+            return;
+        }
+
+        try
+        {
+            var bytes = await Client.GetRegSPIPdfAsync(
+                _regspi.SelectedEmployee.Id,
+                _regspi.AssetType,
+                _regspi.Status,
+                _regspi.Page,
+                1000);
+
+            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
+            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            Snackbar.Add("RegSPI PDF ready.", Severity.Success);
+        }
+        catch
+        {
+            Snackbar.Add("Failed to generate RegSPI PDF.", Severity.Error);
+        }
+    }
+
+    private async Task DownloadRSPIPdfAsync()
+    {
+        try
+        {
+            var bytes = await Client.GetRSPIPdfAsync(
+                _rspi.DateFromNullable.HasValue ? DateOnly.FromDateTime(_rspi.DateFromNullable.Value) : null,
+                _rspi.DateToNullable.HasValue ? DateOnly.FromDateTime(_rspi.DateToNullable.Value) : null,
+                _rspi.AssetType,
+                _rspi.ActiveOnly,
+                _rspi.Page,
+                1000);
+
+            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
+            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            Snackbar.Add("RSPI PDF ready.", Severity.Success);
+        }
+        catch
+        {
+            Snackbar.Add("Failed to generate RSPI PDF.", Severity.Error);
+        }
+    }
+
+    private async Task ExportRegSPICsvAsync()
+    {
+        var items = GetFilteredRegSPIItems();
+        if (items.Count == 0)
+        {
+            Snackbar.Add("No RegSPI rows to export.", Severity.Info);
+            return;
+        }
+
+        var sb = new StringBuilder();
+        sb.AppendLine("ICS No,Date,Fund Cluster,Property No,Item Code,Item Name,Asset Type,SE Value,Issued From,Issued From Position,Issued From Office,Unit Cost,ICS Status,Expires On");
+
+        foreach (var item in items)
+        {
+            sb.AppendLine(string.Join(",",
+                Quote(item.ICSNo),
+                Quote(item.Date.ToString("yyyy-MM-dd")),
+                Quote(item.FundCluster),
+                Quote(item.PropertyNo),
+                Quote(item.ItemCode),
+                Quote(item.ItemName),
+                Quote(item.AssetType),
+                Quote(GetSEValueClass(item.ICSNo, item.AssetType)),
+                Quote(item.IssuedFromEmployeeName),
+                Quote(item.IssuedFromEmployeePositionName),
+                Quote(item.IssuedFromEmployeeOfficeName),
+                Quote(item.UnitCost.ToString("N2")),
+                Quote(item.ICSStatus),
+                Quote(item.ExpiresOn?.ToString("yyyy-MM-dd"))));
+        }
+
+        var dataUrl = $"data:text/csv;base64,{Convert.ToBase64String(Encoding.UTF8.GetBytes(sb.ToString()))}";
+        await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+        Snackbar.Add("RegSPI CSV export ready.", Severity.Success);
+    }
+
+    private async Task ExportRSPICsvAsync()
+    {
+        var items = GetFilteredRSPIItems();
+        if (items.Count == 0)
+        {
+            Snackbar.Add("No RSPI rows to export.", Severity.Info);
+            return;
+        }
+
+        var sb = new StringBuilder();
+        sb.AppendLine("ICS No,ICS Date,Fund Cluster,Property No,Item Code,Item Name,Issued To,Issued To Position,Issued To Office,Issued From,Issued From Position,Issued From Office,Asset Type,SE Value,Unit Cost,ICS Status,Expires On");
+
+        foreach (var item in items)
+        {
+            sb.AppendLine(string.Join(",",
+                Quote(item.ICSNo),
+                Quote(item.ICSDate.ToString("yyyy-MM-dd")),
+                Quote(item.FundCluster),
+                Quote(item.PropertyNo),
+                Quote(item.ItemCode),
+                Quote(item.ItemName),
+                Quote(item.ReceivedByEmployeeName),
+                Quote(item.ReceivedByEmployeePositionName),
+                Quote(item.ReceivedByEmployeeOfficeName),
+                Quote(item.IssuedFromEmployeeName),
+                Quote(item.IssuedFromEmployeePositionName),
+                Quote(item.IssuedFromEmployeeOfficeName),
+                Quote(item.AssetType),
+                Quote(GetSEValueClass(item.ICSNo, item.AssetType)),
+                Quote(item.UnitCost.ToString("N2")),
+                Quote(item.ICSStatus),
+                Quote(item.ExpiresOn?.ToString("yyyy-MM-dd"))));
+        }
+
+        var dataUrl = $"data:text/csv;base64,{Convert.ToBase64String(Encoding.UTF8.GetBytes(sb.ToString()))}";
+        await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+        Snackbar.Add("RSPI CSV export ready.", Severity.Success);
+    }
+
+    private static string Quote(string? value) =>
+        string.IsNullOrWhiteSpace(value)
+            ? "\"\""
+            : $"\"{value.Replace("\"", "\"\"")}\"";
+
+    private void NormalizeRegSPIFilters()
+    {
+        if (!string.Equals(_regspi.SEValueClass, "All", StringComparison.OrdinalIgnoreCase))
+        {
+            _regspi.AssetType = AssetType.SE;
+            return;
+        }
+
+        if (_regspi.AssetType.HasValue && _regspi.AssetType != AssetType.SE)
+        {
+            _regspi.SEValueClass = "All";
+        }
+    }
+
+    private void OnRegSPIAssetTypeChanged(AssetType? value)
+    {
+        _regspi.AssetType = value;
+        NormalizeRegSPIFilters();
+    }
+
+    private void OnRegSPISEValueClassChanged(string value)
+    {
+        _regspi.SEValueClass = string.IsNullOrWhiteSpace(value) ? "All" : value;
+        NormalizeRegSPIFilters();
+    }
+
+    private void NormalizeRSPIFilters()
+    {
+        if (!string.Equals(_rspi.SEValueClass, "All", StringComparison.OrdinalIgnoreCase))
+        {
+            _rspi.AssetType = AssetType.SE;
+            return;
+        }
+
+        if (_rspi.AssetType.HasValue && _rspi.AssetType != AssetType.SE)
+        {
+            _rspi.SEValueClass = "All";
+        }
+    }
+
+    private void OnRSPIAssetTypeChanged(AssetType? value)
+    {
+        _rspi.AssetType = value;
+        NormalizeRSPIFilters();
+    }
+
+    private void OnRSPISEValueClassChanged(string value)
+    {
+        _rspi.SEValueClass = string.IsNullOrWhiteSpace(value) ? "All" : value;
+        NormalizeRSPIFilters();
+    }
 }

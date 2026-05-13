@@ -161,6 +161,9 @@ internal static class ApiClientRegistration
         services.AddTransient<ISMRRClient>(sp =>
             new SMRRClient(ResolveClient(sp)));
 
+        services.AddTransient<ITangibleInventoryItemClient>(sp =>
+            new TangibleInventoryItemClient(ResolveClient(sp)));
+
         services.AddTransient<IICSClient>(sp =>
             new ICSClient(ResolveClient(sp)));
 
@@ -224,6 +227,22 @@ internal static class ApiClientRegistration
 
         services.AddScoped<IHealthClient>(sp =>
             new HealthClient(ResolveClient(sp)));
+
+        // Asset Register module clients
+        services.AddTransient<IAssetRegistryClient>(sp =>
+            new AssetRegistryClient(ResolveClient(sp)));
+        services.AddTransient<IArCatalogClient>(sp =>
+            new ArCatalogClient(ResolveClient(sp)));
+        services.AddTransient<IArAccountabilityClient>(sp =>
+            new ArAccountabilityClient(ResolveClient(sp)));
+        services.AddTransient<IArPhysicalCountClient>(sp =>
+            new ArPhysicalCountClient(ResolveClient(sp)));
+        services.AddTransient<IArIncidentReportClient>(sp =>
+            new ArIncidentReportClient(ResolveClient(sp)));
+        services.AddTransient<IArIssuanceReportClient>(sp =>
+            new ArIssuanceReportClient(ResolveClient(sp)));
+        services.AddTransient<IArUnserviceableReportClient>(sp =>
+            new ArUnserviceableReportClient(ResolveClient(sp)));
 
         return services;
     }

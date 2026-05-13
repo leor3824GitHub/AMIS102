@@ -3,7 +3,9 @@
 @inject IPPERRClient Client
 @inject ILookupClient LookupClient
 @inject ITangibleItemClient TangibleClient
+@inject ICapitalizationThresholdClient CapThresholdClient
 @inject ISnackbar Snackbar
+@inject IDialogService DialogService
 
 <FshPageHeader Title="PPE Receiving Reports (PPERR)"
                Description="Record receipt of Property, Plant & Equipment above the capitalization threshold. Each PPERR creates individual PPE Item records." />
@@ -46,14 +48,20 @@
                     @foreach (var s in _list)
                     {
                         <tr>
-                            <td><b>@s.PPERRNo</b></td>
+                            <td><b>@s.ReportNo</b></td>
                             <td>@s.Date.ToString("MM/dd/yyyy")</td>
                             <td>@s.ReceivedFrom</td>
-                            <td>@s.ReceiptNature</td>
-                            <td><MudChip T="string" Size="Size.Small" Color="Color.Info">@s.ItemCount lines</MudChip></td>
+                            <td>@s.ReceiptType</td>
+                            <td><MudChip T="string" Size="Size.Small" Color="Color.Info">@s.PPEItemCount lines</MudChip></td>
                             <td>
                                 <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small"
                                                Color="Color.Primary" OnClick="@(() => ViewAsync(s.Id))" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                               Color="Color.Warning" OnClick="@(() => OpenEditAsync(s))"
+                                               Title="Edit" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                               Color="Color.Error" OnClick="@(() => DeleteAsync(s.Id, s.ReportNo))"
+                                               Title="Delete" />
                             </td>
                         </tr>
                     }
@@ -74,7 +82,7 @@
                 <MudCardHeader>
                     <CardHeaderContent>
                         <MudStack Row="true" AlignItems="AlignItems.Center">
-                            <MudText Typo="Typo.h6">@_detail.PPERRNo — @_detail.Date.ToString("MMMM dd, yyyy")</MudText>
+                            <MudText Typo="Typo.h6">@_detail.ReportNo — @_detail.Date.ToString("MMMM dd, yyyy")</MudText>
                             <MudSpacer />
                             <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="@(() => _detail = null)" />
                         </MudStack>
@@ -91,12 +99,8 @@
                             <MudText Typo="Typo.body2">@_detail.Address</MudText>
                         </MudItem>
                         <MudItem xs="12" sm="3">
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">Nature</MudText>
-                            <MudText Typo="Typo.body2">@_detail.ReceiptNature</MudText>
-                        </MudItem>
-                        <MudItem xs="12" sm="3">
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">Created</MudText>
-                            <MudText Typo="Typo.body2">@_detail.CreatedOnUtc.ToLocalTime().ToString("MM/dd/yyyy HH:mm")</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Receipt Type</MudText>
+                            <MudText Typo="Typo.body2">@_detail.ReceiptType</MudText>
                         </MudItem>
                     </MudGrid>
                     <MudDivider Class="my-2" />
@@ -114,13 +118,13 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var item in _detail.Items)
+                            @foreach (var (item, i) in _detail.Items.Select((x, i) => (x, i + 1)))
                             {
                                 <tr>
-                                    <td>@item.ItemNo</td>
-                                    <td><b>@item.PropertyCode</b></td>
+                                    <td>@i</td>
+                                    <td><b>@item.PropertyNo</b></td>
                                     <td>@item.Description</td>
-                                    <td>@item.DateAcquired.ToString("MM/dd/yyyy")</td>
+                                    <td>@item.AcquisitionDate.ToString("MM/dd/yyyy")</td>
                                     <td>@item.Quantity</td>
                                     <td>₱@item.UnitCost.ToString("N2")</td>
                                     <td><b>₱@item.Amount.ToString("N2")</b></td>
@@ -140,7 +144,71 @@
 
     </MudTabPanel>
 
-    <!-- Tab 2: New PPERR -->
+    <!-- Tab 2: Edit PPERR (shown only when editing) -->
+    @if (_editId.HasValue)
+    {
+        <MudTabPanel Text="Edit PPERR" Icon="@Icons.Material.Filled.Edit">
+
+            <MudGrid Spacing="3">
+                <MudItem xs="12" md="5">
+                    <MudCard Elevation="0" Outlined="true">
+                        <MudCardContent>
+                            <MudText Typo="Typo.subtitle1" Class="mb-3">Edit Details</MudText>
+                            <MudStack Spacing="2">
+                                <MudTextField @bind-Value="_editForm.ReportNo" Label="PPERR No." Variant="Variant.Outlined"
+                                              Required="true" MaxLength="32" />
+                                <MudDatePicker @bind-Date="_editForm.DateNullable" Label="Date" Variant="Variant.Outlined"
+                                               DateFormat="MM/dd/yyyy" Required="true" />
+                                <MudTextField @bind-Value="_editForm.ReceivedFrom" Label="Received From" Variant="Variant.Outlined"
+                                              Required="true" MaxLength="200" />
+                                <MudTextField @bind-Value="_editForm.Address" Label="Address" Variant="Variant.Outlined" MaxLength="500" />
+                                <MudSelect @bind-Value="_editForm.ReceiptType" Label="Receipt Type" Variant="Variant.Outlined" T="ReceiptType">
+                                    <MudSelectItem Value="ReceiptType.Purchase">Purchase</MudSelectItem>
+                                    <MudSelectItem Value="ReceiptType.Transfer">Transfer</MudSelectItem>
+                                    <MudSelectItem Value="ReceiptType.Donation">Donation</MudSelectItem>
+                                    <MudSelectItem Value="ReceiptType.Others">Others</MudSelectItem>
+                                </MudSelect>
+                                @if (_editForm.ReceiptType == ReceiptType.Others)
+                                {
+                                    <MudTextField @bind-Value="_editForm.OtherReceiptType" Label="Specify Receipt Type"
+                                                  Variant="Variant.Outlined" Required="true" MaxLength="100" />
+                                }
+                                <MudAutocomplete T="EmployeeReferenceDto"
+                                                 @bind-Value="_editForm.ReceivedBy"
+                                                 SearchFunc="SearchEmployees"
+                                                 ToStringFunc="FormatEmployee"
+                                                 Label="Received By" Variant="Variant.Outlined"
+                                                 Clearable="true" ResetValueOnEmptyText="true" CoerceValue="true" />
+                                <MudAutocomplete T="EmployeeReferenceDto"
+                                                 @bind-Value="_editForm.NotedBy"
+                                                 SearchFunc="SearchEmployees"
+                                                 ToStringFunc="FormatEmployee"
+                                                 Label="Noted By (Division Chief)" Variant="Variant.Outlined"
+                                                 Clearable="true" ResetValueOnEmptyText="true" CoerceValue="true" />
+
+                                <MudStack Row="true" Spacing="1" Class="mt-2">
+                                    <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                                               OnClick="SaveEditAsync" Disabled="_busy">
+                                        @if (_busy)
+                                        {
+                                            <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                                        }
+                                        Save Changes
+                                    </MudButton>
+                                    <MudButton Variant="Variant.Outlined" Color="Color.Default" OnClick="CancelEdit">
+                                        Cancel
+                                    </MudButton>
+                                </MudStack>
+                            </MudStack>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+            </MudGrid>
+
+        </MudTabPanel>
+    }
+
+    <!-- Tab 3: New PPERR -->
     <MudTabPanel Text="New PPERR" Icon="@Icons.Material.Filled.Add">
 
         <MudGrid Spacing="3">
@@ -151,19 +219,24 @@
                     <MudCardContent>
                         <MudText Typo="Typo.subtitle1" Class="mb-3">Details</MudText>
                         <MudStack Spacing="2">
-                            <MudTextField @bind-Value="_form.PPERRNo" Label="PPERR No." Variant="Variant.Outlined"
+                            <MudTextField @bind-Value="_form.ReportNo" Label="PPERR No." Variant="Variant.Outlined"
                                           Required="true" MaxLength="32" Placeholder="e.g. PPERR-2026-00001" />
                             <MudDatePicker @bind-Date="_form.DateNullable" Label="Date" Variant="Variant.Outlined"
                                            DateFormat="MM/dd/yyyy" Required="true" />
                             <MudTextField @bind-Value="_form.ReceivedFrom" Label="Received From" Variant="Variant.Outlined"
                                           Required="true" MaxLength="200" />
                             <MudTextField @bind-Value="_form.Address" Label="Address" Variant="Variant.Outlined" MaxLength="500" />
-                            <MudSelect @bind-Value="_form.ReceiptNature" Label="Receipt Nature" Variant="Variant.Outlined" T="PPEReceiptNature">
-                                <MudSelectItem Value="PPEReceiptNature.Purchase">Purchase</MudSelectItem>
-                                <MudSelectItem Value="PPEReceiptNature.Transfer">Transfer</MudSelectItem>
-                                <MudSelectItem Value="PPEReceiptNature.Donation">Donation</MudSelectItem>
-                                <MudSelectItem Value="PPEReceiptNature.Others">Others</MudSelectItem>
+                            <MudSelect @bind-Value="_form.ReceiptType" Label="Receipt Type" Variant="Variant.Outlined" T="ReceiptType">
+                                <MudSelectItem Value="ReceiptType.Purchase">Purchase</MudSelectItem>
+                                <MudSelectItem Value="ReceiptType.Transfer">Transfer</MudSelectItem>
+                                <MudSelectItem Value="ReceiptType.Donation">Donation</MudSelectItem>
+                                <MudSelectItem Value="ReceiptType.Others">Others</MudSelectItem>
                             </MudSelect>
+                            @if (_form.ReceiptType == ReceiptType.Others)
+                            {
+                                <MudTextField @bind-Value="_form.OtherReceiptType" Label="Specify Receipt Type"
+                                              Variant="Variant.Outlined" Required="true" MaxLength="100" />
+                            }
                             <MudAutocomplete T="EmployeeReferenceDto"
                                              @bind-Value="_form.ReceivedBy"
                                              SearchFunc="SearchEmployees"
@@ -282,14 +355,22 @@
     private List<PPERRSummaryDto> _list = [];
     private PPERRDetailsDto? _detail;
     private PpErrForm _form = new();
+    private PpErrForm _editForm = new();
+    private Guid? _editId;
     private LineItem _draft = new();
     private string? _keyword;
     private bool _loading, _busy;
     private int _page = 1, _totalCount, _activeTab;
+    private decimal _capitalizationThreshold;
     private const int PageSize = 15;
     private int TotalPages => Math.Max(1, (int)Math.Ceiling(_totalCount / (double)PageSize));
 
-    protected override async Task OnInitializedAsync() => await LoadAsync();
+    protected override async Task OnInitializedAsync()
+    {
+        var threshold = await CapThresholdClient.GetActiveAsync();
+        _capitalizationThreshold = threshold?.CapitalizationAmount ?? 0m;
+        await LoadAsync();
+    }
 
     private async Task<IEnumerable<TangibleItemSummaryDto>> SearchTangibleItemsAsync(string? value, CancellationToken ct)
     {
@@ -298,7 +379,9 @@
             .Where(x => x.SelectedItem is not null)
             .Select(x => x.SelectedItem!.Id)
             .ToHashSet();
-        return response.Items.Where(x => !alreadySelected.Contains(x.Id));
+        return response.Items
+            .Where(x => !alreadySelected.Contains(x.Id))
+            .Where(x => _capitalizationThreshold == 0m || x.UnitCost >= _capitalizationThreshold);
     }
 
     private async Task LoadAsync()
@@ -322,10 +405,15 @@
 
     private async Task CreateAsync()
     {
-        if (string.IsNullOrWhiteSpace(_form.PPERRNo) || _form.DateNullable is null ||
-            string.IsNullOrWhiteSpace(_form.ReceivedFrom) || _form.ReceivedBy is null || _form.NotedBy is null)
+        if (string.IsNullOrWhiteSpace(_form.ReportNo) || _form.DateNullable is null ||
+            string.IsNullOrWhiteSpace(_form.ReceivedFrom))
         {
-            Snackbar.Add("PPERR No., Date, Received From, Received By, and Noted By are required.", Severity.Warning);
+            Snackbar.Add("PPERR No., Date, and Received From are required.", Severity.Warning);
+            return;
+        }
+        if (_form.ReceiptType == ReceiptType.Others && string.IsNullOrWhiteSpace(_form.OtherReceiptType))
+        {
+            Snackbar.Add("Specify Receipt Type is required when Receipt Type is Others.", Severity.Warning);
             return;
         }
         if (_form.Items.Count == 0)
@@ -336,23 +424,23 @@
         _busy = true;
         try
         {
-            var items = _form.Items.Select(li => new CreatePPERRItemRequest(
-                li.SelectedItem!.PropertyClass,
-                li.SelectedItem!.CategoryCode,
-                li.SelectedItem!.PropertyNo,
-                li.SelectedItem!.ItemName,
-                null,
-                li.SelectedItem!.AcquisitionDate,
-                li.SelectedItem!.Quantity,
-                li.SelectedItem!.UnitCost,
-                0)).ToList();
+            var items = _form.Items
+                .Select(li => new CreatePPERRItemRequest(li.SelectedItem!.Id, null))
+                .ToList();
 
             var result = await Client.CreateAsync(new CreatePPERRCommand(
-                _form.PPERRNo, DateOnly.FromDateTime(_form.DateNullable!.Value),
-                _form.ReceivedFrom, _form.Address ?? string.Empty, _form.ReceiptNature,
-                _form.ReceivedBy!.Id, _form.NotedBy!.Id, items));
+                _form.ReportNo,
+                DateOnly.FromDateTime(_form.DateNullable!.Value),
+                _form.ReceivedFrom,
+                _form.Address,
+                _form.ReceiptType,
+                _form.OtherReceiptType,
+                null,
+                _form.ReceivedBy?.Id,
+                _form.NotedBy?.Id,
+                items));
 
-            Snackbar.Add($"PPERR created. {result.PPEItemsCreated} PPE item(s) registered.", Severity.Success);
+            Snackbar.Add($"PPERR {result.ReportNo} created with {result.PPEItemCount} PPE item(s).", Severity.Success);
             ClearForm();
             _activeTab = 0;
             await LoadAsync();
@@ -374,6 +462,82 @@
 
     private void RemoveItem(int idx) => _form.Items.RemoveAt(idx);
 
+    private async Task OpenEditAsync(PPERRSummaryDto s)
+    {
+        var detail = await Client.GetAsync(s.Id);
+        if (detail is null) return;
+        _editId = s.Id;
+        _editForm = new PpErrForm
+        {
+            ReportNo     = detail.ReportNo,
+            DateNullable = detail.Date.ToDateTime(TimeOnly.MinValue),
+            ReceivedFrom = detail.ReceivedFrom,
+            Address      = detail.Address,
+            OtherReceiptType = detail.OtherReceiptType,
+            ReceiptType  = Enum.TryParse<ReceiptType>(detail.ReceiptType, out var rt) ? rt : ReceiptType.Purchase,
+        };
+        _activeTab = 1; // Edit tab is index 1
+    }
+
+    private async Task SaveEditAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_editForm.ReportNo) || _editForm.DateNullable is null ||
+            string.IsNullOrWhiteSpace(_editForm.ReceivedFrom))
+        {
+            Snackbar.Add("PPERR No., Date, and Received From are required.", Severity.Warning);
+            return;
+        }
+        if (_editForm.ReceiptType == ReceiptType.Others && string.IsNullOrWhiteSpace(_editForm.OtherReceiptType))
+        {
+            Snackbar.Add("Specify Receipt Type is required when Receipt Type is Others.", Severity.Warning);
+            return;
+        }
+        _busy = true;
+        try
+        {
+            await Client.UpdateAsync(_editId!.Value, new UpdatePPERRCommand(
+                _editForm.ReportNo,
+                DateOnly.FromDateTime(_editForm.DateNullable!.Value),
+                _editForm.ReceivedFrom,
+                _editForm.Address,
+                _editForm.ReceiptType,
+                _editForm.OtherReceiptType,
+                null,
+                _editForm.ReceivedBy?.Id,
+                _editForm.NotedBy?.Id));
+
+            Snackbar.Add("PPERR updated.", Severity.Success);
+            CancelEdit();
+            await LoadAsync();
+        }
+        catch (Exception ex) { Snackbar.Add($"Update failed: {ex.Message}", Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    private void CancelEdit()
+    {
+        _editId = null;
+        _editForm = new PpErrForm();
+        _activeTab = 0;
+    }
+
+    private async Task DeleteAsync(Guid id, string reportNo)
+    {
+        var confirmed = await DialogService.ShowMessageBox(
+            "Confirm Delete",
+            $"Delete PPERR \"{reportNo}\"? This action cannot be undone.",
+            yesText: "Delete", cancelText: "Cancel");
+        if (confirmed is not true) return;
+        try
+        {
+            await Client.DeleteAsync(id);
+            Snackbar.Add($"PPERR {reportNo} deleted.", Severity.Success);
+            if (_detail?.Id == id) _detail = null;
+            await LoadAsync();
+        }
+        catch (Exception ex) { Snackbar.Add($"Delete failed: {ex.Message}", Severity.Error); }
+    }
+
     private void ClearForm()
     {
         _form = new PpErrForm();
@@ -391,11 +555,12 @@
 
     private sealed class PpErrForm
     {
-        public string PPERRNo { get; set; } = string.Empty;
+        public string ReportNo { get; set; } = string.Empty;
         public DateTime? DateNullable { get; set; } = DateTime.Today;
         public string ReceivedFrom { get; set; } = string.Empty;
         public string? Address { get; set; }
-        public PPEReceiptNature ReceiptNature { get; set; } = PPEReceiptNature.Purchase;
+        public ReceiptType ReceiptType { get; set; } = ReceiptType.Purchase;
+        public string? OtherReceiptType { get; set; }
         public EmployeeReferenceDto? ReceivedBy { get; set; }
         public EmployeeReferenceDto? NotedBy { get; set; }
         public List<LineItem> Items { get; set; } = [];

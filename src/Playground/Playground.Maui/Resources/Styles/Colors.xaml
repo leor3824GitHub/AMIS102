@@ -29,4 +29,8 @@
     <Color x:Key="Success">#43A047</Color>
     <Color x:Key="Warning">#FB8C00</Color>
 
+    <Color x:Key="Surface">#F5F5F7</Color>
+    <Color x:Key="PrimaryLight">#EDE9FB</Color>
+    <Color x:Key="DangerLight">#FFEBEE</Color>
+
 </ResourceDictionary>

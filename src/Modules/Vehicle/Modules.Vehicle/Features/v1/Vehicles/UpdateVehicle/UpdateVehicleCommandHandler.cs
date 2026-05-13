@@ -28,14 +28,12 @@ public sealed class UpdateVehicleCommandHandler(VehicleDbContext db, ICurrentUse
             throw new FluentValidation.ValidationException(
             [new ValidationFailure(nameof(cmd.PlateNumber), "Another vehicle already uses this plate number.")]);
 
-        if (!Enum.TryParse<VehicleType>(cmd.Type, ignoreCase: true, out var vehicleType))
-            throw new FluentValidation.ValidationException(
-            [new ValidationFailure(nameof(cmd.Type), $"Invalid vehicle type '{cmd.Type}'.")]);
+        Enum.TryParse<VehicleType>(cmd.Type, ignoreCase: true, out var vehicleType);
 
         vehicle.Update(cmd.PlateNumber, cmd.Make, cmd.Model, cmd.Year, vehicleType, cmd.Notes,
             cmd.MotorNumber, cmd.ChassisNumber, cmd.NumberOfCylinders,
             cmd.EngineDisplacementCC, cmd.FuelType, cmd.VehicleUse, cmd.AcquisitionCost);
-        vehicle.LastModifiedBy = currentUser.GetUserId().ToString();
+        vehicle.SetLastModifiedBy(currentUser.GetUserId().ToString());
         await db.SaveChangesAsync(ct).ConfigureAwait(false);
         return vehicle.ToDto();
     }

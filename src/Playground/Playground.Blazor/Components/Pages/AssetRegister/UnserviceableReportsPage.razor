@@ -1,0 +1,459 @@
+@page "/asset-register/unserviceable"
+@using FSH.Playground.Blazor.ApiClient
+@inject IArUnserviceableReportClient Client
+@inject ISnackbar Snackbar
+
+<FshPageHeader Title="Unserviceable Property Reports (IIRUSP / IIRUP)"
+               Description="Report, inspect, and dispose of unserviceable property per COA 2022-004 Annex A.10." />
+
+<MudGrid Spacing="3">
+    <!-- Filters -->
+    <MudItem xs="12">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                <MudGrid Spacing="2">
+                    <MudItem xs="12" md="4">
+                        <MudTextField @bind-Value="_keyword" Label="Report No. / Keyword" Variant="Variant.Outlined"
+                                      Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Outlined.Search"
+                                      OnKeyDown="OnSearchKeyDown" Immediate="false" />
+                    </MudItem>
+                    <MudItem xs="6" md="2">
+                        <MudSelect @bind-Value="_typeFilter" Label="Report Type" Variant="Variant.Outlined" T="int?" Clearable="true">
+                            <MudSelectItem Value="@((int?)null)">All</MudSelectItem>
+                            <MudSelectItem Value="@((int?)0)">IIRUSP (SE)</MudSelectItem>
+                            <MudSelectItem Value="@((int?)1)">IIRUP (PPE)</MudSelectItem>
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="6" md="2">
+                        <MudSelect @bind-Value="_statusFilter" Label="Status" Variant="Variant.Outlined" T="int?" Clearable="true">
+                            <MudSelectItem Value="@((int?)null)">All</MudSelectItem>
+                            <MudSelectItem Value="@((int?)0)">Draft</MudSelectItem>
+                            <MudSelectItem Value="@((int?)1)">Submitted</MudSelectItem>
+                            <MudSelectItem Value="@((int?)2)">Inspected</MudSelectItem>
+                            <MudSelectItem Value="@((int?)3)">Disposed</MudSelectItem>
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="2" Class="d-flex align-end">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                                   StartIcon="@Icons.Material.Outlined.Search" OnClick="LoadAsync" Disabled="_busy">
+                            Search
+                        </MudButton>
+                    </MudItem>
+                    <MudItem xs="12" md="2" Class="d-flex align-end">
+                        <MudButton Variant="Variant.Outlined" Color="Color.Success" FullWidth="true"
+                                   StartIcon="@Icons.Material.Outlined.Add" OnClick="@(() => _showCreateForm = !_showCreateForm)">
+                            New Report
+                        </MudButton>
+                    </MudItem>
+                </MudGrid>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    <!-- Create Form -->
+    @if (_showCreateForm)
+    {
+        <MudItem xs="12" md="5">
+            <MudCard Elevation="2">
+                <MudCardHeader>
+                    <CardHeaderContent><MudText Typo="Typo.h6">Create Unserviceable Report</MudText></CardHeaderContent>
+                    <CardHeaderActions>
+                        <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small"
+                                       OnClick="@(() => _showCreateForm = false)" />
+                    </CardHeaderActions>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudStack Spacing="2">
+                        <MudSelect @bind-Value="_createForm.ReportType" Label="Report Type" Variant="Variant.Outlined" T="int" Required="true">
+                            <MudSelectItem Value="0">IIRUSP (Semi-Expendable)</MudSelectItem>
+                            <MudSelectItem Value="1">IIRUP (PPE)</MudSelectItem>
+                        </MudSelect>
+                        <MudTextField @bind-Value="_createForm.FundCluster" Label="Fund Cluster" Variant="Variant.Outlined" MaxLength="50" Required="true" />
+                        <MudTextField @bind-Value="_createForm.Station" Label="Station / Location" Variant="Variant.Outlined" MaxLength="200" Required="true" />
+                        <MudDatePicker @bind-Date="_createForm.AsAtNullable" Label="As At" Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" Required="true" />
+                        <MudTextField @bind-Value="_createForm.AccountableOfficerName" Label="Accountable Officer (Name)" Variant="Variant.Outlined" MaxLength="100" Required="true" />
+                        <MudTextField @bind-Value="_createForm.AccountableOfficerDesignation" Label="Designation" Variant="Variant.Outlined" MaxLength="100" />
+                        <MudButton Variant="Variant.Filled" Color="Color.Success" FullWidth="true"
+                                   OnClick="CreateReportAsync" Disabled="_busy">
+                            Create Report
+                        </MudButton>
+                    </MudStack>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    }
+
+    <!-- Results -->
+    <MudItem xs="12">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                @if (_busy)
+                {
+                    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+                }
+                else if (!string.IsNullOrEmpty(_error))
+                {
+                    <MudAlert Severity="Severity.Error" Dense="true">@_error</MudAlert>
+                }
+                else
+                {
+                    <MudTable Items="_items" Dense="true" Hover="true" Striped="true"
+                              OnRowClick="OnRowClick" T="ArUnserviceableReportSummaryDto" RowClass="cursor-pointer">
+                        <HeaderContent>
+                            <MudTh>Report No.</MudTh>
+                            <MudTh>Type</MudTh>
+                            <MudTh>Status</MudTh>
+                            <MudTh>As At</MudTh>
+                            <MudTh Style="text-align:right">Items</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd><strong>@context.ReportNo</strong></MudTd>
+                            <MudTd>
+                                <MudChip T="string" Size="Size.Small"
+                                         Color="@(context.ReportType == 0 ? Color.Info : Color.Secondary)"
+                                         Variant="Variant.Outlined">
+                                    @(context.ReportType == 0 ? "IIRUSP" : "IIRUP")
+                                </MudChip>
+                            </MudTd>
+                            <MudTd>
+                                <MudChip T="string" Size="Size.Small"
+                                         Color="@UnserviceableStatusColor(context.Status)"
+                                         Variant="Variant.Filled">
+                                    @FormatUnserviceableStatus(context.Status)
+                                </MudChip>
+                            </MudTd>
+                            <MudTd>@context.AsAt.ToString("yyyy-MM-dd")</MudTd>
+                            <MudTd Style="text-align:right">@context.ItemCount</MudTd>
+                        </RowTemplate>
+                        <NoRecordsContent>
+                            <MudText Color="Color.Secondary">No unserviceable reports found.</MudText>
+                        </NoRecordsContent>
+                    </MudTable>
+
+                    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mt-3">
+                        <MudText Typo="Typo.caption">Page @_page of @_totalPages (@_totalCount total)</MudText>
+                        <MudStack Row="true" Spacing="1">
+                            <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft" Size="Size.Small"
+                                           Disabled="_page <= 1 || _busy" OnClick="PrevPage" />
+                            <MudIconButton Icon="@Icons.Material.Filled.ChevronRight" Size="Size.Small"
+                                           Disabled="_page >= _totalPages || _busy" OnClick="NextPage" />
+                        </MudStack>
+                    </MudStack>
+                }
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    <!-- Detail panel -->
+    @if (_selected is not null)
+    {
+        <MudItem xs="12">
+            <MudCard Elevation="2">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                            <MudText Typo="Typo.h6">@_selected.ReportNo</MudText>
+                            <MudChip T="string" Size="Size.Small" Color="@UnserviceableStatusColor(_selected.Status)" Variant="Variant.Filled">
+                                @FormatUnserviceableStatus(_selected.Status)
+                            </MudChip>
+                        </MudStack>
+                    </CardHeaderContent>
+                    <CardHeaderActions>
+                        <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small"
+                                       OnClick="@(() => _selected = null)" />
+                    </CardHeaderActions>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudGrid Class="mb-3">
+                        <MudItem xs="6" md="3">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Report Type</MudText>
+                            <MudText Typo="Typo.body2">@(_selected.ReportType == 0 ? "IIRUSP (SE)" : "IIRUP (PPE)")</MudText>
+                        </MudItem>
+                        <MudItem xs="6" md="3">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">As At</MudText>
+                            <MudText Typo="Typo.body2">@_selected.AsAt.ToString("yyyy-MM-dd")</MudText>
+                        </MudItem>
+                        <MudItem xs="6" md="3">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Fund Cluster</MudText>
+                            <MudText Typo="Typo.body2">@_selected.FundCluster</MudText>
+                        </MudItem>
+                        <MudItem xs="6" md="3">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Station</MudText>
+                            <MudText Typo="Typo.body2">@_selected.Station</MudText>
+                        </MudItem>
+                        <MudItem xs="6" md="4">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Accountable Officer</MudText>
+                            <MudText Typo="Typo.body2">@_selected.AccountableOfficer.PrintedName (@(_selected.AccountableOfficer.Designation ?? "—"))</MudText>
+                        </MudItem>
+                        @if (_selected.ApprovedBy is not null)
+                        {
+                            <MudItem xs="6" md="4">
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">Approved By</MudText>
+                                <MudText Typo="Typo.body2">@_selected.ApprovedBy.PrintedName</MudText>
+                            </MudItem>
+                        }
+                        @if (_selected.InspectedBy is not null)
+                        {
+                            <MudItem xs="6" md="4">
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">Inspected By / On</MudText>
+                                <MudText Typo="Typo.body2">@_selected.InspectedBy.PrintedName — @_selected.InspectedOn?.ToString("yyyy-MM-dd")</MudText>
+                            </MudItem>
+                        }
+                    </MudGrid>
+
+                    <MudText Typo="Typo.subtitle2" Class="mb-2">Property Items (@_selected.Items.Count)</MudText>
+                    <MudTable Items="_selected.Items" Dense="true" Striped="true">
+                        <HeaderContent>
+                            <MudTh>Property No.</MudTh>
+                            <MudTh>Description</MudTh>
+                            <MudTh>Date Acquired</MudTh>
+                            <MudTh Style="text-align:right">Acq. Cost (₱)</MudTh>
+                            <MudTh Style="text-align:right">Accum. Depr. (₱)</MudTh>
+                            <MudTh Style="text-align:right">Carrying Amt (₱)</MudTh>
+                            <MudTh>Disposal Method</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd>@context.Snapshot.PropertyNo</MudTd>
+                            <MudTd>@context.Snapshot.Description</MudTd>
+                            <MudTd>@context.SnapshotDateAcquired.ToString("yyyy-MM-dd")</MudTd>
+                            <MudTd Style="text-align:right">@context.SnapshotAcquisitionCost.ToString("N2")</MudTd>
+                            <MudTd Style="text-align:right">@context.SnapshotAccumulatedDepreciation.ToString("N2")</MudTd>
+                            <MudTd Style="text-align:right">@context.SnapshotCarryingAmount.ToString("N2")</MudTd>
+                            <MudTd>@(context.DisposalMethod.HasValue ? FormatDisposalMethod(context.DisposalMethod.Value) : "Pending")</MudTd>
+                        </RowTemplate>
+                    </MudTable>
+
+                    <!-- Add item (Draft only = 0) -->
+                    @if (_selected.Status == 0)
+                    {
+                        <MudDivider Class="my-3" />
+                        <MudText Typo="Typo.subtitle2" Class="mb-2">Add Asset Item</MudText>
+                        <MudStack Row="true" Spacing="2" AlignItems="AlignItems.End">
+                            <MudTextField @bind-Value="_addItemAssetId" Label="Asset Registry Id (GUID)" Variant="Variant.Outlined"
+                                          Style="flex:1;" Placeholder="Paste asset registry id" />
+                            <MudTextField @bind-Value="_addItemRemarks" Label="Remarks (optional)" Variant="Variant.Outlined"
+                                          Style="flex:1;" MaxLength="500" />
+                            <MudButton Variant="Variant.Outlined" Color="Color.Primary"
+                                       OnClick="AddItemAsync" Disabled="_busy || string.IsNullOrWhiteSpace(_addItemAssetId)">
+                                Add Item
+                            </MudButton>
+                        </MudStack>
+                    }
+
+                    <!-- Submit (Draft → Submitted) -->
+                    @if (_selected.Status == 0 && _selected.Items.Count > 0)
+                    {
+                        <MudDivider Class="my-3" />
+                        <MudText Typo="Typo.subtitle2" Class="mb-2">Submit for Approval</MudText>
+                        <MudStack Row="true" Spacing="2" AlignItems="AlignItems.End">
+                            <MudTextField @bind-Value="_submitApprovedByName" Label="Approved By (Name)" Variant="Variant.Outlined"
+                                          Style="flex:1;" MaxLength="100" Required="true" />
+                            <MudTextField @bind-Value="_submitApprovedByDesignation" Label="Designation" Variant="Variant.Outlined"
+                                          Style="width:200px;" MaxLength="100" />
+                            <MudButton Variant="Variant.Filled" Color="Color.Warning"
+                                       OnClick="SubmitReportAsync" Disabled="_busy || string.IsNullOrWhiteSpace(_submitApprovedByName)">
+                                Submit
+                            </MudButton>
+                        </MudStack>
+                    }
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    }
+</MudGrid>
+
+@code {
+    private bool _busy;
+    private string? _error;
+    private string? _keyword;
+    private int? _typeFilter;
+    private int? _statusFilter;
+    private int _page = 1;
+    private int _totalPages = 1;
+    private int _totalCount;
+    private const int PageSize = 15;
+    private IReadOnlyList<ArUnserviceableReportSummaryDto> _items = [];
+    private ArUnserviceableReportDto? _selected;
+    private bool _showCreateForm;
+
+    // Create form
+    private CreateFormModel _createForm = new();
+
+    // Add item
+    private string? _addItemAssetId;
+    private string? _addItemRemarks;
+
+    // Submit
+    private string? _submitApprovedByName;
+    private string? _submitApprovedByDesignation;
+
+    private sealed class CreateFormModel
+    {
+        public int ReportType { get; set; }
+        public string FundCluster { get; set; } = "";
+        public string Station { get; set; } = "";
+        public DateTime? AsAtNullable { get; set; }
+        public string AccountableOfficerName { get; set; } = "";
+        public string? AccountableOfficerDesignation { get; set; }
+    }
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            var result = await Client.SearchAsync(_keyword, _typeFilter, _statusFilter, _page, PageSize);
+            _items = result.Items;
+            _totalCount = result.TotalCount;
+            _totalPages = result.TotalPages > 0 ? result.TotalPages : 1;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task OnRowClick(TableRowClickEventArgs<ArUnserviceableReportSummaryDto> args)
+    {
+        _busy = true;
+        try
+        {
+            _selected = await Client.GetAsync(args.Item.Id);
+            _addItemAssetId = null;
+            _addItemRemarks = null;
+            _submitApprovedByName = null;
+            _submitApprovedByDesignation = null;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task CreateReportAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_createForm.AccountableOfficerName) ||
+            string.IsNullOrWhiteSpace(_createForm.Station) || !_createForm.AsAtNullable.HasValue)
+        {
+            Snackbar.Add("All required fields must be filled.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            var req = new CreateUnserviceableReportRequest(
+                _createForm.ReportType,
+                _createForm.FundCluster,
+                _createForm.Station.Trim(),
+                DateOnly.FromDateTime(_createForm.AsAtNullable.Value),
+                new ArEmployeeRefDto(Guid.Empty, _createForm.AccountableOfficerName.Trim(), _createForm.AccountableOfficerDesignation));
+
+            _selected = await Client.CreateDraftAsync(req);
+            Snackbar.Add("Report created.", Severity.Success);
+            _showCreateForm = false;
+            _createForm = new();
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task AddItemAsync()
+    {
+        if (_selected is null || !Guid.TryParse(_addItemAssetId, out var assetId))
+        {
+            Snackbar.Add("Enter a valid Asset Registry Id.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            _selected = await Client.AddItemAsync(_selected.Id, new AddUnserviceableReportItemRequest(assetId, _addItemRemarks));
+            _addItemAssetId = null;
+            _addItemRemarks = null;
+            Snackbar.Add("Item added.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task SubmitReportAsync()
+    {
+        if (_selected is null || string.IsNullOrWhiteSpace(_submitApprovedByName)) return;
+        _busy = true;
+        try
+        {
+            var req = new SubmitUnserviceableReportRequest(
+                new ArEmployeeRefDto(Guid.Empty, _submitApprovedByName.Trim(), _submitApprovedByDesignation));
+            _selected = await Client.SubmitAsync(_selected.Id, req);
+            Snackbar.Add("Report submitted.", Severity.Success);
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task PrevPage() { _page--; await LoadAsync(); }
+    private async Task NextPage() { _page++; await LoadAsync(); }
+    private async Task OnSearchKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") { _page = 1; await LoadAsync(); }
+    }
+
+    private static string FormatUnserviceableStatus(int v) => v switch
+    {
+        0 => "Draft",
+        1 => "Submitted",
+        2 => "Inspected",
+        3 => "Disposed",
+        _ => v.ToString()
+    };
+    private static Color UnserviceableStatusColor(int v) => v switch
+    {
+        0 => Color.Default,
+        1 => Color.Warning,
+        2 => Color.Info,
+        3 => Color.Success,
+        _ => Color.Default
+    };
+    private static string FormatDisposalMethod(int v) => v switch
+    {
+        0 => "PublicAuction",
+        1 => "Donation",
+        2 => "Destruction",
+        3 => "BurningOfWaste",
+        4 => "Other",
+        _ => v.ToString()
+    };
+}

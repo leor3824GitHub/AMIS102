@@ -1,0 +1,385 @@
+@page "/asset-register/incidents"
+@using FSH.Playground.Blazor.ApiClient
+@inject IArIncidentReportClient Client
+@inject ISnackbar Snackbar
+
+<FshPageHeader Title="Property Incident Reports (RLSDDSP)"
+               Description="File and track loss/damage incidents per COA 2022-004. Notarization required before resolution." />
+
+<MudGrid Spacing="3">
+    <!-- Filters -->
+    <MudItem xs="12">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                <MudGrid Spacing="2">
+                    <MudItem xs="12" md="4">
+                        <MudTextField @bind-Value="_keyword" Label="Incident No. / Keyword" Variant="Variant.Outlined"
+                                      Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Outlined.Search"
+                                      OnKeyDown="OnSearchKeyDown" Immediate="false" />
+                    </MudItem>
+                    <MudItem xs="6" md="2">
+                        <MudSelect @bind-Value="_typeFilter" Label="Incident Type" Variant="Variant.Outlined" T="int?" Clearable="true">
+                            <MudSelectItem Value="@((int?)null)">All</MudSelectItem>
+                            <MudSelectItem Value="@((int?)0)">Loss</MudSelectItem>
+                            <MudSelectItem Value="@((int?)1)">Damage</MudSelectItem>
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="6" md="2">
+                        <MudSelect @bind-Value="_statusFilter" Label="Status" Variant="Variant.Outlined" T="int?" Clearable="true">
+                            <MudSelectItem Value="@((int?)null)">All</MudSelectItem>
+                            <MudSelectItem Value="@((int?)0)">Filed</MudSelectItem>
+                            <MudSelectItem Value="@((int?)1)">PoliceNotified</MudSelectItem>
+                            <MudSelectItem Value="@((int?)2)">Notarized</MudSelectItem>
+                            <MudSelectItem Value="@((int?)3)">UnderInvestigation</MudSelectItem>
+                            <MudSelectItem Value="@((int?)4)">Resolved</MudSelectItem>
+                            <MudSelectItem Value="@((int?)5)">Closed</MudSelectItem>
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="2" Class="d-flex align-end">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                                   StartIcon="@Icons.Material.Outlined.Search" OnClick="LoadAsync" Disabled="_busy">
+                            Search
+                        </MudButton>
+                    </MudItem>
+                </MudGrid>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    <!-- Results -->
+    <MudItem xs="12">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                @if (_busy)
+                {
+                    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+                }
+                else if (!string.IsNullOrEmpty(_error))
+                {
+                    <MudAlert Severity="Severity.Error" Dense="true">@_error</MudAlert>
+                }
+                else
+                {
+                    <MudTable Items="_items" Dense="true" Hover="true" Striped="true"
+                              OnRowClick="OnRowClick" T="ArIncidentReportSummaryDto" RowClass="cursor-pointer">
+                        <HeaderContent>
+                            <MudTh>Incident No.</MudTh>
+                            <MudTh>Type</MudTh>
+                            <MudTh>Status</MudTh>
+                            <MudTh>Incident Date</MudTh>
+                            <MudTh Style="text-align:right">Items</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd><strong>@context.IncidentNo</strong></MudTd>
+                            <MudTd>
+                                <MudChip T="string" Size="Size.Small"
+                                         Color="@(context.IncidentType == 0 ? Color.Warning : Color.Error)"
+                                         Variant="Variant.Outlined">
+                                    @FormatIncidentType(context.IncidentType)
+                                </MudChip>
+                            </MudTd>
+                            <MudTd>
+                                <MudChip T="string" Size="Size.Small"
+                                         Color="@IncidentStatusColor(context.Status)"
+                                         Variant="Variant.Filled">
+                                    @FormatIncidentStatus(context.Status)
+                                </MudChip>
+                            </MudTd>
+                            <MudTd>@context.IncidentDate.ToString("yyyy-MM-dd")</MudTd>
+                            <MudTd Style="text-align:right">@context.ItemCount</MudTd>
+                        </RowTemplate>
+                        <NoRecordsContent>
+                            <MudText Color="Color.Secondary">No incident reports found.</MudText>
+                        </NoRecordsContent>
+                    </MudTable>
+
+                    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mt-3">
+                        <MudText Typo="Typo.caption">Page @_page of @_totalPages (@_totalCount total)</MudText>
+                        <MudStack Row="true" Spacing="1">
+                            <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft" Size="Size.Small"
+                                           Disabled="_page <= 1 || _busy" OnClick="PrevPage" />
+                            <MudIconButton Icon="@Icons.Material.Filled.ChevronRight" Size="Size.Small"
+                                           Disabled="_page >= _totalPages || _busy" OnClick="NextPage" />
+                        </MudStack>
+                    </MudStack>
+                }
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    <!-- Detail panel -->
+    @if (_selected is not null)
+    {
+        <MudItem xs="12">
+            <MudCard Elevation="2">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                            <MudText Typo="Typo.h6">@_selected.IncidentNo</MudText>
+                            <MudChip T="string" Size="Size.Small" Color="@IncidentStatusColor(_selected.Status)" Variant="Variant.Filled">
+                                @FormatIncidentStatus(_selected.Status)
+                            </MudChip>
+                        </MudStack>
+                    </CardHeaderContent>
+                    <CardHeaderActions>
+                        <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small"
+                                       OnClick="@(() => _selected = null)" />
+                    </CardHeaderActions>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudGrid Class="mb-3">
+                        <MudItem xs="6" md="3">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Incident Type</MudText>
+                            <MudText Typo="Typo.body2">@FormatIncidentType(_selected.IncidentType)</MudText>
+                        </MudItem>
+                        <MudItem xs="6" md="3">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Incident Date</MudText>
+                            <MudText Typo="Typo.body2">@_selected.IncidentDate.ToString("yyyy-MM-dd")</MudText>
+                        </MudItem>
+                        <MudItem xs="6" md="3">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Fund Cluster</MudText>
+                            <MudText Typo="Typo.body2">@_selected.FundCluster</MudText>
+                        </MudItem>
+                        <MudItem xs="6" md="3">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Department / Office</MudText>
+                            <MudText Typo="Typo.body2">@_selected.DepartmentOffice</MudText>
+                        </MudItem>
+                        <MudItem xs="12">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Circumstances</MudText>
+                            <MudText Typo="Typo.body2">@_selected.Circumstances</MudText>
+                        </MudItem>
+                        <MudItem xs="6" md="4">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Accountable Officer</MudText>
+                            <MudText Typo="Typo.body2">@_selected.AccountableOfficer.PrintedName</MudText>
+                            <MudText Typo="Typo.caption">@_selected.AccountableOfficerDesignation</MudText>
+                        </MudItem>
+                        @if (_selected.PoliceNotified)
+                        {
+                            <MudItem xs="6" md="4">
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">Police</MudText>
+                                <MudText Typo="Typo.body2">@_selected.PoliceStation — @_selected.PoliceNotifiedOn?.ToString("yyyy-MM-dd")</MudText>
+                                <MudText Typo="Typo.caption">Blotter: @_selected.PoliceBlotterRef</MudText>
+                            </MudItem>
+                        }
+                        @if (_selected.NotarizedOn.HasValue)
+                        {
+                            <MudItem xs="6" md="4">
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">Notarized On</MudText>
+                                <MudText Typo="Typo.body2">@_selected.NotarizedOn.Value.ToString("yyyy-MM-dd")</MudText>
+                            </MudItem>
+                        }
+                        @if (_selected.AmountSettled.HasValue)
+                        {
+                            <MudItem xs="6" md="3">
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">Amount Settled (₱)</MudText>
+                                <MudText Typo="Typo.body2">@_selected.AmountSettled.Value.ToString("N2")</MudText>
+                            </MudItem>
+                        }
+                    </MudGrid>
+
+                    <MudText Typo="Typo.subtitle2" Class="mb-2">Incident Items (@_selected.Items.Count)</MudText>
+                    <MudTable Items="_selected.Items" Dense="true" Striped="true">
+                        <HeaderContent>
+                            <MudTh>Property No.</MudTh>
+                            <MudTh>Description</MudTh>
+                            <MudTh Style="text-align:right">Acq. Cost (₱)</MudTh>
+                            <MudTh Style="text-align:right">CRC (₱)</MudTh>
+                            <MudTh>Resolution</MudTh>
+                            <MudTh>Resolved On</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd>@context.Snapshot.PropertyNo</MudTd>
+                            <MudTd>@context.Snapshot.Description</MudTd>
+                            <MudTd Style="text-align:right">@context.SnapshotAcquisitionCost.ToString("N2")</MudTd>
+                            <MudTd Style="text-align:right">@context.SnapshotCurrentReplacementCost.ToString("N2")</MudTd>
+                            <MudTd>@FormatItemResolution(context.ItemResolution)</MudTd>
+                            <MudTd>@(context.ResolvedOn?.ToString("yyyy-MM-dd") ?? "—")</MudTd>
+                        </RowTemplate>
+                    </MudTable>
+
+                    <!-- Police notify (Filed = 0 and not yet notified) -->
+                    @if (_selected.Status == 0 && !_selected.PoliceNotified)
+                    {
+                        <MudDivider Class="my-3" />
+                        <MudText Typo="Typo.subtitle2" Class="mb-2">Notify Police</MudText>
+                        <MudGrid Spacing="2">
+                            <MudItem xs="12" md="4">
+                                <MudTextField @bind-Value="_policeStation" Label="Police Station" Variant="Variant.Outlined" MaxLength="100" Required="true" />
+                            </MudItem>
+                            <MudItem xs="6" md="3">
+                                <MudDatePicker @bind-Date="_policeNotifiedOn" Label="Notified On" Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" Required="true" />
+                            </MudItem>
+                            <MudItem xs="6" md="3">
+                                <MudTextField @bind-Value="_policeBlotterRef" Label="Blotter Ref" Variant="Variant.Outlined" MaxLength="100" Required="true" />
+                            </MudItem>
+                            <MudItem xs="12" md="2" Class="d-flex align-end">
+                                <MudButton Variant="Variant.Filled" Color="Color.Info" FullWidth="true"
+                                           OnClick="NotifyPoliceAsync" Disabled="_busy">
+                                    Notify Police
+                                </MudButton>
+                            </MudItem>
+                        </MudGrid>
+                    }
+
+                    <!-- Close (only if status >= 2/Notarized) -->
+                    @if (_selected.Status >= 2 && _selected.Status < 5)
+                    {
+                        <MudDivider Class="my-3" />
+                        <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="CloseReportAsync" Disabled="_busy">
+                            Close Incident Report
+                        </MudButton>
+                    }
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    }
+</MudGrid>
+
+@code {
+    private bool _busy;
+    private string? _error;
+    private string? _keyword;
+    private int? _typeFilter;
+    private int? _statusFilter;
+    private int _page = 1;
+    private int _totalPages = 1;
+    private int _totalCount;
+    private const int PageSize = 15;
+    private IReadOnlyList<ArIncidentReportSummaryDto> _items = [];
+    private ArIncidentReportDto? _selected;
+
+    // Police notify form
+    private string? _policeStation;
+    private DateTime? _policeNotifiedOn;
+    private string? _policeBlotterRef;
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            var result = await Client.SearchAsync(_keyword, _typeFilter, _statusFilter, _page, PageSize);
+            _items = result.Items;
+            _totalCount = result.TotalCount;
+            _totalPages = result.TotalPages > 0 ? result.TotalPages : 1;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task OnRowClick(TableRowClickEventArgs<ArIncidentReportSummaryDto> args)
+    {
+        _busy = true;
+        try
+        {
+            _selected = await Client.GetAsync(args.Item.Id);
+            _policeStation = null;
+            _policeNotifiedOn = null;
+            _policeBlotterRef = null;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task NotifyPoliceAsync()
+    {
+        if (_selected is null || string.IsNullOrWhiteSpace(_policeStation) || !_policeNotifiedOn.HasValue || string.IsNullOrWhiteSpace(_policeBlotterRef))
+        {
+            Snackbar.Add("All police notification fields are required.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            var req = new NotifyPoliceRequest(
+                _policeStation.Trim(),
+                DateOnly.FromDateTime(_policeNotifiedOn.Value),
+                _policeBlotterRef.Trim());
+            _selected = await Client.NotifyPoliceAsync(_selected.Id, req);
+            Snackbar.Add("Police notified.", Severity.Success);
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task CloseReportAsync()
+    {
+        if (_selected is null) return;
+        _busy = true;
+        try
+        {
+            _selected = await Client.CloseAsync(_selected.Id);
+            Snackbar.Add("Incident report closed.", Severity.Success);
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task PrevPage() { _page--; await LoadAsync(); }
+    private async Task NextPage() { _page++; await LoadAsync(); }
+    private async Task OnSearchKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") { _page = 1; await LoadAsync(); }
+    }
+
+    private static string FormatIncidentType(int v) => v switch { 0 => "Loss", 1 => "Damage", _ => v.ToString() };
+    private static string FormatIncidentStatus(int v) => v switch
+    {
+        0 => "Filed",
+        1 => "PoliceNotified",
+        2 => "Notarized",
+        3 => "UnderInvestigation",
+        4 => "Resolved",
+        5 => "Closed",
+        _ => v.ToString()
+    };
+    private static Color IncidentStatusColor(int v) => v switch
+    {
+        0 => Color.Info,
+        1 => Color.Warning,
+        2 => Color.Primary,
+        3 => Color.Warning,
+        4 => Color.Success,
+        5 => Color.Dark,
+        _ => Color.Default
+    };
+    private static string FormatItemResolution(int v) => v switch
+    {
+        0 => "Pending",
+        1 => "Recovered",
+        2 => "Settled",
+        3 => "ReliefGranted",
+        4 => "Derecognized",
+        _ => v.ToString()
+    };
+}

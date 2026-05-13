@@ -4,6 +4,7 @@
        xmlns:inventory="clr-namespace:Playground.Maui.Features.Inventory"
        xmlns:scan="clr-namespace:Playground.Maui.Features.Scan"
        xmlns:profile="clr-namespace:Playground.Maui.Features.Profile"
+       xmlns:count="clr-namespace:Playground.Maui.Features.PhysicalCount"
        x:Class="Playground.Maui.AppShell"
        Shell.FlyoutBehavior="Disabled">
 
@@ -16,6 +17,10 @@
                       Icon="scan.png"
                       ContentTemplate="{DataTemplate scan:ScanPage}"
                       Route="ScanPage" />
+        <ShellContent Title="Count"
+                      Icon="scan.png"
+                      ContentTemplate="{DataTemplate count:PhysicalCountSessionListPage}"
+                      Route="PhysicalCountSessionListPage" />
         <ShellContent Title="Profile"
                       Icon="profile.png"
                       ContentTemplate="{DataTemplate profile:ProfilePage}"

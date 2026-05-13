@@ -1,3 +1,4 @@
+using FSH.Modules.AssetManagement.Domain;
 using FSH.Modules.AssetManagement.Features.v1.InventoryCustodianSlips.CreateICS;
 using Shouldly;
 using Xunit;
@@ -140,6 +141,7 @@ public sealed class CreateICSCommandValidatorTests
         new(
             ICSNo: "ICS-2025-01-0001",
             Date: DateOnly.FromDateTime(DateTime.UtcNow),
+            Category: AssetCategory.LowValuedSemi,
             FundCluster: "101",
             IssuedFromEmployeeId: Guid.NewGuid(),
             ReceivedByEmployeeId: Guid.NewGuid(),

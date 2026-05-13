@@ -67,7 +67,7 @@ internal sealed class VehicleDbInitializer(
 
             foreach (var vehicle in vehicles)
             {
-                vehicle.CreatedBy = "seed";
+                vehicle.SetCreatedBy("seed");
             }
 
             await context.Vehicles.AddRangeAsync(vehicles, cancellationToken).ConfigureAwait(false);

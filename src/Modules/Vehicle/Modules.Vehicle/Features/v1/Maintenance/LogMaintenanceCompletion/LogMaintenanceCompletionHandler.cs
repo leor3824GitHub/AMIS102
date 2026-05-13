@@ -1,4 +1,5 @@
 using FSH.Framework.Core.Context;
+using FSH.Framework.Core.Exceptions;
 using FSH.Modules.Vehicle.Contracts.v1.Maintenance;
 using FSH.Modules.Vehicle.Data;
 using FSH.Modules.Vehicle.Domain.Maintenance;
@@ -12,7 +13,7 @@ public sealed class LogMaintenanceCompletionHandler(
 {
     public async ValueTask<LogMaintenanceCompletionResponse> Handle(
         LogMaintenanceCompletionCommand command,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         var tenantId = currentUser.GetTenant() ?? throw new InvalidOperationException("Tenant ID required");
 
@@ -30,17 +31,17 @@ public sealed class LogMaintenanceCompletionHandler(
             command.Notes);
 
         db.MaintenanceLogs.Add(log);
-        await db.SaveChangesAsync(ct);
+        await db.SaveChangesAsync(cancellationToken);
 
         // If a schedule is associated, advance its due dates
         if (command.ScheduleId.HasValue)
         {
-            var schedule = await db.MaintenanceSchedules.FindAsync(new object[] { command.ScheduleId.Value }, cancellationToken: ct)
-                ?? throw new ApplicationException($"Maintenance schedule {command.ScheduleId} not found");
+            var schedule = await db.MaintenanceSchedules.FindAsync(new object[] { command.ScheduleId.Value }, cancellationToken: cancellationToken)
+                ?? throw new NotFoundException($"Maintenance schedule {command.ScheduleId} not found");
 
             schedule.RecordCompletion(command.PerformedDate, command.OdometerAtService);
             db.MaintenanceSchedules.Update(schedule);
-            await db.SaveChangesAsync(ct);
+            await db.SaveChangesAsync(cancellationToken);
         }
 
         return new LogMaintenanceCompletionResponse(log.Id);

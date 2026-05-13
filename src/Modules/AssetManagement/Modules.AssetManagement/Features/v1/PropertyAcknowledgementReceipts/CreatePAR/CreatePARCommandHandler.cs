@@ -48,6 +48,11 @@ public sealed class CreatePARCommandHandler : ICommandHandler<CreatePARCommand, 
             .ToDictionaryAsync(x => x.Inv.Id, cancellationToken)
             .ConfigureAwait(false);
 
+        var registryByInventoryItemId = await _dbContext.AssetRegistry
+            .Where(x => requestedItemIds.Contains(x.TangibleInventoryItemId))
+            .ToDictionaryAsync(x => x.TangibleInventoryItemId, cancellationToken)
+            .ConfigureAwait(false);
+
         foreach (var itemId in requestedItemIds)
         {
             if (!invItems.TryGetValue(itemId, out var row))
@@ -60,9 +65,25 @@ public sealed class CreatePARCommandHandler : ICommandHandler<CreatePARCommand, 
             if (row.Inv.IsIssued)
                 throw new InvalidOperationException(
                     $"TangibleInventoryItem {row.Inv.PropertyNo} is already issued.");
+
+            if (!registryByInventoryItemId.ContainsKey(itemId))
+            {
+                var registry = AssetRegistry.Create(
+                    tenantId: row.Inv.TenantId,
+                    tangibleInventoryItemId: row.Inv.Id,
+                    itemId: row.Inv.ItemId,
+                    propertyNo: row.Inv.PropertyNo,
+                    assetType: row.Inv.AssetType,
+                    acquisitionDate: row.Inv.AcquisitionDate,
+                    unitCost: row.Inv.UnitCost);
+
+                _dbContext.AssetRegistry.Add(registry);
+                registryByInventoryItemId[itemId] = registry;
+            }
         }
 
         string tenantId = _currentUser.GetTenant() ?? string.Empty;
+        string userId = _currentUser.GetUserId().ToString();
 
         var par = PropertyAcknowledgementReceipt.Create(
             tenantId,
@@ -73,7 +94,7 @@ public sealed class CreatePARCommandHandler : ICommandHandler<CreatePARCommand, 
             command.ReceivedByEmployeeId,
             command.ApprovedByEmployeeId);
 
-        par.CreatedBy = _currentUser.GetUserId().ToString();
+        par.CreatedBy = userId;
         _dbContext.PropertyAcknowledgementReceipts.Add(par);
 
         int itemNo = 1;
@@ -95,6 +116,29 @@ public sealed class CreatePARCommandHandler : ICommandHandler<CreatePARCommand, 
 
             _dbContext.PARItems.Add(parItem);
             row.Inv.MarkIssued();
+
+            var registry = registryByInventoryItemId[row.Inv.Id];
+            var previousCustodian = registry.CurrentCustodianId;
+            registry.AssignTo(command.ReceivedByEmployeeId, null);
+            var eventType = previousCustodian.HasValue
+                ? AssetAssignmentEventType.Transferred
+                : AssetAssignmentEventType.Assigned;
+
+            var history = AssetAssignmentHistory.Create(
+                tenantId,
+                registry.Id,
+                eventType,
+                DateTimeOffset.UtcNow,
+                "PAR",
+                par.Id,
+                par.PARNo,
+                previousCustodian,
+                command.ReceivedByEmployeeId,
+                null,
+                null);
+
+            _dbContext.AssetAssignmentHistory.Add(history);
+            registry.LinkCurrentAssignment(history.Id);
             itemNo++;
         }
 

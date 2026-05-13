@@ -1,3 +1,4 @@
+using System.Net.Http.Json;
 using CommunityToolkit.Mvvm.Messaging;
 using CommunityToolkit.Mvvm.Messaging.Messages;
 
@@ -23,7 +24,12 @@ public sealed class AuthenticatedHttpHandler(
 
         var response = await base.SendAsync(request, cancellationToken);
 
-        if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized && !_isRefreshing)
+        // Only attempt refresh + SessionExpired when a token existed but was rejected.
+        // If there was no token (offline/PIN-unlock mode), return the 401 as-is so
+        // ViewModels fall back to cache without triggering the PIN-page loop.
+        if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized
+            && !_isRefreshing
+            && !string.IsNullOrEmpty(accessToken))
         {
             _isRefreshing = true;
             try
@@ -56,11 +62,26 @@ public sealed class AuthenticatedHttpHandler(
     {
         request.Headers.Remove("Authorization");
         request.Headers.Remove("tenant");
+        request.Headers.Remove("X-Client-Id");
 
         if (!string.IsNullOrEmpty(accessToken))
             request.Headers.Add("Authorization", $"Bearer {accessToken}");
 
         request.Headers.Add("tenant", options.TenantId);
+        request.Headers.Add("X-Client-Id", GetClientId());
+    }
+
+    private static string GetClientId()
+    {
+#if ANDROID
+        return "maui-android";
+#elif IOS
+        return "maui-ios";
+#elif WINDOWS
+        return "maui-windows";
+#else
+        return "maui";
+#endif
     }
 
     private async Task<string?> TryRefreshTokenAsync(CancellationToken cancellationToken)
@@ -71,6 +92,7 @@ public sealed class AuthenticatedHttpHandler(
 
         using var refreshRequest = new HttpRequestMessage(HttpMethod.Post, "api/v1/identity/token/refresh");
         refreshRequest.Headers.Add("tenant", options.TenantId);
+        refreshRequest.Headers.Add("X-Client-Id", GetClientId());
         refreshRequest.Content = System.Net.Http.Json.JsonContent.Create(new { Token = refreshToken });
 
         try
@@ -83,8 +105,8 @@ public sealed class AuthenticatedHttpHandler(
             if (tokenResponse is null)
                 return null;
 
-            await tokenStorage.SaveTokensAsync(tokenResponse.Token, tokenResponse.RefreshToken);
-            return tokenResponse.Token;
+            await tokenStorage.SaveTokensAsync(tokenResponse.AccessToken, tokenResponse.RefreshToken);
+            return tokenResponse.AccessToken;
         }
         catch
         {
@@ -109,5 +131,6 @@ public sealed class AuthenticatedHttpHandler(
         return clone;
     }
 
-    private sealed record TokenResponse(string Token, string RefreshToken);
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Instantiated by System.Text.Json deserialization")]
+    private sealed record TokenResponse(string AccessToken, string RefreshToken);
 }

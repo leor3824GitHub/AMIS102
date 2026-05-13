@@ -1,8 +1,15 @@
+using Microsoft.Extensions.DependencyInjection;
+
 namespace Playground.Maui.Features.Profile;
 
 public partial class ProfilePage : ContentPage
 {
     private readonly ProfileViewModel _vm;
+
+    public ProfilePage()
+        : this(ResolveViewModel())
+    {
+    }
 
     public ProfilePage(ProfileViewModel vm)
     {
@@ -21,4 +28,8 @@ public partial class ProfilePage : ContentPage
     {
         await _vm.LogoutAsync();
     }
+
+    private static ProfileViewModel ResolveViewModel() =>
+        Application.Current?.Handler?.MauiContext?.Services.GetRequiredService<ProfileViewModel>()
+        ?? throw new InvalidOperationException("Unable to resolve ProfileViewModel from DI.");
 }

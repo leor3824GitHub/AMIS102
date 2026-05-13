@@ -105,8 +105,8 @@ public sealed class PpmpHandlerTests
         await db.SaveChangesAsync();
 
         var approvedById = Guid.NewGuid();
-        var result = await new ApprovePpmpCommandHandler(db)
-            .Handle(new ApprovePpmpCommand(ppmp.Id, approvedById), CancellationToken.None);
+        var result = await new ApprovePpmpCommandHandler(db, new StubCurrentUser(approvedById))
+            .Handle(new ApprovePpmpCommand(ppmp.Id), CancellationToken.None);
 
         result.Status.ShouldBe(PpmpStatus.Approved);
     }
@@ -140,8 +140,8 @@ public sealed class PpmpHandlerTests
         await db.SaveChangesAsync();
 
         var returnedById = Guid.NewGuid();
-        var result = await new ReturnPpmpCommandHandler(db)
-            .Handle(new ReturnPpmpCommand(ppmp.Id, "Needs revision", returnedById), CancellationToken.None);
+        var result = await new ReturnPpmpCommandHandler(db, new StubCurrentUser(returnedById))
+            .Handle(new ReturnPpmpCommand(ppmp.Id, "Needs revision"), CancellationToken.None);
 
         result.Status.ShouldBe(PpmpStatus.Returned);
     }

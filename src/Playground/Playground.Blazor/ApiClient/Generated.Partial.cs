@@ -7,6 +7,9 @@ namespace FSH.Playground.Blazor.ApiClient
     {
         [System.Text.Json.Serialization.JsonPropertyName("warehouseLocationId")]
         public System.Guid? WarehouseLocationId { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("fulfilledOnUtc")]
+        public System.DateTimeOffset? FulfilledOnUtc { get; set; }
     }
 
     public partial class ApproveSupplyRequestCommand

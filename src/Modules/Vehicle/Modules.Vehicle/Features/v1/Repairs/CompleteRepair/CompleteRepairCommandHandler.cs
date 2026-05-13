@@ -23,7 +23,7 @@ public sealed class CompleteRepairCommandHandler(VehicleDbContext db, ICurrentUs
             [new ValidationFailure(nameof(cmd.Id), "Only in-progress repairs can be completed.")]);
 
         record.Complete(cmd.CompletedDate);
-        record.LastModifiedBy = currentUser.GetUserId().ToString();
+        record.SetLastModifiedBy(currentUser.GetUserId().ToString());
 
         var vehicle = await db.Vehicles.FirstOrDefaultAsync(v => v.Id == record.VehicleId, ct).ConfigureAwait(false)
             ?? throw new FluentValidation.ValidationException(

@@ -4,13 +4,214 @@
              xmlns:vm="clr-namespace:Playground.Maui.Features.Profile"
              x:DataType="vm:ProfileViewModel"
              x:Class="Playground.Maui.Features.Profile.ProfilePage"
-             Title="Profile">
-    <VerticalStackLayout Padding="16" Spacing="12">
-        <ActivityIndicator IsRunning="{Binding IsLoading}" IsVisible="{Binding IsLoading}" />
-        <Label Text="{Binding FullName}" FontSize="22" FontAttributes="Bold" />
-        <Label Text="{Binding Email}" />
-        <Label Text="{Binding Department}" />
-        <Label Text="{Binding Position}" />
-        <Button Text="Sign Out" Clicked="OnLogoutClicked" Margin="0,24,0,0" />
-    </VerticalStackLayout>
+             Title="Profile"
+             BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource OffBlack}}">
+
+    <ContentPage.Resources>
+        <x:Double x:Key="NameFontSize">22</x:Double>
+        <x:Double x:Key="BadgeFontSize">13</x:Double>
+        <x:Double x:Key="SectionFontSize">11</x:Double>
+        <x:Double x:Key="RowLabelFontSize">12</x:Double>
+        <x:Double x:Key="RowValueFontSize">15</x:Double>
+        <x:Double x:Key="AvatarSize">80</x:Double>
+        <x:Double x:Key="InitialsFontSize">28</x:Double>
+        <x:Double x:Key="IconBoxSize">36</x:Double>
+        <x:Double x:Key="VersionFontSize">12</x:Double>
+    </ContentPage.Resources>
+
+    <ScrollView>
+        <VerticalStackLayout Spacing="0">
+
+            <!-- ── Header card: avatar + name + department ── -->
+            <Border Stroke="Transparent"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray950}}"
+                    Padding="24,36,24,28"
+                    Margin="0,0,0,20">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="0,0,28,28" />
+                </Border.StrokeShape>
+                <Border.Shadow>
+                    <Shadow Brush="Black" Offset="0,4" Radius="16" Opacity="0.06" />
+                </Border.Shadow>
+
+                <VerticalStackLayout Spacing="12" HorizontalOptions="Center">
+
+                    <!-- Avatar circle with initials -->
+                    <Grid WidthRequest="{StaticResource AvatarSize}"
+                          HeightRequest="{StaticResource AvatarSize}"
+                          HorizontalOptions="Center">
+                        <Ellipse Fill="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                                 WidthRequest="{StaticResource AvatarSize}"
+                                 HeightRequest="{StaticResource AvatarSize}" />
+                        <Label Text="{Binding Initials}"
+                               FontSize="{StaticResource InitialsFontSize}"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource White}"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center" />
+                    </Grid>
+
+                    <!-- Full name -->
+                    <Label Text="{Binding FullName}"
+                           FontSize="{StaticResource NameFontSize}"
+                           FontAttributes="Bold"
+                           HorizontalOptions="Center"
+                           HorizontalTextAlignment="Center" />
+
+                    <!-- Department badge (pill) -->
+                    <Border StrokeShape="RoundRectangle 20"
+                            Stroke="{AppThemeBinding Light={StaticResource PrimaryLight}, Dark={StaticResource Tertiary}}"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource PrimaryLight}, Dark={StaticResource Tertiary}}"
+                            Padding="14,5"
+                            HorizontalOptions="Center"
+                            IsVisible="{Binding Department, Converter={StaticResource IsNotNullConverter}}">
+                        <Label Text="{Binding Department}"
+                               FontSize="{StaticResource BadgeFontSize}"
+                               TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+                    </Border>
+
+                    <!-- Loading indicator -->
+                    <ActivityIndicator IsRunning="{Binding IsLoading}"
+                                       IsVisible="{Binding IsLoading}"
+                                       Margin="0,4,0,0" />
+
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- ── Section: Account Information ── -->
+            <Label Text="ACCOUNT INFORMATION"
+                   FontSize="{StaticResource SectionFontSize}"
+                   FontAttributes="Bold"
+                   CharacterSpacing="1.5"
+                   TextColor="{StaticResource Gray400}"
+                   Margin="20,0,20,10" />
+
+            <Border Stroke="Transparent"
+                    StrokeShape="RoundRectangle 16"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray950}}"
+                    Margin="16,0">
+                <Border.Shadow>
+                    <Shadow Brush="Black" Offset="0,2" Radius="8" Opacity="0.05" />
+                </Border.Shadow>
+
+                <VerticalStackLayout Spacing="0">
+
+                    <!-- Email row -->
+                    <Grid Padding="16,14"
+                          ColumnDefinitions="48,*"
+                          ColumnSpacing="4">
+                        <Border Grid.Column="0"
+                                StrokeShape="RoundRectangle 10"
+                                Stroke="Transparent"
+                                BackgroundColor="{AppThemeBinding Light={StaticResource PrimaryLight}, Dark={StaticResource Tertiary}}"
+                                WidthRequest="{StaticResource IconBoxSize}"
+                                HeightRequest="{StaticResource IconBoxSize}"
+                                HorizontalOptions="Start"
+                                VerticalOptions="Center">
+                            <Label Text="@"
+                                   FontSize="16"
+                                   FontAttributes="Bold"
+                                   TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                                   HorizontalOptions="Center"
+                                   VerticalOptions="Center" />
+                        </Border>
+                        <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                            <Label Text="Email"
+                                   FontSize="{StaticResource RowLabelFontSize}"
+                                   TextColor="{StaticResource Gray400}" />
+                            <Label Text="{Binding Email}"
+                                   FontSize="{StaticResource RowValueFontSize}" />
+                        </VerticalStackLayout>
+                    </Grid>
+
+                    <BoxView HeightRequest="1"
+                             Color="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}"
+                             Margin="16,0" />
+
+                    <!-- Position row -->
+                    <Grid Padding="16,14"
+                          ColumnDefinitions="48,*"
+                          ColumnSpacing="4"
+                          IsVisible="{Binding Position, Converter={StaticResource IsNotNullConverter}}">
+                        <Border Grid.Column="0"
+                                StrokeShape="RoundRectangle 10"
+                                Stroke="Transparent"
+                                BackgroundColor="{AppThemeBinding Light={StaticResource PrimaryLight}, Dark={StaticResource Tertiary}}"
+                                WidthRequest="{StaticResource IconBoxSize}"
+                                HeightRequest="{StaticResource IconBoxSize}"
+                                HorizontalOptions="Start"
+                                VerticalOptions="Center">
+                            <Label Text="P"
+                                   FontSize="16"
+                                   FontAttributes="Bold"
+                                   TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                                   HorizontalOptions="Center"
+                                   VerticalOptions="Center" />
+                        </Border>
+                        <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                            <Label Text="Position"
+                                   FontSize="{StaticResource RowLabelFontSize}"
+                                   TextColor="{StaticResource Gray400}" />
+                            <Label Text="{Binding Position}"
+                                   FontSize="{StaticResource RowValueFontSize}" />
+                        </VerticalStackLayout>
+                    </Grid>
+
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- ── Sign Out card ── -->
+            <Border Stroke="Transparent"
+                    StrokeShape="RoundRectangle 16"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray950}}"
+                    Margin="16,16,16,0">
+                <Border.Shadow>
+                    <Shadow Brush="Black" Offset="0,2" Radius="8" Opacity="0.05" />
+                </Border.Shadow>
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnLogoutClicked" />
+                </Border.GestureRecognizers>
+
+                <Grid Padding="16,16"
+                      ColumnDefinitions="48,*"
+                      ColumnSpacing="4">
+                    <Border Grid.Column="0"
+                            StrokeShape="RoundRectangle 10"
+                            Stroke="Transparent"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource DangerLight}, Dark={StaticResource Gray900}}"
+                            WidthRequest="{StaticResource IconBoxSize}"
+                            HeightRequest="{StaticResource IconBoxSize}"
+                            HorizontalOptions="Start"
+                            VerticalOptions="Center">
+                        <Label Text="&#x2190;"
+                               FontSize="18"
+                               TextColor="{StaticResource Danger}"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center" />
+                    </Border>
+                    <Label Grid.Column="1"
+                           Text="Sign Out"
+                           FontSize="{StaticResource RowValueFontSize}"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource Danger}"
+                           VerticalOptions="Center" />
+                </Grid>
+            </Border>
+
+            <!-- ── Version footer ── -->
+            <Label Text="AMIS · Asset Management Information System"
+                   FontSize="{StaticResource VersionFontSize}"
+                   TextColor="{StaticResource Gray300}"
+                   HorizontalOptions="Center"
+                   HorizontalTextAlignment="Center"
+                   Margin="24,28,24,8" />
+            <Label Text="Version 1.0"
+                   FontSize="{StaticResource VersionFontSize}"
+                   TextColor="{StaticResource Gray300}"
+                   HorizontalOptions="Center"
+                   Margin="0,0,0,28" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+
 </ContentPage>

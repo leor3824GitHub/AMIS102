@@ -185,7 +185,7 @@ public sealed class ProcurementPlanningValidatorTests
     public void ReturnPpmp_ValidCommand_Passes()
     {
         var result = new ReturnPpmpCommandValidator()
-            .Validate(new ReturnPpmpCommand(Guid.NewGuid(), "Needs correction", Guid.NewGuid()));
+            .Validate(new ReturnPpmpCommand(Guid.NewGuid(), "Needs correction"));
 
         result.IsValid.ShouldBeTrue();
     }
@@ -194,7 +194,7 @@ public sealed class ProcurementPlanningValidatorTests
     public void ReturnPpmp_EmptyReturnReason_Fails()
     {
         var result = new ReturnPpmpCommandValidator()
-            .Validate(new ReturnPpmpCommand(Guid.NewGuid(), "", Guid.NewGuid()));
+            .Validate(new ReturnPpmpCommand(Guid.NewGuid(), ""));
 
         result.IsValid.ShouldBeFalse();
         result.Errors.ShouldContain(e => e.PropertyName == "ReturnReason");
@@ -273,7 +273,7 @@ public sealed class ProcurementPlanningValidatorTests
     public void ReturnApp_ValidCommand_Passes()
     {
         var result = new ReturnAnnualProcurementPlanCommandValidator()
-            .Validate(new ReturnAppCommand(Guid.NewGuid(), "Incomplete items", Guid.NewGuid()));
+            .Validate(new ReturnAppCommand(Guid.NewGuid(), "Incomplete items"));
 
         result.IsValid.ShouldBeTrue();
     }
@@ -282,7 +282,7 @@ public sealed class ProcurementPlanningValidatorTests
     public void ReturnApp_EmptyReturnReason_Fails()
     {
         var result = new ReturnAnnualProcurementPlanCommandValidator()
-            .Validate(new ReturnAppCommand(Guid.NewGuid(), "", Guid.NewGuid()));
+            .Validate(new ReturnAppCommand(Guid.NewGuid(), ""));
 
         result.IsValid.ShouldBeFalse();
         result.Errors.ShouldContain(e => e.PropertyName == "ReturnReason");

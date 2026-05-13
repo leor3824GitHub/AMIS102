@@ -120,6 +120,18 @@ public sealed class CreateTangibleInventoryCommandHandler(
             dbContext.TangibleInventoryItems.Add(inventoryItem);
             ti.LinkToInventory(inventoryItem.Id);
 
+            var registry = AssetRegistry.Create(
+                tenantId,
+                inventoryItem.Id,
+                ti.ItemId,
+                ti.PropertyNo,
+                assetType,
+                ti.AcquisitionDate,
+                ti.UnitCost);
+
+            registry.CreatedBy = userId;
+            dbContext.AssetRegistry.Add(registry);
+
             if (assetType == AssetType.SE) seCount++;
             else ppeCount++;
         }

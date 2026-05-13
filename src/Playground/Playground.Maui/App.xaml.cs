@@ -1,3 +1,4 @@
+using CommunityToolkit.Mvvm.Messaging;
 using Playground.Maui.Features.Auth;
 using Playground.Maui.Services;
 
@@ -11,26 +12,29 @@ public partial class App : Application
     {
         InitializeComponent();
         _tokenStorage = tokenStorage;
+
+        WeakReferenceMessenger.Default.Register<SessionExpiredMessage>(this, (_, _) =>
+            MainThread.BeginInvokeOnMainThread(() => MainPage = new NavigationPage(ResolvePage<LoginPage>())));
     }
 
     protected override Window CreateWindow(IActivationState? activationState)
     {
-        return new Window(new AppShell()) { Title = "AMIS Mobile" };
+        // Use a blank page initially; OnStart replaces it after the window is attached.
+        // Creating AppShell here causes a Fragment 1.8.9 crash on Android because the
+        // Activity view hierarchy isn't ready when Fragment eagerly tries to attach tab views.
+        return new Window(new ContentPage()) { Title = "AMIS Mobile" };
     }
 
     protected override async void OnStart()
     {
         base.OnStart();
 
-        var token = await _tokenStorage.GetAccessTokenAsync();
-        if (string.IsNullOrEmpty(token))
-        {
-            MainPage = new NavigationPage(new LoginPage(
-                (LoginViewModel)Handler!.MauiContext!.Services.GetRequiredService(typeof(LoginViewModel))));
-        }
-        else
-        {
-            MainPage = new AppShell();
-        }
+        var accessToken = await _tokenStorage.GetAccessTokenAsync();
+        MainPage = accessToken is not null
+            ? new AppShell()
+            : new NavigationPage(ResolvePage<LoginPage>());
     }
+
+    private T ResolvePage<T>() where T : Page =>
+        (T)Handler!.MauiContext!.Services.GetRequiredService(typeof(T));
 }

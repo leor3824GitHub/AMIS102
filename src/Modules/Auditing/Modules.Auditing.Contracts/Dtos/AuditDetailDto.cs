@@ -1,5 +1,7 @@
 using FSH.Modules.Auditing.Contracts;
+using FSH.Modules.Auditing.Contracts.Serialization;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace FSH.Modules.Auditing.Contracts.Dtos;
 
@@ -11,8 +13,10 @@ public sealed class AuditDetailDto
 
     public DateTime ReceivedAtUtc { get; set; }
 
+    [JsonConverter(typeof(JsonNumericEnumConverter<AuditEventType>))]
     public AuditEventType EventType { get; set; }
 
+    [JsonConverter(typeof(JsonNumericEnumConverter<AuditSeverity>))]
     public AuditSeverity Severity { get; set; }
 
     public string? TenantId { get; set; }
@@ -31,6 +35,7 @@ public sealed class AuditDetailDto
 
     public string? Source { get; set; }
 
+    [JsonConverter(typeof(JsonNumericEnumConverter<AuditTag>))]
     public AuditTag Tags { get; set; }
 
     /// <summary>

@@ -11,7 +11,7 @@ public sealed class SearchMaintenanceLogsHandler(
 {
     public async ValueTask<List<MaintenanceLogDto>> Handle(
         SearchMaintenanceLogsQuery query,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         var logs = await db.MaintenanceLogs
             .Where(x => (string.IsNullOrEmpty(query.MaintenanceType) || x.MaintenanceType.Contains(query.MaintenanceType)) &&
@@ -20,7 +20,7 @@ public sealed class SearchMaintenanceLogsHandler(
                      (!query.PerformedDateFrom.HasValue || x.PerformedDate >= query.PerformedDateFrom) &&
                      (!query.PerformedDateTo.HasValue || x.PerformedDate <= query.PerformedDateTo) &&
                      !x.IsDeleted)
-            .ToListAsync(ct);
+            .ToListAsync(cancellationToken);
 
         return logs
             .Select(x => new MaintenanceLogDto(

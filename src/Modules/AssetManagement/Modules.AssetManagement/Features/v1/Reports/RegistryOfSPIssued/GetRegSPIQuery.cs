@@ -16,10 +16,35 @@ public sealed record GetRegSPIQuery(
 
 public sealed record PagedRegSPIResponse(
     Guid EmployeeId,
+    string? EmployeeNumber,
+    string EmployeeName,
+    string? EmployeeOfficeName,
+    string? EmployeeDepartmentName,
+    string? EmployeePositionName,
+    IReadOnlyList<RegSPISignatoryDto> Signatories,
+    IReadOnlyList<RegSPISectionDto> Sections,
     IReadOnlyList<RegSPIEntryDto> Items,
+    int PageLineCount,
+    decimal PageAmountTotal,
     int PageNumber,
     int PageSize,
-    int TotalCount);
+    int TotalCount,
+    decimal OverallAmountTotal);
+
+public sealed record RegSPISignatoryDto(
+    int SortOrder,
+    string Label,
+    string Name,
+    string Title);
+
+public sealed record RegSPISectionDto(
+    Guid ICSId,
+    string ICSNo,
+    DateOnly Date,
+    string? FundCluster,
+    string ICSStatus,
+    int LineCount,
+    decimal AmountTotal);
 
 public sealed record RegSPIEntryDto(
     Guid ICSId,
@@ -34,4 +59,8 @@ public sealed record RegSPIEntryDto(
     decimal UnitCost,
     int? EstimatedUsefulLifeYears,
     DateOnly? ExpiresOn,
-    string ICSStatus);
+    string ICSStatus,
+    Guid? IssuedFromEmployeeId,
+    string? IssuedFromEmployeeName,
+    string? IssuedFromEmployeePositionName,
+    string? IssuedFromEmployeeOfficeName);

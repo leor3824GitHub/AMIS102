@@ -1,4 +1,5 @@
 using FSH.Framework.Core.Domain;
+using FSH.Modules.Vehicle.Domain.Events;
 using System.Security.Cryptography;
 
 namespace FSH.Modules.Vehicle.Domain.Vehicles;
@@ -58,15 +59,15 @@ public class Vehicle : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
     public byte[] Version { get; set; } = [];
 
     // IAuditableEntity
-    public DateTimeOffset CreatedOnUtc { get; set; } = DateTimeOffset.UtcNow;
-    public string? CreatedBy { get; set; }
-    public DateTimeOffset? LastModifiedOnUtc { get; set; }
-    public string? LastModifiedBy { get; set; }
+    public DateTimeOffset CreatedOnUtc { get; private set; } = DateTimeOffset.UtcNow;
+    public string? CreatedBy { get; private set; }
+    public DateTimeOffset? LastModifiedOnUtc { get; private set; }
+    public string? LastModifiedBy { get; private set; }
 
     // ISoftDeletable
-    public bool IsDeleted { get; set; }
-    public DateTimeOffset? DeletedOnUtc { get; set; }
-    public string? DeletedBy { get; set; }
+    public bool IsDeleted { get; private set; }
+    public DateTimeOffset? DeletedOnUtc { get; private set; }
+    public string? DeletedBy { get; private set; }
 
     public static Vehicle Create(string tenantId, string plateNumber, string make, string model,
         int year, VehicleType type, int odometer = 0, string? notes = null,
@@ -74,7 +75,7 @@ public class Vehicle : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
         int? numberOfCylinders = null, int? engineDisplacementCC = null,
         string? fuelType = null, string? vehicleUse = null, decimal? acquisitionCost = null)
     {
-        return new Vehicle
+        var vehicle = new Vehicle
         {
             Id = Guid.NewGuid(),
             TenantId = tenantId,
@@ -96,6 +97,9 @@ public class Vehicle : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
             CreatedOnUtc = DateTimeOffset.UtcNow,
             Version = NewVersion()
         };
+
+        vehicle.AddDomainEvent(VehicleCreatedEvent.Create(vehicle.Id, tenantId, vehicle.PlateNumber, vehicle.Make, vehicle.Model, vehicle.Year));
+        return vehicle;
     }
 
     private static byte[] NewVersion() => RandomNumberGenerator.GetBytes(8);
@@ -171,6 +175,7 @@ public class Vehicle : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
         Status = VehicleStatus.Active;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
         Version = NewVersion();
+        AddDomainEvent(VehicleReactivatedEvent.Create(Id, TenantId, PlateNumber));
     }
 
     public void Retire()
@@ -184,6 +189,7 @@ public class Vehicle : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
         Status = VehicleStatus.Retired;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
         Version = NewVersion();
+        AddDomainEvent(VehicleRetiredEvent.Create(Id, TenantId, PlateNumber));
     }
 
     public void Decommission()
@@ -197,6 +203,7 @@ public class Vehicle : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
         Status = VehicleStatus.Decommissioned;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
         Version = NewVersion();
+        AddDomainEvent(VehicleDecommissionedEvent.Create(Id, TenantId, PlateNumber));
     }
 
     public void SoftDelete(string? deletedBy = null)
@@ -205,6 +212,21 @@ public class Vehicle : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
         DeletedOnUtc = DateTimeOffset.UtcNow;
         DeletedBy = deletedBy;
         Version = NewVersion();
+    }
+
+    internal void SetCreatedBy(string? userId)
+    {
+        CreatedBy = userId;
+    }
+
+    internal void SetLastModifiedBy(string? userId)
+    {
+        LastModifiedBy = userId;
+    }
+
+    internal void SetLastModifiedOnUtc(DateTimeOffset utcNow)
+    {
+        LastModifiedOnUtc = utcNow;
     }
 
     private static void ValidateAssignmentPair(Guid? id, string? name, string label)

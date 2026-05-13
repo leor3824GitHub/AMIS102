@@ -27,6 +27,8 @@ public class HttpRequestContextEnricher : ILogEventEnricher
             logEvent.AddPropertyIfAbsent(propertyFactory.CreateProperty("RequestMethod", httpContext.Request.Method));
             logEvent.AddPropertyIfAbsent(propertyFactory.CreateProperty("RequestPath", httpContext.Request.Path));
             logEvent.AddPropertyIfAbsent(propertyFactory.CreateProperty("UserAgent", httpContext.Request.Headers["User-Agent"]));
+            var clientId = httpContext.Request.Headers["X-Client-Id"].ToString();
+            logEvent.AddPropertyIfAbsent(propertyFactory.CreateProperty("ClientId", string.IsNullOrWhiteSpace(clientId) ? "web" : clientId));
 
             if (httpContext.User?.Identity?.IsAuthenticated == true)
             {

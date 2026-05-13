@@ -65,6 +65,8 @@ internal sealed class AuthorizationHeaderHandler : DelegatingHandler
             request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
         }
 
+        request.Headers.TryAddWithoutValidation("X-Client-Id", "blazor");
+
         // Send the request
         var response = await base.SendAsync(request, cancellationToken);
 

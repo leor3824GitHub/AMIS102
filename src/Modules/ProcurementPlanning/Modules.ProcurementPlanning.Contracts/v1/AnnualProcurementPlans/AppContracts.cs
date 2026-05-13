@@ -101,9 +101,9 @@ public sealed record PromoteToFinalAppCommand(Guid Id) : ICommand<AnnualProcurem
 /// <summary>Creates a new Updated version of an Approved Final or Updated APP.</summary>
 public sealed record CreateUpdateAppCommand(Guid Id, string UpdateReason) : ICommand<AnnualProcurementPlanDto>;
 
-public sealed record ApproveAppCommand(Guid Id, Guid ApprovedById) : ICommand<AnnualProcurementPlanDto>;
+public sealed record ApproveAppCommand(Guid Id) : ICommand<AnnualProcurementPlanDto>;
 public sealed record RecallAppCommand(Guid Id) : ICommand<AnnualProcurementPlanDto>;
-public sealed record ReturnAppCommand(Guid Id, string ReturnReason, Guid ReturnedById) : ICommand<AnnualProcurementPlanDto>;
+public sealed record ReturnAppCommand(Guid Id, string ReturnReason) : ICommand<AnnualProcurementPlanDto>;
 public sealed record DeleteAnnualProcurementPlanCommand(Guid Id) : ICommand<Unit>;
 
 // ── Queries ───────────────────────────────────────────────────────────────────

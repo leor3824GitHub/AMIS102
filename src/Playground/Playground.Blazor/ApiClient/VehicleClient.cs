@@ -64,19 +64,54 @@ internal sealed class VehicleClient : IVehicleClient
 {
     private readonly HttpClient _httpClient;
 
+    private static class VehicleApiRoutes
+    {
+        private const string Root = "api/v1/vehicle";
+
+        public const string Vehicles = Root + "/vehicles";
+        public const string Repairs = Root + "/repairs";
+        public const string MaintenanceSchedules = Root + "/maintenance/schedules";
+        public const string MaintenanceSchedulesSearch = MaintenanceSchedules + "/search";
+        public const string MaintenanceSchedulesDue = MaintenanceSchedules + "/due";
+        public const string MaintenanceLogs = Root + "/maintenance/logs";
+        public const string MaintenanceLogsSearch = MaintenanceLogs + "/search";
+        public const string InventoryReport = Vehicles + "/inventory-report";
+        public const string InventoryPdf = Vehicles + "/inventory/pdf";
+        public const string FuelOdometer = Root + "/fuel-odometer";
+        public const string FuelOdometerSummary = FuelOdometer + "/summary";
+
+        public static string VehicleById(Guid id) => $"{Vehicles}/{id}";
+        public static string VehicleAssignment(Guid id) => $"{Vehicles}/{id}/assignment";
+        public static string VehicleOdometer(Guid id) => $"{Vehicles}/{id}/odometer";
+        public static string VehicleRetire(Guid id) => $"{Vehicles}/{id}/retire";
+        public static string VehicleDecommission(Guid id) => $"{Vehicles}/{id}/decommission";
+        public static string VehicleReactivate(Guid id) => $"{Vehicles}/{id}/reactivate";
+
+        public static string RepairById(Guid id) => $"{Repairs}/{id}";
+        public static string RepairStart(Guid id) => $"{Repairs}/{id}/start";
+        public static string RepairComplete(Guid id) => $"{Repairs}/{id}/complete";
+        public static string RepairCancel(Guid id) => $"{Repairs}/{id}/cancel";
+
+        public static string MaintenanceScheduleById(Guid id) => $"{MaintenanceSchedules}/{id}";
+        public static string MaintenanceScheduleDeactivate(Guid id) => $"{MaintenanceSchedules}/{id}/deactivate";
+
+        public static string MaintenanceLogById(Guid id) => $"{MaintenanceLogs}/{id}";
+        public static string FuelOdometerById(Guid id) => $"{FuelOdometer}/{id}";
+    }
+
     public VehicleClient(HttpClient httpClient)
     {
         _httpClient = httpClient;
     }
 
     public Task<VehicleDto> CreateVehicleAsync(CreateVehicleCommand command, CancellationToken cancellationToken = default) =>
-        PostJsonAsync<VehicleDto>("api/v1/vehicle/vehicles", command, cancellationToken);
+        PostJsonAsync<VehicleDto>(VehicleApiRoutes.Vehicles, command, cancellationToken);
 
     public async Task<PagedResponse<VehicleDto>> SearchVehiclesAsync(SearchVehiclesQuery query, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(query);
 
-        var url = BuildUrl("api/v1/vehicle/vehicles", new Dictionary<string, string?>
+        var url = BuildUrl(VehicleApiRoutes.Vehicles, new Dictionary<string, string?>
         {
             ["keyword"] = query.Keyword,
             ["status"] = query.Status,
@@ -92,40 +127,40 @@ internal sealed class VehicleClient : IVehicleClient
     }
 
     public Task<VehicleDto?> GetVehicleAsync(Guid id, CancellationToken cancellationToken = default) =>
-        GetJsonOrNullAsync<VehicleDto>($"api/v1/vehicle/vehicles/{id}", cancellationToken);
+        GetJsonOrNullAsync<VehicleDto>(VehicleApiRoutes.VehicleById(id), cancellationToken);
 
     public Task<VehicleDto> UpdateVehicleAsync(Guid id, UpdateVehicleCommand command, CancellationToken cancellationToken = default) =>
-        PutJsonAsync<VehicleDto>($"api/v1/vehicle/vehicles/{id}", command, cancellationToken);
+        PutJsonAsync<VehicleDto>(VehicleApiRoutes.VehicleById(id), command, cancellationToken);
 
     public Task AssignVehicleAsync(Guid id, AssignVehicleCommand command, CancellationToken cancellationToken = default) =>
-        PutNoContentAsync($"api/v1/vehicle/vehicles/{id}/assignment", command, cancellationToken);
+        PutNoContentAsync(VehicleApiRoutes.VehicleAssignment(id), command, cancellationToken);
 
     public Task UpdateOdometerAsync(Guid id, UpdateOdometerCommand command, CancellationToken cancellationToken = default) =>
-        PutNoContentAsync($"api/v1/vehicle/vehicles/{id}/odometer", command, cancellationToken);
+        PutNoContentAsync(VehicleApiRoutes.VehicleOdometer(id), command, cancellationToken);
 
     public Task RetireVehicleAsync(Guid id, CancellationToken cancellationToken = default) =>
-        PostNoBodyNoContentAsync($"api/v1/vehicle/vehicles/{id}/retire", cancellationToken);
+        PostNoBodyNoContentAsync(VehicleApiRoutes.VehicleRetire(id), cancellationToken);
 
     public Task DecommissionVehicleAsync(Guid id, CancellationToken cancellationToken = default) =>
-        PostNoBodyNoContentAsync($"api/v1/vehicle/vehicles/{id}/decommission", cancellationToken);
+        PostNoBodyNoContentAsync(VehicleApiRoutes.VehicleDecommission(id), cancellationToken);
 
     public Task ReactivateVehicleAsync(Guid id, CancellationToken cancellationToken = default) =>
-        PostNoBodyNoContentAsync($"api/v1/vehicle/vehicles/{id}/reactivate", cancellationToken);
+        PostNoBodyNoContentAsync(VehicleApiRoutes.VehicleReactivate(id), cancellationToken);
 
     public async Task DeleteVehicleAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        using var response = await _httpClient.DeleteAsync(new Uri($"api/v1/vehicle/vehicles/{id}", UriKind.Relative), cancellationToken);
+        using var response = await _httpClient.DeleteAsync(new Uri(VehicleApiRoutes.VehicleById(id), UriKind.Relative), cancellationToken);
         response.EnsureSuccessStatusCode();
     }
 
     public Task<RepairRecordDto> CreateRepairAsync(CreateRepairRecordCommand command, CancellationToken cancellationToken = default) =>
-        PostJsonAsync<RepairRecordDto>("api/v1/vehicle/repairs", command, cancellationToken);
+        PostJsonAsync<RepairRecordDto>(VehicleApiRoutes.Repairs, command, cancellationToken);
 
     public async Task<PagedResponse<RepairRecordDto>> SearchRepairsAsync(SearchRepairRecordsQuery query, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(query);
 
-        var url = BuildUrl("api/v1/vehicle/repairs", new Dictionary<string, string?>
+        var url = BuildUrl(VehicleApiRoutes.Repairs, new Dictionary<string, string?>
         {
             ["vehicleId"] = query.VehicleId?.ToString(),
             ["status"] = query.Status,
@@ -142,81 +177,81 @@ internal sealed class VehicleClient : IVehicleClient
     }
 
     public Task<RepairRecordDto?> GetRepairAsync(Guid id, CancellationToken cancellationToken = default) =>
-        GetJsonOrNullAsync<RepairRecordDto>($"api/v1/vehicle/repairs/{id}", cancellationToken);
+        GetJsonOrNullAsync<RepairRecordDto>(VehicleApiRoutes.RepairById(id), cancellationToken);
 
     public Task<RepairRecordDto> UpdateRepairAsync(Guid id, UpdateRepairRecordCommand command, CancellationToken cancellationToken = default) =>
-        PutJsonAsync<RepairRecordDto>($"api/v1/vehicle/repairs/{id}", command, cancellationToken);
+        PutJsonAsync<RepairRecordDto>(VehicleApiRoutes.RepairById(id), command, cancellationToken);
 
     public Task StartRepairAsync(Guid id, CancellationToken cancellationToken = default) =>
-        PostNoBodyNoContentAsync($"api/v1/vehicle/repairs/{id}/start", cancellationToken);
+        PostNoBodyNoContentAsync(VehicleApiRoutes.RepairStart(id), cancellationToken);
 
     public Task CompleteRepairAsync(Guid id, CompleteRepairCommand command, CancellationToken cancellationToken = default) =>
-        PostNoContentAsync($"api/v1/vehicle/repairs/{id}/complete", command, cancellationToken);
+        PostNoContentAsync(VehicleApiRoutes.RepairComplete(id), command, cancellationToken);
 
     public Task CancelRepairAsync(Guid id, CancellationToken cancellationToken = default) =>
-        PostNoBodyNoContentAsync($"api/v1/vehicle/repairs/{id}/cancel", cancellationToken);
+        PostNoBodyNoContentAsync(VehicleApiRoutes.RepairCancel(id), cancellationToken);
 
     public async Task DeleteRepairAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        using var response = await _httpClient.DeleteAsync(new Uri($"api/v1/vehicle/repairs/{id}", UriKind.Relative), cancellationToken);
+        using var response = await _httpClient.DeleteAsync(new Uri(VehicleApiRoutes.RepairById(id), UriKind.Relative), cancellationToken);
         response.EnsureSuccessStatusCode();
     }
 
     public Task<MaintenanceScheduleDto> CreateMaintenanceScheduleAsync(CreateMaintenanceScheduleRequest request, CancellationToken cancellationToken = default) =>
-        PostJsonAsync<MaintenanceScheduleDto>("api/v1/vehicle/maintenance/schedules", request, cancellationToken);
+        PostJsonAsync<MaintenanceScheduleDto>(VehicleApiRoutes.MaintenanceSchedules, request, cancellationToken);
 
     public async Task<List<MaintenanceScheduleDto>> SearchMaintenanceSchedulesAsync(MaintenanceScheduleSearchRequest request, CancellationToken cancellationToken = default)
     {
-        var response = await PostJsonAsync<List<MaintenanceScheduleDto>>("api/v1/vehicle/maintenance/schedules/search", request, cancellationToken);
+        var response = await PostJsonAsync<List<MaintenanceScheduleDto>>(VehicleApiRoutes.MaintenanceSchedulesSearch, request, cancellationToken);
         return response ?? [];
     }
 
     public async Task<List<MaintenanceScheduleDto>> GetDueMaintenanceSchedulesAsync(DueMaintenanceScheduleSearchRequest request, CancellationToken cancellationToken = default)
     {
-        var response = await PostJsonAsync<List<MaintenanceScheduleDto>>("api/v1/vehicle/maintenance/schedules/due", request, cancellationToken);
+        var response = await PostJsonAsync<List<MaintenanceScheduleDto>>(VehicleApiRoutes.MaintenanceSchedulesDue, request, cancellationToken);
         return response ?? [];
     }
 
     public Task<MaintenanceScheduleDto?> GetMaintenanceScheduleAsync(Guid scheduleId, CancellationToken cancellationToken = default) =>
-        GetJsonOrNullAsync<MaintenanceScheduleDto>($"api/v1/vehicle/maintenance/schedules/{scheduleId}", cancellationToken);
+        GetJsonOrNullAsync<MaintenanceScheduleDto>(VehicleApiRoutes.MaintenanceScheduleById(scheduleId), cancellationToken);
 
     public Task<MaintenanceScheduleDto> UpdateMaintenanceScheduleAsync(Guid scheduleId, UpdateMaintenanceScheduleRequest request, CancellationToken cancellationToken = default) =>
-        PutJsonAsync<MaintenanceScheduleDto>($"api/v1/vehicle/maintenance/schedules/{scheduleId}", request, cancellationToken);
+        PutJsonAsync<MaintenanceScheduleDto>(VehicleApiRoutes.MaintenanceScheduleById(scheduleId), request, cancellationToken);
 
     public Task DeactivateMaintenanceScheduleAsync(Guid scheduleId, CancellationToken cancellationToken = default) =>
-        PatchNoBodyNoContentAsync($"api/v1/vehicle/maintenance/schedules/{scheduleId}/deactivate", cancellationToken);
+        PatchNoBodyNoContentAsync(VehicleApiRoutes.MaintenanceScheduleDeactivate(scheduleId), cancellationToken);
 
     public async Task DeleteMaintenanceScheduleAsync(Guid scheduleId, CancellationToken cancellationToken = default)
     {
-        using var response = await _httpClient.DeleteAsync(new Uri($"api/v1/vehicle/maintenance/schedules/{scheduleId}", UriKind.Relative), cancellationToken);
+        using var response = await _httpClient.DeleteAsync(new Uri(VehicleApiRoutes.MaintenanceScheduleById(scheduleId), UriKind.Relative), cancellationToken);
         response.EnsureSuccessStatusCode();
     }
 
     public Task<MaintenanceLogDto> LogMaintenanceCompletionAsync(LogMaintenanceCompletionRequest request, CancellationToken cancellationToken = default) =>
-        PostJsonAsync<MaintenanceLogDto>("api/v1/vehicle/maintenance/logs", request, cancellationToken);
+        PostJsonAsync<MaintenanceLogDto>(VehicleApiRoutes.MaintenanceLogs, request, cancellationToken);
 
     public async Task<List<MaintenanceLogDto>> SearchMaintenanceLogsAsync(MaintenanceLogSearchRequest request, CancellationToken cancellationToken = default)
     {
-        var response = await PostJsonAsync<List<MaintenanceLogDto>>("api/v1/vehicle/maintenance/logs/search", request, cancellationToken);
+        var response = await PostJsonAsync<List<MaintenanceLogDto>>(VehicleApiRoutes.MaintenanceLogsSearch, request, cancellationToken);
         return response ?? [];
     }
 
     public Task<MaintenanceLogDto?> GetMaintenanceLogAsync(Guid logId, CancellationToken cancellationToken = default) =>
-        GetJsonOrNullAsync<MaintenanceLogDto>($"api/v1/vehicle/maintenance/logs/{logId}", cancellationToken);
+        GetJsonOrNullAsync<MaintenanceLogDto>(VehicleApiRoutes.MaintenanceLogById(logId), cancellationToken);
 
     public Task<MaintenanceLogDto> UpdateMaintenanceLogAsync(Guid logId, UpdateMaintenanceLogRequest request, CancellationToken cancellationToken = default) =>
-        PutJsonAsync<MaintenanceLogDto>($"api/v1/vehicle/maintenance/logs/{logId}", request, cancellationToken);
+        PutJsonAsync<MaintenanceLogDto>(VehicleApiRoutes.MaintenanceLogById(logId), request, cancellationToken);
 
     public async Task DeleteMaintenanceLogAsync(Guid logId, CancellationToken cancellationToken = default)
     {
-        using var response = await _httpClient.DeleteAsync(new Uri($"api/v1/vehicle/maintenance/logs/{logId}", UriKind.Relative), cancellationToken);
+        using var response = await _httpClient.DeleteAsync(new Uri(VehicleApiRoutes.MaintenanceLogById(logId), UriKind.Relative), cancellationToken);
         response.EnsureSuccessStatusCode();
     }
 
     public async Task<List<MotorVehicleInventoryItemDto>> GetMotorVehicleInventoryAsync(
         string? status = null, CancellationToken cancellationToken = default)
     {
-        var url = BuildUrl("api/v1/vehicle/vehicles/inventory-report", new Dictionary<string, string?>
+        var url = BuildUrl(VehicleApiRoutes.InventoryReport, new Dictionary<string, string?>
         {
             ["status"] = status
         });
@@ -231,22 +266,22 @@ internal sealed class VehicleClient : IVehicleClient
     {
         var command = new { Status = status, AsOfDate = asOfDate };
         using var response = await _httpClient.PostAsJsonAsync(
-            "api/v1/vehicle/vehicles/inventory/pdf", command, cancellationToken);
+            VehicleApiRoutes.InventoryPdf, command, cancellationToken);
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadAsByteArrayAsync(cancellationToken);
     }
 
     public Task<VehicleDailyUsageDto> CreateVehicleDailyUsageAsync(CreateVehicleDailyUsageCommand command, CancellationToken cancellationToken = default) =>
-        PostJsonAsync<VehicleDailyUsageDto>("api/v1/vehicle/fuel-odometer", command, cancellationToken);
+        PostJsonAsync<VehicleDailyUsageDto>(VehicleApiRoutes.FuelOdometer, command, cancellationToken);
 
     public Task<VehicleDailyUsageDto> UpdateVehicleDailyUsageAsync(Guid id, UpdateVehicleDailyUsageCommand command, CancellationToken cancellationToken = default) =>
-        PutJsonAsync<VehicleDailyUsageDto>($"api/v1/vehicle/fuel-odometer/{id}", command, cancellationToken);
+        PutJsonAsync<VehicleDailyUsageDto>(VehicleApiRoutes.FuelOdometerById(id), command, cancellationToken);
 
     public async Task<PagedResponse<VehicleDailyUsageDto>> SearchVehicleDailyUsageAsync(SearchVehicleDailyUsageQuery query, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(query);
 
-        var url = BuildUrl("api/v1/vehicle/fuel-odometer", new Dictionary<string, string?>
+        var url = BuildUrl(VehicleApiRoutes.FuelOdometer, new Dictionary<string, string?>
         {
             ["vehicleId"] = query.VehicleId?.ToString(),
             ["dateFrom"] = query.DateFrom?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
@@ -264,7 +299,7 @@ internal sealed class VehicleClient : IVehicleClient
     {
         ArgumentNullException.ThrowIfNull(query);
 
-        var url = BuildUrl("api/v1/vehicle/fuel-odometer/summary", new Dictionary<string, string?>
+        var url = BuildUrl(VehicleApiRoutes.FuelOdometerSummary, new Dictionary<string, string?>
         {
             ["vehicleId"] = query.VehicleId?.ToString(),
             ["dateFrom"] = query.DateFrom?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
