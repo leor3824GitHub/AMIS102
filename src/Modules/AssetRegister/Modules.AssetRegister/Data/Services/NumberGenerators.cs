@@ -1,27 +1,8 @@
 using System.Globalization;
 using AMIS.Modules.AssetRegister.Contracts.v1;
-using AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
 using AMIS.Modules.AssetRegister.Domain.Services;
 
 namespace AMIS.Modules.AssetRegister.Data.Services;
-
-internal sealed class PropertyNumberGenerator(AssetRegisterDbContext db, CounterAllocator allocator) : IPropertyNumberGenerator
-{
-    public async Task<PropertyNumber> NextAsync(
-        AssetType assetType,
-        string subMajorAccount,
-        string generalLedgerAccount,
-        string locationCode,
-        DateOnly acquisitionDate,
-        CancellationToken ct)
-    {
-        _ = assetType;
-        var tenantId = db.TenantInfo?.Identifier ?? string.Empty;
-        var key = $"PROP-{subMajorAccount}-{generalLedgerAccount}";
-        var serial = await allocator.NextSerialAsync(tenantId, acquisitionDate.Year, 1, key, ct).ConfigureAwait(false);
-        return PropertyNumber.Create(acquisitionDate.Year, subMajorAccount, generalLedgerAccount, serial, locationCode);
-    }
-}
 
 internal sealed class AccountabilityNumberGenerator(AssetRegisterDbContext db, CounterAllocator allocator) : IAccountabilityNumberGenerator
 {

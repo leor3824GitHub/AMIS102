@@ -861,7 +861,8 @@ public sealed record CreateReceivingReportItemRequest(
     decimal UnitCost,
     string? SerialNo,
     string? Brand,
-    string? Model);
+    string? Model,
+    IReadOnlyList<string> PropertyNos);
 
 public sealed record CreateReceivingReportRequest(
     ReceivingDocumentKind DocumentKind,

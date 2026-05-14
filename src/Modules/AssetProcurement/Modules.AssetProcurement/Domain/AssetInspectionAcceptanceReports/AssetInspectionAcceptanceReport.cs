@@ -18,6 +18,9 @@ public sealed class AssetIARLineItem
     public decimal Amount => Quantity * UnitCost;
     public string? InspectionRemarks { get; private set; }
 
+    /// <summary>Stock / Property No assigned by the operator at IAR time (SOP GS-PD26 column). Optional during Draft; required before acceptance.</summary>
+    public string? StockPropertyNo { get; private set; }
+
     private AssetIARLineItem() { }
 
     public static AssetIARLineItem Create(
@@ -31,7 +34,8 @@ public sealed class AssetIARLineItem
         string unit,
         decimal quantity,
         decimal unitCost,
-        string? inspectionRemarks) =>
+        string? inspectionRemarks,
+        string? stockPropertyNo) =>
         new()
         {
             ItemNo = itemNo,
@@ -44,7 +48,8 @@ public sealed class AssetIARLineItem
             Unit = unit,
             Quantity = quantity,
             UnitCost = unitCost,
-            InspectionRemarks = inspectionRemarks
+            InspectionRemarks = inspectionRemarks,
+            StockPropertyNo = string.IsNullOrWhiteSpace(stockPropertyNo) ? null : stockPropertyNo.Trim()
         };
 }
 
@@ -115,7 +120,8 @@ public sealed class AssetInspectionAcceptanceReport : AggregateRoot<Guid>, IHasT
             iar._lineItems.Add(AssetIARLineItem.Create(
                 itemNo++, li.Description, li.TechnicalSpecifications,
                 li.Brand, li.Model, li.SerialNo, li.PropertyClassHint,
-                li.Unit, li.Quantity, li.UnitCost, li.InspectionRemarks));
+                li.Unit, li.Quantity, li.UnitCost, li.InspectionRemarks,
+                li.StockPropertyNo));
 
         return iar;
     }
@@ -144,7 +150,8 @@ public sealed class AssetInspectionAcceptanceReport : AggregateRoot<Guid>, IHasT
             _lineItems.Add(AssetIARLineItem.Create(
                 itemNo++, li.Description, li.TechnicalSpecifications,
                 li.Brand, li.Model, li.SerialNo, li.PropertyClassHint,
-                li.Unit, li.Quantity, li.UnitCost, li.InspectionRemarks));
+                li.Unit, li.Quantity, li.UnitCost, li.InspectionRemarks,
+                li.StockPropertyNo));
     }
 
     public void Accept()
@@ -153,6 +160,14 @@ public sealed class AssetInspectionAcceptanceReport : AggregateRoot<Guid>, IHasT
             throw new InvalidOperationException("Only Draft IARs can be accepted.");
         if (_lineItems.Count == 0)
             throw new InvalidOperationException("IAR must have at least one line item.");
+
+        var missing = _lineItems
+            .Where(li => string.IsNullOrWhiteSpace(li.StockPropertyNo))
+            .Select(li => li.ItemNo)
+            .ToList();
+        if (missing.Count > 0)
+            throw new InvalidOperationException(
+                $"Cannot accept IAR: Stock/Property No is required on every line. Missing on item(s): {string.Join(", ", missing)}.");
 
         Status = AssetIARStatus.Accepted;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;

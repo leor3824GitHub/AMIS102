@@ -1,4 +1,5 @@
 using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.AssetRegister.Contracts.v1;
 using AMIS.Modules.AssetRegister.Contracts.v1.Assets;
 using AMIS.Modules.AssetRegister.Data;
 using Mediator;
@@ -26,6 +27,7 @@ public sealed class SearchAssetsQueryHandler(AssetRegisterDbContext db)
         }
         if (query.AssetType.HasValue) q = q.Where(a => a.AssetType == query.AssetType.Value);
         if (query.LifecycleState.HasValue) q = q.Where(a => a.LifecycleState == query.LifecycleState.Value);
+        else if (!query.IncludeTransferredOut) q = q.Where(a => a.LifecycleState != LifecycleState.TransferredOut);
         if (query.CurrentCustodianId.HasValue) q = q.Where(a => a.CurrentCustodianId == query.CurrentCustodianId.Value);
         if (query.CatalogItemId.HasValue) q = q.Where(a => a.ItemId == query.CatalogItemId.Value);
 

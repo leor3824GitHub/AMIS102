@@ -1,8 +1,9 @@
 @typeparam TValue
 @inherits AMISComponentBase
+@* Compact sizing contract: Dense + Margin.Dense are enforced. InputSize defaults to Size.Small but can be overridden. *@
 <MudAutocomplete T="TValue" Value="Value" ValueChanged="@OnMudValueChanged" Label="@Label" Placeholder="@Placeholder"
                  SearchFunc="@SearchFunc"              Dense="true" Variant="@Variant" Adornment="@Adornment" AdornmentIcon="@AdornmentIcon"
-                 AdornmentColor="@AdornmentColor" Margin="Margin.Dense" Required="@Required" Disabled="@Disabled"
+                 AdornmentColor="@AdornmentColor" Margin="Margin.Dense" Size="@InputSize" Required="@Required" Disabled="@Disabled"
                  IsOpenChanged="@IsOpenChanged" DebounceInterval="400" MaxItems="@MaxItems"
                  ResetValueOnEmptyText="@ResetValueOnEmptyText" @attributes="AdditionalAttributes">
 </MudAutocomplete>
@@ -20,6 +21,7 @@
     [Parameter] public Adornment Adornment { get; set; } = Adornment.None;
     [Parameter] public string? AdornmentIcon { get; set; }
     [Parameter] public Color AdornmentColor { get; set; } = Color.Default;
+    [Parameter] public Size InputSize { get; set; } = Size.Small;
     [Parameter] public bool Required { get; set; }
     [Parameter] public bool Disabled { get; set; }
     [Parameter(CaptureUnmatchedValues = true)] public Dictionary<string, object>? AdditionalAttributes { get; set; }

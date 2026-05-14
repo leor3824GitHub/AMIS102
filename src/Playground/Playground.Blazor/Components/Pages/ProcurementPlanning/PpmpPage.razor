@@ -32,12 +32,13 @@
                 <MudAutocomplete T="string" @bind-Value="_itemForm.GeneralDescription" Label="Description / Objective"
                                  Variant="Variant.Outlined" SearchFunc="SearchDescriptions" ResetValueOnEmptyText="false"
                                  CoerceText="true" CoerceValue="true" Required="true"
-                                 HelperText="Start typing — previous descriptions will appear"
+                                 Dense="true" Margin="Margin.Dense" Size="Size.Small"
+                                 HelperText="Start typing ï¿½ previous descriptions will appear"
                                  Placeholder="Describe the procurement item or objective" />
             </MudItem>
 
             <MudItem xs="12" sm="6">
-                <MudSelect @bind-Value="_itemForm.ProjectType" Label="Type" Variant="Variant.Outlined" T="ProjectType">
+                <MudSelect @bind-Value="_itemForm.ProjectType" Label="Type" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" T="ProjectType">
                     <MudSelectItem Value="ProjectType.Goods">Goods</MudSelectItem>
                     <MudSelectItem Value="ProjectType.Infrastructure">Infrastructure</MudSelectItem>
                     <MudSelectItem Value="ProjectType.ConsultingServices">Consulting Services</MudSelectItem>
@@ -48,43 +49,44 @@
                 <MudAutocomplete T="string" @bind-Value="_itemForm.ModeOfProcurement" Label="Mode of Procurement"
                                  Variant="Variant.Outlined" SearchFunc="SearchModesOfProcurement"
                                  ResetValueOnEmptyText="false" CoerceText="true" CoerceValue="true" Required="true"
+                                 Dense="true" Margin="Margin.Dense" Size="Size.Small"
                                  Placeholder="Select mode of procurement"
                                  HelperText="Sourced from Master Data" />
             </MudItem>
 
             <MudItem xs="12" sm="4">
                 <MudNumericField @bind-Value="_itemForm.Quantity" Label="Quantity" Variant="Variant.Outlined"
-                                 Min="0.01m" />
+                                 Dense="true" Margin="Margin.Dense" Size="Size.Small" Min="0.01m" />
             </MudItem>
 
             <MudItem xs="12" sm="4">
                 <MudAutocomplete T="string" @bind-Value="_itemForm.Unit" Label="Unit of Measure"
                                  Variant="Variant.Outlined" SearchFunc="SearchUnits" ResetValueOnEmptyText="false" CoerceText="true"
-                                 CoerceValue="true" Placeholder="e.g. LOT, PCS, BOX..."
+                                 CoerceValue="true" Dense="true" Margin="Margin.Dense" Size="Size.Small" Placeholder="e.g. LOT, PCS, BOX..."
                                  HelperText="Select from master data or type a unit" />
             </MudItem>
 
             <MudItem xs="12" sm="4">
                 <MudNumericField @bind-Value="_itemForm.EstimatedBudget" Label="Estimated Budget (?)"
-                                 Variant="Variant.Outlined" Min="0m" Format="N2" />
+                                 Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" Min="0m" Format="N2" />
             </MudItem>
 
             <MudItem xs="12" sm="4">
                 <MudTextField @bind-Value="_itemForm.ProcurementStart" Label="Procurement Start"
-                              Variant="Variant.Outlined" Placeholder="MM/YYYY" />
+                              Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" Placeholder="MM/YYYY" />
             </MudItem>
             <MudItem xs="12" sm="4">
                 <MudTextField @bind-Value="_itemForm.ProcurementEnd" Label="Procurement End" Variant="Variant.Outlined"
-                              Placeholder="MM/YYYY" />
+                              Dense="true" Margin="Margin.Dense" Size="Size.Small" Placeholder="MM/YYYY" />
             </MudItem>
             <MudItem xs="12" sm="4">
                 <MudTextField @bind-Value="_itemForm.ExpectedDelivery" Label="Expected Delivery"
-                              Variant="Variant.Outlined" Placeholder="MM/YYYY" />
+                              Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" Placeholder="MM/YYYY" />
             </MudItem>
 
             <MudItem xs="12" sm="9">
                 <MudTextField @bind-Value="_itemForm.SourceOfFunds" Label="Source of Funds"
-                              Variant="Variant.Outlined" />
+                              Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" />
             </MudItem>
 
             <MudItem xs="12" sm="3" Style="display:flex;align-items:center">
@@ -93,13 +95,13 @@
             </MudItem>
 
             <MudItem xs="12">
-                <MudTextField @bind-Value="_itemForm.Remarks" Label="Remarks" Variant="Variant.Outlined" Lines="2" />
+                <MudTextField @bind-Value="_itemForm.Remarks" Label="Remarks" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" Lines="2" />
             </MudItem>
         </MudGrid>
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="CloseItemDialog" Variant="Variant.Text">Cancel</MudButton>
-        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="SaveItemDialog">
+        <MudButton OnClick="CloseItemDialog" Variant="Variant.Text" Size="Size.Small">Cancel</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" Size="Size.Small" OnClick="SaveItemDialog">
             @(_editingItemIdx.HasValue ? "Update Item" : "Add Item")
         </MudButton>
     </DialogActions>
@@ -114,9 +116,10 @@
             <MudStack Row="true" Spacing="2" Class="mb-3" AlignItems="AlignItems.Center">
                 <MudTextField @bind-Value="_search" Placeholder="Search PPMP number or unit..."
                               Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Variant="Variant.Outlined"
-                              Immediate="true" DebounceInterval="400" OnDebounceIntervalElapsed="LoadAsync" Class="flex-1" />
+                                        Dense="true" Margin="Margin.Dense" Size="Size.Small"
+                                        Immediate="true" DebounceInterval="400" OnDebounceIntervalElapsed="LoadAsync" Class="flex-1" />
                 <MudSelect Value="@_filterFiscalYear" Label="FY" Variant="Variant.Outlined" T="int?" Style="width:100px"
-                           ValueChanged="OnFilterChanged">
+                                    Dense="true" Margin="Margin.Dense" Size="Size.Small" ValueChanged="OnFilterChanged">
                     <MudSelectItem T="int?" Value="null">All</MudSelectItem>
                     @foreach (var fy in _fiscalYears)
                     {
@@ -124,14 +127,14 @@
                     }
                 </MudSelect>
                 <MudSelect Value="@_filterStatus" Label="Status" Variant="Variant.Outlined" T="PpmpStatus?"
-                           Style="width:150px" ValueChanged="OnStatusFilterChanged">
+                           Dense="true" Margin="Margin.Dense" Size="Size.Small" Style="width:150px" ValueChanged="OnStatusFilterChanged">
                     <MudSelectItem T="PpmpStatus?" Value="null">All</MudSelectItem>
                     @foreach (PpmpStatus s in Enum.GetValues<PpmpStatus>())
                     {
                         <MudSelectItem T="PpmpStatus?" Value="s">@s</MudSelectItem>
                     }
                 </MudSelect>
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.Add"
                            OnClick="StartNew">
                     New PPMP
                 </MudButton>
@@ -244,7 +247,7 @@
                                 <MudChip T="Guid" Value="v.Id" Size="Size.Small"
                                          Color="@(v.IsCurrentVersion ? Color.Primary : Color.Default)"
                                          OnClick="@(() => LoadVersionAsync(v.Id))">
-                                    v@(v.VersionNumber) · @v.Status
+                                    v@(v.VersionNumber) ï¿½ @v.Status
                                 </MudChip>
                             }
                         </MudChipSet>
@@ -308,7 +311,7 @@
             @if (_editing is not null && _editing.Status == PpmpStatus.Returned)
             {
                 <MudAlert Severity="Severity.Error" Dense="true" Class="mb-3" Icon="@Icons.Material.Filled.Undo">
-                    <strong>Returned for revision</strong> — please address the feedback and resubmit.
+                    <strong>Returned for revision</strong> ï¿½ please address the feedback and resubmit.
                     @if (!string.IsNullOrWhiteSpace(_editing.ReturnReason))
                     {
                         <div Class="mt-1"><em>"@_editing.ReturnReason"</em></div>
@@ -338,23 +341,23 @@
             <MudGrid Spacing="2" Class="mb-3">
                 <MudItem xs="6" sm="3">
                     <MudNumericField @bind-Value="_form.FiscalYear" Label="Fiscal Year" Variant="Variant.Outlined"
-                                     Min="2000" Max="2100" Disabled="_isReadOnly" />
+                                     Dense="true" Margin="Margin.Dense" Size="Size.Small" Min="2000" Max="2100" Disabled="_isReadOnly" />
                 </MudItem>
                 <MudItem xs="6" sm="3">
                     <MudSelect @bind-Value="_form.Phase" Label="PPMP Phase" Variant="Variant.Outlined" T="PpmpPhase"
-                               Disabled="_isReadOnly">
+                               Dense="true" Margin="Margin.Dense" Size="Size.Small" Disabled="_isReadOnly">
                         <MudSelectItem Value="PpmpPhase.Indicative">Indicative</MudSelectItem>
                         <MudSelectItem Value="PpmpPhase.Final">Final</MudSelectItem>
                     </MudSelect>
                 </MudItem>
                 <MudItem xs="6" sm="3">
                     <MudTextField @bind-Value="_form.OfficeCode" Label="Office Code" Variant="Variant.Outlined"
-                                  Required="true" Disabled="_isReadOnly"
+                                  Dense="true" Margin="Margin.Dense" Size="Size.Small" Required="true" Disabled="_isReadOnly"
                                   HelperText="@(_orgOfficeCode != null ? "From Organization Profile" : null)" />
                 </MudItem>
                 <MudItem xs="6" sm="3">
                     <MudTextField @bind-Value="_form.EndUserUnit" Label="End-User / Section" Variant="Variant.Outlined"
-                                  Required="true" Disabled="_isReadOnly"
+                                  Dense="true" Margin="Margin.Dense" Size="Size.Small" Required="true" Disabled="_isReadOnly"
                                   HelperText="@(_employeeDepartment != null ? "From your employee profile" : null)" />
                 </MudItem>
             </MudGrid>

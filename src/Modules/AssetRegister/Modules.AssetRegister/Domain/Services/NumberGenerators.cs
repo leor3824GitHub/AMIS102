@@ -1,22 +1,6 @@
 using AMIS.Modules.AssetRegister.Contracts.v1;
-using AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
 
 namespace AMIS.Modules.AssetRegister.Domain.Services;
-
-/// <summary>
-/// Mints a COA 2020-006 PropertyNumber. Implementations operate against
-/// <c>PropertyCodeCounter</c> with optimistic concurrency + bounded retry.
-/// </summary>
-public interface IPropertyNumberGenerator
-{
-    Task<PropertyNumber> NextAsync(
-        AssetType assetType,
-        string subMajorAccount,
-        string generalLedgerAccount,
-        string locationCode,
-        DateOnly acquisitionDate,
-        CancellationToken ct);
-}
 
 public interface IAccountabilityNumberGenerator
 {

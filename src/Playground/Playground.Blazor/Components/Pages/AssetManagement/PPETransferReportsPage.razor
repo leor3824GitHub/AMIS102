@@ -14,6 +14,7 @@
                 <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3" Spacing="2">
                     <MudText Typo="Typo.h6" Class="flex-grow-1">Transfer List</MudText>
                     <MudTextField @bind-Value="_keyword" Label="Search" Variant="Variant.Outlined" Size="Size.Small"
+                                  Dense="true" Margin="Margin.Dense"
                                   Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
                                   DebounceInterval="350" OnDebounceIntervalElapsed="@(() => LoadAsync())"
                                   Style="max-width:200px" />
@@ -23,11 +24,11 @@
                     <MudSelect Value="_typeFilter"
                                ValueChanged="@(async (PPEIssuanceType? v) => { _typeFilter = v; _page = 1; await LoadAsync(); })"
                                Label="Transfer Type" Variant="Variant.Outlined"
-                               Size="Size.Small" T="PPEIssuanceType?" Style="max-width:170px">
+                               Dense="true" Margin="Margin.Dense" Size="Size.Small" T="PPEIssuanceType?" Style="max-width:170px">
                         <MudSelectItem Value="@((PPEIssuanceType?)null)">All Types</MudSelectItem>
-                        <MudSelectItem Value="@((PPEIssuanceType?)PPEIssuanceType.TransferCO)">Transfer – CO</MudSelectItem>
-                        <MudSelectItem Value="@((PPEIssuanceType?)PPEIssuanceType.TransferRO)">Transfer – RO</MudSelectItem>
-                        <MudSelectItem Value="@((PPEIssuanceType?)PPEIssuanceType.TransferPO)">Transfer – PO</MudSelectItem>
+                        <MudSelectItem Value="@((PPEIssuanceType?)PPEIssuanceType.TransferCO)">Transfer ï¿½ CO</MudSelectItem>
+                        <MudSelectItem Value="@((PPEIssuanceType?)PPEIssuanceType.TransferRO)">Transfer ï¿½ RO</MudSelectItem>
+                        <MudSelectItem Value="@((PPEIssuanceType?)PPEIssuanceType.TransferPO)">Transfer ï¿½ PO</MudSelectItem>
                         <MudSelectItem Value="@((PPEIssuanceType?)PPEIssuanceType.Donation)">Donation</MudSelectItem>
                         <MudSelectItem Value="@((PPEIssuanceType?)PPEIssuanceType.Sale)">Sale</MudSelectItem>
                         <MudSelectItem Value="@((PPEIssuanceType?)PPEIssuanceType.Dumping)">Dumping</MudSelectItem>
@@ -60,7 +61,7 @@
                                         <MudChip T="string" Size="Size.Small" Color="Color.Info" Label="true">@FormatIssuanceType(s.IssuanceType)</MudChip>
                                     </MudStack>
                                     <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                        @s.Date.ToString("MMM dd, yyyy") · @s.ItemCount item(s)
+                                        @s.Date.ToString("MMM dd, yyyy") ï¿½ @s.ItemCount item(s)
                                     </MudText>
                                 </MudStack>
                             </MudListItem>
@@ -141,8 +142,8 @@
                                         title="@item.Description">@item.Description</td>
                                     <td>@item.DateAcquired.ToString("MM/dd/yyyy")</td>
                                     <td style="text-align:right">@item.Amount.ToString("N2")</td>
-                                    <td><MudText Typo="Typo.caption">@(item.Condition ?? "—")</MudText></td>
-                                    <td><MudText Typo="Typo.caption">@(item.ReasonForTransfer ?? "—")</MudText></td>
+                                    <td><MudText Typo="Typo.caption">@(item.Condition ?? "ï¿½")</MudText></td>
+                                    <td><MudText Typo="Typo.caption">@(item.ReasonForTransfer ?? "ï¿½")</MudText></td>
                                 </tr>
                             }
                         </tbody>
@@ -204,9 +205,9 @@
 
     private static string FormatIssuanceType(string t) => t switch
     {
-        "TransferCO" => "Transfer – CO",
-        "TransferRO" => "Transfer – RO",
-        "TransferPO" => "Transfer – PO",
+        "TransferCO" => "Transfer ï¿½ CO",
+        "TransferRO" => "Transfer ï¿½ RO",
+        "TransferPO" => "Transfer ï¿½ PO",
         _ => t
     };
 }

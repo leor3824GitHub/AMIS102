@@ -3,7 +3,6 @@ using AMIS.Modules.AssetRegister.Contracts.v1.Receiving;
 using AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
 using AMIS.Modules.AssetRegister.Data;
 using AMIS.Modules.AssetRegister.Domain.Assets;
-using AMIS.Modules.AssetRegister.Domain.Catalog;
 using AMIS.Modules.AssetRegister.Domain.Receiving;
 using AMIS.Modules.AssetRegister.Domain.Services;
 using Mediator;
@@ -13,8 +12,7 @@ namespace AMIS.Modules.AssetRegister.Features.v1.Receiving.CreateReceivingReport
 
 public sealed class CreateReceivingReportCommandHandler(
     AssetRegisterDbContext db,
-    IReceivingReportNumberGenerator reportNumbers,
-    IPropertyNumberGenerator propertyNumbers)
+    IReceivingReportNumberGenerator reportNumbers)
     : ICommandHandler<CreateReceivingReportCommand, ReceivingReportDto>
 {
     public async ValueTask<ReceivingReportDto> Handle(CreateReceivingReportCommand cmd, CancellationToken ct)
@@ -33,9 +31,6 @@ public sealed class CreateReceivingReportCommandHandler(
                 throw new KeyNotFoundException($"PropertyItemCatalog '{id}' not found.");
             if (!c.IsActive)
                 throw new InvalidOperationException($"Catalog item '{c.Code}' is deactivated and cannot be received.");
-            if (string.IsNullOrWhiteSpace(c.UacsObjectCode))
-                throw new InvalidOperationException(
-                    $"Catalog item '{c.Code}' must carry a UacsObjectCode before assets can be registered against it.");
         }
 
         var tenantId = db.TenantInfo?.Identifier ?? string.Empty;
@@ -53,10 +48,13 @@ public sealed class CreateReceivingReportCommandHandler(
 
         var (assetType, category) = ClassifyFor(cmd.DocumentKind);
         var fundCluster = cmd.FundCluster ?? string.Empty;
-        const string DefaultLocationCode = "00";
 
         foreach (var line in cmd.Items)
         {
+            if (line.PropertyNos.Count != line.Quantity)
+                throw new InvalidOperationException(
+                    $"Line '{line.Description}': PropertyNos count ({line.PropertyNos.Count}) must equal Quantity ({line.Quantity}).");
+
             report.AddItem(
                 line.CatalogItemId, line.Reference, line.Description,
                 line.AcquisitionDate, line.Quantity, line.UnitCost,
@@ -65,14 +63,7 @@ public sealed class CreateReceivingReportCommandHandler(
             var catalog = catalogs[line.CatalogItemId];
             for (var i = 0; i < line.Quantity; i++)
             {
-                var propertyNo = await propertyNumbers.NextAsync(
-                    assetType,
-                    catalog.DefaultPropertyClass,
-                    catalog.DefaultCategoryCode,
-                    DefaultLocationCode,
-                    line.AcquisitionDate,
-                    ct).ConfigureAwait(false);
-
+                var propertyNo = PropertyNumber.Create(line.PropertyNos[i]);
                 var asset = AssetRegistry.Register(
                     tenantId, catalog, assetType, category, propertyNo,
                     line.Description, line.SerialNo, line.Brand, line.Model,

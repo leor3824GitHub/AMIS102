@@ -16,31 +16,32 @@
                 <MudText Typo="Typo.h6" Class="mb-3">New Incident Report</MudText>
                 <MudStack Spacing="2">
                     <MudTextField @bind-Value="_form.ReportNo" Label="Report No." Variant="Variant.Outlined"
-                                  Required="true" MaxLength="32" Placeholder="e.g. RLSDDSP-2026-00001" />
+                                  Dense="true" Margin="Margin.Dense" Size="Size.Small" Required="true" MaxLength="32" Placeholder="e.g. RLSDDSP-2026-00001" />
                     <MudDatePicker @bind-Date="_form.DateNullable" Label="Report Date" Variant="Variant.Outlined"
-                                   DateFormat="MM/dd/yyyy" Required="true" />
+                                   Dense="true" Margin="Margin.Dense" Size="Size.Small" DateFormat="MM/dd/yyyy" Required="true" />
                     <MudDatePicker @bind-Date="_form.IncidentDateNullable" Label="Incident Date (if known)" Variant="Variant.Outlined"
-                                   DateFormat="MM/dd/yyyy" />
-                    <MudSelect @bind-Value="_form.IncidentType" Label="Incident Type" Variant="Variant.Outlined" T="PropertyIncidentType">
+                                   Dense="true" Margin="Margin.Dense" Size="Size.Small" DateFormat="MM/dd/yyyy" />
+                    <MudSelect @bind-Value="_form.IncidentType" Label="Incident Type" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" T="PropertyIncidentType">
                         <MudSelectItem Value="PropertyIncidentType.Lost">Lost</MudSelectItem>
                         <MudSelectItem Value="PropertyIncidentType.Stolen">Stolen</MudSelectItem>
                         <MudSelectItem Value="PropertyIncidentType.Damaged">Damaged</MudSelectItem>
                         <MudSelectItem Value="PropertyIncidentType.Destroyed">Destroyed</MudSelectItem>
                     </MudSelect>
-                    <MudTextField @bind-Value="_form.FundCluster" Label="Fund Cluster" Variant="Variant.Outlined" MaxLength="50" />
+                    <MudTextField @bind-Value="_form.FundCluster" Label="Fund Cluster" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" MaxLength="50" />
 
                     <MudAutocomplete T="EmployeeReferenceDto"
                                      @bind-Value="_form.AccountableEmployee"
                                      SearchFunc="SearchEmployees"
                                      ToStringFunc="FormatEmployee"
                                      Label="Accountable Employee (if known)" Variant="Variant.Outlined"
+                                     Dense="true" Margin="Margin.Dense" Size="Size.Small"
                                      Clearable="true" ResetValueOnEmptyText="true" CoerceValue="true" />
 
                     <MudTextField @bind-Value="_form.IncidentDetails" Label="Incident Details" Variant="Variant.Outlined"
-                                  Lines="3" MaxLength="1000" Required="true"
+                                  Dense="true" Margin="Margin.Dense" Size="Size.Small" Lines="3" MaxLength="1000" Required="true"
                                   Placeholder="Describe the circumstances of the loss/damage..." />
                     <MudTextField @bind-Value="_form.Remarks" Label="Remarks" Variant="Variant.Outlined"
-                                  Lines="2" MaxLength="500" />
+                                  Dense="true" Margin="Margin.Dense" Size="Size.Small" Lines="2" MaxLength="500" />
 
                     <MudDivider Class="my-2" />
                     <MudStack Row="true" AlignItems="AlignItems.Center">
@@ -64,8 +65,8 @@
                                              Value="row.SelectedProperty"
                                              ValueChanged="@(v => row.SelectedProperty = v)"
                                              SearchFunc="SearchProperties"
-                                             ToStringFunc="@(x => x is null ? "" : $"{x.PropertyNo} – {x.ItemName} ({x.Status})")"
-                                             Label="Property" Variant="Variant.Outlined" Dense="true"
+                                             ToStringFunc="@(x => x is null ? "" : $"{x.PropertyNo} ï¿½ {x.ItemName} ({x.Status})")"
+                                             Label="Property" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small"
                                              Required="true" Clearable="true" CoerceValue="true" ResetValueOnEmptyText="true" />
                             @if (row.SelectedProperty is not null)
                             {
@@ -76,7 +77,7 @@
                         </MudPaper>
                     }
 
-                    <MudButton Variant="Variant.Filled" Color="Color.Warning" FullWidth="true"
+                    <MudButton Variant="Variant.Filled" Color="Color.Warning" Size="Size.Small" FullWidth="true"
                                OnClick="CreateAsync" Disabled="_busy">Create Incident Report</MudButton>
                 </MudStack>
             </MudCardContent>
@@ -90,9 +91,11 @@
                 <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3" Spacing="2">
                     <MudText Typo="Typo.h6" Class="flex-grow-1">Incident Reports</MudText>
                     <MudTextField @bind-Value="_keyword" Label="Search" Variant="Variant.Outlined" Size="Size.Small"
+                                  Dense="true" Margin="Margin.Dense"
                                   Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
                                   DebounceInterval="350" OnDebounceIntervalElapsed="@(() => LoadAsync())" Style="max-width:190px" />
                     <MudSelect Value="_typeFilter" Label="Type" Variant="Variant.Outlined" Size="Size.Small"
+                               Dense="true" Margin="Margin.Dense"
                                T="PropertyIncidentType?" Style="max-width:130px"
                                ValueChanged="@(v => { _typeFilter = v; _ = LoadAsync(); })">
                         <MudSelectItem T="PropertyIncidentType?" Value="null">All</MudSelectItem>
@@ -163,7 +166,7 @@
                 <MudCardHeader>
                     <CardHeaderContent>
                         <MudStack Row="true" AlignItems="AlignItems.Center">
-                            <MudText Typo="Typo.h6">@_detail.ReportNo — @_detail.Date.ToString("MMMM dd, yyyy")</MudText>
+                            <MudText Typo="Typo.h6">@_detail.ReportNo ï¿½ @_detail.Date.ToString("MMMM dd, yyyy")</MudText>
                             <MudSpacer />
                             <MudChip T="string" Size="Size.Small" Color="@IncidentTypeColor(_detail.IncidentType)">@_detail.IncidentType</MudChip>
                             <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="@(() => _detail = null)" />
@@ -269,7 +272,7 @@
 
     private async Task<IEnumerable<SemiExpendablePropertySummaryDto>> SearchProperties(string? value, CancellationToken ct)
     {
-        // Show all non-disposed properties — backend validates eligible statuses
+        // Show all non-disposed properties ï¿½ backend validates eligible statuses
         var response = await PropertyClient.SearchAsync(value, page: 1, pageSize: 20, ct: ct);
         return response.Items;
     }

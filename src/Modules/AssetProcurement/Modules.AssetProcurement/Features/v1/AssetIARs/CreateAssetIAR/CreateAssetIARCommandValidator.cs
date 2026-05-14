@@ -17,6 +17,8 @@ public sealed class CreateAssetIARCommandValidator : AbstractValidator<CreateAss
             li.RuleFor(x => x.Unit).NotEmpty().MaximumLength(64);
             li.RuleFor(x => x.Quantity).GreaterThan(0);
             li.RuleFor(x => x.UnitCost).GreaterThan(0);
+            li.RuleFor(x => x.StockPropertyNo).MaximumLength(64)
+                .When(x => !string.IsNullOrWhiteSpace(x.StockPropertyNo));
         });
     }
 }

@@ -71,9 +71,9 @@ public class AssetRegisterModule : IModule
         services.AddScoped<IDbInitializer, AssetRegisterDbInitializer>();
         services.AddHostedService<AssetRegisterDbInitializerHostedService>();
 
-        // Number generator + counter allocator wiring (Phase 3a).
+        // Document-number generator + counter allocator wiring.
+        // (PropertyNo is operator-assigned per NFA policy — no system generator.)
         services.AddScoped<CounterAllocator>();
-        services.AddScoped<IPropertyNumberGenerator, PropertyNumberGenerator>();
         services.AddScoped<IAccountabilityNumberGenerator, AccountabilityNumberGenerator>();
         services.AddScoped<IInventoryTransferNumberGenerator, InventoryTransferNumberGenerator>();
         services.AddScoped<IIncidentNumberGenerator, IncidentNumberGenerator>();

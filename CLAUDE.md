@@ -81,6 +81,15 @@ Modules/{Module}/Features/v1/{Feature}/
 | No `Task.Run()` for I/O — use `async/await` directly            | `Task.Run()` causes deadlocks on UI thread       |
 | No inline colors/font sizes — use `{StaticResource}`            | Maintainable, theme-consistent styling           |
 
+### Blazor UI (`Playground.Blazor`)
+
+| ⚠️ Rule                                                               | Why                                               |
+| --------------------------------------------------------------------- | ------------------------------------------------- |
+| Prefer `AMISTextField`, `AMISSelect`, `AMISAutocomplete`              | Enforces compact defaults consistently            |
+| If using raw Mud inputs, set `Dense="true"` + `Margin="Margin.Dense"` | Keeps filter/form rows aligned and compact        |
+| Use `Size="Size.Small"` for filter-row inputs and action buttons      | Establishes the 40px compact baseline             |
+| Avoid mixing default and compact controls in one row                  | Prevents visible height mismatch and misalignment |
+
 ## Available Skills
 
 Call skills with `/skill-name` in your prompt.
@@ -101,7 +110,7 @@ Delegate complex tasks to specialized agents.
 
 | Agent                | Expertise                                                  |
 | -------------------- | ---------------------------------------------------------- |
-| `code-reviewer`      | Review changes against AMIS patterns + architecture rules   |
+| `code-reviewer`      | Review changes against AMIS patterns + architecture rules  |
 | `feature-scaffolder` | Generate complete feature slices from requirements         |
 | `module-creator`     | Create new modules with contracts, persistence, DI setup   |
 | `architecture-guard` | Verify layering, dependencies, module boundaries           |
@@ -177,4 +186,3 @@ dotnet test src/AMIS.Framework.slnx   # All tests must pass
 **Philosophy:** This is a production-ready starter kit. Every pattern is battle-tested. Follow the conventions, and you'll ship faster.
 
 ---
-

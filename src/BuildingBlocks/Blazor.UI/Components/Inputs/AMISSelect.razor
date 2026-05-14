@@ -1,5 +1,6 @@
 @typeparam TValue
 @inherits AMISComponentBase
+@* Compact sizing contract: Dense + Margin.Dense are enforced. InputSize defaults to Size.Small but can be overridden. *@
 <MudSelect T="TValue"
            @bind-Value="Value"
            Label="@Label"
@@ -11,6 +12,7 @@
            AdornmentIcon="@AdornmentIcon"
            AdornmentColor="@AdornmentColor"
            Margin="Margin.Dense"
+           Size="@InputSize"
            @attributes="AdditionalAttributes">
     @ChildContent
 </MudSelect>
@@ -25,6 +27,7 @@
     [Parameter] public Adornment Adornment { get; set; } = Adornment.None;
     [Parameter] public string? AdornmentIcon { get; set; }
     [Parameter] public Color AdornmentColor { get; set; } = Color.Default;
+    [Parameter] public Size InputSize { get; set; } = Size.Small;
     [Parameter] public RenderFragment? ChildContent { get; set; }
     [Parameter(CaptureUnmatchedValues = true)] public Dictionary<string, object>? AdditionalAttributes { get; set; }
 }

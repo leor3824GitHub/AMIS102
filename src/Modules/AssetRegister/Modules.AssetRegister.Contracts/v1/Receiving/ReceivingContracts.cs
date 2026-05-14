@@ -54,11 +54,14 @@ public sealed record CreateReceivingReportItemRequest(
     decimal UnitCost,
     string? SerialNo,
     string? Brand,
-    string? Model);
+    string? Model,
+    IReadOnlyList<string> PropertyNos);
 
 /// <summary>
 /// Creates a Receiving Report (PPERR or SMRR) and materializes one AssetRegistry row
 /// per item quantity. ReportNo is auto-minted via IReceivingReportNumberGenerator.
+/// PropertyNos are operator-assigned per NFA policy and must contain exactly
+/// <c>Quantity</c> entries per line.
 /// </summary>
 public sealed record CreateReceivingReportCommand(
     ReceivingDocumentKind DocumentKind,

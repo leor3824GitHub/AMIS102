@@ -16,23 +16,24 @@
                 <MudText Typo="Typo.h6" Class="mb-3">New IIRUSP</MudText>
                 <MudStack Spacing="2">
                     <MudTextField @bind-Value="_form.ReportNo" Label="Report No." Variant="Variant.Outlined"
-                                  Required="true" MaxLength="32" Placeholder="e.g. IUR-2026-04-0001" />
+                                  Dense="true" Margin="Margin.Dense" Size="Size.Small" Required="true" MaxLength="32" Placeholder="e.g. IUR-2026-04-0001" />
                     <MudDatePicker @bind-Date="_form.DateNullable" Label="Date" Variant="Variant.Outlined"
-                                   DateFormat="MM/dd/yyyy" Required="true" />
-                    <MudSelect @bind-Value="_form.DisposalMethod" Label="Disposal Method" Variant="Variant.Outlined" T="DisposalMethod">
+                                   Dense="true" Margin="Margin.Dense" Size="Size.Small" DateFormat="MM/dd/yyyy" Required="true" />
+                    <MudSelect @bind-Value="_form.DisposalMethod" Label="Disposal Method" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" T="DisposalMethod">
                         <MudSelectItem Value="DisposalMethod.Sale">Sale</MudSelectItem>
                         <MudSelectItem Value="DisposalMethod.Destruction">Destruction</MudSelectItem>
                         <MudSelectItem Value="DisposalMethod.Donation">Donation</MudSelectItem>
                         <MudSelectItem Value="DisposalMethod.Transfer">Transfer</MudSelectItem>
                         <MudSelectItem Value="DisposalMethod.Others">Others</MudSelectItem>
                     </MudSelect>
-                    <MudTextField @bind-Value="_form.FundCluster" Label="Fund Cluster" Variant="Variant.Outlined" MaxLength="50" />
+                    <MudTextField @bind-Value="_form.FundCluster" Label="Fund Cluster" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" MaxLength="50" />
 
                     <MudAutocomplete T="EmployeeReferenceDto"
                                      @bind-Value="_form.InspectedBy"
                                      SearchFunc="SearchEmployees"
                                      ToStringFunc="FormatEmployee"
                                      Label="Inspected By" Variant="Variant.Outlined"
+                                     Dense="true" Margin="Margin.Dense" Size="Size.Small"
                                      Clearable="true" ResetValueOnEmptyText="true" CoerceValue="true" />
 
                     <MudAutocomplete T="EmployeeReferenceDto"
@@ -40,10 +41,11 @@
                                      SearchFunc="SearchEmployees"
                                      ToStringFunc="FormatEmployee"
                                      Label="Approved By" Variant="Variant.Outlined"
+                                     Dense="true" Margin="Margin.Dense" Size="Size.Small"
                                      Clearable="true" ResetValueOnEmptyText="true" CoerceValue="true" />
 
                     <MudTextField @bind-Value="_form.Remarks" Label="Remarks" Variant="Variant.Outlined"
-                                  Lines="2" MaxLength="500" />
+                                  Dense="true" Margin="Margin.Dense" Size="Size.Small" Lines="2" MaxLength="500" />
 
                     <MudDivider Class="my-2" />
                     <MudStack Row="true" AlignItems="AlignItems.Center">
@@ -68,7 +70,7 @@
                                                  Value="li.SelectedProperty"
                                                  ValueChanged="@(v => li.SelectedProperty = v)"
                                                  SearchFunc="SearchEligibleProperties"
-                                                 ToStringFunc="@(x => x is null ? "" : $"{x.PropertyNo} – {x.ItemName} ({x.Status})")"
+                                                 ToStringFunc="@(x => x is null ? "" : $"{x.PropertyNo} ï¿½ {x.ItemName} ({x.Status})")"
                                                  Label="Property (OnHand/Returned/LostStolenDamaged)" Variant="Variant.Outlined" Dense="true"
                                                  Required="true" Clearable="true" CoerceValue="true" ResetValueOnEmptyText="true" />
                                 @if (li.SelectedProperty is not null)
@@ -85,7 +87,7 @@
                     }
 
                     <MudButton Variant="Variant.Filled" Color="Color.Error" FullWidth="true"
-                               OnClick="CreateAsync" Disabled="_busy">
+                               Size="Size.Small" OnClick="CreateAsync" Disabled="_busy">
                         @if (_busy) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" /> }
                         Create IIRUSP
                     </MudButton>
@@ -101,9 +103,11 @@
                 <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3" Spacing="2">
                     <MudText Typo="Typo.h6" Class="flex-grow-1">Unserviceable Reports</MudText>
                     <MudTextField @bind-Value="_keyword" Label="Search" Variant="Variant.Outlined" Size="Size.Small"
+                                             Dense="true" Margin="Margin.Dense"
                                   Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
                                   DebounceInterval="350" OnDebounceIntervalElapsed="@(() => LoadAsync())" Style="max-width:180px" />
                     <MudSelect Value="_methodFilter" Label="Method" Variant="Variant.Outlined" Size="Size.Small"
+                                         Dense="true" Margin="Margin.Dense"
                                T="DisposalMethod?" Style="max-width:130px"
                                ValueChanged="@(v => { _methodFilter = v; _ = LoadAsync(); })">
                         <MudSelectItem T="DisposalMethod?" Value="null">All</MudSelectItem>
@@ -171,7 +175,7 @@
                 <MudCardHeader>
                     <CardHeaderContent>
                         <MudStack Row="true" AlignItems="AlignItems.Center">
-                            <MudText Typo="Typo.h6">@_detail.ReportNo — @_detail.Date.ToString("MMMM dd, yyyy")</MudText>
+                            <MudText Typo="Typo.h6">@_detail.ReportNo ï¿½ @_detail.Date.ToString("MMMM dd, yyyy")</MudText>
                             <MudSpacer />
                             <MudChip T="string" Size="Size.Small" Color="Color.Error">@_detail.DisposalMethod</MudChip>
                             <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="@(() => _detail = null)" />
@@ -298,7 +302,7 @@
         return results.Take(20);
     }
 
-    private static string ShortGuid(Guid id) => $"{id:D}"[..8] + "…";
+    private static string ShortGuid(Guid id) => $"{id:D}"[..8] + "ï¿½";
 
     private static string FormatEmployee(EmployeeReferenceDto? e) =>
         e is null ? "" : $"{e.FirstName} {e.LastName} ({e.EmployeeNumber})";

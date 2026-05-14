@@ -10,7 +10,7 @@
 
 <AMISPageHeader Title="Purchase Orders" Description="Create, manage, and receive supply purchase orders">
     <ActionContent>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.Add"
                    OnClick="OpenCreateDialog">
             New Purchase Order
         </MudButton>
@@ -34,6 +34,7 @@
             <MudSpacer />
             <MudTextField @bind-Value="_poSearch" Placeholder="Search PO#..." Margin="Margin.Dense"
                           Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
+                          Dense="true" Size="Size.Small"
                           Style="max-width: 220px"
                           DebounceInterval="400" OnDebounceIntervalElapsed="() => _table?.ReloadServerData()" />
         </MudStack>
@@ -56,7 +57,7 @@
             </MudTd>
             <MudTd>@GetSupplierName(context.SupplierId)</MudTd>
             <MudTd>@context.OrderDate.ToString("MMM d, yyyy")</MudTd>
-            <MudTd>@(context.ExpectedDeliveryDate?.ToString("MMM d, yyyy") ?? "—")</MudTd>
+            <MudTd>@(context.ExpectedDeliveryDate?.ToString("MMM d, yyyy") ?? "ï¿½")</MudTd>
             <MudTd Style="text-align:right">$@context.TotalAmount.ToString("F2")</MudTd>
             <MudTd Style="text-align:center">@context.LineItems.Count</MudTd>
             <MudTd>@RenderStatusChip(context.Status)</MudTd>
@@ -120,7 +121,7 @@
                                  Clearable="true"
                                  Required="true"
                                  Placeholder="Search supplier..."
-                                 Variant="Variant.Outlined" />
+                                 Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" />
 
                 <MudAutocomplete T="WarehouseOption"
                                  Label="Existing Warehouse"
@@ -132,6 +133,7 @@
                                  Placeholder="@(_warehouses.Count == 0 ? "No warehouses yet" : "Search existing warehouse...")"
                                  HelperText="Select existing, or leave blank and enter a new name below"
                                  Variant="Variant.Outlined"
+                                 Dense="true" Margin="Margin.Dense" Size="Size.Small"
                                  ValueChanged="@(w => { _createWarehouseExisting = w; _createNewWarehouseName = w?.Name ?? string.Empty; })" />
 
                 @if (_createWarehouseExisting == null)
@@ -140,7 +142,7 @@
                                   Label="New Warehouse Name"
                                   Placeholder="e.g. Main Warehouse, Supply Room..."
                                   HelperText="A new warehouse location will be registered with this name"
-                                  Variant="Variant.Outlined" />
+                                  Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" />
                 }
 
                 <MudDatePicker @bind-Date="_createExpectedDelivery"
@@ -148,11 +150,12 @@
                                Placeholder="Select date..."
                                Editable="true"
                                Variant="Variant.Outlined"
+                               Dense="true" Margin="Margin.Dense" Size="Size.Small"
                                MinDate="DateTime.Today" />
 
                 <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2" Class="mt-2">
-                    <MudButton OnClick="@(() => _showCreateDialog = false)">Cancel</MudButton>
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                    <MudButton Size="Size.Small" OnClick="@(() => _showCreateDialog = false)">Cancel</MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
                                OnClick="CreatePurchaseOrder" Disabled="@_isActioning">
                         @if (_isActioning) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" /> }
                         Create PO
@@ -170,7 +173,7 @@
         <MudPaper Class="pa-5" Elevation="24" Style="width: min(780px, 95vw); max-height: 90vh; overflow-y: auto;">
             <MudText Typo="Typo.h6" Class="mb-1">
                 <MudIcon Icon="@Icons.Material.Filled.PlaylistAdd" Class="mr-2" Color="Color.Primary" />
-                Line Items — @_editingPO.PurchaseOrderNumber
+                Line Items ï¿½ @_editingPO.PurchaseOrderNumber
             </MudText>
             <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-4">
                 Supplier: @GetSupplierName(_editingPO.SupplierId)
@@ -226,19 +229,19 @@
                                      Clearable="true"
                                      Placeholder="Search product..."
                                      Variant="Variant.Outlined"
-                                     Dense="true"
+                                     Dense="true" Margin="Margin.Dense" Size="Size.Small"
                                      ValueChanged="@(p => { _addProduct = p; if (p != null) _addUnitPrice = (decimal)p.UnitPrice; })" />
                 </MudItem>
                 <MudItem xs="6" sm="3">
                     <MudNumericField T="int" @bind-Value="_addQuantity" Label="Quantity" Min="1"
-                                     Variant="Variant.Outlined" Dense="true" />
+                                     Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" />
                 </MudItem>
                 <MudItem xs="6" sm="2">
                     <MudNumericField T="decimal" @bind-Value="_addUnitPrice" Label="Unit Price" Min="0"
-                                     Variant="Variant.Outlined" Dense="true" Format="F2" />
+                                     Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" Format="F2" />
                 </MudItem>
                 <MudItem xs="12" sm="2" Class="d-flex align-end">
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" FullWidth="true"
                                OnClick="AddLineItem" Disabled="@(_addProduct == null || _addQuantity <= 0 || _isActioning)">
                         Add
                     </MudButton>
@@ -246,10 +249,10 @@
             </MudGrid>
 
             <MudStack Row="true" Justify="Justify.SpaceBetween" Class="mt-2">
-                <MudButton OnClick="@(() => _showLineItemsDialog = false)">Close</MudButton>
+                <MudButton Size="Size.Small" OnClick="@(() => _showLineItemsDialog = false)">Close</MudButton>
                 @if (_editingPO.LineItems.Any())
                 {
-                    <MudButton Variant="Variant.Filled" Color="Color.Info"
+                    <MudButton Variant="Variant.Filled" Color="Color.Info" Size="Size.Small"
                                StartIcon="@Icons.Material.Filled.Send"
                                OnClick="@(() => ConfirmAction(_editingPO, "Submit"))"
                                Disabled="@_isActioning">
@@ -268,7 +271,7 @@
         <MudPaper Class="pa-5" Elevation="24" Style="width: min(700px, 95vw); max-height: 90vh; overflow-y: auto;">
             <MudText Typo="Typo.h6" Class="mb-1">
                 <MudIcon Icon="@Icons.Material.Filled.MoveToInbox" Class="mr-2" Color="Color.Warning" />
-                Record Receipt — @_receiptPO.PurchaseOrderNumber
+                Record Receipt ï¿½ @_receiptPO.PurchaseOrderNumber
             </MudText>
             <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-4">
                 Enter received and rejected quantities for each line item.
@@ -306,11 +309,12 @@
             </MudTable>
 
             <MudTextField @bind-Value="_receiptNotes" Label="Receiving Notes" Lines="2"
-                          Variant="Variant.Outlined" Placeholder="Optional notes..." Class="mb-3" />
+                          Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small"
+                          Placeholder="Optional notes..." Class="mb-3" />
 
             <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2">
-                <MudButton OnClick="@(() => _showReceiptDialog = false)">Cancel</MudButton>
-                <MudButton Variant="Variant.Filled" Color="Color.Warning"
+                <MudButton Size="Size.Small" OnClick="@(() => _showReceiptDialog = false)">Cancel</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Warning" Size="Size.Small"
                            StartIcon="@Icons.Material.Filled.MoveToInbox"
                            OnClick="SubmitReceipt" Disabled="@_isActioning">
                     @if (_isActioning) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" /> }
@@ -347,11 +351,11 @@
                 </MudItem>
                 <MudItem xs="6">
                     <MudText Typo="Typo.caption" Color="Color.Tertiary">Expected Delivery</MudText>
-                    <MudText Typo="Typo.body2">@(_detailPO.ExpectedDeliveryDate?.ToString("MMM d, yyyy") ?? "—")</MudText>
+                    <MudText Typo="Typo.body2">@(_detailPO.ExpectedDeliveryDate?.ToString("MMM d, yyyy") ?? "ï¿½")</MudText>
                 </MudItem>
                 <MudItem xs="6">
                     <MudText Typo="Typo.caption" Color="Color.Tertiary">Delivery Date</MudText>
-                    <MudText Typo="Typo.body2">@(_detailPO.DeliveryDate?.ToString("MMM d, yyyy") ?? "—")</MudText>
+                    <MudText Typo="Typo.body2">@(_detailPO.DeliveryDate?.ToString("MMM d, yyyy") ?? "ï¿½")</MudText>
                 </MudItem>
                 @if (!string.IsNullOrWhiteSpace(_detailPO.ReceivingNotes))
                 {
@@ -392,7 +396,7 @@
                         {
                             <MudChip T="string" Size="Size.Small" Color="Color.Error">@context.RejectedQuantity</MudChip>
                         }
-                        else { <MudText>—</MudText> }
+                        else { <MudText>ï¿½</MudText> }
                     </MudTd>
                 </RowTemplate>
                 <FooterContent>
@@ -403,7 +407,7 @@
             </MudTable>
 
             <MudStack Row="true" Justify="Justify.FlexEnd">
-                <MudButton Variant="Variant.Outlined" OnClick="@(() => _showDetailDialog = false)">Close</MudButton>
+                <MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="@(() => _showDetailDialog = false)">Close</MudButton>
             </MudStack>
         </MudPaper>
     </MudOverlay>
@@ -416,7 +420,7 @@
         <MudPaper Class="pa-5" Elevation="24" Style="width: min(720px, 95vw); max-height: 90vh; overflow-y: auto;">
             <MudText Typo="Typo.h6" Class="mb-1">
                 <MudIcon Icon="@Icons.Material.Filled.FactCheck" Class="mr-2" Color="Color.Secondary" />
-                Record Inspection — @_inspectionPO.PurchaseOrderNumber
+                Record Inspection ï¿½ @_inspectionPO.PurchaseOrderNumber
             </MudText>
             <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-4">
                 Enter accepted and rejected quantities for each received line item. Accepted items go to warehouse inventory.
@@ -456,17 +460,18 @@
                                           ValueChanged="@((string v) => SetInspectRejectionReason(context.ProductId, v))"
                                           Placeholder="Required" Dense="true" Margin="Margin.Dense" Variant="Variant.Outlined" />
                         }
-                        else { <MudText Typo="Typo.caption" Color="Color.Secondary">—</MudText> }
+                        else { <MudText Typo="Typo.caption" Color="Color.Secondary">ï¿½</MudText> }
                     </MudTd>
                 </RowTemplate>
             </MudTable>
 
             <MudTextField @bind-Value="_inspectionNotes" Label="Inspection Notes" Lines="2"
-                          Variant="Variant.Outlined" Placeholder="Optional notes..." Class="mb-3" />
+                          Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small"
+                          Placeholder="Optional notes..." Class="mb-3" />
 
             <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2">
-                <MudButton OnClick="@(() => _showInspectionDialog = false)">Cancel</MudButton>
-                <MudButton Variant="Variant.Filled" Color="Color.Secondary"
+                <MudButton Size="Size.Small" OnClick="@(() => _showInspectionDialog = false)">Cancel</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Secondary" Size="Size.Small"
                            StartIcon="@Icons.Material.Filled.FactCheck"
                            OnClick="SubmitInspection" Disabled="@_isActioning">
                     @if (_isActioning) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" /> }
@@ -485,8 +490,8 @@
             <MudText Typo="Typo.h6" Class="mb-3">@_confirmTitle</MudText>
             <MudText Class="mb-4">@_confirmMessage</MudText>
             <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2">
-                <MudButton OnClick="@(() => _showConfirmDialog = false)">Cancel</MudButton>
-                <MudButton Variant="Variant.Filled" Color="@_confirmColor"
+                <MudButton Size="Size.Small" OnClick="@(() => _showConfirmDialog = false)">Cancel</MudButton>
+                <MudButton Variant="Variant.Filled" Color="@_confirmColor" Size="Size.Small"
                            OnClick="ExecuteConfirmedAction" Disabled="@_isActioning">
                     @if (_isActioning) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" /> }
                     @_confirmAction
@@ -591,7 +596,7 @@
                 {
                     var name = g.First().WarehouseLocationName;
                     var display = string.IsNullOrWhiteSpace(name)
-                        ? $"Warehouse {g.Key.ToString()[..8]}…"
+                        ? $"Warehouse {g.Key.ToString()[..8]}ï¿½"
                         : name;
                     return new WarehouseOption(g.Key, display);
                 })
@@ -640,7 +645,7 @@
             var product = await ExpendableClient.ProductsGetAsync(productId);
             if (product != null) _productNames[productId] = $"{product.Name} ({product.Sku})";
         }
-        catch { _productNames[productId] = productId.ToString()[..8] + "…"; }
+        catch { _productNames[productId] = productId.ToString()[..8] + "ï¿½"; }
     }
 
     private void SetStatusFilter(string? status)
@@ -652,10 +657,10 @@
     // ===== LOOKUP HELPERS =====
 
     private string GetSupplierName(string supplierId) =>
-        _supplierNames.TryGetValue(supplierId, out var name) ? name : supplierId[..Math.Min(8, supplierId.Length)] + "…";
+        _supplierNames.TryGetValue(supplierId, out var name) ? name : supplierId[..Math.Min(8, supplierId.Length)] + "ï¿½";
 
     private string GetProductName(Guid productId) =>
-        _productNames.TryGetValue(productId, out var name) ? name : productId.ToString()[..8] + "…";
+        _productNames.TryGetValue(productId, out var name) ? name : productId.ToString()[..8] + "ï¿½";
 
     // ===== AUTOCOMPLETE SEARCH FUNCS =====
 

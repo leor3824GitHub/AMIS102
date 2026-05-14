@@ -214,7 +214,8 @@
                     l.Catalog!.Id, l.Reference, l.Description,
                     DateOnly.FromDateTime(l.AcquisitionDate ?? DateTime.Today),
                     l.Quantity, l.UnitCost,
-                    SerialNo: null, Brand: null, Model: null)).ToList());
+                    SerialNo: null, Brand: null, Model: null,
+                    PropertyNos: Array.Empty<string>())).ToList());
 
             var created = await Client.CreateAsync(request);
             await OnCreated.InvokeAsync(created);

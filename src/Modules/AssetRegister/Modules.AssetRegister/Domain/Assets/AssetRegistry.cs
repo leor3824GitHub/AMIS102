@@ -191,6 +191,23 @@ public sealed class AssetRegistry : AggregateRoot<Guid>, IHasTenant, IAuditableE
         AddDomainEvent(new AssetUnserviceableEvent(Id, reportId, TenantId));
     }
 
+    public void MarkTransferredOut(Guid issuanceReportId, string reportNo, IssuanceReportType reportType)
+    {
+        EnsureNotDisposed();
+        if (LifecycleState is LifecycleState.Unserviceable or LifecycleState.UnderInvestigation)
+            throw new InvalidOperationException(
+                $"Cannot transfer out an asset from state '{LifecycleState}'. Resolve the incident or unserviceable status first.");
+        if (LifecycleState == LifecycleState.TransferredOut)
+            return;
+
+        LifecycleState = LifecycleState.TransferredOut;
+        CurrentAccountabilityId = null;
+        CurrentCustodianId = null;
+        CurrentLocationId = null;
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        AddDomainEvent(new AssetTransferredOutEvent(Id, issuanceReportId, reportNo, reportType, TenantId));
+    }
+
     public void Dispose(Guid reportId, DisposalMethod method)
     {
         EnsureNotDisposed();

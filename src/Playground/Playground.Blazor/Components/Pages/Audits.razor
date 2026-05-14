@@ -138,6 +138,9 @@
                                         Label="Date Range"
                                         Color="Color.Primary"
                                         Variant="Variant.Outlined"
+                                        Dense="true"
+                                        Margin="Margin.Dense"
+                                        Size="Size.Small"
                                         Adornment="Adornment.Start"
                                         AdornmentIcon="@Icons.Material.Filled.CalendarMonth" />
                 </MudItem>
@@ -146,6 +149,9 @@
                                   Label="Search"
                                   Placeholder="Search events, users, resources..."
                                   Variant="Variant.Outlined"
+                                  Dense="true"
+                                  Margin="Margin.Dense"
+                                  Size="Size.Small"
                                   Adornment="Adornment.Start"
                                   AdornmentIcon="@Icons.Material.Filled.Search"
                                   Clearable="true" />
@@ -155,6 +161,9 @@
                                   Label="User / Actor"
                                   Placeholder="Filter by user ID or name"
                                   Variant="Variant.Outlined"
+                                  Dense="true"
+                                  Margin="Margin.Dense"
+                                  Size="Size.Small"
                                   Adornment="Adornment.Start"
                                   AdornmentIcon="@Icons.Material.Filled.Person"
                                   Clearable="true" />
@@ -164,6 +173,9 @@
                                @bind-Value="_filter.EventType"
                                Label="Event Type"
                                Variant="Variant.Outlined"
+                               Dense="true"
+                               Margin="Margin.Dense"
+                               Size="Size.Small"
                                Clearable="true"
                                AdornmentIcon="@Icons.Material.Filled.Category"
                                Adornment="Adornment.Start">
@@ -181,6 +193,9 @@
                                @bind-Value="_filter.Severity"
                                Label="Severity"
                                Variant="Variant.Outlined"
+                               Dense="true"
+                               Margin="Margin.Dense"
+                               Size="Size.Small"
                                Clearable="true"
                                AdornmentIcon="@Icons.Material.Filled.PriorityHigh"
                                Adornment="Adornment.Start">
@@ -198,6 +213,9 @@
                                   Label="Tenant ID"
                                   Placeholder="Filter by tenant"
                                   Variant="Variant.Outlined"
+                                  Dense="true"
+                                  Margin="Margin.Dense"
+                                  Size="Size.Small"
                                   Adornment="Adornment.Start"
                                   AdornmentIcon="@Icons.Material.Filled.Business"
                                   Clearable="true" />
@@ -207,6 +225,9 @@
                                   Label="Source / Resource"
                                   Placeholder="Filter by source"
                                   Variant="Variant.Outlined"
+                                  Dense="true"
+                                  Margin="Margin.Dense"
+                                  Size="Size.Small"
                                   Adornment="Adornment.Start"
                                   AdornmentIcon="@Icons.Material.Filled.Source"
                                   Clearable="true" />
@@ -216,6 +237,9 @@
                                   Label="Correlation ID"
                                   Placeholder="Track related events"
                                   Variant="Variant.Outlined"
+                                  Dense="true"
+                                  Margin="Margin.Dense"
+                                  Size="Size.Small"
                                   Adornment="Adornment.Start"
                                   AdornmentIcon="@Icons.Material.Filled.Link"
                                   Clearable="true" />
@@ -225,6 +249,9 @@
                                   Label="Trace ID"
                                   Placeholder="Distributed tracing ID"
                                   Variant="Variant.Outlined"
+                                  Dense="true"
+                                  Margin="Margin.Dense"
+                                  Size="Size.Small"
                                   Adornment="Adornment.Start"
                                   AdornmentIcon="@Icons.Material.Filled.Timeline"
                                   Clearable="true" />
@@ -234,6 +261,7 @@
         <MudCardActions Class="px-4 pb-4">
             <MudButton Variant="Variant.Filled"
                        Color="Color.Primary"
+                       Size="Size.Small"
                        StartIcon="@Icons.Material.Filled.Search"
                        OnClick="ReloadTable"
                        FullWidth="false">
@@ -241,6 +269,7 @@
             </MudButton>
             <MudButton Variant="Variant.Outlined"
                        Color="Color.Secondary"
+                       Size="Size.Small"
                        StartIcon="@Icons.Material.Filled.Clear"
                        OnClick="ResetFilters">
                 Reset All

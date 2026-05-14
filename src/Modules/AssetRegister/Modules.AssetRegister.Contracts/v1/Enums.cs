@@ -26,7 +26,9 @@ public enum LifecycleState
     Assigned = 1,
     UnderInvestigation = 2,
     Unserviceable = 3,
-    Disposed = 4
+    Disposed = 4,
+    /// <summary>Transferred out of this office via a posted PPEIR/SMIR. Excluded from default registry views; still resolvable by direct PropertyNo lookup for audit.</summary>
+    TransferredOut = 5
 }
 
 public enum AccountabilityType

@@ -23,6 +23,14 @@
 
   /* Transitions */
   --AMIS-transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Control Sizing Tokens */
+  --amis-control-height-compact: 40px;
+  --amis-control-height-normal: 48px;
+  --amis-control-height-tight: 32px;
+  --amis-control-padding-compact: 8px 12px;
+  --amis-control-padding-normal: 10px 14px;
+  --amis-control-border-radius: 4px;
 }
 
 .AMIS-card {
@@ -382,3 +390,27 @@
 }
 
 /* AMISStatCard styles are in the component's scoped CSS */
+
+/* Sizing Utilities */
+.amis-control-compact {
+  height: var(--amis-control-height-compact) !important;
+  padding: var(--amis-control-padding-compact) !important;
+}
+
+.amis-control-normal {
+  height: var(--amis-control-height-normal) !important;
+  padding: var(--amis-control-padding-normal) !important;
+}
+
+.amis-table-compact .mud-table-row {
+  height: 32px;
+}
+
+.amis-table-compact .mud-table-cell {
+  padding: 4px 8px !important;
+}
+
+/*
+ * Do: use AMIS input wrappers, or set Dense="true" + Margin="Margin.Dense" consistently.
+ * Avoid mixing default and compact input sizes in the same row.
+ */

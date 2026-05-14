@@ -1,0 +1,210 @@
+@page "/asset-procurement/iars"
+@using AMIS.Playground.Blazor.ApiClient
+@using AMIS.Modules.AssetProcurement.Contracts.v1.AssetInspectionAcceptanceReports
+@using AMIS.Modules.AssetProcurement.Contracts.v1.AssetPurchaseOrders
+@inject IAssetIarClient IarClient
+@inject IAssetPurchaseOrderClient PoClient
+@inject ILookupClient LookupClient
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<AMISPageHeader Title="Inspection &amp; Acceptance Reports"
+                Description="Create IAR from an asset Purchase Order; assign a Property No per line, then Accept to flow into the Asset Registry." />
+
+<MudCard Elevation="1" Class="mb-3">
+    <MudCardContent>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudTextField @bind-Value="_keyword" Label="Search IAR No / Supplier" Variant="Variant.Outlined"
+                          Size="Size.Small" Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
+                          DebounceInterval="350" OnDebounceIntervalElapsed="@(() => LoadAsync())"
+                          Style="max-width:320px" />
+            <MudSelect T="AssetIARStatus?" Value="_statusFilter" ValueChanged="OnStatusFilterChanged"
+                       Label="Status" Variant="Variant.Outlined"
+                       Size="Size.Small" Clearable="true" Style="max-width:180px">
+                <MudSelectItem T="AssetIARStatus?" Value="@((AssetIARStatus?)null)">(any)</MudSelectItem>
+                <MudSelectItem T="AssetIARStatus?" Value="@AssetIARStatus.Draft">Draft</MudSelectItem>
+                <MudSelectItem T="AssetIARStatus?" Value="@AssetIARStatus.Accepted">Accepted</MudSelectItem>
+                <MudSelectItem T="AssetIARStatus?" Value="@AssetIARStatus.Rejected">Rejected</MudSelectItem>
+            </MudSelect>
+            <MudSpacer />
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+                       OnClick="OpenCreateDialog">
+                New IAR
+            </MudButton>
+        </MudStack>
+    </MudCardContent>
+</MudCard>
+
+<MudCard Elevation="1">
+    <MudCardContent>
+        @if (_loading)
+        {
+            <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+        }
+        else if (_items.Count == 0)
+        {
+            <MudAlert Severity="Severity.Info">No IARs found. Click <b>New IAR</b> to create one from a purchase order.</MudAlert>
+        }
+        else
+        {
+            <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                <thead>
+                    <tr>
+                        <th>IAR No.</th>
+                        <th>Date</th>
+                        <th>PO</th>
+                        <th>Supplier</th>
+                        <th>Lines</th>
+                        <th class="text-right">Total</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var iar in _items)
+                    {
+                        <tr>
+                            <td><b>@iar.IarNumber</b></td>
+                            <td>@iar.IarDate.ToString("MM/dd/yyyy")</td>
+                            <td>@iar.PoNumber</td>
+                            <td>@iar.SupplierName</td>
+                            <td>@iar.LineItemCount</td>
+                            <td class="text-right">@iar.TotalAmount.ToString("N2")</td>
+                            <td>
+                                <MudChip T="string" Size="Size.Small"
+                                         Color="@StatusColor(iar.Status)">
+                                    @iar.Status
+                                </MudChip>
+                            </td>
+                            <td>
+                                <MudStack Row="true" Spacing="0">
+                                    <MudTooltip Text="View / Edit">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small"
+                                                       Color="Color.Primary"
+                                                       OnClick="@(() => OpenEditDialog(iar.Id))" />
+                                    </MudTooltip>
+                                    @if (iar.Status == AssetIARStatus.Draft)
+                                    {
+                                        <MudTooltip Text="Accept (materialize assets)">
+                                            <MudIconButton Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small"
+                                                           Color="Color.Success"
+                                                           OnClick="@(() => AcceptAsync(iar.Id))" />
+                                        </MudTooltip>
+                                        <MudTooltip Text="Reject">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Cancel" Size="Size.Small"
+                                                           Color="Color.Error"
+                                                           OnClick="@(() => RejectAsync(iar.Id))" />
+                                        </MudTooltip>
+                                    }
+                                </MudStack>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </MudSimpleTable>
+
+            <MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-2" Spacing="1">
+                <MudText Typo="Typo.caption">@_totalCount IARs total</MudText>
+                <MudSpacer />
+                <MudPagination Count="@TotalPages" Selected="_page" ShowFirstButton="true" ShowLastButton="true"
+                               SelectedChanged="@(async p => { _page = p; await LoadAsync(); })" />
+            </MudStack>
+        }
+    </MudCardContent>
+</MudCard>
+
+@code {
+    private List<AssetIARSummaryDto> _items = [];
+    private string? _keyword;
+    private AssetIARStatus? _statusFilter;
+    private bool _loading;
+    private int _page = 1;
+    private int _totalCount;
+    private const int PageSize = 15;
+    private int TotalPages => Math.Max(1, (int)Math.Ceiling(_totalCount / (double)PageSize));
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task OnStatusFilterChanged(AssetIARStatus? value)
+    {
+        _statusFilter = value;
+        _page = 1;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        try
+        {
+            var response = await IarClient.SearchAsync(_keyword, _statusFilter, page: _page, pageSize: PageSize);
+            _items = [.. response.Items];
+            _totalCount = (int)response.TotalCount;
+        }
+        catch (Exception ex) { Snackbar.Add($"Load failed: {ex.Message}", Severity.Error); }
+        finally { _loading = false; }
+    }
+
+    private async Task OpenCreateDialog()
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true, MaxWidth = MaxWidth.Large };
+        var dialog = await DialogService.ShowAsync<AssetIARFormDialog>("New Inspection & Acceptance Report", options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
+            await LoadAsync();
+    }
+
+    private async Task OpenEditDialog(Guid id)
+    {
+        var iar = await IarClient.GetAsync(id);
+        if (iar is null) { Snackbar.Add("IAR not found.", Severity.Error); return; }
+        var parameters = new DialogParameters { ["Existing"] = iar };
+        var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true, MaxWidth = MaxWidth.Large };
+        var dialog = await DialogService.ShowAsync<AssetIARFormDialog>($"IAR {iar.IarNumber}", parameters, options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
+            await LoadAsync();
+    }
+
+    private async Task AcceptAsync(Guid id)
+    {
+        var ok = await DialogService.ShowMessageBox(
+            "Accept IAR",
+            "Accepting will close this IAR for edits and publish line items to the Asset Register (one AssetRegistry row per accepted line). Continue?",
+            yesText: "Accept", cancelText: "Cancel");
+        if (ok != true) return;
+
+        try
+        {
+            await IarClient.AcceptAsync(id);
+            Snackbar.Add("IAR accepted.", Severity.Success);
+            await LoadAsync();
+        }
+        catch (Exception ex) { Snackbar.Add($"Accept failed: {ex.Message}", Severity.Error); }
+    }
+
+    private async Task RejectAsync(Guid id)
+    {
+        var reason = await DialogService.ShowMessageBox(
+            "Reject IAR",
+            (MarkupString)"Provide a brief reason. The IAR will be marked Rejected and cannot be reopened.",
+            yesText: "Reject", cancelText: "Cancel");
+        if (reason != true) return;
+
+        try
+        {
+            await IarClient.RejectAsync(id, "Rejected by user.");
+            Snackbar.Add("IAR rejected.", Severity.Success);
+            await LoadAsync();
+        }
+        catch (Exception ex) { Snackbar.Add($"Reject failed: {ex.Message}", Severity.Error); }
+    }
+
+    private static Color StatusColor(AssetIARStatus s) => s switch
+    {
+        AssetIARStatus.Draft => Color.Default,
+        AssetIARStatus.Accepted => Color.Success,
+        AssetIARStatus.Rejected => Color.Error,
+        _ => Color.Default
+    };
+}

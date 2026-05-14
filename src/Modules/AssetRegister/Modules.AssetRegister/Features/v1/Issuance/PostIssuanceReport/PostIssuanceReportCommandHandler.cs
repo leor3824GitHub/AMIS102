@@ -21,6 +21,13 @@ public sealed class PostIssuanceReportCommandHandler(AssetRegisterDbContext db)
         var postedBy = EmployeeRef.Create(cmd.PostedBy.EmployeeId, cmd.PostedBy.PrintedName, cmd.PostedBy.Designation);
         report.Post(certifiedBy, postedBy, cmd.PostedOn);
 
+        var assetIds = report.Lines.Select(l => l.AssetRegistryId).Distinct().ToList();
+        var assets = await db.AssetRegistries
+            .Where(a => assetIds.Contains(a.Id))
+            .ToListAsync(ct).ConfigureAwait(false);
+        foreach (var asset in assets)
+            asset.MarkTransferredOut(report.Id, report.ReportNo, report.ReportType);
+
         await db.SaveChangesAsync(ct).ConfigureAwait(false);
         return IssuanceMapper.ToDto(report);
     }

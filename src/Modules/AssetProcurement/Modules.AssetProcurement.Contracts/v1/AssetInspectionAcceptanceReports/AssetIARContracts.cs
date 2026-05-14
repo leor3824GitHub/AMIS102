@@ -31,7 +31,8 @@ public sealed record AssetIARLineItemDto(
     decimal Quantity,
     decimal UnitCost,
     decimal Amount,
-    string? InspectionRemarks);
+    string? InspectionRemarks,
+    string? StockPropertyNo);
 
 public sealed record AssetIARDto(
     Guid Id,
@@ -80,7 +81,8 @@ public sealed record AssetIARLineItemRequest(
     string Unit,
     decimal Quantity,
     decimal UnitCost,
-    string? InspectionRemarks);
+    string? InspectionRemarks,
+    string? StockPropertyNo = null);
 
 public sealed record CreateAssetIARCommand(
     Guid PurchaseOrderId,
@@ -134,7 +136,8 @@ public sealed record AssetIARAcceptedEventItem(
     string? PropertyClassHint,
     string Unit,
     decimal Quantity,
-    decimal UnitCost);
+    decimal UnitCost,
+    string? StockPropertyNo = null);
 
 public sealed record AssetIARAcceptedEvent(
     Guid IARId,

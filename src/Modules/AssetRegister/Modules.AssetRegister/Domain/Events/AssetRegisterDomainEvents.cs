@@ -44,6 +44,14 @@ public sealed record AssetTransferredEvent(
     string? TenantId,
     string? CorrelationId = null) : AssetRegisterDomainEvent(TenantId, CorrelationId);
 
+public sealed record AssetTransferredOutEvent(
+    Guid AssetRegistryId,
+    Guid IssuanceReportId,
+    string ReportNo,
+    IssuanceReportType ReportType,
+    string? TenantId,
+    string? CorrelationId = null) : AssetRegisterDomainEvent(TenantId, CorrelationId);
+
 public sealed record AssetFoundAtStationEvent(
     Guid PhysicalCountSessionId,
     Guid PhysicalCountEntryId,

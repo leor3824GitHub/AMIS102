@@ -18,13 +18,13 @@
                 <MudText Typo="Typo.h6" Class="mb-3">New PPEIR</MudText>
                 <MudStack Spacing="2">
                     <MudTextField @bind-Value="_form.PPEIRNo" Label="PPEIR No." Variant="Variant.Outlined"
-                                  Required="true" MaxLength="32" Placeholder="e.g. PPEIR-2026-00001" />
+                                  Dense="true" Margin="Margin.Dense" Size="Size.Small" Required="true" MaxLength="32" Placeholder="e.g. PPEIR-2026-00001" />
                     <MudDatePicker @bind-Date="_form.DateNullable" Label="Date" Variant="Variant.Outlined"
-                                   DateFormat="MM/dd/yyyy" Required="true" />
-                    <MudSelect @bind-Value="_form.IssuanceType" Label="Issuance Type" Variant="Variant.Outlined" T="PPEIssuanceType">
-                        <MudSelectItem Value="PPEIssuanceType.TransferCO">Transfer – CO</MudSelectItem>
-                        <MudSelectItem Value="PPEIssuanceType.TransferRO">Transfer – RO</MudSelectItem>
-                        <MudSelectItem Value="PPEIssuanceType.TransferPO">Transfer – PO</MudSelectItem>
+                                   Dense="true" Margin="Margin.Dense" Size="Size.Small" DateFormat="MM/dd/yyyy" Required="true" />
+                    <MudSelect @bind-Value="_form.IssuanceType" Label="Issuance Type" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" T="PPEIssuanceType">
+                        <MudSelectItem Value="PPEIssuanceType.TransferCO">Transfer ï¿½ CO</MudSelectItem>
+                        <MudSelectItem Value="PPEIssuanceType.TransferRO">Transfer ï¿½ RO</MudSelectItem>
+                        <MudSelectItem Value="PPEIssuanceType.TransferPO">Transfer ï¿½ PO</MudSelectItem>
                         <MudSelectItem Value="PPEIssuanceType.Donation">Donation</MudSelectItem>
                         <MudSelectItem Value="PPEIssuanceType.Dumping">Dumping</MudSelectItem>
                         <MudSelectItem Value="PPEIssuanceType.Destruction">Destruction</MudSelectItem>
@@ -35,28 +35,32 @@
                                      @bind-Value="_form.IssuedTo"
                                      SearchFunc="SearchEmployees" ToStringFunc="FormatEmployee"
                                      Label="Issued To (Receiving Officer)" Variant="Variant.Outlined"
+                                                 Dense="true" Margin="Margin.Dense" Size="Size.Small"
                                      Required="true" Clearable="true" ResetValueOnEmptyText="true" CoerceValue="true" />
                     <MudTextField @bind-Value="_form.IssuedToOfficeAddress" Label="Receiving Office Address" Variant="Variant.Outlined"
-                                  Required="true" MaxLength="500" />
+                                             Dense="true" Margin="Margin.Dense" Size="Size.Small" Required="true" MaxLength="500" />
                     <MudAutocomplete T="EmployeeReferenceDto"
                                      @bind-Value="_form.IssuedBy"
                                      SearchFunc="SearchEmployees" ToStringFunc="FormatEmployee"
                                      Label="Issued By (Division Chief)" Variant="Variant.Outlined"
+                                                 Dense="true" Margin="Margin.Dense" Size="Size.Small"
                                      Required="true" Clearable="true" ResetValueOnEmptyText="true" CoerceValue="true" />
                     <MudAutocomplete T="EmployeeReferenceDto"
                                      @bind-Value="_form.ReceivedBy"
                                      SearchFunc="SearchEmployees" ToStringFunc="FormatEmployee"
                                      Label="Received By" Variant="Variant.Outlined"
+                                                 Dense="true" Margin="Margin.Dense" Size="Size.Small"
                                      Required="true" Clearable="true" ResetValueOnEmptyText="true" CoerceValue="true" />
                     <MudAutocomplete T="EmployeeReferenceDto"
                                      @bind-Value="_form.ApprovedBy"
                                      SearchFunc="SearchEmployees" ToStringFunc="FormatEmployee"
                                      Label="Approved By (GSD-PSMD Chief)" Variant="Variant.Outlined"
+                                                 Dense="true" Margin="Margin.Dense" Size="Size.Small"
                                      Required="true" Clearable="true" ResetValueOnEmptyText="true" CoerceValue="true" />
                     <MudDatePicker @bind-Date="_form.DateReceivedNullable" Label="Date Received (optional)"
-                                   Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" />
-                    <MudTextField @bind-Value="_form.DriverName" Label="Driver Name (optional)" Variant="Variant.Outlined" MaxLength="200" />
-                    <MudTextField @bind-Value="_form.BillOfLadingNo" Label="Bill of Lading No. (optional)" Variant="Variant.Outlined" MaxLength="100" />
+                                              Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" DateFormat="MM/dd/yyyy" />
+                          <MudTextField @bind-Value="_form.DriverName" Label="Driver Name (optional)" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" MaxLength="200" />
+                          <MudTextField @bind-Value="_form.BillOfLadingNo" Label="Bill of Lading No. (optional)" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" MaxLength="100" />
 
                     <MudDivider Class="my-2" />
                     <MudStack Row="true" AlignItems="AlignItems.Center">
@@ -79,8 +83,8 @@
                                              Value="li.SelectedPPEItem"
                                              ValueChanged="@(v => li.SelectedPPEItem = v)"
                                              SearchFunc="SearchTransferablePPEItems"
-                                             ToStringFunc="@(x => x is null ? "" : $"{x.PropertyCode} – {x.Description[..Math.Min(40, x.Description.Length)]}")"
-                                             Label="PPE Item (OnHand / IssuedPAR)" Variant="Variant.Outlined" Dense="true"
+                                             ToStringFunc="@(x => x is null ? "" : $"{x.PropertyCode} ï¿½ {x.Description[..Math.Min(40, x.Description.Length)]}")"
+                                             Label="PPE Item (OnHand / IssuedPAR)" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small"
                                              Required="true" Clearable="true" CoerceValue="true" ResetValueOnEmptyText="true" />
                             @if (li.SelectedPPEItem is not null)
                             {
@@ -91,7 +95,7 @@
                         </MudPaper>
                     }
 
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" FullWidth="true"
                                OnClick="CreateAsync" Disabled="_busy">
                         @if (_busy) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" /> }
                         Create PPEIR
@@ -108,6 +112,7 @@
                 <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3" Spacing="2">
                     <MudText Typo="Typo.h6" Class="flex-grow-1">PPE Issuance Reports</MudText>
                     <MudTextField @bind-Value="_keyword" Label="Search" Variant="Variant.Outlined" Size="Size.Small"
+                                  Dense="true" Margin="Margin.Dense"
                                   Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
                                   DebounceInterval="350" OnDebounceIntervalElapsed="@(() => LoadAsync())" Style="max-width:220px" />
                 </MudStack>
@@ -156,7 +161,7 @@
                 <MudCardHeader>
                     <CardHeaderContent>
                         <MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Spacing="1">
-                            <MudText Typo="Typo.h6" Class="flex-grow-1">@_detail.PPEIRNo — @_detail.Date.ToString("MMMM dd, yyyy")</MudText>
+                            <MudText Typo="Typo.h6" Class="flex-grow-1">@_detail.PPEIRNo ï¿½ @_detail.Date.ToString("MMMM dd, yyyy")</MudText>
                             <MudButton Variant="Variant.Outlined" Color="Color.Info" Size="Size.Small"
                                        StartIcon="@Icons.Material.Filled.Description"
                                        OnClick="@(() => Navigation.NavigateTo("/asset-management/ppe-transfer-reports"))">
@@ -197,7 +202,7 @@
                                     <td>@item.ItemNo</td>
                                     <td><b>@item.PropertyCode</b></td>
                                     <td>@(item.SerialNumber ?? "-")</td>
-                                    <td>@(item.PPESpecification.Length > 30 ? item.PPESpecification[..30] + "…" : item.PPESpecification)</td>
+                                    <td>@(item.PPESpecification.Length > 30 ? item.PPESpecification[..30] + "ï¿½" : item.PPESpecification)</td>
                                     <td>?@item.AcquisitionCost.ToString("N2")</td>
                                     <td>@if (item.AccumulatedDepreciation.HasValue) { <text>?@item.AccumulatedDepreciation.Value.ToString("N2")</text> } else { <MudText Typo="Typo.caption" Color="Color.Warning">Pending</MudText> }</td>
                                     <td>@(item.BookValue.HasValue ? "?" + item.BookValue.Value.ToString("N2") : "-")</td>
@@ -216,7 +221,7 @@
 @if (_showDepreciationDialog && _detail is not null)
 {
     <MudDialog @bind-IsVisible="_showDepreciationDialog">
-        <TitleContent>Record Depreciation — @_detail.PPEIRNo</TitleContent>
+        <TitleContent>Record Depreciation ï¿½ @_detail.PPEIRNo</TitleContent>
         <DialogContent>
             <MudStack Spacing="2">
                 @foreach (var row in _depRows)
@@ -238,8 +243,8 @@
             </MudStack>
         </DialogContent>
         <DialogActions>
-            <MudButton OnClick="@(() => _showDepreciationDialog = false)">Cancel</MudButton>
-            <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="SaveDepreciationAsync" Disabled="_depBusy">Save</MudButton>
+            <MudButton Size="Size.Small" OnClick="@(() => _showDepreciationDialog = false)">Cancel</MudButton>
+            <MudButton Color="Color.Primary" Variant="Variant.Filled" Size="Size.Small" OnClick="SaveDepreciationAsync" Disabled="_depBusy">Save</MudButton>
         </DialogActions>
     </MudDialog>
 }
@@ -390,9 +395,9 @@
 
     private static string FormatIssuanceType(string t) => t switch
     {
-        "TransferCO" => "Transfer – CO",
-        "TransferRO" => "Transfer – RO",
-        "TransferPO" => "Transfer – PO",
+        "TransferCO" => "Transfer ï¿½ CO",
+        "TransferRO" => "Transfer ï¿½ RO",
+        "TransferPO" => "Transfer ï¿½ PO",
         _ => t
     };
 

@@ -30,12 +30,13 @@
                             <MudAutocomplete T="PropertyItemCatalogSummaryDto"
                                              @bind-Value="_spc.SelectedItem"
                                              SearchFunc="SearchItems"
-                                             ToStringFunc="@(x => x is null ? "" : $"{x.Code} – {x.Name}")"
+                                             ToStringFunc="@(x => x is null ? "" : $"{x.Code} ï¿½ {x.Name}")"
                                              Label="Item" Variant="Variant.Outlined"
+                                             Dense="true" Margin="Margin.Dense" Size="Size.Small"
                                              Required="true" Clearable="true" ResetValueOnEmptyText="true" CoerceValue="true" />
-                            <MudDatePicker @bind-Date="_spc.DateFromNullable" Label="Date From" Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" />
-                            <MudDatePicker @bind-Date="_spc.DateToNullable" Label="Date To" Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" />
-                            <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                            <MudDatePicker @bind-Date="_spc.DateFromNullable" Label="Date From" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" DateFormat="MM/dd/yyyy" />
+                            <MudDatePicker @bind-Date="_spc.DateToNullable" Label="Date To" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" DateFormat="MM/dd/yyyy" />
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" FullWidth="true"
                                        OnClick="LoadSPCAsync" Disabled="_spc.Loading || _spc.SelectedItem is null">
                                 Generate
                             </MudButton>
@@ -53,7 +54,7 @@
                     <MudCard Elevation="1">
                         <MudCardHeader>
                             <CardHeaderContent>
-                                <MudText Typo="Typo.h6">@_spc.Result.ItemCode — @_spc.Result.ItemName</MudText>
+                                <MudText Typo="Typo.h6">@_spc.Result.ItemCode ï¿½ @_spc.Result.ItemName</MudText>
                             </CardHeaderContent>
                         </MudCardHeader>
                         <MudCardContent>
@@ -113,26 +114,27 @@
                                              SearchFunc="SearchEmployees"
                                              ToStringFunc="FormatEmployee"
                                              Label="Employee" Variant="Variant.Outlined"
+                                             Dense="true" Margin="Margin.Dense" Size="Size.Small"
                                              Required="true" Clearable="true" ResetValueOnEmptyText="true" CoerceValue="true" />
-                            <MudSelect Value="_regspi.AssetType" ValueChanged="OnRegSPIAssetTypeChanged" Label="Asset Type" Variant="Variant.Outlined" T="AssetType?">
+                            <MudSelect Value="_regspi.AssetType" ValueChanged="OnRegSPIAssetTypeChanged" Label="Asset Type" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" T="AssetType?">
                                 <MudSelectItem T="AssetType?" Value="null">All Types</MudSelectItem>
                                 <MudSelectItem T="AssetType?" Value="AssetType.SE">SE</MudSelectItem>
                                 <MudSelectItem T="AssetType?" Value="AssetType.PPE">PPE</MudSelectItem>
                             </MudSelect>
-                            <MudSelect Value="_regspi.SEValueClass" ValueChanged="OnRegSPISEValueClassChanged" Label="SE Value Class" Variant="Variant.Outlined" T="string">
+                            <MudSelect Value="_regspi.SEValueClass" ValueChanged="OnRegSPISEValueClassChanged" Label="SE Value Class" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" T="string">
                                 <MudSelectItem T="string" Value='@("All")'>All</MudSelectItem>
                                 <MudSelectItem T="string" Value='@("Low-Valued")'>Low-Valued (SPLV)</MudSelectItem>
                                 <MudSelectItem T="string" Value='@("High-Valued")'>High-Valued (SPHV)</MudSelectItem>
                             </MudSelect>
                             <MudText Typo="Typo.caption" Color="Color.Secondary">SE low/high value is inferred from ICS number prefix: SPLV = Low-Valued, SPHV = High-Valued.</MudText>
-                            <MudSelect @bind-Value="_regspi.Status" Label="ICS Status" Variant="Variant.Outlined" T="ICSStatus?">
+                            <MudSelect @bind-Value="_regspi.Status" Label="ICS Status" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" T="ICSStatus?">
                                 <MudSelectItem T="ICSStatus?" Value="null">All Statuses</MudSelectItem>
                                 <MudSelectItem T="ICSStatus?" Value="ICSStatus.Active">Active</MudSelectItem>
                                 <MudSelectItem T="ICSStatus?" Value="ICSStatus.Renewed">Renewed</MudSelectItem>
                                 <MudSelectItem T="ICSStatus?" Value="ICSStatus.CancelledByReturn">Cancelled</MudSelectItem>
                                 <MudSelectItem T="ICSStatus?" Value="ICSStatus.Expired">Expired</MudSelectItem>
                             </MudSelect>
-                            <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" FullWidth="true"
                                        OnClick="@(() => LoadRegSPIAsync(1))"
                                        Disabled="_regspi.Loading || _regspi.SelectedEmployee is null">
                                 Generate
@@ -315,21 +317,21 @@
                     <MudCardContent>
                         <MudStack Spacing="2">
                             <MudText Typo="Typo.subtitle2">Filter</MudText>
-                            <MudDatePicker @bind-Date="_rspi.DateFromNullable" Label="Date From" Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" />
-                            <MudDatePicker @bind-Date="_rspi.DateToNullable" Label="Date To" Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" />
-                            <MudSelect Value="_rspi.AssetType" ValueChanged="OnRSPIAssetTypeChanged" Label="Asset Type" Variant="Variant.Outlined" T="AssetType?">
+                            <MudDatePicker @bind-Date="_rspi.DateFromNullable" Label="Date From" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" DateFormat="MM/dd/yyyy" />
+                            <MudDatePicker @bind-Date="_rspi.DateToNullable" Label="Date To" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" DateFormat="MM/dd/yyyy" />
+                            <MudSelect Value="_rspi.AssetType" ValueChanged="OnRSPIAssetTypeChanged" Label="Asset Type" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" T="AssetType?">
                                 <MudSelectItem T="AssetType?" Value="null">All Types</MudSelectItem>
                                 <MudSelectItem T="AssetType?" Value="AssetType.SE">SE</MudSelectItem>
                                 <MudSelectItem T="AssetType?" Value="AssetType.PPE">PPE</MudSelectItem>
                             </MudSelect>
-                            <MudSelect Value="_rspi.SEValueClass" ValueChanged="OnRSPISEValueClassChanged" Label="SE Value Class" Variant="Variant.Outlined" T="string">
+                            <MudSelect Value="_rspi.SEValueClass" ValueChanged="OnRSPISEValueClassChanged" Label="SE Value Class" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" T="string">
                                 <MudSelectItem T="string" Value='@("All")'>All</MudSelectItem>
                                 <MudSelectItem T="string" Value='@("Low-Valued")'>Low-Valued (SPLV)</MudSelectItem>
                                 <MudSelectItem T="string" Value='@("High-Valued")'>High-Valued (SPHV)</MudSelectItem>
                             </MudSelect>
                             <MudText Typo="Typo.caption" Color="Color.Secondary">SE low/high value is inferred from ICS number prefix: SPLV = Low-Valued, SPHV = High-Valued.</MudText>
                             <MudCheckBox @bind-Value="_rspi.ActiveOnly" Label="Active ICS only" T="bool" />
-                            <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" FullWidth="true"
                                        OnClick="@(() => LoadRSPIAsync(1))" Disabled="_rspi.Loading">
                                 Generate
                             </MudButton>
@@ -502,10 +504,11 @@
                             <MudAutocomplete T="SemiExpendablePropertySummaryDto"
                                              @bind-Value="_history.SelectedProperty"
                                              SearchFunc="SearchAllProperties"
-                                             ToStringFunc="@(x => x is null ? "" : $"{x.PropertyNo} – {x.ItemName}")"
+                                             ToStringFunc="@(x => x is null ? "" : $"{x.PropertyNo} ï¿½ {x.ItemName}")"
                                              Label="Property" Variant="Variant.Outlined"
+                                             Dense="true" Margin="Margin.Dense" Size="Size.Small"
                                              Required="true" Clearable="true" ResetValueOnEmptyText="true" CoerceValue="true" />
-                            <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" FullWidth="true"
                                        OnClick="LoadHistoryAsync"
                                        Disabled="_history.Loading || _history.SelectedProperty is null">
                                 Load History
@@ -525,7 +528,7 @@
                         <MudCardHeader>
                             <CardHeaderContent>
                                 <MudStack Spacing="0">
-                                    <MudText Typo="Typo.h6">@_history.Result.PropertyNo — @_history.Result.ItemName</MudText>
+                                    <MudText Typo="Typo.h6">@_history.Result.PropertyNo ï¿½ @_history.Result.ItemName</MudText>
                                     <MudText Typo="Typo.caption" Color="Color.Secondary">
                                         @_history.Result.ItemCode
                                         @if (!string.IsNullOrWhiteSpace(_history.Result.SerialNo)) { <text> | S/N: @_history.Result.SerialNo</text> }

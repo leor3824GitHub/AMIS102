@@ -17,6 +17,7 @@
         <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3" Spacing="2">
             <MudText Typo="Typo.h6" Class="flex-grow-1">Receiving Reports</MudText>
             <MudTextField @bind-Value="_keyword" Label="Search" Variant="Variant.Outlined" Size="Size.Small"
+                          Dense="true" Margin="Margin.Dense"
                           Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
                           DebounceInterval="350" OnDebounceIntervalElapsed="@(() => LoadAsync())"
                           Style="max-width:260px" />
@@ -82,7 +83,7 @@
                 <MudCardHeader>
                     <CardHeaderContent>
                         <MudStack Row="true" AlignItems="AlignItems.Center">
-                            <MudText Typo="Typo.h6">Edit SMRR — @_editForm.ReportNo</MudText>
+                            <MudText Typo="Typo.h6">Edit SMRR ï¿½ @_editForm.ReportNo</MudText>
                             <MudSpacer />
                             <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="@(() => _editId = null)" />
                         </MudStack>
@@ -92,18 +93,18 @@
                     <MudGrid Spacing="2">
                         <MudItem xs="12" sm="4">
                             <MudTextField @bind-Value="_editForm.ReportNo" Label="SMRR No." Variant="Variant.Outlined"
-                                          Required="true" MaxLength="32" />
+                                          Dense="true" Margin="Margin.Dense" Size="Size.Small" Required="true" MaxLength="32" />
                         </MudItem>
                         <MudItem xs="12" sm="4">
                             <MudDatePicker @bind-Date="_editForm.DateNullable" Label="Date" Variant="Variant.Outlined"
-                                           DateFormat="MM/dd/yyyy" Required="true" />
+                                           Dense="true" Margin="Margin.Dense" Size="Size.Small" DateFormat="MM/dd/yyyy" Required="true" />
                         </MudItem>
                         <MudItem xs="12" sm="4">
                             <MudTextField @bind-Value="_editForm.ReceivedFrom" Label="Received From" Variant="Variant.Outlined"
-                                          Required="true" MaxLength="200" />
+                                          Dense="true" Margin="Margin.Dense" Size="Size.Small" Required="true" MaxLength="200" />
                         </MudItem>
                         <MudItem xs="12" sm="4">
-                            <MudSelect @bind-Value="_editForm.ReceiptType" Label="Receipt Type" Variant="Variant.Outlined" T="ReceiptType">
+                            <MudSelect @bind-Value="_editForm.ReceiptType" Label="Receipt Type" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" T="ReceiptType">
                                 <MudSelectItem Value="ReceiptType.Purchase">Purchase</MudSelectItem>
                                 <MudSelectItem Value="ReceiptType.Transfer">Transfer</MudSelectItem>
                                 <MudSelectItem Value="ReceiptType.Donation">Donation</MudSelectItem>
@@ -114,24 +115,24 @@
                         {
                             <MudItem xs="12" sm="4">
                                 <MudTextField @bind-Value="_editForm.OtherReceiptType" Label="Specify Receipt Type"
-                                              Variant="Variant.Outlined" Required="true" MaxLength="100" />
+                                              Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" Required="true" MaxLength="100" />
                             </MudItem>
                         }
                         <MudItem xs="12" sm="4">
-                            <MudTextField @bind-Value="_editForm.Address" Label="Address" Variant="Variant.Outlined" MaxLength="500" />
+                            <MudTextField @bind-Value="_editForm.Address" Label="Address" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" MaxLength="500" />
                         </MudItem>
                         <MudItem xs="12" sm="4">
-                            <MudTextField @bind-Value="_editForm.FundCluster" Label="Fund Cluster" Variant="Variant.Outlined" MaxLength="50" />
+                            <MudTextField @bind-Value="_editForm.FundCluster" Label="Fund Cluster" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" MaxLength="50" />
                         </MudItem>
                     </MudGrid>
                 </MudCardContent>
                 <MudCardActions>
-                    <MudButton Variant="Variant.Filled" Color="Color.Warning" OnClick="SaveEditAsync" Disabled="_busy"
+                    <MudButton Variant="Variant.Filled" Color="Color.Warning" Size="Size.Small" OnClick="SaveEditAsync" Disabled="_busy"
                                StartIcon="@Icons.Material.Filled.Save">
                         @if (_busy) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" /> }
                         Save Changes
                     </MudButton>
-                    <MudButton Variant="Variant.Outlined" Color="Color.Default" OnClick="@(() => _editId = null)" Class="ml-2">Cancel</MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Default" Size="Size.Small" OnClick="@(() => _editId = null)" Class="ml-2">Cancel</MudButton>
                 </MudCardActions>
             </MudCard>
         }
@@ -143,7 +144,7 @@
                 <MudCardHeader>
                     <CardHeaderContent>
                         <MudStack Row="true" AlignItems="AlignItems.Center">
-                            <MudText Typo="Typo.h6">@_detail.ReportNo — @_detail.Date.ToString("MMMM dd, yyyy")</MudText>
+                            <MudText Typo="Typo.h6">@_detail.ReportNo ï¿½ @_detail.Date.ToString("MMMM dd, yyyy")</MudText>
                             <MudSpacer />
                             <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="@(() => _detail = null)" />
                         </MudStack>
@@ -200,8 +201,8 @@
                                         <MudText Typo="Typo.body2">@item.Description</MudText>
                                         <MudText Typo="Typo.caption" Color="Color.Secondary">@item.AssetType</MudText>
                                     </td>
-                                    <td>@(item.Description ?? "—")</td>
-                                    <td>@(item.Reference ?? "—")</td>
+                                    <td>@(item.Description ?? "ï¿½")</td>
+                                    <td>@(item.Reference ?? "ï¿½")</td>
                                     <td>@item.AcquisitionDate.ToString("MM/dd/yyyy")</td>
                                     <td>@item.Quantity</td>
                                     <td>?@item.UnitCost.ToString("N2")</td>
@@ -234,10 +235,10 @@
                         <MudText Typo="Typo.subtitle1" Class="mb-3">Details</MudText>
                         <MudStack Spacing="2">
                             <MudTextField @bind-Value="_form.ReportNo" Label="SMRR No." Variant="Variant.Outlined"
-                                          Required="true" MaxLength="32" Placeholder="e.g. SMRR-2026-00001" />
+                                          Dense="true" Margin="Margin.Dense" Size="Size.Small" Required="true" MaxLength="32" Placeholder="e.g. SMRR-2026-00001" />
                             <MudDatePicker @bind-Date="_form.DateNullable" Label="Date" Variant="Variant.Outlined"
-                                           DateFormat="MM/dd/yyyy" Required="true" />
-                            <MudSelect @bind-Value="_form.ReceiptType" Label="Receipt Type" Variant="Variant.Outlined" T="ReceiptType">
+                                           Dense="true" Margin="Margin.Dense" Size="Size.Small" DateFormat="MM/dd/yyyy" Required="true" />
+                            <MudSelect @bind-Value="_form.ReceiptType" Label="Receipt Type" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" T="ReceiptType">
                                 <MudSelectItem Value="ReceiptType.Purchase">Purchase</MudSelectItem>
                                 <MudSelectItem Value="ReceiptType.Transfer">Transfer</MudSelectItem>
                                 <MudSelectItem Value="ReceiptType.Donation">Donation</MudSelectItem>
@@ -246,15 +247,15 @@
                             @if (_form.ReceiptType == ReceiptType.Others)
                             {
                                 <MudTextField @bind-Value="_form.OtherReceiptType" Label="Specify Receipt Type"
-                                              Variant="Variant.Outlined" Required="true" MaxLength="100" />
+                                              Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" Required="true" MaxLength="100" />
                             }
                             <MudTextField @bind-Value="_form.ReceivedFrom" Label="Received From" Variant="Variant.Outlined"
-                                          Required="true" MaxLength="200" />
-                            <MudTextField @bind-Value="_form.Address" Label="Address" Variant="Variant.Outlined" MaxLength="500" />
+                                          Dense="true" Margin="Margin.Dense" Size="Size.Small" Required="true" MaxLength="200" />
+                            <MudTextField @bind-Value="_form.Address" Label="Address" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" MaxLength="500" />
 
 
                             <MudStack Row="true" Spacing="1" Class="mt-2">
-                                <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" FullWidth="true"
                                            OnClick="CreateAsync" Disabled="_busy">
                                     @if (_busy)
                                     {
@@ -262,7 +263,7 @@
                                     }
                                     Create SMRR
                                 </MudButton>
-                                <MudButton Variant="Variant.Outlined" Color="Color.Default" OnClick="ClearForm">
+                                <MudButton Variant="Variant.Outlined" Color="Color.Default" Size="Size.Small" OnClick="ClearForm">
                                     Clear
                                 </MudButton>
                             </MudStack>
@@ -283,13 +284,14 @@
                                 <MudAutocomplete T="TangibleItemSummaryDto"
                                                  @bind-Value="_draft.SelectedItem"
                                                  SearchFunc="SearchTangibleItems"
-                                                 ToStringFunc="@(x => x is null ? "" : $"{x.PropertyNo} — {x.ItemName}")"
+                                                 ToStringFunc="@(x => x is null ? "" : $"{x.PropertyNo} ï¿½ {x.ItemName}")"
                                                  Label="Tangible Item" Variant="Variant.Outlined"
+                                                 Dense="true" Margin="Margin.Dense" Size="Size.Small"
                                                  Clearable="true" CoerceValue="true"
                                                  ResetValueOnEmptyText="true" MinCharacters="0" />
                             </MudItem>
                             <MudItem xs="12" sm="2">
-                                <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" FullWidth="true"
                                            StartIcon="@Icons.Material.Filled.Add" OnClick="AddLineItem">Add</MudButton>
                             </MudItem>
                         </MudGrid>

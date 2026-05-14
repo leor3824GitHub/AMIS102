@@ -47,20 +47,17 @@ public sealed record AssetRegistrySummaryDto(
 
 /// <summary>
 /// Registers a single physical unit. One command = one row (per cardinality rule §B).
-/// PropertyNo is auto-minted by IPropertyNumberGenerator from the catalog item's
-/// PropertyClass + AcquisitionDate when not supplied.
+/// PropertyNo is operator-assigned (NFA policy) — must be supplied by the caller.
 /// </summary>
 public sealed record RegisterAssetCommand(
     Guid CatalogItemId,
     AssetType AssetType,
     AssetCategory Category,
+    string PropertyNo,
     string Description,
     string FundCluster,
     DateOnly AcquisitionDate,
     decimal UnitCost,
-    string LocationCode,
-    string SubMajorAccount,
-    string GeneralLedgerAccount,
     string? SerialNo = null,
     string? Brand = null,
     string? Model = null,
@@ -83,6 +80,7 @@ public sealed record SearchAssetsQuery(
     LifecycleState? LifecycleState = null,
     Guid? CurrentCustodianId = null,
     Guid? CatalogItemId = null,
+    bool IncludeTransferredOut = false,
     int PageNumber = 1,
     int PageSize = 10) : IQuery<PagedResponse<AssetRegistrySummaryDto>>;
 

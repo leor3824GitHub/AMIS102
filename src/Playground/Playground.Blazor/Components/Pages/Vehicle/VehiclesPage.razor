@@ -10,21 +10,22 @@
     <ActionContent>
         <MudStack Row="true" Spacing="2" Style="width:100%; max-width: 700px;">
             <MudTextField @bind-Value="_query.Keyword" Label="Search" Placeholder="Plate, make, model"
-                          Variant="Variant.Outlined" Size="Size.Small" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" />
-            <MudSelect T="string" @bind-Value="_query.Status" Label="Status" Dense="true" Clearable="true">
+                          Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small"
+                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" />
+            <MudSelect T="string" @bind-Value="_query.Status" Label="Status" Dense="true" Margin="Margin.Dense" Size="Size.Small" Clearable="true">
                 <MudSelectItem Value="@Active">Active</MudSelectItem>
                 <MudSelectItem Value="@UnderRepair">Under Repair</MudSelectItem>
                 <MudSelectItem Value="@Retired">Retired</MudSelectItem>
                 <MudSelectItem Value="@Decommissioned">Decommissioned</MudSelectItem>
             </MudSelect>
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="LoadVehicles" Disabled="_busy">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" OnClick="LoadVehicles" Disabled="_busy">
                 @if (_busy)
                 {
                     <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
                 }
                 Search
             </MudButton>
-            <MudButton Variant="Variant.Outlined" Color="Color.Default" OnClick="ClearFilters" Disabled="_busy">Clear</MudButton>
+            <MudButton Variant="Variant.Outlined" Color="Color.Default" Size="Size.Small" OnClick="ClearFilters" Disabled="_busy">Clear</MudButton>
         </MudStack>
     </ActionContent>
 </AMISPageHeader>

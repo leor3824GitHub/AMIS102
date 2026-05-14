@@ -82,7 +82,7 @@ else
     <!-- Filter bar -->
     <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2" Spacing="2" Wrap="Wrap.Wrap">
         <MudSelect Value="_resultFilter" Label="Filter" Variant="Variant.Outlined" Size="Size.Small"
-                   T="string" Style="max-width:150px"
+                   Dense="true" Margin="Margin.Dense" T="string" Style="max-width:150px"
                    ValueChanged="@((string? v) => { _resultFilter = v; ApplyFilter(); })">
             <MudSelectItem Value="@((string?)null)">All (@TotalCount)</MudSelectItem>
             <MudSelectItem Value="@("Pending")">Pending (@PendingCount)</MudSelectItem>
@@ -91,7 +91,7 @@ else
             <MudSelectItem Value="@("FoundAtStation")">Found@Station (@AtStationCount)</MudSelectItem>
         </MudSelect>
         <MudTextField @bind-Value="_keyword" Label="Search property / description" Variant="Variant.Outlined"
-                      Size="Size.Small" Style="max-width:280px"
+                      Size="Size.Small" Dense="true" Margin="Margin.Dense" Style="max-width:280px"
                       Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
                       DebounceInterval="300" OnDebounceIntervalElapsed="ApplyFilter" />
     </MudStack>
@@ -178,17 +178,17 @@ else
         <MudPaper Elevation="8" Class="pa-4" Style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10;min-width:320px;max-width:480px;width:90vw">
             <MudText Typo="Typo.h6" Class="mb-2">Mark as Found</MudText>
             <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-3">@_markEntry.PropertyNumber — @_markEntry.Description[..Math.Min(60,_markEntry.Description.Length)]</MudText>
-            <MudSelect @bind-Value="_markCondition" Label="Condition" Variant="Variant.Outlined" T="string" Class="mb-2">
+            <MudSelect @bind-Value="_markCondition" Label="Condition" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" T="string" Class="mb-2">
                 <MudSelectItem Value="@("Good")">Good</MudSelectItem>
                 <MudSelectItem Value="@("NeedsRepair")">Needs Repair</MudSelectItem>
                 <MudSelectItem Value="@("Unserviceable")">Unserviceable</MudSelectItem>
                 <MudSelectItem Value="@("Obsolete")">Obsolete</MudSelectItem>
                 <MudSelectItem Value="@("NoLongerNeeded")">No Longer Needed</MudSelectItem>
             </MudSelect>
-            <MudTextField @bind-Value="_markRemarks" Label="Remarks (optional)" Variant="Variant.Outlined" Lines="2" Class="mb-3" />
+            <MudTextField @bind-Value="_markRemarks" Label="Remarks (optional)" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" Lines="2" Class="mb-3" />
             <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2">
-                <MudButton OnClick="CloseMarkDialog">Cancel</MudButton>
-                <MudButton Variant="Variant.Filled" Color="Color.Success"
+                <MudButton Size="Size.Small" OnClick="CloseMarkDialog">Cancel</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Small"
                            OnClick="ConfirmMarkFoundAsync" Disabled="_busy">
                     @(_isScanMark ? "Confirm Scan" : "Mark Found")
                 </MudButton>
@@ -206,21 +206,21 @@ else
                 Use this for assets found physically but not on the pre-generated checklist.
             </MudAlert>
             <MudStack Spacing="2">
-                <MudTextField @bind-Value="_fasPropertyNumber" Label="Property Number" Variant="Variant.Outlined" MaxLength="64" />
-                <MudTextField @bind-Value="_fasDescription" Label="Description" Variant="Variant.Outlined" MaxLength="500" Lines="2" />
-                <MudNumericField @bind-Value="_fasUnitCost" Label="Unit Cost (₱)" Variant="Variant.Outlined" Min="0m" T="decimal" />
-                <MudSelect @bind-Value="_fasCondition" Label="Condition" Variant="Variant.Outlined" T="string">
+                <MudTextField @bind-Value="_fasPropertyNumber" Label="Property Number" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" MaxLength="64" />
+                <MudTextField @bind-Value="_fasDescription" Label="Description" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" MaxLength="500" Lines="2" />
+                <MudNumericField @bind-Value="_fasUnitCost" Label="Unit Cost (₱)" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" Min="0m" T="decimal" />
+                <MudSelect @bind-Value="_fasCondition" Label="Condition" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" T="string">
                     <MudSelectItem Value="@("Good")">Good</MudSelectItem>
                     <MudSelectItem Value="@("NeedsRepair")">Needs Repair</MudSelectItem>
                     <MudSelectItem Value="@("Unserviceable")">Unserviceable</MudSelectItem>
                     <MudSelectItem Value="@("Obsolete")">Obsolete</MudSelectItem>
                     <MudSelectItem Value="@("NoLongerNeeded")">No Longer Needed</MudSelectItem>
                 </MudSelect>
-                <MudTextField @bind-Value="_fasRemarks" Label="Remarks (optional)" Variant="Variant.Outlined" Lines="2" />
+                <MudTextField @bind-Value="_fasRemarks" Label="Remarks (optional)" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" Lines="2" />
             </MudStack>
             <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2" Class="mt-3">
-                <MudButton OnClick="@(() => _showFoundAtStation = false)">Cancel</MudButton>
-                <MudButton Variant="Variant.Filled" Color="Color.Info" OnClick="ConfirmFoundAtStationAsync" Disabled="_busy">Add Entry</MudButton>
+                <MudButton Size="Size.Small" OnClick="@(() => _showFoundAtStation = false)">Cancel</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Info" Size="Size.Small" OnClick="ConfirmFoundAtStationAsync" Disabled="_busy">Add Entry</MudButton>
             </MudStack>
         </MudPaper>
     }
@@ -241,8 +241,8 @@ else
                 Once submitted the session is locked and the ICF / RPCPPE reports are ready. This cannot be undone.
             </MudText>
             <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2">
-                <MudButton OnClick="@(() => _showSubmitConfirm = false)">Cancel</MudButton>
-                <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="SubmitAsync" Disabled="_busy">Submit</MudButton>
+                <MudButton Size="Size.Small" OnClick="@(() => _showSubmitConfirm = false)">Cancel</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Small" OnClick="SubmitAsync" Disabled="_busy">Submit</MudButton>
             </MudStack>
         </MudPaper>
     }

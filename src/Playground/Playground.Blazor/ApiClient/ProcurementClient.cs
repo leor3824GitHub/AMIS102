@@ -1,5 +1,7 @@
 using System.Globalization;
 using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Web;
 using AMIS.Framework.Shared.Persistence;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.Canvass;
@@ -8,6 +10,14 @@ using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
 using PurchaseOrderContracts = AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders;
 
 namespace AMIS.Playground.Blazor.ApiClient;
+
+internal static class ProcurementJson
+{
+    public static readonly JsonSerializerOptions Options = new(JsonSerializerDefaults.Web)
+    {
+        Converters = { new JsonStringEnumConverter() }
+    };
+}
 
 // ── Purchase Requests ─────────────────────────────────────────────────────────
 
@@ -34,52 +44,52 @@ internal sealed class PurchaseRequestClient(HttpClient http) : IPurchaseRequestC
         if (status.HasValue) q["Status"] = ((int)status.Value).ToString(CultureInfo.InvariantCulture);
         q["PageNumber"] = page.ToString(CultureInfo.InvariantCulture);
         q["PageSize"] = pageSize.ToString(CultureInfo.InvariantCulture);
-        return http.GetFromJsonAsync<PagedResponse<PurchaseRequestSummaryDto>>($"{Base}?{q}", ct)!;
+        return http.GetFromJsonAsync<PagedResponse<PurchaseRequestSummaryDto>>($"{Base}?{q}", ProcurementJson.Options, ct)!;
     }
 
     public Task<PurchaseRequestDto?> GetAsync(Guid id, CancellationToken ct = default) =>
-        http.GetFromJsonAsync<PurchaseRequestDto>($"{Base}/{id}", ct);
+        http.GetFromJsonAsync<PurchaseRequestDto>($"{Base}/{id}", ProcurementJson.Options, ct);
 
     public async Task<PurchaseRequestDto> CreateAsync(CreatePurchaseRequestCommand command, CancellationToken ct = default)
     {
-        using var r = await http.PostAsJsonAsync(Base, command, ct);
+        using var r = await http.PostAsJsonAsync(Base, command, ProcurementJson.Options, ct);
         r.EnsureSuccessStatusCode();
-        return (await r.Content.ReadFromJsonAsync<PurchaseRequestDto>(ct))!;
+        return (await r.Content.ReadFromJsonAsync<PurchaseRequestDto>(ProcurementJson.Options, ct))!;
     }
 
     public async Task<PurchaseRequestDto> UpdateAsync(Guid id, UpdatePurchaseRequestCommand command, CancellationToken ct = default)
     {
-        using var r = await http.PutAsJsonAsync($"{Base}/{id}", command, ct);
+        using var r = await http.PutAsJsonAsync($"{Base}/{id}", command, ProcurementJson.Options, ct);
         r.EnsureSuccessStatusCode();
-        return (await r.Content.ReadFromJsonAsync<PurchaseRequestDto>(ct))!;
+        return (await r.Content.ReadFromJsonAsync<PurchaseRequestDto>(ProcurementJson.Options, ct))!;
     }
 
     public async Task<PurchaseRequestDto> SubmitAsync(Guid id, CancellationToken ct = default)
     {
         using var r = await http.PostAsync($"{Base}/{id}/submit", null, ct);
         r.EnsureSuccessStatusCode();
-        return (await r.Content.ReadFromJsonAsync<PurchaseRequestDto>(ct))!;
+        return (await r.Content.ReadFromJsonAsync<PurchaseRequestDto>(ProcurementJson.Options, ct))!;
     }
 
     public async Task<PurchaseRequestDto> ApproveAsync(Guid id, Guid approvedById, CancellationToken ct = default)
     {
-        using var r = await http.PostAsJsonAsync($"{Base}/{id}/approve", new ApprovePurchaseRequestCommand(id, approvedById), ct);
+        using var r = await http.PostAsJsonAsync($"{Base}/{id}/approve", new ApprovePurchaseRequestCommand(id, approvedById), ProcurementJson.Options, ct);
         r.EnsureSuccessStatusCode();
-        return (await r.Content.ReadFromJsonAsync<PurchaseRequestDto>(ct))!;
+        return (await r.Content.ReadFromJsonAsync<PurchaseRequestDto>(ProcurementJson.Options, ct))!;
     }
 
     public async Task<PurchaseRequestDto> RejectAsync(Guid id, string reason, CancellationToken ct = default)
     {
-        using var r = await http.PostAsJsonAsync($"{Base}/{id}/reject", new RejectPurchaseRequestCommand(id, reason), ct);
+        using var r = await http.PostAsJsonAsync($"{Base}/{id}/reject", new RejectPurchaseRequestCommand(id, reason), ProcurementJson.Options, ct);
         r.EnsureSuccessStatusCode();
-        return (await r.Content.ReadFromJsonAsync<PurchaseRequestDto>(ct))!;
+        return (await r.Content.ReadFromJsonAsync<PurchaseRequestDto>(ProcurementJson.Options, ct))!;
     }
 
     public async Task<PurchaseRequestDto> CancelAsync(Guid id, string? reason = null, CancellationToken ct = default)
     {
-        using var r = await http.PostAsJsonAsync($"{Base}/{id}/cancel", new CancelPurchaseRequestCommand(id, reason), ct);
+        using var r = await http.PostAsJsonAsync($"{Base}/{id}/cancel", new CancelPurchaseRequestCommand(id, reason), ProcurementJson.Options, ct);
         r.EnsureSuccessStatusCode();
-        return (await r.Content.ReadFromJsonAsync<PurchaseRequestDto>(ct))!;
+        return (await r.Content.ReadFromJsonAsync<PurchaseRequestDto>(ProcurementJson.Options, ct))!;
     }
 }
 
@@ -105,31 +115,31 @@ internal sealed class CanvassRequestClient(HttpClient http) : ICanvassRequestCli
         if (status.HasValue) q["Status"] = ((int)status.Value).ToString(CultureInfo.InvariantCulture);
         q["PageNumber"] = page.ToString(CultureInfo.InvariantCulture);
         q["PageSize"] = pageSize.ToString(CultureInfo.InvariantCulture);
-        return http.GetFromJsonAsync<PagedResponse<CanvassRequestSummaryDto>>($"{Base}?{q}", ct)!;
+        return http.GetFromJsonAsync<PagedResponse<CanvassRequestSummaryDto>>($"{Base}?{q}", ProcurementJson.Options, ct)!;
     }
 
     public Task<CanvassRequestDto?> GetAsync(Guid id, CancellationToken ct = default) =>
-        http.GetFromJsonAsync<CanvassRequestDto>($"{Base}/{id}", ct);
+        http.GetFromJsonAsync<CanvassRequestDto>($"{Base}/{id}", ProcurementJson.Options, ct);
 
     public async Task<CanvassRequestDto> CreateAsync(CreateCanvassRequestCommand command, CancellationToken ct = default)
     {
-        using var r = await http.PostAsJsonAsync(Base, command, ct);
+        using var r = await http.PostAsJsonAsync(Base, command, ProcurementJson.Options, ct);
         r.EnsureSuccessStatusCode();
-        return (await r.Content.ReadFromJsonAsync<CanvassRequestDto>(ct))!;
+        return (await r.Content.ReadFromJsonAsync<CanvassRequestDto>(ProcurementJson.Options, ct))!;
     }
 
     public async Task<CanvassQuotationDto> AddQuotationAsync(Guid canvassRequestId, AddQuotationCommand command, CancellationToken ct = default)
     {
-        using var r = await http.PostAsJsonAsync($"{Base}/{canvassRequestId}/quotations", command with { CanvassRequestId = canvassRequestId }, ct);
+        using var r = await http.PostAsJsonAsync($"{Base}/{canvassRequestId}/quotations", command with { CanvassRequestId = canvassRequestId }, ProcurementJson.Options, ct);
         r.EnsureSuccessStatusCode();
-        return (await r.Content.ReadFromJsonAsync<CanvassQuotationDto>(ct))!;
+        return (await r.Content.ReadFromJsonAsync<CanvassQuotationDto>(ProcurementJson.Options, ct))!;
     }
 
     public async Task<CanvassRequestDto> AwardAsync(Guid canvassRequestId, Guid awardedQuotationId, CancellationToken ct = default)
     {
-        using var r = await http.PostAsJsonAsync($"{Base}/{canvassRequestId}/award", new AwardCanvassCommand(canvassRequestId, awardedQuotationId), ct);
+        using var r = await http.PostAsJsonAsync($"{Base}/{canvassRequestId}/award", new AwardCanvassCommand(canvassRequestId, awardedQuotationId), ProcurementJson.Options, ct);
         r.EnsureSuccessStatusCode();
-        return (await r.Content.ReadFromJsonAsync<CanvassRequestDto>(ct))!;
+        return (await r.Content.ReadFromJsonAsync<CanvassRequestDto>(ProcurementJson.Options, ct))!;
     }
 }
 
@@ -156,38 +166,38 @@ internal sealed class PurchaseOrderClient(HttpClient http) : IPurchaseOrderClien
         if (status.HasValue) q["Status"] = ((int)status.Value).ToString(CultureInfo.InvariantCulture);
         q["PageNumber"] = page.ToString(CultureInfo.InvariantCulture);
         q["PageSize"] = pageSize.ToString(CultureInfo.InvariantCulture);
-        return http.GetFromJsonAsync<PagedResponse<PurchaseOrderSummaryDto>>($"{Base}?{q}", ct)!;
+        return http.GetFromJsonAsync<PagedResponse<PurchaseOrderSummaryDto>>($"{Base}?{q}", ProcurementJson.Options, ct)!;
     }
 
     public Task<PurchaseOrderDto?> GetAsync(Guid id, CancellationToken ct = default) =>
-        http.GetFromJsonAsync<PurchaseOrderDto>($"{Base}/{id}", ct);
+        http.GetFromJsonAsync<PurchaseOrderDto>($"{Base}/{id}", ProcurementJson.Options, ct);
 
     public async Task<PurchaseOrderDto> CreateAsync(PurchaseOrderContracts.CreatePurchaseOrderCommand command, CancellationToken ct = default)
     {
-        using var r = await http.PostAsJsonAsync(Base, command, ct);
+        using var r = await http.PostAsJsonAsync(Base, command, ProcurementJson.Options, ct);
         r.EnsureSuccessStatusCode();
-        return (await r.Content.ReadFromJsonAsync<PurchaseOrderDto>(ct))!;
+        return (await r.Content.ReadFromJsonAsync<PurchaseOrderDto>(ProcurementJson.Options, ct))!;
     }
 
     public async Task<PurchaseOrderDto> UpdateAsync(Guid id, UpdatePurchaseOrderCommand command, CancellationToken ct = default)
     {
-        using var r = await http.PutAsJsonAsync($"{Base}/{id}", command, ct);
+        using var r = await http.PutAsJsonAsync($"{Base}/{id}", command, ProcurementJson.Options, ct);
         r.EnsureSuccessStatusCode();
-        return (await r.Content.ReadFromJsonAsync<PurchaseOrderDto>(ct))!;
+        return (await r.Content.ReadFromJsonAsync<PurchaseOrderDto>(ProcurementJson.Options, ct))!;
     }
 
     public async Task<PurchaseOrderDto> IssueAsync(Guid id, CancellationToken ct = default)
     {
         using var r = await http.PatchAsync($"{Base}/{id}/issue", null, ct);
         r.EnsureSuccessStatusCode();
-        return (await r.Content.ReadFromJsonAsync<PurchaseOrderDto>(ct))!;
+        return (await r.Content.ReadFromJsonAsync<PurchaseOrderDto>(ProcurementJson.Options, ct))!;
     }
 
     public async Task<PurchaseOrderDto> CancelAsync(Guid id, string? reason = null, CancellationToken ct = default)
     {
-        using var r = await http.PatchAsJsonAsync($"{Base}/{id}/cancel", new CancelPoBody(reason), ct);
+        using var r = await http.PatchAsJsonAsync($"{Base}/{id}/cancel", new CancelPoBody(reason), ProcurementJson.Options, ct);
         r.EnsureSuccessStatusCode();
-        return (await r.Content.ReadFromJsonAsync<PurchaseOrderDto>(ct))!;
+        return (await r.Content.ReadFromJsonAsync<PurchaseOrderDto>(ProcurementJson.Options, ct))!;
     }
 
     private sealed record CancelPoBody(string? Reason);

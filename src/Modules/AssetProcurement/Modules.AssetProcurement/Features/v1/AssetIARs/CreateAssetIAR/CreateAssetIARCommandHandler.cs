@@ -88,7 +88,8 @@ public sealed class CreateAssetIARCommandHandler(
             iar.LineItems.Select(li => new AssetIARLineItemDto(
                 li.ItemNo, li.Description, li.TechnicalSpecifications,
                 li.Brand, li.Model, li.SerialNo, li.PropertyClassHint,
-                li.Unit, li.Quantity, li.UnitCost, li.Amount, li.InspectionRemarks)).ToList(),
+                li.Unit, li.Quantity, li.UnitCost, li.Amount, li.InspectionRemarks,
+                li.StockPropertyNo)).ToList(),
             iar.TotalAmount,
             iar.CreatedOnUtc,
             iar.CreatedBy,

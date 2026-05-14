@@ -1,0 +1,161 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="Page-1" id="xLwjKgr2C4di308eg2Jw">
+    <mxGraphModel dx="1705" dy="1070" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="UnqTaPZdMhy_Gl80gt0S-15" edge="1" parent="1" source="UnqTaPZdMhy_Gl80gt0S-1" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="UnqTaPZdMhy_Gl80gt0S-8" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="160" y="130" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="UnqTaPZdMhy_Gl80gt0S-1" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Start" vertex="1">
+          <mxGeometry height="80" width="120" x="100" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="UnqTaPZdMhy_Gl80gt0S-18" edge="1" parent="1" source="UnqTaPZdMhy_Gl80gt0S-2" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="UnqTaPZdMhy_Gl80gt0S-8" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="UnqTaPZdMhy_Gl80gt0S-2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="Received Purchase Request" vertex="1">
+          <mxGeometry height="60" width="120" x="100" y="130" as="geometry" />
+        </mxCell>
+        <mxCell id="UnqTaPZdMhy_Gl80gt0S-6" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="&lt;div&gt;Received RFQ&amp;nbsp;&lt;/div&gt;&lt;div&gt;from 3 Suppliers&lt;/div&gt;" vertex="1">
+          <mxGeometry height="60" width="120" x="100" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="UnqTaPZdMhy_Gl80gt0S-19" edge="1" parent="1" source="UnqTaPZdMhy_Gl80gt0S-8" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="UnqTaPZdMhy_Gl80gt0S-9" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="UnqTaPZdMhy_Gl80gt0S-8" parent="1" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;" value="Create Request for Quotation Form" vertex="1">
+          <mxGeometry height="60" width="150" x="80" y="210" as="geometry" />
+        </mxCell>
+        <mxCell id="UnqTaPZdMhy_Gl80gt0S-20" edge="1" parent="1" source="UnqTaPZdMhy_Gl80gt0S-9" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="UnqTaPZdMhy_Gl80gt0S-10" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="UnqTaPZdMhy_Gl80gt0S-9" parent="1" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;" value="&lt;div&gt;Create Abstract of&lt;/div&gt;&lt;div&gt;&amp;nbsp;Canvass&lt;/div&gt;" vertex="1">
+          <mxGeometry height="60" width="150" x="80" y="370" as="geometry" />
+        </mxCell>
+        <mxCell id="UnqTaPZdMhy_Gl80gt0S-21" edge="1" parent="1" source="UnqTaPZdMhy_Gl80gt0S-10" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="UnqTaPZdMhy_Gl80gt0S-12" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="UnqTaPZdMhy_Gl80gt0S-10" parent="1" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;" value="&lt;div&gt;Create Purchase&amp;nbsp;&lt;/div&gt;&lt;div&gt;Request for lowest quotatoin&lt;/div&gt;" vertex="1">
+          <mxGeometry height="60" width="150" x="70" y="450" as="geometry" />
+        </mxCell>
+        <mxCell id="UnqTaPZdMhy_Gl80gt0S-22" edge="1" parent="1" source="UnqTaPZdMhy_Gl80gt0S-12" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="UnqTaPZdMhy_Gl80gt0S-11" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="UnqTaPZdMhy_Gl80gt0S-23" edge="1" parent="1" source="UnqTaPZdMhy_Gl80gt0S-12" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="UnqTaPZdMhy_Gl80gt0S-13" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="UnqTaPZdMhy_Gl80gt0S-12" parent="1" style="rhombus;whiteSpace=wrap;html=1;" value="Is Supplier&amp;nbsp; policy payment first?" vertex="1">
+          <mxGeometry height="120" width="120" x="250" y="420" as="geometry" />
+        </mxCell>
+        <mxCell id="UnqTaPZdMhy_Gl80gt0S-60" edge="1" parent="1" source="UnqTaPZdMhy_Gl80gt0S-13" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="UnqTaPZdMhy_Gl80gt0S-48" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="UnqTaPZdMhy_Gl80gt0S-13" parent="1" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;" value="&lt;div&gt;Received item&amp;nbsp;&lt;/div&gt;&lt;div&gt;&amp;amp; make IAR, Also&amp;nbsp;&lt;/div&gt;&lt;div&gt;Create Property Number&amp;nbsp;&lt;/div&gt;&lt;div&gt;per Item&lt;/div&gt;" vertex="1">
+          <mxGeometry height="70" width="160" x="220" y="570" as="geometry" />
+        </mxCell>
+        <mxCell id="UnqTaPZdMhy_Gl80gt0S-27" parent="1" style="swimlane;startSize=0;" value="Finance Module" vertex="1">
+          <mxGeometry height="260" width="220" x="490" y="350" as="geometry" />
+        </mxCell>
+        <mxCell id="UnqTaPZdMhy_Gl80gt0S-11" parent="UnqTaPZdMhy_Gl80gt0S-27" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;" value="&lt;div&gt;If Yes,&amp;nbsp;&lt;/div&gt;&lt;div&gt;Create BUR and&amp;nbsp;&lt;/div&gt;&lt;div&gt;Voucher&lt;/div&gt;" vertex="1">
+          <mxGeometry height="60" width="150" x="35" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="UnqTaPZdMhy_Gl80gt0S-58" edge="1" parent="UnqTaPZdMhy_Gl80gt0S-27" source="UnqTaPZdMhy_Gl80gt0S-53" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="UnqTaPZdMhy_Gl80gt0S-11" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="UnqTaPZdMhy_Gl80gt0S-53" parent="UnqTaPZdMhy_Gl80gt0S-27" style="ellipse;whiteSpace=wrap;html=1;" value="Start" vertex="1">
+          <mxGeometry height="50" width="60" x="80" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="UnqTaPZdMhy_Gl80gt0S-28" parent="1" style="swimlane;startSize=0;" value="Asset Register Module" vertex="1">
+          <mxGeometry height="400" width="792" x="40" y="670" as="geometry" />
+        </mxCell>
+        <mxCell id="UnqTaPZdMhy_Gl80gt0S-36" edge="1" parent="UnqTaPZdMhy_Gl80gt0S-28" source="UnqTaPZdMhy_Gl80gt0S-33" style="edgeStyle=entityRelationEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="UnqTaPZdMhy_Gl80gt0S-35" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="UnqTaPZdMhy_Gl80gt0S-33" parent="UnqTaPZdMhy_Gl80gt0S-28" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;" value="&lt;div&gt;Create&lt;/div&gt;&lt;div&gt;&amp;nbsp;PPERR for PPE&lt;/div&gt;&lt;div&gt;&amp;nbsp;&amp;amp; SMRR for SE(data came from Inspected &amp;amp; accepted items)&lt;/div&gt;" vertex="1">
+          <mxGeometry height="70" width="145" x="175" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="UnqTaPZdMhy_Gl80gt0S-67" edge="1" parent="UnqTaPZdMhy_Gl80gt0S-28" source="UnqTaPZdMhy_Gl80gt0S-35" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="UnqTaPZdMhy_Gl80gt0S-41" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="UnqTaPZdMhy_Gl80gt0S-35" parent="UnqTaPZdMhy_Gl80gt0S-28" style="rounded=1;whiteSpace=wrap;html=1;" value="Store in the Asset Registry" vertex="1">
+          <mxGeometry height="70" width="135" x="355" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="UnqTaPZdMhy_Gl80gt0S-69" edge="1" parent="UnqTaPZdMhy_Gl80gt0S-28" source="UnqTaPZdMhy_Gl80gt0S-37" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="UnqTaPZdMhy_Gl80gt0S-39" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="UnqTaPZdMhy_Gl80gt0S-78" edge="1" parent="UnqTaPZdMhy_Gl80gt0S-28" source="UnqTaPZdMhy_Gl80gt0S-37" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="UnqTaPZdMhy_Gl80gt0S-77" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="UnqTaPZdMhy_Gl80gt0S-37" parent="UnqTaPZdMhy_Gl80gt0S-28" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;" value="&lt;div&gt;Create&amp;nbsp;&lt;/div&gt;&lt;div&gt;PAR for PPE and&amp;nbsp;&lt;/div&gt;&lt;div&gt;ICS for SE&lt;/div&gt;" vertex="1">
+          <mxGeometry height="70" width="150" x="347.5" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="UnqTaPZdMhy_Gl80gt0S-70" edge="1" parent="UnqTaPZdMhy_Gl80gt0S-28" source="UnqTaPZdMhy_Gl80gt0S-39" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="UnqTaPZdMhy_Gl80gt0S-46" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="UnqTaPZdMhy_Gl80gt0S-39" parent="UnqTaPZdMhy_Gl80gt0S-28" style="rounded=0;whiteSpace=wrap;html=1;" value="Issued the item/s to accountable officer." vertex="1">
+          <mxGeometry height="60" width="125" x="175" y="245" as="geometry" />
+        </mxCell>
+        <mxCell id="UnqTaPZdMhy_Gl80gt0S-68" edge="1" parent="UnqTaPZdMhy_Gl80gt0S-28" source="UnqTaPZdMhy_Gl80gt0S-41" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="UnqTaPZdMhy_Gl80gt0S-37" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="UnqTaPZdMhy_Gl80gt0S-71" edge="1" parent="UnqTaPZdMhy_Gl80gt0S-28" source="UnqTaPZdMhy_Gl80gt0S-41" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="UnqTaPZdMhy_Gl80gt0S-43" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="UnqTaPZdMhy_Gl80gt0S-41" parent="UnqTaPZdMhy_Gl80gt0S-28" style="rhombus;whiteSpace=wrap;html=1;" value="&lt;div&gt;Transfer to&amp;nbsp;&lt;/div&gt;&lt;div&gt;other Office?&lt;/div&gt;" vertex="1">
+          <mxGeometry height="90" width="95" x="375" y="125" as="geometry" />
+        </mxCell>
+        <mxCell id="UnqTaPZdMhy_Gl80gt0S-72" edge="1" parent="UnqTaPZdMhy_Gl80gt0S-28" source="UnqTaPZdMhy_Gl80gt0S-43" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="UnqTaPZdMhy_Gl80gt0S-62" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="UnqTaPZdMhy_Gl80gt0S-80" edge="1" parent="UnqTaPZdMhy_Gl80gt0S-28" source="UnqTaPZdMhy_Gl80gt0S-43" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="UnqTaPZdMhy_Gl80gt0S-79" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="UnqTaPZdMhy_Gl80gt0S-43" parent="UnqTaPZdMhy_Gl80gt0S-28" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;" value="&lt;div&gt;If yes,&amp;nbsp;&lt;/div&gt;&lt;div&gt;Create PPEIR&amp;nbsp;&lt;/div&gt;&lt;div&gt;for PPE and&amp;nbsp;&lt;/div&gt;&lt;div&gt;SMIR for SE&lt;/div&gt;" vertex="1">
+          <mxGeometry height="70" width="135" x="545" y="135" as="geometry" />
+        </mxCell>
+        <mxCell id="UnqTaPZdMhy_Gl80gt0S-46" parent="UnqTaPZdMhy_Gl80gt0S-28" style="ellipse;whiteSpace=wrap;html=1;" value="End" vertex="1">
+          <mxGeometry height="65" width="85" x="50" y="242.5" as="geometry" />
+        </mxCell>
+        <mxCell id="UnqTaPZdMhy_Gl80gt0S-52" edge="1" parent="UnqTaPZdMhy_Gl80gt0S-28" source="UnqTaPZdMhy_Gl80gt0S-49" style="edgeStyle=entityRelationEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="UnqTaPZdMhy_Gl80gt0S-33" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="UnqTaPZdMhy_Gl80gt0S-49" parent="UnqTaPZdMhy_Gl80gt0S-28" style="ellipse;whiteSpace=wrap;html=1;" value="Start" vertex="1">
+          <mxGeometry height="65" width="85" x="50" y="32.5" as="geometry" />
+        </mxCell>
+        <mxCell id="UnqTaPZdMhy_Gl80gt0S-73" edge="1" parent="UnqTaPZdMhy_Gl80gt0S-28" source="UnqTaPZdMhy_Gl80gt0S-62" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="UnqTaPZdMhy_Gl80gt0S-35" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="UnqTaPZdMhy_Gl80gt0S-62" parent="UnqTaPZdMhy_Gl80gt0S-28" style="rounded=1;whiteSpace=wrap;html=1;" value="&lt;div&gt;Update Asset Registry&lt;/div&gt;&lt;div&gt;to exclude from Reports from now on&lt;/div&gt;" vertex="1">
+          <mxGeometry height="67.5" width="131" x="547" y="31.25" as="geometry" />
+        </mxCell>
+        <mxCell id="UnqTaPZdMhy_Gl80gt0S-63" edge="1" parent="UnqTaPZdMhy_Gl80gt0S-28" source="UnqTaPZdMhy_Gl80gt0S-43" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=1;exitDx=0;exitDy=0;" target="UnqTaPZdMhy_Gl80gt0S-43">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="UnqTaPZdMhy_Gl80gt0S-77" parent="UnqTaPZdMhy_Gl80gt0S-28" style="shape=document;whiteSpace=wrap;html=1;boundedLbl=1;" value="PAR/ICS form" vertex="1">
+          <mxGeometry height="60" width="80" x="382.5" y="330" as="geometry" />
+        </mxCell>
+        <mxCell id="UnqTaPZdMhy_Gl80gt0S-79" parent="UnqTaPZdMhy_Gl80gt0S-28" style="shape=document;whiteSpace=wrap;html=1;boundedLbl=1;" value="PPEIR/SMIR form" vertex="1">
+          <mxGeometry height="60" width="80" x="700" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="UnqTaPZdMhy_Gl80gt0S-81" parent="UnqTaPZdMhy_Gl80gt0S-28" style="shape=document;whiteSpace=wrap;html=1;boundedLbl=1;" value="PPERR/SMRR form" vertex="1">
+          <mxGeometry height="60" width="80" x="207.5" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="UnqTaPZdMhy_Gl80gt0S-29" parent="1" style="swimlane;startSize=0;" value="Procurement Module" vertex="1">
+          <mxGeometry height="640" width="385" x="45" y="10" as="geometry" />
+        </mxCell>
+        <mxCell id="UnqTaPZdMhy_Gl80gt0S-48" parent="UnqTaPZdMhy_Gl80gt0S-29" style="ellipse;whiteSpace=wrap;html=1;" value="End" vertex="1">
+          <mxGeometry height="65" width="85" x="55" y="562.5" as="geometry" />
+        </mxCell>
+        <mxCell id="UnqTaPZdMhy_Gl80gt0S-61" edge="1" parent="1" source="UnqTaPZdMhy_Gl80gt0S-11" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.935;entryY=0.59;entryDx=0;entryDy=0;entryPerimeter=0;" target="UnqTaPZdMhy_Gl80gt0S-13">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="UnqTaPZdMhy_Gl80gt0S-76" edge="1" parent="1" source="UnqTaPZdMhy_Gl80gt0S-33" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.425;entryY=1.043;entryDx=0;entryDy=0;entryPerimeter=0;" target="UnqTaPZdMhy_Gl80gt0S-13" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
