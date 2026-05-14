@@ -11,7 +11,7 @@ public static class AddIssuanceReportLinesEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapPost("/{id:guid}/lines", Handle)
-            .WithName(nameof(AddIssuanceReportLinesCommand))
+            .WithModuleName<AddIssuanceReportLinesCommand>()
             .WithSummary("Snapshot accountability lines into a draft issuance report")
             .Produces<PropertyIssuanceReportDto>()
             .RequirePermission(AssetRegisterModuleConstants.Permissions.Issuance.Post);

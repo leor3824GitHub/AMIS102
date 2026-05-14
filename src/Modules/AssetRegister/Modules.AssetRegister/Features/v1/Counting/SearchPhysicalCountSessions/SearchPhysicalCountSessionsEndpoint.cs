@@ -13,7 +13,7 @@ public static class SearchPhysicalCountSessionsEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapGet("/", Handle)
-            .WithName(nameof(SearchPhysicalCountSessionsQuery))
+            .WithModuleName<SearchPhysicalCountSessionsQuery>()
             .WithSummary("Search physical count sessions")
             .Produces<PagedResponse<PhysicalCountSessionSummaryDto>>()
             .RequirePermission(AssetRegisterModuleConstants.Permissions.Count.View);

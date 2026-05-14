@@ -297,7 +297,7 @@ internal sealed record ReturnAccountabilityLineRequest(Guid LineId, int? Odomete
 internal sealed record ReturnAccountabilityLinesRequest(
     IReadOnlyList<ReturnAccountabilityLineRequest> Lines,
     DateOnly ReturnedOn,
-    ArContracts.ArContracts.AssetCondition ConditionAtReturn);
+    ArContracts.AssetCondition ConditionAtReturn);
 
 internal sealed record CancelAccountabilityRequest(string Reason);
 
@@ -439,7 +439,7 @@ internal interface IArPhysicalCountClient
 
 internal sealed class ArPhysicalCountClient(HttpClient http) : IArPhysicalCountClient
 {
-    private const string Base = "api/v1/asset-register/counting";
+    private const string Base = "api/v1/asset-register/count";
 
     public async Task<ArPagedResponse<ArPhysicalCountSummaryDto>> SearchAsync(string? keyword = null, PhysicalCountStatus? status = null, PhysicalCountScope? scope = null, int page = 1, int pageSize = 20, CancellationToken ct = default)
     {
@@ -555,8 +555,8 @@ internal sealed class ArIncidentReportClient(HttpClient http) : IArIncidentRepor
         var url = ArUrlBuilder.Build(Base, new()
         {
             ["keyword"] = keyword,
-            ["incidentType"] = incidentType?.ToString(CultureInfo.InvariantCulture),
-            ["status"] = status?.ToString(CultureInfo.InvariantCulture),
+            ["incidentType"] = incidentType?.ToString(),
+            ["status"] = status?.ToString(),
             ["pageNumber"] = page.ToString(CultureInfo.InvariantCulture),
             ["pageSize"] = pageSize.ToString(CultureInfo.InvariantCulture),
         });
@@ -667,8 +667,8 @@ internal sealed class ArIssuanceReportClient(HttpClient http) : IArIssuanceRepor
         var url = ArUrlBuilder.Build(Base, new()
         {
             ["keyword"] = keyword,
-            ["reportType"] = reportType?.ToString(CultureInfo.InvariantCulture),
-            ["status"] = status?.ToString(CultureInfo.InvariantCulture),
+            ["reportType"] = reportType?.ToString(),
+            ["status"] = status?.ToString(),
             ["pageNumber"] = page.ToString(CultureInfo.InvariantCulture),
             ["pageSize"] = pageSize.ToString(CultureInfo.InvariantCulture),
         });
@@ -749,7 +749,7 @@ internal sealed record ArUnserviceableReportDto(
     IReadOnlyCollection<ArUnserviceableReportItemDto> Items);
 
 internal sealed record CreateUnserviceableReportRequest(
-    int ReportType,
+    UnserviceableReportType ReportType,
     string FundCluster,
     string Station,
     DateOnly AsAt,
@@ -777,8 +777,8 @@ internal sealed class ArUnserviceableReportClient(HttpClient http) : IArUnservic
         var url = ArUrlBuilder.Build(Base, new()
         {
             ["keyword"] = keyword,
-            ["reportType"] = reportType?.ToString(CultureInfo.InvariantCulture),
-            ["status"] = status?.ToString(CultureInfo.InvariantCulture),
+            ["reportType"] = reportType?.ToString(),
+            ["status"] = status?.ToString(),
             ["pageNumber"] = page.ToString(CultureInfo.InvariantCulture),
             ["pageSize"] = pageSize.ToString(CultureInfo.InvariantCulture),
         });
@@ -815,11 +815,11 @@ internal sealed class ArUnserviceableReportClient(HttpClient http) : IArUnservic
 
 public sealed record ArReceivingReportSummaryDto(
     Guid Id,
-    int DocumentKind,
+    ReceivingDocumentKind DocumentKind,
     string ReportNo,
     DateOnly Date,
     string ReceivedFrom,
-    int ReceiptType,
+    ArContracts.ReceiptType ReceiptType,
     int ItemCount,
     decimal TotalAmount);
 
@@ -839,12 +839,12 @@ public sealed record ArReceivingReportItemDto(
 
 public sealed record ArReceivingReportDto(
     Guid Id,
-    int DocumentKind,
+    ReceivingDocumentKind DocumentKind,
     string ReportNo,
     DateOnly Date,
     string ReceivedFrom,
     string? Address,
-    int ReceiptType,
+    ArContracts.ReceiptType ReceiptType,
     string? OtherReceiptType,
     string? FundCluster,
     ArEmployeeRefDto ReceivedBy,
@@ -864,11 +864,11 @@ public sealed record CreateReceivingReportItemRequest(
     string? Model);
 
 public sealed record CreateReceivingReportRequest(
-    int DocumentKind,
+    ReceivingDocumentKind DocumentKind,
     DateOnly Date,
     string ReceivedFrom,
     string? Address,
-    int ReceiptType,
+    ArContracts.ReceiptType ReceiptType,
     string? OtherReceiptType,
     string? FundCluster,
     ArEmployeeRefDto ReceivedBy,
@@ -879,7 +879,7 @@ public sealed record CreateReceivingReportRequest(
 public interface IArReceivingReportClient
 {
     Task<ArPagedResponse<ArReceivingReportSummaryDto>> SearchAsync(
-        string? keyword = null, int? documentKind = null, int? receiptType = null,
+        string? keyword = null, ReceivingDocumentKind? documentKind = null, ArContracts.ReceiptType? receiptType = null,
         DateOnly? fromDate = null, DateOnly? toDate = null,
         int page = 1, int pageSize = 20, CancellationToken ct = default);
     Task<ArReceivingReportDto?> GetAsync(Guid id, CancellationToken ct = default);
@@ -892,15 +892,15 @@ public sealed class ArReceivingReportClient(HttpClient http) : IArReceivingRepor
     private const string Base = "api/v1/asset-register/receiving";
 
     public async Task<ArPagedResponse<ArReceivingReportSummaryDto>> SearchAsync(
-        string? keyword = null, int? documentKind = null, int? receiptType = null,
+        string? keyword = null, ReceivingDocumentKind? documentKind = null, ArContracts.ReceiptType? receiptType = null,
         DateOnly? fromDate = null, DateOnly? toDate = null,
         int page = 1, int pageSize = 20, CancellationToken ct = default)
     {
         var url = ArUrlBuilder.Build(Base, new()
         {
             ["keyword"] = keyword,
-            ["documentKind"] = documentKind?.ToString(CultureInfo.InvariantCulture),
-            ["receiptType"] = receiptType?.ToString(CultureInfo.InvariantCulture),
+            ["documentKind"] = documentKind?.ToString(),
+            ["receiptType"] = receiptType?.ToString(),
             ["fromDate"] = fromDate?.ToString("o", CultureInfo.InvariantCulture),
             ["toDate"] = toDate?.ToString("o", CultureInfo.InvariantCulture),
             ["pageNumber"] = page.ToString(CultureInfo.InvariantCulture),

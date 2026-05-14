@@ -11,7 +11,7 @@ public static class ReconcilePhysicalCountEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapPost("/{id:guid}/reconcile", Handle)
-            .WithName(nameof(ReconcilePhysicalCountCommand))
+            .WithModuleName<ReconcilePhysicalCountCommand>()
             .WithSummary("Reconcile a count session — materializes FoundAtStation entries and opens incident drafts for missing")
             .Produces<PhysicalCountSessionDto>()
             .RequirePermission(AssetRegisterModuleConstants.Permissions.Count.Submit);

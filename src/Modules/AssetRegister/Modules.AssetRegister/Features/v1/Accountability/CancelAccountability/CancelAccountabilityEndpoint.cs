@@ -11,7 +11,7 @@ public static class CancelAccountabilityEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapPost("/{id:guid}/cancel", Handle)
-            .WithName(nameof(CancelAccountabilityCommand))
+            .WithModuleName<CancelAccountabilityCommand>()
             .WithSummary("Cancel an Active accountability that has no returned/lost lines")
             .Produces<PropertyAccountabilityDto>()
             .RequirePermission(AssetRegisterModuleConstants.Permissions.Accountability.Issue);

@@ -11,7 +11,7 @@ public static class StartPhysicalCountEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapPost("/", Handle)
-            .WithName(nameof(StartPhysicalCountCommand))
+            .WithModuleName<StartPhysicalCountCommand>()
             .WithSummary("Start a physical count session")
             .Produces<PhysicalCountSessionDto>(StatusCodes.Status201Created)
             .RequirePermission(AssetRegisterModuleConstants.Permissions.Count.Create);

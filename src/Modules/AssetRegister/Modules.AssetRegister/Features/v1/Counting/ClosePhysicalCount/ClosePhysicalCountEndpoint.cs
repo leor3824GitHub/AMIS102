@@ -11,7 +11,7 @@ public static class ClosePhysicalCountEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapPost("/{id:guid}/close", Handle)
-            .WithName(nameof(ClosePhysicalCountCommand))
+            .WithModuleName<ClosePhysicalCountCommand>()
             .WithSummary("Close a reconciled count session")
             .Produces<PhysicalCountSessionDto>()
             .RequirePermission(AssetRegisterModuleConstants.Permissions.Count.Close);

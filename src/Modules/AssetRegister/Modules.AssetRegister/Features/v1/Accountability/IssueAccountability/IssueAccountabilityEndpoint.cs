@@ -11,7 +11,7 @@ public static class IssueAccountabilityEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapPost("/", Handle)
-            .WithName(nameof(IssueAccountabilityCommand))
+            .WithModuleName<IssueAccountabilityCommand>()
             .WithSummary("Issue an ICS (SE) or PAR (PPE) accountability")
             .Produces<PropertyAccountabilityDto>(StatusCodes.Status201Created)
             .RequirePermission(AssetRegisterModuleConstants.Permissions.Accountability.Issue);

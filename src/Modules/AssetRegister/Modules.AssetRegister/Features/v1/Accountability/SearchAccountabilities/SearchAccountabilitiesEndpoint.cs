@@ -13,7 +13,7 @@ public static class SearchAccountabilitiesEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapGet("/", Handle)
-            .WithName(nameof(SearchAccountabilitiesQuery))
+            .WithModuleName<SearchAccountabilitiesQuery>()
             .WithSummary("Search accountabilities (ICS / PAR)")
             .Produces<PagedResponse<PropertyAccountabilitySummaryDto>>()
             .RequirePermission(AssetRegisterModuleConstants.Permissions.Accountability.View);

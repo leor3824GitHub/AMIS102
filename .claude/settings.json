@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(grep -v \".Designer\\\\|obj\\\\\\\\\")"
+      "Bash(grep -v \".Designer\\\\|obj\\\\\\\\\")",
+      "PowerShell($env:PGPASSWORD = \"password\"; $psql = \\(Get-Command psql -ErrorAction SilentlyContinue\\).Source; if \\(-not $psql\\) { Get-ChildItem 'C:\\\\Program Files\\\\PostgreSQL\\\\' -Recurse -Filter psql.exe -ErrorAction SilentlyContinue | Select-Object -First 1 | ForEach-Object { $psql = $_.FullName } }; \"psql: $psql\"; if \\($psql\\) { & $psql -U postgres -h localhost -d AMIS229 -c \"SELECT table_schema, table_name FROM information_schema.tables WHERE table_name ILIKE 'PropertyItemCatalog%';\" })"
     ]
   }
 }

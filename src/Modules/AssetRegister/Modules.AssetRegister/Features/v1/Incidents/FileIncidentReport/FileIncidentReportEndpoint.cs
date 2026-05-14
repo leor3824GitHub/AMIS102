@@ -11,7 +11,7 @@ public static class FileIncidentReportEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapPost("/", Handle)
-            .WithName(nameof(FileIncidentReportCommand))
+            .WithModuleName<FileIncidentReportCommand>()
             .WithSummary("File a property incident report (RLSDDSP)")
             .Produces<PropertyIncidentReportDto>(StatusCodes.Status201Created)
             .RequirePermission(AssetRegisterModuleConstants.Permissions.Incident.File);

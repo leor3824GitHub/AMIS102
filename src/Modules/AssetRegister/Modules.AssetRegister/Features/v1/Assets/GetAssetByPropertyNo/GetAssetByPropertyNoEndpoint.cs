@@ -11,7 +11,7 @@ public static class GetAssetByPropertyNoEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapGet("/by-property-no/{propertyNo}", Handle)
-            .WithName(nameof(GetAssetByPropertyNoQuery))
+            .WithModuleName<GetAssetByPropertyNoQuery>()
             .WithSummary("Look up an asset by COA 2020-006 PropertyNo")
             .Produces<AssetRegistryDto>()
             .Produces(StatusCodes.Status404NotFound)

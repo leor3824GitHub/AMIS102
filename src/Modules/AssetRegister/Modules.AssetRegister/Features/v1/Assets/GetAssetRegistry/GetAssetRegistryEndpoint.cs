@@ -11,7 +11,7 @@ public static class GetAssetRegistryEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapGet("/{id:guid}", Handle)
-            .WithName(nameof(GetAssetRegistryQuery))
+            .WithModuleName<GetAssetRegistryQuery>()
             .WithSummary("Get an asset by id")
             .Produces<AssetRegistryDto>()
             .Produces(StatusCodes.Status404NotFound)

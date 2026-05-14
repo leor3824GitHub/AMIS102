@@ -11,7 +11,7 @@ public static class DeletePropertyItemCatalogEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapDelete("/{id:guid}", Handle)
-            .WithName(nameof(DeletePropertyItemCatalogCommand))
+            .WithModuleName<DeletePropertyItemCatalogCommand>()
             .WithSummary("Delete a property item catalog entry")
             .Produces(StatusCodes.Status204NoContent)
             .Produces(StatusCodes.Status404NotFound)

@@ -11,7 +11,7 @@ public static class GetIncidentReportEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapGet("/{id:guid}", Handle)
-            .WithName(nameof(GetIncidentReportQuery))
+            .WithModuleName<GetIncidentReportQuery>()
             .WithSummary("Get an incident report by id")
             .Produces<PropertyIncidentReportDto>()
             .Produces(StatusCodes.Status404NotFound)

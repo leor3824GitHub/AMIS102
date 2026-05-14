@@ -12,7 +12,7 @@ public static class SearchPropertyItemCatalogsEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapGet("/", Handle)
-            .WithName(nameof(SearchPropertyItemCatalogsQuery))
+            .WithModuleName<SearchPropertyItemCatalogsQuery>()
             .WithSummary("Search property item catalog entries")
             .Produces<PagedResponse<PropertyItemCatalogDto>>()
             .RequirePermission(AssetRegisterModuleConstants.Permissions.Catalog.View);

@@ -11,7 +11,7 @@ public static class NotarizeIncidentReportEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapPost("/{id:guid}/notarize", Handle)
-            .WithName(nameof(NotarizeIncidentReportCommand))
+            .WithModuleName<NotarizeIncidentReportCommand>()
             .WithSummary("Record notarization on an RLSDDSP")
             .Produces<PropertyIncidentReportDto>()
             .RequirePermission(AssetRegisterModuleConstants.Permissions.Incident.Resolve);

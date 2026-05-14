@@ -11,7 +11,7 @@ public static class UpdateAssetConditionEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapPost("/{id:guid}/condition", Handle)
-            .WithName(nameof(UpdateAssetConditionCommand))
+            .WithModuleName<UpdateAssetConditionCommand>()
             .WithSummary("Update an asset's current physical condition")
             .Produces<AssetRegistryDto>()
             .RequirePermission(AssetRegisterModuleConstants.Permissions.Assets.Update);

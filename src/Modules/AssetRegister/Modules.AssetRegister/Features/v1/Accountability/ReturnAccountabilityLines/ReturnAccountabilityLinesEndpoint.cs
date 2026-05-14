@@ -11,7 +11,7 @@ public static class ReturnAccountabilityLinesEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapPost("/{id:guid}/returns", Handle)
-            .WithName(nameof(ReturnAccountabilityLinesCommand))
+            .WithModuleName<ReturnAccountabilityLinesCommand>()
             .WithSummary("Return one or more accountability lines (and free their assets)")
             .Produces<PropertyAccountabilityDto>()
             .RequirePermission(AssetRegisterModuleConstants.Permissions.Accountability.Return);

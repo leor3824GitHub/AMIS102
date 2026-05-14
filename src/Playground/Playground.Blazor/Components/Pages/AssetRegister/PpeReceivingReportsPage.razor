@@ -1,5 +1,7 @@
 @page "/asset-register/receiving/ppe"
 @using AMIS.Playground.Blazor.ApiClient
+@using ReceivingDocumentKind = AMIS.Modules.AssetRegister.Contracts.v1.ReceivingDocumentKind
+@using ReceiptType = AMIS.Modules.AssetRegister.Contracts.v1.ReceiptType
 @inject IArReceivingReportClient Client
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
@@ -18,12 +20,12 @@
                                       OnKeyDown="OnSearchKeyDown" Immediate="false" />
                     </MudItem>
                     <MudItem xs="6" md="2">
-                        <MudSelect @bind-Value="_receiptTypeFilter" Label="Type" Variant="Variant.Outlined" T="int?" Clearable="true">
-                            <MudSelectItem Value="@((int?)null)">All</MudSelectItem>
-                            <MudSelectItem Value="@((int?)0)">Purchase</MudSelectItem>
-                            <MudSelectItem Value="@((int?)1)">Transfer</MudSelectItem>
-                            <MudSelectItem Value="@((int?)2)">Donation</MudSelectItem>
-                            <MudSelectItem Value="@((int?)3)">Other</MudSelectItem>
+                        <MudSelect @bind-Value="_receiptTypeFilter" Label="Type" Variant="Variant.Outlined" T="ReceiptType?" Clearable="true">
+                            <MudSelectItem T="ReceiptType?" Value="@((ReceiptType?)null)">All</MudSelectItem>
+                            <MudSelectItem T="ReceiptType?" Value="@((ReceiptType?)ReceiptType.Purchase)">Purchase</MudSelectItem>
+                            <MudSelectItem T="ReceiptType?" Value="@((ReceiptType?)ReceiptType.Transfer)">Transfer</MudSelectItem>
+                            <MudSelectItem T="ReceiptType?" Value="@((ReceiptType?)ReceiptType.Donation)">Donation</MudSelectItem>
+                            <MudSelectItem T="ReceiptType?" Value="@((ReceiptType?)ReceiptType.Other)">Other</MudSelectItem>
                         </MudSelect>
                     </MudItem>
                     <MudItem xs="12" md="2" Class="d-flex align-end">
@@ -107,9 +109,9 @@
 </MudGrid>
 
 @code {
-    private const int PpeDocumentKind = 0;
+    private const ReceivingDocumentKind PpeDocumentKind = ReceivingDocumentKind.PPERR;
     private string? _keyword;
-    private int? _receiptTypeFilter;
+    private ReceiptType? _receiptTypeFilter;
     private bool _busy;
     private bool _showCreateForm;
     private int _page = 1;
@@ -183,13 +185,13 @@
         }
     }
 
-    private static string ReceiptTypeLabel(int t) => t switch
+    private static string ReceiptTypeLabel(ReceiptType t) => t switch
     {
-        0 => "Purchase",
-        1 => "Transfer",
-        2 => "Donation",
-        3 => "Other",
-        _ => t.ToString(System.Globalization.CultureInfo.InvariantCulture)
+        ReceiptType.Purchase => "Purchase",
+        ReceiptType.Transfer => "Transfer",
+        ReceiptType.Donation => "Donation",
+        ReceiptType.Other => "Other",
+        _ => t.ToString()
     };
 }
 

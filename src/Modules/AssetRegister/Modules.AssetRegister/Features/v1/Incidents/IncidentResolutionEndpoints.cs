@@ -17,7 +17,7 @@ public static class IncidentResolutionEndpoints
                 if (id != cmd.IncidentReportId) return TypedResults.BadRequest("Route id and body id must match.");
                 return (IResult)TypedResults.Ok(await mediator.Send(cmd, ct));
             })
-            .WithName(nameof(RecordIncidentRecoveryCommand))
+            .WithModuleName<RecordIncidentRecoveryCommand>()
             .WithSummary("Record asset recovery on an incident report")
             .Produces<PropertyIncidentReportDto>()
             .RequirePermission(AssetRegisterModuleConstants.Permissions.Incident.Resolve);
@@ -28,7 +28,7 @@ public static class IncidentResolutionEndpoints
                 if (id != cmd.IncidentReportId) return TypedResults.BadRequest("Route id and body id must match.");
                 return (IResult)TypedResults.Ok(await mediator.Send(cmd, ct));
             })
-            .WithName(nameof(RecordIncidentSettlementCommand))
+            .WithModuleName<RecordIncidentSettlementCommand>()
             .WithSummary("Record monetary settlement (accountable officer paid)")
             .Produces<PropertyIncidentReportDto>()
             .RequirePermission(AssetRegisterModuleConstants.Permissions.Incident.Resolve);
@@ -39,7 +39,7 @@ public static class IncidentResolutionEndpoints
                 if (id != cmd.IncidentReportId) return TypedResults.BadRequest("Route id and body id must match.");
                 return (IResult)TypedResults.Ok(await mediator.Send(cmd, ct));
             })
-            .WithName(nameof(GrantIncidentReliefCommand))
+            .WithModuleName<GrantIncidentReliefCommand>()
             .WithSummary("Record relief granted (COA decision)")
             .Produces<PropertyIncidentReportDto>()
             .RequirePermission(AssetRegisterModuleConstants.Permissions.Incident.Resolve);
@@ -50,14 +50,14 @@ public static class IncidentResolutionEndpoints
                 if (id != cmd.IncidentReportId) return TypedResults.BadRequest("Route id and body id must match.");
                 return (IResult)TypedResults.Ok(await mediator.Send(cmd, ct));
             })
-            .WithName(nameof(DerecognizeIncidentItemCommand))
+            .WithModuleName<DerecognizeIncidentItemCommand>()
             .WithSummary("Derecognize an item (COA Circular 2020-006 §8 — requires authority)")
             .Produces<PropertyIncidentReportDto>()
             .RequirePermission(AssetRegisterModuleConstants.Permissions.Incident.Resolve);
 
         endpoints.MapPost("/{id:guid}/close", async (Guid id, IMediator mediator, CancellationToken ct) =>
                 TypedResults.Ok(await mediator.Send(new CloseIncidentReportCommand(id), ct)))
-            .WithName(nameof(CloseIncidentReportCommand))
+            .WithModuleName<CloseIncidentReportCommand>()
             .WithSummary("Close a fully resolved incident report")
             .Produces<PropertyIncidentReportDto>()
             .RequirePermission(AssetRegisterModuleConstants.Permissions.Incident.Resolve);

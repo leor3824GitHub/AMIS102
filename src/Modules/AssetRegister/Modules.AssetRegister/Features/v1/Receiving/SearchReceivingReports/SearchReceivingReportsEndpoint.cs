@@ -13,7 +13,7 @@ public static class SearchReceivingReportsEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapGet("/", Handle)
-            .WithName("AssetRegister_SearchReceivingReports")
+            .WithModuleName<SearchReceivingReportsQuery>()
             .WithSummary("Search Receiving Reports (PPERR / SMRR)")
             .Produces<PagedResponse<ReceivingReportSummaryDto>>()
             .RequirePermission(AssetRegisterModuleConstants.Permissions.Receiving.View);

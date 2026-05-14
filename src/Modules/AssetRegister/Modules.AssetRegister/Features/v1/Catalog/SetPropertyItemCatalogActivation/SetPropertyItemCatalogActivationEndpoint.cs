@@ -11,7 +11,7 @@ public static class SetPropertyItemCatalogActivationEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapPost("/{id:guid}/activation", Handle)
-            .WithName(nameof(SetPropertyItemCatalogActivationCommand))
+            .WithModuleName<SetPropertyItemCatalogActivationCommand>()
             .WithSummary("Activate or deactivate a property item catalog entry")
             .Produces<PropertyItemCatalogDto>()
             .RequirePermission(AssetRegisterModuleConstants.Permissions.Catalog.Update);

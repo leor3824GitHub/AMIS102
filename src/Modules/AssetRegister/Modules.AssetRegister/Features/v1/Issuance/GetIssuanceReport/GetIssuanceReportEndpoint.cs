@@ -11,7 +11,7 @@ public static class GetIssuanceReportEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapGet("/{id:guid}", Handle)
-            .WithName(nameof(GetIssuanceReportQuery))
+            .WithModuleName<GetIssuanceReportQuery>()
             .WithSummary("Get an issuance report by id")
             .Produces<PropertyIssuanceReportDto>()
             .Produces(StatusCodes.Status404NotFound)

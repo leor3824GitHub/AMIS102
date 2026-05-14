@@ -11,7 +11,7 @@ public static class RenewAccountabilityEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapPost("/{id:guid}/renew", Handle)
-            .WithName(nameof(RenewAccountabilityCommand))
+            .WithModuleName<RenewAccountabilityCommand>()
             .WithSummary("Renew an Active accountability — produces a successor row")
             .Produces<PropertyAccountabilityDto>(StatusCodes.Status201Created)
             .RequirePermission(AssetRegisterModuleConstants.Permissions.Accountability.Issue);

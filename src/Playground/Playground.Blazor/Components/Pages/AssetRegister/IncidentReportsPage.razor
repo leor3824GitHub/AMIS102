@@ -160,7 +160,7 @@
                         {
                             <MudItem xs="6" md="4">
                                 <MudText Typo="Typo.caption" Color="Color.Secondary">Police</MudText>
-                                <MudText Typo="Typo.body2">@_selected.PoliceStation � @_selected.PoliceNotifiedOn?.ToString("yyyy-MM-dd")</MudText>
+                                <MudText Typo="Typo.body2">@_selected.PoliceStation — @_selected.PoliceNotifiedOn?.ToString("yyyy-MM-dd")</MudText>
                                 <MudText Typo="Typo.caption">Blotter: @_selected.PoliceBlotterRef</MudText>
                             </MudItem>
                         }
@@ -196,7 +196,7 @@
                             <MudTd Style="text-align:right">@context.SnapshotAcquisitionCost.ToString("N2")</MudTd>
                             <MudTd Style="text-align:right">@context.SnapshotCurrentReplacementCost.ToString("N2")</MudTd>
                             <MudTd>@FormatItemResolution(context.ItemResolution)</MudTd>
-                            <MudTd>@(context.ResolvedOn?.ToString("yyyy-MM-dd") ?? "�")</MudTd>
+                            <MudTd>@(context.ResolvedOn?.ToString("yyyy-MM-dd") ?? "—")</MudTd>
                         </RowTemplate>
                     </MudTable>
 

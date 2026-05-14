@@ -13,7 +13,7 @@ public static class SearchIncidentReportsEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapGet("/", Handle)
-            .WithName(nameof(SearchIncidentReportsQuery))
+            .WithModuleName<SearchIncidentReportsQuery>()
             .WithSummary("Search incident reports")
             .Produces<PagedResponse<PropertyIncidentReportSummaryDto>>()
             .RequirePermission(AssetRegisterModuleConstants.Permissions.Incident.View);

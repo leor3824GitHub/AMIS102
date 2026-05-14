@@ -11,7 +11,7 @@ public static class GetAccountabilityEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapGet("/{id:guid}", Handle)
-            .WithName(nameof(GetAccountabilityQuery))
+            .WithModuleName<GetAccountabilityQuery>()
             .WithSummary("Get an accountability by id")
             .Produces<PropertyAccountabilityDto>()
             .Produces(StatusCodes.Status404NotFound)

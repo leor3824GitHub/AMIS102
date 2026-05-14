@@ -11,7 +11,7 @@ public static class UpdatePropertyItemCatalogEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapPut("/{id:guid}", Handle)
-            .WithName(nameof(UpdatePropertyItemCatalogCommand))
+            .WithModuleName<UpdatePropertyItemCatalogCommand>()
             .WithSummary("Update a property item catalog entry")
             .Produces<PropertyItemCatalogDto>()
             .Produces(StatusCodes.Status404NotFound)

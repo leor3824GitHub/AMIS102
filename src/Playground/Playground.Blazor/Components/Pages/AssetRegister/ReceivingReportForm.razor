@@ -1,4 +1,6 @@
 @using AMIS.Playground.Blazor.ApiClient
+@using ReceivingDocumentKind = AMIS.Modules.AssetRegister.Contracts.v1.ReceivingDocumentKind
+@using ReceiptType = AMIS.Modules.AssetRegister.Contracts.v1.ReceiptType
 @inject IArReceivingReportClient Client
 @inject IArCatalogClient CatalogClient
 @inject ILookupClient LookupClient
@@ -16,14 +18,14 @@
                 <MudDatePicker @bind-Date="_date" Label="Date" Variant="Variant.Outlined" Required="true" />
             </MudItem>
             <MudItem xs="12" md="3">
-                <MudSelect @bind-Value="_receiptType" Label="Type" Variant="Variant.Outlined" T="int" Required="true">
-                    <MudSelectItem Value="0">Purchase</MudSelectItem>
-                    <MudSelectItem Value="1">Transfer</MudSelectItem>
-                    <MudSelectItem Value="2">Donation</MudSelectItem>
-                    <MudSelectItem Value="3">Other</MudSelectItem>
+                <MudSelect @bind-Value="_receiptType" Label="Type" Variant="Variant.Outlined" T="ReceiptType" Required="true">
+                    <MudSelectItem T="ReceiptType" Value="@ReceiptType.Purchase">Purchase</MudSelectItem>
+                    <MudSelectItem T="ReceiptType" Value="@ReceiptType.Transfer">Transfer</MudSelectItem>
+                    <MudSelectItem T="ReceiptType" Value="@ReceiptType.Donation">Donation</MudSelectItem>
+                    <MudSelectItem T="ReceiptType" Value="@ReceiptType.Other">Other</MudSelectItem>
                 </MudSelect>
             </MudItem>
-            @if (_receiptType == 3)
+            @if (_receiptType == ReceiptType.Other)
             {
                 <MudItem xs="12" md="3">
                     <MudTextField @bind-Value="_otherReceiptType" Label="Specify Other" Variant="Variant.Outlined" Required="true" />
@@ -48,7 +50,7 @@
                                  SearchFunc="SearchEmployeesAsync" ToStringFunc="FormatEmployee"
                                  CoerceText="false" />
             </MudItem>
-            @if (DocumentKind == 1)
+            @if (DocumentKind == ReceivingDocumentKind.SMRR)
             {
                 <MudItem xs="12" md="3">
                     <MudDatePicker @bind-Date="_dateReceived" Label="Date Received" Variant="Variant.Outlined" />
@@ -116,13 +118,13 @@
 </MudCard>
 
 @code {
-    [Parameter] public int DocumentKind { get; set; }
+    [Parameter] public ReceivingDocumentKind DocumentKind { get; set; }
     [Parameter] public string Title { get; set; } = "Create Receiving Report";
     [Parameter] public EventCallback<ArReceivingReportDto> OnCreated { get; set; }
     [Parameter] public EventCallback OnCancel { get; set; }
 
     private DateTime? _date = DateTime.Today;
-    private int _receiptType;
+    private ReceiptType _receiptType;
     private string? _otherReceiptType;
     private string? _fundCluster;
     private string _receivedFrom = string.Empty;
@@ -203,7 +205,7 @@
                 _receivedFrom,
                 _address,
                 _receiptType,
-                _receiptType == 3 ? _otherReceiptType : null,
+                _receiptType == ReceiptType.Other ? _otherReceiptType : null,
                 _fundCluster,
                 new ArEmployeeRefDto(_receivedBy.Id, PrintedName(_receivedBy), _receivedBy.PositionName),
                 _notedBy is null ? null : new ArEmployeeRefDto(_notedBy.Id, PrintedName(_notedBy), _notedBy.PositionName),

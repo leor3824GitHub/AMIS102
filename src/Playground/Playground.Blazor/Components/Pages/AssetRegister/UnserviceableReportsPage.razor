@@ -68,9 +68,9 @@
                 </MudCardHeader>
                 <MudCardContent>
                     <MudStack Spacing="2">
-                        <MudSelect @bind-Value="_createForm.ReportType" Label="Report Type" Variant="Variant.Outlined" T="int" Required="true">
-                            <MudSelectItem Value="0">IIRUSP (Semi-Expendable)</MudSelectItem>
-                            <MudSelectItem Value="1">IIRUP (PPE)</MudSelectItem>
+                        <MudSelect @bind-Value="_createForm.ReportType" Label="Report Type" Variant="Variant.Outlined" T="UnserviceableReportType" Required="true">
+                            <MudSelectItem T="UnserviceableReportType" Value="@UnserviceableReportType.IIRUSP">IIRUSP (Semi-Expendable)</MudSelectItem>
+                            <MudSelectItem T="UnserviceableReportType" Value="@UnserviceableReportType.IIRUP">IIRUP (PPE)</MudSelectItem>
                         </MudSelect>
                         <MudTextField @bind-Value="_createForm.FundCluster" Label="Fund Cluster" Variant="Variant.Outlined" MaxLength="50" Required="true" />
                         <MudTextField @bind-Value="_createForm.Station" Label="Station / Location" Variant="Variant.Outlined" MaxLength="200" Required="true" />
@@ -187,7 +187,7 @@
                         </MudItem>
                         <MudItem xs="6" md="4">
                             <MudText Typo="Typo.caption" Color="Color.Secondary">Accountable Officer</MudText>
-                            <MudText Typo="Typo.body2">@_selected.AccountableOfficer.PrintedName (@(_selected.AccountableOfficer.Designation ?? "�"))</MudText>
+                            <MudText Typo="Typo.body2">@_selected.AccountableOfficer.PrintedName (@(_selected.AccountableOfficer.Designation ?? "—"))</MudText>
                         </MudItem>
                         @if (_selected.ApprovedBy is not null)
                         {
@@ -200,7 +200,7 @@
                         {
                             <MudItem xs="6" md="4">
                                 <MudText Typo="Typo.caption" Color="Color.Secondary">Inspected By / On</MudText>
-                                <MudText Typo="Typo.body2">@_selected.InspectedBy.PrintedName � @_selected.InspectedOn?.ToString("yyyy-MM-dd")</MudText>
+                                <MudText Typo="Typo.body2">@_selected.InspectedBy.PrintedName — @_selected.InspectedOn?.ToString("yyyy-MM-dd")</MudText>
                             </MudItem>
                         }
                     </MudGrid>

@@ -11,7 +11,7 @@ public static class NotifyIncidentPoliceEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapPost("/{id:guid}/police", Handle)
-            .WithName(nameof(NotifyIncidentPoliceCommand))
+            .WithModuleName<NotifyIncidentPoliceCommand>()
             .WithSummary("Record police notification on an incident report")
             .Produces<PropertyIncidentReportDto>()
             .RequirePermission(AssetRegisterModuleConstants.Permissions.Incident.Resolve);

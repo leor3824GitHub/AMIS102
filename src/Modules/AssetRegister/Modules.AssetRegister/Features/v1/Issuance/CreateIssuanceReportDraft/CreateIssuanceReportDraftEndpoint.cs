@@ -11,7 +11,7 @@ public static class CreateIssuanceReportDraftEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapPost("/", Handle)
-            .WithName(nameof(CreateIssuanceReportDraftCommand))
+            .WithModuleName<CreateIssuanceReportDraftCommand>()
             .WithSummary("Create a draft issuance report (RSPI/PPEIR)")
             .Produces<PropertyIssuanceReportDto>(StatusCodes.Status201Created)
             .RequirePermission(AssetRegisterModuleConstants.Permissions.Issuance.Post);

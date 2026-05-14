@@ -86,7 +86,7 @@
                                 </MudChip>
                             </MudTd>
                             <MudTd>@context.IssuedOn.ToString("yyyy-MM-dd")</MudTd>
-                            <MudTd>@(context.ExpiresOn?.ToString("yyyy-MM-dd") ?? "�")</MudTd>
+                            <MudTd>@(context.ExpiresOn?.ToString("yyyy-MM-dd") ?? "—")</MudTd>
                             <MudTd Style="text-align:right">@context.LineCount</MudTd>
                         </RowTemplate>
                         <NoRecordsContent>
@@ -139,7 +139,7 @@
                         </MudItem>
                         <MudItem xs="6" md="3">
                             <MudText Typo="Typo.caption" Color="Color.Secondary">Expires On</MudText>
-                            <MudText Typo="Typo.body2">@(_selected.ExpiresOn?.ToString("yyyy-MM-dd") ?? "�")</MudText>
+                            <MudText Typo="Typo.body2">@(_selected.ExpiresOn?.ToString("yyyy-MM-dd") ?? "—")</MudText>
                         </MudItem>
                         <MudItem xs="6" md="3">
                             <MudText Typo="Typo.caption" Color="Color.Secondary">Fund Cluster</MudText>
@@ -147,11 +147,11 @@
                         </MudItem>
                         <MudItem xs="12" md="6">
                             <MudText Typo="Typo.caption" Color="Color.Secondary">Issued By</MudText>
-                            <MudText Typo="Typo.body2">@_selected.IssuedBy.PrintedName (@(_selected.IssuedBy.Designation ?? "�"))</MudText>
+                            <MudText Typo="Typo.body2">@_selected.IssuedBy.PrintedName (@(_selected.IssuedBy.Designation ?? "—"))</MudText>
                         </MudItem>
                         <MudItem xs="12" md="6">
                             <MudText Typo="Typo.caption" Color="Color.Secondary">Received By</MudText>
-                            <MudText Typo="Typo.body2">@_selected.ReceivedBy.PrintedName (@(_selected.ReceivedBy.Designation ?? "�"))</MudText>
+                            <MudText Typo="Typo.body2">@_selected.ReceivedBy.PrintedName (@(_selected.ReceivedBy.Designation ?? "—"))</MudText>
                         </MudItem>
                         @if (!string.IsNullOrEmpty(_selected.CancellationReason))
                         {
@@ -183,7 +183,7 @@
                             <MudTd Style="text-align:right">@context.ReturnedQty</MudTd>
                             <MudTd Style="text-align:right">@context.Snapshot.UnitCost.ToString("N2")</MudTd>
                             <MudTd>@FormatLineStatus(context.LineStatus)</MudTd>
-                            <MudTd>@(context.ReturnedOn?.ToString("yyyy-MM-dd") ?? "�")</MudTd>
+                            <MudTd>@(context.ReturnedOn?.ToString("yyyy-MM-dd") ?? "—")</MudTd>
                         </RowTemplate>
                     </MudTable>
 

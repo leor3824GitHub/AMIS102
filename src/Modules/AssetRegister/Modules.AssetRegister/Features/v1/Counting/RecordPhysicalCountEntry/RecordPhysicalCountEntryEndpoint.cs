@@ -11,7 +11,7 @@ public static class RecordPhysicalCountEntryEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapPost("/{id:guid}/entries", Handle)
-            .WithName(nameof(RecordPhysicalCountEntryCommand))
+            .WithModuleName<RecordPhysicalCountEntryCommand>()
             .WithSummary("Record a count entry for a known asset")
             .Produces<PhysicalCountSessionDto>()
             .RequirePermission(AssetRegisterModuleConstants.Permissions.Count.Record);

@@ -11,7 +11,7 @@ public static class GetPhysicalCountSessionEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapGet("/{id:guid}", Handle)
-            .WithName(nameof(GetPhysicalCountSessionQuery))
+            .WithModuleName<GetPhysicalCountSessionQuery>()
             .WithSummary("Get a physical count session by id")
             .Produces<PhysicalCountSessionDto>()
             .Produces(StatusCodes.Status404NotFound)

@@ -11,7 +11,7 @@ public static class AddFoundAtStationEntryEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapPost("/{id:guid}/found-at-station", Handle)
-            .WithName(nameof(AddFoundAtStationEntryCommand))
+            .WithModuleName<AddFoundAtStationEntryCommand>()
             .WithSummary("Add a FoundAtStation entry (asset unknown to the registry)")
             .Produces<PhysicalCountSessionDto>()
             .RequirePermission(AssetRegisterModuleConstants.Permissions.Count.Record);

@@ -11,7 +11,7 @@ public static class DeleteReceivingReportEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapDelete("/{id:guid}", Handle)
-            .WithName("AssetRegister_DeleteReceivingReport")
+            .WithModuleName<DeleteReceivingReportCommand>()
             .WithSummary("Delete a Receiving Report (header + lines).")
             .Produces(StatusCodes.Status204NoContent)
             .Produces(StatusCodes.Status404NotFound)

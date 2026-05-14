@@ -1,4 +1,6 @@
 @using AMIS.Playground.Blazor.ApiClient
+@using ReceivingDocumentKind = AMIS.Modules.AssetRegister.Contracts.v1.ReceivingDocumentKind
+@using ReceiptType = AMIS.Modules.AssetRegister.Contracts.v1.ReceiptType
 
 <MudDialog>
     <DialogContent>
@@ -9,7 +11,7 @@
             </MudItem>
             <MudItem xs="6" md="3">
                 <MudText Typo="Typo.subtitle2">Kind</MudText>
-                <MudText Typo="Typo.body1">@(Report.DocumentKind == 0 ? "PPERR" : "SMRR")</MudText>
+                <MudText Typo="Typo.body1">@(Report.DocumentKind == ReceivingDocumentKind.PPERR ? "PPERR" : "SMRR")</MudText>
             </MudItem>
             <MudItem xs="6" md="3">
                 <MudText Typo="Typo.subtitle2">Date</MudText>
@@ -82,10 +84,13 @@
 
     private void Close() => MudDialog.Close();
 
-    private static string ReceiptTypeLabel(int t) => t switch
+    private static string ReceiptTypeLabel(ReceiptType t) => t switch
     {
-        0 => "Purchase", 1 => "Transfer", 2 => "Donation", 3 => "Other",
-        _ => t.ToString(System.Globalization.CultureInfo.InvariantCulture)
+        ReceiptType.Purchase => "Purchase",
+        ReceiptType.Transfer => "Transfer",
+        ReceiptType.Donation => "Donation",
+        ReceiptType.Other => "Other",
+        _ => t.ToString()
     };
 }
 

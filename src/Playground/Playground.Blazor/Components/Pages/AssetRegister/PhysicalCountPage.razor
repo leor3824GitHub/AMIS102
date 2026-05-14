@@ -69,10 +69,10 @@
                     <MudStack Spacing="2">
                         <MudTextField @bind-Value="_startForm.Code" Label="Session Code" Variant="Variant.Outlined"
                                       MaxLength="50" Required="true" Placeholder="e.g. PC-2026-Q1-SE" />
-                        <MudSelect @bind-Value="_startForm.Scope" Label="Scope" Variant="Variant.Outlined" T="int" Required="true">
-                            <MudSelectItem Value="0">Semi-Expendable (RPCSEMEX)</MudSelectItem>
-                            <MudSelectItem Value="1">PPE (RPCPPE)</MudSelectItem>
-                            <MudSelectItem Value="2">All Assets</MudSelectItem>
+                        <MudSelect @bind-Value="_startForm.Scope" Label="Scope" Variant="Variant.Outlined" T="PhysicalCountScope" Required="true">
+                            <MudSelectItem T="PhysicalCountScope" Value="@PhysicalCountScope.SEOnly">Semi-Expendable (RPCSEMEX)</MudSelectItem>
+                            <MudSelectItem T="PhysicalCountScope" Value="@PhysicalCountScope.PPEOnly">PPE (RPCPPE)</MudSelectItem>
+                            <MudSelectItem T="PhysicalCountScope" Value="@PhysicalCountScope.Both">All Assets</MudSelectItem>
                         </MudSelect>
                         <MudTextField @bind-Value="_startForm.FundCluster" Label="Fund Cluster" Variant="Variant.Outlined"
                                       MaxLength="50" Required="true" />
@@ -129,7 +129,7 @@
                             </MudTd>
                             <MudTd>@context.AsAt.ToString("yyyy-MM-dd")</MudTd>
                             <MudTd>@context.StartedOn.ToString("yyyy-MM-dd")</MudTd>
-                            <MudTd>@(context.ClosedOn?.ToString("yyyy-MM-dd") ?? "�")</MudTd>
+                            <MudTd>@(context.ClosedOn?.ToString("yyyy-MM-dd") ?? "—")</MudTd>
                             <MudTd Style="text-align:right">@context.EntryCount</MudTd>
                         </RowTemplate>
                         <NoRecordsContent>
@@ -222,12 +222,12 @@
                             <MudTh>Scanned On</MudTh>
                         </HeaderContent>
                         <RowTemplate>
-                            <MudTd>@(context.Snapshot?.PropertyNo ?? "�")</MudTd>
+                            <MudTd>@(context.Snapshot?.PropertyNo ?? "—")</MudTd>
                             <MudTd>@context.SnapshotArticle</MudTd>
                             <MudTd>@context.SnapshotUnit</MudTd>
                             <MudTd Style="text-align:right">@context.SnapshotUnitCost.ToString("N2")</MudTd>
                             <MudTd>@FormatCountCondition(context.Condition)</MudTd>
-                            <MudTd>@(context.ScannedOnUtc?.LocalDateTime.ToString("yyyy-MM-dd HH:mm") ?? "�")</MudTd>
+                            <MudTd>@(context.ScannedOnUtc?.LocalDateTime.ToString("yyyy-MM-dd HH:mm") ?? "—")</MudTd>
                         </RowTemplate>
                     </MudTable>
                     @if (_selected.Entries.Count > 10)

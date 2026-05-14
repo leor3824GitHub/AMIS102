@@ -13,7 +13,7 @@ public static class SearchIssuanceReportsEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapGet("/", Handle)
-            .WithName(nameof(SearchIssuanceReportsQuery))
+            .WithModuleName<SearchIssuanceReportsQuery>()
             .WithSummary("Search issuance reports")
             .Produces<PagedResponse<PropertyIssuanceReportSummaryDto>>()
             .RequirePermission(AssetRegisterModuleConstants.Permissions.Issuance.View);

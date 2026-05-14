@@ -13,7 +13,7 @@ public static class SearchAssetsEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapGet("/", Handle)
-            .WithName(nameof(SearchAssetsQuery))
+            .WithModuleName<SearchAssetsQuery>()
             .WithSummary("Search assets")
             .Produces<PagedResponse<AssetRegistrySummaryDto>>()
             .RequirePermission(AssetRegisterModuleConstants.Permissions.Assets.View);

@@ -11,7 +11,7 @@ public static class MarkPhysicalCountMissingEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapPost("/{id:guid}/missing", Handle)
-            .WithName(nameof(MarkPhysicalCountMissingCommand))
+            .WithModuleName<MarkPhysicalCountMissingCommand>()
             .WithSummary("Mark a known asset as missing during a count")
             .Produces<PhysicalCountSessionDto>()
             .RequirePermission(AssetRegisterModuleConstants.Permissions.Count.Record);

@@ -11,7 +11,7 @@ public static class CreateReceivingReportEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapPost("/", Handle)
-            .WithName("AssetRegister_CreateReceivingReport")
+            .WithModuleName<CreateReceivingReportCommand>()
             .WithSummary("Create a Receiving Report (PPERR or SMRR) and register assets.")
             .Produces<ReceivingReportDto>(StatusCodes.Status201Created)
             .RequirePermission(AssetRegisterModuleConstants.Permissions.Receiving.Create);

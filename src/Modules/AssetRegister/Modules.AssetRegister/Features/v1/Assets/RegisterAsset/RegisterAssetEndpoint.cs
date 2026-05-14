@@ -11,7 +11,7 @@ public static class RegisterAssetEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapPost("/", Handle)
-            .WithName(nameof(RegisterAssetCommand))
+            .WithModuleName<RegisterAssetCommand>()
             .WithSummary("Register a single physical asset (one row per unit, COA 2020-006).")
             .Produces<AssetRegistryDto>(StatusCodes.Status201Created)
             .Produces(StatusCodes.Status400BadRequest)

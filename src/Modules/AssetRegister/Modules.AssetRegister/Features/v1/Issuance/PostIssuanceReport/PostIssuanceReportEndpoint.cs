@@ -11,7 +11,7 @@ public static class PostIssuanceReportEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapPost("/{id:guid}/post", Handle)
-            .WithName(nameof(PostIssuanceReportCommand))
+            .WithModuleName<PostIssuanceReportCommand>()
             .WithSummary("Post a draft issuance report (becomes immutable)")
             .Produces<PropertyIssuanceReportDto>()
             .RequirePermission(AssetRegisterModuleConstants.Permissions.Issuance.Post);

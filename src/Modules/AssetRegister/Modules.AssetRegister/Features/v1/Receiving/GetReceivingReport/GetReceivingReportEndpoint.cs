@@ -11,7 +11,7 @@ public static class GetReceivingReportEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapGet("/{id:guid}", Handle)
-            .WithName("AssetRegister_GetReceivingReport")
+            .WithModuleName<GetReceivingReportQuery>()
             .WithSummary("Fetch a single Receiving Report (with item lines).")
             .Produces<ReceivingReportDto>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound)

@@ -11,7 +11,7 @@ public static class GetPropertyItemCatalogEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapGet("/{id:guid}", Handle)
-            .WithName(nameof(GetPropertyItemCatalogQuery))
+            .WithModuleName<GetPropertyItemCatalogQuery>()
             .WithSummary("Get a property item catalog entry by id")
             .Produces<PropertyItemCatalogDto>()
             .Produces(StatusCodes.Status404NotFound)

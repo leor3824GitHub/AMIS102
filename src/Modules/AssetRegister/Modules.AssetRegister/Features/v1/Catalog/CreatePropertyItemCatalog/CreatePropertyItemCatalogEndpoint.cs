@@ -11,7 +11,7 @@ public static class CreatePropertyItemCatalogEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapPost("/", Handle)
-            .WithName(nameof(CreatePropertyItemCatalogCommand))
+            .WithModuleName<CreatePropertyItemCatalogCommand>()
             .WithSummary("Create a property item catalog entry")
             .Produces<PropertyItemCatalogDto>(StatusCodes.Status201Created)
             .Produces(StatusCodes.Status400BadRequest)

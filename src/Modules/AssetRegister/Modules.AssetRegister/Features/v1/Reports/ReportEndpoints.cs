@@ -13,41 +13,41 @@ public static class ReportEndpoints
     public static IEndpointRouteBuilder MapReportEndpoints(this IEndpointRouteBuilder endpoints)
     {
         endpoints.MapGet("/accountability/{id:guid}", HandleAccountabilityReport)
-            .WithName(nameof(GetAccountabilityReportQuery))
+            .WithModuleName<GetAccountabilityReportQuery>()
             .WithSummary("Generate accountability document view (ICS/PAR)")
             .Produces<AccountabilityReportDto>()
             .Produces(StatusCodes.Status404NotFound)
             .RequirePermission(AssetRegisterModuleConstants.Permissions.Accountability.View);
 
         endpoints.MapGet("/issuance/{id:guid}", HandleIssuanceReport)
-            .WithName(nameof(GetIssuanceReportDocumentQuery))
+            .WithModuleName<GetIssuanceReportDocumentQuery>()
             .WithSummary("Generate issuance document view (RSPI/PPEIR)")
             .Produces<IssuanceReportDocumentDto>()
             .Produces(StatusCodes.Status404NotFound)
             .RequirePermission(AssetRegisterModuleConstants.Permissions.Issuance.View);
 
         endpoints.MapGet("/count/{sessionId:guid}", HandlePhysicalCountReport)
-            .WithName(nameof(GetPhysicalCountReportQuery))
+            .WithModuleName<GetPhysicalCountReportQuery>()
             .WithSummary("Generate physical count report view (RPCSEMEX/RPCPPE)")
             .Produces<PhysicalCountReportDto>()
             .Produces(StatusCodes.Status404NotFound)
             .RequirePermission(AssetRegisterModuleConstants.Permissions.Count.View);
 
         endpoints.MapGet("/regspi", HandleRegSpiReport)
-            .WithName(nameof(GetRegSpiReportQuery))
+            .WithModuleName<GetRegSpiReportQuery>()
             .WithSummary("Generate RegSPI document view")
             .Produces<RegSpiReportDto>()
             .RequirePermission(AssetRegisterModuleConstants.Permissions.Accountability.View);
 
         endpoints.MapGet("/incidents/{id:guid}", HandleIncidentReport)
-            .WithName(nameof(GetIncidentReportDocumentQuery))
+            .WithModuleName<GetIncidentReportDocumentQuery>()
             .WithSummary("Generate incident document view (RLSDDSP)")
             .Produces<IncidentReportDocumentDto>()
             .Produces(StatusCodes.Status404NotFound)
             .RequirePermission(AssetRegisterModuleConstants.Permissions.Incident.View);
 
         endpoints.MapGet("/unserviceable/{id:guid}", HandleUnserviceableReport)
-            .WithName(nameof(GetUnserviceableReportDocumentQuery))
+            .WithModuleName<GetUnserviceableReportDocumentQuery>()
             .WithSummary("Generate unserviceable document view (IIRUSP/IIRUP)")
             .Produces<UnserviceableReportDocumentDto>()
             .Produces(StatusCodes.Status404NotFound)

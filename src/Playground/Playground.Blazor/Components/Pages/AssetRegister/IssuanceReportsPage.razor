@@ -1,5 +1,7 @@
 @page "/asset-register/issuance"
 @using AMIS.Playground.Blazor.ApiClient
+@using IssuanceReportType = AMIS.Modules.AssetRegister.Contracts.v1.IssuanceReportType
+@using IssuanceReportStatus = AMIS.Modules.AssetRegister.Contracts.v1.IssuanceReportStatus
 @inject IArIssuanceReportClient Client
 @inject ISnackbar Snackbar
 
@@ -18,17 +20,17 @@
                                       OnKeyDown="OnSearchKeyDown" Immediate="false" />
                     </MudItem>
                     <MudItem xs="6" md="2">
-                        <MudSelect @bind-Value="_typeFilter" Label="Report Type" Variant="Variant.Outlined" T="int?" Clearable="true">
-                            <MudSelectItem Value="@((int?)null)">All</MudSelectItem>
-                            <MudSelectItem Value="@((int?)0)">SMIR (SE)</MudSelectItem>
-                            <MudSelectItem Value="@((int?)1)">PPEIR</MudSelectItem>
+                        <MudSelect @bind-Value="_typeFilter" Label="Report Type" Variant="Variant.Outlined" T="IssuanceReportType?" Clearable="true">
+                            <MudSelectItem T="IssuanceReportType?" Value="@((IssuanceReportType?)null)">All</MudSelectItem>
+                            <MudSelectItem T="IssuanceReportType?" Value="@((IssuanceReportType?)IssuanceReportType.SMIR)">SMIR (SE)</MudSelectItem>
+                            <MudSelectItem T="IssuanceReportType?" Value="@((IssuanceReportType?)IssuanceReportType.PPEIR)">PPEIR</MudSelectItem>
                         </MudSelect>
                     </MudItem>
                     <MudItem xs="6" md="2">
-                        <MudSelect @bind-Value="_statusFilter" Label="Status" Variant="Variant.Outlined" T="int?" Clearable="true">
-                            <MudSelectItem Value="@((int?)null)">All</MudSelectItem>
-                            <MudSelectItem Value="@((int?)0)">Draft</MudSelectItem>
-                            <MudSelectItem Value="@((int?)1)">Posted</MudSelectItem>
+                        <MudSelect @bind-Value="_statusFilter" Label="Status" Variant="Variant.Outlined" T="IssuanceReportStatus?" Clearable="true">
+                            <MudSelectItem T="IssuanceReportStatus?" Value="@((IssuanceReportStatus?)null)">All</MudSelectItem>
+                            <MudSelectItem T="IssuanceReportStatus?" Value="@((IssuanceReportStatus?)IssuanceReportStatus.Draft)">Draft</MudSelectItem>
+                            <MudSelectItem T="IssuanceReportStatus?" Value="@((IssuanceReportStatus?)IssuanceReportStatus.Posted)">Posted</MudSelectItem>
                         </MudSelect>
                     </MudItem>
                     <MudItem xs="12" md="2" Class="d-flex align-end">
@@ -62,9 +64,9 @@
                 </MudCardHeader>
                 <MudCardContent>
                     <MudStack Spacing="2">
-                        <MudSelect @bind-Value="_createForm.ReportType" Label="Report Type" Variant="Variant.Outlined" T="int" Required="true">
-                            <MudSelectItem Value="0">SMIR (Semi-Expendable)</MudSelectItem>
-                            <MudSelectItem Value="1">PPEIR (PPE)</MudSelectItem>
+                        <MudSelect @bind-Value="_createForm.ReportType" Label="Report Type" Variant="Variant.Outlined" T="IssuanceReportType" Required="true">
+                            <MudSelectItem T="IssuanceReportType" Value="@IssuanceReportType.SMIR">SMIR (Semi-Expendable)</MudSelectItem>
+                            <MudSelectItem T="IssuanceReportType" Value="@IssuanceReportType.PPEIR">PPEIR (PPE)</MudSelectItem>
                         </MudSelect>
                         <MudTextField @bind-Value="_createForm.FundCluster" Label="Fund Cluster" Variant="Variant.Outlined"
                                       MaxLength="50" Required="true" />
@@ -114,19 +116,19 @@
                             <MudTd><strong>@context.ReportNo</strong></MudTd>
                             <MudTd>
                                 <MudChip T="string" Size="Size.Small"
-                                         Color="@(context.ReportType == 0 ? Color.Info : Color.Secondary)"
+                                         Color="@(context.ReportType == IssuanceReportType.SMIR ? Color.Info : Color.Secondary)"
                                          Variant="Variant.Outlined">
-                                    @(context.ReportType == 0 ? "SMIR" : "PPEIR")
+                                     @(context.ReportType == IssuanceReportType.SMIR ? "SMIR" : "PPEIR")
                                 </MudChip>
                             </MudTd>
                             <MudTd>
                                 <MudChip T="string" Size="Size.Small"
-                                         Color="@(context.Status == 0 ? Color.Warning : Color.Success)"
+                                         Color="@(context.Status == IssuanceReportStatus.Draft ? Color.Warning : Color.Success)"
                                          Variant="Variant.Filled">
-                                    @(context.Status == 0 ? "Draft" : "Posted")
+                                     @(context.Status == IssuanceReportStatus.Draft ? "Draft" : "Posted")
                                 </MudChip>
                             </MudTd>
-                            <MudTd>@context.PeriodFromDate.ToString("yyyy-MM-dd") — @context.PeriodToDate.ToString("yyyy-MM-dd")</MudTd>
+                            <MudTd>@context.PeriodFromDate.ToString("yyyy-MM-dd") â€” @context.PeriodToDate.ToString("yyyy-MM-dd")</MudTd>
                             <MudTd Style="text-align:right">@context.LineCount</MudTd>
                             <MudTd Style="text-align:right">@context.TotalAmount.ToString("N2")</MudTd>
                         </RowTemplate>
@@ -159,9 +161,9 @@
                         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
                             <MudText Typo="Typo.h6">@_selected.ReportNo</MudText>
                             <MudChip T="string" Size="Size.Small"
-                                     Color="@(_selected.Status == 0 ? Color.Warning : Color.Success)"
+                                      Color="@(_selected.Status == IssuanceReportStatus.Draft ? Color.Warning : Color.Success)"
                                      Variant="Variant.Filled">
-                                @(_selected.Status == 0 ? "Draft" : "Posted")
+                                  @(_selected.Status == IssuanceReportStatus.Draft ? "Draft" : "Posted")
                             </MudChip>
                         </MudStack>
                     </CardHeaderContent>
@@ -180,7 +182,7 @@
                     <MudGrid Class="mb-3">
                         <MudItem xs="6" md="3">
                             <MudText Typo="Typo.caption" Color="Color.Secondary">Type</MudText>
-                            <MudText Typo="Typo.body2">@(_selected.ReportType == 0 ? "SMIR" : "PPEIR")</MudText>
+                            <MudText Typo="Typo.body2">@(_selected.ReportType == IssuanceReportType.SMIR ? "SMIR" : "PPEIR")</MudText>
                         </MudItem>
                         <MudItem xs="6" md="3">
                             <MudText Typo="Typo.caption" Color="Color.Secondary">Fund Cluster</MudText>
@@ -198,7 +200,7 @@
                         {
                             <MudItem xs="6" md="3">
                                 <MudText Typo="Typo.caption" Color="Color.Secondary">Posted By / On</MudText>
-                                <MudText Typo="Typo.body2">@_selected.PostedBy.PrintedName — @_selected.PostedOn?.ToString("yyyy-MM-dd")</MudText>
+                                <MudText Typo="Typo.body2">@_selected.PostedBy.PrintedName â€” @_selected.PostedOn?.ToString("yyyy-MM-dd")</MudText>
                             </MudItem>
                         }
                     </MudGrid>
@@ -213,7 +215,7 @@
                             <MudTh Style="text-align:right">Unit Cost (?)</MudTh>
                             <MudTh Style="text-align:right">Amount (?)</MudTh>
                             <MudTh>RC Code</MudTh>
-                            @if (_selected.Status == 0)
+                            @if (_selected.Status == IssuanceReportStatus.Draft)
                             {
                                 <MudTh>Remove</MudTh>
                             }
@@ -225,8 +227,8 @@
                             <MudTd Style="text-align:right">@context.SnapshotQuantityIssued</MudTd>
                             <MudTd Style="text-align:right">@context.SnapshotUnitCost.ToString("N2")</MudTd>
                             <MudTd Style="text-align:right">@context.SnapshotAmount.ToString("N2")</MudTd>
-                            <MudTd>@(context.SnapshotResponsibilityCenterCode ?? "—")</MudTd>
-                            @if (_selected.Status == 0)
+                            <MudTd>@(context.SnapshotResponsibilityCenterCode ?? "â€”")</MudTd>
+                            @if (_selected.Status == IssuanceReportStatus.Draft)
                             {
                                 <MudTd>
                                     <MudIconButton Icon="@Icons.Material.Outlined.Remove" Size="Size.Small"
@@ -238,7 +240,7 @@
                     </MudTable>
 
                     <!-- Post action (Draft only) -->
-                    @if (_selected.Status == 0)
+                    @if (_selected.Status == IssuanceReportStatus.Draft)
                     {
                         <MudDivider Class="my-3" />
                         <MudText Typo="Typo.subtitle2" Class="mb-2">Post Report</MudText>
@@ -273,8 +275,8 @@
     private bool _busy;
     private string? _error;
     private string? _keyword;
-    private int? _typeFilter;
-    private int? _statusFilter;
+    private IssuanceReportType? _typeFilter;
+    private IssuanceReportStatus? _statusFilter;
     private int _page = 1;
     private int _totalPages = 1;
     private int _totalCount;
@@ -288,7 +290,7 @@
 
     private sealed class CreateFormModel
     {
-        public int ReportType { get; set; }
+        public IssuanceReportType ReportType { get; set; }
         public string FundCluster { get; set; } = "";
         public DateTime? PeriodFromNullable { get; set; }
         public DateTime? PeriodToNullable { get; set; }

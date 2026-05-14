@@ -8,7 +8,7 @@
 @inject ISnackbar Snackbar
 
 <AMISPageHeader Title="Asset Registry"
-               Description="Master ledger of individual physical units � one row per asset (COA 2020-006, 2022-004)." />
+               Description="Master ledger of individual physical units — one row per asset (COA 2020-006, 2022-004)." />
 
 <MudGrid Spacing="3">
     <!-- Search filters -->
@@ -125,7 +125,7 @@
             <MudCard Elevation="2">
                 <MudCardHeader>
                     <CardHeaderContent>
-                        <MudText Typo="Typo.h6">@_selected.PropertyNo � Detail</MudText>
+                        <MudText Typo="Typo.h6">@_selected.PropertyNo — Detail</MudText>
                     </CardHeaderContent>
                     <CardHeaderActions>
                         <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small"
@@ -152,7 +152,7 @@
                         </MudItem>
                         <MudItem xs="6" md="2">
                             <MudText Typo="Typo.caption" Color="Color.Secondary">UACS Object Code</MudText>
-                            <MudText Typo="Typo.body2">@(_selected.UacsObjectCode ?? "�")</MudText>
+                            <MudText Typo="Typo.body2">@(_selected.UacsObjectCode ?? "—")</MudText>
                         </MudItem>
                         <MudItem xs="6" md="2">
                             <MudText Typo="Typo.caption" Color="Color.Secondary">Unit Cost (?)</MudText>

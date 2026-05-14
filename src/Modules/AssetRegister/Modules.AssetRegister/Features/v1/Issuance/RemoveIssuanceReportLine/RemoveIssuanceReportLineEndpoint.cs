@@ -11,7 +11,7 @@ public static class RemoveIssuanceReportLineEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapDelete("/{id:guid}/lines/{lineId:guid}", Handle)
-            .WithName(nameof(RemoveIssuanceReportLineCommand))
+            .WithModuleName<RemoveIssuanceReportLineCommand>()
             .WithSummary("Remove a line from a draft issuance report")
             .Produces<PropertyIssuanceReportDto>()
             .RequirePermission(AssetRegisterModuleConstants.Permissions.Issuance.Post);
