@@ -1,6 +1,6 @@
-﻿# AMIS102
+﻿# AMIS
 
-AMIS102 is a modular, enterprise-ready Asset Management Information System built on .NET 10 and powered by the AMIS (Asset Management Information System) (AMIS) architecture foundation.
+AMIS is a modular, enterprise-ready Asset Management Information System built on .NET 10 and powered by the AMIS (Asset Management Information System) (AMIS) architecture foundation.
 
 This repository extends the AMIS framework into a domain-focused implementation for government and enterprise operations, including procurement, fixed assets, expendables, vehicle management, finance, auditing, and multi-tenant administration.
 
@@ -12,7 +12,7 @@ This repository extends the AMIS framework into a domain-focused implementation 
 - Built-in Identity, authorization permissions, auditing, caching, jobs, and OpenAPI docs.
 - Reference clients for API, Blazor, and .NET MAUI.
 
-## Core modules in AMIS102
+## Core modules in AMIS
 
 - Identity
 - Multitenancy
@@ -81,7 +81,7 @@ Aspire will orchestrate the API, supporting services, and local infrastructure.
 
 ## Notes on project identity
 
-This repository is AMIS102, implemented on top of the AMIS (Asset Management Information System) starter architecture. If you see references to AMIS in solution or framework package names, those refer to the underlying platform components used by AMIS102.
+This repository is AMIS, implemented on top of the AMIS (Asset Management Information System) starter architecture. If you see references to AMIS in solution or framework package names, those refer to the underlying platform components used by AMIS.
 
 ## Additional docs
 
@@ -89,5 +89,5 @@ This repository is AMIS102, implemented on top of the AMIS (Asset Management Inf
 - `MAUI-IMPLEMENTATION-PLAN.md` for .NET MAUI roadmap
 - `ASSETMANAGEMENT-OVERHAUL-PLAN.md` and related planning docs for domain evolution
 
-AMIS102 is designed for production-focused teams that need fast delivery with strong architecture discipline.
+AMIS is designed for production-focused teams that need fast delivery with strong architecture discipline.
 
