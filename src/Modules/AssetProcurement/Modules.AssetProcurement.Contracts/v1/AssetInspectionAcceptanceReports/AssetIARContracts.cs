@@ -12,6 +12,16 @@ public enum AssetIARStatus
 {
     Draft = 0,
     Accepted = 1,
+    Rejected = 2,             // legacy whole-IAR rejection — superseded by per-line Rejected; kept for back-compat
+    PendingInspection = 3,
+    Inspected = 4,
+    Cancelled = 5
+}
+
+public enum LineInspectionResult
+{
+    Pending = 0,
+    Passed = 1,
     Rejected = 2
 }
 
@@ -32,7 +42,10 @@ public sealed record AssetIARLineItemDto(
     decimal UnitCost,
     decimal Amount,
     string? InspectionRemarks,
-    string? StockPropertyNo);
+    string? StockPropertyNo,
+    LineInspectionResult InspectionResult = LineInspectionResult.Pending,
+    DateTimeOffset? InspectedOnUtc = null,
+    Guid? InspectedById = null);
 
 public sealed record AssetIARDto(
     Guid Id,
@@ -54,7 +67,11 @@ public sealed record AssetIARDto(
     decimal TotalAmount,
     DateTimeOffset CreatedOnUtc,
     string? CreatedBy,
-    DateTimeOffset? LastModifiedOnUtc);
+    DateTimeOffset? LastModifiedOnUtc,
+    DateTimeOffset? SubmittedForInspectionOnUtc = null,
+    DateTimeOffset? InspectedOnUtc = null,
+    DateTimeOffset? AcceptedOnUtc = null,
+    DateTimeOffset? CancelledOnUtc = null);
 
 public sealed record AssetIARSummaryDto(
     Guid Id,
@@ -68,7 +85,7 @@ public sealed record AssetIARSummaryDto(
     DateTimeOffset CreatedOnUtc);
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Commands
+// Commands — existing
 // ──────────────────────────────────────────────────────────────────────────────
 
 public sealed record AssetIARLineItemRequest(
@@ -105,6 +122,26 @@ public sealed record UpdateAssetIARCommand(
 public sealed record AcceptAssetIARCommand(Guid Id) : ICommand<AssetIARDto>;
 
 public sealed record RejectAssetIARCommand(Guid Id, string Reason) : ICommand<AssetIARDto>;
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Commands — stage workflow (new)
+// ──────────────────────────────────────────────────────────────────────────────
+
+public sealed record SubmitIARForInspectionCommand(Guid Id) : ICommand<AssetIARDto>;
+
+public sealed record ReassignInspectorCommand(Guid Id, Guid NewInspectorId) : ICommand<AssetIARDto>;
+
+public sealed record LineInspectionDecision(int ItemNo, LineInspectionResult Result, string? Remarks);
+
+public sealed record RecordIARInspectionCommand(
+    Guid Id,
+    IReadOnlyList<LineInspectionDecision> Decisions) : ICommand<AssetIARDto>;
+
+public sealed record AssignPropertyNoCommand(Guid Id, int ItemNo, string PropertyNo) : ICommand<AssetIARDto>;
+
+public sealed record ExpandLineByQuantityCommand(Guid Id, int ItemNo) : ICommand<AssetIARDto>;
+
+public sealed record CancelAssetIARCommand(Guid Id) : ICommand<AssetIARDto>;
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Queries
@@ -153,4 +190,3 @@ public sealed record AssetIARAcceptedEvent(
     public DateTime OccurredOnUtc { get; } = DateTime.UtcNow;
     public string Source { get; } = "AssetProcurement";
 }
-

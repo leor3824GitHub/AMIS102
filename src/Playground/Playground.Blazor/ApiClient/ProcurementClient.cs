@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -10,6 +11,8 @@ using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
 using PurchaseOrderContracts = AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders;
 
 namespace AMIS.Playground.Blazor.ApiClient;
+
+internal sealed class DuplicatePurchaseOrderException(string message) : Exception(message);
 
 internal static class ProcurementJson
 {
@@ -147,7 +150,7 @@ internal sealed class CanvassRequestClient(HttpClient http) : ICanvassRequestCli
 
 internal interface IPurchaseOrderClient
 {
-    Task<PagedResponse<PurchaseOrderSummaryDto>> SearchAsync(string? keyword = null, PurchaseOrderStatus? status = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
+    Task<PagedResponse<PurchaseOrderSummaryDto>> SearchAsync(string? keyword = null, PurchaseOrderStatus? status = null, int page = 1, int pageSize = 20, Guid? purchaseRequestId = null, Guid? supplierId = null, CancellationToken ct = default);
     Task<PurchaseOrderDto?> GetAsync(Guid id, CancellationToken ct = default);
     Task<PurchaseOrderDto> CreateAsync(PurchaseOrderContracts.CreatePurchaseOrderCommand command, CancellationToken ct = default);
     Task<PurchaseOrderDto> UpdateAsync(Guid id, UpdatePurchaseOrderCommand command, CancellationToken ct = default);
@@ -159,11 +162,13 @@ internal sealed class PurchaseOrderClient(HttpClient http) : IPurchaseOrderClien
 {
     private const string Base = "api/v1/procurement/purchase-orders";
 
-    public Task<PagedResponse<PurchaseOrderSummaryDto>> SearchAsync(string? keyword = null, PurchaseOrderStatus? status = null, int page = 1, int pageSize = 20, CancellationToken ct = default)
+    public Task<PagedResponse<PurchaseOrderSummaryDto>> SearchAsync(string? keyword = null, PurchaseOrderStatus? status = null, int page = 1, int pageSize = 20, Guid? purchaseRequestId = null, Guid? supplierId = null, CancellationToken ct = default)
     {
         var q = HttpUtility.ParseQueryString(string.Empty);
         if (!string.IsNullOrWhiteSpace(keyword)) q["Keyword"] = keyword;
         if (status.HasValue) q["Status"] = ((int)status.Value).ToString(CultureInfo.InvariantCulture);
+        if (purchaseRequestId.HasValue) q["PurchaseRequestId"] = purchaseRequestId.Value.ToString();
+        if (supplierId.HasValue) q["SupplierId"] = supplierId.Value.ToString();
         q["PageNumber"] = page.ToString(CultureInfo.InvariantCulture);
         q["PageSize"] = pageSize.ToString(CultureInfo.InvariantCulture);
         return http.GetFromJsonAsync<PagedResponse<PurchaseOrderSummaryDto>>($"{Base}?{q}", ProcurementJson.Options, ct)!;
@@ -175,9 +180,31 @@ internal sealed class PurchaseOrderClient(HttpClient http) : IPurchaseOrderClien
     public async Task<PurchaseOrderDto> CreateAsync(PurchaseOrderContracts.CreatePurchaseOrderCommand command, CancellationToken ct = default)
     {
         using var r = await http.PostAsJsonAsync(Base, command, ProcurementJson.Options, ct);
+
+        if (r.StatusCode == HttpStatusCode.Conflict)
+        {
+            var detail = await ReadProblemDetailAsync(r, ct);
+            throw new DuplicatePurchaseOrderException(detail ?? "A duplicate purchase order already exists.");
+        }
+
         r.EnsureSuccessStatusCode();
         return (await r.Content.ReadFromJsonAsync<PurchaseOrderDto>(ProcurementJson.Options, ct))!;
     }
+
+    private static async Task<string?> ReadProblemDetailAsync(HttpResponseMessage response, CancellationToken ct)
+    {
+        try
+        {
+            var problem = await response.Content.ReadFromJsonAsync<ProblemDetailsLite>(ProcurementJson.Options, ct);
+            return problem?.Detail;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private sealed record ProblemDetailsLite(string? Title, string? Detail);
 
     public async Task<PurchaseOrderDto> UpdateAsync(Guid id, UpdatePurchaseOrderCommand command, CancellationToken ct = default)
     {

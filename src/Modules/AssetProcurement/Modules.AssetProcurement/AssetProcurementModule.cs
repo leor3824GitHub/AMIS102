@@ -23,6 +23,12 @@ using AMIS.Modules.AssetProcurement.Features.v1.AssetIARs.AcceptAssetIAR;
 using AMIS.Modules.AssetProcurement.Features.v1.AssetIARs.RejectAssetIAR;
 using AMIS.Modules.AssetProcurement.Features.v1.AssetIARs.GetAssetIAR;
 using AMIS.Modules.AssetProcurement.Features.v1.AssetIARs.SearchAssetIARs;
+using AMIS.Modules.AssetProcurement.Features.v1.AssetIARs.SubmitForInspection;
+using AMIS.Modules.AssetProcurement.Features.v1.AssetIARs.ReassignInspector;
+using AMIS.Modules.AssetProcurement.Features.v1.AssetIARs.RecordInspection;
+using AMIS.Modules.AssetProcurement.Features.v1.AssetIARs.AssignPropertyNo;
+using AMIS.Modules.AssetProcurement.Features.v1.AssetIARs.ExpandLineByQuantity;
+using AMIS.Modules.AssetProcurement.Features.v1.AssetIARs.CancelAssetIAR;
 using AMIS.Modules.AssetProcurement.Provisioning;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -50,11 +56,15 @@ public class AssetProcurementModule : IModule
         new("Issue Asset Purchase Orders",    "Issue",   "AssetProcurement.AssetPurchaseOrders"),
         new("Cancel Asset Purchase Orders",   "Cancel",  "AssetProcurement.AssetPurchaseOrders"),
 
-        new("View Asset IARs",    "View",   "AssetProcurement.AssetIARs", IsBasic: true),
-        new("Create Asset IARs",  "Create", "AssetProcurement.AssetIARs"),
-        new("Update Asset IARs",  "Update", "AssetProcurement.AssetIARs"),
-        new("Accept Asset IARs",  "Accept", "AssetProcurement.AssetIARs"),
-        new("Reject Asset IARs",  "Reject", "AssetProcurement.AssetIARs"),
+        new("View Asset IARs",                "View",                "AssetProcurement.AssetIARs", IsBasic: true),
+        new("Create Asset IARs",              "Create",              "AssetProcurement.AssetIARs"),
+        new("Update Asset IARs",              "Update",              "AssetProcurement.AssetIARs"),
+        new("Accept Asset IARs",              "Accept",              "AssetProcurement.AssetIARs"),
+        new("Reject Asset IARs",              "Reject",              "AssetProcurement.AssetIARs"),
+        new("Submit Asset IARs for Inspection", "SubmitForInspection", "AssetProcurement.AssetIARs"),
+        new("Inspect Asset IARs",             "Inspect",             "AssetProcurement.AssetIARs"),
+        new("Assign Property No on Asset IARs", "AssignPropertyNo",  "AssetProcurement.AssetIARs"),
+        new("Cancel Asset IARs",              "Cancel",              "AssetProcurement.AssetIARs"),
     ];
 
     public void ConfigureServices(IHostApplicationBuilder builder)
@@ -108,8 +118,14 @@ public class AssetProcurementModule : IModule
         // IARs
         CreateAssetIAREndpoint.Map(iarGroup);
         UpdateAssetIAREndpoint.Map(iarGroup);
+        SubmitIARForInspectionEndpoint.Map(iarGroup);
+        ReassignInspectorEndpoint.Map(iarGroup);
+        RecordIARInspectionEndpoint.Map(iarGroup);
+        AssignPropertyNoEndpoint.Map(iarGroup);
+        ExpandLineByQuantityEndpoint.Map(iarGroup);
         AcceptAssetIAREndpoint.Map(iarGroup);
         RejectAssetIAREndpoint.Map(iarGroup);
+        CancelAssetIAREndpoint.Map(iarGroup);
         GetAssetIAREndpoint.Map(iarGroup);
         SearchAssetIARsEndpoint.Map(iarGroup);
     }

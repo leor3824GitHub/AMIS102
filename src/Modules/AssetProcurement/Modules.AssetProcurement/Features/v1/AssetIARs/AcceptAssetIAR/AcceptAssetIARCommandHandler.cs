@@ -31,10 +31,12 @@ public sealed class AcceptAssetIARCommandHandler(
             PoNumber: po?.PoNumber ?? string.Empty,
             SupplierId: iar.SupplierId,
             SupplierName: iar.SupplierName,
-            AcceptedItems: iar.LineItems.Select(li => new AssetIARAcceptedEventItem(
-                li.Description, li.TechnicalSpecifications, li.Brand, li.Model,
-                li.SerialNo, li.PropertyClassHint, li.Unit, li.Quantity, li.UnitCost,
-                li.StockPropertyNo)).ToList(),
+            AcceptedItems: iar.LineItems
+                .Where(li => li.InspectionResult != LineInspectionResult.Rejected)
+                .Select(li => new AssetIARAcceptedEventItem(
+                    li.Description, li.TechnicalSpecifications, li.Brand, li.Model,
+                    li.SerialNo, li.PropertyClassHint, li.Unit, li.Quantity, li.UnitCost,
+                    li.StockPropertyNo)).ToList(),
             TenantId: dbContext.TenantInfo?.Identifier);
 
         await eventBus.PublishAsync(integrationEvent, cancellationToken).ConfigureAwait(false);

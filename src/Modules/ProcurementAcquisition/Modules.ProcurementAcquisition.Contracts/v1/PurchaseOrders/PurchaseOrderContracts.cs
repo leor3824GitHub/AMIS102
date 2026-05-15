@@ -102,7 +102,8 @@ public sealed record CreatePurchaseOrderCommand(
     string PaymentTerm,
     string? FundCluster,
     string? OursBursNumber,
-    IReadOnlyList<PurchaseOrderLineItemRequest> LineItems) : ICommand<PurchaseOrderDto>;
+    IReadOnlyList<PurchaseOrderLineItemRequest> LineItems,
+    bool AllowDuplicate = false) : ICommand<PurchaseOrderDto>;
 
 public sealed record UpdatePurchaseOrderCommand(
     Guid Id,

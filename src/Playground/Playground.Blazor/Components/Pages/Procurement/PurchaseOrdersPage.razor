@@ -1,4 +1,5 @@
 @page "/procurement/purchase-orders"
+@using AMIS.Modules.ProcurementAcquisition.Contracts.v1.Canvass
 @using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders
 @using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests
 @using AMIS.Framework.Shared.Persistence
@@ -6,6 +7,7 @@
 @using PurchaseOrderContracts = AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders
 @inject IPurchaseOrderClient Client
 @inject IPurchaseRequestClient PurchaseRequestClient
+@inject ICanvassRequestClient CanvassClient
 @inject IMaster_dataClient MasterDataClient
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
@@ -31,7 +33,20 @@
                                      Clearable="true"
                                      CoerceValue="true"
                                      ResetValueOnEmptyText="true" />
-                    <MudTextField @bind-Value="_form.CanvassRequestId" Label="Canvass Request ID (optional)" Variant="Variant.Outlined" />
+                    @if (_prefilledCanvass is not null)
+                    {
+                        <MudAlert Severity="Severity.Success" Dense="true" Icon="@Icons.Material.Filled.EmojiEvents">
+                            Prefilled from awarded canvass <b>@_prefilledCanvass.RivNumber</b>
+                            @if (!string.IsNullOrWhiteSpace(_prefilledCanvass.AwardedSupplierName))
+                            {
+                                <span> · Supplier: @_prefilledCanvass.AwardedSupplierName</span>
+                            }
+                        </MudAlert>
+                    }
+                    else
+                    {
+                        <MudTextField @bind-Value="_form.CanvassRequestId" Label="Canvass Request ID (optional)" Variant="Variant.Outlined" />
+                    }
                     <MudDivider Class="my-1" />
                     <MudText Typo="Typo.subtitle2">Supplier Information</MudText>
                     <MudAutocomplete T="SupplierDto"
@@ -95,7 +110,7 @@
                                 </MudItem>
                                 <MudItem xs="12">
                                     <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                        Amount: ?@((li.Quantity * li.UnitCost).ToString("N2"))
+                                        Amount: ₱@((li.Quantity * li.UnitCost).ToString("N2"))
                                     </MudText>
                                 </MudItem>
                             </MudGrid>
@@ -107,7 +122,7 @@
                     @if (_form.LineItems.Any())
                     {
                         <MudPaper Class="pa-2" Style="background:var(--mud-palette-background-grey)">
-                            <MudText Typo="Typo.body2"><b>Total: ?@_form.LineItems.Sum(li => li.Quantity * li.UnitCost).ToString("N2")</b></MudText>
+                            <MudText Typo="Typo.body2"><b>Total: ₱@_form.LineItems.Sum(li => li.Quantity * li.UnitCost).ToString("N2")</b></MudText>
                         </MudPaper>
                     }
 
@@ -178,7 +193,7 @@
                                     <td>@item.PoDate.ToString("MM/dd/yyyy")</td>
                                     <td>@item.SupplierName</td>
                                     <td><MudText Typo="Typo.caption">@item.ModeOfProcurement.ToString().Replace("_"," ")</MudText></td>
-                                    <td style="text-align:right">?@item.TotalAmount.ToString("N2")</td>
+                                    <td style="text-align:right">₱@item.TotalAmount.ToString("N2")</td>
                                     <td>@PoStatusChip(item.Status)</td>
                                     <td>
                                         <MudStack Row="true" Spacing="0">
@@ -228,7 +243,7 @@
             <MudCard Elevation="1" Class="mt-3">
                 <MudCardContent>
                     <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3">
-                        <MudText Typo="Typo.h6" Class="flex-grow-1">@_detail.PoNumber � Details</MudText>
+                        <MudText Typo="Typo.h6" Class="flex-grow-1">@_detail.PoNumber • Details</MudText>
                         <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="@(() => _detail = null)" />
                     </MudStack>
                     <MudGrid Spacing="2">
@@ -268,19 +283,19 @@
                             {
                                 <tr>
                                     <td>@li.ItemNo</td>
-                                    <td>@(li.StockNumber ?? "�")</td>
+                                    <td>@(li.StockNumber ?? "—")</td>
                                     <td>@li.Description</td>
                                     <td>@li.Unit</td>
                                     <td style="text-align:right">@li.Quantity.ToString("N2")</td>
-                                    <td style="text-align:right">?@li.UnitCost.ToString("N2")</td>
-                                    <td style="text-align:right">?@li.Amount.ToString("N2")</td>
+                                    <td style="text-align:right">₱@li.UnitCost.ToString("N2")</td>
+                                    <td style="text-align:right">₱@li.Amount.ToString("N2")</td>
                                 </tr>
                             }
                         </tbody>
                         <tfoot>
                             <tr>
                                 <td colspan="6" style="text-align:right"><b>Total Amount:</b></td>
-                                <td style="text-align:right"><b>?@_detail.TotalAmount.ToString("N2")</b></td>
+                                <td style="text-align:right"><b>₱@_detail.TotalAmount.ToString("N2")</b></td>
                             </tr>
                         </tfoot>
                     </MudSimpleTable>
@@ -292,6 +307,9 @@
 </MudGrid>
 
 @code {
+    [SupplyParameterFromQuery(Name = "canvassId")]
+    public Guid? CanvassId { get; set; }
+
     private List<PurchaseOrderSummaryDto> _items = [];
     private PurchaseOrderDto? _editing, _detail;
     private PoForm _form = new();
@@ -301,10 +319,108 @@
     private int _page = 1, _pageSize = 15, _totalCount;
     private PurchaseRequestSummaryDto? _selectedPurchaseRequest;
     private SupplierDto? _selectedSupplier;
+    private CanvassRequestDto? _prefilledCanvass;
+    private Guid? _appliedCanvassId;
 
     private static readonly string[] _statusFilters = ["All", "Draft", "Issued", "PartiallyDelivered", "Fulfilled", "Cancelled"];
 
     protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (CanvassId.HasValue && CanvassId.Value != _appliedCanvassId)
+        {
+            _appliedCanvassId = CanvassId.Value;
+            await PrefillFromCanvassAsync(CanvassId.Value);
+        }
+    }
+
+    private async Task PrefillFromCanvassAsync(Guid canvassId)
+    {
+        try
+        {
+            var canvass = await CanvassClient.GetAsync(canvassId);
+            if (canvass is null)
+            {
+                Snackbar.Add("Canvass request not found.", Severity.Warning);
+                return;
+            }
+
+            if (canvass.Status != CanvassRequestStatus.Awarded)
+            {
+                Snackbar.Add("Canvass request has not been awarded yet.", Severity.Warning);
+                return;
+            }
+
+            var awarded = canvass.Quotations.FirstOrDefault(q => q.IsAwarded);
+            if (awarded is null)
+            {
+                Snackbar.Add("No awarded quotation found on this canvass.", Severity.Warning);
+                return;
+            }
+
+            // Resolve PR summary for the autocomplete value.
+            PurchaseRequestSummaryDto? prSummary = null;
+            try
+            {
+                var pr = await PurchaseRequestClient.GetAsync(canvass.PurchaseRequestId);
+                if (pr is not null)
+                {
+                    prSummary = new PurchaseRequestSummaryDto(
+                        pr.Id, pr.PrNumber, pr.PrDate, pr.DepartmentName, pr.Section, pr.Purpose,
+                        pr.PrType, pr.Status, pr.LineItems.Count,
+                        pr.LineItems.Sum(li => li.EstimatedTotalCost), pr.CreatedOnUtc);
+                }
+            }
+            catch { /* keep null if lookup fails */ }
+
+            _prefilledCanvass = canvass;
+            _editing = null;
+            _selectedPurchaseRequest = prSummary;
+            _selectedSupplier = new SupplierDto
+            {
+                Id = awarded.SupplierId,
+                Code = string.Empty,
+                Name = awarded.SupplierName,
+                TinNo = awarded.TinNumber,
+                Address = awarded.SupplierAddress,
+                IsActive = true
+            };
+
+            _form = new PoForm
+            {
+                CanvassRequestId = canvass.Id.ToString(),
+                SupplierName = awarded.SupplierName,
+                SupplierAddress = awarded.SupplierAddress,
+                SupplierTin = awarded.TinNumber,
+                ModeOfProcurement = ModeOfProcurement.SmallValueProcurement,
+                PlaceOfDelivery = string.Empty,
+                DeliveryTerm = awarded.DeliveryTerms ?? "30 days",
+                PaymentTerm = "30 days",
+                LineItems = awarded.LineItems
+                    .Select(li => new PoLineItemRow
+                    {
+                        StockNumber = null,
+                        Unit = li.Unit,
+                        Description = li.Description,
+                        Quantity = li.Quantity,
+                        UnitCost = li.UnitPrice
+                    })
+                    .ToList()
+            };
+
+            if (_form.LineItems.Count == 0)
+            {
+                _form.LineItems.Add(new());
+            }
+
+            Snackbar.Add($"Prefilled from awarded canvass {canvass.RivNumber}.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Could not prefill from canvass: {ex.Message}", Severity.Error);
+        }
+    }
 
     private async Task<IEnumerable<PurchaseRequestSummaryDto>> SearchPurchaseRequests(string value, CancellationToken ct)
     {
@@ -406,6 +522,18 @@
     private async Task SaveAsync()
     {
         if (!IsFormValid()) { Snackbar.Add("Fill in all required fields and at least one line item.", Severity.Warning); return; }
+
+        var allowDuplicate = false;
+        if (_editing is null)
+        {
+            var (proceed, overrideDuplicate) = await ConfirmNoDuplicateAsync();
+            if (!proceed)
+            {
+                return;
+            }
+            allowDuplicate = overrideDuplicate;
+        }
+
         _busy = true;
         try
         {
@@ -415,14 +543,7 @@
 
             if (_editing is null)
             {
-                await Client.CreateAsync(new PurchaseOrderContracts.CreatePurchaseOrderCommand(
-                    _selectedPurchaseRequest!.Id,
-                    string.IsNullOrWhiteSpace(_form.CanvassRequestId) ? null : Guid.Parse(_form.CanvassRequestId),
-                    _selectedSupplier!.Id,
-                    _form.SupplierName, _form.SupplierAddress, _form.SupplierTin,
-                    _form.ModeOfProcurement, _form.PlaceOfDelivery,
-                    ToDateOnly(_form.DateOfDeliveryNullable),
-                    _form.DeliveryTerm, _form.PaymentTerm, _form.FundCluster, _form.OursBursNumber, lineItems));
+                await CreateWithDuplicateRetryAsync(lineItems, allowDuplicate);
                 Snackbar.Add("Purchase order created.", Severity.Success);
             }
             else
@@ -439,6 +560,7 @@
             ResetForm();
             await LoadAsync();
         }
+        catch (OperationCanceledException) { /* user cancelled at duplicate prompt */ }
         catch (Exception ex) { Snackbar.Add($"Save failed: {ex.Message}", Severity.Error); }
         finally { _busy = false; }
     }
@@ -541,6 +663,8 @@
         _editing = null;
         _selectedPurchaseRequest = null;
         _selectedSupplier = null;
+        _prefilledCanvass = null;
+        _appliedCanvassId = null;
         _form = new();
     }
 
@@ -549,8 +673,142 @@
         _editing = null;
         _selectedPurchaseRequest = null;
         _selectedSupplier = null;
+        _prefilledCanvass = null;
+        _appliedCanvassId = null;
         _form = new();
     }
+
+    private async Task CreateWithDuplicateRetryAsync(List<PurchaseOrderLineItemRequest> lineItems, bool allowDuplicate)
+    {
+        try
+        {
+            await Client.CreateAsync(new PurchaseOrderContracts.CreatePurchaseOrderCommand(
+                _selectedPurchaseRequest!.Id,
+                string.IsNullOrWhiteSpace(_form.CanvassRequestId) ? null : Guid.Parse(_form.CanvassRequestId),
+                _selectedSupplier!.Id,
+                _form.SupplierName, _form.SupplierAddress, _form.SupplierTin,
+                _form.ModeOfProcurement, _form.PlaceOfDelivery,
+                ToDateOnly(_form.DateOfDeliveryNullable),
+                _form.DeliveryTerm, _form.PaymentTerm, _form.FundCluster, _form.OursBursNumber, lineItems,
+                allowDuplicate));
+        }
+        catch (DuplicatePurchaseOrderException dup) when (!allowDuplicate)
+        {
+            var confirmed = await DialogService.ShowMessageBox(
+                "Possible Duplicate Purchase Order",
+                $"{dup.Message} Do you still want to create this PO?",
+                yesText: "Create anyway",
+                cancelText: "Cancel");
+
+            if (confirmed is not true)
+            {
+                throw new OperationCanceledException("Cancelled by user after duplicate warning.");
+            }
+
+            await Client.CreateAsync(new PurchaseOrderContracts.CreatePurchaseOrderCommand(
+                _selectedPurchaseRequest!.Id,
+                string.IsNullOrWhiteSpace(_form.CanvassRequestId) ? null : Guid.Parse(_form.CanvassRequestId),
+                _selectedSupplier!.Id,
+                _form.SupplierName, _form.SupplierAddress, _form.SupplierTin,
+                _form.ModeOfProcurement, _form.PlaceOfDelivery,
+                ToDateOnly(_form.DateOfDeliveryNullable),
+                _form.DeliveryTerm, _form.PaymentTerm, _form.FundCluster, _form.OursBursNumber, lineItems,
+                AllowDuplicate: true));
+        }
+    }
+
+    private async Task<(bool Proceed, bool AllowDuplicate)> ConfirmNoDuplicateAsync()
+    {
+        if (_selectedPurchaseRequest is null || _selectedSupplier is null)
+        {
+            return (true, false);
+        }
+
+        var newDescriptions = _form.LineItems
+            .Select(li => NormalizeItem(li.Description))
+            .Where(d => d.Length > 0)
+            .ToHashSet();
+
+        if (newDescriptions.Count == 0)
+        {
+            return (true, false);
+        }
+
+        Guid? canvassId = Guid.TryParse(_form.CanvassRequestId, out var cid) ? cid : null;
+
+        List<PurchaseOrderSummaryDto> candidates;
+        try
+        {
+            var result = await Client.SearchAsync(
+                purchaseRequestId: _selectedPurchaseRequest.Id,
+                supplierId: _selectedSupplier.Id,
+                page: 1,
+                pageSize: 50);
+            candidates = result.Items?
+                .Where(p => p.Status != PurchaseOrderStatus.Cancelled)
+                .ToList() ?? [];
+        }
+        catch
+        {
+            return (true, false);
+        }
+
+        if (candidates.Count == 0)
+        {
+            return (true, false);
+        }
+
+        var duplicates = new List<(PurchaseOrderSummaryDto Po, List<string> Items)>();
+        foreach (var c in candidates)
+        {
+            PurchaseOrderDto? detail;
+            try { detail = await Client.GetAsync(c.Id); }
+            catch { continue; }
+            if (detail is null) continue;
+
+            if (canvassId.HasValue && detail.CanvassRequestId != canvassId)
+            {
+                continue;
+            }
+
+            var overlap = detail.LineItems
+                .Select(li => li.Description)
+                .Where(d => newDescriptions.Contains(NormalizeItem(d)))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (overlap.Count > 0)
+            {
+                duplicates.Add((c, overlap));
+            }
+        }
+
+        if (duplicates.Count == 0)
+        {
+            return (true, false);
+        }
+
+        var poList = string.Join(", ", duplicates.Select(d => $"{d.Po.PoNumber} ({d.Po.Status})"));
+        var sampleItems = duplicates
+            .SelectMany(d => d.Items)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Take(3)
+            .ToList();
+        var itemPreview = string.Join(", ", sampleItems);
+
+        var message = $"A purchase order already exists for this purchase request and supplier ({_selectedSupplier.Name}) with overlapping item(s): {itemPreview}. Existing PO(s): {poList}. Do you still want to create this PO?";
+
+        var confirmed = await DialogService.ShowMessageBox(
+            "Possible Duplicate Purchase Order",
+            message,
+            yesText: "Create anyway",
+            cancelText: "Cancel");
+
+        return confirmed is true ? (true, true) : (false, false);
+    }
+
+    private static string NormalizeItem(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim().ToLowerInvariant();
 
     private bool IsFormValid() =>
         _selectedPurchaseRequest is not null &&

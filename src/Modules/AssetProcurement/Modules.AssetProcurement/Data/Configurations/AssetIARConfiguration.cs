@@ -21,6 +21,12 @@ internal sealed class AssetIARConfiguration : IEntityTypeConfiguration<AssetInsp
         builder.Property(x => x.RejectionReason).HasMaxLength(500);
         builder.Property(x => x.Version).IsRowVersion();
 
+        // Stage audit timestamps (Phase 1: stage-based workflow).
+        builder.Property(x => x.SubmittedForInspectionOnUtc);
+        builder.Property(x => x.InspectedOnUtc);
+        builder.Property(x => x.AcceptedOnUtc);
+        builder.Property(x => x.CancelledOnUtc);
+
         builder.OwnsMany(x => x.LineItems, li =>
         {
             li.ToJson();
@@ -32,6 +38,7 @@ internal sealed class AssetIARConfiguration : IEntityTypeConfiguration<AssetInsp
             li.Property(x => x.PropertyClassHint).HasMaxLength(64);
             li.Property(x => x.Unit).IsRequired().HasMaxLength(64);
             li.Property(x => x.InspectionRemarks).HasMaxLength(500);
+            li.Property(x => x.InspectionResult).HasConversion<int>();
         });
 
         builder.HasQueryFilter("SoftDelete", x => !x.IsDeleted);

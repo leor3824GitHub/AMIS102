@@ -1,0 +1,149 @@
+@using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests
+
+<MudDialog>
+    <DialogContent>
+        <MudGrid Spacing="2">
+            <MudItem xs="12" md="4">
+                <MudText Typo="Typo.subtitle2">PR Number</MudText>
+                <MudText Typo="Typo.body1"><b>@PurchaseRequest.PrNumber</b></MudText>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudText Typo="Typo.subtitle2">PR Date</MudText>
+                <MudText Typo="Typo.body1">@PurchaseRequest.PrDate.ToString("MM/dd/yyyy")</MudText>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudText Typo="Typo.subtitle2">Status</MudText>
+                <MudChip T="string" Size="Size.Small" Color="@StatusColor(PurchaseRequest.Status)" Icon="@StatusIcon(PurchaseRequest.Status)">
+                    @PurchaseRequest.Status
+                </MudChip>
+            </MudItem>
+
+            <MudItem xs="12" md="6">
+                <MudText Typo="Typo.subtitle2">Department</MudText>
+                <MudText Typo="Typo.body1">@PurchaseRequest.DepartmentName</MudText>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudText Typo="Typo.subtitle2">Section</MudText>
+                <MudText Typo="Typo.body1">@(string.IsNullOrWhiteSpace(PurchaseRequest.Section) ? "-" : PurchaseRequest.Section)</MudText>
+            </MudItem>
+
+            <MudItem xs="12" md="6">
+                <MudText Typo="Typo.subtitle2">Requested By</MudText>
+                <MudText Typo="Typo.body1">@PurchaseRequest.RequestedByName</MudText>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudText Typo="Typo.subtitle2">Approved By</MudText>
+                <MudText Typo="Typo.body1">@(string.IsNullOrWhiteSpace(PurchaseRequest.ApprovedByName) ? "-" : PurchaseRequest.ApprovedByName)</MudText>
+            </MudItem>
+
+            <MudItem xs="12">
+                <MudText Typo="Typo.subtitle2">Purpose</MudText>
+                <MudText Typo="Typo.body1">@PurchaseRequest.Purpose</MudText>
+            </MudItem>
+
+            <MudItem xs="12" md="4">
+                <MudText Typo="Typo.subtitle2">PR Type</MudText>
+                <MudChip T="string" Size="Size.Small" Color="@(PurchaseRequest.PrType == PrType.Unplanned ? Color.Warning : Color.Info)">
+                    @PurchaseRequest.PrType
+                </MudChip>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudText Typo="Typo.subtitle2">SAI</MudText>
+                <MudText Typo="Typo.body1">@FormatDoc(PurchaseRequest.SaiNumber, PurchaseRequest.SaiDate)</MudText>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudText Typo="Typo.subtitle2">ALOBS</MudText>
+                <MudText Typo="Typo.body1">@FormatDoc(PurchaseRequest.AlobsNumber, PurchaseRequest.AlobsDate)</MudText>
+            </MudItem>
+
+            @if (PurchaseRequest.PrType == PrType.Unplanned)
+            {
+                <MudItem xs="12">
+                    <MudText Typo="Typo.subtitle2">Justification</MudText>
+                    <MudText Typo="Typo.body1">@(string.IsNullOrWhiteSpace(PurchaseRequest.Justification) ? "-" : PurchaseRequest.Justification)</MudText>
+                </MudItem>
+            }
+
+            <MudItem xs="12">
+                <MudDivider Class="my-2" />
+                <MudText Typo="Typo.subtitle1">Line Items</MudText>
+                <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                    <thead>
+                        <tr>
+                            <th style="width:70px">#</th>
+                            <th>Description</th>
+                            <th style="width:110px">Qty</th>
+                            <th style="width:110px">Unit</th>
+                            <th style="width:130px;text-align:right">Unit Cost</th>
+                            <th style="width:130px;text-align:right">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var line in PurchaseRequest.LineItems)
+                        {
+                            <tr>
+                                <td>@line.ItemNo</td>
+                                <td>@line.ItemDescription</td>
+                                <td>@line.Quantity.ToString("N2")</td>
+                                <td>@line.UnitOfIssue</td>
+                                <td style="text-align:right">@line.EstimatedUnitCost.ToString("N2")</td>
+                                <td style="text-align:right">@line.EstimatedTotalCost.ToString("N2")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </MudSimpleTable>
+
+                <MudStack Row="true" JustifyContent="JustifyContent.End" Class="mt-2">
+                    <MudText Typo="Typo.subtitle2">Estimated Total: @PurchaseRequest.LineItems.Sum(x => x.EstimatedTotalCost).ToString("N2")</MudText>
+                </MudStack>
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Close">Close</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter]
+    public PurchaseRequestDto PurchaseRequest { get; set; } = default!;
+
+    private void Close() => MudDialog.Close();
+
+    private static string FormatDoc(string? number, DateOnly? date)
+    {
+        if (string.IsNullOrWhiteSpace(number) && date is null)
+        {
+            return "-";
+        }
+
+        if (string.IsNullOrWhiteSpace(number))
+        {
+            return date!.Value.ToString("MM/dd/yyyy");
+        }
+
+        return date is null ? number : $"{number} ({date.Value:MM/dd/yyyy})";
+    }
+
+    private static Color StatusColor(PurchaseRequestStatus status) => status switch
+    {
+        PurchaseRequestStatus.Draft => Color.Default,
+        PurchaseRequestStatus.Submitted => Color.Info,
+        PurchaseRequestStatus.Approved => Color.Success,
+        PurchaseRequestStatus.Rejected => Color.Error,
+        PurchaseRequestStatus.Cancelled => Color.Warning,
+        _ => Color.Default
+    };
+
+    private static string StatusIcon(PurchaseRequestStatus status) => status switch
+    {
+        PurchaseRequestStatus.Draft => Icons.Material.Filled.Edit,
+        PurchaseRequestStatus.Submitted => Icons.Material.Filled.HourglassTop,
+        PurchaseRequestStatus.Approved => Icons.Material.Filled.CheckCircle,
+        PurchaseRequestStatus.Rejected => Icons.Material.Filled.Cancel,
+        PurchaseRequestStatus.Cancelled => Icons.Material.Filled.Block,
+        _ => Icons.Material.Filled.Help
+    };
+}

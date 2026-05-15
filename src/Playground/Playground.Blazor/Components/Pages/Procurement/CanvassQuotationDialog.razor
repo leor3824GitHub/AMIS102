@@ -1,0 +1,94 @@
+@using AMIS.Modules.ProcurementAcquisition.Contracts.v1.Canvass
+@using AMIS.Playground.Blazor.ApiClient
+
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="2">
+            <MudAutocomplete T="SupplierDto"
+                             Value="_selectedSupplier"
+                             ValueChanged="OnSupplierChanged"
+                             SearchFunc="SearchSuppliers"
+                             ToStringFunc="FormatSupplier"
+                             Label="Supplier Name"
+                             Variant="Variant.Outlined"
+                             Required="true"
+                             Placeholder="Search supplier..."
+                             Clearable="true"
+                             CoerceText="true"
+                             CoerceValue="true"
+                             ResetValueOnEmptyText="true" />
+            <MudTextField @bind-Value="Form.SupplierAddress" Label="Supplier Address" Variant="Variant.Outlined" Required="true" />
+            <MudTextField @bind-Value="Form.TinNumber" Label="TIN (optional)" Variant="Variant.Outlined" />
+            <MudDatePicker @bind-Date="Form.QuotationDateNullable" Label="Quotation Date" Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" Required="true" />
+            <MudTextField @bind-Value="Form.DeliveryTerms" Label="Delivery Terms" Variant="Variant.Outlined" />
+
+            <MudText Typo="Typo.subtitle2" Class="mt-1">Quoted Items (from Purchase Request)</MudText>
+            @if (_loadingLineItems)
+            {
+                <MudProgressLinear Indeterminate="true" />
+            }
+            else if (Form.LineItems.Count == 0)
+            {
+                <MudAlert Severity="Severity.Warning" Dense="true">
+                    No line items found on the linked purchase request.
+                </MudAlert>
+            }
+            else
+            {
+                <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                    <thead>
+                        <tr>
+                            <th style="width:48px">
+                                <MudCheckBox T="bool" Value="@AllSelected" ValueChanged="OnToggleAll" Dense="true" />
+                            </th>
+                            <th style="width:50px">#</th>
+                            <th>Description</th>
+                            <th style="width:90px">Qty</th>
+                            <th style="width:90px">Unit</th>
+                            <th style="width:140px;text-align:right">Unit Price</th>
+                            <th style="width:130px;text-align:right">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (var i = 0; i < Form.LineItems.Count; i++)
+                        {
+                            var idx = i;
+                            var li = Form.LineItems[idx];
+                            <tr>
+                                <td>
+                                    <MudCheckBox @bind-Value="li.IsSelected" Dense="true" />
+                                </td>
+                                <td>@(idx + 1)</td>
+                                <td>@li.Description</td>
+                                <td>@li.Quantity.ToString("N2")</td>
+                                <td>@li.Unit</td>
+                                <td style="text-align:right">
+                                    <MudNumericField @bind-Value="li.UnitPrice" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                                     Min="0m" HideSpinButtons="true" Format="N2"
+                                                     Disabled="@(!li.IsSelected)" />
+                                </td>
+                                <td style="text-align:right">@(li.IsSelected ? (li.Quantity * li.UnitPrice).ToString("N2") : "-")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </MudSimpleTable>
+
+                <MudStack Row="true" JustifyContent="JustifyContent.End" Class="mt-1">
+                    <MudText Typo="Typo.subtitle2">
+                        Total (@SelectedCount selected): @Form.LineItems.Where(li => li.IsSelected).Sum(li => li.Quantity * li.UnitPrice).ToString("N2")
+                    </MudText>
+                </MudStack>
+            }
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" Disabled="_busy">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SubmitAsync" Disabled="@(_busy || _loadingLineItems || SelectedCount == 0)">
+            @if (_busy)
+            {
+                <MudProgressCircular Size="Size.Small" Class="mr-1" Indeterminate="true" />
+            }
+            Submit Quotation
+        </MudButton>
+    </DialogActions>
+</MudDialog>

@@ -1,4 +1,6 @@
+using System.Net;
 using AMIS.Framework.Core.Context;
+using AMIS.Framework.Core.Exceptions;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders;
 using AMIS.Modules.ProcurementAcquisition.Data;
 using AMIS.Modules.ProcurementAcquisition.Domain.PurchaseOrders;
@@ -14,6 +16,12 @@ public sealed class CreatePurchaseOrderCommandHandler(
     public async ValueTask<PurchaseOrderDto> Handle(CreatePurchaseOrderCommand command, CancellationToken cancellationToken)
     {
         var tenantId = GetRequiredTenantId();
+
+        if (!command.AllowDuplicate)
+        {
+            await EnsureNoDuplicateAsync(command, cancellationToken).ConfigureAwait(false);
+        }
+
         var poNumber = await GeneratePoNumberAsync(tenantId, cancellationToken).ConfigureAwait(false);
 
         var lineItems = command.LineItems.Select(li =>
@@ -43,6 +51,54 @@ public sealed class CreatePurchaseOrderCommandHandler(
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
         return MapToDto(po);
+    }
+
+    private async Task EnsureNoDuplicateAsync(CreatePurchaseOrderCommand command, CancellationToken ct)
+    {
+        var incomingDescriptions = command.LineItems
+            .Select(li => (li.Description ?? string.Empty).Trim().ToLowerInvariant())
+            .Where(d => d.Length > 0)
+            .ToHashSet();
+
+        if (incomingDescriptions.Count == 0)
+        {
+            return;
+        }
+
+        var query = dbContext.PurchaseOrders
+            .AsNoTracking()
+            .Where(p => p.PurchaseRequestId == command.PurchaseRequestId
+                        && p.SupplierId == command.SupplierId
+                        && p.Status != PurchaseOrderStatus.Cancelled);
+
+        if (command.CanvassRequestId.HasValue)
+        {
+            query = query.Where(p => p.CanvassRequestId == command.CanvassRequestId.Value);
+        }
+
+        var existing = await query
+            .Select(p => new
+            {
+                p.PoNumber,
+                p.Status,
+                Descriptions = p.LineItems.Select(li => li.Description).ToList()
+            })
+            .ToListAsync(ct)
+            .ConfigureAwait(false);
+
+        var conflicts = existing
+            .Where(p => p.Descriptions.Any(d => incomingDescriptions.Contains((d ?? string.Empty).Trim().ToLowerInvariant())))
+            .ToList();
+
+        if (conflicts.Count == 0)
+        {
+            return;
+        }
+
+        var poList = string.Join(", ", conflicts.Select(p => $"{p.PoNumber} ({p.Status})"));
+        var message = $"A purchase order already exists for this purchase request and supplier with overlapping item(s). Existing PO(s): {poList}.";
+
+        throw new CustomException(message, Enumerable.Empty<string>(), HttpStatusCode.Conflict);
     }
 
     private async Task<string> GeneratePoNumberAsync(string tenantId, CancellationToken ct)

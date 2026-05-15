@@ -1,4 +1,5 @@
 @page "/procurement/canvass-requests"
+@using AMIS.Playground.Blazor.Components.Pages.Procurement
 @using AMIS.Modules.ProcurementAcquisition.Contracts.v1.Canvass
 @using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests
 @using AMIS.Framework.Shared.Persistence
@@ -8,8 +9,9 @@
 @inject IMaster_dataClient MasterDataClient
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
+@inject NavigationManager Nav
 
-<AMISPageHeader Title="Canvass Requests (RIV)" Description="Request for Issuance of Voucher — manage supplier quotations and award" />
+<AMISPageHeader Title="Canvass Requests (RIV)" Description="Request for Issuance of Voucher â€¢ manage supplier quotations and award" />
 
 <MudGrid Spacing="3">
     <!-- Create Form -->
@@ -41,7 +43,7 @@
             </MudCardContent>
         </MudCard>
 
-        <!-- Add Quotation Panel (shows when a request is selected) -->
+        <!-- Add Quotation Dialog Trigger (shows when a request is selected) -->
         @if (_selected is not null)
         {
             <MudCard Elevation="1" Class="mt-3">
@@ -50,67 +52,16 @@
                         <MudText Typo="Typo.h6" Class="flex-grow-1">Add Quotation</MudText>
                         <MudText Typo="Typo.caption" Color="Color.Secondary">@_selected.RivNumber</MudText>
                     </MudStack>
-                    <MudStack Spacing="2">
-                        <MudAutocomplete T="SupplierDto"
-                                         Value="_selectedSupplier"
-                                         ValueChanged="OnSupplierChanged"
-                                         SearchFunc="SearchSuppliers"
-                                         ToStringFunc="FormatSupplier"
-                                         Label="Supplier Name"
-                                         Variant="Variant.Outlined"
-                                         Required="true"
-                                         Placeholder="Search supplier..."
-                                         Clearable="true"
-                                         CoerceText="true"
-                                         CoerceValue="true"
-                                         ResetValueOnEmptyText="true" />
-                        <MudTextField @bind-Value="_qForm.SupplierAddress" Label="Supplier Address" Variant="Variant.Outlined" Required="true" />
-                        <MudTextField @bind-Value="_qForm.TinNumber" Label="TIN (optional)" Variant="Variant.Outlined" />
-                        <MudDatePicker @bind-Date="_qForm.QuotationDateNullable" Label="Quotation Date" Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" Required="true" />
-                        <MudTextField @bind-Value="_qForm.DeliveryTerms" Label="Delivery Terms" Variant="Variant.Outlined" />
-
-                        <MudText Typo="Typo.subtitle2" Class="mt-1">Quoted Items</MudText>
-                        @for (var i = 0; i < _qForm.LineItems.Count; i++)
-                        {
-                            var idx = i;
-                            var li = _qForm.LineItems[idx];
-                            <MudPaper Outlined="true" Class="pa-2">
-                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Class="mb-1">
-                                    <MudText Typo="Typo.caption" Color="Color.Secondary">Item @(idx + 1)</MudText>
-                                    <MudSpacer />
-                                    <MudIconButton Icon="@Icons.Material.Filled.Remove" Size="Size.Small" Color="Color.Error"
-                                                   OnClick="@(() => RemoveQLineItem(idx))" />
-                                </MudStack>
-                                <MudGrid Spacing="1">
-                                    <MudItem xs="12">
-                                        <MudTextField @bind-Value="li.Description" Label="Description" Variant="Variant.Outlined" Dense="true" />
-                                    </MudItem>
-                                    <MudItem xs="4">
-                                        <MudNumericField @bind-Value="li.Quantity" Label="Qty" Variant="Variant.Outlined" Dense="true" Min="0.01m" />
-                                    </MudItem>
-                                    <MudItem xs="4">
-                                        <MudTextField @bind-Value="li.Unit" Label="Unit" Variant="Variant.Outlined" Dense="true" />
-                                    </MudItem>
-                                    <MudItem xs="4">
-                                        <MudNumericField @bind-Value="li.UnitPrice" Label="Unit Price" Variant="Variant.Outlined" Dense="true" Min="0m" />
-                                    </MudItem>
-                                </MudGrid>
-                            </MudPaper>
-                        }
-                        <MudButton StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Text" Size="Size.Small"
-                                   OnClick="AddQLineItem" Color="Color.Primary">Add Item</MudButton>
-
-                        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
-                                   OnClick="AddQuotationAsync" Disabled="_busy">
-                            Submit Quotation
-                        </MudButton>
-                        <MudButton Variant="Variant.Text" FullWidth="true" OnClick="@(() => _selected = null)">
-                            Deselect Request
-                        </MudButton>
-                    </MudStack>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" OnClick="OpenQuotationDialog">
+                        Add Quotation
+                    </MudButton>
+                    <MudButton Variant="Variant.Text" FullWidth="true" OnClick="@(() => _selected = null)">
+                        Deselect Request
+                    </MudButton>
                 </MudCardContent>
             </MudCard>
         }
+
     </MudItem>
 
     <!-- List Panel -->
@@ -180,6 +131,14 @@
                                                                    OnClick="@(async () => await AwardAsync(item.Id))" />
                                                 </MudTooltip>
                                             }
+                                            @if (item.Status == CanvassRequestStatus.Awarded)
+                                            {
+                                                <MudTooltip Text="Create Purchase Order from awarded quotation">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.ShoppingCart" Size="Size.Small"
+                                                                   Color="Color.Primary"
+                                                                   OnClick="@(() => GoToPurchaseOrder(item.Id))" />
+                                                </MudTooltip>
+                                            }
                                         </MudStack>
                                     </td>
                                 </tr>
@@ -215,12 +174,19 @@
                                                                         <MudText Typo="Typo.caption" Color="Color.Secondary">@q.SupplierAddress</MudText>
                                                                     </td>
                                                                     <td>@q.QuotationDate.ToString("MM/dd/yyyy")</td>
-                                                                    <td style="text-align:right">?@q.LineItems.Sum(li => li.Total).ToString("N2")</td>
-                                                                    <td>@(q.DeliveryTerms ?? "—")</td>
+                                                                    <td style="text-align:right">â‚±@q.LineItems.Sum(li => li.Total).ToString("N2")</td>
+                                                                    <td>@(q.DeliveryTerms ?? "â€”")</td>
                                                                     <td>
                                                                         @if (q.IsAwarded)
                                                                         {
-                                                                            <MudChip T="string" Size="Size.Small" Color="Color.Success" Icon="@Icons.Material.Filled.Star">Awarded</MudChip>
+                                                                            <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                                                                                <MudChip T="string" Size="Size.Small" Color="Color.Success" Icon="@Icons.Material.Filled.Star">Awarded</MudChip>
+                                                                                <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary"
+                                                                                           StartIcon="@Icons.Material.Filled.ShoppingCart"
+                                                                                           OnClick="@(() => GoToPurchaseOrder(_selectedDetail.Id))">
+                                                                                    Create PO
+                                                                                </MudButton>
+                                                                            </MudStack>
                                                                         }
                                                                         else if (_selectedDetail.Status == CanvassRequestStatus.Open)
                                                                         {
@@ -259,14 +225,12 @@
 @code {
     private List<CanvassRequestSummaryDto> _items = [];
     private CanvassRequestDto? _selected, _selectedDetail;
-    private QuotationForm _qForm = new();
     private PurchaseRequestSummaryDto? _selectedPurchaseRequest;
     private DateTime? _returnDeadlineNullable;
     private bool _busy, _loaded;
     private string _keyword = string.Empty;
     private string _statusFilter = "All";
     private int _page = 1, _pageSize = 15, _totalCount;
-    private SupplierDto? _selectedSupplier;
 
     private static readonly string[] _statusFilters = ["All", "Open", "Evaluated", "Awarded", "Cancelled"];
 
@@ -308,54 +272,24 @@
             : $"{request.PrNumber} - {request.Purpose}";
     }
 
-    private async Task<IEnumerable<SupplierDto>> SearchSuppliers(string value, CancellationToken token)
+    private async Task OpenQuotationDialog()
     {
-        try
+        if (_selected is null) return;
+
+        var parameters = new DialogParameters
         {
-            var response = await MasterDataClient.SuppliersListAsync(
-                keyword: string.IsNullOrWhiteSpace(value) ? null : value,
-                pageNumber: 1,
-                pageSize: 20,
-                isActive: null,
-                cancellationToken: token);
-
-            return response?.Items ?? Enumerable.Empty<SupplierDto>();
-        }
-        catch (Exception ex)
+            [nameof(CanvassQuotationDialog.CanvassRequestId)] = _selected.Id,
+            [nameof(CanvassQuotationDialog.PurchaseRequestId)] = _selected.PurchaseRequestId,
+            [nameof(CanvassQuotationDialog.Form)] = new QuotationForm()
+        };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<CanvassQuotationDialog>("Add Quotation", parameters, options);
+        var result = await dialog.Result;
+        if (result is { Canceled: false })
         {
-            Snackbar.Add($"Failed to load suppliers: {ex.Message}", Severity.Warning);
-            return Enumerable.Empty<SupplierDto>();
+            await SelectCanvass(_selected.Id);
+            await LoadAsync();
         }
-    }
-
-    private Task OnSupplierChanged(SupplierDto? supplier)
-    {
-        _selectedSupplier = supplier;
-        _qForm.SupplierName = supplier?.Name ?? string.Empty;
-
-        if (supplier is null)
-        {
-            _qForm.SupplierAddress = null;
-            _qForm.TinNumber = null;
-            return Task.CompletedTask;
-        }
-
-        _qForm.SupplierAddress = supplier.Address;
-        _qForm.TinNumber = supplier.TinNo;
-
-        return Task.CompletedTask;
-    }
-
-    private static string FormatSupplier(SupplierDto? supplier)
-    {
-        if (supplier is null)
-        {
-            return string.Empty;
-        }
-
-        return string.IsNullOrWhiteSpace(supplier.Code)
-            ? supplier.Name
-            : $"{supplier.Name} ({supplier.Code})";
     }
 
     private async Task LoadAsync()
@@ -400,35 +334,6 @@
         if (detail is null) { Snackbar.Add("Canvass request not found.", Severity.Error); return; }
         _selected = detail;
         _selectedDetail = detail;
-        _selectedSupplier = null;
-        _qForm = new();
-    }
-
-    private async Task AddQuotationAsync()
-    {
-        if (_selected is null || string.IsNullOrWhiteSpace(_qForm.SupplierName) || !_qForm.QuotationDateNullable.HasValue)
-        {
-            Snackbar.Add("Fill in supplier name and quotation date.", Severity.Warning);
-            return;
-        }
-        _busy = true;
-        try
-        {
-            var lineItems = _qForm.LineItems
-                .Select(li => new AddQuotationLineItemRequest(li.Description, li.Unit, li.Quantity, li.UnitPrice))
-                .ToList();
-            await Client.AddQuotationAsync(_selected.Id, new AddQuotationCommand(
-                _selected.Id, Guid.NewGuid(), _qForm.SupplierName, _qForm.SupplierAddress ?? string.Empty,
-                _qForm.TinNumber, DateOnly.FromDateTime(_qForm.QuotationDateNullable!.Value),
-                _qForm.DeliveryTerms, lineItems));
-            Snackbar.Add("Quotation added.", Severity.Success);
-            _selectedSupplier = null;
-            _qForm = new();
-            await SelectCanvass(_selected.Id);
-            await LoadAsync();
-        }
-        catch (Exception ex) { Snackbar.Add($"Failed: {ex.Message}", Severity.Error); }
-        finally { _busy = false; }
     }
 
     private async Task AwardAsync(Guid canvassId)
@@ -456,8 +361,8 @@
         finally { _busy = false; }
     }
 
-    private void AddQLineItem() => _qForm.LineItems.Add(new());
-    private void RemoveQLineItem(int idx) { if (_qForm.LineItems.Count > 1) _qForm.LineItems.RemoveAt(idx); }
+    private void GoToPurchaseOrder(Guid canvassId) =>
+        Nav.NavigateTo($"/procurement/purchase-orders?canvassId={canvassId}");
 
     private static RenderFragment CanvassStatusChip(CanvassRequestStatus status) => __builder =>
     {
@@ -477,22 +382,6 @@
         __builder.CloseComponent();
     };
 
-    private sealed class QuotationForm
-    {
-        public string SupplierName { get; set; } = string.Empty;
-        public string? SupplierAddress { get; set; }
-        public string? TinNumber { get; set; }
-        public DateTime? QuotationDateNullable { get; set; } = DateTime.Today;
-        public string? DeliveryTerms { get; set; }
-        public List<QLineItemRow> LineItems { get; set; } = [new()];
-    }
-
-    private sealed class QLineItemRow
-    {
-        public string Description { get; set; } = string.Empty;
-        public string Unit { get; set; } = "pc";
-        public decimal Quantity { get; set; } = 1;
-        public decimal UnitPrice { get; set; }
-    }
+    // QuotationForm and QLineItemRow moved to QuotationForm.cs for sharing with dialog
 }
 

@@ -89,10 +89,17 @@ public sealed class CreateAssetIARCommandHandler(
                 li.ItemNo, li.Description, li.TechnicalSpecifications,
                 li.Brand, li.Model, li.SerialNo, li.PropertyClassHint,
                 li.Unit, li.Quantity, li.UnitCost, li.Amount, li.InspectionRemarks,
-                li.StockPropertyNo)).ToList(),
+                li.StockPropertyNo,
+                li.InspectionResult,
+                li.InspectedOnUtc,
+                li.InspectedById)).ToList(),
             iar.TotalAmount,
             iar.CreatedOnUtc,
             iar.CreatedBy,
-            iar.LastModifiedOnUtc);
+            iar.LastModifiedOnUtc,
+            iar.SubmittedForInspectionOnUtc,
+            iar.InspectedOnUtc,
+            iar.AcceptedOnUtc,
+            iar.CancelledOnUtc);
 }
 
