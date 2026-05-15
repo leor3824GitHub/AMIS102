@@ -11,7 +11,7 @@ public static class RecordIARInspectionEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapPost("/{id:guid}/record-inspection", Handle)
-            .WithName(nameof(RecordIARInspectionCommand))
+            .WithName($"Procurement.{nameof(RecordIARInspectionCommand)}")
             .WithSummary("Inspector records pass/fail per line")
             .Produces<AssetIARDto>()
             .Produces(StatusCodes.Status403Forbidden)

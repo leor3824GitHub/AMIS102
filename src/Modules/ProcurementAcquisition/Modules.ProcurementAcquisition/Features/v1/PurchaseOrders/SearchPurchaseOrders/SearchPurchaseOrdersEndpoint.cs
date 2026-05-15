@@ -12,7 +12,7 @@ public static class SearchPurchaseOrdersEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapGet("/", SearchPurchaseOrders)
-            .WithName(nameof(SearchPurchaseOrdersQuery))
+            .WithName($"Procurement.{nameof(SearchPurchaseOrdersQuery)}")
             .WithSummary("Search purchase orders with pagination")
             .Produces<PagedResponse<PurchaseOrderSummaryDto>>(StatusCodes.Status200OK)
             .RequirePermission(ProcurementAcquisitionModuleConstants.Permissions.PurchaseOrders.View);

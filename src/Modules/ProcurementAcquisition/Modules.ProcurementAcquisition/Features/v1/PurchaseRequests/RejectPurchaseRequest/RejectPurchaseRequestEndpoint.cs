@@ -11,7 +11,7 @@ public static class RejectPurchaseRequestEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapPost("/{id:guid}/reject", RejectPurchaseRequest)
-            .WithName(nameof(RejectPurchaseRequestCommand))
+            .WithName($"Procurement.{nameof(RejectPurchaseRequestCommand)}")
             .WithSummary("Reject a submitted purchase request")
             .Produces<PurchaseRequestDto>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound)

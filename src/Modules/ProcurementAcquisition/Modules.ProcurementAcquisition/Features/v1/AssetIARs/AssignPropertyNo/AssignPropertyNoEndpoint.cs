@@ -11,7 +11,7 @@ public static class AssignPropertyNoEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapPost("/{id:guid}/lines/{itemNo:int}/property-no", Handle)
-            .WithName(nameof(AssignPropertyNoCommand))
+            .WithName($"Procurement.{nameof(AssignPropertyNoCommand)}")
             .WithSummary("Assign a Property No to a passed line during the Acceptance stage")
             .Produces<AssetIARDto>()
             .Produces(StatusCodes.Status404NotFound)

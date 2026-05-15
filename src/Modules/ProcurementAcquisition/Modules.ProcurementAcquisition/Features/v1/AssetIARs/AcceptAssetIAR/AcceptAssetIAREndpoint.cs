@@ -11,7 +11,7 @@ public static class AcceptAssetIAREndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapPost("/{id:guid}/accept", Handle)
-            .WithName(nameof(AcceptAssetIARCommand))
+            .WithName($"Procurement.{nameof(AcceptAssetIARCommand)}")
             .WithSummary("Accept an asset IAR — triggers TangibleItem creation in AssetManagement")
             .Produces<AssetIARDto>()
             .Produces(StatusCodes.Status404NotFound)

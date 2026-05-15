@@ -11,7 +11,7 @@ public static class CreatePurchaseRequestEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapPost("/", CreatePurchaseRequest)
-            .WithName(nameof(CreatePurchaseRequestCommand))
+            .WithName($"Procurement.{nameof(CreatePurchaseRequestCommand)}")
             .WithSummary("Create a new purchase request")
             .Produces<PurchaseRequestDto>(StatusCodes.Status201Created)
             .Produces(StatusCodes.Status400BadRequest)

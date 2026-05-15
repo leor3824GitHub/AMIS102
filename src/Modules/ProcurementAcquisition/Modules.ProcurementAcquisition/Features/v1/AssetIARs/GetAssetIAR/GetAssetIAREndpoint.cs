@@ -11,7 +11,7 @@ public static class GetAssetIAREndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapGet("/{id:guid}", Handle)
-            .WithName(nameof(GetAssetIARQuery))
+            .WithName($"Procurement.{nameof(GetAssetIARQuery)}")
             .WithSummary("Get asset IAR by ID")
             .Produces<AssetIARDto>()
             .Produces(StatusCodes.Status404NotFound)

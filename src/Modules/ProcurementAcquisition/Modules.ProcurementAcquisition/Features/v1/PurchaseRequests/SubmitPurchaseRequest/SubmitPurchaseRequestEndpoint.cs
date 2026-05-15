@@ -11,7 +11,7 @@ public static class SubmitPurchaseRequestEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapPost("/{id:guid}/submit", SubmitPurchaseRequest)
-            .WithName(nameof(SubmitPurchaseRequestCommand))
+            .WithName($"Procurement.{nameof(SubmitPurchaseRequestCommand)}")
             .WithSummary("Submit a draft purchase request for approval")
             .Produces<PurchaseRequestDto>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound)

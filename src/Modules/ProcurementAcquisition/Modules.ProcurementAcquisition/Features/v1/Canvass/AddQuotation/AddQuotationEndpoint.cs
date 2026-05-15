@@ -11,7 +11,7 @@ public static class AddQuotationEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapPost("/{id:guid}/quotations", AddQuotation)
-            .WithName(nameof(AddQuotationCommand))
+            .WithName($"Procurement.{nameof(AddQuotationCommand)}")
             .WithSummary("Add a supplier quotation to a canvass request")
             .Produces<CanvassQuotationDto>(StatusCodes.Status201Created)
             .Produces(StatusCodes.Status400BadRequest)

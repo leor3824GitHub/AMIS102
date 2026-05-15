@@ -11,7 +11,7 @@ public static class IssuePurchaseOrderEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapPatch("/{id:guid}/issue", IssuePurchaseOrder)
-            .WithName(nameof(IssuePurchaseOrderCommand))
+            .WithName($"Procurement.{nameof(IssuePurchaseOrderCommand)}")
             .WithSummary("Issue a draft purchase order")
             .Produces<PurchaseOrderDto>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound)

@@ -11,7 +11,7 @@ public static class UpdateAssetIAREndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapPut("/{id:guid}", Handle)
-            .WithName(nameof(UpdateAssetIARCommand))
+            .WithName($"Procurement.{nameof(UpdateAssetIARCommand)}")
             .WithSummary("Update a Draft asset IAR")
             .Produces<AssetIARDto>()
             .Produces(StatusCodes.Status404NotFound)

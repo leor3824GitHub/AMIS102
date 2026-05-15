@@ -11,7 +11,7 @@ public static class GetCanvassRequestEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapGet("/{id:guid}", GetCanvassRequest)
-            .WithName(nameof(GetCanvassRequestQuery))
+            .WithName($"Procurement.{nameof(GetCanvassRequestQuery)}")
             .WithSummary("Get a canvass request by ID including all quotations")
             .Produces<CanvassRequestDto>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound)

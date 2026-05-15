@@ -11,7 +11,7 @@ public static class CreateAssetIAREndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapPost("/", Handle)
-            .WithName(nameof(CreateAssetIARCommand))
+            .WithName($"Procurement.{nameof(CreateAssetIARCommand)}")
             .WithSummary("Create an asset inspection and acceptance report")
             .Produces<AssetIARDto>(StatusCodes.Status201Created)
             .Produces(StatusCodes.Status400BadRequest)

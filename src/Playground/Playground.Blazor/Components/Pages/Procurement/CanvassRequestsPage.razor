@@ -315,10 +315,17 @@
             Snackbar.Add("Select a purchase request and return deadline.", Severity.Warning);
             return;
         }
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var selectedDeadline = DateOnly.FromDateTime(_returnDeadlineNullable.Value);
+        if (selectedDeadline <= today)
+        {
+            Snackbar.Add("Return deadline must be a future date.", Severity.Warning);
+            return;
+        }
         _busy = true;
         try
         {
-            await Client.CreateAsync(new CreateCanvassRequestCommand(_selectedPurchaseRequest.Id, DateOnly.FromDateTime(_returnDeadlineNullable.Value)));
+            await Client.CreateAsync(new CreateCanvassRequestCommand(_selectedPurchaseRequest.Id, selectedDeadline));
             Snackbar.Add("Canvass request created.", Severity.Success);
             _selectedPurchaseRequest = null;
             _returnDeadlineNullable = null;

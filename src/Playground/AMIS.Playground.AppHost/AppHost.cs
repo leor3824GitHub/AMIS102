@@ -10,11 +10,11 @@ var localApiBaseUrl = $"https://localhost:{ApiHttpsPort}";
 
 // Postgres container + database
 var postgres = builder.AddPostgres("postgres", port: 5432)
-    .WithDataVolume("AMIS-postgres-data229")
-    .AddDatabase("AMIS229");
+    .WithDataVolume("AMIS-postgres-data230")
+    .AddDatabase("AMIS230");
 
 var redis = builder.AddRedis("redis", port: 6379)
-    .WithDataVolume("AMIS-redis-data229");
+    .WithDataVolume("AMIS-redis-data230");
 
 var api = builder.AddProject<Projects.Playground_Api>("playground-api")
     // Modify the endpoints auto-created from launchSettings.json (http/https profiles).

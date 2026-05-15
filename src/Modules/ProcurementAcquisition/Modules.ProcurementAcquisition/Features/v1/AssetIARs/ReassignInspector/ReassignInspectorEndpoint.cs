@@ -11,7 +11,7 @@ public static class ReassignInspectorEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapPost("/{id:guid}/reassign-inspector", Handle)
-            .WithName(nameof(ReassignInspectorCommand))
+            .WithName($"Procurement.{nameof(ReassignInspectorCommand)}")
             .WithSummary("Reassign the inspector while the IAR is awaiting inspection")
             .Produces<AssetIARDto>()
             .Produces(StatusCodes.Status404NotFound)

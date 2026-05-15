@@ -11,7 +11,7 @@ public static class CancelAssetIAREndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapPost("/{id:guid}/cancel", Handle)
-            .WithName(nameof(CancelAssetIARCommand))
+            .WithName($"Procurement.{nameof(CancelAssetIARCommand)}")
             .WithSummary("Cancel an IAR before it is accepted")
             .Produces<AssetIARDto>()
             .Produces(StatusCodes.Status404NotFound)

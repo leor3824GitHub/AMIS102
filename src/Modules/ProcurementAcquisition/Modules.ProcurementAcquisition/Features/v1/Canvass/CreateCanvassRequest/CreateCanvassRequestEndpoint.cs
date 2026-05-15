@@ -11,7 +11,7 @@ public static class CreateCanvassRequestEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapPost("/", CreateCanvassRequest)
-            .WithName(nameof(CreateCanvassRequestCommand))
+            .WithName($"Procurement.{nameof(CreateCanvassRequestCommand)}")
             .WithSummary("Create a canvass/RFQ request from an approved purchase request")
             .Produces<CanvassRequestDto>(StatusCodes.Status201Created)
             .Produces(StatusCodes.Status400BadRequest)

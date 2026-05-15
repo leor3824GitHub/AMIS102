@@ -11,7 +11,7 @@ public static class UpdateQuotationEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapPut("/quotations/{quotationId:guid}", UpdateQuotation)
-            .WithName(nameof(UpdateQuotationCommand))
+            .WithName($"Procurement.{nameof(UpdateQuotationCommand)}")
             .WithSummary("Update a supplier quotation")
             .Produces<CanvassQuotationDto>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound)

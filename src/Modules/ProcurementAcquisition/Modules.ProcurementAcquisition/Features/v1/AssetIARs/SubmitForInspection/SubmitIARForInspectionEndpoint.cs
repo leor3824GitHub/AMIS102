@@ -11,9 +11,10 @@ public static class SubmitIARForInspectionEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapPost("/{id:guid}/submit-for-inspection", Handle)
-            .WithName(nameof(SubmitIARForInspectionCommand))
+            .WithName($"Procurement.{nameof(SubmitIARForInspectionCommand)}")
             .WithSummary("Submit a Draft IAR to the assigned inspector")
             .Produces<AssetIARDto>()
+            .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status404NotFound)
             .RequirePermission(ProcurementAcquisitionModuleConstants.Permissions.AssetIARs.SubmitForInspection);
 

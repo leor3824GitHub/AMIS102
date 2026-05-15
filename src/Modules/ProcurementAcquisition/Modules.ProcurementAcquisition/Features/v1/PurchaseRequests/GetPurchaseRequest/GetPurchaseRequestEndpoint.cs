@@ -11,7 +11,7 @@ public static class GetPurchaseRequestEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapGet("/{id:guid}", GetPurchaseRequest)
-            .WithName(nameof(GetPurchaseRequestQuery))
+            .WithName($"Procurement.{nameof(GetPurchaseRequestQuery)}")
             .WithSummary("Get a purchase request by ID")
             .Produces<PurchaseRequestDto>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound)

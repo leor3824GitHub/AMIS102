@@ -4,8 +4,6 @@
 @inject IAssetIarClient IarClient
 @inject IPurchaseOrderClient PoClient
 @inject ILookupClient LookupClient
-@inject IIdentityClient IdentityClient
-@inject IUsersClient UsersClient
 @inject IEmployeesClient EmployeesClient
 @using Microsoft.AspNetCore.Components.Authorization
 @inject AuthenticationStateProvider AuthStateProvider
@@ -59,14 +57,17 @@
             <MudItem xs="12" md="6">
                 <MudAutocomplete T="EmployeeReferenceDto"
                                  @bind-Value="_assignedInspector"
-                                 SearchFunc="SearchInspectorsAsync"
+                                 SearchFunc="SearchEmployeesAsync"
                                  ToStringFunc="FormatEmployee"
                                  Label="Assigned Inspector *"
+                                 Placeholder="Type name or employee number"
                                  Variant="Variant.Outlined"
                                  Dense="true"
                                  Required="true"
+                                 MinCharacters="0"
                                  CoerceText="false"
-                                 Disabled="_isLocked" />
+                                 Disabled="_isLocked"
+                                 OpenIcon="@Icons.Material.Filled.ExpandMore" />
             </MudItem>
             @if (_selectedPoDetails is not null)
             {
@@ -219,16 +220,15 @@
     private string? _deliveryReceiptNo;
     private DateTime? _deliveryDate;
     private string? _remarks;
-
-    private string? _inspectorRoleId;
-    private readonly Dictionary<string, EmployeeReferenceDto> _inspectorEmployeeCache = new(StringComparer.OrdinalIgnoreCase);
     private readonly List<PoLineChoice> _poLineChoices = [];
     private readonly List<LineModel> _unmappedExistingLines = [];
+    private readonly List<EmployeeReferenceDto> _availableEmployees = [];
     private int SelectedPoLineCount => _poLineChoices.Count(x => x.Selected);
 
     protected override async Task OnInitializedAsync()
     {
-        await Task.WhenAll(ResolveInspectorRoleAsync(), ResolveCurrentUserEmployeeAsync());
+        await ResolveCurrentUserEmployeeAsync();
+        await PreloadEmployeesAsync();
 
         if (Existing is null)
         {
@@ -265,29 +265,9 @@
 
         try { _assignedInspector = await LookupClient.EmployeesGetAsync(Existing.InspectedById); } catch { }
 
-        if (!string.IsNullOrWhiteSpace(_assignedInspector?.IdentityUserId))
-        {
-            _inspectorEmployeeCache[_assignedInspector.IdentityUserId] = _assignedInspector;
-        }
-
         if (_poLineChoices.Count == 0 && Existing.LineItems.Count > 0)
         {
             _unmappedExistingLines.AddRange(Existing.LineItems.Select(ToLineModel));
-        }
-    }
-
-    private async Task ResolveInspectorRoleAsync()
-    {
-        try
-        {
-            var roles = await IdentityClient.RolesGetAsync();
-            _inspectorRoleId = roles?
-                .FirstOrDefault(r => string.Equals(r.Name, "Inspector", StringComparison.OrdinalIgnoreCase))?
-                .Id;
-        }
-        catch
-        {
-            _inspectorRoleId = null;
         }
     }
 
@@ -453,75 +433,50 @@
         }
     }
 
-    private async Task<IEnumerable<EmployeeReferenceDto>> SearchEmployeesAsync(string value, CancellationToken cancellationToken)
+    private async Task PreloadEmployeesAsync()
     {
         try
         {
             var response = await LookupClient.EmployeesGetAsync(
-                keyword: string.IsNullOrWhiteSpace(value) ? null : value,
+                keyword: null,
                 isActive: true,
                 pageNumber: 1,
-                pageSize: 20,
-                cancellationToken: cancellationToken);
-            return response?.Items ?? [];
+                pageSize: 100,
+                cancellationToken: CancellationToken.None);
+            _availableEmployees.Clear();
+            if (response?.Items != null)
+            {
+                _availableEmployees.AddRange(response.Items);
+            }
         }
-        catch
+        catch (Exception ex)
         {
-            return [];
+            Snackbar.Add($"Could not pre-load employees: {ex.Message}", Severity.Warning);
         }
     }
 
-    private async Task<IEnumerable<EmployeeReferenceDto>> SearchInspectorsAsync(string value, CancellationToken cancellationToken)
+    private async Task<IEnumerable<EmployeeReferenceDto>> SearchEmployeesAsync(string value, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(_inspectorRoleId))
-        {
-            return await SearchEmployeesAsync(value, cancellationToken);
-        }
-
         try
         {
-            var users = await UsersClient.SearchAsync(
-                pageNumber: 1,
-                pageSize: 20,
-                search: string.IsNullOrWhiteSpace(value) ? null : value,
-                isActive: true,
-                roleId: _inspectorRoleId,
-                cancellationToken: cancellationToken);
-
-            foreach (var user in users?.Items ?? [])
+            // If empty search, return pre-loaded employees
+            if (string.IsNullOrWhiteSpace(value))
             {
-                if (string.IsNullOrWhiteSpace(user.Id) || _inspectorEmployeeCache.ContainsKey(user.Id))
-                {
-                    continue;
-                }
-
-                try
-                {
-                    var employee = await EmployeesClient.ByIdentityAsync(user.Id, cancellationToken);
-                    if (employee is not null)
-                    {
-                        _inspectorEmployeeCache[user.Id] = employee;
-                    }
-                }
-                catch
-                {
-                    // Ignore users without linked employee records.
-                }
+                return _availableEmployees;
             }
 
-            return _inspectorEmployeeCache.Values
-                .Where(e => e.IsActive)
-                .Where(e => string.IsNullOrWhiteSpace(value)
-                    || e.FirstName.Contains(value, StringComparison.OrdinalIgnoreCase)
-                    || e.LastName.Contains(value, StringComparison.OrdinalIgnoreCase)
-                    || e.EmployeeNumber.Contains(value, StringComparison.OrdinalIgnoreCase))
-                .OrderBy(e => e.LastName)
-                .ThenBy(e => e.FirstName)
-                .Take(20)
-                .ToList();
+            // Search from API for keyword
+            var response = await LookupClient.EmployeesGetAsync(
+                keyword: value,
+                isActive: true,
+                pageNumber: 1,
+                pageSize: 30,
+                cancellationToken: cancellationToken);
+            return response?.Items ?? [];
         }
-        catch
+        catch (Exception ex)
         {
+            Snackbar.Add($"Search failed: {ex.Message}", Severity.Error);
             return [];
         }
     }

@@ -11,7 +11,7 @@ public static class UpdatePurchaseRequestEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapPut("/{id:guid}", UpdatePurchaseRequest)
-            .WithName(nameof(UpdatePurchaseRequestCommand))
+            .WithName($"Procurement.{nameof(UpdatePurchaseRequestCommand)}")
             .WithSummary("Update a draft purchase request")
             .Produces<PurchaseRequestDto>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status400BadRequest)

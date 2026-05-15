@@ -12,7 +12,7 @@ public static class SearchCanvassRequestsEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapGet("/", SearchCanvassRequests)
-            .WithName(nameof(SearchCanvassRequestsQuery))
+            .WithName($"Procurement.{nameof(SearchCanvassRequestsQuery)}")
             .WithSummary("Search canvass requests with pagination")
             .Produces<PagedResponse<CanvassRequestSummaryDto>>(StatusCodes.Status200OK)
             .RequirePermission(ProcurementAcquisitionModuleConstants.Permissions.CanvassRequests.View);

@@ -11,7 +11,7 @@ public static class AwardCanvassEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapPost("/{id:guid}/award", AwardCanvass)
-            .WithName(nameof(AwardCanvassCommand))
+            .WithName($"Procurement.{nameof(AwardCanvassCommand)}")
             .WithSummary("Award a canvass request to a supplier quotation")
             .Produces<CanvassRequestDto>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound)

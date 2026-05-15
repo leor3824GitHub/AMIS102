@@ -18,7 +18,7 @@ internal sealed class AssetIARConfiguration : IEntityTypeConfiguration<AssetInsp
         builder.Property(x => x.SupplierName).IsRequired().HasMaxLength(500);
         builder.Property(x => x.DeliveryReceiptNo).HasMaxLength(64);
         builder.Property(x => x.Remarks).HasMaxLength(1000);
-        builder.Property(x => x.Version).IsRowVersion();
+        // Version column kept for future xmin-based concurrency; not active until properly wired
 
         builder.Property(x => x.SubmittedForInspectionOnUtc);
         builder.Property(x => x.InspectedOnUtc);

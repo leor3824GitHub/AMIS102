@@ -11,7 +11,7 @@ public static class ExpandLineByQuantityEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapPost("/{id:guid}/lines/{itemNo:int}/expand", Handle)
-            .WithName(nameof(ExpandLineByQuantityCommand))
+            .WithName($"Procurement.{nameof(ExpandLineByQuantityCommand)}")
             .WithSummary("Split a passed line with Qty>1 into N lines of Qty=1 (NFA one-line-per-physical-unit)")
             .Produces<AssetIARDto>()
             .Produces(StatusCodes.Status404NotFound)

@@ -12,7 +12,7 @@ public static class SearchAssetIARsEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapGet("/", Handle)
-            .WithName(nameof(SearchAssetIARsQuery))
+            .WithName($"Procurement.{nameof(SearchAssetIARsQuery)}")
             .WithSummary("Search asset inspection and acceptance reports")
             .Produces<PagedResponse<AssetIARSummaryDto>>()
             .RequirePermission(ProcurementAcquisitionModuleConstants.Permissions.AssetIARs.View);

@@ -1,8 +1,10 @@
+using AMIS.Framework.Core.Exceptions;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.AssetInspectionAcceptanceReports;
 using AMIS.Modules.ProcurementAcquisition.Data;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.AssetIARs.CreateAssetIAR;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
+using System.Net;
 
 namespace AMIS.Modules.ProcurementAcquisition.Features.v1.AssetIARs.SubmitForInspection;
 
@@ -13,9 +15,20 @@ public sealed class SubmitIARForInspectionCommandHandler(
     {
         var iar = await dbContext.AssetIARs
             .FirstOrDefaultAsync(x => x.Id == command.Id, cancellationToken).ConfigureAwait(false)
-            ?? throw new KeyNotFoundException($"Asset IAR '{command.Id}' not found.");
+            ?? throw new CustomException(
+                $"Asset IAR '{command.Id}' not found.",
+                Enumerable.Empty<string>(),
+                HttpStatusCode.NotFound);
 
-        iar.SubmitForInspection();
+        try
+        {
+            iar.SubmitForInspection();
+        }
+        catch (InvalidOperationException ex)
+        {
+            throw new CustomException(ex.Message, Enumerable.Empty<string>(), HttpStatusCode.BadRequest);
+        }
+
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
         var poNumber = await dbContext.PurchaseOrders
