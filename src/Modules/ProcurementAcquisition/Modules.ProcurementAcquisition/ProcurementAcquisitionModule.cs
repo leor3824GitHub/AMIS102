@@ -23,6 +23,17 @@ using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.IssuePurcha
 using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.CancelPurchaseOrder;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.GetPurchaseOrder;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.SearchPurchaseOrders;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.AssetIARs.CreateAssetIAR;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.AssetIARs.UpdateAssetIAR;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.AssetIARs.AcceptAssetIAR;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.AssetIARs.CancelAssetIAR;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.AssetIARs.GetAssetIAR;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.AssetIARs.SearchAssetIARs;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.AssetIARs.SubmitForInspection;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.AssetIARs.ReassignInspector;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.AssetIARs.RecordInspection;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.AssetIARs.AssignPropertyNo;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.AssetIARs.ExpandLineByQuantity;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -54,6 +65,15 @@ public class ProcurementAcquisitionModule : IModule
         new("Update Purchase Orders", "Update", "Procurement.PurchaseOrders"),
         new("Issue Purchase Orders", "Issue", "Procurement.PurchaseOrders"),
         new("Cancel Purchase Orders", "Cancel", "Procurement.PurchaseOrders"),
+
+        new("View Asset IARs",                "View",                "Procurement.AssetIARs", IsBasic: true),
+        new("Create Asset IARs",              "Create",              "Procurement.AssetIARs"),
+        new("Update Asset IARs",              "Update",              "Procurement.AssetIARs"),
+        new("Accept Asset IARs",              "Accept",              "Procurement.AssetIARs"),
+        new("Submit Asset IARs For Inspection","SubmitForInspection","Procurement.AssetIARs"),
+        new("Inspect Asset IARs",             "Inspect",             "Procurement.AssetIARs"),
+        new("Assign Property No",             "AssignPropertyNo",    "Procurement.AssetIARs"),
+        new("Cancel Asset IARs",              "Cancel",              "Procurement.AssetIARs"),
     ];
 
     public void ConfigureServices(IHostApplicationBuilder builder)
@@ -85,6 +105,7 @@ public class ProcurementAcquisitionModule : IModule
         var purchaseRequestsGroup = moduleGroup.MapGroup("/purchase-requests");
         var canvassRequestsGroup = moduleGroup.MapGroup("/canvass-requests");
         var purchaseOrdersGroup = moduleGroup.MapGroup("/purchase-orders");
+        var iarGroup = moduleGroup.MapGroup("/iars");
 
         // Purchase Requests
         CreatePurchaseRequestEndpoint.Map(purchaseRequestsGroup);
@@ -111,6 +132,19 @@ public class ProcurementAcquisitionModule : IModule
         CancelPurchaseOrderEndpoint.Map(purchaseOrdersGroup);
         GetPurchaseOrderEndpoint.Map(purchaseOrdersGroup);
         SearchPurchaseOrdersEndpoint.Map(purchaseOrdersGroup);
+
+        // Asset IARs
+        CreateAssetIAREndpoint.Map(iarGroup);
+        UpdateAssetIAREndpoint.Map(iarGroup);
+        AcceptAssetIAREndpoint.Map(iarGroup);
+        CancelAssetIAREndpoint.Map(iarGroup);
+        GetAssetIAREndpoint.Map(iarGroup);
+        SearchAssetIARsEndpoint.Map(iarGroup);
+        SubmitIARForInspectionEndpoint.Map(iarGroup);
+        ReassignInspectorEndpoint.Map(iarGroup);
+        RecordIARInspectionEndpoint.Map(iarGroup);
+        AssignPropertyNoEndpoint.Map(iarGroup);
+        ExpandLineByQuantityEndpoint.Map(iarGroup);
     }
 }
 

@@ -12,8 +12,6 @@ using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
 using AMIS.Modules.Finance;
 using AMIS.Modules.Finance.Contracts.v1.DisbursementVouchers;
 using AMIS.Modules.AssetManagement;
-using AMIS.Modules.AssetProcurement;
-using AMIS.Modules.AssetProcurement.Contracts.v1.AssetPurchaseRequests;
 using AMIS.Modules.AssetRegister;
 using AMIS.Modules.AssetRegister.Contracts.v1.Assets;
 using AMIS.Modules.ProcurementPlanning;
@@ -69,8 +67,6 @@ builder.Services.AddMediator(o =>
         typeof(FinanceModule),
         typeof(CreateDisbursementVoucherCommand),
         typeof(AssetManagementModule),
-        typeof(AssetProcurementModule),
-        typeof(CreateAssetPurchaseRequestCommand),
         typeof(AssetRegisterModule),
         typeof(RegisterAssetCommand),
         typeof(ProcurementPlanningModule),
@@ -88,7 +84,6 @@ var moduleAssemblies = new Assembly[]
     typeof(ProcurementAcquisitionModule).Assembly,
     typeof(FinanceModule).Assembly,
     typeof(AssetManagementModule).Assembly,
-    typeof(AssetProcurementModule).Assembly,
     typeof(AssetRegisterModule).Assembly,
     typeof(ProcurementPlanningModule).Assembly
 };

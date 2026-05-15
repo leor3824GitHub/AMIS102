@@ -34,6 +34,18 @@ public static class ProcurementAcquisitionModuleConstants
             public const string Issue = "Permissions.Procurement.PurchaseOrders.Issue";
             public const string Cancel = "Permissions.Procurement.PurchaseOrders.Cancel";
         }
+
+        public static class AssetIARs
+        {
+            public const string View = "Permissions.Procurement.AssetIARs.View";
+            public const string Create = "Permissions.Procurement.AssetIARs.Create";
+            public const string Update = "Permissions.Procurement.AssetIARs.Update";
+            public const string Accept = "Permissions.Procurement.AssetIARs.Accept";
+            public const string SubmitForInspection = "Permissions.Procurement.AssetIARs.SubmitForInspection";
+            public const string Inspect = "Permissions.Procurement.AssetIARs.Inspect";
+            public const string AssignPropertyNo = "Permissions.Procurement.AssetIARs.AssignPropertyNo";
+            public const string Cancel = "Permissions.Procurement.AssetIARs.Cancel";
+        }
     }
 }
 

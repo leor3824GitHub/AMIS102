@@ -80,8 +80,8 @@ internal sealed class IdentityDbInitializer(
 
         var requiredPermissionNames = new HashSet<string>(StringComparer.Ordinal)
         {
-            AmisPermission.NameFor(ActionConstants.View, "AssetProcurement.AssetIARs"),
-            AmisPermission.NameFor("Inspect", "AssetProcurement.AssetIARs")
+            AmisPermission.NameFor(ActionConstants.View, "Procurement.AssetIARs"),
+            AmisPermission.NameFor("Inspect", "Procurement.AssetIARs")
         };
 
         var inspectorPermissions = PermissionConstants.All

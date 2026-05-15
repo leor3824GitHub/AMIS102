@@ -22,7 +22,7 @@
     <ProjectReference Include="..\..\..\BuildingBlocks\Persistence\Persistence.csproj" />
     <ProjectReference Include="..\..\..\BuildingBlocks\Web\Web.csproj" />
     <ProjectReference Include="..\Modules.AssetRegister.Contracts\Modules.AssetRegister.Contracts.csproj" />
-    <ProjectReference Include="..\..\AssetProcurement\Modules.AssetProcurement.Contracts\Modules.AssetProcurement.Contracts.csproj" />
+    <ProjectReference Include="..\..\ProcurementAcquisition\Modules.ProcurementAcquisition.Contracts\Modules.ProcurementAcquisition.Contracts.csproj" />
   </ItemGroup>
 </Project>
 

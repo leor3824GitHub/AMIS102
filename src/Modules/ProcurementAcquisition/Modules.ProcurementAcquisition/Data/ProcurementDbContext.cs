@@ -3,6 +3,7 @@ using AMIS.Framework.Persistence;
 using AMIS.Framework.Persistence.Context;
 using AMIS.Framework.Shared.Multitenancy;
 using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.ProcurementAcquisition.Domain.AssetInspectionAcceptanceReports;
 using AMIS.Modules.ProcurementAcquisition.Domain.Canvass;
 using AMIS.Modules.ProcurementAcquisition.Domain.PurchaseOrders;
 using AMIS.Modules.ProcurementAcquisition.Domain.PurchaseRequests;
@@ -18,6 +19,7 @@ public class ProcurementDbContext : BaseDbContext
     public DbSet<CanvassRequest> CanvassRequests => Set<CanvassRequest>();
     public DbSet<CanvassQuotation> CanvassQuotations => Set<CanvassQuotation>();
     public DbSet<PurchaseOrder> PurchaseOrders => Set<PurchaseOrder>();
+    public DbSet<AssetInspectionAcceptanceReport> AssetIARs => Set<AssetInspectionAcceptanceReport>();
 
     public ProcurementDbContext(
         IMultiTenantContextAccessor<AppTenantInfo> multiTenantContextAccessor,

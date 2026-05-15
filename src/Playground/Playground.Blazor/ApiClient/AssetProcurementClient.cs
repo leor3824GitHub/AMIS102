@@ -2,8 +2,7 @@ using System.Globalization;
 using System.Net.Http.Json;
 using System.Web;
 using AMIS.Framework.Shared.Persistence;
-using AMIS.Modules.AssetProcurement.Contracts.v1.AssetInspectionAcceptanceReports;
-using AMIS.Modules.AssetProcurement.Contracts.v1.AssetPurchaseOrders;
+using AMIS.Modules.ProcurementAcquisition.Contracts.v1.AssetInspectionAcceptanceReports;
 
 namespace AMIS.Playground.Blazor.ApiClient;
 
@@ -28,7 +27,7 @@ internal interface IAssetIarClient
 
 internal sealed class AssetIarClient(HttpClient http) : IAssetIarClient
 {
-    private const string Base = "api/v1/asset-procurement/iars";
+    private const string Base = "api/v1/procurement/iars";
 
     public Task<PagedResponse<AssetIARSummaryDto>> SearchAsync(
         string? keyword = null, AssetIARStatus? status = null,
@@ -122,34 +121,4 @@ internal sealed class AssetIarClient(HttpClient http) : IAssetIarClient
         r.EnsureSuccessStatusCode();
         return (await r.Content.ReadFromJsonAsync<AssetIARDto>(ct))!;
     }
-}
-
-// ── Asset Purchase Orders (picker support) ────────────────────────────────────
-
-internal interface IAssetPurchaseOrderClient
-{
-    Task<PagedResponse<AssetPurchaseOrderSummaryDto>> SearchAsync(
-        string? keyword = null, AssetPurchaseOrderStatus? status = null,
-        int page = 1, int pageSize = 30, CancellationToken ct = default);
-    Task<AssetPurchaseOrderDto?> GetAsync(Guid id, CancellationToken ct = default);
-}
-
-internal sealed class AssetPurchaseOrderClient(HttpClient http) : IAssetPurchaseOrderClient
-{
-    private const string Base = "api/v1/asset-procurement/purchase-orders";
-
-    public Task<PagedResponse<AssetPurchaseOrderSummaryDto>> SearchAsync(
-        string? keyword = null, AssetPurchaseOrderStatus? status = null,
-        int page = 1, int pageSize = 30, CancellationToken ct = default)
-    {
-        var q = HttpUtility.ParseQueryString(string.Empty);
-        if (!string.IsNullOrWhiteSpace(keyword)) q["Keyword"] = keyword;
-        if (status.HasValue) q["Status"] = ((int)status.Value).ToString(CultureInfo.InvariantCulture);
-        q["PageNumber"] = page.ToString(CultureInfo.InvariantCulture);
-        q["PageSize"] = pageSize.ToString(CultureInfo.InvariantCulture);
-        return http.GetFromJsonAsync<PagedResponse<AssetPurchaseOrderSummaryDto>>($"{Base}?{q}", ct)!;
-    }
-
-    public Task<AssetPurchaseOrderDto?> GetAsync(Guid id, CancellationToken ct = default) =>
-        http.GetFromJsonAsync<AssetPurchaseOrderDto>($"{Base}/{id}", ct);
 }

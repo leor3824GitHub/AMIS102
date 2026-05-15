@@ -2,7 +2,7 @@
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Components.Authorization
 @using AMIS.Playground.Blazor.ApiClient
-@using AMIS.Modules.AssetProcurement.Contracts.v1.AssetInspectionAcceptanceReports
+@using AMIS.Modules.ProcurementAcquisition.Contracts.v1.AssetInspectionAcceptanceReports
 @inject IAssetIarClient IarClient
 @inject IIdentityClient IdentityClient
 @inject ISnackbar Snackbar
@@ -168,12 +168,12 @@
 </MudCard>
 
 @code {
-    private const string PermissionCreate = "Permissions.AssetProcurement.AssetIARs.Create";
-    private const string PermissionUpdate = "Permissions.AssetProcurement.AssetIARs.Update";
-    private const string PermissionSubmitForInspection = "Permissions.AssetProcurement.AssetIARs.SubmitForInspection";
-    private const string PermissionInspect = "Permissions.AssetProcurement.AssetIARs.Inspect";
-    private const string PermissionAccept = "Permissions.AssetProcurement.AssetIARs.Accept";
-    private const string PermissionCancel = "Permissions.AssetProcurement.AssetIARs.Cancel";
+    private const string PermissionCreate = "Permissions.Procurement.AssetIARs.Create";
+    private const string PermissionUpdate = "Permissions.Procurement.AssetIARs.Update";
+    private const string PermissionSubmitForInspection = "Permissions.Procurement.AssetIARs.SubmitForInspection";
+    private const string PermissionInspect = "Permissions.Procurement.AssetIARs.Inspect";
+    private const string PermissionAccept = "Permissions.Procurement.AssetIARs.Accept";
+    private const string PermissionCancel = "Permissions.Procurement.AssetIARs.Cancel";
 
     private readonly HashSet<string> _permissions = new(StringComparer.OrdinalIgnoreCase);
     private List<AssetIARSummaryDto> _items = [];

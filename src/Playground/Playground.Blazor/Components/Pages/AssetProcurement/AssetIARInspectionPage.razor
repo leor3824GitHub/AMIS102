@@ -2,7 +2,7 @@
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Components.Authorization
 @using AMIS.Playground.Blazor.ApiClient
-@using AMIS.Modules.AssetProcurement.Contracts.v1.AssetInspectionAcceptanceReports
+@using AMIS.Modules.ProcurementAcquisition.Contracts.v1.AssetInspectionAcceptanceReports
 @inject IAssetIarClient IarClient
 @inject IIdentityClient IdentityClient
 @inject ISnackbar Snackbar
@@ -123,7 +123,7 @@ else
 }
 
 @code {
-    private const string PermissionInspect = "Permissions.AssetProcurement.AssetIARs.Inspect";
+    private const string PermissionInspect = "Permissions.Procurement.AssetIARs.Inspect";
 
     [Parameter] public Guid Id { get; set; }
 

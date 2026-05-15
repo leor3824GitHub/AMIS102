@@ -28,8 +28,6 @@
     <ProjectReference Include="..\..\BuildingBlocks\Shared\Shared.csproj" />
     <ProjectReference Include="..\..\Modules\Auditing\Modules.Auditing\Modules.Auditing.csproj" />
     <ProjectReference Include="..\..\Modules\Auditing\Modules.Auditing.Contracts\Modules.Auditing.Contracts.csproj" />
-    <ProjectReference Include="..\..\Modules\AssetProcurement\Modules.AssetProcurement\Modules.AssetProcurement.csproj" />
-    <ProjectReference Include="..\..\Modules\AssetProcurement\Modules.AssetProcurement.Contracts\Modules.AssetProcurement.Contracts.csproj" />
     <ProjectReference Include="..\..\Modules\Expendable\Modules.Expendable\Modules.Expendable.csproj" />
     <ProjectReference Include="..\..\Modules\Expendable\Modules.Expendable.Contracts\Modules.Expendable.Contracts.csproj" />
     <ProjectReference Include="..\..\Modules\Finance\Modules.Finance\Modules.Finance.csproj" />

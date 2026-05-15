@@ -3,7 +3,7 @@ using AMIS.Framework.Eventing.Abstractions;
 using AMIS.Framework.Persistence;
 using AMIS.Framework.Shared.Constants;
 using AMIS.Framework.Web.Modules;
-using AMIS.Modules.AssetProcurement.Contracts.v1.AssetInspectionAcceptanceReports;
+using AMIS.Modules.ProcurementAcquisition.Contracts.v1.AssetInspectionAcceptanceReports;
 using AMIS.Modules.AssetRegister.Data;
 using AMIS.Modules.AssetRegister.Data.Services;
 using AMIS.Modules.AssetRegister.Domain.Events;

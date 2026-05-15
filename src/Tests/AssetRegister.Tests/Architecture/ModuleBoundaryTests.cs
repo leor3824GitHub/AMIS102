@@ -32,16 +32,16 @@ public sealed class ModuleBoundaryTests
     }
 
     [Fact]
-    public void Module_OnlyContractsRefAllowed_AssetProcurement()
+    public void Module_OnlyContractsRefAllowed_ProcurementAcquisition()
     {
-        // AssetProcurement.Contracts is the single allowed cross-module reference,
+        // ProcurementAcquisition.Contracts is the single allowed cross-module reference,
         // for the inbound AssetIARAcceptedEvent.
         var asm = typeof(AssetRegisterModule).Assembly;
         var referenced = asm.GetReferencedAssemblies().Select(a => a.Name ?? string.Empty).ToList();
 
-        referenced.ShouldContain("AMIS.Modules.AssetProcurement.Contracts");
-        referenced.ShouldNotContain("AMIS.Modules.AssetProcurement",
-            customMessage: "Only AssetProcurement.Contracts may be referenced, not the implementation assembly.");
+        referenced.ShouldContain("AMIS.Modules.ProcurementAcquisition.Contracts");
+        referenced.ShouldNotContain("AMIS.Modules.ProcurementAcquisition",
+            customMessage: "Only ProcurementAcquisition.Contracts may be referenced, not the implementation assembly.");
     }
 
     [Fact]

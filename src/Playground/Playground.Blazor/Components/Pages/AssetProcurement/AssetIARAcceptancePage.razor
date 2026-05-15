@@ -1,7 +1,7 @@
 @page "/asset-procurement/iars/{Id:guid}/accept"
 @using System.Linq
 @using AMIS.Playground.Blazor.ApiClient
-@using AMIS.Modules.AssetProcurement.Contracts.v1.AssetInspectionAcceptanceReports
+@using AMIS.Modules.ProcurementAcquisition.Contracts.v1.AssetInspectionAcceptanceReports
 @inject IAssetIarClient IarClient
 @inject IIdentityClient IdentityClient
 @inject ISnackbar Snackbar
@@ -204,8 +204,8 @@ else
 }
 
 @code {
-    private const string PermissionAccept = "Permissions.AssetProcurement.AssetIARs.Accept";
-    private const string PermissionAssignPropertyNo = "Permissions.AssetProcurement.AssetIARs.AssignPropertyNo";
+    private const string PermissionAccept = "Permissions.Procurement.AssetIARs.Accept";
+    private const string PermissionAssignPropertyNo = "Permissions.Procurement.AssetIARs.AssignPropertyNo";
 
     [Parameter] public Guid Id { get; set; }
 
@@ -324,7 +324,7 @@ else
             return false;
         }
 
-        if (PassedLines.Count == 0)
+        if (_iar.LineItems.Count == 0)
         {
             return false;
         }

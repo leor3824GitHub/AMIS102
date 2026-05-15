@@ -1,8 +1,8 @@
 @using AMIS.Playground.Blazor.ApiClient
-@using AMIS.Modules.AssetProcurement.Contracts.v1.AssetInspectionAcceptanceReports
-@using AMIS.Modules.AssetProcurement.Contracts.v1.AssetPurchaseOrders
+@using AMIS.Modules.ProcurementAcquisition.Contracts.v1.AssetInspectionAcceptanceReports
+@using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders
 @inject IAssetIarClient IarClient
-@inject IAssetPurchaseOrderClient PoClient
+@inject IPurchaseOrderClient PoClient
 @inject ILookupClient LookupClient
 @inject IIdentityClient IdentityClient
 @inject IUsersClient UsersClient
@@ -24,7 +24,7 @@
 
         <MudGrid Spacing="2">
             <MudItem xs="12" md="6">
-                <MudAutocomplete T="AssetPurchaseOrderSummaryDto"
+                <MudAutocomplete T="PurchaseOrderSummaryDto"
                                  Value="_selectedPo"
                                  ValueChanged="OnPoSelectedAsync"
                                  SearchFunc="SearchPurchaseOrdersAsync"
@@ -130,8 +130,7 @@
                                 <th>Unit</th>
                                 <th>Qty</th>
                                 <th class="text-right">Unit Cost</th>
-                                <th>Brand / Model</th>
-                                <th>Technical Specifications</th>
+                                <th>Stock No.</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -149,8 +148,7 @@
                                     <td>@choice.Unit</td>
                                     <td>@choice.Quantity</td>
                                     <td class="text-right">@choice.UnitCost.ToString("N2")</td>
-                                    <td>@BuildBrandModelText(choice.Brand, choice.Model)</td>
-                                    <td>@(string.IsNullOrWhiteSpace(choice.TechnicalSpecifications) ? "-" : choice.TechnicalSpecifications)</td>
+                                    <td>@(string.IsNullOrWhiteSpace(choice.StockNumber) ? "-" : choice.StockNumber)</td>
                                 </tr>
                             }
                         </tbody>
@@ -214,8 +212,8 @@
     private bool _busy;
     private bool _isLocked => Existing is not null && Existing.Status != AssetIARStatus.Draft;
 
-    private AssetPurchaseOrderSummaryDto? _selectedPo;
-    private AssetPurchaseOrderDto? _selectedPoDetails;
+    private PurchaseOrderSummaryDto? _selectedPo;
+    private PurchaseOrderDto? _selectedPoDetails;
     private EmployeeReferenceDto? _assignedInspector;
     private Guid _currentUserEmployeeId;
     private string? _deliveryReceiptNo;
@@ -242,7 +240,7 @@
             _selectedPoDetails = await PoClient.GetAsync(Existing.PurchaseOrderId);
             if (_selectedPoDetails is not null)
             {
-                _selectedPo = new AssetPurchaseOrderSummaryDto(
+                _selectedPo = new PurchaseOrderSummaryDto(
                     _selectedPoDetails.Id,
                     _selectedPoDetails.PoNumber,
                     _selectedPoDetails.PoDate,
@@ -312,19 +310,19 @@
         }
     }
 
-    private static string FormatPo(AssetPurchaseOrderSummaryDto? po) =>
+    private static string FormatPo(PurchaseOrderSummaryDto? po) =>
         po is null ? string.Empty : $"{po.PoNumber} - {po.SupplierName}";
 
     private static string FormatEmployee(EmployeeReferenceDto? employee) =>
         employee is null ? string.Empty : $"{employee.LastName}, {employee.FirstName} ({employee.EmployeeNumber})";
 
-    private async Task<IEnumerable<AssetPurchaseOrderSummaryDto>> SearchPurchaseOrdersAsync(string value, CancellationToken cancellationToken)
+    private async Task<IEnumerable<PurchaseOrderSummaryDto>> SearchPurchaseOrdersAsync(string value, CancellationToken cancellationToken)
     {
         try
         {
             var keyword = string.IsNullOrWhiteSpace(value) ? null : value;
-            var issued = await PoClient.SearchAsync(keyword, status: AssetPurchaseOrderStatus.Issued, page: 1, pageSize: 20, ct: cancellationToken);
-            var partiallyDelivered = await PoClient.SearchAsync(keyword, status: AssetPurchaseOrderStatus.PartiallyDelivered, page: 1, pageSize: 20, ct: cancellationToken);
+            var issued = await PoClient.SearchAsync(keyword, status: PurchaseOrderStatus.Issued, page: 1, pageSize: 20, ct: cancellationToken);
+            var partiallyDelivered = await PoClient.SearchAsync(keyword, status: PurchaseOrderStatus.PartiallyDelivered, page: 1, pageSize: 20, ct: cancellationToken);
 
             return issued.Items
                 .Concat(partiallyDelivered.Items)
@@ -334,13 +332,14 @@
                 .Take(30)
                 .ToList();
         }
-        catch
+        catch (Exception ex)
         {
+            Snackbar.Add($"Failed to load purchase orders: {ex.Message}", Severity.Error);
             return [];
         }
     }
 
-    private async Task OnPoSelectedAsync(AssetPurchaseOrderSummaryDto? po)
+    private async Task OnPoSelectedAsync(PurchaseOrderSummaryDto? po)
     {
         _selectedPo = po;
         _selectedPoDetails = null;
@@ -373,7 +372,7 @@
     }
 
     private void HydratePoLineChoices(
-        IReadOnlyList<AssetPurchaseOrderLineItemDto> poLines,
+        IReadOnlyList<PurchaseOrderLineItemDto> poLines,
         IReadOnlyList<AssetIARLineItemDto>? existingLines)
     {
         _poLineChoices.Clear();
@@ -386,10 +385,7 @@
                 ItemNo = poLine.ItemNo,
                 Unit = poLine.Unit,
                 Description = poLine.Description,
-                TechnicalSpecifications = poLine.TechnicalSpecifications,
-                Brand = poLine.Brand,
-                Model = poLine.Model,
-                PropertyClassHint = poLine.PropertyClassHint,
+                StockNumber = poLine.StockNumber,
                 Quantity = poLine.Quantity,
                 UnitCost = poLine.UnitCost,
                 Selected = false
@@ -422,9 +418,6 @@
     {
         return string.Equals(Normalize(poLine.Description), Normalize(iarLine.Description), StringComparison.Ordinal)
             && string.Equals(Normalize(poLine.Unit), Normalize(iarLine.Unit), StringComparison.Ordinal)
-            && string.Equals(Normalize(poLine.TechnicalSpecifications), Normalize(iarLine.TechnicalSpecifications), StringComparison.Ordinal)
-            && string.Equals(Normalize(poLine.Brand), Normalize(iarLine.Brand), StringComparison.Ordinal)
-            && string.Equals(Normalize(poLine.Model), Normalize(iarLine.Model), StringComparison.Ordinal)
             && poLine.Quantity == iarLine.Quantity
             && poLine.UnitCost == iarLine.UnitCost;
     }
@@ -458,24 +451,6 @@
         {
             line.Selected = false;
         }
-    }
-
-    private static string BuildBrandModelText(string? brand, string? model)
-    {
-        var hasBrand = !string.IsNullOrWhiteSpace(brand);
-        var hasModel = !string.IsNullOrWhiteSpace(model);
-
-        if (!hasBrand && !hasModel)
-        {
-            return "-";
-        }
-
-        if (hasBrand && hasModel)
-        {
-            return $"{brand} / {model}";
-        }
-
-        return hasBrand ? brand! : model!;
     }
 
     private async Task<IEnumerable<EmployeeReferenceDto>> SearchEmployeesAsync(string value, CancellationToken cancellationToken)
@@ -585,11 +560,11 @@
             .Where(x => x.Selected)
             .Select(line => new AssetIARLineItemRequest(
                 line.Description,
-                line.TechnicalSpecifications,
-                line.Brand,
-                line.Model,
                 null,
-                line.PropertyClassHint,
+                null,
+                null,
+                null,
+                null,
                 line.Unit,
                 line.Quantity,
                 line.UnitCost,
@@ -706,10 +681,7 @@
         public int ItemNo { get; set; }
         public string Unit { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
-        public string? TechnicalSpecifications { get; set; }
-        public string? Brand { get; set; }
-        public string? Model { get; set; }
-        public string? PropertyClassHint { get; set; }
+        public string? StockNumber { get; set; }
         public decimal Quantity { get; set; }
         public decimal UnitCost { get; set; }
         public bool Selected { get; set; }
