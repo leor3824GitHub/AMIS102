@@ -53,7 +53,8 @@ public sealed class SearchAssetIARsQueryHandler(
             iar.LineItems.Count,
             iar.TotalAmount,
             iar.Status,
-            iar.CreatedOnUtc)).ToList();
+            iar.CreatedOnUtc,
+            iar.InspectedById)).ToList();
 
         return new PagedResponse<AssetIARSummaryDto>
         {

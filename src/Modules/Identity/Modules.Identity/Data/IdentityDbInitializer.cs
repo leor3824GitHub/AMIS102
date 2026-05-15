@@ -65,6 +65,33 @@ internal sealed class IdentityDbInitializer(
                 }
             }
         }
+
+        await SeedInspectorRoleAsync(tenantId, cancellationToken);
+    }
+
+    private async Task SeedInspectorRoleAsync(string tenantId, CancellationToken cancellationToken)
+    {
+        if (await roleManager.Roles.SingleOrDefaultAsync(r => r.Name == "Inspector", cancellationToken)
+            is not AmisRole inspectorRole)
+        {
+            inspectorRole = new AmisRole("Inspector", $"Inspector Role for {tenantId} Tenant");
+            await roleManager.CreateAsync(inspectorRole);
+        }
+
+        var requiredPermissionNames = new HashSet<string>(StringComparer.Ordinal)
+        {
+            AmisPermission.NameFor(ActionConstants.View, "AssetProcurement.AssetIARs"),
+            AmisPermission.NameFor("Inspect", "AssetProcurement.AssetIARs")
+        };
+
+        var inspectorPermissions = PermissionConstants.All
+            .Where(p => requiredPermissionNames.Contains(p.Name))
+            .ToList();
+
+        if (inspectorPermissions.Count > 0)
+        {
+            await AssignPermissionsToRoleAsync(context, inspectorPermissions, inspectorRole, cancellationToken);
+        }
     }
 
     private async Task AssignPermissionsToRoleAsync(IdentityDbContext dbContext, IReadOnlyList<AmisPermission> permissions, AmisRole role, CancellationToken cancellationToken = default)

@@ -124,7 +124,6 @@ public sealed class AssetInspectionAcceptanceReport : AggregateRoot<Guid>, IHasT
     public DateOnly? DeliveryDate { get; private set; }
     public AssetIARStatus Status { get; private set; }
     public string? Remarks { get; private set; }
-    public string? RejectionReason { get; private set; }
     public byte[] Version { get; set; } = [];
 
     public DateTimeOffset? SubmittedForInspectionOnUtc { get; private set; }
@@ -336,21 +335,11 @@ public sealed class AssetInspectionAcceptanceReport : AggregateRoot<Guid>, IHasT
         LastModifiedOnUtc = AcceptedOnUtc;
     }
 
-    public void Reject(string reason)
-    {
-        if (Status != AssetIARStatus.Draft)
-            throw new InvalidOperationException("Only Draft IARs can be rejected.");
-
-        Status = AssetIARStatus.Rejected;
-        RejectionReason = reason;
-        LastModifiedOnUtc = DateTimeOffset.UtcNow;
-    }
-
     /// <summary>Property Custodian abandons an IAR before acceptance. Allowed from Draft, PendingInspection, or Inspected.</summary>
     public void Cancel()
     {
         if (Status is not (AssetIARStatus.Draft or AssetIARStatus.PendingInspection or AssetIARStatus.Inspected))
-            throw new InvalidOperationException("Only IARs that have not yet been accepted, rejected, or cancelled can be cancelled.");
+            throw new InvalidOperationException("Only IARs that have not yet been accepted or cancelled can be cancelled.");
 
         Status = AssetIARStatus.Cancelled;
         CancelledOnUtc = DateTimeOffset.UtcNow;

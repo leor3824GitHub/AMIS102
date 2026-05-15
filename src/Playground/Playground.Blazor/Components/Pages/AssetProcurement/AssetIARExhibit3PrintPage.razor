@@ -1,0 +1,406 @@
+@page "/asset-procurement/iars/{Id:guid}/exhibit3"
+@using AMIS.Playground.Blazor.ApiClient
+@using AMIS.Modules.AssetProcurement.Contracts.v1.AssetInspectionAcceptanceReports
+@inject IAssetIarClient IarClient
+@inject IJSRuntime JS
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+
+<PageTitle>IAR Exhibit 3</PageTitle>
+
+<style>
+    .iar-e3-page {
+        background: white;
+        color: #111;
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 8px;
+        font-family: "Times New Roman", serif;
+        font-size: 12px;
+    }
+
+    .iar-e3-exhibit {
+        text-align: right;
+        font-size: 13px;
+        margin-bottom: 6px;
+        font-weight: 600;
+    }
+
+    .iar-e3-title {
+        text-align: center;
+        font-size: 40px;
+        font-weight: 700;
+        margin: 2px 0 10px;
+        letter-spacing: 1px;
+    }
+
+    .iar-e3-form {
+        border: 2px solid #222;
+    }
+
+    .iar-e3-grid {
+        display: grid;
+        grid-template-columns: 1fr 310px;
+        border-bottom: 2px solid #222;
+    }
+
+    .iar-e3-left,
+    .iar-e3-right {
+        padding: 8px 10px;
+    }
+
+    .iar-e3-left {
+        border-right: 2px solid #222;
+    }
+
+    .iar-e3-row {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 8px;
+        margin-bottom: 6px;
+        align-items: baseline;
+    }
+
+    .iar-e3-label {
+        white-space: nowrap;
+    }
+
+    .iar-e3-value {
+        border-bottom: 1px solid #333;
+        min-height: 16px;
+        padding: 0 2px;
+    }
+
+    .iar-e3-table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+    }
+
+    .iar-e3-table th,
+    .iar-e3-table td {
+        border: 1px solid #222;
+        padding: 3px 5px;
+        vertical-align: middle;
+        word-wrap: break-word;
+    }
+
+    .iar-e3-table th {
+        text-align: center;
+        font-weight: 700;
+    }
+
+    .iar-e3-table td {
+        height: 24px;
+    }
+
+    .iar-e3-ctr {
+        text-align: center;
+    }
+
+    .iar-e3-rowline {
+        border-bottom: 1px solid #222;
+    }
+
+    .iar-e3-bottom {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        border-top: 2px solid #222;
+        min-height: 235px;
+    }
+
+    .iar-e3-bottom > div {
+        padding: 10px;
+    }
+
+    .iar-e3-inspection {
+        border-right: 2px solid #222;
+    }
+
+    .iar-e3-heading {
+        text-align: center;
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 12px;
+        font-style: italic;
+    }
+
+    .iar-e3-checkline {
+        margin-top: 8px;
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .iar-e3-box {
+        width: 18px;
+        height: 18px;
+        border: 1px solid #222;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 13px;
+        line-height: 1;
+        flex-shrink: 0;
+    }
+
+    .iar-e3-sign {
+        margin-top: 38px;
+        text-align: center;
+    }
+
+    .iar-e3-sign-name {
+        border-top: 1px solid #222;
+        display: inline-block;
+        min-width: 280px;
+        padding-top: 2px;
+        font-weight: 700;
+    }
+
+    .iar-e3-sign-role {
+        margin-top: 4px;
+        font-size: 11px;
+    }
+
+    .iar-e3-note {
+        font-size: 11px;
+        margin-top: 6px;
+    }
+
+    @@media print {
+        .no-print {
+            display: none !important;
+        }
+
+        .iar-e3-page {
+            max-width: 100%;
+            padding: 0;
+        }
+
+        body {
+            margin: 0;
+        }
+
+        .mud-main-content,
+        .mud-nav-menu,
+        .mud-drawer {
+            display: none !important;
+        }
+    }
+</style>
+
+<div class="no-print">
+    <MudPaper Class="pa-3 mb-3" Elevation="1">
+        <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+            <MudButton Variant="Variant.Outlined" OnClick="BackToAcceptance">
+                Back
+            </MudButton>
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Secondary"
+                       StartIcon="@Icons.Material.Filled.Print"
+                       OnClick="PrintReport"
+                       Disabled="@(_iar is null)">
+                Print Exhibit 3
+            </MudButton>
+            @if (_iar is not null)
+            {
+                <MudText Typo="Typo.body2" Class="ml-2">IAR: @_iar.IarNumber</MudText>
+            }
+        </MudStack>
+    </MudPaper>
+</div>
+
+@if (_loading)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else if (_iar is null)
+{
+    <MudAlert Severity="Severity.Error">Unable to load IAR for Exhibit 3 printing.</MudAlert>
+}
+else
+{
+    <div class="iar-e3-page" id="iar-exhibit3">
+        <div class="iar-e3-exhibit">Exhibit 3</div>
+        <div class="iar-e3-title">INSPECTION AND ACCEPTANCE REPORT</div>
+
+        <div class="iar-e3-form">
+            <div class="iar-e3-grid">
+                <div class="iar-e3-left">
+                    <div class="iar-e3-row">
+                        <div class="iar-e3-label">Supplier :</div>
+                        <div class="iar-e3-value">@_iar.SupplierName</div>
+                    </div>
+                    <div class="iar-e3-row">
+                        <div class="iar-e3-label">PO No./Date :</div>
+                        <div class="iar-e3-value">@_iar.PoNumber / @(_iar.DeliveryDate?.ToString("MM/dd/yyyy") ?? _iar.IarDate.ToString("MM/dd/yyyy"))</div>
+                    </div>
+                    <div class="iar-e3-row">
+                        <div class="iar-e3-label">Requisitioning Office/Dept. :</div>
+                        <div class="iar-e3-value">&nbsp;</div>
+                    </div>
+                    <div class="iar-e3-row">
+                        <div class="iar-e3-label">Responsibility Center Code :</div>
+                        <div class="iar-e3-value">&nbsp;</div>
+                    </div>
+                </div>
+                <div class="iar-e3-right">
+                    <div class="iar-e3-row">
+                        <div class="iar-e3-label">IAR No. :</div>
+                        <div class="iar-e3-value">@_iar.IarNumber</div>
+                    </div>
+                    <div class="iar-e3-row">
+                        <div class="iar-e3-label">Date :</div>
+                        <div class="iar-e3-value">@_iar.IarDate.ToString("MM/dd/yyyy")</div>
+                    </div>
+                    <div class="iar-e3-row">
+                        <div class="iar-e3-label">Invoice No. :</div>
+                        <div class="iar-e3-value">@(_iar.DeliveryReceiptNo ?? string.Empty)</div>
+                    </div>
+                    <div class="iar-e3-row">
+                        <div class="iar-e3-label">Date :</div>
+                        <div class="iar-e3-value">@(_iar.DeliveryDate?.ToString("MM/dd/yyyy") ?? string.Empty)</div>
+                    </div>
+                </div>
+            </div>
+
+            <table class="iar-e3-table">
+                <thead>
+                    <tr>
+                        <th style="width:180px">Stock/Property No.</th>
+                        <th>Description</th>
+                        <th style="width:110px">Unit</th>
+                        <th style="width:110px">Quantity</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{
+                        var inspectedLines = GetInspectedLines();
+                        var targetRows = Math.Max(14, inspectedLines.Count);
+                    }
+
+                    @if (inspectedLines.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="4" class="iar-e3-ctr">No inspected lines available.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var line in inspectedLines)
+                        {
+                            <tr class="iar-e3-rowline">
+                                <td>@(string.IsNullOrWhiteSpace(line.StockPropertyNo) ? "" : line.StockPropertyNo)</td>
+                                <td>@line.Description</td>
+                                <td class="iar-e3-ctr">@line.Unit</td>
+                                <td class="iar-e3-ctr">@line.Quantity</td>
+                            </tr>
+                        }
+
+                        @for (var i = inspectedLines.Count; i < targetRows; i++)
+                        {
+                            <tr class="iar-e3-rowline">
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+
+            <div class="iar-e3-bottom">
+                <div class="iar-e3-inspection">
+                    <div class="iar-e3-heading">INSPECTION</div>
+                    <div class="iar-e3-row">
+                        <div class="iar-e3-label">Date Inspected :</div>
+                        <div class="iar-e3-value">@(_iar.InspectedOnUtc?.ToLocalTime().ToString("MM/dd/yyyy") ?? string.Empty)</div>
+                    </div>
+                    <div class="iar-e3-checkline">
+                        <span class="iar-e3-box">@(GetInspectionChecked() ? "X" : "")</span>
+                        <span>Inspected, verified and found in order as to quantity and specifications</span>
+                    </div>
+
+                    <div class="iar-e3-sign">
+                        <div class="iar-e3-sign-name">@_iar.InspectedByName</div>
+                        <div class="iar-e3-sign-role">Inspection Officer / Inspection Committee</div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="iar-e3-heading">ACCEPTANCE</div>
+                    <div class="iar-e3-row">
+                        <div class="iar-e3-label">Date Received :</div>
+                        <div class="iar-e3-value">@(_iar.AcceptedOnUtc?.ToLocalTime().ToString("MM/dd/yyyy") ?? string.Empty)</div>
+                    </div>
+                    <div class="iar-e3-checkline">
+                        <span class="iar-e3-box">@(GetCompleteChecked() ? "X" : "")</span>
+                        <span>Complete</span>
+                    </div>
+                    <div class="iar-e3-checkline">
+                        <span class="iar-e3-box">@(GetPartialChecked() ? "X" : "")</span>
+                        <span>Partial (pls. specify quantity)</span>
+                    </div>
+
+                    <div class="iar-e3-sign">
+                        <div class="iar-e3-sign-name">@_iar.ReceivedByName</div>
+                        <div class="iar-e3-sign-role">Supply and/or Property Custodian</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="iar-e3-note no-print">
+            Note: Layout follows Exhibit 3 and uses available IAR/PO data. Fill office/center details if required by your process.
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    private bool _loading = true;
+    private AssetIARDto? _iar;
+
+    private List<AssetIARLineItemDto> GetInspectedLines()
+    {
+        return _iar?.LineItems
+            .Where(li => li.InspectionResult != LineInspectionResult.Pending)
+            .OrderBy(li => li.ItemNo)
+            .ToList() ?? [];
+    }
+
+    private bool GetInspectionChecked() => _iar is not null && GetInspectedLines().Count > 0;
+
+    private bool GetCompleteChecked() => _iar is not null && _iar.Status == AssetIARStatus.Accepted;
+
+    private bool GetPartialChecked() => _iar is not null && _iar.Status == AssetIARStatus.Inspected;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        try
+        {
+            _iar = await IarClient.GetAsync(Id);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load Exhibit 3: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task PrintReport() => await JS.InvokeVoidAsync("print");
+
+    private void BackToAcceptance() => Navigation.NavigateTo($"/asset-procurement/iars/{Id}/accept");
+}

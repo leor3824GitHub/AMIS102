@@ -12,7 +12,6 @@ public enum AssetIARStatus
 {
     Draft = 0,
     Accepted = 1,
-    Rejected = 2,             // legacy whole-IAR rejection — superseded by per-line Rejected; kept for back-compat
     PendingInspection = 3,
     Inspected = 4,
     Cancelled = 5
@@ -82,7 +81,8 @@ public sealed record AssetIARSummaryDto(
     int LineItemCount,
     decimal TotalAmount,
     AssetIARStatus Status,
-    DateTimeOffset CreatedOnUtc);
+    DateTimeOffset CreatedOnUtc,
+    Guid AssignedInspectorId = default);
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Commands — existing
@@ -120,8 +120,6 @@ public sealed record UpdateAssetIARCommand(
     IReadOnlyList<AssetIARLineItemRequest> LineItems) : ICommand<AssetIARDto>;
 
 public sealed record AcceptAssetIARCommand(Guid Id) : ICommand<AssetIARDto>;
-
-public sealed record RejectAssetIARCommand(Guid Id, string Reason) : ICommand<AssetIARDto>;
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Commands — stage workflow (new)

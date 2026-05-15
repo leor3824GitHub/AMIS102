@@ -1,0 +1,166 @@
+@using AMIS.Playground.Blazor.ApiClient
+@inject IAssetIarClient IarClient
+@inject IIdentityClient IdentityClient
+@inject IUsersClient UsersClient
+@inject IEmployeesClient EmployeesClient
+@inject ILookupClient LookupClient
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudText Typo="Typo.body2" Class="mb-2">
+            Select a replacement inspector for this pending IAR.
+        </MudText>
+
+        <MudAutocomplete T="EmployeeReferenceDto"
+                         @bind-Value="_selectedInspector"
+                         SearchFunc="SearchInspectorsAsync"
+                         ToStringFunc="FormatEmployee"
+                         Label="Assigned Inspector *"
+                         Variant="Variant.Outlined"
+                         Dense="true"
+                         Required="true"
+                         CoerceText="false" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync" Disabled="_busy">
+            Reassign
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance Dialog { get; set; } = default!;
+
+    [Parameter] public Guid IarId { get; set; }
+    [Parameter] public Guid CurrentInspectorId { get; set; }
+
+    private EmployeeReferenceDto? _selectedInspector;
+    private string? _inspectorRoleId;
+    private bool _busy;
+    private readonly Dictionary<string, EmployeeReferenceDto> _employeeCache = new(StringComparer.OrdinalIgnoreCase);
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var roles = await IdentityClient.RolesGetAsync();
+            _inspectorRoleId = roles?
+                .FirstOrDefault(r => string.Equals(r.Name, "Inspector", StringComparison.OrdinalIgnoreCase))?
+                .Id;
+        }
+        catch
+        {
+            _inspectorRoleId = null;
+        }
+
+        if (CurrentInspectorId != Guid.Empty)
+        {
+            try
+            {
+                _selectedInspector = await LookupClient.EmployeesGetAsync(CurrentInspectorId);
+                if (!string.IsNullOrWhiteSpace(_selectedInspector?.IdentityUserId))
+                {
+                    _employeeCache[_selectedInspector.IdentityUserId] = _selectedInspector;
+                }
+            }
+            catch
+            {
+                // Ignore failed pre-load. User can still pick a new inspector.
+            }
+        }
+    }
+
+    private async Task<IEnumerable<EmployeeReferenceDto>> SearchInspectorsAsync(string value, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(_inspectorRoleId))
+        {
+            // Fallback if Inspector role has not been seeded yet.
+            var fallback = await LookupClient.EmployeesGetAsync(
+                keyword: string.IsNullOrWhiteSpace(value) ? null : value,
+                isActive: true,
+                pageNumber: 1,
+                pageSize: 20,
+                cancellationToken: cancellationToken);
+            return fallback?.Items ?? [];
+        }
+
+        try
+        {
+            var users = await UsersClient.SearchAsync(
+                pageNumber: 1,
+                pageSize: 20,
+                search: string.IsNullOrWhiteSpace(value) ? null : value,
+                isActive: true,
+                roleId: _inspectorRoleId,
+                cancellationToken: cancellationToken);
+
+            foreach (var user in users?.Items ?? [])
+            {
+                if (string.IsNullOrWhiteSpace(user.Id) || _employeeCache.ContainsKey(user.Id))
+                {
+                    continue;
+                }
+
+                try
+                {
+                    var employee = await EmployeesClient.ByIdentityAsync(user.Id, cancellationToken);
+                    if (employee is not null)
+                    {
+                        _employeeCache[user.Id] = employee;
+                    }
+                }
+                catch
+                {
+                    // Ignore users that have no linked employee record.
+                }
+            }
+
+            return _employeeCache.Values
+                .Where(e => e.IsActive)
+                .Where(e => string.IsNullOrWhiteSpace(value)
+                    || e.FirstName.Contains(value, StringComparison.OrdinalIgnoreCase)
+                    || e.LastName.Contains(value, StringComparison.OrdinalIgnoreCase)
+                    || e.EmployeeNumber.Contains(value, StringComparison.OrdinalIgnoreCase))
+                .OrderBy(e => e.LastName)
+                .ThenBy(e => e.FirstName)
+                .Take(20)
+                .ToList();
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    private static string FormatEmployee(EmployeeReferenceDto? employee) =>
+        employee is null ? string.Empty : $"{employee.LastName}, {employee.FirstName} ({employee.EmployeeNumber})";
+
+    private async Task SaveAsync()
+    {
+        if (_selectedInspector is null)
+        {
+            Snackbar.Add("Inspector is required.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            await IarClient.ReassignInspectorAsync(IarId, _selectedInspector.Id);
+            Snackbar.Add("Inspector reassigned.", Severity.Success);
+            Dialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Reassign failed: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void Cancel() => Dialog.Cancel();
+}

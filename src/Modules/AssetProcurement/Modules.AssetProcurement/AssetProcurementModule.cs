@@ -20,7 +20,6 @@ using AMIS.Modules.AssetProcurement.Features.v1.AssetPurchaseOrders.SearchAssetP
 using AMIS.Modules.AssetProcurement.Features.v1.AssetIARs.CreateAssetIAR;
 using AMIS.Modules.AssetProcurement.Features.v1.AssetIARs.UpdateAssetIAR;
 using AMIS.Modules.AssetProcurement.Features.v1.AssetIARs.AcceptAssetIAR;
-using AMIS.Modules.AssetProcurement.Features.v1.AssetIARs.RejectAssetIAR;
 using AMIS.Modules.AssetProcurement.Features.v1.AssetIARs.GetAssetIAR;
 using AMIS.Modules.AssetProcurement.Features.v1.AssetIARs.SearchAssetIARs;
 using AMIS.Modules.AssetProcurement.Features.v1.AssetIARs.SubmitForInspection;
@@ -60,7 +59,6 @@ public class AssetProcurementModule : IModule
         new("Create Asset IARs",              "Create",              "AssetProcurement.AssetIARs"),
         new("Update Asset IARs",              "Update",              "AssetProcurement.AssetIARs"),
         new("Accept Asset IARs",              "Accept",              "AssetProcurement.AssetIARs"),
-        new("Reject Asset IARs",              "Reject",              "AssetProcurement.AssetIARs"),
         new("Submit Asset IARs for Inspection", "SubmitForInspection", "AssetProcurement.AssetIARs"),
         new("Inspect Asset IARs",             "Inspect",             "AssetProcurement.AssetIARs"),
         new("Assign Property No on Asset IARs", "AssignPropertyNo",  "AssetProcurement.AssetIARs"),
@@ -124,7 +122,6 @@ public class AssetProcurementModule : IModule
         AssignPropertyNoEndpoint.Map(iarGroup);
         ExpandLineByQuantityEndpoint.Map(iarGroup);
         AcceptAssetIAREndpoint.Map(iarGroup);
-        RejectAssetIAREndpoint.Map(iarGroup);
         CancelAssetIAREndpoint.Map(iarGroup);
         GetAssetIAREndpoint.Map(iarGroup);
         SearchAssetIARsEndpoint.Map(iarGroup);

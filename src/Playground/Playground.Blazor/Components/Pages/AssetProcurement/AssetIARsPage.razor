@@ -1,15 +1,17 @@
 @page "/asset-procurement/iars"
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
 @using AMIS.Playground.Blazor.ApiClient
 @using AMIS.Modules.AssetProcurement.Contracts.v1.AssetInspectionAcceptanceReports
-@using AMIS.Modules.AssetProcurement.Contracts.v1.AssetPurchaseOrders
 @inject IAssetIarClient IarClient
-@inject IAssetPurchaseOrderClient PoClient
-@inject ILookupClient LookupClient
+@inject IIdentityClient IdentityClient
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthStateProvider
 
 <AMISPageHeader Title="Inspection &amp; Acceptance Reports"
-                Description="Create IAR from an asset Purchase Order; assign a Property No per line, then Accept to flow into the Asset Registry." />
+                Description="Track IARs from Draft to Inspection and Acceptance." />
 
 <MudCard Elevation="1" Class="mb-3">
     <MudCardContent>
@@ -18,22 +20,26 @@
                           Size="Size.Small" Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
                           DebounceInterval="350" OnDebounceIntervalElapsed="@(() => LoadAsync())"
                           Style="max-width:320px" />
-            <MudSelect T="AssetIARStatus?" Value="_statusFilter" ValueChanged="OnStatusFilterChanged"
-                       Label="Status" Variant="Variant.Outlined"
-                       Size="Size.Small" Clearable="true" Style="max-width:180px">
-                <MudSelectItem T="AssetIARStatus?" Value="@((AssetIARStatus?)null)">(any)</MudSelectItem>
-                <MudSelectItem T="AssetIARStatus?" Value="@AssetIARStatus.Draft">Draft</MudSelectItem>
-                <MudSelectItem T="AssetIARStatus?" Value="@AssetIARStatus.Accepted">Accepted</MudSelectItem>
-                <MudSelectItem T="AssetIARStatus?" Value="@AssetIARStatus.Rejected">Rejected</MudSelectItem>
-            </MudSelect>
             <MudSpacer />
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
-                       OnClick="OpenCreateDialog">
-                New IAR
-            </MudButton>
+            @if (_canCreate)
+            {
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+                           OnClick="OpenCreateDialog">
+                    New IAR
+                </MudButton>
+            }
         </MudStack>
     </MudCardContent>
 </MudCard>
+
+<MudTabs Elevation="0" Rounded="true" PanelClass="pa-0" Class="mb-3" ActivePanelIndex="_activeTab" ActivePanelIndexChanged="OnTabChanged">
+    <MudTabPanel Text="All" />
+    <MudTabPanel Text="Draft" />
+    <MudTabPanel Text="Pending Inspection" />
+    <MudTabPanel Text="Inspected" />
+    <MudTabPanel Text="Accepted" />
+    <MudTabPanel Text="Cancelled" />
+</MudTabs>
 
 <MudCard Elevation="1">
     <MudCardContent>
@@ -43,7 +49,7 @@
         }
         else if (_items.Count == 0)
         {
-            <MudAlert Severity="Severity.Info">No IARs found. Click <b>New IAR</b> to create one from a purchase order.</MudAlert>
+            <MudAlert Severity="Severity.Info">No IARs found.</MudAlert>
         }
         else
         {
@@ -71,30 +77,78 @@
                             <td>@iar.LineItemCount</td>
                             <td class="text-right">@iar.TotalAmount.ToString("N2")</td>
                             <td>
-                                <MudChip T="string" Size="Size.Small"
-                                         Color="@StatusColor(iar.Status)">
+                                <MudChip T="string" Size="Size.Small" Color="@StatusColor(iar.Status)">
                                     @iar.Status
                                 </MudChip>
                             </td>
                             <td>
-                                <MudStack Row="true" Spacing="0">
-                                    <MudTooltip Text="View / Edit">
-                                        <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small"
-                                                       Color="Color.Primary"
-                                                       OnClick="@(() => OpenEditDialog(iar.Id))" />
-                                    </MudTooltip>
+                                <MudStack Row="true" Spacing="1">
                                     @if (iar.Status == AssetIARStatus.Draft)
                                     {
-                                        <MudTooltip Text="Accept (materialize assets)">
-                                            <MudIconButton Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small"
-                                                           Color="Color.Success"
-                                                           OnClick="@(() => AcceptAsync(iar.Id))" />
-                                        </MudTooltip>
-                                        <MudTooltip Text="Reject">
-                                            <MudIconButton Icon="@Icons.Material.Filled.Cancel" Size="Size.Small"
-                                                           Color="Color.Error"
-                                                           OnClick="@(() => RejectAsync(iar.Id))" />
-                                        </MudTooltip>
+                                        @if (_canUpdate)
+                                        {
+                                            <MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="@(() => OpenEditDialog(iar.Id))">Edit</MudButton>
+                                        }
+                                        @if (_canSubmitForInspection)
+                                        {
+                                            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" OnClick="@(() => SubmitForInspectionAsync(iar.Id))">
+                                                Submit for Inspection
+                                            </MudButton>
+                                        }
+                                        @if (_canCancel)
+                                        {
+                                            <MudButton Variant="Variant.Outlined" Color="Color.Error" Size="Size.Small" OnClick="@(() => CancelIarAsync(iar.Id))">
+                                                Cancel
+                                            </MudButton>
+                                        }
+                                    }
+                                    else if (iar.Status == AssetIARStatus.PendingInspection)
+                                    {
+                                        @if (_canInspect && IsAssignedInspector(iar))
+                                        {
+                                            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" OnClick="@(() => OpenInspectionPage(iar.Id))">
+                                                Inspect
+                                            </MudButton>
+                                        }
+                                        else if (_canSubmitForInspection)
+                                        {
+                                            <MudButton Variant="Variant.Outlined" Color="Color.Warning" Size="Size.Small" OnClick="@(() => OpenReassignInspectorDialog(iar.Id))">
+                                                Reassign Inspector
+                                            </MudButton>
+                                        }
+                                        @if (_canCancel)
+                                        {
+                                            <MudButton Variant="Variant.Outlined" Color="Color.Error" Size="Size.Small" OnClick="@(() => CancelIarAsync(iar.Id))">
+                                                Cancel
+                                            </MudButton>
+                                        }
+                                    }
+                                    else if (iar.Status == AssetIARStatus.Inspected)
+                                    {
+                                        @if (_canAccept)
+                                        {
+                                            <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small" OnClick="@(() => OpenAcceptancePage(iar.Id))">
+                                                Acceptance
+                                            </MudButton>
+                                        }
+                                        @if (_canCancel)
+                                        {
+                                            <MudButton Variant="Variant.Outlined" Color="Color.Error" Size="Size.Small" OnClick="@(() => CancelIarAsync(iar.Id))">
+                                                Cancel
+                                            </MudButton>
+                                        }
+                                    }
+                                    else if (iar.Status == AssetIARStatus.Accepted)
+                                    {
+                                        <MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="@(() => OpenViewDialog(iar.Id))">
+                                            View / Print
+                                        </MudButton>
+                                    }
+                                    else
+                                    {
+                                        <MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="@(() => OpenViewDialog(iar.Id))">
+                                            View
+                                        </MudButton>
                                     }
                                 </MudStack>
                             </td>
@@ -114,20 +168,77 @@
 </MudCard>
 
 @code {
+    private const string PermissionCreate = "Permissions.AssetProcurement.AssetIARs.Create";
+    private const string PermissionUpdate = "Permissions.AssetProcurement.AssetIARs.Update";
+    private const string PermissionSubmitForInspection = "Permissions.AssetProcurement.AssetIARs.SubmitForInspection";
+    private const string PermissionInspect = "Permissions.AssetProcurement.AssetIARs.Inspect";
+    private const string PermissionAccept = "Permissions.AssetProcurement.AssetIARs.Accept";
+    private const string PermissionCancel = "Permissions.AssetProcurement.AssetIARs.Cancel";
+
+    private readonly HashSet<string> _permissions = new(StringComparer.OrdinalIgnoreCase);
     private List<AssetIARSummaryDto> _items = [];
     private string? _keyword;
     private AssetIARStatus? _statusFilter;
     private bool _loading;
+    private int _activeTab;
     private int _page = 1;
     private int _totalCount;
+    private Guid _currentUserId;
     private const int PageSize = 15;
     private int TotalPages => Math.Max(1, (int)Math.Ceiling(_totalCount / (double)PageSize));
+    private bool _canCreate => HasPermission(PermissionCreate);
+    private bool _canUpdate => HasPermission(PermissionUpdate);
+    private bool _canSubmitForInspection => HasPermission(PermissionSubmitForInspection);
+    private bool _canInspect => HasPermission(PermissionInspect);
+    private bool _canAccept => HasPermission(PermissionAccept);
+    private bool _canCancel => HasPermission(PermissionCancel);
 
-    protected override async Task OnInitializedAsync() => await LoadAsync();
-
-    private async Task OnStatusFilterChanged(AssetIARStatus? value)
+    protected override async Task OnInitializedAsync()
     {
-        _statusFilter = value;
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var idClaim = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        _currentUserId = Guid.TryParse(idClaim, out var parsed) ? parsed : Guid.Empty;
+
+        await LoadPermissionsAsync();
+        await LoadAsync();
+    }
+
+    private async Task LoadPermissionsAsync()
+    {
+        try
+        {
+            var permissions = await IdentityClient.PermissionsGetAsync();
+            _permissions.Clear();
+
+            foreach (var permission in permissions)
+            {
+                if (!string.IsNullOrWhiteSpace(permission))
+                {
+                    _permissions.Add(permission.Trim());
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _permissions.Clear();
+            Snackbar.Add($"Unable to load permissions. Action buttons may be limited: {ex.Message}", Severity.Warning);
+        }
+    }
+
+    private bool HasPermission(string permission) => _permissions.Contains(permission);
+
+    private async Task OnTabChanged(int tab)
+    {
+        _activeTab = tab;
+        _statusFilter = tab switch
+        {
+            1 => AssetIARStatus.Draft,
+            2 => AssetIARStatus.PendingInspection,
+            3 => AssetIARStatus.Inspected,
+            4 => AssetIARStatus.Accepted,
+            5 => AssetIARStatus.Cancelled,
+            _ => null
+        };
         _page = 1;
         await LoadAsync();
     }
@@ -140,71 +251,136 @@
             var response = await IarClient.SearchAsync(_keyword, _statusFilter, page: _page, pageSize: PageSize);
             _items = [.. response.Items];
             _totalCount = (int)response.TotalCount;
+
         }
-        catch (Exception ex) { Snackbar.Add($"Load failed: {ex.Message}", Severity.Error); }
-        finally { _loading = false; }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Load failed: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
     }
+
+    private bool IsAssignedInspector(AssetIARSummaryDto iar) =>
+        _currentUserId != Guid.Empty && iar.AssignedInspectorId == _currentUserId;
 
     private async Task OpenCreateDialog()
     {
         var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true, MaxWidth = MaxWidth.Large };
-        var dialog = await DialogService.ShowAsync<AssetIARFormDialog>("New Inspection & Acceptance Report", options);
+        var dialog = await DialogService.ShowAsync<AssetIARDraftDialog>("New IAR Draft", options);
         var result = await dialog.Result;
         if (result is not null && !result.Canceled)
+        {
             await LoadAsync();
+        }
     }
 
     private async Task OpenEditDialog(Guid id)
     {
         var iar = await IarClient.GetAsync(id);
-        if (iar is null) { Snackbar.Add("IAR not found.", Severity.Error); return; }
+        if (iar is null)
+        {
+            Snackbar.Add("IAR not found.", Severity.Error);
+            return;
+        }
+
         var parameters = new DialogParameters { ["Existing"] = iar };
         var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true, MaxWidth = MaxWidth.Large };
-        var dialog = await DialogService.ShowAsync<AssetIARFormDialog>($"IAR {iar.IarNumber}", parameters, options);
+        var dialog = await DialogService.ShowAsync<AssetIARDraftDialog>($"IAR {iar.IarNumber}", parameters, options);
         var result = await dialog.Result;
         if (result is not null && !result.Canceled)
+        {
             await LoadAsync();
+        }
     }
 
-    private async Task AcceptAsync(Guid id)
+    private void OpenViewDialog(Guid id)
     {
-        var ok = await DialogService.ShowMessageBox(
-            "Accept IAR",
-            "Accepting will close this IAR for edits and publish line items to the Asset Register (one AssetRegistry row per accepted line). Continue?",
-            yesText: "Accept", cancelText: "Cancel");
-        if (ok != true) return;
+        Navigation.NavigateTo($"/asset-procurement/iars/{id}/accept");
+    }
+
+    private async Task SubmitForInspectionAsync(Guid id)
+    {
+        var ok = await DialogService.ShowMessageBox("Submit IAR", "Submit this draft for inspection?", yesText: "Submit", cancelText: "Cancel");
+        if (ok != true)
+        {
+            return;
+        }
 
         try
         {
-            await IarClient.AcceptAsync(id);
-            Snackbar.Add("IAR accepted.", Severity.Success);
+            await IarClient.SubmitForInspectionAsync(id);
+            Snackbar.Add("IAR submitted for inspection.", Severity.Success);
             await LoadAsync();
         }
-        catch (Exception ex) { Snackbar.Add($"Accept failed: {ex.Message}", Severity.Error); }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Submit failed: {ex.Message}", Severity.Error);
+        }
     }
 
-    private async Task RejectAsync(Guid id)
+    private async Task CancelIarAsync(Guid id)
     {
-        var reason = await DialogService.ShowMessageBox(
-            "Reject IAR",
-            (MarkupString)"Provide a brief reason. The IAR will be marked Rejected and cannot be reopened.",
-            yesText: "Reject", cancelText: "Cancel");
-        if (reason != true) return;
+        var ok = await DialogService.ShowMessageBox("Cancel IAR", "Cancel this IAR? This action cannot be undone.", yesText: "Cancel IAR", cancelText: "Keep");
+        if (ok != true)
+        {
+            return;
+        }
 
         try
         {
-            await IarClient.RejectAsync(id, "Rejected by user.");
-            Snackbar.Add("IAR rejected.", Severity.Success);
+            await IarClient.CancelAsync(id);
+            Snackbar.Add("IAR cancelled.", Severity.Success);
             await LoadAsync();
         }
-        catch (Exception ex) { Snackbar.Add($"Reject failed: {ex.Message}", Severity.Error); }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Cancel failed: {ex.Message}", Severity.Error);
+        }
     }
 
-    private static Color StatusColor(AssetIARStatus s) => s switch
+    private async Task OpenReassignInspectorDialog(Guid id)
+    {
+        var details = await IarClient.GetAsync(id);
+        if (details is null)
+        {
+            Snackbar.Add("IAR not found.", Severity.Error);
+            return;
+        }
+
+        var parameters = new DialogParameters
+        {
+            ["IarId"] = details.Id,
+            ["CurrentInspectorId"] = details.InspectedById
+        };
+        var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true, MaxWidth = MaxWidth.Small };
+        var dialog = await DialogService.ShowAsync<AssetIARReassignInspectorDialog>("Reassign Inspector", parameters, options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
+        {
+            await LoadAsync();
+        }
+    }
+
+    private void OpenInspectionPage(Guid id)
+    {
+        Navigation.NavigateTo($"/asset-procurement/iars/{id}/inspect");
+    }
+
+    private void OpenAcceptancePage(Guid id)
+    {
+        Navigation.NavigateTo($"/asset-procurement/iars/{id}/accept");
+    }
+
+    private static Color StatusColor(AssetIARStatus status) => status switch
     {
         AssetIARStatus.Draft => Color.Default,
+        AssetIARStatus.PendingInspection => Color.Warning,
+        AssetIARStatus.Inspected => Color.Info,
         AssetIARStatus.Accepted => Color.Success,
-        AssetIARStatus.Rejected => Color.Error,
+        AssetIARStatus.Cancelled => Color.Error,
         _ => Color.Default
     };
 }

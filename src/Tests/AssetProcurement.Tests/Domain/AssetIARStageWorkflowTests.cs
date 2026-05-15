@@ -28,6 +28,15 @@ public sealed class AssetIARStageWorkflowTests
     }
 
     [Fact]
+    public void SubmitForInspection_WithEmptyInspector_Throws()
+    {
+        var iar = NewDraftWithInspector(Guid.Empty, NewLine("Desk"));
+
+        Should.Throw<InvalidOperationException>(() => iar.SubmitForInspection())
+            .Message.ShouldContain("inspector must be assigned");
+    }
+
+    [Fact]
     public void SubmitForInspection_FromNonDraft_Throws()
     {
         var iar = NewDraft(NewLine("Desk"));
@@ -51,6 +60,15 @@ public sealed class AssetIARStageWorkflowTests
     [Fact]
     public void ReassignInspector_FromDraft_Throws() =>
         Should.Throw<InvalidOperationException>(() => NewDraft(NewLine("Desk")).ReassignInspector(Guid.NewGuid()));
+
+    [Fact]
+    public void ReassignInspector_FromInspected_Throws()
+    {
+        var inspectorId = Guid.NewGuid();
+        var iar = NewInspected(inspectorId, (NewLine("Desk"), LineInspectionResult.Passed));
+
+        Should.Throw<InvalidOperationException>(() => iar.ReassignInspector(Guid.NewGuid()));
+    }
 
     [Fact]
     public void ReassignInspector_WithEmptyGuid_Throws()
@@ -118,6 +136,19 @@ public sealed class AssetIARStageWorkflowTests
     }
 
     [Fact]
+    public void RecordInspection_WithPendingDecision_Throws()
+    {
+        var inspectorId = Guid.NewGuid();
+        var iar = NewDraftWithInspector(inspectorId, NewLine("Desk"));
+        iar.SubmitForInspection();
+
+        Should.Throw<InvalidOperationException>(() =>
+            iar.RecordInspection(inspectorId,
+                [new LineInspectionDecision(1, LineInspectionResult.Pending, null)]))
+            .Message.ShouldContain("Missing on item(s): 1");
+    }
+
+    [Fact]
     public void RecordInspection_FromNonPending_Throws()
     {
         var inspectorId = Guid.NewGuid();
@@ -146,6 +177,24 @@ public sealed class AssetIARStageWorkflowTests
         var iar = NewInspected(inspectorId, (NewLine("Desk"), LineInspectionResult.Rejected));
 
         Should.Throw<InvalidOperationException>(() => iar.AssignPropertyNo(1, "X-001"));
+    }
+
+    [Fact]
+    public void AssignPropertyNo_WithWhitespace_Throws()
+    {
+        var inspectorId = Guid.NewGuid();
+        var iar = NewInspected(inspectorId, (NewLine("Desk"), LineInspectionResult.Passed));
+
+        Should.Throw<InvalidOperationException>(() => iar.AssignPropertyNo(1, "   "));
+    }
+
+    [Fact]
+    public void AssignPropertyNo_WhenLineMissing_ThrowsKeyNotFound()
+    {
+        var inspectorId = Guid.NewGuid();
+        var iar = NewInspected(inspectorId, (NewLine("Desk"), LineInspectionResult.Passed));
+
+        Should.Throw<KeyNotFoundException>(() => iar.AssignPropertyNo(99, "X-001"));
     }
 
     [Fact]
@@ -184,6 +233,18 @@ public sealed class AssetIARStageWorkflowTests
     }
 
     [Fact]
+    public void Accept_FromInspected_WithAllRejectedLines_DoesNotRequirePropertyNumbers()
+    {
+        var inspectorId = Guid.NewGuid();
+        var iar = NewInspected(inspectorId,
+            (NewLine("Desk"), LineInspectionResult.Rejected),
+            (NewLine("Chair"), LineInspectionResult.Rejected));
+
+        Should.NotThrow(() => iar.Accept());
+        iar.Status.ShouldBe(AssetIARStatus.Accepted);
+    }
+
+    [Fact]
     public void Accept_FromCancelled_Throws()
     {
         var iar = NewDraft(NewLine("Desk"));
@@ -206,6 +267,24 @@ public sealed class AssetIARStageWorkflowTests
         iar.LineItems.Select(li => li.ItemNo).ShouldBe([1, 2, 3]);
         iar.LineItems.ShouldAllBe(li => li.InspectionResult == LineInspectionResult.Passed);
         iar.LineItems.ShouldAllBe(li => string.IsNullOrEmpty(li.StockPropertyNo));
+    }
+
+    [Fact]
+    public void ExpandLineByQuantity_CopiesInspectionMetadataToNewLines()
+    {
+        var inspectorId = Guid.NewGuid();
+        // Switch to passed so expansion is allowed, while keeping an explicit inspection remark.
+        var pendingIar = NewDraftWithInspector(inspectorId, NewLine("Desk", quantity: 2m));
+        pendingIar.SubmitForInspection();
+        pendingIar.RecordInspection(inspectorId,
+            [new LineInspectionDecision(1, LineInspectionResult.Passed, "Checked physically")]);
+
+        pendingIar.ExpandLineByQuantity(1);
+
+        pendingIar.LineItems.Count.ShouldBe(2);
+        pendingIar.LineItems.ShouldAllBe(li => li.InspectedById == inspectorId);
+        pendingIar.LineItems.ShouldAllBe(li => li.InspectedOnUtc.HasValue);
+        pendingIar.LineItems.ShouldAllBe(li => li.InspectionRemarks == "Checked physically");
     }
 
     [Fact]
@@ -248,6 +327,27 @@ public sealed class AssetIARStageWorkflowTests
         iar.Cancel();
 
         iar.Status.ShouldBe(AssetIARStatus.Cancelled);
+    }
+
+    [Fact]
+    public void Cancel_FromInspected_TransitionsToCancelled()
+    {
+        var inspectorId = Guid.NewGuid();
+        var iar = NewInspected(inspectorId, (NewLine("Desk"), LineInspectionResult.Passed));
+
+        iar.Cancel();
+
+        iar.Status.ShouldBe(AssetIARStatus.Cancelled);
+        iar.CancelledOnUtc.ShouldNotBeNull();
+    }
+
+    [Fact]
+    public void Cancel_FromCancelled_Throws()
+    {
+        var iar = NewDraft(NewLine("Desk"));
+        iar.Cancel();
+
+        Should.Throw<InvalidOperationException>(() => iar.Cancel());
     }
 
     [Fact]

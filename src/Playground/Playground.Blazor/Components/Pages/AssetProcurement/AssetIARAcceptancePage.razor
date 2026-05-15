@@ -1,0 +1,463 @@
+@page "/asset-procurement/iars/{Id:guid}/accept"
+@using System.Linq
+@using AMIS.Playground.Blazor.ApiClient
+@using AMIS.Modules.AssetProcurement.Contracts.v1.AssetInspectionAcceptanceReports
+@inject IAssetIarClient IarClient
+@inject IIdentityClient IdentityClient
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject NavigationManager Navigation
+
+<PageTitle>IAR Acceptance / View</PageTitle>
+
+<AMISPageHeader Title="IAR Acceptance"
+                Description="Assign property numbers, split multi-quantity lines, or review accepted/cancelled IAR details." />
+
+@if (_loading)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else if (_iar is null)
+{
+    <MudAlert Severity="Severity.Error">IAR not found.</MudAlert>
+}
+else
+{
+    <AssetIARStageStepper Status="@_iar.Status" />
+
+    @if (_iar.Status == AssetIARStatus.Accepted)
+    {
+        <MudAlert Severity="Severity.Success" Class="mb-3">
+            This IAR is already <b>Accepted</b>. The page is in read-only mode.
+        </MudAlert>
+    }
+    else if (_iar.Status == AssetIARStatus.Cancelled)
+    {
+        <MudAlert Severity="Severity.Warning" Class="mb-3">
+            This IAR is <b>Cancelled</b>. The page is in read-only mode.
+        </MudAlert>
+    }
+    else if (_iar.Status != AssetIARStatus.Inspected)
+    {
+        <MudAlert Severity="Severity.Warning" Class="mb-3">
+            Acceptance actions are available only when IAR status is <b>Inspected</b>. Current page is read-only.
+        </MudAlert>
+    }
+    else if (!_canAssignPropertyNoPermission && !_canAcceptPermission)
+    {
+        <MudAlert Severity="Severity.Warning" Class="mb-3">
+            You do not have permissions to assign Property No or accept this IAR. Current page is read-only.
+        </MudAlert>
+    }
+
+    <MudCard Elevation="1" Class="mb-3">
+        <MudCardContent>
+            <MudGrid Spacing="2">
+                <MudItem xs="12" md="3"><MudText><b>IAR No:</b> @_iar.IarNumber</MudText></MudItem>
+                <MudItem xs="12" md="3"><MudText><b>PO:</b> @_iar.PoNumber</MudText></MudItem>
+                <MudItem xs="12" md="3"><MudText><b>Supplier:</b> @_iar.SupplierName</MudText></MudItem>
+                <MudItem xs="12" md="3"><MudText><b>Status:</b> @_iar.Status</MudText></MudItem>
+            </MudGrid>
+        </MudCardContent>
+    </MudCard>
+
+    <MudCard Elevation="1">
+        <MudCardContent>
+            <MudExpansionPanels Elevation="0">
+                <MudExpansionPanel Text=$"Passed Lines ({PassedLines.Count})" Expanded="true">
+                    @if (PassedLines.Count == 0)
+                    {
+                        <MudAlert Severity="Severity.Info" Dense="true">
+                            No passed lines are available for acceptance in this IAR.
+                        </MudAlert>
+                    }
+                    else
+                    {
+                        <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Description</th>
+                                    <th>Qty</th>
+                                    <th>Property No</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var line in PassedLines)
+                                {
+                                    var input = GetPropertyNoInput(line.ItemNo, line.StockPropertyNo);
+                                    <tr>
+                                        <td>@line.ItemNo</td>
+                                        <td>@line.Description</td>
+                                        <td>@line.Quantity</td>
+                                        <td style="min-width: 320px;">
+                                            @if (_canAssignActions)
+                                            {
+                                                <MudTextField T="string"
+                                                              Value="@input"
+                                                              ValueChanged="@(v => OnPropertyNoChanged(line.ItemNo, v))"
+                                                              Variant="Variant.Outlined"
+                                                              Dense="true"
+                                                              Placeholder="Required for passed lines"
+                                                              MaxLength="64" />
+                                            }
+                                            else
+                                            {
+                                                <MudText>@(string.IsNullOrWhiteSpace(line.StockPropertyNo) ? "-" : line.StockPropertyNo)</MudText>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (_canAssignActions)
+                                            {
+                                                <MudStack Row="true" Spacing="1">
+                                                    <MudButton Variant="Variant.Outlined"
+                                                               Size="Size.Small"
+                                                               Color="Color.Primary"
+                                                               Disabled="@(!CanAssignPropertyNo(line))"
+                                                               OnClick="@(() => AssignPropertyNoAsync(line.ItemNo))">
+                                                        Assign
+                                                    </MudButton>
+                                                    <MudButton Variant="Variant.Outlined"
+                                                               Size="Size.Small"
+                                                               Color="Color.Secondary"
+                                                               Disabled="@(!CanExpandLine(line))"
+                                                               OnClick="@(() => ExpandLineAsync(line.ItemNo))">
+                                                        Expand Qty
+                                                    </MudButton>
+                                                </MudStack>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </MudSimpleTable>
+                    }
+                </MudExpansionPanel>
+
+                <MudExpansionPanel Text=$"Rejected Lines ({RejectedLines.Count})">
+                    @if (RejectedLines.Count == 0)
+                    {
+                        <MudAlert Severity="Severity.Info" Dense="true">
+                            No rejected lines.
+                        </MudAlert>
+                    }
+                    else
+                    {
+                        <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Description</th>
+                                    <th>Qty</th>
+                                    <th>Inspector Remarks</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var line in RejectedLines)
+                                {
+                                    <tr>
+                                        <td>@line.ItemNo</td>
+                                        <td>@line.Description</td>
+                                        <td>@line.Quantity</td>
+                                        <td>@(string.IsNullOrWhiteSpace(line.InspectionRemarks) ? "-" : line.InspectionRemarks)</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </MudSimpleTable>
+                    }
+                </MudExpansionPanel>
+            </MudExpansionPanels>
+
+            @if (PendingLines.Count > 0)
+            {
+                <MudAlert Severity="Severity.Warning" Dense="true" Class="mt-2">
+                    This IAR still has @PendingLines.Count line(s) without inspection decision. Acceptance is disabled until inspection is finalized.
+                </MudAlert>
+            }
+
+            @if (_canAcceptActions && !CanAccept())
+            {
+                <MudAlert Severity="Severity.Info" Dense="true" Class="mt-2">
+                    Every passed line must have a Property No before acceptance.
+                </MudAlert>
+            }
+        </MudCardContent>
+        <MudCardActions>
+            <MudSpacer />
+            <MudButton Variant="Variant.Outlined" OnClick="BackToList">Back</MudButton>
+            <MudButton Variant="Variant.Outlined"
+                       Color="Color.Secondary"
+                       StartIcon="@Icons.Material.Filled.Print"
+                       Disabled="@(!CanPrintExhibit3())"
+                       OnClick="OpenExhibit3Print">
+                Print Exhibit 3
+            </MudButton>
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Success"
+                       Disabled="@(!_canAcceptActions || _busy || !CanAccept())"
+                       OnClick="AcceptAsync">
+                Accept IAR
+            </MudButton>
+        </MudCardActions>
+    </MudCard>
+}
+
+@code {
+    private const string PermissionAccept = "Permissions.AssetProcurement.AssetIARs.Accept";
+    private const string PermissionAssignPropertyNo = "Permissions.AssetProcurement.AssetIARs.AssignPropertyNo";
+
+    [Parameter] public Guid Id { get; set; }
+
+    private AssetIARDto? _iar;
+    private bool _loading = true;
+    private bool _busy;
+    private readonly HashSet<string> _permissions = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<int, string> _propertyNoInputs = [];
+    private List<AssetIARLineItemDto> PassedLines => _iar?.LineItems
+        .Where(li => li.InspectionResult == LineInspectionResult.Passed)
+        .OrderBy(li => li.ItemNo)
+        .ToList() ?? [];
+    private List<AssetIARLineItemDto> RejectedLines => _iar?.LineItems
+        .Where(li => li.InspectionResult == LineInspectionResult.Rejected)
+        .OrderBy(li => li.ItemNo)
+        .ToList() ?? [];
+    private List<AssetIARLineItemDto> PendingLines => _iar?.LineItems
+        .Where(li => li.InspectionResult == LineInspectionResult.Pending)
+        .OrderBy(li => li.ItemNo)
+        .ToList() ?? [];
+
+    private bool _canAcceptPermission => HasPermission(PermissionAccept);
+    private bool _canAssignPropertyNoPermission => HasPermission(PermissionAssignPropertyNo);
+    private bool _canAssignActions => _iar is not null && _iar.Status == AssetIARStatus.Inspected && _canAssignPropertyNoPermission;
+    private bool _canAcceptActions => _iar is not null && _iar.Status == AssetIARStatus.Inspected && _canAcceptPermission;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPermissionsAsync();
+        await LoadAsync();
+    }
+
+    private async Task LoadPermissionsAsync()
+    {
+        try
+        {
+            var permissions = await IdentityClient.PermissionsGetAsync();
+            _permissions.Clear();
+
+            foreach (var permission in permissions)
+            {
+                if (!string.IsNullOrWhiteSpace(permission))
+                {
+                    _permissions.Add(permission.Trim());
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _permissions.Clear();
+            Snackbar.Add($"Unable to load permissions. Acceptance actions may be limited: {ex.Message}", Severity.Warning);
+        }
+    }
+
+    private bool HasPermission(string permission) => _permissions.Contains(permission);
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        try
+        {
+            _iar = await IarClient.GetAsync(Id);
+            SyncPropertyNoInputs();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load IAR: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void SyncPropertyNoInputs()
+    {
+        _propertyNoInputs.Clear();
+        if (_iar is null)
+        {
+            return;
+        }
+
+        foreach (var line in _iar.LineItems)
+        {
+            _propertyNoInputs[line.ItemNo] = line.StockPropertyNo ?? string.Empty;
+        }
+    }
+
+    private string GetPropertyNoInput(int itemNo, string? fallback)
+    {
+        if (_propertyNoInputs.TryGetValue(itemNo, out var value))
+        {
+            return value;
+        }
+
+        var initial = fallback ?? string.Empty;
+        _propertyNoInputs[itemNo] = initial;
+        return initial;
+    }
+
+    private void OnPropertyNoChanged(int itemNo, string? value)
+    {
+        _propertyNoInputs[itemNo] = value?.Trim() ?? string.Empty;
+    }
+
+    private bool CanAssignPropertyNo(AssetIARLineItemDto line)
+        => _canAssignActions && line.InspectionResult == LineInspectionResult.Passed;
+
+    private bool CanExpandLine(AssetIARLineItemDto line)
+        => _canAssignActions && line.InspectionResult == LineInspectionResult.Passed && line.Quantity > 1m;
+
+    private bool CanAccept()
+    {
+        if (_iar is null || _iar.Status != AssetIARStatus.Inspected)
+        {
+            return false;
+        }
+
+        if (PassedLines.Count == 0)
+        {
+            return false;
+        }
+
+        return PassedLines
+            .All(li => !string.IsNullOrWhiteSpace(li.StockPropertyNo));
+    }
+
+    private bool CanPrintExhibit3()
+    {
+        if (_iar is null)
+        {
+            return false;
+        }
+
+        if (_iar.Status != AssetIARStatus.Inspected && _iar.Status != AssetIARStatus.Accepted)
+        {
+            return false;
+        }
+
+        return _iar.LineItems.Any(li => li.InspectionResult != LineInspectionResult.Pending);
+    }
+
+    private async Task AssignPropertyNoAsync(int itemNo)
+    {
+        if (_iar is null)
+        {
+            return;
+        }
+
+        if (!_propertyNoInputs.TryGetValue(itemNo, out var propertyNo) || string.IsNullOrWhiteSpace(propertyNo))
+        {
+            Snackbar.Add($"Item {itemNo}: Property No is required.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            _iar = await IarClient.AssignPropertyNoAsync(_iar.Id, itemNo, propertyNo.Trim());
+            SyncPropertyNoInputs();
+            Snackbar.Add($"Item {itemNo}: Property No assigned.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Assign property no failed: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task ExpandLineAsync(int itemNo)
+    {
+        if (_iar is null)
+        {
+            return;
+        }
+
+        var ok = await DialogService.ShowMessageBox(
+            "Expand Quantity",
+            $"Expand item {itemNo} into one-line-per-unit entries?",
+            yesText: "Expand",
+            cancelText: "Cancel");
+
+        if (ok != true)
+        {
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            _iar = await IarClient.ExpandLineByQuantityAsync(_iar.Id, itemNo);
+            SyncPropertyNoInputs();
+            Snackbar.Add($"Item {itemNo} expanded.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Expand failed: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task AcceptAsync()
+    {
+        if (_iar is null)
+        {
+            return;
+        }
+
+        var ok = await DialogService.ShowMessageBox(
+            "Accept IAR",
+            "Confirm acceptance and publish accepted line items to AssetManagement?",
+            yesText: "Accept",
+            cancelText: "Cancel");
+
+        if (ok != true)
+        {
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            _iar = await IarClient.AcceptAsync(_iar.Id);
+            Snackbar.Add("IAR accepted.", Severity.Success);
+            Navigation.NavigateTo("/asset-procurement/iars");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Accept failed: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void BackToList() => Navigation.NavigateTo("/asset-procurement/iars");
+
+    private void OpenExhibit3Print()
+    {
+        if (_iar is null)
+        {
+            return;
+        }
+
+        Navigation.NavigateTo($"/asset-procurement/iars/{_iar.Id}/exhibit3");
+    }
+
+}

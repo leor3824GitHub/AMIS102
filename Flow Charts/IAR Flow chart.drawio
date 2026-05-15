@@ -1,0 +1,85 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="Page-1" id="5BDQzyVr0FiZlxDsRA4b">
+    <mxGraphModel dx="779" dy="489" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="Gid2_jpuFEl_JTnb3CZ6-2" parent="1" style="swimlane;startSize=0;" value="Upon received item/s from supplier flow chart" vertex="1">
+          <mxGeometry height="800" width="720" x="50" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="Gid2_jpuFEl_JTnb3CZ6-4" edge="1" parent="Gid2_jpuFEl_JTnb3CZ6-2" source="Gid2_jpuFEl_JTnb3CZ6-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="Gid2_jpuFEl_JTnb3CZ6-3" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Gid2_jpuFEl_JTnb3CZ6-1" parent="Gid2_jpuFEl_JTnb3CZ6-2" style="ellipse;whiteSpace=wrap;html=1;" value="start" vertex="1">
+          <mxGeometry height="50" width="80" x="100" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="Gid2_jpuFEl_JTnb3CZ6-6" edge="1" parent="Gid2_jpuFEl_JTnb3CZ6-2" source="Gid2_jpuFEl_JTnb3CZ6-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="Gid2_jpuFEl_JTnb3CZ6-5" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Gid2_jpuFEl_JTnb3CZ6-3" parent="Gid2_jpuFEl_JTnb3CZ6-2" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;" value="Supply Officer (SO) Received Iitem and do Request for Inspection" vertex="1">
+          <mxGeometry height="60" width="120" x="80" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="Gid2_jpuFEl_JTnb3CZ6-22" edge="1" parent="Gid2_jpuFEl_JTnb3CZ6-2" source="Gid2_jpuFEl_JTnb3CZ6-5" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="Gid2_jpuFEl_JTnb3CZ6-9" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Gid2_jpuFEl_JTnb3CZ6-5" parent="Gid2_jpuFEl_JTnb3CZ6-2" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;" value="&lt;div&gt;Inspector inspect&lt;/div&gt;&lt;div&gt;&amp;nbsp;the items&lt;/div&gt;" vertex="1">
+          <mxGeometry height="60" width="130" x="75" y="200" as="geometry" />
+        </mxCell>
+        <mxCell id="Gid2_jpuFEl_JTnb3CZ6-12" edge="1" parent="Gid2_jpuFEl_JTnb3CZ6-2" source="Gid2_jpuFEl_JTnb3CZ6-9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" target="Gid2_jpuFEl_JTnb3CZ6-10">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Gid2_jpuFEl_JTnb3CZ6-16" edge="1" parent="Gid2_jpuFEl_JTnb3CZ6-2" source="Gid2_jpuFEl_JTnb3CZ6-9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="Gid2_jpuFEl_JTnb3CZ6-14" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Gid2_jpuFEl_JTnb3CZ6-9" parent="Gid2_jpuFEl_JTnb3CZ6-2" style="rhombus;whiteSpace=wrap;html=1;" value="Is passed with specs" vertex="1">
+          <mxGeometry height="80" width="80" x="100" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="Gid2_jpuFEl_JTnb3CZ6-11" edge="1" parent="Gid2_jpuFEl_JTnb3CZ6-2" source="Gid2_jpuFEl_JTnb3CZ6-10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="Gid2_jpuFEl_JTnb3CZ6-3" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Gid2_jpuFEl_JTnb3CZ6-10" parent="Gid2_jpuFEl_JTnb3CZ6-2" style="rounded=0;whiteSpace=wrap;html=1;" value="Supplier" vertex="1">
+          <mxGeometry height="60" width="120" x="250" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="Gid2_jpuFEl_JTnb3CZ6-13" parent="Gid2_jpuFEl_JTnb3CZ6-2" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="No" vertex="1">
+          <mxGeometry height="30" width="60" x="210" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="Gid2_jpuFEl_JTnb3CZ6-25" edge="1" parent="Gid2_jpuFEl_JTnb3CZ6-2" source="Gid2_jpuFEl_JTnb3CZ6-14" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="Gid2_jpuFEl_JTnb3CZ6-24" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Gid2_jpuFEl_JTnb3CZ6-14" parent="Gid2_jpuFEl_JTnb3CZ6-2" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;" value="SO do add these items to IAR with creation property number for each items" vertex="1">
+          <mxGeometry height="60" width="120" x="80" y="400" as="geometry" />
+        </mxCell>
+        <mxCell id="Gid2_jpuFEl_JTnb3CZ6-17" parent="Gid2_jpuFEl_JTnb3CZ6-2" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="Yes" vertex="1">
+          <mxGeometry height="30" width="60" x="145" y="370" as="geometry" />
+        </mxCell>
+        <mxCell id="Gid2_jpuFEl_JTnb3CZ6-29" edge="1" parent="Gid2_jpuFEl_JTnb3CZ6-2" source="Gid2_jpuFEl_JTnb3CZ6-24" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="Gid2_jpuFEl_JTnb3CZ6-26" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Gid2_jpuFEl_JTnb3CZ6-24" parent="Gid2_jpuFEl_JTnb3CZ6-2" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;" value="&lt;div&gt;SO&lt;/div&gt;&lt;div&gt;Accept the item&lt;/div&gt;" vertex="1">
+          <mxGeometry height="60" width="120" x="75" y="490" as="geometry" />
+        </mxCell>
+        <mxCell id="Gid2_jpuFEl_JTnb3CZ6-30" edge="1" parent="Gid2_jpuFEl_JTnb3CZ6-2" source="Gid2_jpuFEl_JTnb3CZ6-26" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="Gid2_jpuFEl_JTnb3CZ6-27" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Gid2_jpuFEl_JTnb3CZ6-26" parent="Gid2_jpuFEl_JTnb3CZ6-2" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;" value="Print IAR from for signature of Inspectior and SO" vertex="1">
+          <mxGeometry height="60" width="120" x="75" y="580" as="geometry" />
+        </mxCell>
+        <mxCell id="Gid2_jpuFEl_JTnb3CZ6-31" edge="1" parent="Gid2_jpuFEl_JTnb3CZ6-2" source="Gid2_jpuFEl_JTnb3CZ6-27" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="Gid2_jpuFEl_JTnb3CZ6-28" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Gid2_jpuFEl_JTnb3CZ6-27" parent="Gid2_jpuFEl_JTnb3CZ6-2" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;" value="SO do command to add these items to Asset Registry" vertex="1">
+          <mxGeometry height="60" width="120" x="75" y="670" as="geometry" />
+        </mxCell>
+        <mxCell id="Gid2_jpuFEl_JTnb3CZ6-33" edge="1" parent="Gid2_jpuFEl_JTnb3CZ6-2" source="Gid2_jpuFEl_JTnb3CZ6-28" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="Gid2_jpuFEl_JTnb3CZ6-32" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Gid2_jpuFEl_JTnb3CZ6-28" parent="Gid2_jpuFEl_JTnb3CZ6-2" style="rounded=1;whiteSpace=wrap;html=1;" value="Asset is now in the Registry" vertex="1">
+          <mxGeometry height="60" width="120" x="250" y="670" as="geometry" />
+        </mxCell>
+        <mxCell id="Gid2_jpuFEl_JTnb3CZ6-32" parent="Gid2_jpuFEl_JTnb3CZ6-2" style="ellipse;whiteSpace=wrap;html=1;" value="End" vertex="1">
+          <mxGeometry height="50" width="60" x="420" y="675" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

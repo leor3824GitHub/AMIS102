@@ -1,0 +1,46 @@
+@using AMIS.Modules.AssetProcurement.Contracts.v1.AssetInspectionAcceptanceReports
+
+<MudPaper Elevation="0" Class="pa-3 mb-3"
+          Style="border: 1px solid var(--mud-palette-lines-default); border-radius: 8px;">
+    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Class="iar-stepper-wrap">
+        @foreach (var step in _steps)
+        {
+            <MudChip T="string"
+                     Color="@ChipColor(step.Index)"
+                     Variant="@ChipVariant(step.Index)"
+                     Size="Size.Small">
+                @step.Label
+            </MudChip>
+            @if (step.Index < _steps.Count - 1)
+            {
+                <MudIcon Icon="@Icons.Material.Filled.KeyboardArrowRight" Size="Size.Small" />
+            }
+        }
+    </MudStack>
+</MudPaper>
+
+@code {
+    [Parameter] public AssetIARStatus Status { get; set; }
+
+    private readonly List<(int Index, string Label)> _steps =
+    [
+        (0, "Draft"),
+        (1, "Inspection"),
+        (2, "Acceptance"),
+        (3, "Registered")
+    ];
+
+    private int CurrentStep => Status switch
+    {
+        AssetIARStatus.Draft => 0,
+        AssetIARStatus.PendingInspection => 1,
+        AssetIARStatus.Inspected => 2,
+        AssetIARStatus.Accepted => 3,
+        AssetIARStatus.Cancelled => 0,
+        _ => 0
+    };
+
+    private Color ChipColor(int step) => step <= CurrentStep ? Color.Primary : Color.Default;
+
+    private Variant ChipVariant(int step) => step <= CurrentStep ? Variant.Filled : Variant.Outlined;
+}

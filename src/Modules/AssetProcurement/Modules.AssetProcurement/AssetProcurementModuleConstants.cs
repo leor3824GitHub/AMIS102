@@ -32,7 +32,6 @@ public static class AssetProcurementModuleConstants
             public const string Create              = "Permissions.AssetProcurement.AssetIARs.Create";
             public const string Update              = "Permissions.AssetProcurement.AssetIARs.Update";
             public const string Accept              = "Permissions.AssetProcurement.AssetIARs.Accept";
-            public const string Reject              = "Permissions.AssetProcurement.AssetIARs.Reject";
             public const string SubmitForInspection = "Permissions.AssetProcurement.AssetIARs.SubmitForInspection";
             public const string Inspect             = "Permissions.AssetProcurement.AssetIARs.Inspect";
             public const string AssignPropertyNo    = "Permissions.AssetProcurement.AssetIARs.AssignPropertyNo";
