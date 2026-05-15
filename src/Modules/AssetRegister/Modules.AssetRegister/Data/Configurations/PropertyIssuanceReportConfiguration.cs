@@ -44,9 +44,11 @@ internal sealed class PropertyIssuanceReportLineConfiguration : IEntityTypeConfi
     public void Configure(EntityTypeBuilder<PropertyIssuanceReportLine> builder)
     {
         ArgumentNullException.ThrowIfNull(builder);
-        builder.ToTable("PropertyIssuanceReportLines", AssetRegisterModuleConstants.SchemaName);
+        builder.ToTable("PropertyIssuanceReportLines", AssetRegisterModuleConstants.SchemaName)
+            .IsMultiTenant();
 
         builder.HasKey(x => x.Id);
+        builder.Property(x => x.TenantId).IsRequired().HasMaxLength(50);
         builder.Property(x => x.SnapshotResponsibilityCenterCode).HasMaxLength(64);
         builder.Property(x => x.SnapshotUnitCost).HasPrecision(18, 2);
         builder.Property(x => x.SnapshotAmount).HasPrecision(18, 2);

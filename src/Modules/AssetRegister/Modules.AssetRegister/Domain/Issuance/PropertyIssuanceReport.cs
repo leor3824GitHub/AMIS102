@@ -70,7 +70,7 @@ public sealed class PropertyIssuanceReport : AggregateRoot<Guid>, IHasTenant, IA
         ArgumentNullException.ThrowIfNull(snapshot);
         EnsureDraft();
         _lines.Add(PropertyIssuanceReportLine.Create(
-            Id, accountabilityId, accountabilityLineId, assetRegistryId,
+            TenantId, Id, accountabilityId, accountabilityLineId, assetRegistryId,
             snapshot, responsibilityCenterCode, unitCost));
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
     }

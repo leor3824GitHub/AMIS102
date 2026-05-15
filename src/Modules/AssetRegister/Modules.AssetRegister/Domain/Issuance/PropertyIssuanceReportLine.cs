@@ -1,10 +1,12 @@
+using AMIS.Framework.Core.Domain;
 using AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
 
 namespace AMIS.Modules.AssetRegister.Domain.Issuance;
 
-public sealed class PropertyIssuanceReportLine
+public sealed class PropertyIssuanceReportLine : IHasTenant
 {
     public Guid Id { get; private set; }
+    public string TenantId { get; private set; } = default!;
     public Guid ReportId { get; private set; }
     public Guid AccountabilityId { get; private set; }
     public Guid AccountabilityLineId { get; private set; }
@@ -18,6 +20,7 @@ public sealed class PropertyIssuanceReportLine
     private PropertyIssuanceReportLine() { }
 
     internal static PropertyIssuanceReportLine Create(
+        string tenantId,
         Guid reportId,
         Guid accountabilityId,
         Guid accountabilityLineId,
@@ -28,6 +31,7 @@ public sealed class PropertyIssuanceReportLine
         new()
         {
             Id = Guid.NewGuid(),
+            TenantId = tenantId,
             ReportId = reportId,
             AccountabilityId = accountabilityId,
             AccountabilityLineId = accountabilityLineId,

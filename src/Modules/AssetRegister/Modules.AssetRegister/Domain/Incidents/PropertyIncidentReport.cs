@@ -89,7 +89,7 @@ public sealed class PropertyIncidentReport : AggregateRoot<Guid>, IHasTenant, IA
 
         foreach (var (assetId, snapshot, acquisitionCost, crc, lineId) in materialized)
         {
-            report._items.Add(PropertyIncidentItem.Create(report.Id, assetId, snapshot, acquisitionCost, crc, lineId));
+            report._items.Add(PropertyIncidentItem.Create(tenantId, report.Id, assetId, snapshot, acquisitionCost, crc, lineId));
             report.AddDomainEvent(new AssetLostEvent(assetId, report.Id, tenantId));
         }
         report.AddDomainEvent(new IncidentReportFiledEvent(report.Id, incidentNo, incidentType, tenantId));

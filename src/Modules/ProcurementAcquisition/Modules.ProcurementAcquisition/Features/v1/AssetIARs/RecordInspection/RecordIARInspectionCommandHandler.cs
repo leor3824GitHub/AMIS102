@@ -1,4 +1,6 @@
 using AMIS.Framework.Core.Context;
+using AMIS.Framework.Core.Exceptions;
+using AMIS.Modules.MasterData.Contracts.v1.References;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.AssetInspectionAcceptanceReports;
 using AMIS.Modules.ProcurementAcquisition.Data;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.AssetIARs.CreateAssetIAR;
@@ -9,7 +11,8 @@ namespace AMIS.Modules.ProcurementAcquisition.Features.v1.AssetIARs.RecordInspec
 
 public sealed class RecordIARInspectionCommandHandler(
     ProcurementDbContext dbContext,
-    ICurrentUser currentUser) : ICommandHandler<RecordIARInspectionCommand, AssetIARDto>
+    ICurrentUser currentUser,
+    IMediator mediator) : ICommandHandler<RecordIARInspectionCommand, AssetIARDto>
 {
     public async ValueTask<AssetIARDto> Handle(RecordIARInspectionCommand command, CancellationToken cancellationToken)
     {
@@ -17,7 +20,11 @@ public sealed class RecordIARInspectionCommandHandler(
             .FirstOrDefaultAsync(x => x.Id == command.Id, cancellationToken).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Asset IAR '{command.Id}' not found.");
 
-        var actorId = currentUser.GetUserId();
+        var identityUserId = currentUser.GetUserId().ToString();
+        var employee = await mediator.Send(new GetEmployeeReferenceByIdentityUserIdQuery(identityUserId), cancellationToken).ConfigureAwait(false)
+            ?? throw new NotFoundException("No employee profile found for the current user. Cannot record inspection.");
+
+        var actorId = employee.Id;
         iar.RecordInspection(actorId, command.Decisions);
 
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);

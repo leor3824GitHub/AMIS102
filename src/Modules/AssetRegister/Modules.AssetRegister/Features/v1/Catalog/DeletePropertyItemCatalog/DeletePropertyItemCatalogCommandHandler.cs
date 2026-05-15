@@ -14,10 +14,6 @@ public sealed class DeletePropertyItemCatalogCommandHandler(AssetRegisterDbConte
         var entity = await db.PropertyItemCatalogs.FirstOrDefaultAsync(x => x.Id == cmd.Id, ct).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"PropertyItemCatalog '{cmd.Id}' not found.");
 
-        var inUse = await db.AssetRegistries.AnyAsync(a => a.ItemId == cmd.Id, ct).ConfigureAwait(false);
-        if (inUse)
-            throw new InvalidOperationException("Catalog item is referenced by registered assets and cannot be deleted. Deactivate it instead.");
-
         db.PropertyItemCatalogs.Remove(entity);
         await db.SaveChangesAsync(ct).ConfigureAwait(false);
         return Unit.Value;

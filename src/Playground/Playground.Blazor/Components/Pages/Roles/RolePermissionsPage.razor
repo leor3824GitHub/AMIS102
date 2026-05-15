@@ -394,7 +394,7 @@ else
                     Key = g.Key,
                     Permissions = g.Where(p =>
                         p.ToLowerInvariant().Contains(term) ||
-                        GetPermissionResource(p).ToLowerInvariant().Contains(term) ||
+                        GetPermissionScope(p).ToLowerInvariant().Contains(term) ||
                         GetPermissionAction(p).ToLowerInvariant().Contains(term)
                     ).ToList()
                 })
@@ -403,17 +403,25 @@ else
         }
     }
 
-    // Permission format: Permissions.{Resource}.{Action}
+    // Permission formats:
+    // - Permissions.{Category}.{Action}
+    // - Permissions.{Category}.{Scope}.{Action}
     private static string GetPermissionResource(string permission)
     {
         var parts = permission.Split('.');
         return parts.Length >= 2 ? parts[1] : "Other";
     }
 
+    private static string GetPermissionScope(string permission)
+    {
+        var parts = permission.Split('.');
+        return parts.Length >= 4 ? parts[^2] : GetPermissionResource(permission);
+    }
+
     private static string GetPermissionAction(string permission)
     {
         var parts = permission.Split('.');
-        return parts.Length >= 3 ? parts[2] : permission;
+        return parts.Length >= 3 ? parts[^1] : permission;
     }
 
     private static readonly HashSet<string> SystemRoles = new(StringComparer.OrdinalIgnoreCase)
@@ -641,15 +649,29 @@ else
 
     private static string GetPermissionDisplayName(string permission)
     {
-        // Permission format: Permissions.{Resource}.{Action}
-        // Show the action with nice formatting
+        // Show scope + action for module-scoped permissions to avoid duplicate labels.
+        var scope = GetPermissionScope(permission);
         var action = GetPermissionAction(permission);
 
-        // Add spaces before capital letters for readability (e.g., "UpgradeSubscription" -> "Upgrade Subscription")
-        var formatted = string.Concat(action.Select((c, i) =>
-            i > 0 && char.IsUpper(c) ? " " + c : c.ToString()));
+        var formattedScope = FormatPermissionToken(scope);
+        var formattedAction = FormatPermissionToken(action);
 
-        return formatted;
+        return string.Equals(formattedScope, FormatCategoryName(GetPermissionResource(permission)), StringComparison.OrdinalIgnoreCase)
+            ? formattedAction
+            : $"{formattedScope} - {formattedAction}";
+    }
+
+    private static string FormatPermissionToken(string token)
+    {
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            return string.Empty;
+        }
+
+        return System.Text.RegularExpressions.Regex.Replace(
+            token,
+            "(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])",
+            " ");
     }
 
     private static string GetCategoryDescription(string category) => category switch

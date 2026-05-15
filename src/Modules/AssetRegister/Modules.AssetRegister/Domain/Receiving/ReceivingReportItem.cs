@@ -1,8 +1,11 @@
+using AMIS.Framework.Core.Domain;
+
 namespace AMIS.Modules.AssetRegister.Domain.Receiving;
 
-public sealed class ReceivingReportItem
+public sealed class ReceivingReportItem : IHasTenant
 {
     public Guid Id { get; private set; }
+    public string TenantId { get; private set; } = default!;
     public Guid ReportId { get; private set; }
     public Guid CatalogItemId { get; private set; }
 
@@ -25,6 +28,7 @@ public sealed class ReceivingReportItem
     private ReceivingReportItem() { }
 
     internal static ReceivingReportItem Create(
+        string tenantId,
         Guid reportId,
         Guid catalogItemId,
         string? reference,
@@ -46,6 +50,7 @@ public sealed class ReceivingReportItem
         return new ReceivingReportItem
         {
             Id = Guid.NewGuid(),
+            TenantId = tenantId,
             ReportId = reportId,
             CatalogItemId = catalogItemId,
             Reference = reference,

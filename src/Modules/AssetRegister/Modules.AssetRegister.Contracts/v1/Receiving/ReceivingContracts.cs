@@ -45,23 +45,30 @@ public sealed record ReceivingReportSummaryDto(
 
 // ── Commands ───────────────────────────────────────────────────────────────
 
+/// <summary>
+/// A single physical unit on a Receiving Report (one line = one asset).
+/// <see cref="PropertyNo"/> is inherited from the IAR acceptance phase — it is NOT
+/// generated here. When the source is an accepted IAR, also pass
+/// <see cref="SourceIARId"/> + <see cref="PropertyClassHint"/> so the handler can
+/// resolve the catalog entry automatically.
+/// </summary>
 public sealed record CreateReceivingReportItemRequest(
-    Guid CatalogItemId,
+    Guid? CatalogItemId,
     string? Reference,
     string Description,
     DateOnly AcquisitionDate,
-    int Quantity,
     decimal UnitCost,
+    string PropertyNo,
     string? SerialNo,
     string? Brand,
     string? Model,
-    IReadOnlyList<string> PropertyNos);
+    Guid? SourceIARId = null,
+    string? PropertyClassHint = null);
 
 /// <summary>
 /// Creates a Receiving Report (PPERR or SMRR) and materializes one AssetRegistry row
-/// per item quantity. ReportNo is auto-minted via IReceivingReportNumberGenerator.
-/// PropertyNos are operator-assigned per NFA policy and must contain exactly
-/// <c>Quantity</c> entries per line.
+/// per line item. Each line represents exactly one physical unit; PropertyNo is
+/// inherited from the IAR acceptance phase.
 /// </summary>
 public sealed record CreateReceivingReportCommand(
     ReceivingDocumentKind DocumentKind,

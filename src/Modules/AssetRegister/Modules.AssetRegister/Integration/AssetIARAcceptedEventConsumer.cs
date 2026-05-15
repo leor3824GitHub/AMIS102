@@ -119,12 +119,32 @@ internal sealed class AssetIARAcceptedEventConsumer(
             if (byClass is not null) return byClass;
         }
 
-        // Fallback: match by description prefix.
-        return catalogs.FirstOrDefault(c =>
+        // Fallback 1: substring containment (either direction).
+        var bySubstring = catalogs.FirstOrDefault(c =>
             c.IsActive &&
             (line.Description.Contains(c.Description, StringComparison.OrdinalIgnoreCase)
              || c.Description.Contains(line.Description, StringComparison.OrdinalIgnoreCase)));
+        if (bySubstring is not null) return bySubstring;
+
+        // Fallback 2: word-token overlap — pick the catalog entry with the most shared
+        // significant words (≥4 chars) to handle variations like
+        // "Computer, i3 Desktop" ↔ "Desktop Computer Set".
+        var lineTokens = Tokenize(line.Description);
+        if (lineTokens.Count == 0) return null;
+
+        return catalogs
+            .Where(c => c.IsActive)
+            .Select(c => new { Catalog = c, Score = Tokenize(c.Description).Count(t => lineTokens.Contains(t)) })
+            .Where(x => x.Score > 0)
+            .OrderByDescending(x => x.Score)
+            .FirstOrDefault()?.Catalog;
     }
+
+    private static HashSet<string> Tokenize(string text) =>
+        text.Split([' ', ',', '-', '/', '(', ')', '.'], StringSplitOptions.RemoveEmptyEntries)
+            .Where(w => w.Length >= 4)
+            .Select(w => w.ToUpperInvariant())
+            .ToHashSet();
 
     private static (AssetType, AssetCategory) ClassifyFromCatalog(PropertyItemCatalog catalog, decimal unitCost)
     {

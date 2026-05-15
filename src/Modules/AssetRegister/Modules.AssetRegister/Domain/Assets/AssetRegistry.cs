@@ -12,7 +12,6 @@ public sealed class AssetRegistry : AggregateRoot<Guid>, IHasTenant, IAuditableE
 
     // identity & classification
     public PropertyNumber PropertyNo { get; private set; } = default!;
-    public Guid ItemId { get; private set; }
     public AssetType AssetType { get; private set; }
     public AssetCategory Category { get; private set; }
     public string PropertyClass { get; private set; } = default!;
@@ -81,7 +80,6 @@ public sealed class AssetRegistry : AggregateRoot<Guid>, IHasTenant, IAuditableE
             Id = Guid.NewGuid(),
             TenantId = tenantId,
             PropertyNo = propertyNo,
-            ItemId = catalog.Id,
             AssetType = assetType,
             Category = category,
             PropertyClass = catalog.DefaultPropertyClass,

@@ -56,9 +56,11 @@ internal sealed class PhysicalCountEntryConfiguration : IEntityTypeConfiguration
     public void Configure(EntityTypeBuilder<PhysicalCountEntry> builder)
     {
         ArgumentNullException.ThrowIfNull(builder);
-        builder.ToTable("PhysicalCountEntries", AssetRegisterModuleConstants.SchemaName);
+        builder.ToTable("PhysicalCountEntries", AssetRegisterModuleConstants.SchemaName)
+            .IsMultiTenant();
 
         builder.HasKey(x => x.Id);
+        builder.Property(x => x.TenantId).IsRequired().HasMaxLength(50);
         builder.Property(x => x.SnapshotArticle).IsRequired().HasMaxLength(500);
         builder.Property(x => x.SnapshotUnit).IsRequired().HasMaxLength(64);
         builder.Property(x => x.SnapshotUnitCost).HasPrecision(18, 2);

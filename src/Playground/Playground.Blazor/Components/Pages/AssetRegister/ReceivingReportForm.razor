@@ -1,9 +1,13 @@
 @using AMIS.Playground.Blazor.ApiClient
+@using Microsoft.AspNetCore.Components.Authorization
 @using ReceivingDocumentKind = AMIS.Modules.AssetRegister.Contracts.v1.ReceivingDocumentKind
 @using ReceiptType = AMIS.Modules.AssetRegister.Contracts.v1.ReceiptType
+@using System.Security.Claims
 @inject IArReceivingReportClient Client
-@inject IArCatalogClient CatalogClient
+@inject IArReceivingReportClient ArReceivingReportClient
 @inject ILookupClient LookupClient
+@inject IEmployeesClient EmployeesClient
+@inject AuthenticationStateProvider AuthenticationStateProvider
 @inject ISnackbar Snackbar
 
 <MudCard Elevation="2">
@@ -41,12 +45,12 @@
                 <MudTextField @bind-Value="_address" Label="Address" Variant="Variant.Outlined" />
             </MudItem>
             <MudItem xs="12" md="6">
-                <MudAutocomplete T="EmployeeReferenceDto" @bind-Value="_receivedBy" Label="Received By" Variant="Variant.Outlined"
-                                 SearchFunc="SearchEmployeesAsync" ToStringFunc="FormatEmployee"
-                                 Required="true" CoerceText="false" />
+                <MudTextField Value="@(_receivedBy is null ? "Loading..." : FormatEmployee(_receivedBy))"
+                              Label="Received By" Variant="Variant.Outlined" ReadOnly="true"
+                              HelperText="Auto-assigned to the currently logged-in user" />
             </MudItem>
             <MudItem xs="12" md="6">
-                <MudAutocomplete T="EmployeeReferenceDto" @bind-Value="_notedBy" Label="Noted By (optional)" Variant="Variant.Outlined"
+                <MudAutocomplete T="EmployeeReferenceDto" @bind-Value="_notedBy" Label="Noted By (Head of Office)" Variant="Variant.Outlined"
                                  SearchFunc="SearchEmployeesAsync" ToStringFunc="FormatEmployee"
                                  CoerceText="false" />
             </MudItem>
@@ -59,52 +63,58 @@
 
             <MudItem xs="12">
                 <MudDivider Class="my-2" />
-                <MudText Typo="Typo.subtitle1">Items</MudText>
+                <MudText Typo="Typo.subtitle1" Class="mb-2">Items</MudText>
             </MudItem>
 
-            @foreach (var item in _lines)
+            <MudItem xs="12" md="6">
+                <MudAutocomplete T="SupplierInfo" Value="_selectedSupplier"
+                                 ValueChanged="@(async s => await OnSupplierSelectedAsync(s))"
+                                 Label="Supplier" Variant="Variant.Outlined"
+                                 SearchFunc="SearchSuppliersAsync"
+                                 ToStringFunc="@(s => s?.Name ?? string.Empty)"
+                                 CoerceText="false"
+                                 HelperText="Search supplier to load available IAR items below" />
+            </MudItem>
+
+            @if (_loadingItems)
             {
                 <MudItem xs="12">
-                    <MudPaper Elevation="0" Class="pa-2" Style="background: var(--mud-palette-surface);">
-                        <MudGrid Spacing="2">
-                            <MudItem xs="12" md="3">
-                                <MudAutocomplete T="ArCatalogItemDto" Value="item.Catalog"
-                                                 ValueChanged="@(c => OnCatalogChosen(item, c))"
-                                                 Label="Property Item" Variant="Variant.Outlined"
-                                                 SearchFunc="SearchCatalogAsync"
-                                                 ToStringFunc="@(c => c is null ? string.Empty : $"{c.Code} — {c.Description}")"
-                                                 Required="true" CoerceText="false" />
-                            </MudItem>
-                            <MudItem xs="12" md="2">
-                                <MudTextField @bind-Value="item.Reference" Label="Reference" Variant="Variant.Outlined" />
-                            </MudItem>
-                            <MudItem xs="12" md="3">
-                                <MudTextField @bind-Value="item.Description" Label="Description" Variant="Variant.Outlined" Required="true" />
-                            </MudItem>
-                            <MudItem xs="12" md="2">
-                                <MudDatePicker @bind-Date="item.AcquisitionDate" Label="Date Acquired" Variant="Variant.Outlined" Required="true" />
-                            </MudItem>
-                            <MudItem xs="6" md="1">
-                                <MudNumericField @bind-Value="item.Quantity" Label="Qty" Variant="Variant.Outlined" Min="1" />
-                            </MudItem>
-                            <MudItem xs="6" md="1">
-                                <MudNumericField @bind-Value="item.UnitCost" Label="Unit Cost" Variant="Variant.Outlined"
-                                                 Format="N2" Min="0" />
-                            </MudItem>
-                            <MudItem xs="12" Class="d-flex justify-end">
-                                <MudButton Color="Color.Error" Size="Size.Small" OnClick="@(() => RemoveLine(item))"
-                                           StartIcon="@Icons.Material.Outlined.Delete">Remove line</MudButton>
-                            </MudItem>
-                        </MudGrid>
-                    </MudPaper>
+                    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
                 </MudItem>
             }
-
-            <MudItem xs="12">
-                <MudButton OnClick="AddLine" StartIcon="@Icons.Material.Outlined.Add" Variant="Variant.Outlined" Color="Color.Primary">
-                    Add line
-                </MudButton>
-            </MudItem>
+            else if (_availableItems.Count > 0)
+            {
+                <MudItem xs="12">
+                    <MudTable T="AcceptedIARLineItemDto" Items="_availableItems"
+                              MultiSelection="true" @bind-SelectedItems="_selectedItems"
+                              Dense="true" Hover="true" Elevation="0"
+                              Style="background: var(--mud-palette-surface);">
+                        <HeaderContent>
+                            <MudTh>Property No</MudTh>
+                            <MudTh>Description</MudTh>
+                            <MudTh>Date Acquired</MudTh>
+                            <MudTh Style="text-align:right">Unit Cost</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Property No"><MudText Typo="Typo.body2">@context.StockPropertyNo</MudText></MudTd>
+                            <MudTd DataLabel="Description"><MudText Typo="Typo.body2">@context.Description</MudText></MudTd>
+                            <MudTd DataLabel="Date Acquired"><MudText Typo="Typo.body2">@context.IARDate.ToString("yyyy-MM-dd")</MudText></MudTd>
+                            <MudTd DataLabel="Unit Cost" Style="text-align:right"><MudText Typo="Typo.body2">@context.UnitCost.ToString("N2")</MudText></MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary mt-1">
+                        @_selectedItems.Count of @_availableItems.Count item(s) selected
+                    </MudText>
+                </MudItem>
+            }
+            else if (_selectedSupplier is not null && !_loadingItems)
+            {
+                <MudItem xs="12">
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary">
+                        No accepted IAR items found for this supplier.
+                    </MudText>
+                </MudItem>
+            }
 
             <MudItem xs="12" Class="d-flex justify-end">
                 <MudButton OnClick="OnCancel" Variant="Variant.Text" Class="mr-2">Cancel</MudButton>
@@ -123,6 +133,8 @@
     [Parameter] public EventCallback<ArReceivingReportDto> OnCreated { get; set; }
     [Parameter] public EventCallback OnCancel { get; set; }
 
+    private sealed record SupplierInfo(string Name, string? Address);
+
     private DateTime? _date = DateTime.Today;
     private ReceiptType _receiptType;
     private string? _otherReceiptType;
@@ -133,42 +145,68 @@
     private EmployeeReferenceDto? _notedBy;
     private DateTime? _dateReceived;
     private bool _busy;
+    private bool _loadingItems;
 
-    private readonly List<LineModel> _lines = [new()];
+    private SupplierInfo? _selectedSupplier;
+    private readonly List<AcceptedIARLineItemDto> _availableItems = [];
+    private HashSet<AcceptedIARLineItemDto> _selectedItems = [];
 
-    private sealed class LineModel
+    protected override async Task OnInitializedAsync()
     {
-        public ArCatalogItemDto? Catalog { get; set; }
-        public string? Reference { get; set; }
-        public string Description { get; set; } = string.Empty;
-        public DateTime? AcquisitionDate { get; set; } = DateTime.Today;
-        public int Quantity { get; set; } = 1;
-        public decimal UnitCost { get; set; }
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var identityUserId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!string.IsNullOrWhiteSpace(identityUserId))
+                _receivedBy = await EmployeesClient.ByIdentityAsync(identityUserId);
+        }
+        catch
+        {
+            Snackbar.Add("Could not load current user employee record.", Severity.Warning);
+        }
     }
-
-    private void AddLine() => _lines.Add(new LineModel());
-    private void RemoveLine(LineModel m) { if (_lines.Count > 1) _lines.Remove(m); }
 
     private static string FormatEmployee(EmployeeReferenceDto? e) =>
         e is null ? string.Empty : $"{e.LastName}, {e.FirstName} ({e.EmployeeNumber})";
 
     private static string PrintedName(EmployeeReferenceDto e) => $"{e.FirstName} {e.LastName}".Trim();
 
-    private void OnCatalogChosen(LineModel line, ArCatalogItemDto? c)
-    {
-        line.Catalog = c;
-        if (c is not null && string.IsNullOrWhiteSpace(line.Description))
-            line.Description = c.Description;
-    }
-
-    private async Task<IEnumerable<ArCatalogItemDto>> SearchCatalogAsync(string value, CancellationToken ct)
+    private async Task<IEnumerable<SupplierInfo>> SearchSuppliersAsync(string value, CancellationToken ct)
     {
         try
         {
-            var res = await CatalogClient.SearchAsync(value, isActive: true, page: 1, pageSize: 20, ct: ct);
-            return res.Items;
+            var res = await ArReceivingReportClient.SearchAcceptedIARItemsAsync(value, page: 1, pageSize: 100, ct: ct);
+            return (res?.Items ?? [])
+                .GroupBy(x => x.SupplierName, StringComparer.OrdinalIgnoreCase)
+                .Select(g => new SupplierInfo(g.Key, g.First().SupplierAddress))
+                .ToList();
         }
         catch { return []; }
+    }
+
+    private async Task OnSupplierSelectedAsync(SupplierInfo? supplier)
+    {
+        _selectedSupplier = supplier;
+        _availableItems.Clear();
+        _selectedItems = [];
+
+        if (supplier is null) return;
+
+        _receivedFrom = supplier.Name;
+        _address = supplier.Address;
+
+        _loadingItems = true;
+        try
+        {
+            var res = await ArReceivingReportClient.SearchAcceptedIARItemsAsync(
+                supplier.Name, page: 1, pageSize: 200);
+            _availableItems.AddRange(res?.Items ?? []);
+        }
+        catch
+        {
+            Snackbar.Add("Failed to load IAR items for this supplier.", Severity.Error);
+        }
+        finally { _loadingItems = false; }
     }
 
     private async Task<IEnumerable<EmployeeReferenceDto>> SearchEmployeesAsync(string value, CancellationToken ct)
@@ -185,14 +223,24 @@
 
     private async Task SaveAsync()
     {
-        if (_date is null || _receivedBy is null)
+        if (_date is null)
         {
-            Snackbar.Add("Date and Received By are required.", Severity.Warning);
+            Snackbar.Add("Date is required.", Severity.Warning);
             return;
         }
-        if (_lines.Any(l => l.Catalog is null || string.IsNullOrWhiteSpace(l.Description) || l.Quantity <= 0 || l.UnitCost <= 0))
+        if (_receivedBy is null)
         {
-            Snackbar.Add("Each line needs a catalog item, description, quantity, and unit cost.", Severity.Warning);
+            Snackbar.Add("Could not determine the current user. Please refresh and try again.", Severity.Warning);
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(_receivedFrom))
+        {
+            Snackbar.Add("Received From is required.", Severity.Warning);
+            return;
+        }
+        if (_selectedItems.Count == 0)
+        {
+            Snackbar.Add("Select at least one item to register.", Severity.Warning);
             return;
         }
 
@@ -210,12 +258,18 @@
                 new ArEmployeeRefDto(_receivedBy.Id, PrintedName(_receivedBy), _receivedBy.PositionName),
                 _notedBy is null ? null : new ArEmployeeRefDto(_notedBy.Id, PrintedName(_notedBy), _notedBy.PositionName),
                 _dateReceived is null ? null : DateOnly.FromDateTime(_dateReceived.Value),
-                _lines.Select(l => new CreateReceivingReportItemRequest(
-                    l.Catalog!.Id, l.Reference, l.Description,
-                    DateOnly.FromDateTime(l.AcquisitionDate ?? DateTime.Today),
-                    l.Quantity, l.UnitCost,
-                    SerialNo: null, Brand: null, Model: null,
-                    PropertyNos: Array.Empty<string>())).ToList());
+                _selectedItems.Select(item => new CreateReceivingReportItemRequest(
+                    CatalogItemId: null,
+                    Reference: item.IARNumber,
+                    Description: item.Description,
+                    AcquisitionDate: item.IARDate,
+                    UnitCost: item.UnitCost,
+                    PropertyNo: item.StockPropertyNo!,
+                    SerialNo: item.SerialNo,
+                    Brand: item.Brand,
+                    Model: item.Model,
+                    SourceIARId: item.IARId,
+                    PropertyClassHint: item.PropertyClassHint)).ToList());
 
             var created = await Client.CreateAsync(request);
             await OnCreated.InvokeAsync(created);
@@ -227,4 +281,3 @@
         finally { _busy = false; }
     }
 }
-

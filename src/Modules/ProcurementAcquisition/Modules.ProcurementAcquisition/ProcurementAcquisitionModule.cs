@@ -29,6 +29,7 @@ using AMIS.Modules.ProcurementAcquisition.Features.v1.AssetIARs.AcceptAssetIAR;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.AssetIARs.CancelAssetIAR;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.AssetIARs.GetAssetIAR;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.AssetIARs.SearchAssetIARs;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.AssetIARs.SearchAcceptedIARLineItems;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.AssetIARs.SubmitForInspection;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.AssetIARs.ReassignInspector;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.AssetIARs.RecordInspection;
@@ -140,6 +141,7 @@ public class ProcurementAcquisitionModule : IModule
         CancelAssetIAREndpoint.Map(iarGroup);
         GetAssetIAREndpoint.Map(iarGroup);
         SearchAssetIARsEndpoint.Map(iarGroup);
+        SearchAcceptedIARLineItemsEndpoint.Map(iarGroup);
         SubmitIARForInspectionEndpoint.Map(iarGroup);
         ReassignInspectorEndpoint.Map(iarGroup);
         RecordIARInspectionEndpoint.Map(iarGroup);

@@ -1,7 +1,9 @@
+using System.Net;
 using System.Security.Claims;
 using Finbuckle.MultiTenant;
 using Finbuckle.MultiTenant.Abstractions;
 using AMIS.Framework.Core.Context;
+using AMIS.Framework.Core.Exceptions;
 using AMIS.Framework.Shared.Multitenancy;
 using AMIS.Framework.Shared.Persistence;
 using AMIS.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
@@ -85,12 +87,13 @@ public sealed class PpmpHandlerTests
     }
 
     [Fact]
-    public async Task SubmitPpmp_NotFound_ThrowsKeyNotFoundException()
+    public async Task SubmitPpmp_NotFound_ThrowsNotFoundCustomException()
     {
         await using var db = CreateDbContext();
-        await Should.ThrowAsync<KeyNotFoundException>(async () =>
+        var ex = await Should.ThrowAsync<CustomException>(async () =>
             await new SubmitPpmpCommandHandler(db)
                 .Handle(new SubmitPpmpCommand(Guid.NewGuid()), CancellationToken.None));
+        ex.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 
     // ── ApprovePpmpCommandHandler ──────────────────────────────────────────────
@@ -277,12 +280,13 @@ public sealed class PpmpHandlerTests
     }
 
     [Fact]
-    public async Task GetPpmp_UnknownId_ThrowsKeyNotFoundException()
+    public async Task GetPpmp_UnknownId_ThrowsNotFoundCustomException()
     {
         await using var db = CreateDbContext();
-        await Should.ThrowAsync<KeyNotFoundException>(async () =>
+        var ex = await Should.ThrowAsync<CustomException>(async () =>
             await new GetPpmpQueryHandler(db)
                 .Handle(new GetPpmpQuery(Guid.NewGuid()), CancellationToken.None));
+        ex.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 
     // ── GetPpmpVersionsQueryHandler ────────────────────────────────────────────

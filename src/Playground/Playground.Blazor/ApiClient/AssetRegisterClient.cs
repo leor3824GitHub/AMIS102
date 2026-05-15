@@ -853,16 +853,36 @@ public sealed record ArReceivingReportDto(
     IReadOnlyCollection<ArReceivingReportItemDto> Items);
 
 public sealed record CreateReceivingReportItemRequest(
-    Guid CatalogItemId,
+    Guid? CatalogItemId,
     string? Reference,
     string Description,
     DateOnly AcquisitionDate,
-    int Quantity,
     decimal UnitCost,
+    string PropertyNo,
     string? SerialNo,
     string? Brand,
     string? Model,
-    IReadOnlyList<string> PropertyNos);
+    Guid? SourceIARId = null,
+    string? PropertyClassHint = null);
+
+// Mirror of ProcurementAcquisition's AcceptedIARLineItemDto — kept here so the
+// Blazor receiving form can stay in the AssetRegister client namespace.
+public sealed record AcceptedIARLineItemDto(
+    Guid IARId,
+    string IARNumber,
+    DateOnly IARDate,
+    int ItemNo,
+    string Description,
+    string Unit,
+    decimal Quantity,
+    decimal UnitCost,
+    string? PropertyClassHint,
+    string? SerialNo,
+    string? Brand,
+    string? Model,
+    string? StockPropertyNo,
+    string SupplierName,
+    string? SupplierAddress);
 
 public sealed record CreateReceivingReportRequest(
     ReceivingDocumentKind DocumentKind,
@@ -886,6 +906,8 @@ public interface IArReceivingReportClient
     Task<ArReceivingReportDto?> GetAsync(Guid id, CancellationToken ct = default);
     Task<ArReceivingReportDto> CreateAsync(CreateReceivingReportRequest request, CancellationToken ct = default);
     Task DeleteAsync(Guid id, CancellationToken ct = default);
+    Task<ArPagedResponse<AcceptedIARLineItemDto>> SearchAcceptedIARItemsAsync(
+        string? keyword = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
 }
 
 public sealed class ArReceivingReportClient(HttpClient http) : IArReceivingReportClient
@@ -925,6 +947,19 @@ public sealed class ArReceivingReportClient(HttpClient http) : IArReceivingRepor
     {
         var resp = await http.DeleteAsync($"{Base}/{id}", ct);
         resp.EnsureSuccessStatusCode();
+    }
+
+    public async Task<ArPagedResponse<AcceptedIARLineItemDto>> SearchAcceptedIARItemsAsync(
+        string? keyword = null, int page = 1, int pageSize = 20, CancellationToken ct = default)
+    {
+        var url = ArUrlBuilder.Build("api/v1/procurement/iars/accepted-line-items", new()
+        {
+            ["keyword"] = keyword,
+            ["pageNumber"] = page.ToString(CultureInfo.InvariantCulture),
+            ["pageSize"] = pageSize.ToString(CultureInfo.InvariantCulture),
+        });
+        var result = await http.GetFromJsonAsync<ArPagedResponse<AcceptedIARLineItemDto>>(url, ct);
+        return result ?? new ArPagedResponse<AcceptedIARLineItemDto>([], page, pageSize, 0, 0);
     }
 }
 

@@ -66,32 +66,20 @@ internal sealed class IdentityDbInitializer(
             }
         }
 
-        await SeedInspectorRoleAsync(tenantId, cancellationToken);
+        await RemoveLegacyInspectorRoleAsync(cancellationToken);
     }
 
-    private async Task SeedInspectorRoleAsync(string tenantId, CancellationToken cancellationToken)
+    private async Task RemoveLegacyInspectorRoleAsync(CancellationToken cancellationToken)
     {
         if (await roleManager.Roles.SingleOrDefaultAsync(r => r.Name == "Inspector", cancellationToken)
             is not AmisRole inspectorRole)
         {
-            inspectorRole = new AmisRole("Inspector", $"Inspector Role for {tenantId} Tenant");
-            await roleManager.CreateAsync(inspectorRole);
+            return;
         }
 
-        var requiredPermissionNames = new HashSet<string>(StringComparer.Ordinal)
-        {
-            AmisPermission.NameFor(ActionConstants.View, "Procurement.AssetIARs"),
-            AmisPermission.NameFor("Inspect", "Procurement.AssetIARs")
-        };
+        logger.LogInformation("Removing legacy 'Inspector' role for '{TenantId}' Tenant. Inspection access is now permission-based.", multiTenantContextAccessor.MultiTenantContext?.TenantInfo?.Id);
 
-        var inspectorPermissions = PermissionConstants.All
-            .Where(p => requiredPermissionNames.Contains(p.Name))
-            .ToList();
-
-        if (inspectorPermissions.Count > 0)
-        {
-            await AssignPermissionsToRoleAsync(context, inspectorPermissions, inspectorRole, cancellationToken);
-        }
+        await roleManager.DeleteAsync(inspectorRole);
     }
 
     private async Task AssignPermissionsToRoleAsync(IdentityDbContext dbContext, IReadOnlyList<AmisPermission> permissions, AmisRole role, CancellationToken cancellationToken = default)

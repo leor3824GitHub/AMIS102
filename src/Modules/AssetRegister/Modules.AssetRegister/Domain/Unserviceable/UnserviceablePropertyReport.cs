@@ -71,7 +71,7 @@ public sealed class UnserviceablePropertyReport : AggregateRoot<Guid>, IHasTenan
                 $"Report type {ReportType} requires {expected} assets; received {asset.AssetType}.");
 
         _items.Add(UnserviceablePropertyItem.Create(
-            Id, asset.Id, asset.Snapshot(),
+            TenantId, Id, asset.Id, asset.Snapshot(),
             asset.AcquisitionDate, asset.UnitCost,
             asset.AccumulatedDepreciation, asset.AccumulatedImpairmentLosses,
             remarks));

@@ -82,7 +82,7 @@ public sealed class PhysicalCountSession : AggregateRoot<Guid>, IHasTenant, IAud
         EnsureOngoing();
         EnsureScopeAllows(asset.AssetType);
         _entries.Add(PhysicalCountEntry.CreateForKnownAsset(
-            Id, asset.Id, asset.Snapshot(), article, unit, unitCost,
+            TenantId, Id, asset.Id, asset.Snapshot(), article, unit, unitCost,
             condition, locationId, scannedOnUtc, scannedByEmployeeId, photoPath, remarks));
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
     }
@@ -101,7 +101,7 @@ public sealed class PhysicalCountSession : AggregateRoot<Guid>, IHasTenant, IAud
     {
         EnsureOngoing();
         _entries.Add(PhysicalCountEntry.CreateFoundAtStation(
-            Id, article, unit, unitCost, locationId,
+            TenantId, Id, article, unit, unitCost, locationId,
             proposedPropertyClass, proposedCategoryCode, proposedAcquisitionDate, proposedUnitCost,
             scannedByEmployeeId, remarks));
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
@@ -113,7 +113,7 @@ public sealed class PhysicalCountSession : AggregateRoot<Guid>, IHasTenant, IAud
         EnsureOngoing();
         EnsureScopeAllows(asset.AssetType);
         _entries.Add(PhysicalCountEntry.CreateForKnownAsset(
-            Id, asset.Id, asset.Snapshot(), asset.Description, asset.Unit, asset.UnitCost,
+            TenantId, Id, asset.Id, asset.Snapshot(), asset.Description, asset.Unit, asset.UnitCost,
             PhysicalCountCondition.Missing, locationId, null, null, null, remarks));
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
     }

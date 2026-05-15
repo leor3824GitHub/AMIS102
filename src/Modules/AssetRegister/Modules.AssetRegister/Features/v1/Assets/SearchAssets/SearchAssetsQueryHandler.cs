@@ -29,7 +29,6 @@ public sealed class SearchAssetsQueryHandler(AssetRegisterDbContext db)
         if (query.LifecycleState.HasValue) q = q.Where(a => a.LifecycleState == query.LifecycleState.Value);
         else if (!query.IncludeTransferredOut) q = q.Where(a => a.LifecycleState != LifecycleState.TransferredOut);
         if (query.CurrentCustodianId.HasValue) q = q.Where(a => a.CurrentCustodianId == query.CurrentCustodianId.Value);
-        if (query.CatalogItemId.HasValue) q = q.Where(a => a.ItemId == query.CatalogItemId.Value);
 
         var pageNumber = query.PageNumber <= 0 ? 1 : query.PageNumber;
         var pageSize = query.PageSize <= 0 ? 10 : query.PageSize;

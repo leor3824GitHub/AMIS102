@@ -3,6 +3,7 @@ using System;
 using AMIS.Modules.AssetRegister.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
 {
     [DbContext(typeof(AssetRegisterDbContext))]
-    partial class AssetRegisterDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260515123109_AssetRegister_RemoveItemId")]
+    partial class AssetRegister_RemoveItemId
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -134,11 +137,6 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
 
-                    b.Property<string>("TenantId")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
                     b.HasKey("Id");
 
                     b.HasIndex("AssetRegistryId");
@@ -146,8 +144,6 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                     b.HasIndex("AccountabilityId", "LineStatus");
 
                     b.ToTable("PropertyAccountabilityLines", "asset_register");
-
-                    b.HasAnnotation("Finbuckle:MultiTenant", true);
                 });
 
             modelBuilder.Entity("AMIS.Modules.AssetRegister.Domain.Assets.AssetRegistry", b =>
@@ -471,11 +467,6 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)");
 
-                    b.Property<string>("TenantId")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
                     b.HasKey("Id");
 
                     b.HasIndex("AssetRegistryId");
@@ -483,8 +474,6 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                     b.HasIndex("SessionId");
 
                     b.ToTable("PhysicalCountEntries", "asset_register");
-
-                    b.HasAnnotation("Finbuckle:MultiTenant", true);
                 });
 
             modelBuilder.Entity("AMIS.Modules.AssetRegister.Domain.Counting.PhysicalCountSession", b =>
@@ -586,11 +575,6 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)");
 
-                    b.Property<string>("TenantId")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
                     b.HasKey("Id");
 
                     b.HasIndex("AssetRegistryId");
@@ -598,8 +582,6 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                     b.HasIndex("ReportId");
 
                     b.ToTable("PropertyIncidentItems", "asset_register");
-
-                    b.HasAnnotation("Finbuckle:MultiTenant", true);
                 });
 
             modelBuilder.Entity("AMIS.Modules.AssetRegister.Domain.Incidents.PropertyIncidentReport", b =>
@@ -840,11 +822,6 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)");
 
-                    b.Property<string>("TenantId")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
                     b.HasKey("Id");
 
                     b.HasIndex("AccountabilityId");
@@ -856,8 +833,6 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                     b.HasIndex("ReportId");
 
                     b.ToTable("PropertyIssuanceReportLines", "asset_register");
-
-                    b.HasAnnotation("Finbuckle:MultiTenant", true);
                 });
 
             modelBuilder.Entity("AMIS.Modules.AssetRegister.Domain.Receiving.ReceivingReport", b =>
@@ -974,11 +949,6 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
-                    b.Property<string>("TenantId")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
                     b.Property<decimal>("UnitCost")
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)");
@@ -990,8 +960,6 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                     b.HasIndex("ReportId");
 
                     b.ToTable("ReceivingReportItems", "asset_register");
-
-                    b.HasAnnotation("Finbuckle:MultiTenant", true);
                 });
 
             modelBuilder.Entity("AMIS.Modules.AssetRegister.Domain.Unserviceable.UnserviceablePropertyItem", b =>
@@ -1047,11 +1015,6 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                     b.Property<DateOnly>("SnapshotDateAcquired")
                         .HasColumnType("date");
 
-                    b.Property<string>("TenantId")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
                     b.HasKey("Id");
 
                     b.HasIndex("AssetRegistryId");
@@ -1059,8 +1022,6 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                     b.HasIndex("ReportId");
 
                     b.ToTable("UnserviceablePropertyItems", "asset_register");
-
-                    b.HasAnnotation("Finbuckle:MultiTenant", true);
                 });
 
             modelBuilder.Entity("AMIS.Modules.AssetRegister.Domain.Unserviceable.UnserviceablePropertyReport", b =>

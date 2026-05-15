@@ -37,7 +37,6 @@
                                    Placeholder="e.g. 2026-NFA-GSD-00001"
                                    Disabled="_editing is not null"
                                    InitialYear="@(_form.AcquisitionDateNullable?.Year ?? DateTime.Now.Year)"
-                                   NextSequenceProvider="GetNextSequenceAsync"
                                    OnCodeSelected="OnPropertyNoCodeSelected" />
                     <MudNumericField @bind-Value="_form.Quantity"
                                      Label="Quantity"
@@ -61,7 +60,7 @@
                     <MudAutocomplete T="PurchaseOrderSummaryDto"
                                      @bind-Value="_form.SelectedPurchaseOrder"
                                      SearchFunc="SearchPurchaseOrdersAsync"
-                                     ToStringFunc="@(x => x is null ? "" : $"{x.PoNumber} – {x.SupplierName}")"
+                                     ToStringFunc="@(x => x is null ? "" : $"{x.PoNumber} ï¿½ {x.SupplierName}")"
                                      Label="Purchase Order (optional)"
                                      Variant="Variant.Outlined"
                                      Clearable="true"
@@ -319,9 +318,6 @@
         }
         catch (Exception ex) { Snackbar.Add($"Delete failed: {ex.Message}", Severity.Error); }
     }
-
-    private Task<int> GetNextSequenceAsync(int year, string officeCode, string classCode, string itemCode) =>
-        Client.GetNextSequenceAsync(year, officeCode, classCode, itemCode);
 
     private void OnPropertyNoCodeSelected((string ClassCode, string ItemCode) codes)
     {

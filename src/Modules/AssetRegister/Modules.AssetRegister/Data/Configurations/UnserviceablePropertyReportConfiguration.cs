@@ -46,9 +46,11 @@ internal sealed class UnserviceablePropertyItemConfiguration : IEntityTypeConfig
     public void Configure(EntityTypeBuilder<UnserviceablePropertyItem> builder)
     {
         ArgumentNullException.ThrowIfNull(builder);
-        builder.ToTable("UnserviceablePropertyItems", AssetRegisterModuleConstants.SchemaName);
+        builder.ToTable("UnserviceablePropertyItems", AssetRegisterModuleConstants.SchemaName)
+            .IsMultiTenant();
 
         builder.HasKey(x => x.Id);
+        builder.Property(x => x.TenantId).IsRequired().HasMaxLength(50);
         builder.Property(x => x.SnapshotAcquisitionCost).HasPrecision(18, 2);
         builder.Property(x => x.SnapshotAccumulatedDepreciation).HasPrecision(18, 2);
         builder.Property(x => x.SnapshotAccumulatedImpairmentLosses).HasPrecision(18, 2);

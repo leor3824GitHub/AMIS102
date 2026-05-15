@@ -5,6 +5,7 @@
 @using AMIS.Modules.ProcurementAcquisition.Contracts.v1.AssetInspectionAcceptanceReports
 @inject IAssetIarClient IarClient
 @inject IIdentityClient IdentityClient
+@inject IEmployeesClient EmployeesClient
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 @inject NavigationManager Navigation
@@ -183,7 +184,7 @@
     private int _activeTab;
     private int _page = 1;
     private int _totalCount;
-    private Guid _currentUserId;
+    private Guid _currentUserEmployeeId;
     private const int PageSize = 15;
     private int TotalPages => Math.Max(1, (int)Math.Ceiling(_totalCount / (double)PageSize));
     private bool _canCreate => HasPermission(PermissionCreate);
@@ -195,12 +196,28 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        var idClaim = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        _currentUserId = Guid.TryParse(idClaim, out var parsed) ? parsed : Guid.Empty;
-
+        await ResolveCurrentUserEmployeeAsync();
         await LoadPermissionsAsync();
         await LoadAsync();
+    }
+
+    private async Task ResolveCurrentUserEmployeeAsync()
+    {
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var identityId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!string.IsNullOrWhiteSpace(identityId))
+            {
+                var employee = await EmployeesClient.ByIdentityAsync(identityId);
+                if (employee is not null)
+                    _currentUserEmployeeId = employee.Id;
+            }
+        }
+        catch
+        {
+            // Falls back to Guid.Empty; inspector button will be hidden.
+        }
     }
 
     private async Task LoadPermissionsAsync()
@@ -264,7 +281,7 @@
     }
 
     private bool IsAssignedInspector(AssetIARSummaryDto iar) =>
-        _currentUserId != Guid.Empty && iar.AssignedInspectorId == _currentUserId;
+        _currentUserEmployeeId != Guid.Empty && iar.AssignedInspectorId == _currentUserEmployeeId;
 
     private async Task OpenCreateDialog()
     {

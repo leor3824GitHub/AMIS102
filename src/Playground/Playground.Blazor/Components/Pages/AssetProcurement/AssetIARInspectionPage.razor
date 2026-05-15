@@ -5,6 +5,7 @@
 @using AMIS.Modules.ProcurementAcquisition.Contracts.v1.AssetInspectionAcceptanceReports
 @inject IAssetIarClient IarClient
 @inject IIdentityClient IdentityClient
+@inject IEmployeesClient EmployeesClient
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthStateProvider
@@ -85,15 +86,25 @@ else
                             <td>@line.ItemNo</td>
                             <td>@line.Description</td>
                             <td>@line.Quantity</td>
-                            <td style="min-width:220px">
-                                <MudToggleGroup T="LineInspectionResult"
-                                                Value="decision.Result"
-                                                ValueChanged="@(r => OnResultChanged(line.ItemNo, r))"
-                                                Dense="true"
-                                                Disabled="@(!_canEditInspection)">
-                                    <MudToggleItem T="LineInspectionResult" Value="LineInspectionResult.Passed" Color="Color.Success">Pass</MudToggleItem>
-                                    <MudToggleItem T="LineInspectionResult" Value="LineInspectionResult.Rejected" Color="Color.Error">Reject</MudToggleItem>
-                                </MudToggleGroup>
+                            <td>
+                                <MudStack Row="true" Spacing="1">
+                                    <MudTooltip Text="Pass">
+                                        <MudIconButton Icon="@Icons.Material.Filled.CheckCircle"
+                                                       Color="@(decision.Result == LineInspectionResult.Passed ? Color.Success : Color.Default)"
+                                                       Size="Size.Small"
+                                                       Variant="@(decision.Result == LineInspectionResult.Passed ? Variant.Filled : Variant.Outlined)"
+                                                       OnClick="@(() => OnResultChanged(line.ItemNo, LineInspectionResult.Passed))"
+                                                       Disabled="@(!_canEditInspection)" />
+                                    </MudTooltip>
+                                    <MudTooltip Text="Reject">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Cancel"
+                                                       Color="@(decision.Result == LineInspectionResult.Rejected ? Color.Error : Color.Default)"
+                                                       Size="Size.Small"
+                                                       Variant="@(decision.Result == LineInspectionResult.Rejected ? Variant.Filled : Variant.Outlined)"
+                                                       OnClick="@(() => OnResultChanged(line.ItemNo, LineInspectionResult.Rejected))"
+                                                       Disabled="@(!_canEditInspection)" />
+                                    </MudTooltip>
+                                </MudStack>
                             </td>
                             <td style="min-width:260px">
                                 <MudTextField T="string" Value="decision.Remarks"
@@ -130,26 +141,38 @@ else
     private AssetIARDto? _iar;
     private bool _loading = true;
     private bool _submitting;
-    private Guid _currentUserId;
+    private Guid _currentUserEmployeeId;
     private readonly HashSet<string> _permissions = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<int, LineInspectionDecision> _decisions = [];
 
-    private bool _isAssignedInspector => _iar is not null && _currentUserId != Guid.Empty && _currentUserId == _iar.InspectedById;
+    private bool _isAssignedInspector => _iar is not null && _currentUserEmployeeId != Guid.Empty && _currentUserEmployeeId == _iar.InspectedById;
     private bool _canInspectPermission => HasPermission(PermissionInspect);
     private bool _canEditInspection => _iar is not null && _iar.Status == AssetIARStatus.PendingInspection && _isAssignedInspector && _canInspectPermission;
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadCurrentUserAsync();
+        await ResolveCurrentUserEmployeeAsync();
         await LoadPermissionsAsync();
         await LoadAsync();
     }
 
-    private async Task LoadCurrentUserAsync()
+    private async Task ResolveCurrentUserEmployeeAsync()
     {
-        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
-        var idClaim = auth.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        _currentUserId = Guid.TryParse(idClaim, out var parsed) ? parsed : Guid.Empty;
+        try
+        {
+            var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+            var identityId = auth.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!string.IsNullOrWhiteSpace(identityId))
+            {
+                var employee = await EmployeesClient.ByIdentityAsync(identityId);
+                if (employee is not null)
+                    _currentUserEmployeeId = employee.Id;
+            }
+        }
+        catch
+        {
+            // Falls back to Guid.Empty; inspection actions will be hidden.
+        }
     }
 
     private async Task LoadPermissionsAsync()

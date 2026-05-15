@@ -8,7 +8,6 @@ internal static class AssetRegistryMapper
     public static AssetRegistryDto ToDto(AssetRegistry x) =>
         new(x.Id,
             x.PropertyNo.Value,
-            x.ItemId,
             x.AssetType,
             x.Category,
             x.PropertyClass,

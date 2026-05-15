@@ -1,11 +1,13 @@
+using AMIS.Framework.Core.Domain;
 using AMIS.Modules.AssetRegister.Contracts.v1;
 using AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
 
 namespace AMIS.Modules.AssetRegister.Domain.Unserviceable;
 
-public sealed class UnserviceablePropertyItem
+public sealed class UnserviceablePropertyItem : IHasTenant
 {
     public Guid Id { get; private set; }
+    public string TenantId { get; private set; } = default!;
     public Guid ReportId { get; private set; }
     public Guid AssetRegistryId { get; private set; }
     public AssetSnapshot Snapshot { get; private set; } = default!;
@@ -28,6 +30,7 @@ public sealed class UnserviceablePropertyItem
     private UnserviceablePropertyItem() { }
 
     internal static UnserviceablePropertyItem Create(
+        string tenantId,
         Guid reportId,
         Guid assetRegistryId,
         AssetSnapshot snapshot,
@@ -39,6 +42,7 @@ public sealed class UnserviceablePropertyItem
         new()
         {
             Id = Guid.NewGuid(),
+            TenantId = tenantId,
             ReportId = reportId,
             AssetRegistryId = assetRegistryId,
             Snapshot = snapshot,

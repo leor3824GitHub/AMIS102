@@ -19,19 +19,13 @@ public sealed class CreateReceivingReportCommandHandler(
     {
         ArgumentNullException.ThrowIfNull(cmd);
 
-        var catalogIds = cmd.Items.Select(i => i.CatalogItemId).Distinct().ToList();
-        var catalogs = await db.PropertyItemCatalogs
-            .Where(c => catalogIds.Contains(c.Id))
-            .ToDictionaryAsync(c => c.Id, ct)
+        // Load every active catalog once; we resolve per-line below — either by
+        // the explicit CatalogItemId or by PropertyClassHint coming from an IAR.
+        var allCatalogs = await db.PropertyItemCatalogs
+            .Where(c => c.IsActive)
+            .ToListAsync(ct)
             .ConfigureAwait(false);
-
-        foreach (var id in catalogIds)
-        {
-            if (!catalogs.TryGetValue(id, out var c))
-                throw new KeyNotFoundException($"PropertyItemCatalog '{id}' not found.");
-            if (!c.IsActive)
-                throw new InvalidOperationException($"Catalog item '{c.Code}' is deactivated and cannot be received.");
-        }
+        var catalogsById = allCatalogs.ToDictionary(c => c.Id);
 
         var tenantId = db.TenantInfo?.Identifier ?? string.Empty;
         var reportNo = await reportNumbers.NextAsync(cmd.DocumentKind, cmd.Date, ct).ConfigureAwait(false);
@@ -51,26 +45,20 @@ public sealed class CreateReceivingReportCommandHandler(
 
         foreach (var line in cmd.Items)
         {
-            if (line.PropertyNos.Count != line.Quantity)
-                throw new InvalidOperationException(
-                    $"Line '{line.Description}': PropertyNos count ({line.PropertyNos.Count}) must equal Quantity ({line.Quantity}).");
+            var catalog = ResolveCatalog(line, allCatalogs, catalogsById);
 
             report.AddItem(
-                line.CatalogItemId, line.Reference, line.Description,
-                line.AcquisitionDate, line.Quantity, line.UnitCost,
+                catalog.Id, line.Reference, line.Description,
+                line.AcquisitionDate, quantity: 1, line.UnitCost,
                 line.SerialNo, line.Brand, line.Model);
 
-            var catalog = catalogs[line.CatalogItemId];
-            for (var i = 0; i < line.Quantity; i++)
-            {
-                var propertyNo = PropertyNumber.Create(line.PropertyNos[i]);
-                var asset = AssetRegistry.Register(
-                    tenantId, catalog, assetType, category, propertyNo,
-                    line.Description, line.SerialNo, line.Brand, line.Model,
-                    fundCluster, line.AcquisitionDate, line.UnitCost,
-                    sourceIARId: null, sourcePurchaseOrderId: null);
-                db.AssetRegistries.Add(asset);
-            }
+            var propertyNo = PropertyNumber.Create(line.PropertyNo);
+            var asset = AssetRegistry.Register(
+                tenantId, catalog, assetType, category, propertyNo,
+                line.Description, line.SerialNo, line.Brand, line.Model,
+                fundCluster, line.AcquisitionDate, line.UnitCost,
+                sourceIARId: line.SourceIARId, sourcePurchaseOrderId: null);
+            db.AssetRegistries.Add(asset);
         }
 
         db.ReceivingReports.Add(report);
@@ -83,5 +71,59 @@ public sealed class CreateReceivingReportCommandHandler(
         kind == ReceivingDocumentKind.PPERR
             ? (AssetType.PPE, AssetCategory.PPE)
             : (AssetType.SE, AssetCategory.HighValuedSemi);
+
+    /// <summary>
+    /// Pick a catalog for the line: prefer an explicit CatalogItemId; otherwise resolve
+    /// from PropertyClassHint, then by description substring, then by token overlap —
+    /// mirrors <c>AssetIARAcceptedEventConsumer.ResolveCatalog</c> so IAR-driven and
+    /// event-driven flows pick the same catalog row.
+    /// </summary>
+    private static Domain.Catalog.PropertyItemCatalog ResolveCatalog(
+        CreateReceivingReportItemRequest line,
+        IReadOnlyList<Domain.Catalog.PropertyItemCatalog> all,
+        IReadOnlyDictionary<Guid, Domain.Catalog.PropertyItemCatalog> byId)
+    {
+        if (line.CatalogItemId.HasValue && line.CatalogItemId.Value != Guid.Empty)
+        {
+            if (!byId.TryGetValue(line.CatalogItemId.Value, out var c))
+                throw new KeyNotFoundException($"PropertyItemCatalog '{line.CatalogItemId}' not found.");
+            if (!c.IsActive)
+                throw new InvalidOperationException($"Catalog item '{c.Code}' is deactivated and cannot be received.");
+            return c;
+        }
+
+        if (!string.IsNullOrWhiteSpace(line.PropertyClassHint))
+        {
+            var byClass = all.FirstOrDefault(c =>
+                string.Equals(c.DefaultPropertyClass, line.PropertyClassHint, StringComparison.OrdinalIgnoreCase));
+            if (byClass is not null) return byClass;
+        }
+
+        var bySubstring = all.FirstOrDefault(c =>
+            line.Description.Contains(c.Description, StringComparison.OrdinalIgnoreCase) ||
+            c.Description.Contains(line.Description, StringComparison.OrdinalIgnoreCase));
+        if (bySubstring is not null) return bySubstring;
+
+        var lineTokens = Tokenize(line.Description);
+        if (lineTokens.Count > 0)
+        {
+            var byTokens = all
+                .Select(c => new { Catalog = c, Score = Tokenize(c.Description).Count(lineTokens.Contains) })
+                .Where(x => x.Score > 0)
+                .OrderByDescending(x => x.Score)
+                .FirstOrDefault();
+            if (byTokens is not null) return byTokens.Catalog;
+        }
+
+        throw new InvalidOperationException(
+            $"Could not match line '{line.Description}' to any PropertyItemCatalog. " +
+            "Provide CatalogItemId explicitly or add a matching catalog entry.");
+    }
+
+    private static HashSet<string> Tokenize(string text) =>
+        text.Split([' ', ',', '-', '/', '(', ')', '.'], StringSplitOptions.RemoveEmptyEntries)
+            .Where(w => w.Length >= 4)
+            .Select(w => w.ToUpperInvariant())
+            .ToHashSet();
 }
 

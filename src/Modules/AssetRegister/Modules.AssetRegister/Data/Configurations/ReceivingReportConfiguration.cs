@@ -46,9 +46,11 @@ internal sealed class ReceivingReportItemConfiguration : IEntityTypeConfiguratio
     public void Configure(EntityTypeBuilder<ReceivingReportItem> builder)
     {
         ArgumentNullException.ThrowIfNull(builder);
-        builder.ToTable("ReceivingReportItems", AssetRegisterModuleConstants.SchemaName);
+        builder.ToTable("ReceivingReportItems", AssetRegisterModuleConstants.SchemaName)
+            .IsMultiTenant();
 
         builder.HasKey(x => x.Id);
+        builder.Property(x => x.TenantId).IsRequired().HasMaxLength(50);
         builder.Property(x => x.Reference).HasMaxLength(64);
         builder.Property(x => x.Description).IsRequired().HasMaxLength(500);
         builder.Property(x => x.UnitCost).HasPrecision(18, 2);

@@ -24,14 +24,13 @@ public static class SearchAssetsEndpoint
         AssetType? assetType = null,
         LifecycleState? lifecycleState = null,
         Guid? currentCustodianId = null,
-        Guid? catalogItemId = null,
         bool includeTransferredOut = false,
         int pageNumber = 1,
         int pageSize = 10,
         CancellationToken ct = default)
     {
         var result = await mediator.Send(new SearchAssetsQuery(
-            keyword, assetType, lifecycleState, currentCustodianId, catalogItemId,
+            keyword, assetType, lifecycleState, currentCustodianId,
             includeTransferredOut, pageNumber, pageSize), ct);
         return TypedResults.Ok(result);
     }

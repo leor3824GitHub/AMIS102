@@ -92,7 +92,7 @@ public sealed class ReceivingReport : AggregateRoot<Guid>, IHasTenant, IAuditabl
         string? model)
     {
         var item = ReceivingReportItem.Create(
-            Id, catalogItemId, reference, description,
+            TenantId, Id, catalogItemId, reference, description,
             acquisitionDate, quantity, unitCost,
             serialNo, brand, model);
         _items.Add(item);

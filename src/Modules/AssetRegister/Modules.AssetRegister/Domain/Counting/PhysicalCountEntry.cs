@@ -1,11 +1,13 @@
+using AMIS.Framework.Core.Domain;
 using AMIS.Modules.AssetRegister.Contracts.v1;
 using AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
 
 namespace AMIS.Modules.AssetRegister.Domain.Counting;
 
-public sealed class PhysicalCountEntry
+public sealed class PhysicalCountEntry : IHasTenant
 {
     public Guid Id { get; private set; }
+    public string TenantId { get; private set; } = default!;
     public Guid SessionId { get; private set; }
     public Guid? AssetRegistryId { get; private set; }
     public AssetSnapshot? Snapshot { get; private set; }
@@ -28,6 +30,7 @@ public sealed class PhysicalCountEntry
     private PhysicalCountEntry() { }
 
     internal static PhysicalCountEntry CreateForKnownAsset(
+        string tenantId,
         Guid sessionId,
         Guid assetRegistryId,
         AssetSnapshot snapshot,
@@ -48,6 +51,7 @@ public sealed class PhysicalCountEntry
         return new PhysicalCountEntry
         {
             Id = Guid.NewGuid(),
+            TenantId = tenantId,
             SessionId = sessionId,
             AssetRegistryId = assetRegistryId,
             Snapshot = snapshot,
@@ -64,6 +68,7 @@ public sealed class PhysicalCountEntry
     }
 
     internal static PhysicalCountEntry CreateFoundAtStation(
+        string tenantId,
         Guid sessionId,
         string article,
         string unit,
@@ -78,6 +83,7 @@ public sealed class PhysicalCountEntry
         new()
         {
             Id = Guid.NewGuid(),
+            TenantId = tenantId,
             SessionId = sessionId,
             AssetRegistryId = null,
             Snapshot = null,

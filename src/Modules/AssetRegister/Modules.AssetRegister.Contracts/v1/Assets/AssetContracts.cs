@@ -6,7 +6,6 @@ namespace AMIS.Modules.AssetRegister.Contracts.v1.Assets;
 public sealed record AssetRegistryDto(
     Guid Id,
     string PropertyNo,
-    Guid ItemId,
     AssetType AssetType,
     AssetCategory Category,
     string PropertyClass,
@@ -79,7 +78,6 @@ public sealed record SearchAssetsQuery(
     AssetType? AssetType = null,
     LifecycleState? LifecycleState = null,
     Guid? CurrentCustodianId = null,
-    Guid? CatalogItemId = null,
     bool IncludeTransferredOut = false,
     int PageNumber = 1,
     int PageSize = 10) : IQuery<PagedResponse<AssetRegistrySummaryDto>>;

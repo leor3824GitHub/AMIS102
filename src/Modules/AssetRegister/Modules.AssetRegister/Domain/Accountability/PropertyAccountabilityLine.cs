@@ -1,11 +1,13 @@
+using AMIS.Framework.Core.Domain;
 using AMIS.Modules.AssetRegister.Contracts.v1;
 using AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
 
 namespace AMIS.Modules.AssetRegister.Domain.Accountability;
 
-public sealed class PropertyAccountabilityLine
+public sealed class PropertyAccountabilityLine : IHasTenant
 {
     public Guid Id { get; private set; }
+    public string TenantId { get; private set; } = default!;
     public Guid AccountabilityId { get; private set; }
     public Guid AssetRegistryId { get; private set; }
     public AssetSnapshot Snapshot { get; private set; } = default!;
@@ -23,6 +25,7 @@ public sealed class PropertyAccountabilityLine
     private PropertyAccountabilityLine() { }
 
     internal static PropertyAccountabilityLine Create(
+        string tenantId,
         Guid accountabilityId,
         Guid assetRegistryId,
         AssetSnapshot snapshot,
@@ -32,6 +35,7 @@ public sealed class PropertyAccountabilityLine
         new()
         {
             Id = Guid.NewGuid(),
+            TenantId = tenantId,
             AccountabilityId = accountabilityId,
             AssetRegistryId = assetRegistryId,
             Snapshot = snapshot,

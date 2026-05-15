@@ -45,9 +45,11 @@ internal sealed class PropertyAccountabilityLineConfiguration : IEntityTypeConfi
     public void Configure(EntityTypeBuilder<PropertyAccountabilityLine> builder)
     {
         ArgumentNullException.ThrowIfNull(builder);
-        builder.ToTable("PropertyAccountabilityLines", AssetRegisterModuleConstants.SchemaName);
+        builder.ToTable("PropertyAccountabilityLines", AssetRegisterModuleConstants.SchemaName)
+            .IsMultiTenant();
 
         builder.HasKey(x => x.Id);
+        builder.Property(x => x.TenantId).IsRequired().HasMaxLength(50);
         builder.Property(x => x.SnapshotItemNo).IsRequired().HasMaxLength(32);
         builder.Property(x => x.SnapshotResponsibilityCenterCode).HasMaxLength(64);
 

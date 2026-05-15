@@ -56,9 +56,11 @@ internal sealed class PropertyIncidentItemConfiguration : IEntityTypeConfigurati
     public void Configure(EntityTypeBuilder<PropertyIncidentItem> builder)
     {
         ArgumentNullException.ThrowIfNull(builder);
-        builder.ToTable("PropertyIncidentItems", AssetRegisterModuleConstants.SchemaName);
+        builder.ToTable("PropertyIncidentItems", AssetRegisterModuleConstants.SchemaName)
+            .IsMultiTenant();
 
         builder.HasKey(x => x.Id);
+        builder.Property(x => x.TenantId).IsRequired().HasMaxLength(50);
         builder.Property(x => x.SnapshotAcquisitionCost).HasPrecision(18, 2);
         builder.Property(x => x.SnapshotCurrentReplacementCost).HasPrecision(18, 2);
 

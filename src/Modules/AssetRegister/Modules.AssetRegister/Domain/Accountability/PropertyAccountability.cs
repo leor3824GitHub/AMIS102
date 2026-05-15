@@ -94,7 +94,7 @@ public sealed class PropertyAccountability : AggregateRoot<Guid>, IHasTenant, IA
         foreach (var (asset, itemNo, rcCode, vehicleProfile) in materialized)
         {
             accountability._lines.Add(PropertyAccountabilityLine.Create(
-                accountability.Id, asset.Id, asset.Snapshot(), itemNo, rcCode, vehicleProfile));
+                tenantId, accountability.Id, asset.Id, asset.Snapshot(), itemNo, rcCode, vehicleProfile));
             accountability.AddDomainEvent(new AssetIssuedEvent(
                 asset.Id, accountability.Id, receivedBy.EmployeeId, tenantId));
         }
@@ -126,7 +126,7 @@ public sealed class PropertyAccountability : AggregateRoot<Guid>, IHasTenant, IA
         foreach (var line in _lines)
         {
             successor._lines.Add(PropertyAccountabilityLine.Create(
-                successor.Id, line.AssetRegistryId, line.Snapshot,
+                TenantId, successor.Id, line.AssetRegistryId, line.Snapshot,
                 line.SnapshotItemNo, line.SnapshotResponsibilityCenterCode,
                 line.VehicleProfile));
         }

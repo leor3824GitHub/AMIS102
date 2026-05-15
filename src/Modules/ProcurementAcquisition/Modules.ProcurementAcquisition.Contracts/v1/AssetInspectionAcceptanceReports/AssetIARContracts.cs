@@ -158,6 +158,35 @@ public sealed class SearchAssetIARsQuery : IQuery<PagedResponse<AssetIARSummaryD
     public int PageSize { get; set; } = 10;
 }
 
+/// <summary>
+/// A single line item from an Accepted IAR, exposed for downstream modules (notably
+/// AssetRegister Receiving Reports) to pre-populate forms without re-typing supplier
+/// data. <see cref="ItemNo"/> uniquely identifies the line within its parent IAR.
+/// </summary>
+public sealed record AcceptedIARLineItemDto(
+    Guid IARId,
+    string IARNumber,
+    DateOnly IARDate,
+    int ItemNo,
+    string Description,
+    string Unit,
+    decimal Quantity,
+    decimal UnitCost,
+    string? PropertyClassHint,
+    string? SerialNo,
+    string? Brand,
+    string? Model,
+    string? StockPropertyNo,
+    string SupplierName,
+    string? SupplierAddress);
+
+public sealed class SearchAcceptedIARLineItemsQuery : IQuery<PagedResponse<AcceptedIARLineItemDto>>
+{
+    public string? Keyword { get; set; }
+    public int PageNumber { get; set; } = 1;
+    public int PageSize { get; set; } = 20;
+}
+
 // ──────────────────────────────────────────────────────────────────────────────
 // Integration Event
 // ──────────────────────────────────────────────────────────────────────────────

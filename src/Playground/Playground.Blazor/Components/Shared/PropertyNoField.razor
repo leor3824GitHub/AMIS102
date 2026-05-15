@@ -1,151 +1,17 @@
-@using AMIS.Playground.Blazor.ApiClient
-@using AMIS.Modules.MasterData.Contracts.v1.PropertyClasses
-@inject IOrganizationProfileClient OrgProfileClient
-@inject IPropertyClassClient PropertyClassClient
+@inject IDialogService DialogService
 
-<MudStack Spacing="0">
-    <MudTextField Value="@Value"
-                  ValueChanged="@((string v) => ValueChanged.InvokeAsync(v))"
-                  Label="@Label"
-                  Variant="Variant.Outlined"
-                  Required="@(Required && !Disabled)"
-                  MaxLength="@MaxLength"
-                  Placeholder="@Placeholder"
-                  Disabled="@Disabled"
-                  Adornment="Adornment.End"
-                  AdornmentIcon="@Icons.Material.Outlined.AutoAwesome"
-                  AdornmentColor="@(_showGenerator ? Color.Primary : Color.Default)"
-                  OnAdornmentClick="ToggleGeneratorAsync" />
-
-    @if (_showGenerator)
-    {
-        <MudPaper Elevation="4" Class="pa-3 mt-1"
-                  Style="border-left: 3px solid var(--mud-palette-primary); border-radius: 0 0 4px 4px;">
-            <MudStack Spacing="2">
-
-                <!-- Office code (readonly) -->
-                <MudTextField Value="@_officeCode" Label="Office Code (Annex E)"
-                              Variant="Variant.Outlined" Size="Size.Small" ReadOnly="true"
-                              Adornment="@(_officeCode == "???" ? Adornment.End : Adornment.None)"
-                              AdornmentIcon="@Icons.Material.Outlined.Warning"
-                              AdornmentColor="Color.Warning" />
-
-                <!-- Mode toggle -->
-                <MudButtonGroup Size="Size.Small" OverrideStyles="false" Style="width:100%">
-                    <MudButton OnClick="@(() => SetMode(false))"
-                               Variant="@(!_categoryFirst ? Variant.Filled : Variant.Outlined)"
-                               Color="@(!_categoryFirst ? Color.Primary : Color.Default)"
-                               FullWidth="true">
-                        Class &#8594; Category
-                    </MudButton>
-                    <MudButton OnClick="@(() => SetMode(true))"
-                               Variant="@(_categoryFirst ? Variant.Filled : Variant.Outlined)"
-                               Color="@(_categoryFirst ? Color.Primary : Color.Default)"
-                               FullWidth="true">
-                        Category &#8594; Class
-                    </MudButton>
-                </MudButtonGroup>
-
-                @if (!_categoryFirst)
-                {
-                    <!-- Class first: pick class, then category filtered to that class -->
-                    <MudAutocomplete T="PropertyClassDto"
-                                     Value="_selectedClass"
-                                     ValueChanged="OnClassSelectedAsync"
-                                     SearchFunc="SearchClassesAsync"
-                                     ToStringFunc="@(c => c is null ? "" : $"{c.Code} – {c.Name}")"
-                                     Label="Property Class" Variant="Variant.Outlined"
-                                     Size="Size.Small" ResetValueOnEmptyText="true"
-                                     CoerceValue="false" MinCharacters="0"
-                                     AnchorOrigin="Origin.BottomLeft" />
-
-                    <MudAutocomplete T="PropertyClassItemDto"
-                                     @key="@($"item-{_selectedClass?.Code}")"
-                                     Value="_selectedItem"
-                                     ValueChanged="OnItemSelectedAsync"
-                                     SearchFunc="SearchItemsInClassAsync"
-                                     ToStringFunc="@(i => i is null ? "" : $"{i.ItemCode} – {i.Name}")"
-                                     Label="Category Code" Variant="Variant.Outlined"
-                                     Size="Size.Small" ResetValueOnEmptyText="true"
-                                     CoerceValue="false" MinCharacters="0"
-                                     Disabled="@(_selectedClass is null)"
-                                     AnchorOrigin="Origin.BottomLeft" />
-                }
-                else
-                {
-                    <!-- Category first: pick any category, class auto-fills -->
-                    <MudAutocomplete T="PropertyClassItemDto"
-                                     Value="_selectedItem"
-                                     ValueChanged="OnItemSelectedAsync"
-                                     SearchFunc="SearchAllItemsAsync"
-                                     ToStringFunc="@(i => i is null ? "" : $"{i.ItemCode} – {i.Name}")"
-                                     Label="Category Code" Variant="Variant.Outlined"
-                                     Size="Size.Small" ResetValueOnEmptyText="true"
-                                     CoerceValue="false" MinCharacters="0"
-                                     AnchorOrigin="Origin.BottomLeft" />
-
-                    <MudTextField Value="@FormatClass(ClassCode)" Label="Property Class"
-                                  Variant="Variant.Outlined" Size="Size.Small" ReadOnly="true"
-                                  Placeholder="Auto-filled when category is selected"
-                                  Adornment="@(string.IsNullOrWhiteSpace(ClassCode) ? Adornment.End : Adornment.None)"
-                                  AdornmentIcon="@Icons.Material.Outlined.Info"
-                                  AdornmentColor="Color.Secondary" />
-                }
-
-                <!-- Year + Sequence -->
-                <MudStack Row="true" Spacing="2">
-                    <MudNumericField Value="_year" ValueChanged="@((int v) => OnYearChangedAsync(v))"
-                                     Label="Year" Variant="Variant.Outlined"
-                                     Size="Size.Small" Min="2000" Max="2099" Style="flex:1" />
-                    <MudNumericField @bind-Value="_seq" Label="Sequence" Variant="Variant.Outlined"
-                                     Size="Size.Small" Min="1" Max="9999" Style="flex:1"
-                                     Disabled="_loadingSeq"
-                                     Adornment="@(_loadingSeq ? Adornment.End : Adornment.None)"
-                                     AdornmentIcon="@Icons.Material.Filled.HourglassEmpty"
-                                     AdornmentColor="Color.Default" />
-                </MudStack>
-
-                <!-- Preview -->
-                <MudPaper Elevation="0" Class="pa-2"
-                          Style="background: var(--mud-palette-background-grey); border-radius: 4px;">
-                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-                        <MudIcon Icon="@Icons.Material.Outlined.Tag" Size="Size.Small" Color="Color.Primary" />
-                        <MudText Style="font-family: monospace; font-weight: 700; font-size: 0.9rem; letter-spacing: 0.04em; color: var(--mud-palette-primary);">
-                            @PreviewCode
-                        </MudText>
-                    </MudStack>
-                    @if (!string.IsNullOrWhiteSpace(ClassCode))
-                    {
-                        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">
-                            @FormatClass(ClassCode)@(_selectedItem is null ? "" : $" › {FormatItem(_selectedItem.ItemCode)}")
-                        </MudText>
-                    }
-                </MudPaper>
-
-                @if (_officeCode == "???")
-                {
-                    <MudAlert Severity="Severity.Warning" Dense="true" Class="py-1">
-                        Office Code not set — configure in <b>Master Data → Organization Profile</b>.
-                    </MudAlert>
-                }
-
-                <!-- Actions -->
-                <MudStack Row="true" Spacing="1">
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
-                               FullWidth="true" OnClick="UseCodeAsync" Disabled="@(!CanGenerate)">
-                        <MudIcon Icon="@Icons.Material.Outlined.Check" Size="Size.Small" Class="mr-1" />
-                        Use this code
-                    </MudButton>
-                    <MudButton Variant="Variant.Outlined" Color="Color.Default" Size="Size.Small"
-                               OnClick="@(() => _showGenerator = false)">
-                        Cancel
-                    </MudButton>
-                </MudStack>
-
-            </MudStack>
-        </MudPaper>
-    }
-</MudStack>
+<MudTextField Value="@Value"
+              ValueChanged="@((string v) => ValueChanged.InvokeAsync(v))"
+              Label="@Label"
+              Variant="Variant.Outlined"
+              Required="@(Required && !Disabled)"
+              MaxLength="@MaxLength"
+              Placeholder="@Placeholder"
+              Disabled="@Disabled"
+              Adornment="Adornment.End"
+              AdornmentIcon="@Icons.Material.Outlined.AutoAwesome"
+              AdornmentColor="Color.Default"
+              OnAdornmentClick="OpenGeneratorDialogAsync" />
 
 @code {
     [Parameter] public string Value { get; set; } = string.Empty;
@@ -155,168 +21,34 @@
     [Parameter] public int MaxLength { get; set; } = 32;
     [Parameter] public string Placeholder { get; set; } = string.Empty;
     [Parameter] public bool Disabled { get; set; }
-    [Parameter] public Func<int, string, string, string, Task<int>>? NextSequenceProvider { get; set; }
     [Parameter] public EventCallback<(string ClassCode, string ItemCode)> OnCodeSelected { get; set; }
     [Parameter] public int InitialYear { get; set; } = DateTime.Now.Year;
 
-    private bool _showGenerator;
-    private string _officeCode = "???";
-    private int _year = DateTime.Now.Year;
-    private int _seq = 1;
-    private bool _loadingSeq;
-    private bool _categoryFirst;
-    private PropertyClassDto? _selectedClass;
-    private PropertyClassItemDto? _selectedItem;
-    private List<PropertyClassDto> _classes = [];
-    private bool _loaded;
-
-    // In class-first mode: derived from selected class.
-    // In category-first mode: derived from the item's ClassCode.
-    private string? ClassCode => _categoryFirst
-        ? _selectedItem?.ClassCode
-        : _selectedClass?.Code;
-
-    private string PreviewCode =>
-        $"{_year}-NFA-{_officeCode}-{ClassCode ?? "??"}-{_selectedItem?.ItemCode ?? "??"}-{_seq:D3}";
-
-    private bool CanGenerate =>
-        _officeCode != "???" &&
-        !string.IsNullOrWhiteSpace(ClassCode) &&
-        !string.IsNullOrWhiteSpace(_selectedItem?.ItemCode);
-
-    private async Task ToggleGeneratorAsync()
+    private async Task OpenGeneratorDialogAsync()
     {
-        _showGenerator = !_showGenerator;
-        if (_showGenerator && !_loaded)
+        if (Disabled) return;
+
+        var parameters = new DialogParameters<PropertyNoGeneratorDialog>
         {
-            _year = InitialYear;
-            await Task.WhenAll(LoadOfficeCodeAsync(), LoadClassesAsync());
-            _loaded = true;
-        }
-    }
-
-    private void SetMode(bool categoryFirst)
-    {
-        if (_categoryFirst == categoryFirst) return;
-        _categoryFirst = categoryFirst;
-        _selectedClass = null;
-        _selectedItem = null;
-        _seq = 1;
-    }
-
-    private async Task LoadOfficeCodeAsync()
-    {
-        try
+            { x => x.InitialYear, InitialYear }
+        };
+        var options = new DialogOptions
         {
-            var profile = await OrgProfileClient.GetAsync();
-            _officeCode = string.IsNullOrWhiteSpace(profile?.AnnexECode)
-                ? "???"
-                : profile.AnnexECode.ToUpperInvariant();
-        }
-        catch { _officeCode = "???"; }
-    }
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true,
+            CloseButton = true,
+            CloseOnEscapeKey = true
+        };
 
-    private async Task LoadClassesAsync()
-    {
-        try
+        var dialog = await DialogService.ShowAsync<PropertyNoGeneratorDialog>("Generate Property No.", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is PropertyNoGeneratorDialog.PropertyNoResult data)
         {
-            var all = await PropertyClassClient.GetTreeAsync();
-            _classes = all?.Where(c => c.IsActive).OrderBy(c => c.Code).ToList() ?? [];
+            await ValueChanged.InvokeAsync(data.PropertyNo);
+            if (OnCodeSelected.HasDelegate)
+                await OnCodeSelected.InvokeAsync((data.ClassCode, data.ItemCode));
         }
-        catch { _classes = []; }
-    }
-
-    private Task<IEnumerable<PropertyClassDto>> SearchClassesAsync(string? value, CancellationToken ct)
-    {
-        IEnumerable<PropertyClassDto> results = string.IsNullOrWhiteSpace(value)
-            ? _classes
-            : _classes.Where(c =>
-                c.Code.Contains(value, StringComparison.OrdinalIgnoreCase) ||
-                c.Name.Contains(value, StringComparison.OrdinalIgnoreCase));
-        return Task.FromResult(results);
-    }
-
-    private Task<IEnumerable<PropertyClassItemDto>> SearchItemsInClassAsync(string? value, CancellationToken ct)
-    {
-        IEnumerable<PropertyClassItemDto> items = _selectedClass is null
-            ? []
-            : _selectedClass.Items.Where(i => i.IsActive);
-        if (!string.IsNullOrWhiteSpace(value))
-            items = items.Where(i =>
-                i.ItemCode.Contains(value, StringComparison.OrdinalIgnoreCase) ||
-                i.Name.Contains(value, StringComparison.OrdinalIgnoreCase));
-        return Task.FromResult(items.OrderBy(i => i.ItemCode).AsEnumerable());
-    }
-
-    private Task<IEnumerable<PropertyClassItemDto>> SearchAllItemsAsync(string? value, CancellationToken ct)
-    {
-        IEnumerable<PropertyClassItemDto> items = _classes
-            .Where(c => c.IsActive)
-            .SelectMany(c => c.Items.Where(i => i.IsActive));
-        if (!string.IsNullOrWhiteSpace(value))
-            items = items.Where(i =>
-                i.ItemCode.Contains(value, StringComparison.OrdinalIgnoreCase) ||
-                i.Name.Contains(value, StringComparison.OrdinalIgnoreCase));
-        return Task.FromResult(items.OrderBy(i => i.ItemCode).AsEnumerable());
-    }
-
-    private string FormatClass(string? code)
-    {
-        if (string.IsNullOrWhiteSpace(code)) return string.Empty;
-        var cls = _classes.FirstOrDefault(c => c.Code == code);
-        return cls is null ? code : $"{cls.Code} – {cls.Name}";
-    }
-
-    private string FormatItem(string? itemCode)
-    {
-        if (string.IsNullOrWhiteSpace(itemCode)) return string.Empty;
-        var item = _classes.SelectMany(c => c.Items).FirstOrDefault(i => i.ItemCode == itemCode);
-        return item is null ? itemCode : $"{item.ItemCode} – {item.Name}";
-    }
-
-    private async Task OnYearChangedAsync(int year)
-    {
-        _year = year;
-        await RefreshSequenceAsync();
-    }
-
-    private async Task OnClassSelectedAsync(PropertyClassDto? cls)
-    {
-        _selectedClass = cls;
-        _selectedItem = null;
-        await RefreshSequenceAsync();
-    }
-
-    private async Task OnItemSelectedAsync(PropertyClassItemDto? item)
-    {
-        _selectedItem = item;
-        await RefreshSequenceAsync();
-    }
-
-    private async Task RefreshSequenceAsync()
-    {
-        if (NextSequenceProvider is null) return;
-        var classCode = ClassCode;
-        var itemCode = _selectedItem?.ItemCode;
-        if (_officeCode == "???" || string.IsNullOrWhiteSpace(classCode) || string.IsNullOrWhiteSpace(itemCode)) return;
-        _loadingSeq = true;
-        try
-        {
-            _seq = await NextSequenceProvider(_year, _officeCode, classCode, itemCode);
-        }
-        catch { /* leave current seq */ }
-        finally { _loadingSeq = false; }
-    }
-
-    private async Task UseCodeAsync()
-    {
-        await ValueChanged.InvokeAsync(PreviewCode);
-        var classCode = ClassCode;
-        var itemCode = _selectedItem?.ItemCode;
-        if (OnCodeSelected.HasDelegate && !string.IsNullOrWhiteSpace(classCode) && !string.IsNullOrWhiteSpace(itemCode))
-            await OnCodeSelected.InvokeAsync((classCode!, itemCode!));
-        _showGenerator = false;
-        _seq++;
     }
 }
 
