@@ -73,8 +73,7 @@ builder.Services.AddMediator(o =>
         typeof(RegisterAssetCommand),
         typeof(ProcurementPlanningModule),
         typeof(CreatePpmpCommand),
-        typeof(ReportingModule),
-        typeof(ReportingContractsMarker)];
+        typeof(ReportingModule)];
 });
 
 var moduleAssemblies = new Assembly[]

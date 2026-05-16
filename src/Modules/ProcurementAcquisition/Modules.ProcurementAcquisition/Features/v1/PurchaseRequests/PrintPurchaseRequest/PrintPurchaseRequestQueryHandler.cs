@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.PrintPurchaseRequest;
 
-internal sealed class PrintPurchaseRequestQueryHandler(
+public sealed class PrintPurchaseRequestQueryHandler(
     ProcurementDbContext dbContext,
     IMediator mediator)
     : IQueryHandler<PrintPurchaseRequestQuery, byte[]>
