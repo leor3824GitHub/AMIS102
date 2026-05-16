@@ -367,7 +367,7 @@
                 if (pr is not null)
                 {
                     prSummary = new PurchaseRequestSummaryDto(
-                        pr.Id, pr.PrNumber, pr.PrDate, pr.DepartmentName, pr.Section, pr.Purpose,
+                        pr.Id, pr.PrNumber, pr.PrDate, pr.DepartmentName, pr.ResponsibilityCenterCode, pr.Purpose,
                         pr.PrType, pr.Status, pr.LineItems.Count,
                         pr.LineItems.Sum(li => li.EstimatedTotalCost), pr.CreatedOnUtc);
                 }
@@ -582,7 +582,7 @@
                     pr.PrNumber,
                     pr.PrDate,
                     pr.DepartmentName,
-                    pr.Section,
+                    pr.ResponsibilityCenterCode,
                     pr.Purpose,
                     pr.PrType,
                     pr.Status,

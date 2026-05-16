@@ -39,10 +39,16 @@
                 <MudTextField @bind-Value="_fundCluster" Label="Fund Cluster" Variant="Variant.Outlined" />
             </MudItem>
             <MudItem xs="12" md="6">
-                <MudTextField @bind-Value="_receivedFrom" Label="Received From" Variant="Variant.Outlined" Required="true" />
+                <MudAutocomplete T="SupplierInfo" Value="_selectedSupplier"
+                                 ValueChanged="@(async s => await OnSupplierSelectedAsync(s))"
+                                 Label="Received From" Variant="Variant.Outlined"
+                                 SearchFunc="SearchSuppliersAsync"
+                                 ToStringFunc="@(s => s?.Name ?? string.Empty)"
+                                 CoerceText="false" Required="true"
+                                 HelperText="Search supplier from accepted IARs" />
             </MudItem>
             <MudItem xs="12" md="6">
-                <MudTextField @bind-Value="_address" Label="Address" Variant="Variant.Outlined" />
+                <MudTextField @bind-Value="_address" Label="Address" Variant="Variant.Outlined" ReadOnly="true" />
             </MudItem>
             <MudItem xs="12" md="6">
                 <MudTextField Value="@(_receivedBy is null ? "Loading..." : FormatEmployee(_receivedBy))"
@@ -64,16 +70,6 @@
             <MudItem xs="12">
                 <MudDivider Class="my-2" />
                 <MudText Typo="Typo.subtitle1" Class="mb-2">Items</MudText>
-            </MudItem>
-
-            <MudItem xs="12" md="6">
-                <MudAutocomplete T="SupplierInfo" Value="_selectedSupplier"
-                                 ValueChanged="@(async s => await OnSupplierSelectedAsync(s))"
-                                 Label="Supplier" Variant="Variant.Outlined"
-                                 SearchFunc="SearchSuppliersAsync"
-                                 ToStringFunc="@(s => s?.Name ?? string.Empty)"
-                                 CoerceText="false"
-                                 HelperText="Search supplier to load available IAR items below" />
             </MudItem>
 
             @if (_loadingItems)
@@ -233,7 +229,7 @@
             Snackbar.Add("Could not determine the current user. Please refresh and try again.", Severity.Warning);
             return;
         }
-        if (string.IsNullOrWhiteSpace(_receivedFrom))
+        if (_selectedSupplier is null)
         {
             Snackbar.Add("Received From is required.", Severity.Warning);
             return;

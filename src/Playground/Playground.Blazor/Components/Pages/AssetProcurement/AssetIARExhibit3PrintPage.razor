@@ -2,6 +2,7 @@
 @using AMIS.Playground.Blazor.ApiClient
 @using AMIS.Modules.ProcurementAcquisition.Contracts.v1.AssetInspectionAcceptanceReports
 @inject IAssetIarClient IarClient
+@inject IOrganizationProfileState OrgProfileState
 @inject IJSRuntime JS
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation
@@ -222,6 +223,24 @@ else if (_iar is null)
 else
 {
     <div class="iar-e3-page" id="iar-exhibit3">
+        @{
+            var _org = OrgProfileState.Profile;
+        }
+        @if (_org is not null)
+        {
+            <div style="text-align:center; margin-bottom:6px; line-height:1.4;">
+                <div style="font-size:11px;">Republic of the Philippines</div>
+                <div style="font-size:13px; font-weight:700;">@_org.Name</div>
+                @if (!string.IsNullOrWhiteSpace(_org.ShortName))
+                {
+                    <div style="font-size:11px;">(@_org.ShortName)</div>
+                }
+                @if (!string.IsNullOrWhiteSpace(_org.Address))
+                {
+                    <div style="font-size:11px;">@_org.Address</div>
+                }
+            </div>
+        }
         <div class="iar-e3-exhibit">Exhibit 3</div>
         <div class="iar-e3-title">INSPECTION AND ACCEPTANCE REPORT</div>
 

@@ -16,6 +16,7 @@ namespace AMIS.Modules.ProcurementAcquisition.Data;
 public class ProcurementDbContext : BaseDbContext
 {
     public DbSet<PurchaseRequest> PurchaseRequests => Set<PurchaseRequest>();
+    public DbSet<PrNumberSequence> PrNumberSequences => Set<PrNumberSequence>();
     public DbSet<CanvassRequest> CanvassRequests => Set<CanvassRequest>();
     public DbSet<CanvassQuotation> CanvassQuotations => Set<CanvassQuotation>();
     public DbSet<PurchaseOrder> PurchaseOrders => Set<PurchaseOrder>();

@@ -50,13 +50,13 @@ public sealed class PurchaseRequest : AggregateRoot<Guid>, IHasTenant, IAuditabl
     public string? AlobsNumber { get; private set; }
     public DateOnly? AlobsDate { get; private set; }
     public Guid DepartmentId { get; private set; }
-    public string? Section { get; private set; }
+    public string? ResponsibilityCenterCode { get; private set; }
     public string Purpose { get; private set; } = default!;
     public PrType PrType { get; private set; }
     public string? Justification { get; private set; }
     public PurchaseRequestStatus Status { get; private set; }
-    public Guid RequestedById { get; private set; }
-    public Guid? ApprovedById { get; private set; }
+    public string RequestedByName { get; private set; } = default!;
+    public string? ApprovedByName { get; private set; }
     public string? RejectionReason { get; private set; }
     public string? CancellationReason { get; private set; }
     public byte[] Version { get; set; } = [];
@@ -79,11 +79,11 @@ public sealed class PurchaseRequest : AggregateRoot<Guid>, IHasTenant, IAuditabl
         string tenantId,
         string prNumber,
         Guid departmentId,
-        string? section,
+        string? responsibilityCenterCode,
         string purpose,
         PrType prType,
         string? justification,
-        Guid requestedById,
+        string requestedByName,
         string? saiNumber,
         DateOnly? saiDate,
         string? alobsNumber,
@@ -97,11 +97,11 @@ public sealed class PurchaseRequest : AggregateRoot<Guid>, IHasTenant, IAuditabl
             PrNumber = prNumber,
             PrDate = DateOnly.FromDateTime(DateTime.UtcNow),
             DepartmentId = departmentId,
-            Section = section,
+            ResponsibilityCenterCode = responsibilityCenterCode,
             Purpose = purpose,
             PrType = prType,
             Justification = justification,
-            RequestedById = requestedById,
+            RequestedByName = requestedByName,
             SaiNumber = saiNumber,
             SaiDate = saiDate,
             AlobsNumber = alobsNumber,
@@ -121,11 +121,11 @@ public sealed class PurchaseRequest : AggregateRoot<Guid>, IHasTenant, IAuditabl
 
     public void Update(
         Guid departmentId,
-        string? section,
+        string? responsibilityCenterCode,
         string purpose,
         PrType prType,
         string? justification,
-        Guid requestedById,
+        string requestedByName,
         string? saiNumber,
         DateOnly? saiDate,
         string? alobsNumber,
@@ -136,11 +136,11 @@ public sealed class PurchaseRequest : AggregateRoot<Guid>, IHasTenant, IAuditabl
             throw new InvalidOperationException("Only Draft purchase requests can be updated.");
 
         DepartmentId = departmentId;
-        Section = section;
+        ResponsibilityCenterCode = responsibilityCenterCode;
         Purpose = purpose;
         PrType = prType;
         Justification = justification;
-        RequestedById = requestedById;
+        RequestedByName = requestedByName;
         SaiNumber = saiNumber;
         SaiDate = saiDate;
         AlobsNumber = alobsNumber;
@@ -166,13 +166,13 @@ public sealed class PurchaseRequest : AggregateRoot<Guid>, IHasTenant, IAuditabl
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
     }
 
-    public void Approve(Guid approvedById)
+    public void Approve(string approvedByName)
     {
         if (Status != PurchaseRequestStatus.Submitted)
             throw new InvalidOperationException("Only Submitted purchase requests can be approved.");
 
         Status = PurchaseRequestStatus.Approved;
-        ApprovedById = approvedById;
+        ApprovedByName = approvedByName;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
     }
 

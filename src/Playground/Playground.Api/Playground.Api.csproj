@@ -44,6 +44,8 @@
     <ProjectReference Include="..\..\Modules\AssetRegister\Modules.AssetRegister\Modules.AssetRegister.csproj" />
     <ProjectReference Include="..\..\Modules\ProcurementPlanning\Modules.ProcurementPlanning.Contracts\Modules.ProcurementPlanning.Contracts.csproj" />
     <ProjectReference Include="..\..\Modules\ProcurementPlanning\Modules.ProcurementPlanning\Modules.ProcurementPlanning.csproj" />
+    <ProjectReference Include="..\..\Modules\Reporting\Modules.Reporting.Contracts\Modules.Reporting.Contracts.csproj" />
+    <ProjectReference Include="..\..\Modules\Reporting\Modules.Reporting\Modules.Reporting.csproj" />
     <ProjectReference Include="..\..\Modules\Identity\Modules.Identity\Modules.Identity.csproj" />
     <ProjectReference Include="..\..\Modules\Multitenancy\Modules.Multitenancy\Modules.Multitenancy.csproj" />
     <ProjectReference Include="..\Migrations.PostgreSQL\Migrations.PostgreSQL.csproj" />

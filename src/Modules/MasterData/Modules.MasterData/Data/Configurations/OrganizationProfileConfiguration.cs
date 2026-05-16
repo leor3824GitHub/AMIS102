@@ -19,6 +19,18 @@ public sealed class OrganizationProfileConfiguration : IEntityTypeConfiguration<
         builder.Property(x => x.Address).HasMaxLength(400);
         builder.Property(x => x.LogoUrl).HasMaxLength(500);
         builder.Property(x => x.AnnexECode).HasMaxLength(8);
+        builder.Property(x => x.RegionalManagerId);
+        builder.Property(x => x.RegionalManagerName).HasMaxLength(200);
+        builder.Property(x => x.RegionalManagerDesignation).HasMaxLength(200);
+        builder.Property(x => x.AssistantRegionalManagerId);
+        builder.Property(x => x.AssistantRegionalManagerName).HasMaxLength(200);
+        builder.Property(x => x.AssistantRegionalManagerDesignation).HasMaxLength(200);
+        builder.Property(x => x.AccountantId);
+        builder.Property(x => x.AccountantName).HasMaxLength(200);
+        builder.Property(x => x.AccountantDesignation).HasMaxLength(200);
+        builder.Property(x => x.SupervisingAdminOfficerId);
+        builder.Property(x => x.SupervisingAdminOfficerName).HasMaxLength(200);
+        builder.Property(x => x.SupervisingAdminOfficerDesignation).HasMaxLength(200);
         builder.Property(x => x.Version).IsConcurrencyToken();
 
         builder.HasIndex(x => x.TenantId).IsUnique();

@@ -55,7 +55,7 @@ public sealed class PurchaseRequestDomainTests
 
         var act = () => pr.Update(
             Guid.NewGuid(), null, "Updated purpose", PrType.Planned,
-            null, Guid.NewGuid(), null, null, null, null,
+            null, "Test User", null, null, null, null,
             []);
 
         act.ShouldThrow<InvalidOperationException>();
@@ -66,11 +66,11 @@ public sealed class PurchaseRequestDomainTests
             tenantId: "tenant-1",
             prNumber: "PR-2025-001",
             departmentId: Guid.NewGuid(),
-            section: null,
+            responsibilityCenterCode: null,
             purpose: "Purchase of office supplies",
             prType: PrType.Planned,
             justification: null,
-            requestedById: Guid.NewGuid(),
+            requestedByName: "Test User",
             saiNumber: null,
             saiDate: null,
             alobsNumber: null,

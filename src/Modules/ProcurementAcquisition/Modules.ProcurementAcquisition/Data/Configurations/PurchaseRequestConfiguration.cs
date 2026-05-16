@@ -17,13 +17,15 @@ public sealed class PurchaseRequestConfiguration : IEntityTypeConfiguration<Purc
         builder.Property(x => x.PrNumber).HasMaxLength(32).IsRequired();
         builder.Property(x => x.SaiNumber).HasMaxLength(64);
         builder.Property(x => x.AlobsNumber).HasMaxLength(64);
-        builder.Property(x => x.Section).HasMaxLength(160);
+        builder.Property(x => x.ResponsibilityCenterCode).HasMaxLength(160);
         builder.Property(x => x.Purpose).HasMaxLength(500).IsRequired();
         builder.Property(x => x.Justification).HasMaxLength(1000);
         builder.Property(x => x.RejectionReason).HasMaxLength(1000);
         builder.Property(x => x.CancellationReason).HasMaxLength(1000);
         builder.Property(x => x.PrType).IsRequired();
         builder.Property(x => x.Status).IsRequired();
+        builder.Property(x => x.RequestedByName).HasMaxLength(200).IsRequired();
+        builder.Property(x => x.ApprovedByName).HasMaxLength(200);
         // Version column kept for future xmin-based concurrency; not active until properly wired
 
         builder.HasIndex(x => new { x.TenantId, x.PrNumber }).IsUnique();

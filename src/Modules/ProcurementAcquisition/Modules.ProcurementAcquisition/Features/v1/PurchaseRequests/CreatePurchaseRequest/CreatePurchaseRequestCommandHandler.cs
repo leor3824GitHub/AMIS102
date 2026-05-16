@@ -14,54 +14,59 @@ public sealed class CreatePurchaseRequestCommandHandler(
     public async ValueTask<PurchaseRequestDto> Handle(CreatePurchaseRequestCommand command, CancellationToken cancellationToken)
     {
         var tenantId = GetRequiredTenantId();
-        var prNumber = await GeneratePrNumberAsync(tenantId, cancellationToken).ConfigureAwait(false);
+        var now = DateTime.UtcNow;
 
-        var lineItems = command.LineItems.Select(li =>
-            (li.Quantity, li.UnitOfIssue, li.ItemDescription, li.EstimatedUnitCost));
-
-        var pr = PurchaseRequest.Create(
-            tenantId,
-            prNumber,
-            command.DepartmentId,
-            command.Section,
-            command.Purpose,
-            command.PrType,
-            command.Justification,
-            command.RequestedById,
-            command.SaiNumber,
-            command.SaiDate,
-            command.AlobsNumber,
-            command.AlobsDate,
-            lineItems);
-
-        pr.CreatedBy = currentUser.GetUserId().ToString();
-
-        dbContext.PurchaseRequests.Add(pr);
-        await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-
-        return MapToDto(pr);
-    }
-
-    private async Task<string> GeneratePrNumberAsync(string tenantId, CancellationToken ct)
-    {
-        var year = DateTime.UtcNow.Year;
-        var prefix = $"PR-{year}-";
-
-        var lastNumber = await dbContext.PurchaseRequests
-            .IgnoreQueryFilters()
-            .Where(x => x.TenantId == tenantId && x.PrNumber.StartsWith(prefix))
-            .Select(x => x.PrNumber)
-            .OrderByDescending(x => x)
-            .FirstOrDefaultAsync(ct)
-            .ConfigureAwait(false);
-
-        var next = 1;
-        if (lastNumber != null && int.TryParse(lastNumber[prefix.Length..], out var last))
+        for (var attempt = 0; attempt < 5; attempt++)
         {
-            next = last + 1;
+            var sequence = await dbContext.PrNumberSequences
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(x => x.TenantId == tenantId && x.Year == now.Year, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (sequence is null)
+            {
+                sequence = PrNumberSequence.Create(tenantId, now.Year);
+                dbContext.PrNumberSequences.Add(sequence);
+            }
+
+            var serial = sequence.NextSerial();
+            var prNumber = $"{now.Year:D4}-{now.Month:D2}-{serial:D4}";
+
+            var lineItems = command.LineItems.Select(li =>
+                (li.Quantity, li.UnitOfIssue, li.ItemDescription, li.EstimatedUnitCost));
+
+            var pr = PurchaseRequest.Create(
+                tenantId,
+                prNumber,
+                command.DepartmentId,
+                command.ResponsibilityCenterCode,
+                command.Purpose,
+                command.PrType,
+                command.Justification,
+                command.RequestedByName,
+                command.SaiNumber,
+                command.SaiDate,
+                command.AlobsNumber,
+                command.AlobsDate,
+                lineItems);
+
+            pr.CreatedBy = currentUser.GetUserId().ToString();
+            dbContext.PurchaseRequests.Add(pr);
+
+            try
+            {
+                await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                return MapToDto(pr);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                // Another request modified the sequence row between our read and save.
+                // Clear tracked entities and retry with the latest sequence value.
+                dbContext.ChangeTracker.Clear();
+            }
         }
 
-        return $"{prefix}{next:0000}";
+        throw new InvalidOperationException("Failed to allocate a unique PR number. Please try again.");
     }
 
     private string GetRequiredTenantId() =>
@@ -81,15 +86,13 @@ public sealed class CreatePurchaseRequestCommandHandler(
             pr.AlobsDate,
             pr.DepartmentId,
             string.Empty, // DepartmentName resolved by query handler
-            pr.Section,
+            pr.ResponsibilityCenterCode,
             pr.Purpose,
             pr.PrType,
             pr.Justification,
             pr.Status,
-            pr.RequestedById,
-            string.Empty, // RequestedByName resolved by query handler
-            pr.ApprovedById,
-            null,
+            pr.RequestedByName,
+            pr.ApprovedByName,
             pr.LineItems.Select(li => new PurchaseRequestLineItemDto(
                 li.ItemNo, li.Quantity, li.UnitOfIssue, li.ItemDescription,
                 li.EstimatedUnitCost, li.EstimatedTotalCost)).ToList(),
@@ -98,4 +101,3 @@ public sealed class CreatePurchaseRequestCommandHandler(
             pr.LastModifiedOnUtc);
     }
 }
-

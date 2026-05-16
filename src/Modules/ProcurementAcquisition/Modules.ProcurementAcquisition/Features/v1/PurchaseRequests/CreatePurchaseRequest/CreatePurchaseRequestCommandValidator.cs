@@ -9,7 +9,7 @@ public sealed class CreatePurchaseRequestCommandValidator : AbstractValidator<Cr
     {
         RuleFor(x => x.DepartmentId).NotEmpty().WithMessage("Department is required.");
         RuleFor(x => x.Purpose).NotEmpty().MaximumLength(500);
-        RuleFor(x => x.RequestedById).NotEmpty().WithMessage("Requested by employee is required.");
+        RuleFor(x => x.RequestedByName).NotEmpty().MaximumLength(200).WithMessage("Requested by name is required.");
         RuleFor(x => x.Justification)
             .NotEmpty().When(x => x.PrType == PrType.Unplanned)
             .WithMessage("Justification is required for Unplanned purchase requests.");

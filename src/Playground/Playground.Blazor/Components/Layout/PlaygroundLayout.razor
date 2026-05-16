@@ -22,6 +22,7 @@
 @inject AMIS.Playground.Blazor.ApiClient.IIdentityClient IdentityClient
 @inject AMIS.Playground.Blazor.ApiClient.IOrganizationProfileClient OrgProfileClient
 @inject IUserProfileState UserProfileState
+@inject IOrganizationProfileState OrgProfileState
 @inject IDialogService DialogService
 @inject IAuthStateNotifier AuthStateNotifier
 @inject IJSRuntime JS
@@ -274,6 +275,7 @@ else
         try
         {
             var profile = await OrgProfileClient.GetAsync();
+            OrgProfileState.SetProfile(profile);
             if (profile is null || string.IsNullOrWhiteSpace(profile.Name))
             {
                 var options = new DialogOptions
@@ -289,7 +291,7 @@ else
         }
         catch
         {
-            // Silently skip — don't block the user if the API is unavailable
+            // Silently skip ï¿½ don't block the user if the API is unavailable
         }
     }
 

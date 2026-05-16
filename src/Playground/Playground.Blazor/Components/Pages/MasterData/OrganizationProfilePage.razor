@@ -4,6 +4,7 @@
 @using MudBlazor
 @inject IOrganizationProfileClient OrgProfileClient
 @inject ILookupClient LookupClient
+@inject IOrganizationProfileState OrgProfileState
 @inject ISnackbar Snackbar
 
 <AMISPageHeader Title="Organization Profile"
@@ -27,7 +28,7 @@
                               CoerceText="true"
                               CoerceValue="false"
                               MinCharacters="1"
-                              HelperText="Type to search offices � selecting one auto-fills the office code" />
+                              HelperText="Type to search offices — selecting one auto-fills the office code" />
 
                 <MudTextField @bind-Value="_form.ShortName"
                               Label="Short Name / Acronym"
@@ -59,20 +60,99 @@
                               Placeholder="e.g. 00B"
                               Adornment="Adornment.Start"
                               AdornmentIcon="@Icons.Material.Filled.Tag"
-                              HelperText="Auto-filled from office selection � used in property code generation" />
-
-                <MudButton Variant="Variant.Filled"
-                           Color="Color.Primary"
-                           OnClick="SaveAsync"
-                           Disabled="_busy || string.IsNullOrWhiteSpace(_form.Name)"
-                           Class="mt-1">
-                    @if (_busy)
-                    {
-                        <MudProgressCircular Size="Size.Small" Class="mr-2" />
-                    }
-                    Save
-                </MudButton>
+                              HelperText="Auto-filled from office selection — used in property code generation" />
             </MudStack>
+        </MudPaper>
+
+        <MudPaper Elevation="1" Class="pa-4 mt-3">
+            <MudText Typo="Typo.h6" Class="mb-3">Key Officers</MudText>
+            <MudStack Spacing="3">
+                <MudAutocomplete T="EmployeeReferenceDto"
+                                 Value="_form.RegionalManager"
+                                 ValueChanged="e => _form.RegionalManager = e"
+                                 Label="Regional Manager II — Name"
+                                 Variant="Variant.Outlined"
+                                 SearchFunc="SearchEmployeesAsync"
+                                 ToStringFunc="EmployeeDisplayName"
+                                 ResetValueOnEmptyText="true"
+                                 CoerceText="true"
+                                 MinCharacters="1"
+                                 Clearable="true"
+                                 HelperText="Type to search employees" />
+                <MudTextField @bind-Value="_form.RegionalManagerDesignation"
+                              Label="Regional Manager II — Designation"
+                              Variant="Variant.Outlined"
+                              MaxLength="200"
+                              Placeholder="e.g. Regional Manager II, Acting Regional Manager II" />
+
+                <MudAutocomplete T="EmployeeReferenceDto"
+                                 Value="_form.AssistantRegionalManager"
+                                 ValueChanged="e => _form.AssistantRegionalManager = e"
+                                 Label="Assistant Regional Manager — Name"
+                                 Variant="Variant.Outlined"
+                                 SearchFunc="SearchEmployeesAsync"
+                                 ToStringFunc="EmployeeDisplayName"
+                                 ResetValueOnEmptyText="true"
+                                 CoerceText="true"
+                                 MinCharacters="1"
+                                 Clearable="true"
+                                 HelperText="Type to search employees" />
+                <MudTextField @bind-Value="_form.AssistantRegionalManagerDesignation"
+                              Label="Assistant Regional Manager — Designation"
+                              Variant="Variant.Outlined"
+                              MaxLength="200"
+                              Placeholder="e.g. Assistant Regional Manager, Acting Assistant Regional Manager" />
+
+                <MudAutocomplete T="EmployeeReferenceDto"
+                                 Value="_form.Accountant"
+                                 ValueChanged="e => _form.Accountant = e"
+                                 Label="Accountant IV — Name"
+                                 Variant="Variant.Outlined"
+                                 SearchFunc="SearchEmployeesAsync"
+                                 ToStringFunc="EmployeeDisplayName"
+                                 ResetValueOnEmptyText="true"
+                                 CoerceText="true"
+                                 MinCharacters="1"
+                                 Clearable="true"
+                                 HelperText="Type to search employees" />
+                <MudTextField @bind-Value="_form.AccountantDesignation"
+                              Label="Accountant IV — Designation"
+                              Variant="Variant.Outlined"
+                              MaxLength="200"
+                              Placeholder="e.g. Accountant IV, OIC-Accountant IV" />
+
+                <MudAutocomplete T="EmployeeReferenceDto"
+                                 Value="_form.SupervisingAdminOfficer"
+                                 ValueChanged="e => _form.SupervisingAdminOfficer = e"
+                                 Label="Supervising Administrative Officer — Name"
+                                 Variant="Variant.Outlined"
+                                 SearchFunc="SearchEmployeesAsync"
+                                 ToStringFunc="EmployeeDisplayName"
+                                 ResetValueOnEmptyText="true"
+                                 CoerceText="true"
+                                 MinCharacters="1"
+                                 Clearable="true"
+                                 HelperText="Type to search employees" />
+                <MudTextField @bind-Value="_form.SupervisingAdminOfficerDesignation"
+                              Label="Supervising Administrative Officer — Designation"
+                              Variant="Variant.Outlined"
+                              MaxLength="200"
+                              Placeholder="e.g. Supervising Administrative Officer, OIC-Admin Officer" />
+            </MudStack>
+        </MudPaper>
+
+        <MudPaper Elevation="0" Class="pa-0 mt-3">
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       OnClick="SaveAsync"
+                       Disabled="_busy || string.IsNullOrWhiteSpace(_form.Name)"
+                       FullWidth="true">
+                @if (_busy)
+                {
+                    <MudProgressCircular Size="Size.Small" Class="mr-2" />
+                }
+                Save
+            </MudButton>
         </MudPaper>
     </MudItem>
 
@@ -93,6 +173,45 @@
                         <MudText Typo="Typo.body2">@_form.Address</MudText>
                     }
                 </MudStack>
+
+                @if (_form.RegionalManager is not null || _form.AssistantRegionalManager is not null ||
+                     _form.Accountant is not null || _form.SupervisingAdminOfficer is not null)
+                {
+                    <MudDivider Class="my-3" />
+                    <MudText Typo="Typo.subtitle2" Class="mb-2">Key Officers</MudText>
+                    <MudSimpleTable Dense="true">
+                        <tbody>
+                            @if (_form.RegionalManager is not null)
+                            {
+                                <tr>
+                                    <td><MudText Typo="Typo.caption" Color="Color.Secondary">@(NullIfEmpty(_form.RegionalManagerDesignation) ?? "Regional Manager II")</MudText></td>
+                                    <td><MudText Typo="Typo.body2"><b>@($"{_form.RegionalManager.FirstName} {_form.RegionalManager.LastName}")</b></MudText></td>
+                                </tr>
+                            }
+                            @if (_form.AssistantRegionalManager is not null)
+                            {
+                                <tr>
+                                    <td><MudText Typo="Typo.caption" Color="Color.Secondary">@(NullIfEmpty(_form.AssistantRegionalManagerDesignation) ?? "Assistant Regional Manager")</MudText></td>
+                                    <td><MudText Typo="Typo.body2"><b>@($"{_form.AssistantRegionalManager.FirstName} {_form.AssistantRegionalManager.LastName}")</b></MudText></td>
+                                </tr>
+                            }
+                            @if (_form.Accountant is not null)
+                            {
+                                <tr>
+                                    <td><MudText Typo="Typo.caption" Color="Color.Secondary">@(NullIfEmpty(_form.AccountantDesignation) ?? "Accountant IV")</MudText></td>
+                                    <td><MudText Typo="Typo.body2"><b>@($"{_form.Accountant.FirstName} {_form.Accountant.LastName}")</b></MudText></td>
+                                </tr>
+                            }
+                            @if (_form.SupervisingAdminOfficer is not null)
+                            {
+                                <tr>
+                                    <td><MudText Typo="Typo.caption" Color="Color.Secondary">@(NullIfEmpty(_form.SupervisingAdminOfficerDesignation) ?? "Supervising Administrative Officer")</MudText></td>
+                                    <td><MudText Typo="Typo.body2"><b>@($"{_form.SupervisingAdminOfficer.FirstName} {_form.SupervisingAdminOfficer.LastName}")</b></MudText></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </MudSimpleTable>
+                }
             </MudPaper>
         </MudItem>
     }
@@ -116,14 +235,46 @@
                     ShortName = existing.ShortName ?? string.Empty,
                     Address = existing.Address ?? string.Empty,
                     LogoUrl = existing.LogoUrl ?? string.Empty,
-                    AnnexECode = existing.AnnexECode ?? string.Empty
+                    AnnexECode = existing.AnnexECode ?? string.Empty,
+                    RegionalManagerDesignation = existing.RegionalManagerDesignation ?? string.Empty,
+                    AssistantRegionalManagerDesignation = existing.AssistantRegionalManagerDesignation ?? string.Empty,
+                    AccountantDesignation = existing.AccountantDesignation ?? string.Empty,
+                    SupervisingAdminOfficerDesignation = existing.SupervisingAdminOfficerDesignation ?? string.Empty
                 };
+
+                await LoadOfficersAsync(existing);
             }
         }
         catch
         {
-            // No profile yet � start with empty form
+            // No profile yet — start with empty form
         }
+    }
+
+    private async Task LoadOfficersAsync(OrganizationProfileDto profile)
+    {
+        var tasks = new List<Task>();
+
+        if (profile.RegionalManagerId.HasValue)
+            tasks.Add(LoadEmployeeAsync(profile.RegionalManagerId.Value, e => _form.RegionalManager = e));
+        if (profile.AssistantRegionalManagerId.HasValue)
+            tasks.Add(LoadEmployeeAsync(profile.AssistantRegionalManagerId.Value, e => _form.AssistantRegionalManager = e));
+        if (profile.AccountantId.HasValue)
+            tasks.Add(LoadEmployeeAsync(profile.AccountantId.Value, e => _form.Accountant = e));
+        if (profile.SupervisingAdminOfficerId.HasValue)
+            tasks.Add(LoadEmployeeAsync(profile.SupervisingAdminOfficerId.Value, e => _form.SupervisingAdminOfficer = e));
+
+        await Task.WhenAll(tasks);
+    }
+
+    private async Task LoadEmployeeAsync(Guid id, Action<EmployeeReferenceDto> setter)
+    {
+        try
+        {
+            var employee = await LookupClient.EmployeesGetAsync(id);
+            if (employee is not null) setter(employee);
+        }
+        catch { }
     }
 
     private async Task<IEnumerable<string>> SearchOfficeNamesAsync(string value, CancellationToken ct)
@@ -136,6 +287,25 @@
                 .Where(o => !string.IsNullOrWhiteSpace(o.Name))
                 .ToDictionary(o => o.Name!, o => o, StringComparer.OrdinalIgnoreCase);
             return _officesByName.Keys.OrderBy(n => n);
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    private async Task<IEnumerable<EmployeeReferenceDto>> SearchEmployeesAsync(string value, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return [];
+        try
+        {
+            var result = await LookupClient.EmployeesGetAsync(
+                keyword: value,
+                isActive: true,
+                pageNumber: 1,
+                pageSize: 20,
+                cancellationToken: ct);
+            return result?.Items ?? [];
         }
         catch
         {
@@ -165,9 +335,22 @@
                 NullIfEmpty(_form.ShortName),
                 NullIfEmpty(_form.Address),
                 NullIfEmpty(_form.LogoUrl),
-                NullIfEmpty(_form.AnnexECode));
+                NullIfEmpty(_form.AnnexECode),
+                _form.RegionalManager?.Id,
+                _form.RegionalManager is not null ? $"{_form.RegionalManager.FirstName} {_form.RegionalManager.LastName}" : null,
+                NullIfEmpty(_form.RegionalManagerDesignation),
+                _form.AssistantRegionalManager?.Id,
+                _form.AssistantRegionalManager is not null ? $"{_form.AssistantRegionalManager.FirstName} {_form.AssistantRegionalManager.LastName}" : null,
+                NullIfEmpty(_form.AssistantRegionalManagerDesignation),
+                _form.Accountant?.Id,
+                _form.Accountant is not null ? $"{_form.Accountant.FirstName} {_form.Accountant.LastName}" : null,
+                NullIfEmpty(_form.AccountantDesignation),
+                _form.SupervisingAdminOfficer?.Id,
+                _form.SupervisingAdminOfficer is not null ? $"{_form.SupervisingAdminOfficer.FirstName} {_form.SupervisingAdminOfficer.LastName}" : null,
+                NullIfEmpty(_form.SupervisingAdminOfficerDesignation));
 
-            await OrgProfileClient.UpsertAsync(command);
+            var result = await OrgProfileClient.UpsertAsync(command);
+            OrgProfileState.SetProfile(result);
             Snackbar.Add("Organization profile saved.", Severity.Success);
         }
         catch (Exception ex)
@@ -180,6 +363,9 @@
         }
     }
 
+    private static string EmployeeDisplayName(EmployeeReferenceDto? e) =>
+        e is null ? string.Empty : $"{e.FirstName} {e.LastName}";
+
     private static string? NullIfEmpty(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
@@ -190,6 +376,13 @@
         public string Address { get; set; } = string.Empty;
         public string LogoUrl { get; set; } = string.Empty;
         public string AnnexECode { get; set; } = string.Empty;
+        public EmployeeReferenceDto? RegionalManager { get; set; }
+        public string RegionalManagerDesignation { get; set; } = string.Empty;
+        public EmployeeReferenceDto? AssistantRegionalManager { get; set; }
+        public string AssistantRegionalManagerDesignation { get; set; } = string.Empty;
+        public EmployeeReferenceDto? Accountant { get; set; }
+        public string AccountantDesignation { get; set; } = string.Empty;
+        public EmployeeReferenceDto? SupervisingAdminOfficer { get; set; }
+        public string SupervisingAdminOfficerDesignation { get; set; } = string.Empty;
     }
 }
-

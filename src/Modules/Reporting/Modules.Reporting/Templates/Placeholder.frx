@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Report ScriptLanguage="CSharp" ReportInfo.Created="05/16/2026 00:00:00" ReportInfo.Modified="05/16/2026 00:00:00" ReportInfo.CreatorVersion="2024.3.0">
+  <Dictionary>
+  </Dictionary>
+  <ReportPage Name="Page1" Watermark.Font="Arial, 60pt" PaperWidth="210" PaperHeight="297">
+    <ReportTitleBand Name="ReportTitle1" Width="718.2" Height="56.7">
+      <TextObject Name="Text1" Left="0" Top="9.45" Width="718.2" Height="37.8"
+        Text="Placeholder Report — Replace with actual .frx template"
+        Font="Arial, 14pt, style=Bold" HorzAlign="Center" VertAlign="Center" />
+    </ReportTitleBand>
+    <PageFooterBand Name="PageFooter1" Top="779.4" Width="718.2" Height="18.9">
+      <TextObject Name="TextPage" Left="0" Top="0" Width="718.2" Height="18.9"
+        Text="Page [Page#] of [TotalPages#]"
+        Font="Arial, 8pt" HorzAlign="Right" />
+    </PageFooterBand>
+  </ReportPage>
+</Report>

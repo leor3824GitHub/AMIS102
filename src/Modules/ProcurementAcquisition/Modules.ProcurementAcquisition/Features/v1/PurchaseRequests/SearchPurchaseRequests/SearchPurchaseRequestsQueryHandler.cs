@@ -49,7 +49,7 @@ public sealed class SearchPurchaseRequestsQueryHandler(ProcurementDbContext dbCo
                 x.PrNumber,
                 x.PrDate,
                 string.Empty,
-                x.Section,
+                x.ResponsibilityCenterCode,
                 x.Purpose,
                 x.PrType,
                 x.Status,

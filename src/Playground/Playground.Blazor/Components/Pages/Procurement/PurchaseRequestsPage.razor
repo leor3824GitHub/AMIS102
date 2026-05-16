@@ -11,6 +11,8 @@
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 @inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Navigation
+@inject IEmployeesClient EmployeesClient
 
 <AMISPageHeader Title="Purchase Requests" Description="Manage procurement purchase requests (PR)" />
 
@@ -26,35 +28,34 @@
                                      ValueChanged="OnDepartmentChanged"
                                      SearchFunc="SearchDepartments"
                                      ToStringFunc="FormatDepartment"
-                                     Label="Department"
+                                     Label="Department *"
                                      Variant="Variant.Outlined"
                                      Placeholder="Search department..."
-                                     Required="true"
                                      Clearable="true"
                                      CoerceValue="true"
-                                     ResetValueOnEmptyText="true" />
-                    <MudTextField @bind-Value="_form.Section" Label="Section" Variant="Variant.Outlined" />
-                    <MudTextField @bind-Value="_form.Purpose" Label="Purpose / Title" Variant="Variant.Outlined" Required="true" Lines="2" />
+                                     ResetValueOnEmptyText="true"
+                                     Error="@(_submitted && _form.Department is null)"
+                                     ErrorText="Department is required." />
+                    <MudTextField @bind-Value="_form.ResponsibilityCenterCode" Label="Responsibility Center Code" Variant="Variant.Outlined" />
+                    <MudTextField @bind-Value="_form.Purpose"
+                                  Label="Purpose / Title *"
+                                  Variant="Variant.Outlined"
+                                  Lines="2"
+                                  Error="@(_submitted && string.IsNullOrWhiteSpace(_form.Purpose))"
+                                  ErrorText="Purpose is required." />
                     <MudSelect @bind-Value="_form.PrType" Label="PR Type" Variant="Variant.Outlined" T="PrType">
                         <MudSelectItem Value="PrType.Planned">Planned</MudSelectItem>
                         <MudSelectItem Value="PrType.Unplanned">Unplanned</MudSelectItem>
                     </MudSelect>
                     @if (_form.PrType == PrType.Unplanned)
                     {
-                        <MudTextField @bind-Value="_form.Justification" Label="Justification" Variant="Variant.Outlined" Lines="2" Required="true" />
+                        <MudTextField @bind-Value="_form.Justification"
+                                      Label="Justification *"
+                                      Variant="Variant.Outlined"
+                                      Lines="2"
+                                      Error="@(_submitted && string.IsNullOrWhiteSpace(_form.Justification))"
+                                      ErrorText="Justification is required for unplanned requests." />
                     }
-                    <MudAutocomplete T="EmployeeReferenceDto"
-                                     Value="_form.RequestedBy"
-                                     ValueChanged="OnRequestedByChanged"
-                                     SearchFunc="SearchEmployees"
-                                     ToStringFunc="FormatEmployee"
-                                     Label="Requested By"
-                                     Variant="Variant.Outlined"
-                                     Placeholder="Search employee..."
-                                     Required="true"
-                                     Clearable="true"
-                                     CoerceValue="true"
-                                     ResetValueOnEmptyText="true" />
                     <MudGrid Spacing="1">
                         <MudItem xs="6"><MudTextField @bind-Value="_form.SaiNumber" Label="SAI Number" Variant="Variant.Outlined" /></MudItem>
                         <MudItem xs="6"><MudDatePicker @bind-Date="_form.SaiDateNullable" Label="SAI Date" Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" /></MudItem>
@@ -63,6 +64,10 @@
                     </MudGrid>
 
                     <MudText Typo="Typo.subtitle2" Class="mt-2">Line Items</MudText>
+                    @if (_submitted && !_form.LineItems.Any(li => !string.IsNullOrWhiteSpace(li.ItemDescription)))
+                    {
+                        <MudAlert Severity="Severity.Error" Dense="true">At least one line item with a description is required.</MudAlert>
+                    }
                     @for (var i = 0; i < _form.LineItems.Count; i++)
                     {
                         var idx = i;
@@ -76,7 +81,12 @@
                             </MudStack>
                             <MudGrid Spacing="1">
                                 <MudItem xs="12">
-                                    <MudTextField @bind-Value="li.ItemDescription" Label="Description" Variant="Variant.Outlined" Dense="true" />
+                                    <MudTextField @bind-Value="li.ItemDescription"
+                                                  Label="Description *"
+                                                  Variant="Variant.Outlined"
+                                                  Dense="true"
+                                                  Error="@(_submitted && string.IsNullOrWhiteSpace(li.ItemDescription))"
+                                                  ErrorText="Description is required." />
                                 </MudItem>
                                 <MudItem xs="4">
                                     <MudNumericField @bind-Value="li.Quantity" Label="Qty" Variant="Variant.Outlined" Dense="true" Min="0.01m" />
@@ -182,6 +192,10 @@
                                                 <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" Color="Color.Default"
                                                                OnClick="@(async () => await ShowDetailsAsync(item.Id))" />
                                             </MudTooltip>
+                                            <MudTooltip Text="Print">
+                                                <MudIconButton Icon="@Icons.Material.Filled.Print" Size="Size.Small" Color="Color.Secondary"
+                                                               OnClick="@(() => Navigation.NavigateTo($"/procurement/purchase-requests/{item.Id}/print"))" />
+                                            </MudTooltip>
                                             @if (item.Status == PurchaseRequestStatus.Draft)
                                             {
                                                 <MudTooltip Text="Edit">
@@ -232,11 +246,11 @@
     private List<PurchaseRequestSummaryDto> _items = [];
     private PurchaseRequestDto? _editing;
     private PrForm _form = new();
-    private bool _busy, _loaded;
+    private bool _busy, _loaded, _submitted;
     private string _keyword = string.Empty;
     private string _statusFilter = "All";
     private int _page = 1, _pageSize = 15, _totalCount;
-    private Guid? _currentUserId;
+    private string _currentUserEmployeeName = string.Empty;
     private List<DepartmentReferenceDto> _departments = [];
 
     private static readonly string[] _statusFilters = ["All", "Draft", "Submitted", "Approved", "Rejected", "Cancelled"];
@@ -245,7 +259,18 @@
     {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var idStr = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        _currentUserId = Guid.TryParse(idStr, out var g) ? g : null;
+
+        if (!string.IsNullOrWhiteSpace(idStr))
+        {
+            try
+            {
+                var employee = await EmployeesClient.ByIdentityAsync(idStr);
+                if (employee is not null)
+                    _currentUserEmployeeName = $"{employee.FirstName} {employee.LastName}";
+            }
+            catch { }
+        }
+
         await LoadDepartmentsAsync();
         await LoadAsync();
     }
@@ -277,61 +302,20 @@
         return Task.FromResult(results);
     }
 
-    private async Task<IEnumerable<EmployeeReferenceDto>> SearchEmployees(string value, CancellationToken token)
-    {
-        try
-        {
-            var response = await LookupClient.EmployeesGetAsync(
-                keyword: string.IsNullOrWhiteSpace(value) ? null : value,
-                isActive: true,
-                pageNumber: 1,
-                pageSize: 20,
-                cancellationToken: token);
-
-            return response.Items ?? Enumerable.Empty<EmployeeReferenceDto>();
-        }
-        catch
-        {
-            return Enumerable.Empty<EmployeeReferenceDto>();
-        }
-    }
-
     private Task OnDepartmentChanged(DepartmentReferenceDto? department)
     {
         _form.Department = department;
         return Task.CompletedTask;
     }
 
-    private Task OnRequestedByChanged(EmployeeReferenceDto? employee)
-    {
-        _form.RequestedBy = employee;
-        return Task.CompletedTask;
-    }
-
     private static string FormatDepartment(DepartmentReferenceDto? department)
     {
         if (department is null)
-        {
             return string.Empty;
-        }
 
         return string.IsNullOrWhiteSpace(department.Code)
             ? department.Name
             : $"{department.Code} - {department.Name}";
-    }
-
-    private static string FormatEmployee(EmployeeReferenceDto? employee)
-    {
-        if (employee is null)
-        {
-            return string.Empty;
-        }
-
-        var fullName = $"{employee.FirstName} {employee.LastName}".Trim();
-        var primary = string.IsNullOrWhiteSpace(fullName) ? employee.EmployeeNumber : fullName;
-        return string.IsNullOrWhiteSpace(employee.EmployeeNumber)
-            ? primary
-            : $"{primary} ({employee.EmployeeNumber})";
     }
 
     private async Task LoadAsync()
@@ -357,7 +341,20 @@
 
     private async Task SaveAsync()
     {
-        if (!IsFormValid()) { Snackbar.Add("Fill in all required fields and add at least one line item.", Severity.Warning); return; }
+        _submitted = true;
+
+        if (!IsFormValid())
+        {
+            Snackbar.Add("Please fill in all required fields.", Severity.Warning);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_currentUserEmployeeName))
+        {
+            Snackbar.Add("Could not resolve your employee record. Please re-login.", Severity.Warning);
+            return;
+        }
+
         _busy = true;
         try
         {
@@ -368,16 +365,16 @@
             if (_editing is null)
             {
                 await Client.CreateAsync(new CreatePurchaseRequestCommand(
-                    _form.Department!.Id, _form.Section, _form.Purpose, _form.PrType, _form.Justification,
-                    _form.RequestedBy!.Id, _form.SaiNumber, ToDateOnly(_form.SaiDateNullable),
+                    _form.Department!.Id, _form.ResponsibilityCenterCode, _form.Purpose, _form.PrType, _form.Justification,
+                    _currentUserEmployeeName, _form.SaiNumber, ToDateOnly(_form.SaiDateNullable),
                     _form.AlobsNumber, ToDateOnly(_form.AlobsDateNullable), lineItems));
                 Snackbar.Add("Purchase request created.", Severity.Success);
             }
             else
             {
                 await Client.UpdateAsync(_editing.Id, new UpdatePurchaseRequestCommand(
-                    _editing.Id, _form.Department!.Id, _form.Section, _form.Purpose, _form.PrType, _form.Justification,
-                    _form.RequestedBy!.Id, _form.SaiNumber, ToDateOnly(_form.SaiDateNullable),
+                    _editing.Id, _form.Department!.Id, _form.ResponsibilityCenterCode, _form.Purpose, _form.PrType, _form.Justification,
+                    _editing.RequestedByName ?? _currentUserEmployeeName, _form.SaiNumber, ToDateOnly(_form.SaiDateNullable),
                     _form.AlobsNumber, ToDateOnly(_form.AlobsDateNullable), lineItems));
                 Snackbar.Add("Purchase request updated.", Severity.Success);
             }
@@ -399,39 +396,20 @@
             department = _departments.FirstOrDefault(d => d.Id == pr.DepartmentId);
             if (department is null)
             {
-                try
-                {
-                    department = await MasterDataClient.DepartmentsGetAsync(pr.DepartmentId);
-                }
-                catch
-                {
-                    // Keep null and let validation handle it if lookup data is unavailable.
-                }
+                try { department = await MasterDataClient.DepartmentsGetAsync(pr.DepartmentId); }
+                catch { }
             }
         }
 
-        EmployeeReferenceDto? requestedBy = null;
-        if (pr.RequestedById != Guid.Empty)
-        {
-            try
-            {
-                requestedBy = await LookupClient.EmployeesGetAsync(pr.RequestedById);
-            }
-            catch
-            {
-                // Keep null and let validation handle it if lookup data is unavailable.
-            }
-        }
-
+        _submitted = false;
         _editing = pr;
         _form = new PrForm
         {
             Department = department,
-            Section = pr.Section,
+            ResponsibilityCenterCode = pr.ResponsibilityCenterCode,
             Purpose = pr.Purpose,
             PrType = pr.PrType,
             Justification = pr.Justification,
-            RequestedBy = requestedBy,
             SaiNumber = pr.SaiNumber,
             SaiDateNullable = pr.SaiDate?.ToDateTime(TimeOnly.MinValue),
             AlobsNumber = pr.AlobsNumber,
@@ -451,24 +429,23 @@
         try
         {
             var pr = await Client.GetAsync(id);
-            if (pr is null)
+            if (pr is null) { Snackbar.Add("PR not found.", Severity.Error); return; }
+
+            var departmentName = _departments.FirstOrDefault(d => d.Id == pr.DepartmentId)?.Name;
+            if (string.IsNullOrEmpty(departmentName) && pr.DepartmentId != Guid.Empty)
             {
-                Snackbar.Add("PR not found.", Severity.Error);
-                return;
+                try { departmentName = (await MasterDataClient.DepartmentsGetAsync(pr.DepartmentId))?.Name; }
+                catch { }
             }
+            if (!string.IsNullOrEmpty(departmentName))
+                pr = pr with { DepartmentName = departmentName };
 
             var parameters = new DialogParameters<PurchaseRequestDetailsDialog>
             {
                 { x => x.PurchaseRequest, pr }
             };
 
-            var options = new DialogOptions
-            {
-                MaxWidth = MaxWidth.Large,
-                FullWidth = true,
-                CloseButton = true
-            };
-
+            var options = new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true, CloseButton = true };
             await DialogService.ShowAsync<PurchaseRequestDetailsDialog>($"PR Details - {pr.PrNumber}", parameters, options);
         }
         catch (Exception ex)
@@ -487,7 +464,7 @@
 
     private async Task ApproveAsync(Guid id)
     {
-        if (_currentUserId is null)
+        if (string.IsNullOrWhiteSpace(_currentUserEmployeeName))
         {
             Snackbar.Add("Cannot determine current user identity. Please re-login.", Severity.Warning);
             return;
@@ -496,7 +473,7 @@
         if (ok is not true) return;
         try
         {
-            await Client.ApproveAsync(id, _currentUserId.Value);
+            await Client.ApproveAsync(id, _currentUserEmployeeName);
             Snackbar.Add("PR approved.", Severity.Success);
             await LoadAsync();
         }
@@ -530,14 +507,19 @@
 
     private void AddLineItem() => _form.LineItems.Add(new LineItemRow());
     private void RemoveLineItem(int idx) { if (_form.LineItems.Count > 1) _form.LineItems.RemoveAt(idx); }
-    private void CancelEdit() { _editing = null; _form = new(); }
-    private void ResetForm() { _editing = null; _form = new(); }
+    private void CancelEdit() { _editing = null; _submitted = false; _form = new(); }
+    private void ResetForm() { _editing = null; _submitted = false; _form = new(); }
 
     private bool IsFormValid() =>
         _form.Department is not null &&
-        _form.RequestedBy is not null &&
         !string.IsNullOrWhiteSpace(_form.Purpose) &&
-        _form.LineItems.Any(li => !string.IsNullOrWhiteSpace(li.ItemDescription));
+        (_form.PrType != PrType.Unplanned || !string.IsNullOrWhiteSpace(_form.Justification)) &&
+        _form.LineItems.Count > 0 &&
+        _form.LineItems.All(li =>
+            !string.IsNullOrWhiteSpace(li.ItemDescription) &&
+            !string.IsNullOrWhiteSpace(li.UnitOfIssue) &&
+            li.Quantity > 0 &&
+            li.EstimatedUnitCost > 0);
 
     private static DateOnly? ToDateOnly(DateTime? d) => d.HasValue ? DateOnly.FromDateTime(d.Value) : null;
 
@@ -563,11 +545,10 @@
     private sealed class PrForm
     {
         public DepartmentReferenceDto? Department { get; set; }
-        public string? Section { get; set; }
+        public string? ResponsibilityCenterCode { get; set; }
         public string Purpose { get; set; } = string.Empty;
         public PrType PrType { get; set; } = PrType.Planned;
         public string? Justification { get; set; }
-        public EmployeeReferenceDto? RequestedBy { get; set; }
         public string? SaiNumber { get; set; }
         public DateTime? SaiDateNullable { get; set; }
         public string? AlobsNumber { get; set; }
@@ -583,4 +564,3 @@
         public decimal EstimatedUnitCost { get; set; }
     }
 }
-

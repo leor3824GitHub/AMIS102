@@ -8,7 +8,19 @@ public sealed record OrganizationProfileDto(
     string? ShortName,
     string? Address,
     string? LogoUrl,
-    string? AnnexECode);
+    string? AnnexECode,
+    Guid? RegionalManagerId = null,
+    string? RegionalManagerName = null,
+    string? RegionalManagerDesignation = null,
+    Guid? AssistantRegionalManagerId = null,
+    string? AssistantRegionalManagerName = null,
+    string? AssistantRegionalManagerDesignation = null,
+    Guid? AccountantId = null,
+    string? AccountantName = null,
+    string? AccountantDesignation = null,
+    Guid? SupervisingAdminOfficerId = null,
+    string? SupervisingAdminOfficerName = null,
+    string? SupervisingAdminOfficerDesignation = null);
 
 public sealed record GetOrganizationProfileQuery() : IQuery<OrganizationProfileDto?>;
 
@@ -17,5 +29,17 @@ public sealed record UpsertOrganizationProfileCommand(
     string? ShortName,
     string? Address,
     string? LogoUrl,
-    string? AnnexECode = null) : ICommand<OrganizationProfileDto>;
+    string? AnnexECode = null,
+    Guid? RegionalManagerId = null,
+    string? RegionalManagerName = null,
+    string? RegionalManagerDesignation = null,
+    Guid? AssistantRegionalManagerId = null,
+    string? AssistantRegionalManagerName = null,
+    string? AssistantRegionalManagerDesignation = null,
+    Guid? AccountantId = null,
+    string? AccountantName = null,
+    string? AccountantDesignation = null,
+    Guid? SupervisingAdminOfficerId = null,
+    string? SupervisingAdminOfficerName = null,
+    string? SupervisingAdminOfficerDesignation = null) : ICommand<OrganizationProfileDto>;
 

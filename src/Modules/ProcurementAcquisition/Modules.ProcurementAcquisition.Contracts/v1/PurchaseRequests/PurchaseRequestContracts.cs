@@ -44,14 +44,12 @@ public sealed record PurchaseRequestDto(
     DateOnly? AlobsDate,
     Guid DepartmentId,
     string DepartmentName,
-    string? Section,
+    string? ResponsibilityCenterCode,
     string Purpose,
     PrType PrType,
     string? Justification,
     PurchaseRequestStatus Status,
-    Guid RequestedById,
     string RequestedByName,
-    Guid? ApprovedById,
     string? ApprovedByName,
     IReadOnlyList<PurchaseRequestLineItemDto> LineItems,
     DateTimeOffset CreatedOnUtc,
@@ -63,7 +61,7 @@ public sealed record PurchaseRequestSummaryDto(
     string PrNumber,
     DateOnly PrDate,
     string DepartmentName,
-    string? Section,
+    string? ResponsibilityCenterCode,
     string Purpose,
     PrType PrType,
     PurchaseRequestStatus Status,
@@ -83,11 +81,11 @@ public sealed record CreatePurchaseRequestLineItemRequest(
 
 public sealed record CreatePurchaseRequestCommand(
     Guid DepartmentId,
-    string? Section,
+    string? ResponsibilityCenterCode,
     string Purpose,
     PrType PrType,
     string? Justification,
-    Guid RequestedById,
+    string RequestedByName,
     string? SaiNumber,
     DateOnly? SaiDate,
     string? AlobsNumber,
@@ -97,11 +95,11 @@ public sealed record CreatePurchaseRequestCommand(
 public sealed record UpdatePurchaseRequestCommand(
     Guid Id,
     Guid DepartmentId,
-    string? Section,
+    string? ResponsibilityCenterCode,
     string Purpose,
     PrType PrType,
     string? Justification,
-    Guid RequestedById,
+    string RequestedByName,
     string? SaiNumber,
     DateOnly? SaiDate,
     string? AlobsNumber,
@@ -110,7 +108,7 @@ public sealed record UpdatePurchaseRequestCommand(
 
 public sealed record SubmitPurchaseRequestCommand(Guid Id) : ICommand<PurchaseRequestDto>;
 
-public sealed record ApprovePurchaseRequestCommand(Guid Id, Guid ApprovedById) : ICommand<PurchaseRequestDto>;
+public sealed record ApprovePurchaseRequestCommand(Guid Id, string ApprovedByName) : ICommand<PurchaseRequestDto>;
 
 public sealed record RejectPurchaseRequestCommand(Guid Id, string Reason) : ICommand<PurchaseRequestDto>;
 

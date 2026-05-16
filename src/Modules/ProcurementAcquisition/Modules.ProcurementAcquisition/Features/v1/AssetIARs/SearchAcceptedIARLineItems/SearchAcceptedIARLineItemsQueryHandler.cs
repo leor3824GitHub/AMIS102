@@ -65,6 +65,7 @@ public sealed class SearchAcceptedIARLineItemsQueryHandler(
         if (!string.IsNullOrEmpty(keyword))
         {
             flat = flat.Where(x =>
+                x.SupplierName.Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
                 x.StockPropertyNo!.Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
                 x.IARNumber.Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
                 x.Description.Contains(keyword, StringComparison.OrdinalIgnoreCase) ||

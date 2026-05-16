@@ -89,6 +89,10 @@ Modules/{Module}/Features/v1/{Feature}/
 | If using raw Mud inputs, set `Dense="true"` + `Margin="Margin.Dense"` | Keeps filter/form rows aligned and compact        |
 | Use `Size="Size.Small"` for filter-row inputs and action buttons      | Establishes the 40px compact baseline             |
 | Avoid mixing default and compact controls in one row                  | Prevents visible height mismatch and misalignment |
+| Use `IOrganizationProfileState` for agency/officer data in reports   | Scoped session state — zero HTTP calls per page   |
+| Never fetch org profile per-page with `IOrganizationProfileClient`   | Already loaded by `PlaygroundLayout` at session start |
+
+Details: See `.claude/rules/blazor.md`
 
 ## Available Skills
 
@@ -176,7 +180,7 @@ dotnet test src/AMIS.Framework.slnx   # All tests must pass
 
 ## Documentation
 
-- **Rules:** See `.claude/rules/*.md` (API conventions, testing, modules, MAUI)
+- **Rules:** See `.claude/rules/*.md` (API conventions, testing, modules, MAUI, Blazor)
 - **Skills:** See `.claude/skills/*/SKILL.md` (step-by-step guides)
 - **Agents:** See `.claude/agents/*.md` (specialized assistants)
 - **MAUI Plan:** See `MAUI-IMPLEMENTATION-PLAN.md` (full implementation roadmap)

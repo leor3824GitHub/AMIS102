@@ -61,6 +61,9 @@ builder.Services.AddScoped<IThemeStateFactory, CachedThemeStateFactory>(); // Fo
 // User profile state for syncing across components
 builder.Services.AddScoped<IUserProfileState, UserProfileState>();
 
+// Organization profile state — loaded once per session in PlaygroundLayout, consumed by report pages
+builder.Services.AddScoped<IOrganizationProfileState, OrganizationProfileState>();
+
 // Auth state notifier for session expiration (Blazor-compatible)
 builder.Services.AddScoped<IAuthStateNotifier, AuthStateNotifier>();
 

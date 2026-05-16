@@ -106,9 +106,7 @@ namespace AMIS.Playground.Migrations.PostgreSQL.Procurement
                         .HasColumnType("character varying(50)");
 
                     b.Property<byte[]>("Version")
-                        .IsConcurrencyToken()
                         .IsRequired()
-                        .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("bytea");
 
                     b.HasKey("Id");
@@ -390,6 +388,41 @@ namespace AMIS.Playground.Migrations.PostgreSQL.Procurement
                     b.HasAnnotation("Finbuckle:MultiTenant", true);
                 });
 
+            modelBuilder.Entity("AMIS.Modules.ProcurementAcquisition.Domain.PurchaseRequests.PrNumberSequence", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("LastSerial")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("integer");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "Year")
+                        .IsUnique();
+
+                    b.ToTable("PrNumberSequences", "procurement");
+
+                    b.HasAnnotation("Finbuckle:MultiTenant", true);
+                });
+
             modelBuilder.Entity("AMIS.Modules.ProcurementAcquisition.Domain.PurchaseRequests.PurchaseRequest", b =>
                 {
                     b.Property<Guid>("Id")
@@ -403,8 +436,9 @@ namespace AMIS.Playground.Migrations.PostgreSQL.Procurement
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
 
-                    b.Property<Guid?>("ApprovedById")
-                        .HasColumnType("uuid");
+                    b.Property<string>("ApprovedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<string>("CancellationReason")
                         .HasMaxLength(1000)
@@ -460,8 +494,14 @@ namespace AMIS.Playground.Migrations.PostgreSQL.Procurement
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
 
-                    b.Property<Guid>("RequestedById")
-                        .HasColumnType("uuid");
+                    b.Property<string>("RequestedByName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("ResponsibilityCenterCode")
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)");
 
                     b.Property<DateOnly?>("SaiDate")
                         .HasColumnType("date");
@@ -469,10 +509,6 @@ namespace AMIS.Playground.Migrations.PostgreSQL.Procurement
                     b.Property<string>("SaiNumber")
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
-
-                    b.Property<string>("Section")
-                        .HasMaxLength(160)
-                        .HasColumnType("character varying(160)");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");

@@ -8,7 +8,7 @@ public sealed class ApprovePurchaseRequestCommandValidator : AbstractValidator<A
     public ApprovePurchaseRequestCommandValidator()
     {
         RuleFor(x => x.Id).NotEmpty();
-        RuleFor(x => x.ApprovedById).NotEmpty().WithMessage("Approver employee is required.");
+        RuleFor(x => x.ApprovedByName).NotEmpty().MaximumLength(200).WithMessage("Approver name is required.");
     }
 }
 

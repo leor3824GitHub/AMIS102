@@ -23,11 +23,11 @@ public sealed class UpdatePurchaseRequestCommandHandler(
 
         pr.Update(
             command.DepartmentId,
-            command.Section,
+            command.ResponsibilityCenterCode,
             command.Purpose,
             command.PrType,
             command.Justification,
-            command.RequestedById,
+            command.RequestedByName,
             command.SaiNumber,
             command.SaiDate,
             command.AlobsNumber,

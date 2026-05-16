@@ -20,19 +20,32 @@ public sealed class UpsertOrganizationProfileCommandHandler(MasterDataDbContext 
         {
             var tenantId = currentUser.GetTenant() ?? string.Empty;
             existing = Domain.OrganizationProfile.Create(
-                tenantId, command.Name, command.ShortName, command.Address, command.LogoUrl, command.AnnexECode);
+                tenantId, command.Name, command.ShortName, command.Address, command.LogoUrl, command.AnnexECode,
+                command.RegionalManagerId, command.RegionalManagerName, command.RegionalManagerDesignation,
+                command.AssistantRegionalManagerId, command.AssistantRegionalManagerName, command.AssistantRegionalManagerDesignation,
+                command.AccountantId, command.AccountantName, command.AccountantDesignation,
+                command.SupervisingAdminOfficerId, command.SupervisingAdminOfficerName, command.SupervisingAdminOfficerDesignation);
             existing.CreatedBy = currentUser.GetUserId().ToString();
             db.OrganizationProfiles.Add(existing);
         }
         else
         {
-            existing.Update(command.Name, command.ShortName, command.Address, command.LogoUrl, command.AnnexECode);
+            existing.Update(command.Name, command.ShortName, command.Address, command.LogoUrl, command.AnnexECode,
+                command.RegionalManagerId, command.RegionalManagerName, command.RegionalManagerDesignation,
+                command.AssistantRegionalManagerId, command.AssistantRegionalManagerName, command.AssistantRegionalManagerDesignation,
+                command.AccountantId, command.AccountantName, command.AccountantDesignation,
+                command.SupervisingAdminOfficerId, command.SupervisingAdminOfficerName, command.SupervisingAdminOfficerDesignation);
             existing.LastModifiedBy = currentUser.GetUserId().ToString();
         }
 
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-        return new OrganizationProfileDto(existing.Id, existing.Name, existing.ShortName, existing.Address, existing.LogoUrl, existing.AnnexECode);
+        return new OrganizationProfileDto(
+            existing.Id, existing.Name, existing.ShortName, existing.Address, existing.LogoUrl, existing.AnnexECode,
+            existing.RegionalManagerId, existing.RegionalManagerName, existing.RegionalManagerDesignation,
+            existing.AssistantRegionalManagerId, existing.AssistantRegionalManagerName, existing.AssistantRegionalManagerDesignation,
+            existing.AccountantId, existing.AccountantName, existing.AccountantDesignation,
+            existing.SupervisingAdminOfficerId, existing.SupervisingAdminOfficerName, existing.SupervisingAdminOfficerDesignation);
     }
 }
 
