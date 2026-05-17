@@ -13,6 +13,7 @@
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Navigation
 @inject IEmployeesClient EmployeesClient
+@inject IJSRuntime JS
 
 <AMISPageHeader Title="Purchase Requests" Description="Manage procurement purchase requests (PR)" />
 
@@ -192,10 +193,27 @@
                                                 <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" Color="Color.Default"
                                                                OnClick="@(async () => await ShowDetailsAsync(item.Id))" />
                                             </MudTooltip>
-                                            <MudTooltip Text="Print">
-                                                <MudIconButton Icon="@Icons.Material.Filled.Print" Size="Size.Small" Color="Color.Secondary"
-                                                               OnClick="@(() => Navigation.NavigateTo($"/procurement/purchase-requests/{item.Id}/print"))" />
-                                            </MudTooltip>
+                                            <MudMenu Icon="@Icons.Material.Filled.Print"
+                                                     Color="Color.Secondary"
+                                                     Size="Size.Small"
+                                                     Dense="true"
+                                                     AnchorOrigin="Origin.BottomLeft"
+                                                     TransformOrigin="Origin.TopLeft"
+                                                     ToolTip="Print">
+                                                <MudMenuItem Icon="@Icons.Material.Filled.PictureAsPdf"
+                                                             OnClick="@(() => DownloadRdlcPdfAsync(item.Id, "a4"))">
+                                                    Download PDF (RDLC) – A4
+                                                </MudMenuItem>
+                                                <MudMenuItem Icon="@Icons.Material.Filled.PictureAsPdf"
+                                                             OnClick="@(() => DownloadRdlcPdfAsync(item.Id, "longbond"))">
+                                                    Download PDF (RDLC) – Long Bond
+                                                </MudMenuItem>
+                                                <MudDivider />
+                                                <MudMenuItem Icon="@Icons.Material.Filled.ContentCut"
+                                                             OnClick="@(() => OpenFastReportSetupAsync(item.Id))">
+                                                    Fast Report – Page Setup…
+                                                </MudMenuItem>
+                                            </MudMenu>
                                             @if (item.Status == PurchaseRequestStatus.Draft)
                                             {
                                                 <MudTooltip Text="Edit">
@@ -503,6 +521,48 @@
         if (ok is not true) return;
         try { await Client.CancelAsync(id); Snackbar.Add("PR cancelled.", Severity.Info); await LoadAsync(); }
         catch (Exception ex) { Snackbar.Add($"Cancel failed: {ex.Message}", Severity.Error); }
+    }
+
+    private async Task DownloadRdlcPdfAsync(Guid id, string paperSize)
+    {
+        try
+        {
+            var bytes = await Client.GetPrintPdfAsync(id, pageWidth: paperSize);
+            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
+            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            Snackbar.Add("PDF ready.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"PDF generation failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task OpenFastReportSetupAsync(Guid id)
+    {
+        var parameters = new DialogParameters
+        {
+            [nameof(FastReportPageSetupDialog.PaperSize)] = "a4",
+            [nameof(FastReportPageSetupDialog.Orientation)] = "landscape",
+            [nameof(FastReportPageSetupDialog.Copies)] = 2
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.ExtraSmall, FullWidth = false, CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<FastReportPageSetupDialog>("Page Setup", parameters, options);
+        var result = await dialog.Result;
+        if (result is null || result.Canceled) return;
+        if (result.Data is not FastReportPageSetupDialog.Result r) return;
+
+        try
+        {
+            var bytes = await Client.GetFastReportPdfAsync(id, pageWidth: r.PaperSize, copies: r.Copies, orientation: r.Orientation);
+            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
+            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            Snackbar.Add("PDF ready.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fast report failed: {ex.Message}", Severity.Error);
+        }
     }
 
     private void AddLineItem() => _form.LineItems.Add(new LineItemRow());

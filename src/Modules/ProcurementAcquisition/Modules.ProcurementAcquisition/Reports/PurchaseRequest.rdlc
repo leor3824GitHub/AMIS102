@@ -6,12 +6,24 @@
   <df:DefaultFontFamily>Arial</df:DefaultFontFamily>
   <AutoRefresh>0</AutoRefresh>
 
+  <!--
+    Layout: Letter landscape (11 × 8.5 in), 0.5 in margins.
+    Content width  = 10 in
+    Two identical PR copies side-by-side with a 2× margin gap for cutting:
+      Left  copy : Left=0in,    Width=4.5in
+      Gap        : 4.5..5.5in   (1.0 in = 2× the 0.5 in margin) ← cut here
+      Right copy : Left=5.5in,  Width=4.5in
+  -->
+
   <!-- ═══════════ DATA SOURCES ═══════════ -->
   <DataSources>
     <DataSource Name="PurchaseRequestDS">
       <ConnectionProperties><DataProvider>System.Object</DataProvider><ConnectString /></ConnectionProperties>
     </DataSource>
     <DataSource Name="LineItemsDS">
+      <ConnectionProperties><DataProvider>System.Object</DataProvider><ConnectString /></ConnectionProperties>
+    </DataSource>
+    <DataSource Name="LineItemsDS_R">
       <ConnectionProperties><DataProvider>System.Object</DataProvider><ConnectString /></ConnectionProperties>
     </DataSource>
     <DataSource Name="OrganizationProfileDS">
@@ -52,6 +64,18 @@
       </Fields>
     </DataSet>
 
+    <DataSet Name="LineItemsDS_R">
+      <Query><DataSourceName>LineItemsDS_R</DataSourceName><CommandText /></Query>
+      <Fields>
+        <Field Name="ItemNo"><DataField>ItemNo</DataField><rd:TypeName>System.Int32</rd:TypeName></Field>
+        <Field Name="UnitOfIssue"><DataField>UnitOfIssue</DataField><rd:TypeName>System.String</rd:TypeName></Field>
+        <Field Name="ItemDescription"><DataField>ItemDescription</DataField><rd:TypeName>System.String</rd:TypeName></Field>
+        <Field Name="Quantity"><DataField>Quantity</DataField><rd:TypeName>System.Decimal</rd:TypeName></Field>
+        <Field Name="EstimatedUnitCost"><DataField>EstimatedUnitCost</DataField><rd:TypeName>System.Decimal</rd:TypeName></Field>
+        <Field Name="EstimatedTotalCost"><DataField>EstimatedTotalCost</DataField><rd:TypeName>System.Decimal</rd:TypeName></Field>
+      </Fields>
+    </DataSet>
+
     <DataSet Name="OrganizationProfileDS">
       <Query><DataSourceName>OrganizationProfileDS</DataSourceName><CommandText /></Query>
       <Fields>
@@ -68,41 +92,50 @@
       <Body>
         <ReportItems>
 
-          <!-- ╔══════════════════════════════════════════════════════════╗ -->
-          <!-- ║  MAIN LAYOUT TABLE — single-column flowing container    ║ -->
-          <!-- ╚══════════════════════════════════════════════════════════╝ -->
-          <Tablix Name="MainTable">
+          <!-- ════════════════════════════════════════════════════════════
+               LEFT COPY  (Left=0in, Width=4.5in)
+               ════════════════════════════════════════════════════════════ -->
+          <Tablix Name="MainTable_L">
             <TablixBody>
               <TablixColumns>
-                <TablixColumn><Width>7.5in</Width></TablixColumn>
+                <TablixColumn><Width>4.5in</Width></TablixColumn>
               </TablixColumns>
               <TablixRows>
 
                 <!-- ─── ROW A: AGENCY HEADER ─── -->
                 <TablixRow>
-                  <Height>0.7in</Height>
+                  <Height>0.6in</Height>
                   <TablixCells>
                     <TablixCell>
                       <CellContents>
-                        <Rectangle Name="AgencyHeaderRect">
+                        <Rectangle Name="AgencyHeaderRect_L">
                           <ReportItems>
-                            <Textbox Name="RepublicTxt">
-                              <Value>Republic of the Philippines</Value>
-                              <Top>0in</Top><Left>0in</Left><Width>7.5in</Width><Height>0.2in</Height>
-                              <Style><FontSize>8pt</FontSize><TextAlign>Center</TextAlign></Style>
+                            <Textbox Name="RepublicTxt_L">
+                              <Paragraphs><Paragraph><TextRuns><TextRun>
+                                <Value>Republic of the Philippines</Value>
+                                <Style><FontSize>7pt</FontSize></Style>
+                              </TextRun></TextRuns><Style><TextAlign>Center</TextAlign></Style></Paragraph></Paragraphs>
+                              <Top>0in</Top><Left>0in</Left><Width>4.5in</Width><Height>0.17in</Height>
+                              <Style />
                             </Textbox>
-                            <Textbox Name="AgencyNameTxt">
-                              <Value>=First(Fields!Name.Value, "OrganizationProfileDS")</Value>
-                              <Top>0.2in</Top><Left>0in</Left><Width>7.5in</Width><Height>0.27in</Height>
-                              <Style><FontSize>12pt</FontSize><FontWeight>Bold</FontWeight><TextAlign>Center</TextAlign></Style>
+                            <Textbox Name="AgencyNameTxt_L">
+                              <Paragraphs><Paragraph><TextRuns><TextRun>
+                                <Value>=First(Fields!Name.Value, "OrganizationProfileDS")</Value>
+                                <Style><FontSize>10pt</FontSize><FontWeight>Bold</FontWeight></Style>
+                              </TextRun></TextRuns><Style><TextAlign>Center</TextAlign></Style></Paragraph></Paragraphs>
+                              <Top>0.17in</Top><Left>0in</Left><Width>4.5in</Width><Height>0.25in</Height>
+                              <Style />
                             </Textbox>
-                            <Textbox Name="AgencyAddressTxt">
-                              <Value>=First(Fields!Address.Value, "OrganizationProfileDS")</Value>
-                              <Top>0.47in</Top><Left>0in</Left><Width>7.5in</Width><Height>0.18in</Height>
-                              <Style><FontSize>8pt</FontSize><TextAlign>Center</TextAlign></Style>
+                            <Textbox Name="AgencyAddressTxt_L">
+                              <Paragraphs><Paragraph><TextRuns><TextRun>
+                                <Value>=First(Fields!Address.Value, "OrganizationProfileDS")</Value>
+                                <Style><FontSize>7pt</FontSize></Style>
+                              </TextRun></TextRuns><Style><TextAlign>Center</TextAlign></Style></Paragraph></Paragraphs>
+                              <Top>0.42in</Top><Left>0in</Left><Width>4.5in</Width><Height>0.16in</Height>
+                              <Style />
                             </Textbox>
                           </ReportItems>
-                          <Top>0in</Top><Left>0in</Left><Width>7.5in</Width><Height>0.7in</Height>
+                          <Top>0in</Top><Left>0in</Left><Width>4.5in</Width><Height>0.6in</Height>
                           <Style />
                         </Rectangle>
                       </CellContents>
@@ -112,17 +145,19 @@
 
                 <!-- ─── ROW B: REPORT TITLE ─── -->
                 <TablixRow>
-                  <Height>0.4in</Height>
+                  <Height>0.3in</Height>
                   <TablixCells>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="ReportTitleTxt">
-                          <Value>PURCHASE REQUEST</Value>
+                        <Textbox Name="ReportTitleTxt_L">
+                          <Paragraphs><Paragraph><TextRuns><TextRun>
+                            <Value>PURCHASE REQUEST</Value>
+                            <Style><FontSize>12pt</FontSize><FontWeight>Bold</FontWeight></Style>
+                          </TextRun></TextRuns><Style><TextAlign>Center</TextAlign></Style></Paragraph></Paragraphs>
                           <Style>
-                            <FontSize>14pt</FontSize><FontWeight>Bold</FontWeight>
-                            <TextAlign>Center</TextAlign><VerticalAlign>Middle</VerticalAlign>
-                            <BorderStyle><Top>Solid</Top><Bottom>Solid</Bottom></BorderStyle>
-                            <BorderWidth><Top>2pt</Top><Bottom>1pt</Bottom></BorderWidth>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <TopBorder><Style>Solid</Style><Width>2pt</Width></TopBorder>
+                            <BottomBorder><Style>Solid</Style><Width>1pt</Width></BottomBorder>
                           </Style>
                         </Textbox>
                       </CellContents>
@@ -130,127 +165,258 @@
                   </TablixCells>
                 </TablixRow>
 
-                <!-- ─── ROW C: HEADER INFO (4-col, 6-row nested table) ─── -->
+                <!-- ─── ROW C: HEADER INFO ─── -->
                 <TablixRow>
-                  <Height>1.6in</Height>
+                  <Height>1.4in</Height>
                   <TablixCells>
                     <TablixCell>
                       <CellContents>
-                        <Tablix Name="HeaderInfoTable">
+                        <Tablix Name="HeaderInfoTable_L">
                           <TablixBody>
                             <TablixColumns>
-                              <TablixColumn><Width>1.3in</Width></TablixColumn>
-                              <TablixColumn><Width>2.2in</Width></TablixColumn>
-                              <TablixColumn><Width>1.2in</Width></TablixColumn>
-                              <TablixColumn><Width>2.8in</Width></TablixColumn>
+                              <TablixColumn><Width>0.8in</Width></TablixColumn>
+                              <TablixColumn><Width>1.4in</Width></TablixColumn>
+                              <TablixColumn><Width>0.8in</Width></TablixColumn>
+                              <TablixColumn><Width>1.5in</Width></TablixColumn>
                             </TablixColumns>
                             <TablixRows>
 
                               <!-- Row 1: Department | PR No. -->
-                              <TablixRow><Height>0.25in</Height><TablixCells>
-                                <TablixCell><CellContents><Textbox Name="HiLblDept"><Value>Department:</Value><Style><FontSize>8pt</FontSize><FontWeight>Bold</FontWeight><VerticalAlign>Middle</VerticalAlign><PaddingLeft>2pt</PaddingLeft><BorderStyle><Default>Solid</Default></BorderStyle><BorderColor><Default>Gray</Default></BorderColor></Style></Textbox></CellContents></TablixCell>
-                                <TablixCell><CellContents><Textbox Name="HiValDept"><Value>=First(Fields!DepartmentName.Value, "PurchaseRequestDS")</Value><Style><FontSize>8pt</FontSize><VerticalAlign>Middle</VerticalAlign><PaddingLeft>3pt</PaddingLeft><BorderStyle><Default>Solid</Default></BorderStyle><BorderColor><Default>Gray</Default></BorderColor></Style></Textbox></CellContents></TablixCell>
-                                <TablixCell><CellContents><Textbox Name="HiLblPrNo"><Value>PR No.:</Value><Style><FontSize>8pt</FontSize><FontWeight>Bold</FontWeight><VerticalAlign>Middle</VerticalAlign><PaddingLeft>2pt</PaddingLeft><BorderStyle><Default>Solid</Default></BorderStyle><BorderColor><Default>Gray</Default></BorderColor></Style></Textbox></CellContents></TablixCell>
-                                <TablixCell><CellContents><Textbox Name="HiValPrNo"><Value>=First(Fields!PrNumber.Value, "PurchaseRequestDS")</Value><Style><FontSize>8pt</FontSize><FontWeight>Bold</FontWeight><VerticalAlign>Middle</VerticalAlign><PaddingLeft>3pt</PaddingLeft><BorderStyle><Default>Solid</Default></BorderStyle><BorderColor><Default>Gray</Default></BorderColor></Style></Textbox></CellContents></TablixCell>
+                              <TablixRow><Height>0.22in</Height><TablixCells>
+                                <TablixCell><CellContents><Textbox Name="HiLblDept_L">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>Department:</Value><Style><FontSize>7pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><PaddingLeft>2pt</PaddingLeft><Border><Style>Solid</Style><Color>Gray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="HiValDept_L">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>=First(Fields!DepartmentName.Value, "PurchaseRequestDS")</Value><Style><FontSize>7pt</FontSize></Style></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><PaddingLeft>3pt</PaddingLeft><Border><Style>Solid</Style><Color>Gray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="HiLblPrNo_L">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>PR No.:</Value><Style><FontSize>7pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><PaddingLeft>2pt</PaddingLeft><Border><Style>Solid</Style><Color>Gray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="HiValPrNo_L">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>=First(Fields!PrNumber.Value, "PurchaseRequestDS")</Value><Style><FontSize>7pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><PaddingLeft>3pt</PaddingLeft><Border><Style>Solid</Style><Color>Gray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
                               </TablixCells></TablixRow>
 
                               <!-- Row 2: RC Code | PR Date -->
-                              <TablixRow><Height>0.25in</Height><TablixCells>
-                                <TablixCell><CellContents><Textbox Name="HiLblRc"><Value>RC Code:</Value><Style><FontSize>8pt</FontSize><FontWeight>Bold</FontWeight><VerticalAlign>Middle</VerticalAlign><PaddingLeft>2pt</PaddingLeft><BorderStyle><Default>Solid</Default></BorderStyle><BorderColor><Default>Gray</Default></BorderColor></Style></Textbox></CellContents></TablixCell>
-                                <TablixCell><CellContents><Textbox Name="HiValRc"><Value>=First(Fields!ResponsibilityCenterCode.Value, "PurchaseRequestDS")</Value><Style><FontSize>8pt</FontSize><VerticalAlign>Middle</VerticalAlign><PaddingLeft>3pt</PaddingLeft><BorderStyle><Default>Solid</Default></BorderStyle><BorderColor><Default>Gray</Default></BorderColor></Style></Textbox></CellContents></TablixCell>
-                                <TablixCell><CellContents><Textbox Name="HiLblPrDate"><Value>PR Date:</Value><Style><FontSize>8pt</FontSize><FontWeight>Bold</FontWeight><VerticalAlign>Middle</VerticalAlign><PaddingLeft>2pt</PaddingLeft><BorderStyle><Default>Solid</Default></BorderStyle><BorderColor><Default>Gray</Default></BorderColor></Style></Textbox></CellContents></TablixCell>
-                                <TablixCell><CellContents><Textbox Name="HiValPrDate"><Value>=First(Fields!PrDate.Value, "PurchaseRequestDS")</Value><Style><FontSize>8pt</FontSize><VerticalAlign>Middle</VerticalAlign><PaddingLeft>3pt</PaddingLeft><BorderStyle><Default>Solid</Default></BorderStyle><BorderColor><Default>Gray</Default></BorderColor></Style></Textbox></CellContents></TablixCell>
+                              <TablixRow><Height>0.22in</Height><TablixCells>
+                                <TablixCell><CellContents><Textbox Name="HiLblRc_L">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>RC Code:</Value><Style><FontSize>7pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><PaddingLeft>2pt</PaddingLeft><Border><Style>Solid</Style><Color>Gray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="HiValRc_L">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>=First(Fields!ResponsibilityCenterCode.Value, "PurchaseRequestDS")</Value><Style><FontSize>7pt</FontSize></Style></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><PaddingLeft>3pt</PaddingLeft><Border><Style>Solid</Style><Color>Gray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="HiLblPrDate_L">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>PR Date:</Value><Style><FontSize>7pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><PaddingLeft>2pt</PaddingLeft><Border><Style>Solid</Style><Color>Gray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="HiValPrDate_L">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>=First(Fields!PrDate.Value, "PurchaseRequestDS")</Value><Style><FontSize>7pt</FontSize></Style></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><PaddingLeft>3pt</PaddingLeft><Border><Style>Solid</Style><Color>Gray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
                               </TablixCells></TablixRow>
 
                               <!-- Row 3: (empty) | SAI No. -->
-                              <TablixRow><Height>0.25in</Height><TablixCells>
-                                <TablixCell><CellContents><Textbox Name="HiLblE1"><Value /><Style><BorderStyle><Default>Solid</Default></BorderStyle><BorderColor><Default>Gray</Default></BorderColor></Style></Textbox></CellContents></TablixCell>
-                                <TablixCell><CellContents><Textbox Name="HiValE1"><Value /><Style><BorderStyle><Default>Solid</Default></BorderStyle><BorderColor><Default>Gray</Default></BorderColor></Style></Textbox></CellContents></TablixCell>
-                                <TablixCell><CellContents><Textbox Name="HiLblSaiNo"><Value>SAI No.:</Value><Style><FontSize>8pt</FontSize><FontWeight>Bold</FontWeight><VerticalAlign>Middle</VerticalAlign><PaddingLeft>2pt</PaddingLeft><BorderStyle><Default>Solid</Default></BorderStyle><BorderColor><Default>Gray</Default></borderColor></Style></Textbox></CellContents></TablixCell>
-                                <TablixCell><CellContents><Textbox Name="HiValSaiNo"><Value>=First(Fields!SaiNumber.Value, "PurchaseRequestDS")</Value><Style><FontSize>8pt</FontSize><VerticalAlign>Middle</VerticalAlign><PaddingLeft>3pt</PaddingLeft><BorderStyle><Default>Solid</Default></BorderStyle><BorderColor><Default>Gray</Default></BorderColor></Style></Textbox></CellContents></TablixCell>
+                              <TablixRow><Height>0.22in</Height><TablixCells>
+                                <TablixCell><CellContents><Textbox Name="HiLblE1_L">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value /><Style /></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><Border><Style>Solid</Style><Color>Gray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="HiValE1_L">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value /><Style /></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><Border><Style>Solid</Style><Color>Gray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="HiLblSaiNo_L">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>SAI No.:</Value><Style><FontSize>7pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><PaddingLeft>2pt</PaddingLeft><Border><Style>Solid</Style><Color>Gray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="HiValSaiNo_L">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>=First(Fields!SaiNumber.Value, "PurchaseRequestDS")</Value><Style><FontSize>7pt</FontSize></Style></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><PaddingLeft>3pt</PaddingLeft><Border><Style>Solid</Style><Color>Gray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
                               </TablixCells></TablixRow>
 
                               <!-- Row 4: (empty) | SAI Date -->
-                              <TablixRow><Height>0.25in</Height><TablixCells>
-                                <TablixCell><CellContents><Textbox Name="HiLblE2"><Value /><Style><BorderStyle><Default>Solid</Default></BorderStyle><BorderColor><Default>Gray</Default></BorderColor></Style></Textbox></CellContents></TablixCell>
-                                <TablixCell><CellContents><Textbox Name="HiValE2"><Value /><Style><BorderStyle><Default>Solid</Default></BorderStyle><BorderColor><Default>Gray</Default></BorderColor></Style></Textbox></CellContents></TablixCell>
-                                <TablixCell><CellContents><Textbox Name="HiLblSaiDate"><Value>SAI Date:</Value><Style><FontSize>8pt</FontSize><FontWeight>Bold</FontWeight><VerticalAlign>Middle</VerticalAlign><PaddingLeft>2pt</PaddingLeft><BorderStyle><Default>Solid</Default></BorderStyle><BorderColor><Default>Gray</Default></BorderColor></Style></Textbox></CellContents></TablixCell>
-                                <TablixCell><CellContents><Textbox Name="HiValSaiDate"><Value>=First(Fields!SaiDate.Value, "PurchaseRequestDS")</Value><Style><FontSize>8pt</FontSize><VerticalAlign>Middle</VerticalAlign><PaddingLeft>3pt</PaddingLeft><BorderStyle><Default>Solid</Default></BorderStyle><BorderColor><Default>Gray</Default></BorderColor></Style></Textbox></CellContents></TablixCell>
+                              <TablixRow><Height>0.22in</Height><TablixCells>
+                                <TablixCell><CellContents><Textbox Name="HiLblE2_L">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value /><Style /></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><Border><Style>Solid</Style><Color>Gray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="HiValE2_L">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value /><Style /></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><Border><Style>Solid</Style><Color>Gray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="HiLblSaiDate_L">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>SAI Date:</Value><Style><FontSize>7pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><PaddingLeft>2pt</PaddingLeft><Border><Style>Solid</Style><Color>Gray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="HiValSaiDate_L">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>=First(Fields!SaiDate.Value, "PurchaseRequestDS")</Value><Style><FontSize>7pt</FontSize></Style></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><PaddingLeft>3pt</PaddingLeft><Border><Style>Solid</Style><Color>Gray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
                               </TablixCells></TablixRow>
 
                               <!-- Row 5: (empty) | ALOBS No. -->
-                              <TablixRow><Height>0.25in</Height><TablixCells>
-                                <TablixCell><CellContents><Textbox Name="HiLblE3"><Value /><Style><BorderStyle><Default>Solid</Default></BorderStyle><BorderColor><Default>Gray</Default></BorderColor></Style></Textbox></CellContents></TablixCell>
-                                <TablixCell><CellContents><Textbox Name="HiValE3"><Value /><Style><BorderStyle><Default>Solid</Default></BorderStyle><BorderColor><Default>Gray</Default></BorderColor></Style></Textbox></CellContents></TablixCell>
-                                <TablixCell><CellContents><Textbox Name="HiLblAlobsNo"><Value>ALOBS No.:</Value><Style><FontSize>8pt</FontSize><FontWeight>Bold</FontWeight><VerticalAlign>Middle</VerticalAlign><PaddingLeft>2pt</PaddingLeft><BorderStyle><Default>Solid</Default></BorderStyle><BorderColor><Default>Gray</Default></BorderColor></Style></Textbox></CellContents></TablixCell>
-                                <TablixCell><CellContents><Textbox Name="HiValAlobsNo"><Value>=First(Fields!AlobsNumber.Value, "PurchaseRequestDS")</Value><Style><FontSize>8pt</FontSize><VerticalAlign>Middle</VerticalAlign><PaddingLeft>3pt</PaddingLeft><BorderStyle><Default>Solid</Default></BorderStyle><BorderColor><Default>Gray</Default></BorderColor></Style></Textbox></CellContents></TablixCell>
+                              <TablixRow><Height>0.22in</Height><TablixCells>
+                                <TablixCell><CellContents><Textbox Name="HiLblE3_L">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value /><Style /></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><Border><Style>Solid</Style><Color>Gray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="HiValE3_L">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value /><Style /></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><Border><Style>Solid</Style><Color>Gray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="HiLblAlobsNo_L">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>ALOBS No.:</Value><Style><FontSize>7pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><PaddingLeft>2pt</PaddingLeft><Border><Style>Solid</Style><Color>Gray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="HiValAlobsNo_L">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>=First(Fields!AlobsNumber.Value, "PurchaseRequestDS")</Value><Style><FontSize>7pt</FontSize></Style></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><PaddingLeft>3pt</PaddingLeft><Border><Style>Solid</Style><Color>Gray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
                               </TablixCells></TablixRow>
 
                               <!-- Row 6: (empty) | ALOBS Date -->
-                              <TablixRow><Height>0.25in</Height><TablixCells>
-                                <TablixCell><CellContents><Textbox Name="HiLblE4"><Value /><Style><BorderStyle><Default>Solid</Default></BorderStyle><BorderColor><Default>Gray</Default></BorderColor></Style></Textbox></CellContents></TablixCell>
-                                <TablixCell><CellContents><Textbox Name="HiValE4"><Value /><Style><BorderStyle><Default>Solid</Default></BorderStyle><BorderColor><Default>Gray</Default></BorderColor></Style></Textbox></CellContents></TablixCell>
-                                <TablixCell><CellContents><Textbox Name="HiLblAlobsDate"><Value>ALOBS Date:</Value><Style><FontSize>8pt</FontSize><FontWeight>Bold</FontWeight><VerticalAlign>Middle</VerticalAlign><PaddingLeft>2pt</PaddingLeft><BorderStyle><Default>Solid</Default></BorderStyle><BorderColor><Default>Gray</Default></BorderColor></Style></Textbox></CellContents></TablixCell>
-                                <TablixCell><CellContents><Textbox Name="HiValAlobsDate"><Value>=First(Fields!AlobsDate.Value, "PurchaseRequestDS")</Value><Style><FontSize>8pt</FontSize><VerticalAlign>Middle</VerticalAlign><PaddingLeft>3pt</PaddingLeft><BorderStyle><Default>Solid</Default></BorderStyle><BorderColor><Default>Gray</Default></BorderColor></Style></Textbox></CellContents></TablixCell>
+                              <TablixRow><Height>0.22in</Height><TablixCells>
+                                <TablixCell><CellContents><Textbox Name="HiLblE4_L">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value /><Style /></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><Border><Style>Solid</Style><Color>Gray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="HiValE4_L">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value /><Style /></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><Border><Style>Solid</Style><Color>Gray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="HiLblAlobsDate_L">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>ALOBS Date:</Value><Style><FontSize>7pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><PaddingLeft>2pt</PaddingLeft><Border><Style>Solid</Style><Color>Gray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="HiValAlobsDate_L">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>=First(Fields!AlobsDate.Value, "PurchaseRequestDS")</Value><Style><FontSize>7pt</FontSize></Style></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><PaddingLeft>3pt</PaddingLeft><Border><Style>Solid</Style><Color>Gray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
                               </TablixCells></TablixRow>
 
                             </TablixRows>
                           </TablixBody>
                           <TablixColumnHierarchy><TablixMembers><TablixMember /><TablixMember /><TablixMember /><TablixMember /></TablixMembers></TablixColumnHierarchy>
                           <TablixRowHierarchy><TablixMembers><TablixMember /><TablixMember /><TablixMember /><TablixMember /><TablixMember /><TablixMember /></TablixMembers></TablixRowHierarchy>
-                          <Top>0in</Top><Left>0in</Left><Width>7.5in</Width>
+                          <DataSetName>PurchaseRequestDS</DataSetName>
+                          <Top>0in</Top><Left>0in</Left><Width>4.5in</Width>
                         </Tablix>
                       </CellContents>
                     </TablixCell>
                   </TablixCells>
                 </TablixRow>
 
-                <!-- ─── ROW D: LINE ITEMS (nested Tablix, DataSet=LineItemsDS) ─── -->
+                <!-- ─── ROW D: LINE ITEMS ─── -->
                 <TablixRow>
                   <Height>0.53in</Height>
                   <TablixCells>
                     <TablixCell>
                       <CellContents>
-                        <Tablix Name="LineItemsTable">
+                        <Tablix Name="LineItemsTable_L">
                           <TablixBody>
                             <TablixColumns>
-                              <TablixColumn><Width>0.35in</Width></TablixColumn>
-                              <TablixColumn><Width>0.65in</Width></TablixColumn>
-                              <TablixColumn><Width>3.5in</Width></TablixColumn>
-                              <TablixColumn><Width>0.65in</Width></TablixColumn>
-                              <TablixColumn><Width>1.15in</Width></TablixColumn>
-                              <TablixColumn><Width>1.2in</Width></TablixColumn>
+                              <TablixColumn><Width>0.3in</Width></TablixColumn>
+                              <TablixColumn><Width>0.4in</Width></TablixColumn>
+                              <TablixColumn><Width>1.7in</Width></TablixColumn>
+                              <TablixColumn><Width>0.4in</Width></TablixColumn>
+                              <TablixColumn><Width>0.8in</Width></TablixColumn>
+                              <TablixColumn><Width>0.9in</Width></TablixColumn>
                             </TablixColumns>
                             <TablixRows>
 
                               <!-- HEADER ROW -->
-                              <TablixRow><Height>0.28in</Height><TablixCells>
-                                <TablixCell><CellContents><Textbox Name="LiHdrNo"><Value>Item No.</Value><Style><FontSize>8pt</FontSize><FontWeight>Bold</FontWeight><TextAlign>Center</TextAlign><VerticalAlign>Middle</VerticalAlign><BackgroundColor>LightGray</BackgroundColor><BorderStyle><Default>Solid</Default></BorderStyle><BorderColor><Default>DimGray</Default></BorderColor></Style></Textbox></CellContents></TablixCell>
-                                <TablixCell><CellContents><Textbox Name="LiHdrUnit"><Value>Unit</Value><Style><FontSize>8pt</FontSize><FontWeight>Bold</FontWeight><TextAlign>Center</TextAlign><VerticalAlign>Middle</VerticalAlign><BackgroundColor>LightGray</BackgroundColor><BorderStyle><Default>Solid</Default></BorderStyle><BorderColor><Default>DimGray</Default></BorderColor></Style></Textbox></CellContents></TablixCell>
-                                <TablixCell><CellContents><Textbox Name="LiHdrDesc"><Value>Description of Articles</Value><Style><FontSize>8pt</FontSize><FontWeight>Bold</FontWeight><TextAlign>Center</TextAlign><VerticalAlign>Middle</VerticalAlign><BackgroundColor>LightGray</BackgroundColor><BorderStyle><Default>Solid</Default></BorderStyle><BorderColor><Default>DimGray</Default></BorderColor></Style></Textbox></CellContents></TablixCell>
-                                <TablixCell><CellContents><Textbox Name="LiHdrQty"><Value>Qty</Value><Style><FontSize>8pt</FontSize><FontWeight>Bold</FontWeight><TextAlign>Center</TextAlign><VerticalAlign>Middle</VerticalAlign><BackgroundColor>LightGray</BackgroundColor><BorderStyle><Default>Solid</Default></BorderStyle><BorderColor><Default>DimGray</Default></BorderColor></Style></Textbox></CellContents></TablixCell>
-                                <TablixCell><CellContents><Textbox Name="LiHdrUnitCost"><Value>Est. Unit Cost</Value><Style><FontSize>8pt</FontSize><FontWeight>Bold</FontWeight><TextAlign>Center</TextAlign><VerticalAlign>Middle</VerticalAlign><BackgroundColor>LightGray</BackgroundColor><BorderStyle><Default>Solid</Default></BorderStyle><BorderColor><Default>DimGray</Default></BorderColor></Style></Textbox></CellContents></TablixCell>
-                                <TablixCell><CellContents><Textbox Name="LiHdrTotalCost"><Value>Est. Total Cost</Value><Style><FontSize>8pt</FontSize><FontWeight>Bold</FontWeight><TextAlign>Center</TextAlign><VerticalAlign>Middle</VerticalAlign><BackgroundColor>LightGray</BackgroundColor><BorderStyle><Default>Solid</Default></BorderStyle><BorderColor><Default>DimGray</Default></BorderColor></Style></Textbox></CellContents></TablixCell>
+                              <TablixRow><Height>0.25in</Height><TablixCells>
+                                <TablixCell><CellContents><Textbox Name="LiHdrNo_L">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>No.</Value><Style><FontSize>7pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style><TextAlign>Center</TextAlign></Style></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><BackgroundColor>LightGray</BackgroundColor><Border><Style>Solid</Style><Color>DimGray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="LiHdrUnit_L">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>Unit</Value><Style><FontSize>7pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style><TextAlign>Center</TextAlign></Style></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><BackgroundColor>LightGray</BackgroundColor><Border><Style>Solid</Style><Color>DimGray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="LiHdrDesc_L">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>Description</Value><Style><FontSize>7pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style><TextAlign>Center</TextAlign></Style></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><BackgroundColor>LightGray</BackgroundColor><Border><Style>Solid</Style><Color>DimGray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="LiHdrQty_L">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>Qty</Value><Style><FontSize>7pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style><TextAlign>Center</TextAlign></Style></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><BackgroundColor>LightGray</BackgroundColor><Border><Style>Solid</Style><Color>DimGray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="LiHdrUnitCost_L">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>Unit Cost</Value><Style><FontSize>7pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style><TextAlign>Center</TextAlign></Style></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><BackgroundColor>LightGray</BackgroundColor><Border><Style>Solid</Style><Color>DimGray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="LiHdrTotalCost_L">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>Total Cost</Value><Style><FontSize>7pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style><TextAlign>Center</TextAlign></Style></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><BackgroundColor>LightGray</BackgroundColor><Border><Style>Solid</Style><Color>DimGray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
                               </TablixCells></TablixRow>
 
                               <!-- DETAIL ROW -->
-                              <TablixRow><Height>0.25in</Height><TablixCells>
-                                <TablixCell><CellContents><Textbox Name="LiDetNo"><Value>=Fields!ItemNo.Value</Value><CanGrow>true</CanGrow><Style><FontSize>8pt</FontSize><TextAlign>Center</TextAlign><VerticalAlign>Middle</VerticalAlign><BorderStyle><Default>Solid</Default></BorderStyle><BorderColor><Default>LightGray</Default></BorderColor></Style></Textbox></CellContents></TablixCell>
-                                <TablixCell><CellContents><Textbox Name="LiDetUnit"><Value>=Fields!UnitOfIssue.Value</Value><CanGrow>true</CanGrow><Style><FontSize>8pt</FontSize><TextAlign>Center</TextAlign><VerticalAlign>Middle</VerticalAlign><BorderStyle><Default>Solid</Default></BorderStyle><BorderColor><Default>LightGray</Default></BorderColor></Style></Textbox></CellContents></TablixCell>
-                                <TablixCell><CellContents><Textbox Name="LiDetDesc"><Value>=Fields!ItemDescription.Value</Value><CanGrow>true</CanGrow><Style><FontSize>8pt</FontSize><TextAlign>Left</TextAlign><VerticalAlign>Middle</VerticalAlign><PaddingLeft>3pt</PaddingLeft><BorderStyle><Default>Solid</Default></BorderStyle><BorderColor><Default>LightGray</Default></BorderColor></Style></Textbox></CellContents></TablixCell>
-                                <TablixCell><CellContents><Textbox Name="LiDetQty"><Value>=Fields!Quantity.Value</Value><CanGrow>true</CanGrow><Style><FontSize>8pt</FontSize><TextAlign>Center</TextAlign><VerticalAlign>Middle</VerticalAlign><Format>#,##0.##</Format><BorderStyle><Default>Solid</Default></BorderStyle><BorderColor><Default>LightGray</Default></BorderColor></Style></Textbox></CellContents></TablixCell>
-                                <TablixCell><CellContents><Textbox Name="LiDetUnitCost"><Value>=Fields!EstimatedUnitCost.Value</Value><Style><FontSize>8pt</FontSize><TextAlign>Right</TextAlign><VerticalAlign>Middle</VerticalAlign><PaddingRight>3pt</PaddingRight><Format>#,##0.00</Format><BorderStyle><Default>Solid</Default></BorderStyle><BorderColor><Default>LightGray</Default></BorderColor></Style></Textbox></CellContents></TablixCell>
-                                <TablixCell><CellContents><Textbox Name="LiDetTotalCost"><Value>=Fields!EstimatedTotalCost.Value</Value><Style><FontSize>8pt</FontSize><TextAlign>Right</TextAlign><VerticalAlign>Middle</VerticalAlign><PaddingRight>3pt</PaddingRight><Format>#,##0.00</Format><BorderStyle><Default>Solid</Default></BorderStyle><BorderColor><Default>LightGray</Default></BorderColor></Style></Textbox></CellContents></TablixCell>
+                              <TablixRow><Height>0.22in</Height><TablixCells>
+                                <TablixCell><CellContents><Textbox Name="LiDetNo_L">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>=Fields!ItemNo.Value</Value><Style><FontSize>7pt</FontSize></Style></TextRun></TextRuns><Style><TextAlign>Center</TextAlign></Style></Paragraph></Paragraphs>
+                                  <CanGrow>true</CanGrow>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><Border><Style>Solid</Style><Color>LightGray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="LiDetUnit_L">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>=Fields!UnitOfIssue.Value</Value><Style><FontSize>7pt</FontSize></Style></TextRun></TextRuns><Style><TextAlign>Center</TextAlign></Style></Paragraph></Paragraphs>
+                                  <CanGrow>true</CanGrow>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><Border><Style>Solid</Style><Color>LightGray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="LiDetDesc_L">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>=Fields!ItemDescription.Value</Value><Style><FontSize>7pt</FontSize></Style></TextRun></TextRuns><Style><TextAlign>Left</TextAlign></Style></Paragraph></Paragraphs>
+                                  <CanGrow>true</CanGrow>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><PaddingLeft>3pt</PaddingLeft><Border><Style>Solid</Style><Color>LightGray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="LiDetQty_L">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>=Fields!Quantity.Value</Value><Style><FontSize>7pt</FontSize><Format>#,##0.##</Format></Style></TextRun></TextRuns><Style><TextAlign>Center</TextAlign></Style></Paragraph></Paragraphs>
+                                  <CanGrow>true</CanGrow>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><Border><Style>Solid</Style><Color>LightGray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="LiDetUnitCost_L">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>=Fields!EstimatedUnitCost.Value</Value><Style><FontSize>7pt</FontSize><Format>#,##0.00</Format></Style></TextRun></TextRuns><Style><TextAlign>Right</TextAlign></Style></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><PaddingRight>3pt</PaddingRight><Border><Style>Solid</Style><Color>LightGray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="LiDetTotalCost_L">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>=Fields!EstimatedTotalCost.Value</Value><Style><FontSize>7pt</FontSize><Format>#,##0.00</Format></Style></TextRun></TextRuns><Style><TextAlign>Right</TextAlign></Style></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><PaddingRight>3pt</PaddingRight><Border><Style>Solid</Style><Color>LightGray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
                               </TablixCells></TablixRow>
 
                               <!-- FOOTER ROW: TOTAL -->
-                              <TablixRow><Height>0.25in</Height><TablixCells>
-                                <TablixCell><CellContents><Textbox Name="LiFtrE1"><Value /><Style><BorderStyle><Default>Solid</Default></BorderStyle><BorderColor><Default>DimGray</Default></BorderColor></Style></Textbox></CellContents></TablixCell>
-                                <TablixCell><CellContents><Textbox Name="LiFtrE2"><Value /><Style><BorderStyle><Default>Solid</Default></BorderStyle><BorderColor><Default>DimGray</Default></BorderColor></Style></Textbox></CellContents></TablixCell>
-                                <TablixCell><CellContents><Textbox Name="LiFtrE3"><Value /><Style><BorderStyle><Default>Solid</Default></BorderStyle><BorderColor><Default>DimGray</Default></BorderColor></Style></Textbox></CellContents></TablixCell>
-                                <TablixCell><CellContents><Textbox Name="LiFtrE4"><Value /><Style><BorderStyle><Default>Solid</Default></BorderStyle><BorderColor><Default>DimGray</Default></BorderColor></Style></Textbox></CellContents></TablixCell>
-                                <TablixCell><CellContents><Textbox Name="LiFtrTotalLbl"><Value>TOTAL:</Value><Style><FontSize>8pt</FontSize><FontWeight>Bold</FontWeight><TextAlign>Right</TextAlign><VerticalAlign>Middle</VerticalAlign><PaddingRight>3pt</PaddingRight><BorderStyle><Default>Solid</Default></BorderStyle><BorderColor><Default>DimGray</Default></BorderColor></Style></Textbox></CellContents></TablixCell>
-                                <TablixCell><CellContents><Textbox Name="LiFtrTotalVal"><Value>=Sum(Fields!EstimatedTotalCost.Value)</Value><Style><FontSize>8pt</FontSize><FontWeight>Bold</FontWeight><TextAlign>Right</TextAlign><VerticalAlign>Middle</VerticalAlign><PaddingRight>3pt</PaddingRight><Format>#,##0.00</Format><BorderStyle><Default>Solid</Default></BorderStyle><BorderColor><Default>DimGray</Default></BorderColor></Style></Textbox></CellContents></TablixCell>
+                              <TablixRow><Height>0.22in</Height><TablixCells>
+                                <TablixCell><CellContents><Textbox Name="LiFtrE1_L">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value /><Style /></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><Border><Style>Solid</Style><Color>DimGray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="LiFtrE2_L">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value /><Style /></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><Border><Style>Solid</Style><Color>DimGray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="LiFtrE3_L">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value /><Style /></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><Border><Style>Solid</Style><Color>DimGray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="LiFtrE4_L">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value /><Style /></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><Border><Style>Solid</Style><Color>DimGray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="LiFtrTotalLbl_L">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>TOTAL:</Value><Style><FontSize>7pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style><TextAlign>Right</TextAlign></Style></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><PaddingRight>3pt</PaddingRight><Border><Style>Solid</Style><Color>DimGray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="LiFtrTotalVal_L">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>=Sum(Fields!EstimatedTotalCost.Value)</Value><Style><FontSize>7pt</FontSize><FontWeight>Bold</FontWeight><Format>#,##0.00</Format></Style></TextRun></TextRuns><Style><TextAlign>Right</TextAlign></Style></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><PaddingRight>3pt</PaddingRight><Border><Style>Solid</Style><Color>DimGray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
                               </TablixCells></TablixRow>
 
                             </TablixRows>
@@ -264,7 +430,7 @@
                                 <KeepTogether>true</KeepTogether>
                               </TablixMember>
                               <TablixMember>
-                                <Group Name="LineItems_Detail">
+                                <Group Name="LineItems_Detail_L">
                                   <GroupExpressions>
                                     <GroupExpression>=Fields!ItemNo.Value</GroupExpression>
                                   </GroupExpressions>
@@ -276,39 +442,44 @@
                             </TablixMembers>
                           </TablixRowHierarchy>
                           <DataSetName>LineItemsDS</DataSetName>
-                          <Top>0in</Top><Left>0in</Left><Width>7.5in</Width>
+                          <Top>0in</Top><Left>0in</Left><Width>4.5in</Width>
                         </Tablix>
                       </CellContents>
                     </TablixCell>
                   </TablixCells>
                 </TablixRow>
 
-                <!-- ─── ROW E: PURPOSE / JUSTIFICATION ─── -->
+                <!-- ─── ROW E: PURPOSE ─── -->
                 <TablixRow>
-                  <Height>0.9in</Height>
+                  <Height>0.7in</Height>
                   <TablixCells>
                     <TablixCell>
                       <CellContents>
-                        <Rectangle Name="PurposeRect">
+                        <Rectangle Name="PurposeRect_L">
                           <ReportItems>
-                            <Textbox Name="PurposeLblTxt">
-                              <Value>Purpose / Description of Project:</Value>
-                              <Top>0in</Top><Left>0in</Left><Width>7.5in</Width><Height>0.22in</Height>
-                              <Style><FontSize>8pt</FontSize><FontWeight>Bold</FontWeight><VerticalAlign>Middle</VerticalAlign></Style>
+                            <Textbox Name="PurposeLblTxt_L">
+                              <Paragraphs><Paragraph><TextRuns><TextRun>
+                                <Value>Purpose / Description of Project:</Value>
+                                <Style><FontSize>7pt</FontSize><FontWeight>Bold</FontWeight></Style>
+                              </TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                              <Top>0in</Top><Left>0in</Left><Width>4.5in</Width><Height>0.2in</Height>
+                              <Style><VerticalAlign>Middle</VerticalAlign></Style>
                             </Textbox>
-                            <Textbox Name="PurposeValTxt">
-                              <Value>=First(Fields!Purpose.Value, "PurchaseRequestDS")</Value>
+                            <Textbox Name="PurposeValTxt_L">
+                              <Paragraphs><Paragraph><TextRuns><TextRun>
+                                <Value>=First(Fields!Purpose.Value, "PurchaseRequestDS")</Value>
+                                <Style><FontSize>7pt</FontSize></Style>
+                              </TextRun></TextRuns><Style /></Paragraph></Paragraphs>
                               <CanGrow>true</CanGrow>
-                              <Top>0.22in</Top><Left>0in</Left><Width>7.5in</Width><Height>0.65in</Height>
+                              <Top>0.2in</Top><Left>0in</Left><Width>4.5in</Width><Height>0.48in</Height>
                               <Style>
-                                <FontSize>8pt</FontSize><VerticalAlign>Top</VerticalAlign>
+                                <VerticalAlign>Top</VerticalAlign>
                                 <PaddingLeft>3pt</PaddingLeft><PaddingTop>2pt</PaddingTop>
-                                <BorderStyle><Default>Solid</Default></BorderStyle>
-                                <BorderColor><Default>LightGray</Default></BorderColor>
+                                <Border><Style>Solid</Style><Color>LightGray</Color></Border>
                               </Style>
                             </Textbox>
                           </ReportItems>
-                          <Top>0in</Top><Left>0in</Left><Width>7.5in</Width><Height>0.9in</Height>
+                          <Top>0in</Top><Left>0in</Left><Width>4.5in</Width><Height>0.7in</Height>
                           <Style />
                         </Rectangle>
                       </CellContents>
@@ -316,43 +487,71 @@
                   </TablixCells>
                 </TablixRow>
 
-                <!-- ─── ROW F: SIGNATURE SECTION (3-col) ─── -->
+                <!-- ─── ROW F: SIGNATURES ─── -->
                 <TablixRow>
-                  <Height>1.2in</Height>
+                  <Height>1.0in</Height>
                   <TablixCells>
                     <TablixCell>
                       <CellContents>
-                        <Tablix Name="SignatureTable">
+                        <Tablix Name="SignatureTable_L">
                           <TablixBody>
                             <TablixColumns>
-                              <TablixColumn><Width>2.5in</Width></TablixColumn>
-                              <TablixColumn><Width>2.5in</Width></TablixColumn>
-                              <TablixColumn><Width>2.5in</Width></TablixColumn>
+                              <TablixColumn><Width>2.0in</Width></TablixColumn>
+                              <TablixColumn><Width>0.5in</Width></TablixColumn>
+                              <TablixColumn><Width>2.0in</Width></TablixColumn>
                             </TablixColumns>
                             <TablixRows>
                               <!-- Labels -->
-                              <TablixRow><Height>0.25in</Height><TablixCells>
-                                <TablixCell><CellContents><Textbox Name="SigLblReq"><Value>Requested By:</Value><Style><FontSize>8pt</FontSize><FontWeight>Bold</FontWeight><VerticalAlign>Bottom</VerticalAlign></Style></Textbox></CellContents></TablixCell>
-                                <TablixCell><CellContents><Textbox Name="SigLblMid"><Value /><Style /></Textbox></CellContents></TablixCell>
-                                <TablixCell><CellContents><Textbox Name="SigLblAppr"><Value>Approved By:</Value><Style><FontSize>8pt</FontSize><FontWeight>Bold</FontWeight><VerticalAlign>Bottom</VerticalAlign></Style></Textbox></CellContents></TablixCell>
+                              <TablixRow><Height>0.22in</Height><TablixCells>
+                                <TablixCell><CellContents><Textbox Name="SigLblReq_L">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>Requested By:</Value><Style><FontSize>7pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Bottom</VerticalAlign></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="SigLblMid_L">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value /><Style /></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style />
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="SigLblAppr_L">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>Approved By:</Value><Style><FontSize>7pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Bottom</VerticalAlign></Style>
+                                </Textbox></CellContents></TablixCell>
                               </TablixCells></TablixRow>
-                              <!-- Names with signature line -->
-                              <TablixRow><Height>0.55in</Height><TablixCells>
-                                <TablixCell><CellContents><Textbox Name="SigValReq"><Value>=First(Fields!RequestedByName.Value, "PurchaseRequestDS")</Value><Style><FontSize>9pt</FontSize><FontWeight>Bold</FontWeight><TextAlign>Center</TextAlign><VerticalAlign>Bottom</VerticalAlign><BorderStyle><Bottom>Solid</Bottom></BorderStyle></Style></Textbox></CellContents></TablixCell>
-                                <TablixCell><CellContents><Textbox Name="SigValMid"><Value /><Style /></Textbox></CellContents></TablixCell>
-                                <TablixCell><CellContents><Textbox Name="SigValAppr"><Value>=First(Fields!ApprovedByName.Value, "PurchaseRequestDS")</Value><Style><FontSize>9pt</FontSize><FontWeight>Bold</FontWeight><TextAlign>Center</TextAlign><VerticalAlign>Bottom</VerticalAlign><BorderStyle><Bottom>Solid</Bottom></BorderStyle></Style></Textbox></CellContents></TablixCell>
+                              <!-- Names -->
+                              <TablixRow><Height>0.5in</Height><TablixCells>
+                                <TablixCell><CellContents><Textbox Name="SigValReq_L">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>=First(Fields!RequestedByName.Value, "PurchaseRequestDS")</Value><Style><FontSize>8pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style><TextAlign>Center</TextAlign></Style></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Bottom</VerticalAlign><BottomBorder><Style>Solid</Style></BottomBorder></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="SigValMid_L">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value /><Style /></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style />
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="SigValAppr_L">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>=First(Fields!ApprovedByName.Value, "PurchaseRequestDS")</Value><Style><FontSize>8pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style><TextAlign>Center</TextAlign></Style></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Bottom</VerticalAlign><BottomBorder><Style>Solid</Style></BottomBorder></Style>
+                                </Textbox></CellContents></TablixCell>
                               </TablixCells></TablixRow>
                               <!-- Designations -->
-                              <TablixRow><Height>0.22in</Height><TablixCells>
-                                <TablixCell><CellContents><Textbox Name="SigDesReq"><Value>Requesting Officer / Designation</Value><Style><FontSize>7pt</FontSize><TextAlign>Center</TextAlign><VerticalAlign>Top</VerticalAlign></Style></Textbox></CellContents></TablixCell>
-                                <TablixCell><CellContents><Textbox Name="SigDesMid"><Value /><Style /></Textbox></CellContents></TablixCell>
-                                <TablixCell><CellContents><Textbox Name="SigDesAppr"><Value>Head of Agency / HOPE</Value><Style><FontSize>7pt</FontSize><TextAlign>Center</TextAlign><VerticalAlign>Top</VerticalAlign></Style></Textbox></CellContents></TablixCell>
+                              <TablixRow><Height>0.2in</Height><TablixCells>
+                                <TablixCell><CellContents><Textbox Name="SigDesReq_L">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>Requesting Officer / Designation</Value><Style><FontSize>6pt</FontSize></Style></TextRun></TextRuns><Style><TextAlign>Center</TextAlign></Style></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Top</VerticalAlign></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="SigDesMid_L">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value /><Style /></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style />
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="SigDesAppr_L">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>Head of Agency / HOPE</Value><Style><FontSize>6pt</FontSize></Style></TextRun></TextRuns><Style><TextAlign>Center</TextAlign></Style></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Top</VerticalAlign></Style>
+                                </Textbox></CellContents></TablixCell>
                               </TablixCells></TablixRow>
                             </TablixRows>
                           </TablixBody>
                           <TablixColumnHierarchy><TablixMembers><TablixMember /><TablixMember /><TablixMember /></TablixMembers></TablixColumnHierarchy>
                           <TablixRowHierarchy><TablixMembers><TablixMember /><TablixMember /><TablixMember /></TablixMembers></TablixRowHierarchy>
-                          <Top>0in</Top><Left>0in</Left><Width>7.5in</Width>
+                          <DataSetName>PurchaseRequestDS</DataSetName>
+                          <Top>0in</Top><Left>0in</Left><Width>4.5in</Width>
                         </Tablix>
                       </CellContents>
                     </TablixCell>
@@ -362,30 +561,503 @@
               </TablixRows>
             </TablixBody>
 
-            <!-- Outer table hierarchy (6 static rows, no dataset) -->
             <TablixColumnHierarchy><TablixMembers><TablixMember /></TablixMembers></TablixColumnHierarchy>
             <TablixRowHierarchy>
               <TablixMembers>
-                <TablixMember /> <!-- A: Agency Header -->
-                <TablixMember /> <!-- B: Title -->
-                <TablixMember /> <!-- C: Header Info -->
-                <TablixMember /> <!-- D: Line Items -->
-                <TablixMember /> <!-- E: Purpose -->
-                <TablixMember /> <!-- F: Signatures -->
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
               </TablixMembers>
             </TablixRowHierarchy>
+            <DataSetName>PurchaseRequestDS</DataSetName>
 
-            <Top>0in</Top><Left>0in</Left><Width>7.5in</Width>
+            <Top>0in</Top><Left>0in</Left><Width>4.5in</Width>
+          </Tablix>
+
+          <!-- ════════════════════════════════════════════════════════════
+               RIGHT COPY  (Left=5.5in, Width=4.5in)
+               ════════════════════════════════════════════════════════════ -->
+          <Tablix Name="MainTable_R">
+            <TablixBody>
+              <TablixColumns>
+                <TablixColumn><Width>4.5in</Width></TablixColumn>
+              </TablixColumns>
+              <TablixRows>
+
+                <!-- ─── ROW A: AGENCY HEADER ─── -->
+                <TablixRow>
+                  <Height>0.6in</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Rectangle Name="AgencyHeaderRect_R">
+                          <ReportItems>
+                            <Textbox Name="RepublicTxt_R">
+                              <Paragraphs><Paragraph><TextRuns><TextRun>
+                                <Value>Republic of the Philippines</Value>
+                                <Style><FontSize>7pt</FontSize></Style>
+                              </TextRun></TextRuns><Style><TextAlign>Center</TextAlign></Style></Paragraph></Paragraphs>
+                              <Top>0in</Top><Left>0in</Left><Width>4.5in</Width><Height>0.17in</Height>
+                              <Style />
+                            </Textbox>
+                            <Textbox Name="AgencyNameTxt_R">
+                              <Paragraphs><Paragraph><TextRuns><TextRun>
+                                <Value>=First(Fields!Name.Value, "OrganizationProfileDS")</Value>
+                                <Style><FontSize>10pt</FontSize><FontWeight>Bold</FontWeight></Style>
+                              </TextRun></TextRuns><Style><TextAlign>Center</TextAlign></Style></Paragraph></Paragraphs>
+                              <Top>0.17in</Top><Left>0in</Left><Width>4.5in</Width><Height>0.25in</Height>
+                              <Style />
+                            </Textbox>
+                            <Textbox Name="AgencyAddressTxt_R">
+                              <Paragraphs><Paragraph><TextRuns><TextRun>
+                                <Value>=First(Fields!Address.Value, "OrganizationProfileDS")</Value>
+                                <Style><FontSize>7pt</FontSize></Style>
+                              </TextRun></TextRuns><Style><TextAlign>Center</TextAlign></Style></Paragraph></Paragraphs>
+                              <Top>0.42in</Top><Left>0in</Left><Width>4.5in</Width><Height>0.16in</Height>
+                              <Style />
+                            </Textbox>
+                          </ReportItems>
+                          <Top>0in</Top><Left>0in</Left><Width>4.5in</Width><Height>0.6in</Height>
+                          <Style />
+                        </Rectangle>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+
+                <!-- ─── ROW B: REPORT TITLE ─── -->
+                <TablixRow>
+                  <Height>0.3in</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="ReportTitleTxt_R">
+                          <Paragraphs><Paragraph><TextRuns><TextRun>
+                            <Value>PURCHASE REQUEST</Value>
+                            <Style><FontSize>12pt</FontSize><FontWeight>Bold</FontWeight></Style>
+                          </TextRun></TextRuns><Style><TextAlign>Center</TextAlign></Style></Paragraph></Paragraphs>
+                          <Style>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <TopBorder><Style>Solid</Style><Width>2pt</Width></TopBorder>
+                            <BottomBorder><Style>Solid</Style><Width>1pt</Width></BottomBorder>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+
+                <!-- ─── ROW C: HEADER INFO ─── -->
+                <TablixRow>
+                  <Height>1.4in</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Tablix Name="HeaderInfoTable_R">
+                          <TablixBody>
+                            <TablixColumns>
+                              <TablixColumn><Width>0.8in</Width></TablixColumn>
+                              <TablixColumn><Width>1.4in</Width></TablixColumn>
+                              <TablixColumn><Width>0.8in</Width></TablixColumn>
+                              <TablixColumn><Width>1.5in</Width></TablixColumn>
+                            </TablixColumns>
+                            <TablixRows>
+
+                              <TablixRow><Height>0.22in</Height><TablixCells>
+                                <TablixCell><CellContents><Textbox Name="HiLblDept_R">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>Department:</Value><Style><FontSize>7pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><PaddingLeft>2pt</PaddingLeft><Border><Style>Solid</Style><Color>Gray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="HiValDept_R">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>=First(Fields!DepartmentName.Value, "PurchaseRequestDS")</Value><Style><FontSize>7pt</FontSize></Style></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><PaddingLeft>3pt</PaddingLeft><Border><Style>Solid</Style><Color>Gray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="HiLblPrNo_R">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>PR No.:</Value><Style><FontSize>7pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><PaddingLeft>2pt</PaddingLeft><Border><Style>Solid</Style><Color>Gray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="HiValPrNo_R">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>=First(Fields!PrNumber.Value, "PurchaseRequestDS")</Value><Style><FontSize>7pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><PaddingLeft>3pt</PaddingLeft><Border><Style>Solid</Style><Color>Gray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                              </TablixCells></TablixRow>
+
+                              <TablixRow><Height>0.22in</Height><TablixCells>
+                                <TablixCell><CellContents><Textbox Name="HiLblRc_R">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>RC Code:</Value><Style><FontSize>7pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><PaddingLeft>2pt</PaddingLeft><Border><Style>Solid</Style><Color>Gray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="HiValRc_R">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>=First(Fields!ResponsibilityCenterCode.Value, "PurchaseRequestDS")</Value><Style><FontSize>7pt</FontSize></Style></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><PaddingLeft>3pt</PaddingLeft><Border><Style>Solid</Style><Color>Gray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="HiLblPrDate_R">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>PR Date:</Value><Style><FontSize>7pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><PaddingLeft>2pt</PaddingLeft><Border><Style>Solid</Style><Color>Gray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="HiValPrDate_R">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>=First(Fields!PrDate.Value, "PurchaseRequestDS")</Value><Style><FontSize>7pt</FontSize></Style></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><PaddingLeft>3pt</PaddingLeft><Border><Style>Solid</Style><Color>Gray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                              </TablixCells></TablixRow>
+
+                              <TablixRow><Height>0.22in</Height><TablixCells>
+                                <TablixCell><CellContents><Textbox Name="HiLblE1_R">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value /><Style /></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><Border><Style>Solid</Style><Color>Gray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="HiValE1_R">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value /><Style /></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><Border><Style>Solid</Style><Color>Gray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="HiLblSaiNo_R">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>SAI No.:</Value><Style><FontSize>7pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><PaddingLeft>2pt</PaddingLeft><Border><Style>Solid</Style><Color>Gray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="HiValSaiNo_R">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>=First(Fields!SaiNumber.Value, "PurchaseRequestDS")</Value><Style><FontSize>7pt</FontSize></Style></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><PaddingLeft>3pt</PaddingLeft><Border><Style>Solid</Style><Color>Gray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                              </TablixCells></TablixRow>
+
+                              <TablixRow><Height>0.22in</Height><TablixCells>
+                                <TablixCell><CellContents><Textbox Name="HiLblE2_R">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value /><Style /></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><Border><Style>Solid</Style><Color>Gray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="HiValE2_R">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value /><Style /></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><Border><Style>Solid</Style><Color>Gray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="HiLblSaiDate_R">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>SAI Date:</Value><Style><FontSize>7pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><PaddingLeft>2pt</PaddingLeft><Border><Style>Solid</Style><Color>Gray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="HiValSaiDate_R">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>=First(Fields!SaiDate.Value, "PurchaseRequestDS")</Value><Style><FontSize>7pt</FontSize></Style></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><PaddingLeft>3pt</PaddingLeft><Border><Style>Solid</Style><Color>Gray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                              </TablixCells></TablixRow>
+
+                              <TablixRow><Height>0.22in</Height><TablixCells>
+                                <TablixCell><CellContents><Textbox Name="HiLblE3_R">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value /><Style /></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><Border><Style>Solid</Style><Color>Gray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="HiValE3_R">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value /><Style /></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><Border><Style>Solid</Style><Color>Gray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="HiLblAlobsNo_R">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>ALOBS No.:</Value><Style><FontSize>7pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><PaddingLeft>2pt</PaddingLeft><Border><Style>Solid</Style><Color>Gray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="HiValAlobsNo_R">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>=First(Fields!AlobsNumber.Value, "PurchaseRequestDS")</Value><Style><FontSize>7pt</FontSize></Style></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><PaddingLeft>3pt</PaddingLeft><Border><Style>Solid</Style><Color>Gray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                              </TablixCells></TablixRow>
+
+                              <TablixRow><Height>0.22in</Height><TablixCells>
+                                <TablixCell><CellContents><Textbox Name="HiLblE4_R">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value /><Style /></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><Border><Style>Solid</Style><Color>Gray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="HiValE4_R">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value /><Style /></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><Border><Style>Solid</Style><Color>Gray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="HiLblAlobsDate_R">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>ALOBS Date:</Value><Style><FontSize>7pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><PaddingLeft>2pt</PaddingLeft><Border><Style>Solid</Style><Color>Gray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="HiValAlobsDate_R">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>=First(Fields!AlobsDate.Value, "PurchaseRequestDS")</Value><Style><FontSize>7pt</FontSize></Style></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><PaddingLeft>3pt</PaddingLeft><Border><Style>Solid</Style><Color>Gray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                              </TablixCells></TablixRow>
+
+                            </TablixRows>
+                          </TablixBody>
+                          <TablixColumnHierarchy><TablixMembers><TablixMember /><TablixMember /><TablixMember /><TablixMember /></TablixMembers></TablixColumnHierarchy>
+                          <TablixRowHierarchy><TablixMembers><TablixMember /><TablixMember /><TablixMember /><TablixMember /><TablixMember /><TablixMember /></TablixMembers></TablixRowHierarchy>
+                          <DataSetName>PurchaseRequestDS</DataSetName>
+                          <Top>0in</Top><Left>0in</Left><Width>4.5in</Width>
+                        </Tablix>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+
+                <!-- ─── ROW D: LINE ITEMS ─── -->
+                <TablixRow>
+                  <Height>0.53in</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Tablix Name="LineItemsTable_R">
+                          <TablixBody>
+                            <TablixColumns>
+                              <TablixColumn><Width>0.3in</Width></TablixColumn>
+                              <TablixColumn><Width>0.4in</Width></TablixColumn>
+                              <TablixColumn><Width>1.7in</Width></TablixColumn>
+                              <TablixColumn><Width>0.4in</Width></TablixColumn>
+                              <TablixColumn><Width>0.8in</Width></TablixColumn>
+                              <TablixColumn><Width>0.9in</Width></TablixColumn>
+                            </TablixColumns>
+                            <TablixRows>
+
+                              <TablixRow><Height>0.25in</Height><TablixCells>
+                                <TablixCell><CellContents><Textbox Name="LiHdrNo_R">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>No.</Value><Style><FontSize>7pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style><TextAlign>Center</TextAlign></Style></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><BackgroundColor>LightGray</BackgroundColor><Border><Style>Solid</Style><Color>DimGray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="LiHdrUnit_R">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>Unit</Value><Style><FontSize>7pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style><TextAlign>Center</TextAlign></Style></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><BackgroundColor>LightGray</BackgroundColor><Border><Style>Solid</Style><Color>DimGray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="LiHdrDesc_R">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>Description</Value><Style><FontSize>7pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style><TextAlign>Center</TextAlign></Style></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><BackgroundColor>LightGray</BackgroundColor><Border><Style>Solid</Style><Color>DimGray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="LiHdrQty_R">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>Qty</Value><Style><FontSize>7pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style><TextAlign>Center</TextAlign></Style></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><BackgroundColor>LightGray</BackgroundColor><Border><Style>Solid</Style><Color>DimGray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="LiHdrUnitCost_R">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>Unit Cost</Value><Style><FontSize>7pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style><TextAlign>Center</TextAlign></Style></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><BackgroundColor>LightGray</BackgroundColor><Border><Style>Solid</Style><Color>DimGray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="LiHdrTotalCost_R">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>Total Cost</Value><Style><FontSize>7pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style><TextAlign>Center</TextAlign></Style></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><BackgroundColor>LightGray</BackgroundColor><Border><Style>Solid</Style><Color>DimGray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                              </TablixCells></TablixRow>
+
+                              <TablixRow><Height>0.22in</Height><TablixCells>
+                                <TablixCell><CellContents><Textbox Name="LiDetNo_R">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>=Fields!ItemNo.Value</Value><Style><FontSize>7pt</FontSize></Style></TextRun></TextRuns><Style><TextAlign>Center</TextAlign></Style></Paragraph></Paragraphs>
+                                  <CanGrow>true</CanGrow>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><Border><Style>Solid</Style><Color>LightGray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="LiDetUnit_R">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>=Fields!UnitOfIssue.Value</Value><Style><FontSize>7pt</FontSize></Style></TextRun></TextRuns><Style><TextAlign>Center</TextAlign></Style></Paragraph></Paragraphs>
+                                  <CanGrow>true</CanGrow>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><Border><Style>Solid</Style><Color>LightGray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="LiDetDesc_R">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>=Fields!ItemDescription.Value</Value><Style><FontSize>7pt</FontSize></Style></TextRun></TextRuns><Style><TextAlign>Left</TextAlign></Style></Paragraph></Paragraphs>
+                                  <CanGrow>true</CanGrow>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><PaddingLeft>3pt</PaddingLeft><Border><Style>Solid</Style><Color>LightGray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="LiDetQty_R">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>=Fields!Quantity.Value</Value><Style><FontSize>7pt</FontSize><Format>#,##0.##</Format></Style></TextRun></TextRuns><Style><TextAlign>Center</TextAlign></Style></Paragraph></Paragraphs>
+                                  <CanGrow>true</CanGrow>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><Border><Style>Solid</Style><Color>LightGray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="LiDetUnitCost_R">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>=Fields!EstimatedUnitCost.Value</Value><Style><FontSize>7pt</FontSize><Format>#,##0.00</Format></Style></TextRun></TextRuns><Style><TextAlign>Right</TextAlign></Style></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><PaddingRight>3pt</PaddingRight><Border><Style>Solid</Style><Color>LightGray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="LiDetTotalCost_R">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>=Fields!EstimatedTotalCost.Value</Value><Style><FontSize>7pt</FontSize><Format>#,##0.00</Format></Style></TextRun></TextRuns><Style><TextAlign>Right</TextAlign></Style></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><PaddingRight>3pt</PaddingRight><Border><Style>Solid</Style><Color>LightGray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                              </TablixCells></TablixRow>
+
+                              <TablixRow><Height>0.22in</Height><TablixCells>
+                                <TablixCell><CellContents><Textbox Name="LiFtrE1_R">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value /><Style /></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><Border><Style>Solid</Style><Color>DimGray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="LiFtrE2_R">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value /><Style /></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><Border><Style>Solid</Style><Color>DimGray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="LiFtrE3_R">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value /><Style /></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><Border><Style>Solid</Style><Color>DimGray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="LiFtrE4_R">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value /><Style /></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><Border><Style>Solid</Style><Color>DimGray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="LiFtrTotalLbl_R">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>TOTAL:</Value><Style><FontSize>7pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style><TextAlign>Right</TextAlign></Style></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><PaddingRight>3pt</PaddingRight><Border><Style>Solid</Style><Color>DimGray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="LiFtrTotalVal_R">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>=Sum(Fields!EstimatedTotalCost.Value)</Value><Style><FontSize>7pt</FontSize><FontWeight>Bold</FontWeight><Format>#,##0.00</Format></Style></TextRun></TextRuns><Style><TextAlign>Right</TextAlign></Style></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Middle</VerticalAlign><PaddingRight>3pt</PaddingRight><Border><Style>Solid</Style><Color>DimGray</Color></Border></Style>
+                                </Textbox></CellContents></TablixCell>
+                              </TablixCells></TablixRow>
+
+                            </TablixRows>
+                          </TablixBody>
+                          <TablixColumnHierarchy><TablixMembers><TablixMember /><TablixMember /><TablixMember /><TablixMember /><TablixMember /><TablixMember /></TablixMembers></TablixColumnHierarchy>
+                          <TablixRowHierarchy>
+                            <TablixMembers>
+                              <TablixMember>
+                                <KeepWithGroup>After</KeepWithGroup>
+                                <RepeatOnNewPage>true</RepeatOnNewPage>
+                                <KeepTogether>true</KeepTogether>
+                              </TablixMember>
+                              <TablixMember>
+                                <Group Name="LineItems_Detail_R">
+                                  <GroupExpressions>
+                                    <GroupExpression>=Fields!ItemNo.Value</GroupExpression>
+                                  </GroupExpressions>
+                                </Group>
+                              </TablixMember>
+                              <TablixMember>
+                                <KeepWithGroup>Before</KeepWithGroup>
+                              </TablixMember>
+                            </TablixMembers>
+                          </TablixRowHierarchy>
+                          <DataSetName>LineItemsDS_R</DataSetName>
+                          <Top>0in</Top><Left>0in</Left><Width>4.5in</Width>
+                        </Tablix>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+
+                <!-- ─── ROW E: PURPOSE ─── -->
+                <TablixRow>
+                  <Height>0.7in</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Rectangle Name="PurposeRect_R">
+                          <ReportItems>
+                            <Textbox Name="PurposeLblTxt_R">
+                              <Paragraphs><Paragraph><TextRuns><TextRun>
+                                <Value>Purpose / Description of Project:</Value>
+                                <Style><FontSize>7pt</FontSize><FontWeight>Bold</FontWeight></Style>
+                              </TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                              <Top>0in</Top><Left>0in</Left><Width>4.5in</Width><Height>0.2in</Height>
+                              <Style><VerticalAlign>Middle</VerticalAlign></Style>
+                            </Textbox>
+                            <Textbox Name="PurposeValTxt_R">
+                              <Paragraphs><Paragraph><TextRuns><TextRun>
+                                <Value>=First(Fields!Purpose.Value, "PurchaseRequestDS")</Value>
+                                <Style><FontSize>7pt</FontSize></Style>
+                              </TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                              <CanGrow>true</CanGrow>
+                              <Top>0.2in</Top><Left>0in</Left><Width>4.5in</Width><Height>0.48in</Height>
+                              <Style>
+                                <VerticalAlign>Top</VerticalAlign>
+                                <PaddingLeft>3pt</PaddingLeft><PaddingTop>2pt</PaddingTop>
+                                <Border><Style>Solid</Style><Color>LightGray</Color></Border>
+                              </Style>
+                            </Textbox>
+                          </ReportItems>
+                          <Top>0in</Top><Left>0in</Left><Width>4.5in</Width><Height>0.7in</Height>
+                          <Style />
+                        </Rectangle>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+
+                <!-- ─── ROW F: SIGNATURES ─── -->
+                <TablixRow>
+                  <Height>1.0in</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Tablix Name="SignatureTable_R">
+                          <TablixBody>
+                            <TablixColumns>
+                              <TablixColumn><Width>2.0in</Width></TablixColumn>
+                              <TablixColumn><Width>0.5in</Width></TablixColumn>
+                              <TablixColumn><Width>2.0in</Width></TablixColumn>
+                            </TablixColumns>
+                            <TablixRows>
+                              <TablixRow><Height>0.22in</Height><TablixCells>
+                                <TablixCell><CellContents><Textbox Name="SigLblReq_R">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>Requested By:</Value><Style><FontSize>7pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Bottom</VerticalAlign></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="SigLblMid_R">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value /><Style /></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style />
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="SigLblAppr_R">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>Approved By:</Value><Style><FontSize>7pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Bottom</VerticalAlign></Style>
+                                </Textbox></CellContents></TablixCell>
+                              </TablixCells></TablixRow>
+                              <TablixRow><Height>0.5in</Height><TablixCells>
+                                <TablixCell><CellContents><Textbox Name="SigValReq_R">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>=First(Fields!RequestedByName.Value, "PurchaseRequestDS")</Value><Style><FontSize>8pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style><TextAlign>Center</TextAlign></Style></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Bottom</VerticalAlign><BottomBorder><Style>Solid</Style></BottomBorder></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="SigValMid_R">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value /><Style /></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style />
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="SigValAppr_R">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>=First(Fields!ApprovedByName.Value, "PurchaseRequestDS")</Value><Style><FontSize>8pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style><TextAlign>Center</TextAlign></Style></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Bottom</VerticalAlign><BottomBorder><Style>Solid</Style></BottomBorder></Style>
+                                </Textbox></CellContents></TablixCell>
+                              </TablixCells></TablixRow>
+                              <TablixRow><Height>0.2in</Height><TablixCells>
+                                <TablixCell><CellContents><Textbox Name="SigDesReq_R">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>Requesting Officer / Designation</Value><Style><FontSize>6pt</FontSize></Style></TextRun></TextRuns><Style><TextAlign>Center</TextAlign></Style></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Top</VerticalAlign></Style>
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="SigDesMid_R">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value /><Style /></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+                                  <Style />
+                                </Textbox></CellContents></TablixCell>
+                                <TablixCell><CellContents><Textbox Name="SigDesAppr_R">
+                                  <Paragraphs><Paragraph><TextRuns><TextRun><Value>Head of Agency / HOPE</Value><Style><FontSize>6pt</FontSize></Style></TextRun></TextRuns><Style><TextAlign>Center</TextAlign></Style></Paragraph></Paragraphs>
+                                  <Style><VerticalAlign>Top</VerticalAlign></Style>
+                                </Textbox></CellContents></TablixCell>
+                              </TablixCells></TablixRow>
+                            </TablixRows>
+                          </TablixBody>
+                          <TablixColumnHierarchy><TablixMembers><TablixMember /><TablixMember /><TablixMember /></TablixMembers></TablixColumnHierarchy>
+                          <TablixRowHierarchy><TablixMembers><TablixMember /><TablixMember /><TablixMember /></TablixMembers></TablixRowHierarchy>
+                          <DataSetName>PurchaseRequestDS</DataSetName>
+                          <Top>0in</Top><Left>0in</Left><Width>4.5in</Width>
+                        </Tablix>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+
+              </TablixRows>
+            </TablixBody>
+
+            <TablixColumnHierarchy><TablixMembers><TablixMember /></TablixMembers></TablixColumnHierarchy>
+            <TablixRowHierarchy>
+              <TablixMembers>
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+              </TablixMembers>
+            </TablixRowHierarchy>
+            <DataSetName>PurchaseRequestDS</DataSetName>
+
+            <Top>0in</Top><Left>5.5in</Left><Width>4.5in</Width>
           </Tablix>
 
         </ReportItems>
-        <Height>9in</Height>
+        <Height>7.5in</Height>
         <Style />
       </Body>
-      <Width>7.5in</Width>
+      <Width>10in</Width>
       <Page>
-        <PageHeight>11in</PageHeight>
-        <PageWidth>8.5in</PageWidth>
+        <PageHeight>8.5in</PageHeight>
+        <PageWidth>11in</PageWidth>
         <LeftMargin>0.5in</LeftMargin>
         <RightMargin>0.5in</RightMargin>
         <TopMargin>0.5in</TopMargin>
@@ -398,5 +1070,5 @@
   <Language>en-PH</Language>
   <ConsumeContainerWhitespace>true</ConsumeContainerWhitespace>
   <rd:ReportUnitType>Inch</rd:ReportUnitType>
-  <rd:ReportID>purchase-request-v1</rd:ReportID>
+  <rd:ReportID>purchase-request-v2</rd:ReportID>
 </Report>

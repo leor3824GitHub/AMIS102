@@ -1,5 +1,7 @@
+using Asp.Versioning;
 using AMIS.Framework.Shared.Constants;
 using AMIS.Framework.Web.Modules;
+using AMIS.Modules.Reporting.Features.v1.PurchaseRequests.PrintPurchaseRequestFast;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -31,7 +33,17 @@ public sealed class ReportingModule : IModule
     {
         ArgumentNullException.ThrowIfNull(endpoints);
 
-        // Report endpoints are mapped here as each phase is completed.
-        // See REPORTING-MODULE-PLAN.md for the full implementation roadmap.
+        var apiVersionSet = endpoints.NewApiVersionSet()
+            .HasApiVersion(new ApiVersion(1))
+            .ReportApiVersions()
+            .Build();
+
+        var moduleGroup = endpoints
+            .MapGroup("api/v{version:apiVersion}/reporting")
+            .WithTags("Reporting")
+            .WithApiVersionSet(apiVersionSet);
+
+        var prGroup = moduleGroup.MapGroup("/procurement/purchase-requests");
+        PrintPurchaseRequestFastEndpoint.Map(prGroup);
     }
 }

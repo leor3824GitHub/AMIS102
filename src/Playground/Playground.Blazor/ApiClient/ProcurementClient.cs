@@ -29,6 +29,7 @@ internal interface IPurchaseRequestClient
     Task<PagedResponse<PurchaseRequestSummaryDto>> SearchAsync(string? keyword = null, PurchaseRequestStatus? status = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
     Task<PurchaseRequestDto?> GetAsync(Guid id, CancellationToken ct = default);
     Task<byte[]> GetPrintPdfAsync(Guid id, string? pageWidth = null, string? pageHeight = null, CancellationToken ct = default);
+    Task<byte[]> GetFastReportPdfAsync(Guid id, string? pageWidth = null, int? copies = null, string? orientation = null, CancellationToken ct = default);
     Task<PurchaseRequestDto> CreateAsync(CreatePurchaseRequestCommand command, CancellationToken ct = default);
     Task<PurchaseRequestDto> UpdateAsync(Guid id, UpdatePurchaseRequestCommand command, CancellationToken ct = default);
     Task<PurchaseRequestDto> SubmitAsync(Guid id, CancellationToken ct = default);
@@ -53,6 +54,29 @@ internal sealed class PurchaseRequestClient(HttpClient http) : IPurchaseRequestC
 
     public Task<PurchaseRequestDto?> GetAsync(Guid id, CancellationToken ct = default) =>
         http.GetFromJsonAsync<PurchaseRequestDto>($"{Base}/{id}", ProcurementJson.Options, ct);
+
+    public Task<byte[]> GetFastReportPdfAsync(
+        Guid id,
+        string? pageWidth = null,
+        int? copies = null,
+        string? orientation = null,
+        CancellationToken ct = default)
+    {
+        var query = HttpUtility.ParseQueryString(string.Empty);
+        if (!string.IsNullOrWhiteSpace(pageWidth))
+            query["pageWidth"] = pageWidth;
+        if (copies is 1 or 2)
+            query["copies"] = copies.Value.ToString(CultureInfo.InvariantCulture);
+        if (!string.IsNullOrWhiteSpace(orientation))
+            query["orientation"] = orientation;
+
+        var queryString = query.ToString();
+        var url = string.IsNullOrWhiteSpace(queryString)
+            ? $"api/v1/reporting/procurement/purchase-requests/{id}/print/fast"
+            : $"api/v1/reporting/procurement/purchase-requests/{id}/print/fast?{queryString}";
+
+        return http.GetByteArrayAsync(url, ct);
+    }
 
     public Task<byte[]> GetPrintPdfAsync(Guid id, string? pageWidth = null, string? pageHeight = null, CancellationToken ct = default)
     {

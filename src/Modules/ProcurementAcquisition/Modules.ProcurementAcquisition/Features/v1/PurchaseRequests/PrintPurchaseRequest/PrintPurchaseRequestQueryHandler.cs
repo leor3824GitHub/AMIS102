@@ -69,6 +69,7 @@ public sealed class PrintPurchaseRequestQueryHandler(
             [
                 ("PurchaseRequestDS",    (IEnumerable)headerData),
                 ("LineItemsDS",          (IEnumerable)lineItems),
+                ("LineItemsDS_R",        (IEnumerable)lineItems),
                 ("OrganizationProfileDS",(IEnumerable)orgData)
             ],
             pageWidth:  query.PageWidth,

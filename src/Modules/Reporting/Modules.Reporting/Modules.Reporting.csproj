@@ -20,6 +20,8 @@
 	<ItemGroup>
 		<ProjectReference Include="..\..\..\BuildingBlocks\Web\Web.csproj" />
 		<ProjectReference Include="..\Modules.Reporting.Contracts\Modules.Reporting.Contracts.csproj" />
+		<ProjectReference Include="..\..\MasterData\Modules.MasterData.Contracts\Modules.MasterData.Contracts.csproj" />
+		<ProjectReference Include="..\..\ProcurementAcquisition\Modules.ProcurementAcquisition.Contracts\Modules.ProcurementAcquisition.Contracts.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
