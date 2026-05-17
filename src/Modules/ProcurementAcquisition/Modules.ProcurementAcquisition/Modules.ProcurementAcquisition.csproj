@@ -17,11 +17,7 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Reports\*.rdlc" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\..\..\BuildingBlocks\Caching\Caching.csproj" />
-    <ProjectReference Include="..\..\..\BuildingBlocks\Reporting\Reporting.csproj" />
     <ProjectReference Include="..\..\..\BuildingBlocks\Eventing\Eventing.csproj" />
     <ProjectReference Include="..\..\..\BuildingBlocks\Persistence\Persistence.csproj" />
     <ProjectReference Include="..\..\..\BuildingBlocks\Web\Web.csproj" />

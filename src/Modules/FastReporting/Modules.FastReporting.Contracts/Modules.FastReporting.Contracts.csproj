@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<RootNamespace>AMIS.Modules.FastReporting.Contracts</RootNamespace>
+		<AssemblyName>AMIS.Modules.FastReporting.Contracts</AssemblyName>
+		<PackageId>AMIS.Modules.FastReporting.Contracts</PackageId>
+		<NoWarn>$(NoWarn);CA1002;CA1056;CS1572;S2094</NoWarn>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Mediator.Abstractions" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\..\BuildingBlocks\Shared\Shared.csproj" />
+	</ItemGroup>
+
+</Project>

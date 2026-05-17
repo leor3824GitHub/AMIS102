@@ -2,7 +2,6 @@
   <Folder Name="/BuildingBlocks/">
     <Project Path="BuildingBlocks/Blazor.UI/Blazor.UI.csproj" Id="b8ed01df-1c7f-4be1-afa4-f41d3ac7208e" />
     <Project Path="BuildingBlocks/Caching/Caching.csproj" />
-    <Project Path="BuildingBlocks/Reporting/Reporting.csproj" />
     <Project Path="BuildingBlocks/Core/Core.csproj" />
     <Project Path="BuildingBlocks/Eventing.Abstractions/Eventing.Abstractions.csproj" />
     <Project Path="BuildingBlocks/Eventing/Eventing.csproj" />
@@ -50,9 +49,13 @@
     <Project Path="Modules/ProcurementPlanning/Modules.ProcurementPlanning.Contracts/Modules.ProcurementPlanning.Contracts.csproj" />
     <Project Path="Modules/ProcurementPlanning/Modules.ProcurementPlanning/Modules.ProcurementPlanning.csproj" />
   </Folder>
-  <Folder Name="/Modules/Reporting/">
-    <Project Path="Modules/Reporting/Modules.Reporting.Contracts/Modules.Reporting.Contracts.csproj" />
-    <Project Path="Modules/Reporting/Modules.Reporting/Modules.Reporting.csproj" />
+  <Folder Name="/Modules/FastReporting/">
+    <Project Path="Modules/FastReporting/Modules.FastReporting.Contracts/Modules.FastReporting.Contracts.csproj" />
+    <Project Path="Modules/FastReporting/Modules.FastReporting/Modules.FastReporting.csproj" />
+  </Folder>
+  <Folder Name="/Modules/RdlcReporting/">
+    <Project Path="Modules/RdlcReporting/Modules.RdlcReporting.Contracts/Modules.RdlcReporting.Contracts.csproj" />
+    <Project Path="Modules/RdlcReporting/Modules.RdlcReporting/Modules.RdlcReporting.csproj" />
   </Folder>
   <Folder Name="/Modules/Identity/">
     <Project Path="Modules/Identity/Modules.Identity.Contracts/Modules.Identity.Contracts.csproj" />

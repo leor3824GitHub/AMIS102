@@ -2,12 +2,14 @@
 paths:
   - "src/**/Reports/**/*.rdlc"
   - "src/**/Features/**/Print*"
-  - "src/BuildingBlocks/Reporting/**"
+  - "src/Modules/RdlcReporting/**"
 ---
 
 # RDLC Reports with ReportViewerCore
 
-AMIS uses **ReportViewerCore.NETCore** (v15.1.33) for server-side RDLC → PDF rendering. The entry point is `RdlcReportHelper.Render()` in `BuildingBlocks/Reporting`.
+AMIS uses **ReportViewerCore.NETCore** (v15.1.33) for server-side RDLC → PDF rendering. The entry point is `RdlcReportHelper.Render()` in `Modules.RdlcReporting`.
+
+RDLC handlers, endpoints, and `.rdlc` templates live in the dedicated `Modules.RdlcReporting` module, mirroring how FastReport reports live in `Modules.FastReporting`. Other modules consume RDLC by sending mediator queries that the `RdlcReporting` handlers fulfill — they do not reference the RDLC engine themselves.
 
 ## Package
 
@@ -15,7 +17,7 @@ AMIS uses **ReportViewerCore.NETCore** (v15.1.33) for server-side RDLC → PDF r
 <!-- Directory.Packages.props -->
 <PackageVersion Include="ReportViewerCore.NETCore" Version="15.1.33" />
 
-<!-- Your module's .csproj -->
+<!-- Modules.RdlcReporting.csproj -->
 <PackageReference Include="ReportViewerCore.NETCore" />
 ```
 
@@ -23,7 +25,7 @@ Exposes `Microsoft.Reporting.NETCore` namespace — `LocalReport`, `ReportDataSo
 
 ## RdlcReportHelper
 
-`src/BuildingBlocks/Reporting/RdlcReportHelper.cs` — static utility, three steps internally:
+`src/Modules/RdlcReporting/Modules.RdlcReporting/Services/RdlcReportHelper.cs` — static utility, three steps internally:
 
 ```csharp
 public static byte[] Render(
@@ -40,31 +42,42 @@ public static byte[] Render(
 2. Binds each `(name, data)` tuple as a `ReportDataSource`
 3. Renders with optional `<DeviceInfo>` page size override; returns `byte[]`
 
+Namespace: `AMIS.Modules.RdlcReporting.Services`
+
 ## Embed the .rdlc File
 
-In the module `.csproj`:
+In `Modules.RdlcReporting.csproj`:
 
 ```xml
 <EmbeddedResource Include="Reports\*.rdlc" />
 ```
 
-Resource name pattern: `{RootNamespace}.Reports.{FileName}.rdlc`
+Resource name pattern: `AMIS.Modules.RdlcReporting.Reports.{FileName}.rdlc`
 
-Example: `AMIS.Modules.ProcurementAcquisition.Reports.PurchaseRequest.rdlc`
+Example: `AMIS.Modules.RdlcReporting.Reports.PurchaseRequest.rdlc`
 
 ## Handler Pattern
 
-Reference: `PrintPurchaseRequestQueryHandler.cs`
+Reference: `PrintPurchaseRequestQueryHandler.cs` inside `Modules.RdlcReporting`.
+
+Handlers live in `Modules.RdlcReporting/Features/v1/{Area}/{Print...}/` and use mediator to fetch data from other modules' `.Contracts` — they never reference module internals or DbContexts.
 
 ```csharp
-public sealed class MyReportQueryHandler(...) : IQueryHandler<MyReportQuery, byte[]>
+using AMIS.Modules.RdlcReporting.Services;
+
+namespace AMIS.Modules.RdlcReporting.Features.v1.{Area}.{PrintFeature};
+
+public sealed class MyReportQueryHandler(IMediator mediator) : IQueryHandler<MyReportQuery, byte[]>
 {
     private static readonly Assembly Assembly = typeof(MyReportQueryHandler).Assembly;
-    private const string ReportResource = "My.Namespace.Reports.MyReport.rdlc";
+    private const string ReportResource = "AMIS.Modules.RdlcReporting.Reports.MyReport.rdlc";
 
     public async ValueTask<byte[]> Handle(MyReportQuery query, CancellationToken ct)
     {
-        // 1. Fetch data
+        // 1. Fetch data via other modules' Contracts queries
+        var dto = await mediator.Send(new GetSomethingQuery(query.Id), ct)
+            ?? throw new KeyNotFoundException(...);
+
         // 2. Build flat records matching RDLC DataSet field names exactly
         var headerData = new List<MyReportHeader> { new(...) };
         var lineItems  = new List<MyReportLineItem> { ... };
@@ -100,7 +113,11 @@ Mismatch = field renders blank in the PDF with no build error.
 
 ## Endpoint Pattern
 
+Endpoints live in `Modules.RdlcReporting` and are mapped through `RdlcReportingModule.MapEndpoints`. The module group is `api/v1/rdlc-reporting/`, with sub-groups per consuming area (e.g. `/procurement/purchase-requests`).
+
 ```csharp
+using AMIS.Modules.RdlcReporting.Services;
+
 endpoints.MapGet("/{id:guid}/print", async (Guid id, IMediator mediator, CancellationToken ct,
     string? pageWidth = null, string? pageHeight = null) =>
 {
@@ -115,15 +132,15 @@ endpoints.MapGet("/{id:guid}/print", async (Guid id, IMediator mediator, Cancell
     var bytes = await mediator.Send(new MyReportQuery(id, pageWidth, pageHeight), ct);
     return Results.File(bytes, "application/pdf", $"report-{id}.pdf");
 })
-.WithName("Module_PrintMyReport")
-.WithSummary("Generate PDF for my report")
+.WithName("RdlcReporting_PrintMyReport")    // GLOBALLY unique — prefix with RdlcReporting
+.WithSummary("Generate RDLC PDF for my report")
 .Produces(200, null, "application/pdf")
 .RequirePermission(MyPermissions.MyEntity.View);
 ```
 
 ## Paper Size Shortcuts
 
-`GovernmentPaperSizes` in BuildingBlocks defines preset `(width, height)` tuples:
+`GovernmentPaperSizes` lives in `AMIS.Modules.RdlcReporting.Services` and defines preset `(width, height)` tuples:
 
 | Shorthand | Width | Height |
 |-----------|-------|--------|
@@ -136,18 +153,16 @@ endpoints.MapGet("/{id:guid}/print", async (Guid id, IMediator mediator, Cancell
 
 ## Blazor UI Integration
 
-Fetch bytes from the API client, open as data URL in a new tab:
+Fetch bytes from the API client at `api/v1/rdlc-reporting/.../print`, then open as a data URL in a new tab:
 
 ```csharp
-// In API client
-public async Task<byte[]> GetReportPdfAsync(Guid id, string? paperSize = null, CancellationToken ct = default)
+// In API client (e.g. ProcurementClient.GetPrintPdfAsync)
+public Task<byte[]> GetReportPdfAsync(Guid id, string? paperSize = null, CancellationToken ct = default)
 {
     var url = string.IsNullOrWhiteSpace(paperSize)
-        ? $"{Base}/{id}/print"
-        : $"{Base}/{id}/print?pageWidth={paperSize}";
-    using var r = await http.GetAsync(url, ct);
-    r.EnsureSuccessStatusCode();
-    return await r.Content.ReadAsByteArrayAsync(ct);
+        ? $"api/v1/rdlc-reporting/procurement/purchase-requests/{id}/print"
+        : $"api/v1/rdlc-reporting/procurement/purchase-requests/{id}/print?pageWidth={paperSize}";
+    return http.GetByteArrayAsync(url, ct);
 }
 
 // In Blazor page @code block
@@ -194,19 +209,20 @@ Toolbar split-button pattern (HTML print + RDLC download menu):
 
 ## Checklist for a New RDLC Report
 
-1. Design `.rdlc` in VS Report Designer → place under `Reports/` in the module
-2. Add `<EmbeddedResource Include="Reports\*.rdlc" />` to the module `.csproj`
-3. Add `<PackageReference Include="ReportViewerCore.NETCore" />` to the module `.csproj` (or reference `BuildingBlocks/Reporting`)
-4. Create flat `internal sealed record` types whose property names match RDLC DataSet field names exactly
-5. Implement an `IQueryHandler<TQuery, byte[]>` that calls `RdlcReportHelper.Render(...)`
-6. Add a `MapGet` endpoint that dispatches the query and returns `Results.File(bytes, "application/pdf", "name.pdf")`
-7. Add `GetReportPdfAsync` to the Blazor API client
-8. Add download button / menu to the Blazor page using the data URL pattern above
+1. Design `.rdlc` in VS Report Designer → place under `Modules.RdlcReporting/Reports/`.
+2. Confirm `Modules.RdlcReporting.csproj` already has `<EmbeddedResource Include="Reports\*.rdlc" />` (it does).
+3. Reference the owning data module's `.Contracts` project from `Modules.RdlcReporting.csproj` if not already referenced (e.g. `Modules.MyArea.Contracts`).
+4. Add a vertical slice under `Modules.RdlcReporting/Features/v1/{Area}/{PrintFeature}/`:
+   - `Print{Entity}Query.cs`, `Print{Entity}QueryHandler.cs`, `Print{Entity}Endpoint.cs`.
+5. Create flat `internal sealed record` types whose property names match RDLC DataSet field names exactly.
+6. Map the endpoint in `RdlcReportingModule.MapEndpoints` under the appropriate sub-group.
+7. Add `GetReportPdfAsync` to the relevant Blazor API client targeting `api/v1/rdlc-reporting/...`.
+8. Add download button / menu to the Blazor page using the data URL pattern above.
 
 ## Reference Implementation
 
-- Helper: `src/BuildingBlocks/Reporting/RdlcReportHelper.cs`
-- Handler: `src/Modules/ProcurementAcquisition/.../PrintPurchaseRequest/PrintPurchaseRequestQueryHandler.cs`
-- Endpoint: `src/Modules/ProcurementAcquisition/.../PrintPurchaseRequest/PrintPurchaseRequestEndpoint.cs`
+- Helper: `src/Modules/RdlcReporting/Modules.RdlcReporting/Services/RdlcReportHelper.cs`
+- Handler: `src/Modules/RdlcReporting/Modules.RdlcReporting/Features/v1/PurchaseRequests/PrintPurchaseRequest/PrintPurchaseRequestQueryHandler.cs`
+- Endpoint: `src/Modules/RdlcReporting/Modules.RdlcReporting/Features/v1/PurchaseRequests/PrintPurchaseRequest/PrintPurchaseRequestEndpoint.cs`
 - UI: `src/Playground/Playground.Blazor/Components/Pages/Procurement/PurchaseRequestPrintPage.razor`
-- RDLC: `src/Modules/ProcurementAcquisition/.../Reports/PurchaseRequest.rdlc`
+- RDLC: `src/Modules/RdlcReporting/Modules.RdlcReporting/Reports/PurchaseRequest.rdlc`
