@@ -6,4 +6,5 @@ public sealed record PrintPurchaseRequestFastQuery(
     Guid Id,
     string PaperSize = "a4",
     int Copies = 2,
-    string Orientation = "landscape") : IQuery<byte[]>;
+    string Orientation = "landscape",
+    int MinRows = 10) : IQuery<byte[]>;

@@ -29,7 +29,7 @@ internal interface IPurchaseRequestClient
     Task<PagedResponse<PurchaseRequestSummaryDto>> SearchAsync(string? keyword = null, PurchaseRequestStatus? status = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
     Task<PurchaseRequestDto?> GetAsync(Guid id, CancellationToken ct = default);
     Task<byte[]> GetPrintPdfAsync(Guid id, string? pageWidth = null, string? pageHeight = null, CancellationToken ct = default);
-    Task<byte[]> GetFastReportPdfAsync(Guid id, string? pageWidth = null, int? copies = null, string? orientation = null, CancellationToken ct = default);
+    Task<byte[]> GetFastReportPdfAsync(Guid id, string? pageWidth = null, int? copies = null, string? orientation = null, int? minRows = null, CancellationToken ct = default);
     Task<PurchaseRequestDto> CreateAsync(CreatePurchaseRequestCommand command, CancellationToken ct = default);
     Task<PurchaseRequestDto> UpdateAsync(Guid id, UpdatePurchaseRequestCommand command, CancellationToken ct = default);
     Task<PurchaseRequestDto> SubmitAsync(Guid id, CancellationToken ct = default);
@@ -60,6 +60,7 @@ internal sealed class PurchaseRequestClient(HttpClient http) : IPurchaseRequestC
         string? pageWidth = null,
         int? copies = null,
         string? orientation = null,
+        int? minRows = null,
         CancellationToken ct = default)
     {
         var query = HttpUtility.ParseQueryString(string.Empty);
@@ -69,6 +70,8 @@ internal sealed class PurchaseRequestClient(HttpClient http) : IPurchaseRequestC
             query["copies"] = copies.Value.ToString(CultureInfo.InvariantCulture);
         if (!string.IsNullOrWhiteSpace(orientation))
             query["orientation"] = orientation;
+        if (minRows is > 0)
+            query["minRows"] = minRows.Value.ToString(CultureInfo.InvariantCulture);
 
         var queryString = query.ToString();
         var url = string.IsNullOrWhiteSpace(queryString)

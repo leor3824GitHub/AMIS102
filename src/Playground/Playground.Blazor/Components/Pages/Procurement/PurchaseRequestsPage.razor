@@ -201,12 +201,8 @@
                                                      TransformOrigin="Origin.TopLeft"
                                                      ToolTip="Print">
                                                 <MudMenuItem Icon="@Icons.Material.Filled.PictureAsPdf"
-                                                             OnClick="@(() => DownloadRdlcPdfAsync(item.Id, "a4"))">
-                                                    Download PDF (RDLC) – A4
-                                                </MudMenuItem>
-                                                <MudMenuItem Icon="@Icons.Material.Filled.PictureAsPdf"
-                                                             OnClick="@(() => DownloadRdlcPdfAsync(item.Id, "longbond"))">
-                                                    Download PDF (RDLC) – Long Bond
+                                                             OnClick="@(() => DownloadFastReportPdfAsync(item.Id))">
+                                                    Download PDF
                                                 </MudMenuItem>
                                                 <MudDivider />
                                                 <MudMenuItem Icon="@Icons.Material.Filled.ContentCut"
@@ -523,11 +519,11 @@
         catch (Exception ex) { Snackbar.Add($"Cancel failed: {ex.Message}", Severity.Error); }
     }
 
-    private async Task DownloadRdlcPdfAsync(Guid id, string paperSize)
+    private async Task DownloadFastReportPdfAsync(Guid id)
     {
         try
         {
-            var bytes = await Client.GetPrintPdfAsync(id, pageWidth: paperSize);
+            var bytes = await Client.GetFastReportPdfAsync(id, pageWidth: "a4", copies: 2, orientation: "landscape", minRows: 10);
             var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
             await JS.InvokeVoidAsync("open", dataUrl, "_blank");
             Snackbar.Add("PDF ready.", Severity.Success);
@@ -544,7 +540,8 @@
         {
             [nameof(FastReportPageSetupDialog.PaperSize)] = "a4",
             [nameof(FastReportPageSetupDialog.Orientation)] = "landscape",
-            [nameof(FastReportPageSetupDialog.Copies)] = 2
+            [nameof(FastReportPageSetupDialog.Copies)] = 2,
+            [nameof(FastReportPageSetupDialog.MinRows)] = 10
         };
         var options = new DialogOptions { MaxWidth = MaxWidth.ExtraSmall, FullWidth = false, CloseOnEscapeKey = true };
         var dialog = await DialogService.ShowAsync<FastReportPageSetupDialog>("Page Setup", parameters, options);
@@ -554,7 +551,7 @@
 
         try
         {
-            var bytes = await Client.GetFastReportPdfAsync(id, pageWidth: r.PaperSize, copies: r.Copies, orientation: r.Orientation);
+            var bytes = await Client.GetFastReportPdfAsync(id, pageWidth: r.PaperSize, copies: r.Copies, orientation: r.Orientation, minRows: r.MinRows);
             var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
             await JS.InvokeVoidAsync("open", dataUrl, "_blank");
             Snackbar.Add("PDF ready.", Severity.Success);

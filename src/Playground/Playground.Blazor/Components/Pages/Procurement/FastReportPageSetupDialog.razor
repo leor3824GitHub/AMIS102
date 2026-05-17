@@ -37,6 +37,17 @@
                     </MudText>
                 }
             </MudField>
+
+            <MudNumericField T="int"
+                             Label="Rows per page"
+                             @bind-Value="MinRows"
+                             Min="1"
+                             Max="20"
+                             Step="1"
+                             Dense="true"
+                             Margin="Margin.Dense"
+                             Variant="Variant.Outlined"
+                             HelperText="Pads the line-item table with empty rows up to this count." />
         </MudStack>
     </DialogContent>
     <DialogActions>
@@ -53,6 +64,7 @@
     [Parameter] public string PaperSize { get; set; } = "a4";
     [Parameter] public string Orientation { get; set; } = "landscape";
     [Parameter] public int Copies { get; set; } = 2;
+    [Parameter] public int MinRows { get; set; } = 10;
 
     private readonly (string Value, string Label)[] _paperOptions =
     {
@@ -62,12 +74,13 @@
         ("legal",    "Legal — 216 × 356 mm (8.5 × 14 in)")
     };
 
-    public sealed record Result(string PaperSize, string Orientation, int Copies);
+    public sealed record Result(string PaperSize, string Orientation, int Copies, int MinRows);
 
     private void Submit()
     {
         var copies = Orientation == "portrait" ? 1 : Copies;
-        MudDialog.Close(DialogResult.Ok(new Result(PaperSize, Orientation, copies)));
+        var rows = Math.Clamp(MinRows, 1, 20);
+        MudDialog.Close(DialogResult.Ok(new Result(PaperSize, Orientation, copies, rows)));
     }
 
     private void Cancel() => MudDialog.Cancel();

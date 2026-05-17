@@ -38,48 +38,69 @@
             Audit Logs
         </MudNavLink>
 
-        <MudNavGroup Title="Expendable" Icon="@Icons.Material.Outlined.Inventory2" @bind-Expanded="_expendableExpanded">
-            <MudNavLink Href="/expendable/my-requests" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Inbox">
-                My Requests
+         <MudNavGroup Title="Procurement Planning" Icon="@Icons.Material.Outlined.Assignment" @bind-Expanded="_procurementPlanningExpanded">
+            <MudNavLink Href="/procurement-planning/ppmps" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.ListAlt">
+                PPMP
             </MudNavLink>
-            <MudNavLink Href="/expendable/shopping" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.ShoppingBag">
-                Shop
+            <MudNavLink Href="/procurement-planning/ppmp-approvals" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.HowToReg">
+                PPMP Approvals
             </MudNavLink>
-            <MudNavLink Href="/expendable/cart" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.ShoppingCart">
-                Basket
+            <MudNavLink Href="/procurement-planning/apps" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Description">
+                Annual Procurement Plan (APP)
             </MudNavLink>
-            <MudNavLink Href="/expendable/products" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Label">
-                Products
-            </MudNavLink>
-            <MudNavLink Href="/expendable/purchases" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.ReceiptLong">
-                Purchases
-            </MudNavLink>
-            <MudNavLink Href="/expendable/requests" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Description">
-                Supply Requests
-            </MudNavLink>
-            <MudNavLink Href="/expendable/warehouse" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Warehouse">
-                Warehouse
-            </MudNavLink>
-            <MudNavLink Href="/expendable/reports/department" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Assessment">
-                Issuance Report
-            </MudNavLink>
-            <MudNavLink Href="/expendable/reports/employee" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.PersonSearch">
-                Employee Issuance
-            </MudNavLink>
-            <MudNavLink Href="/expendable/reports/stock-card" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Inventory">
-                Stock Card
-            </MudNavLink>
-            <MudNavLink Href="/expendable/reports/physical-count" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.FactCheck">
-                Physical Count
+            <MudNavLink Href="/procurement-planning/app-approvals" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.LibraryAddCheck">
+                APP Approvals
             </MudNavLink>
         </MudNavGroup>
 
-        <MudNavGroup Title="Finance" Icon="@Icons.Material.Outlined.AccountBalanceWallet" @bind-Expanded="_financeExpanded">
-            <MudNavLink Href="/finance/disbursement-vouchers" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Receipt">
-                Disbursement Vouchers
+        <MudNavGroup Title="Procurement Acquisition" Icon="@Icons.Material.Outlined.ShoppingBag" @bind-Expanded="_procurementExpanded">
+            <MudNavLink Href="/procurement/purchase-requests" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Description">
+                Purchase Requests
             </MudNavLink>
-            <MudNavLink Href="/finance/budget-utilization-records" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.AccountBalance">
-                Budget Utilization Records
+            <MudNavLink Href="/procurement/canvass-requests" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.RequestQuote">
+                Canvass (RIV)
+            </MudNavLink>
+            <MudNavLink Href="/procurement/purchase-orders" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Receipt">
+                Purchase Orders
+            </MudNavLink>
+            <MudNavLink Href="/asset-procurement/iars" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.RuleFolder">
+                Inspection &amp; Acceptance (IAR)
+            </MudNavLink>
+        </MudNavGroup>
+
+        <MudNavGroup Title="Asset Register" Icon="@Icons.Material.Outlined.FolderSpecial" @bind-Expanded="_assetRegisterExpanded">
+            <MudNavLink Href="/asset-register" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.Home">
+                Overview
+            </MudNavLink>
+            <MudNavLink Href="/asset-register/receiving/ppe" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.MoveToInbox">
+                Receiving — PPE (PPERR)
+            </MudNavLink>
+            <MudNavLink Href="/asset-register/receiving/smrr" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.MoveToInbox">
+                Receiving — Supplies (SMRR)
+            </MudNavLink>
+            <MudNavLink Href="/asset-register/assets" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Inventory2">
+                Asset Registry
+            </MudNavLink>
+            <MudNavLink Href="/asset-register/accountability" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.AssignmentInd">
+                ICS / PAR
+            </MudNavLink>
+            <MudNavLink Href="/asset-register/catalog" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.LibraryBooks">
+                Property Catalog
+            </MudNavLink>
+            <MudNavLink Href="/asset-register/physical-count" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.FactCheck">
+                Physical Count
+            </MudNavLink>
+            <MudNavLink Href="/asset-register/incidents" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.ReportProblem">
+                Incident Reports
+            </MudNavLink>
+            <MudNavLink Href="/asset-register/issuance" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Receipt">
+                Issuance Reports
+            </MudNavLink>
+            <MudNavLink Href="/asset-register/unserviceable" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.DeleteSweep">
+                Unserviceable Reports
+            </MudNavLink>
+            <MudNavLink Href="/asset-register/reports" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Assessment">
+                Reports Workspace
             </MudNavLink>
         </MudNavGroup>
 
@@ -135,69 +156,48 @@
             </MudNavLink>
         </MudNavGroup>
 
-        <MudNavGroup Title="Asset Register" Icon="@Icons.Material.Outlined.FolderSpecial" @bind-Expanded="_assetRegisterExpanded">
-            <MudNavLink Href="/asset-register" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.Home">
-                Overview
+        <MudNavGroup Title="Expendable" Icon="@Icons.Material.Outlined.Inventory2" @bind-Expanded="_expendableExpanded">
+            <MudNavLink Href="/expendable/my-requests" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Inbox">
+                My Requests
             </MudNavLink>
-            <MudNavLink Href="/asset-register/receiving/ppe" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.MoveToInbox">
-                Receiving — PPE (PPERR)
+            <MudNavLink Href="/expendable/shopping" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.ShoppingBag">
+                Shop
             </MudNavLink>
-            <MudNavLink Href="/asset-register/receiving/smrr" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.MoveToInbox">
-                Receiving — Supplies (SMRR)
+            <MudNavLink Href="/expendable/cart" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.ShoppingCart">
+                Basket
             </MudNavLink>
-            <MudNavLink Href="/asset-register/assets" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Inventory2">
-                Asset Registry
+            <MudNavLink Href="/expendable/products" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Label">
+                Products
             </MudNavLink>
-            <MudNavLink Href="/asset-register/accountability" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.AssignmentInd">
-                ICS / PAR
+            <MudNavLink Href="/expendable/purchases" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.ReceiptLong">
+                Purchases
             </MudNavLink>
-            <MudNavLink Href="/asset-register/catalog" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.LibraryBooks">
-                Property Catalog
+            <MudNavLink Href="/expendable/requests" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Description">
+                Supply Requests
             </MudNavLink>
-            <MudNavLink Href="/asset-register/physical-count" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.FactCheck">
+            <MudNavLink Href="/expendable/warehouse" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Warehouse">
+                Warehouse
+            </MudNavLink>
+            <MudNavLink Href="/expendable/reports/department" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Assessment">
+                Issuance Report
+            </MudNavLink>
+            <MudNavLink Href="/expendable/reports/employee" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.PersonSearch">
+                Employee Issuance
+            </MudNavLink>
+            <MudNavLink Href="/expendable/reports/stock-card" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Inventory">
+                Stock Card
+            </MudNavLink>
+            <MudNavLink Href="/expendable/reports/physical-count" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.FactCheck">
                 Physical Count
             </MudNavLink>
-            <MudNavLink Href="/asset-register/incidents" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.ReportProblem">
-                Incident Reports
-            </MudNavLink>
-            <MudNavLink Href="/asset-register/issuance" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Receipt">
-                Issuance Reports
-            </MudNavLink>
-            <MudNavLink Href="/asset-register/unserviceable" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.DeleteSweep">
-                Unserviceable Reports
-            </MudNavLink>
-            <MudNavLink Href="/asset-register/reports" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Assessment">
-                Reports Workspace
-            </MudNavLink>
         </MudNavGroup>
 
-        <MudNavGroup Title="Procurement Planning" Icon="@Icons.Material.Outlined.Assignment" @bind-Expanded="_procurementPlanningExpanded">
-            <MudNavLink Href="/procurement-planning/ppmps" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.ListAlt">
-                PPMP
+        <MudNavGroup Title="Finance" Icon="@Icons.Material.Outlined.AccountBalanceWallet" @bind-Expanded="_financeExpanded">
+            <MudNavLink Href="/finance/disbursement-vouchers" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Receipt">
+                Disbursement Vouchers
             </MudNavLink>
-            <MudNavLink Href="/procurement-planning/ppmp-approvals" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.HowToReg">
-                PPMP Approvals
-            </MudNavLink>
-            <MudNavLink Href="/procurement-planning/apps" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Description">
-                Annual Procurement Plan (APP)
-            </MudNavLink>
-            <MudNavLink Href="/procurement-planning/app-approvals" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.LibraryAddCheck">
-                APP Approvals
-            </MudNavLink>
-        </MudNavGroup>
-
-        <MudNavGroup Title="Procurement" Icon="@Icons.Material.Outlined.ShoppingBag" @bind-Expanded="_procurementExpanded">
-            <MudNavLink Href="/procurement/purchase-requests" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Description">
-                Purchase Requests
-            </MudNavLink>
-            <MudNavLink Href="/procurement/canvass-requests" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.RequestQuote">
-                Canvass (RIV)
-            </MudNavLink>
-            <MudNavLink Href="/procurement/purchase-orders" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Receipt">
-                Purchase Orders
-            </MudNavLink>
-            <MudNavLink Href="/asset-procurement/iars" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.RuleFolder">
-                Inspection &amp; Acceptance (IAR)
+            <MudNavLink Href="/finance/budget-utilization-records" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.AccountBalance">
+                Budget Utilization Records
             </MudNavLink>
         </MudNavGroup>
 
