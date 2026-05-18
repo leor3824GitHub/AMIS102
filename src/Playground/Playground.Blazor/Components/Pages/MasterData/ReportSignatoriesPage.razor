@@ -22,6 +22,7 @@
                     <MudSelectItem Value="@("DepartmentIssuance")">Department Issuance</MudSelectItem>
                     <MudSelectItem Value="@("StockCard")">Stock Card</MudSelectItem>
                     <MudSelectItem Value="@("EmployeeIssuance")">Employee Issuance</MudSelectItem>
+                    <MudSelectItem Value="@("AbstractOfCanvass")">Abstract of Canvass</MudSelectItem>
                 </MudSelect>
                 <MudNumericField T="int" @bind-Value="_form.SortOrder" Label="Sort Order" Variant="Variant.Outlined"
                                  Min="1" Required="true" HelperText="Determines left-to-right column position" />
@@ -76,6 +77,7 @@
                     <MudSelectItem Value="@("DepartmentIssuance")">Department Issuance</MudSelectItem>
                     <MudSelectItem Value="@("StockCard")">Stock Card</MudSelectItem>
                     <MudSelectItem Value="@("EmployeeIssuance")">Employee Issuance</MudSelectItem>
+                    <MudSelectItem Value="@("AbstractOfCanvass")">Abstract of Canvass</MudSelectItem>
                 </MudSelect>
             </MudStack>
 
@@ -322,6 +324,10 @@
     {
         "VehicleInventory" => "Vehicle",
         "PhysicalCount" => "Physical Count",
+        "DepartmentIssuance" => "Dept. Issuance",
+        "StockCard" => "Stock Card",
+        "EmployeeIssuance" => "Emp. Issuance",
+        "AbstractOfCanvass" => "Canvass",
         _ => reportType
     };
 
@@ -329,6 +335,7 @@
     {
         "VehicleInventory" => Color.Info,
         "PhysicalCount" => Color.Success,
+        "AbstractOfCanvass" => Color.Warning,
         _ => Color.Default
     };
 }

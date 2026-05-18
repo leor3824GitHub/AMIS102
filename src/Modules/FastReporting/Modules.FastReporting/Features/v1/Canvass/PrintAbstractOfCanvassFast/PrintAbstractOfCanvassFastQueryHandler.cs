@@ -4,6 +4,7 @@ using System.Reflection;
 using AMIS.Modules.FastReporting.Contracts.v1.Reports;
 using AMIS.Modules.FastReporting.Services;
 using AMIS.Modules.MasterData.Contracts.v1.OrganizationProfile;
+using AMIS.Modules.MasterData.Contracts.v1.ReportSignatories;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.Canvass;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
 using FastReport;
@@ -31,6 +32,7 @@ public sealed class PrintAbstractOfCanvassFastQueryHandler(IMediator mediator)
 
         var pr = await mediator.Send(new GetPurchaseRequestQuery(canvass.PurchaseRequestId), ct).ConfigureAwait(false);
         var org = await mediator.Send(new GetOrganizationProfileQuery(), ct).ConfigureAwait(false);
+        var signatories = await mediator.Send(new GetReportSignatoriesQuery("AbstractOfCanvass"), ct).ConfigureAwait(false);
 
         var nf = CultureInfo.InvariantCulture;
         var quotations = canvass.Quotations.ToList();
@@ -57,18 +59,18 @@ public sealed class PrintAbstractOfCanvassFastQueryHandler(IMediator mediator)
                 Sup3Name:         supplierNames[2],
                 Sup4Name:         supplierNames[3],
                 Sup5Name:         supplierNames[4],
-                Member1Name:      string.Empty,
-                Member1Role:      "TWG Goods/Services-Chairperson",
-                Member2Name:      (org?.AccountantName ?? string.Empty).ToUpperInvariant(),
-                Member2Role:      org?.AccountantDesignation ?? "Accountant IV",
-                Member3Name:      string.Empty,
-                Member3Role:      "ROPC Member",
-                Member4Name:      string.Empty,
-                Member4Role:      "ROPC Member",
-                ViceChairName:    (org?.SupervisingAdminOfficerName ?? string.Empty).ToUpperInvariant(),
-                ViceChairRole:    org?.SupervisingAdminOfficerDesignation ?? "Supervising Administrative Officer",
-                ChairName:        (org?.AssistantRegionalManagerName ?? org?.RegionalManagerName ?? string.Empty).ToUpperInvariant(),
-                ChairRole:        org?.AssistantRegionalManagerDesignation ?? org?.RegionalManagerDesignation ?? "Assistant Regional Manager II")
+                Member1Name:      SignatoryName(signatories, 1),
+                Member1Role:      SignatoryLabel(signatories, 1, "TWG Goods/Services-Chairperson"),
+                Member2Name:      SignatoryName(signatories, 2, org?.AccountantName),
+                Member2Role:      SignatoryLabel(signatories, 2, org?.AccountantDesignation ?? "Accountant IV"),
+                Member3Name:      SignatoryName(signatories, 3),
+                Member3Role:      SignatoryLabel(signatories, 3, "ROPC Member"),
+                Member4Name:      SignatoryName(signatories, 4),
+                Member4Role:      SignatoryLabel(signatories, 4, "ROPC Member"),
+                ViceChairName:    SignatoryName(signatories, 5, org?.SupervisingAdminOfficerName),
+                ViceChairRole:    SignatoryLabel(signatories, 5, org?.SupervisingAdminOfficerDesignation ?? "Supervising Administrative Officer"),
+                ChairName:        SignatoryName(signatories, 6, org?.AssistantRegionalManagerName ?? org?.RegionalManagerName),
+                ChairRole:        SignatoryLabel(signatories, 6, org?.AssistantRegionalManagerDesignation ?? org?.RegionalManagerDesignation ?? "Assistant Regional Manager II"))
         };
 
         var lineItemsTable = BuildLineItemsTable(quotations, query.MinRows);
@@ -93,6 +95,19 @@ public sealed class PrintAbstractOfCanvassFastQueryHandler(IMediator mediator)
             },
             fileName: $"AOC-{canvass.RivNumber}",
             ct: ct).ConfigureAwait(false);
+    }
+
+    private static string SignatoryName(IReadOnlyList<ReportSignatoryDto> list, int order, string? orgFallback = null)
+    {
+        var match = list.FirstOrDefault(s => s.SortOrder == order && s.IsActive);
+        var name = match?.Name ?? orgFallback ?? string.Empty;
+        return name.ToUpperInvariant();
+    }
+
+    private static string SignatoryLabel(IReadOnlyList<ReportSignatoryDto> list, int order, string? fallback = null)
+    {
+        var match = list.FirstOrDefault(s => s.SortOrder == order && s.IsActive);
+        return match?.Label ?? fallback ?? string.Empty;
     }
 
     // Build the cross-supplier price table. For each unique item description across

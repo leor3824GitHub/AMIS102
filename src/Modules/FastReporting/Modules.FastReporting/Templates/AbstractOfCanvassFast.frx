@@ -181,18 +181,12 @@
         Text="" Border.Lines="4" Border.Width="0.75" />
       <TextObject Name="M1RoleVal" Left="0" Top="104" Width="366" Height="14"
         Text="[CanvassDS.Member1Role]" Font="Times New Roman, 8pt" HorzAlign="Center" VertAlign="Top" />
-      <TextObject Name="M1MemCap" Left="0" Top="118" Width="366" Height="12"
-        Text="ROPC Member" Font="Times New Roman, 7pt, style=Italic" HorzAlign="Center" VertAlign="Top" />
-
       <TextObject Name="M2NameVal" Left="367" Top="86" Width="366" Height="16"
         Text="[CanvassDS.Member2Name]" Font="Times New Roman, 9pt, style=Bold" HorzAlign="Center" VertAlign="Bottom" />
       <TextObject Name="M2NameLine" Left="387" Top="102" Width="326" Height="1.1"
         Text="" Border.Lines="4" Border.Width="0.75" />
       <TextObject Name="M2RoleVal" Left="367" Top="104" Width="366" Height="14"
         Text="[CanvassDS.Member2Role]" Font="Times New Roman, 8pt" HorzAlign="Center" VertAlign="Top" />
-      <TextObject Name="M2MemCap" Left="367" Top="118" Width="366" Height="12"
-        Text="ROPC Member" Font="Times New Roman, 7pt, style=Italic" HorzAlign="Center" VertAlign="Top" />
-
       <!-- ─── Pair 2: Member3 (left) + Member4 (right) ─── -->
       <TextObject Name="M3NameVal" Left="0" Top="156" Width="366" Height="16"
         Text="[CanvassDS.Member3Name]" Font="Times New Roman, 9pt, style=Bold" HorzAlign="Center" VertAlign="Bottom" />
@@ -200,18 +194,12 @@
         Text="" Border.Lines="4" Border.Width="0.75" />
       <TextObject Name="M3RoleVal" Left="0" Top="174" Width="366" Height="14"
         Text="[CanvassDS.Member3Role]" Font="Times New Roman, 8pt" HorzAlign="Center" VertAlign="Top" />
-      <TextObject Name="M3MemCap" Left="0" Top="188" Width="366" Height="12"
-        Text="ROPC Member" Font="Times New Roman, 7pt, style=Italic" HorzAlign="Center" VertAlign="Top" />
-
       <TextObject Name="M4NameVal" Left="367" Top="156" Width="366" Height="16"
         Text="[CanvassDS.Member4Name]" Font="Times New Roman, 9pt, style=Bold" HorzAlign="Center" VertAlign="Bottom" />
       <TextObject Name="M4NameLine" Left="387" Top="172" Width="326" Height="1.1"
         Text="" Border.Lines="4" Border.Width="0.75" />
       <TextObject Name="M4RoleVal" Left="367" Top="174" Width="366" Height="14"
         Text="[CanvassDS.Member4Role]" Font="Times New Roman, 8pt" HorzAlign="Center" VertAlign="Top" />
-      <TextObject Name="M4MemCap" Left="367" Top="188" Width="366" Height="12"
-        Text="ROPC Member" Font="Times New Roman, 7pt, style=Italic" HorzAlign="Center" VertAlign="Top" />
-
       <!-- ─── Vice Chairperson (centered, top=226) ─── -->
       <TextObject Name="VcNameVal" Left="183" Top="226" Width="367" Height="16"
         Text="[CanvassDS.ViceChairName]" Font="Times New Roman, 9pt, style=Bold" HorzAlign="Center" VertAlign="Bottom" />
@@ -219,9 +207,6 @@
         Text="" Border.Lines="4" Border.Width="0.75" />
       <TextObject Name="VcRoleVal" Left="183" Top="244" Width="367" Height="14"
         Text="[CanvassDS.ViceChairRole]" Font="Times New Roman, 8pt" HorzAlign="Center" VertAlign="Top" />
-      <TextObject Name="VcCap" Left="183" Top="258" Width="367" Height="12"
-        Text="Vice Chairperson-ROPC" Font="Times New Roman, 7pt, style=Italic" HorzAlign="Center" VertAlign="Top" />
-
       <!-- ─── Chairperson (centered, top=296) ─── -->
       <TextObject Name="ChNameVal" Left="183" Top="296" Width="367" Height="16"
         Text="[CanvassDS.ChairName]" Font="Times New Roman, 9pt, style=Bold" HorzAlign="Center" VertAlign="Bottom" />
@@ -229,9 +214,6 @@
         Text="" Border.Lines="4" Border.Width="0.75" />
       <TextObject Name="ChRoleVal" Left="183" Top="314" Width="367" Height="14"
         Text="[CanvassDS.ChairRole]" Font="Times New Roman, 8pt" HorzAlign="Center" VertAlign="Top" />
-      <TextObject Name="ChCap" Left="183" Top="328" Width="367" Height="12"
-        Text="Chairperson-ROPC" Font="Times New Roman, 7pt, style=Italic" HorzAlign="Center" VertAlign="Top" />
-
     </ReportSummaryBand>
 
     <!-- ═══════════════════════════════════════════════════════════
