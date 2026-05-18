@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Report ScriptLanguage="CSharp" ReportInfo.Created="05/18/2026 00:00:00" ReportInfo.Modified="05/18/2026 00:00:00" ReportInfo.CreatorVersion="2025.1.0">
+  <Dictionary />
+  <!--
+    Data sources are registered at runtime via Report.RegisterData(...).
+    Layout: A4 portrait (210 × 297 mm), 8 mm margins.
+    Content width  = (210-16) × 3.7795 ≈ 733 units
+    Content height = (297-16) × 3.7795 ≈ 1062 units
+
+    Single IAR per page (no left/right copy split). Mirrors Exhibit 3 /
+    Appendix 62 Inspection and Acceptance Report layout.
+
+    Table column widths (total 733):
+      Stock/Property No. (25%) : 183  x=0
+      Description        (45%) : 330  x=183
+      Unit               (10%) :  73  x=513
+      Quantity           (20%) : 147  x=586
+  -->
+
+  <ReportPage Name="Page1"
+    PaperWidth="210" PaperHeight="297"
+    LeftMargin="8" TopMargin="8" RightMargin="8" BottomMargin="8"
+    Landscape="false">
+
+    <!-- ═══════════════════════════════════════════════════════════
+         TITLE BAND  (appears once)
+         ═══════════════════════════════════════════════════════════ -->
+    <ReportTitleBand Name="ReportTitle1" Width="733" Height="248">
+
+      <!-- ── Appendix 62 (right-aligned) ─────────────────────── -->
+      <TextObject Name="Appendix" Left="0" Top="0" Width="733" Height="14"
+        Text="Appendix 62" HorzAlign="Right" VertAlign="Center"
+        Font="Times New Roman, 10pt, style=Italic" />
+
+      <!-- ── Organization Header ─────────────────────────────── -->
+      <TextObject Name="Republic" Left="0" Top="16" Width="733" Height="14"
+        Text="Republic of the Philippines" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 9pt" />
+      <TextObject Name="OrgName" Left="0" Top="30" Width="733" Height="16"
+        Text="[IarDS.OrgName]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 12pt, style=Bold" />
+      <TextObject Name="OrgShortName" Left="0" Top="46" Width="733" Height="14"
+        Text="[IarDS.OrgShortName]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 10pt, style=Bold" />
+      <TextObject Name="OrgAddress" Left="0" Top="60" Width="733" Height="14"
+        Text="[IarDS.OrgAddress]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 10pt, style=Bold" />
+
+      <!-- ── Title ───────────────────────────────────────────── -->
+      <TextObject Name="Title" Left="0" Top="84" Width="733" Height="26"
+        Text="INSPECTION AND ACCEPTANCE REPORT" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 14pt, style=Bold" />
+      <TextObject Name="TitleUnderline" Left="146" Top="110" Width="441" Height="1.1"
+        Text="" Border.Lines="4" Border.Width="1" />
+
+      <!-- ═══ Info Box: 5 rows × 4 cols (top=124, H=90) ════════
+           Left half  (0-400)  : labels (0-110)  + values (110-400)
+           Right half (400-733): labels (400-510) + values (510-733)
+      -->
+
+      <!-- Row 1: Entity Name | Fund Cluster -->
+      <TextObject Name="EntLbl" Left="0" Top="124" Width="110" Height="18"
+        Text="Entity Name :" Font="Times New Roman, 8pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="EntVal" Left="110" Top="124" Width="290" Height="18"
+        Text="[IarDS.OrgName]" Font="Times New Roman, 9pt, style=Bold" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="FundLbl" Left="400" Top="124" Width="110" Height="18"
+        Text="Fund Cluster :" Font="Times New Roman, 8pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="FundVal" Left="510" Top="124" Width="223" Height="18"
+        Text="[IarDS.FundCluster]" Font="Times New Roman, 9pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+
+      <!-- Row 2: Supplier | IAR No. -->
+      <TextObject Name="SupLbl" Left="0" Top="142" Width="110" Height="18"
+        Text="Supplier :" Font="Times New Roman, 8pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="SupVal" Left="110" Top="142" Width="290" Height="18"
+        Text="[IarDS.SupplierName]" Font="Times New Roman, 9pt, style=Bold" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="IarLbl" Left="400" Top="142" Width="110" Height="18"
+        Text="IAR No. :" Font="Times New Roman, 8pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="IarVal" Left="510" Top="142" Width="223" Height="18"
+        Text="[IarDS.IarNumber]" Font="Times New Roman, 9pt, style=Bold" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+
+      <!-- Row 3: PO No./Date | Date -->
+      <TextObject Name="PoLbl" Left="0" Top="160" Width="110" Height="18"
+        Text="PO No./Date :" Font="Times New Roman, 8pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="PoVal" Left="110" Top="160" Width="290" Height="18"
+        Text="[IarDS.PoNumberAndDate]" Font="Times New Roman, 9pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="IarDtLbl" Left="400" Top="160" Width="110" Height="18"
+        Text="Date :" Font="Times New Roman, 8pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="IarDtVal" Left="510" Top="160" Width="223" Height="18"
+        Text="[IarDS.IarDate]" Font="Times New Roman, 9pt, style=Bold" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+
+      <!-- Row 4: Requisitioning Office/Dept | Invoice No. -->
+      <TextObject Name="ReqLbl" Left="0" Top="178" Width="110" Height="18"
+        Text="Requisitioning Office/Dept. :" Font="Times New Roman, 7pt" VertAlign="Center" WordWrap="true"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="ReqVal" Left="110" Top="178" Width="290" Height="18"
+        Text="[IarDS.RequisitioningOffice]" Font="Times New Roman, 9pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="InvLbl" Left="400" Top="178" Width="110" Height="18"
+        Text="Invoice No. :" Font="Times New Roman, 8pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="InvVal" Left="510" Top="178" Width="223" Height="18"
+        Text="[IarDS.InvoiceNo]" Font="Times New Roman, 9pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+
+      <!-- Row 5: Responsibility Center Code | Invoice Date -->
+      <TextObject Name="RccLbl" Left="0" Top="196" Width="110" Height="18"
+        Text="Responsibility Center Code :" Font="Times New Roman, 7pt" VertAlign="Center" WordWrap="true"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="RccVal" Left="110" Top="196" Width="290" Height="18"
+        Text="[IarDS.ResponsibilityCenterCode]" Font="Times New Roman, 9pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="InvDtLbl" Left="400" Top="196" Width="110" Height="18"
+        Text="Date :" Font="Times New Roman, 8pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="InvDtVal" Left="510" Top="196" Width="223" Height="18"
+        Text="[IarDS.InvoiceDate]" Font="Times New Roman, 9pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+
+      <!-- ═══ Table Column Headers (top=218, H=30) ═══ -->
+      <TextObject Name="HStock" Left="0" Top="218" Width="183" Height="30"
+        Text="Stock/&#10;Property No." HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 9pt, style=Bold,Italic"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="HDesc" Left="183" Top="218" Width="330" Height="30"
+        Text="Description" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 9pt, style=Bold,Italic"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="HUnit" Left="513" Top="218" Width="73" Height="30"
+        Text="Unit" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 9pt, style=Bold,Italic"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="HQty" Left="586" Top="218" Width="147" Height="30"
+        Text="Quantity" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 9pt, style=Bold,Italic"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+
+    </ReportTitleBand>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         DATA BAND  (repeats once per line item, height = 22)
+         ═══════════════════════════════════════════════════════════ -->
+    <DataBand Name="Data1" DataSource="LineItemsDS" Width="733" Height="22">
+
+      <TextObject Name="DStock" Left="0" Top="0" Width="183" Height="22"
+        Text="[LineItemsDS.StockPropertyNo]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 9pt"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="DDesc" Left="183" Top="0" Width="330" Height="22"
+        Text="[LineItemsDS.Description]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 9pt, style=Bold"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="DUnit" Left="513" Top="0" Width="73" Height="22"
+        Text="[LineItemsDS.Unit]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 9pt"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="DQty" Left="586" Top="0" Width="147" Height="22"
+        Text="[LineItemsDS.Quantity]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 9pt, style=Bold"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+
+    </DataBand>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SUMMARY BAND  (appears once at end)
+         INSPECTION (left) / ACCEPTANCE (right) split
+         ═══════════════════════════════════════════════════════════ -->
+    <ReportSummaryBand Name="ReportSummary1" Width="733" Height="260">
+
+      <!-- ── Headings ────────────────────────────────────────── -->
+      <TextObject Name="InsHeading" Left="0" Top="0" Width="366" Height="30"
+        Text="INSPECTION" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 14pt, style=Bold,Italic"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="AccHeading" Left="366" Top="0" Width="367" Height="30"
+        Text="ACCEPTANCE" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 14pt, style=Bold,Italic"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+
+      <!-- ── Date Received row ───────────────────────────────── -->
+      <TextObject Name="InsDateLbl" Left="0" Top="30" Width="100" Height="22"
+        Text="Date Received :" Font="Times New Roman, 9pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="4,1,2,1" />
+      <TextObject Name="InsDateVal" Left="100" Top="30" Width="266" Height="22"
+        Text="[IarDS.InspectionDate]" Font="Times New Roman, 9pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="4,1,2,1" />
+      <TextObject Name="AccDateLbl" Left="366" Top="30" Width="100" Height="22"
+        Text="Date Received :" Font="Times New Roman, 9pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="4,1,2,1" />
+      <TextObject Name="AccDateVal" Left="466" Top="30" Width="267" Height="22"
+        Text="[IarDS.AcceptanceDate]" Font="Times New Roman, 9pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="4,1,2,1" />
+
+      <!-- ── INSPECTION body (left, 0-366, top=52, H=160) ───── -->
+      <TextObject Name="InsBody" Left="0" Top="52" Width="366" Height="160"
+        Text="" Border.Lines="11" Border.Width="0.5" />
+      <!-- "Inspected, verified..." checkbox + label -->
+      <TextObject Name="InsChkBox" Left="18" Top="68" Width="14" Height="14"
+        Text="[IarDS.InspectedCheck]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 10pt, style=Bold"
+        Border.Lines="15" Border.Width="0.5" />
+      <TextObject Name="InsChkLbl" Left="36" Top="64" Width="324" Height="24"
+        Text="Inspected, verified and found in order as to quantity and specifications"
+        Font="Times New Roman, 9pt" VertAlign="Center" WordWrap="true" Padding="2,1,2,1" />
+
+      <!-- Inspector signature (centered name + caption) -->
+      <TextObject Name="InsSig" Left="40" Top="130" Width="286" Height="20"
+        Text="[IarDS.InspectorName]" HorzAlign="Center" VertAlign="Bottom"
+        Font="Times New Roman, 10pt, style=Bold,Underline" Padding="2,1,2,1" />
+      <TextObject Name="InsSigCap" Left="40" Top="152" Width="286" Height="14"
+        Text="Inspection Officer/Inspection Committee"
+        Font="Times New Roman, 9pt, style=Italic" HorzAlign="Center" VertAlign="Top"
+        Padding="2,1,2,1" />
+
+      <!-- ── ACCEPTANCE body (right, 366-733, top=52, H=160) ── -->
+      <TextObject Name="AccBody" Left="366" Top="52" Width="367" Height="160"
+        Text="" Border.Lines="14" Border.Width="0.5" />
+      <!-- Complete checkbox -->
+      <TextObject Name="AccCompChk" Left="384" Top="68" Width="14" Height="14"
+        Text="[IarDS.CompleteCheck]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 10pt, style=Bold"
+        Border.Lines="15" Border.Width="0.5" />
+      <TextObject Name="AccCompLbl" Left="402" Top="64" Width="325" Height="22"
+        Text="Complete"
+        Font="Times New Roman, 9pt" VertAlign="Center" Padding="2,1,2,1" />
+
+      <!-- Partial checkbox -->
+      <TextObject Name="AccPartChk" Left="384" Top="92" Width="14" Height="14"
+        Text="[IarDS.PartialCheck]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 10pt, style=Bold"
+        Border.Lines="15" Border.Width="0.5" />
+      <TextObject Name="AccPartLbl" Left="402" Top="88" Width="325" Height="22"
+        Text="Partial (pls. specify quantity)"
+        Font="Times New Roman, 9pt" VertAlign="Center" Padding="2,1,2,1" />
+
+      <!-- Custodian signature (centered name + caption) -->
+      <TextObject Name="AccSig" Left="406" Top="130" Width="287" Height="20"
+        Text="[IarDS.CustodianName]" HorzAlign="Center" VertAlign="Bottom"
+        Font="Times New Roman, 10pt, style=Bold,Underline" Padding="2,1,2,1" />
+      <TextObject Name="AccSigCap" Left="406" Top="152" Width="287" Height="14"
+        Text="Supply and/or Property Custodian"
+        Font="Times New Roman, 9pt, style=Italic" HorzAlign="Center" VertAlign="Top"
+        Padding="2,1,2,1" />
+
+    </ReportSummaryBand>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         PAGE FOOTER
+         ═══════════════════════════════════════════════════════════ -->
+    <PageFooterBand Name="PageFooter1" Top="1048" Width="733" Height="14">
+      <TextObject Name="PgNo" Left="0" Top="0" Width="733" Height="14"
+        Text="Page [Page#] of [TotalPages#]" HorzAlign="Right"
+        Font="Times New Roman, 7pt" />
+    </PageFooterBand>
+
+  </ReportPage>
+</Report>

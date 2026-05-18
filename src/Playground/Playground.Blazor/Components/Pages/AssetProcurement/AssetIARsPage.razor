@@ -2,6 +2,7 @@
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Components.Authorization
 @using AMIS.Playground.Blazor.ApiClient
+@using AMIS.Playground.Blazor.Components.Pages.Procurement
 @using AMIS.Modules.ProcurementAcquisition.Contracts.v1.AssetInspectionAcceptanceReports
 @inject IAssetIarClient IarClient
 @inject IIdentityClient IdentityClient
@@ -10,6 +11,7 @@
 @inject IDialogService DialogService
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthStateProvider
+@inject IJSRuntime JS
 
 <AMISPageHeader Title="Inspection &amp; Acceptance Reports"
                 Description="Track IARs from Draft to Inspection and Acceptance." />
@@ -151,6 +153,23 @@
                                             View
                                         </MudButton>
                                     }
+                                    <MudMenu Icon="@Icons.Material.Filled.Print"
+                                             Color="Color.Secondary"
+                                             Size="Size.Small"
+                                             Dense="true"
+                                             AnchorOrigin="Origin.BottomLeft"
+                                             TransformOrigin="Origin.TopLeft"
+                                             ToolTip="Print">
+                                        <MudMenuItem Icon="@Icons.Material.Filled.PictureAsPdf"
+                                                     OnClick="@(() => DownloadFastReportPdfAsync(iar.Id))">
+                                            Download PDF
+                                        </MudMenuItem>
+                                        <MudDivider />
+                                        <MudMenuItem Icon="@Icons.Material.Filled.Settings"
+                                                     OnClick="@(() => OpenFastReportSetupAsync(iar.Id))">
+                                            Fast Report – Page Setup…
+                                        </MudMenuItem>
+                                    </MudMenu>
                                 </MudStack>
                             </td>
                         </tr>
@@ -400,4 +419,48 @@
         AssetIARStatus.Cancelled => Color.Error,
         _ => Color.Default
     };
+
+    private async Task DownloadFastReportPdfAsync(Guid id)
+    {
+        try
+        {
+            var bytes = await IarClient.GetFastReportPdfAsync(id, pageWidth: "a4", orientation: "portrait", minRows: 12);
+            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
+            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            Snackbar.Add("PDF ready.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"PDF generation failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task OpenFastReportSetupAsync(Guid id)
+    {
+        // IAR is always 1 copy per page; the dialog's Copies field is ignored on submit.
+        var parameters = new DialogParameters
+        {
+            [nameof(FastReportPageSetupDialog.PaperSize)] = "a4",
+            [nameof(FastReportPageSetupDialog.Orientation)] = "portrait",
+            [nameof(FastReportPageSetupDialog.Copies)] = 1,
+            [nameof(FastReportPageSetupDialog.MinRows)] = 12
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.ExtraSmall, FullWidth = false, CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<FastReportPageSetupDialog>("Page Setup", parameters, options);
+        var result = await dialog.Result;
+        if (result is null || result.Canceled) return;
+        if (result.Data is not FastReportPageSetupDialog.Result r) return;
+
+        try
+        {
+            var bytes = await IarClient.GetFastReportPdfAsync(id, pageWidth: r.PaperSize, orientation: r.Orientation, minRows: r.MinRows);
+            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
+            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            Snackbar.Add("PDF ready.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fast report failed: {ex.Message}", Severity.Error);
+        }
+    }
 }

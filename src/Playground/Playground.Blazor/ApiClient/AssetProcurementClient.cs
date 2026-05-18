@@ -16,6 +16,7 @@ internal interface IAssetIarClient
         string? keyword = null, AssetIARStatus? status = null,
         int page = 1, int pageSize = 20, CancellationToken ct = default);
     Task<AssetIARDto?> GetAsync(Guid id, CancellationToken ct = default);
+    Task<byte[]> GetFastReportPdfAsync(Guid id, string? pageWidth = null, string? orientation = null, int? minRows = null, CancellationToken ct = default);
     Task<AssetIARDto> CreateAsync(CreateAssetIARCommand command, CancellationToken ct = default);
     Task<AssetIARDto> UpdateAsync(Guid id, UpdateAssetIARCommand command, CancellationToken ct = default);
     Task<AssetIARDto> SubmitForInspectionAsync(Guid id, CancellationToken ct = default);
@@ -49,6 +50,29 @@ internal sealed class AssetIarClient(HttpClient http) : IAssetIarClient
 
     public Task<AssetIARDto?> GetAsync(Guid id, CancellationToken ct = default) =>
         http.GetFromJsonAsync<AssetIARDto>($"{Base}/{id}", JsonOptions, ct);
+
+    public Task<byte[]> GetFastReportPdfAsync(
+        Guid id,
+        string? pageWidth = null,
+        string? orientation = null,
+        int? minRows = null,
+        CancellationToken ct = default)
+    {
+        var query = HttpUtility.ParseQueryString(string.Empty);
+        if (!string.IsNullOrWhiteSpace(pageWidth))
+            query["pageWidth"] = pageWidth;
+        if (!string.IsNullOrWhiteSpace(orientation))
+            query["orientation"] = orientation;
+        if (minRows is > 0)
+            query["minRows"] = minRows.Value.ToString(CultureInfo.InvariantCulture);
+
+        var queryString = query.ToString();
+        var url = string.IsNullOrWhiteSpace(queryString)
+            ? $"api/v1/fast-reporting/procurement/iars/{id}/print"
+            : $"api/v1/fast-reporting/procurement/iars/{id}/print?{queryString}";
+
+        return http.GetByteArrayAsync(url, ct);
+    }
 
     public async Task<AssetIARDto> CreateAsync(CreateAssetIARCommand command, CancellationToken ct = default)
     {
