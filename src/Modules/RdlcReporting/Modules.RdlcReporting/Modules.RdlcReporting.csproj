@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<RootNamespace>AMIS.Modules.RdlcReporting</RootNamespace>
+		<AssemblyName>AMIS.Modules.RdlcReporting</AssemblyName>
+		<PackageId>AMIS.Modules.RdlcReporting</PackageId>
+		<NoWarn>$(NoWarn);CA1031;CA1812;CA2208;S3267;S3928;CA1062;CA1304;CA1308;CA1311;CA1862;CA2227;S1144</NoWarn>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Mediator.Abstractions" />
+		<PackageReference Include="ReportViewerCore.NETCore" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\..\BuildingBlocks\Web\Web.csproj" />
+		<ProjectReference Include="..\Modules.RdlcReporting.Contracts\Modules.RdlcReporting.Contracts.csproj" />
+		<ProjectReference Include="..\..\MasterData\Modules.MasterData.Contracts\Modules.MasterData.Contracts.csproj" />
+		<ProjectReference Include="..\..\ProcurementAcquisition\Modules.ProcurementAcquisition.Contracts\Modules.ProcurementAcquisition.Contracts.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<EmbeddedResource Include="Reports\*.rdlc" />
+	</ItemGroup>
+
+</Project>

@@ -11,7 +11,6 @@ using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.RejectPur
 using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.CancelPurchaseRequest;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.GetPurchaseRequest;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.SearchPurchaseRequests;
-using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.PrintPurchaseRequest;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.Canvass.CreateCanvassRequest;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.Canvass.AddQuotation;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.Canvass.UpdateQuotation;
@@ -118,7 +117,6 @@ public class ProcurementAcquisitionModule : IModule
         CancelPurchaseRequestEndpoint.Map(purchaseRequestsGroup);
         GetPurchaseRequestEndpoint.Map(purchaseRequestsGroup);
         SearchPurchaseRequestsEndpoint.Map(purchaseRequestsGroup);
-        PrintPurchaseRequestEndpoint.Map(purchaseRequestsGroup);
 
         // Canvass Requests
         CreateCanvassRequestEndpoint.Map(canvassRequestsGroup);

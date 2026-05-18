@@ -75,8 +75,8 @@ internal sealed class PurchaseRequestClient(HttpClient http) : IPurchaseRequestC
 
         var queryString = query.ToString();
         var url = string.IsNullOrWhiteSpace(queryString)
-            ? $"api/v1/reporting/procurement/purchase-requests/{id}/print/fast"
-            : $"api/v1/reporting/procurement/purchase-requests/{id}/print/fast?{queryString}";
+            ? $"api/v1/fast-reporting/procurement/purchase-requests/{id}/print"
+            : $"api/v1/fast-reporting/procurement/purchase-requests/{id}/print?{queryString}";
 
         return http.GetByteArrayAsync(url, ct);
     }
@@ -96,8 +96,8 @@ internal sealed class PurchaseRequestClient(HttpClient http) : IPurchaseRequestC
 
         var queryString = query.ToString();
         var url = string.IsNullOrWhiteSpace(queryString)
-            ? $"{Base}/{id}/print"
-            : $"{Base}/{id}/print?{queryString}";
+            ? $"api/v1/rdlc-reporting/procurement/purchase-requests/{id}/print"
+            : $"api/v1/rdlc-reporting/procurement/purchase-requests/{id}/print?{queryString}";
 
         return http.GetByteArrayAsync(url, ct);
     }
