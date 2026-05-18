@@ -151,6 +151,7 @@ internal interface ICanvassRequestClient
 {
     Task<PagedResponse<CanvassRequestSummaryDto>> SearchAsync(string? keyword = null, CanvassRequestStatus? status = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
     Task<CanvassRequestDto?> GetAsync(Guid id, CancellationToken ct = default);
+    Task<byte[]> GetFastReportPdfAsync(Guid id, string? pageWidth = null, string? orientation = null, int? minRows = null, CancellationToken ct = default);
     Task<CanvassRequestDto> CreateAsync(CreateCanvassRequestCommand command, CancellationToken ct = default);
     Task<CanvassQuotationDto> AddQuotationAsync(Guid canvassRequestId, AddQuotationCommand command, CancellationToken ct = default);
     Task<CanvassRequestDto> AwardAsync(Guid canvassRequestId, Guid awardedQuotationId, CancellationToken ct = default);
@@ -172,6 +173,29 @@ internal sealed class CanvassRequestClient(HttpClient http) : ICanvassRequestCli
 
     public Task<CanvassRequestDto?> GetAsync(Guid id, CancellationToken ct = default) =>
         http.GetFromJsonAsync<CanvassRequestDto>($"{Base}/{id}", ProcurementJson.Options, ct);
+
+    public Task<byte[]> GetFastReportPdfAsync(
+        Guid id,
+        string? pageWidth = null,
+        string? orientation = null,
+        int? minRows = null,
+        CancellationToken ct = default)
+    {
+        var query = HttpUtility.ParseQueryString(string.Empty);
+        if (!string.IsNullOrWhiteSpace(pageWidth))
+            query["pageWidth"] = pageWidth;
+        if (!string.IsNullOrWhiteSpace(orientation))
+            query["orientation"] = orientation;
+        if (minRows is > 0)
+            query["minRows"] = minRows.Value.ToString(CultureInfo.InvariantCulture);
+
+        var queryString = query.ToString();
+        var url = string.IsNullOrWhiteSpace(queryString)
+            ? $"api/v1/fast-reporting/procurement/canvass-requests/{id}/print"
+            : $"api/v1/fast-reporting/procurement/canvass-requests/{id}/print?{queryString}";
+
+        return http.GetByteArrayAsync(url, ct);
+    }
 
     public async Task<CanvassRequestDto> CreateAsync(CreateCanvassRequestCommand command, CancellationToken ct = default)
     {
@@ -201,6 +225,7 @@ internal interface IPurchaseOrderClient
 {
     Task<PagedResponse<PurchaseOrderSummaryDto>> SearchAsync(string? keyword = null, PurchaseOrderStatus? status = null, int page = 1, int pageSize = 20, Guid? purchaseRequestId = null, Guid? supplierId = null, CancellationToken ct = default);
     Task<PurchaseOrderDto?> GetAsync(Guid id, CancellationToken ct = default);
+    Task<byte[]> GetFastReportPdfAsync(Guid id, string? pageWidth = null, string? orientation = null, int? minRows = null, CancellationToken ct = default);
     Task<PurchaseOrderDto> CreateAsync(PurchaseOrderContracts.CreatePurchaseOrderCommand command, CancellationToken ct = default);
     Task<PurchaseOrderDto> UpdateAsync(Guid id, UpdatePurchaseOrderCommand command, CancellationToken ct = default);
     Task<PurchaseOrderDto> IssueAsync(Guid id, CancellationToken ct = default);
@@ -225,6 +250,29 @@ internal sealed class PurchaseOrderClient(HttpClient http) : IPurchaseOrderClien
 
     public Task<PurchaseOrderDto?> GetAsync(Guid id, CancellationToken ct = default) =>
         http.GetFromJsonAsync<PurchaseOrderDto>($"{Base}/{id}", ProcurementJson.Options, ct);
+
+    public Task<byte[]> GetFastReportPdfAsync(
+        Guid id,
+        string? pageWidth = null,
+        string? orientation = null,
+        int? minRows = null,
+        CancellationToken ct = default)
+    {
+        var query = HttpUtility.ParseQueryString(string.Empty);
+        if (!string.IsNullOrWhiteSpace(pageWidth))
+            query["pageWidth"] = pageWidth;
+        if (!string.IsNullOrWhiteSpace(orientation))
+            query["orientation"] = orientation;
+        if (minRows is > 0)
+            query["minRows"] = minRows.Value.ToString(CultureInfo.InvariantCulture);
+
+        var queryString = query.ToString();
+        var url = string.IsNullOrWhiteSpace(queryString)
+            ? $"api/v1/fast-reporting/procurement/purchase-orders/{id}/print"
+            : $"api/v1/fast-reporting/procurement/purchase-orders/{id}/print?{queryString}";
+
+        return http.GetByteArrayAsync(url, ct);
+    }
 
     public async Task<PurchaseOrderDto> CreateAsync(PurchaseOrderContracts.CreatePurchaseOrderCommand command, CancellationToken ct = default)
     {

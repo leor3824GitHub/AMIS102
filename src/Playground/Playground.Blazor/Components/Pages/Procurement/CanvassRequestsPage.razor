@@ -10,6 +10,7 @@
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 @inject NavigationManager Nav
+@inject IJSRuntime JS
 
 <AMISPageHeader Title="Canvass Requests (RIV)" Description="Request for Issuance of Voucher • manage supplier quotations and award" />
 
@@ -42,25 +43,6 @@
                 </MudStack>
             </MudCardContent>
         </MudCard>
-
-        <!-- Add Quotation Dialog Trigger (shows when a request is selected) -->
-        @if (_selected is not null)
-        {
-            <MudCard Elevation="1" Class="mt-3">
-                <MudCardContent>
-                    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
-                        <MudText Typo="Typo.h6" Class="flex-grow-1">Add Quotation</MudText>
-                        <MudText Typo="Typo.caption" Color="Color.Secondary">@_selected.RivNumber</MudText>
-                    </MudStack>
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" OnClick="OpenQuotationDialog">
-                        Add Quotation
-                    </MudButton>
-                    <MudButton Variant="Variant.Text" FullWidth="true" OnClick="@(() => _selected = null)">
-                        Deselect Request
-                    </MudButton>
-                </MudCardContent>
-            </MudCard>
-        }
 
     </MudItem>
 
@@ -118,11 +100,19 @@
                                     <td>@CanvassStatusChip(item.Status)</td>
                                     <td>
                                         <MudStack Row="true" Spacing="0">
-                                            <MudTooltip Text="Manage Quotations">
+                                            <MudTooltip Text="@(isSelected ? "Hide Quotations" : "View Quotations")">
                                                 <MudIconButton Icon="@Icons.Material.Filled.RequestQuote" Size="Size.Small"
                                                                Color="Color.Primary"
-                                                               OnClick="@(async () => await SelectCanvass(item.Id))" />
+                                                               OnClick="@(async () => await ToggleCanvass(item.Id))" />
                                             </MudTooltip>
+                                            @if (item.Status == CanvassRequestStatus.Open)
+                                            {
+                                                <MudTooltip Text="Add Quotation">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.PostAdd" Size="Size.Small"
+                                                                   Color="Color.Secondary"
+                                                                   OnClick="@(async () => await OpenQuotationDialogFor(item.Id))" />
+                                                </MudTooltip>
+                                            }
                                             @if (item.Status == CanvassRequestStatus.Open && item.QuotationCount > 0)
                                             {
                                                 <MudTooltip Text="Award to Supplier">
@@ -139,6 +129,23 @@
                                                                    OnClick="@(() => GoToPurchaseOrder(item.Id))" />
                                                 </MudTooltip>
                                             }
+                                            <MudMenu Icon="@Icons.Material.Filled.Print"
+                                                     Color="Color.Secondary"
+                                                     Size="Size.Small"
+                                                     Dense="true"
+                                                     AnchorOrigin="Origin.BottomLeft"
+                                                     TransformOrigin="Origin.TopLeft"
+                                                     ToolTip="Print Abstract of Canvass">
+                                                <MudMenuItem Icon="@Icons.Material.Filled.PictureAsPdf"
+                                                             OnClick="@(() => DownloadFastReportPdfAsync(item.Id))">
+                                                    Download PDF
+                                                </MudMenuItem>
+                                                <MudDivider />
+                                                <MudMenuItem Icon="@Icons.Material.Filled.Settings"
+                                                             OnClick="@(() => OpenFastReportSetupAsync(item.Id))">
+                                                    Fast Report – Page Setup…
+                                                </MudMenuItem>
+                                            </MudMenu>
                                         </MudStack>
                                     </td>
                                 </tr>
@@ -148,10 +155,27 @@
                                     <tr>
                                         <td colspan="6">
                                             <MudPaper Outlined="true" Class="pa-3 ma-1">
-                                                <MudText Typo="Typo.subtitle2" Class="mb-2">Quotations for @_selectedDetail.RivNumber</MudText>
+                                                <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
+                                                    <MudText Typo="Typo.subtitle2" Class="flex-grow-1">Quotations for @_selectedDetail.RivNumber</MudText>
+                                                    @if (_selectedDetail.Status == CanvassRequestStatus.Open)
+                                                    {
+                                                        <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary"
+                                                                   StartIcon="@Icons.Material.Filled.PostAdd"
+                                                                   OnClick="OpenQuotationDialog">
+                                                            Add Quotation
+                                                        </MudButton>
+                                                    }
+                                                </MudStack>
                                                 @if (_selectedDetail.Quotations.Count == 0)
                                                 {
-                                                    <MudText Typo="Typo.body2" Color="Color.Secondary">No quotations yet. Add one using the form on the left.</MudText>
+                                                    @if (_selectedDetail.Status == CanvassRequestStatus.Open)
+                                                    {
+                                                        <MudText Typo="Typo.body2" Color="Color.Secondary">No quotations yet. Click <b>Add Quotation</b> above to record one.</MudText>
+                                                    }
+                                                    else
+                                                    {
+                                                        <MudText Typo="Typo.body2" Color="Color.Secondary">No quotations recorded.</MudText>
+                                                    }
                                                 }
                                                 else
                                                 {
@@ -275,6 +299,11 @@
     private async Task OpenQuotationDialog()
     {
         if (_selected is null) return;
+        if (_selected.Status != CanvassRequestStatus.Open)
+        {
+            Snackbar.Add($"Cannot add quotation — canvass is {_selected.Status}.", Severity.Warning);
+            return;
+        }
 
         var parameters = new DialogParameters
         {
@@ -343,6 +372,26 @@
         _selectedDetail = detail;
     }
 
+    private async Task ToggleCanvass(Guid id)
+    {
+        if (_selected?.Id == id)
+        {
+            _selected = null;
+            _selectedDetail = null;
+        }
+        else
+        {
+            await SelectCanvass(id);
+        }
+    }
+
+    private async Task OpenQuotationDialogFor(Guid canvassId)
+    {
+        await SelectCanvass(canvassId);
+        if (_selected is null) return;
+        await OpenQuotationDialog();
+    }
+
     private async Task AwardAsync(Guid canvassId)
     {
         var detail = await Client.GetAsync(canvassId);
@@ -370,6 +419,50 @@
 
     private void GoToPurchaseOrder(Guid canvassId) =>
         Nav.NavigateTo($"/procurement/purchase-orders?canvassId={canvassId}");
+
+    private async Task DownloadFastReportPdfAsync(Guid id)
+    {
+        try
+        {
+            var bytes = await Client.GetFastReportPdfAsync(id, pageWidth: "a4", orientation: "portrait", minRows: 8);
+            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
+            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            Snackbar.Add("PDF ready.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"PDF generation failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task OpenFastReportSetupAsync(Guid id)
+    {
+        // Abstract of Canvass is always 1 AOC per page; the dialog's Copies field is ignored on submit.
+        var parameters = new DialogParameters
+        {
+            [nameof(FastReportPageSetupDialog.PaperSize)] = "a4",
+            [nameof(FastReportPageSetupDialog.Orientation)] = "portrait",
+            [nameof(FastReportPageSetupDialog.Copies)] = 1,
+            [nameof(FastReportPageSetupDialog.MinRows)] = 8
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.ExtraSmall, FullWidth = false, CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<FastReportPageSetupDialog>("Page Setup", parameters, options);
+        var result = await dialog.Result;
+        if (result is null || result.Canceled) return;
+        if (result.Data is not FastReportPageSetupDialog.Result r) return;
+
+        try
+        {
+            var bytes = await Client.GetFastReportPdfAsync(id, pageWidth: r.PaperSize, orientation: r.Orientation, minRows: r.MinRows);
+            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
+            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            Snackbar.Add("PDF ready.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fast report failed: {ex.Message}", Severity.Error);
+        }
+    }
 
     private static RenderFragment CanvassStatusChip(CanvassRequestStatus status) => __builder =>
     {

@@ -1,7 +1,7 @@
 using Asp.Versioning;
 using AMIS.Framework.Shared.Constants;
 using AMIS.Framework.Web.Modules;
-using AMIS.Modules.RdlcReporting.Features.v1.PurchaseRequests.PrintPurchaseRequest;
+using AMIS.Modules.RdlcReporting.Endpoints;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -41,7 +41,12 @@ public sealed class RdlcReportingModule : IModule
             .WithTags("RdlcReporting")
             .WithApiVersionSet(apiVersionSet);
 
-        var prGroup = moduleGroup.MapGroup("/procurement/purchase-requests");
-        PrintPurchaseRequestEndpoint.Map(prGroup);
+        // One line per area. Add the new area's extension method and the rest stays untouched.
+        moduleGroup.MapProcurementRdlcReports();
+        // moduleGroup.MapAssetManagementRdlcReports();
+        // moduleGroup.MapExpendableRdlcReports();
+        // moduleGroup.MapVehicleRdlcReports();
+        // moduleGroup.MapFinanceRdlcReports();
+        // moduleGroup.MapProcurementPlanningRdlcReports();
     }
 }

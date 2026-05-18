@@ -1,3 +1,5 @@
+using AMIS.Modules.FastReporting.Features.v1.Canvass.PrintAbstractOfCanvassFast;
+using AMIS.Modules.FastReporting.Features.v1.PurchaseOrders.PrintPurchaseOrderFast;
 using AMIS.Modules.FastReporting.Features.v1.PurchaseRequests.PrintPurchaseRequestFast;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
@@ -16,7 +18,8 @@ internal static class ProcurementEndpoints
         var procurement = moduleGroup.MapGroup("/procurement");
 
         procurement.MapGroup("/purchase-requests").MapPurchaseRequestFastReports();
-        // procurement.MapGroup("/purchase-orders").MapPurchaseOrderFastReports();
+        procurement.MapGroup("/purchase-orders").MapPurchaseOrderFastReports();
+        procurement.MapGroup("/canvass-requests").MapCanvassRequestFastReports();
 
         return moduleGroup;
     }
@@ -24,6 +27,18 @@ internal static class ProcurementEndpoints
     private static IEndpointRouteBuilder MapPurchaseRequestFastReports(this IEndpointRouteBuilder group)
     {
         PrintPurchaseRequestFastEndpoint.Map(group);
+        return group;
+    }
+
+    private static IEndpointRouteBuilder MapPurchaseOrderFastReports(this IEndpointRouteBuilder group)
+    {
+        PrintPurchaseOrderFastEndpoint.Map(group);
+        return group;
+    }
+
+    private static IEndpointRouteBuilder MapCanvassRequestFastReports(this IEndpointRouteBuilder group)
+    {
+        PrintAbstractOfCanvassFastEndpoint.Map(group);
         return group;
     }
 }

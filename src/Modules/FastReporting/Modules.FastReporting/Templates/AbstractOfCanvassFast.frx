@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Report ScriptLanguage="CSharp" ReportInfo.Created="05/18/2026 00:00:00" ReportInfo.Modified="05/18/2026 00:00:00" ReportInfo.CreatorVersion="2025.1.0">
+  <Dictionary />
+  <!--
+    Layout: A4 portrait (210 × 297 mm), 8 mm margins.
+    Content width  = (210-16) × 3.7795 ≈ 733 units
+    Content height = (297-16) × 3.7795 ≈ 1062 units
+
+    Single AOC per page (no left/right copy split).
+
+    Table column widths (total 733):
+      QTY                 (7%) :  50    x=0
+      UNIT                (7%) :  50    x=50
+      ITEM DESCRIPTION   (32%) : 233    x=100
+      Supplier 1-5 (each 12%) : 400 / N (dynamic via handler) x=333..
+
+    The handler resizes supplier columns (HSup1..5 / DSup1..5) to fit
+    the canvass's actual supplier count. Unused columns are hidden.
+  -->
+
+  <ReportPage Name="Page1"
+    PaperWidth="210" PaperHeight="297"
+    LeftMargin="8" TopMargin="8" RightMargin="8" BottomMargin="8"
+    Landscape="false">
+
+    <!-- ═══════════════════════════════════════════════════════════
+         TITLE BAND
+         Contains: org header, title, RIV / Date / PR box, column headers
+         ═══════════════════════════════════════════════════════════ -->
+    <ReportTitleBand Name="ReportTitle1" Width="733" Height="220">
+
+      <!-- ── Organization Header ─────────────────────────── -->
+      <TextObject Name="Republic" Left="0" Top="2" Width="733" Height="14.3"
+        Text="Republic of the Philippines" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 9pt" />
+      <TextObject Name="NFA" Left="0" Top="18.3" Width="733" Height="17.6"
+        Text="National Food Authority" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 11pt, style=Bold" />
+      <TextObject Name="OrgName" Left="0" Top="37.9" Width="733" Height="14.3"
+        Text="[CanvassDS.OrgName]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 9pt" />
+      <TextObject Name="OrgAddr" Left="0" Top="54.2" Width="733" Height="14.3"
+        Text="[CanvassDS.OrgAddress]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 9pt" />
+
+      <!-- ── Title ──────────────────── -->
+      <TextObject Name="Title" Left="0" Top="78" Width="733" Height="26"
+        Text="ABSTRACT OF CANVASS OF PRICES" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 14pt, style=Bold" />
+      <TextObject Name="TitleUnderline" Left="166" Top="104" Width="400" Height="1.1"
+        Text="" Border.Lines="4" Border.Width="1" />
+
+      <!-- ═══ RIV / Date / PR Box (top=118, H=46) ═══════ -->
+      <!-- Row 1: RIV No. / Date -->
+      <TextObject Name="RivLbl" Left="0" Top="118" Width="80" Height="22"
+        Text="RIV No. :" Font="Times New Roman, 8pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="RivVal" Left="80" Top="118" Width="280" Height="22"
+        Text="[CanvassDS.RivNumber]" Font="Times New Roman, 9pt, style=Bold" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="DateLbl" Left="360" Top="118" Width="80" Height="22"
+        Text="Date :" Font="Times New Roman, 8pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="DateVal" Left="440" Top="118" Width="293" Height="22"
+        Text="[CanvassDS.CanvassDate]" Font="Times New Roman, 9pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+
+      <!-- Row 2: PR No. / Return Deadline -->
+      <TextObject Name="PrNoLbl" Left="0" Top="140" Width="80" Height="22"
+        Text="PR No. :" Font="Times New Roman, 8pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="PrNoVal" Left="80" Top="140" Width="280" Height="22"
+        Text="[CanvassDS.PrNumber]" Font="Times New Roman, 9pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="DeadlineLbl" Left="360" Top="140" Width="80" Height="22"
+        Text="Return Deadline :" Font="Times New Roman, 7pt" VertAlign="Center" WordWrap="true"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="DeadlineVal" Left="440" Top="140" Width="293" Height="22"
+        Text="[CanvassDS.ReturnDeadline]" Font="Times New Roman, 9pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+
+      <!-- ═══ Table Column Headers (top=168, H=46) ═══ -->
+      <TextObject Name="HQty" Left="0" Top="168" Width="50" Height="46"
+        Text="QTY" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt, style=Bold"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="HUnit" Left="50" Top="168" Width="50" Height="46"
+        Text="UNIT" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt, style=Bold"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="HDesc" Left="100" Top="168" Width="233" Height="46"
+        Text="ITEM DESCRIPTION" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt, style=Bold"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+
+      <!-- Supplier columns 1..5 (handler resizes/hides based on actual count) -->
+      <TextObject Name="HSup1" Left="333" Top="168" Width="80" Height="46"
+        Text="[CanvassDS.Sup1Name]" HorzAlign="Center" VertAlign="Center" WordWrap="true"
+        Font="Times New Roman, 8pt, style=Bold"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="HSup2" Left="413" Top="168" Width="80" Height="46"
+        Text="[CanvassDS.Sup2Name]" HorzAlign="Center" VertAlign="Center" WordWrap="true"
+        Font="Times New Roman, 8pt, style=Bold"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="HSup3" Left="493" Top="168" Width="80" Height="46"
+        Text="[CanvassDS.Sup3Name]" HorzAlign="Center" VertAlign="Center" WordWrap="true"
+        Font="Times New Roman, 8pt, style=Bold"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="HSup4" Left="573" Top="168" Width="80" Height="46"
+        Text="[CanvassDS.Sup4Name]" HorzAlign="Center" VertAlign="Center" WordWrap="true"
+        Font="Times New Roman, 8pt, style=Bold"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="HSup5" Left="653" Top="168" Width="80" Height="46"
+        Text="[CanvassDS.Sup5Name]" HorzAlign="Center" VertAlign="Center" WordWrap="true"
+        Font="Times New Roman, 8pt, style=Bold"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+
+    </ReportTitleBand>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         DATA BAND  (repeats once per line item, height = 22)
+         ═══════════════════════════════════════════════════════════ -->
+    <DataBand Name="Data1" DataSource="LineItemsDS" Width="733" Height="22">
+
+      <TextObject Name="DQty" Left="0" Top="0" Width="50" Height="22"
+        Text="[LineItemsDS.Quantity]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="DUnit" Left="50" Top="0" Width="50" Height="22"
+        Text="[LineItemsDS.Unit]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="DDesc" Left="100" Top="0" Width="233" Height="22"
+        Text="[LineItemsDS.Description]" VertAlign="Center"
+        Font="Times New Roman, 8pt, style=Bold" HorzAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+
+      <TextObject Name="DSup1" Left="333" Top="0" Width="80" Height="22"
+        Text="[LineItemsDS.Sup1Price]" HorzAlign="Right" VertAlign="Center"
+        Font="Times New Roman, 8pt"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+      <TextObject Name="DSup2" Left="413" Top="0" Width="80" Height="22"
+        Text="[LineItemsDS.Sup2Price]" HorzAlign="Right" VertAlign="Center"
+        Font="Times New Roman, 8pt"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+      <TextObject Name="DSup3" Left="493" Top="0" Width="80" Height="22"
+        Text="[LineItemsDS.Sup3Price]" HorzAlign="Right" VertAlign="Center"
+        Font="Times New Roman, 8pt"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+      <TextObject Name="DSup4" Left="573" Top="0" Width="80" Height="22"
+        Text="[LineItemsDS.Sup4Price]" HorzAlign="Right" VertAlign="Center"
+        Font="Times New Roman, 8pt"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+      <TextObject Name="DSup5" Left="653" Top="0" Width="80" Height="22"
+        Text="[LineItemsDS.Sup5Price]" HorzAlign="Right" VertAlign="Center"
+        Font="Times New Roman, 8pt"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+
+    </DataBand>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SUMMARY BAND  (appears once at end)
+         Contains: Purpose line, ROPC signature block
+         ═══════════════════════════════════════════════════════════ -->
+    <ReportSummaryBand Name="ReportSummary1" Width="733" Height="430">
+
+      <!-- ── Purpose Row (full width) ── -->
+      <TextObject Name="PurposeVal" Left="0" Top="0" Width="733" Height="40"
+        Text="[CanvassDS.Purpose]" Font="Times New Roman, 9pt, style=Bold" VertAlign="Center" WordWrap="true"
+        Border.Lines="15" Border.Width="0.5" Padding="4,2,4,2" />
+
+      <!-- ═══ Committee Signature Block (top=70) ═════════════
+           2 rows of paired signatures, then Vice Chair and Chair centered.
+           Pair row height = 70 (16 spacer + 14 name + 14 underline + 14 role + 12 caption)
+      -->
+
+      <!-- ─── Pair 1: Member1 (left) + Member2 (right) ─── -->
+      <TextObject Name="M1NameVal" Left="0" Top="86" Width="366" Height="16"
+        Text="[CanvassDS.Member1Name]" Font="Times New Roman, 9pt, style=Bold" HorzAlign="Center" VertAlign="Bottom" />
+      <TextObject Name="M1NameLine" Left="20" Top="102" Width="326" Height="1.1"
+        Text="" Border.Lines="4" Border.Width="0.75" />
+      <TextObject Name="M1RoleVal" Left="0" Top="104" Width="366" Height="14"
+        Text="[CanvassDS.Member1Role]" Font="Times New Roman, 8pt" HorzAlign="Center" VertAlign="Top" />
+      <TextObject Name="M1MemCap" Left="0" Top="118" Width="366" Height="12"
+        Text="ROPC Member" Font="Times New Roman, 7pt, style=Italic" HorzAlign="Center" VertAlign="Top" />
+
+      <TextObject Name="M2NameVal" Left="367" Top="86" Width="366" Height="16"
+        Text="[CanvassDS.Member2Name]" Font="Times New Roman, 9pt, style=Bold" HorzAlign="Center" VertAlign="Bottom" />
+      <TextObject Name="M2NameLine" Left="387" Top="102" Width="326" Height="1.1"
+        Text="" Border.Lines="4" Border.Width="0.75" />
+      <TextObject Name="M2RoleVal" Left="367" Top="104" Width="366" Height="14"
+        Text="[CanvassDS.Member2Role]" Font="Times New Roman, 8pt" HorzAlign="Center" VertAlign="Top" />
+      <TextObject Name="M2MemCap" Left="367" Top="118" Width="366" Height="12"
+        Text="ROPC Member" Font="Times New Roman, 7pt, style=Italic" HorzAlign="Center" VertAlign="Top" />
+
+      <!-- ─── Pair 2: Member3 (left) + Member4 (right) ─── -->
+      <TextObject Name="M3NameVal" Left="0" Top="156" Width="366" Height="16"
+        Text="[CanvassDS.Member3Name]" Font="Times New Roman, 9pt, style=Bold" HorzAlign="Center" VertAlign="Bottom" />
+      <TextObject Name="M3NameLine" Left="20" Top="172" Width="326" Height="1.1"
+        Text="" Border.Lines="4" Border.Width="0.75" />
+      <TextObject Name="M3RoleVal" Left="0" Top="174" Width="366" Height="14"
+        Text="[CanvassDS.Member3Role]" Font="Times New Roman, 8pt" HorzAlign="Center" VertAlign="Top" />
+      <TextObject Name="M3MemCap" Left="0" Top="188" Width="366" Height="12"
+        Text="ROPC Member" Font="Times New Roman, 7pt, style=Italic" HorzAlign="Center" VertAlign="Top" />
+
+      <TextObject Name="M4NameVal" Left="367" Top="156" Width="366" Height="16"
+        Text="[CanvassDS.Member4Name]" Font="Times New Roman, 9pt, style=Bold" HorzAlign="Center" VertAlign="Bottom" />
+      <TextObject Name="M4NameLine" Left="387" Top="172" Width="326" Height="1.1"
+        Text="" Border.Lines="4" Border.Width="0.75" />
+      <TextObject Name="M4RoleVal" Left="367" Top="174" Width="366" Height="14"
+        Text="[CanvassDS.Member4Role]" Font="Times New Roman, 8pt" HorzAlign="Center" VertAlign="Top" />
+      <TextObject Name="M4MemCap" Left="367" Top="188" Width="366" Height="12"
+        Text="ROPC Member" Font="Times New Roman, 7pt, style=Italic" HorzAlign="Center" VertAlign="Top" />
+
+      <!-- ─── Vice Chairperson (centered, top=226) ─── -->
+      <TextObject Name="VcNameVal" Left="183" Top="226" Width="367" Height="16"
+        Text="[CanvassDS.ViceChairName]" Font="Times New Roman, 9pt, style=Bold" HorzAlign="Center" VertAlign="Bottom" />
+      <TextObject Name="VcNameLine" Left="203" Top="242" Width="327" Height="1.1"
+        Text="" Border.Lines="4" Border.Width="0.75" />
+      <TextObject Name="VcRoleVal" Left="183" Top="244" Width="367" Height="14"
+        Text="[CanvassDS.ViceChairRole]" Font="Times New Roman, 8pt" HorzAlign="Center" VertAlign="Top" />
+      <TextObject Name="VcCap" Left="183" Top="258" Width="367" Height="12"
+        Text="Vice Chairperson-ROPC" Font="Times New Roman, 7pt, style=Italic" HorzAlign="Center" VertAlign="Top" />
+
+      <!-- ─── Chairperson (centered, top=296) ─── -->
+      <TextObject Name="ChNameVal" Left="183" Top="296" Width="367" Height="16"
+        Text="[CanvassDS.ChairName]" Font="Times New Roman, 9pt, style=Bold" HorzAlign="Center" VertAlign="Bottom" />
+      <TextObject Name="ChNameLine" Left="203" Top="312" Width="327" Height="1.1"
+        Text="" Border.Lines="4" Border.Width="0.75" />
+      <TextObject Name="ChRoleVal" Left="183" Top="314" Width="367" Height="14"
+        Text="[CanvassDS.ChairRole]" Font="Times New Roman, 8pt" HorzAlign="Center" VertAlign="Top" />
+      <TextObject Name="ChCap" Left="183" Top="328" Width="367" Height="12"
+        Text="Chairperson-ROPC" Font="Times New Roman, 7pt, style=Italic" HorzAlign="Center" VertAlign="Top" />
+
+    </ReportSummaryBand>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         PAGE FOOTER
+         ═══════════════════════════════════════════════════════════ -->
+    <PageFooterBand Name="PageFooter1" Top="1048" Width="733" Height="14">
+      <TextObject Name="PgNo" Left="0" Top="0" Width="733" Height="14"
+        Text="Page [Page#] of [TotalPages#]" HorzAlign="Right"
+        Font="Times New Roman, 7pt" />
+    </PageFooterBand>
+
+  </ReportPage>
+</Report>

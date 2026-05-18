@@ -1,9 +1,10 @@
-﻿{
+{
   "permissions": {
     "allow": [
       "Bash(grep -v \".Designer\\\\|obj\\\\\\\\\")",
-      "PowerShell($env:PGPASSWORD = \"password\"; $psql = \\(Get-Command psql -ErrorAction SilentlyContinue\\).Source; if \\(-not $psql\\) { Get-ChildItem 'C:\\\\Program Files\\\\PostgreSQL\\\\' -Recurse -Filter psql.exe -ErrorAction SilentlyContinue | Select-Object -First 1 | ForEach-Object { $psql = $_.FullName } }; \"psql: $psql\"; if \\($psql\\) { & $psql -U postgres -h localhost -d AMIS230 -c \"SELECT table_schema, table_name FROM information_schema.tables WHERE table_name ILIKE 'PropertyItemCatalog%';\" })"
+      "PowerShell($env:PGPASSWORD = \"password\"; $psql = \\(Get-Command psql -ErrorAction SilentlyContinue\\).Source; if \\(-not $psql\\) { Get-ChildItem 'C:\\\\Program Files\\\\PostgreSQL\\\\' -Recurse -Filter psql.exe -ErrorAction SilentlyContinue | Select-Object -First 1 | ForEach-Object { $psql = $_.FullName } }; \"psql: $psql\"; if \\($psql\\) { & $psql -U postgres -h localhost -d AMIS230 -c \"SELECT table_schema, table_name FROM information_schema.tables WHERE table_name ILIKE 'PropertyItemCatalog%';\" })",
+      "PowerShell(dotnet build src/AMIS.Framework.slnx --nologo -v minimal 2>&1)",
+      "PowerShell(dotnet build src/Modules/FastReporting/Modules.FastReporting/Modules.FastReporting.csproj --nologo -v minimal 2>&1)"
     ]
   }
 }
-

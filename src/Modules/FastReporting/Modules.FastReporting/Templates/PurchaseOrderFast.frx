@@ -1,0 +1,343 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Report ScriptLanguage="CSharp" ReportInfo.Created="05/18/2026 00:00:00" ReportInfo.Modified="05/18/2026 00:00:00" ReportInfo.CreatorVersion="2025.1.0">
+  <Dictionary />
+  <!--
+    Data sources are registered at runtime via Report.RegisterData(IEnumerable, name).
+    Do NOT predeclare them as <TableDataSource DataType="System.Data.DataTable"> here —
+    that conflicts with the BusinessObjectDataSource created by RegisterData and causes
+    "Table is not connected to the data" at PrepareAsync time.
+  -->
+
+  <!--
+    Layout: A4 portrait (210 × 297 mm), 8 mm margins.
+    Content width  = (210-16) × 3.7795 ≈ 733 units
+    Content height = (297-16) × 3.7795 ≈ 1062 units
+
+    Single PO per page (no left/right copy split).
+
+    Table column widths (total 733):
+      Stock No.    (10%) :  75    x=0
+      Unit          (7%) :  50    x=75
+      Description  (38%) : 280    x=125
+      Quantity      (8%) :  60    x=405
+      Unit Cost    (14%) : 105    x=465
+      Amount       (22%) : 163    x=570
+  -->
+
+  <ReportPage Name="Page1"
+    PaperWidth="210" PaperHeight="297"
+    LeftMargin="8" TopMargin="8" RightMargin="8" BottomMargin="8"
+    Landscape="false">
+
+    <!-- ═══════════════════════════════════════════════════════════
+         TITLE BAND  (appears once)
+         Contains: org header, Exhibit 5, title, supplier/PO box,
+                   gentlemen line, delivery/payment box, col headers
+         ═══════════════════════════════════════════════════════════ -->
+    <ReportTitleBand Name="ReportTitle1" Width="733" Height="330">
+
+      <!-- ── Organization Header ─────────────────────────── -->
+      <TextObject Name="Republic" Left="0" Top="2" Width="733" Height="14.3"
+        Text="Republic of the Philippines" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 9pt" />
+      <TextObject Name="NFA" Left="0" Top="18.3" Width="733" Height="17.6"
+        Text="National Food Authority" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 11pt, style=Bold" />
+      <TextObject Name="OrgName" Left="0" Top="37.9" Width="733" Height="14.3"
+        Text="[PurchaseOrderDS.OrgName]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 9pt" />
+      <TextObject Name="OrgAddr" Left="0" Top="54.2" Width="733" Height="14.3"
+        Text="[PurchaseOrderDS.OrgAddress]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 9pt" />
+
+      <!-- ── Exhibit 5 + Title ──────────────────── -->
+      <TextObject Name="Exhibit" Left="0" Top="74" Width="733" Height="14.3"
+        Text="Exhibit 5" HorzAlign="Right" VertAlign="Center"
+        Font="Times New Roman, 10pt, style=Bold" />
+      <TextObject Name="Title" Left="0" Top="90" Width="733" Height="26"
+        Text="PURCHASE ORDER" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 16pt, style=Bold" />
+      <!-- Underline below title (centred, ~280 wide) -->
+      <TextObject Name="TitleUnderline" Left="226" Top="116" Width="280" Height="1.1"
+        Text="" Border.Lines="4" Border.Width="1" />
+
+      <!-- ═══ Supplier / PO Info Box (top=128, H=70) ═══════
+           Left half (0-440): Supplier, Address, TIN
+           Right half (440-733): P.O. No., Date, Mode of Procurement
+      -->
+
+      <!-- Left: Supplier row -->
+      <TextObject Name="SupLbl" Left="0" Top="128" Width="65" Height="23.3"
+        Text="Supplier :" Font="Times New Roman, 8pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="SupVal" Left="65" Top="128" Width="375" Height="23.3"
+        Text="[PurchaseOrderDS.SupplierName]" Font="Times New Roman, 9pt, style=Bold" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <!-- Left: Address row -->
+      <TextObject Name="AddrLbl" Left="0" Top="151.3" Width="65" Height="23.3"
+        Text="Address :" Font="Times New Roman, 8pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="AddrVal" Left="65" Top="151.3" Width="375" Height="23.3"
+        Text="[PurchaseOrderDS.SupplierAddress]" Font="Times New Roman, 9pt" VertAlign="Center" WordWrap="true"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <!-- Left: TIN row -->
+      <TextObject Name="TinLbl" Left="0" Top="174.6" Width="65" Height="23.3"
+        Text="TIN :" Font="Times New Roman, 8pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="TinVal" Left="65" Top="174.6" Width="375" Height="23.3"
+        Text="[PurchaseOrderDS.SupplierTin]" Font="Times New Roman, 9pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+
+      <!-- Right: P.O. No. row -->
+      <TextObject Name="PoNoLbl" Left="440" Top="128" Width="80" Height="23.3"
+        Text="P.O. No. :" Font="Times New Roman, 8pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="PoNoVal" Left="520" Top="128" Width="213" Height="23.3"
+        Text="[PurchaseOrderDS.PoNumber]" Font="Times New Roman, 9pt, style=Bold" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <!-- Right: Date row -->
+      <TextObject Name="PoDtLbl" Left="440" Top="151.3" Width="80" Height="23.3"
+        Text="Date :" Font="Times New Roman, 8pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="PoDtVal" Left="520" Top="151.3" Width="213" Height="23.3"
+        Text="[PurchaseOrderDS.PoDate]" Font="Times New Roman, 9pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <!-- Right: Mode of Procurement row -->
+      <TextObject Name="ModeLbl" Left="440" Top="174.6" Width="80" Height="23.3"
+        Text="Mode of Procurement :" Font="Times New Roman, 7pt" VertAlign="Center" WordWrap="true"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="ModeVal" Left="520" Top="174.6" Width="213" Height="23.3"
+        Text="[PurchaseOrderDS.ModeOfProcurement]" Font="Times New Roman, 8pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+
+      <!-- ═══ Gentlemen Section (top=198, H=30) ═══════ -->
+      <TextObject Name="GentLbl" Left="0" Top="198" Width="733" Height="14"
+        Text="Gentlemen:" Font="Times New Roman, 8pt" VertAlign="Center"
+        Border.Lines="11" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="GentTxt" Left="0" Top="212" Width="733" Height="16"
+        Text="          Please furnish this Office the following articles subject to the terms and conditions contained herein:"
+        Font="Times New Roman, 8pt, style=Italic" VertAlign="Center"
+        Border.Lines="14" Border.Width="0.5" Padding="2,1,2,1" />
+
+      <!-- ═══ Delivery / Payment Box (top=228, H=45)
+           Left half (0-440): Place of Delivery, Date of Delivery
+           Right half (440-733): Delivery Term, Payment Term
+      -->
+      <TextObject Name="PlcDelLbl" Left="0" Top="228" Width="100" Height="22.5"
+        Text="Place of Delivery :" Font="Times New Roman, 8pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="PlcDelVal" Left="100" Top="228" Width="340" Height="22.5"
+        Text="[PurchaseOrderDS.PlaceOfDelivery]" Font="Times New Roman, 9pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="DtDelLbl" Left="0" Top="250.5" Width="100" Height="22.5"
+        Text="Date of Delivery :" Font="Times New Roman, 8pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="DtDelVal" Left="100" Top="250.5" Width="340" Height="22.5"
+        Text="[PurchaseOrderDS.DateOfDelivery]" Font="Times New Roman, 9pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+
+      <TextObject Name="DelTermLbl" Left="440" Top="228" Width="90" Height="22.5"
+        Text="Delivery Term :" Font="Times New Roman, 8pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="DelTermVal" Left="530" Top="228" Width="203" Height="22.5"
+        Text="[PurchaseOrderDS.DeliveryTerm]" Font="Times New Roman, 9pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="PayTermLbl" Left="440" Top="250.5" Width="90" Height="22.5"
+        Text="Payment Term :" Font="Times New Roman, 8pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="PayTermVal" Left="530" Top="250.5" Width="203" Height="22.5"
+        Text="[PurchaseOrderDS.PaymentTerm]" Font="Times New Roman, 9pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+
+      <!-- ═══ Table Column Headers (top=273, H=30) ═══ -->
+      <TextObject Name="HStockNo" Left="0" Top="273" Width="75" Height="30"
+        Text="Stock/&#10;Property No." HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt, style=Bold"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="HUnit" Left="75" Top="273" Width="50" Height="30"
+        Text="Unit" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt, style=Bold"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="HDesc" Left="125" Top="273" Width="280" Height="30"
+        Text="Description" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt, style=Bold"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="HQty" Left="405" Top="273" Width="60" Height="30"
+        Text="Quantity" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt, style=Bold"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="HUnitCost" Left="465" Top="273" Width="105" Height="30"
+        Text="Unit Cost" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt, style=Bold"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="HAmount" Left="570" Top="273" Width="163" Height="30"
+        Text="Amount" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt, style=Bold"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+
+    </ReportTitleBand>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         DATA BAND  (repeats once per line item, height = 22)
+         ═══════════════════════════════════════════════════════════ -->
+    <DataBand Name="Data1" DataSource="LineItemsDS" Width="733" Height="22">
+
+      <TextObject Name="DStockNo" Left="0" Top="0" Width="75" Height="22"
+        Text="[LineItemsDS.StockNumber]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="DUnit" Left="75" Top="0" Width="50" Height="22"
+        Text="[LineItemsDS.Unit]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="DDesc" Left="125" Top="0" Width="280" Height="22"
+        Text="[LineItemsDS.Description]" VertAlign="Center"
+        Font="Times New Roman, 8pt"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="DQty" Left="405" Top="0" Width="60" Height="22"
+        Text="[LineItemsDS.Quantity]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="DUnitCost" Left="465" Top="0" Width="105" Height="22"
+        Text="[LineItemsDS.UnitCost]" HorzAlign="Right" VertAlign="Center"
+        Font="Times New Roman, 8pt"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+      <TextObject Name="DAmount" Left="570" Top="0" Width="163" Height="22"
+        Text="[LineItemsDS.Amount]" HorzAlign="Right" VertAlign="Center"
+        Font="Times New Roman, 8pt"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+
+    </DataBand>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SUMMARY BAND  (appears once at end)
+         Contains: Total in words, penalty text, signatures, funds available
+         ═══════════════════════════════════════════════════════════ -->
+    <ReportSummaryBand Name="ReportSummary1" Width="733" Height="312">
+
+      <!-- ── Total row (matches data band columns; spans last cell with amount) ── -->
+      <TextObject Name="TotalLbl" Left="0" Top="0" Width="570" Height="22"
+        Text="TOTAL" Font="Times New Roman, 9pt, style=Bold" HorzAlign="Right" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,6,1" />
+      <TextObject Name="TotalVal" Left="570" Top="0" Width="163" Height="22"
+        Text="[PurchaseOrderDS.TotalAmount]" Font="Times New Roman, 9pt, style=Bold" HorzAlign="Right" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+
+      <!-- ── Total Amount in Words (full width) ── -->
+      <TextObject Name="TotWordsVal" Left="0" Top="22" Width="733" Height="24"
+        Text="[PurchaseOrderDS.TotalAmountInWords]" Font="Times New Roman, 9pt, style=Bold" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="4,2,4,2" />
+      <TextObject Name="TotWordsCap" Left="0" Top="46" Width="733" Height="12"
+        Text="(Total Amount in Words)" Font="Times New Roman, 7pt, style=Italic" HorzAlign="Center" VertAlign="Top"
+        Border.Lines="14" Border.Width="0.5" />
+
+      <!-- ── Penalty paragraph (full width) ── -->
+      <TextObject Name="PenaltyTxt" Left="0" Top="58" Width="733" Height="34"
+        Text="          In case of failure to make the full delivery within the time specified above, a penalty of one-tenth (1/10) of one percent for every day of delay shall be imposed on the undelivered item/s."
+        Font="Times New Roman, 8pt" VertAlign="Center" WordWrap="true"
+        Border.Lines="15" Border.Width="0.5" Padding="4,2,4,2" />
+
+      <!-- ═══ Signature Block (top=92, H=110) ════════════════
+           Left  (0-366)   : Conforme (supplier signature, date) — borderless,
+                             owner/rep signs and writes their name manually.
+           Right (366-733) : Very truly yours (authorized official, designation) —
+                             borderless, name and designation pre-printed.
+           Both columns share Top values so labels align horizontally.
+      -->
+      <TextObject Name="ConfTitle" Left="0" Top="92" Width="366" Height="14"
+        Text="Conforme:" Font="Times New Roman, 8pt, style=Bold" VertAlign="Center"
+        Padding="2,1,2,1" />
+      <TextObject Name="VtyTitle" Left="366" Top="92" Width="367" Height="14"
+        Text="Very truly yours," Font="Times New Roman, 8pt, style=Bold" HorzAlign="Left" VertAlign="Center"
+        Padding="4,1,2,1" />
+
+      <!-- Signature space — bottom border doubles as the signature line -->
+      <TextObject Name="ConfSp" Left="0" Top="106" Width="366" Height="32"
+        Text="" Border.Lines="8" Border.Width="0.5" />
+      <TextObject Name="VtySp" Left="366" Top="106" Width="367" Height="32"
+        Text="" />
+      <TextObject Name="VtyNameVal" Left="386" Top="122" Width="327" Height="14"
+        Text="[PurchaseOrderDS.AuthorizedOfficialName]" Font="Times New Roman, 9pt, style=Bold" HorzAlign="Center" VertAlign="Bottom"
+        Border.Lines="8" Border.Width="0.5" />
+
+      <!-- Signature caption row -->
+      <TextObject Name="ConfCap" Left="0" Top="138" Width="366" Height="14"
+        Text="Signature over Printed Name of Supplier" Font="Times New Roman, 7pt, style=Italic" HorzAlign="Center" VertAlign="Top"
+        Padding="2,1,2,1" />
+      <TextObject Name="VtyCap" Left="366" Top="138" Width="367" Height="14"
+        Text="Signature over Printed Name of Authorized Official" Font="Times New Roman, 7pt, style=Italic" HorzAlign="Center" VertAlign="Top"
+        Padding="2,1,2,1" />
+
+      <!-- Date / Designation row -->
+      <TextObject Name="ConfDateLine" Left="0" Top="152" Width="366" Height="32"
+        Text="" Border.Lines="8" Border.Width="0.5" />
+      <TextObject Name="ConfDateCap" Left="0" Top="184" Width="366" Height="14"
+        Text="Date" Font="Times New Roman, 7pt, style=Italic" HorzAlign="Center" VertAlign="Top"
+        Padding="2,1,2,1" />
+
+      <TextObject Name="VtyDsVal" Left="386" Top="168" Width="327" Height="14"
+        Text="[PurchaseOrderDS.AuthorizedOfficialDesignation]" Font="Times New Roman, 9pt, style=Bold" HorzAlign="Center" VertAlign="Bottom"
+        Border.Lines="8" Border.Width="0.5" />
+      <TextObject Name="VtyDsCap" Left="366" Top="184" Width="367" Height="14"
+        Text="Designation" Font="Times New Roman, 7pt, style=Italic" HorzAlign="Center" VertAlign="Top"
+        Padding="2,1,2,1" />
+
+      <!-- ═══ Funds Available + ORS/BURS box (top=202, H=110) ══════
+           Left (0-366) : Funds Available signature
+           Right (366-733) : ORS/BURS No., Date, Amount
+      -->
+      <TextObject Name="FaLbl" Left="0" Top="202" Width="100" Height="22"
+        Text="Funds Available :" Font="Times New Roman, 8pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="FaSig" Left="100" Top="202" Width="266" Height="22"
+        Text="" Border.Lines="15" Border.Width="0.5" />
+      <TextObject Name="FaNameVal" Left="100" Top="202" Width="266" Height="22"
+        Text="[PurchaseOrderDS.AccountantName]" Font="Times New Roman, 9pt, style=Bold" HorzAlign="Center" VertAlign="Bottom" Padding="1,1,1,2" />
+
+      <!-- Right column: ORS/BURS No. -->
+      <TextObject Name="OrsNoLbl" Left="366" Top="202" Width="120" Height="22"
+        Text="ORS/BURS No. :" Font="Times New Roman, 8pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="OrsNoVal" Left="486" Top="202" Width="247" Height="22"
+        Text="[PurchaseOrderDS.OursBursNumber]" Font="Times New Roman, 9pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+
+      <!-- Empty cell under FaSig for layout balance + caption row -->
+      <TextObject Name="FaCapBox" Left="0" Top="224" Width="366" Height="32"
+        Text="Signature over Printed Name of Chief&#10;Accountant/Head of Accounting Division/Unit"
+        Font="Times New Roman, 7pt, style=Italic" HorzAlign="Center" VertAlign="Center"
+        Border.Lines="11" Border.Width="0.5" Padding="2,2,2,2" />
+
+      <!-- Right column: Date of ORS/BURS -->
+      <TextObject Name="OrsDtLbl" Left="366" Top="224" Width="120" Height="22"
+        Text="Date of the ORS/BURS :" Font="Times New Roman, 7pt" VertAlign="Center" WordWrap="true"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="OrsDtVal" Left="486" Top="224" Width="247" Height="22"
+        Text="[PurchaseOrderDS.PoDate]" Font="Times New Roman, 9pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+
+      <!-- Right column: Amount -->
+      <TextObject Name="AmtLbl" Left="366" Top="246" Width="120" Height="22"
+        Text="Amount :" Font="Times New Roman, 8pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="AmtVal" Left="486" Top="246" Width="247" Height="22"
+        Text="[PurchaseOrderDS.TotalAmount]" Font="Times New Roman, 9pt, style=Bold" HorzAlign="Right" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,4,1" />
+
+      <!-- Bottom filler row for left column (to match height of 3 right-column rows) -->
+      <TextObject Name="FaFiller" Left="0" Top="256" Width="366" Height="12"
+        Text="" Border.Lines="11" Border.Width="0.5" />
+
+    </ReportSummaryBand>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         PAGE FOOTER
+         ═══════════════════════════════════════════════════════════ -->
+    <PageFooterBand Name="PageFooter1" Top="1048" Width="733" Height="14">
+      <TextObject Name="PgNo" Left="0" Top="0" Width="733" Height="14"
+        Text="Page [Page#] of [TotalPages#]" HorzAlign="Right"
+        Font="Times New Roman, 7pt" />
+    </PageFooterBand>
+
+  </ReportPage>
+</Report>

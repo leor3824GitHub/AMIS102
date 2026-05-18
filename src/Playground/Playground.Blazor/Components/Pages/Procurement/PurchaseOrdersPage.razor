@@ -11,6 +11,7 @@
 @inject IMaster_dataClient MasterDataClient
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
+@inject IJSRuntime JS
 
 <AMISPageHeader Title="Purchase Orders" Description="Create and manage purchase orders (PO)" />
 
@@ -219,6 +220,23 @@
                                                 <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" Color="Color.Default"
                                                                OnClick="@(async () => await ViewDetailsAsync(item.Id))" />
                                             </MudTooltip>
+                                            <MudMenu Icon="@Icons.Material.Filled.Print"
+                                                     Color="Color.Secondary"
+                                                     Size="Size.Small"
+                                                     Dense="true"
+                                                     AnchorOrigin="Origin.BottomLeft"
+                                                     TransformOrigin="Origin.TopLeft"
+                                                     ToolTip="Print">
+                                                <MudMenuItem Icon="@Icons.Material.Filled.PictureAsPdf"
+                                                             OnClick="@(() => DownloadFastReportPdfAsync(item.Id))">
+                                                    Download PDF
+                                                </MudMenuItem>
+                                                <MudDivider />
+                                                <MudMenuItem Icon="@Icons.Material.Filled.Settings"
+                                                             OnClick="@(() => OpenFastReportSetupAsync(item.Id))">
+                                                    Fast Report – Page Setup…
+                                                </MudMenuItem>
+                                            </MudMenu>
                                         </MudStack>
                                     </td>
                                 </tr>
@@ -654,6 +672,50 @@
     private async Task ViewDetailsAsync(Guid id)
     {
         _detail = await Client.GetAsync(id);
+    }
+
+    private async Task DownloadFastReportPdfAsync(Guid id)
+    {
+        try
+        {
+            var bytes = await Client.GetFastReportPdfAsync(id, pageWidth: "a4", orientation: "portrait", minRows: 8);
+            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
+            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            Snackbar.Add("PDF ready.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"PDF generation failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task OpenFastReportSetupAsync(Guid id)
+    {
+        // PO is always 1 copy per page; the dialog's Copies field is ignored on submit.
+        var parameters = new DialogParameters
+        {
+            [nameof(FastReportPageSetupDialog.PaperSize)] = "a4",
+            [nameof(FastReportPageSetupDialog.Orientation)] = "portrait",
+            [nameof(FastReportPageSetupDialog.Copies)] = 1,
+            [nameof(FastReportPageSetupDialog.MinRows)] = 8
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.ExtraSmall, FullWidth = false, CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<FastReportPageSetupDialog>("Page Setup", parameters, options);
+        var result = await dialog.Result;
+        if (result is null || result.Canceled) return;
+        if (result.Data is not FastReportPageSetupDialog.Result r) return;
+
+        try
+        {
+            var bytes = await Client.GetFastReportPdfAsync(id, pageWidth: r.PaperSize, orientation: r.Orientation, minRows: r.MinRows);
+            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
+            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            Snackbar.Add("PDF ready.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fast report failed: {ex.Message}", Severity.Error);
+        }
     }
 
     private void AddLineItem() => _form.LineItems.Add(new());
