@@ -6,5 +6,5 @@ namespace AMIS.Modules.FastReporting.Features.v1.AssetIARs.PrintAssetIARFast;
 public sealed record PrintAssetIARFastQuery(
     Guid Id,
     string PaperSize = "a4",
-    string Orientation = "portrait",
+    string Orientation = "landscape",
     int MinRows = 12) : IQuery<ReportFileDto>;

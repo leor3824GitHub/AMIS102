@@ -19,7 +19,7 @@ public static class PrintAssetIARFastEndpoint
             .RequirePermission(AssetIARsView);
 
     // Query: ?pageWidth=a4|legal|longbond|letter   (default a4)
-    //        ?orientation=portrait|landscape       (default portrait)
+    //        ?orientation=landscape|portrait       (default landscape — template is 2-up side-by-side)
     //        ?minRows=1..30                        (default 12) — pads data band with empty rows
     private static async Task<IResult> PrintFast(
         Guid id,
@@ -30,9 +30,9 @@ public static class PrintAssetIARFastEndpoint
         int? minRows = null)
     {
         var paperSize = (pageWidth ?? "a4").ToLowerInvariant();
-        var orient = (orientation ?? "portrait").ToLowerInvariant() == "landscape"
-            ? "landscape"
-            : "portrait";
+        var orient = (orientation ?? "landscape").ToLowerInvariant() == "portrait"
+            ? "portrait"
+            : "landscape";
         var rows = Math.Clamp(minRows ?? 12, 1, 30);
 
         var dto = await mediator.Send(

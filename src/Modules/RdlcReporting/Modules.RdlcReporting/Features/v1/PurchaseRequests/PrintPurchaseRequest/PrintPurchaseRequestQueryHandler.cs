@@ -35,8 +35,8 @@ public sealed class PrintPurchaseRequestQueryHandler(IMediator mediator)
                 ResponsibilityCenterCode: pr.ResponsibilityCenterCode,
                 Purpose:                 pr.Purpose,
                 Justification:           pr.Justification,
-                RequestedByName:         pr.RequestedByName,
-                ApprovedByName:          pr.ApprovedByName)
+                RequestedByName:         pr.RequestedByName.ToUpperInvariant(),
+                ApprovedByName:          pr.ApprovedByName?.ToUpperInvariant())
         };
 
         var lineItems = pr.LineItems

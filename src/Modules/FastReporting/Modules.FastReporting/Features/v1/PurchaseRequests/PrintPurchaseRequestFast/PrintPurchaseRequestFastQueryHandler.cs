@@ -36,9 +36,9 @@ public sealed class PrintPurchaseRequestFastQueryHandler(IMediator mediator)
                 DepartmentName:           pr.DepartmentName,
                 ResponsibilityCenterCode: pr.ResponsibilityCenterCode ?? string.Empty,
                 Purpose:                  pr.Purpose ?? string.Empty,
-                RequestedByName:          pr.RequestedByName ?? string.Empty,
+                RequestedByName:          (pr.RequestedByName ?? string.Empty).ToUpperInvariant(),
                 RequestedByDesignation:   requestedByDesignation,
-                ApprovedByName:           pr.ApprovedByName ?? org?.RegionalManagerName ?? string.Empty,
+                ApprovedByName:           (pr.ApprovedByName ?? org?.RegionalManagerName ?? string.Empty).ToUpperInvariant(),
                 ApprovedByDesignation:    org?.RegionalManagerDesignation ?? "Regional Manager II")
         };
 

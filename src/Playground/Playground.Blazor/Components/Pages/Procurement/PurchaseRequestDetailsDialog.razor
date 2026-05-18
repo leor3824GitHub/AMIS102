@@ -29,11 +29,11 @@
 
             <MudItem xs="12" md="6">
                 <MudText Typo="Typo.subtitle2">Requested By</MudText>
-                <MudText Typo="Typo.body1">@PurchaseRequest.RequestedByName</MudText>
+                <MudText Typo="Typo.body1">@PurchaseRequest.RequestedByName?.ToUpperInvariant()</MudText>
             </MudItem>
             <MudItem xs="12" md="6">
                 <MudText Typo="Typo.subtitle2">Approved By</MudText>
-                <MudText Typo="Typo.body1">@(string.IsNullOrWhiteSpace(PurchaseRequest.ApprovedByName) ? "-" : PurchaseRequest.ApprovedByName)</MudText>
+                <MudText Typo="Typo.body1">@(string.IsNullOrWhiteSpace(PurchaseRequest.ApprovedByName) ? "-" : PurchaseRequest.ApprovedByName.ToUpperInvariant())</MudText>
             </MudItem>
 
             <MudItem xs="12">

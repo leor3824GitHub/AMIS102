@@ -61,8 +61,8 @@ public sealed class PrintAssetIARFastQueryHandler(IMediator mediator)
                 InspectedCheck:           InspectedCheck(iar),
                 CompleteCheck:            iar.Status == AssetIARStatus.Accepted ? "X" : string.Empty,
                 PartialCheck:             iar.Status == AssetIARStatus.Inspected ? "X" : string.Empty,
-                InspectorName:            iar.InspectedByName ?? string.Empty,
-                CustodianName:            iar.ReceivedByName ?? string.Empty)
+                InspectorName:            (iar.InspectedByName ?? string.Empty).ToUpperInvariant(),
+                CustodianName:            (iar.ReceivedByName ?? string.Empty).ToUpperInvariant())
         };
 
         var lineItemsTable = BuildLineItemsTable(iar, query.MinRows);

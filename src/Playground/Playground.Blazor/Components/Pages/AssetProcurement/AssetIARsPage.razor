@@ -66,7 +66,7 @@
                         <th>Lines</th>
                         <th class="text-right">Total</th>
                         <th>Status</th>
-                        <th></th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -141,17 +141,13 @@
                                             </MudButton>
                                         }
                                     }
-                                    else if (iar.Status == AssetIARStatus.Accepted)
-                                    {
-                                        <MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="@(() => OpenViewDialog(iar.Id))">
-                                            View / Print
-                                        </MudButton>
-                                    }
                                     else
                                     {
-                                        <MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="@(() => OpenViewDialog(iar.Id))">
-                                            View
-                                        </MudButton>
+                                        <MudIconButton Icon="@Icons.Material.Filled.Visibility"
+                                                       Color="Color.Default"
+                                                       Size="Size.Small"
+                                                       OnClick="@(() => OpenViewDialog(iar.Id))"
+                                                       title="View" />
                                     }
                                     <MudMenu Icon="@Icons.Material.Filled.Print"
                                              Color="Color.Secondary"
@@ -424,7 +420,7 @@
     {
         try
         {
-            var bytes = await IarClient.GetFastReportPdfAsync(id, pageWidth: "a4", orientation: "portrait", minRows: 12);
+            var bytes = await IarClient.GetFastReportPdfAsync(id, pageWidth: "a4", orientation: "landscape", minRows: 12);
             var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
             await JS.InvokeVoidAsync("open", dataUrl, "_blank");
             Snackbar.Add("PDF ready.", Severity.Success);
@@ -441,7 +437,7 @@
         var parameters = new DialogParameters
         {
             [nameof(FastReportPageSetupDialog.PaperSize)] = "a4",
-            [nameof(FastReportPageSetupDialog.Orientation)] = "portrait",
+            [nameof(FastReportPageSetupDialog.Orientation)] = "landscape",
             [nameof(FastReportPageSetupDialog.Copies)] = 1,
             [nameof(FastReportPageSetupDialog.MinRows)] = 12
         };

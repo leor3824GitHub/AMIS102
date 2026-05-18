@@ -44,9 +44,9 @@ public sealed class PrintPurchaseOrderFastQueryHandler(IMediator mediator)
                 OursBursNumber:           po.OursBursNumber ?? string.Empty,
                 TotalAmount:              po.TotalAmount.ToString("N2", nf),
                 TotalAmountInWords:       po.TotalAmountInWords,
-                AuthorizedOfficialName:        org?.RegionalManagerName ?? string.Empty,
+                AuthorizedOfficialName:        (org?.RegionalManagerName ?? string.Empty).ToUpperInvariant(),
                 AuthorizedOfficialDesignation: org?.RegionalManagerDesignation ?? "Regional Manager II",
-                AccountantName:                org?.AccountantName ?? string.Empty)
+                AccountantName:                (org?.AccountantName ?? string.Empty).ToUpperInvariant())
         };
 
         var lineItemsTable = BuildLineItemsTable(po, query.MinRows);

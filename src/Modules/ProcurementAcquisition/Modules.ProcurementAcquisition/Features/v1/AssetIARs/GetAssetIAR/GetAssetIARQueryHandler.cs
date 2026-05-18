@@ -7,7 +7,8 @@ using Microsoft.EntityFrameworkCore;
 namespace AMIS.Modules.ProcurementAcquisition.Features.v1.AssetIARs.GetAssetIAR;
 
 public sealed class GetAssetIARQueryHandler(
-    ProcurementDbContext dbContext) : IQueryHandler<GetAssetIARQuery, AssetIARDto?>
+    ProcurementDbContext dbContext,
+    IMediator mediator) : IQueryHandler<GetAssetIARQuery, AssetIARDto?>
 {
     public async ValueTask<AssetIARDto?> Handle(GetAssetIARQuery query, CancellationToken cancellationToken)
     {
@@ -25,6 +26,10 @@ public sealed class GetAssetIARQueryHandler(
             .FirstOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false) ?? string.Empty;
 
-        return CreateAssetIARCommandHandler.MapToDto(iar, poNumber);
+        var (inspectorName, custodianName) = await CreateAssetIARCommandHandler
+            .ResolveEmployeeNamesAsync(iar.InspectedById, iar.ReceivedById, mediator, cancellationToken)
+            .ConfigureAwait(false);
+
+        return CreateAssetIARCommandHandler.MapToDto(iar, poNumber, inspectorName, custodianName);
     }
 }

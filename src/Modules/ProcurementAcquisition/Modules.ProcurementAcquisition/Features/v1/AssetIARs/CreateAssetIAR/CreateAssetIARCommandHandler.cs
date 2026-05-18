@@ -1,4 +1,5 @@
 using AMIS.Framework.Core.Context;
+using AMIS.Modules.MasterData.Contracts.v1.References;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.AssetInspectionAcceptanceReports;
 using AMIS.Modules.ProcurementAcquisition.Data;
 using AMIS.Modules.ProcurementAcquisition.Domain.AssetInspectionAcceptanceReports;
@@ -9,7 +10,8 @@ namespace AMIS.Modules.ProcurementAcquisition.Features.v1.AssetIARs.CreateAssetI
 
 public sealed class CreateAssetIARCommandHandler(
     ProcurementDbContext dbContext,
-    ICurrentUser currentUser) : ICommandHandler<CreateAssetIARCommand, AssetIARDto>
+    ICurrentUser currentUser,
+    IMediator mediator) : ICommandHandler<CreateAssetIARCommand, AssetIARDto>
 {
     public async ValueTask<AssetIARDto> Handle(CreateAssetIARCommand command, CancellationToken cancellationToken)
     {
@@ -41,8 +43,30 @@ public sealed class CreateAssetIARCommandHandler(
         dbContext.AssetIARs.Add(iar);
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-        return MapToDto(iar, po.PoNumber);
+        var (inspectorName, custodianName) = await ResolveEmployeeNamesAsync(
+            iar.InspectedById, iar.ReceivedById, mediator, cancellationToken).ConfigureAwait(false);
+
+        return MapToDto(iar, po.PoNumber, inspectorName, custodianName);
     }
+
+    internal static async Task<(string InspectorName, string CustodianName)> ResolveEmployeeNamesAsync(
+        Guid inspectedById,
+        Guid receivedById,
+        IMediator mediator,
+        CancellationToken ct)
+    {
+        var ids = new HashSet<Guid>();
+        if (inspectedById != Guid.Empty) ids.Add(inspectedById);
+        if (receivedById != Guid.Empty) ids.Add(receivedById);
+        if (ids.Count == 0) return (string.Empty, string.Empty);
+
+        var map = await mediator.Send(new GetEmployeeReferencesByIdsQuery(ids), ct).ConfigureAwait(false);
+
+        return (FormatName(map, inspectedById), FormatName(map, receivedById));
+    }
+
+    private static string FormatName(IReadOnlyDictionary<Guid, EmployeeReferenceDto> map, Guid id) =>
+        map.TryGetValue(id, out var emp) ? $"{emp.FirstName} {emp.LastName}".Trim() : string.Empty;
 
     private async Task<string> GenerateIARNumberAsync(string tenantId, CancellationToken ct)
     {
@@ -69,7 +93,11 @@ public sealed class CreateAssetIARCommandHandler(
         ?? dbContext.TenantInfo?.Identifier
         ?? throw new InvalidOperationException("Tenant ID required.");
 
-    internal static AssetIARDto MapToDto(AssetInspectionAcceptanceReport iar, string poNumber) =>
+    internal static AssetIARDto MapToDto(
+        AssetInspectionAcceptanceReport iar,
+        string poNumber,
+        string inspectorName = "",
+        string custodianName = "") =>
         new(iar.Id,
             iar.IarNumber,
             iar.IarDate,
@@ -78,9 +106,9 @@ public sealed class CreateAssetIARCommandHandler(
             iar.SupplierId,
             iar.SupplierName,
             iar.InspectedById,
-            string.Empty,
+            inspectorName,
             iar.ReceivedById,
-            string.Empty,
+            custodianName,
             iar.DeliveryReceiptNo,
             iar.DeliveryDate,
             iar.Status,

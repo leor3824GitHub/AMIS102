@@ -59,15 +59,15 @@ public sealed class PrintAbstractOfCanvassFastQueryHandler(IMediator mediator)
                 Sup5Name:         supplierNames[4],
                 Member1Name:      string.Empty,
                 Member1Role:      "TWG Goods/Services-Chairperson",
-                Member2Name:      org?.AccountantName ?? string.Empty,
+                Member2Name:      (org?.AccountantName ?? string.Empty).ToUpperInvariant(),
                 Member2Role:      org?.AccountantDesignation ?? "Accountant IV",
                 Member3Name:      string.Empty,
                 Member3Role:      "ROPC Member",
                 Member4Name:      string.Empty,
                 Member4Role:      "ROPC Member",
-                ViceChairName:    org?.SupervisingAdminOfficerName ?? string.Empty,
+                ViceChairName:    (org?.SupervisingAdminOfficerName ?? string.Empty).ToUpperInvariant(),
                 ViceChairRole:    org?.SupervisingAdminOfficerDesignation ?? "Supervising Administrative Officer",
-                ChairName:        org?.AssistantRegionalManagerName ?? org?.RegionalManagerName ?? string.Empty,
+                ChairName:        (org?.AssistantRegionalManagerName ?? org?.RegionalManagerName ?? string.Empty).ToUpperInvariant(),
                 ChairRole:        org?.AssistantRegionalManagerDesignation ?? org?.RegionalManagerDesignation ?? "Assistant Regional Manager II")
         };
 
