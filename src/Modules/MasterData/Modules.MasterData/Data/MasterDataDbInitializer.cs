@@ -21,12 +21,12 @@ internal sealed class MasterDataDbInitializer(
 
     public async Task SeedAsync(CancellationToken cancellationToken)
     {
-        // Offices — NFA Central Office departments (Location codes per NFA chart of accounts)
+        // Offices ï¿½ NFA Central Office departments (Location codes per NFA chart of accounts)
         if (!await context.Offices.AnyAsync(cancellationToken).ConfigureAwait(false))
         {
             var offices = new[]
             {
-                // -- Central Office — Code=short abbreviation, RegProvCode=abbreviation, LocationCode=NFA location code -
+                // -- Central Office ï¿½ Code=short abbreviation, RegProvCode=abbreviation, LocationCode=NFA location code -
                 // Office.Create(code, name, description, regProvCode, locationCode)
                 Office.Create("ASD",  "Accounting Services Department",                              null, "ASD",  "8300"),
                 Office.Create("ACE",  "Agricultural Commodity Exchange",                             null, "ACE",  "9805"),
@@ -58,8 +58,8 @@ internal sealed class MasterDataDbInitializer(
                 Office.Create("STF",  "Staff House",                                                 null, "STF",  "8606"),
                 Office.Create("TRS",  "Technical Research and Services Department",                  null, "TRS",  "9000"),
 
-                // -- Regional/Provincial — Code=Reg/Prov code, LocationCode=4-digit NFA code -
-                // Region I — La Union
+                // -- Regional/Provincial ï¿½ Code=Reg/Prov code, LocationCode=4-digit NFA code -
+                // Region I ï¿½ La Union
                 Office.Create("100",  "La Union - Regional Office - Reg. I",                         null, "100",  "0100"),
                 Office.Create("101",  "La Union - Provincial Office",                                null, "101",  "0101"),
                 Office.Create("106",  "Abra",                                                        null, "106",  "0102"),
@@ -69,7 +69,7 @@ internal sealed class MasterDataDbInitializer(
                 Office.Create("102",  "Eastern Pangasinan - Binalonan",                              null, "102",  "0106"),
                 Office.Create("107",  "Western Pangasinan - Lingayen",                               null, "107",  "0107"),
 
-                // Region II — Isabela
+                // Region II ï¿½ Isabela
                 Office.Create("200",  "Isabela - Regional Office - Reg. II",                         null, "200",  "0200"),
                 Office.Create("201",  "Isabela - Provincial Office",                                 null, "201",  "0201"),
                 Office.Create("205",  "Quirino",                                                     null, "205",  "0202"),
@@ -80,7 +80,7 @@ internal sealed class MasterDataDbInitializer(
                 Office.Create("208",  "Cagayan - Tuguegarao",                                        null, "208",  "0207"),
                 Office.Create("207",  "North Western Cagayan Apayao - Allacapan",                    null, "207",  "0208"),
 
-                // Region III — Cabanatuan City
+                // Region III ï¿½ Cabanatuan City
                 Office.Create("300",  "Cabanatuan City - Regional Office - Reg. III",                null, "300",  "0300"),
                 Office.Create("301",  "Nueva Ecija - Provincial Office",                             null, "301",  "0301"),
                 Office.Create("306",  "Bulacan",                                                     null, "306",  "0302"),
@@ -90,7 +90,7 @@ internal sealed class MasterDataDbInitializer(
                 Office.Create("307",  "Zambales",                                                    null, "307",  "0306"),
                 Office.Create("305",  "Aurora",                                                      null, "305",  "0307"),
 
-                // Region IV — Batangas City
+                // Region IV ï¿½ Batangas City
                 Office.Create("400",  "Batangas City - Regional Office - Reg. IV",                   null, "400",  "0400"),
                 Office.Create("401",  "Batangas - Provincial Office",                                null, "401",  "0401"),
                 Office.Create("402",  "Infanta",                                                     null, "402",  "0402"),
@@ -103,7 +103,7 @@ internal sealed class MasterDataDbInitializer(
                 Office.Create("403",  "Quezon - Lucena",                                             null, "403",  "0409"),
                 Office.Create("407",  "Romblon",                                                     null, "407",  "0410"),
 
-                // Region V — Legazpi City
+                // Region V ï¿½ Legazpi City
                 Office.Create("500",  "Legazpi City - Regional Office - Reg. V",                     null, "500",  "0500"),
                 Office.Create("501",  "Albay - Provincial Office",                                   null, "501",  "0501"),
                 Office.Create("503",  "Camarines Norte - Daet",                                      null, "503",  "0502"),
@@ -112,7 +112,7 @@ internal sealed class MasterDataDbInitializer(
                 Office.Create("505",  "Masbate",                                                     null, "505",  "0505"),
                 Office.Create("504",  "Sorsogon",                                                    null, "504",  "0506"),
 
-                // Region VI — Iloilo
+                // Region VI ï¿½ Iloilo
                 Office.Create("600",  "Iloilo - Regional Office - Reg. VI",                          null, "600",  "0600"),
                 Office.Create("601",  "Iloilo - Provincial Office",                                  null, "601",  "0601"),
                 Office.Create("604",  "Antique",                                                     null, "604",  "0602"),
@@ -120,14 +120,14 @@ internal sealed class MasterDataDbInitializer(
                 Office.Create("605",  "Negros Occidental - Bacolod",                                 null, "605",  "0604"),
                 Office.Create("602",  "Capiz - Roxas",                                               null, "602",  "0605"),
 
-                // Region VII — Cebu
+                // Region VII ï¿½ Cebu
                 Office.Create("700",  "Cebu - Regional Office - Reg. VII",                           null, "700",  "0700"),
                 Office.Create("701",  "Cebu - Provincial Office",                                    null, "701",  "0701"),
                 Office.Create("703",  "Bohol",                                                       null, "703",  "0702"),
                 Office.Create("704",  "Negros Oriental - Dumaguete",                                 null, "704",  "0703"),
                 Office.Create("702",  "Siquijor",                                                    null, "702",  "0704"),
 
-                // Region VIII — Northern Leyte
+                // Region VIII ï¿½ Northern Leyte
                 Office.Create("800",  "Northern Leyte - Regional Office - Reg. VIII",                null, "800",  "0800"),
                 Office.Create("801",  "Northern Leyte - Provincial Office",                          null, "801",  "0801"),
                 Office.Create("803",  "Eastern Samar - Borongan",                                    null, "803",  "0802"),
@@ -136,14 +136,14 @@ internal sealed class MasterDataDbInitializer(
                 Office.Create("804",  "Southern Leyte - Maasin",                                     null, "804",  "0805"),
                 Office.Create("806",  "Naval - Biliran",                                             null, "806",  "0806"),
 
-                // Region IX — Zamboanga City
+                // Region IX ï¿½ Zamboanga City
                 Office.Create("900",  "Zamboanga City - Regional Office - Reg. IX",                  null, "900",  "0900"),
                 Office.Create("901",  "Zamboanga - Provincial Office",                               null, "901",  "0901"),
                 Office.Create("905",  "Dipolog - Zamboanga del Norte",                               null, "905",  "0902"),
                 Office.Create("902",  "Pagadian City - Zamboanga del Sur",                           null, "902",  "0903"),
                 Office.Create("908",  "Ipil - Malangas",                                             null, "908",  "0904"),
 
-                // Region X — Cagayan de Oro
+                // Region X ï¿½ Cagayan de Oro
                 Office.Create("X000", "Cagayan de Oro - Regional Office - Reg. X",                   null, "000",  "1000"),
                 Office.Create("X001", "Misamis Oriental - Provincial Office",                        null, "001",  "1001"),
                 Office.Create("X007", "Bukidnon",                                                    null, "007",  "1002"),
@@ -151,7 +151,7 @@ internal sealed class MasterDataDbInitializer(
                 Office.Create("906",  "Misamis Occidental - Ozamiz",                                 null, "906",  "1004"),
                 Office.Create("125",  "Lanao del Norte - Iligan",                                    null, "125",  "1005"),
 
-                // Region XI — General Santos City
+                // Region XI ï¿½ General Santos City
                 Office.Create("1100", "General Santos City - Regional Office - Reg. XI",             null, "1100", "1100"),
                 Office.Create("111",  "General Santos City - Provincial Office",                     null, "111",  "1101"),
                 Office.Create("114",  "Digos - Davao del Sur",                                       null, "114",  "1102"),
@@ -160,13 +160,13 @@ internal sealed class MasterDataDbInitializer(
                 Office.Create("113",  "Davao del Norte - Tagum",                                     null, "113",  "1105"),
                 Office.Create("116",  "Compostela Valley",                                           null, "116",  "1106"),
 
-                // Region XII — Tacurong Sultan Kudarat
+                // Region XII ï¿½ Tacurong Sultan Kudarat
                 Office.Create("120",  "Tacurong Sultan Kudarat - Regional Office - Reg. XII",        null, "120",  "1200"),
                 Office.Create("123",  "Isulan - Provincial Office",                                  null, "123",  "1201"),
                 Office.Create("122",  "North Cotabato - Kidapawan",                                  null, "122",  "1202"),
                 Office.Create("121",  "South Cotabato - Marbel",                                     null, "121",  "1203"),
 
-                // Region XIII — Metro Manila
+                // Region XIII ï¿½ Metro Manila
                 Office.Create("1300", "Metro Manila Office - Regional Office - Reg. XIII",           null, "1300", "1300"),
                 Office.Create("NDO",  "North District Office - Valenzuela",                          null, "NDO",  "1301"),
                 Office.Create("CDO",  "Central District Office",                                     null, "CDO",  "1302"),
@@ -176,7 +176,7 @@ internal sealed class MasterDataDbInitializer(
                 Office.Create("MTO",  "Metro Transport Office",                                      null, "MTO",  "1306"),
                 Office.Create("1309", "Batanes",                                                     null, "1309", "1309"),
 
-                // Region XIV — Cotabato
+                // Region XIV ï¿½ Cotabato
                 Office.Create("140",  "Cotabato - Regional Office - Reg. XIV",                       null, "140",  "1400"),
                 Office.Create("141",  "Maguindanao",                                                 null, "141",  "1401"),
                 Office.Create("144",  "Lanao del Sur - Marawi",                                      null, "144",  "1402"),
@@ -184,7 +184,7 @@ internal sealed class MasterDataDbInitializer(
                 Office.Create("143",  "Tawi-Tawi",                                                   null, "143",  "1404"),
                 Office.Create("1405", "Basilan",                                                     null, null,   "1405"),
 
-                // Region XV — Caraga
+                // Region XV ï¿½ Caraga
                 Office.Create("00B",  "Caraga - Regional Office - Reg. XV",                      null, "00B",  "1500"),
                 Office.Create("X002", "Agusan del Norte",                                            null, "002",  "1501"),
                 Office.Create("X003", "Agusan del Sur",                                              null, "003",  "1502"),
@@ -258,19 +258,19 @@ internal sealed class MasterDataDbInitializer(
                 UnitOfMeasure.Create("UOM-SET",  "Set",          "Matched set of items"),
                 UnitOfMeasure.Create("UOM-PAIR", "Pair",         "Two matching items"),
                 // Weight
-                UnitOfMeasure.Create("UOM-KG",   "Kilogram",     "SI unit of mass — 1 000 g"),
+                UnitOfMeasure.Create("UOM-KG",   "Kilogram",     "SI unit of mass ï¿½ 1 000 g"),
                 UnitOfMeasure.Create("UOM-G",    "Gram",         "SI unit of mass"),
                 UnitOfMeasure.Create("UOM-MG",   "Milligram",    "One-thousandth of a gram"),
-                UnitOfMeasure.Create("UOM-LB",   "Pound",        "Imperial unit of mass ˜ 453.6 g"),
+                UnitOfMeasure.Create("UOM-LB",   "Pound",        "Imperial unit of mass ï¿½ 453.6 g"),
                 // Volume
                 UnitOfMeasure.Create("UOM-L",    "Liter",        "SI unit of volume"),
                 UnitOfMeasure.Create("UOM-ML",   "Milliliter",   "One-thousandth of a liter"),
-                UnitOfMeasure.Create("UOM-GAL",  "Gallon",       "US liquid gallon ˜ 3.785 L"),
+                UnitOfMeasure.Create("UOM-GAL",  "Gallon",       "US liquid gallon ï¿½ 3.785 L"),
                 // Length / Area
                 UnitOfMeasure.Create("UOM-M",    "Meter",        "SI unit of length"),
                 UnitOfMeasure.Create("UOM-CM",   "Centimeter",   "One-hundredth of a meter"),
                 UnitOfMeasure.Create("UOM-MM",   "Millimeter",   "One-thousandth of a meter"),
-                UnitOfMeasure.Create("UOM-FT",   "Foot",         "Imperial unit of length ˜ 30.48 cm"),
+                UnitOfMeasure.Create("UOM-FT",   "Foot",         "Imperial unit of length ï¿½ 30.48 cm"),
                 UnitOfMeasure.Create("UOM-SQM",  "Square Meter", "Area measurement"),
                 // Time / Service
                 UnitOfMeasure.Create("UOM-HR",   "Hour",         "Unit of time for labor or service billing"),
@@ -298,10 +298,10 @@ internal sealed class MasterDataDbInitializer(
                 // Electronics & IT
                 Supplier.Create("SUP-007", "TechSource Philippines", "789-012-345-006", "NON-VAT", "Computers, peripherals, and accessories", "Carol Lee", "carol@techsource.example", "+63-2-8800-1007", "42 Tech Park, Eastwood, Quezon City"),
                 Supplier.Create("SUP-008", "NetGear Solutions", "890-123-456-007", "NON-VAT", "Networking equipment and cabling", "James Reyes", "james@netgear-solutions.example", "+63-2-8800-1008", "18 Network Blvd, Ortigas Center"),
-                Supplier.Create("SUP-009", "PowerCell Energy", "901-234-567-008", "NON-VAT", "Batteries, UPS, and power supplies", "Lena Uy", "lena@powercell.example", "+63-2-8800-1009", "7 Power Drive, Parañaque City"),
+                Supplier.Create("SUP-009", "PowerCell Energy", "901-234-567-008", "NON-VAT", "Batteries, UPS, and power supplies", "Lena Uy", "lena@powercell.example", "+63-2-8800-1009", "7 Power Drive, Paraï¿½aque City"),
 
                 // Furniture & fixtures
-                Supplier.Create("SUP-010", "Furnishings Co.", "112-233-445-009", "NON-VAT", "Office furniture and ergonomic chairs", "Eve Turner", "eve@furnishings.example", "+63-2-8800-1010", "99 Furniture Rd, Las Piñas City"),
+                Supplier.Create("SUP-010", "Furnishings Co.", "112-233-445-009", "NON-VAT", "Office furniture and ergonomic chairs", "Eve Turner", "eve@furnishings.example", "+63-2-8800-1010", "99 Furniture Rd, Las Piï¿½as City"),
                 Supplier.Create("SUP-011", "ModSpace Interiors", "223-344-556-010", "NON-VAT", "Modular workstations and storage", "Anton Flores", "anton@modspace.example", "+63-2-8800-1011", "61 Design Ave, Alabang, Muntinlupa"),
 
                 // Cleaning & janitorial
@@ -415,7 +415,7 @@ internal sealed class MasterDataDbInitializer(
 
         await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-        // EmployeeProfiles — spread across offices, departments, and positions
+        // EmployeeProfiles ï¿½ spread across offices, departments, and positions
         if (!await context.Employees.AnyAsync(cancellationToken).ConfigureAwait(false))
         {
             // Load lookup IDs by code for deterministic assignment
@@ -501,7 +501,27 @@ internal sealed class MasterDataDbInitializer(
             await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        // Property Classes — NFA COA GAM Annex A (Account codes per NFA chart of accounts)
+        // Abstract of Canvass â€” seeded separately so it also runs on existing deployments
+        if (!await context.ReportSignatories.AnyAsync(s => s.ReportType == "AbstractOfCanvass", cancellationToken).ConfigureAwait(false))
+        {
+            var tenantId = context.TenantInfo?.Identifier ?? MultitenancyConstants.Root.Id;
+
+            var aocSignatories = new[]
+            {
+                // Abstract of Canvass â€” BOPC/ROPC Committee
+                Domain.ReportSignatory.Create(tenantId, "AbstractOfCanvass", 1, "TWG Goods/Services-Chairperson", "Name of Employee", "TWG Goods/Services-Chairperson"),
+                Domain.ReportSignatory.Create(tenantId, "AbstractOfCanvass", 2, "BOPC/ROPC Member",               "Name of Employee", "BOPC/ROPC Member"),
+                Domain.ReportSignatory.Create(tenantId, "AbstractOfCanvass", 3, "BOPC/ROPC Member",               "Name of Employee", "BOPC/ROPC Member"),
+                Domain.ReportSignatory.Create(tenantId, "AbstractOfCanvass", 4, "BOPC/ROPC Member",               "Name of Employee", "BOPC/ROPC Member"),
+                Domain.ReportSignatory.Create(tenantId, "AbstractOfCanvass", 5, "BOPC/ROPC Vice-Chairperson",     "Name of Employee", "BOPC/ROPC Vice-Chairperson"),
+                Domain.ReportSignatory.Create(tenantId, "AbstractOfCanvass", 6, "BOPC/ROPC Chairperson",          "Name of Employee", "BOPC/ROPC Chairperson"),
+            };
+
+            await context.ReportSignatories.AddRangeAsync(aocSignatories, cancellationToken).ConfigureAwait(false);
+            await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        // Property Classes ï¿½ NFA COA GAM Annex A (Account codes per NFA chart of accounts)
         if (!await context.PropertyClasses.AnyAsync(cancellationToken).ConfigureAwait(false))
         {
             var seed = new (string Code, string Name, string? Desc, (string ItemCode, string Name)[] Items)[]
