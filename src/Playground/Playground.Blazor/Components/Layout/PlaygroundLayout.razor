@@ -21,6 +21,7 @@
 @inject IThemeStateFactory ThemeStateFactory
 @inject AMIS.Playground.Blazor.ApiClient.IIdentityClient IdentityClient
 @inject AMIS.Playground.Blazor.ApiClient.IOrganizationProfileClient OrgProfileClient
+@inject AMIS.Playground.Blazor.ApiClient.IEmployeesClient EmployeesClient
 @inject IUserProfileState UserProfileState
 @inject IOrganizationProfileState OrgProfileState
 @inject IDialogService DialogService
@@ -351,13 +352,10 @@ else
             {
                 _userName = $"{profile.FirstName} {profile.LastName}".Trim();
                 if (string.IsNullOrWhiteSpace(_userName))
-                {
                     _userName = profile.Email ?? "User";
-                }
                 _userEmail = profile.Email;
                 _avatarUrl = profile.ImageUrl;
 
-                // Update shared profile state so other components can access it
                 UserProfileState.UpdateProfile(_userName, _userEmail, _userRole, _avatarUrl);
 
                 StateHasChanged();
@@ -365,9 +363,33 @@ else
         }
         catch
         {
-            // Use defaults if profile loading fails
             _userName = "User";
         }
+
+        // Resolve permissions — needed by multiple pages; loaded once per circuit.
+        try
+        {
+            var permissions = await IdentityClient.PermissionsGetAsync();
+            var set = new HashSet<string>(
+                permissions.Where(p => !string.IsNullOrWhiteSpace(p)).Select(p => p.Trim()),
+                StringComparer.OrdinalIgnoreCase);
+            UserProfileState.SetPermissions(set);
+        }
+        catch { /* silently skip; pages degrade gracefully when Permissions is empty */ }
+
+        // Resolve EmployeeId — used by inspector/custodian checks on IAR pages.
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var identityId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (!string.IsNullOrWhiteSpace(identityId))
+            {
+                var employee = await EmployeesClient.ByIdentityAsync(identityId);
+                if (employee is not null)
+                    UserProfileState.SetEmployeeId(employee.Id);
+            }
+        }
+        catch { /* silently skip; pages degrade gracefully when EmployeeId is Guid.Empty */ }
     }
 
     private void NavigateToProfile()

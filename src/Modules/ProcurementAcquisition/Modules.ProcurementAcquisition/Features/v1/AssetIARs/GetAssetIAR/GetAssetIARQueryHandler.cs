@@ -1,6 +1,6 @@
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.AssetInspectionAcceptanceReports;
 using AMIS.Modules.ProcurementAcquisition.Data;
-using AMIS.Modules.ProcurementAcquisition.Features.v1.AssetIARs.CreateAssetIAR;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.AssetIARs;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
@@ -26,10 +26,10 @@ public sealed class GetAssetIARQueryHandler(
             .FirstOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false) ?? string.Empty;
 
-        var (inspectorName, custodianName) = await CreateAssetIARCommandHandler
+        var (inspectorName, custodianName) = await AssetIARMapper
             .ResolveEmployeeNamesAsync(iar.InspectedById, iar.ReceivedById, mediator, cancellationToken)
             .ConfigureAwait(false);
 
-        return CreateAssetIARCommandHandler.MapToDto(iar, poNumber, inspectorName, custodianName);
+        return AssetIARMapper.ToDto(iar, poNumber, inspectorName, custodianName);
     }
 }

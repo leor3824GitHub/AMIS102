@@ -21,6 +21,7 @@ public class ProcurementDbContext : BaseDbContext
     public DbSet<CanvassQuotation> CanvassQuotations => Set<CanvassQuotation>();
     public DbSet<PurchaseOrder> PurchaseOrders => Set<PurchaseOrder>();
     public DbSet<AssetInspectionAcceptanceReport> AssetIARs => Set<AssetInspectionAcceptanceReport>();
+    public DbSet<IarNumberSequence> IarNumberSequences => Set<IarNumberSequence>();
 
     public ProcurementDbContext(
         IMultiTenantContextAccessor<AppTenantInfo> multiTenantContextAccessor,

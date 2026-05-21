@@ -12,6 +12,7 @@ public enum AssetIARStatus
 {
     Draft = 0,
     Accepted = 1,
+    // 2 = reserved (was used during early development, kept to avoid migration gaps)
     PendingInspection = 3,
     Inspected = 4,
     Cancelled = 5

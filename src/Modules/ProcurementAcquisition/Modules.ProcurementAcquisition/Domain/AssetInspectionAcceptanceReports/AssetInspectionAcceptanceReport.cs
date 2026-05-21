@@ -124,8 +124,6 @@ public sealed class AssetInspectionAcceptanceReport : AggregateRoot<Guid>, IHasT
     public DateOnly? DeliveryDate { get; private set; }
     public AssetIARStatus Status { get; private set; }
     public string? Remarks { get; private set; }
-    public byte[] Version { get; set; } = [];
-
     public DateTimeOffset? SubmittedForInspectionOnUtc { get; private set; }
     public DateTimeOffset? InspectedOnUtc { get; private set; }
     public DateTimeOffset? AcceptedOnUtc { get; private set; }
@@ -315,9 +313,8 @@ public sealed class AssetInspectionAcceptanceReport : AggregateRoot<Guid>, IHasT
 
     public void Accept()
     {
-        // Allowed from Draft (legacy direct path) or Inspected (new staged path).
-        if (Status != AssetIARStatus.Draft && Status != AssetIARStatus.Inspected)
-            throw new InvalidOperationException("IAR can only be accepted from Draft or Inspected status.");
+        if (Status != AssetIARStatus.Inspected)
+            throw new InvalidOperationException("IAR can only be accepted after inspection is complete.");
         if (_lineItems.Count == 0)
             throw new InvalidOperationException("IAR must have at least one line item.");
 

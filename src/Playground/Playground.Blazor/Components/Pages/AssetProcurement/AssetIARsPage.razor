@@ -1,16 +1,12 @@
 @page "/asset-procurement/iars"
-@using System.Security.Claims
-@using Microsoft.AspNetCore.Components.Authorization
 @using AMIS.Playground.Blazor.ApiClient
 @using AMIS.Playground.Blazor.Components.Pages.Procurement
 @using AMIS.Modules.ProcurementAcquisition.Contracts.v1.AssetInspectionAcceptanceReports
 @inject IAssetIarClient IarClient
-@inject IIdentityClient IdentityClient
-@inject IEmployeesClient EmployeesClient
+@inject IUserProfileState UserProfileState
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 @inject NavigationManager Navigation
-@inject AuthenticationStateProvider AuthStateProvider
 @inject IJSRuntime JS
 
 <AMISPageHeader Title="Inspection &amp; Acceptance Reports"
@@ -20,14 +16,15 @@
     <MudCardContent>
         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
             <MudTextField @bind-Value="_keyword" Label="Search IAR No / Supplier" Variant="Variant.Outlined"
-                          Size="Size.Small" Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
+                          Size="Size.Small" Margin="Margin.Dense"
+                          Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
                           DebounceInterval="350" OnDebounceIntervalElapsed="@(() => LoadAsync())"
                           Style="max-width:320px" />
             <MudSpacer />
             @if (_canCreate)
             {
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
-                           OnClick="OpenCreateDialog">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
+                           StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateDialog">
                     New IAR
                 </MudButton>
             }
@@ -85,69 +82,88 @@
                                 </MudChip>
                             </td>
                             <td>
-                                <MudStack Row="true" Spacing="1">
+                                <MudStack Row="true" Spacing="0">
                                     @if (iar.Status == AssetIARStatus.Draft)
                                     {
                                         @if (_canUpdate)
                                         {
-                                            <MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="@(() => OpenEditDialog(iar.Id))">Edit</MudButton>
+                                            <MudTooltip Text="Edit">
+                                                <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                                               Color="Color.Primary" Size="Size.Small"
+                                                               OnClick="@(() => OpenEditDialog(iar.Id))" />
+                                            </MudTooltip>
                                         }
                                         @if (_canSubmitForInspection)
                                         {
-                                            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" OnClick="@(() => SubmitForInspectionAsync(iar.Id))">
-                                                Submit for Inspection
-                                            </MudButton>
+                                            <MudTooltip Text="Submit for Inspection">
+                                                <MudIconButton Icon="@Icons.Material.Filled.Send"
+                                                               Color="Color.Info" Size="Size.Small"
+                                                               OnClick="@(() => SubmitForInspectionAsync(iar.Id))" />
+                                            </MudTooltip>
                                         }
                                         @if (_canCancel)
                                         {
-                                            <MudButton Variant="Variant.Outlined" Color="Color.Error" Size="Size.Small" OnClick="@(() => CancelIarAsync(iar.Id))">
-                                                Cancel
-                                            </MudButton>
+                                            <MudTooltip Text="Cancel">
+                                                <MudIconButton Icon="@Icons.Material.Filled.Cancel"
+                                                               Color="Color.Error" Size="Size.Small"
+                                                               OnClick="@(() => CancelIarAsync(iar.Id))" />
+                                            </MudTooltip>
                                         }
                                     }
                                     else if (iar.Status == AssetIARStatus.PendingInspection)
                                     {
-                                        @if (_canInspect && IsAssignedInspector(iar))
+                                        @if (_canInspect)
                                         {
-                                            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" OnClick="@(() => OpenInspectionPage(iar.Id))">
-                                                Inspect
-                                            </MudButton>
+                                            <MudTooltip Text="@(IsAssignedInspector(iar) ? "Record Inspection" : "View Inspection")">
+                                                <MudIconButton Icon="@Icons.Material.Filled.FactCheck"
+                                                               Color="@(IsAssignedInspector(iar) ? Color.Primary : Color.Default)"
+                                                               Size="Size.Small"
+                                                               OnClick="@(() => OpenInspectionPage(iar.Id))" />
+                                            </MudTooltip>
                                         }
-                                        else if (_canSubmitForInspection)
+                                        @if (_canSubmitForInspection)
                                         {
-                                            <MudButton Variant="Variant.Outlined" Color="Color.Warning" Size="Size.Small" OnClick="@(() => OpenReassignInspectorDialog(iar.Id))">
-                                                Reassign Inspector
-                                            </MudButton>
+                                            <MudTooltip Text="Reassign Inspector">
+                                                <MudIconButton Icon="@Icons.Material.Filled.SwitchAccount"
+                                                               Color="Color.Warning" Size="Size.Small"
+                                                               OnClick="@(() => OpenReassignInspectorDialog(iar.Id))" />
+                                            </MudTooltip>
                                         }
                                         @if (_canCancel)
                                         {
-                                            <MudButton Variant="Variant.Outlined" Color="Color.Error" Size="Size.Small" OnClick="@(() => CancelIarAsync(iar.Id))">
-                                                Cancel
-                                            </MudButton>
+                                            <MudTooltip Text="Cancel">
+                                                <MudIconButton Icon="@Icons.Material.Filled.Cancel"
+                                                               Color="Color.Error" Size="Size.Small"
+                                                               OnClick="@(() => CancelIarAsync(iar.Id))" />
+                                            </MudTooltip>
                                         }
                                     }
                                     else if (iar.Status == AssetIARStatus.Inspected)
                                     {
-                                        @if (_canAccept)
+                                        @if (_canAccept || _canAssignPropertyNo)
                                         {
-                                            <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small" OnClick="@(() => OpenAcceptancePage(iar.Id))">
-                                                Acceptance
-                                            </MudButton>
+                                            <MudTooltip Text="Accept">
+                                                <MudIconButton Icon="@Icons.Material.Filled.CheckCircle"
+                                                               Color="Color.Success" Size="Size.Small"
+                                                               OnClick="@(() => OpenAcceptancePage(iar.Id))" />
+                                            </MudTooltip>
                                         }
                                         @if (_canCancel)
                                         {
-                                            <MudButton Variant="Variant.Outlined" Color="Color.Error" Size="Size.Small" OnClick="@(() => CancelIarAsync(iar.Id))">
-                                                Cancel
-                                            </MudButton>
+                                            <MudTooltip Text="Cancel">
+                                                <MudIconButton Icon="@Icons.Material.Filled.Cancel"
+                                                               Color="Color.Error" Size="Size.Small"
+                                                               OnClick="@(() => CancelIarAsync(iar.Id))" />
+                                            </MudTooltip>
                                         }
                                     }
                                     else
                                     {
-                                        <MudIconButton Icon="@Icons.Material.Filled.Visibility"
-                                                       Color="Color.Default"
-                                                       Size="Size.Small"
-                                                       OnClick="@(() => OpenViewDialog(iar.Id))"
-                                                       title="View" />
+                                        <MudTooltip Text="View">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Visibility"
+                                                           Color="Color.Default" Size="Size.Small"
+                                                           OnClick="@(() => OpenDetailPage(iar.Id))" />
+                                        </MudTooltip>
                                     }
                                     <MudMenu Icon="@Icons.Material.Filled.Print"
                                              Color="Color.Secondary"
@@ -188,10 +204,10 @@
     private const string PermissionUpdate = "Permissions.Procurement.AssetIARs.Update";
     private const string PermissionSubmitForInspection = "Permissions.Procurement.AssetIARs.SubmitForInspection";
     private const string PermissionInspect = "Permissions.Procurement.AssetIARs.Inspect";
+    private const string PermissionAssignPropertyNo = "Permissions.Procurement.AssetIARs.AssignPropertyNo";
     private const string PermissionAccept = "Permissions.Procurement.AssetIARs.Accept";
     private const string PermissionCancel = "Permissions.Procurement.AssetIARs.Cancel";
 
-    private readonly HashSet<string> _permissions = new(StringComparer.OrdinalIgnoreCase);
     private List<AssetIARSummaryDto> _items = [];
     private string? _keyword;
     private AssetIARStatus? _statusFilter;
@@ -199,65 +215,20 @@
     private int _activeTab;
     private int _page = 1;
     private int _totalCount;
-    private Guid _currentUserEmployeeId;
     private const int PageSize = 15;
     private int TotalPages => Math.Max(1, (int)Math.Ceiling(_totalCount / (double)PageSize));
-    private bool _canCreate => HasPermission(PermissionCreate);
-    private bool _canUpdate => HasPermission(PermissionUpdate);
-    private bool _canSubmitForInspection => HasPermission(PermissionSubmitForInspection);
-    private bool _canInspect => HasPermission(PermissionInspect);
-    private bool _canAccept => HasPermission(PermissionAccept);
-    private bool _canCancel => HasPermission(PermissionCancel);
+    private bool _canCreate => UserProfileState.Permissions.Contains(PermissionCreate);
+    private bool _canUpdate => UserProfileState.Permissions.Contains(PermissionUpdate);
+    private bool _canSubmitForInspection => UserProfileState.Permissions.Contains(PermissionSubmitForInspection);
+    private bool _canInspect => UserProfileState.Permissions.Contains(PermissionInspect);
+    private bool _canAssignPropertyNo => UserProfileState.Permissions.Contains(PermissionAssignPropertyNo);
+    private bool _canAccept => UserProfileState.Permissions.Contains(PermissionAccept);
+    private bool _canCancel => UserProfileState.Permissions.Contains(PermissionCancel);
 
     protected override async Task OnInitializedAsync()
     {
-        await ResolveCurrentUserEmployeeAsync();
-        await LoadPermissionsAsync();
         await LoadAsync();
     }
-
-    private async Task ResolveCurrentUserEmployeeAsync()
-    {
-        try
-        {
-            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-            var identityId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (!string.IsNullOrWhiteSpace(identityId))
-            {
-                var employee = await EmployeesClient.ByIdentityAsync(identityId);
-                if (employee is not null)
-                    _currentUserEmployeeId = employee.Id;
-            }
-        }
-        catch
-        {
-            // Falls back to Guid.Empty; inspector button will be hidden.
-        }
-    }
-
-    private async Task LoadPermissionsAsync()
-    {
-        try
-        {
-            var permissions = await IdentityClient.PermissionsGetAsync();
-            _permissions.Clear();
-
-            foreach (var permission in permissions)
-            {
-                if (!string.IsNullOrWhiteSpace(permission))
-                {
-                    _permissions.Add(permission.Trim());
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            _permissions.Clear();
-            Snackbar.Add($"Unable to load permissions. Action buttons may be limited: {ex.Message}", Severity.Warning);
-        }
-    }
-
-    private bool HasPermission(string permission) => _permissions.Contains(permission);
 
     private async Task OnTabChanged(int tab)
     {
@@ -283,7 +254,6 @@
             var response = await IarClient.SearchAsync(_keyword, _statusFilter, page: _page, pageSize: PageSize);
             _items = [.. response.Items];
             _totalCount = (int)response.TotalCount;
-
         }
         catch (Exception ex)
         {
@@ -296,7 +266,7 @@
     }
 
     private bool IsAssignedInspector(AssetIARSummaryDto iar) =>
-        _currentUserEmployeeId != Guid.Empty && iar.AssignedInspectorId == _currentUserEmployeeId;
+        UserProfileState.EmployeeId != Guid.Empty && iar.AssignedInspectorId == UserProfileState.EmployeeId;
 
     private async Task OpenCreateDialog()
     {
@@ -328,10 +298,8 @@
         }
     }
 
-    private void OpenViewDialog(Guid id)
-    {
+    private void OpenDetailPage(Guid id) =>
         Navigation.NavigateTo($"/asset-procurement/iars/{id}/accept");
-    }
 
     private async Task SubmitForInspectionAsync(Guid id)
     {

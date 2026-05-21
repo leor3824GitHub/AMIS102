@@ -15,7 +15,7 @@ public static class ExpandLineByQuantityEndpoint
             .WithSummary("Split a passed line with Qty>1 into N lines of Qty=1 (NFA one-line-per-physical-unit)")
             .Produces<AssetIARDto>()
             .Produces(StatusCodes.Status404NotFound)
-            .RequirePermission(ProcurementAcquisitionModuleConstants.Permissions.AssetIARs.AssignPropertyNo);
+            .RequirePermission(ProcurementAcquisitionModuleConstants.Permissions.AssetIARs.ExpandLine);
 
     private static async Task<IResult> Handle(Guid id, int itemNo, IMediator mediator, CancellationToken cancellationToken)
     {

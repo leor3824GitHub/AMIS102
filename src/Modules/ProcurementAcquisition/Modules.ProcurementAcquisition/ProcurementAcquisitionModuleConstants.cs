@@ -44,6 +44,7 @@ public static class ProcurementAcquisitionModuleConstants
             public const string SubmitForInspection = "Permissions.Procurement.AssetIARs.SubmitForInspection";
             public const string Inspect = "Permissions.Procurement.AssetIARs.Inspect";
             public const string AssignPropertyNo = "Permissions.Procurement.AssetIARs.AssignPropertyNo";
+            public const string ExpandLine = "Permissions.Procurement.AssetIARs.ExpandLine";
             public const string Cancel = "Permissions.Procurement.AssetIARs.Cancel";
         }
     }

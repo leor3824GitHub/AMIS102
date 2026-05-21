@@ -1,6 +1,7 @@
+using AMIS.Framework.Core.Exceptions;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.AssetInspectionAcceptanceReports;
 using AMIS.Modules.ProcurementAcquisition.Data;
-using AMIS.Modules.ProcurementAcquisition.Features.v1.AssetIARs.CreateAssetIAR;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.AssetIARs;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,9 +14,13 @@ public sealed class CancelAssetIARCommandHandler(
     {
         var iar = await dbContext.AssetIARs
             .FirstOrDefaultAsync(x => x.Id == command.Id, cancellationToken).ConfigureAwait(false)
-            ?? throw new KeyNotFoundException($"Asset IAR '{command.Id}' not found.");
+            ?? throw new NotFoundException($"Asset IAR '{command.Id}' not found.");
 
-        iar.Cancel();
+        try { iar.Cancel(); }
+        catch (InvalidOperationException ex)
+        {
+            throw new CustomException(ex.Message, [], System.Net.HttpStatusCode.BadRequest);
+        }
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
         var poNumber = await dbContext.PurchaseOrders
@@ -25,6 +30,6 @@ public sealed class CancelAssetIARCommandHandler(
             .FirstOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false) ?? string.Empty;
 
-        return CreateAssetIARCommandHandler.MapToDto(iar, poNumber);
+        return AssetIARMapper.ToDto(iar, poNumber);
     }
 }

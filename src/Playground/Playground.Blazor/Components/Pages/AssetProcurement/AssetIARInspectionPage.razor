@@ -1,19 +1,15 @@
 @page "/asset-procurement/iars/{Id:guid}/inspect"
-@using System.Security.Claims
-@using Microsoft.AspNetCore.Components.Authorization
 @using AMIS.Playground.Blazor.ApiClient
 @using AMIS.Modules.ProcurementAcquisition.Contracts.v1.AssetInspectionAcceptanceReports
 @inject IAssetIarClient IarClient
-@inject IIdentityClient IdentityClient
-@inject IEmployeesClient EmployeesClient
+@inject IUserProfileState UserProfileState
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation
-@inject AuthenticationStateProvider AuthStateProvider
 
 <PageTitle>Inspect Asset IAR</PageTitle>
 
 <AMISPageHeader Title="IAR Inspection"
-                Description="Inspector records pass or reject decisions for each IAR line item." />
+                Description="Inspector records pass or reject decisions for each line item." />
 
 @if (_loading)
 {
@@ -27,108 +23,274 @@ else
 {
     <AssetIARStageStepper Status="@_iar.Status" />
 
-    @if (!_isAssignedInspector)
+    @* ── Access alerts ─────────────────────────────────────── *@
+    @if (_iar.Status == AssetIARStatus.Inspected)
     {
-        <MudAlert Severity="Severity.Error" Class="mb-3">
-            You are not the assigned inspector for this IAR.
-        </MudAlert>
-    }
-    else if (!_canInspectPermission)
-    {
-        <MudAlert Severity="Severity.Warning" Class="mb-3">
-            You do not have permission to record inspection actions.
+        <MudAlert Severity="Severity.Success" Class="mb-3" Dense="true">
+            Inspection has been <b>recorded</b> on @(_iar.InspectedOnUtc?.ToLocalTime().ToString("MMM dd, yyyy h:mm tt") ?? "—"). This page is read-only.
         </MudAlert>
     }
     else if (_iar.Status != AssetIARStatus.PendingInspection)
     {
-        <MudAlert Severity="Severity.Info" Class="mb-3">
-            This IAR is in @_iar.Status state. Inspection decisions are read-only.
+        <MudAlert Severity="Severity.Warning" Class="mb-3" Dense="true">
+            Inspection actions are only available when status is <b>Pending Inspection</b>. Current status: <b>@_iar.Status</b>.
+        </MudAlert>
+    }
+    else if (!_isAssignedInspector)
+    {
+        <MudAlert Severity="Severity.Error" Class="mb-3" Dense="true">
+            You are not the assigned inspector for this IAR. Only <b>@_iar.InspectedByName</b> can record inspection decisions.
+        </MudAlert>
+    }
+    else if (!_canInspectPermission)
+    {
+        <MudAlert Severity="Severity.Warning" Class="mb-3" Dense="true">
+            You do not have the <b>Inspect</b> permission to record inspection decisions.
         </MudAlert>
     }
 
+    @* ── IAR header card ───────────────────────────────────── *@
     <MudCard Elevation="1" Class="mb-3">
-        <MudCardContent>
+        <MudCardContent Class="pb-2">
             <MudGrid Spacing="2">
-                <MudItem xs="12" md="3"><MudText><b>IAR No:</b> @_iar.IarNumber</MudText></MudItem>
-                <MudItem xs="12" md="3"><MudText><b>PO:</b> @_iar.PoNumber</MudText></MudItem>
-                <MudItem xs="12" md="3"><MudText><b>Supplier:</b> @_iar.SupplierName</MudText></MudItem>
-                <MudItem xs="12" md="3"><MudText><b>Assigned Inspector:</b> @_iar.InspectedByName</MudText></MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">IAR No.</MudText>
+                    <MudText Typo="Typo.body1"><b>@_iar.IarNumber</b></MudText>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Purchase Order</MudText>
+                    <MudText Typo="Typo.body1">@_iar.PoNumber</MudText>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Supplier</MudText>
+                    <MudText Typo="Typo.body1">@_iar.SupplierName</MudText>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">IAR Date</MudText>
+                    <MudText Typo="Typo.body1">@_iar.IarDate.ToString("MMM dd, yyyy")</MudText>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Assigned Inspector</MudText>
+                    <MudText Typo="Typo.body1">@_iar.InspectedByName</MudText>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Received By</MudText>
+                    <MudText Typo="Typo.body1">@_iar.ReceivedByName</MudText>
+                </MudItem>
+                @if (!string.IsNullOrWhiteSpace(_iar.DeliveryReceiptNo))
+                {
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Delivery Receipt No.</MudText>
+                        <MudText Typo="Typo.body1">@_iar.DeliveryReceiptNo</MudText>
+                    </MudItem>
+                }
+                @if (_iar.DeliveryDate.HasValue)
+                {
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Delivery Date</MudText>
+                        <MudText Typo="Typo.body1">@_iar.DeliveryDate.Value.ToString("MMM dd, yyyy")</MudText>
+                    </MudItem>
+                }
+                @if (_iar.SubmittedForInspectionOnUtc.HasValue)
+                {
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Submitted for Inspection</MudText>
+                        <MudText Typo="Typo.body1">@_iar.SubmittedForInspectionOnUtc.Value.ToLocalTime().ToString("MMM dd, yyyy")</MudText>
+                    </MudItem>
+                }
             </MudGrid>
         </MudCardContent>
     </MudCard>
 
+    @* ── Progress summary ──────────────────────────────────── *@
+    <MudCard Elevation="1" Class="mb-3">
+        <MudCardContent Class="py-3">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap">
+                <MudText Typo="Typo.subtitle2" Class="mr-2">Inspection Progress</MudText>
+                <MudChip T="string" Color="Color.Default" Size="Size.Small">
+                    @PendingCount Pending
+                </MudChip>
+                <MudChip T="string" Color="Color.Success" Variant="@(PassedCount > 0 ? Variant.Filled : Variant.Outlined)" Size="Size.Small">
+                    @PassedCount Passed
+                </MudChip>
+                <MudChip T="string" Color="Color.Error" Variant="@(RejectedCount > 0 ? Variant.Filled : Variant.Outlined)" Size="Size.Small">
+                    @RejectedCount Rejected
+                </MudChip>
+                <MudSpacer />
+                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                    @(_iar.LineItems.Count) total line(s) · ₱@_iar.TotalAmount.ToString("N2")
+                </MudText>
+            </MudStack>
+            @if (_iar.LineItems.Count > 0)
+            {
+                var pct = (int)(((PassedCount + RejectedCount) / (double)_iar.LineItems.Count) * 100);
+                <MudProgressLinear Value="@pct" Color="Color.Primary" Class="mt-2" Rounded="true" Size="Size.Small" />
+            }
+        </MudCardContent>
+    </MudCard>
+
+    @* ── Line items ────────────────────────────────────────── *@
     <MudCard Elevation="1">
         <MudCardContent>
-            <MudStack Row="true" Spacing="1" Class="mb-2">
-                <MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="PassAll" Disabled="@(!_canEditInspection)">
-                    Pass all
-                </MudButton>
-                <MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="ResetAll" Disabled="@(!_canEditInspection)">
-                    Reset all
-                </MudButton>
-            </MudStack>
+            @if (_canEditInspection)
+            {
+                <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Class="mb-3">
+                    <MudButton Variant="Variant.Outlined" Size="Size.Small"
+                               StartIcon="@Icons.Material.Filled.CheckCircle"
+                               Color="Color.Success"
+                               OnClick="PassAll">
+                        Pass All
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Size="Size.Small"
+                               StartIcon="@Icons.Material.Filled.Refresh"
+                               OnClick="ResetAll">
+                        Reset All
+                    </MudButton>
+                    <MudSpacer />
+                    @if (PendingCount > 0)
+                    {
+                        <MudText Typo="Typo.caption" Color="Color.Warning">
+                            @PendingCount line(s) still pending a decision.
+                        </MudText>
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.caption" Color="Color.Success">
+                            All lines have a decision. Ready to submit.
+                        </MudText>
+                    }
+                </MudStack>
+            }
 
-            <MudSimpleTable Dense="true" Hover="true" Striped="true">
+            <MudSimpleTable Dense="true" Hover="true">
                 <thead>
                     <tr>
-                        <th>#</th>
-                        <th>Description</th>
-                        <th>Qty</th>
-                        <th>Result</th>
-                        <th>Remarks</th>
+                        <th style="width:48px">#</th>
+                        <th>Item / Specifications</th>
+                        <th style="width:60px">Unit</th>
+                        <th style="width:60px; text-align:right">Qty</th>
+                        <th style="width:110px; text-align:right">Unit Cost</th>
+                        <th style="width:110px; text-align:right">Amount</th>
+                        <th style="width:110px">Result</th>
+                        <th style="min-width:260px">Remarks</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var line in _iar.LineItems.OrderBy(x => x.ItemNo))
                     {
                         var decision = GetDecision(line.ItemNo);
-                        <tr>
-                            <td>@line.ItemNo</td>
-                            <td>@line.Description</td>
-                            <td>@line.Quantity</td>
-                            <td>
-                                <MudStack Row="true" Spacing="1">
-                                    <MudTooltip Text="Pass">
-                                        <MudIconButton Icon="@Icons.Material.Filled.CheckCircle"
-                                                       Color="@(decision.Result == LineInspectionResult.Passed ? Color.Success : Color.Default)"
-                                                       Size="Size.Small"
-                                                       Variant="@(decision.Result == LineInspectionResult.Passed ? Variant.Filled : Variant.Outlined)"
-                                                       OnClick="@(() => OnResultChanged(line.ItemNo, LineInspectionResult.Passed))"
-                                                       Disabled="@(!_canEditInspection)" />
-                                    </MudTooltip>
-                                    <MudTooltip Text="Reject">
-                                        <MudIconButton Icon="@Icons.Material.Filled.Cancel"
-                                                       Color="@(decision.Result == LineInspectionResult.Rejected ? Color.Error : Color.Default)"
-                                                       Size="Size.Small"
-                                                       Variant="@(decision.Result == LineInspectionResult.Rejected ? Variant.Filled : Variant.Outlined)"
-                                                       OnClick="@(() => OnResultChanged(line.ItemNo, LineInspectionResult.Rejected))"
-                                                       Disabled="@(!_canEditInspection)" />
-                                    </MudTooltip>
-                                </MudStack>
+                        var rowStyle = decision.Result switch
+                        {
+                            LineInspectionResult.Passed => "background-color: rgba(76,175,80,0.07);",
+                            LineInspectionResult.Rejected => "background-color: rgba(244,67,54,0.07);",
+                            _ => ""
+                        };
+                        <tr style="@rowStyle">
+                            <td style="vertical-align:top; padding-top:10px;">@line.ItemNo</td>
+                            <td style="vertical-align:top; padding-top:10px;">
+                                <MudText Typo="Typo.body2"><b>@line.Description</b></MudText>
+                                @if (!string.IsNullOrWhiteSpace(line.TechnicalSpecifications))
+                                {
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary" Style="white-space:pre-wrap">@line.TechnicalSpecifications</MudText>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(line.Brand) || !string.IsNullOrWhiteSpace(line.Model))
+                                {
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                        @(!string.IsNullOrWhiteSpace(line.Brand) ? $"Brand: {line.Brand}" : "")
+                                        @(!string.IsNullOrWhiteSpace(line.Model) ? $"  Model: {line.Model}" : "")
+                                    </MudText>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(line.SerialNo))
+                                {
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">S/N: @line.SerialNo</MudText>
+                                }
                             </td>
-                            <td style="min-width:260px">
-                                <MudTextField T="string" Value="decision.Remarks"
-                                              ValueChanged="@(v => OnRemarksChanged(line.ItemNo, v))"
-                                              Variant="Variant.Outlined"
-                                              Dense="true"
-                                              Placeholder="@(decision.Result == LineInspectionResult.Rejected ? "Required for rejected lines" : "Available when result is Reject")"
-                                              Disabled="@(!_canEditInspection || !IsRemarksEditable(line.ItemNo))"
-                                              MaxLength="500" />
+                            <td style="vertical-align:top; padding-top:10px;">@line.Unit</td>
+                            <td style="vertical-align:top; padding-top:10px; text-align:right;">@line.Quantity.ToString("N0")</td>
+                            <td style="vertical-align:top; padding-top:10px; text-align:right;">@line.UnitCost.ToString("N2")</td>
+                            <td style="vertical-align:top; padding-top:10px; text-align:right;">@line.Amount.ToString("N2")</td>
+                            <td style="vertical-align:top; padding-top:6px;">
+                                @if (_canEditInspection)
+                                {
+                                    <MudStack Row="true" Spacing="1">
+                                        <MudTooltip Text="Pass">
+                                            <MudIconButton Icon="@Icons.Material.Filled.CheckCircle"
+                                                           Color="@(decision.Result == LineInspectionResult.Passed ? Color.Success : Color.Default)"
+                                                           Size="Size.Small"
+                                                           Variant="@(decision.Result == LineInspectionResult.Passed ? Variant.Filled : Variant.Outlined)"
+                                                           OnClick="@(() => OnResultChanged(line.ItemNo, LineInspectionResult.Passed))" />
+                                        </MudTooltip>
+                                        <MudTooltip Text="Reject">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Cancel"
+                                                           Color="@(decision.Result == LineInspectionResult.Rejected ? Color.Error : Color.Default)"
+                                                           Size="Size.Small"
+                                                           Variant="@(decision.Result == LineInspectionResult.Rejected ? Variant.Filled : Variant.Outlined)"
+                                                           OnClick="@(() => OnResultChanged(line.ItemNo, LineInspectionResult.Rejected))" />
+                                        </MudTooltip>
+                                    </MudStack>
+                                }
+                                else
+                                {
+                                    @switch (decision.Result)
+                                    {
+                                        case LineInspectionResult.Passed:
+                                            <MudChip T="string" Color="Color.Success" Size="Size.Small" Variant="Variant.Filled">Passed</MudChip>
+                                            break;
+                                        case LineInspectionResult.Rejected:
+                                            <MudChip T="string" Color="Color.Error" Size="Size.Small" Variant="Variant.Filled">Rejected</MudChip>
+                                            break;
+                                        default:
+                                            <MudChip T="string" Color="Color.Default" Size="Size.Small" Variant="Variant.Outlined">Pending</MudChip>
+                                            break;
+                                    }
+                                }
+                            </td>
+                            <td style="vertical-align:top; padding-top:6px;">
+                                @if (_canEditInspection)
+                                {
+                                    <MudTextField T="string" Value="decision.Remarks"
+                                                  ValueChanged="@(v => OnRemarksChanged(line.ItemNo, v))"
+                                                  Variant="Variant.Outlined"
+                                                  Margin="Margin.Dense"
+                                                  Dense="true"
+                                                  Placeholder="@(decision.Result == LineInspectionResult.Rejected ? "Required — enter rejection reason" : "Optional")"
+                                                  Disabled="@(!IsRemarksEditable(line.ItemNo))"
+                                                  Error="@(decision.Result == LineInspectionResult.Rejected && string.IsNullOrWhiteSpace(decision.Remarks))"
+                                                  MaxLength="500" />
+                                }
+                                else
+                                {
+                                    <MudText Typo="Typo.body2">@(string.IsNullOrWhiteSpace(decision.Remarks) ? "—" : decision.Remarks)</MudText>
+                                }
                             </td>
                         </tr>
                     }
                 </tbody>
             </MudSimpleTable>
+
+            @if (!_canEditInspection && _iar.Status == AssetIARStatus.Inspected && _iar.InspectedOnUtc.HasValue)
+            {
+                <MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-3" Spacing="1">
+                    <MudIcon Icon="@Icons.Material.Filled.VerifiedUser" Color="Color.Success" Size="Size.Small" />
+                    <MudText Typo="Typo.caption" Color="Color.Success">
+                        Inspection recorded by <b>@_iar.InspectedByName</b> on @_iar.InspectedOnUtc.Value.ToLocalTime().ToString("MMM dd, yyyy h:mm tt")
+                    </MudText>
+                </MudStack>
+            }
         </MudCardContent>
         <MudCardActions>
             <MudSpacer />
-            <MudButton Variant="Variant.Outlined" OnClick="BackToList">Back</MudButton>
-            <MudButton Variant="Variant.Filled"
-                       Color="Color.Primary"
-                       OnClick="SubmitInspectionAsync"
-                       Disabled="@(!_canEditInspection || _submitting)">
-                Record inspection
-            </MudButton>
+            <MudButton Variant="Variant.Outlined" OnClick="BackToList">Back to List</MudButton>
+            @if (_canEditInspection)
+            {
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.FactCheck"
+                           OnClick="SubmitInspectionAsync"
+                           Disabled="@_submitting">
+                    @(_submitting ? "Saving…" : "Record Inspection")
+                </MudButton>
+            }
         </MudCardActions>
     </MudCard>
 }
@@ -141,63 +303,20 @@ else
     private AssetIARDto? _iar;
     private bool _loading = true;
     private bool _submitting;
-    private Guid _currentUserEmployeeId;
-    private readonly HashSet<string> _permissions = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<int, LineInspectionDecision> _decisions = [];
 
-    private bool _isAssignedInspector => _iar is not null && _currentUserEmployeeId != Guid.Empty && _currentUserEmployeeId == _iar.InspectedById;
-    private bool _canInspectPermission => HasPermission(PermissionInspect);
+    private bool _isAssignedInspector => _iar is not null && UserProfileState.EmployeeId != Guid.Empty && UserProfileState.EmployeeId == _iar.InspectedById;
+    private bool _canInspectPermission => UserProfileState.Permissions.Contains(PermissionInspect);
     private bool _canEditInspection => _iar is not null && _iar.Status == AssetIARStatus.PendingInspection && _isAssignedInspector && _canInspectPermission;
+
+    private int PassedCount => _decisions.Values.Count(d => d.Result == LineInspectionResult.Passed);
+    private int RejectedCount => _decisions.Values.Count(d => d.Result == LineInspectionResult.Rejected);
+    private int PendingCount => _decisions.Values.Count(d => d.Result == LineInspectionResult.Pending);
 
     protected override async Task OnInitializedAsync()
     {
-        await ResolveCurrentUserEmployeeAsync();
-        await LoadPermissionsAsync();
         await LoadAsync();
     }
-
-    private async Task ResolveCurrentUserEmployeeAsync()
-    {
-        try
-        {
-            var auth = await AuthStateProvider.GetAuthenticationStateAsync();
-            var identityId = auth.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (!string.IsNullOrWhiteSpace(identityId))
-            {
-                var employee = await EmployeesClient.ByIdentityAsync(identityId);
-                if (employee is not null)
-                    _currentUserEmployeeId = employee.Id;
-            }
-        }
-        catch
-        {
-            // Falls back to Guid.Empty; inspection actions will be hidden.
-        }
-    }
-
-    private async Task LoadPermissionsAsync()
-    {
-        try
-        {
-            var permissions = await IdentityClient.PermissionsGetAsync();
-            _permissions.Clear();
-
-            foreach (var permission in permissions)
-            {
-                if (!string.IsNullOrWhiteSpace(permission))
-                {
-                    _permissions.Add(permission.Trim());
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            _permissions.Clear();
-            Snackbar.Add($"Unable to load permissions. Inspection actions may be limited: {ex.Message}", Severity.Warning);
-        }
-    }
-
-    private bool HasPermission(string permission) => _permissions.Contains(permission);
 
     private async Task LoadAsync()
     {
@@ -212,7 +331,7 @@ else
                 {
                     _decisions[line.ItemNo] = new LineInspectionDecision(
                         line.ItemNo,
-                        line.InspectionResult == LineInspectionResult.Pending ? LineInspectionResult.Pending : line.InspectionResult,
+                        line.InspectionResult,
                         line.InspectionRemarks);
                 }
             }
@@ -228,9 +347,7 @@ else
     }
 
     private LineInspectionDecision GetDecision(int itemNo) =>
-        _decisions.TryGetValue(itemNo, out var decision)
-            ? decision
-            : new LineInspectionDecision(itemNo, LineInspectionResult.Pending, null);
+        _decisions.TryGetValue(itemNo, out var d) ? d : new LineInspectionDecision(itemNo, LineInspectionResult.Pending, null);
 
     private void OnResultChanged(int itemNo, LineInspectionResult result)
     {
@@ -250,33 +367,24 @@ else
     private void PassAll()
     {
         if (_iar is null) return;
-
         foreach (var line in _iar.LineItems)
-        {
             _decisions[line.ItemNo] = new LineInspectionDecision(line.ItemNo, LineInspectionResult.Passed, null);
-        }
     }
 
     private void ResetAll()
     {
         if (_iar is null) return;
-
         foreach (var line in _iar.LineItems)
-        {
             _decisions[line.ItemNo] = new LineInspectionDecision(line.ItemNo, LineInspectionResult.Pending, null);
-        }
     }
 
     private async Task SubmitInspectionAsync()
     {
-        if (_iar is null)
-        {
-            return;
-        }
+        if (_iar is null) return;
 
         if (_iar.Status != AssetIARStatus.PendingInspection)
         {
-            Snackbar.Add("Inspection can only be recorded while status is PendingInspection.", Severity.Warning);
+            Snackbar.Add("Inspection can only be recorded while status is Pending Inspection.", Severity.Warning);
             return;
         }
 
@@ -288,17 +396,15 @@ else
 
         if (!_canInspectPermission)
         {
-            Snackbar.Add("You do not have permission to record inspection actions.", Severity.Warning);
+            Snackbar.Add("You do not have permission to record inspection.", Severity.Warning);
             return;
         }
 
-        var decisions = _iar.LineItems
-            .Select(li => GetDecision(li.ItemNo))
-            .ToList();
+        var decisions = _iar.LineItems.Select(li => GetDecision(li.ItemNo)).ToList();
 
         if (decisions.Any(d => d.Result == LineInspectionResult.Pending))
         {
-            Snackbar.Add("Every line must be marked Pass or Reject.", Severity.Warning);
+            Snackbar.Add("Every line must be marked Pass or Reject before submitting.", Severity.Warning);
             return;
         }
 
@@ -309,7 +415,7 @@ else
 
         if (rejectedWithoutRemarks.Count > 0)
         {
-            Snackbar.Add($"Rejected lines require remarks. Missing on: {string.Join(", ", rejectedWithoutRemarks)}", Severity.Warning);
+            Snackbar.Add($"Rejected lines require remarks. Missing on item(s): {string.Join(", ", rejectedWithoutRemarks)}", Severity.Warning);
             return;
         }
 
@@ -317,7 +423,7 @@ else
         try
         {
             await IarClient.RecordInspectionAsync(_iar.Id, decisions);
-            Snackbar.Add("Inspection recorded.", Severity.Success);
+            Snackbar.Add("Inspection recorded successfully.", Severity.Success);
             Navigation.NavigateTo("/asset-procurement/iars");
         }
         catch (Exception ex)

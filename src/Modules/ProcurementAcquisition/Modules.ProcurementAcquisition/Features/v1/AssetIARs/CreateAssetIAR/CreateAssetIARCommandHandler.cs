@@ -1,8 +1,9 @@
 using AMIS.Framework.Core.Context;
-using AMIS.Modules.MasterData.Contracts.v1.References;
+using AMIS.Framework.Core.Exceptions;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.AssetInspectionAcceptanceReports;
 using AMIS.Modules.ProcurementAcquisition.Data;
 using AMIS.Modules.ProcurementAcquisition.Domain.AssetInspectionAcceptanceReports;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.AssetIARs;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
@@ -21,112 +22,64 @@ public sealed class CreateAssetIARCommandHandler(
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == command.PurchaseOrderId, cancellationToken)
             .ConfigureAwait(false)
-            ?? throw new KeyNotFoundException($"Purchase order '{command.PurchaseOrderId}' not found.");
+            ?? throw new NotFoundException($"Purchase order '{command.PurchaseOrderId}' not found.");
 
-        var iarNumber = await GenerateIARNumberAsync(tenantId, cancellationToken).ConfigureAwait(false);
+        for (var attempt = 0; attempt < 5; attempt++)
+        {
+            var year = DateTime.UtcNow.Year;
 
-        var iar = AssetInspectionAcceptanceReport.Create(
-            tenantId,
-            iarNumber,
-            command.PurchaseOrderId,
-            po.SupplierId,
-            po.SupplierName,
-            command.InspectedById,
-            command.ReceivedById,
-            command.DeliveryReceiptNo,
-            command.DeliveryDate,
-            command.Remarks,
-            command.LineItems);
+            var sequence = await dbContext.IarNumberSequences
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(x => x.TenantId == tenantId && x.Year == year, cancellationToken)
+                .ConfigureAwait(false);
 
-        iar.CreatedBy = currentUser.GetUserId().ToString();
+            if (sequence is null)
+            {
+                sequence = IarNumberSequence.Create(tenantId, year);
+                dbContext.IarNumberSequences.Add(sequence);
+            }
 
-        dbContext.AssetIARs.Add(iar);
-        await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            var serial = sequence.NextSerial();
+            var iarNumber = $"IAR-{year}-{serial:0000}";
 
-        var (inspectorName, custodianName) = await ResolveEmployeeNamesAsync(
-            iar.InspectedById, iar.ReceivedById, mediator, cancellationToken).ConfigureAwait(false);
+            var iar = AssetInspectionAcceptanceReport.Create(
+                tenantId,
+                iarNumber,
+                command.PurchaseOrderId,
+                po.SupplierId,
+                po.SupplierName,
+                command.InspectedById,
+                command.ReceivedById,
+                command.DeliveryReceiptNo,
+                command.DeliveryDate,
+                command.Remarks,
+                command.LineItems);
 
-        return MapToDto(iar, po.PoNumber, inspectorName, custodianName);
-    }
+            iar.CreatedBy = currentUser.GetUserId().ToString();
+            dbContext.AssetIARs.Add(iar);
 
-    internal static async Task<(string InspectorName, string CustodianName)> ResolveEmployeeNamesAsync(
-        Guid inspectedById,
-        Guid receivedById,
-        IMediator mediator,
-        CancellationToken ct)
-    {
-        var ids = new HashSet<Guid>();
-        if (inspectedById != Guid.Empty) ids.Add(inspectedById);
-        if (receivedById != Guid.Empty) ids.Add(receivedById);
-        if (ids.Count == 0) return (string.Empty, string.Empty);
+            try
+            {
+                await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-        var map = await mediator.Send(new GetEmployeeReferencesByIdsQuery(ids), ct).ConfigureAwait(false);
+                var (inspectorName, custodianName) = await AssetIARMapper
+                    .ResolveEmployeeNamesAsync(iar.InspectedById, iar.ReceivedById, mediator, cancellationToken)
+                    .ConfigureAwait(false);
 
-        return (FormatName(map, inspectedById), FormatName(map, receivedById));
-    }
+                return AssetIARMapper.ToDto(iar, po.PoNumber, inspectorName, custodianName);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                // Another request modified the sequence row between our read and save. Retry.
+                dbContext.ChangeTracker.Clear();
+            }
+        }
 
-    private static string FormatName(IReadOnlyDictionary<Guid, EmployeeReferenceDto> map, Guid id) =>
-        map.TryGetValue(id, out var emp) ? $"{emp.FirstName} {emp.LastName}".Trim() : string.Empty;
-
-    private async Task<string> GenerateIARNumberAsync(string tenantId, CancellationToken ct)
-    {
-        var year = DateTime.UtcNow.Year;
-        var prefix = $"IAR-{year}-";
-
-        var lastNumber = await dbContext.AssetIARs
-            .IgnoreQueryFilters()
-            .Where(x => x.TenantId == tenantId && x.IarNumber.StartsWith(prefix))
-            .Select(x => x.IarNumber)
-            .OrderByDescending(x => x)
-            .FirstOrDefaultAsync(ct)
-            .ConfigureAwait(false);
-
-        var next = 1;
-        if (lastNumber != null && int.TryParse(lastNumber[prefix.Length..], out var last))
-            next = last + 1;
-
-        return $"{prefix}{next:0000}";
+        throw new CustomException("Failed to allocate a unique IAR number. Please try again.", [], System.Net.HttpStatusCode.Conflict);
     }
 
     private string GetRequiredTenantId() =>
         currentUser.GetTenant()
         ?? dbContext.TenantInfo?.Identifier
         ?? throw new InvalidOperationException("Tenant ID required.");
-
-    internal static AssetIARDto MapToDto(
-        AssetInspectionAcceptanceReport iar,
-        string poNumber,
-        string inspectorName = "",
-        string custodianName = "") =>
-        new(iar.Id,
-            iar.IarNumber,
-            iar.IarDate,
-            iar.PurchaseOrderId,
-            poNumber,
-            iar.SupplierId,
-            iar.SupplierName,
-            iar.InspectedById,
-            inspectorName,
-            iar.ReceivedById,
-            custodianName,
-            iar.DeliveryReceiptNo,
-            iar.DeliveryDate,
-            iar.Status,
-            iar.Remarks,
-            iar.LineItems.Select(li => new AssetIARLineItemDto(
-                li.ItemNo, li.Description, li.TechnicalSpecifications,
-                li.Brand, li.Model, li.SerialNo, li.PropertyClassHint,
-                li.Unit, li.Quantity, li.UnitCost, li.Amount, li.InspectionRemarks,
-                li.StockPropertyNo,
-                li.InspectionResult,
-                li.InspectedOnUtc,
-                li.InspectedById)).ToList(),
-            iar.TotalAmount,
-            iar.CreatedOnUtc,
-            iar.CreatedBy,
-            iar.LastModifiedOnUtc,
-            iar.SubmittedForInspectionOnUtc,
-            iar.InspectedOnUtc,
-            iar.AcceptedOnUtc,
-            iar.CancelledOnUtc);
 }

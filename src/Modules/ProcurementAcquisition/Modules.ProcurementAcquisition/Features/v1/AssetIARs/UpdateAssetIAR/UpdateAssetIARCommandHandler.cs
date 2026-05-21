@@ -1,6 +1,7 @@
+using AMIS.Framework.Core.Exceptions;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.AssetInspectionAcceptanceReports;
 using AMIS.Modules.ProcurementAcquisition.Data;
-using AMIS.Modules.ProcurementAcquisition.Features.v1.AssetIARs.CreateAssetIAR;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.AssetIARs;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,15 +14,22 @@ public sealed class UpdateAssetIARCommandHandler(
     {
         var iar = await dbContext.AssetIARs
             .FirstOrDefaultAsync(x => x.Id == command.Id, cancellationToken).ConfigureAwait(false)
-            ?? throw new KeyNotFoundException($"Asset IAR '{command.Id}' not found.");
+            ?? throw new NotFoundException($"Asset IAR '{command.Id}' not found.");
 
-        iar.Update(
-            command.InspectedById,
-            command.ReceivedById,
-            command.DeliveryReceiptNo,
-            command.DeliveryDate,
-            command.Remarks,
-            command.LineItems);
+        try
+        {
+            iar.Update(
+                command.InspectedById,
+                command.ReceivedById,
+                command.DeliveryReceiptNo,
+                command.DeliveryDate,
+                command.Remarks,
+                command.LineItems);
+        }
+        catch (InvalidOperationException ex)
+        {
+            throw new CustomException(ex.Message, [], System.Net.HttpStatusCode.BadRequest);
+        }
 
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
@@ -32,6 +40,6 @@ public sealed class UpdateAssetIARCommandHandler(
             .FirstOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false) ?? string.Empty;
 
-        return CreateAssetIARCommandHandler.MapToDto(iar, poNumber);
+        return AssetIARMapper.ToDto(iar, poNumber);
     }
 }

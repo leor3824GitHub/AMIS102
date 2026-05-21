@@ -1,9 +1,8 @@
 @page "/asset-procurement/iars/{Id:guid}/accept"
-@using System.Linq
 @using AMIS.Playground.Blazor.ApiClient
 @using AMIS.Modules.ProcurementAcquisition.Contracts.v1.AssetInspectionAcceptanceReports
 @inject IAssetIarClient IarClient
-@inject IIdentityClient IdentityClient
+@inject IUserProfileState UserProfileState
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 @inject NavigationManager Navigation
@@ -51,12 +50,39 @@ else
     }
 
     <MudCard Elevation="1" Class="mb-3">
-        <MudCardContent>
+        <MudCardContent Class="pb-2">
             <MudGrid Spacing="2">
-                <MudItem xs="12" md="3"><MudText><b>IAR No:</b> @_iar.IarNumber</MudText></MudItem>
-                <MudItem xs="12" md="3"><MudText><b>PO:</b> @_iar.PoNumber</MudText></MudItem>
-                <MudItem xs="12" md="3"><MudText><b>Supplier:</b> @_iar.SupplierName</MudText></MudItem>
-                <MudItem xs="12" md="3"><MudText><b>Status:</b> @_iar.Status</MudText></MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">IAR No.</MudText>
+                    <MudText Typo="Typo.body1"><b>@_iar.IarNumber</b></MudText>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">IAR Date</MudText>
+                    <MudText Typo="Typo.body1">@_iar.IarDate.ToString("MMM dd, yyyy")</MudText>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Purchase Order</MudText>
+                    <MudText Typo="Typo.body1">@_iar.PoNumber</MudText>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Supplier</MudText>
+                    <MudText Typo="Typo.body1">@_iar.SupplierName</MudText>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Inspector</MudText>
+                    <MudText Typo="Typo.body1">@(_iar.InspectedByName ?? "—")</MudText>
+                </MudItem>
+                @if (_iar.InspectedOnUtc.HasValue)
+                {
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Inspected On</MudText>
+                        <MudText Typo="Typo.body1">@_iar.InspectedOnUtc.Value.ToLocalTime().ToString("MMM dd, yyyy")</MudText>
+                    </MudItem>
+                }
+                <MudItem xs="12" sm="6" md="3">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Status</MudText>
+                    <MudText Typo="Typo.body1">@_iar.Status</MudText>
+                </MudItem>
             </MudGrid>
         </MudCardContent>
     </MudCard>
@@ -178,20 +204,13 @@ else
             @if (_canAcceptActions && !CanAccept())
             {
                 <MudAlert Severity="Severity.Info" Dense="true" Class="mt-2">
-                    Every passed line must have a Property No before acceptance.
+                    Click <b>Assign</b> on each passed line to save its Property No — the Accept button becomes available once every passed line has one.
                 </MudAlert>
             }
         </MudCardContent>
         <MudCardActions>
             <MudSpacer />
             <MudButton Variant="Variant.Outlined" OnClick="BackToList">Back</MudButton>
-            <MudButton Variant="Variant.Outlined"
-                       Color="Color.Secondary"
-                       StartIcon="@Icons.Material.Filled.Print"
-                       Disabled="@(!CanPrintExhibit3())"
-                       OnClick="OpenExhibit3Print">
-                Print Exhibit 3
-            </MudButton>
             <MudButton Variant="Variant.Filled"
                        Color="Color.Success"
                        Disabled="@(!_canAcceptActions || _busy || !CanAccept())"
@@ -211,55 +230,23 @@ else
     private AssetIARDto? _iar;
     private bool _loading = true;
     private bool _busy;
-    private readonly HashSet<string> _permissions = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<int, string> _propertyNoInputs = [];
-    private List<AssetIARLineItemDto> PassedLines => _iar?.LineItems
-        .Where(li => li.InspectionResult == LineInspectionResult.Passed)
-        .OrderBy(li => li.ItemNo)
-        .ToList() ?? [];
-    private List<AssetIARLineItemDto> RejectedLines => _iar?.LineItems
-        .Where(li => li.InspectionResult == LineInspectionResult.Rejected)
-        .OrderBy(li => li.ItemNo)
-        .ToList() ?? [];
-    private List<AssetIARLineItemDto> PendingLines => _iar?.LineItems
-        .Where(li => li.InspectionResult == LineInspectionResult.Pending)
-        .OrderBy(li => li.ItemNo)
-        .ToList() ?? [];
+    private List<AssetIARLineItemDto> _passedLines = [];
+    private List<AssetIARLineItemDto> _rejectedLines = [];
+    private List<AssetIARLineItemDto> _pendingLines = [];
+    private List<AssetIARLineItemDto> PassedLines => _passedLines;
+    private List<AssetIARLineItemDto> RejectedLines => _rejectedLines;
+    private List<AssetIARLineItemDto> PendingLines => _pendingLines;
 
-    private bool _canAcceptPermission => HasPermission(PermissionAccept);
-    private bool _canAssignPropertyNoPermission => HasPermission(PermissionAssignPropertyNo);
+    private bool _canAcceptPermission => UserProfileState.Permissions.Contains(PermissionAccept);
+    private bool _canAssignPropertyNoPermission => UserProfileState.Permissions.Contains(PermissionAssignPropertyNo);
     private bool _canAssignActions => _iar is not null && _iar.Status == AssetIARStatus.Inspected && _canAssignPropertyNoPermission;
     private bool _canAcceptActions => _iar is not null && _iar.Status == AssetIARStatus.Inspected && _canAcceptPermission;
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadPermissionsAsync();
         await LoadAsync();
     }
-
-    private async Task LoadPermissionsAsync()
-    {
-        try
-        {
-            var permissions = await IdentityClient.PermissionsGetAsync();
-            _permissions.Clear();
-
-            foreach (var permission in permissions)
-            {
-                if (!string.IsNullOrWhiteSpace(permission))
-                {
-                    _permissions.Add(permission.Trim());
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            _permissions.Clear();
-            Snackbar.Add($"Unable to load permissions. Acceptance actions may be limited: {ex.Message}", Severity.Warning);
-        }
-    }
-
-    private bool HasPermission(string permission) => _permissions.Contains(permission);
 
     private async Task LoadAsync()
     {
@@ -284,13 +271,19 @@ else
         _propertyNoInputs.Clear();
         if (_iar is null)
         {
+            _passedLines = [];
+            _rejectedLines = [];
+            _pendingLines = [];
             return;
         }
 
         foreach (var line in _iar.LineItems)
-        {
             _propertyNoInputs[line.ItemNo] = line.StockPropertyNo ?? string.Empty;
-        }
+
+        var ordered = _iar.LineItems.OrderBy(li => li.ItemNo).ToList();
+        _passedLines = ordered.Where(li => li.InspectionResult == LineInspectionResult.Passed).ToList();
+        _rejectedLines = ordered.Where(li => li.InspectionResult == LineInspectionResult.Rejected).ToList();
+        _pendingLines = ordered.Where(li => li.InspectionResult == LineInspectionResult.Pending).ToList();
     }
 
     private string GetPropertyNoInput(int itemNo, string? fallback)
@@ -330,21 +323,6 @@ else
 
         return PassedLines
             .All(li => !string.IsNullOrWhiteSpace(li.StockPropertyNo));
-    }
-
-    private bool CanPrintExhibit3()
-    {
-        if (_iar is null)
-        {
-            return false;
-        }
-
-        if (_iar.Status != AssetIARStatus.Inspected && _iar.Status != AssetIARStatus.Accepted)
-        {
-            return false;
-        }
-
-        return _iar.LineItems.Any(li => li.InspectionResult != LineInspectionResult.Pending);
     }
 
     private async Task AssignPropertyNoAsync(int itemNo)
@@ -448,15 +426,5 @@ else
     }
 
     private void BackToList() => Navigation.NavigateTo("/asset-procurement/iars");
-
-    private void OpenExhibit3Print()
-    {
-        if (_iar is null)
-        {
-            return;
-        }
-
-        Navigation.NavigateTo($"/asset-procurement/iars/{_iar.Id}/exhibit3");
-    }
 
 }

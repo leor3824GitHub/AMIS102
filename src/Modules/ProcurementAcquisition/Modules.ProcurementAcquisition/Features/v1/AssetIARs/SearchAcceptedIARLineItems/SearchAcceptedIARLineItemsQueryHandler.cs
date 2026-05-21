@@ -7,13 +7,10 @@ using Microsoft.EntityFrameworkCore;
 namespace AMIS.Modules.ProcurementAcquisition.Features.v1.AssetIARs.SearchAcceptedIARLineItems;
 
 /// <summary>
-/// Flattens line items across all Accepted IARs into a single searchable list.
-/// Backs the Receiving Report's "From IAR" autocomplete in the Blazor UI.
-///
-/// Line items live in a JSON column on the parent IAR, so the flattening happens
-/// in-memory after a server-side filter on Status. For a single tenant with low
-/// thousands of accepted IARs this is acceptable; if that grows, materialize a
-/// flat view or push the filter into a PostgreSQL JSONB expression.
+/// Flattens line items across Accepted IARs into a searchable list for the
+/// Receiving Report "From IAR" autocomplete. Line items are stored in a JSON
+/// column so filtering happens in-memory; the DB query is capped at 500 parent
+/// IARs (most-recently-accepted first) to bound memory and latency.
 /// </summary>
 public sealed class SearchAcceptedIARLineItemsQueryHandler(
     ProcurementDbContext dbContext) : IQueryHandler<SearchAcceptedIARLineItemsQuery, PagedResponse<AcceptedIARLineItemDto>>
@@ -27,6 +24,7 @@ public sealed class SearchAcceptedIARLineItemsQueryHandler(
             .AsNoTracking()
             .Where(x => x.Status == AssetIARStatus.Accepted)
             .OrderByDescending(x => x.AcceptedOnUtc ?? x.CreatedOnUtc)
+            .Take(500)
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
