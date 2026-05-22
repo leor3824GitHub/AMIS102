@@ -34,15 +34,13 @@ internal sealed class AssetRegisterDbInitializer(
 
         var tenantId = context.TenantInfo?.Identifier ?? MultitenancyConstants.Root.Id;
 
-        var hasCatalog = await context.PropertyItemCatalogs
+        var existingCodes = (await context.PropertyItemCatalogs
             .IgnoreQueryFilters()
-            .AnyAsync(x => x.TenantId == tenantId, cancellationToken)
-            .ConfigureAwait(false);
-
-        if (hasCatalog)
-        {
-            return;
-        }
+            .Where(x => x.TenantId == tenantId)
+            .Select(x => x.Code)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         var seedItems = new[]
         {
@@ -51,12 +49,16 @@ internal sealed class AssetRegisterDbInitializer(
             PropertyItemCatalog.Create(tenantId, "AR-SE-LAPTOP", "Laptop Computer", "ICT", "SE-ICT", "unit", "50215030", 3),
             PropertyItemCatalog.Create(tenantId, "AR-PPE-DESKTOP", "Desktop Computer Set", "ICT", "PPE-ICT", "set", "10605030", 5),
             PropertyItemCatalog.Create(tenantId, "AR-PPE-PRINTER", "Network Printer", "ICT", "PPE-ICT", "unit", "10605030", 5),
-            PropertyItemCatalog.Create(tenantId, "AR-PPE-AIRCON", "Split-type Air Conditioner", "EQUIP", "PPE-EQ", "unit", "10604010", 10)
+            PropertyItemCatalog.Create(tenantId, "AR-PPE-AIRCON", "Split-type Air Conditioner", "EQUIP", "PPE-EQ", "unit", "10604010", 10),
+            PropertyItemCatalog.Create(tenantId, "AR-PPE-TELEVISION", "Smart Television Set", "ICT", "PPE-ICT", "unit", "10605030", 5),
         };
 
-        await context.PropertyItemCatalogs.AddRangeAsync(seedItems, cancellationToken).ConfigureAwait(false);
+        var toAdd = seedItems.Where(x => !existingCodes.Contains(x.Code)).ToList();
+        if (toAdd.Count == 0) return;
+
+        await context.PropertyItemCatalogs.AddRangeAsync(toAdd, cancellationToken).ConfigureAwait(false);
         await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        logger.LogInformation("[{Tenant}] seeded asset register property item catalog with {Count} defaults", tenantId, seedItems.Length);
+        logger.LogInformation("[{Tenant}] seeded asset register property item catalog with {Count} new entries", tenantId, toAdd.Count);
     }
 }
 

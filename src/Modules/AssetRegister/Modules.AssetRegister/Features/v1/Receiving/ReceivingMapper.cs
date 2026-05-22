@@ -14,7 +14,7 @@ internal static class ReceivingMapper
         e is null ? null : new EmployeeRefDto(e.EmployeeId, e.PrintedName, e.Designation);
 
     public static ReceivingReportItemDto ToDto(ReceivingReportItem i) =>
-        new(i.Id, i.ReportId, i.CatalogItemId, i.Reference, i.Description,
+        new(i.Id, i.ReportId, i.CatalogItemId, i.Reference, i.PropertyNo, i.Description,
             i.AcquisitionDate, i.Quantity, i.UnitCost, i.Amount,
             i.SerialNo, i.Brand, i.Model);
 

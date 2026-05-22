@@ -90,7 +90,7 @@ else
     <MudCard Elevation="1">
         <MudCardContent>
             <MudExpansionPanels Elevation="0">
-                <MudExpansionPanel Text=$"Passed Lines ({PassedLines.Count})" Expanded="true">
+                <MudExpansionPanel Text="@($"Passed Lines ({PassedLines.Count})")" Expanded="true">
                     @if (PassedLines.Count == 0)
                     {
                         <MudAlert Severity="Severity.Info" Dense="true">
@@ -160,7 +160,7 @@ else
                     }
                 </MudExpansionPanel>
 
-                <MudExpansionPanel Text=$"Rejected Lines ({RejectedLines.Count})">
+                <MudExpansionPanel Text="@($"Rejected Lines ({RejectedLines.Count})")">
                     @if (RejectedLines.Count == 0)
                     {
                         <MudAlert Severity="Severity.Info" Dense="true">

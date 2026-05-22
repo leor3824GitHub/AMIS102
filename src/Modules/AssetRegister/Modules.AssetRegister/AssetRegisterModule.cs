@@ -176,6 +176,14 @@ public class AssetRegisterModule : IModule
         Features.v1.Receiving.GetReceivingReport.GetReceivingReportEndpoint.Map(receiving);
         Features.v1.Receiving.SearchReceivingReports.SearchReceivingReportsEndpoint.Map(receiving);
 
+        // PPERR Form Series (pre-printed accountable form management)
+        var ppErrSeries = moduleGroup.MapGroup("/pperr-series");
+        Features.v1.Receiving.CreatePPERRFormSeries.CreatePPERRFormSeriesEndpoint.Map(ppErrSeries);
+        Features.v1.Receiving.SearchPPERRFormSeries.SearchPPERRFormSeriesEndpoint.Map(ppErrSeries);
+        Features.v1.Receiving.GetActivePPERRFormSeries.GetActivePPERRFormSeriesEndpoint.Map(ppErrSeries);
+        Features.v1.Receiving.ActivatePPERRFormSeries.ActivatePPERRFormSeriesEndpoint.Map(ppErrSeries);
+        Features.v1.Receiving.ActivatePPERRFormSeries.ActivatePPERRFormSeriesEndpoint.MapDeactivate(ppErrSeries);
+
         // Report rendering endpoints (ICS/PAR, RSPI/PPEIR, RPCSEMEX/RPCPPE, RegSPI, RLSDDSP, IIRUSP/IIRUP) — Phase 5
         var reports = moduleGroup.MapGroup("/reports");
         Features.v1.Reports.ReportEndpoints.MapReportEndpoints(reports);

@@ -1,6 +1,8 @@
 using System.Globalization;
 using System.Net.Http.Json;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 // AssetRegister contract enums. Cannot use `using namespace` alone because
 // AssetManagementClient.cs declares enums of the same name (AssetType,
 // AssetCategory, DisposalMethod, PropertyIncidentType, ReceiptType) in the
@@ -11,6 +13,16 @@ using AMIS.Modules.AssetRegister.Contracts.v1;
 using ArContracts = AMIS.Modules.AssetRegister.Contracts.v1;
 
 namespace AMIS.Playground.Blazor.ApiClient;
+
+// Shared JSON options that mirror the API's ConfigureHttpJsonOptions:
+// enums are serialized/deserialized as strings ("PPERR", not 0).
+file static class ArJsonOptions
+{
+    internal static readonly JsonSerializerOptions Default = new(JsonSerializerDefaults.Web)
+    {
+        Converters = { new JsonStringEnumConverter() }
+    };
+}
 
 // ── Shared DTOs ────────────────────────────────────────────────────────────
 
@@ -120,28 +132,28 @@ internal sealed class AssetRegistryClient(HttpClient http) : IAssetRegistryClien
             ["pageNumber"] = page.ToString(CultureInfo.InvariantCulture),
             ["pageSize"] = pageSize.ToString(CultureInfo.InvariantCulture),
         });
-        var result = await http.GetFromJsonAsync<ArPagedResponse<AssetRegistrySummaryDto>>(url, ct);
+        var result = await http.GetFromJsonAsync<ArPagedResponse<AssetRegistrySummaryDto>>(url, ArJsonOptions.Default, ct);
         return result ?? new ArPagedResponse<AssetRegistrySummaryDto>([], page, pageSize, 0, 0);
     }
 
     public Task<AssetRegistryDto?> GetAsync(Guid id, CancellationToken ct = default) =>
-        http.GetFromJsonAsync<AssetRegistryDto>($"{Base}/{id}", ct);
+        http.GetFromJsonAsync<AssetRegistryDto>($"{Base}/{id}", ArJsonOptions.Default, ct);
 
     public Task<AssetRegistryDto?> GetByPropertyNoAsync(string propertyNo, CancellationToken ct = default) =>
-        http.GetFromJsonAsync<AssetRegistryDto>($"{Base}/by-property-no/{Uri.EscapeDataString(propertyNo)}", ct);
+        http.GetFromJsonAsync<AssetRegistryDto>($"{Base}/by-property-no/{Uri.EscapeDataString(propertyNo)}", ArJsonOptions.Default, ct);
 
     public async Task<AssetRegistryDto> RegisterAsync(RegisterAssetRequest request, CancellationToken ct = default)
     {
-        var resp = await http.PostAsJsonAsync(Base, request, ct);
+        var resp = await http.PostAsJsonAsync(Base, request, ArJsonOptions.Default, ct);
         resp.EnsureSuccessStatusCode();
-        return (await resp.Content.ReadFromJsonAsync<AssetRegistryDto>(cancellationToken: ct))!;
+        return (await resp.Content.ReadFromJsonAsync<AssetRegistryDto>(ArJsonOptions.Default, cancellationToken: ct))!;
     }
 
     public async Task<AssetRegistryDto> UpdateConditionAsync(Guid id, ArContracts.AssetCondition condition, CancellationToken ct = default)
     {
-        var resp = await http.PutAsJsonAsync($"{Base}/{id}/condition", new UpdateAssetConditionRequest(condition), ct);
+        var resp = await http.PutAsJsonAsync($"{Base}/{id}/condition", new UpdateAssetConditionRequest(condition), ArJsonOptions.Default, ct);
         resp.EnsureSuccessStatusCode();
-        return (await resp.Content.ReadFromJsonAsync<AssetRegistryDto>(cancellationToken: ct))!;
+        return (await resp.Content.ReadFromJsonAsync<AssetRegistryDto>(ArJsonOptions.Default, cancellationToken: ct))!;
     }
 }
 
@@ -198,25 +210,25 @@ internal sealed class ArCatalogClient(HttpClient http) : IArCatalogClient
             ["pageNumber"] = page.ToString(CultureInfo.InvariantCulture),
             ["pageSize"] = pageSize.ToString(CultureInfo.InvariantCulture),
         });
-        var result = await http.GetFromJsonAsync<ArPagedResponse<ArCatalogItemDto>>(url, ct);
+        var result = await http.GetFromJsonAsync<ArPagedResponse<ArCatalogItemDto>>(url, ArJsonOptions.Default, ct);
         return result ?? new ArPagedResponse<ArCatalogItemDto>([], page, pageSize, 0, 0);
     }
 
     public Task<ArCatalogItemDto?> GetAsync(Guid id, CancellationToken ct = default) =>
-        http.GetFromJsonAsync<ArCatalogItemDto>($"{Base}/{id}", ct);
+        http.GetFromJsonAsync<ArCatalogItemDto>($"{Base}/{id}", ArJsonOptions.Default, ct);
 
     public async Task<ArCatalogItemDto> CreateAsync(CreateArCatalogItemRequest request, CancellationToken ct = default)
     {
-        var resp = await http.PostAsJsonAsync(Base, request, ct);
+        var resp = await http.PostAsJsonAsync(Base, request, ArJsonOptions.Default, ct);
         resp.EnsureSuccessStatusCode();
-        return (await resp.Content.ReadFromJsonAsync<ArCatalogItemDto>(cancellationToken: ct))!;
+        return (await resp.Content.ReadFromJsonAsync<ArCatalogItemDto>(ArJsonOptions.Default, cancellationToken: ct))!;
     }
 
     public async Task<ArCatalogItemDto> UpdateAsync(Guid id, UpdateArCatalogItemRequest request, CancellationToken ct = default)
     {
-        var resp = await http.PutAsJsonAsync($"{Base}/{id}", request, ct);
+        var resp = await http.PutAsJsonAsync($"{Base}/{id}", request, ArJsonOptions.Default, ct);
         resp.EnsureSuccessStatusCode();
-        return (await resp.Content.ReadFromJsonAsync<ArCatalogItemDto>(cancellationToken: ct))!;
+        return (await resp.Content.ReadFromJsonAsync<ArCatalogItemDto>(ArJsonOptions.Default, cancellationToken: ct))!;
     }
 
     public async Task DeleteAsync(Guid id, CancellationToken ct = default)
@@ -229,7 +241,7 @@ internal sealed class ArCatalogClient(HttpClient http) : IArCatalogClient
     {
         var resp = await http.PutAsJsonAsync($"{Base}/{id}/activation", new { IsActive = isActive }, ct);
         resp.EnsureSuccessStatusCode();
-        return (await resp.Content.ReadFromJsonAsync<ArCatalogItemDto>(cancellationToken: ct))!;
+        return (await resp.Content.ReadFromJsonAsync<ArCatalogItemDto>(ArJsonOptions.Default, cancellationToken: ct))!;
     }
 }
 
@@ -327,39 +339,39 @@ internal sealed class ArAccountabilityClient(HttpClient http) : IArAccountabilit
             ["pageNumber"] = page.ToString(CultureInfo.InvariantCulture),
             ["pageSize"] = pageSize.ToString(CultureInfo.InvariantCulture),
         });
-        var result = await http.GetFromJsonAsync<ArPagedResponse<ArAccountabilitySummaryDto>>(url, ct);
+        var result = await http.GetFromJsonAsync<ArPagedResponse<ArAccountabilitySummaryDto>>(url, ArJsonOptions.Default, ct);
         return result ?? new ArPagedResponse<ArAccountabilitySummaryDto>([], page, pageSize, 0, 0);
     }
 
     public Task<ArAccountabilityDto?> GetAsync(Guid id, CancellationToken ct = default) =>
-        http.GetFromJsonAsync<ArAccountabilityDto>($"{Base}/{id}", ct);
+        http.GetFromJsonAsync<ArAccountabilityDto>($"{Base}/{id}", ArJsonOptions.Default, ct);
 
     public async Task<ArAccountabilityDto> IssueAsync(IssueAccountabilityRequest request, CancellationToken ct = default)
     {
-        var resp = await http.PostAsJsonAsync(Base, request, ct);
+        var resp = await http.PostAsJsonAsync(Base, request, ArJsonOptions.Default, ct);
         resp.EnsureSuccessStatusCode();
-        return (await resp.Content.ReadFromJsonAsync<ArAccountabilityDto>(cancellationToken: ct))!;
+        return (await resp.Content.ReadFromJsonAsync<ArAccountabilityDto>(ArJsonOptions.Default, cancellationToken: ct))!;
     }
 
     public async Task<ArAccountabilityDto> ReturnLinesAsync(Guid id, ReturnAccountabilityLinesRequest request, CancellationToken ct = default)
     {
-        var resp = await http.PostAsJsonAsync($"{Base}/{id}/return", request, ct);
+        var resp = await http.PostAsJsonAsync($"{Base}/{id}/return", request, ArJsonOptions.Default, ct);
         resp.EnsureSuccessStatusCode();
-        return (await resp.Content.ReadFromJsonAsync<ArAccountabilityDto>(cancellationToken: ct))!;
+        return (await resp.Content.ReadFromJsonAsync<ArAccountabilityDto>(ArJsonOptions.Default, cancellationToken: ct))!;
     }
 
     public async Task<ArAccountabilityDto> CancelAsync(Guid id, string reason, CancellationToken ct = default)
     {
-        var resp = await http.PostAsJsonAsync($"{Base}/{id}/cancel", new CancelAccountabilityRequest(reason), ct);
+        var resp = await http.PostAsJsonAsync($"{Base}/{id}/cancel", new CancelAccountabilityRequest(reason), ArJsonOptions.Default, ct);
         resp.EnsureSuccessStatusCode();
-        return (await resp.Content.ReadFromJsonAsync<ArAccountabilityDto>(cancellationToken: ct))!;
+        return (await resp.Content.ReadFromJsonAsync<ArAccountabilityDto>(ArJsonOptions.Default, cancellationToken: ct))!;
     }
 
     public async Task<ArAccountabilityDto> RenewAsync(Guid id, DateOnly newIssuedOn, DateOnly? newExpiresOn, CancellationToken ct = default)
     {
-        var resp = await http.PostAsJsonAsync($"{Base}/{id}/renew", new RenewAccountabilityRequest(newIssuedOn, newExpiresOn), ct);
+        var resp = await http.PostAsJsonAsync($"{Base}/{id}/renew", new RenewAccountabilityRequest(newIssuedOn, newExpiresOn), ArJsonOptions.Default, ct);
         resp.EnsureSuccessStatusCode();
-        return (await resp.Content.ReadFromJsonAsync<ArAccountabilityDto>(cancellationToken: ct))!;
+        return (await resp.Content.ReadFromJsonAsync<ArAccountabilityDto>(ArJsonOptions.Default, cancellationToken: ct))!;
     }
 }
 
@@ -451,32 +463,32 @@ internal sealed class ArPhysicalCountClient(HttpClient http) : IArPhysicalCountC
             ["pageNumber"] = page.ToString(CultureInfo.InvariantCulture),
             ["pageSize"] = pageSize.ToString(CultureInfo.InvariantCulture),
         });
-        var result = await http.GetFromJsonAsync<ArPagedResponse<ArPhysicalCountSummaryDto>>(url, ct);
+        var result = await http.GetFromJsonAsync<ArPagedResponse<ArPhysicalCountSummaryDto>>(url, ArJsonOptions.Default, ct);
         return result ?? new ArPagedResponse<ArPhysicalCountSummaryDto>([], page, pageSize, 0, 0);
     }
 
     public Task<ArPhysicalCountSessionDto?> GetAsync(Guid id, CancellationToken ct = default) =>
-        http.GetFromJsonAsync<ArPhysicalCountSessionDto>($"{Base}/{id}", ct);
+        http.GetFromJsonAsync<ArPhysicalCountSessionDto>($"{Base}/{id}", ArJsonOptions.Default, ct);
 
     public async Task<ArPhysicalCountSessionDto> StartAsync(StartPhysicalCountRequest request, CancellationToken ct = default)
     {
-        var resp = await http.PostAsJsonAsync(Base, request, ct);
+        var resp = await http.PostAsJsonAsync(Base, request, ArJsonOptions.Default, ct);
         resp.EnsureSuccessStatusCode();
-        return (await resp.Content.ReadFromJsonAsync<ArPhysicalCountSessionDto>(cancellationToken: ct))!;
+        return (await resp.Content.ReadFromJsonAsync<ArPhysicalCountSessionDto>(ArJsonOptions.Default, cancellationToken: ct))!;
     }
 
     public async Task<ArPhysicalCountSessionDto> RecordEntryAsync(Guid sessionId, ArRecordPhysicalCountEntryRequest request, CancellationToken ct = default)
     {
-        var resp = await http.PostAsJsonAsync($"{Base}/{sessionId}/entries", request, ct);
+        var resp = await http.PostAsJsonAsync($"{Base}/{sessionId}/entries", request, ArJsonOptions.Default, ct);
         resp.EnsureSuccessStatusCode();
-        return (await resp.Content.ReadFromJsonAsync<ArPhysicalCountSessionDto>(cancellationToken: ct))!;
+        return (await resp.Content.ReadFromJsonAsync<ArPhysicalCountSessionDto>(ArJsonOptions.Default, cancellationToken: ct))!;
     }
 
     public async Task<ArPhysicalCountSessionDto> CloseAsync(Guid sessionId, ClosePhysicalCountRequest request, CancellationToken ct = default)
     {
-        var resp = await http.PostAsJsonAsync($"{Base}/{sessionId}/close", request, ct);
+        var resp = await http.PostAsJsonAsync($"{Base}/{sessionId}/close", request, ArJsonOptions.Default, ct);
         resp.EnsureSuccessStatusCode();
-        return (await resp.Content.ReadFromJsonAsync<ArPhysicalCountSessionDto>(cancellationToken: ct))!;
+        return (await resp.Content.ReadFromJsonAsync<ArPhysicalCountSessionDto>(ArJsonOptions.Default, cancellationToken: ct))!;
     }
 }
 
@@ -560,39 +572,39 @@ internal sealed class ArIncidentReportClient(HttpClient http) : IArIncidentRepor
             ["pageNumber"] = page.ToString(CultureInfo.InvariantCulture),
             ["pageSize"] = pageSize.ToString(CultureInfo.InvariantCulture),
         });
-        var result = await http.GetFromJsonAsync<ArPagedResponse<ArIncidentReportSummaryDto>>(url, ct);
+        var result = await http.GetFromJsonAsync<ArPagedResponse<ArIncidentReportSummaryDto>>(url, ArJsonOptions.Default, ct);
         return result ?? new ArPagedResponse<ArIncidentReportSummaryDto>([], page, pageSize, 0, 0);
     }
 
     public Task<ArIncidentReportDto?> GetAsync(Guid id, CancellationToken ct = default) =>
-        http.GetFromJsonAsync<ArIncidentReportDto>($"{Base}/{id}", ct);
+        http.GetFromJsonAsync<ArIncidentReportDto>($"{Base}/{id}", ArJsonOptions.Default, ct);
 
     public async Task<ArIncidentReportDto> FileAsync(FileIncidentReportRequest request, CancellationToken ct = default)
     {
-        var resp = await http.PostAsJsonAsync(Base, request, ct);
+        var resp = await http.PostAsJsonAsync(Base, request, ArJsonOptions.Default, ct);
         resp.EnsureSuccessStatusCode();
-        return (await resp.Content.ReadFromJsonAsync<ArIncidentReportDto>(cancellationToken: ct))!;
+        return (await resp.Content.ReadFromJsonAsync<ArIncidentReportDto>(ArJsonOptions.Default, cancellationToken: ct))!;
     }
 
     public async Task<ArIncidentReportDto> NotifyPoliceAsync(Guid id, NotifyPoliceRequest request, CancellationToken ct = default)
     {
-        var resp = await http.PostAsJsonAsync($"{Base}/{id}/police-notify", request, ct);
+        var resp = await http.PostAsJsonAsync($"{Base}/{id}/police-notify", request, ArJsonOptions.Default, ct);
         resp.EnsureSuccessStatusCode();
-        return (await resp.Content.ReadFromJsonAsync<ArIncidentReportDto>(cancellationToken: ct))!;
+        return (await resp.Content.ReadFromJsonAsync<ArIncidentReportDto>(ArJsonOptions.Default, cancellationToken: ct))!;
     }
 
     public async Task<ArIncidentReportDto> NotarizeAsync(Guid id, NotarizeIncidentRequest request, CancellationToken ct = default)
     {
-        var resp = await http.PostAsJsonAsync($"{Base}/{id}/notarize", request, ct);
+        var resp = await http.PostAsJsonAsync($"{Base}/{id}/notarize", request, ArJsonOptions.Default, ct);
         resp.EnsureSuccessStatusCode();
-        return (await resp.Content.ReadFromJsonAsync<ArIncidentReportDto>(cancellationToken: ct))!;
+        return (await resp.Content.ReadFromJsonAsync<ArIncidentReportDto>(ArJsonOptions.Default, cancellationToken: ct))!;
     }
 
     public async Task<ArIncidentReportDto> CloseAsync(Guid id, CancellationToken ct = default)
     {
         var resp = await http.PostAsJsonAsync($"{Base}/{id}/close", new { }, ct);
         resp.EnsureSuccessStatusCode();
-        return (await resp.Content.ReadFromJsonAsync<ArIncidentReportDto>(cancellationToken: ct))!;
+        return (await resp.Content.ReadFromJsonAsync<ArIncidentReportDto>(ArJsonOptions.Default, cancellationToken: ct))!;
     }
 }
 
@@ -672,39 +684,39 @@ internal sealed class ArIssuanceReportClient(HttpClient http) : IArIssuanceRepor
             ["pageNumber"] = page.ToString(CultureInfo.InvariantCulture),
             ["pageSize"] = pageSize.ToString(CultureInfo.InvariantCulture),
         });
-        var result = await http.GetFromJsonAsync<ArPagedResponse<ArIssuanceReportSummaryDto>>(url, ct);
+        var result = await http.GetFromJsonAsync<ArPagedResponse<ArIssuanceReportSummaryDto>>(url, ArJsonOptions.Default, ct);
         return result ?? new ArPagedResponse<ArIssuanceReportSummaryDto>([], page, pageSize, 0, 0);
     }
 
     public Task<ArIssuanceReportDto?> GetAsync(Guid id, CancellationToken ct = default) =>
-        http.GetFromJsonAsync<ArIssuanceReportDto>($"{Base}/{id}", ct);
+        http.GetFromJsonAsync<ArIssuanceReportDto>($"{Base}/{id}", ArJsonOptions.Default, ct);
 
     public async Task<ArIssuanceReportDto> CreateDraftAsync(CreateIssuanceReportDraftRequest request, CancellationToken ct = default)
     {
-        var resp = await http.PostAsJsonAsync(Base, request, ct);
+        var resp = await http.PostAsJsonAsync(Base, request, ArJsonOptions.Default, ct);
         resp.EnsureSuccessStatusCode();
-        return (await resp.Content.ReadFromJsonAsync<ArIssuanceReportDto>(cancellationToken: ct))!;
+        return (await resp.Content.ReadFromJsonAsync<ArIssuanceReportDto>(ArJsonOptions.Default, cancellationToken: ct))!;
     }
 
     public async Task<ArIssuanceReportDto> AddLinesAsync(Guid id, IReadOnlyList<Guid> accountabilityLineIds, CancellationToken ct = default)
     {
-        var resp = await http.PostAsJsonAsync($"{Base}/{id}/lines", new AddIssuanceReportLinesRequest(accountabilityLineIds), ct);
+        var resp = await http.PostAsJsonAsync($"{Base}/{id}/lines", new AddIssuanceReportLinesRequest(accountabilityLineIds), ArJsonOptions.Default, ct);
         resp.EnsureSuccessStatusCode();
-        return (await resp.Content.ReadFromJsonAsync<ArIssuanceReportDto>(cancellationToken: ct))!;
+        return (await resp.Content.ReadFromJsonAsync<ArIssuanceReportDto>(ArJsonOptions.Default, cancellationToken: ct))!;
     }
 
     public async Task<ArIssuanceReportDto> PostAsync(Guid id, PostIssuanceReportRequest request, CancellationToken ct = default)
     {
-        var resp = await http.PostAsJsonAsync($"{Base}/{id}/post", request, ct);
+        var resp = await http.PostAsJsonAsync($"{Base}/{id}/post", request, ArJsonOptions.Default, ct);
         resp.EnsureSuccessStatusCode();
-        return (await resp.Content.ReadFromJsonAsync<ArIssuanceReportDto>(cancellationToken: ct))!;
+        return (await resp.Content.ReadFromJsonAsync<ArIssuanceReportDto>(ArJsonOptions.Default, cancellationToken: ct))!;
     }
 
     public async Task<ArIssuanceReportDto> RemoveLineAsync(Guid id, Guid lineId, CancellationToken ct = default)
     {
         var resp = await http.DeleteAsync($"{Base}/{id}/lines/{lineId}", ct);
         resp.EnsureSuccessStatusCode();
-        return (await resp.Content.ReadFromJsonAsync<ArIssuanceReportDto>(cancellationToken: ct))!;
+        return (await resp.Content.ReadFromJsonAsync<ArIssuanceReportDto>(ArJsonOptions.Default, cancellationToken: ct))!;
     }
 }
 
@@ -782,32 +794,32 @@ internal sealed class ArUnserviceableReportClient(HttpClient http) : IArUnservic
             ["pageNumber"] = page.ToString(CultureInfo.InvariantCulture),
             ["pageSize"] = pageSize.ToString(CultureInfo.InvariantCulture),
         });
-        var result = await http.GetFromJsonAsync<ArPagedResponse<ArUnserviceableReportSummaryDto>>(url, ct);
+        var result = await http.GetFromJsonAsync<ArPagedResponse<ArUnserviceableReportSummaryDto>>(url, ArJsonOptions.Default, ct);
         return result ?? new ArPagedResponse<ArUnserviceableReportSummaryDto>([], page, pageSize, 0, 0);
     }
 
     public Task<ArUnserviceableReportDto?> GetAsync(Guid id, CancellationToken ct = default) =>
-        http.GetFromJsonAsync<ArUnserviceableReportDto>($"{Base}/{id}", ct);
+        http.GetFromJsonAsync<ArUnserviceableReportDto>($"{Base}/{id}", ArJsonOptions.Default, ct);
 
     public async Task<ArUnserviceableReportDto> CreateDraftAsync(CreateUnserviceableReportRequest request, CancellationToken ct = default)
     {
-        var resp = await http.PostAsJsonAsync(Base, request, ct);
+        var resp = await http.PostAsJsonAsync(Base, request, ArJsonOptions.Default, ct);
         resp.EnsureSuccessStatusCode();
-        return (await resp.Content.ReadFromJsonAsync<ArUnserviceableReportDto>(cancellationToken: ct))!;
+        return (await resp.Content.ReadFromJsonAsync<ArUnserviceableReportDto>(ArJsonOptions.Default, cancellationToken: ct))!;
     }
 
     public async Task<ArUnserviceableReportDto> AddItemAsync(Guid id, AddUnserviceableReportItemRequest request, CancellationToken ct = default)
     {
-        var resp = await http.PostAsJsonAsync($"{Base}/{id}/items", request, ct);
+        var resp = await http.PostAsJsonAsync($"{Base}/{id}/items", request, ArJsonOptions.Default, ct);
         resp.EnsureSuccessStatusCode();
-        return (await resp.Content.ReadFromJsonAsync<ArUnserviceableReportDto>(cancellationToken: ct))!;
+        return (await resp.Content.ReadFromJsonAsync<ArUnserviceableReportDto>(ArJsonOptions.Default, cancellationToken: ct))!;
     }
 
     public async Task<ArUnserviceableReportDto> SubmitAsync(Guid id, SubmitUnserviceableReportRequest request, CancellationToken ct = default)
     {
-        var resp = await http.PostAsJsonAsync($"{Base}/{id}/submit", request, ct);
+        var resp = await http.PostAsJsonAsync($"{Base}/{id}/submit", request, ArJsonOptions.Default, ct);
         resp.EnsureSuccessStatusCode();
-        return (await resp.Content.ReadFromJsonAsync<ArUnserviceableReportDto>(cancellationToken: ct))!;
+        return (await resp.Content.ReadFromJsonAsync<ArUnserviceableReportDto>(ArJsonOptions.Default, cancellationToken: ct))!;
     }
 }
 
@@ -828,6 +840,7 @@ public sealed record ArReceivingReportItemDto(
     Guid ReportId,
     Guid CatalogItemId,
     string? Reference,
+    string PropertyNo,
     string Description,
     DateOnly AcquisitionDate,
     int Quantity,
@@ -897,6 +910,18 @@ public sealed record CreateReceivingReportRequest(
     DateOnly? DateReceived,
     IReadOnlyList<CreateReceivingReportItemRequest> Items);
 
+public sealed record ArPPERRFormSeriesDto(
+    Guid Id,
+    string Label,
+    int StartSerial,
+    int EndSerial,
+    int NextSerial,
+    int Remaining,
+    bool IsActive,
+    bool IsExhausted);
+
+public sealed record CreateArPPERRFormSeriesRequest(string Label, int StartSerial, int EndSerial);
+
 public interface IArReceivingReportClient
 {
     Task<ArPagedResponse<ArReceivingReportSummaryDto>> SearchAsync(
@@ -908,6 +933,14 @@ public interface IArReceivingReportClient
     Task DeleteAsync(Guid id, CancellationToken ct = default);
     Task<ArPagedResponse<AcceptedIARLineItemDto>> SearchAcceptedIARItemsAsync(
         string? keyword = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
+    Task<byte[]> GetFastReportPdfAsync(Guid id, string? pageWidth = null, string? orientation = null, int? minRows = null, CancellationToken ct = default);
+
+    // PPERR Form Series
+    Task<ArPagedResponse<ArPPERRFormSeriesDto>> SearchSeriesAsync(int page = 1, int pageSize = 20, CancellationToken ct = default);
+    Task<ArPPERRFormSeriesDto?> GetActiveSeriesAsync(CancellationToken ct = default);
+    Task<ArPPERRFormSeriesDto> CreateSeriesAsync(CreateArPPERRFormSeriesRequest request, CancellationToken ct = default);
+    Task<ArPPERRFormSeriesDto> ActivateSeriesAsync(Guid id, CancellationToken ct = default);
+    Task<ArPPERRFormSeriesDto> DeactivateSeriesAsync(Guid id, CancellationToken ct = default);
 }
 
 public sealed class ArReceivingReportClient(HttpClient http) : IArReceivingReportClient
@@ -929,18 +962,18 @@ public sealed class ArReceivingReportClient(HttpClient http) : IArReceivingRepor
             ["pageNumber"] = page.ToString(CultureInfo.InvariantCulture),
             ["pageSize"] = pageSize.ToString(CultureInfo.InvariantCulture),
         });
-        var result = await http.GetFromJsonAsync<ArPagedResponse<ArReceivingReportSummaryDto>>(url, ct);
+        var result = await http.GetFromJsonAsync<ArPagedResponse<ArReceivingReportSummaryDto>>(url, ArJsonOptions.Default, ct);
         return result ?? new ArPagedResponse<ArReceivingReportSummaryDto>([], page, pageSize, 0, 0);
     }
 
     public Task<ArReceivingReportDto?> GetAsync(Guid id, CancellationToken ct = default) =>
-        http.GetFromJsonAsync<ArReceivingReportDto>($"{Base}/{id}", ct);
+        http.GetFromJsonAsync<ArReceivingReportDto>($"{Base}/{id}", ArJsonOptions.Default, ct);
 
     public async Task<ArReceivingReportDto> CreateAsync(CreateReceivingReportRequest request, CancellationToken ct = default)
     {
-        var resp = await http.PostAsJsonAsync(Base, request, ct);
+        var resp = await http.PostAsJsonAsync(Base, request, ArJsonOptions.Default, ct);
         resp.EnsureSuccessStatusCode();
-        return (await resp.Content.ReadFromJsonAsync<ArReceivingReportDto>(cancellationToken: ct))!;
+        return (await resp.Content.ReadFromJsonAsync<ArReceivingReportDto>(ArJsonOptions.Default, cancellationToken: ct))!;
     }
 
     public async Task DeleteAsync(Guid id, CancellationToken ct = default)
@@ -958,8 +991,64 @@ public sealed class ArReceivingReportClient(HttpClient http) : IArReceivingRepor
             ["pageNumber"] = page.ToString(CultureInfo.InvariantCulture),
             ["pageSize"] = pageSize.ToString(CultureInfo.InvariantCulture),
         });
-        var result = await http.GetFromJsonAsync<ArPagedResponse<AcceptedIARLineItemDto>>(url, ct);
+        var result = await http.GetFromJsonAsync<ArPagedResponse<AcceptedIARLineItemDto>>(url, ArJsonOptions.Default, ct);
         return result ?? new ArPagedResponse<AcceptedIARLineItemDto>([], page, pageSize, 0, 0);
+    }
+
+    public Task<byte[]> GetFastReportPdfAsync(
+        Guid id,
+        string? pageWidth = null,
+        string? orientation = null,
+        int? minRows = null,
+        CancellationToken ct = default)
+    {
+        var url = ArUrlBuilder.Build($"api/v1/fast-reporting/asset-register/receiving-reports/{id}/print", new()
+        {
+            ["pageWidth"] = pageWidth,
+            ["orientation"] = orientation,
+            ["minRows"] = minRows?.ToString(CultureInfo.InvariantCulture),
+        });
+        return http.GetByteArrayAsync(url, ct);
+    }
+
+    private const string SeriesBase = "api/v1/asset-register/pperr-series";
+
+    public async Task<ArPagedResponse<ArPPERRFormSeriesDto>> SearchSeriesAsync(int page = 1, int pageSize = 20, CancellationToken ct = default)
+    {
+        var url = ArUrlBuilder.Build(SeriesBase, new()
+        {
+            ["pageNumber"] = page.ToString(CultureInfo.InvariantCulture),
+            ["pageSize"] = pageSize.ToString(CultureInfo.InvariantCulture),
+        });
+        var result = await http.GetFromJsonAsync<ArPagedResponse<ArPPERRFormSeriesDto>>(url, ArJsonOptions.Default, ct);
+        return result ?? new ArPagedResponse<ArPPERRFormSeriesDto>([], page, pageSize, 0, 0);
+    }
+
+    public async Task<ArPPERRFormSeriesDto?> GetActiveSeriesAsync(CancellationToken ct = default)
+    {
+        try { return await http.GetFromJsonAsync<ArPPERRFormSeriesDto>($"{SeriesBase}/active", ArJsonOptions.Default, ct); }
+        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NoContent) { return null; }
+    }
+
+    public async Task<ArPPERRFormSeriesDto> CreateSeriesAsync(CreateArPPERRFormSeriesRequest request, CancellationToken ct = default)
+    {
+        var resp = await http.PostAsJsonAsync(SeriesBase, request, ArJsonOptions.Default, ct);
+        resp.EnsureSuccessStatusCode();
+        return (await resp.Content.ReadFromJsonAsync<ArPPERRFormSeriesDto>(ArJsonOptions.Default, cancellationToken: ct))!;
+    }
+
+    public async Task<ArPPERRFormSeriesDto> ActivateSeriesAsync(Guid id, CancellationToken ct = default)
+    {
+        var resp = await http.PutAsync($"{SeriesBase}/{id}/activate", null, ct);
+        resp.EnsureSuccessStatusCode();
+        return (await resp.Content.ReadFromJsonAsync<ArPPERRFormSeriesDto>(ArJsonOptions.Default, cancellationToken: ct))!;
+    }
+
+    public async Task<ArPPERRFormSeriesDto> DeactivateSeriesAsync(Guid id, CancellationToken ct = default)
+    {
+        var resp = await http.PutAsync($"{SeriesBase}/{id}/deactivate", null, ct);
+        resp.EnsureSuccessStatusCode();
+        return (await resp.Content.ReadFromJsonAsync<ArPPERRFormSeriesDto>(ArJsonOptions.Default, cancellationToken: ct))!;
     }
 }
 

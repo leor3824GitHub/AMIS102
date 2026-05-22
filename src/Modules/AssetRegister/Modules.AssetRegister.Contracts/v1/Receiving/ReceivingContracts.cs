@@ -9,6 +9,7 @@ public sealed record ReceivingReportItemDto(
     Guid ReportId,
     Guid CatalogItemId,
     string? Reference,
+    string PropertyNo,
     string Description,
     DateOnly AcquisitionDate,
     int Quantity,
@@ -97,4 +98,31 @@ public sealed record SearchReceivingReportsQuery(
     DateOnly? ToDate = null,
     int PageNumber = 1,
     int PageSize = 10) : IQuery<PagedResponse<ReceivingReportSummaryDto>>;
+
+// ── PPERR Form Series ──────────────────────────────────────────────────────
+
+public sealed record PPERRFormSeriesDto(
+    Guid Id,
+    string Label,
+    int StartSerial,
+    int EndSerial,
+    int NextSerial,
+    int Remaining,
+    bool IsActive,
+    bool IsExhausted);
+
+public sealed record CreatePPERRFormSeriesCommand(
+    string Label,
+    int StartSerial,
+    int EndSerial) : ICommand<PPERRFormSeriesDto>;
+
+public sealed record ActivatePPERRFormSeriesCommand(Guid Id) : ICommand<PPERRFormSeriesDto>;
+
+public sealed record DeactivatePPERRFormSeriesCommand(Guid Id) : ICommand<PPERRFormSeriesDto>;
+
+public sealed record GetActivePPERRFormSeriesQuery : IQuery<PPERRFormSeriesDto?>;
+
+public sealed record SearchPPERRFormSeriesQuery(
+    int PageNumber = 1,
+    int PageSize = 20) : IQuery<PagedResponse<PPERRFormSeriesDto>>;
 

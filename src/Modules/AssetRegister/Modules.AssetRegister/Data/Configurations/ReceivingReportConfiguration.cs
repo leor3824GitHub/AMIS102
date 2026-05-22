@@ -52,6 +52,7 @@ internal sealed class ReceivingReportItemConfiguration : IEntityTypeConfiguratio
         builder.HasKey(x => x.Id);
         builder.Property(x => x.TenantId).IsRequired().HasMaxLength(50);
         builder.Property(x => x.Reference).HasMaxLength(64);
+        builder.Property(x => x.PropertyNo).IsRequired().HasMaxLength(64);
         builder.Property(x => x.Description).IsRequired().HasMaxLength(500);
         builder.Property(x => x.UnitCost).HasPrecision(18, 2);
         builder.Property(x => x.SerialNo).HasMaxLength(200);
@@ -60,6 +61,30 @@ internal sealed class ReceivingReportItemConfiguration : IEntityTypeConfiguratio
         builder.Ignore(x => x.Amount);
 
         builder.HasIndex(x => x.CatalogItemId);
+    }
+}
+
+internal sealed class PPERRFormSeriesConfiguration : IEntityTypeConfiguration<PPERRFormSeries>
+{
+    public void Configure(EntityTypeBuilder<PPERRFormSeries> builder)
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+        builder.ToTable("PPERRFormSeries", AssetRegisterModuleConstants.SchemaName)
+            .IsMultiTenant();
+
+        builder.HasKey(x => x.Id);
+        builder.Property(x => x.TenantId).IsRequired().HasMaxLength(50);
+        builder.Property(x => x.Label).IsRequired().HasMaxLength(200);
+        builder.Property<uint>("xmin")
+            .HasColumnName("xmin")
+            .HasColumnType("xid")
+            .ValueGeneratedOnAddOrUpdate()
+            .IsConcurrencyToken();
+
+        builder.Ignore(x => x.IsExhausted);
+        builder.Ignore(x => x.Remaining);
+
+        builder.HasIndex(x => new { x.TenantId, x.IsActive });
     }
 }
 

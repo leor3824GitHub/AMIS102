@@ -48,7 +48,7 @@ public sealed class CreateReceivingReportCommandHandler(
             var catalog = ResolveCatalog(line, allCatalogs, catalogsById);
 
             report.AddItem(
-                catalog.Id, line.Reference, line.Description,
+                catalog.Id, line.Reference, line.PropertyNo, line.Description,
                 line.AcquisitionDate, quantity: 1, line.UnitCost,
                 line.SerialNo, line.Brand, line.Model);
 

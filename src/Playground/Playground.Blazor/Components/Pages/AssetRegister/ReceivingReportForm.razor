@@ -17,6 +17,23 @@
         </CardHeaderContent>
     </MudCardHeader>
     <MudCardContent>
+        @if (DocumentKind == ReceivingDocumentKind.PPERR)
+        {
+            @if (_activeSeries is not null && !_activeSeries.IsExhausted)
+            {
+                <MudAlert Severity="Severity.Info" Dense="true" Class="mb-3" Icon="@Icons.Material.Outlined.Tag">
+                    Next form no. will be <strong>PPERR-@_activeSeries.NextSerial.ToString($"D{_activeSeries.EndSerial.ToString().Length}")</strong>
+                    &nbsp;·&nbsp; @_activeSeries.Remaining remaining in series "<em>@_activeSeries.Label</em>"
+                </MudAlert>
+            }
+            else
+            {
+                <MudAlert Severity="Severity.Warning" Dense="true" Class="mb-3" Icon="@Icons.Material.Outlined.Warning">
+                    No active PPERR form series. The report number will be auto-generated.
+                    <MudLink Href="/asset-register/pperr-series" Class="ml-1">Manage Series</MudLink>
+                </MudAlert>
+            }
+        }
         <MudGrid Spacing="2">
             <MudItem xs="12" md="3">
                 <MudDatePicker @bind-Date="_date" Label="Date" Variant="Variant.Outlined" Required="true" />
@@ -142,6 +159,7 @@
     private DateTime? _dateReceived;
     private bool _busy;
     private bool _loadingItems;
+    private ArPPERRFormSeriesDto? _activeSeries;
 
     private SupplierInfo? _selectedSupplier;
     private readonly List<AcceptedIARLineItemDto> _availableItems = [];
@@ -159,6 +177,12 @@
         catch
         {
             Snackbar.Add("Could not load current user employee record.", Severity.Warning);
+        }
+
+        if (DocumentKind == ReceivingDocumentKind.PPERR)
+        {
+            try { _activeSeries = await Client.GetActiveSeriesAsync(); }
+            catch { /* non-critical */ }
         }
     }
 

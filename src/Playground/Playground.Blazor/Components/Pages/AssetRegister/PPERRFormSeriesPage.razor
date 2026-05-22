@@ -1,0 +1,186 @@
+@page "/asset-register/pperr-series"
+@using AMIS.Playground.Blazor.ApiClient
+@inject IArReceivingReportClient Client
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<AMISPageHeader Title="PPERR Form Series"
+               Description="Manage pre-printed, pre-numbered PPERR accountable form batches. Only one series may be active at a time." />
+
+<MudGrid Spacing="3">
+    <MudItem xs="12">
+        <MudCard Elevation="1">
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.subtitle1">Register New Series</MudText>
+                </CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudGrid Spacing="2">
+                    <MudItem xs="12" md="4">
+                        <MudTextField @bind-Value="_label" Label="Label / Description" Variant="Variant.Outlined"
+                                      HelperText="e.g. FY 2026 Batch 1" />
+                    </MudItem>
+                    <MudItem xs="6" md="2">
+                        <MudNumericField @bind-Value="_startSerial" Label="Start No." Variant="Variant.Outlined" Min="1" />
+                    </MudItem>
+                    <MudItem xs="6" md="2">
+                        <MudNumericField @bind-Value="_endSerial" Label="End No." Variant="Variant.Outlined" Min="1" />
+                    </MudItem>
+                    <MudItem xs="12" md="2" Class="d-flex align-end">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                                   StartIcon="@Icons.Material.Outlined.Add"
+                                   OnClick="CreateAsync" Disabled="_busy">
+                            Add Series
+                        </MudButton>
+                    </MudItem>
+                </MudGrid>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    <MudItem xs="12">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                @if (_busy)
+                {
+                    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+                }
+                else if (_items.Count == 0)
+                {
+                    <MudAlert Severity="Severity.Info">No PPERR form series registered yet.</MudAlert>
+                }
+                else
+                {
+                    <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                        <thead>
+                            <tr>
+                                <th>Label</th>
+                                <th class="text-right">Start No.</th>
+                                <th class="text-right">End No.</th>
+                                <th class="text-right">Next No.</th>
+                                <th class="text-right">Remaining</th>
+                                <th>Status</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var s in _items)
+                            {
+                                <tr>
+                                    <td><b>@s.Label</b></td>
+                                    <td class="text-right">@s.StartSerial</td>
+                                    <td class="text-right">@s.EndSerial</td>
+                                    <td class="text-right">@(s.IsExhausted ? "—" : s.NextSerial.ToString())</td>
+                                    <td class="text-right">@s.Remaining</td>
+                                    <td>
+                                        @if (s.IsActive)
+                                        {
+                                            <MudChip T="string" Color="Color.Success" Size="Size.Small">Active</MudChip>
+                                        }
+                                        else if (s.IsExhausted)
+                                        {
+                                            <MudChip T="string" Color="Color.Default" Size="Size.Small">Exhausted</MudChip>
+                                        }
+                                        else
+                                        {
+                                            <MudChip T="string" Color="Color.Default" Size="Size.Small">Inactive</MudChip>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (!s.IsActive && !s.IsExhausted)
+                                        {
+                                            <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Success"
+                                                       OnClick="@(() => ActivateAsync(s.Id))">
+                                                Set Active
+                                            </MudButton>
+                                        }
+                                        else if (s.IsActive)
+                                        {
+                                            <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Default"
+                                                       OnClick="@(() => DeactivateAsync(s.Id))">
+                                                Deactivate
+                                            </MudButton>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </MudSimpleTable>
+                    <MudPagination Count="@TotalPages" Selected="_page" ShowFirstButton="true" ShowLastButton="true"
+                                   SelectedChanged="@(async p => { _page = p; await LoadAsync(); })" />
+                }
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private bool _busy;
+    private string _label = "";
+    private int _startSerial = 1;
+    private int _endSerial = 100;
+    private int _page = 1;
+    private const int PageSize = 20;
+    private int _totalCount;
+    private int TotalPages => (int)Math.Ceiling(_totalCount / (double)PageSize);
+    private List<ArPPERRFormSeriesDto> _items = [];
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _busy = true;
+        try
+        {
+            var resp = await Client.SearchSeriesAsync(page: _page, pageSize: PageSize);
+            _items = resp.Items.ToList();
+            _totalCount = resp.TotalCount;
+        }
+        catch (Exception ex) { Snackbar.Add($"Failed to load: {ex.Message}", Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    private async Task CreateAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_label)) { Snackbar.Add("Label is required.", Severity.Warning); return; }
+        if (_endSerial < _startSerial) { Snackbar.Add("End No. must be ≥ Start No.", Severity.Warning); return; }
+
+        _busy = true;
+        try
+        {
+            await Client.CreateSeriesAsync(new CreateArPPERRFormSeriesRequest(_label, _startSerial, _endSerial));
+            Snackbar.Add("Series registered.", Severity.Success);
+            _label = ""; _startSerial = 1; _endSerial = 100;
+            await LoadAsync();
+        }
+        catch (Exception ex) { Snackbar.Add($"Failed: {ex.Message}", Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    private async Task ActivateAsync(Guid id)
+    {
+        _busy = true;
+        try
+        {
+            await Client.ActivateSeriesAsync(id);
+            Snackbar.Add("Series set as active.", Severity.Success);
+            await LoadAsync();
+        }
+        catch (Exception ex) { Snackbar.Add($"Failed: {ex.Message}", Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    private async Task DeactivateAsync(Guid id)
+    {
+        _busy = true;
+        try
+        {
+            await Client.DeactivateSeriesAsync(id);
+            Snackbar.Add("Series deactivated.", Severity.Success);
+            await LoadAsync();
+        }
+        catch (Exception ex) { Snackbar.Add($"Failed: {ex.Message}", Severity.Error); }
+        finally { _busy = false; }
+    }
+}

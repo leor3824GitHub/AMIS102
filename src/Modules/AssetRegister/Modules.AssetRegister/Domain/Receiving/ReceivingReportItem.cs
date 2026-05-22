@@ -9,12 +9,11 @@ public sealed class ReceivingReportItem : IHasTenant
     public Guid ReportId { get; private set; }
     public Guid CatalogItemId { get; private set; }
 
-    /// <summary>
-    /// Supplier reference (SMRR) or pre-printed property code (PPERR). Optional;
-    /// system-generated PropertyNumbers on the materialized AssetRegistry rows are
-    /// the authoritative identifier.
-    /// </summary>
+    /// <summary>IAR document reference (PPERR) or supplier delivery note (SMRR). Optional.</summary>
     public string? Reference { get; private set; }
+
+    /// <summary>Property number assigned to the materialized AssetRegistry row.</summary>
+    public string PropertyNo { get; private set; } = default!;
 
     public string Description { get; private set; } = default!;
     public DateOnly AcquisitionDate { get; private set; }
@@ -32,6 +31,7 @@ public sealed class ReceivingReportItem : IHasTenant
         Guid reportId,
         Guid catalogItemId,
         string? reference,
+        string propertyNo,
         string description,
         DateOnly acquisitionDate,
         int quantity,
@@ -42,6 +42,8 @@ public sealed class ReceivingReportItem : IHasTenant
     {
         if (string.IsNullOrWhiteSpace(description))
             throw new InvalidOperationException("Item description is required.");
+        if (string.IsNullOrWhiteSpace(propertyNo))
+            throw new InvalidOperationException("Property number is required.");
         if (quantity <= 0)
             throw new InvalidOperationException("Item quantity must be greater than zero.");
         if (unitCost <= 0)
@@ -54,6 +56,7 @@ public sealed class ReceivingReportItem : IHasTenant
             ReportId = reportId,
             CatalogItemId = catalogItemId,
             Reference = reference,
+            PropertyNo = propertyNo,
             Description = description,
             AcquisitionDate = acquisitionDate,
             Quantity = quantity,

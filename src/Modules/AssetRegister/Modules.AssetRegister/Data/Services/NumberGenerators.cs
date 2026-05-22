@@ -1,6 +1,7 @@
 using System.Globalization;
 using AMIS.Modules.AssetRegister.Contracts.v1;
 using AMIS.Modules.AssetRegister.Domain.Services;
+using Microsoft.EntityFrameworkCore;
 
 namespace AMIS.Modules.AssetRegister.Data.Services;
 
@@ -57,8 +58,21 @@ internal sealed class ReceivingReportNumberGenerator(AssetRegisterDbContext db, 
 {
     public async Task<string> NextAsync(ReceivingDocumentKind kind, DateOnly date, CancellationToken ct)
     {
-        var prefix = kind == ReceivingDocumentKind.PPERR ? "PPERR" : "SMRR";
         var tenantId = db.TenantInfo?.Identifier ?? string.Empty;
+
+        // For PPERR: use the active pre-printed form series if one exists.
+        if (kind == ReceivingDocumentKind.PPERR)
+        {
+            var activeSeries = await db.PPERRFormSeries
+                .FirstOrDefaultAsync(s => s.TenantId == tenantId && s.IsActive, ct)
+                .ConfigureAwait(false);
+
+            if (activeSeries is not null)
+                return activeSeries.AllocateNext();
+        }
+
+        // Fall back to date-based auto-generation.
+        var prefix = kind == ReceivingDocumentKind.PPERR ? "PPERR" : "SMRR";
         var serial = await allocator.NextSerialAsync(tenantId, date.Year, date.Month, prefix, ct).ConfigureAwait(false);
         return $"{prefix}-{date.Year:D4}-{date.Month:D2}-{serial.ToString("D4", CultureInfo.InvariantCulture)}";
     }

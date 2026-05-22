@@ -28,6 +28,7 @@ public class AssetRegisterDbContext : BaseDbContext
     public DbSet<PropertyIncidentReport> PropertyIncidentReports => Set<PropertyIncidentReport>();
     public DbSet<UnserviceablePropertyReport> UnserviceablePropertyReports => Set<UnserviceablePropertyReport>();
     public DbSet<ReceivingReport> ReceivingReports => Set<ReceivingReport>();
+    public DbSet<PPERRFormSeries> PPERRFormSeries => Set<PPERRFormSeries>();
 
     public AssetRegisterDbContext(
         IMultiTenantContextAccessor<AppTenantInfo> multiTenantContextAccessor,

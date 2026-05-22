@@ -22,6 +22,7 @@
 		<ProjectReference Include="..\Modules.FastReporting.Contracts\Modules.FastReporting.Contracts.csproj" />
 		<ProjectReference Include="..\..\MasterData\Modules.MasterData.Contracts\Modules.MasterData.Contracts.csproj" />
 		<ProjectReference Include="..\..\ProcurementAcquisition\Modules.ProcurementAcquisition.Contracts\Modules.ProcurementAcquisition.Contracts.csproj" />
+		<ProjectReference Include="..\..\AssetRegister\Modules.AssetRegister.Contracts\Modules.AssetRegister.Contracts.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
