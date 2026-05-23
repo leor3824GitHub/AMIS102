@@ -668,6 +668,7 @@ internal interface IArIssuanceReportClient
     Task<ArIssuanceReportDto> AddLinesAsync(Guid id, IReadOnlyList<Guid> accountabilityLineIds, CancellationToken ct = default);
     Task<ArIssuanceReportDto> PostAsync(Guid id, PostIssuanceReportRequest request, CancellationToken ct = default);
     Task<ArIssuanceReportDto> RemoveLineAsync(Guid id, Guid lineId, CancellationToken ct = default);
+    Task<byte[]> GetFastReportPdfAsync(Guid id, string? pageWidth = null, string? orientation = null, int? minRows = null, CancellationToken ct = default);
 }
 
 internal sealed class ArIssuanceReportClient(HttpClient http) : IArIssuanceReportClient
@@ -717,6 +718,22 @@ internal sealed class ArIssuanceReportClient(HttpClient http) : IArIssuanceRepor
         var resp = await http.DeleteAsync($"{Base}/{id}/lines/{lineId}", ct);
         resp.EnsureSuccessStatusCode();
         return (await resp.Content.ReadFromJsonAsync<ArIssuanceReportDto>(ArJsonOptions.Default, cancellationToken: ct))!;
+    }
+
+    public Task<byte[]> GetFastReportPdfAsync(
+        Guid id,
+        string? pageWidth = null,
+        string? orientation = null,
+        int? minRows = null,
+        CancellationToken ct = default)
+    {
+        var url = ArUrlBuilder.Build($"api/v1/fast-reporting/asset-register/issuance-reports/{id}/print", new()
+        {
+            ["pageWidth"] = pageWidth,
+            ["orientation"] = orientation,
+            ["minRows"] = minRows?.ToString(CultureInfo.InvariantCulture),
+        });
+        return http.GetByteArrayAsync(url, ct);
     }
 }
 
@@ -918,9 +935,12 @@ public sealed record ArPPERRFormSeriesDto(
     int NextSerial,
     int Remaining,
     bool IsActive,
-    bool IsExhausted);
+    bool IsExhausted,
+    bool IsUnused);
 
 public sealed record CreateArPPERRFormSeriesRequest(string Label, int StartSerial, int EndSerial);
+
+public sealed record UpdateArPPERRFormSeriesRequest(string Label, int StartSerial, int EndSerial);
 
 public interface IArReceivingReportClient
 {
@@ -939,6 +959,8 @@ public interface IArReceivingReportClient
     Task<ArPagedResponse<ArPPERRFormSeriesDto>> SearchSeriesAsync(int page = 1, int pageSize = 20, CancellationToken ct = default);
     Task<ArPPERRFormSeriesDto?> GetActiveSeriesAsync(CancellationToken ct = default);
     Task<ArPPERRFormSeriesDto> CreateSeriesAsync(CreateArPPERRFormSeriesRequest request, CancellationToken ct = default);
+    Task<ArPPERRFormSeriesDto> UpdateSeriesAsync(Guid id, UpdateArPPERRFormSeriesRequest request, CancellationToken ct = default);
+    Task DeleteSeriesAsync(Guid id, CancellationToken ct = default);
     Task<ArPPERRFormSeriesDto> ActivateSeriesAsync(Guid id, CancellationToken ct = default);
     Task<ArPPERRFormSeriesDto> DeactivateSeriesAsync(Guid id, CancellationToken ct = default);
 }
@@ -1035,6 +1057,19 @@ public sealed class ArReceivingReportClient(HttpClient http) : IArReceivingRepor
         var resp = await http.PostAsJsonAsync(SeriesBase, request, ArJsonOptions.Default, ct);
         resp.EnsureSuccessStatusCode();
         return (await resp.Content.ReadFromJsonAsync<ArPPERRFormSeriesDto>(ArJsonOptions.Default, cancellationToken: ct))!;
+    }
+
+    public async Task<ArPPERRFormSeriesDto> UpdateSeriesAsync(Guid id, UpdateArPPERRFormSeriesRequest request, CancellationToken ct = default)
+    {
+        var resp = await http.PutAsJsonAsync($"{SeriesBase}/{id}", request, ArJsonOptions.Default, ct);
+        resp.EnsureSuccessStatusCode();
+        return (await resp.Content.ReadFromJsonAsync<ArPPERRFormSeriesDto>(ArJsonOptions.Default, cancellationToken: ct))!;
+    }
+
+    public async Task DeleteSeriesAsync(Guid id, CancellationToken ct = default)
+    {
+        var resp = await http.DeleteAsync($"{SeriesBase}/{id}", ct);
+        resp.EnsureSuccessStatusCode();
     }
 
     public async Task<ArPPERRFormSeriesDto> ActivateSeriesAsync(Guid id, CancellationToken ct = default)

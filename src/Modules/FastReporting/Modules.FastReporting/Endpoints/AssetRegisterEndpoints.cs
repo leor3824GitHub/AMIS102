@@ -1,3 +1,4 @@
+using AMIS.Modules.FastReporting.Features.v1.AssetRegister.PrintPPEIssuanceReportFast;
 using AMIS.Modules.FastReporting.Features.v1.AssetRegister.PrintPPEReceivingReportFast;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
@@ -16,6 +17,7 @@ internal static class AssetRegisterEndpoints
         var assetRegister = moduleGroup.MapGroup("/asset-register");
 
         assetRegister.MapGroup("/receiving-reports").MapPPEReceivingReportFastReports();
+        assetRegister.MapGroup("/issuance-reports").MapPPEIssuanceReportFastReports();
 
         return moduleGroup;
     }
@@ -23,6 +25,12 @@ internal static class AssetRegisterEndpoints
     private static IEndpointRouteBuilder MapPPEReceivingReportFastReports(this IEndpointRouteBuilder group)
     {
         PrintPPEReceivingReportFastEndpoint.Map(group);
+        return group;
+    }
+
+    private static IEndpointRouteBuilder MapPPEIssuanceReportFastReports(this IEndpointRouteBuilder group)
+    {
+        PrintPPEIssuanceReportFastEndpoint.Map(group);
         return group;
     }
 }

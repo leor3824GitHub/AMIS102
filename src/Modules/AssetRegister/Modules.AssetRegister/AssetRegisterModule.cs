@@ -179,6 +179,8 @@ public class AssetRegisterModule : IModule
         // PPERR Form Series (pre-printed accountable form management)
         var ppErrSeries = moduleGroup.MapGroup("/pperr-series");
         Features.v1.Receiving.CreatePPERRFormSeries.CreatePPERRFormSeriesEndpoint.Map(ppErrSeries);
+        Features.v1.Receiving.UpdatePPERRFormSeries.UpdatePPERRFormSeriesEndpoint.Map(ppErrSeries);
+        Features.v1.Receiving.DeletePPERRFormSeries.DeletePPERRFormSeriesEndpoint.Map(ppErrSeries);
         Features.v1.Receiving.SearchPPERRFormSeries.SearchPPERRFormSeriesEndpoint.Map(ppErrSeries);
         Features.v1.Receiving.GetActivePPERRFormSeries.GetActivePPERRFormSeriesEndpoint.Map(ppErrSeries);
         Features.v1.Receiving.ActivatePPERRFormSeries.ActivatePPERRFormSeriesEndpoint.Map(ppErrSeries);

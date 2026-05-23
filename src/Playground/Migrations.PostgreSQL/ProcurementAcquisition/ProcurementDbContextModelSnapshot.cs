@@ -8,7 +8,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace AMIS.Playground.Migrations.PostgreSQL.Procurement
+namespace AMIS.Playground.Migrations.PostgreSQL.ProcurementAcquisition
 {
     [DbContext(typeof(ProcurementDbContext))]
     partial class ProcurementDbContextModelSnapshot : ModelSnapshot

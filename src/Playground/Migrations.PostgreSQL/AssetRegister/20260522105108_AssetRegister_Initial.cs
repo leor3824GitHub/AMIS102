@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -22,9 +22,7 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    Version = table.Column<byte[]>(type: "bytea", rowVersion: true, nullable: false),
                     PropertyNo = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
-                    ItemId = table.Column<Guid>(type: "uuid", nullable: false),
                     AssetType = table.Column<int>(type: "integer", nullable: false),
                     Category = table.Column<int>(type: "integer", nullable: false),
                     PropertyClass = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
@@ -51,7 +49,8 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                     CreatedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     CreatedBy = table.Column<string>(type: "text", nullable: true),
                     LastModifiedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    LastModifiedBy = table.Column<string>(type: "text", nullable: true)
+                    LastModifiedBy = table.Column<string>(type: "text", nullable: true),
+                    xmin = table.Column<uint>(type: "xid", rowVersion: true, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -65,7 +64,6 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    Version = table.Column<byte[]>(type: "bytea", rowVersion: true, nullable: false),
                     Code = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
                     Scope = table.Column<int>(type: "integer", nullable: false),
                     Status = table.Column<int>(type: "integer", nullable: false),
@@ -83,11 +81,35 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                     CreatedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     CreatedBy = table.Column<string>(type: "text", nullable: true),
                     LastModifiedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    LastModifiedBy = table.Column<string>(type: "text", nullable: true)
+                    LastModifiedBy = table.Column<string>(type: "text", nullable: true),
+                    xmin = table.Column<uint>(type: "xid", rowVersion: true, nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_PhysicalCountSessions", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "PPERRFormSeries",
+                schema: "asset_register",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    Label = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    StartSerial = table.Column<int>(type: "integer", nullable: false),
+                    EndSerial = table.Column<int>(type: "integer", nullable: false),
+                    NextSerial = table.Column<int>(type: "integer", nullable: false),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    CreatedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    LastModifiedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    LastModifiedBy = table.Column<string>(type: "text", nullable: true),
+                    xmin = table.Column<uint>(type: "xid", rowVersion: true, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PPERRFormSeries", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -97,7 +119,6 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    Version = table.Column<byte[]>(type: "bytea", rowVersion: true, nullable: false),
                     DocumentNo = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
                     AccountabilityType = table.Column<int>(type: "integer", nullable: false),
                     FundCluster = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
@@ -116,7 +137,8 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                     CreatedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     CreatedBy = table.Column<string>(type: "text", nullable: true),
                     LastModifiedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    LastModifiedBy = table.Column<string>(type: "text", nullable: true)
+                    LastModifiedBy = table.Column<string>(type: "text", nullable: true),
+                    xmin = table.Column<uint>(type: "xid", rowVersion: true, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -134,7 +156,7 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                     Month = table.Column<int>(type: "integer", nullable: false),
                     CounterKey = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
                     LastSerial = table.Column<int>(type: "integer", nullable: false),
-                    RowVersion = table.Column<byte[]>(type: "bytea", rowVersion: true, nullable: false)
+                    xmin = table.Column<uint>(type: "xid", rowVersion: true, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -148,7 +170,6 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    Version = table.Column<byte[]>(type: "bytea", rowVersion: true, nullable: false),
                     IncidentNo = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
                     IncidentType = table.Column<int>(type: "integer", nullable: false),
                     IncidentDate = table.Column<DateOnly>(type: "date", nullable: false),
@@ -184,7 +205,8 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                     CreatedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     CreatedBy = table.Column<string>(type: "text", nullable: true),
                     LastModifiedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    LastModifiedBy = table.Column<string>(type: "text", nullable: true)
+                    LastModifiedBy = table.Column<string>(type: "text", nullable: true),
+                    xmin = table.Column<uint>(type: "xid", rowVersion: true, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -198,7 +220,6 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    Version = table.Column<byte[]>(type: "bytea", rowVersion: true, nullable: false),
                     ReportNo = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
                     ReportType = table.Column<int>(type: "integer", nullable: false),
                     FundCluster = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
@@ -218,7 +239,8 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                     CreatedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     CreatedBy = table.Column<string>(type: "text", nullable: true),
                     LastModifiedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    LastModifiedBy = table.Column<string>(type: "text", nullable: true)
+                    LastModifiedBy = table.Column<string>(type: "text", nullable: true),
+                    xmin = table.Column<uint>(type: "xid", rowVersion: true, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -246,11 +268,45 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                     LastModifiedBy = table.Column<string>(type: "text", nullable: true),
                     DeletedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     DeletedBy = table.Column<string>(type: "text", nullable: true),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false)
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
+                    xmin = table.Column<uint>(type: "xid", rowVersion: true, nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_PropertyItemCatalog", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ReceivingReports",
+                schema: "asset_register",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    DocumentKind = table.Column<int>(type: "integer", nullable: false),
+                    ReportNo = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    Date = table.Column<DateOnly>(type: "date", nullable: false),
+                    ReceivedFrom = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Address = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    ReceiptType = table.Column<int>(type: "integer", nullable: false),
+                    OtherReceiptType = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    FundCluster = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
+                    ReceivedBy_EmployeeId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ReceivedBy_PrintedName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    ReceivedBy_Designation = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    NotedBy_EmployeeId = table.Column<Guid>(type: "uuid", nullable: true),
+                    NotedBy_PrintedName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    NotedBy_Designation = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    DateReceived = table.Column<DateOnly>(type: "date", nullable: true),
+                    CreatedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    LastModifiedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    LastModifiedBy = table.Column<string>(type: "text", nullable: true),
+                    xmin = table.Column<uint>(type: "xid", rowVersion: true, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ReceivingReports", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -260,7 +316,6 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    Version = table.Column<byte[]>(type: "bytea", rowVersion: true, nullable: false),
                     ReportNo = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
                     ReportType = table.Column<int>(type: "integer", nullable: false),
                     AsAt = table.Column<DateOnly>(type: "date", nullable: false),
@@ -284,7 +339,8 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                     CreatedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     CreatedBy = table.Column<string>(type: "text", nullable: true),
                     LastModifiedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    LastModifiedBy = table.Column<string>(type: "text", nullable: true)
+                    LastModifiedBy = table.Column<string>(type: "text", nullable: true),
+                    xmin = table.Column<uint>(type: "xid", rowVersion: true, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -297,6 +353,7 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     SessionId = table.Column<Guid>(type: "uuid", nullable: false),
                     AssetRegistryId = table.Column<Guid>(type: "uuid", nullable: true),
                     Snapshot_PropertyNo = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: true),
@@ -366,6 +423,7 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     AccountabilityId = table.Column<Guid>(type: "uuid", nullable: false),
                     AssetRegistryId = table.Column<Guid>(type: "uuid", nullable: false),
                     Snapshot_PropertyNo = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
@@ -411,6 +469,7 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     ReportId = table.Column<Guid>(type: "uuid", nullable: false),
                     AssetRegistryId = table.Column<Guid>(type: "uuid", nullable: false),
                     Snapshot_PropertyNo = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
@@ -448,6 +507,7 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     ReportId = table.Column<Guid>(type: "uuid", nullable: false),
                     AccountabilityId = table.Column<Guid>(type: "uuid", nullable: false),
                     AccountabilityLineId = table.Column<Guid>(type: "uuid", nullable: false),
@@ -481,11 +541,43 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                 });
 
             migrationBuilder.CreateTable(
+                name: "ReceivingReportItems",
+                schema: "asset_register",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    ReportId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CatalogItemId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Reference = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
+                    PropertyNo = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    Description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    AcquisitionDate = table.Column<DateOnly>(type: "date", nullable: false),
+                    Quantity = table.Column<int>(type: "integer", nullable: false),
+                    UnitCost = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
+                    SerialNo = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    Brand = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    Model = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ReceivingReportItems", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ReceivingReportItems_ReceivingReports_ReportId",
+                        column: x => x.ReportId,
+                        principalSchema: "asset_register",
+                        principalTable: "ReceivingReports",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "UnserviceablePropertyItems",
                 schema: "asset_register",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     ReportId = table.Column<Guid>(type: "uuid", nullable: false),
                     AssetRegistryId = table.Column<Guid>(type: "uuid", nullable: false),
                     Snapshot_PropertyNo = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
@@ -530,12 +622,6 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                 columns: new[] { "TenantId", "CurrentCustodianId" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_AssetRegistries_TenantId_ItemId",
-                schema: "asset_register",
-                table: "AssetRegistries",
-                columns: new[] { "TenantId", "ItemId" });
-
-            migrationBuilder.CreateIndex(
                 name: "IX_AssetRegistries_TenantId_LifecycleState",
                 schema: "asset_register",
                 table: "AssetRegistries",
@@ -572,6 +658,12 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                 schema: "asset_register",
                 table: "PhysicalCountSessions",
                 columns: new[] { "TenantId", "Status" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PPERRFormSeries_TenantId_IsActive",
+                schema: "asset_register",
+                table: "PPERRFormSeries",
+                columns: new[] { "TenantId", "IsActive" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_PropertyAccountabilities_TenantId_DocumentNo",
@@ -675,6 +767,31 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_ReceivingReportItems_CatalogItemId",
+                schema: "asset_register",
+                table: "ReceivingReportItems",
+                column: "CatalogItemId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ReceivingReportItems_ReportId",
+                schema: "asset_register",
+                table: "ReceivingReportItems",
+                column: "ReportId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ReceivingReports_TenantId_DocumentKind_Date",
+                schema: "asset_register",
+                table: "ReceivingReports",
+                columns: new[] { "TenantId", "DocumentKind", "Date" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ReceivingReports_TenantId_ReportNo",
+                schema: "asset_register",
+                table: "ReceivingReports",
+                columns: new[] { "TenantId", "ReportNo" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_UnserviceablePropertyItems_AssetRegistryId",
                 schema: "asset_register",
                 table: "UnserviceablePropertyItems",
@@ -716,6 +833,10 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                 schema: "asset_register");
 
             migrationBuilder.DropTable(
+                name: "PPERRFormSeries",
+                schema: "asset_register");
+
+            migrationBuilder.DropTable(
                 name: "PropertyAccountabilityLines",
                 schema: "asset_register");
 
@@ -733,6 +854,10 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
 
             migrationBuilder.DropTable(
                 name: "PropertyItemCatalog",
+                schema: "asset_register");
+
+            migrationBuilder.DropTable(
+                name: "ReceivingReportItems",
                 schema: "asset_register");
 
             migrationBuilder.DropTable(
@@ -756,9 +881,12 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                 schema: "asset_register");
 
             migrationBuilder.DropTable(
+                name: "ReceivingReports",
+                schema: "asset_register");
+
+            migrationBuilder.DropTable(
                 name: "UnserviceablePropertyReports",
                 schema: "asset_register");
         }
     }
 }
-

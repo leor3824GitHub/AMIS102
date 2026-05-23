@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace AMIS.Playground.Migrations.PostgreSQL.MasterData
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class MasterData_Initial : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -150,6 +150,18 @@ namespace AMIS.Playground.Migrations.PostgreSQL.MasterData
                     Address = table.Column<string>(type: "character varying(400)", maxLength: 400, nullable: true),
                     LogoUrl = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     AnnexECode = table.Column<string>(type: "character varying(8)", maxLength: 8, nullable: true),
+                    RegionalManagerId = table.Column<Guid>(type: "uuid", nullable: true),
+                    RegionalManagerName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    RegionalManagerDesignation = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    AssistantRegionalManagerId = table.Column<Guid>(type: "uuid", nullable: true),
+                    AssistantRegionalManagerName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    AssistantRegionalManagerDesignation = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    AccountantId = table.Column<Guid>(type: "uuid", nullable: true),
+                    AccountantName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    AccountantDesignation = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    SupervisingAdminOfficerId = table.Column<Guid>(type: "uuid", nullable: true),
+                    SupervisingAdminOfficerName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    SupervisingAdminOfficerDesignation = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     Version = table.Column<byte[]>(type: "bytea", nullable: false),
                     CreatedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     CreatedBy = table.Column<string>(type: "text", nullable: true),
@@ -659,4 +671,3 @@ namespace AMIS.Playground.Migrations.PostgreSQL.MasterData
         }
     }
 }
-

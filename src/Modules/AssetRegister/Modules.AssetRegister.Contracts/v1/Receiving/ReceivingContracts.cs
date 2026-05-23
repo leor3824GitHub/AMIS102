@@ -109,12 +109,21 @@ public sealed record PPERRFormSeriesDto(
     int NextSerial,
     int Remaining,
     bool IsActive,
-    bool IsExhausted);
+    bool IsExhausted,
+    bool IsUnused);
 
 public sealed record CreatePPERRFormSeriesCommand(
     string Label,
     int StartSerial,
     int EndSerial) : ICommand<PPERRFormSeriesDto>;
+
+public sealed record UpdatePPERRFormSeriesCommand(
+    Guid Id,
+    string Label,
+    int StartSerial,
+    int EndSerial) : ICommand<PPERRFormSeriesDto>;
+
+public sealed record DeletePPERRFormSeriesCommand(Guid Id) : ICommand<Unit>;
 
 public sealed record ActivatePPERRFormSeriesCommand(Guid Id) : ICommand<PPERRFormSeriesDto>;
 

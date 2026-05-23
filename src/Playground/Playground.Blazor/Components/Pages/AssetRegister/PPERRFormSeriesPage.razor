@@ -12,7 +12,7 @@
         <MudCard Elevation="1">
             <MudCardHeader>
                 <CardHeaderContent>
-                    <MudText Typo="Typo.subtitle1">Register New Series</MudText>
+                    <MudText Typo="Typo.subtitle1">@(_editingId is null ? "Register New Series" : "Edit Series")</MudText>
                 </CardHeaderContent>
             </MudCardHeader>
             <MudCardContent>
@@ -27,12 +27,27 @@
                     <MudItem xs="6" md="2">
                         <MudNumericField @bind-Value="_endSerial" Label="End No." Variant="Variant.Outlined" Min="1" />
                     </MudItem>
-                    <MudItem xs="12" md="2" Class="d-flex align-end">
-                        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
-                                   StartIcon="@Icons.Material.Outlined.Add"
-                                   OnClick="CreateAsync" Disabled="_busy">
-                            Add Series
-                        </MudButton>
+                    <MudItem xs="12" md="4" Class="d-flex align-end gap-2">
+                        @if (_editingId is null)
+                        {
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                                       StartIcon="@Icons.Material.Outlined.Add"
+                                       OnClick="CreateAsync" Disabled="_busy">
+                                Add Series
+                            </MudButton>
+                        }
+                        else
+                        {
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                                       StartIcon="@Icons.Material.Outlined.Save"
+                                       OnClick="SaveEditAsync" Disabled="_busy">
+                                Save
+                            </MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Default"
+                                       OnClick="CancelEdit" Disabled="_busy">
+                                Cancel
+                            </MudButton>
+                        }
                     </MudItem>
                 </MudGrid>
             </MudCardContent>
@@ -88,20 +103,33 @@
                                         }
                                     </td>
                                     <td>
-                                        @if (!s.IsActive && !s.IsExhausted)
-                                        {
-                                            <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Success"
-                                                       OnClick="@(() => ActivateAsync(s.Id))">
-                                                Set Active
-                                            </MudButton>
-                                        }
-                                        else if (s.IsActive)
-                                        {
-                                            <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Default"
-                                                       OnClick="@(() => DeactivateAsync(s.Id))">
-                                                Deactivate
-                                            </MudButton>
-                                        }
+                                        <div class="d-flex gap-1 flex-wrap">
+                                            @if (!s.IsActive && !s.IsExhausted)
+                                            {
+                                                <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Success"
+                                                           OnClick="@(() => ActivateAsync(s.Id))" Disabled="_busy">
+                                                    Set Active
+                                                </MudButton>
+                                            }
+                                            else if (s.IsActive)
+                                            {
+                                                <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Default"
+                                                           OnClick="@(() => DeactivateAsync(s.Id))" Disabled="_busy">
+                                                    Deactivate
+                                                </MudButton>
+                                            }
+                                            @if (s.IsUnused)
+                                            {
+                                                <MudIconButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary"
+                                                               Icon="@Icons.Material.Outlined.Edit"
+                                                               OnClick="@(() => BeginEdit(s))" Disabled="_busy"
+                                                               title="Edit" />
+                                                <MudIconButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Error"
+                                                               Icon="@Icons.Material.Outlined.Delete"
+                                                               OnClick="@(() => DeleteAsync(s))" Disabled="_busy"
+                                                               title="Delete" />
+                                            }
+                                        </div>
                                     </td>
                                 </tr>
                             }
@@ -120,6 +148,7 @@
     private string _label = "";
     private int _startSerial = 1;
     private int _endSerial = 100;
+    private Guid? _editingId;
     private int _page = 1;
     private const int PageSize = 20;
     private int _totalCount;
@@ -151,11 +180,67 @@
         {
             await Client.CreateSeriesAsync(new CreateArPPERRFormSeriesRequest(_label, _startSerial, _endSerial));
             Snackbar.Add("Series registered.", Severity.Success);
-            _label = ""; _startSerial = 1; _endSerial = 100;
+            ResetForm();
             await LoadAsync();
         }
         catch (Exception ex) { Snackbar.Add($"Failed: {ex.Message}", Severity.Error); }
         finally { _busy = false; }
+    }
+
+    private void BeginEdit(ArPPERRFormSeriesDto s)
+    {
+        _editingId = s.Id;
+        _label = s.Label;
+        _startSerial = s.StartSerial;
+        _endSerial = s.EndSerial;
+    }
+
+    private void CancelEdit() => ResetForm();
+
+    private async Task SaveEditAsync()
+    {
+        if (_editingId is null) return;
+        if (string.IsNullOrWhiteSpace(_label)) { Snackbar.Add("Label is required.", Severity.Warning); return; }
+        if (_endSerial < _startSerial) { Snackbar.Add("End No. must be ≥ Start No.", Severity.Warning); return; }
+
+        _busy = true;
+        try
+        {
+            await Client.UpdateSeriesAsync(_editingId.Value,
+                new UpdateArPPERRFormSeriesRequest(_label, _startSerial, _endSerial));
+            Snackbar.Add("Series updated.", Severity.Success);
+            ResetForm();
+            await LoadAsync();
+        }
+        catch (Exception ex) { Snackbar.Add($"Failed: {ex.Message}", Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    private async Task DeleteAsync(ArPPERRFormSeriesDto s)
+    {
+        var ok = await DialogService.ShowMessageBox(
+            "Delete?", $"Delete series '{s.Label}' (range {s.StartSerial}–{s.EndSerial})?",
+            yesText: "Delete", cancelText: "Cancel");
+        if (ok != true) return;
+
+        _busy = true;
+        try
+        {
+            await Client.DeleteSeriesAsync(s.Id);
+            Snackbar.Add("Series deleted.", Severity.Success);
+            if (_editingId == s.Id) ResetForm();
+            await LoadAsync();
+        }
+        catch (Exception ex) { Snackbar.Add($"Failed: {ex.Message}", Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    private void ResetForm()
+    {
+        _editingId = null;
+        _label = "";
+        _startSerial = 1;
+        _endSerial = 100;
     }
 
     private async Task ActivateAsync(Guid id)

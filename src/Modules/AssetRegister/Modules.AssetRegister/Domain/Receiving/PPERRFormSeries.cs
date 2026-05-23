@@ -29,6 +29,9 @@ public sealed class PPERRFormSeries : AggregateRoot<Guid>, IHasTenant, IAuditabl
 
     public int Remaining => IsExhausted ? 0 : EndSerial - NextSerial + 1;
 
+    /// <summary>True when no PPERR number has yet been allocated from this series — safe to edit or delete.</summary>
+    public bool IsUnused => NextSerial == StartSerial;
+
     public DateTimeOffset CreatedOnUtc { get; set; } = DateTimeOffset.UtcNow;
     public string? CreatedBy { get; set; }
     public DateTimeOffset? LastModifiedOnUtc { get; set; }
@@ -57,6 +60,30 @@ public sealed class PPERRFormSeries : AggregateRoot<Guid>, IHasTenant, IAuditabl
             IsActive = false,
             CreatedOnUtc = DateTimeOffset.UtcNow
         };
+    }
+
+    /// <summary>
+    /// Update the descriptive label and serial range. Only allowed while the series is unused
+    /// (no PPERR numbers have been allocated). Range changes after allocation would invalidate
+    /// already-issued report numbers.
+    /// </summary>
+    public void UpdateRange(string label, int startSerial, int endSerial)
+    {
+        if (!IsUnused)
+            throw new InvalidOperationException(
+                $"Series '{Label}' has already issued PPERR numbers and cannot be edited.");
+        if (string.IsNullOrWhiteSpace(label))
+            throw new InvalidOperationException("Series label is required.");
+        if (startSerial <= 0)
+            throw new InvalidOperationException("Start serial must be greater than zero.");
+        if (endSerial < startSerial)
+            throw new InvalidOperationException("End serial must be greater than or equal to start serial.");
+
+        Label = label;
+        StartSerial = startSerial;
+        EndSerial = endSerial;
+        NextSerial = startSerial;
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;
     }
 
     public void Activate()

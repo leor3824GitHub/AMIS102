@@ -1,9 +1,12 @@
 @page "/asset-register/issuance"
 @using AMIS.Playground.Blazor.ApiClient
+@using AMIS.Playground.Blazor.Components.Pages.Procurement
 @using IssuanceReportType = AMIS.Modules.AssetRegister.Contracts.v1.IssuanceReportType
 @using IssuanceReportStatus = AMIS.Modules.AssetRegister.Contracts.v1.IssuanceReportStatus
 @inject IArIssuanceReportClient Client
 @inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject IJSRuntime JS
 
 <AMISPageHeader Title="Property Issuance Reports (SMIR / PPEIR)"
                Description="Manage Semi-Expendable Issuance Records (SMIR) and PPE Issuance Reports (PPEIR) per COA 2022-004." />
@@ -111,6 +114,7 @@
                             <MudTh>Period</MudTh>
                             <MudTh Style="text-align:right">Lines</MudTh>
                             <MudTh Style="text-align:right">Total Amount (?)</MudTh>
+                            <MudTh Style="text-align:center">Actions</MudTh>
                         </HeaderContent>
                         <RowTemplate>
                             <MudTd><strong>@context.ReportNo</strong></MudTd>
@@ -131,6 +135,28 @@
                             <MudTd>@context.PeriodFromDate.ToString("yyyy-MM-dd") — @context.PeriodToDate.ToString("yyyy-MM-dd")</MudTd>
                             <MudTd Style="text-align:right">@context.LineCount</MudTd>
                             <MudTd Style="text-align:right">@context.TotalAmount.ToString("N2")</MudTd>
+                            <MudTd Style="text-align:center" @onclick:stopPropagation="true">
+                                @if (context.ReportType == IssuanceReportType.PPEIR)
+                                {
+                                    <MudMenu Icon="@Icons.Material.Filled.Print"
+                                             Color="Color.Secondary"
+                                             Size="Size.Small"
+                                             Dense="true"
+                                             AnchorOrigin="Origin.BottomLeft"
+                                             TransformOrigin="Origin.TopLeft"
+                                             ToolTip="Print PPEIR">
+                                        <MudMenuItem Icon="@Icons.Material.Filled.PictureAsPdf"
+                                                     OnClick="@(() => DownloadFastReportPdfAsync(context.Id))">
+                                            Download PDF
+                                        </MudMenuItem>
+                                        <MudDivider />
+                                        <MudMenuItem Icon="@Icons.Material.Filled.Settings"
+                                                     OnClick="@(() => OpenFastReportSetupAsync(context.Id))">
+                                            Fast Report – Page Setup…
+                                        </MudMenuItem>
+                                    </MudMenu>
+                                }
+                            </MudTd>
                         </RowTemplate>
                         <NoRecordsContent>
                             <MudText Color="Color.Secondary">No issuance reports found.</MudText>
@@ -437,6 +463,49 @@
     private async Task OnSearchKeyDown(KeyboardEventArgs e)
     {
         if (e.Key == "Enter") { _page = 1; await LoadAsync(); }
+    }
+
+    private async Task DownloadFastReportPdfAsync(Guid id)
+    {
+        try
+        {
+            var bytes = await Client.GetFastReportPdfAsync(id, pageWidth: "longbond", orientation: "portrait");
+            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
+            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            Snackbar.Add("PDF ready.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"PDF generation failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task OpenFastReportSetupAsync(Guid id)
+    {
+        var parameters = new DialogParameters
+        {
+            [nameof(FastReportPageSetupDialog.PaperSize)] = "longbond",
+            [nameof(FastReportPageSetupDialog.Orientation)] = "portrait",
+            [nameof(FastReportPageSetupDialog.Copies)] = 1,
+            [nameof(FastReportPageSetupDialog.MinRows)] = 12
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.ExtraSmall, FullWidth = false, CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<FastReportPageSetupDialog>("Page Setup", parameters, options);
+        var result = await dialog.Result;
+        if (result is null || result.Canceled) return;
+        if (result.Data is not FastReportPageSetupDialog.Result r) return;
+
+        try
+        {
+            var bytes = await Client.GetFastReportPdfAsync(id, pageWidth: r.PaperSize, orientation: r.Orientation, minRows: r.MinRows);
+            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
+            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            Snackbar.Add("PDF ready.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fast report failed: {ex.Message}", Severity.Error);
+        }
     }
 }
 
