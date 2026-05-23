@@ -1,11 +1,13 @@
 @page "/procurement/purchase-requests"
 @using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests
+@using AMIS.Modules.AssetRegister.Contracts.v1.Catalog
 @using AMIS.Framework.Shared.Persistence
 @using AMIS.Playground.Blazor.ApiClient
 @using AMIS.Playground.Blazor.Components.Shared
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Components.Authorization
 @inject IPurchaseRequestClient Client
+@inject IArCatalogClient CatalogClient
 @inject ILookupClient LookupClient
 @inject IMaster_dataClient MasterDataClient
 @inject ISnackbar Snackbar
@@ -82,12 +84,53 @@
                             </MudStack>
                             <MudGrid Spacing="1">
                                 <MudItem xs="12">
-                                    <MudTextField @bind-Value="li.ItemDescription"
-                                                  Label="Description *"
-                                                  Variant="Variant.Outlined"
-                                                  Dense="true"
-                                                  Error="@(_submitted && string.IsNullOrWhiteSpace(li.ItemDescription))"
-                                                  ErrorText="Description is required." />
+                                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                        <MudAutocomplete T="ArCatalogItemDto"
+                                                         Value="li.SelectedCatalog"
+                                                         ValueChanged="@(c => OnCatalogSelected(idx, c))"
+                                                         Text="@li.ItemDescription"
+                                                         TextChanged="@(t => OnDescriptionChanged(idx, t))"
+                                                         SearchFunc="SearchCatalogAsync"
+                                                         ToStringFunc="@(c => c?.Description ?? string.Empty)"
+                                                         Label="Description *"
+                                                         Variant="Variant.Outlined"
+                                                         Dense="true"
+                                                         Margin="Margin.Dense"
+                                                         CoerceValue="false"
+                                                         CoerceText="false"
+                                                         ResetValueOnEmptyText="false"
+                                                         MinCharacters="0"
+                                                         Clearable="true"
+                                                         Error="@(_submitted && string.IsNullOrWhiteSpace(li.ItemDescription))"
+                                                         ErrorText="Description is required."
+                                                         Class="flex-grow-1" />
+                                        <MudTooltip Text="Create a new catalog item from this description">
+                                            <MudIconButton Icon="@Icons.Material.Filled.AddCircleOutline"
+                                                           Color="Color.Primary"
+                                                           Size="Size.Small"
+                                                           OnClick="@(async () => await OpenCreateCatalogAsync(idx))" />
+                                        </MudTooltip>
+                                    </MudStack>
+                                    @if (li.SelectedCatalog is not null)
+                                    {
+                                        <MudStack Row="true" Spacing="1" Class="mt-1">
+                                            <MudChip T="string" Size="Size.Small" Color="Color.Info" Icon="@Icons.Material.Filled.Inventory2">
+                                                @li.SelectedCatalog.Code
+                                            </MudChip>
+                                            @if (li.SelectedCatalog.Status == CatalogItemStatus.Draft)
+                                            {
+                                                <MudChip T="string" Size="Size.Small" Color="Color.Warning" Icon="@Icons.Material.Filled.HourglassEmpty">
+                                                    Draft — UACS pending
+                                                </MudChip>
+                                            }
+                                            else if (!string.IsNullOrWhiteSpace(li.SelectedCatalog.UacsObjectCode))
+                                            {
+                                                <MudChip T="string" Size="Size.Small" Color="Color.Success" Icon="@Icons.Material.Filled.AccountBalance">
+                                                    UACS @li.SelectedCatalog.UacsObjectCode
+                                                </MudChip>
+                                            }
+                                        </MudStack>
+                                    }
                                 </MudItem>
                                 <MudItem xs="4">
                                     <MudNumericField @bind-Value="li.Quantity" Label="Qty" Variant="Variant.Outlined" Dense="true" Min="0.01m" />
@@ -389,7 +432,9 @@
         try
         {
             var lineItems = _form.LineItems
-                .Select(li => new CreatePurchaseRequestLineItemRequest(li.Quantity, li.UnitOfIssue, li.ItemDescription, li.EstimatedUnitCost))
+                .Select(li => new CreatePurchaseRequestLineItemRequest(
+                    li.Quantity, li.UnitOfIssue, li.ItemDescription, li.EstimatedUnitCost,
+                    li.SelectedCatalog?.Id))
                 .ToList();
 
             if (_editing is null)
@@ -452,6 +497,21 @@
                 EstimatedUnitCost = li.EstimatedUnitCost
             }).ToList()
         };
+
+        // Hydrate SelectedCatalog for each line that references a catalog item.
+        for (var i = 0; i < pr.LineItems.Count; i++)
+        {
+            var src = pr.LineItems[i];
+            if (src.CatalogItemId is not null && src.CatalogItemId != Guid.Empty)
+            {
+                try
+                {
+                    var c = await CatalogClient.GetAsync(src.CatalogItemId.Value);
+                    if (c is not null) _form.LineItems[i].SelectedCatalog = c;
+                }
+                catch { /* leave catalog link blank; user can re-attach */ }
+            }
+        }
     }
 
     private async Task ShowDetailsAsync(Guid id)
@@ -636,6 +696,60 @@
     private void CancelEdit() { _editing = null; _submitted = false; _form = new(); }
     private void ResetForm() { _editing = null; _submitted = false; _form = new(); }
 
+    private async Task<IEnumerable<ArCatalogItemDto>> SearchCatalogAsync(string value, CancellationToken ct)
+    {
+        try
+        {
+            var page = await CatalogClient.SearchAsync(keyword: value, isActive: true, page: 1, pageSize: 30, ct: ct);
+            return page.Items ?? [];
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    private void OnCatalogSelected(int idx, ArCatalogItemDto? c)
+    {
+        var li = _form.LineItems[idx];
+        li.SelectedCatalog = c;
+        if (c is not null)
+        {
+            // Auto-fill description and unit so the user doesn't have to retype them.
+            li.ItemDescription = c.Description;
+            if (string.IsNullOrWhiteSpace(li.UnitOfIssue) || li.UnitOfIssue == "pc")
+                li.UnitOfIssue = c.DefaultUnit;
+        }
+    }
+
+    private void OnDescriptionChanged(int idx, string? text)
+    {
+        var li = _form.LineItems[idx];
+        li.ItemDescription = text ?? string.Empty;
+        // If the user edits the text away from the selected catalog's description, break the link.
+        if (li.SelectedCatalog is not null &&
+            !string.Equals(li.SelectedCatalog.Description, li.ItemDescription, StringComparison.OrdinalIgnoreCase))
+        {
+            li.SelectedCatalog = null;
+        }
+    }
+
+    private async Task OpenCreateCatalogAsync(int idx)
+    {
+        var li = _form.LineItems[idx];
+        var parameters = new DialogParameters<CreateCatalogItemDialog>
+        {
+            { x => x.InitialDescription, li.ItemDescription }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true };
+        var dialog = await DialogService.ShowAsync<CreateCatalogItemDialog>("Create Catalog Item", parameters, options);
+        var result = await dialog.Result;
+        if (result is null || result.Canceled || result.Data is not ArCatalogItemDto created)
+            return;
+
+        OnCatalogSelected(idx, created);
+    }
+
     private bool IsFormValid() =>
         _form.Department is not null &&
         !string.IsNullOrWhiteSpace(_form.Purpose) &&
@@ -691,5 +805,7 @@
         public string UnitOfIssue { get; set; } = "pc";
         public string ItemDescription { get; set; } = string.Empty;
         public decimal EstimatedUnitCost { get; set; }
+        /// <summary>Optional link to a PropertyItemCatalog row in AssetRegister. Null for free-text-only lines.</summary>
+        public ArCatalogItemDto? SelectedCatalog { get; set; }
     }
 }

@@ -1,4 +1,5 @@
 using AMIS.Framework.Core.Context;
+using AMIS.Framework.Eventing.Abstractions;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
 using AMIS.Modules.ProcurementAcquisition.Data;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.CreatePurchaseRequest;
@@ -9,7 +10,8 @@ namespace AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.Certi
 
 public sealed class CertifyFundsAvailableCommandHandler(
     ProcurementDbContext dbContext,
-    ICurrentUser currentUser) : ICommandHandler<CertifyFundsAvailableCommand, PurchaseRequestDto>
+    ICurrentUser currentUser,
+    IEventBus eventBus) : ICommandHandler<CertifyFundsAvailableCommand, PurchaseRequestDto>
 {
     public async ValueTask<PurchaseRequestDto> Handle(CertifyFundsAvailableCommand command, CancellationToken cancellationToken)
     {
@@ -33,6 +35,26 @@ public sealed class CertifyFundsAvailableCommandHandler(
         pr.LastModifiedBy = accountantId.ToString();
 
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+        // Publish UACS-certified event for lines that reference a catalog item — AssetRegister consumes this
+        // to back-fill UACS on Draft catalog rows. Lines with no CatalogItemId are skipped (free-text PRs).
+        var lines = pr.LineItems
+            .Where(li => li.CatalogItemId is not null && li.CatalogItemId != Guid.Empty
+                         && !string.IsNullOrWhiteSpace(li.UacsObjectCode))
+            .Select(li => new PurchaseRequestUacsCertifiedEventLine(li.ItemNo, li.CatalogItemId!.Value, li.UacsObjectCode!))
+            .ToList();
+
+        if (lines.Count > 0)
+        {
+            var integrationEvent = new PurchaseRequestUacsCertifiedEvent(
+                PurchaseRequestId: pr.Id,
+                PrNumber: pr.PrNumber,
+                Lines: lines,
+                TenantId: dbContext.TenantInfo?.Identifier);
+
+            await eventBus.PublishAsync(integrationEvent, cancellationToken).ConfigureAwait(false);
+        }
+
         return CreatePurchaseRequestCommandHandler.MapToDto(pr);
     }
 }

@@ -14,7 +14,7 @@ public sealed class GetPropertyItemCatalogQueryHandler(AssetRegisterDbContext db
             .Where(x => x.Id == query.Id)
             .Select(x => new PropertyItemCatalogDto(
                 x.Id, x.Code, x.Description, x.DefaultPropertyClass, x.DefaultCategoryCode,
-                x.DefaultUnit, x.UacsObjectCode, x.EstimatedUsefulLifeYears, x.IsActive))
+                x.DefaultUnit, x.UacsObjectCode, x.EstimatedUsefulLifeYears, x.IsActive, x.Status))
             .FirstOrDefaultAsync(ct).ConfigureAwait(false);
 }
 

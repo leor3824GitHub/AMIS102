@@ -33,7 +33,7 @@ public sealed class CreatePurchaseRequestCommandHandler(
             var prNumber = $"{now.Year:D4}-{now.Month:D2}-{serial:D4}";
 
             var lineItems = command.LineItems.Select(li =>
-                (li.Quantity, li.UnitOfIssue, li.ItemDescription, li.EstimatedUnitCost));
+                new PurchaseRequestLineItemData(li.Quantity, li.UnitOfIssue, li.ItemDescription, li.EstimatedUnitCost, li.CatalogItemId));
 
             var pr = PurchaseRequest.Create(
                 tenantId,
@@ -95,7 +95,7 @@ public sealed class CreatePurchaseRequestCommandHandler(
             pr.ApprovedByName,
             pr.LineItems.Select(li => new PurchaseRequestLineItemDto(
                 li.ItemNo, li.Quantity, li.UnitOfIssue, li.ItemDescription,
-                li.EstimatedUnitCost, li.EstimatedTotalCost, li.UacsObjectCode)).ToList(),
+                li.EstimatedUnitCost, li.EstimatedTotalCost, li.UacsObjectCode, li.CatalogItemId)).ToList(),
             pr.CreatedOnUtc,
             pr.CreatedBy,
             pr.LastModifiedOnUtc,

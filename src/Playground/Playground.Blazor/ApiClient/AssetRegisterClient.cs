@@ -10,6 +10,7 @@ using System.Text.Json.Serialization;
 // C# name-resolution rules. Each conflicting type is fully-qualified at the
 // point of use below. Non-conflicting types come in via the namespace import.
 using AMIS.Modules.AssetRegister.Contracts.v1;
+using AMIS.Modules.AssetRegister.Contracts.v1.Catalog;
 using ArContracts = AMIS.Modules.AssetRegister.Contracts.v1;
 
 namespace AMIS.Playground.Blazor.ApiClient;
@@ -168,7 +169,8 @@ internal sealed record ArCatalogItemDto(
     string DefaultUnit,
     string? UacsObjectCode,
     int EstimatedUsefulLifeYears,
-    bool IsActive);
+    bool IsActive,
+    CatalogItemStatus Status = CatalogItemStatus.Ready);
 
 internal sealed record CreateArCatalogItemRequest(
     string Code,

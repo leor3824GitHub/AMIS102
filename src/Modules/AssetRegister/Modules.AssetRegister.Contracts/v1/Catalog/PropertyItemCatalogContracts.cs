@@ -3,6 +3,17 @@ using Mediator;
 
 namespace AMIS.Modules.AssetRegister.Contracts.v1.Catalog;
 
+/// <summary>
+/// Lifecycle status for a <c>PropertyItemCatalog</c> row.
+/// Items created inline from a PR start as <see cref="Draft"/> (no UACS yet);
+/// an Accountant's "Funds Available" certification back-fills UACS and promotes the row to <see cref="Ready"/>.
+/// </summary>
+public enum CatalogItemStatus
+{
+    Draft = 0,
+    Ready = 1
+}
+
 public sealed record PropertyItemCatalogDto(
     Guid Id,
     string Code,
@@ -12,7 +23,8 @@ public sealed record PropertyItemCatalogDto(
     string DefaultUnit,
     string? UacsObjectCode,
     int EstimatedUsefulLifeYears,
-    bool IsActive);
+    bool IsActive,
+    CatalogItemStatus Status = CatalogItemStatus.Ready);
 
 // ── Commands ───────────────────────────────────────────────────────────────
 

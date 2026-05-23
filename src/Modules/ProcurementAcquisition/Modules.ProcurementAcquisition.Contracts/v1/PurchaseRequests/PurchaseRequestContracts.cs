@@ -1,3 +1,4 @@
+using AMIS.Framework.Eventing.Abstractions;
 using AMIS.Framework.Shared.Persistence;
 using Mediator;
 
@@ -36,7 +37,8 @@ public sealed record PurchaseRequestLineItemDto(
     string ItemDescription,
     decimal EstimatedUnitCost,
     decimal EstimatedTotalCost,
-    string? UacsObjectCode = null);
+    string? UacsObjectCode = null,
+    Guid? CatalogItemId = null);
 
 public sealed record PurchaseRequestDto(
     Guid Id,
@@ -91,7 +93,8 @@ public sealed record CreatePurchaseRequestLineItemRequest(
     decimal Quantity,
     string UnitOfIssue,
     string ItemDescription,
-    decimal EstimatedUnitCost);
+    decimal EstimatedUnitCost,
+    Guid? CatalogItemId = null);
 
 public sealed record CreatePurchaseRequestCommand(
     Guid DepartmentId,
@@ -164,5 +167,29 @@ public sealed class SearchPurchaseRequestsQuery : IQuery<PagedResponse<PurchaseR
     public DateOnly? ToDate { get; set; }
     public int PageNumber { get; set; } = 1;
     public int PageSize { get; set; } = 10;
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Integration Events
+// ──────────────────────────────────────────────────────────────────────────────
+
+/// <summary>Per-line UACS assignment captured at PR Funds Available certification.</summary>
+public sealed record PurchaseRequestUacsCertifiedEventLine(int ItemNo, Guid CatalogItemId, string UacsObjectCode);
+
+/// <summary>
+/// Published when an Accountant certifies "Funds Available" on a PR. Carries the per-line UACS assignments
+/// for any line item that references a <c>PropertyItemCatalog</c>. The AssetRegister module consumes this event
+/// to back-fill UACS on Draft catalog rows and promote them to <c>Ready</c>.
+/// </summary>
+public sealed record PurchaseRequestUacsCertifiedEvent(
+    Guid PurchaseRequestId,
+    string PrNumber,
+    IReadOnlyList<PurchaseRequestUacsCertifiedEventLine> Lines,
+    string? TenantId,
+    string CorrelationId = "") : IIntegrationEvent
+{
+    public Guid Id { get; } = Guid.NewGuid();
+    public DateTime OccurredOnUtc { get; } = DateTime.UtcNow;
+    public string Source { get; } = "Procurement";
 }
 

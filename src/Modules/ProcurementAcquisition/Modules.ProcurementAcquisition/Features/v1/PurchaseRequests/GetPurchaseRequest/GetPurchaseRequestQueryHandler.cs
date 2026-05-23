@@ -40,7 +40,7 @@ public sealed class GetPurchaseRequestQueryHandler(ProcurementDbContext dbContex
             pr.ApprovedByName,
             pr.LineItems.Select(li => new PurchaseRequestLineItemDto(
                 li.ItemNo, li.Quantity, li.UnitOfIssue, li.ItemDescription,
-                li.EstimatedUnitCost, li.EstimatedTotalCost, li.UacsObjectCode)).ToList(),
+                li.EstimatedUnitCost, li.EstimatedTotalCost, li.UacsObjectCode, li.CatalogItemId)).ToList(),
             pr.CreatedOnUtc,
             pr.CreatedBy,
             pr.LastModifiedOnUtc,

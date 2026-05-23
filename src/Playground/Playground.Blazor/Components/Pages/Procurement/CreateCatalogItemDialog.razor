@@ -1,0 +1,152 @@
+@using AMIS.Modules.AssetRegister.Contracts.v1.Catalog
+@using AMIS.Playground.Blazor.ApiClient
+@inject IArCatalogClient CatalogClient
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudGrid Spacing="2">
+            <MudItem xs="12">
+                <MudAlert Severity="Severity.Info" Dense="true">
+                    Create a new catalog item. <b>UACS Object Code</b> is intentionally left for the Accountant to fill in during "Funds Available" certification — the row will be saved as <b>Draft</b> until then.
+                </MudAlert>
+            </MudItem>
+
+            <MudItem xs="12" md="6">
+                <MudTextField @bind-Value="_form.Code"
+                              Label="Code *"
+                              Variant="Variant.Outlined"
+                              Dense="true"
+                              Margin="Margin.Dense"
+                              MaxLength="64"
+                              Placeholder="e.g. OE-DESKTOP-001"
+                              Error="@(_submitted && string.IsNullOrWhiteSpace(_form.Code))" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudTextField @bind-Value="_form.DefaultUnit"
+                              Label="Default Unit *"
+                              Variant="Variant.Outlined"
+                              Dense="true"
+                              Margin="Margin.Dense"
+                              MaxLength="32"
+                              Placeholder="e.g. piece, set, box"
+                              Error="@(_submitted && string.IsNullOrWhiteSpace(_form.DefaultUnit))" />
+            </MudItem>
+
+            <MudItem xs="12">
+                <MudTextField @bind-Value="_form.Description"
+                              Label="Description *"
+                              Variant="Variant.Outlined"
+                              Dense="true"
+                              Margin="Margin.Dense"
+                              MaxLength="400"
+                              Lines="2"
+                              Error="@(_submitted && string.IsNullOrWhiteSpace(_form.Description))" />
+            </MudItem>
+
+            <MudItem xs="12" md="6">
+                <MudTextField @bind-Value="_form.DefaultPropertyClass"
+                              Label="Default Property Class *"
+                              Variant="Variant.Outlined"
+                              Dense="true"
+                              Margin="Margin.Dense"
+                              MaxLength="64"
+                              Placeholder="e.g. OE (Office Equipment)"
+                              Error="@(_submitted && string.IsNullOrWhiteSpace(_form.DefaultPropertyClass))" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudTextField @bind-Value="_form.DefaultCategoryCode"
+                              Label="Default Category Code *"
+                              Variant="Variant.Outlined"
+                              Dense="true"
+                              Margin="Margin.Dense"
+                              MaxLength="64"
+                              Placeholder="e.g. OEC (Computer & Accessories)"
+                              Error="@(_submitted && string.IsNullOrWhiteSpace(_form.DefaultCategoryCode))" />
+            </MudItem>
+
+            <MudItem xs="12">
+                <MudNumericField @bind-Value="_form.EstimatedUsefulLifeYears"
+                                 Label="Estimated Useful Life (years) *"
+                                 Variant="Variant.Outlined"
+                                 Dense="true"
+                                 Margin="Margin.Dense"
+                                 Min="1"
+                                 Max="100"
+                                 Error="@(_submitted && _form.EstimatedUsefulLifeYears <= 0)" />
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CreateAsync" Disabled="_busy">
+            Create Draft Catalog Item
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance Dialog { get; set; } = default!;
+    [Parameter] public string? InitialDescription { get; set; }
+
+    private readonly FormModel _form = new();
+    private bool _busy;
+    private bool _submitted;
+
+    protected override void OnInitialized()
+    {
+        if (!string.IsNullOrWhiteSpace(InitialDescription))
+            _form.Description = InitialDescription;
+    }
+
+    private async Task CreateAsync()
+    {
+        _submitted = true;
+        if (string.IsNullOrWhiteSpace(_form.Code) ||
+            string.IsNullOrWhiteSpace(_form.Description) ||
+            string.IsNullOrWhiteSpace(_form.DefaultPropertyClass) ||
+            string.IsNullOrWhiteSpace(_form.DefaultCategoryCode) ||
+            string.IsNullOrWhiteSpace(_form.DefaultUnit) ||
+            _form.EstimatedUsefulLifeYears <= 0)
+        {
+            Snackbar.Add("Please fill in all required fields.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            var created = await CatalogClient.CreateAsync(new CreateArCatalogItemRequest(
+                _form.Code.Trim(),
+                _form.Description.Trim(),
+                _form.DefaultPropertyClass.Trim(),
+                _form.DefaultCategoryCode.Trim(),
+                _form.DefaultUnit.Trim(),
+                UacsObjectCode: null,                 // intentional — Accountant fills this later
+                _form.EstimatedUsefulLifeYears));
+
+            Snackbar.Add($"Draft catalog item '{created.Code}' created. UACS will be filled when the Accountant certifies funds.", Severity.Success);
+            Dialog.Close(DialogResult.Ok(created));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Create failed: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void Cancel() => Dialog.Cancel();
+
+    private sealed class FormModel
+    {
+        public string Code { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public string DefaultPropertyClass { get; set; } = string.Empty;
+        public string DefaultCategoryCode { get; set; } = string.Empty;
+        public string DefaultUnit { get; set; } = "piece";
+        public int EstimatedUsefulLifeYears { get; set; } = 5;
+    }
+}

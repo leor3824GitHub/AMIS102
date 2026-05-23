@@ -1,6 +1,7 @@
 using AMIS.Framework.Core.Context;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
 using AMIS.Modules.ProcurementAcquisition.Data;
+using AMIS.Modules.ProcurementAcquisition.Domain.PurchaseRequests;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.CreatePurchaseRequest;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
@@ -19,7 +20,7 @@ public sealed class UpdatePurchaseRequestCommandHandler(
             ?? throw new KeyNotFoundException($"Purchase request '{command.Id}' not found.");
 
         var lineItems = command.LineItems.Select(li =>
-            (li.Quantity, li.UnitOfIssue, li.ItemDescription, li.EstimatedUnitCost));
+            new PurchaseRequestLineItemData(li.Quantity, li.UnitOfIssue, li.ItemDescription, li.EstimatedUnitCost, li.CatalogItemId));
 
         pr.Update(
             command.DepartmentId,

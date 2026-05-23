@@ -26,9 +26,11 @@ internal sealed class PropertyItemCatalogConfiguration : IEntityTypeConfiguratio
         builder.Property(x => x.DefaultCategoryCode).IsRequired().HasMaxLength(64);
         builder.Property(x => x.DefaultUnit).IsRequired().HasMaxLength(64);
         builder.Property(x => x.UacsObjectCode).HasMaxLength(32);
+        builder.Property(x => x.Status).IsRequired();
 
         builder.HasQueryFilter("SoftDelete", x => !x.IsDeleted);
         builder.HasIndex(x => new { x.TenantId, x.Code }).IsUnique();
+        builder.HasIndex(x => x.Status);
     }
 }
 

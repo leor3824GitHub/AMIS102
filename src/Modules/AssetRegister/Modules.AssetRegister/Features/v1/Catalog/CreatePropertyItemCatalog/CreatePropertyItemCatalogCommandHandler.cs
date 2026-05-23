@@ -46,6 +46,6 @@ internal static class PropertyItemCatalogMapper
 {
     public static PropertyItemCatalogDto ToDto(PropertyItemCatalog x) =>
         new(x.Id, x.Code, x.Description, x.DefaultPropertyClass, x.DefaultCategoryCode,
-            x.DefaultUnit, x.UacsObjectCode, x.EstimatedUsefulLifeYears, x.IsActive);
+            x.DefaultUnit, x.UacsObjectCode, x.EstimatedUsefulLifeYears, x.IsActive, x.Status);
 }
 

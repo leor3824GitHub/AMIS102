@@ -33,7 +33,7 @@ public sealed class SearchPropertyItemCatalogsQueryHandler(AssetRegisterDbContex
             .Skip((pageNumber - 1) * pageSize).Take(pageSize)
             .Select(x => new PropertyItemCatalogDto(
                 x.Id, x.Code, x.Description, x.DefaultPropertyClass, x.DefaultCategoryCode,
-                x.DefaultUnit, x.UacsObjectCode, x.EstimatedUsefulLifeYears, x.IsActive))
+                x.DefaultUnit, x.UacsObjectCode, x.EstimatedUsefulLifeYears, x.IsActive, x.Status))
             .ToListAsync(ct).ConfigureAwait(false);
 
         return new PagedResponse<PropertyItemCatalogDto>

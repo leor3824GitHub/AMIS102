@@ -219,6 +219,78 @@ public sealed class PurchaseRequestDomainTests
         act.ShouldThrow<InvalidOperationException>();
     }
 
+    [Fact]
+    public void Create_LineItem_CatalogItemId_IsOptional()
+    {
+        var pr = CreatePr();
+        pr.LineItems[0].CatalogItemId.ShouldBeNull();
+    }
+
+    [Fact]
+    public void Create_LineItem_WithCatalogItemId_IsPersisted()
+    {
+        var catalogId = Guid.NewGuid();
+        var pr = PurchaseRequest.Create(
+            tenantId: "tenant-1",
+            prNumber: "PR-2026-002",
+            departmentId: Guid.NewGuid(),
+            responsibilityCenterCode: null,
+            purpose: "Purchase ICT equipment",
+            prType: PrType.Planned,
+            justification: null,
+            requestedByName: "Test User",
+            saiNumber: null,
+            saiDate: null,
+            alobsNumber: null,
+            alobsDate: null,
+            lineItems: [new PurchaseRequestLineItemData(1, "piece", "Desktop Computer", 25000m, catalogId)]);
+
+        pr.LineItems[0].CatalogItemId.ShouldBe(catalogId);
+    }
+
+    [Fact]
+    public void Update_LineItem_CanChangeCatalogItemId()
+    {
+        var pr = CreatePr();
+        var newCatalogId = Guid.NewGuid();
+
+        pr.Update(
+            Guid.NewGuid(), null, "Updated purpose", PrType.Planned,
+            null, "Test User", null, null, null, null,
+            [new PurchaseRequestLineItemData(3, "piece", "Different item", 200m, newCatalogId)]);
+
+        pr.LineItems[0].CatalogItemId.ShouldBe(newCatalogId);
+    }
+
+    [Fact]
+    public void CertifyFundsAvailable_PreservesCatalogItemId()
+    {
+        var catalogId = Guid.NewGuid();
+        var pr = PurchaseRequest.Create(
+            tenantId: "tenant-1",
+            prNumber: "PR-2026-003",
+            departmentId: Guid.NewGuid(),
+            responsibilityCenterCode: null,
+            purpose: "Purchase ICT equipment",
+            prType: PrType.Planned,
+            justification: null,
+            requestedByName: "Test User",
+            saiNumber: null,
+            saiDate: null,
+            alobsNumber: null,
+            alobsDate: null,
+            lineItems: [new PurchaseRequestLineItemData(1, "piece", "Desktop Computer", 25000m, catalogId)]);
+        pr.Submit();
+
+        pr.CertifyFundsAvailable(
+            Guid.NewGuid(), "Jane Accountant",
+            pr.LineItems.ToDictionary(li => li.ItemNo, _ => "1-07-05-030"),
+            null, null);
+
+        pr.LineItems[0].CatalogItemId.ShouldBe(catalogId);
+        pr.LineItems[0].UacsObjectCode.ShouldBe("1-07-05-030");
+    }
+
     private static PurchaseRequest CreatePr(decimal quantity = 2, decimal unitCost = 500m) =>
         PurchaseRequest.Create(
             tenantId: "tenant-1",
@@ -233,5 +305,5 @@ public sealed class PurchaseRequestDomainTests
             saiDate: null,
             alobsNumber: null,
             alobsDate: null,
-            lineItems: [(quantity, "piece", "Bond Paper A4", unitCost)]);
+            lineItems: [new PurchaseRequestLineItemData(quantity, "piece", "Bond Paper A4", unitCost)]);
 }

@@ -3,6 +3,14 @@ using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
 
 namespace AMIS.Modules.ProcurementAcquisition.Domain.PurchaseRequests;
 
+/// <summary>Domain-internal carrier for PR line item input. Handlers map their input shape to this before calling <see cref="PurchaseRequest.Create"/> / <see cref="PurchaseRequest.Update"/>.</summary>
+public readonly record struct PurchaseRequestLineItemData(
+    decimal Quantity,
+    string UnitOfIssue,
+    string ItemDescription,
+    decimal EstimatedUnitCost,
+    Guid? CatalogItemId = null);
+
 public sealed class PurchaseRequestLineItem
 {
     public int ItemNo { get; private set; }
@@ -11,6 +19,13 @@ public sealed class PurchaseRequestLineItem
     public string ItemDescription { get; private set; } = default!;
     public decimal EstimatedUnitCost { get; private set; }
     public decimal EstimatedTotalCost => Quantity * EstimatedUnitCost;
+
+    /// <summary>
+    /// Optional reference to a <c>PropertyItemCatalog</c> row (in the AssetRegister module).
+    /// When set, propagates forward to PO/IAR/PPERR via snapshots so downstream documents can
+    /// classify the item without re-typing or fuzzy matching.
+    /// </summary>
+    public Guid? CatalogItemId { get; private set; }
 
     /// <summary>
     /// UACS Object Code assigned by the Accountant during the "Funds Available" certification step.
@@ -25,7 +40,8 @@ public sealed class PurchaseRequestLineItem
         decimal quantity,
         string unitOfIssue,
         string itemDescription,
-        decimal estimatedUnitCost)
+        decimal estimatedUnitCost,
+        Guid? catalogItemId = null)
     {
         return new PurchaseRequestLineItem
         {
@@ -33,16 +49,18 @@ public sealed class PurchaseRequestLineItem
             Quantity = quantity,
             UnitOfIssue = unitOfIssue,
             ItemDescription = itemDescription,
-            EstimatedUnitCost = estimatedUnitCost
+            EstimatedUnitCost = estimatedUnitCost,
+            CatalogItemId = catalogItemId == Guid.Empty ? null : catalogItemId
         };
     }
 
-    public void Update(decimal quantity, string unitOfIssue, string itemDescription, decimal estimatedUnitCost)
+    public void Update(decimal quantity, string unitOfIssue, string itemDescription, decimal estimatedUnitCost, Guid? catalogItemId = null)
     {
         Quantity = quantity;
         UnitOfIssue = unitOfIssue;
         ItemDescription = itemDescription;
         EstimatedUnitCost = estimatedUnitCost;
+        CatalogItemId = catalogItemId == Guid.Empty ? null : catalogItemId;
     }
 
     internal void AssignUacs(string uacsObjectCode)
@@ -117,7 +135,7 @@ public sealed class PurchaseRequest : AggregateRoot<Guid>, IHasTenant, IAuditabl
         DateOnly? saiDate,
         string? alobsNumber,
         DateOnly? alobsDate,
-        IEnumerable<(decimal Quantity, string UnitOfIssue, string ItemDescription, decimal EstimatedUnitCost)> lineItems)
+        IEnumerable<PurchaseRequestLineItemData> lineItems)
     {
         var pr = new PurchaseRequest
         {
@@ -140,9 +158,10 @@ public sealed class PurchaseRequest : AggregateRoot<Guid>, IHasTenant, IAuditabl
         };
 
         var itemNo = 1;
-        foreach (var (qty, unit, desc, cost) in lineItems)
+        foreach (var li in lineItems)
         {
-            pr._lineItems.Add(PurchaseRequestLineItem.Create(itemNo++, qty, unit, desc, cost));
+            pr._lineItems.Add(PurchaseRequestLineItem.Create(
+                itemNo++, li.Quantity, li.UnitOfIssue, li.ItemDescription, li.EstimatedUnitCost, li.CatalogItemId));
         }
 
         return pr;
@@ -159,7 +178,7 @@ public sealed class PurchaseRequest : AggregateRoot<Guid>, IHasTenant, IAuditabl
         DateOnly? saiDate,
         string? alobsNumber,
         DateOnly? alobsDate,
-        IEnumerable<(decimal Quantity, string UnitOfIssue, string ItemDescription, decimal EstimatedUnitCost)> lineItems)
+        IEnumerable<PurchaseRequestLineItemData> lineItems)
     {
         if (Status != PurchaseRequestStatus.Draft)
             throw new InvalidOperationException("Only Draft purchase requests can be updated.");
@@ -178,9 +197,10 @@ public sealed class PurchaseRequest : AggregateRoot<Guid>, IHasTenant, IAuditabl
 
         _lineItems.Clear();
         var itemNo = 1;
-        foreach (var (qty, unit, desc, cost) in lineItems)
+        foreach (var li in lineItems)
         {
-            _lineItems.Add(PurchaseRequestLineItem.Create(itemNo++, qty, unit, desc, cost));
+            _lineItems.Add(PurchaseRequestLineItem.Create(
+                itemNo++, li.Quantity, li.UnitOfIssue, li.ItemDescription, li.EstimatedUnitCost, li.CatalogItemId));
         }
     }
 
