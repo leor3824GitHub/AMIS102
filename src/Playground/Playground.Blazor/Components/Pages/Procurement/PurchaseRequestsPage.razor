@@ -225,11 +225,26 @@
                                                                    OnClick="@(async () => await CancelPrAsync(item.Id))" />
                                                 </MudTooltip>
                                             }
-                                            @if (item.Status == PurchaseRequestStatus.Submitted)
+                                            @if (item.Status == PurchaseRequestStatus.PendingFundsAvailable)
                                             {
-                                                <MudTooltip Text="Approve">
+                                                <MudTooltip Text="Certify Funds Available (Accountant)">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.AccountBalance" Size="Size.Small" Color="Color.Info"
+                                                                   OnClick="@(async () => await CertifyFundsAvailableAsync(item.Id))" />
+                                                </MudTooltip>
+                                                <MudTooltip Text="Return for Revision">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.Reply" Size="Size.Small" Color="Color.Warning"
+                                                                   OnClick="@(async () => await ReturnForRevisionAsync(item.Id))" />
+                                                </MudTooltip>
+                                            }
+                                            @if (item.Status == PurchaseRequestStatus.PendingApproval || item.Status == PurchaseRequestStatus.Submitted)
+                                            {
+                                                <MudTooltip Text="Approve (HoPE)">
                                                     <MudIconButton Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small" Color="Color.Success"
                                                                    OnClick="@(async () => await ApproveAsync(item.Id))" />
+                                                </MudTooltip>
+                                                <MudTooltip Text="Return for Revision">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.Reply" Size="Size.Small" Color="Color.Warning"
+                                                                   OnClick="@(async () => await ReturnForRevisionAsync(item.Id))" />
                                                 </MudTooltip>
                                                 <MudTooltip Text="Reject">
                                                     <MudIconButton Icon="@Icons.Material.Filled.Cancel" Size="Size.Small" Color="Color.Error"
@@ -267,7 +282,8 @@
     private string _currentUserEmployeeName = string.Empty;
     private List<DepartmentReferenceDto> _departments = [];
 
-    private static readonly string[] _statusFilters = ["All", "Draft", "Submitted", "Approved", "Rejected", "Cancelled"];
+    private static readonly string[] _statusFilters =
+        ["All", "Draft", "PendingFundsAvailable", "PendingApproval", "Approved", "Submitted", "Rejected", "Cancelled"];
 
     protected override async Task OnInitializedAsync()
     {
@@ -476,6 +492,31 @@
         catch (Exception ex) { Snackbar.Add($"Submit failed: {ex.Message}", Severity.Error); }
     }
 
+    private async Task CertifyFundsAvailableAsync(Guid id)
+    {
+        if (string.IsNullOrWhiteSpace(_currentUserEmployeeName))
+        {
+            Snackbar.Add("Cannot determine current user identity. Please re-login.", Severity.Warning);
+            return;
+        }
+
+        PurchaseRequestDto? pr;
+        try { pr = await Client.GetAsync(id); }
+        catch (Exception ex) { Snackbar.Add($"Load PR failed: {ex.Message}", Severity.Error); return; }
+        if (pr is null) { Snackbar.Add("PR not found.", Severity.Warning); return; }
+
+        var parameters = new DialogParameters<CertifyFundsAvailableDialog>
+        {
+            { x => x.PurchaseRequest, pr },
+            { x => x.CertifiedByName, _currentUserEmployeeName }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true, CloseButton = true };
+        var dialog = await DialogService.ShowAsync<CertifyFundsAvailableDialog>($"Funds Available — {pr.PrNumber}", parameters, options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
+            await LoadAsync();
+    }
+
     private async Task ApproveAsync(Guid id)
     {
         if (string.IsNullOrWhiteSpace(_currentUserEmployeeName))
@@ -483,7 +524,7 @@
             Snackbar.Add("Cannot determine current user identity. Please re-login.", Severity.Warning);
             return;
         }
-        var ok = await DialogService.ShowMessageBox("Approve PR", "Approve this purchase request?", "Approve", cancelText: "Cancel");
+        var ok = await DialogService.ShowMessageBox("Approve PR", "Approve this purchase request as Head of Procuring Entity?", "Approve", cancelText: "Cancel");
         if (ok is not true) return;
         try
         {
@@ -492,6 +533,34 @@
             await LoadAsync();
         }
         catch (Exception ex) { Snackbar.Add($"Approve failed: {ex.Message}", Severity.Error); }
+    }
+
+    private async Task ReturnForRevisionAsync(Guid id)
+    {
+        if (string.IsNullOrWhiteSpace(_currentUserEmployeeName))
+        {
+            Snackbar.Add("Cannot determine current user identity. Please re-login.", Severity.Warning);
+            return;
+        }
+
+        var parameters = new DialogParameters<ReasonInputDialog>
+        {
+            { x => x.Title, "Return for Revision" },
+            { x => x.Label, "Reason for Return" },
+            { x => x.ConfirmText, "Return" }
+        };
+        var dialog = await DialogService.ShowAsync<ReasonInputDialog>("Return for Revision", parameters);
+        var result = await dialog.Result;
+        if (result is null || result.Canceled || result.Data is not string reason || string.IsNullOrWhiteSpace(reason))
+            return;
+
+        try
+        {
+            await Client.ReturnForRevisionAsync(id, _currentUserEmployeeName, reason);
+            Snackbar.Add("PR returned to requester for revision.", Severity.Info);
+            await LoadAsync();
+        }
+        catch (Exception ex) { Snackbar.Add($"Return failed: {ex.Message}", Severity.Error); }
     }
 
     private async Task RejectAsync(Guid id)
@@ -586,6 +655,9 @@
         {
             PurchaseRequestStatus.Draft => (Color.Default, Icons.Material.Filled.Edit),
             PurchaseRequestStatus.Submitted => (Color.Info, Icons.Material.Filled.HourglassTop),
+            PurchaseRequestStatus.PendingFundsAvailable => (Color.Info, Icons.Material.Filled.AccountBalance),
+            PurchaseRequestStatus.PendingApproval => (Color.Secondary, Icons.Material.Filled.HourglassBottom),
+            PurchaseRequestStatus.ReturnedForRevision => (Color.Warning, Icons.Material.Filled.Reply),
             PurchaseRequestStatus.Approved => (Color.Success, Icons.Material.Filled.CheckCircle),
             PurchaseRequestStatus.Rejected => (Color.Error, Icons.Material.Filled.Cancel),
             PurchaseRequestStatus.Cancelled => (Color.Warning, Icons.Material.Filled.Block),

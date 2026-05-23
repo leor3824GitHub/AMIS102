@@ -40,10 +40,20 @@ public sealed class GetPurchaseRequestQueryHandler(ProcurementDbContext dbContex
             pr.ApprovedByName,
             pr.LineItems.Select(li => new PurchaseRequestLineItemDto(
                 li.ItemNo, li.Quantity, li.UnitOfIssue, li.ItemDescription,
-                li.EstimatedUnitCost, li.EstimatedTotalCost)).ToList(),
+                li.EstimatedUnitCost, li.EstimatedTotalCost, li.UacsObjectCode)).ToList(),
             pr.CreatedOnUtc,
             pr.CreatedBy,
-            pr.LastModifiedOnUtc);
+            pr.LastModifiedOnUtc,
+            FundsAvailableCertifiedById: pr.FundsAvailableCertifiedById,
+            FundsAvailableCertifiedByName: pr.FundsAvailableCertifiedByName,
+            FundsAvailableCertifiedOnUtc: pr.FundsAvailableCertifiedOnUtc,
+            ApprovedById: pr.ApprovedById,
+            ApprovedOnUtc: pr.ApprovedOnUtc,
+            ReturnedReason: pr.ReturnedReason,
+            ReturnedById: pr.ReturnedById,
+            ReturnedByName: pr.ReturnedByName,
+            ReturnedOnUtc: pr.ReturnedOnUtc,
+            RejectionReason: pr.RejectionReason);
     }
 }
 

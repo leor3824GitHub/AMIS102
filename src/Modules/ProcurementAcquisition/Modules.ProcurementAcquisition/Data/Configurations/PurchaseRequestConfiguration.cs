@@ -26,6 +26,13 @@ public sealed class PurchaseRequestConfiguration : IEntityTypeConfiguration<Purc
         builder.Property(x => x.Status).IsRequired();
         builder.Property(x => x.RequestedByName).HasMaxLength(200).IsRequired();
         builder.Property(x => x.ApprovedByName).HasMaxLength(200);
+
+        // Funds Available — Accountant
+        builder.Property(x => x.FundsAvailableCertifiedByName).HasMaxLength(200);
+
+        // Return-for-revision audit trail
+        builder.Property(x => x.ReturnedByName).HasMaxLength(200);
+        builder.Property(x => x.ReturnedReason).HasMaxLength(1000);
         // Version column kept for future xmin-based concurrency; not active until properly wired
 
         builder.HasIndex(x => new { x.TenantId, x.PrNumber }).IsUnique();
@@ -43,6 +50,7 @@ public sealed class PurchaseRequestConfiguration : IEntityTypeConfiguration<Purc
             b.Property(li => li.UnitOfIssue).HasMaxLength(64).IsRequired();
             b.Property(li => li.ItemDescription).HasMaxLength(500).IsRequired();
             b.Property(li => li.EstimatedUnitCost).HasPrecision(18, 4).IsRequired();
+            b.Property(li => li.UacsObjectCode).HasMaxLength(64); // assigned by Accountant; stays in JSON blob
         });
     }
 }

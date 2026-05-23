@@ -12,6 +12,12 @@ public sealed class PurchaseRequestLineItem
     public decimal EstimatedUnitCost { get; private set; }
     public decimal EstimatedTotalCost => Quantity * EstimatedUnitCost;
 
+    /// <summary>
+    /// UACS Object Code assigned by the Accountant during the "Funds Available" certification step.
+    /// Null until the Accountant certifies the PR; carries forward to PO/IAR/PPERR thereafter.
+    /// </summary>
+    public string? UacsObjectCode { get; private set; }
+
     private PurchaseRequestLineItem() { }
 
     public static PurchaseRequestLineItem Create(
@@ -38,6 +44,13 @@ public sealed class PurchaseRequestLineItem
         ItemDescription = itemDescription;
         EstimatedUnitCost = estimatedUnitCost;
     }
+
+    internal void AssignUacs(string uacsObjectCode)
+    {
+        if (string.IsNullOrWhiteSpace(uacsObjectCode))
+            throw new InvalidOperationException($"Item {ItemNo}: UACS Object Code is required.");
+        UacsObjectCode = uacsObjectCode.Trim();
+    }
 }
 
 public sealed class PurchaseRequest : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
@@ -56,7 +69,23 @@ public sealed class PurchaseRequest : AggregateRoot<Guid>, IHasTenant, IAuditabl
     public string? Justification { get; private set; }
     public PurchaseRequestStatus Status { get; private set; }
     public string RequestedByName { get; private set; } = default!;
+
+    // "Funds Available" — Accountant signs and assigns UACS codes
+    public Guid? FundsAvailableCertifiedById { get; private set; }
+    public string? FundsAvailableCertifiedByName { get; private set; }
+    public DateTimeOffset? FundsAvailableCertifiedOnUtc { get; private set; }
+
+    // "Approved by" — HoPE
     public string? ApprovedByName { get; private set; }
+    public Guid? ApprovedById { get; private set; }
+    public DateTimeOffset? ApprovedOnUtc { get; private set; }
+
+    // Return for revision — set by either approver; cleared when re-submitted
+    public string? ReturnedReason { get; private set; }
+    public Guid? ReturnedById { get; private set; }
+    public string? ReturnedByName { get; private set; }
+    public DateTimeOffset? ReturnedOnUtc { get; private set; }
+
     public string? RejectionReason { get; private set; }
     public string? CancellationReason { get; private set; }
     public byte[] Version { get; set; } = [];
@@ -155,6 +184,9 @@ public sealed class PurchaseRequest : AggregateRoot<Guid>, IHasTenant, IAuditabl
         }
     }
 
+    /// <summary>
+    /// Requester submits the PR. Moves Draft → PendingFundsAvailable (awaiting Accountant).
+    /// </summary>
     public void Submit()
     {
         if (Status != PurchaseRequestStatus.Draft)
@@ -162,24 +194,99 @@ public sealed class PurchaseRequest : AggregateRoot<Guid>, IHasTenant, IAuditabl
         if (_lineItems.Count == 0)
             throw new InvalidOperationException("Purchase request must have at least one line item.");
 
-        Status = PurchaseRequestStatus.Submitted;
+        Status = PurchaseRequestStatus.PendingFundsAvailable;
+        // Clear any prior return metadata on re-submission
+        ReturnedReason = null;
+        ReturnedById = null;
+        ReturnedByName = null;
+        ReturnedOnUtc = null;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
     }
 
-    public void Approve(string approvedByName)
+    /// <summary>
+    /// Accountant signs "Funds Available", assigns a UACS Object Code per line item, and optionally
+    /// captures ALOBS reference. Moves PendingFundsAvailable → PendingApproval (awaiting HoPE).
+    /// </summary>
+    public void CertifyFundsAvailable(
+        Guid certifiedById,
+        string certifiedByName,
+        IReadOnlyDictionary<int, string> uacsByItemNo,
+        string? alobsNumber,
+        DateOnly? alobsDate)
     {
-        if (Status != PurchaseRequestStatus.Submitted)
-            throw new InvalidOperationException("Only Submitted purchase requests can be approved.");
+        if (Status != PurchaseRequestStatus.PendingFundsAvailable)
+            throw new InvalidOperationException("Funds Available can only be certified on PRs awaiting Accountant review.");
+        if (string.IsNullOrWhiteSpace(certifiedByName))
+            throw new InvalidOperationException("Accountant name is required.");
+        ArgumentNullException.ThrowIfNull(uacsByItemNo);
+
+        var missing = _lineItems
+            .Where(li => !uacsByItemNo.TryGetValue(li.ItemNo, out var u) || string.IsNullOrWhiteSpace(u))
+            .Select(li => li.ItemNo)
+            .ToList();
+        if (missing.Count > 0)
+            throw new InvalidOperationException(
+                $"Every line item requires a UACS Object Code. Missing on item(s): {string.Join(", ", missing)}.");
+
+        foreach (var li in _lineItems)
+            li.AssignUacs(uacsByItemNo[li.ItemNo]);
+
+        if (!string.IsNullOrWhiteSpace(alobsNumber))
+        {
+            AlobsNumber = alobsNumber;
+            AlobsDate = alobsDate;
+        }
+
+        FundsAvailableCertifiedById = certifiedById;
+        FundsAvailableCertifiedByName = certifiedByName;
+        FundsAvailableCertifiedOnUtc = DateTimeOffset.UtcNow;
+
+        Status = PurchaseRequestStatus.PendingApproval;
+        LastModifiedOnUtc = FundsAvailableCertifiedOnUtc;
+    }
+
+    /// <summary>
+    /// HoPE final approval. Allowed from PendingApproval (new two-step flow) or from
+    /// legacy <see cref="PurchaseRequestStatus.Submitted"/> (rows created before the workflow change).
+    /// </summary>
+    public void Approve(string approvedByName, Guid? approvedById = null)
+    {
+        if (Status != PurchaseRequestStatus.PendingApproval && Status != PurchaseRequestStatus.Submitted)
+            throw new InvalidOperationException("Only PRs awaiting HoPE approval can be approved.");
+        if (string.IsNullOrWhiteSpace(approvedByName))
+            throw new InvalidOperationException("Approver name is required.");
 
         Status = PurchaseRequestStatus.Approved;
         ApprovedByName = approvedByName;
-        LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        ApprovedById = approvedById;
+        ApprovedOnUtc = DateTimeOffset.UtcNow;
+        LastModifiedOnUtc = ApprovedOnUtc;
+    }
+
+    /// <summary>
+    /// Either approver returns the PR for revision. Reverts to Draft with a reason; requester re-edits and resubmits.
+    /// </summary>
+    public void ReturnForRevision(Guid returnedById, string returnedByName, string reason)
+    {
+        if (Status != PurchaseRequestStatus.PendingFundsAvailable && Status != PurchaseRequestStatus.PendingApproval)
+            throw new InvalidOperationException("Only PRs awaiting approval can be returned for revision.");
+        if (string.IsNullOrWhiteSpace(reason))
+            throw new InvalidOperationException("A reason is required when returning a PR for revision.");
+        if (string.IsNullOrWhiteSpace(returnedByName))
+            throw new InvalidOperationException("Returner name is required.");
+
+        Status = PurchaseRequestStatus.Draft;
+        ReturnedReason = reason;
+        ReturnedById = returnedById;
+        ReturnedByName = returnedByName;
+        ReturnedOnUtc = DateTimeOffset.UtcNow;
+        LastModifiedOnUtc = ReturnedOnUtc;
     }
 
     public void Reject(string reason)
     {
-        if (Status != PurchaseRequestStatus.Submitted)
-            throw new InvalidOperationException("Only Submitted purchase requests can be rejected.");
+        if (Status != PurchaseRequestStatus.PendingApproval && Status != PurchaseRequestStatus.Submitted)
+            throw new InvalidOperationException("Only PRs awaiting HoPE approval can be rejected.");
 
         Status = PurchaseRequestStatus.Rejected;
         RejectionReason = reason;
@@ -196,4 +303,3 @@ public sealed class PurchaseRequest : AggregateRoot<Guid>, IHasTenant, IAuditabl
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
     }
 }
-

@@ -27,14 +27,49 @@
                 <MudText Typo="Typo.body1">@(string.IsNullOrWhiteSpace(PurchaseRequest.ResponsibilityCenterCode) ? "-" : PurchaseRequest.ResponsibilityCenterCode)</MudText>
             </MudItem>
 
-            <MudItem xs="12" md="6">
+            <MudItem xs="12" md="4">
                 <MudText Typo="Typo.subtitle2">Requested By</MudText>
                 <MudText Typo="Typo.body1">@PurchaseRequest.RequestedByName?.ToUpperInvariant()</MudText>
             </MudItem>
-            <MudItem xs="12" md="6">
-                <MudText Typo="Typo.subtitle2">Approved By</MudText>
-                <MudText Typo="Typo.body1">@(string.IsNullOrWhiteSpace(PurchaseRequest.ApprovedByName) ? "-" : PurchaseRequest.ApprovedByName.ToUpperInvariant())</MudText>
+            <MudItem xs="12" md="4">
+                <MudText Typo="Typo.subtitle2">Funds Available (Accountant)</MudText>
+                <MudText Typo="Typo.body1">
+                    @(string.IsNullOrWhiteSpace(PurchaseRequest.FundsAvailableCertifiedByName)
+                        ? "-"
+                        : $"{PurchaseRequest.FundsAvailableCertifiedByName.ToUpperInvariant()}{(PurchaseRequest.FundsAvailableCertifiedOnUtc is null ? "" : $" • {PurchaseRequest.FundsAvailableCertifiedOnUtc.Value.ToLocalTime():MM/dd/yyyy}")}")
+                </MudText>
             </MudItem>
+            <MudItem xs="12" md="4">
+                <MudText Typo="Typo.subtitle2">Approved By (HoPE)</MudText>
+                <MudText Typo="Typo.body1">
+                    @(string.IsNullOrWhiteSpace(PurchaseRequest.ApprovedByName)
+                        ? "-"
+                        : $"{PurchaseRequest.ApprovedByName.ToUpperInvariant()}{(PurchaseRequest.ApprovedOnUtc is null ? "" : $" • {PurchaseRequest.ApprovedOnUtc.Value.ToLocalTime():MM/dd/yyyy}")}")
+                </MudText>
+            </MudItem>
+
+            @if (!string.IsNullOrWhiteSpace(PurchaseRequest.ReturnedReason))
+            {
+                <MudItem xs="12">
+                    <MudAlert Severity="Severity.Warning" Dense="true">
+                        <b>Returned by @PurchaseRequest.ReturnedByName?.ToUpperInvariant()</b>
+                        @if (PurchaseRequest.ReturnedOnUtc is not null)
+                        {
+                            <span> on @PurchaseRequest.ReturnedOnUtc.Value.ToLocalTime().ToString("MM/dd/yyyy")</span>
+                        }
+                        — @PurchaseRequest.ReturnedReason
+                    </MudAlert>
+                </MudItem>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(PurchaseRequest.RejectionReason))
+            {
+                <MudItem xs="12">
+                    <MudAlert Severity="Severity.Error" Dense="true">
+                        <b>Rejected:</b> @PurchaseRequest.RejectionReason
+                    </MudAlert>
+                </MudItem>
+            }
 
             <MudItem xs="12">
                 <MudText Typo="Typo.subtitle2">Purpose</MudText>
@@ -70,12 +105,13 @@
                 <MudSimpleTable Dense="true" Hover="true" Striped="true">
                     <thead>
                         <tr>
-                            <th style="width:70px">#</th>
+                            <th style="width:50px">#</th>
                             <th>Description</th>
-                            <th style="width:110px">Qty</th>
-                            <th style="width:110px">Unit</th>
-                            <th style="width:130px;text-align:right">Unit Cost</th>
-                            <th style="width:130px;text-align:right">Total</th>
+                            <th style="width:90px;text-align:right">Qty</th>
+                            <th style="width:80px">Unit</th>
+                            <th style="width:120px;text-align:right">Unit Cost</th>
+                            <th style="width:120px;text-align:right">Total</th>
+                            <th style="width:140px">UACS</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -84,10 +120,11 @@
                             <tr>
                                 <td>@line.ItemNo</td>
                                 <td>@line.ItemDescription</td>
-                                <td>@line.Quantity.ToString("N2")</td>
+                                <td style="text-align:right">@line.Quantity.ToString("N2")</td>
                                 <td>@line.UnitOfIssue</td>
                                 <td style="text-align:right">@line.EstimatedUnitCost.ToString("N2")</td>
                                 <td style="text-align:right">@line.EstimatedTotalCost.ToString("N2")</td>
+                                <td>@(string.IsNullOrWhiteSpace(line.UacsObjectCode) ? "-" : line.UacsObjectCode)</td>
                             </tr>
                         }
                     </tbody>
@@ -131,6 +168,9 @@
     {
         PurchaseRequestStatus.Draft => Color.Default,
         PurchaseRequestStatus.Submitted => Color.Info,
+        PurchaseRequestStatus.PendingFundsAvailable => Color.Info,
+        PurchaseRequestStatus.PendingApproval => Color.Secondary,
+        PurchaseRequestStatus.ReturnedForRevision => Color.Warning,
         PurchaseRequestStatus.Approved => Color.Success,
         PurchaseRequestStatus.Rejected => Color.Error,
         PurchaseRequestStatus.Cancelled => Color.Warning,
@@ -141,6 +181,9 @@
     {
         PurchaseRequestStatus.Draft => Icons.Material.Filled.Edit,
         PurchaseRequestStatus.Submitted => Icons.Material.Filled.HourglassTop,
+        PurchaseRequestStatus.PendingFundsAvailable => Icons.Material.Filled.AccountBalance,
+        PurchaseRequestStatus.PendingApproval => Icons.Material.Filled.HourglassBottom,
+        PurchaseRequestStatus.ReturnedForRevision => Icons.Material.Filled.Reply,
         PurchaseRequestStatus.Approved => Icons.Material.Filled.CheckCircle,
         PurchaseRequestStatus.Rejected => Icons.Material.Filled.Cancel,
         PurchaseRequestStatus.Cancelled => Icons.Material.Filled.Block,

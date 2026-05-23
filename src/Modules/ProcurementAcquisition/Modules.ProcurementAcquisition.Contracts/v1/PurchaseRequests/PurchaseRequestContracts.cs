@@ -10,10 +10,13 @@ namespace AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
 public enum PurchaseRequestStatus
 {
     Draft = 0,
-    Submitted = 1,
+    Submitted = 1,                  // legacy single-step submissions; kept for backward compat
     Approved = 2,
     Rejected = 3,
-    Cancelled = 4
+    Cancelled = 4,
+    PendingFundsAvailable = 5,      // submitted by requester; awaiting Accountant
+    PendingApproval = 6,            // certified by Accountant; awaiting HoPE
+    ReturnedForRevision = 7         // returned by Accountant or HoPE; back to Draft for edits
 }
 
 public enum PrType
@@ -32,7 +35,8 @@ public sealed record PurchaseRequestLineItemDto(
     string UnitOfIssue,
     string ItemDescription,
     decimal EstimatedUnitCost,
-    decimal EstimatedTotalCost);
+    decimal EstimatedTotalCost,
+    string? UacsObjectCode = null);
 
 public sealed record PurchaseRequestDto(
     Guid Id,
@@ -54,7 +58,17 @@ public sealed record PurchaseRequestDto(
     IReadOnlyList<PurchaseRequestLineItemDto> LineItems,
     DateTimeOffset CreatedOnUtc,
     string? CreatedBy,
-    DateTimeOffset? LastModifiedOnUtc);
+    DateTimeOffset? LastModifiedOnUtc,
+    Guid? FundsAvailableCertifiedById = null,
+    string? FundsAvailableCertifiedByName = null,
+    DateTimeOffset? FundsAvailableCertifiedOnUtc = null,
+    Guid? ApprovedById = null,
+    DateTimeOffset? ApprovedOnUtc = null,
+    string? ReturnedReason = null,
+    Guid? ReturnedById = null,
+    string? ReturnedByName = null,
+    DateTimeOffset? ReturnedOnUtc = null,
+    string? RejectionReason = null);
 
 public sealed record PurchaseRequestSummaryDto(
     Guid Id,
@@ -109,6 +123,26 @@ public sealed record UpdatePurchaseRequestCommand(
 public sealed record SubmitPurchaseRequestCommand(Guid Id) : ICommand<PurchaseRequestDto>;
 
 public sealed record ApprovePurchaseRequestCommand(Guid Id, string ApprovedByName) : ICommand<PurchaseRequestDto>;
+
+/// <summary>Per-line UACS assignment supplied by the Accountant during Funds Available certification.</summary>
+public sealed record LineUacsAssignment(int ItemNo, string UacsObjectCode);
+
+/// <summary>
+/// Accountant signs the "Funds Available" portion of the PR form. Assigns a UACS Object Code per line item
+/// and (optionally) captures the ALOBS reference. Moves PR from PendingFundsAvailable to PendingApproval.
+/// </summary>
+public sealed record CertifyFundsAvailableCommand(
+    Guid Id,
+    string CertifiedByName,
+    IReadOnlyList<LineUacsAssignment> UacsByLine,
+    string? AlobsNumber = null,
+    DateOnly? AlobsDate = null) : ICommand<PurchaseRequestDto>;
+
+/// <summary>Either approver (Accountant or HoPE) returns the PR for revision with a reason. Reverts to Draft.</summary>
+public sealed record ReturnPurchaseRequestForRevisionCommand(
+    Guid Id,
+    string ReturnedByName,
+    string Reason) : ICommand<PurchaseRequestDto>;
 
 public sealed record RejectPurchaseRequestCommand(Guid Id, string Reason) : ICommand<PurchaseRequestDto>;
 

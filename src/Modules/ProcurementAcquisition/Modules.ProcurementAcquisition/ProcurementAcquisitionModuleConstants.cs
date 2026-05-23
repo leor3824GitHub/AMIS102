@@ -12,7 +12,9 @@ public static class ProcurementAcquisitionModuleConstants
             public const string Create = "Permissions.Procurement.PurchaseRequests.Create";
             public const string Update = "Permissions.Procurement.PurchaseRequests.Update";
             public const string Submit = "Permissions.Procurement.PurchaseRequests.Submit";
+            public const string CertifyFundsAvailable = "Permissions.Procurement.PurchaseRequests.CertifyFundsAvailable";
             public const string Approve = "Permissions.Procurement.PurchaseRequests.Approve";
+            public const string ReturnForRevision = "Permissions.Procurement.PurchaseRequests.ReturnForRevision";
             public const string Reject = "Permissions.Procurement.PurchaseRequests.Reject";
             public const string Cancel = "Permissions.Procurement.PurchaseRequests.Cancel";
         }

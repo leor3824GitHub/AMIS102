@@ -6,7 +6,9 @@ using AMIS.Modules.ProcurementAcquisition.Data;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.CreatePurchaseRequest;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.UpdatePurchaseRequest;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.SubmitPurchaseRequest;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.CertifyFundsAvailable;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.ApprovePurchaseRequest;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.ReturnForRevision;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.RejectPurchaseRequest;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.CancelPurchaseRequest;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.GetPurchaseRequest;
@@ -51,7 +53,9 @@ public class ProcurementAcquisitionModule : IModule
         new("Create Purchase Requests", "Create", "Procurement.PurchaseRequests"),
         new("Update Purchase Requests", "Update", "Procurement.PurchaseRequests"),
         new("Submit Purchase Requests", "Submit", "Procurement.PurchaseRequests"),
+        new("Certify Funds Available on Purchase Requests", "CertifyFundsAvailable", "Procurement.PurchaseRequests"),
         new("Approve Purchase Requests", "Approve", "Procurement.PurchaseRequests"),
+        new("Return Purchase Requests for Revision", "ReturnForRevision", "Procurement.PurchaseRequests"),
         new("Reject Purchase Requests", "Reject", "Procurement.PurchaseRequests"),
         new("Cancel Purchase Requests", "Cancel", "Procurement.PurchaseRequests"),
 
@@ -112,7 +116,9 @@ public class ProcurementAcquisitionModule : IModule
         CreatePurchaseRequestEndpoint.Map(purchaseRequestsGroup);
         UpdatePurchaseRequestEndpoint.Map(purchaseRequestsGroup);
         SubmitPurchaseRequestEndpoint.Map(purchaseRequestsGroup);
+        CertifyFundsAvailableEndpoint.Map(purchaseRequestsGroup);
         ApprovePurchaseRequestEndpoint.Map(purchaseRequestsGroup);
+        ReturnPurchaseRequestForRevisionEndpoint.Map(purchaseRequestsGroup);
         RejectPurchaseRequestEndpoint.Map(purchaseRequestsGroup);
         CancelPurchaseRequestEndpoint.Map(purchaseRequestsGroup);
         GetPurchaseRequestEndpoint.Map(purchaseRequestsGroup);

@@ -33,7 +33,9 @@ internal interface IPurchaseRequestClient
     Task<PurchaseRequestDto> CreateAsync(CreatePurchaseRequestCommand command, CancellationToken ct = default);
     Task<PurchaseRequestDto> UpdateAsync(Guid id, UpdatePurchaseRequestCommand command, CancellationToken ct = default);
     Task<PurchaseRequestDto> SubmitAsync(Guid id, CancellationToken ct = default);
+    Task<PurchaseRequestDto> CertifyFundsAvailableAsync(Guid id, CertifyFundsAvailableCommand command, CancellationToken ct = default);
     Task<PurchaseRequestDto> ApproveAsync(Guid id, string approvedByName, CancellationToken ct = default);
+    Task<PurchaseRequestDto> ReturnForRevisionAsync(Guid id, string returnedByName, string reason, CancellationToken ct = default);
     Task<PurchaseRequestDto> RejectAsync(Guid id, string reason, CancellationToken ct = default);
     Task<PurchaseRequestDto> CancelAsync(Guid id, string? reason = null, CancellationToken ct = default);
 }
@@ -123,9 +125,24 @@ internal sealed class PurchaseRequestClient(HttpClient http) : IPurchaseRequestC
         return (await r.Content.ReadFromJsonAsync<PurchaseRequestDto>(ProcurementJson.Options, ct))!;
     }
 
+    public async Task<PurchaseRequestDto> CertifyFundsAvailableAsync(Guid id, CertifyFundsAvailableCommand command, CancellationToken ct = default)
+    {
+        using var r = await http.PostAsJsonAsync($"{Base}/{id}/certify-funds-available", command with { Id = id }, ProcurementJson.Options, ct);
+        r.EnsureSuccessStatusCode();
+        return (await r.Content.ReadFromJsonAsync<PurchaseRequestDto>(ProcurementJson.Options, ct))!;
+    }
+
     public async Task<PurchaseRequestDto> ApproveAsync(Guid id, string approvedByName, CancellationToken ct = default)
     {
         using var r = await http.PostAsJsonAsync($"{Base}/{id}/approve", new ApprovePurchaseRequestCommand(id, approvedByName), ProcurementJson.Options, ct);
+        r.EnsureSuccessStatusCode();
+        return (await r.Content.ReadFromJsonAsync<PurchaseRequestDto>(ProcurementJson.Options, ct))!;
+    }
+
+    public async Task<PurchaseRequestDto> ReturnForRevisionAsync(Guid id, string returnedByName, string reason, CancellationToken ct = default)
+    {
+        using var r = await http.PostAsJsonAsync($"{Base}/{id}/return-for-revision",
+            new ReturnPurchaseRequestForRevisionCommand(id, returnedByName, reason), ProcurementJson.Options, ct);
         r.EnsureSuccessStatusCode();
         return (await r.Content.ReadFromJsonAsync<PurchaseRequestDto>(ProcurementJson.Options, ct))!;
     }

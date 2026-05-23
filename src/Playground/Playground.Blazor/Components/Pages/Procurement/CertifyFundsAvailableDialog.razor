@@ -1,0 +1,148 @@
+@using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests
+@using AMIS.Playground.Blazor.ApiClient
+@inject IPurchaseRequestClient Client
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudGrid Spacing="2">
+            <MudItem xs="12">
+                <MudAlert Severity="Severity.Info" Dense="true">
+                    Assign a <b>UACS Object Code</b> per line item. The PR cannot proceed to HoPE without all lines coded.
+                </MudAlert>
+            </MudItem>
+
+            <MudItem xs="12" md="6">
+                <MudTextField Value="@PurchaseRequest.PrNumber" Label="PR Number" ReadOnly="true" Dense="true" Margin="Margin.Dense" Variant="Variant.Outlined" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudTextField Value="@CertifiedByName" T="string" Label="Funds Available — Signatory (Accountant)" ReadOnly="true" Dense="true" Margin="Margin.Dense" Variant="Variant.Outlined" />
+            </MudItem>
+
+            <MudItem xs="12" md="6">
+                <MudTextField @bind-Value="_alobsNumber" Label="ALOBS Number (optional)" Dense="true" Margin="Margin.Dense" Variant="Variant.Outlined" MaxLength="64" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudDatePicker @bind-Date="_alobsDate" Label="ALOBS Date (optional)" Dense="true" Margin="Margin.Dense" Variant="Variant.Outlined" />
+            </MudItem>
+
+            <MudItem xs="12">
+                <MudText Typo="Typo.subtitle1" Class="mt-2"><b>Line Items — UACS Assignment</b></MudText>
+                <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                    <thead>
+                        <tr>
+                            <th style="width:50px">#</th>
+                            <th>Description</th>
+                            <th style="width:90px;text-align:right">Qty</th>
+                            <th style="width:90px">Unit</th>
+                            <th style="width:130px;text-align:right">Est. Total</th>
+                            <th style="width:220px">UACS Object Code *</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var line in PurchaseRequest.LineItems)
+                        {
+                            <tr>
+                                <td>@line.ItemNo</td>
+                                <td>@line.ItemDescription</td>
+                                <td style="text-align:right">@line.Quantity.ToString("N2")</td>
+                                <td>@line.UnitOfIssue</td>
+                                <td style="text-align:right">@line.EstimatedTotalCost.ToString("N2")</td>
+                                <td>
+                                    <MudTextField Value="@(GetUacs(line.ItemNo))"
+                                                  T="string"
+                                                  ValueChanged="@((string v) => SetUacs(line.ItemNo, v))"
+                                                  Placeholder="e.g. 1-07-05-030"
+                                                  Dense="true"
+                                                  Margin="Margin.Dense"
+                                                  Variant="Variant.Outlined"
+                                                  MaxLength="64"
+                                                  Error="@(_submitted && string.IsNullOrWhiteSpace(GetUacs(line.ItemNo)))" />
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </MudSimpleTable>
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="CertifyAsync" Disabled="_busy">
+            Certify &amp; Send to HoPE
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance Dialog { get; set; } = default!;
+    [Parameter] public PurchaseRequestDto PurchaseRequest { get; set; } = default!;
+    [Parameter] public string CertifiedByName { get; set; } = string.Empty;
+
+    private readonly Dictionary<int, string> _uacs = new();
+    private string? _alobsNumber;
+    private DateTime? _alobsDate;
+    private bool _busy;
+    private bool _submitted;
+
+    protected override void OnInitialized()
+    {
+        // Pre-fill from any existing UACS values already on the line (e.g. when re-certifying after a return).
+        foreach (var line in PurchaseRequest.LineItems)
+            _uacs[line.ItemNo] = line.UacsObjectCode ?? string.Empty;
+
+        _alobsNumber = PurchaseRequest.AlobsNumber;
+        _alobsDate = PurchaseRequest.AlobsDate?.ToDateTime(TimeOnly.MinValue);
+    }
+
+    private string GetUacs(int itemNo) => _uacs.TryGetValue(itemNo, out var v) ? v : string.Empty;
+
+    private void SetUacs(int itemNo, string? value) => _uacs[itemNo] = value?.Trim() ?? string.Empty;
+
+    private async Task CertifyAsync()
+    {
+        _submitted = true;
+
+        var missing = PurchaseRequest.LineItems
+            .Where(li => string.IsNullOrWhiteSpace(GetUacs(li.ItemNo)))
+            .ToList();
+        if (missing.Count > 0)
+        {
+            Snackbar.Add($"UACS required on {missing.Count} line(s).", Severity.Warning);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(CertifiedByName))
+        {
+            Snackbar.Add("Could not resolve your employee name. Please re-login.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            var assignments = PurchaseRequest.LineItems
+                .Select(li => new LineUacsAssignment(li.ItemNo, GetUacs(li.ItemNo)))
+                .ToList();
+
+            var alobsDate = _alobsDate is null ? (DateOnly?)null : DateOnly.FromDateTime(_alobsDate.Value);
+
+            var result = await Client.CertifyFundsAvailableAsync(
+                PurchaseRequest.Id,
+                new CertifyFundsAvailableCommand(PurchaseRequest.Id, CertifiedByName, assignments, _alobsNumber, alobsDate));
+
+            Snackbar.Add("Funds Available certified. PR forwarded to HoPE.", Severity.Success);
+            Dialog.Close(DialogResult.Ok(result));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Certify failed: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void Cancel() => Dialog.Cancel();
+}

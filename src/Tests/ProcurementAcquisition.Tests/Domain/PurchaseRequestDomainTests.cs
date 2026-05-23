@@ -27,13 +27,13 @@ public sealed class PurchaseRequestDomainTests
     }
 
     [Fact]
-    public void Submit_WhenDraft_ChangesStatusToSubmitted()
+    public void Submit_WhenDraft_ChangesStatusToPendingFundsAvailable()
     {
         var pr = CreatePr();
 
         pr.Submit();
 
-        pr.Status.ShouldBe(PurchaseRequestStatus.Submitted);
+        pr.Status.ShouldBe(PurchaseRequestStatus.PendingFundsAvailable);
     }
 
     [Fact]
@@ -61,6 +61,164 @@ public sealed class PurchaseRequestDomainTests
         act.ShouldThrow<InvalidOperationException>();
     }
 
+    [Fact]
+    public void CertifyFundsAvailable_AfterSubmit_AssignsUacsAndMovesToPendingApproval()
+    {
+        var pr = CreatePr();
+        pr.Submit();
+        var uacs = pr.LineItems.ToDictionary(li => li.ItemNo, _ => "1-07-05-030");
+
+        pr.CertifyFundsAvailable(Guid.NewGuid(), "Jane Accountant", uacs, "ALOBS-2026-001", DateOnly.FromDateTime(DateTime.UtcNow));
+
+        pr.Status.ShouldBe(PurchaseRequestStatus.PendingApproval);
+        pr.FundsAvailableCertifiedByName.ShouldBe("Jane Accountant");
+        pr.FundsAvailableCertifiedOnUtc.ShouldNotBeNull();
+        pr.AlobsNumber.ShouldBe("ALOBS-2026-001");
+        pr.LineItems[0].UacsObjectCode.ShouldBe("1-07-05-030");
+    }
+
+    [Fact]
+    public void CertifyFundsAvailable_WhenNotPendingFundsAvailable_Throws()
+    {
+        var pr = CreatePr();
+
+        var act = () => pr.CertifyFundsAvailable(
+            Guid.NewGuid(), "Jane", new Dictionary<int, string> { [1] = "1-07-05-030" }, null, null);
+
+        act.ShouldThrow<InvalidOperationException>();
+    }
+
+    [Fact]
+    public void CertifyFundsAvailable_WithMissingUacsForALine_Throws()
+    {
+        var pr = CreatePr();
+        pr.Submit();
+        var uacs = new Dictionary<int, string>(); // empty — line 1 is missing
+
+        var act = () => pr.CertifyFundsAvailable(Guid.NewGuid(), "Jane", uacs, null, null);
+
+        act.ShouldThrow<InvalidOperationException>();
+    }
+
+    [Fact]
+    public void Approve_AfterCertifyFundsAvailable_MovesToApproved()
+    {
+        var pr = CreatePr();
+        pr.Submit();
+        pr.CertifyFundsAvailable(Guid.NewGuid(), "Jane Accountant",
+            pr.LineItems.ToDictionary(li => li.ItemNo, _ => "1-07-05-030"), null, null);
+
+        pr.Approve("John HoPE", Guid.NewGuid());
+
+        pr.Status.ShouldBe(PurchaseRequestStatus.Approved);
+        pr.ApprovedByName.ShouldBe("John HoPE");
+        pr.ApprovedOnUtc.ShouldNotBeNull();
+    }
+
+    [Fact]
+    public void Approve_WhenPendingFundsAvailable_Throws()
+    {
+        var pr = CreatePr();
+        pr.Submit(); // PendingFundsAvailable — HoPE cannot approve yet
+
+        var act = () => pr.Approve("John HoPE");
+
+        act.ShouldThrow<InvalidOperationException>();
+    }
+
+    [Fact]
+    public void Approve_WhenLegacySubmitted_StillWorks()
+    {
+        // Backward compat: legacy PRs in Submitted status should still be approvable
+        var pr = CreatePr();
+        // Force into legacy Submitted status (simulating data created before the workflow change).
+        // We use reflection only because no public API can put us in legacy Submitted.
+        typeof(PurchaseRequest).GetProperty("Status")!.SetValue(pr, PurchaseRequestStatus.Submitted);
+
+        pr.Approve("John HoPE");
+
+        pr.Status.ShouldBe(PurchaseRequestStatus.Approved);
+    }
+
+    [Fact]
+    public void ReturnForRevision_FromPendingFundsAvailable_RevertsToDraftWithReason()
+    {
+        var pr = CreatePr();
+        pr.Submit();
+
+        pr.ReturnForRevision(Guid.NewGuid(), "Jane Accountant", "Wrong department charged.");
+
+        pr.Status.ShouldBe(PurchaseRequestStatus.Draft);
+        pr.ReturnedReason.ShouldBe("Wrong department charged.");
+        pr.ReturnedByName.ShouldBe("Jane Accountant");
+        pr.ReturnedOnUtc.ShouldNotBeNull();
+    }
+
+    [Fact]
+    public void ReturnForRevision_FromPendingApproval_AlsoReverts()
+    {
+        var pr = CreatePr();
+        pr.Submit();
+        pr.CertifyFundsAvailable(Guid.NewGuid(), "Jane",
+            pr.LineItems.ToDictionary(li => li.ItemNo, _ => "1-07-05-030"), null, null);
+
+        pr.ReturnForRevision(Guid.NewGuid(), "John HoPE", "Procurement mode incorrect.");
+
+        pr.Status.ShouldBe(PurchaseRequestStatus.Draft);
+        pr.ReturnedByName.ShouldBe("John HoPE");
+    }
+
+    [Fact]
+    public void ReturnForRevision_FromDraft_Throws()
+    {
+        var pr = CreatePr();
+
+        var act = () => pr.ReturnForRevision(Guid.NewGuid(), "Jane", "should not be possible");
+
+        act.ShouldThrow<InvalidOperationException>();
+    }
+
+    [Fact]
+    public void Submit_AfterReturnForRevision_ClearsReturnMetadata()
+    {
+        var pr = CreatePr();
+        pr.Submit();
+        pr.ReturnForRevision(Guid.NewGuid(), "Jane", "Fix line items.");
+        pr.ReturnedReason.ShouldNotBeNull();
+
+        pr.Submit();
+
+        pr.Status.ShouldBe(PurchaseRequestStatus.PendingFundsAvailable);
+        pr.ReturnedReason.ShouldBeNull();
+        pr.ReturnedByName.ShouldBeNull();
+        pr.ReturnedOnUtc.ShouldBeNull();
+    }
+
+    [Fact]
+    public void Reject_WhenPendingApproval_MovesToRejected()
+    {
+        var pr = CreatePr();
+        pr.Submit();
+        pr.CertifyFundsAvailable(Guid.NewGuid(), "Jane",
+            pr.LineItems.ToDictionary(li => li.ItemNo, _ => "1-07-05-030"), null, null);
+
+        pr.Reject("Outside fiscal year.");
+
+        pr.Status.ShouldBe(PurchaseRequestStatus.Rejected);
+        pr.RejectionReason.ShouldBe("Outside fiscal year.");
+    }
+
+    [Fact]
+    public void Reject_WhenPendingFundsAvailable_Throws()
+    {
+        var pr = CreatePr();
+        pr.Submit();
+
+        var act = () => pr.Reject("Should not reject yet — Accountant still reviewing.");
+
+        act.ShouldThrow<InvalidOperationException>();
+    }
+
     private static PurchaseRequest CreatePr(decimal quantity = 2, decimal unitCost = 500m) =>
         PurchaseRequest.Create(
             tenantId: "tenant-1",
@@ -77,4 +235,3 @@ public sealed class PurchaseRequestDomainTests
             alobsDate: null,
             lineItems: [(quantity, "piece", "Bond Paper A4", unitCost)]);
 }
-
