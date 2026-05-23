@@ -1,21 +1,21 @@
 using AMIS.Framework.Eventing.Abstractions;
-using AMIS.Modules.ProcurementAcquisition.Contracts.v1.AssetInspectionAcceptanceReports;
 using AMIS.Modules.AssetRegister.Contracts.v1;
+using AMIS.Modules.AssetRegister.Contracts.v1.Catalog;
 using AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
 using AMIS.Modules.AssetRegister.Data;
 using AMIS.Modules.AssetRegister.Domain.Assets;
 using AMIS.Modules.AssetRegister.Domain.Catalog;
+using AMIS.Modules.ProcurementAcquisition.Contracts.v1.AssetInspectionAcceptanceReports;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace AMIS.Modules.AssetRegister.Integration;
 
 /// <summary>
-/// Materializes one <see cref="AssetRegistry"/> row per accepted physical unit
-/// (per cardinality rule §B — a quantity of N produces N rows, each with its own
-/// PropertyNo). PropertyNo is operator-assigned at IAR acceptance time and arrives
-/// on the event line; lines without a number are skipped with a warning so the
-/// operator can correct the IAR and re-fire.
+/// Materializes one <see cref="AssetRegistry"/> row per accepted physical unit. As of Phase 3, every accepted
+/// IAR line MUST carry an explicit <c>CatalogItemId</c> — fuzzy matching (PropertyClassHint / description /
+/// token overlap) has been removed. Lines missing either the catalog id or a Property No are skipped with a
+/// warning so the operator can correct the source IAR and re-fire if needed.
 /// </summary>
 internal sealed class AssetIARAcceptedEventConsumer(
     AssetRegisterDbContext db,
@@ -29,14 +29,16 @@ internal sealed class AssetIARAcceptedEventConsumer(
         ArgumentNullException.ThrowIfNull(@event);
         var tenantId = @event.TenantId ?? db.TenantInfo?.Identifier ?? string.Empty;
 
-        var catalogs = await db.PropertyItemCatalogs.ToListAsync(ct).ConfigureAwait(false);
-        if (catalogs.Count == 0)
-        {
-            logger.LogWarning(
-                "[{Tenant}] AssetRegister received IAR {IARId} but no PropertyItemCatalog entries exist; skipping materialization.",
-                tenantId, @event.IARId);
-            return;
-        }
+        var ids = @event.AcceptedItems
+            .Where(li => li.CatalogItemId is not null && li.CatalogItemId != Guid.Empty)
+            .Select(li => li.CatalogItemId!.Value)
+            .Distinct()
+            .ToList();
+
+        var catalogsById = ids.Count == 0
+            ? new Dictionary<Guid, PropertyItemCatalog>()
+            : await db.PropertyItemCatalogs.Where(c => ids.Contains(c.Id))
+                .ToDictionaryAsync(c => c.Id, ct).ConfigureAwait(false);
 
         var materialized = 0;
         var skipped = 0;
@@ -46,18 +48,37 @@ internal sealed class AssetIARAcceptedEventConsumer(
             if (string.IsNullOrWhiteSpace(line.StockPropertyNo))
             {
                 logger.LogWarning(
-                    "[{Tenant}] Skipping IAR line '{Description}': StockPropertyNo not assigned. Operator must set the PropertyNo on the IAR line before acceptance.",
-                    tenantId, line.Description);
+                    "[{Tenant}] Skipping IAR {IARId} line '{Description}': StockPropertyNo not assigned.",
+                    tenantId, @event.IARId, line.Description);
                 skipped++;
                 continue;
             }
 
-            var catalog = ResolveCatalog(catalogs, line);
-            if (catalog is null)
+            if (line.CatalogItemId is null || line.CatalogItemId == Guid.Empty)
             {
                 logger.LogWarning(
-                    "[{Tenant}] Skipping IAR line '{Description}' (PropertyClassHint='{Hint}'): no matching PropertyItemCatalog.",
-                    tenantId, line.Description, line.PropertyClassHint);
+                    "[{Tenant}] Skipping IAR {IARId} line '{Description}': no CatalogItemId. " +
+                    "Source PR must reference a catalog item before acceptance.",
+                    tenantId, @event.IARId, line.Description);
+                skipped++;
+                continue;
+            }
+
+            if (!catalogsById.TryGetValue(line.CatalogItemId.Value, out var catalog))
+            {
+                logger.LogWarning(
+                    "[{Tenant}] Skipping IAR {IARId} line '{Description}': catalog {CatalogItemId} not found.",
+                    tenantId, @event.IARId, line.Description, line.CatalogItemId);
+                skipped++;
+                continue;
+            }
+
+            if (catalog.Status == CatalogItemStatus.Draft || string.IsNullOrWhiteSpace(catalog.UacsObjectCode))
+            {
+                logger.LogWarning(
+                    "[{Tenant}] Skipping IAR {IARId} line '{Description}': catalog '{Code}' is still Draft (UACS missing). " +
+                    "Accountant must certify Funds Available on the source PR first.",
+                    tenantId, @event.IARId, line.Description, catalog.Code);
                 skipped++;
                 continue;
             }
@@ -67,16 +88,17 @@ internal sealed class AssetIARAcceptedEventConsumer(
             if (quantity <= 0)
             {
                 logger.LogWarning(
-                    "[{Tenant}] Skipping IAR line '{Description}': non-positive quantity {Qty}.",
-                    tenantId, line.Description, line.Quantity);
+                    "[{Tenant}] Skipping IAR {IARId} line '{Description}': non-positive quantity {Qty}.",
+                    tenantId, @event.IARId, line.Description, line.Quantity);
                 skipped++;
                 continue;
             }
             if (quantity != 1)
             {
                 logger.LogWarning(
-                    "[{Tenant}] IAR line '{Description}' has quantity {Qty} but only one StockPropertyNo. Per NFA policy, tracked items must use one IAR line per unit. Materializing 1 row.",
-                    tenantId, line.Description, quantity);
+                    "[{Tenant}] IAR line '{Description}' has quantity {Qty} but only one StockPropertyNo. " +
+                    "Per NFA policy, tracked items must use one IAR line per unit. Materializing 1 row.",
+                    line.Description, quantity);
             }
 
             var propertyNo = PropertyNumber.Create(line.StockPropertyNo);
@@ -108,44 +130,6 @@ internal sealed class AssetIARAcceptedEventConsumer(
             tenantId, @event.IARId, materialized, skipped, @event.AcceptedItems.Count);
     }
 
-    private static PropertyItemCatalog? ResolveCatalog(
-        IReadOnlyList<PropertyItemCatalog> catalogs, AssetIARAcceptedEventItem line)
-    {
-        if (!string.IsNullOrWhiteSpace(line.PropertyClassHint))
-        {
-            var byClass = catalogs.FirstOrDefault(c =>
-                c.IsActive &&
-                string.Equals(c.DefaultPropertyClass, line.PropertyClassHint, StringComparison.OrdinalIgnoreCase));
-            if (byClass is not null) return byClass;
-        }
-
-        // Fallback 1: substring containment (either direction).
-        var bySubstring = catalogs.FirstOrDefault(c =>
-            c.IsActive &&
-            (line.Description.Contains(c.Description, StringComparison.OrdinalIgnoreCase)
-             || c.Description.Contains(line.Description, StringComparison.OrdinalIgnoreCase)));
-        if (bySubstring is not null) return bySubstring;
-
-        // Fallback 2: word-token overlap — pick the catalog entry with the most shared
-        // significant words (≥4 chars) to handle variations like
-        // "Computer, i3 Desktop" ↔ "Desktop Computer Set".
-        var lineTokens = Tokenize(line.Description);
-        if (lineTokens.Count == 0) return null;
-
-        return catalogs
-            .Where(c => c.IsActive)
-            .Select(c => new { Catalog = c, Score = Tokenize(c.Description).Count(t => lineTokens.Contains(t)) })
-            .Where(x => x.Score > 0)
-            .OrderByDescending(x => x.Score)
-            .FirstOrDefault()?.Catalog;
-    }
-
-    private static HashSet<string> Tokenize(string text) =>
-        text.Split([' ', ',', '-', '/', '(', ')', '.'], StringSplitOptions.RemoveEmptyEntries)
-            .Where(w => w.Length >= 4)
-            .Select(w => w.ToUpperInvariant())
-            .ToHashSet();
-
     private static (AssetType, AssetCategory) ClassifyFromCatalog(PropertyItemCatalog catalog, decimal unitCost)
     {
         // PropertyClass naming convention: contains "PPE" → PPE; else SE.
@@ -157,4 +141,3 @@ internal sealed class AssetIARAcceptedEventConsumer(
             : (AssetType.SE, AssetCategory.LowValuedSemi);
     }
 }
-

@@ -21,6 +21,12 @@ public sealed class AssetIARLineItem
     /// <summary>Stock / Property No assigned by the operator at IAR time (SOP GS-PD26 column). Optional during Draft; required before acceptance.</summary>
     public string? StockPropertyNo { get; private set; }
 
+    /// <summary>Snapshot of the PR/PO catalog reference. Carries forward into PPERR and AssetRegistry.</summary>
+    public Guid? CatalogItemId { get; private set; }
+
+    /// <summary>Snapshot of the Accountant-assigned UACS Object Code copied from the source PR/PO line.</summary>
+    public string? UacsObjectCode { get; private set; }
+
     /// <summary>Per-line inspector decision. Defaults to <see cref="LineInspectionResult.Pending"/> for legacy lines.</summary>
     public LineInspectionResult InspectionResult { get; private set; } = LineInspectionResult.Pending;
     public DateTimeOffset? InspectedOnUtc { get; private set; }
@@ -40,7 +46,9 @@ public sealed class AssetIARLineItem
         decimal quantity,
         decimal unitCost,
         string? inspectionRemarks,
-        string? stockPropertyNo) =>
+        string? stockPropertyNo,
+        Guid? catalogItemId = null,
+        string? uacsObjectCode = null) =>
         new()
         {
             ItemNo = itemNo,
@@ -54,7 +62,9 @@ public sealed class AssetIARLineItem
             Quantity = quantity,
             UnitCost = unitCost,
             InspectionRemarks = inspectionRemarks,
-            StockPropertyNo = string.IsNullOrWhiteSpace(stockPropertyNo) ? null : stockPropertyNo.Trim()
+            StockPropertyNo = string.IsNullOrWhiteSpace(stockPropertyNo) ? null : stockPropertyNo.Trim(),
+            CatalogItemId = catalogItemId == Guid.Empty ? null : catalogItemId,
+            UacsObjectCode = string.IsNullOrWhiteSpace(uacsObjectCode) ? null : uacsObjectCode.Trim()
         };
 
     internal void RecordInspection(LineInspectionResult result, string? remarks, Guid inspectorId, DateTimeOffset whenUtc)
@@ -97,6 +107,8 @@ public sealed class AssetIARLineItem
             UnitCost = UnitCost,
             InspectionRemarks = InspectionRemarks,
             StockPropertyNo = null,
+            CatalogItemId = CatalogItemId,
+            UacsObjectCode = UacsObjectCode,
             InspectionResult = InspectionResult,
             InspectedById = InspectedById,
             InspectedOnUtc = InspectedOnUtc
@@ -180,7 +192,7 @@ public sealed class AssetInspectionAcceptanceReport : AggregateRoot<Guid>, IHasT
                 itemNo++, li.Description, li.TechnicalSpecifications,
                 li.Brand, li.Model, li.SerialNo, li.PropertyClassHint,
                 li.Unit, li.Quantity, li.UnitCost, li.InspectionRemarks,
-                li.StockPropertyNo));
+                li.StockPropertyNo, li.CatalogItemId, li.UacsObjectCode));
 
         return iar;
     }

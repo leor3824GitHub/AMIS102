@@ -1,13 +1,16 @@
 @using AMIS.Playground.Blazor.ApiClient
+@using AMIS.Modules.AssetRegister.Contracts.v1.Catalog
 @using Microsoft.AspNetCore.Components.Authorization
 @using ReceivingDocumentKind = AMIS.Modules.AssetRegister.Contracts.v1.ReceivingDocumentKind
 @using ReceiptType = AMIS.Modules.AssetRegister.Contracts.v1.ReceiptType
 @using System.Security.Claims
 @inject IArReceivingReportClient Client
 @inject IArReceivingReportClient ArReceivingReportClient
+@inject IArCatalogClient CatalogClient
 @inject ILookupClient LookupClient
 @inject IEmployeesClient EmployeesClient
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IDialogService DialogService
 @inject ISnackbar Snackbar
 
 <MudCard Elevation="2">
@@ -55,18 +58,33 @@
             <MudItem xs="12" md="3">
                 <MudTextField @bind-Value="_fundCluster" Label="Fund Cluster" Variant="Variant.Outlined" />
             </MudItem>
-            <MudItem xs="12" md="6">
-                <MudAutocomplete T="SupplierInfo" Value="_selectedSupplier"
-                                 ValueChanged="@(async s => await OnSupplierSelectedAsync(s))"
-                                 Label="Received From" Variant="Variant.Outlined"
-                                 SearchFunc="SearchSuppliersAsync"
-                                 ToStringFunc="@(s => s?.Name ?? string.Empty)"
-                                 CoerceText="false" Required="true"
-                                 HelperText="Search supplier from accepted IARs" />
-            </MudItem>
-            <MudItem xs="12" md="6">
-                <MudTextField @bind-Value="_address" Label="Address" Variant="Variant.Outlined" ReadOnly="true" />
-            </MudItem>
+            @if (_receiptType == ReceiptType.Purchase)
+            {
+                <MudItem xs="12" md="6">
+                    <MudAutocomplete T="SupplierInfo" Value="_selectedSupplier"
+                                     ValueChanged="@(async s => await OnSupplierSelectedAsync(s))"
+                                     Label="Received From (Supplier)" Variant="Variant.Outlined"
+                                     SearchFunc="SearchSuppliersAsync"
+                                     ToStringFunc="@(s => s?.Name ?? string.Empty)"
+                                     CoerceText="false" Required="true"
+                                     HelperText="Search supplier from accepted IARs" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField @bind-Value="_address" Label="Address" Variant="Variant.Outlined" ReadOnly="true" />
+                </MudItem>
+            }
+            else
+            {
+                <MudItem xs="12" md="6">
+                    <MudTextField @bind-Value="_receivedFrom" Label="Received From (Source Office / Donor / Agency)"
+                                  Variant="Variant.Outlined" Required="true"
+                                  HelperText="e.g. 'NFA Region V' or 'Department of Agriculture' or donor name" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField @bind-Value="_address" Label="Address" Variant="Variant.Outlined"
+                                  HelperText="Source office address (optional)" />
+                </MudItem>
+            }
             <MudItem xs="12" md="6">
                 <MudTextField Value="@(_receivedBy is null ? "Loading..." : FormatEmployee(_receivedBy))"
                               Label="Received By" Variant="Variant.Outlined" ReadOnly="true"
@@ -89,43 +107,165 @@
                 <MudText Typo="Typo.subtitle1" Class="mb-2">Items</MudText>
             </MudItem>
 
-            @if (_loadingItems)
+            @if (_receiptType == ReceiptType.Purchase)
             {
-                <MudItem xs="12">
-                    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
-                </MudItem>
+                @* ─── From Accepted IAR (purchases) ──────────────────────────────────── *@
+                @if (_loadingItems)
+                {
+                    <MudItem xs="12">
+                        <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+                    </MudItem>
+                }
+                else if (_availableItems.Count > 0)
+                {
+                    <MudItem xs="12">
+                        <MudTable T="AcceptedIARLineItemDto" Items="_availableItems"
+                                  MultiSelection="true" @bind-SelectedItems="_selectedItems"
+                                  Dense="true" Hover="true" Elevation="0"
+                                  Style="background: var(--mud-palette-surface);">
+                            <HeaderContent>
+                                <MudTh>Property No</MudTh>
+                                <MudTh>Description</MudTh>
+                                <MudTh>Date Acquired</MudTh>
+                                <MudTh Style="text-align:right">Unit Cost</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd DataLabel="Property No"><MudText Typo="Typo.body2">@context.StockPropertyNo</MudText></MudTd>
+                                <MudTd DataLabel="Description"><MudText Typo="Typo.body2">@context.Description</MudText></MudTd>
+                                <MudTd DataLabel="Date Acquired"><MudText Typo="Typo.body2">@context.IARDate.ToString("yyyy-MM-dd")</MudText></MudTd>
+                                <MudTd DataLabel="Unit Cost" Style="text-align:right"><MudText Typo="Typo.body2">@context.UnitCost.ToString("N2")</MudText></MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary mt-1">
+                            @_selectedItems.Count of @_availableItems.Count item(s) selected
+                        </MudText>
+                    </MudItem>
+                }
+                else if (_selectedSupplier is not null && !_loadingItems)
+                {
+                    <MudItem xs="12">
+                        <MudText Typo="Typo.body2" Class="mud-text-secondary">
+                            No accepted IAR items found for this supplier.
+                        </MudText>
+                    </MudItem>
+                }
             }
-            else if (_availableItems.Count > 0)
+            else
             {
+                @* ─── Ad-hoc lines (donations, transfers, other) ──────────────────────── *@
                 <MudItem xs="12">
-                    <MudTable T="AcceptedIARLineItemDto" Items="_availableItems"
-                              MultiSelection="true" @bind-SelectedItems="_selectedItems"
-                              Dense="true" Hover="true" Elevation="0"
-                              Style="background: var(--mud-palette-surface);">
-                        <HeaderContent>
-                            <MudTh>Property No</MudTh>
-                            <MudTh>Description</MudTh>
-                            <MudTh>Date Acquired</MudTh>
-                            <MudTh Style="text-align:right">Unit Cost</MudTh>
-                        </HeaderContent>
-                        <RowTemplate>
-                            <MudTd DataLabel="Property No"><MudText Typo="Typo.body2">@context.StockPropertyNo</MudText></MudTd>
-                            <MudTd DataLabel="Description"><MudText Typo="Typo.body2">@context.Description</MudText></MudTd>
-                            <MudTd DataLabel="Date Acquired"><MudText Typo="Typo.body2">@context.IARDate.ToString("yyyy-MM-dd")</MudText></MudTd>
-                            <MudTd DataLabel="Unit Cost" Style="text-align:right"><MudText Typo="Typo.body2">@context.UnitCost.ToString("N2")</MudText></MudTd>
-                        </RowTemplate>
-                    </MudTable>
-                    <MudText Typo="Typo.caption" Class="mud-text-secondary mt-1">
-                        @_selectedItems.Count of @_availableItems.Count item(s) selected
-                    </MudText>
+                    <MudAlert Severity="Severity.Info" Dense="true" Class="mb-2">
+                        Lines come from a <b>@_receiptType</b> source (no internal IAR). Capture the
+                        originating office/agency and the source document reference on each line so
+                        depreciation and the audit trail remain continuous.
+                    </MudAlert>
                 </MudItem>
-            }
-            else if (_selectedSupplier is not null && !_loadingItems)
-            {
+                @for (var i = 0; i < _adhocLines.Count; i++)
+                {
+                    var idx = i;
+                    var line = _adhocLines[idx];
+                    <MudItem xs="12">
+                        <MudPaper Outlined="true" Class="pa-2">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Class="mb-1">
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">Item @(idx + 1)</MudText>
+                                <MudSpacer />
+                                @if (_adhocLines.Count > 1)
+                                {
+                                    <MudIconButton Icon="@Icons.Material.Filled.Remove" Size="Size.Small" Color="Color.Error"
+                                                   OnClick="@(() => _adhocLines.RemoveAt(idx))" />
+                                }
+                            </MudStack>
+                            <MudGrid Spacing="1">
+                                <MudItem xs="12">
+                                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                        <MudAutocomplete T="ArCatalogItemDto"
+                                                         Value="line.SelectedCatalog"
+                                                         ValueChanged="@(c => OnAdhocCatalogSelected(idx, c))"
+                                                         Text="@line.Description"
+                                                         TextChanged="@(t => OnAdhocDescriptionChanged(idx, t))"
+                                                         SearchFunc="SearchCatalogAsync"
+                                                         ToStringFunc="@(c => c?.Description ?? string.Empty)"
+                                                         Label="Description *"
+                                                         Variant="Variant.Outlined"
+                                                         Dense="true"
+                                                         Margin="Margin.Dense"
+                                                         CoerceValue="false" CoerceText="false"
+                                                         ResetValueOnEmptyText="false"
+                                                         MinCharacters="0"
+                                                         Clearable="true"
+                                                         Class="flex-grow-1" />
+                                        <MudTooltip Text="Create a new catalog item from this description">
+                                            <MudIconButton Icon="@Icons.Material.Filled.AddCircleOutline"
+                                                           Color="Color.Primary" Size="Size.Small"
+                                                           OnClick="@(async () => await OpenAdhocCreateCatalogAsync(idx))" />
+                                        </MudTooltip>
+                                    </MudStack>
+                                    @if (line.SelectedCatalog is not null)
+                                    {
+                                        <MudStack Row="true" Spacing="1" Class="mt-1">
+                                            <MudChip T="string" Size="Size.Small" Color="Color.Info" Icon="@Icons.Material.Filled.Inventory2">
+                                                @line.SelectedCatalog.Code
+                                            </MudChip>
+                                            @if (line.SelectedCatalog.Status == CatalogItemStatus.Draft)
+                                            {
+                                                <MudChip T="string" Size="Size.Small" Color="Color.Warning" Icon="@Icons.Material.Filled.HourglassEmpty">
+                                                    Draft — cannot be received until Accountant assigns UACS on a PR
+                                                </MudChip>
+                                            }
+                                            else if (!string.IsNullOrWhiteSpace(line.SelectedCatalog.UacsObjectCode))
+                                            {
+                                                <MudChip T="string" Size="Size.Small" Color="Color.Success" Icon="@Icons.Material.Filled.AccountBalance">
+                                                    UACS @line.SelectedCatalog.UacsObjectCode
+                                                </MudChip>
+                                            }
+                                        </MudStack>
+                                    }
+                                </MudItem>
+                                <MudItem xs="6" md="3">
+                                    <MudNumericField @bind-Value="line.UnitCost" Label="Original Cost *"
+                                                     Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Min="0.01m" />
+                                </MudItem>
+                                <MudItem xs="6" md="3">
+                                    <MudDatePicker @bind-Date="line.OriginalAcquisitionDate"
+                                                   Label="Original Acquisition Date *"
+                                                   Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense"
+                                                   HelperText="Source-agency books — used for depreciation timeline" />
+                                </MudItem>
+                                <MudItem xs="6" md="3">
+                                    <MudTextField @bind-Value="line.PropertyNo" Label="New Property No *"
+                                                  Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense"
+                                                  MaxLength="32"
+                                                  HelperText="Issued by receiving agency on its own books" />
+                                </MudItem>
+                                <MudItem xs="6" md="3">
+                                    <MudTextField @bind-Value="line.SourcePropertyNo" Label="Source PropertyNo"
+                                                  Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense"
+                                                  MaxLength="64"
+                                                  HelperText="From the originating agency's books" />
+                                </MudItem>
+                                <MudItem xs="12" md="6">
+                                    <MudTextField @bind-Value="line.SourceDocumentRef"
+                                                  Label="Source Document Reference *"
+                                                  Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense"
+                                                  MaxLength="200"
+                                                  HelperText="e.g. PPEIR-2026-0123 dated 2026-04-15, PTR-..., Deed of Donation No. ..." />
+                                </MudItem>
+                                <MudItem xs="6" md="3">
+                                    <MudTextField @bind-Value="line.SerialNo" Label="Serial No" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+                                </MudItem>
+                                <MudItem xs="3">
+                                    <MudTextField @bind-Value="line.Brand" Label="Brand" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+                                </MudItem>
+                                <MudItem xs="3">
+                                    <MudTextField @bind-Value="line.Model" Label="Model" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+                                </MudItem>
+                            </MudGrid>
+                        </MudPaper>
+                    </MudItem>
+                }
                 <MudItem xs="12">
-                    <MudText Typo="Typo.body2" Class="mud-text-secondary">
-                        No accepted IAR items found for this supplier.
-                    </MudText>
+                    <MudButton StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Text" Size="Size.Small"
+                               OnClick="AddAdhocLine" Color="Color.Primary">Add Item</MudButton>
                 </MudItem>
             }
 
@@ -164,6 +304,9 @@
     private SupplierInfo? _selectedSupplier;
     private readonly List<AcceptedIARLineItemDto> _availableItems = [];
     private HashSet<AcceptedIARLineItemDto> _selectedItems = [];
+
+    // Ad-hoc lines path — used when ReceiptType != Purchase (donations, transfers, other).
+    private readonly List<AdhocLine> _adhocLines = [new()];
 
     protected override async Task OnInitializedAsync()
     {
@@ -253,15 +396,84 @@
             Snackbar.Add("Could not determine the current user. Please refresh and try again.", Severity.Warning);
             return;
         }
-        if (_selectedSupplier is null)
+        if (string.IsNullOrWhiteSpace(_receivedFrom))
         {
             Snackbar.Add("Received From is required.", Severity.Warning);
             return;
         }
-        if (_selectedItems.Count == 0)
+
+        List<CreateReceivingReportItemRequest> lineRequests;
+        if (_receiptType == ReceiptType.Purchase)
         {
-            Snackbar.Add("Select at least one item to register.", Severity.Warning);
-            return;
+            if (_selectedItems.Count == 0)
+            {
+                Snackbar.Add("Select at least one IAR item to register.", Severity.Warning);
+                return;
+            }
+            lineRequests = _selectedItems.Select(item => new CreateReceivingReportItemRequest(
+                CatalogItemId: item.CatalogItemId,
+                Reference: item.IARNumber,
+                Description: item.Description,
+                AcquisitionDate: item.IARDate,
+                UnitCost: item.UnitCost,
+                PropertyNo: item.StockPropertyNo!,
+                SerialNo: item.SerialNo,
+                Brand: item.Brand,
+                Model: item.Model,
+                SourceIARId: item.IARId,
+                PropertyClassHint: item.PropertyClassHint,
+                UacsObjectCode: item.UacsObjectCode)).ToList();
+        }
+        else
+        {
+            var filled = _adhocLines.Where(l => !string.IsNullOrWhiteSpace(l.Description)).ToList();
+            if (filled.Count == 0)
+            {
+                Snackbar.Add("Add at least one line item with a description.", Severity.Warning);
+                return;
+            }
+            var missingCatalog = filled.Where(l => l.SelectedCatalog is null).ToList();
+            if (missingCatalog.Count > 0)
+            {
+                Snackbar.Add($"Pick or create a catalog item on {missingCatalog.Count} line(s).", Severity.Warning);
+                return;
+            }
+            var missingPropertyNo = filled.Where(l => string.IsNullOrWhiteSpace(l.PropertyNo)).ToList();
+            if (missingPropertyNo.Count > 0)
+            {
+                Snackbar.Add($"Assign a new PropertyNo on {missingPropertyNo.Count} line(s).", Severity.Warning);
+                return;
+            }
+            var missingSourceDoc = filled.Where(l => string.IsNullOrWhiteSpace(l.SourceDocumentRef)).ToList();
+            if (missingSourceDoc.Count > 0)
+            {
+                Snackbar.Add($"Source Document Reference is required on {missingSourceDoc.Count} line(s).", Severity.Warning);
+                return;
+            }
+            var missingOrigDate = filled.Where(l => l.OriginalAcquisitionDate is null).ToList();
+            if (missingOrigDate.Count > 0)
+            {
+                Snackbar.Add($"Original Acquisition Date is required on {missingOrigDate.Count} line(s).", Severity.Warning);
+                return;
+            }
+
+            lineRequests = filled.Select(l => new CreateReceivingReportItemRequest(
+                CatalogItemId: l.SelectedCatalog!.Id,
+                Reference: l.SourceDocumentRef,
+                Description: l.Description,
+                AcquisitionDate: DateOnly.FromDateTime(_date!.Value),
+                UnitCost: l.UnitCost,
+                PropertyNo: l.PropertyNo!,
+                SerialNo: l.SerialNo,
+                Brand: l.Brand,
+                Model: l.Model,
+                SourceIARId: null,
+                PropertyClassHint: null,
+                UacsObjectCode: l.SelectedCatalog.UacsObjectCode,
+                SourceAgencyName: _receivedFrom,
+                SourcePropertyNo: l.SourcePropertyNo,
+                SourceDocumentRef: l.SourceDocumentRef,
+                OriginalAcquisitionDate: DateOnly.FromDateTime(l.OriginalAcquisitionDate!.Value))).ToList();
         }
 
         _busy = true;
@@ -278,18 +490,7 @@
                 new ArEmployeeRefDto(_receivedBy.Id, PrintedName(_receivedBy), _receivedBy.PositionName),
                 _notedBy is null ? null : new ArEmployeeRefDto(_notedBy.Id, PrintedName(_notedBy), _notedBy.PositionName),
                 _dateReceived is null ? null : DateOnly.FromDateTime(_dateReceived.Value),
-                _selectedItems.Select(item => new CreateReceivingReportItemRequest(
-                    CatalogItemId: null,
-                    Reference: item.IARNumber,
-                    Description: item.Description,
-                    AcquisitionDate: item.IARDate,
-                    UnitCost: item.UnitCost,
-                    PropertyNo: item.StockPropertyNo!,
-                    SerialNo: item.SerialNo,
-                    Brand: item.Brand,
-                    Model: item.Model,
-                    SourceIARId: item.IARId,
-                    PropertyClassHint: item.PropertyClassHint)).ToList());
+                lineRequests);
 
             var created = await Client.CreateAsync(request);
             await OnCreated.InvokeAsync(created);
@@ -299,5 +500,69 @@
             Snackbar.Add($"Save failed: {ex.Message}", Severity.Error);
         }
         finally { _busy = false; }
+    }
+
+    // ── Ad-hoc lines helpers ───────────────────────────────────────────────
+
+    private void AddAdhocLine() => _adhocLines.Add(new AdhocLine());
+
+    private async Task<IEnumerable<ArCatalogItemDto>> SearchCatalogAsync(string value, CancellationToken ct)
+    {
+        try
+        {
+            var page = await CatalogClient.SearchAsync(keyword: value, isActive: true, page: 1, pageSize: 30, ct: ct);
+            return page.Items ?? [];
+        }
+        catch { return []; }
+    }
+
+    private void OnAdhocCatalogSelected(int idx, ArCatalogItemDto? c)
+    {
+        var line = _adhocLines[idx];
+        line.SelectedCatalog = c;
+        if (c is not null)
+            line.Description = c.Description;
+    }
+
+    private void OnAdhocDescriptionChanged(int idx, string? text)
+    {
+        var line = _adhocLines[idx];
+        line.Description = text ?? string.Empty;
+        if (line.SelectedCatalog is not null &&
+            !string.Equals(line.SelectedCatalog.Description, line.Description, StringComparison.OrdinalIgnoreCase))
+        {
+            line.SelectedCatalog = null;
+        }
+    }
+
+    private async Task OpenAdhocCreateCatalogAsync(int idx)
+    {
+        var line = _adhocLines[idx];
+        var parameters = new DialogParameters<AMIS.Playground.Blazor.Components.Pages.Procurement.CreateCatalogItemDialog>
+        {
+            { x => x.InitialDescription, line.Description }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true };
+        var dialog = await DialogService.ShowAsync<AMIS.Playground.Blazor.Components.Pages.Procurement.CreateCatalogItemDialog>(
+            "Create Catalog Item", parameters, options);
+        var result = await dialog.Result;
+        if (result is null || result.Canceled || result.Data is not ArCatalogItemDto created)
+            return;
+
+        OnAdhocCatalogSelected(idx, created);
+    }
+
+    private sealed class AdhocLine
+    {
+        public ArCatalogItemDto? SelectedCatalog { get; set; }
+        public string Description { get; set; } = string.Empty;
+        public decimal UnitCost { get; set; }
+        public DateTime? OriginalAcquisitionDate { get; set; }
+        public string? PropertyNo { get; set; }
+        public string? SourcePropertyNo { get; set; }
+        public string? SourceDocumentRef { get; set; }
+        public string? SerialNo { get; set; }
+        public string? Brand { get; set; }
+        public string? Model { get; set; }
     }
 }

@@ -57,7 +57,9 @@ public sealed class SearchAcceptedIARLineItemsQueryHandler(
                     li.Model,
                     li.StockPropertyNo,
                     po?.SupplierName ?? iar.SupplierName,
-                    po?.SupplierAddress));
+                    po?.SupplierAddress,
+                    li.CatalogItemId,
+                    li.UacsObjectCode));
         });
 
         if (!string.IsNullOrEmpty(keyword))

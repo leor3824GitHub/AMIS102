@@ -101,8 +101,8 @@
                                                          ResetValueOnEmptyText="false"
                                                          MinCharacters="0"
                                                          Clearable="true"
-                                                         Error="@(_submitted && string.IsNullOrWhiteSpace(li.ItemDescription))"
-                                                         ErrorText="Description is required."
+                                                         Error="@(_submitted && (string.IsNullOrWhiteSpace(li.ItemDescription) || li.SelectedCatalog is null))"
+                                                         ErrorText="@(string.IsNullOrWhiteSpace(li.ItemDescription) ? "Description is required." : "Pick a catalog item — use the + button to create one from your description.")"
                                                          Class="flex-grow-1" />
                                         <MudTooltip Text="Create a new catalog item from this description">
                                             <MudIconButton Icon="@Icons.Material.Filled.AddCircleOutline"
@@ -759,7 +759,8 @@
             !string.IsNullOrWhiteSpace(li.ItemDescription) &&
             !string.IsNullOrWhiteSpace(li.UnitOfIssue) &&
             li.Quantity > 0 &&
-            li.EstimatedUnitCost > 0);
+            li.EstimatedUnitCost > 0 &&
+            li.SelectedCatalog is not null);
 
     private static DateOnly? ToDateOnly(DateTime? d) => d.HasValue ? DateOnly.FromDateTime(d.Value) : null;
 

@@ -43,7 +43,7 @@ public sealed class AcceptAssetIARCommandHandler(
                 .Select(li => new AssetIARAcceptedEventItem(
                     li.Description, li.TechnicalSpecifications, li.Brand, li.Model,
                     li.SerialNo, li.PropertyClassHint, li.Unit, li.Quantity, li.UnitCost,
-                    li.StockPropertyNo)).ToList(),
+                    li.StockPropertyNo, li.CatalogItemId, li.UacsObjectCode)).ToList(),
             TenantId: dbContext.TenantInfo?.Identifier);
 
         await eventBus.PublishAsync(integrationEvent, cancellationToken).ConfigureAwait(false);

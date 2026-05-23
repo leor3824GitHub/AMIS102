@@ -1,4 +1,6 @@
+using AMIS.Framework.Core.Exceptions;
 using AMIS.Modules.AssetRegister.Contracts.v1;
+using AMIS.Modules.AssetRegister.Contracts.v1.Catalog;
 using AMIS.Modules.AssetRegister.Contracts.v1.Receiving;
 using AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
 using AMIS.Modules.AssetRegister.Data;
@@ -19,13 +21,18 @@ public sealed class CreateReceivingReportCommandHandler(
     {
         ArgumentNullException.ThrowIfNull(cmd);
 
-        // Load every active catalog once; we resolve per-line below — either by
-        // the explicit CatalogItemId or by PropertyClassHint coming from an IAR.
-        var allCatalogs = await db.PropertyItemCatalogs
-            .Where(c => c.IsActive)
-            .ToListAsync(ct)
+        // Resolve catalog rows referenced by the request. As of Phase 3, every line MUST carry an explicit
+        // CatalogItemId — the old fuzzy fallback (PropertyClassHint / substring / token overlap) is gone.
+        var ids = cmd.Items
+            .Where(i => i.CatalogItemId.HasValue && i.CatalogItemId.Value != Guid.Empty)
+            .Select(i => i.CatalogItemId!.Value)
+            .Distinct()
+            .ToList();
+
+        var catalogsById = await db.PropertyItemCatalogs
+            .Where(c => ids.Contains(c.Id))
+            .ToDictionaryAsync(c => c.Id, ct)
             .ConfigureAwait(false);
-        var catalogsById = allCatalogs.ToDictionary(c => c.Id);
 
         var tenantId = db.TenantInfo?.Identifier ?? string.Empty;
         var reportNo = await reportNumbers.NextAsync(cmd.DocumentKind, cmd.Date, ct).ConfigureAwait(false);
@@ -45,18 +52,25 @@ public sealed class CreateReceivingReportCommandHandler(
 
         foreach (var line in cmd.Items)
         {
-            var catalog = ResolveCatalog(line, allCatalogs, catalogsById);
+            var catalog = ResolveCatalog(line, catalogsById);
 
             report.AddItem(
                 catalog.Id, line.Reference, line.PropertyNo, line.Description,
                 line.AcquisitionDate, quantity: 1, line.UnitCost,
-                line.SerialNo, line.Brand, line.Model);
+                line.SerialNo, line.Brand, line.Model,
+                line.UacsObjectCode ?? catalog.UacsObjectCode,
+                line.SourceAgencyName, line.SourcePropertyNo, line.SourceDocumentRef, line.OriginalAcquisitionDate);
+
+            // For donations/transfers the receiving agency carries the original timeline (COA GAM —
+            // depreciation continuity), so AssetRegistry's AcquisitionDate is the OriginalAcquisitionDate
+            // when supplied. For purchases it stays the line's booked date.
+            var assetAcquisitionDate = line.OriginalAcquisitionDate ?? line.AcquisitionDate;
 
             var propertyNo = PropertyNumber.Create(line.PropertyNo);
             var asset = AssetRegistry.Register(
                 tenantId, catalog, assetType, category, propertyNo,
                 line.Description, line.SerialNo, line.Brand, line.Model,
-                fundCluster, line.AcquisitionDate, line.UnitCost,
+                fundCluster, assetAcquisitionDate, line.UnitCost,
                 sourceIARId: line.SourceIARId, sourcePurchaseOrderId: null);
             db.AssetRegistries.Add(asset);
         }
@@ -73,57 +87,36 @@ public sealed class CreateReceivingReportCommandHandler(
             : (AssetType.SE, AssetCategory.HighValuedSemi);
 
     /// <summary>
-    /// Pick a catalog for the line: prefer an explicit CatalogItemId; otherwise resolve
-    /// from PropertyClassHint, then by description substring, then by token overlap —
-    /// mirrors <c>AssetIARAcceptedEventConsumer.ResolveCatalog</c> so IAR-driven and
-    /// event-driven flows pick the same catalog row.
+    /// Resolves an explicit <c>CatalogItemId</c> to its row. Throws a clean 400-mapped exception when the
+    /// id is missing, unknown, deactivated, or still <see cref="CatalogItemStatus.Draft"/> (no UACS yet —
+    /// an Accountant must certify the source PR first).
     /// </summary>
     private static Domain.Catalog.PropertyItemCatalog ResolveCatalog(
         CreateReceivingReportItemRequest line,
-        IReadOnlyList<Domain.Catalog.PropertyItemCatalog> all,
         IReadOnlyDictionary<Guid, Domain.Catalog.PropertyItemCatalog> byId)
     {
-        if (line.CatalogItemId.HasValue && line.CatalogItemId.Value != Guid.Empty)
-        {
-            if (!byId.TryGetValue(line.CatalogItemId.Value, out var c))
-                throw new KeyNotFoundException($"PropertyItemCatalog '{line.CatalogItemId}' not found.");
-            if (!c.IsActive)
-                throw new InvalidOperationException($"Catalog item '{c.Code}' is deactivated and cannot be received.");
-            return c;
-        }
+        if (!line.CatalogItemId.HasValue || line.CatalogItemId.Value == Guid.Empty)
+            throw new CustomException(
+                $"Line '{line.Description}' (Property No '{line.PropertyNo}'): CatalogItemId is required. " +
+                "Pick a catalog item on the source PR or PPERR form before saving.",
+                [], System.Net.HttpStatusCode.BadRequest);
 
-        if (!string.IsNullOrWhiteSpace(line.PropertyClassHint))
-        {
-            var byClass = all.FirstOrDefault(c =>
-                string.Equals(c.DefaultPropertyClass, line.PropertyClassHint, StringComparison.OrdinalIgnoreCase));
-            if (byClass is not null) return byClass;
-        }
+        if (!byId.TryGetValue(line.CatalogItemId.Value, out var c))
+            throw new CustomException(
+                $"Line '{line.Description}': PropertyItemCatalog '{line.CatalogItemId}' was not found.",
+                [], System.Net.HttpStatusCode.BadRequest);
 
-        var bySubstring = all.FirstOrDefault(c =>
-            line.Description.Contains(c.Description, StringComparison.OrdinalIgnoreCase) ||
-            c.Description.Contains(line.Description, StringComparison.OrdinalIgnoreCase));
-        if (bySubstring is not null) return bySubstring;
+        if (!c.IsActive)
+            throw new CustomException(
+                $"Line '{line.Description}': catalog item '{c.Code}' is deactivated and cannot be received.",
+                [], System.Net.HttpStatusCode.BadRequest);
 
-        var lineTokens = Tokenize(line.Description);
-        if (lineTokens.Count > 0)
-        {
-            var byTokens = all
-                .Select(c => new { Catalog = c, Score = Tokenize(c.Description).Count(lineTokens.Contains) })
-                .Where(x => x.Score > 0)
-                .OrderByDescending(x => x.Score)
-                .FirstOrDefault();
-            if (byTokens is not null) return byTokens.Catalog;
-        }
+        if (c.Status == CatalogItemStatus.Draft || string.IsNullOrWhiteSpace(c.UacsObjectCode))
+            throw new CustomException(
+                $"Line '{line.Description}': catalog item '{c.Code}' is still Draft (UACS not assigned). " +
+                "An Accountant must certify Funds Available on a PR that uses this item before assets can be registered against it.",
+                [], System.Net.HttpStatusCode.BadRequest);
 
-        throw new InvalidOperationException(
-            $"Could not match line '{line.Description}' to any PropertyItemCatalog. " +
-            "Provide CatalogItemId explicitly or add a matching catalog entry.");
+        return c;
     }
-
-    private static HashSet<string> Tokenize(string text) =>
-        text.Split([' ', ',', '-', '/', '(', ')', '.'], StringSplitOptions.RemoveEmptyEntries)
-            .Where(w => w.Length >= 4)
-            .Select(w => w.ToUpperInvariant())
-            .ToHashSet();
 }
-

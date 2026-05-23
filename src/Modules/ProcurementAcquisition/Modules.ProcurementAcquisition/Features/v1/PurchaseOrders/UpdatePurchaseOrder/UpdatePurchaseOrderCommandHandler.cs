@@ -1,6 +1,7 @@
 using AMIS.Framework.Core.Context;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders;
 using AMIS.Modules.ProcurementAcquisition.Data;
+using AMIS.Modules.ProcurementAcquisition.Domain.PurchaseOrders;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.CreatePurchaseOrder;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
@@ -19,7 +20,8 @@ public sealed class UpdatePurchaseOrderCommandHandler(
             ?? throw new KeyNotFoundException($"Purchase order '{command.Id}' not found.");
 
         var lineItems = command.LineItems.Select(li =>
-            (li.StockNumber, li.Unit, li.Description, li.Quantity, li.UnitCost));
+            new PurchaseOrderLineItemData(li.StockNumber, li.Unit, li.Description, li.Quantity, li.UnitCost,
+                li.CatalogItemId, li.UacsObjectCode));
 
         po.Update(
             command.SupplierId,

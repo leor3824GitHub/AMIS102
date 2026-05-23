@@ -3,6 +3,7 @@ using System;
 using AMIS.Modules.AssetRegister.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
 {
     [DbContext(typeof(AssetRegisterDbContext))]
-    partial class AssetRegisterDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260523223201_Phase3_AddUacsToReceivingReportItem")]
+    partial class Phase3_AddUacsToReceivingReportItem
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1020,9 +1023,6 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
-                    b.Property<DateOnly?>("OriginalAcquisitionDate")
-                        .HasColumnType("date");
-
                     b.Property<string>("PropertyNo")
                         .IsRequired()
                         .HasMaxLength(64)
@@ -1041,18 +1041,6 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                     b.Property<string>("SerialNo")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
-
-                    b.Property<string>("SourceAgencyName")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<string>("SourceDocumentRef")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<string>("SourcePropertyNo")
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
 
                     b.Property<string>("TenantId")
                         .IsRequired()

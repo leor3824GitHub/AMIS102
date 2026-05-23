@@ -45,7 +45,9 @@ public sealed record AssetIARLineItemDto(
     string? StockPropertyNo,
     LineInspectionResult InspectionResult = LineInspectionResult.Pending,
     DateTimeOffset? InspectedOnUtc = null,
-    Guid? InspectedById = null);
+    Guid? InspectedById = null,
+    Guid? CatalogItemId = null,
+    string? UacsObjectCode = null);
 
 public sealed record AssetIARDto(
     Guid Id,
@@ -100,7 +102,9 @@ public sealed record AssetIARLineItemRequest(
     decimal Quantity,
     decimal UnitCost,
     string? InspectionRemarks,
-    string? StockPropertyNo = null);
+    string? StockPropertyNo = null,
+    Guid? CatalogItemId = null,
+    string? UacsObjectCode = null);
 
 public sealed record CreateAssetIARCommand(
     Guid PurchaseOrderId,
@@ -179,7 +183,9 @@ public sealed record AcceptedIARLineItemDto(
     string? Model,
     string? StockPropertyNo,
     string SupplierName,
-    string? SupplierAddress);
+    string? SupplierAddress,
+    Guid? CatalogItemId = null,
+    string? UacsObjectCode = null);
 
 public sealed class SearchAcceptedIARLineItemsQuery : IQuery<PagedResponse<AcceptedIARLineItemDto>>
 {
@@ -202,7 +208,9 @@ public sealed record AssetIARAcceptedEventItem(
     string Unit,
     decimal Quantity,
     decimal UnitCost,
-    string? StockPropertyNo = null);
+    string? StockPropertyNo = null,
+    Guid? CatalogItemId = null,
+    string? UacsObjectCode = null);
 
 public sealed record AssetIARAcceptedEvent(
     Guid IARId,

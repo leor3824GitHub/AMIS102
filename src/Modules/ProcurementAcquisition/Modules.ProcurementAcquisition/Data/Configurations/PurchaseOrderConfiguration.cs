@@ -44,6 +44,7 @@ public sealed class PurchaseOrderConfiguration : IEntityTypeConfiguration<Purcha
             b.Property(li => li.Description).HasMaxLength(500).IsRequired();
             b.Property(li => li.Quantity).HasPrecision(18, 4).IsRequired();
             b.Property(li => li.UnitCost).HasPrecision(18, 4).IsRequired();
+            b.Property(li => li.UacsObjectCode).HasMaxLength(64); // copied from PR line; flows through to IAR/PPERR
         });
     }
 }

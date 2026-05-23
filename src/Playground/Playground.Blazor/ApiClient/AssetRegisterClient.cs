@@ -895,7 +895,12 @@ public sealed record CreateReceivingReportItemRequest(
     string? Brand,
     string? Model,
     Guid? SourceIARId = null,
-    string? PropertyClassHint = null);
+    string? PropertyClassHint = null,
+    string? UacsObjectCode = null,
+    string? SourceAgencyName = null,
+    string? SourcePropertyNo = null,
+    string? SourceDocumentRef = null,
+    DateOnly? OriginalAcquisitionDate = null);
 
 // Mirror of ProcurementAcquisition's AcceptedIARLineItemDto — kept here so the
 // Blazor receiving form can stay in the AssetRegister client namespace.
@@ -914,7 +919,9 @@ public sealed record AcceptedIARLineItemDto(
     string? Model,
     string? StockPropertyNo,
     string SupplierName,
-    string? SupplierAddress);
+    string? SupplierAddress,
+    Guid? CatalogItemId = null,
+    string? UacsObjectCode = null);
 
 public sealed record CreateReceivingReportRequest(
     ReceivingDocumentKind DocumentKind,

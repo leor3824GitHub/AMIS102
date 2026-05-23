@@ -37,7 +37,9 @@ public sealed record PurchaseOrderLineItemDto(
     string Description,
     decimal Quantity,
     decimal UnitCost,
-    decimal Amount);
+    decimal Amount,
+    Guid? CatalogItemId = null,
+    string? UacsObjectCode = null);
 
 public sealed record PurchaseOrderDto(
     Guid Id,
@@ -86,7 +88,9 @@ public sealed record PurchaseOrderLineItemRequest(
     string Unit,
     string Description,
     decimal Quantity,
-    decimal UnitCost);
+    decimal UnitCost,
+    Guid? CatalogItemId = null,
+    string? UacsObjectCode = null);
 
 public sealed record CreatePurchaseOrderCommand(
     Guid PurchaseRequestId,

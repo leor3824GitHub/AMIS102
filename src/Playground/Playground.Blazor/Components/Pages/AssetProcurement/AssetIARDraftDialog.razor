@@ -368,7 +368,9 @@
                 StockNumber = poLine.StockNumber,
                 Quantity = poLine.Quantity,
                 UnitCost = poLine.UnitCost,
-                Selected = false
+                Selected = false,
+                CatalogItemId = poLine.CatalogItemId,
+                UacsObjectCode = poLine.UacsObjectCode
             });
         }
 
@@ -414,7 +416,9 @@
         Unit = lineItem.Unit,
         Quantity = lineItem.Quantity,
         UnitCost = lineItem.UnitCost,
-        PropertyClassHint = lineItem.PropertyClassHint
+        PropertyClassHint = lineItem.PropertyClassHint,
+        CatalogItemId = lineItem.CatalogItemId,
+        UacsObjectCode = lineItem.UacsObjectCode
     };
 
     private void SelectAllPoLines()
@@ -524,7 +528,9 @@
                 line.Quantity,
                 line.UnitCost,
                 null,
-                null))
+                null,
+                line.CatalogItemId,
+                line.UacsObjectCode))
             .Concat(_unmappedExistingLines.Select(line => new AssetIARLineItemRequest(
                 line.Description!,
                 line.TechnicalSpecifications,
@@ -536,7 +542,9 @@
                 line.Quantity,
                 line.UnitCost,
                 null,
-                null)))
+                null,
+                line.CatalogItemId,
+                line.UacsObjectCode)))
             .ToList();
 
         var deliveryDate = _deliveryDate is null ? (DateOnly?)null : DateOnly.FromDateTime(_deliveryDate.Value);
@@ -629,6 +637,8 @@
         public string? Unit { get; set; }
         public decimal Quantity { get; set; }
         public decimal UnitCost { get; set; }
+        public Guid? CatalogItemId { get; set; }
+        public string? UacsObjectCode { get; set; }
     }
 
     private sealed class PoLineChoice
@@ -640,5 +650,7 @@
         public decimal Quantity { get; set; }
         public decimal UnitCost { get; set; }
         public bool Selected { get; set; }
+        public Guid? CatalogItemId { get; set; }
+        public string? UacsObjectCode { get; set; }
     }
 }

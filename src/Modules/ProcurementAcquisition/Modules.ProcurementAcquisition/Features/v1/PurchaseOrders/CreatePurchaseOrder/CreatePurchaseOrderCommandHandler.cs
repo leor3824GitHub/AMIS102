@@ -25,7 +25,8 @@ public sealed class CreatePurchaseOrderCommandHandler(
         var poNumber = await GeneratePoNumberAsync(tenantId, cancellationToken).ConfigureAwait(false);
 
         var lineItems = command.LineItems.Select(li =>
-            (li.StockNumber, li.Unit, li.Description, li.Quantity, li.UnitCost));
+            new PurchaseOrderLineItemData(li.StockNumber, li.Unit, li.Description, li.Quantity, li.UnitCost,
+                li.CatalogItemId, li.UacsObjectCode));
 
         var po = PurchaseOrder.Create(
             tenantId,
@@ -151,7 +152,8 @@ public sealed class CreatePurchaseOrderCommandHandler(
             po.OursBursNumber,
             po.Status,
             po.LineItems.Select(li => new PurchaseOrderLineItemDto(
-                li.ItemNo, li.StockNumber, li.Unit, li.Description, li.Quantity, li.UnitCost, li.Amount)).ToList(),
+                li.ItemNo, li.StockNumber, li.Unit, li.Description, li.Quantity, li.UnitCost, li.Amount,
+                li.CatalogItemId, li.UacsObjectCode)).ToList(),
             po.TotalAmount,
             AmountToWords(po.TotalAmount),
             po.CreatedOnUtc,

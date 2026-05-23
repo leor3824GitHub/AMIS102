@@ -58,6 +58,10 @@ internal sealed class ReceivingReportItemConfiguration : IEntityTypeConfiguratio
         builder.Property(x => x.SerialNo).HasMaxLength(200);
         builder.Property(x => x.Brand).HasMaxLength(200);
         builder.Property(x => x.Model).HasMaxLength(200);
+        builder.Property(x => x.UacsObjectCode).HasMaxLength(64);
+        builder.Property(x => x.SourceAgencyName).HasMaxLength(200);
+        builder.Property(x => x.SourcePropertyNo).HasMaxLength(64);
+        builder.Property(x => x.SourceDocumentRef).HasMaxLength(200);
         builder.Ignore(x => x.Amount);
 
         builder.HasIndex(x => x.CatalogItemId);

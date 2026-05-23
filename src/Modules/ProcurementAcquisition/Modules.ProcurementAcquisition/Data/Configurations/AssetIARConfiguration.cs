@@ -36,6 +36,7 @@ internal sealed class AssetIARConfiguration : IEntityTypeConfiguration<AssetInsp
             li.Property(x => x.Unit).IsRequired().HasMaxLength(64);
             li.Property(x => x.InspectionRemarks).HasMaxLength(500);
             li.Property(x => x.InspectionResult).HasConversion<int>();
+            li.Property(x => x.UacsObjectCode).HasMaxLength(64); // copied from PO line snapshot
         });
 
         builder.HasQueryFilter("SoftDelete", x => !x.IsDeleted);

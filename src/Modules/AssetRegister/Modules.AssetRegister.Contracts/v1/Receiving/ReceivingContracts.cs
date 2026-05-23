@@ -17,7 +17,12 @@ public sealed record ReceivingReportItemDto(
     decimal Amount,
     string? SerialNo,
     string? Brand,
-    string? Model);
+    string? Model,
+    string? UacsObjectCode = null,
+    string? SourceAgencyName = null,
+    string? SourcePropertyNo = null,
+    string? SourceDocumentRef = null,
+    DateOnly? OriginalAcquisitionDate = null);
 
 public sealed record ReceivingReportDto(
     Guid Id,
@@ -48,10 +53,10 @@ public sealed record ReceivingReportSummaryDto(
 
 /// <summary>
 /// A single physical unit on a Receiving Report (one line = one asset).
-/// <see cref="PropertyNo"/> is inherited from the IAR acceptance phase — it is NOT
-/// generated here. When the source is an accepted IAR, also pass
-/// <see cref="SourceIARId"/> + <see cref="PropertyClassHint"/> so the handler can
-/// resolve the catalog entry automatically.
+/// <see cref="CatalogItemId"/> is required as of Phase 3 — the handler no longer falls back to fuzzy matching.
+/// <see cref="PropertyNo"/> is inherited from the IAR acceptance phase — it is NOT generated here.
+/// <see cref="UacsObjectCode"/> snapshots the PR-side Accountant-assigned UACS so the receiving record carries
+/// its own copy independent of catalog mutations.
 /// </summary>
 public sealed record CreateReceivingReportItemRequest(
     Guid? CatalogItemId,
@@ -64,7 +69,15 @@ public sealed record CreateReceivingReportItemRequest(
     string? Brand,
     string? Model,
     Guid? SourceIARId = null,
-    string? PropertyClassHint = null);
+    string? PropertyClassHint = null,
+    string? UacsObjectCode = null,
+    // ── Ad-hoc / external source (Donation, Transfer, Other) ───────────────────────────
+    // Required when SourceIARId is null. SourceAgencyName must be set; the rest are optional but
+    // strongly recommended for audit and depreciation continuity (COA GAM §V.B).
+    string? SourceAgencyName = null,
+    string? SourcePropertyNo = null,
+    string? SourceDocumentRef = null,
+    DateOnly? OriginalAcquisitionDate = null);
 
 /// <summary>
 /// Creates a Receiving Report (PPERR or SMRR) and materializes one AssetRegistry row

@@ -21,6 +21,10 @@ public sealed class UpdatePurchaseRequestCommandValidator : AbstractValidator<Up
             li.RuleFor(x => x.UnitOfIssue).NotEmpty().MaximumLength(64);
             li.RuleFor(x => x.ItemDescription).NotEmpty().MaximumLength(500);
             li.RuleFor(x => x.EstimatedUnitCost).GreaterThan(0);
+            li.RuleFor(x => x.CatalogItemId)
+                .NotNull().NotEqual(Guid.Empty)
+                .WithMessage("Pick a catalog item for every line — use the + button to create one from your description. " +
+                             "The catalog link is required so downstream IAR and PPERR can register the asset.");
         });
     }
 }

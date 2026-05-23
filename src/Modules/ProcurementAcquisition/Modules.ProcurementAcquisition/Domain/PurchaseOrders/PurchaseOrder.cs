@@ -3,6 +3,16 @@ using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders;
 
 namespace AMIS.Modules.ProcurementAcquisition.Domain.PurchaseOrders;
 
+/// <summary>Domain-internal carrier for PO line item input. Mirrors <c>PurchaseRequestLineItemData</c>.</summary>
+public readonly record struct PurchaseOrderLineItemData(
+    string? StockNumber,
+    string Unit,
+    string Description,
+    decimal Quantity,
+    decimal UnitCost,
+    Guid? CatalogItemId = null,
+    string? UacsObjectCode = null);
+
 public sealed class PurchaseOrderLineItem
 {
     public int ItemNo { get; private set; }
@@ -13,9 +23,23 @@ public sealed class PurchaseOrderLineItem
     public decimal UnitCost { get; private set; }
     public decimal Amount => Quantity * UnitCost;
 
+    /// <summary>Snapshot of the PR-side catalog reference. Carries forward to IAR / PPERR.</summary>
+    public Guid? CatalogItemId { get; private set; }
+
+    /// <summary>Snapshot of the Accountant-assigned UACS Object Code. Carries forward to IAR / PPERR.</summary>
+    public string? UacsObjectCode { get; private set; }
+
     private PurchaseOrderLineItem() { }
 
-    public static PurchaseOrderLineItem Create(int itemNo, string? stockNumber, string unit, string description, decimal quantity, decimal unitCost)
+    public static PurchaseOrderLineItem Create(
+        int itemNo,
+        string? stockNumber,
+        string unit,
+        string description,
+        decimal quantity,
+        decimal unitCost,
+        Guid? catalogItemId = null,
+        string? uacsObjectCode = null)
     {
         return new PurchaseOrderLineItem
         {
@@ -24,17 +48,28 @@ public sealed class PurchaseOrderLineItem
             Unit = unit,
             Description = description,
             Quantity = quantity,
-            UnitCost = unitCost
+            UnitCost = unitCost,
+            CatalogItemId = catalogItemId == Guid.Empty ? null : catalogItemId,
+            UacsObjectCode = string.IsNullOrWhiteSpace(uacsObjectCode) ? null : uacsObjectCode.Trim()
         };
     }
 
-    public void Update(string? stockNumber, string unit, string description, decimal quantity, decimal unitCost)
+    public void Update(
+        string? stockNumber,
+        string unit,
+        string description,
+        decimal quantity,
+        decimal unitCost,
+        Guid? catalogItemId = null,
+        string? uacsObjectCode = null)
     {
         StockNumber = stockNumber;
         Unit = unit;
         Description = description;
         Quantity = quantity;
         UnitCost = unitCost;
+        CatalogItemId = catalogItemId == Guid.Empty ? null : catalogItemId;
+        UacsObjectCode = string.IsNullOrWhiteSpace(uacsObjectCode) ? null : uacsObjectCode.Trim();
     }
 }
 
@@ -92,7 +127,7 @@ public sealed class PurchaseOrder : AggregateRoot<Guid>, IHasTenant, IAuditableE
         string paymentTerm,
         string? fundCluster,
         string? oursBursNumber,
-        IEnumerable<(string? StockNumber, string Unit, string Description, decimal Quantity, decimal UnitCost)> lineItems)
+        IEnumerable<PurchaseOrderLineItemData> lineItems)
     {
         var po = new PurchaseOrder
         {
@@ -118,9 +153,11 @@ public sealed class PurchaseOrder : AggregateRoot<Guid>, IHasTenant, IAuditableE
         };
 
         var itemNo = 1;
-        foreach (var (stock, unit, desc, qty, cost) in lineItems)
+        foreach (var li in lineItems)
         {
-            po._lineItems.Add(PurchaseOrderLineItem.Create(itemNo++, stock, unit, desc, qty, cost));
+            po._lineItems.Add(PurchaseOrderLineItem.Create(
+                itemNo++, li.StockNumber, li.Unit, li.Description, li.Quantity, li.UnitCost,
+                li.CatalogItemId, li.UacsObjectCode));
         }
 
         return po;
@@ -138,7 +175,7 @@ public sealed class PurchaseOrder : AggregateRoot<Guid>, IHasTenant, IAuditableE
         string paymentTerm,
         string? fundCluster,
         string? oursBursNumber,
-        IEnumerable<(string? StockNumber, string Unit, string Description, decimal Quantity, decimal UnitCost)> lineItems)
+        IEnumerable<PurchaseOrderLineItemData> lineItems)
     {
         if (Status != PurchaseOrderStatus.Draft)
             throw new InvalidOperationException("Only Draft purchase orders can be updated.");
@@ -158,9 +195,11 @@ public sealed class PurchaseOrder : AggregateRoot<Guid>, IHasTenant, IAuditableE
 
         _lineItems.Clear();
         var itemNo = 1;
-        foreach (var (stock, unit, desc, qty, cost) in lineItems)
+        foreach (var li in lineItems)
         {
-            _lineItems.Add(PurchaseOrderLineItem.Create(itemNo++, stock, unit, desc, qty, cost));
+            _lineItems.Add(PurchaseOrderLineItem.Create(
+                itemNo++, li.StockNumber, li.Unit, li.Description, li.Quantity, li.UnitCost,
+                li.CatalogItemId, li.UacsObjectCode));
         }
     }
 

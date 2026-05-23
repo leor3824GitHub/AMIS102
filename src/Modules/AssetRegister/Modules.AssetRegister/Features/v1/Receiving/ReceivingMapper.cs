@@ -16,7 +16,8 @@ internal static class ReceivingMapper
     public static ReceivingReportItemDto ToDto(ReceivingReportItem i) =>
         new(i.Id, i.ReportId, i.CatalogItemId, i.Reference, i.PropertyNo, i.Description,
             i.AcquisitionDate, i.Quantity, i.UnitCost, i.Amount,
-            i.SerialNo, i.Brand, i.Model);
+            i.SerialNo, i.Brand, i.Model, i.UacsObjectCode,
+            i.SourceAgencyName, i.SourcePropertyNo, i.SourceDocumentRef, i.OriginalAcquisitionDate);
 
     public static ReceivingReportDto ToDto(ReceivingReport r) =>
         new(r.Id, r.DocumentKind, r.ReportNo, r.Date, r.ReceivedFrom, r.Address,
