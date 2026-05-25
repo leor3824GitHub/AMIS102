@@ -176,7 +176,6 @@
     private static Color StatusColor(PurchaseRequestStatus status) => status switch
     {
         PurchaseRequestStatus.Draft => Color.Default,
-        PurchaseRequestStatus.Submitted => Color.Info,
         PurchaseRequestStatus.PendingFundsAvailable => Color.Info,
         PurchaseRequestStatus.PendingApproval => Color.Secondary,
         PurchaseRequestStatus.ReturnedForRevision => Color.Warning,
@@ -189,7 +188,6 @@
     private static string StatusIcon(PurchaseRequestStatus status) => status switch
     {
         PurchaseRequestStatus.Draft => Icons.Material.Filled.Edit,
-        PurchaseRequestStatus.Submitted => Icons.Material.Filled.HourglassTop,
         PurchaseRequestStatus.PendingFundsAvailable => Icons.Material.Filled.AccountBalance,
         PurchaseRequestStatus.PendingApproval => Icons.Material.Filled.HourglassBottom,
         PurchaseRequestStatus.ReturnedForRevision => Icons.Material.Filled.Reply,

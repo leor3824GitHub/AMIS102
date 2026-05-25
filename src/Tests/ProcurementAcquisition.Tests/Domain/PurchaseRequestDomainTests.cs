@@ -127,20 +127,6 @@ public sealed class PurchaseRequestDomainTests
     }
 
     [Fact]
-    public void Approve_WhenLegacySubmitted_StillWorks()
-    {
-        // Backward compat: legacy PRs in Submitted status should still be approvable
-        var pr = CreatePr();
-        // Force into legacy Submitted status (simulating data created before the workflow change).
-        // We use reflection only because no public API can put us in legacy Submitted.
-        typeof(PurchaseRequest).GetProperty("Status")!.SetValue(pr, PurchaseRequestStatus.Submitted);
-
-        pr.Approve("John HoPE");
-
-        pr.Status.ShouldBe(PurchaseRequestStatus.Approved);
-    }
-
-    [Fact]
     public void ReturnForRevision_FromPendingFundsAvailable_RevertsToDraftWithReason()
     {
         var pr = CreatePr();

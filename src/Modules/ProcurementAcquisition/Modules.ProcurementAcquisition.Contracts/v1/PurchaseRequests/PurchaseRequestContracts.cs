@@ -11,7 +11,6 @@ namespace AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
 public enum PurchaseRequestStatus
 {
     Draft = 0,
-    Submitted = 1,                  // legacy single-step submissions; kept for backward compat
     Approved = 2,
     Rejected = 3,
     Cancelled = 4,

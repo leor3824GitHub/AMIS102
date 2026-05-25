@@ -80,3 +80,18 @@ public sealed class IncidentReportFiledIntegrationPublisher(
     }
 }
 
+public sealed class UnserviceableReportClosedIntegrationPublisher(
+    IEventBus bus, AssetRegisterDbContext db) : INotificationHandler<UnserviceableReportSubmittedEvent>
+{
+    public async ValueTask Handle(UnserviceableReportSubmittedEvent @event, CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(@event);
+        var report = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.FirstOrDefaultAsync(
+            db.UnserviceablePropertyReports, r => r.Id == @event.ReportId, ct).ConfigureAwait(false);
+        if (report is null) return;
+
+        await bus.PublishAsync(new AssetRegisterIntegrationEvents.UnserviceableReportClosed(
+            report.Id, report.ReportNo, report.ReportType, @event.TenantId, @event.CorrelationId ?? string.Empty), ct).ConfigureAwait(false);
+    }
+}
+

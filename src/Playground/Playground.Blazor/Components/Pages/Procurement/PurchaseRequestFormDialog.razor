@@ -1,0 +1,541 @@
+@using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests
+@using AMIS.Modules.AssetRegister.Contracts.v1.Catalog
+@using AMIS.Framework.Shared.Persistence
+@using AMIS.Playground.Blazor.ApiClient
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
+@inject IPurchaseRequestClient Client
+@inject IArCatalogClient CatalogClient
+@inject ILookupClient LookupClient
+@inject IMaster_dataClient MasterDataClient
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject IEmployeesClient EmployeesClient
+
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="2">
+            <MudText Typo="Typo.h6">@(_editing is null ? "New Purchase Request" : $"Edit {_editing.PrNumber}")</MudText>
+
+            <MudGrid Spacing="1">
+                <MudItem xs="12" sm="6" md="4">
+                    <MudAutocomplete T="DepartmentReferenceDto"
+                                     Value="_form.Department"
+                                     ValueChanged="OnDepartmentChanged"
+                                     SearchFunc="SearchDepartments"
+                                     ToStringFunc="FormatDepartment"
+                                     Label="Department *"
+                                     Variant="Variant.Outlined"
+                                     Placeholder="Search department..."
+                                     Clearable="true"
+                                     CoerceValue="true"
+                                     ResetValueOnEmptyText="true"
+                                     Error="@(_submitted && _form.Department is null)"
+                                     ErrorText="Department is required."
+                                     Dense="true" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" sm="6" md="4">
+                    <MudTextField @bind-Value="_form.ResponsibilityCenterCode" Label="Responsibility Center Code" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" sm="12" md="4">
+                    <MudSelect @bind-Value="_form.PrType" Label="PR Type" Variant="Variant.Outlined" T="PrType" Dense="true" Margin="Margin.Dense">
+                        <MudSelectItem Value="PrType.Planned">Planned</MudSelectItem>
+                        <MudSelectItem Value="PrType.Unplanned">Unplanned</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+            </MudGrid>
+
+            <MudTextField @bind-Value="_form.Purpose"
+                          Label="Purpose / Title *"
+                          Variant="Variant.Outlined"
+                          Lines="2"
+                          Error="@(_submitted && string.IsNullOrWhiteSpace(_form.Purpose))"
+                          ErrorText="Purpose is required."
+                          Dense="true" Margin="Margin.Dense" />
+
+            @if (_form.PrType == PrType.Unplanned)
+            {
+                <MudTextField @bind-Value="_form.Justification"
+                              Label="Justification *"
+                              Variant="Variant.Outlined"
+                              Lines="2"
+                              Error="@(_submitted && string.IsNullOrWhiteSpace(_form.Justification))"
+                              ErrorText="Justification is required for unplanned requests."
+                              Dense="true" Margin="Margin.Dense" />
+            }
+
+            <MudGrid Spacing="1">
+                <MudItem xs="12" sm="6" md="3"><MudTextField @bind-Value="_form.SaiNumber" Label="SAI Number" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" /></MudItem>
+                <MudItem xs="12" sm="6" md="3"><MudDatePicker @bind-Date="_form.SaiDateNullable" Label="SAI Date" Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" Dense="true" Margin="Margin.Dense" /></MudItem>
+                <MudItem xs="12" sm="6" md="3"><MudTextField @bind-Value="_form.AlobsNumber" Label="ALOBS Number" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" /></MudItem>
+                <MudItem xs="12" sm="6" md="3"><MudDatePicker @bind-Date="_form.AlobsDateNullable" Label="ALOBS Date" Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" Dense="true" Margin="Margin.Dense" /></MudItem>
+            </MudGrid>
+
+            <MudText Typo="Typo.subtitle2" Class="mt-2">Line Items</MudText>
+            @if (_submitted && !_form.LineItems.Any(li => !string.IsNullOrWhiteSpace(li.ItemDescription)))
+            {
+                <MudAlert Severity="Severity.Error" Dense="true">At least one line item with a description is required.</MudAlert>
+            }
+
+            <!-- New Line Item Form -->
+            <MudPaper Outlined="true" Class="pa-3">
+                <MudText Typo="Typo.subtitle2" Class="mb-2">Add New Line Item</MudText>
+                <MudGrid Spacing="1">
+                    <MudItem xs="12" sm="12" md="6">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                            <MudAutocomplete T="ArCatalogItemDto"
+                                             Value="_newLineItem.SelectedCatalog"
+                                             ValueChanged="@(c => OnNewCatalogSelected(c))"
+                                             Text="@_newLineItem.ItemDescription"
+                                             TextChanged="@(t => OnNewDescriptionChanged(t))"
+                                             SearchFunc="SearchCatalogAsync"
+                                             ToStringFunc="@(c => c?.Description ?? string.Empty)"
+                                             Label="Description *"
+                                             Variant="Variant.Outlined"
+                                             Dense="true"
+                                             Margin="Margin.Dense"
+                                             CoerceValue="false"
+                                             CoerceText="false"
+                                             ResetValueOnEmptyText="false"
+                                             MinCharacters="0"
+                                             Clearable="true"
+                                             ErrorText="@(string.IsNullOrWhiteSpace(_newLineItem.ItemDescription) ? "Description is required." : "Pick a catalog item — use the + button to create one.")"
+                                             Class="flex-grow-1" />
+                            <MudTooltip Text="Create a new catalog item from this description">
+                                <MudIconButton Icon="@Icons.Material.Filled.AddCircleOutline"
+                                               Color="Color.Primary"
+                                               Size="Size.Small"
+                                               OnClick="@(async () => await OpenCreateCatalogForNewItemAsync())" />
+                            </MudTooltip>
+                        </MudStack>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="1">
+                        <MudNumericField @bind-Value="_newLineItem.Quantity" Label="Qty" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Min="0.01m" />
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="1">
+                        <MudTextField @bind-Value="_newLineItem.UnitOfIssue" Label="Unit" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="2">
+                        <MudNumericField @bind-Value="_newLineItem.EstimatedUnitCost" Label="Unit Cost" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Min="0m" />
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="2" Class="d-flex align-center">
+                        <MudButton StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Filled" Color="Color.Primary"
+                                   OnClick="AddLineItem" Size="Size.Small" FullWidth="true">Add Item</MudButton>
+                    </MudItem>
+                </MudGrid>
+                @if (_newLineItem.SelectedCatalog is not null)
+                {
+                    <MudStack Row="true" Spacing="1" Class="mt-2">
+                        <MudChip T="string" Size="Size.Small" Color="Color.Info" Icon="@Icons.Material.Filled.Inventory2">
+                            @_newLineItem.SelectedCatalog.Code
+                        </MudChip>
+                        @if (_newLineItem.SelectedCatalog.Status == CatalogItemStatus.Draft)
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Warning" Icon="@Icons.Material.Filled.HourglassEmpty">
+                                Draft — UACS pending
+                            </MudChip>
+                        }
+                        else if (!string.IsNullOrWhiteSpace(_newLineItem.SelectedCatalog.UacsObjectCode))
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Success" Icon="@Icons.Material.Filled.AccountBalance">
+                                UACS @_newLineItem.SelectedCatalog.UacsObjectCode
+                            </MudChip>
+                        }
+                    </MudStack>
+                }
+            </MudPaper>
+
+            <!-- Line Items List -->
+            @if (_form.LineItems.Count > 0)
+            {
+                <MudTable Items="_form.LineItems" Hover="true" Dense="true" Class="mt-2">
+                    <HeaderContent>
+                        <MudTh>Description</MudTh>
+                        <MudTh Style="width: 80px;">Qty</MudTh>
+                        <MudTh Style="width: 70px;">Unit</MudTh>
+                        <MudTh Style="width: 100px;">Unit Cost</MudTh>
+                        <MudTh Style="width: 50px;"></MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Description">
+                            <div>
+                                <div>@context.ItemDescription</div>
+                                @if (context.SelectedCatalog is not null)
+                                {
+                                    <div style="font-size: 0.75rem; color: #999; margin-top: 2px;">
+                                        @context.SelectedCatalog.Code
+                                        @if (!string.IsNullOrWhiteSpace(context.SelectedCatalog.UacsObjectCode))
+                                        {
+                                            <span> · UACS @context.SelectedCatalog.UacsObjectCode</span>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        </MudTd>
+                        <MudTd DataLabel="Qty">@context.Quantity</MudTd>
+                        <MudTd DataLabel="Unit">@context.UnitOfIssue</MudTd>
+                        <MudTd DataLabel="Unit Cost">@context.EstimatedUnitCost.ToString("C")</MudTd>
+                        <MudTd DataLabel="Actions">
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
+                                           OnClick="@(() => RemoveLineItem(_form.LineItems.IndexOf(context)))" />
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+            }
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync" Disabled="_busy">
+            @if (_busy) { <MudProgressCircular Size="Size.Small" Class="mr-1" Indeterminate="true" /> }
+            @(_editing is null ? "Create PR" : "Save Changes")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance Dialog { get; set; } = default!;
+    [Parameter] public PurchaseRequestDto? PurchaseRequest { get; set; }
+
+    private PurchaseRequestDto? _editing;
+    private PrForm _form = new();
+    private LineItemRow _newLineItem = new();
+    private bool _busy, _submitted;
+    private string _currentUserEmployeeName = string.Empty;
+    private List<DepartmentReferenceDto> _departments = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var idStr = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (!string.IsNullOrWhiteSpace(idStr))
+        {
+            try
+            {
+                var employee = await EmployeesClient.ByIdentityAsync(idStr);
+                if (employee is not null)
+                    _currentUserEmployeeName = $"{employee.FirstName} {employee.LastName}";
+            }
+            catch { }
+        }
+
+        await LoadDepartmentsAsync();
+
+        if (PurchaseRequest is not null)
+            await BeginEdit(PurchaseRequest);
+    }
+
+    private async Task LoadDepartmentsAsync()
+    {
+        try
+        {
+            var response = await LookupClient.DepartmentsAsync(pageSize: 1000, isActive: true);
+            _departments = response?.Items?.ToList() ?? [];
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load departments: {ex.Message}", Severity.Warning);
+        }
+    }
+
+    private Task<IEnumerable<DepartmentReferenceDto>> SearchDepartments(string value, CancellationToken token)
+    {
+        IEnumerable<DepartmentReferenceDto> results = _departments;
+
+        if (!string.IsNullOrWhiteSpace(value))
+        {
+            results = results.Where(d =>
+                d.Name.Contains(value, StringComparison.InvariantCultureIgnoreCase) ||
+                d.Code.Contains(value, StringComparison.InvariantCultureIgnoreCase));
+        }
+
+        return Task.FromResult(results);
+    }
+
+    private Task OnDepartmentChanged(DepartmentReferenceDto? department)
+    {
+        _form.Department = department;
+        return Task.CompletedTask;
+    }
+
+    private static string FormatDepartment(DepartmentReferenceDto? department)
+    {
+        if (department is null)
+            return string.Empty;
+
+        return string.IsNullOrWhiteSpace(department.Code)
+            ? department.Name
+            : $"{department.Code} - {department.Name}";
+    }
+
+    private async Task SaveAsync()
+    {
+        _submitted = true;
+
+        if (!IsFormValid())
+        {
+            Snackbar.Add("Please fill in all required fields.", Severity.Warning);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_currentUserEmployeeName))
+        {
+            Snackbar.Add("Could not resolve your employee record. Please re-login.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            var lineItems = _form.LineItems
+                .Select(li => new CreatePurchaseRequestLineItemRequest(
+                    li.Quantity, li.UnitOfIssue, li.ItemDescription, li.EstimatedUnitCost,
+                    li.SelectedCatalog?.Id))
+                .ToList();
+
+            if (_editing is null)
+            {
+                await Client.CreateAsync(new CreatePurchaseRequestCommand(
+                    _form.Department!.Id, _form.ResponsibilityCenterCode, _form.Purpose, _form.PrType, _form.Justification,
+                    _currentUserEmployeeName, _form.SaiNumber, ToDateOnly(_form.SaiDateNullable),
+                    _form.AlobsNumber, ToDateOnly(_form.AlobsDateNullable), lineItems));
+                Snackbar.Add("Purchase request created.", Severity.Success);
+            }
+            else
+            {
+                await Client.UpdateAsync(_editing.Id, new UpdatePurchaseRequestCommand(
+                    _editing.Id, _form.Department!.Id, _form.ResponsibilityCenterCode, _form.Purpose, _form.PrType, _form.Justification,
+                    _editing.RequestedByName ?? _currentUserEmployeeName, _form.SaiNumber, ToDateOnly(_form.SaiDateNullable),
+                    _form.AlobsNumber, ToDateOnly(_form.AlobsDateNullable), lineItems));
+                Snackbar.Add("Purchase request updated.", Severity.Success);
+            }
+            Dialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex) { Snackbar.Add($"Save failed: {ex.Message}", Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    private async Task BeginEdit(PurchaseRequestDto pr)
+    {
+        DepartmentReferenceDto? department = null;
+        if (pr.DepartmentId != Guid.Empty)
+        {
+            department = _departments.FirstOrDefault(d => d.Id == pr.DepartmentId);
+            if (department is null)
+            {
+                try { department = await MasterDataClient.DepartmentsGetAsync(pr.DepartmentId); }
+                catch { }
+            }
+        }
+
+        _submitted = false;
+        _editing = pr;
+        _newLineItem = new LineItemRow();
+        _form = new PrForm
+        {
+            Department = department,
+            ResponsibilityCenterCode = pr.ResponsibilityCenterCode,
+            Purpose = pr.Purpose,
+            PrType = pr.PrType,
+            Justification = pr.Justification,
+            SaiNumber = pr.SaiNumber,
+            SaiDateNullable = pr.SaiDate?.ToDateTime(TimeOnly.MinValue),
+            AlobsNumber = pr.AlobsNumber,
+            AlobsDateNullable = pr.AlobsDate?.ToDateTime(TimeOnly.MinValue),
+            LineItems = pr.LineItems.Select(li => new LineItemRow
+            {
+                Quantity = li.Quantity,
+                UnitOfIssue = li.UnitOfIssue,
+                ItemDescription = li.ItemDescription,
+                EstimatedUnitCost = li.EstimatedUnitCost
+            }).ToList()
+        };
+
+        for (var i = 0; i < pr.LineItems.Count; i++)
+        {
+            var src = pr.LineItems[i];
+            if (src.CatalogItemId is not null && src.CatalogItemId != Guid.Empty)
+            {
+                try
+                {
+                    var c = await CatalogClient.GetAsync(src.CatalogItemId.Value);
+                    if (c is not null) _form.LineItems[i].SelectedCatalog = c;
+                }
+                catch { }
+            }
+        }
+    }
+
+    private async Task<IEnumerable<ArCatalogItemDto>> SearchCatalogAsync(string value, CancellationToken ct)
+    {
+        try
+        {
+            var page = await CatalogClient.SearchAsync(keyword: value, isActive: true, page: 1, pageSize: 30, ct: ct);
+            return page.Items ?? [];
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    private void OnCatalogSelected(int idx, ArCatalogItemDto? c)
+    {
+        var li = _form.LineItems[idx];
+        li.SelectedCatalog = c;
+        if (c is not null)
+        {
+            li.ItemDescription = c.Description;
+            if (string.IsNullOrWhiteSpace(li.UnitOfIssue) || li.UnitOfIssue == "pc")
+                li.UnitOfIssue = c.DefaultUnit;
+        }
+    }
+
+    private void OnDescriptionChanged(int idx, string? text)
+    {
+        var li = _form.LineItems[idx];
+        li.ItemDescription = text ?? string.Empty;
+        if (li.SelectedCatalog is not null &&
+            !string.Equals(li.SelectedCatalog.Description, li.ItemDescription, StringComparison.OrdinalIgnoreCase))
+        {
+            li.SelectedCatalog = null;
+        }
+    }
+
+    private async Task OpenCreateCatalogAsync(int idx)
+    {
+        var li = _form.LineItems[idx];
+        var parameters = new DialogParameters<CreateCatalogItemDialog>
+        {
+            { x => x.InitialDescription, li.ItemDescription }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true };
+        var dialog = await DialogService.ShowAsync<CreateCatalogItemDialog>("Create Catalog Item", parameters, options);
+        var result = await dialog.Result;
+        if (result is null || result.Canceled || result.Data is not ArCatalogItemDto created)
+            return;
+
+        OnCatalogSelected(idx, created);
+    }
+
+    private void AddLineItem()
+    {
+        if (string.IsNullOrWhiteSpace(_newLineItem.ItemDescription) || _newLineItem.SelectedCatalog is null)
+        {
+            Snackbar.Add("Please fill in description and select a catalog item.", Severity.Warning);
+            return;
+        }
+
+        if (_newLineItem.Quantity <= 0)
+        {
+            Snackbar.Add("Quantity must be greater than 0.", Severity.Warning);
+            return;
+        }
+
+        if (_newLineItem.EstimatedUnitCost <= 0)
+        {
+            Snackbar.Add("Unit Cost must be greater than 0.", Severity.Warning);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_newLineItem.UnitOfIssue))
+        {
+            Snackbar.Add("Please specify a unit.", Severity.Warning);
+            return;
+        }
+
+        _form.LineItems.Add(new LineItemRow
+        {
+            Quantity = _newLineItem.Quantity,
+            UnitOfIssue = _newLineItem.UnitOfIssue,
+            ItemDescription = _newLineItem.ItemDescription,
+            EstimatedUnitCost = _newLineItem.EstimatedUnitCost,
+            SelectedCatalog = _newLineItem.SelectedCatalog
+        });
+
+        _newLineItem = new LineItemRow();
+        Snackbar.Add("Item added.", Severity.Success);
+    }
+
+    private void OnNewCatalogSelected(ArCatalogItemDto? c)
+    {
+        _newLineItem.SelectedCatalog = c;
+        if (c is not null)
+        {
+            _newLineItem.ItemDescription = c.Description;
+            if (string.IsNullOrWhiteSpace(_newLineItem.UnitOfIssue) || _newLineItem.UnitOfIssue == "pc")
+                _newLineItem.UnitOfIssue = c.DefaultUnit;
+        }
+    }
+
+    private void OnNewDescriptionChanged(string? text)
+    {
+        _newLineItem.ItemDescription = text ?? string.Empty;
+        if (_newLineItem.SelectedCatalog is not null &&
+            !string.Equals(_newLineItem.SelectedCatalog.Description, _newLineItem.ItemDescription, StringComparison.OrdinalIgnoreCase))
+        {
+            _newLineItem.SelectedCatalog = null;
+        }
+    }
+
+    private async Task OpenCreateCatalogForNewItemAsync()
+    {
+        var parameters = new DialogParameters<CreateCatalogItemDialog>
+        {
+            { x => x.InitialDescription, _newLineItem.ItemDescription }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true };
+        var dialog = await DialogService.ShowAsync<CreateCatalogItemDialog>("Create Catalog Item", parameters, options);
+        var result = await dialog.Result;
+        if (result is null || result.Canceled || result.Data is not ArCatalogItemDto created)
+            return;
+
+        OnNewCatalogSelected(created);
+    }
+
+    private void RemoveLineItem(int idx)
+    {
+        _form.LineItems.RemoveAt(idx);
+        Snackbar.Add("Item removed.", Severity.Info);
+    }
+    private void Cancel() => Dialog.Cancel();
+
+    private bool IsFormValid() =>
+        _form.Department is not null &&
+        !string.IsNullOrWhiteSpace(_form.Purpose) &&
+        (_form.PrType != PrType.Unplanned || !string.IsNullOrWhiteSpace(_form.Justification)) &&
+        _form.LineItems.Count > 0 &&
+        _form.LineItems.All(li =>
+            !string.IsNullOrWhiteSpace(li.ItemDescription) &&
+            !string.IsNullOrWhiteSpace(li.UnitOfIssue) &&
+            li.Quantity > 0 &&
+            li.EstimatedUnitCost > 0 &&
+            li.SelectedCatalog is not null);
+
+    private static DateOnly? ToDateOnly(DateTime? d) => d.HasValue ? DateOnly.FromDateTime(d.Value) : null;
+
+    private sealed class PrForm
+    {
+        public DepartmentReferenceDto? Department { get; set; }
+        public string? ResponsibilityCenterCode { get; set; }
+        public string Purpose { get; set; } = string.Empty;
+        public PrType PrType { get; set; } = PrType.Planned;
+        public string? Justification { get; set; }
+        public string? SaiNumber { get; set; }
+        public DateTime? SaiDateNullable { get; set; }
+        public string? AlobsNumber { get; set; }
+        public DateTime? AlobsDateNullable { get; set; }
+        public List<LineItemRow> LineItems { get; set; } = [];
+    }
+
+    private sealed class LineItemRow
+    {
+        public decimal Quantity { get; set; } = 1;
+        public string UnitOfIssue { get; set; } = "pc";
+        public string ItemDescription { get; set; } = string.Empty;
+        public decimal EstimatedUnitCost { get; set; }
+        public ArCatalogItemDto? SelectedCatalog { get; set; }
+    }
+}

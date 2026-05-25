@@ -91,9 +91,21 @@ public class AssetRegisterModule : IModule
         services.AddScoped<INotificationHandler<AssetDisposedEvent>, AssetDisposedIntegrationPublisher>();
         services.AddScoped<INotificationHandler<IssuanceReportPostedEvent>, IssuanceReportPostedIntegrationPublisher>();
         services.AddScoped<INotificationHandler<IncidentReportFiledEvent>, IncidentReportFiledIntegrationPublisher>();
+        services.AddScoped<INotificationHandler<UnserviceableReportSubmittedEvent>, UnserviceableReportClosedIntegrationPublisher>();
 
         // Phase 4: log when a count session reports an asset missing.
         services.AddScoped<INotificationHandler<AssetReportedMissingFromCountEvent>, AssetReportedMissingFromCountHandler>();
+
+        // Internal domain event handlers (Phase 3g) — track state changes but don't publish integration events.
+        services.AddScoped<INotificationHandler<AssetReturnedEvent>, AssetReturnedEventHandler>();
+        services.AddScoped<INotificationHandler<AssetTransferredEvent>, AssetTransferredEventHandler>();
+        services.AddScoped<INotificationHandler<AssetTransferredOutEvent>, AssetTransferredOutEventHandler>();
+        services.AddScoped<INotificationHandler<AssetFoundAtStationEvent>, AssetFoundAtStationEventHandler>();
+        services.AddScoped<INotificationHandler<AssetLostEvent>, AssetLostEventHandler>();
+        services.AddScoped<INotificationHandler<AssetRecoveredEvent>, AssetRecoveredEventHandler>();
+        services.AddScoped<INotificationHandler<AssetUnserviceableEvent>, AssetUnserviceableEventHandler>();
+        services.AddScoped<INotificationHandler<AccountabilityCancelledEvent>, AccountabilityCancelledEventHandler>();
+        services.AddScoped<INotificationHandler<PhysicalCountSessionClosedEvent>, PhysicalCountSessionClosedEventHandler>();
     }
 
     public void MapEndpoints(IEndpointRouteBuilder endpoints)

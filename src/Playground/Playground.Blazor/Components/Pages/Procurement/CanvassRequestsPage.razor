@@ -44,6 +44,77 @@
             </MudCardContent>
         </MudCard>
 
+        @if (_selectedPurchaseRequestDetail is not null)
+        {
+            <MudCard Elevation="1" Class="mt-3">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">PR Details Preview</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudStack Spacing="2">
+                        <div>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Purpose</MudText>
+                            <MudText Typo="Typo.body2">@_selectedPurchaseRequestDetail.Purpose</MudText>
+                        </div>
+                        <MudDivider />
+                        <MudGrid Spacing="1">
+                            <MudItem xs="12" sm="6">
+                                <div>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">PR Type</MudText>
+                                    <MudChip T="string" Size="Size.Small"
+                                             Color="@(_selectedPurchaseRequestDetail.PrType == PrType.Unplanned ? Color.Warning : Color.Info)">
+                                        @_selectedPurchaseRequestDetail.PrType
+                                    </MudChip>
+                                </div>
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                <div>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">Total</MudText>
+                                    <MudText Typo="Typo.body2"><b>₱@_selectedPurchaseRequestDetail.LineItems.Sum(x => x.EstimatedTotalCost).ToString("N2")</b></MudText>
+                                </div>
+                            </MudItem>
+                        </MudGrid>
+                        <MudDivider />
+                        <div>
+                            <MudText Typo="Typo.subtitle2" Class="mb-2">Line Items (@_selectedPurchaseRequestDetail.LineItems.Count)</MudText>
+                            @if (_selectedPurchaseRequestDetail.LineItems.Count == 0)
+                            {
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">No line items.</MudText>
+                            }
+                            else
+                            {
+                                <MudSimpleTable Dense="true" Hover="true" Striped="true" Style="overflow-x: auto;">
+                                    <thead>
+                                        <tr>
+                                            <th style="width:50px">#</th>
+                                            <th style="width:100px;text-align:right">Qty</th>
+                                            <th style="width:70px">Unit</th>
+                                            <th style="width:100px;text-align:right">Unit Cost</th>
+                                            <th style="width:100px;text-align:right">Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var line in _selectedPurchaseRequestDetail.LineItems)
+                                        {
+                                            <tr>
+                                                <td>@line.ItemNo</td>
+                                                <td style="text-align:right">@line.Quantity.ToString("N2")</td>
+                                                <td>@line.UnitOfIssue</td>
+                                                <td style="text-align:right">@line.EstimatedUnitCost.ToString("N2")</td>
+                                                <td style="text-align:right">@line.EstimatedTotalCost.ToString("N2")</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </MudSimpleTable>
+                            }
+                        </div>
+                    </MudStack>
+                </MudCardContent>
+            </MudCard>
+        }
+
     </MudItem>
 
     <!-- List Panel -->
@@ -250,6 +321,7 @@
     private List<CanvassRequestSummaryDto> _items = [];
     private CanvassRequestDto? _selected, _selectedDetail;
     private PurchaseRequestSummaryDto? _selectedPurchaseRequest;
+    private PurchaseRequestDto? _selectedPurchaseRequestDetail;
     private DateTime? _returnDeadlineNullable;
     private bool _busy, _loaded;
     private string _keyword = string.Empty;
@@ -278,10 +350,22 @@
         }
     }
 
-    private Task OnPurchaseRequestChanged(PurchaseRequestSummaryDto? request)
+    private async Task OnPurchaseRequestChanged(PurchaseRequestSummaryDto? request)
     {
         _selectedPurchaseRequest = request;
-        return Task.CompletedTask;
+        _selectedPurchaseRequestDetail = null;
+
+        if (request is not null)
+        {
+            try
+            {
+                _selectedPurchaseRequestDetail = await PurchaseRequestClient.GetAsync(request.Id);
+            }
+            catch
+            {
+                _selectedPurchaseRequestDetail = null;
+            }
+        }
     }
 
     private static string FormatPurchaseRequest(PurchaseRequestSummaryDto? request)
@@ -357,6 +441,7 @@
             await Client.CreateAsync(new CreateCanvassRequestCommand(_selectedPurchaseRequest.Id, selectedDeadline));
             Snackbar.Add("Canvass request created.", Severity.Success);
             _selectedPurchaseRequest = null;
+            _selectedPurchaseRequestDetail = null;
             _returnDeadlineNullable = null;
             await LoadAsync();
         }

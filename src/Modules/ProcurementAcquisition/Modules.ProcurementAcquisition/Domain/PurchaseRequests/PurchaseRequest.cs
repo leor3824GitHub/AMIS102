@@ -266,12 +266,11 @@ public sealed class PurchaseRequest : AggregateRoot<Guid>, IHasTenant, IAuditabl
     }
 
     /// <summary>
-    /// HoPE final approval. Allowed from PendingApproval (new two-step flow) or from
-    /// legacy <see cref="PurchaseRequestStatus.Submitted"/> (rows created before the workflow change).
+    /// HoPE final approval. Allowed from PendingApproval status.
     /// </summary>
     public void Approve(string approvedByName, Guid? approvedById = null)
     {
-        if (Status != PurchaseRequestStatus.PendingApproval && Status != PurchaseRequestStatus.Submitted)
+        if (Status != PurchaseRequestStatus.PendingApproval)
             throw new InvalidOperationException("Only PRs awaiting HoPE approval can be approved.");
         if (string.IsNullOrWhiteSpace(approvedByName))
             throw new InvalidOperationException("Approver name is required.");
@@ -305,7 +304,7 @@ public sealed class PurchaseRequest : AggregateRoot<Guid>, IHasTenant, IAuditabl
 
     public void Reject(string reason)
     {
-        if (Status != PurchaseRequestStatus.PendingApproval && Status != PurchaseRequestStatus.Submitted)
+        if (Status != PurchaseRequestStatus.PendingApproval)
             throw new InvalidOperationException("Only PRs awaiting HoPE approval can be rejected.");
 
         Status = PurchaseRequestStatus.Rejected;
