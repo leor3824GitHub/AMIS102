@@ -377,7 +377,7 @@ else
         }
         catch { /* silently skip; pages degrade gracefully when Permissions is empty */ }
 
-        // Resolve EmployeeId — used by inspector/custodian checks on IAR pages.
+        // Resolve employee profile — used by IAR pages, PR forms, and reports.
         try
         {
             var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
@@ -386,7 +386,10 @@ else
             {
                 var employee = await EmployeesClient.ByIdentityAsync(identityId);
                 if (employee is not null)
-                    UserProfileState.SetEmployeeId(employee.Id);
+                    UserProfileState.SetEmployeeProfile(
+                        employee.Id,
+                        $"{employee.FirstName} {employee.LastName}".Trim(),
+                        employee.PositionName ?? string.Empty);
             }
         }
         catch { /* silently skip; pages degrade gracefully when EmployeeId is Guid.Empty */ }

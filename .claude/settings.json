@@ -15,7 +15,8 @@
       "PowerShell(dotnet build \"src/Playground/Playground.Blazor/Playground.Blazor.csproj\" -v quiet 2>&1)",
       "PowerShell(dotnet build \"d:\\\\VB\\\\AMIS102\\\\src\\\\AMIS.Framework.slnx\" --no-incremental -v quiet 2>&1)",
       "PowerShell(dotnet build \"d:\\\\VB\\\\AMIS102\\\\src\\\\Modules\\\\FastReporting\\\\Modules.FastReporting\\\\Modules.FastReporting.csproj\" --no-incremental 2>&1)",
-      "PowerShell(dotnet build \"d:\\\\VB\\\\AMIS102\\\\src\\\\Modules\\\\FastReporting\\\\Modules.FastReporting\\\\Modules.FastReporting.csproj\" -v q 2>&1)"
+      "PowerShell(dotnet build \"d:\\\\VB\\\\AMIS102\\\\src\\\\Modules\\\\FastReporting\\\\Modules.FastReporting\\\\Modules.FastReporting.csproj\" -v q 2>&1)",
+      "Bash(grep -i \"\\\\.cs$\")"
     ]
   }
 }

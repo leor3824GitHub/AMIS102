@@ -15,7 +15,7 @@ Blazor Server uses **Scoped** lifetime per circuit (one scope = one connected us
 
 | Service | Lifetime | Owner | Purpose |
 | --- | --- | --- | --- |
-| `IUserProfileState` | Scoped | `PlaygroundLayout` | Current user name, email, role, avatar |
+| `IUserProfileState` | Scoped | `PlaygroundLayout` | Current user: name, email, role, avatar, `EmployeeId`, `EmployeeFullName`, `EmployeePositionName` |
 | `IOrganizationProfileState` | Scoped | `PlaygroundLayout` | Agency name, address, 4 key officers — for report headers |
 | `ITenantThemeState` | Scoped | `PlaygroundLayout` | Theme colors, dark mode, logo, favicon |
 | `IAuthStateNotifier` | Scoped | `PlaygroundLayout` | Session expiry broadcast |

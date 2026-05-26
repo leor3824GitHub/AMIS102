@@ -22,8 +22,8 @@ public sealed class PrintPurchaseRequestFastQueryHandler(IMediator mediator)
         var pr = await mediator.Send(new GetPurchaseRequestQuery(query.Id), ct).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Purchase request '{query.Id}' not found.");
 
-        var org = await mediator.Send(new GetOrganizationProfileQuery(), ct).ConfigureAwait(false);
-        var requestedByDesignation = await ResolveDesignationByNameAsync(pr.RequestedByName, ct).ConfigureAwait(false);
+        var org                    = await mediator.Send(new GetOrganizationProfileQuery(), ct).ConfigureAwait(false);
+        var requestedByDesignation = await ResolveDesignationAsync(pr.CreatedBy, ct).ConfigureAwait(false);
 
         var headerData = new List<PrFastHeader>
         {
@@ -101,23 +101,15 @@ public sealed class PrintPurchaseRequestFastQueryHandler(IMediator mediator)
         return table;
     }
 
-    // Look up the requester's position name (used as the printed Designation).
-    // The PR stores only a name string, not an employee FK, so match by trimmed full name.
-    // Returns "" when ambiguous or not found — the field is informational, not load-bearing.
-    private async ValueTask<string> ResolveDesignationByNameAsync(string? fullName, CancellationToken ct)
+    private async ValueTask<string> ResolveDesignationAsync(string? identityUserId, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(fullName))
+        if (string.IsNullOrWhiteSpace(identityUserId))
             return string.Empty;
 
-        var trimmed = fullName.Trim();
-        var page = await mediator.Send(
-            new SearchEmployeeReferencesQuery { Keyword = trimmed, PageSize = 25, IsActive = true },
-            ct).ConfigureAwait(false);
+        var employee = await mediator.Send(
+            new GetEmployeeReferenceByIdentityUserIdQuery(identityUserId), ct).ConfigureAwait(false);
 
-        var match = page.Items?.FirstOrDefault(e =>
-            string.Equals($"{e.FirstName} {e.LastName}".Trim(), trimmed, StringComparison.OrdinalIgnoreCase));
-
-        return match?.PositionName ?? string.Empty;
+        return employee?.PositionName ?? string.Empty;
     }
 
     // Hide every object whose Name starts with "R_" — the right-copy elements in the .frx.

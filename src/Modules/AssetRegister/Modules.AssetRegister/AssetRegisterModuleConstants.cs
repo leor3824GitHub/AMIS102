@@ -67,6 +67,12 @@ public static class AssetRegisterModuleConstants
             public const string Create = "Permissions.AssetRegister.Receiving.Create";
             public const string Delete = "Permissions.AssetRegister.Receiving.Delete";
         }
+
+        public static class ReturnedProperty
+        {
+            public const string View   = "Permissions.AssetRegister.ReturnedProperty.View";
+            public const string Create = "Permissions.AssetRegister.ReturnedProperty.Create";
+        }
     }
 }
 

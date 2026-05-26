@@ -1,0 +1,27 @@
+using AMIS.Modules.AssetRegister.Contracts.v1.Accountability;
+using AMIS.Modules.AssetRegister.Contracts.v1.ReturnedProperty;
+using AMIS.Modules.AssetRegister.Domain.ReturnedProperty;
+using AMIS.Modules.AssetRegister.Features.v1.Accountability;
+
+namespace AMIS.Modules.AssetRegister.Features.v1.ReturnedProperty;
+
+internal static class ReturnedPropertyMapper
+{
+    public static ReturnedPropertyReceiptItemDto ToDto(ReturnedPropertyReceiptItem i) =>
+        new(i.Id, i.ReceiptId, i.AccountabilityLineId, i.AssetRegistryId, i.ItemNo,
+            AccountabilityMapper.ToDto(i.Snapshot));
+
+    public static ReturnedPropertyReceiptDto ToDto(ReturnedPropertyReceipt r) =>
+        new(r.Id, r.ReceiptNo, r.ReceiptType, r.Date,
+            r.AccountabilityId, r.AccountabilityDocumentNo,
+            AccountabilityMapper.ToDto(r.ReturnedBy),
+            r.ReceivedBy is null ? null : AccountabilityMapper.ToDto(r.ReceivedBy),
+            r.Remarks,
+            r.Items.OrderBy(i => i.ItemNo).Select(ToDto).ToList());
+
+    public static ReturnedPropertyReceiptSummaryDto ToSummaryDto(ReturnedPropertyReceipt r) =>
+        new(r.Id, r.ReceiptNo, r.ReceiptType, r.Date,
+            r.AccountabilityDocumentNo,
+            r.Items.Count,
+            r.Items.Sum(i => i.Snapshot.UnitCost));
+}

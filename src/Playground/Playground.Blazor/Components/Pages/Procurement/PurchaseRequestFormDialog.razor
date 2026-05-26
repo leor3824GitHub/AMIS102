@@ -2,16 +2,13 @@
 @using AMIS.Modules.AssetRegister.Contracts.v1.Catalog
 @using AMIS.Framework.Shared.Persistence
 @using AMIS.Playground.Blazor.ApiClient
-@using System.Security.Claims
-@using Microsoft.AspNetCore.Components.Authorization
 @inject IPurchaseRequestClient Client
 @inject IArCatalogClient CatalogClient
 @inject ILookupClient LookupClient
 @inject IMaster_dataClient MasterDataClient
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
-@inject AuthenticationStateProvider AuthStateProvider
-@inject IEmployeesClient EmployeesClient
+@inject IUserProfileState UserProfileState
 
 <MudDialog>
     <DialogContent>
@@ -202,25 +199,10 @@
     private PrForm _form = new();
     private LineItemRow _newLineItem = new();
     private bool _busy, _submitted;
-    private string _currentUserEmployeeName = string.Empty;
     private List<DepartmentReferenceDto> _departments = [];
 
     protected override async Task OnInitializedAsync()
     {
-        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        var idStr = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-        if (!string.IsNullOrWhiteSpace(idStr))
-        {
-            try
-            {
-                var employee = await EmployeesClient.ByIdentityAsync(idStr);
-                if (employee is not null)
-                    _currentUserEmployeeName = $"{employee.FirstName} {employee.LastName}";
-            }
-            catch { }
-        }
-
         await LoadDepartmentsAsync();
 
         if (PurchaseRequest is not null)
@@ -280,9 +262,9 @@
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(_currentUserEmployeeName))
+        if (string.IsNullOrWhiteSpace(UserProfileState.EmployeeFullName))
         {
-            Snackbar.Add("Could not resolve your employee record. Please re-login.", Severity.Warning);
+            Snackbar.Add("Your employee record could not be loaded. Please refresh the page or contact your administrator.", Severity.Warning);
             return;
         }
 
@@ -299,7 +281,7 @@
             {
                 await Client.CreateAsync(new CreatePurchaseRequestCommand(
                     _form.Department!.Id, _form.ResponsibilityCenterCode, _form.Purpose, _form.PrType, _form.Justification,
-                    _currentUserEmployeeName, _form.SaiNumber, ToDateOnly(_form.SaiDateNullable),
+                    UserProfileState.EmployeeFullName, _form.SaiNumber, ToDateOnly(_form.SaiDateNullable),
                     _form.AlobsNumber, ToDateOnly(_form.AlobsDateNullable), lineItems));
                 Snackbar.Add("Purchase request created.", Severity.Success);
             }
@@ -307,7 +289,7 @@
             {
                 await Client.UpdateAsync(_editing.Id, new UpdatePurchaseRequestCommand(
                     _editing.Id, _form.Department!.Id, _form.ResponsibilityCenterCode, _form.Purpose, _form.PrType, _form.Justification,
-                    _editing.RequestedByName ?? _currentUserEmployeeName, _form.SaiNumber, ToDateOnly(_form.SaiDateNullable),
+                    _editing.RequestedByName ?? UserProfileState.EmployeeFullName, _form.SaiNumber, ToDateOnly(_form.SaiDateNullable),
                     _form.AlobsNumber, ToDateOnly(_form.AlobsDateNullable), lineItems));
                 Snackbar.Add("Purchase request updated.", Severity.Success);
             }

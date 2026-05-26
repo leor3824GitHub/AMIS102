@@ -1130,6 +1130,102 @@ public sealed class ArReceivingReportClient(HttpClient http) : IArReceivingRepor
     }
 }
 
+// ── Returned Property Receipts (RRSP / RRP) ───────────────────────────────
+
+internal sealed record ArReturnedPropertyReceiptItemDto(
+    Guid Id,
+    Guid ReceiptId,
+    Guid AccountabilityLineId,
+    Guid AssetRegistryId,
+    int ItemNo,
+    ArAssetSnapshotDto Snapshot);
+
+internal sealed record ArReturnedPropertyReceiptDto(
+    Guid Id,
+    string ReceiptNo,
+    ArContracts.ReturnedPropertyReceiptType ReceiptType,
+    DateOnly Date,
+    Guid AccountabilityId,
+    string AccountabilityDocumentNo,
+    ArEmployeeRefDto ReturnedBy,
+    ArEmployeeRefDto? ReceivedBy,
+    string? Remarks,
+    IReadOnlyCollection<ArReturnedPropertyReceiptItemDto> Items);
+
+internal sealed record ArReturnedPropertyReceiptSummaryDto(
+    Guid Id,
+    string ReceiptNo,
+    ArContracts.ReturnedPropertyReceiptType ReceiptType,
+    DateOnly Date,
+    string AccountabilityDocumentNo,
+    int ItemCount,
+    decimal TotalUnitCost);
+
+internal sealed record CreateReturnedPropertyReceiptRequest(
+    string ReceiptNo,
+    ArContracts.ReturnedPropertyReceiptType ReceiptType,
+    DateOnly Date,
+    Guid AccountabilityId,
+    IReadOnlyList<Guid> AccountabilityLineIds,
+    ArEmployeeRefDto ReturnedBy,
+    ArEmployeeRefDto? ReceivedBy,
+    string? Remarks);
+
+internal interface IArReturnedPropertyClient
+{
+    Task<ArPagedResponse<ArReturnedPropertyReceiptSummaryDto>> SearchAsync(
+        string? keyword = null,
+        ArContracts.ReturnedPropertyReceiptType? receiptType = null,
+        DateOnly? fromDate = null,
+        DateOnly? toDate = null,
+        int page = 1,
+        int pageSize = 15,
+        CancellationToken ct = default);
+
+    Task<ArReturnedPropertyReceiptDto?> GetAsync(Guid id, CancellationToken ct = default);
+
+    Task<ArReturnedPropertyReceiptDto> CreateAsync(
+        CreateReturnedPropertyReceiptRequest request, CancellationToken ct = default);
+}
+
+internal sealed class ArReturnedPropertyClient(HttpClient http) : IArReturnedPropertyClient
+{
+    private const string Base = "api/v1/asset-register/returned-property";
+
+    public async Task<ArPagedResponse<ArReturnedPropertyReceiptSummaryDto>> SearchAsync(
+        string? keyword = null,
+        ArContracts.ReturnedPropertyReceiptType? receiptType = null,
+        DateOnly? fromDate = null,
+        DateOnly? toDate = null,
+        int page = 1,
+        int pageSize = 15,
+        CancellationToken ct = default)
+    {
+        var url = ArUrlBuilder.Build(Base, new()
+        {
+            ["keyword"]     = keyword,
+            ["receiptType"] = receiptType?.ToString(),
+            ["fromDate"]    = fromDate?.ToString("o", System.Globalization.CultureInfo.InvariantCulture),
+            ["toDate"]      = toDate?.ToString("o", System.Globalization.CultureInfo.InvariantCulture),
+            ["pageNumber"]  = page.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            ["pageSize"]    = pageSize.ToString(System.Globalization.CultureInfo.InvariantCulture),
+        });
+        var result = await http.GetFromJsonAsync<ArPagedResponse<ArReturnedPropertyReceiptSummaryDto>>(url, ArJsonOptions.Default, ct);
+        return result ?? new ArPagedResponse<ArReturnedPropertyReceiptSummaryDto>([], page, pageSize, 0, 0);
+    }
+
+    public Task<ArReturnedPropertyReceiptDto?> GetAsync(Guid id, CancellationToken ct = default) =>
+        http.GetFromJsonAsync<ArReturnedPropertyReceiptDto>($"{Base}/{id}", ArJsonOptions.Default, ct);
+
+    public async Task<ArReturnedPropertyReceiptDto> CreateAsync(
+        CreateReturnedPropertyReceiptRequest request, CancellationToken ct = default)
+    {
+        var resp = await http.PostAsJsonAsync(Base, request, ArJsonOptions.Default, ct);
+        resp.EnsureSuccessStatusCode();
+        return (await resp.Content.ReadFromJsonAsync<ArReturnedPropertyReceiptDto>(ArJsonOptions.Default, cancellationToken: ct))!;
+    }
+}
+
 // ── URL builder helper ─────────────────────────────────────────────────────
 
 internal static class ArUrlBuilder

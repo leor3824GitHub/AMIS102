@@ -1,0 +1,360 @@
+@page "/asset-register/returned-property"
+@using AMIS.Playground.Blazor.ApiClient
+@using ReturnedPropertyReceiptType = AMIS.Modules.AssetRegister.Contracts.v1.ReturnedPropertyReceiptType
+@using AccountabilityType = AMIS.Modules.AssetRegister.Contracts.v1.AccountabilityType
+@using AccountabilityStatus = AMIS.Modules.AssetRegister.Contracts.v1.AccountabilityStatus
+@using AccountabilityLineStatus = AMIS.Modules.AssetRegister.Contracts.v1.AccountabilityLineStatus
+@inject IArReturnedPropertyClient Client
+@inject IArAccountabilityClient AccountabilityClient
+@inject ISnackbar Snackbar
+
+<AMISPageHeader Title="Returned Property Receipts (RRSP / RRP)"
+               Description="Record property returned by an end-user from an ICS or PAR. Marks each returned asset back to Available." />
+
+<MudGrid Spacing="3">
+    <!-- Create Form -->
+    <MudItem xs="12" md="5">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                <MudText Typo="Typo.h6" Class="mb-3">New Return Receipt</MudText>
+                <MudStack Spacing="2">
+
+                    <MudSelect Value="_form.ReceiptType" T="ReturnedPropertyReceiptType" Label="Receipt Type"
+                               Variant="Variant.Outlined" Required="true"
+                               ValueChanged="@((ReturnedPropertyReceiptType v) => { _form.ReceiptType = v; _form.SelectedAccountability = null; _accountability = null; _selectedLineIds.Clear(); })">
+                        <MudSelectItem T="ReturnedPropertyReceiptType" Value="ReturnedPropertyReceiptType.RRSP">RRSP — Semi-Expendable (ICS)</MudSelectItem>
+                        <MudSelectItem T="ReturnedPropertyReceiptType" Value="ReturnedPropertyReceiptType.RRP">RRP — Fixed Assets (PAR)</MudSelectItem>
+                    </MudSelect>
+
+                    <MudTextField @bind-Value="_form.ReceiptNo" Label="Receipt No." Variant="Variant.Outlined"
+                                  Required="true" MaxLength="64"
+                                  Placeholder="@(_form.ReceiptType == ReturnedPropertyReceiptType.RRSP ? "e.g. RRSP-2026-00001" : "e.g. RRP-2026-00001")" />
+
+                    <MudDatePicker @bind-Date="_form.DateNullable" Label="Date" Variant="Variant.Outlined"
+                                   DateFormat="MM/dd/yyyy" Required="true" />
+
+                    <MudAutocomplete T="ArAccountabilitySummaryDto"
+                                     Value="_form.SelectedAccountability"
+                                     SearchFunc="SearchAccountabilityAsync"
+                                     ToStringFunc="@(x => x is null ? "" : x.DocumentNo)"
+                                     Label="@(_form.ReceiptType == ReturnedPropertyReceiptType.RRSP ? "ICS to Return Against" : "PAR to Return Against")"
+                                     Variant="Variant.Outlined"
+                                     Required="true" Clearable="true" ResetValueOnEmptyText="true" CoerceValue="true"
+                                     ValueChanged="OnAccountabilitySelected" />
+
+                    @if (_accountability is not null)
+                    {
+                        <MudAlert Severity="Severity.Info" Dense="true">
+                            Select lines to return from <b>@_accountability.DocumentNo</b>
+                            (@_accountability.Lines.Count(l => l.LineStatus == AccountabilityLineStatus.Active) active line(s)).
+                        </MudAlert>
+
+                        <MudText Typo="Typo.subtitle2">Lines to Return</MudText>
+                        @foreach (var line in _accountability.Lines.Where(l => l.LineStatus == AccountabilityLineStatus.Active))
+                        {
+                            <MudCheckBox @bind-Value="_selectedLineIds[line.Id]"
+                                         Label="@($"{line.Snapshot.PropertyNo} — {line.Snapshot.Description} (₱{line.Snapshot.UnitCost:N2})")"
+                                         Color="Color.Primary" Dense="true" />
+                        }
+                    }
+
+                    <MudTextField @bind-Value="_form.ReturnedByName" Label="Returned By (Name)" Variant="Variant.Outlined"
+                                  Required="true" MaxLength="200" />
+                    <MudTextField @bind-Value="_form.ReturnedByDesignation" Label="Returned By (Designation)" Variant="Variant.Outlined" MaxLength="200" />
+
+                    <MudTextField @bind-Value="_form.ReceivedByName" Label="Received By (Supply Officer)" Variant="Variant.Outlined" MaxLength="200" />
+                    <MudTextField @bind-Value="_form.ReceivedByDesignation" Label="Received By (Designation)" Variant="Variant.Outlined" MaxLength="200" />
+
+                    <MudTextField @bind-Value="_form.Remarks" Label="Remarks" Variant="Variant.Outlined"
+                                  Lines="2" MaxLength="1000" />
+
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                               OnClick="CreateAsync" Disabled="_busy">
+                        Create @(_form.ReceiptType == ReturnedPropertyReceiptType.RRSP ? "RRSP" : "RRP")
+                    </MudButton>
+                </MudStack>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    <!-- List Panel -->
+    <MudItem xs="12" md="7">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3" Spacing="2">
+                    <MudText Typo="Typo.h6" Class="flex-grow-1">Return Receipts</MudText>
+                    <MudSelect Value="_typeFilter" T="ReturnedPropertyReceiptType?" Label="Type" Variant="Variant.Outlined"
+                               Size="Size.Small" Style="max-width:140px" Clearable="true"
+                               ValueChanged="@(async (ReturnedPropertyReceiptType? v) => { _typeFilter = v; _page = 1; await LoadAsync(); })">
+                        <MudSelectItem T="ReturnedPropertyReceiptType?" Value="@((ReturnedPropertyReceiptType?)null)">All</MudSelectItem>
+                        <MudSelectItem T="ReturnedPropertyReceiptType?" Value="@((ReturnedPropertyReceiptType?)ReturnedPropertyReceiptType.RRSP)">RRSP (SE)</MudSelectItem>
+                        <MudSelectItem T="ReturnedPropertyReceiptType?" Value="@((ReturnedPropertyReceiptType?)ReturnedPropertyReceiptType.RRP)">RRP (FA)</MudSelectItem>
+                    </MudSelect>
+                    <MudTextField @bind-Value="_keyword" Label="Search" Variant="Variant.Outlined" Size="Size.Small"
+                                  Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
+                                  DebounceInterval="350" OnDebounceIntervalElapsed="@(() => LoadAsync())" Style="max-width:200px" />
+                </MudStack>
+
+                @if (_loading)
+                {
+                    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+                }
+                else if (_records.Count == 0)
+                {
+                    <MudAlert Severity="Severity.Info">No return receipts found.</MudAlert>
+                }
+                else
+                {
+                    <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                        <thead>
+                            <tr>
+                                <th>Receipt No.</th>
+                                <th>Type</th>
+                                <th>Date</th>
+                                <th>Accountability</th>
+                                <th>Items</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var r in _records)
+                            {
+                                <tr>
+                                    <td><b>@r.ReceiptNo</b></td>
+                                    <td>
+                                        <MudChip T="string" Size="Size.Small"
+                                                 Color="@(r.ReceiptType == ReturnedPropertyReceiptType.RRSP ? Color.Info : Color.Secondary)"
+                                                 Variant="Variant.Outlined">
+                                            @r.ReceiptType
+                                        </MudChip>
+                                    </td>
+                                    <td>@r.Date.ToString("MM/dd/yyyy")</td>
+                                    <td><MudText Typo="Typo.caption">@r.AccountabilityDocumentNo</MudText></td>
+                                    <td>
+                                        <MudChip T="string" Size="Size.Small" Color="Color.Default">
+                                            @r.ItemCount item(s)
+                                        </MudChip>
+                                    </td>
+                                    <td>
+                                        <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small"
+                                                       Color="Color.Primary" OnClick="@(() => ViewAsync(r.Id))" />
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </MudSimpleTable>
+
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-2">
+                        <MudText Typo="Typo.caption">@_totalCount total</MudText>
+                        <MudSpacer />
+                        <MudPagination Count="@TotalPages" Selected="_page" ShowFirstButton="true" ShowLastButton="true"
+                                       SelectedChanged="@(async p => { _page = p; await LoadAsync(); })" />
+                    </MudStack>
+                }
+            </MudCardContent>
+        </MudCard>
+
+        <!-- Detail Card -->
+        @if (_detail is not null)
+        {
+            <MudCard Elevation="1" Class="mt-3">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudStack Row="true" AlignItems="AlignItems.Center">
+                            <MudText Typo="Typo.h6">@_detail.ReceiptNo</MudText>
+                            <MudChip T="string" Size="Size.Small"
+                                     Color="@(_detail.ReceiptType == ReturnedPropertyReceiptType.RRSP ? Color.Info : Color.Secondary)"
+                                     Variant="Variant.Outlined">
+                                @_detail.ReceiptType
+                            </MudChip>
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">@_detail.Date.ToString("MMMM dd, yyyy")</MudText>
+                            <MudSpacer />
+                            <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="@(() => _detail = null)" />
+                        </MudStack>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudGrid Spacing="1" Class="mb-2">
+                        <MudItem xs="6">
+                            <MudText Typo="Typo.caption">Accountability Document</MudText>
+                            <MudText Typo="Typo.body2"><b>@_detail.AccountabilityDocumentNo</b></MudText>
+                        </MudItem>
+                        <MudItem xs="6">
+                            <MudText Typo="Typo.caption">Returned By</MudText>
+                            <MudText Typo="Typo.body2">@_detail.ReturnedBy.PrintedName@(!string.IsNullOrWhiteSpace(_detail.ReturnedBy.Designation) ? $" — {_detail.ReturnedBy.Designation}" : "")</MudText>
+                        </MudItem>
+                        @if (_detail.ReceivedBy is not null)
+                        {
+                            <MudItem xs="6">
+                                <MudText Typo="Typo.caption">Received By</MudText>
+                                <MudText Typo="Typo.body2">@_detail.ReceivedBy.PrintedName@(!string.IsNullOrWhiteSpace(_detail.ReceivedBy.Designation) ? $" — {_detail.ReceivedBy.Designation}" : "")</MudText>
+                            </MudItem>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(_detail.Remarks))
+                        {
+                            <MudItem xs="12">
+                                <MudText Typo="Typo.caption">Remarks</MudText>
+                                <MudText Typo="Typo.body2">@_detail.Remarks</MudText>
+                            </MudItem>
+                        }
+                    </MudGrid>
+                    <MudDivider Class="my-2" />
+                    <MudText Typo="Typo.subtitle2" Class="mb-1">Returned Items (@_detail.Items.Count)</MudText>
+                    <MudSimpleTable Dense="true" Striped="true">
+                        <thead>
+                            <tr><th>#</th><th>Property No.</th><th>Description</th><th>Type</th><th style="text-align:right">Unit Cost</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in _detail.Items.OrderBy(x => x.ItemNo))
+                            {
+                                <tr>
+                                    <td>@item.ItemNo</td>
+                                    <td><b>@item.Snapshot.PropertyNo</b></td>
+                                    <td>@item.Snapshot.Description</td>
+                                    <td><MudChip T="string" Size="Size.Small" Color="Color.Default">@item.Snapshot.AssetType</MudChip></td>
+                                    <td style="text-align:right">₱@item.Snapshot.UnitCost.ToString("N2")</td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="4" style="text-align:right"><b>Total:</b></td>
+                                <td style="text-align:right"><b>₱@_detail.Items.Sum(x => x.Snapshot.UnitCost).ToString("N2")</b></td>
+                            </tr>
+                        </tfoot>
+                    </MudSimpleTable>
+                </MudCardContent>
+            </MudCard>
+        }
+    </MudItem>
+</MudGrid>
+
+@code {
+    private List<ArReturnedPropertyReceiptSummaryDto> _records = [];
+    private ArReturnedPropertyReceiptDto? _detail;
+    private ArAccountabilityDto? _accountability;
+    private Dictionary<Guid, bool> _selectedLineIds = [];
+    private ReturnedPropertyReceiptType? _typeFilter;
+    private string? _keyword;
+    private bool _loading;
+    private bool _busy;
+    private int _page = 1;
+    private int _totalCount;
+    private const int PageSize = 15;
+    private int TotalPages => Math.Max(1, (int)Math.Ceiling(_totalCount / (double)PageSize));
+
+    private ReturnForm _form = new();
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        try
+        {
+            var response = await Client.SearchAsync(_keyword, _typeFilter, page: _page, pageSize: PageSize);
+            _records = [.. response.Items];
+            _totalCount = response.TotalCount;
+        }
+        catch (Exception ex) { Snackbar.Add($"Load failed: {ex.Message}", Severity.Error); }
+        finally { _loading = false; }
+    }
+
+    private async Task ViewAsync(Guid id)
+    {
+        try { _detail = await Client.GetAsync(id); }
+        catch (Exception ex) { Snackbar.Add($"Load failed: {ex.Message}", Severity.Error); }
+    }
+
+    private async Task<IEnumerable<ArAccountabilitySummaryDto>> SearchAccountabilityAsync(string? value, CancellationToken ct)
+    {
+        var expectedType = _form.ReceiptType == ReturnedPropertyReceiptType.RRSP
+            ? AccountabilityType.SE_ICS
+            : AccountabilityType.PPE_PAR;
+        var response = await AccountabilityClient.SearchAsync(
+            keyword: value, type: expectedType, status: AccountabilityStatus.Active, page: 1, pageSize: 20, ct: ct);
+        return response.Items;
+    }
+
+    private async Task OnAccountabilitySelected(ArAccountabilitySummaryDto? selected)
+    {
+        _form.SelectedAccountability = selected;
+        _accountability = null;
+        _selectedLineIds.Clear();
+
+        if (selected is null) return;
+
+        try
+        {
+            _accountability = await AccountabilityClient.GetAsync(selected.Id);
+            if (_accountability is not null)
+            {
+                _selectedLineIds = _accountability.Lines
+                    .Where(l => l.LineStatus == AccountabilityLineStatus.Active)
+                    .ToDictionary(l => l.Id, _ => true);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Could not load accountability detail: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task CreateAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_form.ReceiptNo) || _form.DateNullable is null ||
+            _form.SelectedAccountability is null || string.IsNullOrWhiteSpace(_form.ReturnedByName))
+        {
+            Snackbar.Add("Receipt No., Date, Accountability, and Returned By are required.", Severity.Warning);
+            return;
+        }
+
+        var lineIds = _selectedLineIds.Where(kv => kv.Value).Select(kv => kv.Key).ToList();
+        if (lineIds.Count == 0)
+        {
+            Snackbar.Add("Select at least one line to return.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            var returnedBy = new ArEmployeeRefDto(Guid.Empty, _form.ReturnedByName.Trim(), _form.ReturnedByDesignation?.Trim());
+            ArEmployeeRefDto? receivedBy = string.IsNullOrWhiteSpace(_form.ReceivedByName)
+                ? null
+                : new ArEmployeeRefDto(Guid.Empty, _form.ReceivedByName.Trim(), _form.ReceivedByDesignation?.Trim());
+
+            var result = await Client.CreateAsync(new CreateReturnedPropertyReceiptRequest(
+                _form.ReceiptNo.Trim(),
+                _form.ReceiptType,
+                DateOnly.FromDateTime(_form.DateNullable!.Value),
+                _form.SelectedAccountability.Id,
+                lineIds,
+                returnedBy,
+                receivedBy,
+                _form.Remarks?.Trim()));
+
+            Snackbar.Add($"{result.ReceiptNo} created. {result.Items.Count} item(s) returned.", Severity.Success);
+            _form = new ReturnForm();
+            _accountability = null;
+            _selectedLineIds.Clear();
+            _detail = result;
+            await LoadAsync();
+        }
+        catch (Exception ex) { Snackbar.Add($"Create failed: {ex.Message}", Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    private sealed class ReturnForm
+    {
+        public ReturnedPropertyReceiptType ReceiptType { get; set; } = ReturnedPropertyReceiptType.RRSP;
+        public string ReceiptNo { get; set; } = string.Empty;
+        public DateTime? DateNullable { get; set; } = DateTime.Today;
+        public ArAccountabilitySummaryDto? SelectedAccountability { get; set; }
+        public string ReturnedByName { get; set; } = string.Empty;
+        public string? ReturnedByDesignation { get; set; }
+        public string? ReceivedByName { get; set; }
+        public string? ReceivedByDesignation { get; set; }
+        public string? Remarks { get; set; }
+    }
+}

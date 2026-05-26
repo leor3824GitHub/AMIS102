@@ -67,25 +67,30 @@ public sealed class PrintRequestForQuotationFastQueryHandler(IMediator mediator)
         IFormatProvider nf)
     {
         var table = new DataTable("LineItemsDS") { Locale = CultureInfo.InvariantCulture };
+        table.Columns.Add("CopyNumber", typeof(int));
         table.Columns.Add("Description", typeof(string));
         table.Columns.Add("Unit", typeof(string));
         table.Columns.Add("Quantity", typeof(string));
 
+        var rows = new List<(string Desc, string Unit, string Qty)>();
         if (lineItems is not null)
-        {
             foreach (var item in lineItems.OrderBy(x => x.ItemNo))
+                rows.Add((item.ItemDescription, item.UnitOfIssue, item.Quantity.ToString("N0", nf)));
+
+        var padTo = Math.Max(minRows, rows.Count);
+        while (rows.Count < padTo)
+            rows.Add((string.Empty, string.Empty, string.Empty));
+
+        for (var copy = 1; copy <= 2; copy++)
+            foreach (var (desc, unit, qty) in rows)
             {
                 var row = table.NewRow();
-                row["Description"] = item.ItemDescription;
-                row["Unit"] = item.UnitOfIssue;
-                row["Quantity"] = item.Quantity.ToString("N0", nf);
+                row["CopyNumber"] = copy;
+                row["Description"] = desc;
+                row["Unit"] = unit;
+                row["Quantity"] = qty;
                 table.Rows.Add(row);
             }
-        }
-
-        var padTo = Math.Max(minRows, table.Rows.Count);
-        while (table.Rows.Count < padTo)
-            table.Rows.Add(string.Empty, string.Empty, string.Empty);
 
         return table;
     }

@@ -151,3 +151,11 @@ public enum ReceiptType
     Other = 3
 }
 
+public enum ReturnedPropertyReceiptType
+{
+    /// <summary>Receipt for Returned Semi-Expendable Property — for SE_ICS accountabilities.</summary>
+    RRSP = 0,
+    /// <summary>Receipt for Returned Property — for PPE_PAR accountabilities.</summary>
+    RRP = 1
+}
+

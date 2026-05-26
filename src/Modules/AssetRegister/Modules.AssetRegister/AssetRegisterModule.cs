@@ -58,6 +58,9 @@ public class AssetRegisterModule : IModule
         new("View Receiving Reports",   "View",   "AssetRegister.Receiving", IsBasic: true),
         new("Create Receiving Reports", "Create", "AssetRegister.Receiving"),
         new("Delete Receiving Reports", "Delete", "AssetRegister.Receiving"),
+
+        new("View Returned Property Receipts",   "View",   "AssetRegister.ReturnedProperty", IsBasic: true),
+        new("Create Returned Property Receipts", "Create", "AssetRegister.ReturnedProperty"),
     ];
 
     public void ConfigureServices(IHostApplicationBuilder builder)
@@ -197,6 +200,10 @@ public class AssetRegisterModule : IModule
         Features.v1.Receiving.GetActivePPERRFormSeries.GetActivePPERRFormSeriesEndpoint.Map(ppErrSeries);
         Features.v1.Receiving.ActivatePPERRFormSeries.ActivatePPERRFormSeriesEndpoint.Map(ppErrSeries);
         Features.v1.Receiving.ActivatePPERRFormSeries.ActivatePPERRFormSeriesEndpoint.MapDeactivate(ppErrSeries);
+
+        // Returned property receipts (RRSP / RRP)
+        var returnedProperty = moduleGroup.MapGroup("/returned-property");
+        Features.v1.ReturnedProperty.ReturnedPropertyEndpoints.MapReturnedPropertyEndpoints(returnedProperty);
 
         // Report rendering endpoints (ICS/PAR, RSPI/PPEIR, RPCSEMEX/RPCPPE, RegSPI, RLSDDSP, IIRUSP/IIRUP) — Phase 5
         var reports = moduleGroup.MapGroup("/reports");
