@@ -104,8 +104,10 @@ public sealed class CreatePurchaseOrderCommandHandler(
 
     private async Task<string> GeneratePoNumberAsync(string tenantId, CancellationToken ct)
     {
-        var year = DateTime.UtcNow.Year;
-        var prefix = $"PO-{year}-";
+        var now = DateTime.UtcNow;
+        var year = now.Year;
+        var month = now.Month;
+        var prefix = $"{year:D4}-{month:D2}-";
 
         var lastNumber = await dbContext.PurchaseOrders
             .IgnoreQueryFilters()
@@ -121,7 +123,7 @@ public sealed class CreatePurchaseOrderCommandHandler(
             next = last + 1;
         }
 
-        return $"{prefix}{next:0000}";
+        return $"{prefix}{next:D3}";
     }
 
     private string GetRequiredTenantId() =>

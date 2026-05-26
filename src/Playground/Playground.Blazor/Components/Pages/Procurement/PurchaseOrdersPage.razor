@@ -21,23 +21,29 @@
         <MudCard Elevation="1">
             <MudCardContent>
                 <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
-                    <MudTextField @bind-Value="_keyword" Label="Search" Variant="Variant.Outlined" Size="Size.Small"
+                    <MudTextField @bind-Value="_keyword" Label="Search by PO #, supplier, or item..." Variant="Variant.Outlined" Size="Size.Small" Dense="true" Margin="Margin.Dense"
                                   Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
-                                  Style="max-width:220px" DebounceInterval="400"
+                                  Style="max-width:300px" DebounceInterval="400"
                                   OnDebounceIntervalElapsed="@(async () => await LoadAsync())" />
                     <MudSpacer />
                     <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.Add"
-                               OnClick="OpenCreateDialog">
-                        + NEW PURCHASE ORDER
+                               OnClick="OpenCreateDialog"
+                               Title="Create a new purchase order">
+                        NEW PURCHASE ORDER
                     </MudButton>
                 </MudStack>
 
                 <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap" Class="mb-3">
                     @foreach (var s in _statusFilters)
                     {
+                        var isActive = _statusFilter == s;
                         <MudChip T="string" Size="Size.Small"
-                                 Color="@(_statusFilter == s ? Color.Primary : Color.Default)"
-                                 OnClick="@(() => SetStatusFilter(s))">@GetStatusChipLabel(s)</MudChip>
+                                 Color="@(isActive ? Color.Primary : Color.Default)"
+                                 OnClick="@(() => SetStatusFilter(s))"
+                                 Title="@($"Filter by {s} status")"
+                                 Clickable="true">
+                            @GetStatusChipLabel(s)
+                        </MudChip>
                     }
                 </MudStack>
 
@@ -47,7 +53,16 @@
                 }
                 else if (_items.Count == 0)
                 {
-                    <MudAlert Severity="Severity.Info">No purchase orders found.</MudAlert>
+                    <MudAlert Severity="Severity.Info">
+                        @if (!string.IsNullOrWhiteSpace(_keyword) || _statusFilter != "All")
+                        {
+                            <text>No purchase orders match your filters. Try adjusting your search or status filter.</text>
+                        }
+                        else
+                        {
+                            <text>No purchase orders yet. <MudLink Href="#" OnClick="OpenCreateDialog" Style="cursor:pointer;">Create your first PO</MudLink></text>
+                        }
+                    </MudAlert>
                 }
                 else
                 {
@@ -77,23 +92,23 @@
                                         <MudStack Row="true" Spacing="0">
                                             @if (item.Status == PurchaseOrderStatus.Draft)
                                             {
-                                                <MudTooltip Text="Edit">
+                                                <MudTooltip Text="Edit draft">
                                                     <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary"
                                                                    OnClick="@(async () => await OpenEditDialog(item.Id))" />
                                                 </MudTooltip>
-                                                <MudTooltip Text="Issue PO">
+                                                <MudTooltip Text="Issue this PO">
                                                     <MudIconButton Icon="@Icons.Material.Filled.TaskAlt" Size="Size.Small" Color="Color.Success"
                                                                    OnClick="@(async () => await IssueAsync(item.Id))" />
                                                 </MudTooltip>
                                             }
                                             @if (item.Status == PurchaseOrderStatus.Draft || item.Status == PurchaseOrderStatus.Issued)
                                             {
-                                                <MudTooltip Text="Cancel PO">
+                                                <MudTooltip Text="Cancel this PO">
                                                     <MudIconButton Icon="@Icons.Material.Filled.Cancel" Size="Size.Small" Color="Color.Error"
                                                                    OnClick="@(async () => await CancelPoAsync(item.Id))" />
                                                 </MudTooltip>
                                             }
-                                            <MudTooltip Text="View Details">
+                                            <MudTooltip Text="View full details">
                                                 <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" Color="Color.Default"
                                                                OnClick="@(async () => await ViewDetailsAsync(item.Id))" />
                                             </MudTooltip>
@@ -103,7 +118,7 @@
                                                      Dense="true"
                                                      AnchorOrigin="Origin.BottomLeft"
                                                      TransformOrigin="Origin.TopLeft"
-                                                     ToolTip="Print">
+                                                     ToolTip="Print or export">
                                                 <MudMenuItem Icon="@Icons.Material.Filled.PictureAsPdf"
                                                              OnClick="@(() => DownloadFastReportPdfAsync(item.Id))">
                                                     Download PDF
@@ -111,7 +126,7 @@
                                                 <MudDivider />
                                                 <MudMenuItem Icon="@Icons.Material.Filled.Settings"
                                                              OnClick="@(() => OpenFastReportSetupAsync(item.Id))">
-                                                    Fast Report – Page Setup…
+                                                    Page Setup…
                                                 </MudMenuItem>
                                             </MudMenu>
                                         </MudStack>
@@ -138,14 +153,32 @@
             <MudCard Elevation="1" Class="mt-3">
                 <MudCardContent>
                     <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3">
-                        <MudText Typo="Typo.h6" Class="flex-grow-1">@_detail.PoNumber • Details</MudText>
-                        <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="@(() => _detail = null)" />
+                        <div Class="flex-grow-1">
+                            <MudText Typo="Typo.h6" Style="margin-bottom: 2px;">@_detail.PoNumber</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Purchase Order Details</MudText>
+                        </div>
+                        <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="@(() => _detail = null)" Title="Close" />
                     </MudStack>
                     <MudGrid Spacing="2">
                         <MudItem xs="6" sm="3">
                             <MudText Typo="Typo.caption" Color="Color.Secondary">Date</MudText>
                             <MudText Typo="Typo.body2">@_detail.PoDate.ToString("MMMM dd, yyyy")</MudText>
                         </MudItem>
+                        <MudItem xs="6" sm="3">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Status</MudText>
+                            <div Class="mt-1">@PoStatusChip(_detail.Status)</div>
+                        </MudItem>
+                        <MudItem xs="6" sm="3">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Mode of Procurement</MudText>
+                            <MudText Typo="Typo.body2">@_detail.ModeOfProcurement.ToString().Replace("_", " ")</MudText>
+                        </MudItem>
+                        <MudItem xs="6" sm="3">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Total Amount</MudText>
+                            <MudText Typo="Typo.body2" Style="font-weight: 600;">₱@_detail.TotalAmount.ToString("N2")</MudText>
+                        </MudItem>
+                    </MudGrid>
+                    <MudDivider Class="my-3" />
+                    <MudGrid Spacing="2">
                         <MudItem xs="6" sm="3">
                             <MudText Typo="Typo.caption" Color="Color.Secondary">Supplier</MudText>
                             <MudText Typo="Typo.body2">@_detail.SupplierName</MudText>
@@ -156,21 +189,26 @@
                             <MudText Typo="Typo.body2">@_detail.PlaceOfDelivery</MudText>
                         </MudItem>
                         <MudItem xs="6" sm="3">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Delivery Term</MudText>
+                            <MudText Typo="Typo.body2">@_detail.DeliveryTerm</MudText>
+                        </MudItem>
+                        <MudItem xs="6" sm="3">
                             <MudText Typo="Typo.caption" Color="Color.Secondary">Payment Term</MudText>
                             <MudText Typo="Typo.body2">@_detail.PaymentTerm</MudText>
                         </MudItem>
                     </MudGrid>
                     <MudDivider Class="my-3" />
-                    <MudSimpleTable Dense="true">
+                    <MudText Typo="Typo.subtitle2" Style="margin-bottom: 8px;">Line Items</MudText>
+                    <MudSimpleTable Dense="true" Hover="true" Striped="true">
                         <thead>
                             <tr>
-                                <th>#</th>
-                                <th>Stock No.</th>
+                                <th style="width:40px">#</th>
+                                <th style="width:100px">Stock No.</th>
                                 <th>Description</th>
-                                <th>Unit</th>
-                                <th style="text-align:right">Qty</th>
-                                <th style="text-align:right">Unit Cost</th>
-                                <th style="text-align:right">Amount</th>
+                                <th style="width:70px">Unit</th>
+                                <th style="text-align:right; width:70px">Qty</th>
+                                <th style="text-align:right; width:100px">Unit Cost</th>
+                                <th style="text-align:right; width:100px">Amount</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -178,23 +216,28 @@
                             {
                                 <tr>
                                     <td>@li.ItemNo</td>
-                                    <td>@(li.StockNumber ?? "—")</td>
-                                    <td>@li.Description</td>
+                                    <td><MudText Typo="Typo.caption">@(li.StockNumber ?? "—")</MudText></td>
+                                    <td><MudText Typo="Typo.body2">@li.Description</MudText></td>
                                     <td>@li.Unit</td>
                                     <td style="text-align:right">@li.Quantity.ToString("N2")</td>
                                     <td style="text-align:right">₱@li.UnitCost.ToString("N2")</td>
-                                    <td style="text-align:right">₱@li.Amount.ToString("N2")</td>
+                                    <td style="text-align:right"><b>₱@li.Amount.ToString("N2")</b></td>
                                 </tr>
                             }
                         </tbody>
                         <tfoot>
                             <tr>
-                                <td colspan="6" style="text-align:right"><b>Total Amount:</b></td>
-                                <td style="text-align:right"><b>₱@_detail.TotalAmount.ToString("N2")</b></td>
+                                <td colspan="6" style="text-align:right"><b>Total:</b></td>
+                                <td style="text-align:right"><b style="font-size:1.1em">₱@_detail.TotalAmount.ToString("N2")</b></td>
                             </tr>
                         </tfoot>
                     </MudSimpleTable>
-                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2">@_detail.TotalAmountInWords</MudText>
+                    @if (!string.IsNullOrWhiteSpace(_detail.TotalAmountInWords))
+                    {
+                        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2" Style="font-style:italic;">
+                            <strong>Total in words:</strong> @_detail.TotalAmountInWords
+                        </MudText>
+                    }
                 </MudCardContent>
             </MudCard>
         }
@@ -353,18 +396,40 @@
 
     private async Task IssueAsync(Guid id)
     {
-        var ok = await DialogService.ShowMessageBox("Issue Purchase Order", "Issue this PO? It will be sent to the supplier.", "Issue", cancelText: "Cancel");
+        var po = _items.FirstOrDefault(x => x.Id == id);
+        var message = $"Issue purchase order {po?.PoNumber}? This will notify the supplier to proceed with delivery.";
+        var ok = await DialogService.ShowMessageBox("Issue Purchase Order", message, "Issue", cancelText: "Cancel");
         if (ok is not true) return;
-        try { await Client.IssueAsync(id); Snackbar.Add("Purchase order issued.", Severity.Success); await LoadAsync(); await RefreshStatusCountsAsync(); }
-        catch (Exception ex) { Snackbar.Add($"Issue failed: {ex.Message}", Severity.Error); }
+        try
+        {
+            await Client.IssueAsync(id);
+            Snackbar.Add("Purchase order issued successfully.", Severity.Success);
+            await LoadAsync();
+            await RefreshStatusCountsAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Issue failed: {ex.Message}", Severity.Error);
+        }
     }
 
     private async Task CancelPoAsync(Guid id)
     {
-        var ok = await DialogService.ShowMessageBox("Cancel PO", "Cancel this purchase order?", "Yes, Cancel", cancelText: "No");
+        var po = _items.FirstOrDefault(x => x.Id == id);
+        var message = $"Cancel purchase order {po?.PoNumber}? This action cannot be undone.";
+        var ok = await DialogService.ShowMessageBox("Cancel PO", message, "Yes, Cancel", cancelText: "No");
         if (ok is not true) return;
-        try { await Client.CancelAsync(id); Snackbar.Add("Purchase order cancelled.", Severity.Info); await LoadAsync(); await RefreshStatusCountsAsync(); }
-        catch (Exception ex) { Snackbar.Add($"Cancel failed: {ex.Message}", Severity.Error); }
+        try
+        {
+            await Client.CancelAsync(id);
+            Snackbar.Add("Purchase order cancelled.", Severity.Info);
+            await LoadAsync();
+            await RefreshStatusCountsAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Cancel failed: {ex.Message}", Severity.Error);
+        }
     }
 
     private async Task ViewDetailsAsync(Guid id)

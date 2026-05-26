@@ -13,134 +13,307 @@
 
 <MudDialog>
     <DialogContent>
-        <MudStack Spacing="1">
-            <MudText Typo="Typo.h6" Class="mb-1">@(_editing is null ? "New Purchase Order" : $"Edit {_editing.PoNumber}")</MudText>
-
-            <!-- Purchase Request Section -->
-            <MudText Typo="Typo.subtitle2" Style="font-weight: 600; color: var(--mud-palette-primary); margin-top: 4px;">Purchase Request</MudText>
-            <MudAutocomplete T="PurchaseRequestSummaryDto"
-                             Value="_selectedPurchaseRequest"
-                             ValueChanged="OnPurchaseRequestChanged"
-                             SearchFunc="SearchPurchaseRequests"
-                             ToStringFunc="FormatPurchaseRequest"
-                             Label="Purchase Request *"
-                             Variant="Variant.Outlined"
-                             Placeholder="Search PR number or purpose..."
-                             Required="true"
-                             Clearable="true"
-                             CoerceValue="true"
-                             ResetValueOnEmptyText="true"
-                             Dense="true" Margin="Margin.Dense" />
-
-            @if (_prefilledCanvass is not null)
+        <MudStack Spacing="2">
+            <!-- PO Header (for edit mode) -->
+            @if (_editing is not null)
             {
-                <MudAlert Severity="Severity.Success" Dense="true" Icon="@Icons.Material.Filled.EmojiEvents" Class="mt-1">
-                    Prefilled from awarded canvass <b>@_prefilledCanvass.RivNumber</b>
-                    @if (!string.IsNullOrWhiteSpace(_prefilledCanvass.AwardedSupplierName))
-                    {
-                        <span> · Supplier: @_prefilledCanvass.AwardedSupplierName</span>
-                    }
+                <MudAlert Severity="Severity.Info" Dense="true" Icon="@Icons.Material.Filled.Info" Class="mb-2">
+                    <MudGrid Spacing="0">
+                        <MudItem xs="12" sm="6">
+                            <MudText Typo="Typo.body2"><strong>PO Number:</strong> @_editing.PoNumber</MudText>
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudText Typo="Typo.body2"><strong>PO Date:</strong> @_editing.PoDate.ToDateTime(TimeOnly.MinValue):dd/MM/yyyy</MudText>
+                        </MudItem>
+                    </MudGrid>
                 </MudAlert>
             }
-            else
-            {
-                <MudTextField @bind-Value="_form.CanvassRequestId" Label="Canvass Request ID (optional)" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
-            }
+
+            <!-- Purchase Request Section -->
+            <div>
+                <MudText Typo="Typo.subtitle2" Class="section-header">Purchase Request</MudText>
+                <MudGrid Spacing="1">
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudAutocomplete T="PurchaseRequestSummaryDto"
+                                         Value="_selectedPurchaseRequest"
+                                         ValueChanged="OnPurchaseRequestChanged"
+                                         SearchFunc="SearchPurchaseRequests"
+                                         ToStringFunc="FormatPurchaseRequest"
+                                         Label="Purchase Request *"
+                                         Variant="Variant.Outlined"
+                                         Placeholder="Search PR number or purpose..."
+                                         Required="true"
+                                         Clearable="true"
+                                         CoerceValue="true"
+                                         ResetValueOnEmptyText="true"
+                                         Dense="true" Margin="Margin.Dense"
+                                         HelperText="Select from existing purchase requests" />
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="4">
+                        @if (_prefilledCanvass is not null)
+                        {
+                            <MudAlert Severity="Severity.Success" Dense="true" Icon="@Icons.Material.Filled.EmojiEvents" Class="mt-1 mb-2">
+                                <strong>Prefilled from Canvass:</strong> @_prefilledCanvass.RivNumber
+                                @if (!string.IsNullOrWhiteSpace(_prefilledCanvass.AwardedSupplierName))
+                                {
+                                    <span> • <strong>Supplier:</strong> @_prefilledCanvass.AwardedSupplierName</span>
+                                }
+                            </MudAlert>
+                        }
+                        else
+                        {
+                            <MudTextField @bind-Value="_form.CanvassRequestId" Label="Canvass Request ID (optional)" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" HelperText="Link to source canvass if available" />
+                        }
+                    </MudItem>
+                </MudGrid>
+            </div>
 
             <!-- Supplier Section -->
-            <MudText Typo="Typo.subtitle2" Style="font-weight: 600; color: var(--mud-palette-primary); margin-top: 6px;">Supplier Information</MudText>
-            <MudAutocomplete T="SupplierDto"
-                             Value="_selectedSupplier"
-                             ValueChanged="OnSupplierChanged"
-                             SearchFunc="SearchSuppliers"
-                             ToStringFunc="FormatSupplier"
-                             Label="Supplier *"
-                             Variant="Variant.Outlined"
-                             Placeholder="Search supplier..."
-                             Required="true"
-                             Clearable="true"
-                             CoerceValue="true"
-                             ResetValueOnEmptyText="true"
-                             Dense="true" Margin="Margin.Dense" />
-
-            <MudTextField @bind-Value="_form.SupplierAddress" Label="Supplier Address *" Variant="Variant.Outlined" Required="true" Lines="2" Dense="true" Margin="Margin.Dense" />
-            <MudTextField @bind-Value="_form.SupplierTin" Label="TIN (optional)" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <div>
+                <MudText Typo="Typo.subtitle2" Class="section-header">Supplier Information</MudText>
+                <MudGrid Spacing="1">
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudAutocomplete T="SupplierDto"
+                                         Value="_selectedSupplier"
+                                         ValueChanged="OnSupplierChanged"
+                                         SearchFunc="SearchSuppliers"
+                                         ToStringFunc="FormatSupplier"
+                                         Label="Supplier *"
+                                         Variant="Variant.Outlined"
+                                         Placeholder="Search supplier by name or code..."
+                                         Required="true"
+                                         Clearable="true"
+                                         CoerceValue="true"
+                                         ResetValueOnEmptyText="true"
+                                         Dense="true" Margin="Margin.Dense"
+                                         HelperText="Must be an active supplier" />
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="4"><MudTextField @bind-Value="_form.SupplierAddress" Label="Supplier Address *" Variant="Variant.Outlined" Required="true" Dense="true" Margin="Margin.Dense" HelperText="Auto-filled from supplier profile" /></MudItem>
+                    <MudItem xs="12" sm="6" md="4"><MudTextField @bind-Value="_form.SupplierTin" Label="TIN (optional)" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" HelperText="Tax Identification Number" /></MudItem>
+                </MudGrid>
+            </div>
 
             <!-- Delivery & Payment Section -->
-            <MudText Typo="Typo.subtitle2" Style="font-weight: 600; color: var(--mud-palette-primary); margin-top: 6px;">Delivery &amp; Payment</MudText>
+            <div>
+                <MudText Typo="Typo.subtitle2" Class="section-header">Delivery &amp; Payment</MudText>
 
-            <MudSelect @bind-Value="_form.ModeOfProcurement" Label="Mode of Procurement" Variant="Variant.Outlined" T="ModeOfProcurement" Dense="true" Margin="Margin.Dense">
-                @foreach (var mode in Enum.GetValues<ModeOfProcurement>())
-                {
-                    <MudSelectItem Value="mode">@mode.ToString().Replace("_", " ")</MudSelectItem>
-                }
-            </MudSelect>
+                <MudGrid Spacing="1">
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudSelect @bind-Value="_form.ModeOfProcurement" Label="Mode of Procurement *" Variant="Variant.Outlined" T="ModeOfProcurement" Required="true" Dense="true" Margin="Margin.Dense" Size="Size.Small">
+                            @foreach (var mode in Enum.GetValues<ModeOfProcurement>())
+                            {
+                                <MudSelectItem Value="mode">@FormatModeOfProcurement(mode)</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="4"><MudTextField @bind-Value="_form.PlaceOfDelivery" Label="Place of Delivery *" Variant="Variant.Outlined" Required="true" Dense="true" Margin="Margin.Dense" HelperText="e.g., Office, Warehouse" /></MudItem>
+                    <MudItem xs="12" sm="6" md="4"><MudDatePicker @bind-Date="_form.DateOfDeliveryNullable" Label="Delivery Date" Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" Dense="true" Margin="Margin.Dense" HelperText="Optional" /></MudItem>
+                </MudGrid>
 
-            <MudGrid Spacing="1">
-                <MudItem xs="12" sm="12" md="6"><MudTextField @bind-Value="_form.PlaceOfDelivery" Label="Place of Delivery *" Variant="Variant.Outlined" Required="true" Dense="true" Margin="Margin.Dense" /></MudItem>
-                <MudItem xs="12" sm="12" md="6"><MudDatePicker @bind-Date="_form.DateOfDeliveryNullable" Label="Delivery Date" Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" Dense="true" Margin="Margin.Dense" /></MudItem>
-            </MudGrid>
-
-            <MudGrid Spacing="1">
-                <MudItem xs="12" sm="6" md="4"><MudTextField @bind-Value="_form.DeliveryTerm" Label="Delivery Term *" Variant="Variant.Outlined" Required="true" Dense="true" Margin="Margin.Dense" /></MudItem>
-                <MudItem xs="12" sm="6" md="4"><MudTextField @bind-Value="_form.PaymentTerm" Label="Payment Term *" Variant="Variant.Outlined" Required="true" Dense="true" Margin="Margin.Dense" /></MudItem>
-                <MudItem xs="12" sm="12" md="4"></MudItem>
-            </MudGrid>
-
-            <MudGrid Spacing="1">
-                <MudItem xs="12" sm="6" md="4"><MudTextField @bind-Value="_form.FundCluster" Label="Fund Cluster" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" /></MudItem>
-                <MudItem xs="12" sm="6" md="4"><MudTextField @bind-Value="_form.OursBursNumber" Label="OURS/BURS No." Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" /></MudItem>
-                <MudItem xs="12" sm="12" md="4"></MudItem>
-            </MudGrid>
+                <MudGrid Spacing="1">
+                    <MudItem xs="12" sm="6" md="3"><MudTextField @bind-Value="_form.DeliveryTerm" Label="Delivery Term *" Variant="Variant.Outlined" Required="true" Dense="true" Margin="Margin.Dense" HelperText="e.g., 30 days, FOB" /></MudItem>
+                    <MudItem xs="12" sm="6" md="3"><MudTextField @bind-Value="_form.PaymentTerm" Label="Payment Term *" Variant="Variant.Outlined" Required="true" Dense="true" Margin="Margin.Dense" HelperText="e.g., NET30, COD" /></MudItem>
+                    <MudItem xs="12" sm="6" md="3"><MudTextField @bind-Value="_form.FundCluster" Label="Fund Cluster (optional)" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" HelperText="e.g., CO, GAA, SEF" /></MudItem>
+                    <MudItem xs="12" sm="6" md="3"><MudTextField @bind-Value="_form.OursBursNumber" Label="OURS/BURS No. (optional)" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" HelperText="Budget reference" /></MudItem>
+                </MudGrid>
+            </div>
 
             <!-- Line Items Section -->
-            <MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-2">
-                <MudText Typo="Typo.subtitle2" Style="font-weight: 600; color: var(--mud-palette-primary)">Line Items</MudText>
-                <MudSpacer />
-                <MudButton StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Text" Size="Size.Small"
-                           OnClick="AddLineItem" Color="Color.Primary">Add Item</MudButton>
-            </MudStack>
+            <div>
+                <MudText Typo="Typo.subtitle2" Class="section-header">Line Items <span style="color: var(--mud-palette-error);">*</span> (At least one required)</MudText>
 
-            @if (!_form.LineItems.Any(li => !string.IsNullOrWhiteSpace(li.Description)))
-            {
-                <MudAlert Severity="Severity.Error" Dense="true" Class="mt-1">At least one line item with a description is required.</MudAlert>
-            }
+                @if (!_form.LineItems.Any(li => !string.IsNullOrWhiteSpace(li.Description)))
+                {
+                    <MudAlert Severity="Severity.Warning" Dense="true" Class="mb-2">
+                        <strong>Add at least one line item</strong> with description, quantity, unit, and unit cost.
+                    </MudAlert>
+                }
 
-            @for (var i = 0; i < _form.LineItems.Count; i++)
-            {
-                var idx = i;
-                var li = _form.LineItems[idx];
-                <MudPaper Outlined="true" Class="pa-2 mt-1" Style="background: var(--mud-palette-background-grey);">
-                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Class="mb-1">
-                        <MudText Typo="Typo.caption" Color="Color.Secondary"><b>Item @(idx + 1)</b></MudText>
+                <!-- Add New Line Item Form -->
+                <MudPaper Outlined="true" Class="pa-3 mb-2" Style="@(_editingLineItemIndex.HasValue ? "border-left: 4px solid var(--mud-palette-warning)" : "")">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-2">
+                        <MudText Typo="Typo.subtitle2" Style="margin-bottom: 0;">
+                            @if (_editingLineItemIndex.HasValue)
+                            {
+                                <MudIcon Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Class="mr-1" Style="position: relative; top: 2px;" />
+                                <text>Edit Line Item</text>
+                            }
+                            else
+                            {
+                                <text>Add New Line Item</text>
+                            }
+                        </MudText>
                         <MudSpacer />
-                        <MudIconButton Icon="@Icons.Material.Filled.Remove" Size="Size.Small" Color="Color.Error"
-                                       OnClick="@(() => RemoveLineItem(idx))" />
+                        <MudStack Row="true" Spacing="1">
+                            @if (_editingLineItemIndex.HasValue)
+                            {
+                                <MudButton Variant="Variant.Outlined"
+                                           OnClick="@(() => { _editingLineItemIndex = null; _newLineItem = new PoLineItemRow(); })"
+                                           Size="Size.Small"
+                                           Title="Cancel editing">
+                                    Cancel
+                                </MudButton>
+                            }
+                            <MudButton StartIcon="@(_editingLineItemIndex.HasValue ? Icons.Material.Filled.Save : Icons.Material.Filled.Add)"
+                                       Variant="Variant.Filled"
+                                       Color="Color.Primary"
+                                       OnClick="AddNewLineItem"
+                                       Size="Size.Small"
+                                       Title="@(_editingLineItemIndex.HasValue ? "Save changes to this item" : "Add this line item to the list")">
+                                @if (_editingLineItemIndex.HasValue)
+                                {
+                                    <text>Update Item</text>
+                                }
+                                else
+                                {
+                                    <text>Add Item</text>
+                                }
+                            </MudButton>
+                        </MudStack>
                     </MudStack>
-
                     <MudGrid Spacing="1">
-                        <MudItem xs="12">
-                            <MudTextField @bind-Value="li.Description" Label="Description *" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+                        <MudItem xs="12" sm="6" md="4">
+                            <MudTextField @bind-Value="_newLineItem.Description"
+                                          Label="Description *"
+                                          Variant="Variant.Outlined"
+                                          Dense="true"
+                                          Margin="Margin.Dense"
+                                          Placeholder="Item name or description" />
                         </MudItem>
-                        <MudItem xs="12" sm="6" md="3"><MudTextField @bind-Value="li.StockNumber" Label="Stock No." Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" /></MudItem>
-                        <MudItem xs="12" sm="6" md="3"><MudTextField @bind-Value="li.Unit" Label="Unit" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" /></MudItem>
-                        <MudItem xs="12" sm="6" md="3"><MudNumericField @bind-Value="li.Quantity" Label="Qty" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Min="0.01m" /></MudItem>
-                        <MudItem xs="12" sm="6" md="3"><MudNumericField @bind-Value="li.UnitCost" Label="Unit Cost" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Min="0m" /></MudItem>
-                        <MudItem xs="12">
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                Amount: <b>₱@((li.Quantity * li.UnitCost).ToString("N2"))</b>
-                            </MudText>
+                        <MudItem xs="12" sm="6" md="2">
+                            <MudTextField @bind-Value="_newLineItem.StockNumber"
+                                          Label="Stock No."
+                                          Variant="Variant.Outlined"
+                                          Dense="true"
+                                          Margin="Margin.Dense"
+                                          Placeholder="Optional" />
+                        </MudItem>
+                        <MudItem xs="12" sm="4" md="1">
+                            <MudNumericField @bind-Value="_newLineItem.Quantity"
+                                             Label="Qty *"
+                                             Variant="Variant.Outlined"
+                                             Dense="true"
+                                             Margin="Margin.Dense"
+                                             Min="0.01m"
+                                             Placeholder="0.00" />
+                        </MudItem>
+                        <MudItem xs="12" sm="4" md="1">
+                            <MudTextField @bind-Value="_newLineItem.Unit"
+                                          Label="Unit *"
+                                          Variant="Variant.Outlined"
+                                          Dense="true"
+                                          Margin="Margin.Dense"
+                                          Placeholder="pc" />
+                        </MudItem>
+                        <MudItem xs="12" sm="4" md="2">
+                            <MudNumericField @bind-Value="_newLineItem.UnitCost"
+                                             Label="Unit Cost *"
+                                             Variant="Variant.Outlined"
+                                             Dense="true"
+                                             Margin="Margin.Dense"
+                                             Min="0m"
+                                             Format="N2"
+                                             Placeholder="0.00" />
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="2">
+                            <MudTextField @bind-Value="_newLineItem.UacsObjectCode"
+                                          Label="UACS Code"
+                                          Variant="Variant.Outlined"
+                                          Dense="true"
+                                          Margin="Margin.Dense"
+                                          HelperText="Optional" />
                         </MudItem>
                     </MudGrid>
                 </MudPaper>
-            }
 
-            @if (_form.LineItems.Any())
-            {
-                <MudPaper Class="pa-2 mt-1" Style="background: var(--mud-palette-primary-lighten); border: 1px solid var(--mud-palette-primary);">
-                    <MudText Typo="Typo.body2"><b>Total: ₱@_form.LineItems.Sum(li => li.Quantity * li.UnitCost).ToString("N2")</b></MudText>
-                </MudPaper>
-            }
+                <!-- Line Items List (MudDataGrid) -->
+                @if (_form.LineItems.Count > 0)
+                {
+                    <MudDataGrid Items="_form.LineItems" Hover="true" Striped="true" Dense="true" Elevation="1">
+                        <Columns>
+                            <PropertyColumn Property="x => x.Description" Title="Description">
+                                <EditTemplate>
+                                    <MudTextField @bind-Value="context.Item.Description"
+                                                  Variant="Variant.Outlined"
+                                                  Dense="true"
+                                                  Margin="Margin.Dense" />
+                                </EditTemplate>
+                            </PropertyColumn>
+                            <PropertyColumn Property="x => x.StockNumber" Title="Stock No.">
+                                <EditTemplate>
+                                    <MudTextField @bind-Value="context.Item.StockNumber"
+                                                  Variant="Variant.Outlined"
+                                                  Dense="true"
+                                                  Margin="Margin.Dense" />
+                                </EditTemplate>
+                            </PropertyColumn>
+                            <PropertyColumn Property="x => x.Quantity" Title="Qty" Sortable="false">
+                                <EditTemplate>
+                                    <MudNumericField @bind-Value="context.Item.Quantity"
+                                                     Variant="Variant.Outlined"
+                                                     Dense="true"
+                                                     Margin="Margin.Dense"
+                                                     Min="0.01m" />
+                                </EditTemplate>
+                            </PropertyColumn>
+                            <PropertyColumn Property="x => x.Unit" Title="Unit">
+                                <EditTemplate>
+                                    <MudTextField @bind-Value="context.Item.Unit"
+                                                  Variant="Variant.Outlined"
+                                                  Dense="true"
+                                                  Margin="Margin.Dense" />
+                                </EditTemplate>
+                            </PropertyColumn>
+                            <PropertyColumn Property="x => x.UnitCost" Title="Unit Cost" Format="N2" Sortable="false">
+                                <EditTemplate>
+                                    <MudNumericField @bind-Value="context.Item.UnitCost"
+                                                     Variant="Variant.Outlined"
+                                                     Dense="true"
+                                                     Margin="Margin.Dense"
+                                                     Min="0m"
+                                                     Format="N2" />
+                                </EditTemplate>
+                            </PropertyColumn>
+                            <PropertyColumn Property="x => x.UacsObjectCode" Title="UACS Code">
+                                <EditTemplate>
+                                    <MudTextField @bind-Value="context.Item.UacsObjectCode"
+                                                  Variant="Variant.Outlined"
+                                                  Dense="true"
+                                                  Margin="Margin.Dense" />
+                                </EditTemplate>
+                            </PropertyColumn>
+                            <PropertyColumn Property="x => x.Quantity * x.UnitCost" Title="Amount" Format="C" Sortable="false" />
+                            <TemplateColumn Title="Actions" Sortable="false" CellClass="mud-table-cell-custom-group">
+                                <CellTemplate>
+                                    <MudStack Row="true" Spacing="0">
+                                        <MudTooltip Text="Edit this line item">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                                           Size="Size.Small"
+                                                           Color="Color.Primary"
+                                                           OnClick="@(() => EditLineItem(_form.LineItems.IndexOf(context.Item)))" />
+                                        </MudTooltip>
+                                        <MudTooltip Text="Remove this line item">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                                           Size="Size.Small"
+                                                           Color="Color.Error"
+                                                           OnClick="@(async () => await RemoveLineItemAsync(_form.LineItems.IndexOf(context.Item)))" />
+                                        </MudTooltip>
+                                    </MudStack>
+                                </CellTemplate>
+                            </TemplateColumn>
+                        </Columns>
+                    </MudDataGrid>
+
+                    <!-- Total -->
+                    <MudPaper Class="pa-3 mt-2 total-amount-section">
+                        <MudStack Row="true" AlignItems="AlignItems.Center">
+                            <MudText Typo="Typo.h6" Style="margin-bottom: 0;">Total Amount:</MudText>
+                            <MudSpacer />
+                            <MudText Typo="Typo.h6" Style="margin-bottom: 0;"><strong>₱@_form.LineItems.Sum(li => li.Quantity * li.UnitCost).ToString("N2")</strong></MudText>
+                        </MudStack>
+                    </MudPaper>
+                }
+            </div>
         </MudStack>
     </DialogContent>
     <DialogActions>
@@ -159,6 +332,8 @@
 
     private PurchaseOrderDto? _editing;
     private PoForm _form = new();
+    private PoLineItemRow _newLineItem = new();
+    private int? _editingLineItemIndex;
     private bool _busy;
     private PurchaseRequestSummaryDto? _selectedPurchaseRequest;
     private SupplierDto? _selectedSupplier;
@@ -216,6 +391,7 @@
 
             _prefilledCanvass = canvass;
             _selectedPurchaseRequest = prSummary;
+            _newLineItem = new PoLineItemRow();
             _selectedSupplier = new SupplierDto
             {
                 Id = awarded.SupplierId,
@@ -243,7 +419,9 @@
                         Unit = li.Unit,
                         Description = li.Description,
                         Quantity = li.Quantity,
-                        UnitCost = li.UnitPrice
+                        UnitCost = li.UnitPrice,
+                        CatalogItemId = null,
+                        UacsObjectCode = null
                     })
                     .ToList()
             };
@@ -338,9 +516,11 @@
 
     private async Task SaveAsync()
     {
-        if (!IsFormValid())
+        var validationErrors = GetFormValidationErrors();
+        if (validationErrors.Count > 0)
         {
-            Snackbar.Add("Fill in all required fields and at least one line item.", Severity.Warning);
+            var message = string.Join(" • ", validationErrors);
+            Snackbar.Add(message, Severity.Warning);
             return;
         }
 
@@ -357,7 +537,7 @@
         try
         {
             var lineItems = _form.LineItems
-                .Select(li => new PurchaseOrderLineItemRequest(li.StockNumber, li.Unit, li.Description, li.Quantity, li.UnitCost))
+                .Select(li => new PurchaseOrderLineItemRequest(li.StockNumber, li.Unit, li.Description, li.Quantity, li.UnitCost, li.CatalogItemId, li.UacsObjectCode))
                 .ToList();
 
             if (_editing is null)
@@ -386,6 +566,7 @@
     private async Task BeginEdit(PurchaseOrderDto po)
     {
         _editing = po;
+        _newLineItem = new PoLineItemRow();
 
         PurchaseRequestSummaryDto? purchaseRequest = null;
         try
@@ -439,7 +620,9 @@
                 Unit = li.Unit,
                 Description = li.Description,
                 Quantity = li.Quantity,
-                UnitCost = li.UnitCost
+                UnitCost = li.UnitCost,
+                CatalogItemId = li.CatalogItemId,
+                UacsObjectCode = li.UacsObjectCode
             }).ToList()
         };
     }
@@ -540,15 +723,24 @@
         if (duplicates.Count == 0)
             return (true, false);
 
-        var poList = string.Join(", ", duplicates.Select(d => $"{d.Po.PoNumber} ({d.Po.Status})"));
+        var poList = string.Join("\n", duplicates.Select(d => $"  • {d.Po.PoNumber} ({d.Po.Status})"));
         var sampleItems = duplicates
             .SelectMany(d => d.Items)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .Take(3)
             .ToList();
-        var itemPreview = string.Join(", ", sampleItems);
+        var itemPreview = string.Join("\n", sampleItems.Select(x => $"  • {x}"));
 
-        var message = $"A purchase order already exists for this purchase request and supplier ({_selectedSupplier.Name}) with overlapping item(s): {itemPreview}. Existing PO(s): {poList}. Do you still want to create this PO?";
+        var message = $"""
+            A purchase order already exists for this request and supplier {_selectedSupplier.Name} with overlapping items:
+
+            {itemPreview}
+
+            Existing PO(s):
+            {poList}
+
+            Do you still want to create this duplicate PO?
+            """;
 
         var confirmed = await DialogService.ShowMessageBox(
             "Possible Duplicate Purchase Order",
@@ -559,19 +751,144 @@
         return confirmed is true ? (true, true) : (false, false);
     }
 
-    private void AddLineItem() => _form.LineItems.Add(new());
-    private void RemoveLineItem(int idx) { if (_form.LineItems.Count > 1) _form.LineItems.RemoveAt(idx); }
+    private void AddNewLineItem()
+    {
+        if (string.IsNullOrWhiteSpace(_newLineItem.Description))
+        {
+            Snackbar.Add("Description is required.", Severity.Warning);
+            return;
+        }
+
+        if (_newLineItem.Quantity <= 0)
+        {
+            Snackbar.Add("Quantity must be greater than 0.", Severity.Warning);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_newLineItem.Unit))
+        {
+            Snackbar.Add("Unit is required.", Severity.Warning);
+            return;
+        }
+
+        if (_newLineItem.UnitCost <= 0)
+        {
+            Snackbar.Add("Unit Cost must be greater than 0.", Severity.Warning);
+            return;
+        }
+
+        var lineTotal = _newLineItem.Quantity * _newLineItem.UnitCost;
+
+        if (_editingLineItemIndex.HasValue)
+        {
+            // Update existing item
+            var idx = _editingLineItemIndex.Value;
+            if (idx >= 0 && idx < _form.LineItems.Count)
+            {
+                _form.LineItems[idx] = new PoLineItemRow
+                {
+                    Description = _newLineItem.Description,
+                    Unit = _newLineItem.Unit,
+                    Quantity = _newLineItem.Quantity,
+                    UnitCost = _newLineItem.UnitCost,
+                    StockNumber = _newLineItem.StockNumber,
+                    CatalogItemId = _newLineItem.CatalogItemId,
+                    UacsObjectCode = _newLineItem.UacsObjectCode
+                };
+                Snackbar.Add($"Item updated (₱{lineTotal:N2}).", Severity.Success);
+            }
+            _editingLineItemIndex = null;
+        }
+        else
+        {
+            // Add new item
+            _form.LineItems.Add(new PoLineItemRow
+            {
+                Description = _newLineItem.Description,
+                Unit = _newLineItem.Unit,
+                Quantity = _newLineItem.Quantity,
+                UnitCost = _newLineItem.UnitCost,
+                StockNumber = _newLineItem.StockNumber,
+                CatalogItemId = _newLineItem.CatalogItemId,
+                UacsObjectCode = _newLineItem.UacsObjectCode
+            });
+            Snackbar.Add($"Item added (₱{lineTotal:N2}).", Severity.Success);
+        }
+
+        _newLineItem = new PoLineItemRow();
+    }
+
+    private void EditLineItem(int idx)
+    {
+        if (idx < 0 || idx >= _form.LineItems.Count)
+            return;
+
+        var item = _form.LineItems[idx];
+        _newLineItem = new PoLineItemRow
+        {
+            Description = item.Description,
+            Unit = item.Unit,
+            Quantity = item.Quantity,
+            UnitCost = item.UnitCost,
+            StockNumber = item.StockNumber,
+            CatalogItemId = item.CatalogItemId,
+            UacsObjectCode = item.UacsObjectCode
+        };
+        _editingLineItemIndex = idx;
+        Snackbar.Add("Editing item. Click 'Add Item' to save changes.", Severity.Info);
+    }
+
+    private async Task RemoveLineItemAsync(int idx)
+    {
+        if (idx < 0 || idx >= _form.LineItems.Count)
+            return;
+
+        var item = _form.LineItems[idx];
+        var confirmed = await DialogService.ShowMessageBox(
+            "Remove Line Item",
+            $"Remove \"{item.Description}\"? This action cannot be undone.",
+            yesText: "Remove",
+            cancelText: "Cancel");
+
+        if (confirmed is not true)
+            return;
+
+        _form.LineItems.RemoveAt(idx);
+        _editingLineItemIndex = null;
+        Snackbar.Add("Item removed.", Severity.Info);
+    }
     private void Cancel() => Dialog.Cancel();
 
-    private bool IsFormValid() =>
-        _selectedPurchaseRequest is not null &&
-        _selectedSupplier is not null &&
-        !string.IsNullOrWhiteSpace(_form.SupplierName) &&
-        !string.IsNullOrWhiteSpace(_form.SupplierAddress) &&
-        !string.IsNullOrWhiteSpace(_form.PlaceOfDelivery) &&
-        !string.IsNullOrWhiteSpace(_form.DeliveryTerm) &&
-        !string.IsNullOrWhiteSpace(_form.PaymentTerm) &&
-        _form.LineItems.Any(li => !string.IsNullOrWhiteSpace(li.Description));
+    private List<string> GetFormValidationErrors()
+    {
+        var errors = new List<string>();
+
+        if (_selectedPurchaseRequest is null)
+            errors.Add("Select a Purchase Request");
+
+        if (_selectedSupplier is null)
+            errors.Add("Select a Supplier");
+
+        if (string.IsNullOrWhiteSpace(_form.SupplierAddress))
+            errors.Add("Enter Supplier Address");
+
+        if (string.IsNullOrWhiteSpace(_form.PlaceOfDelivery))
+            errors.Add("Enter Place of Delivery");
+
+        if (string.IsNullOrWhiteSpace(_form.DeliveryTerm))
+            errors.Add("Enter Delivery Term");
+
+        if (string.IsNullOrWhiteSpace(_form.PaymentTerm))
+            errors.Add("Enter Payment Term");
+
+        var validItems = _form.LineItems.Where(li => !string.IsNullOrWhiteSpace(li.Description) && li.Quantity > 0 && li.UnitCost > 0).ToList();
+        if (validItems.Count == 0)
+            errors.Add("Add at least one line item with description, quantity, and unit cost");
+
+        return errors;
+    }
+
+    private bool IsFormValid() => GetFormValidationErrors().Count == 0;
 
     private static DateOnly? ToDateOnly(DateTime? d) => d.HasValue ? DateOnly.FromDateTime(d.Value) : null;
     private static string NormalizeItem(string? value) =>
@@ -600,5 +917,31 @@
         public string Description { get; set; } = string.Empty;
         public decimal Quantity { get; set; } = 1;
         public decimal UnitCost { get; set; }
+        public Guid? CatalogItemId { get; set; }
+        public string? UacsObjectCode { get; set; }
     }
+
+    private static string FormatModeOfProcurement(ModeOfProcurement mode) => mode switch
+    {
+        ModeOfProcurement.DirectAcquisition => "Direct Acquisition",
+        ModeOfProcurement.SmallValueProcurement => "Small Value Procurement (SVP)",
+        ModeOfProcurement.PublicBidding => "Public Bidding",
+        ModeOfProcurement.NegotiatedProcurement => "Negotiated Procurement",
+        ModeOfProcurement.ShoppingA => "Shopping (Two Quotes)",
+        ModeOfProcurement.ShoppingB => "Shopping (Single Quote)",
+        _ => mode.ToString()
+    };
 }
+
+<style>
+.section-header {
+    font-weight: 600;
+    color: var(--mud-palette-primary);
+    margin-bottom: 8px;
+}
+
+.total-amount-section {
+    background: var(--mud-palette-primary);
+    color: white;
+}
+</style>
