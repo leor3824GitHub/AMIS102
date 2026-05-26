@@ -1,5 +1,6 @@
 using AMIS.Modules.FastReporting.Features.v1.AssetIARs.PrintAssetIARFast;
 using AMIS.Modules.FastReporting.Features.v1.Canvass.PrintAbstractOfCanvassFast;
+using AMIS.Modules.FastReporting.Features.v1.Canvass.PrintRequestForQuotationFast;
 using AMIS.Modules.FastReporting.Features.v1.PurchaseOrders.PrintPurchaseOrderFast;
 using AMIS.Modules.FastReporting.Features.v1.PurchaseRequests.PrintPurchaseRequestFast;
 using Microsoft.AspNetCore.Builder;
@@ -41,6 +42,7 @@ internal static class ProcurementEndpoints
     private static IEndpointRouteBuilder MapCanvassRequestFastReports(this IEndpointRouteBuilder group)
     {
         PrintAbstractOfCanvassFastEndpoint.Map(group);
+        PrintRequestForQuotationFastEndpoint.Map(group);
         return group;
     }
 

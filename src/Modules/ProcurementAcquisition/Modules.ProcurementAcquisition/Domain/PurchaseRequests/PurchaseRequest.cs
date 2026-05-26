@@ -9,7 +9,8 @@ public readonly record struct PurchaseRequestLineItemData(
     string UnitOfIssue,
     string ItemDescription,
     decimal EstimatedUnitCost,
-    Guid? CatalogItemId = null);
+    Guid? CatalogItemId = null,
+    string? UacsObjectCode = null);
 
 public sealed class PurchaseRequestLineItem
 {
@@ -41,7 +42,8 @@ public sealed class PurchaseRequestLineItem
         string unitOfIssue,
         string itemDescription,
         decimal estimatedUnitCost,
-        Guid? catalogItemId = null)
+        Guid? catalogItemId = null,
+        string? uacsObjectCode = null)
     {
         return new PurchaseRequestLineItem
         {
@@ -50,7 +52,8 @@ public sealed class PurchaseRequestLineItem
             UnitOfIssue = unitOfIssue,
             ItemDescription = itemDescription,
             EstimatedUnitCost = estimatedUnitCost,
-            CatalogItemId = catalogItemId == Guid.Empty ? null : catalogItemId
+            CatalogItemId = catalogItemId == Guid.Empty ? null : catalogItemId,
+            UacsObjectCode = string.IsNullOrWhiteSpace(uacsObjectCode) ? null : uacsObjectCode.Trim()
         };
     }
 
@@ -161,7 +164,7 @@ public sealed class PurchaseRequest : AggregateRoot<Guid>, IHasTenant, IAuditabl
         foreach (var li in lineItems)
         {
             pr._lineItems.Add(PurchaseRequestLineItem.Create(
-                itemNo++, li.Quantity, li.UnitOfIssue, li.ItemDescription, li.EstimatedUnitCost, li.CatalogItemId));
+                itemNo++, li.Quantity, li.UnitOfIssue, li.ItemDescription, li.EstimatedUnitCost, li.CatalogItemId, li.UacsObjectCode));
         }
 
         return pr;
@@ -200,7 +203,7 @@ public sealed class PurchaseRequest : AggregateRoot<Guid>, IHasTenant, IAuditabl
         foreach (var li in lineItems)
         {
             _lineItems.Add(PurchaseRequestLineItem.Create(
-                itemNo++, li.Quantity, li.UnitOfIssue, li.ItemDescription, li.EstimatedUnitCost, li.CatalogItemId));
+                itemNo++, li.Quantity, li.UnitOfIssue, li.ItemDescription, li.EstimatedUnitCost, li.CatalogItemId, li.UacsObjectCode));
         }
     }
 

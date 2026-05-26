@@ -1,0 +1,357 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Report ScriptLanguage="CSharp" ReportInfo.Created="05/26/2026 00:00:00" ReportInfo.Modified="05/26/2026 00:00:00" ReportInfo.CreatorVersion="2025.1.0">
+  <Dictionary />
+  <!--
+    Data sources registered at runtime via Report.RegisterData(...).
+
+    Layout: Long Bond (216 × 330 mm) portrait, 10 mm margins.
+    Content width = (216-20) × 3.7795 = 741 units
+
+    DataSources:
+      SmirDS      – single row; header / signatory fields
+      LineItemsDS – one row per item (DataTable)
+
+    Table column widths (total 741):
+      Name of Item   : 160   x=0
+      Description    : 240   x=160
+      Acq. Date      :  91   x=400
+      Quantity       :  70   x=491
+      Unit Cost      :  90   x=561
+      Amount         :  90   x=651  → 741
+
+    Info section columns (total 741):
+      Label (ISSUED TO/ADDRESS) : 120   x=0
+      Value                     : 320   x=120 → 440
+      Checkbox (SALE/TRANSFER/…): 150   x=440 → 590
+      Date / Others             : 151   x=590 → 741
+
+    Summary band columns (equal thirds):
+      Col 1 (ISSUED BY / APPROVED BY) : 247   x=0
+      Col 2 (RECEIVED BY / DRIVER'S)  : 247   x=247
+      Col 3 (DATE RECEIVED / BILL)    : 247   x=494  → 741
+
+    Border.Lines bitmap: Left=1, Right=2, Top=4, Bottom=8, All=15
+  -->
+
+  <ReportPage Name="Page1"
+    PaperWidth="216" PaperHeight="330"
+    LeftMargin="10" TopMargin="10" RightMargin="10" BottomMargin="10">
+
+    <!-- ═══════════════════════════════════════════════════════════
+         TITLE BAND  (appears once)
+         ═══════════════════════════════════════════════════════════ -->
+    <ReportTitleBand Name="ReportTitle1" Width="741" Height="254">
+
+      <!-- Exhibit tag -->
+      <TextObject Name="Exhibit1" Left="0" Top="0" Width="741" Height="14"
+        Text="EXHIBIT 3" HorzAlign="Right" VertAlign="Center"
+        Font="Times New Roman, 8pt, style=Italic" />
+
+      <!-- Org header (centered) -->
+      <TextObject Name="Republic" Left="0" Top="14" Width="741" Height="14"
+        Text="Republic of the Philippines" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 9pt" />
+      <TextObject Name="NFA" Left="0" Top="28" Width="741" Height="18"
+        Text="NATIONAL FOOD AUTHORITY" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 11pt, style=Bold" />
+      <TextObject Name="OrgName" Left="0" Top="46" Width="741" Height="14"
+        Text="[SmirDS.OrgName]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 9pt" />
+      <TextObject Name="OrgAddress" Left="0" Top="60" Width="741" Height="12"
+        Text="[SmirDS.OrgAddress]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 9pt" />
+
+      <!-- SMIR No. (right side) -->
+      <TextObject Name="SmirNoLbl" Left="490" Top="72" Width="100" Height="20"
+        Text="SMIR No." HorzAlign="Right" VertAlign="Center"
+        Font="Times New Roman, 9pt" Padding="0,0,4,0" />
+      <TextObject Name="SmirNoVal" Left="590" Top="72" Width="151" Height="20"
+        Text="[SmirDS.SmirNo]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 9pt, style=Bold"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+
+      <!-- Report title -->
+      <TextObject Name="Title" Left="0" Top="100" Width="741" Height="24"
+        Text="SUPPLIES AND MATERIALS ISSUANCE  REPORT"
+        HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 11pt, style=Bold" />
+      <!-- Underline below title -->
+      <TextObject Name="TitleUL" Left="60" Top="124" Width="621" Height="1.5"
+        Text="" Border.Lines="4" Border.Width="1" />
+
+      <!-- ─── Info Section ─────────────────────────────────── -->
+
+      <!-- Row 1 (Y=134): ISSUED TO label | value | SALE checkbox | DATE label | DATE value -->
+      <TextObject Name="IssuedToLbl" Left="0" Top="134" Width="120" Height="22"
+        Text="ISSUED TO :" Font="Times New Roman, 8pt, style=Bold"
+        VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="4,1,4,1" />
+      <TextObject Name="IssuedToVal" Left="120" Top="134" Width="320" Height="22"
+        Text="[SmirDS.IssuedToName]" Font="Times New Roman, 8pt"
+        VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="4,1,4,1" />
+
+      <!-- SALE row (Y=134, H=22) -->
+      <TextObject Name="SaleCell" Left="440" Top="134" Width="150" Height="22"
+        Text="" Border.Lines="15" Border.Width="0.5" />
+      <TextObject Name="SaleChk" Left="446" Top="139" Width="12" Height="12"
+        Text="[SmirDS.SaleCheck]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 9pt, style=Bold"
+        Border.Lines="15" Border.Width="0.5" />
+      <TextObject Name="SaleLbl" Left="460" Top="134" Width="128" Height="22"
+        Text="SALE" Font="Times New Roman, 8pt" VertAlign="Center"
+        Padding="2,1,2,1" />
+
+      <!-- DATE label + value (Y=134, H=22) -->
+      <TextObject Name="DateLbl" Left="590" Top="134" Width="60" Height="22"
+        Text="DATE :" Font="Times New Roman, 8pt, style=Bold" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="4,1,2,1" />
+      <TextObject Name="DateVal" Left="650" Top="134" Width="91" Height="22"
+        Text="[SmirDS.Date]" Font="Times New Roman, 8pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="4,1,2,1" />
+
+      <!-- Row 2 (Y=156): ADDRESS label | value | TRANSFER checkbox | DATE continuation -->
+      <TextObject Name="AddressLbl" Left="0" Top="156" Width="120" Height="22"
+        Text="ADDRESS :" Font="Times New Roman, 8pt, style=Bold" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="4,1,4,1" />
+      <TextObject Name="AddressVal" Left="120" Top="156" Width="320" Height="22"
+        Text="[SmirDS.Address]" Font="Times New Roman, 8pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="4,1,4,1" />
+
+      <!-- TRANSFER (Y=156, H=22) -->
+      <TextObject Name="TransferCell" Left="440" Top="156" Width="150" Height="22"
+        Text="" Border.Lines="15" Border.Width="0.5" />
+      <TextObject Name="TransferChk" Left="446" Top="161" Width="12" Height="12"
+        Text="[SmirDS.TransferCheck]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 9pt, style=Bold"
+        Border.Lines="15" Border.Width="0.5" />
+      <TextObject Name="TransferLbl" Left="460" Top="156" Width="128" Height="22"
+        Text="TRANSFER" Font="Times New Roman, 8pt" VertAlign="Center"
+        Padding="2,1,2,1" />
+      <!-- DATE area continuation -->
+      <TextObject Name="DateCont" Left="590" Top="156" Width="151" Height="22"
+        Text="" Border.Lines="15" Border.Width="0.5" />
+
+      <!-- Row 3 (Y=178): blank | blank | DONATION checkbox | blank -->
+      <TextObject Name="BlankLbl3" Left="0" Top="178" Width="120" Height="22"
+        Text="" Border.Lines="15" Border.Width="0.5" />
+      <TextObject Name="BlankVal3" Left="120" Top="178" Width="320" Height="22"
+        Text="" Border.Lines="15" Border.Width="0.5" />
+
+      <!-- DONATION (Y=178, H=22) -->
+      <TextObject Name="DonationCell" Left="440" Top="178" Width="150" Height="22"
+        Text="" Border.Lines="15" Border.Width="0.5" />
+      <TextObject Name="DonationChk" Left="446" Top="183" Width="12" Height="12"
+        Text="[SmirDS.DonationCheck]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 9pt, style=Bold"
+        Border.Lines="15" Border.Width="0.5" />
+      <TextObject Name="DonationLbl" Left="460" Top="178" Width="128" Height="22"
+        Text="DONATION" Font="Times New Roman, 8pt" VertAlign="Center"
+        Padding="2,1,2,1" />
+      <TextObject Name="BlankRight3" Left="590" Top="178" Width="151" Height="22"
+        Text="" Border.Lines="15" Border.Width="0.5" />
+
+      <!-- Row 4 (Y=200): blank | blank | OTHERS checkbox | blank -->
+      <TextObject Name="BlankLbl4" Left="0" Top="200" Width="120" Height="22"
+        Text="" Border.Lines="15" Border.Width="0.5" />
+      <TextObject Name="BlankVal4" Left="120" Top="200" Width="320" Height="22"
+        Text="" Border.Lines="15" Border.Width="0.5" />
+
+      <!-- OTHERS (Y=200, H=22) -->
+      <TextObject Name="OthersCell" Left="440" Top="200" Width="150" Height="22"
+        Text="" Border.Lines="15" Border.Width="0.5" />
+      <TextObject Name="OthersChk" Left="446" Top="205" Width="12" Height="12"
+        Text="[SmirDS.OtherCheck]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 9pt, style=Bold"
+        Border.Lines="15" Border.Width="0.5" />
+      <TextObject Name="OthersLbl" Left="460" Top="200" Width="128" Height="22"
+        Text="OTHERS" Font="Times New Roman, 8pt" VertAlign="Center"
+        Padding="2,1,2,1" />
+      <TextObject Name="BlankRight4" Left="590" Top="200" Width="151" Height="22"
+        Text="" Border.Lines="15" Border.Width="0.5" />
+
+      <!-- ─── Table Column Headers (Y=226, H=28) ─────── -->
+      <TextObject Name="H_NameItem" Left="0" Top="226" Width="160" Height="28"
+        Text="NAME OF&#10;ITEM" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt, style=Bold"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="H_Desc" Left="160" Top="226" Width="240" Height="28"
+        Text="DESCRIPTION" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt, style=Bold"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="H_DateAcq" Left="400" Top="226" Width="91" Height="28"
+        Text="ACQUISITION&#10;DATE" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt, style=Bold"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="H_Qty" Left="491" Top="226" Width="70" Height="28"
+        Text="QUANTITY" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt, style=Bold"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="H_UnitCost" Left="561" Top="226" Width="90" Height="28"
+        Text="UNIT&#10;COST" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt, style=Bold"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="H_Amount" Left="651" Top="226" Width="90" Height="28"
+        Text="AMOUNT" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt, style=Bold"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+
+    </ReportTitleBand>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         DATA BAND  (repeats once per line item, H=22)
+         ═══════════════════════════════════════════════════════════ -->
+    <DataBand Name="Data1" DataSource="LineItemsDS" Width="741" Height="22" CanGrow="true">
+
+      <TextObject Name="D_NameItem" Left="0" Top="0" Width="160" Height="22"
+        Text="[LineItemsDS.NameOfItem]" HorzAlign="Left" VertAlign="Center"
+        Font="Times New Roman, 8pt"
+        Border.Lines="15" Border.Width="0.5" Padding="4,1,4,1"
+        CanGrow="true" GrowToBottom="true" WordWrap="true" />
+      <TextObject Name="D_Desc" Left="160" Top="0" Width="240" Height="22"
+        Text="[LineItemsDS.Description]" HorzAlign="Left" VertAlign="Center"
+        Font="Times New Roman, 8pt"
+        Border.Lines="15" Border.Width="0.5" Padding="4,1,4,1"
+        CanGrow="true" GrowToBottom="true" WordWrap="true" />
+      <TextObject Name="D_DateAcq" Left="400" Top="0" Width="91" Height="22"
+        Text="[LineItemsDS.AcquisitionDate]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1"
+        GrowToBottom="true" />
+      <TextObject Name="D_Qty" Left="491" Top="0" Width="70" Height="22"
+        Text="[LineItemsDS.Quantity]" HorzAlign="Right" VertAlign="Center"
+        Font="Times New Roman, 8pt"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,4,1"
+        GrowToBottom="true" />
+      <TextObject Name="D_UnitCost" Left="561" Top="0" Width="90" Height="22"
+        Text="[LineItemsDS.UnitCost]" HorzAlign="Right" VertAlign="Center"
+        Font="Times New Roman, 8pt"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,4,1"
+        GrowToBottom="true" />
+      <TextObject Name="D_Amount" Left="651" Top="0" Width="90" Height="22"
+        Text="[LineItemsDS.Amount]" HorzAlign="Right" VertAlign="Center"
+        Font="Times New Roman, 8pt"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,4,1"
+        GrowToBottom="true" />
+
+    </DataBand>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SUMMARY BAND  (signatories + copy distribution)
+         ═══════════════════════════════════════════════════════════ -->
+    <ReportSummaryBand Name="ReportSummary1" Width="741" Height="254">
+
+      <!-- === Row 1: Signatory headers (Y=0, H=20) === -->
+      <TextObject Name="IssuedByHeader" Left="0" Top="0" Width="247" Height="20"
+        Text="ISSUED BY" Font="Times New Roman, 9pt, style=Bold,Italic" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="6,1,6,1" />
+      <TextObject Name="ReceivedByHeader" Left="247" Top="0" Width="247" Height="20"
+        Text="RECEIVED BY" Font="Times New Roman, 9pt, style=Bold,Italic" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="6,1,6,1" />
+      <TextObject Name="DateReceivedHeader" Left="494" Top="0" Width="247" Height="20"
+        Text="DATE RECEIVED" Font="Times New Roman, 9pt, style=Bold,Italic" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="6,1,6,1" />
+
+      <!-- === Row 2: BILL OF LADING label in right col (Y=20, H=18) === -->
+      <TextObject Name="IssuedByBillSpace" Left="0" Top="20" Width="247" Height="18"
+        Text="" Border.Lines="11" Border.Width="0.5" />
+      <TextObject Name="ReceivedByBillSpace" Left="247" Top="20" Width="247" Height="18"
+        Text="" Border.Lines="11" Border.Width="0.5" />
+      <TextObject Name="BillOfLadingLbl" Left="494" Top="20" Width="247" Height="18"
+        Text="BILL OF LADING" Font="Times New Roman, 8pt, style=Bold,Italic" VertAlign="Center"
+        Border.Lines="11" Border.Width="0.5" Padding="6,1,6,1" />
+
+      <!-- === Row 3: Blank signature space (Y=38, H=30) === -->
+      <TextObject Name="IssuedBySpace" Left="0" Top="38" Width="247" Height="30"
+        Text="" Border.Lines="11" Border.Width="0.5" />
+      <TextObject Name="ReceivedBySpace" Left="247" Top="38" Width="247" Height="30"
+        Text="" Border.Lines="11" Border.Width="0.5" />
+      <TextObject Name="DateReceivedSpace" Left="494" Top="38" Width="247" Height="30"
+        Text="" Border.Lines="11" Border.Width="0.5" />
+
+      <!-- === Row 4: Printed names (Y=68, H=20) === -->
+      <TextObject Name="IssuedByNameCell" Left="0" Top="68" Width="247" Height="20"
+        Text="" Border.Lines="11" Border.Width="0.5" />
+      <TextObject Name="IssuedByName" Left="6" Top="68" Width="235" Height="20"
+        Text="[SmirDS.IssuedByName]" HorzAlign="Center" VertAlign="Bottom"
+        Font="Times New Roman, 10pt, style=Bold,Underline" Padding="4,1,4,1" />
+
+      <TextObject Name="ReceivedByNameCell" Left="247" Top="68" Width="247" Height="20"
+        Text="" Border.Lines="11" Border.Width="0.5" />
+      <TextObject Name="ReceivedByName" Left="253" Top="68" Width="235" Height="20"
+        Text="[SmirDS.ReceivedByName]" HorzAlign="Center" VertAlign="Bottom"
+        Font="Times New Roman, 10pt, style=Bold,Underline" Padding="4,1,4,1" />
+
+      <TextObject Name="DateReceivedNameCell" Left="494" Top="68" Width="247" Height="20"
+        Text="" Border.Lines="11" Border.Width="0.5" />
+
+      <!-- === Row 5: Designations (Y=88, H=14) === -->
+      <TextObject Name="IssuedByDesigCell" Left="0" Top="88" Width="247" Height="14"
+        Text="" Border.Lines="11" Border.Width="0.5" />
+      <TextObject Name="IssuedByDesig" Left="6" Top="88" Width="235" Height="14"
+        Text="[SmirDS.IssuedByDesignation]" HorzAlign="Center" VertAlign="Top"
+        Font="Times New Roman, 8pt, style=Italic" Padding="4,1,4,1" />
+
+      <TextObject Name="ReceivedByDesigCell" Left="247" Top="88" Width="247" Height="14"
+        Text="" Border.Lines="11" Border.Width="0.5" />
+      <TextObject Name="DateReceivedDesigCell" Left="494" Top="88" Width="247" Height="14"
+        Text="" Border.Lines="11" Border.Width="0.5" />
+
+      <!-- === Row 6: Second signatory headers (Y=102, H=20) === -->
+      <TextObject Name="ApprovedByHeader" Left="0" Top="102" Width="247" Height="20"
+        Text="APPROVED BY" Font="Times New Roman, 9pt, style=Bold,Italic" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="6,1,6,1" />
+      <TextObject Name="DriverHeader" Left="247" Top="102" Width="494" Height="20"
+        Text="DRIVER'S PRINTED NAME AND SIGNATURE"
+        Font="Times New Roman, 9pt, style=Bold,Italic" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="6,1,6,1" />
+
+      <!-- === Row 7: Blank space for second signatures (Y=122, H=30) === -->
+      <TextObject Name="ApprovedBySpace" Left="0" Top="122" Width="247" Height="30"
+        Text="" Border.Lines="11" Border.Width="0.5" />
+      <TextObject Name="DriverSpace" Left="247" Top="122" Width="494" Height="30"
+        Text="" Border.Lines="11" Border.Width="0.5" />
+
+      <!-- === Row 8: Approved by name (Y=152, H=20) === -->
+      <TextObject Name="ApprovedByNameCell" Left="0" Top="152" Width="247" Height="20"
+        Text="" Border.Lines="11" Border.Width="0.5" />
+      <TextObject Name="ApprovedByName" Left="6" Top="152" Width="235" Height="20"
+        Text="[SmirDS.ApprovedByName]" HorzAlign="Center" VertAlign="Bottom"
+        Font="Times New Roman, 10pt, style=Bold,Underline" Padding="4,1,4,1" />
+      <TextObject Name="DriverNameCell" Left="247" Top="152" Width="494" Height="20"
+        Text="" Border.Lines="9" Border.Width="0.5" />
+
+      <!-- === Row 9: Approved by designation (Y=172, H=14) === -->
+      <TextObject Name="ApprovedByDesigCell" Left="0" Top="172" Width="247" Height="14"
+        Text="" Border.Lines="11" Border.Width="0.5" />
+      <TextObject Name="ApprovedByDesig" Left="6" Top="172" Width="235" Height="14"
+        Text="[SmirDS.ApprovedByDesignation]" HorzAlign="Center" VertAlign="Top"
+        Font="Times New Roman, 8pt, style=Italic" Padding="4,1,4,1" />
+      <TextObject Name="DriverDesigCell" Left="247" Top="172" Width="494" Height="14"
+        Text="" Border.Lines="11" Border.Width="0.5" />
+
+      <!-- === Copy Distribution (Y=190+) === -->
+      <TextObject Name="Copy1" Left="0" Top="192" Width="400" Height="13"
+        Text="Copy 1 - Recipient" Font="Times New Roman, 8pt" VertAlign="Center" />
+      <TextObject Name="Copy2" Left="20" Top="205" Width="380" Height="13"
+        Text="2 - PMSDS" Font="Times New Roman, 8pt" VertAlign="Center" />
+      <TextObject Name="Copy3" Left="20" Top="218" Width="380" Height="13"
+        Text="3 - Accounting" Font="Times New Roman, 8pt" VertAlign="Center" />
+      <TextObject Name="Copy4" Left="20" Top="231" Width="380" Height="13"
+        Text="4 - Accounting (ADVICE)" Font="Times New Roman, 8pt" VertAlign="Center" />
+      <TextObject Name="Copy5" Left="20" Top="244" Width="380" Height="13"
+        Text="5 - File" Font="Times New Roman, 8pt" VertAlign="Center" />
+
+    </ReportSummaryBand>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         PAGE FOOTER
+         ═══════════════════════════════════════════════════════════ -->
+    <PageFooterBand Name="PageFooter1" Width="741" Height="14">
+      <TextObject Name="PageNo" Left="0" Top="0" Width="741" Height="14"
+        Text="Page [Page#] of [TotalPages#]" HorzAlign="Right"
+        Font="Times New Roman, 7pt" />
+    </PageFooterBand>
+
+  </ReportPage>
+</Report>

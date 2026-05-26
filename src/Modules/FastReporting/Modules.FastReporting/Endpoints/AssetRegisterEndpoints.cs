@@ -1,5 +1,8 @@
+using AMIS.Modules.FastReporting.Features.v1.AssetRegister.PrintAccountabilityICSFast;
 using AMIS.Modules.FastReporting.Features.v1.AssetRegister.PrintPPEIssuanceReportFast;
 using AMIS.Modules.FastReporting.Features.v1.AssetRegister.PrintPPEReceivingReportFast;
+using AMIS.Modules.FastReporting.Features.v1.AssetRegister.PrintSMIRFast;
+using AMIS.Modules.FastReporting.Features.v1.AssetRegister.PrintSMRRFast;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 
@@ -18,6 +21,9 @@ internal static class AssetRegisterEndpoints
 
         assetRegister.MapGroup("/receiving-reports").MapPPEReceivingReportFastReports();
         assetRegister.MapGroup("/issuance-reports").MapPPEIssuanceReportFastReports();
+        assetRegister.MapGroup("/smir").MapSMIRFastReports();
+        assetRegister.MapGroup("/smrr").MapSMRRFastReports();
+        assetRegister.MapGroup("/accountabilities").MapAccountabilityICSFastReports();
 
         return moduleGroup;
     }
@@ -31,6 +37,24 @@ internal static class AssetRegisterEndpoints
     private static IEndpointRouteBuilder MapPPEIssuanceReportFastReports(this IEndpointRouteBuilder group)
     {
         PrintPPEIssuanceReportFastEndpoint.Map(group);
+        return group;
+    }
+
+    private static IEndpointRouteBuilder MapSMIRFastReports(this IEndpointRouteBuilder group)
+    {
+        PrintSMIRFastEndpoint.Map(group);
+        return group;
+    }
+
+    private static IEndpointRouteBuilder MapSMRRFastReports(this IEndpointRouteBuilder group)
+    {
+        PrintSMRRFastEndpoint.Map(group);
+        return group;
+    }
+
+    private static IEndpointRouteBuilder MapAccountabilityICSFastReports(this IEndpointRouteBuilder group)
+    {
+        PrintAccountabilityICSFastEndpoint.Map(group);
         return group;
     }
 }

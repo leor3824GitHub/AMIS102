@@ -33,7 +33,7 @@ public sealed class CreatePurchaseRequestCommandHandler(
             var prNumber = $"{now.Year:D4}-{now.Month:D2}-{serial:D4}";
 
             var lineItems = command.LineItems.Select(li =>
-                new PurchaseRequestLineItemData(li.Quantity, li.UnitOfIssue, li.ItemDescription, li.EstimatedUnitCost, li.CatalogItemId));
+                new PurchaseRequestLineItemData(li.Quantity, li.UnitOfIssue, li.ItemDescription, li.EstimatedUnitCost, li.CatalogItemId, li.UacsObjectCode));
 
             var pr = PurchaseRequest.Create(
                 tenantId,

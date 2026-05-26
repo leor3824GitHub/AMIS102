@@ -292,7 +292,7 @@
             var lineItems = _form.LineItems
                 .Select(li => new CreatePurchaseRequestLineItemRequest(
                     li.Quantity, li.UnitOfIssue, li.ItemDescription, li.EstimatedUnitCost,
-                    li.SelectedCatalog?.Id))
+                    li.SelectedCatalog?.Id, li.SelectedCatalog?.UacsObjectCode))
                 .ToList();
 
             if (_editing is null)

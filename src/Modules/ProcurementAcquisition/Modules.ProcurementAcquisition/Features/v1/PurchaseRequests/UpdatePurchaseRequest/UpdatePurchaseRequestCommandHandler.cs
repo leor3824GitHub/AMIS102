@@ -20,7 +20,7 @@ public sealed class UpdatePurchaseRequestCommandHandler(
             ?? throw new KeyNotFoundException($"Purchase request '{command.Id}' not found.");
 
         var lineItems = command.LineItems.Select(li =>
-            new PurchaseRequestLineItemData(li.Quantity, li.UnitOfIssue, li.ItemDescription, li.EstimatedUnitCost, li.CatalogItemId));
+            new PurchaseRequestLineItemData(li.Quantity, li.UnitOfIssue, li.ItemDescription, li.EstimatedUnitCost, li.CatalogItemId, li.UacsObjectCode));
 
         pr.Update(
             command.DepartmentId,

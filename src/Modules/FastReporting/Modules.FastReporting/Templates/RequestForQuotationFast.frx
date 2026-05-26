@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Report ScriptLanguage="CSharp" ReportInfo.Created="05/26/2026 00:00:00" ReportInfo.Modified="05/26/2026 00:00:00" ReportInfo.CreatorVersion="2025.1.0">
+  <Dictionary />
+  <!--
+    Layout: A4 portrait (210 × 297 mm), 8 mm margins.
+    Content width  = (210-16) × 3.7795 ≈ 733 units
+    Content height = (297-16) × 3.7795 ≈ 1062 units
+
+    This is a blank Request for Quotation (RFQ) sent to suppliers.
+    Supplier fields (Name, Address, TIN) are left blank for supplier to fill in.
+    RATE/PRICE and TOTAL columns are blank for supplier to quote.
+
+    Table column widths (total 733):
+      ITEM/DESCRIPTION (55%) : 403    x=0
+      UNIT              (10%) :  73    x=403
+      QTY               (10%) :  73    x=476
+      RATE/PRICE       (12.5%):  92    x=549   ← blank, supplier fills
+      TOTAL            (12.5%):  92    x=641   ← blank, supplier fills
+
+    Summary section layout (top of summary band):
+      Left 200  : Regional Manager signature block
+      Mid  200  : Terms of Delivery cell (blank, supplier fills)
+      Right 333 : SUPPLIER'S NAME & SIGNATURE cell (blank)
+  -->
+
+  <ReportPage Name="Page1"
+    PaperWidth="210" PaperHeight="297"
+    LeftMargin="8" TopMargin="8" RightMargin="8" BottomMargin="8"
+    Landscape="false">
+
+    <!-- ═══════════════════════════════════════════════════════════
+         TITLE BAND
+         Contains: org header, form title, supplier fields, instruction,
+                   and table column headers
+         ═══════════════════════════════════════════════════════════ -->
+    <ReportTitleBand Name="ReportTitle1" Width="733" Height="222">
+
+      <!-- ── Organization Header ────────────────────────────────── -->
+      <TextObject Name="Republic" Left="0" Top="0" Width="733" Height="14"
+        Text="Republic of the Philippines" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 9pt" />
+      <TextObject Name="NFA" Left="0" Top="16" Width="733" Height="18"
+        Text="National Food Authority" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 11pt, style=Bold" />
+      <TextObject Name="OrgName" Left="0" Top="36" Width="733" Height="14"
+        Text="[RfqDS.OrgName]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 9pt" />
+      <TextObject Name="OrgAddr" Left="0" Top="52" Width="733" Height="14"
+        Text="[RfqDS.OrgAddress]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 9pt" />
+
+      <!-- ── Form Title ─────────────────────────────────────────── -->
+      <TextObject Name="FormTitle" Left="0" Top="72" Width="733" Height="26"
+        Text="REQUEST FOR QUOTATION" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 14pt, style=Bold" />
+      <TextObject Name="TitleUnderline" Left="133" Top="100" Width="467" Height="1.1"
+        Text="" Border.Lines="4" Border.Width="1" />
+
+      <!-- ── Row 1: Supplier Name / Date / RIV# ──────────────────
+           Widths: 120 + 190 + 60 + 100 + 50 + 213 = 733
+      ─────────────────────────────────────────────────────────── -->
+      <TextObject Name="SupNameLbl" Left="0" Top="106" Width="120" Height="22"
+        Text="SUPPLIER'S NAME:" Font="Times New Roman, 7.5pt, style=Bold"
+        VertAlign="Center" HorzAlign="Left"
+        Border.Lines="15" Border.Width="0.5" Padding="3,1,2,1" />
+      <TextObject Name="SupNameVal" Left="120" Top="106" Width="190" Height="22"
+        Text="" Font="Times New Roman, 9pt"
+        VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="DateLbl" Left="310" Top="106" Width="60" Height="22"
+        Text="DATE:" Font="Times New Roman, 7.5pt, style=Bold"
+        VertAlign="Center" HorzAlign="Left"
+        Border.Lines="15" Border.Width="0.5" Padding="3,1,2,1" />
+      <TextObject Name="DateVal" Left="370" Top="106" Width="100" Height="22"
+        Text="" Font="Times New Roman, 9pt"
+        VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="RivLbl" Left="470" Top="106" Width="50" Height="22"
+        Text="RIV#" Font="Times New Roman, 7.5pt, style=Bold"
+        VertAlign="Center" HorzAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="RivVal" Left="520" Top="106" Width="213" Height="22"
+        Text="[RfqDS.RivNumber]" Font="Times New Roman, 9pt, style=Bold"
+        VertAlign="Center" HorzAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+
+      <!-- ── Row 2: Address / TIN No. ───────────────────────────
+           Widths: 80 + 310 + 70 + 273 = 733
+      ─────────────────────────────────────────────────────────── -->
+      <TextObject Name="AddrLbl" Left="0" Top="130" Width="80" Height="22"
+        Text="ADDRESS:" Font="Times New Roman, 7.5pt, style=Bold"
+        VertAlign="Center" HorzAlign="Left"
+        Border.Lines="15" Border.Width="0.5" Padding="3,1,2,1" />
+      <TextObject Name="AddrVal" Left="80" Top="130" Width="310" Height="22"
+        Text="" Font="Times New Roman, 9pt"
+        VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="TinLbl" Left="390" Top="130" Width="70" Height="22"
+        Text="TIN NO." Font="Times New Roman, 7.5pt, style=Bold"
+        VertAlign="Center" HorzAlign="Left"
+        Border.Lines="15" Border.Width="0.5" Padding="3,1,2,1" />
+      <TextObject Name="TinVal" Left="460" Top="130" Width="273" Height="22"
+        Text="" Font="Times New Roman, 9pt"
+        VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+
+      <!-- ── Row 3: Instruction Text (full width, wraps) ─────────── -->
+      <TextObject Name="InstructionText" Left="0" Top="156" Width="733" Height="34"
+        Text="PLEASE INDICATE YOUR OFFER INCLUDING THE SHORTEST DELIVERY PERIOD FOR EACH ITEM DESCRIBED BELOW AND RETURN THIS FORM TO US ON OR BEFORE [RfqDS.ReturnDeadline]."
+        Font="Times New Roman, 8pt" VertAlign="Center" HorzAlign="Left" WordWrap="true"
+        Border.Lines="15" Border.Width="0.5" Padding="4,2,4,2" />
+
+      <!-- ── Row 4: Table Column Headers ──────────────────────────
+           Columns: ITEM/DESCRIPTION (403) | UNIT (73) | QTY (73) | RATE/PRICE (92) | TOTAL (92)
+           Fill.Color=-11677471 ≈ Material Cyan 400 (#4DD0E1)
+      ─────────────────────────────────────────────────────────── -->
+      <TextObject Name="HDesc" Left="0" Top="194" Width="403" Height="26"
+        Text="ITEM / DESCRIPTION" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 9pt, style=Bold"
+        Fill.Color="-11677471"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="HUnit" Left="403" Top="194" Width="73" Height="26"
+        Text="UNIT" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 9pt, style=Bold"
+        Fill.Color="-11677471"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="HQty" Left="476" Top="194" Width="73" Height="26"
+        Text="QTY" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 9pt, style=Bold"
+        Fill.Color="-11677471"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="HRate" Left="549" Top="194" Width="92" Height="26"
+        Text="RATE/PRICE" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 9pt, style=Bold"
+        Fill.Color="-11677471"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="HTotal" Left="641" Top="194" Width="92" Height="26"
+        Text="T O T A L" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 9pt, style=Bold"
+        Fill.Color="-11677471"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+
+    </ReportTitleBand>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         DATA BAND  (one row per line item, height = 22)
+         RATE/PRICE and TOTAL are blank — supplier fills them in.
+         ═══════════════════════════════════════════════════════════ -->
+    <DataBand Name="Data1" DataSource="LineItemsDS" Width="733" Height="22">
+
+      <TextObject Name="DDesc" Left="0" Top="0" Width="403" Height="22"
+        Text="[LineItemsDS.Description]" VertAlign="Center" HorzAlign="Left"
+        Font="Times New Roman, 9pt, style=Bold"
+        Border.Lines="15" Border.Width="0.5" Padding="4,1,4,1" />
+      <TextObject Name="DUnit" Left="403" Top="0" Width="73" Height="22"
+        Text="[LineItemsDS.Unit]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 9pt"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="DQty" Left="476" Top="0" Width="73" Height="22"
+        Text="[LineItemsDS.Quantity]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 9pt"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="DRate" Left="549" Top="0" Width="92" Height="22"
+        Text="" HorzAlign="Right" VertAlign="Center"
+        Font="Times New Roman, 9pt"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,4,1" />
+      <TextObject Name="DTotal" Left="641" Top="0" Width="92" Height="22"
+        Text="" HorzAlign="Right" VertAlign="Center"
+        Font="Times New Roman, 9pt"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,4,1" />
+
+    </DataBand>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SUMMARY BAND
+         Contains: reservation clause, signature blocks,
+                   and the IMPORTANT note.
+         ═══════════════════════════════════════════════════════════ -->
+    <ReportSummaryBand Name="ReportSummary1" Width="733" Height="170">
+
+      <!-- ── Reservation Clause (orange highlight) ──────────────── -->
+      <TextObject Name="Reservation" Left="0" Top="0" Width="733" Height="40"
+        Text="THE NFA HEREBY RESERVES THE RIGHT TO REJECT ANY OR ALL BID/OFFER TO WAIVE ANY FORMALITY  HEREIN OR TO ACCEPT CONDITIONS MOST ADVANTAGEOUS TO THE AGENCY."
+        Font="Times New Roman, 8pt" VertAlign="Center" HorzAlign="Left" WordWrap="true"
+        Fill.Color="-26624"
+        Border.Lines="15" Border.Width="0.5" Padding="4,2,4,2" />
+
+      <!-- ── Signature Row ───────────────────────────────────────
+           Left  200 : Regional Manager signature area
+           Mid   200 : Terms of Delivery (blank for supplier)
+           Right 333 : SUPPLIER'S NAME & SIGNATURE (blank for supplier)
+      ─────────────────────────────────────────────────────────── -->
+      <TextObject Name="RmSignArea" Left="0" Top="42" Width="200" Height="40"
+        Text="" Font="Times New Roman, 9pt"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="TermsLbl" Left="200" Top="42" Width="200" Height="40"
+        Text="Terms of Delivery" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt, style=Bold"
+        Border.Lines="15" Border.Width="0.5" Padding="2,2,2,2" />
+      <TextObject Name="SupSigLbl" Left="400" Top="42" Width="333" Height="40"
+        Text="SUPPLIER'S NAME &amp; SIGNATURE" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt, style=Bold"
+        Border.Lines="15" Border.Width="0.5" Padding="2,2,2,2" />
+
+      <!-- ── Signatory Name Row ──────────────────────────────────── -->
+      <TextObject Name="SignatoryNameVal" Left="0" Top="84" Width="200" Height="20"
+        Text="[RfqDS.SignatoryName]" HorzAlign="Center" VertAlign="Bottom"
+        Font="Times New Roman, 9pt, style=Bold"
+        Border.Lines="9" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="SignatoryNameUnderline" Left="10" Top="104" Width="180" Height="1.1"
+        Text="" Border.Lines="4" Border.Width="0.75" />
+      <TextObject Name="TermsBlankMid" Left="200" Top="84" Width="200" Height="22"
+        Text="" Border.Lines="9" Border.Width="0.5" />
+      <TextObject Name="SupSigBlankRight" Left="400" Top="84" Width="333" Height="22"
+        Text="" Border.Lines="9" Border.Width="0.5" />
+
+      <!-- ── Signatory Role Row ──────────────────────────────────── -->
+      <TextObject Name="SignatoryRoleVal" Left="0" Top="106" Width="200" Height="18"
+        Text="[RfqDS.SignatoryRole]" HorzAlign="Center" VertAlign="Top"
+        Font="Times New Roman, 8pt"
+        Border.Lines="6" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="DateLblBottom" Left="400" Top="106" Width="333" Height="18"
+        Text="DATE:" HorzAlign="Left" VertAlign="Center"
+        Font="Times New Roman, 8pt, style=Bold"
+        Border.Lines="6" Border.Width="0.5" Padding="4,1,2,1" />
+
+      <!-- ── Important Note ─────────────────────────────────────── -->
+      <TextObject Name="ImportantNote" Left="0" Top="130" Width="733" Height="18"
+        Text="IMPORTANT: ERASURE / ALTERATIONS / INTER CANCELLATIONS WILL INVALIDATE THE OFFER."
+        HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt, style=Italic"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+
+    </ReportSummaryBand>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         PAGE FOOTER
+         ═══════════════════════════════════════════════════════════ -->
+    <PageFooterBand Name="PageFooter1" Top="1048" Width="733" Height="14">
+      <TextObject Name="PgNo" Left="0" Top="0" Width="733" Height="14"
+        Text="Page [Page#] of [TotalPages#]" HorzAlign="Right"
+        Font="Times New Roman, 7pt" />
+    </PageFooterBand>
+
+  </ReportPage>
+</Report>

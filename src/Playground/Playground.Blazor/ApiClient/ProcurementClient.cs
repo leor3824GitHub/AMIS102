@@ -169,6 +169,7 @@ internal interface ICanvassRequestClient
     Task<PagedResponse<CanvassRequestSummaryDto>> SearchAsync(string? keyword = null, CanvassRequestStatus? status = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
     Task<CanvassRequestDto?> GetAsync(Guid id, CancellationToken ct = default);
     Task<byte[]> GetFastReportPdfAsync(Guid id, string? pageWidth = null, string? orientation = null, int? minRows = null, CancellationToken ct = default);
+    Task<byte[]> GetRfqFastReportPdfAsync(Guid id, string? pageWidth = null, string? orientation = null, int? minRows = null, CancellationToken ct = default);
     Task<CanvassRequestDto> CreateAsync(CreateCanvassRequestCommand command, CancellationToken ct = default);
     Task<CanvassQuotationDto> AddQuotationAsync(Guid canvassRequestId, AddQuotationCommand command, CancellationToken ct = default);
     Task<CanvassRequestDto> AwardAsync(Guid canvassRequestId, Guid awardedQuotationId, CancellationToken ct = default);
@@ -210,6 +211,29 @@ internal sealed class CanvassRequestClient(HttpClient http) : ICanvassRequestCli
         var url = string.IsNullOrWhiteSpace(queryString)
             ? $"api/v1/fast-reporting/procurement/canvass-requests/{id}/print"
             : $"api/v1/fast-reporting/procurement/canvass-requests/{id}/print?{queryString}";
+
+        return http.GetByteArrayAsync(url, ct);
+    }
+
+    public Task<byte[]> GetRfqFastReportPdfAsync(
+        Guid id,
+        string? pageWidth = null,
+        string? orientation = null,
+        int? minRows = null,
+        CancellationToken ct = default)
+    {
+        var query = HttpUtility.ParseQueryString(string.Empty);
+        if (!string.IsNullOrWhiteSpace(pageWidth))
+            query["pageWidth"] = pageWidth;
+        if (!string.IsNullOrWhiteSpace(orientation))
+            query["orientation"] = orientation;
+        if (minRows is > 0)
+            query["minRows"] = minRows.Value.ToString(CultureInfo.InvariantCulture);
+
+        var queryString = query.ToString();
+        var url = string.IsNullOrWhiteSpace(queryString)
+            ? $"api/v1/fast-reporting/procurement/canvass-requests/{id}/rfq/print"
+            : $"api/v1/fast-reporting/procurement/canvass-requests/{id}/rfq/print?{queryString}";
 
         return http.GetByteArrayAsync(url, ct);
     }

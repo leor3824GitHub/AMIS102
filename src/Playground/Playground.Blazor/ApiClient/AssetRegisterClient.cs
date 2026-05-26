@@ -671,6 +671,7 @@ internal interface IArIssuanceReportClient
     Task<ArIssuanceReportDto> PostAsync(Guid id, PostIssuanceReportRequest request, CancellationToken ct = default);
     Task<ArIssuanceReportDto> RemoveLineAsync(Guid id, Guid lineId, CancellationToken ct = default);
     Task<byte[]> GetFastReportPdfAsync(Guid id, string? pageWidth = null, string? orientation = null, int? minRows = null, CancellationToken ct = default);
+    Task<byte[]> GetSmirFastReportPdfAsync(Guid id, string? pageWidth = null, string? orientation = null, int? minRows = null, CancellationToken ct = default);
 }
 
 internal sealed class ArIssuanceReportClient(HttpClient http) : IArIssuanceReportClient
@@ -730,6 +731,22 @@ internal sealed class ArIssuanceReportClient(HttpClient http) : IArIssuanceRepor
         CancellationToken ct = default)
     {
         var url = ArUrlBuilder.Build($"api/v1/fast-reporting/asset-register/issuance-reports/{id}/print", new()
+        {
+            ["pageWidth"] = pageWidth,
+            ["orientation"] = orientation,
+            ["minRows"] = minRows?.ToString(CultureInfo.InvariantCulture),
+        });
+        return http.GetByteArrayAsync(url, ct);
+    }
+
+    public Task<byte[]> GetSmirFastReportPdfAsync(
+        Guid id,
+        string? pageWidth = null,
+        string? orientation = null,
+        int? minRows = null,
+        CancellationToken ct = default)
+    {
+        var url = ArUrlBuilder.Build($"api/v1/fast-reporting/asset-register/smir/{id}/print", new()
         {
             ["pageWidth"] = pageWidth,
             ["orientation"] = orientation,
@@ -963,6 +980,7 @@ public interface IArReceivingReportClient
     Task<ArPagedResponse<AcceptedIARLineItemDto>> SearchAcceptedIARItemsAsync(
         string? keyword = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
     Task<byte[]> GetFastReportPdfAsync(Guid id, string? pageWidth = null, string? orientation = null, int? minRows = null, CancellationToken ct = default);
+    Task<byte[]> GetSmrrFastReportPdfAsync(Guid id, string? pageWidth = null, string? orientation = null, int? minRows = null, CancellationToken ct = default);
 
     // PPERR Form Series
     Task<ArPagedResponse<ArPPERRFormSeriesDto>> SearchSeriesAsync(int page = 1, int pageSize = 20, CancellationToken ct = default);
@@ -1034,6 +1052,22 @@ public sealed class ArReceivingReportClient(HttpClient http) : IArReceivingRepor
         CancellationToken ct = default)
     {
         var url = ArUrlBuilder.Build($"api/v1/fast-reporting/asset-register/receiving-reports/{id}/print", new()
+        {
+            ["pageWidth"] = pageWidth,
+            ["orientation"] = orientation,
+            ["minRows"] = minRows?.ToString(CultureInfo.InvariantCulture),
+        });
+        return http.GetByteArrayAsync(url, ct);
+    }
+
+    public Task<byte[]> GetSmrrFastReportPdfAsync(
+        Guid id,
+        string? pageWidth = null,
+        string? orientation = null,
+        int? minRows = null,
+        CancellationToken ct = default)
+    {
+        var url = ArUrlBuilder.Build($"api/v1/fast-reporting/asset-register/smrr/{id}/print", new()
         {
             ["pageWidth"] = pageWidth,
             ["orientation"] = orientation,

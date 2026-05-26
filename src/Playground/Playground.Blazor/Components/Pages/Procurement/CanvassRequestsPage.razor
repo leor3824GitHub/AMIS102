@@ -206,15 +206,19 @@
                                                      Dense="true"
                                                      AnchorOrigin="Origin.BottomLeft"
                                                      TransformOrigin="Origin.TopLeft"
-                                                     ToolTip="Print Abstract of Canvass">
+                                                     ToolTip="Print reports">
                                                 <MudMenuItem Icon="@Icons.Material.Filled.PictureAsPdf"
                                                              OnClick="@(() => DownloadFastReportPdfAsync(item.Id))">
-                                                    Download PDF
+                                                    Abstract of Canvass – PDF
+                                                </MudMenuItem>
+                                                <MudMenuItem Icon="@Icons.Material.Filled.Description"
+                                                             OnClick="@(() => DownloadRfqFastReportPdfAsync(item.Id))">
+                                                    Request for Quotation – PDF
                                                 </MudMenuItem>
                                                 <MudDivider />
                                                 <MudMenuItem Icon="@Icons.Material.Filled.Settings"
                                                              OnClick="@(() => OpenFastReportSetupAsync(item.Id))">
-                                                    Fast Report – Page Setup…
+                                                    Abstract of Canvass – Page Setup…
                                                 </MudMenuItem>
                                             </MudMenu>
                                         </MudStack>
@@ -517,6 +521,21 @@
         catch (Exception ex)
         {
             Snackbar.Add($"PDF generation failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task DownloadRfqFastReportPdfAsync(Guid id)
+    {
+        try
+        {
+            var bytes = await Client.GetRfqFastReportPdfAsync(id, pageWidth: "a4", orientation: "portrait", minRows: 8);
+            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
+            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            Snackbar.Add("RFQ PDF ready.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"RFQ PDF generation failed: {ex.Message}", Severity.Error);
         }
     }
 

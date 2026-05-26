@@ -93,7 +93,8 @@ public sealed record CreatePurchaseRequestLineItemRequest(
     string UnitOfIssue,
     string ItemDescription,
     decimal EstimatedUnitCost,
-    Guid? CatalogItemId = null);
+    Guid? CatalogItemId = null,
+    string? UacsObjectCode = null);
 
 public sealed record CreatePurchaseRequestCommand(
     Guid DepartmentId,

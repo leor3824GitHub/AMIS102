@@ -5,6 +5,7 @@
 @inject IArReceivingReportClient Client
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
+@inject IJSRuntime JS
 
 <AMISPageHeader Title="Supplies and Materials Receiving Reports (SMRR)"
                Description="Record receipt of supplies and semi-expendable materials. Each line materializes one or more AssetRegistry rows for accountability tracking." />
@@ -93,6 +94,9 @@
                                     <td>
                                         <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small"
                                                        Color="Color.Primary" OnClick="@(() => ViewAsync(r.Id))" />
+                                        <MudIconButton Icon="@Icons.Material.Filled.PictureAsPdf" Size="Size.Small"
+                                                       Color="Color.Secondary" OnClick="@(() => PrintFastAsync(r.Id))"
+                                                       Title="Download PDF (SMRR)" />
                                         <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
                                                        Color="Color.Error" OnClick="@(() => DeleteAsync(r.Id, r.ReportNo))" />
                                     </td>
@@ -164,6 +168,21 @@
         catch (Exception ex)
         {
             Snackbar.Add($"Failed to load: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task PrintFastAsync(Guid id)
+    {
+        try
+        {
+            var bytes = await Client.GetSmrrFastReportPdfAsync(id, pageWidth: "longbond", orientation: "portrait");
+            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
+            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            Snackbar.Add("PDF ready.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"PDF generation failed: {ex.Message}", Severity.Error);
         }
     }
 
