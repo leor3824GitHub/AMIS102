@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.Vehicle.Contracts.v1.Repairs;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.Vehicle.Contracts.Permissions;
 
 namespace AMIS.Modules.Vehicle.Features.v1.Repairs.GetRepairRecord;
 
@@ -19,6 +20,6 @@ public static class GetRepairRecordEndpoint
         .WithSummary("Get a repair record by ID")
         .Produces<RepairRecordDto>()
         .Produces(StatusCodes.Status404NotFound)
-        .RequirePermission(VehicleModuleConstants.Permissions.Repairs.View);
+        .RequirePermission(VehiclePermissions.Repairs.View);
 }
 

@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.MasterData.Contracts.v1.PropertyClasses;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.MasterData.Contracts.Permissions;
 
 namespace AMIS.Modules.MasterData.Features.v1.PropertyClasses.CreatePropertyClassItem;
 
@@ -24,6 +25,6 @@ public static class CreatePropertyClassItemEndpoint
         .Produces<Guid>(StatusCodes.Status201Created)
         .Produces(StatusCodes.Status400BadRequest)
         .Produces(StatusCodes.Status404NotFound)
-        .RequirePermission(MasterDataModuleConstants.Permissions.PropertyClasses.Create);
+        .RequirePermission(MasterDataPermissions.PropertyClasses.Create);
 }
 

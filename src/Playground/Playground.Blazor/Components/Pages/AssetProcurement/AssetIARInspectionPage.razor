@@ -1,5 +1,6 @@
 @page "/asset-procurement/iars/{Id:guid}/inspect"
 @using AMIS.Playground.Blazor.ApiClient
+@using AMIS.Modules.ProcurementAcquisition.Contracts.Permissions
 @using AMIS.Modules.ProcurementAcquisition.Contracts.v1.AssetInspectionAcceptanceReports
 @inject IAssetIarClient IarClient
 @inject IUserProfileState UserProfileState
@@ -296,8 +297,6 @@ else
 }
 
 @code {
-    private const string PermissionInspect = "Permissions.Procurement.AssetIARs.Inspect";
-
     [Parameter] public Guid Id { get; set; }
 
     private AssetIARDto? _iar;
@@ -306,7 +305,7 @@ else
     private readonly Dictionary<int, LineInspectionDecision> _decisions = [];
 
     private bool _isAssignedInspector => _iar is not null && UserProfileState.EmployeeId != Guid.Empty && UserProfileState.EmployeeId == _iar.InspectedById;
-    private bool _canInspectPermission => UserProfileState.Permissions.Contains(PermissionInspect);
+    private bool _canInspectPermission => UserProfileState.Permissions.Contains(ProcurementPermissions.AssetIARs.Inspect);
     private bool _canEditInspection => _iar is not null && _iar.Status == AssetIARStatus.PendingInspection && _isAssignedInspector && _canInspectPermission;
 
     private int PassedCount => _decisions.Values.Count(d => d.Result == LineInspectionResult.Passed);

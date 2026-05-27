@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.Finance.Contracts.v1.BudgetUtilizationRecords;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.Finance.Contracts.Permissions;
 
 namespace AMIS.Modules.Finance.Features.v1.BudgetUtilizationRecords.CreateBudgetUtilizationRecord;
 
@@ -17,6 +18,6 @@ public static class CreateBudgetUtilizationRecordEndpoint
         })
         .WithName(nameof(CreateBudgetUtilizationRecordCommand))
         .WithSummary("Create a new budget utilization record")
-        .RequirePermission(FinanceModuleConstants.Permissions.BudgetUtilizationRecords.Create);
+        .RequirePermission(FinancePermissions.BudgetUtilizationRecords.Create);
 }
 

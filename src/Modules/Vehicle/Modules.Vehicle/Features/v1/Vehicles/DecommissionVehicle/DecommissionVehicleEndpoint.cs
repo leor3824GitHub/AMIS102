@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.Vehicle.Contracts.v1.Vehicles;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.Vehicle.Contracts.Permissions;
 
 namespace AMIS.Modules.Vehicle.Features.v1.Vehicles.DecommissionVehicle;
 
@@ -18,6 +19,6 @@ public static class DecommissionVehicleEndpoint
         .WithName(nameof(DecommissionVehicleCommand))
         .WithSummary("Mark vehicle as decommissioned")
         .Produces(StatusCodes.Status204NoContent)
-        .RequirePermission(VehicleModuleConstants.Permissions.Vehicles.Update);
+        .RequirePermission(VehiclePermissions.Vehicles.Update);
 }
 

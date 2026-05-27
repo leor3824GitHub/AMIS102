@@ -1,10 +1,11 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Framework.Shared.Persistence;
 using AMIS.Modules.AssetRegister.Contracts.v1.Catalog;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetRegister.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetRegister.Features.v1.Catalog.SearchPropertyItemCatalogs;
 
@@ -15,7 +16,7 @@ public static class SearchPropertyItemCatalogsEndpoint
             .WithModuleName<SearchPropertyItemCatalogsQuery>()
             .WithSummary("Search property item catalog entries")
             .Produces<PagedResponse<PropertyItemCatalogDto>>()
-            .RequirePermission(AssetRegisterModuleConstants.Permissions.Catalog.View);
+            .RequirePermission(AssetRegisterPermissions.Catalog.View);
 
     private static async Task<IResult> Handle(
         IMediator mediator,

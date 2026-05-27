@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.ProcurementAcquisition.Contracts.Permissions;
 
 namespace AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.CancelPurchaseOrder;
 
@@ -15,7 +16,7 @@ public static class CancelPurchaseOrderEndpoint
             .WithSummary("Cancel a purchase order")
             .Produces<PurchaseOrderDto>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound)
-            .RequirePermission(ProcurementAcquisitionModuleConstants.Permissions.PurchaseOrders.Cancel);
+            .RequirePermission(ProcurementPermissions.PurchaseOrders.Cancel);
 
     private static async Task<IResult> CancelPurchaseOrder(
         Guid id,

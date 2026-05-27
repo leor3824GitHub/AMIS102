@@ -1,8 +1,9 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetManagement.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetManagement.Features.v1.Reports.GenerateRegSPIPdf;
 
@@ -14,7 +15,7 @@ public static class GenerateRegSPIPdfEndpoint
             .WithSummary("Generate a PDF for the Registry of Semi-Expendable Property Issued (RegSPI)")
             .Produces(StatusCodes.Status200OK, contentType: "application/pdf")
             .Produces(StatusCodes.Status400BadRequest)
-            .RequirePermission(AssetManagementModuleConstants.Permissions.Reports.View);
+            .RequirePermission(AssetManagementPermissions.Reports.View);
 
     private static async Task<IResult> Generate(
         GenerateRegSPIPdfCommand command,

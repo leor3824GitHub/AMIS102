@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.MasterData.Contracts.v1.PropertyClasses;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.MasterData.Contracts.Permissions;
 
 namespace AMIS.Modules.MasterData.Features.v1.PropertyClasses.CreatePropertyClass;
 
@@ -19,6 +20,6 @@ public static class CreatePropertyClassEndpoint
         .WithSummary("Create a property class (COA GAM Annex A classification)")
         .Produces<Guid>(StatusCodes.Status201Created)
         .Produces(StatusCodes.Status400BadRequest)
-        .RequirePermission(MasterDataModuleConstants.Permissions.PropertyClasses.Create);
+        .RequirePermission(MasterDataPermissions.PropertyClasses.Create);
 }
 

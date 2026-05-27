@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.ProcurementAcquisition.Contracts.Permissions;
 
 namespace AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.RejectPurchaseRequest;
 
@@ -15,7 +16,7 @@ public static class RejectPurchaseRequestEndpoint
             .WithSummary("Reject a submitted purchase request")
             .Produces<PurchaseRequestDto>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound)
-            .RequirePermission(ProcurementAcquisitionModuleConstants.Permissions.PurchaseRequests.Reject);
+            .RequirePermission(ProcurementPermissions.PurchaseRequests.Reject);
 
     private static async Task<IResult> RejectPurchaseRequest(
         Guid id,

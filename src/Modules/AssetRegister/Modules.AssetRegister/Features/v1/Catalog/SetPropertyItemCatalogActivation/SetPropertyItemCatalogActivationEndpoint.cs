@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.AssetRegister.Contracts.v1.Catalog;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetRegister.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetRegister.Features.v1.Catalog.SetPropertyItemCatalogActivation;
 
@@ -14,7 +15,7 @@ public static class SetPropertyItemCatalogActivationEndpoint
             .WithModuleName<SetPropertyItemCatalogActivationCommand>()
             .WithSummary("Activate or deactivate a property item catalog entry")
             .Produces<PropertyItemCatalogDto>()
-            .RequirePermission(AssetRegisterModuleConstants.Permissions.Catalog.Update);
+            .RequirePermission(AssetRegisterPermissions.Catalog.Update);
 
     private static async Task<IResult> Handle(
         Guid id, SetPropertyItemCatalogActivationCommand cmd, IMediator mediator, CancellationToken ct)

@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.MasterData.Contracts.v1.ReportSignatories;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.MasterData.Contracts.Permissions;
 
 namespace AMIS.Modules.MasterData.Features.v1.ReportSignatories.DeleteReportSignatory;
 
@@ -15,7 +16,7 @@ public static class DeleteReportSignatoryEndpoint
             .WithSummary("Delete a report signatory")
             .Produces(StatusCodes.Status204NoContent)
             .Produces(StatusCodes.Status404NotFound)
-            .RequirePermission(MasterDataModuleConstants.Permissions.ReportSignatories.Delete);
+            .RequirePermission(MasterDataPermissions.ReportSignatories.Delete);
 
     private static async Task<IResult> Delete(
         Guid id,

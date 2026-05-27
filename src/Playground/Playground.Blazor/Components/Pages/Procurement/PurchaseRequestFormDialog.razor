@@ -36,7 +36,7 @@
                     <MudTextField @bind-Value="_form.ResponsibilityCenterCode" Label="Responsibility Center Code" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
                 </MudItem>
                 <MudItem xs="12" sm="12" md="4">
-                    <MudSelect @bind-Value="_form.PrType" Label="PR Type" Variant="Variant.Outlined" T="PrType" Dense="true" Margin="Margin.Dense">
+                    <MudSelect Value="_form.PrType" ValueChanged="OnPrTypeChanged" Label="PR Type" Variant="Variant.Outlined" T="PrType" Dense="true" Margin="Margin.Dense">
                         <MudSelectItem Value="PrType.Planned">Planned</MudSelectItem>
                         <MudSelectItem Value="PrType.Unplanned">Unplanned</MudSelectItem>
                     </MudSelect>
@@ -97,7 +97,7 @@
                                              ResetValueOnEmptyText="false"
                                              MinCharacters="0"
                                              Clearable="true"
-                                             ErrorText="@(string.IsNullOrWhiteSpace(_newLineItem.ItemDescription) ? "Description is required." : "Pick a catalog item — use the + button to create one.")"
+                                             HelperText="Pick a catalog item, or use the + button to create one."
                                              Class="flex-grow-1" />
                             <MudTooltip Text="Create a new catalog item from this description">
                                 <MudIconButton Icon="@Icons.Material.Filled.AddCircleOutline"
@@ -118,7 +118,8 @@
                     </MudItem>
                     <MudItem xs="12" sm="6" md="2" Class="d-flex align-center">
                         <MudButton StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Filled" Color="Color.Primary"
-                                   OnClick="AddLineItem" Size="Size.Small" FullWidth="true">Add Item</MudButton>
+                                   OnClick="AddLineItem" Size="Size.Small" FullWidth="true"
+                                   Disabled="@(!CanAddLineItem())">Add Item</MudButton>
                     </MudItem>
                 </MudGrid>
                 @if (_newLineItem.SelectedCatalog is not null)
@@ -363,44 +364,19 @@
         }
     }
 
-    private void OnCatalogSelected(int idx, ArCatalogItemDto? c)
+    private void OnPrTypeChanged(PrType value)
     {
-        var li = _form.LineItems[idx];
-        li.SelectedCatalog = c;
-        if (c is not null)
-        {
-            li.ItemDescription = c.Description;
-            if (string.IsNullOrWhiteSpace(li.UnitOfIssue) || li.UnitOfIssue == "pc")
-                li.UnitOfIssue = c.DefaultUnit;
-        }
+        _form.PrType = value;
+        if (value != PrType.Unplanned)
+            _form.Justification = null;
     }
 
-    private void OnDescriptionChanged(int idx, string? text)
-    {
-        var li = _form.LineItems[idx];
-        li.ItemDescription = text ?? string.Empty;
-        if (li.SelectedCatalog is not null &&
-            !string.Equals(li.SelectedCatalog.Description, li.ItemDescription, StringComparison.OrdinalIgnoreCase))
-        {
-            li.SelectedCatalog = null;
-        }
-    }
-
-    private async Task OpenCreateCatalogAsync(int idx)
-    {
-        var li = _form.LineItems[idx];
-        var parameters = new DialogParameters<CreateCatalogItemDialog>
-        {
-            { x => x.InitialDescription, li.ItemDescription }
-        };
-        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true };
-        var dialog = await DialogService.ShowAsync<CreateCatalogItemDialog>("Create Catalog Item", parameters, options);
-        var result = await dialog.Result;
-        if (result is null || result.Canceled || result.Data is not ArCatalogItemDto created)
-            return;
-
-        OnCatalogSelected(idx, created);
-    }
+    private bool CanAddLineItem() =>
+        _newLineItem.SelectedCatalog is not null &&
+        !string.IsNullOrWhiteSpace(_newLineItem.ItemDescription) &&
+        !string.IsNullOrWhiteSpace(_newLineItem.UnitOfIssue) &&
+        _newLineItem.Quantity > 0 &&
+        _newLineItem.EstimatedUnitCost > 0;
 
     private void AddLineItem()
     {

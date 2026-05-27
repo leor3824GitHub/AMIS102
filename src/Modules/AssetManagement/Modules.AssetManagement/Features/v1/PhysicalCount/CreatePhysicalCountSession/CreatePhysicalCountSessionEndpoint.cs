@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetManagement.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetManagement.Features.v1.PhysicalCount.CreatePhysicalCountSession;
 
@@ -17,6 +18,6 @@ public static class CreatePhysicalCountSessionEndpoint
         })
         .WithName(nameof(CreatePhysicalCountSessionCommand))
         .WithSummary("Create a Physical Count Session and generate the asset checklist (ICF preparation)")
-        .RequirePermission(AssetManagementModuleConstants.Permissions.PhysicalCount.Create);
+        .RequirePermission(AssetManagementPermissions.PhysicalCount.Create);
 }
 

@@ -1,6 +1,7 @@
 @page "/asset-procurement/iars"
 @using AMIS.Playground.Blazor.ApiClient
 @using AMIS.Playground.Blazor.Components.Pages.Procurement
+@using AMIS.Modules.ProcurementAcquisition.Contracts.Permissions
 @using AMIS.Modules.ProcurementAcquisition.Contracts.v1.AssetInspectionAcceptanceReports
 @inject IAssetIarClient IarClient
 @inject IUserProfileState UserProfileState
@@ -200,14 +201,6 @@
 </MudCard>
 
 @code {
-    private const string PermissionCreate = "Permissions.Procurement.AssetIARs.Create";
-    private const string PermissionUpdate = "Permissions.Procurement.AssetIARs.Update";
-    private const string PermissionSubmitForInspection = "Permissions.Procurement.AssetIARs.SubmitForInspection";
-    private const string PermissionInspect = "Permissions.Procurement.AssetIARs.Inspect";
-    private const string PermissionAssignPropertyNo = "Permissions.Procurement.AssetIARs.AssignPropertyNo";
-    private const string PermissionAccept = "Permissions.Procurement.AssetIARs.Accept";
-    private const string PermissionCancel = "Permissions.Procurement.AssetIARs.Cancel";
-
     private List<AssetIARSummaryDto> _items = [];
     private string? _keyword;
     private AssetIARStatus? _statusFilter;
@@ -217,13 +210,13 @@
     private int _totalCount;
     private const int PageSize = 15;
     private int TotalPages => Math.Max(1, (int)Math.Ceiling(_totalCount / (double)PageSize));
-    private bool _canCreate => UserProfileState.Permissions.Contains(PermissionCreate);
-    private bool _canUpdate => UserProfileState.Permissions.Contains(PermissionUpdate);
-    private bool _canSubmitForInspection => UserProfileState.Permissions.Contains(PermissionSubmitForInspection);
-    private bool _canInspect => UserProfileState.Permissions.Contains(PermissionInspect);
-    private bool _canAssignPropertyNo => UserProfileState.Permissions.Contains(PermissionAssignPropertyNo);
-    private bool _canAccept => UserProfileState.Permissions.Contains(PermissionAccept);
-    private bool _canCancel => UserProfileState.Permissions.Contains(PermissionCancel);
+    private bool _canCreate => UserProfileState.Permissions.Contains(ProcurementPermissions.AssetIARs.Create);
+    private bool _canUpdate => UserProfileState.Permissions.Contains(ProcurementPermissions.AssetIARs.Update);
+    private bool _canSubmitForInspection => UserProfileState.Permissions.Contains(ProcurementPermissions.AssetIARs.SubmitForInspection);
+    private bool _canInspect => UserProfileState.Permissions.Contains(ProcurementPermissions.AssetIARs.Inspect);
+    private bool _canAssignPropertyNo => UserProfileState.Permissions.Contains(ProcurementPermissions.AssetIARs.AssignPropertyNo);
+    private bool _canAccept => UserProfileState.Permissions.Contains(ProcurementPermissions.AssetIARs.Accept);
+    private bool _canCancel => UserProfileState.Permissions.Contains(ProcurementPermissions.AssetIARs.Cancel);
 
     protected override async Task OnInitializedAsync()
     {

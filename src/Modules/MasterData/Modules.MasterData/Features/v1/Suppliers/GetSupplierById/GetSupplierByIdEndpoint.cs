@@ -1,8 +1,9 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.MasterData.Contracts.Permissions;
 
 namespace AMIS.Modules.MasterData.Features.v1.Suppliers.GetSupplierById;
 
@@ -14,7 +15,7 @@ public static class GetSupplierByIdEndpoint
             .WithSummary("Get supplier by ID")
             .Produces<SupplierDetailsDto>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound)
-            .RequirePermission(MasterDataModuleConstants.Permissions.Suppliers.View);
+            .RequirePermission(MasterDataPermissions.Suppliers.View);
 
     private static async Task<IResult> GetSupplierById(
         Guid id,

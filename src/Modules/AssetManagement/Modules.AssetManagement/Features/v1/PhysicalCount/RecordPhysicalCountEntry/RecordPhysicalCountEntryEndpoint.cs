@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetManagement.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetManagement.Features.v1.PhysicalCount.RecordPhysicalCountEntry;
 
@@ -28,7 +29,7 @@ public static class RecordPhysicalCountEntryEndpoint
         })
         .WithName("AssetManagement_RecordPhysicalCountEntry")
         .WithSummary("Record the physical count result for a single asset entry (manual or camera scan)")
-        .RequirePermission(AssetManagementModuleConstants.Permissions.PhysicalCount.Update);
+        .RequirePermission(AssetManagementPermissions.PhysicalCount.Update);
 }
 
 public sealed record RecordPhysicalCountEntryRequest(

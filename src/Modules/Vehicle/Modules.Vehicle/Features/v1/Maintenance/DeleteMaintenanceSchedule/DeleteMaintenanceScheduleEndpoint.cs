@@ -1,8 +1,9 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.Vehicle.Contracts.Permissions;
 
 namespace AMIS.Modules.Vehicle.Features.v1.Maintenance.DeleteMaintenanceSchedule;
 
@@ -20,6 +21,6 @@ public static class DeleteMaintenanceScheduleEndpoint
         })
         .WithName(nameof(DeleteMaintenanceScheduleCommand))
         .WithSummary("Delete a maintenance schedule")
-        .RequirePermission(VehicleModuleConstants.Permissions.Maintenance.Delete);
+        .RequirePermission(VehiclePermissions.Maintenance.Delete);
 }
 

@@ -1,8 +1,9 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.MasterData.Contracts.Permissions;
 
 namespace AMIS.Modules.MasterData.Features.v1.Suppliers.DeleteSupplier;
 
@@ -14,7 +15,7 @@ public static class DeleteSupplierEndpoint
             .WithSummary("Delete supplier")
             .Produces(StatusCodes.Status204NoContent)
             .Produces(StatusCodes.Status404NotFound)
-            .RequirePermission(MasterDataModuleConstants.Permissions.Suppliers.Delete);
+            .RequirePermission(MasterDataPermissions.Suppliers.Delete);
 
     private static async Task<IResult> DeleteSupplier(
         Guid id,

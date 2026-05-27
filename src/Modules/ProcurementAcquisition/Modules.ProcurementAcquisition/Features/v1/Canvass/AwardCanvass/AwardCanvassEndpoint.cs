@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.Canvass;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.ProcurementAcquisition.Contracts.Permissions;
 
 namespace AMIS.Modules.ProcurementAcquisition.Features.v1.Canvass.AwardCanvass;
 
@@ -15,7 +16,7 @@ public static class AwardCanvassEndpoint
             .WithSummary("Award a canvass request to a supplier quotation")
             .Produces<CanvassRequestDto>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound)
-            .RequirePermission(ProcurementAcquisitionModuleConstants.Permissions.CanvassRequests.Award);
+            .RequirePermission(ProcurementPermissions.CanvassRequests.Award);
 
     private static async Task<IResult> AwardCanvass(
         Guid id,

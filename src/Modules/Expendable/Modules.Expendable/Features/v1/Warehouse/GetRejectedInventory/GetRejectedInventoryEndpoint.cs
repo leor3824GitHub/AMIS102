@@ -1,10 +1,11 @@
-using AMIS.Modules.Expendable.Contracts.v1.Warehouse;
+﻿using AMIS.Modules.Expendable.Contracts.v1.Warehouse;
 using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Framework.Shared.Persistence;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.Expendable.Contracts.Permissions;
 
 namespace AMIS.Modules.Expendable.Features.v1.Warehouse.GetRejectedInventory;
 
@@ -16,7 +17,7 @@ public static class GetRejectedInventoryEndpoint
             .WithSummary("Get rejected inventory")
             .Produces<PagedResponse<RejectedInventoryDto>>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status400BadRequest)
-            .RequirePermission(ExpendableModuleConstants.Permissions.Inventory.ViewReports);
+            .RequirePermission(ExpendablePermissions.Inventory.ViewReports);
 
     private static async Task<IResult> Search(
         GetRejectedInventoryQuery query,

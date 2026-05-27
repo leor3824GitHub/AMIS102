@@ -1,4 +1,5 @@
 @page "/procurement/purchase-requests"
+@using AMIS.Modules.ProcurementAcquisition.Contracts.Permissions
 @using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests
 @using AMIS.Framework.Shared.Persistence
 @using AMIS.Playground.Blazor.ApiClient
@@ -12,6 +13,7 @@
 @inject IDialogService DialogService
 @inject AuthenticationStateProvider AuthStateProvider
 @inject IEmployeesClient EmployeesClient
+@inject IUserProfileState UserProfileState
 @inject IJSRuntime JS
 
 <AMISPageHeader Title="Purchase Requests" Description="Manage procurement purchase requests (PR)" />
@@ -27,10 +29,13 @@
                                   Style="max-width:220px" DebounceInterval="400"
                                   OnDebounceIntervalElapsed="@(async () => await LoadAsync())" />
                     <MudSpacer />
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.Add"
-                               OnClick="OpenCreateDialog">
-                        + NEW PURCHASE REQUEST
-                    </MudButton>
+                    @if (_canCreate)
+                    {
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.Add"
+                                   OnClick="OpenCreateDialog">
+                            + NEW PURCHASE REQUEST
+                        </MudButton>
+                    }
                 </MudStack>
 
                 <!-- Status Filter Tabs -->
@@ -115,44 +120,68 @@
                                             </MudMenu>
                                             @if (item.Status == PurchaseRequestStatus.Draft)
                                             {
-                                                <MudTooltip Text="Edit">
-                                                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary"
-                                                                   OnClick="@(async () => await OpenEditDialog(item.Id))" />
-                                                </MudTooltip>
-                                                <MudTooltip Text="Submit for Approval">
-                                                    <MudIconButton Icon="@Icons.Material.Filled.Send" Size="Size.Small" Color="Color.Info"
-                                                                   OnClick="@(async () => await SubmitAsync(item.Id))" />
-                                                </MudTooltip>
-                                                <MudTooltip Text="Cancel">
-                                                    <MudIconButton Icon="@Icons.Material.Filled.Cancel" Size="Size.Small" Color="Color.Error"
-                                                                   OnClick="@(async () => await CancelPrAsync(item.Id))" />
-                                                </MudTooltip>
+                                                @if (_canUpdate)
+                                                {
+                                                    <MudTooltip Text="Edit">
+                                                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary"
+                                                                       OnClick="@(async () => await OpenEditDialog(item.Id))" />
+                                                    </MudTooltip>
+                                                }
+                                                @if (_canSubmit)
+                                                {
+                                                    <MudTooltip Text="Submit for Approval">
+                                                        <MudIconButton Icon="@Icons.Material.Filled.Send" Size="Size.Small" Color="Color.Info"
+                                                                       OnClick="@(async () => await SubmitAsync(item.Id))" />
+                                                    </MudTooltip>
+                                                }
+                                                @if (_canCancel)
+                                                {
+                                                    <MudTooltip Text="Cancel">
+                                                        <MudIconButton Icon="@Icons.Material.Filled.Cancel" Size="Size.Small" Color="Color.Error"
+                                                                       OnClick="@(async () => await CancelPrAsync(item.Id))" />
+                                                    </MudTooltip>
+                                                }
                                             }
                                             @if (item.Status == PurchaseRequestStatus.PendingFundsAvailable)
                                             {
-                                                <MudTooltip Text="Certify Funds Available (Accountant)">
-                                                    <MudIconButton Icon="@Icons.Material.Filled.AccountBalance" Size="Size.Small" Color="Color.Info"
-                                                                   OnClick="@(async () => await CertifyFundsAvailableAsync(item.Id))" />
-                                                </MudTooltip>
-                                                <MudTooltip Text="Return for Revision">
-                                                    <MudIconButton Icon="@Icons.Material.Filled.Reply" Size="Size.Small" Color="Color.Warning"
-                                                                   OnClick="@(async () => await ReturnForRevisionAsync(item.Id))" />
-                                                </MudTooltip>
+                                                @if (_canCertifyFundsAvailable)
+                                                {
+                                                    <MudTooltip Text="Certify Funds Available (Accountant)">
+                                                        <MudIconButton Icon="@Icons.Material.Filled.AccountBalance" Size="Size.Small" Color="Color.Info"
+                                                                       OnClick="@(async () => await CertifyFundsAvailableAsync(item.Id))" />
+                                                    </MudTooltip>
+                                                }
+                                                @if (_canReturnForRevision)
+                                                {
+                                                    <MudTooltip Text="Return for Revision">
+                                                        <MudIconButton Icon="@Icons.Material.Filled.Reply" Size="Size.Small" Color="Color.Warning"
+                                                                       OnClick="@(async () => await ReturnForRevisionAsync(item.Id))" />
+                                                    </MudTooltip>
+                                                }
                                             }
                                             @if (item.Status == PurchaseRequestStatus.PendingApproval)
                                             {
-                                                <MudTooltip Text="Approve (HoPE)">
-                                                    <MudIconButton Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small" Color="Color.Success"
-                                                                   OnClick="@(async () => await ApproveAsync(item.Id))" />
-                                                </MudTooltip>
-                                                <MudTooltip Text="Return for Revision">
-                                                    <MudIconButton Icon="@Icons.Material.Filled.Reply" Size="Size.Small" Color="Color.Warning"
-                                                                   OnClick="@(async () => await ReturnForRevisionAsync(item.Id))" />
-                                                </MudTooltip>
-                                                <MudTooltip Text="Reject">
-                                                    <MudIconButton Icon="@Icons.Material.Filled.Cancel" Size="Size.Small" Color="Color.Error"
-                                                                   OnClick="@(async () => await RejectAsync(item.Id))" />
-                                                </MudTooltip>
+                                                @if (_canApprove)
+                                                {
+                                                    <MudTooltip Text="Approve (HoPE)">
+                                                        <MudIconButton Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small" Color="Color.Success"
+                                                                       OnClick="@(async () => await ApproveAsync(item.Id))" />
+                                                    </MudTooltip>
+                                                }
+                                                @if (_canReturnForRevision)
+                                                {
+                                                    <MudTooltip Text="Return for Revision">
+                                                        <MudIconButton Icon="@Icons.Material.Filled.Reply" Size="Size.Small" Color="Color.Warning"
+                                                                       OnClick="@(async () => await ReturnForRevisionAsync(item.Id))" />
+                                                    </MudTooltip>
+                                                }
+                                                @if (_canReject)
+                                                {
+                                                    <MudTooltip Text="Reject">
+                                                        <MudIconButton Icon="@Icons.Material.Filled.Cancel" Size="Size.Small" Color="Color.Error"
+                                                                       OnClick="@(async () => await RejectAsync(item.Id))" />
+                                                    </MudTooltip>
+                                                }
                                             }
                                         </MudStack>
                                     </td>
@@ -175,6 +204,15 @@
 </MudGrid>
 
 @code {
+    private bool _canCreate => UserProfileState.Permissions.Contains(ProcurementPermissions.PurchaseRequests.Create);
+    private bool _canUpdate => UserProfileState.Permissions.Contains(ProcurementPermissions.PurchaseRequests.Update);
+    private bool _canSubmit => UserProfileState.Permissions.Contains(ProcurementPermissions.PurchaseRequests.Submit);
+    private bool _canCancel => UserProfileState.Permissions.Contains(ProcurementPermissions.PurchaseRequests.Cancel);
+    private bool _canCertifyFundsAvailable => UserProfileState.Permissions.Contains(ProcurementPermissions.PurchaseRequests.CertifyFundsAvailable);
+    private bool _canApprove => UserProfileState.Permissions.Contains(ProcurementPermissions.PurchaseRequests.Approve);
+    private bool _canReturnForRevision => UserProfileState.Permissions.Contains(ProcurementPermissions.PurchaseRequests.ReturnForRevision);
+    private bool _canReject => UserProfileState.Permissions.Contains(ProcurementPermissions.PurchaseRequests.Reject);
+
     private List<PurchaseRequestSummaryDto> _items = [];
     private bool _loaded;
     private string _keyword = string.Empty;
@@ -328,7 +366,10 @@
         var dialog = await DialogService.ShowAsync<PurchaseRequestFormDialog>("Purchase Request", parameters, options);
         var result = await dialog.Result;
         if (result is not null && !result.Canceled)
+        {
             await LoadAsync();
+            await RefreshTabCountsAsync();
+        }
     }
 
     private async Task ShowDetailsAsync(Guid id)

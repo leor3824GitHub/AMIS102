@@ -1,9 +1,10 @@
-using AMIS.Modules.Expendable.Contracts.v1.Purchases;
+﻿using AMIS.Modules.Expendable.Contracts.v1.Purchases;
 using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.Expendable.Contracts.Permissions;
 
 namespace AMIS.Modules.Expendable.Features.v1.Purchases.GetPurchase;
 
@@ -15,7 +16,7 @@ public static class GetPurchaseEndpoint
             .WithSummary("Get purchase order by ID")
             .Produces<PurchaseDto>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound)
-            .RequirePermission(ExpendableModuleConstants.Permissions.Purchases.View);
+            .RequirePermission(ExpendablePermissions.Purchases.View);
 
     private static async Task<IResult> GetPurchase(
         Guid id,

@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.MasterData.Contracts.v1.ReportSignatories;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.MasterData.Contracts.Permissions;
 
 namespace AMIS.Modules.MasterData.Features.v1.ReportSignatories.GetReportSignatories;
 
@@ -14,7 +15,7 @@ public static class GetReportSignatoriesEndpoint
             .WithName(nameof(GetReportSignatoriesQuery))
             .WithSummary("Get report signatories by report type")
             .Produces<List<ReportSignatoryDto>>(StatusCodes.Status200OK)
-            .RequirePermission(MasterDataModuleConstants.Permissions.ReportSignatories.View);
+            .RequirePermission(MasterDataPermissions.ReportSignatories.View);
 
     private static async Task<IResult> GetSignatories(
         [AsParameters] GetReportSignatoriesQuery query,

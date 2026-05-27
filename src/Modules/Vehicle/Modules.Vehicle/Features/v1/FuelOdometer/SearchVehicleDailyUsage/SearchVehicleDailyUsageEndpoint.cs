@@ -1,4 +1,4 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Framework.Shared.Persistence;
 using AMIS.Modules.Vehicle.Contracts.v1.Vehicles;
 using Mediator;
@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.Vehicle.Contracts.Permissions;
 
 namespace AMIS.Modules.Vehicle.Features.v1.FuelOdometer.SearchVehicleDailyUsage;
 
@@ -17,6 +18,6 @@ public static class SearchVehicleDailyUsageEndpoint
         .WithName(nameof(SearchVehicleDailyUsageQuery))
         .WithSummary("Search daily fuel and odometer records")
         .Produces<PagedResponse<VehicleDailyUsageDto>>()
-        .RequirePermission(VehicleModuleConstants.Permissions.FuelOdometer.View);
+        .RequirePermission(VehiclePermissions.FuelOdometer.View);
 }
 

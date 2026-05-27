@@ -1,9 +1,10 @@
-using AMIS.Modules.Expendable.Contracts.v1.Cart;
+﻿using AMIS.Modules.Expendable.Contracts.v1.Cart;
 using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.Expendable.Contracts.Permissions;
 
 namespace AMIS.Modules.Expendable.Features.v1.Cart.GetOrCreateCart;
 
@@ -16,7 +17,7 @@ public static class GetOrCreateCartEndpoint
             .Produces<EmployeeShoppingCartDto>(StatusCodes.Status200OK)
             .Produces<EmployeeShoppingCartDto>(StatusCodes.Status201Created)
             .Produces(StatusCodes.Status400BadRequest)
-            .RequirePermission(ExpendableModuleConstants.Permissions.ShoppingCarts.View);
+            .RequirePermission(ExpendablePermissions.ShoppingCarts.View);
 
     private static async Task<IResult> GetOrCreate(
         string employeeId,

@@ -1,9 +1,10 @@
-using AMIS.Modules.Expendable.Contracts.v1.Cart;
+﻿using AMIS.Modules.Expendable.Contracts.v1.Cart;
 using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.Expendable.Contracts.Permissions;
 
 namespace AMIS.Modules.Expendable.Features.v1.Cart.AddToCart;
 
@@ -16,7 +17,7 @@ public static class AddToCartEndpoint
             .Produces(StatusCodes.Status204NoContent)
             .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status404NotFound)
-            .RequirePermission(ExpendableModuleConstants.Permissions.ShoppingCarts.Edit);
+            .RequirePermission(ExpendablePermissions.ShoppingCarts.Edit);
 
     private static async Task<IResult> AddItem(
         Guid cartId,

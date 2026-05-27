@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.AssetRegister.Contracts.v1.Incidents;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetRegister.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetRegister.Features.v1.Incidents.GetIncidentReport;
 
@@ -15,7 +16,7 @@ public static class GetIncidentReportEndpoint
             .WithSummary("Get an incident report by id")
             .Produces<PropertyIncidentReportDto>()
             .Produces(StatusCodes.Status404NotFound)
-            .RequirePermission(AssetRegisterModuleConstants.Permissions.Incident.View);
+            .RequirePermission(AssetRegisterPermissions.Incident.View);
 
     private static async Task<IResult> Handle(Guid id, IMediator mediator, CancellationToken ct)
     {

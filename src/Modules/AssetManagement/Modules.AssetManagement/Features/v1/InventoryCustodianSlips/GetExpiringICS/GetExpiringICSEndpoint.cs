@@ -1,8 +1,9 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetManagement.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetManagement.Features.v1.InventoryCustodianSlips.GetExpiringICS;
 
@@ -13,7 +14,7 @@ public static class GetExpiringICSEndpoint
             .WithName(nameof(GetExpiringICSQuery))
             .WithSummary("Get Active ICS records expiring within the specified number of days")
             .Produces<PagedExpiringICSResponse>(StatusCodes.Status200OK)
-            .RequirePermission(AssetManagementModuleConstants.Permissions.InventoryCustodianSlips.View);
+            .RequirePermission(AssetManagementPermissions.InventoryCustodianSlips.View);
 
     private static async Task<IResult> GetExpiringICS(
         [AsParameters] GetExpiringICSQuery query,

@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.AssetRegister.Contracts.v1.Accountability;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetRegister.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetRegister.Features.v1.Accountability.ReturnAccountabilityLines;
 
@@ -14,7 +15,7 @@ public static class ReturnAccountabilityLinesEndpoint
             .WithModuleName<ReturnAccountabilityLinesCommand>()
             .WithSummary("Return one or more accountability lines (and free their assets)")
             .Produces<PropertyAccountabilityDto>()
-            .RequirePermission(AssetRegisterModuleConstants.Permissions.Accountability.Return);
+            .RequirePermission(AssetRegisterPermissions.Accountability.Return);
 
     private static async Task<IResult> Handle(
         Guid id, ReturnAccountabilityLinesCommand cmd, IMediator mediator, CancellationToken ct)

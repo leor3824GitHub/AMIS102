@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.Vehicle.Contracts.v1.Vehicles;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.Vehicle.Contracts.Permissions;
 
 namespace AMIS.Modules.Vehicle.Features.v1.Vehicles.DeleteVehicle;
 
@@ -18,6 +19,6 @@ public static class DeleteVehicleEndpoint
         .WithName(nameof(DeleteVehicleCommand))
         .WithSummary("Soft-delete a vehicle")
         .Produces(StatusCodes.Status204NoContent)
-        .RequirePermission(VehicleModuleConstants.Permissions.Vehicles.Delete);
+        .RequirePermission(VehiclePermissions.Vehicles.Delete);
 }
 

@@ -1,8 +1,9 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetManagement.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetManagement.Features.v1.Reclassification.GetReclassificationHistory;
 
@@ -13,7 +14,7 @@ public static class GetReclassificationHistoryEndpoint
             .WithName(nameof(GetReclassificationHistoryQuery))
             .WithSummary("Get paginated history of property reclassification runs")
             .Produces<PagedReclassificationHistoryResponse>(StatusCodes.Status200OK)
-            .RequirePermission(AssetManagementModuleConstants.Permissions.Reclassification.View);
+            .RequirePermission(AssetManagementPermissions.Reclassification.View);
 
     private static async Task<IResult> GetReclassificationHistory(
         [AsParameters] GetReclassificationHistoryQuery query,

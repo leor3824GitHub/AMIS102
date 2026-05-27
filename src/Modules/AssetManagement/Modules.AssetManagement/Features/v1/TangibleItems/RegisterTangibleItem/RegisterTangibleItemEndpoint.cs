@@ -1,8 +1,9 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetManagement.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetManagement.Features.v1.TangibleItems.RegisterTangibleItem;
 
@@ -14,7 +15,7 @@ public static class RegisterTangibleItemEndpoint
             .WithSummary("Register a new tangible item into inventory")
             .Produces<TangibleItemDto>(StatusCodes.Status201Created)
             .Produces(StatusCodes.Status400BadRequest)
-            .RequirePermission(AssetManagementModuleConstants.Permissions.TangibleItems.Create);
+            .RequirePermission(AssetManagementPermissions.TangibleItems.Create);
 
     private static async Task<IResult> RegisterTangibleItem(
         RegisterTangibleItemCommand command,

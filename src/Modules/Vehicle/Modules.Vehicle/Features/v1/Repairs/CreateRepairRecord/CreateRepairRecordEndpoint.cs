@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.Vehicle.Contracts.v1.Repairs;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.Vehicle.Contracts.Permissions;
 
 namespace AMIS.Modules.Vehicle.Features.v1.Repairs.CreateRepairRecord;
 
@@ -19,6 +20,6 @@ public static class CreateRepairRecordEndpoint
         .WithSummary("Create a repair record for a vehicle")
         .Produces<RepairRecordDto>(StatusCodes.Status201Created)
         .Produces(StatusCodes.Status400BadRequest)
-        .RequirePermission(VehicleModuleConstants.Permissions.Repairs.Create);
+        .RequirePermission(VehiclePermissions.Repairs.Create);
 }
 

@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.AssetRegister.Contracts.v1.Assets;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetRegister.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetRegister.Features.v1.Assets.RegisterAsset;
 
@@ -15,7 +16,7 @@ public static class RegisterAssetEndpoint
             .WithSummary("Register a single physical asset (one row per unit; operator-assigned PropertyNo).")
             .Produces<AssetRegistryDto>(StatusCodes.Status201Created)
             .Produces(StatusCodes.Status400BadRequest)
-            .RequirePermission(AssetRegisterModuleConstants.Permissions.Assets.Register);
+            .RequirePermission(AssetRegisterPermissions.Assets.Register);
 
     private static async Task<IResult> Handle(RegisterAssetCommand cmd, IMediator mediator, CancellationToken ct)
     {

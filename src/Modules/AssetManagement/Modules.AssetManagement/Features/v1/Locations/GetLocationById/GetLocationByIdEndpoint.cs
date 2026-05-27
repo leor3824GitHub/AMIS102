@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.AssetManagement.Features.v1.Locations;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetManagement.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetManagement.Features.v1.Locations.GetLocationById;
 
@@ -16,6 +17,6 @@ public static class GetLocationByIdEndpoint
         .WithSummary("Get a location by ID")
         .Produces<LocationDto>(StatusCodes.Status200OK)
         .Produces(StatusCodes.Status404NotFound)
-        .RequirePermission(AssetManagementModuleConstants.Permissions.Locations.View);
+        .RequirePermission(AssetManagementPermissions.Locations.View);
 }
 

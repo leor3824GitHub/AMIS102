@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.AssetInspectionAcceptanceReports;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.ProcurementAcquisition.Contracts.Permissions;
 
 namespace AMIS.Modules.ProcurementAcquisition.Features.v1.AssetIARs.GetAssetIAR;
 
@@ -15,7 +16,7 @@ public static class GetAssetIAREndpoint
             .WithSummary("Get asset IAR by ID")
             .Produces<AssetIARDto>()
             .Produces(StatusCodes.Status404NotFound)
-            .RequirePermission(ProcurementAcquisitionModuleConstants.Permissions.AssetIARs.View);
+            .RequirePermission(ProcurementPermissions.AssetIARs.View);
 
     private static async Task<IResult> Handle(Guid id, IMediator mediator, CancellationToken cancellationToken)
     {

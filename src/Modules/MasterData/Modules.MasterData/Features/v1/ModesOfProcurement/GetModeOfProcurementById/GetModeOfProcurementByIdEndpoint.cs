@@ -1,8 +1,9 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.MasterData.Contracts.Permissions;
 
 namespace AMIS.Modules.MasterData.Features.v1.ModesOfProcurement.GetModeOfProcurementById;
 
@@ -14,7 +15,7 @@ public static class GetModeOfProcurementByIdEndpoint
             .WithSummary("Get mode of procurement by ID")
             .Produces<ModeOfProcurementDetailsDto>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound)
-            .RequirePermission(MasterDataModuleConstants.Permissions.ModesOfProcurement.View);
+            .RequirePermission(MasterDataPermissions.ModesOfProcurement.View);
 
     private static async Task<IResult> GetById(
         Guid id,

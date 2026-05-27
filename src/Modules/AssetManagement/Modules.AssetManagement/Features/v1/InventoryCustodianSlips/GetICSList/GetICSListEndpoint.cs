@@ -1,8 +1,9 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetManagement.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetManagement.Features.v1.InventoryCustodianSlips.GetICSList;
 
@@ -13,6 +14,6 @@ public static class GetICSListEndpoint
             TypedResults.Ok(await mediator.Send(query, ct)))
         .WithName(nameof(GetICSListQuery))
         .WithSummary("Get a paginated list of Inventory Custodian Slips")
-        .RequirePermission(AssetManagementModuleConstants.Permissions.InventoryCustodianSlips.View);
+        .RequirePermission(AssetManagementPermissions.InventoryCustodianSlips.View);
 }
 

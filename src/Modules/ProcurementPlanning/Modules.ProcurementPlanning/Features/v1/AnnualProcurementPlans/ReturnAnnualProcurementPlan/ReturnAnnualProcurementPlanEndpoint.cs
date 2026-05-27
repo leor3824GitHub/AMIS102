@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.ProcurementPlanning.Contracts.Permissions;
 
 namespace AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.ReturnAnnualProcurementPlan;
 
@@ -14,7 +15,7 @@ public static class ReturnAnnualProcurementPlanEndpoint
             .WithName(nameof(ReturnAppCommand))
             .WithSummary("Return a submitted APP for revision")
             .Produces<AnnualProcurementPlanDto>()
-            .RequirePermission(ProcurementPlanningModuleConstants.Permissions.AnnualProcurementPlans.Return);
+            .RequirePermission(ProcurementPlanningPermissions.AnnualProcurementPlans.Return);
 
     private static async Task<IResult> Handle(
         Guid id, ReturnAppCommand command, IMediator mediator, CancellationToken ct)

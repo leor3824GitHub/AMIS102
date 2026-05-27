@@ -1,9 +1,10 @@
-using AMIS.Modules.Expendable.Contracts.v1.Requests;
+﻿using AMIS.Modules.Expendable.Contracts.v1.Requests;
 using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.Expendable.Contracts.Permissions;
 
 namespace AMIS.Modules.Expendable.Features.v1.Requests.CreateSupplyRequest;
 
@@ -15,7 +16,7 @@ public static class CreateSupplyRequestEndpoint
             .WithSummary("Create a new supply request")
             .Produces<SupplyRequestDto>(StatusCodes.Status201Created)
             .Produces(StatusCodes.Status400BadRequest)
-            .RequirePermission(ExpendableModuleConstants.Permissions.SupplyRequests.Create);
+            .RequirePermission(ExpendablePermissions.SupplyRequests.Create);
 
     private static async Task<IResult> CreateRequest(
         CreateSupplyRequestCommand command,

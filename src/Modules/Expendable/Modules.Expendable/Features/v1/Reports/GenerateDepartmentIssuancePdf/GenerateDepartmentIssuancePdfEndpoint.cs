@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.Expendable.Contracts.v1.Reports;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.Expendable.Contracts.Permissions;
 
 namespace AMIS.Modules.Expendable.Features.v1.Reports.GenerateDepartmentIssuancePdf;
 
@@ -15,7 +16,7 @@ public static class GenerateDepartmentIssuancePdfEndpoint
             .WithSummary("Generate a PDF for the Department Issuance report")
             .Produces(StatusCodes.Status200OK, contentType: "application/pdf")
             .Produces(StatusCodes.Status400BadRequest)
-            .RequirePermission(ExpendableModuleConstants.Permissions.Inventory.ViewReports);
+            .RequirePermission(ExpendablePermissions.Inventory.ViewReports);
 
     private static async Task<IResult> Generate(
         GenerateDepartmentIssuancePdfCommand command,

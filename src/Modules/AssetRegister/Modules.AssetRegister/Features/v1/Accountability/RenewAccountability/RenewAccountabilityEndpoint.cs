@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.AssetRegister.Contracts.v1.Accountability;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetRegister.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetRegister.Features.v1.Accountability.RenewAccountability;
 
@@ -12,9 +13,9 @@ public static class RenewAccountabilityEndpoint
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapPost("/{id:guid}/renew", Handle)
             .WithModuleName<RenewAccountabilityCommand>()
-            .WithSummary("Renew an Active accountability — produces a successor row")
+            .WithSummary("Renew an Active accountability â€” produces a successor row")
             .Produces<PropertyAccountabilityDto>(StatusCodes.Status201Created)
-            .RequirePermission(AssetRegisterModuleConstants.Permissions.Accountability.Issue);
+            .RequirePermission(AssetRegisterPermissions.Accountability.Issue);
 
     private static async Task<IResult> Handle(
         Guid id, RenewAccountabilityCommand cmd, IMediator mediator, CancellationToken ct)

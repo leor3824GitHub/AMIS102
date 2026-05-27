@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.AssetRegister.Contracts.v1.Receiving;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetRegister.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetRegister.Features.v1.Receiving.CreateReceivingReport;
 
@@ -14,7 +15,7 @@ public static class CreateReceivingReportEndpoint
             .WithModuleName<CreateReceivingReportCommand>()
             .WithSummary("Create a Receiving Report (PPERR or SMRR) and register assets.")
             .Produces<ReceivingReportDto>(StatusCodes.Status201Created)
-            .RequirePermission(AssetRegisterModuleConstants.Permissions.Receiving.Create);
+            .RequirePermission(AssetRegisterPermissions.Receiving.Create);
 
     private static async Task<IResult> Handle(
         CreateReceivingReportCommand cmd, IMediator mediator, CancellationToken ct)

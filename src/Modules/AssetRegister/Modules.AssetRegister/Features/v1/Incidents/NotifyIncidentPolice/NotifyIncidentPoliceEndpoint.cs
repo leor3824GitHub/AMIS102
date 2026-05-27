@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.AssetRegister.Contracts.v1.Incidents;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetRegister.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetRegister.Features.v1.Incidents.NotifyIncidentPolice;
 
@@ -14,7 +15,7 @@ public static class NotifyIncidentPoliceEndpoint
             .WithModuleName<NotifyIncidentPoliceCommand>()
             .WithSummary("Record police notification on an incident report")
             .Produces<PropertyIncidentReportDto>()
-            .RequirePermission(AssetRegisterModuleConstants.Permissions.Incident.Resolve);
+            .RequirePermission(AssetRegisterPermissions.Incident.Resolve);
 
     private static async Task<IResult> Handle(
         Guid id, NotifyIncidentPoliceCommand cmd, IMediator mediator, CancellationToken ct)

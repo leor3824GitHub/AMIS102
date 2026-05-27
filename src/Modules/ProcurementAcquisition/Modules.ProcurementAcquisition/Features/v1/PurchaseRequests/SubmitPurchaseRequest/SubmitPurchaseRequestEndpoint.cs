@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.ProcurementAcquisition.Contracts.Permissions;
 
 namespace AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.SubmitPurchaseRequest;
 
@@ -15,7 +16,7 @@ public static class SubmitPurchaseRequestEndpoint
             .WithSummary("Submit a draft purchase request for approval")
             .Produces<PurchaseRequestDto>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound)
-            .RequirePermission(ProcurementAcquisitionModuleConstants.Permissions.PurchaseRequests.Submit);
+            .RequirePermission(ProcurementPermissions.PurchaseRequests.Submit);
 
     private static async Task<IResult> SubmitPurchaseRequest(
         Guid id,

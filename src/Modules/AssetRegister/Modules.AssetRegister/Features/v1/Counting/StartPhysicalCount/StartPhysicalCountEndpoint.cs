@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.AssetRegister.Contracts.v1.Counting;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetRegister.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetRegister.Features.v1.Counting.StartPhysicalCount;
 
@@ -14,7 +15,7 @@ public static class StartPhysicalCountEndpoint
             .WithModuleName<StartPhysicalCountCommand>()
             .WithSummary("Start a physical count session")
             .Produces<PhysicalCountSessionDto>(StatusCodes.Status201Created)
-            .RequirePermission(AssetRegisterModuleConstants.Permissions.Count.Create);
+            .RequirePermission(AssetRegisterPermissions.Count.Create);
 
     private static async Task<IResult> Handle(
         StartPhysicalCountCommand cmd, IMediator mediator, CancellationToken ct)

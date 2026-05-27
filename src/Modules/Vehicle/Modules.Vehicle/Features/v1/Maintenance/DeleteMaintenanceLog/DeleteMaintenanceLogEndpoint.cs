@@ -1,8 +1,9 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.Vehicle.Contracts.Permissions;
 
 namespace AMIS.Modules.Vehicle.Features.v1.Maintenance.DeleteMaintenanceLog;
 
@@ -20,6 +21,6 @@ public static class DeleteMaintenanceLogEndpoint
         })
         .WithName(nameof(DeleteMaintenanceLogCommand))
         .WithSummary("Delete a maintenance log")
-        .RequirePermission(VehicleModuleConstants.Permissions.Maintenance.Delete);
+        .RequirePermission(VehiclePermissions.Maintenance.Delete);
 }
 

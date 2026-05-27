@@ -1,8 +1,9 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.MasterData.Contracts.Permissions;
 
 namespace AMIS.Modules.MasterData.Features.v1.Suppliers.GetSuppliers;
 
@@ -13,7 +14,7 @@ public static class GetSuppliersEndpoint
             .WithName(nameof(GetSuppliersQuery))
             .WithSummary("Get paginated list of suppliers")
             .Produces<PagedResponseOfSupplierDto>(StatusCodes.Status200OK)
-            .RequirePermission(MasterDataModuleConstants.Permissions.Suppliers.View);
+            .RequirePermission(MasterDataPermissions.Suppliers.View);
 
     private static async Task<IResult> GetSuppliers(
         string? keyword = null,

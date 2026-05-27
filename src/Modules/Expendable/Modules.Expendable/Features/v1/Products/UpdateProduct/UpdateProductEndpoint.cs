@@ -1,9 +1,10 @@
-using AMIS.Modules.Expendable.Contracts.v1.Products;
+﻿using AMIS.Modules.Expendable.Contracts.v1.Products;
 using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.Expendable.Contracts.Permissions;
 
 namespace AMIS.Modules.Expendable.Features.v1.Products.UpdateProduct;
 
@@ -16,7 +17,7 @@ public static class UpdateProductEndpoint
             .Produces<ProductDto>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status404NotFound)
-            .RequirePermission(ExpendableModuleConstants.Permissions.Products.Update);
+            .RequirePermission(ExpendablePermissions.Products.Update);
 
     private static async Task<IResult> UpdateProduct(
         Guid id,

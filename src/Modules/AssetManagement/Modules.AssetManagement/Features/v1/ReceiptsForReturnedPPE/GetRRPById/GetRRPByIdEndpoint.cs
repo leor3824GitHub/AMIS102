@@ -1,8 +1,9 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetManagement.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetManagement.Features.v1.ReceiptsForReturnedPPE.GetRRPById;
 
@@ -13,6 +14,6 @@ public static class GetRRPByIdEndpoint
             TypedResults.Ok(await mediator.Send(new GetRRPByIdQuery(id), ct)))
         .WithName(nameof(GetRRPByIdQuery))
         .WithSummary("Get a Receipt for Returned PPE by ID")
-        .RequirePermission(AssetManagementModuleConstants.Permissions.ReceiptsForReturnedPPE.View);
+        .RequirePermission(AssetManagementPermissions.ReceiptsForReturnedPPE.View);
 }
 

@@ -1,8 +1,9 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.MasterData.Contracts.Permissions;
 
 namespace AMIS.Modules.MasterData.Features.v1.Categories.GetCategoryById;
 
@@ -14,7 +15,7 @@ public static class GetCategoryByIdEndpoint
             .WithSummary("Get category by ID")
             .Produces<CategoryDetailsDto>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound)
-            .RequirePermission(MasterDataModuleConstants.Permissions.Categories.View);
+            .RequirePermission(MasterDataPermissions.Categories.View);
 
     private static async Task<IResult> GetCategoryById(
         Guid id,

@@ -1,10 +1,11 @@
-using AMIS.Modules.Expendable.Contracts.v1.Products;
+﻿using AMIS.Modules.Expendable.Contracts.v1.Products;
 using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Framework.Shared.Persistence;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.Expendable.Contracts.Permissions;
 
 namespace AMIS.Modules.Expendable.Features.v1.Products.SearchProducts;
 
@@ -12,13 +13,13 @@ public static class SearchProductsEndpoint
 {
     public static void Map(this IEndpointRouteBuilder endpoints)
     {
-        // Primary GET route—maps to /api/v1/expendable/products
+        // Primary GET routeâ€”maps to /api/v1/expendable/products
         endpoints.MapGet("/", SearchFromQueryString)
             .WithName(nameof(SearchProductsQuery))
             .WithSummary("Search products")
             .Produces<PagedResponse<ProductDto>>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status400BadRequest)
-            .RequirePermission(ExpendableModuleConstants.Permissions.Products.View);
+            .RequirePermission(ExpendablePermissions.Products.View);
 
         // Backward-compatible POST route for /search
         endpoints.MapPost("/search", SearchFromBody)
@@ -26,7 +27,7 @@ public static class SearchProductsEndpoint
             .WithSummary("Search products (legacy POST route)")
             .Produces<PagedResponse<ProductDto>>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status400BadRequest)
-            .RequirePermission(ExpendableModuleConstants.Permissions.Products.View);
+            .RequirePermission(ExpendablePermissions.Products.View);
 
         // no-op
     }

@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.ProcurementPlanning.Contracts.Permissions;
 
 namespace AMIS.Modules.ProcurementPlanning.Features.v1.Ppmps.PromoteToFinalPpmp;
 
@@ -14,7 +15,7 @@ public static class PromoteToFinalPpmpEndpoint
             .WithName(nameof(PromoteToFinalPpmpCommand))
             .WithSummary("Promote an Approved Indicative PPMP to a new Final draft")
             .Produces<PpmpDto>(StatusCodes.Status201Created)
-            .RequirePermission(ProcurementPlanningModuleConstants.Permissions.Ppmps.PromoteToFinal);
+            .RequirePermission(ProcurementPlanningPermissions.Ppmps.PromoteToFinal);
 
     private static async Task<IResult> Handle(
         Guid id, IMediator mediator, CancellationToken ct)

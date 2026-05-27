@@ -1,4 +1,4 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Framework.Shared.Persistence;
 using AMIS.Modules.AssetRegister.Contracts.v1;
 using AMIS.Modules.AssetRegister.Contracts.v1.Incidents;
@@ -6,6 +6,7 @@ using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetRegister.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetRegister.Features.v1.Incidents.SearchIncidentReports;
 
@@ -16,7 +17,7 @@ public static class SearchIncidentReportsEndpoint
             .WithModuleName<SearchIncidentReportsQuery>()
             .WithSummary("Search incident reports")
             .Produces<PagedResponse<PropertyIncidentReportSummaryDto>>()
-            .RequirePermission(AssetRegisterModuleConstants.Permissions.Incident.View);
+            .RequirePermission(AssetRegisterPermissions.Incident.View);
 
     private static async Task<IResult> Handle(
         IMediator mediator,

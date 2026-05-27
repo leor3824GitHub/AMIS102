@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetManagement.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetManagement.Features.v1.PropertyAcknowledgementReceipts.CreatePAR;
 
@@ -17,6 +18,6 @@ public static class CreatePAREndpoint
         })
         .WithName(nameof(CreatePARCommand))
         .WithSummary("Create a Property Acknowledgement Receipt (PAR)")
-        .RequirePermission(AssetManagementModuleConstants.Permissions.PropertyAcknowledgementReceipts.Create);
+        .RequirePermission(AssetManagementPermissions.PropertyAcknowledgementReceipts.Create);
 }
 

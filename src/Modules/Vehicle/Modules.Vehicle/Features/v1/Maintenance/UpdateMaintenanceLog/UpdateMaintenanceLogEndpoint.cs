@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.Vehicle.Contracts.v1.Maintenance;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.Vehicle.Contracts.Permissions;
 
 namespace AMIS.Modules.Vehicle.Features.v1.Maintenance.UpdateMaintenanceLog;
 
@@ -31,6 +32,6 @@ public static class UpdateMaintenanceLogEndpoint
         })
         .WithName(nameof(UpdateMaintenanceLogCommand))
         .WithSummary("Update an existing maintenance log")
-        .RequirePermission(VehicleModuleConstants.Permissions.Maintenance.Update);
+        .RequirePermission(VehiclePermissions.Maintenance.Update);
 }
 

@@ -1,4 +1,5 @@
 @page "/procurement/purchase-orders"
+@using AMIS.Modules.ProcurementAcquisition.Contracts.Permissions
 @using AMIS.Modules.ProcurementAcquisition.Contracts.v1.Canvass
 @using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders
 @using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests
@@ -11,6 +12,7 @@
 @inject IMaster_dataClient MasterDataClient
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
+@inject IUserProfileState UserProfileState
 @inject IJSRuntime JS
 
 <AMISPageHeader Title="Purchase Orders" Description="Create and manage purchase orders (PO)" />
@@ -26,11 +28,14 @@
                                   Style="max-width:300px" DebounceInterval="400"
                                   OnDebounceIntervalElapsed="@(async () => await LoadAsync())" />
                     <MudSpacer />
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.Add"
-                               OnClick="OpenCreateDialog"
-                               Title="Create a new purchase order">
-                        NEW PURCHASE ORDER
-                    </MudButton>
+                    @if (_canCreate)
+                    {
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.Add"
+                                   OnClick="OpenCreateDialog"
+                                   Title="Create a new purchase order">
+                            NEW PURCHASE ORDER
+                        </MudButton>
+                    }
                 </MudStack>
 
                 <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap" Class="mb-3">
@@ -58,9 +63,13 @@
                         {
                             <text>No purchase orders match your filters. Try adjusting your search or status filter.</text>
                         }
-                        else
+                        else if (_canCreate)
                         {
                             <text>No purchase orders yet. <MudLink Href="#" OnClick="OpenCreateDialog" Style="cursor:pointer;">Create your first PO</MudLink></text>
+                        }
+                        else
+                        {
+                            <text>No purchase orders yet.</text>
                         }
                     </MudAlert>
                 }
@@ -92,21 +101,30 @@
                                         <MudStack Row="true" Spacing="0">
                                             @if (item.Status == PurchaseOrderStatus.Draft)
                                             {
-                                                <MudTooltip Text="Edit draft">
-                                                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary"
-                                                                   OnClick="@(async () => await OpenEditDialog(item.Id))" />
-                                                </MudTooltip>
-                                                <MudTooltip Text="Issue this PO">
-                                                    <MudIconButton Icon="@Icons.Material.Filled.TaskAlt" Size="Size.Small" Color="Color.Success"
-                                                                   OnClick="@(async () => await IssueAsync(item.Id))" />
-                                                </MudTooltip>
+                                                @if (_canUpdate)
+                                                {
+                                                    <MudTooltip Text="Edit draft">
+                                                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary"
+                                                                       OnClick="@(async () => await OpenEditDialog(item.Id))" />
+                                                    </MudTooltip>
+                                                }
+                                                @if (_canIssue)
+                                                {
+                                                    <MudTooltip Text="Issue this PO">
+                                                        <MudIconButton Icon="@Icons.Material.Filled.TaskAlt" Size="Size.Small" Color="Color.Success"
+                                                                       OnClick="@(async () => await IssueAsync(item.Id))" />
+                                                    </MudTooltip>
+                                                }
                                             }
                                             @if (item.Status == PurchaseOrderStatus.Draft || item.Status == PurchaseOrderStatus.Issued)
                                             {
-                                                <MudTooltip Text="Cancel this PO">
-                                                    <MudIconButton Icon="@Icons.Material.Filled.Cancel" Size="Size.Small" Color="Color.Error"
-                                                                   OnClick="@(async () => await CancelPoAsync(item.Id))" />
-                                                </MudTooltip>
+                                                @if (_canCancel)
+                                                {
+                                                    <MudTooltip Text="Cancel this PO">
+                                                        <MudIconButton Icon="@Icons.Material.Filled.Cancel" Size="Size.Small" Color="Color.Error"
+                                                                       OnClick="@(async () => await CancelPoAsync(item.Id))" />
+                                                    </MudTooltip>
+                                                }
                                             }
                                             <MudTooltip Text="View full details">
                                                 <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" Color="Color.Default"
@@ -245,6 +263,11 @@
 </MudGrid>
 
 @code {
+    private bool _canCreate => UserProfileState.Permissions.Contains(ProcurementPermissions.PurchaseOrders.Create);
+    private bool _canUpdate => UserProfileState.Permissions.Contains(ProcurementPermissions.PurchaseOrders.Update);
+    private bool _canIssue => UserProfileState.Permissions.Contains(ProcurementPermissions.PurchaseOrders.Issue);
+    private bool _canCancel => UserProfileState.Permissions.Contains(ProcurementPermissions.PurchaseOrders.Cancel);
+
     [SupplyParameterFromQuery(Name = "canvassId")]
     public Guid? CanvassId { get; set; }
 

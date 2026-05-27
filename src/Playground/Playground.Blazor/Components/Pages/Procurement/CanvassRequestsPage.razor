@@ -1,5 +1,6 @@
 @page "/procurement/canvass-requests"
 @using AMIS.Playground.Blazor.Components.Pages.Procurement
+@using AMIS.Modules.ProcurementAcquisition.Contracts.Permissions
 @using AMIS.Modules.ProcurementAcquisition.Contracts.v1.Canvass
 @using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests
 @using AMIS.Framework.Shared.Persistence
@@ -10,6 +11,7 @@
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 @inject NavigationManager Nav
+@inject IUserProfileState UserProfileState
 @inject IJSRuntime JS
 
 <AMISPageHeader Title="Canvass Requests (RIV)" Description="Request for Issuance of Voucher • manage supplier quotations and award" />
@@ -17,32 +19,35 @@
 <MudGrid Spacing="3">
     <!-- Create Form -->
     <MudItem xs="12" md="4">
-        <MudCard Elevation="1">
-            <MudCardContent>
-                <MudText Typo="Typo.h6" Class="mb-3">New Canvass Request</MudText>
-                <MudStack Spacing="2">
-                    <MudAutocomplete T="PurchaseRequestSummaryDto"
-                                     Value="_selectedPurchaseRequest"
-                                     ValueChanged="OnPurchaseRequestChanged"
-                                     SearchFunc="SearchPurchaseRequests"
-                                     ToStringFunc="FormatPurchaseRequest"
-                                     Label="Purchase Request"
-                                     Variant="Variant.Outlined"
-                                     Placeholder="Search PR number or purpose..."
-                                     Required="true"
-                                     Clearable="true"
-                                     CoerceValue="true"
-                                     ResetValueOnEmptyText="true" />
-                    <MudDatePicker @bind-Date="_returnDeadlineNullable" Label="Return Deadline"
-                                   Variant="Variant.Outlined" Required="true" DateFormat="MM/dd/yyyy" />
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
-                               OnClick="CreateAsync" Disabled="_busy">
-                        @if (_busy) { <MudProgressCircular Size="Size.Small" Class="mr-1" Indeterminate="true" /> }
-                        Create Canvass Request
-                    </MudButton>
-                </MudStack>
-            </MudCardContent>
-        </MudCard>
+        @if (_canCreate)
+        {
+            <MudCard Elevation="1">
+                <MudCardContent>
+                    <MudText Typo="Typo.h6" Class="mb-3">New Canvass Request</MudText>
+                    <MudStack Spacing="2">
+                        <MudAutocomplete T="PurchaseRequestSummaryDto"
+                                         Value="_selectedPurchaseRequest"
+                                         ValueChanged="OnPurchaseRequestChanged"
+                                         SearchFunc="SearchPurchaseRequests"
+                                         ToStringFunc="FormatPurchaseRequest"
+                                         Label="Purchase Request"
+                                         Variant="Variant.Outlined"
+                                         Placeholder="Search PR number or purpose..."
+                                         Required="true"
+                                         Clearable="true"
+                                         CoerceValue="true"
+                                         ResetValueOnEmptyText="true" />
+                        <MudDatePicker @bind-Date="_returnDeadlineNullable" Label="Return Deadline"
+                                       Variant="Variant.Outlined" Required="true" DateFormat="MM/dd/yyyy" />
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                                   OnClick="CreateAsync" Disabled="_busy">
+                            @if (_busy) { <MudProgressCircular Size="Size.Small" Class="mr-1" Indeterminate="true" /> }
+                            Create Canvass Request
+                        </MudButton>
+                    </MudStack>
+                </MudCardContent>
+            </MudCard>
+        }
 
         @if (_selectedPurchaseRequestDetail is not null)
         {
@@ -176,7 +181,7 @@
                                                                Color="Color.Primary"
                                                                OnClick="@(async () => await ToggleCanvass(item.Id))" />
                                             </MudTooltip>
-                                            @if (item.Status == CanvassRequestStatus.Open)
+                                            @if (item.Status == CanvassRequestStatus.Open && _canUpdate)
                                             {
                                                 <MudTooltip Text="Add Quotation">
                                                     <MudIconButton Icon="@Icons.Material.Filled.PostAdd" Size="Size.Small"
@@ -184,7 +189,7 @@
                                                                    OnClick="@(async () => await OpenQuotationDialogFor(item.Id))" />
                                                 </MudTooltip>
                                             }
-                                            @if (item.Status == CanvassRequestStatus.Open && item.QuotationCount > 0)
+                                            @if (item.Status == CanvassRequestStatus.Open && item.QuotationCount > 0 && _canAward)
                                             {
                                                 <MudTooltip Text="Award to Supplier">
                                                     <MudIconButton Icon="@Icons.Material.Filled.EmojiEvents" Size="Size.Small"
@@ -192,7 +197,7 @@
                                                                    OnClick="@(async () => await AwardAsync(item.Id))" />
                                                 </MudTooltip>
                                             }
-                                            @if (item.Status == CanvassRequestStatus.Awarded)
+                                            @if (item.Status == CanvassRequestStatus.Awarded && _canCreatePo)
                                             {
                                                 <MudTooltip Text="Create Purchase Order from awarded quotation">
                                                     <MudIconButton Icon="@Icons.Material.Filled.ShoppingCart" Size="Size.Small"
@@ -232,7 +237,7 @@
                                             <MudPaper Outlined="true" Class="pa-3 ma-1">
                                                 <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
                                                     <MudText Typo="Typo.subtitle2" Class="flex-grow-1">Quotations for @_selectedDetail.RivNumber</MudText>
-                                                    @if (_selectedDetail.Status == CanvassRequestStatus.Open)
+                                                    @if (_selectedDetail.Status == CanvassRequestStatus.Open && _canUpdate)
                                                     {
                                                         <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary"
                                                                    StartIcon="@Icons.Material.Filled.PostAdd"
@@ -280,14 +285,17 @@
                                                                         {
                                                                             <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
                                                                                 <MudChip T="string" Size="Size.Small" Color="Color.Success" Icon="@Icons.Material.Filled.Star">Awarded</MudChip>
-                                                                                <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary"
-                                                                                           StartIcon="@Icons.Material.Filled.ShoppingCart"
-                                                                                           OnClick="@(() => GoToPurchaseOrder(_selectedDetail.Id))">
-                                                                                    Create PO
-                                                                                </MudButton>
+                                                                                @if (_canCreatePo)
+                                                                                {
+                                                                                    <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary"
+                                                                                               StartIcon="@Icons.Material.Filled.ShoppingCart"
+                                                                                               OnClick="@(() => GoToPurchaseOrder(_selectedDetail.Id))">
+                                                                                        Create PO
+                                                                                    </MudButton>
+                                                                                }
                                                                             </MudStack>
                                                                         }
-                                                                        else if (_selectedDetail.Status == CanvassRequestStatus.Open)
+                                                                        else if (_selectedDetail.Status == CanvassRequestStatus.Open && _canAward)
                                                                         {
                                                                             <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Success"
                                                                                        OnClick="@(async () => await AwardToQuotation(_selectedDetail.Id, q.Id))">
@@ -322,6 +330,11 @@
 </MudGrid>
 
 @code {
+    private bool _canCreate => UserProfileState.Permissions.Contains(ProcurementPermissions.CanvassRequests.Create);
+    private bool _canUpdate => UserProfileState.Permissions.Contains(ProcurementPermissions.CanvassRequests.Update);
+    private bool _canAward => UserProfileState.Permissions.Contains(ProcurementPermissions.CanvassRequests.Award);
+    private bool _canCreatePo => UserProfileState.Permissions.Contains(ProcurementPermissions.PurchaseOrders.Create);
+
     private List<CanvassRequestSummaryDto> _items = [];
     private CanvassRequestDto? _selected, _selectedDetail;
     private PurchaseRequestSummaryDto? _selectedPurchaseRequest;

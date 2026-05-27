@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.Vehicle.Contracts.v1.Repairs;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.Vehicle.Contracts.Permissions;
 
 namespace AMIS.Modules.Vehicle.Features.v1.Repairs.DeleteRepairRecord;
 
@@ -18,6 +19,6 @@ public static class DeleteRepairRecordEndpoint
         .WithName(nameof(DeleteRepairRecordCommand))
         .WithSummary("Soft-delete a repair record")
         .Produces(StatusCodes.Status204NoContent)
-        .RequirePermission(VehicleModuleConstants.Permissions.Repairs.Delete);
+        .RequirePermission(VehiclePermissions.Repairs.Delete);
 }
 

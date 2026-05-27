@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.AssetRegister.Contracts.v1.Catalog;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetRegister.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetRegister.Features.v1.Catalog.CreatePropertyItemCatalog;
 
@@ -15,7 +16,7 @@ public static class CreatePropertyItemCatalogEndpoint
             .WithSummary("Create a property item catalog entry")
             .Produces<PropertyItemCatalogDto>(StatusCodes.Status201Created)
             .Produces(StatusCodes.Status400BadRequest)
-            .RequirePermission(AssetRegisterModuleConstants.Permissions.Catalog.Create);
+            .RequirePermission(AssetRegisterPermissions.Catalog.Create);
 
     private static async Task<IResult> Handle(
         CreatePropertyItemCatalogCommand cmd, IMediator mediator, CancellationToken ct)

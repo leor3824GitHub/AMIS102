@@ -1,8 +1,9 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetManagement.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetManagement.Features.v1.Reports.SemiExpendablePropertyCard;
 
@@ -11,10 +12,10 @@ public static class GetSPCEndpoint
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapGet("/spc/{itemId:guid}", GetSPC)
             .WithName(nameof(GetSPCQuery))
-            .WithSummary("Semi-expendable Property Card (SPC) — stock movement history for a catalog item type")
+            .WithSummary("Semi-expendable Property Card (SPC) â€” stock movement history for a catalog item type")
             .Produces<SPCDto>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound)
-            .RequirePermission(AssetManagementModuleConstants.Permissions.Reports.View);
+            .RequirePermission(AssetManagementPermissions.Reports.View);
 
     private static async Task<IResult> GetSPC(
         Guid itemId,

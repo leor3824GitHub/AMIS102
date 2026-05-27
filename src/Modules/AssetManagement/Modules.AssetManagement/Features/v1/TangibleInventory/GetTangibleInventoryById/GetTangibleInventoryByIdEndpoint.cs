@@ -1,8 +1,9 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetManagement.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetManagement.Features.v1.TangibleInventory.GetTangibleInventoryById;
 
@@ -16,6 +17,6 @@ public static class GetTangibleInventoryByIdEndpoint
         })
         .WithName(nameof(GetTangibleInventoryByIdQuery))
         .WithSummary("Get a Tangible Inventory report with all line items by ID")
-        .RequirePermission(AssetManagementModuleConstants.Permissions.TangibleInventory.View);
+        .RequirePermission(AssetManagementPermissions.TangibleInventory.View);
 }
 

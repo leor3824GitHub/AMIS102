@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.AssetInspectionAcceptanceReports;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.ProcurementAcquisition.Contracts.Permissions;
 
 namespace AMIS.Modules.ProcurementAcquisition.Features.v1.AssetIARs.RecordInspection;
 
@@ -16,7 +17,7 @@ public static class RecordIARInspectionEndpoint
             .Produces<AssetIARDto>()
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound)
-            .RequirePermission(ProcurementAcquisitionModuleConstants.Permissions.AssetIARs.Inspect);
+            .RequirePermission(ProcurementPermissions.AssetIARs.Inspect);
 
     private static async Task<IResult> Handle(Guid id, RecordIARInspectionCommand command, IMediator mediator, CancellationToken cancellationToken)
     {

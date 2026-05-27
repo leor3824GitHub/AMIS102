@@ -1,8 +1,9 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetManagement.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetManagement.Features.v1.PropertyAcknowledgementReceipts.GetPARList;
 
@@ -16,6 +17,6 @@ public static class GetPARListEndpoint
             TypedResults.Ok(await mediator.Send(query, ct)))
         .WithName(nameof(GetPARListQuery))
         .WithSummary("Get a paged list of Property Acknowledgement Receipts")
-        .RequirePermission(AssetManagementModuleConstants.Permissions.PropertyAcknowledgementReceipts.View);
+        .RequirePermission(AssetManagementPermissions.PropertyAcknowledgementReceipts.View);
 }
 

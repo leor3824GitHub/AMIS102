@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.MasterData.Contracts.v1.References;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.MasterData.Contracts.Permissions;
 
 namespace AMIS.Modules.MasterData.Features.v1.UnitOfMeasures.GetUnitOfMeasureById;
 
@@ -15,7 +16,7 @@ public static class GetUnitOfMeasureByIdEndpoint
             .WithSummary("Get unit of measure by id")
             .Produces<UnitOfMeasureReferenceDto>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound)
-            .RequirePermission(MasterDataModuleConstants.Permissions.UnitOfMeasures.View);
+            .RequirePermission(MasterDataPermissions.UnitOfMeasures.View);
 
     private static async Task<IResult> GetUnitOfMeasureById(
         Guid id,

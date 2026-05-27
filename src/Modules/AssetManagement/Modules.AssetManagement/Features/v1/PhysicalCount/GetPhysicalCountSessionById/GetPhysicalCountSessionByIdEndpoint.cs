@@ -1,8 +1,9 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetManagement.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetManagement.Features.v1.PhysicalCount.GetPhysicalCountSessionById;
 
@@ -13,6 +14,6 @@ public static class GetPhysicalCountSessionByIdEndpoint
             TypedResults.Ok(await mediator.Send(new GetPhysicalCountSessionByIdQuery(id), ct)))
         .WithName(nameof(GetPhysicalCountSessionByIdQuery))
         .WithSummary("Get a physical count session with all its checklist entries")
-        .RequirePermission(AssetManagementModuleConstants.Permissions.PhysicalCount.View);
+        .RequirePermission(AssetManagementPermissions.PhysicalCount.View);
 }
 

@@ -1,9 +1,10 @@
-using AMIS.Modules.Expendable.Contracts.v1.Products;
+﻿using AMIS.Modules.Expendable.Contracts.v1.Products;
 using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.Expendable.Contracts.Permissions;
 
 namespace AMIS.Modules.Expendable.Features.v1.Products.ActivateProduct;
 
@@ -16,7 +17,7 @@ public static class ActivateProductEndpoint
             .Produces(StatusCodes.Status204NoContent)
             .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status404NotFound)
-            .RequirePermission(ExpendableModuleConstants.Permissions.Products.Activate);
+            .RequirePermission(ExpendablePermissions.Products.Activate);
 
     private static async Task<IResult> ActivateProduct(
         Guid id,

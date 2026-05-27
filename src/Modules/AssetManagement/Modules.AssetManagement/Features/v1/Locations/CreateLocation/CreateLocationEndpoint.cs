@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.AssetManagement.Features.v1.Locations;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetManagement.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetManagement.Features.v1.Locations.CreateLocation;
 
@@ -19,6 +20,6 @@ public static class CreateLocationEndpoint
         .WithSummary("Create a location for asset placement and accountability")
         .Produces<LocationDto>(StatusCodes.Status201Created)
         .Produces(StatusCodes.Status400BadRequest)
-        .RequirePermission(AssetManagementModuleConstants.Permissions.Locations.Create);
+        .RequirePermission(AssetManagementPermissions.Locations.Create);
 }
 

@@ -1,8 +1,9 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.MasterData.Contracts.Permissions;
 
 namespace AMIS.Modules.MasterData.Features.v1.ModesOfProcurement.GetModesOfProcurement;
 
@@ -13,7 +14,7 @@ public static class GetModesOfProcurementEndpoint
             .WithName(nameof(GetModesOfProcurementQuery))
             .WithSummary("Get paginated list of modes of procurement")
             .Produces<PagedResponseOfModeOfProcurementDto>(StatusCodes.Status200OK)
-            .RequirePermission(MasterDataModuleConstants.Permissions.ModesOfProcurement.View);
+            .RequirePermission(MasterDataPermissions.ModesOfProcurement.View);
 
     private static async Task<IResult> GetList(
         string? keyword = null,

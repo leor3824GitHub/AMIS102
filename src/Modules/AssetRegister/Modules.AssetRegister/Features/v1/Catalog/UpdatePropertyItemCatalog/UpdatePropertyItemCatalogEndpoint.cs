@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.AssetRegister.Contracts.v1.Catalog;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetRegister.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetRegister.Features.v1.Catalog.UpdatePropertyItemCatalog;
 
@@ -15,7 +16,7 @@ public static class UpdatePropertyItemCatalogEndpoint
             .WithSummary("Update a property item catalog entry")
             .Produces<PropertyItemCatalogDto>()
             .Produces(StatusCodes.Status404NotFound)
-            .RequirePermission(AssetRegisterModuleConstants.Permissions.Catalog.Update);
+            .RequirePermission(AssetRegisterPermissions.Catalog.Update);
 
     private static async Task<IResult> Handle(
         Guid id, UpdatePropertyItemCatalogCommand cmd, IMediator mediator, CancellationToken ct)

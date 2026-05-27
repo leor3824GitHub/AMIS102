@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.AssetInspectionAcceptanceReports;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.ProcurementAcquisition.Contracts.Permissions;
 
 namespace AMIS.Modules.ProcurementAcquisition.Features.v1.AssetIARs.UpdateAssetIAR;
 
@@ -15,7 +16,7 @@ public static class UpdateAssetIAREndpoint
             .WithSummary("Update a Draft asset IAR")
             .Produces<AssetIARDto>()
             .Produces(StatusCodes.Status404NotFound)
-            .RequirePermission(ProcurementAcquisitionModuleConstants.Permissions.AssetIARs.Update);
+            .RequirePermission(ProcurementPermissions.AssetIARs.Update);
 
     private static async Task<IResult> Handle(Guid id, UpdateAssetIARCommand command, IMediator mediator, CancellationToken cancellationToken)
     {

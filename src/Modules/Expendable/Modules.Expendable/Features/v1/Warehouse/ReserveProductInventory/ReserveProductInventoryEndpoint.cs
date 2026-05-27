@@ -1,9 +1,10 @@
-using AMIS.Modules.Expendable.Contracts.v1.Warehouse;
+﻿using AMIS.Modules.Expendable.Contracts.v1.Warehouse;
 using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.Expendable.Contracts.Permissions;
 
 namespace AMIS.Modules.Expendable.Features.v1.Warehouse.ReserveProductInventory;
 
@@ -16,7 +17,7 @@ public static class ReserveProductInventoryEndpoint
             .Produces<ReserveProductInventoryResponse>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status404NotFound)
-            .RequirePermission(ExpendableModuleConstants.Permissions.Inventory.Receive);
+            .RequirePermission(ExpendablePermissions.Inventory.Receive);
 
     private static async Task<IResult> ReserveInventory(
         Guid inventoryId,

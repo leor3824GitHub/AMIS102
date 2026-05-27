@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.ProcurementPlanning.Contracts.Permissions;
 
 namespace AMIS.Modules.ProcurementPlanning.Features.v1.Ppmps.ReturnPpmp;
 
@@ -14,7 +15,7 @@ public static class ReturnPpmpEndpoint
             .WithName(nameof(ReturnPpmpCommand))
             .WithSummary("Return a submitted PPMP for revision")
             .Produces<PpmpDto>()
-            .RequirePermission(ProcurementPlanningModuleConstants.Permissions.Ppmps.Return);
+            .RequirePermission(ProcurementPlanningPermissions.Ppmps.Return);
 
     private static async Task<IResult> Handle(
         Guid id, ReturnPpmpCommand command, IMediator mediator, CancellationToken ct)

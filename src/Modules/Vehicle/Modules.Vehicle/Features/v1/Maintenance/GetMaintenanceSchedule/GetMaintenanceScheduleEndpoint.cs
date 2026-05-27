@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.Vehicle.Contracts.v1.Maintenance;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.Vehicle.Contracts.Permissions;
 
 namespace AMIS.Modules.Vehicle.Features.v1.Maintenance.GetMaintenanceSchedule;
 
@@ -21,6 +22,6 @@ public static class GetMaintenanceScheduleEndpoint
         })
         .WithName(nameof(GetMaintenanceScheduleQuery))
         .WithSummary("Get a maintenance schedule by ID")
-        .RequirePermission(VehicleModuleConstants.Permissions.Maintenance.View);
+        .RequirePermission(VehiclePermissions.Maintenance.View);
 }
 

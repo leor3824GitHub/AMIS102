@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.Finance.Contracts.v1.DisbursementVouchers;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.Finance.Contracts.Permissions;
 
 namespace AMIS.Modules.Finance.Features.v1.DisbursementVouchers.GetDisbursementVoucherById;
 
@@ -14,6 +15,6 @@ public static class GetDisbursementVoucherByIdEndpoint
             TypedResults.Ok(await mediator.Send(new GetDisbursementVoucherByIdQuery(id), ct)))
         .WithName(nameof(GetDisbursementVoucherByIdQuery))
         .WithSummary("Get disbursement voucher by ID")
-        .RequirePermission(FinanceModuleConstants.Permissions.DisbursementVouchers.View);
+        .RequirePermission(FinancePermissions.DisbursementVouchers.View);
 }
 

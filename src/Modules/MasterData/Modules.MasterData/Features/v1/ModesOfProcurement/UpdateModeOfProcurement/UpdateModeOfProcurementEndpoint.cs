@@ -1,8 +1,9 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.MasterData.Contracts.Permissions;
 
 namespace AMIS.Modules.MasterData.Features.v1.ModesOfProcurement.UpdateModeOfProcurement;
 
@@ -15,7 +16,7 @@ public static class UpdateModeOfProcurementEndpoint
             .Produces(StatusCodes.Status204NoContent)
             .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status404NotFound)
-            .RequirePermission(MasterDataModuleConstants.Permissions.ModesOfProcurement.Update);
+            .RequirePermission(MasterDataPermissions.ModesOfProcurement.Update);
 
     private static async Task<IResult> Update(
         Guid id,

@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.Finance.Contracts.v1.DisbursementVouchers;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.Finance.Contracts.Permissions;
 
 namespace AMIS.Modules.Finance.Features.v1.DisbursementVouchers.CancelDisbursementVoucher;
 
@@ -17,7 +18,7 @@ public static class CancelDisbursementVoucherEndpoint
         })
         .WithName(nameof(CancelDisbursementVoucherCommand))
         .WithSummary("Cancel a disbursement voucher")
-        .RequirePermission(FinanceModuleConstants.Permissions.DisbursementVouchers.Cancel);
+        .RequirePermission(FinancePermissions.DisbursementVouchers.Cancel);
 
     public sealed record CancelDisbursementVoucherRequest(string Remarks);
 }

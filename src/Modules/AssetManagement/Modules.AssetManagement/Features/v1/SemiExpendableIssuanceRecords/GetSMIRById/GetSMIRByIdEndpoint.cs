@@ -1,8 +1,9 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetManagement.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetManagement.Features.v1.SemiExpendableIssuanceRecords.GetSMIRById;
 
@@ -14,7 +15,7 @@ public static class GetSMIRByIdEndpoint
             .WithSummary("Get a Semi-expendable Materials Issuance Record by ID")
             .Produces<SMIRDetailsDto>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound)
-            .RequirePermission(AssetManagementModuleConstants.Permissions.SemiExpendableIssuanceRecords.View);
+            .RequirePermission(AssetManagementPermissions.SemiExpendableIssuanceRecords.View);
 
     private static async Task<IResult> GetSMIRById(
         Guid id,

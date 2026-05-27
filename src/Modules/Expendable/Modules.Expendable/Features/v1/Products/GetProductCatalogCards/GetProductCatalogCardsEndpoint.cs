@@ -1,4 +1,4 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Framework.Shared.Persistence;
 using AMIS.Modules.Expendable.Contracts.v1.Products;
 using Mediator;
@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.Expendable.Contracts.Permissions;
 
 namespace AMIS.Modules.Expendable.Features.v1.Products.GetProductCatalogCards;
 
@@ -17,7 +18,7 @@ public static class GetProductCatalogCardsEndpoint
             .WithSummary("Get employee-facing product cards for catalog browsing")
             .Produces<PagedResponse<ProductCatalogCardDto>>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status400BadRequest)
-            .RequirePermission(ExpendableModuleConstants.Permissions.Products.View);
+            .RequirePermission(ExpendablePermissions.Products.View);
 
     private static async Task<IResult> GetProductCatalogCards(
         [AsParameters] GetProductCatalogCardsQuery query,

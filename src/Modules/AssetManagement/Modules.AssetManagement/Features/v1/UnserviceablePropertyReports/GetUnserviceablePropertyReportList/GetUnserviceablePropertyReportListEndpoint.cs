@@ -1,8 +1,9 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetManagement.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetManagement.Features.v1.UnserviceablePropertyReports.GetUnserviceablePropertyReportList;
 
@@ -13,7 +14,7 @@ public static class GetUnserviceablePropertyReportListEndpoint
             .WithName(nameof(GetUnserviceablePropertyReportListQuery))
             .WithSummary("Get a paginated list of Inspection and Inventory Reports of Unserviceable Semi-Expendable Properties")
             .Produces<PagedUnserviceablePropertyReportListResponse>(StatusCodes.Status200OK)
-            .RequirePermission(AssetManagementModuleConstants.Permissions.UnserviceablePropertyReports.View);
+            .RequirePermission(AssetManagementPermissions.UnserviceablePropertyReports.View);
 
     private static async Task<IResult> GetList(
         [AsParameters] GetUnserviceablePropertyReportListQuery query,

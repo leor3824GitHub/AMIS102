@@ -1,9 +1,10 @@
-using AMIS.Modules.Expendable.Contracts.v1.Purchases;
+﻿using AMIS.Modules.Expendable.Contracts.v1.Purchases;
 using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.Expendable.Contracts.Permissions;
 
 namespace AMIS.Modules.Expendable.Features.v1.Purchases.CreatePurchaseOrder;
 
@@ -15,7 +16,7 @@ public static class CreatePurchaseOrderEndpoint
             .WithSummary("Create a new purchase order")
             .Produces<PurchaseDto>(StatusCodes.Status201Created)
             .Produces(StatusCodes.Status400BadRequest)
-            .RequirePermission(ExpendableModuleConstants.Permissions.Purchases.Create);
+            .RequirePermission(ExpendablePermissions.Purchases.Create);
 
     private static async Task<IResult> CreatePurchaseOrder(
         CreatePurchaseOrderCommand command,

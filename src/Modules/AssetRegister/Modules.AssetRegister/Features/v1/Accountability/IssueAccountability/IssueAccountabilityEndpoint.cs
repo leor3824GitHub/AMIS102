@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.AssetRegister.Contracts.v1.Accountability;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetRegister.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetRegister.Features.v1.Accountability.IssueAccountability;
 
@@ -14,7 +15,7 @@ public static class IssueAccountabilityEndpoint
             .WithModuleName<IssueAccountabilityCommand>()
             .WithSummary("Issue an ICS (SE) or PAR (PPE) accountability")
             .Produces<PropertyAccountabilityDto>(StatusCodes.Status201Created)
-            .RequirePermission(AssetRegisterModuleConstants.Permissions.Accountability.Issue);
+            .RequirePermission(AssetRegisterPermissions.Accountability.Issue);
 
     private static async Task<IResult> Handle(IssueAccountabilityCommand cmd, IMediator mediator, CancellationToken ct)
     {

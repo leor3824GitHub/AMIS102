@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetManagement.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetManagement.Features.v1.TangibleInventory.CreateTangibleInventory;
 
@@ -17,6 +18,6 @@ public static class CreateTangibleInventoryEndpoint
         })
         .WithName(nameof(CreateTangibleInventoryCommand))
         .WithSummary("Create a Tangible Inventory report and register received tangible assets (SE and PPE)")
-        .RequirePermission(AssetManagementModuleConstants.Permissions.TangibleInventory.Create);
+        .RequirePermission(AssetManagementPermissions.TangibleInventory.Create);
 }
 

@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.ProcurementPlanning.Contracts.Permissions;
 
 namespace AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.CreateUpdateApp;
 
@@ -14,7 +15,7 @@ public static class CreateUpdateAppEndpoint
             .WithName(nameof(CreateUpdateAppCommand))
             .WithSummary("Create a new Updated version of an Approved Final or Updated APP")
             .Produces<AnnualProcurementPlanDto>(StatusCodes.Status201Created)
-            .RequirePermission(ProcurementPlanningModuleConstants.Permissions.AnnualProcurementPlans.CreateUpdate);
+            .RequirePermission(ProcurementPlanningPermissions.AnnualProcurementPlans.CreateUpdate);
 
     private static async Task<IResult> Handle(
         Guid id, CreateUpdateAppCommand command, IMediator mediator, CancellationToken ct)

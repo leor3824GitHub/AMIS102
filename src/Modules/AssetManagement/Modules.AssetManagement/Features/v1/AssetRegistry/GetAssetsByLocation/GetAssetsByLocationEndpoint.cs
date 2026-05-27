@@ -1,8 +1,9 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetManagement.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetManagement.Features.v1.AssetRegistryQueries.GetAssetsByLocation;
 
@@ -20,6 +21,6 @@ public static class GetAssetsByLocationEndpoint
                 new GetAssetsByLocationQuery(locationId, keyword, pageNumber, pageSize), ct)))
         .WithName(nameof(GetAssetsByLocationQuery))
         .WithSummary("Get paginated assets by current location from the unified asset registry")
-        .RequirePermission(AssetManagementModuleConstants.Permissions.AssetRegistry.View);
+        .RequirePermission(AssetManagementPermissions.AssetRegistry.View);
 }
 

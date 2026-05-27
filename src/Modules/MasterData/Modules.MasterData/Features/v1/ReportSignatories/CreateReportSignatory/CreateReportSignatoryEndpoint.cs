@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.MasterData.Contracts.v1.ReportSignatories;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.MasterData.Contracts.Permissions;
 
 namespace AMIS.Modules.MasterData.Features.v1.ReportSignatories.CreateReportSignatory;
 
@@ -15,7 +16,7 @@ public static class CreateReportSignatoryEndpoint
             .WithSummary("Create a report signatory")
             .Produces<ReportSignatoryDto>(StatusCodes.Status201Created)
             .Produces(StatusCodes.Status400BadRequest)
-            .RequirePermission(MasterDataModuleConstants.Permissions.ReportSignatories.Create);
+            .RequirePermission(MasterDataPermissions.ReportSignatories.Create);
 
     private static async Task<IResult> Create(
         CreateReportSignatoryCommand command,

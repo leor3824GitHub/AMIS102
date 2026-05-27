@@ -1,10 +1,11 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.Vehicle.Contracts.v1.Vehicles;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.Vehicle.Contracts.Permissions;
 
 namespace AMIS.Modules.Vehicle.Features.v1.FuelOdometer.GetVehicleDailyUsageSummary;
 
@@ -16,6 +17,6 @@ public static class GetVehicleDailyUsageSummaryEndpoint
         .WithName(nameof(GetVehicleDailyUsageSummaryQuery))
         .WithSummary("Get summary metrics for daily fuel and odometer records")
         .Produces<VehicleDailyUsageSummaryDto>(StatusCodes.Status200OK)
-        .RequirePermission(VehicleModuleConstants.Permissions.FuelOdometer.View);
+        .RequirePermission(VehiclePermissions.FuelOdometer.View);
 }
 

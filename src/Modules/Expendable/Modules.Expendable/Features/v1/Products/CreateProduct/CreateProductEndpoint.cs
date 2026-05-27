@@ -1,10 +1,11 @@
-using AMIS.Modules.Expendable.Contracts.v1.Products;
+﻿using AMIS.Modules.Expendable.Contracts.v1.Products;
 using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.Expendable.Data;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.Expendable.Contracts.Permissions;
 
 namespace AMIS.Modules.Expendable.Features.v1.Products.CreateProduct;
 
@@ -16,7 +17,7 @@ public static class CreateProductEndpoint
             .WithSummary("Create a new product")
             .Produces<ProductDto>(StatusCodes.Status201Created)
             .Produces(StatusCodes.Status400BadRequest)
-            .RequirePermission(ExpendableModuleConstants.Permissions.Products.Create);
+            .RequirePermission(ExpendablePermissions.Products.Create);
 
     private static async Task<IResult> CreateProduct(
         CreateProductCommand command,

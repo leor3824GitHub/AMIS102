@@ -1,8 +1,9 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.MasterData.Contracts.Permissions;
 
 namespace AMIS.Modules.MasterData.Features.v1.Categories.DeleteCategory;
 
@@ -14,7 +15,7 @@ public static class DeleteCategoryEndpoint
             .WithSummary("Delete category")
             .Produces(StatusCodes.Status204NoContent)
             .Produces(StatusCodes.Status404NotFound)
-            .RequirePermission(MasterDataModuleConstants.Permissions.Categories.Delete);
+            .RequirePermission(MasterDataPermissions.Categories.Delete);
 
     private static async Task<IResult> DeleteCategory(
         Guid id,

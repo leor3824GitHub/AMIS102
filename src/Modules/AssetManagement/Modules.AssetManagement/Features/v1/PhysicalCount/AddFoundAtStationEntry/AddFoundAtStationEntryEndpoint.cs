@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetManagement.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetManagement.Features.v1.PhysicalCount.AddFoundAtStationEntry;
 
@@ -31,7 +32,7 @@ public static class AddFoundAtStationEntryEndpoint
         })
         .WithName("AssetManagement_AddFoundAtStationEntry")
         .WithSummary("Add a 'Found at Station' entry for an asset not on the pre-generated checklist")
-        .RequirePermission(AssetManagementModuleConstants.Permissions.PhysicalCount.Update);
+        .RequirePermission(AssetManagementPermissions.PhysicalCount.Update);
 }
 
 public sealed record AddFoundAtStationEntryBody(

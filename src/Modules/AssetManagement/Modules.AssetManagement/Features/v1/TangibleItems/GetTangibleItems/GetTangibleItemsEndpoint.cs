@@ -1,8 +1,9 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetManagement.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetManagement.Features.v1.TangibleItems.GetTangibleItems;
 
@@ -13,7 +14,7 @@ public static class GetTangibleItemsEndpoint
             .WithName(nameof(GetTangibleItemsQuery))
             .WithSummary("Get paginated list of tangible items")
             .Produces<PagedTangibleItemsResponse>(StatusCodes.Status200OK)
-            .RequirePermission(AssetManagementModuleConstants.Permissions.TangibleItems.View);
+            .RequirePermission(AssetManagementPermissions.TangibleItems.View);
 
     private static async Task<IResult> GetTangibleItems(
         string? keyword = null,

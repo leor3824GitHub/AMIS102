@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.AssetInspectionAcceptanceReports;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.ProcurementAcquisition.Contracts.Permissions;
 
 namespace AMIS.Modules.ProcurementAcquisition.Features.v1.AssetIARs.ExpandLineByQuantity;
 
@@ -15,7 +16,7 @@ public static class ExpandLineByQuantityEndpoint
             .WithSummary("Split a passed line with Qty>1 into N lines of Qty=1 (NFA one-line-per-physical-unit)")
             .Produces<AssetIARDto>()
             .Produces(StatusCodes.Status404NotFound)
-            .RequirePermission(ProcurementAcquisitionModuleConstants.Permissions.AssetIARs.ExpandLine);
+            .RequirePermission(ProcurementPermissions.AssetIARs.ExpandLine);
 
     private static async Task<IResult> Handle(Guid id, int itemNo, IMediator mediator, CancellationToken cancellationToken)
     {

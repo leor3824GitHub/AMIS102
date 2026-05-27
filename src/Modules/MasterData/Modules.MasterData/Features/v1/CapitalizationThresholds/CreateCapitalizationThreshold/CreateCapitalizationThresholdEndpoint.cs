@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.MasterData.Contracts.v1.CapitalizationThresholds;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.MasterData.Contracts.Permissions;
 
 namespace AMIS.Modules.MasterData.Features.v1.CapitalizationThresholds.CreateCapitalizationThreshold;
 
@@ -17,6 +18,6 @@ public static class CreateCapitalizationThresholdEndpoint
         })
         .WithName(nameof(CreateCapitalizationThresholdCommand))
         .WithSummary("Add a new COA capitalization threshold circular record")
-        .RequirePermission(MasterDataModuleConstants.Permissions.CapitalizationThresholds.Manage);
+        .RequirePermission(MasterDataPermissions.CapitalizationThresholds.Manage);
 }
 

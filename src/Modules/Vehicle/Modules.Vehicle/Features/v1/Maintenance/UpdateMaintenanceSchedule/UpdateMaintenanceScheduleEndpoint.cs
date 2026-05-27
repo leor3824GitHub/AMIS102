@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.Vehicle.Contracts.v1.Maintenance;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.Vehicle.Contracts.Permissions;
 
 namespace AMIS.Modules.Vehicle.Features.v1.Maintenance.UpdateMaintenanceSchedule;
 
@@ -30,6 +31,6 @@ public static class UpdateMaintenanceScheduleEndpoint
         })
         .WithName(nameof(UpdateMaintenanceScheduleCommand))
         .WithSummary("Update an existing maintenance schedule")
-        .RequirePermission(VehicleModuleConstants.Permissions.Maintenance.Update);
+        .RequirePermission(VehiclePermissions.Maintenance.Update);
 }
 

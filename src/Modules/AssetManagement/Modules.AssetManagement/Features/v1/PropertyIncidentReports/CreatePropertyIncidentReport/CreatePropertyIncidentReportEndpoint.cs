@@ -1,8 +1,9 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetManagement.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetManagement.Features.v1.PropertyIncidentReports.CreatePropertyIncidentReport;
 
@@ -15,7 +16,7 @@ public static class CreatePropertyIncidentReportEndpoint
             .Produces<CreatePropertyIncidentReportResult>(StatusCodes.Status201Created)
             .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status404NotFound)
-            .RequirePermission(AssetManagementModuleConstants.Permissions.PropertyIncidentReports.Create);
+            .RequirePermission(AssetManagementPermissions.PropertyIncidentReports.Create);
 
     private static async Task<IResult> CreateReport(
         CreatePropertyIncidentReportCommand command,

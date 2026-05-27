@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.MasterData.Contracts.v1.OrganizationProfile;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.MasterData.Contracts.Permissions;
 
 namespace AMIS.Modules.MasterData.Features.v1.OrganizationProfile.UpsertOrganizationProfile;
 
@@ -14,7 +15,7 @@ public static class UpsertOrganizationProfileEndpoint
             .WithName(nameof(UpsertOrganizationProfileCommand))
             .WithSummary("Create or update the organization profile for the current tenant")
             .Produces<OrganizationProfileDto>(StatusCodes.Status200OK)
-            .RequirePermission(MasterDataModuleConstants.Permissions.OrganizationProfile.Manage);
+            .RequirePermission(MasterDataPermissions.OrganizationProfile.Manage);
 
     private static async Task<IResult> Upsert(
         UpsertOrganizationProfileCommand command,

@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.Canvass;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.ProcurementAcquisition.Contracts.Permissions;
 
 namespace AMIS.Modules.ProcurementAcquisition.Features.v1.Canvass.GetCanvassRequest;
 
@@ -15,7 +16,7 @@ public static class GetCanvassRequestEndpoint
             .WithSummary("Get a canvass request by ID including all quotations")
             .Produces<CanvassRequestDto>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound)
-            .RequirePermission(ProcurementAcquisitionModuleConstants.Permissions.CanvassRequests.View);
+            .RequirePermission(ProcurementPermissions.CanvassRequests.View);
 
     private static async Task<IResult> GetCanvassRequest(
         Guid id,

@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.AssetManagement.Features.v1.TangibleItems.RegisterTangibleItem;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetManagement.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetManagement.Features.v1.TangibleItems.GetTangibleItemById;
 
@@ -15,7 +16,7 @@ public static class GetTangibleItemByIdEndpoint
             .WithSummary("Get tangible item by ID")
             .Produces<TangibleItemDto>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound)
-            .RequirePermission(AssetManagementModuleConstants.Permissions.TangibleItems.View);
+            .RequirePermission(AssetManagementPermissions.TangibleItems.View);
 
     private static async Task<IResult> GetTangibleItemById(
         Guid id,

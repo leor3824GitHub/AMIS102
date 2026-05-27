@@ -1,8 +1,9 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetManagement.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetManagement.Features.v1.TangibleInventory.GetByPropertyNo;
 
@@ -14,7 +15,7 @@ public static class GetTangibleInventoryItemByPropertyNoEndpoint
             .WithSummary("Get a tangible inventory item by property number")
             .Produces<TangibleInventoryItemDetailDto>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound)
-            .RequirePermission(AssetManagementModuleConstants.Permissions.TangibleInventory.View);
+            .RequirePermission(AssetManagementPermissions.TangibleInventory.View);
 
     private static async Task<IResult> GetByPropertyNo(
         string propertyNo,

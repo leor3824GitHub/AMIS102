@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.ProcurementPlanning.Contracts.Permissions;
 
 namespace AMIS.Modules.ProcurementPlanning.Features.v1.Ppmps.GetPpmp;
 
@@ -15,7 +16,7 @@ public static class GetPpmpEndpoint
             .WithSummary("Get a PPMP by ID")
             .Produces<PpmpDto>()
             .Produces(StatusCodes.Status404NotFound)
-            .RequirePermission(ProcurementPlanningModuleConstants.Permissions.Ppmps.View);
+            .RequirePermission(ProcurementPlanningPermissions.Ppmps.View);
 
     private static async Task<IResult> Handle(Guid id, IMediator mediator, CancellationToken ct)
     {

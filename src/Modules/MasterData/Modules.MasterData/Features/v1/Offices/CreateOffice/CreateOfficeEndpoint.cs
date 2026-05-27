@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.MasterData.Contracts.v1.References;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.MasterData.Contracts.Permissions;
 
 namespace AMIS.Modules.MasterData.Features.v1.Offices.CreateOffice;
 
@@ -15,7 +16,7 @@ public static class CreateOfficeEndpoint
             .WithSummary("Create office")
             .Produces<OfficeReferenceDto>(StatusCodes.Status201Created)
             .Produces(StatusCodes.Status400BadRequest)
-            .RequirePermission(MasterDataModuleConstants.Permissions.Offices.Create);
+            .RequirePermission(MasterDataPermissions.Offices.Create);
 
     private static async Task<IResult> CreateOffice(
         CreateOfficeCommand command,

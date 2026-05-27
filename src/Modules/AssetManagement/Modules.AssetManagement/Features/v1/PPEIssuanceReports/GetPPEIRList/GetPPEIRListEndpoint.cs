@@ -1,8 +1,9 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetManagement.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetManagement.Features.v1.PPEIssuanceReports.GetPPEIRList;
 
@@ -16,6 +17,6 @@ public static class GetPPEIRListEndpoint
             TypedResults.Ok(await mediator.Send(query, ct)))
         .WithName(nameof(GetPPEIRListQuery))
         .WithSummary("Get a paged list of PPE Issuance Reports")
-        .RequirePermission(AssetManagementModuleConstants.Permissions.PPEIssuanceReports.View);
+        .RequirePermission(AssetManagementPermissions.PPEIssuanceReports.View);
 }
 

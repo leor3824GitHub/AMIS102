@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.AssetRegister.Contracts.v1.Counting;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetRegister.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetRegister.Features.v1.Counting.AddFoundAtStationEntry;
 
@@ -14,7 +15,7 @@ public static class AddFoundAtStationEntryEndpoint
             .WithModuleName<AddFoundAtStationEntryCommand>()
             .WithSummary("Add a FoundAtStation entry (asset unknown to the registry)")
             .Produces<PhysicalCountSessionDto>()
-            .RequirePermission(AssetRegisterModuleConstants.Permissions.Count.Record);
+            .RequirePermission(AssetRegisterPermissions.Count.Record);
 
     private static async Task<IResult> Handle(
         Guid id, AddFoundAtStationEntryCommand cmd, IMediator mediator, CancellationToken ct)

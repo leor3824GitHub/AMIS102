@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.ProcurementPlanning.Contracts.Permissions;
 
 namespace AMIS.Modules.ProcurementPlanning.Features.v1.Ppmps.UpdatePpmp;
 
@@ -16,7 +17,7 @@ public static class UpdatePpmpEndpoint
             .Produces<PpmpDto>()
             .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status404NotFound)
-            .RequirePermission(ProcurementPlanningModuleConstants.Permissions.Ppmps.Update);
+            .RequirePermission(ProcurementPlanningPermissions.Ppmps.Update);
 
     private static async Task<IResult> Handle(
         Guid id, UpdatePpmpCommand command, IMediator mediator, CancellationToken ct)

@@ -1,8 +1,9 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.MasterData.Contracts.Permissions;
 
 namespace AMIS.Modules.MasterData.Features.v1.Employees.GetMyEmployee;
 
@@ -14,7 +15,7 @@ public static class GetMyEmployeeEndpoint
             .WithSummary("Get my employee profile")
             .Produces<MyEmployeeDto>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound)
-            .RequirePermission(MasterDataModuleConstants.Permissions.Employees.View);
+            .RequirePermission(MasterDataPermissions.Employees.View);
 
     private static async Task<IResult> GetMyEmployee(
         IMediator mediator,

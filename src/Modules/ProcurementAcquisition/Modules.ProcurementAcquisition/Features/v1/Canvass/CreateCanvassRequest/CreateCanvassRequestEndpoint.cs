@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.Canvass;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.ProcurementAcquisition.Contracts.Permissions;
 
 namespace AMIS.Modules.ProcurementAcquisition.Features.v1.Canvass.CreateCanvassRequest;
 
@@ -15,7 +16,7 @@ public static class CreateCanvassRequestEndpoint
             .WithSummary("Create a canvass/RFQ request from an approved purchase request")
             .Produces<CanvassRequestDto>(StatusCodes.Status201Created)
             .Produces(StatusCodes.Status400BadRequest)
-            .RequirePermission(ProcurementAcquisitionModuleConstants.Permissions.CanvassRequests.Create);
+            .RequirePermission(ProcurementPermissions.CanvassRequests.Create);
 
     private static async Task<IResult> CreateCanvassRequest(
         CreateCanvassRequestCommand command,

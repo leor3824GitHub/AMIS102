@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.AssetRegister.Contracts.v1.Counting;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetRegister.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetRegister.Features.v1.Counting.ReconcilePhysicalCount;
 
@@ -12,9 +13,9 @@ public static class ReconcilePhysicalCountEndpoint
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapPost("/{id:guid}/reconcile", Handle)
             .WithModuleName<ReconcilePhysicalCountCommand>()
-            .WithSummary("Reconcile a count session — materializes FoundAtStation entries and opens incident drafts for missing")
+            .WithSummary("Reconcile a count session â€” materializes FoundAtStation entries and opens incident drafts for missing")
             .Produces<PhysicalCountSessionDto>()
-            .RequirePermission(AssetRegisterModuleConstants.Permissions.Count.Submit);
+            .RequirePermission(AssetRegisterPermissions.Count.Submit);
 
     private static async Task<IResult> Handle(Guid id, IMediator mediator, CancellationToken ct)
     {

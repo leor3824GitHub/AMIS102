@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.Vehicle.Contracts.v1.Vehicles;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.Vehicle.Contracts.Permissions;
 
 namespace AMIS.Modules.Vehicle.Features.v1.FuelOdometer.CreateVehicleDailyUsage;
 
@@ -19,6 +20,6 @@ public static class CreateVehicleDailyUsageEndpoint
         .WithSummary("Create a daily fuel and odometer record")
         .Produces<VehicleDailyUsageDto>(StatusCodes.Status201Created)
         .Produces(StatusCodes.Status400BadRequest)
-        .RequirePermission(VehicleModuleConstants.Permissions.FuelOdometer.Create);
+        .RequirePermission(VehiclePermissions.FuelOdometer.Create);
 }
 

@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.MasterData.Contracts.v1.CapitalizationThresholds;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.MasterData.Contracts.Permissions;
 
 namespace AMIS.Modules.MasterData.Features.v1.CapitalizationThresholds.GetActiveThreshold;
 
@@ -17,6 +18,6 @@ public static class GetActiveThresholdEndpoint
         })
         .WithName(nameof(GetActiveCapitalizationThresholdQuery))
         .WithSummary("Get the currently active capitalization threshold (COA circular)")
-        .RequirePermission(MasterDataModuleConstants.Permissions.CapitalizationThresholds.View);
+        .RequirePermission(MasterDataPermissions.CapitalizationThresholds.View);
 }
 

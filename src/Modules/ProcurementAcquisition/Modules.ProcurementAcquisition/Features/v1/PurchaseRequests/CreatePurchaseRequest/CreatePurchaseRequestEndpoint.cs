@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.ProcurementAcquisition.Contracts.Permissions;
 
 namespace AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.CreatePurchaseRequest;
 
@@ -15,7 +16,7 @@ public static class CreatePurchaseRequestEndpoint
             .WithSummary("Create a new purchase request")
             .Produces<PurchaseRequestDto>(StatusCodes.Status201Created)
             .Produces(StatusCodes.Status400BadRequest)
-            .RequirePermission(ProcurementAcquisitionModuleConstants.Permissions.PurchaseRequests.Create);
+            .RequirePermission(ProcurementPermissions.PurchaseRequests.Create);
 
     private static async Task<IResult> CreatePurchaseRequest(
         CreatePurchaseRequestCommand command,

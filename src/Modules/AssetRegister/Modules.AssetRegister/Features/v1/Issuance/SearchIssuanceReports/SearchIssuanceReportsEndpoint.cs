@@ -1,4 +1,4 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Framework.Shared.Persistence;
 using AMIS.Modules.AssetRegister.Contracts.v1;
 using AMIS.Modules.AssetRegister.Contracts.v1.Issuance;
@@ -6,6 +6,7 @@ using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetRegister.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetRegister.Features.v1.Issuance.SearchIssuanceReports;
 
@@ -16,7 +17,7 @@ public static class SearchIssuanceReportsEndpoint
             .WithModuleName<SearchIssuanceReportsQuery>()
             .WithSummary("Search issuance reports")
             .Produces<PagedResponse<PropertyIssuanceReportSummaryDto>>()
-            .RequirePermission(AssetRegisterModuleConstants.Permissions.Issuance.View);
+            .RequirePermission(AssetRegisterPermissions.Issuance.View);
 
     private static async Task<IResult> Handle(
         IMediator mediator,

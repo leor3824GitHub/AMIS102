@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.MasterData.Contracts.v1.CapitalizationThresholds;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.MasterData.Contracts.Permissions;
 
 namespace AMIS.Modules.MasterData.Features.v1.CapitalizationThresholds.SetActiveThreshold;
 
@@ -17,6 +18,6 @@ public static class SetActiveThresholdEndpoint
         })
         .WithName(nameof(SetActiveCapitalizationThresholdCommand))
         .WithSummary("Set a capitalization threshold circular as the currently active one")
-        .RequirePermission(MasterDataModuleConstants.Permissions.CapitalizationThresholds.Manage);
+        .RequirePermission(MasterDataPermissions.CapitalizationThresholds.Manage);
 }
 

@@ -1,8 +1,9 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetManagement.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetManagement.Features.v1.Reports.ReportOfSPIssued;
 
@@ -11,9 +12,9 @@ public static class GetRSPIEndpoint
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapGet("/rspi", GetRSPI)
             .WithName(nameof(GetRSPIQuery))
-            .WithSummary("Report of Semi-Expendable Property Issued (RSPI) — paginated list of issued properties for a period")
+            .WithSummary("Report of Semi-Expendable Property Issued (RSPI) â€” paginated list of issued properties for a period")
             .Produces<PagedRSPIResponse>(StatusCodes.Status200OK)
-            .RequirePermission(AssetManagementModuleConstants.Permissions.Reports.View);
+            .RequirePermission(AssetManagementPermissions.Reports.View);
 
     private static async Task<IResult> GetRSPI(
         [AsParameters] GetRSPIQuery query,

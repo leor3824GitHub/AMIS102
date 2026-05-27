@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.AssetManagement.Features.v1.TangibleItems.RegisterTangibleItem;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetManagement.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetManagement.Features.v1.TangibleItems.UpdateTangibleItem;
 
@@ -16,7 +17,7 @@ public static class UpdateTangibleItemEndpoint
             .Produces<TangibleItemDto>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status404NotFound)
-            .RequirePermission(AssetManagementModuleConstants.Permissions.TangibleItems.Update);
+            .RequirePermission(AssetManagementPermissions.TangibleItems.Update);
 
     private static async Task<IResult> UpdateTangibleItem(
         Guid id,

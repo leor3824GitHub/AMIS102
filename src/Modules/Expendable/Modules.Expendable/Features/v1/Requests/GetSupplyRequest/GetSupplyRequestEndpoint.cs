@@ -1,9 +1,10 @@
-using AMIS.Modules.Expendable.Contracts.v1.Requests;
+﻿using AMIS.Modules.Expendable.Contracts.v1.Requests;
 using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.Expendable.Contracts.Permissions;
 
 namespace AMIS.Modules.Expendable.Features.v1.Requests.GetSupplyRequest;
 
@@ -15,7 +16,7 @@ public static class GetSupplyRequestEndpoint
             .WithSummary("Get supply request by ID")
             .Produces<SupplyRequestDto>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound)
-            .RequirePermission(ExpendableModuleConstants.Permissions.SupplyRequests.View);
+            .RequirePermission(ExpendablePermissions.SupplyRequests.View);
 
     private static async Task<IResult> GetRequest(
         Guid id,

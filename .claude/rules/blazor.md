@@ -143,6 +143,79 @@ Designations are free-text and can be "Acting Regional Manager II", "OIC-Regiona
 
 ---
 
+## Permission Gating for UI
+
+Every page action — buttons, menu items, row icons — MUST be gated by the same permission its API endpoint enforces with `.RequirePermission(...)`. Backend authorization is necessary but not sufficient: a user without permission should never see the button.
+
+Permissions flow: at login the API returns the user's effective permissions (derived from their assigned roles via `UserPermissionService.GetPermissionsAsync`). `PlaygroundLayout` loads them once per circuit into `UserProfileState.Permissions` (a `HashSet<string>`). Pages read this synchronously — no async, no extra HTTP calls.
+
+### Pattern
+
+Permission **strings** are declared once per module in the **Contracts** project — at `Modules.{Name}.Contracts/Permissions/{Name}Permissions.cs`. The server endpoint and the Blazor page reference the same constant. Never declare `private const string Permission* = "..."` inside a page — that's magic-string duplication that drifts when the key is renamed.
+
+```csharp
+// src/Modules/ProcurementAcquisition/Modules.ProcurementAcquisition.Contracts/Permissions/ProcurementPermissions.cs
+namespace AMIS.Modules.ProcurementAcquisition.Contracts.Permissions;
+
+public static class ProcurementPermissions
+{
+    public static class PurchaseRequests
+    {
+        public const string Create  = "Permissions.Procurement.PurchaseRequests.Create";
+        public const string Approve = "Permissions.Procurement.PurchaseRequests.Approve";
+        // ...
+    }
+}
+```
+
+Server endpoint (impl project — already references its own Contracts):
+
+```csharp
+endpoints.MapPost("/", handler)
+    .RequirePermission(ProcurementPermissions.PurchaseRequests.Create);
+```
+
+Blazor page (already references the Contracts project):
+
+```razor
+@using AMIS.Modules.ProcurementAcquisition.Contracts.Permissions
+@inject IUserProfileState UserProfileState
+
+@if (_canCreate)
+{
+    <MudButton OnClick="OpenCreateDialog">+ New</MudButton>
+}
+
+@if (item.Status == SomeStatus.PendingApproval && _canApprove)
+{
+    <MudIconButton Icon="@Icons.Material.Filled.CheckCircle"
+                   OnClick="@(() => ApproveAsync(item.Id))" />
+}
+
+@code {
+    private bool _canCreate  => UserProfileState.Permissions.Contains(ProcurementPermissions.PurchaseRequests.Create);
+    private bool _canApprove => UserProfileState.Permissions.Contains(ProcurementPermissions.PurchaseRequests.Approve);
+}
+```
+
+### Rules
+
+| ⚠️ Rule | Why |
+| --- | --- |
+| Permission string constants live in `Modules.{Name}.Contracts/Permissions/{Name}Permissions.cs` — one source for both UI and API | Renames become compile errors instead of silent UI drift |
+| Never declare `private const string Permission* = "..."` in a page | Magic-string duplication breaks the single source of truth |
+| Every action button gated with `UserProfileState.Permissions.Contains(SomePermissions.Xxx.Yyy)` | Mirrors endpoint `.RequirePermission()` — users don't see actions they can't perform |
+| Combine permission check with status check via `&&`, not nested `@if` | Single line of gating intent per button |
+| Read `UserProfileState.Permissions` directly — no async, no caching | Already loaded once per circuit by `PlaygroundLayout` |
+| Newly assigned roles require **user re-login** to take effect | API-side permission cache is keyed per user |
+
+### Canonical references
+
+- Constants: [ProcurementPermissions.cs](../../src/Modules/ProcurementAcquisition/Modules.ProcurementAcquisition.Contracts/Permissions/ProcurementPermissions.cs)
+- UI usage: [AssetIARsPage.razor](../../src/Playground/Playground.Blazor/Components/Pages/AssetProcurement/AssetIARsPage.razor)
+
+---
+
 ## Compact UI Controls
 
 | ⚠️ Rule | Why |

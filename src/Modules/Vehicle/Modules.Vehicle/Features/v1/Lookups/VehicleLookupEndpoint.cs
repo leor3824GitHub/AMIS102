@@ -1,10 +1,11 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Framework.Shared.Persistence;
 using AMIS.Modules.Vehicle.Contracts.v1.References;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.Vehicle.Contracts.Permissions;
 
 namespace AMIS.Modules.Vehicle.Features.v1.Lookups;
 
@@ -16,14 +17,14 @@ public static class VehicleLookupEndpoint
             .WithName(nameof(SearchVehicleReferencesQuery))
             .WithSummary("Search vehicle references")
             .Produces<PagedResponse<VehicleReferenceDto>>(StatusCodes.Status200OK)
-            .RequirePermission(VehicleModuleConstants.Permissions.Lookup.View);
+            .RequirePermission(VehiclePermissions.Lookup.View);
 
         endpoints.MapGet("/vehicles/{id:guid}", GetVehicleById)
             .WithName(nameof(GetVehicleReferenceByIdQuery))
             .WithSummary("Get vehicle reference by id")
             .Produces<VehicleReferenceDto>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound)
-            .RequirePermission(VehicleModuleConstants.Permissions.Lookup.View);
+            .RequirePermission(VehiclePermissions.Lookup.View);
     }
 
     private static async Task<IResult> SearchVehicles(

@@ -1,8 +1,9 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetManagement.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetManagement.Features.v1.PhysicalCount.GetICF;
 
@@ -13,6 +14,6 @@ public static class GetICFEndpoint
             TypedResults.Ok(await mediator.Send(new GetICFQuery(sessionId), ct)))
         .WithName(nameof(GetICFQuery))
         .WithSummary("Get the Inventory Count Form (ICF) for a physical count session (COA Circular 2020-006)")
-        .RequirePermission(AssetManagementModuleConstants.Permissions.PhysicalCount.View);
+        .RequirePermission(AssetManagementPermissions.PhysicalCount.View);
 }
 

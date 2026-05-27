@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.ProcurementPlanning.Contracts.Permissions;
 
 namespace AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.GetAvailablePpmps;
 
@@ -14,7 +15,7 @@ public static class GetAvailablePpmpsEndpoint
             .WithName(nameof(GetAvailablePpmpsForAppQuery))
             .WithSummary("Get approved PPMPs available for consolidation into an APP")
             .Produces<IReadOnlyList<PpmpSummaryDto>>()
-            .RequirePermission(ProcurementPlanningModuleConstants.Permissions.AnnualProcurementPlans.Consolidate);
+            .RequirePermission(ProcurementPlanningPermissions.AnnualProcurementPlans.Consolidate);
 
     private static async Task<IResult> Handle(
         [AsParameters] GetAvailablePpmpsForAppQuery query, IMediator mediator, CancellationToken ct)

@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.AssetManagement.Domain;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetManagement.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetManagement.Features.v1.PhysicalCount.GetPhysicalCountSessionList;
 
@@ -17,6 +18,6 @@ public static class GetPhysicalCountSessionListEndpoint
             TypedResults.Ok(await mediator.Send(query, ct)))
         .WithName(nameof(GetPhysicalCountSessionListQuery))
         .WithSummary("List physical count sessions with progress summary")
-        .RequirePermission(AssetManagementModuleConstants.Permissions.PhysicalCount.View);
+        .RequirePermission(AssetManagementPermissions.PhysicalCount.View);
 }
 

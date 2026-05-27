@@ -1,8 +1,9 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetManagement.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetManagement.Features.v1.SemiExpendableIssuanceRecords.GetSMIRList;
 
@@ -13,7 +14,7 @@ public static class GetSMIRListEndpoint
             .WithName(nameof(GetSMIRListQuery))
             .WithSummary("Get a paginated list of Semi-expendable Materials Issuance Records")
             .Produces<PagedSMIRListResponse>(StatusCodes.Status200OK)
-            .RequirePermission(AssetManagementModuleConstants.Permissions.SemiExpendableIssuanceRecords.View);
+            .RequirePermission(AssetManagementPermissions.SemiExpendableIssuanceRecords.View);
 
     private static async Task<IResult> GetSMIRList(
         [AsParameters] GetSMIRListQuery query,

@@ -1,6 +1,7 @@
 using System.Reflection;
 using AMIS.Framework.Shared.Constants;
 using AMIS.Modules.Expendable;
+using AMIS.Modules.Expendable.Contracts.Permissions;
 using Microsoft.Extensions.Hosting;
 
 namespace Generic.Tests.Expendable;
@@ -19,7 +20,7 @@ public sealed class PermissionRegistrationTests
 
         // Assert
         var registered = PermissionConstants.All.Select(p => p.Name).ToHashSet(StringComparer.Ordinal);
-        var expected = GetConstStrings(typeof(ExpendableModuleConstants.Permissions)).ToList();
+        var expected = GetConstStrings(typeof(ExpendablePermissions)).ToList();
 
         expected.ShouldNotBeEmpty();
         expected.ShouldAllBe(permission => registered.Contains(permission));

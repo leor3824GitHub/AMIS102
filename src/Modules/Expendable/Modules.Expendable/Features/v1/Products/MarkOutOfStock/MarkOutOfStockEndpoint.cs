@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.Expendable.Contracts.v1.Products;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.Expendable.Contracts.Permissions;
 
 namespace AMIS.Modules.Expendable.Features.v1.Products.MarkOutOfStock;
 
@@ -16,7 +17,7 @@ public static class MarkOutOfStockEndpoint
             .Produces(StatusCodes.Status204NoContent)
             .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status404NotFound)
-            .RequirePermission(ExpendableModuleConstants.Permissions.Products.MarkOutOfStock);
+            .RequirePermission(ExpendablePermissions.Products.MarkOutOfStock);
 
     private static async Task<IResult> MarkOutOfStock(
         Guid id,

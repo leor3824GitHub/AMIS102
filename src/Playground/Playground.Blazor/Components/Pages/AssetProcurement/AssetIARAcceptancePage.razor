@@ -1,5 +1,6 @@
 @page "/asset-procurement/iars/{Id:guid}/accept"
 @using AMIS.Playground.Blazor.ApiClient
+@using AMIS.Modules.ProcurementAcquisition.Contracts.Permissions
 @using AMIS.Modules.ProcurementAcquisition.Contracts.v1.AssetInspectionAcceptanceReports
 @inject IAssetIarClient IarClient
 @inject IUserProfileState UserProfileState
@@ -222,9 +223,6 @@ else
 }
 
 @code {
-    private const string PermissionAccept = "Permissions.Procurement.AssetIARs.Accept";
-    private const string PermissionAssignPropertyNo = "Permissions.Procurement.AssetIARs.AssignPropertyNo";
-
     [Parameter] public Guid Id { get; set; }
 
     private AssetIARDto? _iar;
@@ -238,8 +236,8 @@ else
     private List<AssetIARLineItemDto> RejectedLines => _rejectedLines;
     private List<AssetIARLineItemDto> PendingLines => _pendingLines;
 
-    private bool _canAcceptPermission => UserProfileState.Permissions.Contains(PermissionAccept);
-    private bool _canAssignPropertyNoPermission => UserProfileState.Permissions.Contains(PermissionAssignPropertyNo);
+    private bool _canAcceptPermission => UserProfileState.Permissions.Contains(ProcurementPermissions.AssetIARs.Accept);
+    private bool _canAssignPropertyNoPermission => UserProfileState.Permissions.Contains(ProcurementPermissions.AssetIARs.AssignPropertyNo);
     private bool _canAssignActions => _iar is not null && _iar.Status == AssetIARStatus.Inspected && _canAssignPropertyNoPermission;
     private bool _canAcceptActions => _iar is not null && _iar.Status == AssetIARStatus.Inspected && _canAcceptPermission;
 

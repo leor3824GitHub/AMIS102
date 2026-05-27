@@ -1,10 +1,11 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Framework.Shared.Persistence;
 using AMIS.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.ProcurementPlanning.Contracts.Permissions;
 
 namespace AMIS.Modules.ProcurementPlanning.Features.v1.Ppmps.SearchPpmps;
 
@@ -15,7 +16,7 @@ public static class SearchPpmpsEndpoint
             .WithName(nameof(SearchPpmpsQuery))
             .WithSummary("Search PPMPs")
             .Produces<PagedResponse<PpmpSummaryDto>>()
-            .RequirePermission(ProcurementPlanningModuleConstants.Permissions.Ppmps.View);
+            .RequirePermission(ProcurementPlanningPermissions.Ppmps.View);
 
     private static async Task<IResult> Handle(
         [AsParameters] SearchPpmpsQuery query, IMediator mediator, CancellationToken ct)

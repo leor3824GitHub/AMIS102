@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.ProcurementPlanning.Contracts.Permissions;
 
 namespace AMIS.Modules.ProcurementPlanning.Features.v1.Ppmps.CreatePpmp;
 
@@ -15,7 +16,7 @@ public static class CreatePpmpEndpoint
             .WithSummary("Create a new PPMP")
             .Produces<PpmpDto>(StatusCodes.Status201Created)
             .Produces(StatusCodes.Status400BadRequest)
-            .RequirePermission(ProcurementPlanningModuleConstants.Permissions.Ppmps.Create);
+            .RequirePermission(ProcurementPlanningPermissions.Ppmps.Create);
 
     private static async Task<IResult> Handle(
         CreatePpmpCommand command, IMediator mediator, CancellationToken ct)

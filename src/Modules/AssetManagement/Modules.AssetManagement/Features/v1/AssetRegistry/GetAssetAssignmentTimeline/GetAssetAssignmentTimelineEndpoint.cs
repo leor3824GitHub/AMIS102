@@ -1,8 +1,9 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetManagement.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetManagement.Features.v1.AssetRegistryQueries.GetAssetAssignmentTimeline;
 
@@ -19,6 +20,6 @@ public static class GetAssetAssignmentTimelineEndpoint
                 new GetAssetAssignmentTimelineQuery(assetRegistryId, pageNumber, pageSize), ct)))
         .WithName(nameof(GetAssetAssignmentTimelineQuery))
         .WithSummary("Get assignment and status timeline for a specific asset registry record")
-        .RequirePermission(AssetManagementModuleConstants.Permissions.AssetRegistry.View);
+        .RequirePermission(AssetManagementPermissions.AssetRegistry.View);
 }
 

@@ -1,8 +1,9 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.MasterData.Contracts.Permissions;
 
 namespace AMIS.Modules.MasterData.Features.v1.Categories.GetCategories;
 
@@ -13,7 +14,7 @@ public static class GetCategoriesEndpoint
             .WithName(nameof(GetCategoriesQuery))
             .WithSummary("Get paginated list of categories")
             .Produces<PagedResponseOfCategoryDto>(StatusCodes.Status200OK)
-            .RequirePermission(MasterDataModuleConstants.Permissions.Categories.View);
+            .RequirePermission(MasterDataPermissions.Categories.View);
 
     private static async Task<IResult> GetCategories(
         string? keyword = null,

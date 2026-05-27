@@ -1,10 +1,11 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Framework.Shared.Persistence;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.Canvass;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.ProcurementAcquisition.Contracts.Permissions;
 
 namespace AMIS.Modules.ProcurementAcquisition.Features.v1.Canvass.SearchCanvassRequests;
 
@@ -15,7 +16,7 @@ public static class SearchCanvassRequestsEndpoint
             .WithName($"Procurement.{nameof(SearchCanvassRequestsQuery)}")
             .WithSummary("Search canvass requests with pagination")
             .Produces<PagedResponse<CanvassRequestSummaryDto>>(StatusCodes.Status200OK)
-            .RequirePermission(ProcurementAcquisitionModuleConstants.Permissions.CanvassRequests.View);
+            .RequirePermission(ProcurementPermissions.CanvassRequests.View);
 
     private static async Task<IResult> SearchCanvassRequests(
         [AsParameters] SearchCanvassRequestsQuery query,

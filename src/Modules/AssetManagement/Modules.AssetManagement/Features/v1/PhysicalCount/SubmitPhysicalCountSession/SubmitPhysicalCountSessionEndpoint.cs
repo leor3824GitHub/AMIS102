@@ -1,8 +1,9 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetManagement.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetManagement.Features.v1.PhysicalCount.SubmitPhysicalCountSession;
 
@@ -19,6 +20,6 @@ public static class SubmitPhysicalCountSessionEndpoint
         })
         .WithName(nameof(SubmitPhysicalCountSessionCommand))
         .WithSummary("Submit and lock a Physical Count Session; unverified entries are auto-marked as Not Found")
-        .RequirePermission(AssetManagementModuleConstants.Permissions.PhysicalCount.Update);
+        .RequirePermission(AssetManagementPermissions.PhysicalCount.Update);
 }
 

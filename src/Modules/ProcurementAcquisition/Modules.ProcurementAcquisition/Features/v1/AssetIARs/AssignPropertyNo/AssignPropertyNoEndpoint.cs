@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.AssetInspectionAcceptanceReports;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.ProcurementAcquisition.Contracts.Permissions;
 
 namespace AMIS.Modules.ProcurementAcquisition.Features.v1.AssetIARs.AssignPropertyNo;
 
@@ -15,7 +16,7 @@ public static class AssignPropertyNoEndpoint
             .WithSummary("Assign a Property No to a passed line during the Acceptance stage")
             .Produces<AssetIARDto>()
             .Produces(StatusCodes.Status404NotFound)
-            .RequirePermission(ProcurementAcquisitionModuleConstants.Permissions.AssetIARs.AssignPropertyNo);
+            .RequirePermission(ProcurementPermissions.AssetIARs.AssignPropertyNo);
 
     private static async Task<IResult> Handle(Guid id, int itemNo, AssignPropertyNoCommand command, IMediator mediator, CancellationToken cancellationToken)
     {

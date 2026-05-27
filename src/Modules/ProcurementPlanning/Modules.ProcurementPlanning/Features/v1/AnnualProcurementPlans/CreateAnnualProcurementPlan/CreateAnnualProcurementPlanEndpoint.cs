@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.ProcurementPlanning.Contracts.Permissions;
 
 namespace AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.CreateAnnualProcurementPlan;
 
@@ -14,7 +15,7 @@ public static class CreateAnnualProcurementPlanEndpoint
             .WithName(nameof(CreateAnnualProcurementPlanCommand))
             .WithSummary("Create a new Annual Procurement Plan (APP)")
             .Produces<AnnualProcurementPlanDto>(StatusCodes.Status201Created)
-            .RequirePermission(ProcurementPlanningModuleConstants.Permissions.AnnualProcurementPlans.Create);
+            .RequirePermission(ProcurementPlanningPermissions.AnnualProcurementPlans.Create);
 
     private static async Task<IResult> Handle(
         CreateAnnualProcurementPlanCommand command, IMediator mediator, CancellationToken ct)

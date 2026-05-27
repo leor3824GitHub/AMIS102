@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.MasterData.Contracts.v1.PropertyClasses;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.MasterData.Contracts.Permissions;
 
 namespace AMIS.Modules.MasterData.Features.v1.PropertyClasses.GetPropertyClassItems;
 
@@ -18,6 +19,6 @@ public static class GetPropertyClassItemsEndpoint
         .WithName(nameof(GetPropertyClassItemsQuery))
         .WithSummary("Get property class items (category codes), optionally filtered by class code")
         .Produces<IReadOnlyList<PropertyClassItemDto>>(StatusCodes.Status200OK)
-        .RequirePermission(MasterDataModuleConstants.Permissions.PropertyClasses.View);
+        .RequirePermission(MasterDataPermissions.PropertyClasses.View);
 }
 

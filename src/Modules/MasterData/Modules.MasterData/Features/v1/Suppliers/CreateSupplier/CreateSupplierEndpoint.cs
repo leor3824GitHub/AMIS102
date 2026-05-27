@@ -1,8 +1,9 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.MasterData.Contracts.Permissions;
 
 namespace AMIS.Modules.MasterData.Features.v1.Suppliers.CreateSupplier;
 
@@ -14,7 +15,7 @@ public static class CreateSupplierEndpoint
             .WithSummary("Create supplier")
             .Produces<SupplierDto>(StatusCodes.Status201Created)
             .Produces(StatusCodes.Status400BadRequest)
-            .RequirePermission(MasterDataModuleConstants.Permissions.Suppliers.Create);
+            .RequirePermission(MasterDataPermissions.Suppliers.Create);
 
     private static async Task<IResult> CreateSupplier(
         CreateSupplierCommand command,

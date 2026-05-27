@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.ProcurementPlanning.Contracts.Permissions;
 
 namespace AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.PromoteToFinalApp;
 
@@ -14,7 +15,7 @@ public static class PromoteToFinalAppEndpoint
             .WithName(nameof(PromoteToFinalAppCommand))
             .WithSummary("Promote an Approved Indicative APP to a new Final draft")
             .Produces<AnnualProcurementPlanDto>(StatusCodes.Status201Created)
-            .RequirePermission(ProcurementPlanningModuleConstants.Permissions.AnnualProcurementPlans.PromoteToFinal);
+            .RequirePermission(ProcurementPlanningPermissions.AnnualProcurementPlans.PromoteToFinal);
 
     private static async Task<IResult> Handle(
         Guid id, IMediator mediator, CancellationToken ct)

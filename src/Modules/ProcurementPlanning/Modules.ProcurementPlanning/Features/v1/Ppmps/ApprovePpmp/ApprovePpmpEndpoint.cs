@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.ProcurementPlanning.Contracts.Permissions;
 
 namespace AMIS.Modules.ProcurementPlanning.Features.v1.Ppmps.ApprovePpmp;
 
@@ -14,7 +15,7 @@ public static class ApprovePpmpEndpoint
             .WithName(nameof(ApprovePpmpCommand))
             .WithSummary("Approve a submitted PPMP")
             .Produces<PpmpDto>()
-            .RequirePermission(ProcurementPlanningModuleConstants.Permissions.Ppmps.Approve);
+            .RequirePermission(ProcurementPlanningPermissions.Ppmps.Approve);
 
     private static async Task<IResult> Handle(
         Guid id, ApprovePpmpCommand command, IMediator mediator, CancellationToken ct)

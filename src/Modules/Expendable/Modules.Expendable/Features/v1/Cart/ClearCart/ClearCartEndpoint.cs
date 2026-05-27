@@ -1,9 +1,10 @@
-using AMIS.Modules.Expendable.Contracts.v1.Cart;
+﻿using AMIS.Modules.Expendable.Contracts.v1.Cart;
 using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.Expendable.Contracts.Permissions;
 
 namespace AMIS.Modules.Expendable.Features.v1.Cart.ClearCart;
 
@@ -16,7 +17,7 @@ public static class ClearCartEndpoint
             .Produces(StatusCodes.Status204NoContent)
             .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status404NotFound)
-            .RequirePermission(ExpendableModuleConstants.Permissions.ShoppingCarts.Clear);
+            .RequirePermission(ExpendablePermissions.ShoppingCarts.Clear);
 
     private static async Task<IResult> Clear(
         Guid cartId,

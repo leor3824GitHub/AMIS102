@@ -1,8 +1,9 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetManagement.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetManagement.Features.v1.TangibleInventory.GetTangibleInventories;
 
@@ -16,6 +17,6 @@ public static class GetTangibleInventoriesEndpoint
             TypedResults.Ok(await mediator.Send(query, ct)))
         .WithName(nameof(GetTangibleInventoriesQuery))
         .WithSummary("Get paginated list of Tangible Inventory reports with optional filters")
-        .RequirePermission(AssetManagementModuleConstants.Permissions.TangibleInventory.View);
+        .RequirePermission(AssetManagementPermissions.TangibleInventory.View);
 }
 

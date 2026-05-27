@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetManagement.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetManagement.Features.v1.TangibleInventory.UpdateTangibleInventory;
 
@@ -20,6 +21,6 @@ public static class UpdateTangibleInventoryEndpoint
         .Produces(StatusCodes.Status204NoContent)
         .Produces(StatusCodes.Status400BadRequest)
         .Produces(StatusCodes.Status404NotFound)
-        .RequirePermission(AssetManagementModuleConstants.Permissions.TangibleInventory.Update);
+        .RequirePermission(AssetManagementPermissions.TangibleInventory.Update);
 }
 

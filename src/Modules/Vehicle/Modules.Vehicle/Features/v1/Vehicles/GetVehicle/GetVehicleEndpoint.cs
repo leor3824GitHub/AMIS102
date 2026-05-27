@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.Vehicle.Contracts.v1.Vehicles;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.Vehicle.Contracts.Permissions;
 
 namespace AMIS.Modules.Vehicle.Features.v1.Vehicles.GetVehicle;
 
@@ -19,6 +20,6 @@ public static class GetVehicleEndpoint
         .WithSummary("Get vehicle by ID")
         .Produces<VehicleDto>()
         .Produces(StatusCodes.Status404NotFound)
-        .RequirePermission(VehicleModuleConstants.Permissions.Vehicles.View);
+        .RequirePermission(VehiclePermissions.Vehicles.View);
 }
 

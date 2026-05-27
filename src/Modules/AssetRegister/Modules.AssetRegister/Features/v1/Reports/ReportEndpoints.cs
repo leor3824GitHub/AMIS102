@@ -1,10 +1,11 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.AssetRegister.Contracts.v1;
 using AMIS.Modules.AssetRegister.Contracts.v1.Reports;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetRegister.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetRegister.Features.v1.Reports;
 
@@ -17,41 +18,41 @@ public static class ReportEndpoints
             .WithSummary("Generate accountability document view (ICS/PAR)")
             .Produces<AccountabilityReportDto>()
             .Produces(StatusCodes.Status404NotFound)
-            .RequirePermission(AssetRegisterModuleConstants.Permissions.Accountability.View);
+            .RequirePermission(AssetRegisterPermissions.Accountability.View);
 
         endpoints.MapGet("/issuance/{id:guid}", HandleIssuanceReport)
             .WithModuleName<GetIssuanceReportDocumentQuery>()
             .WithSummary("Generate issuance document view (RSPI/PPEIR)")
             .Produces<IssuanceReportDocumentDto>()
             .Produces(StatusCodes.Status404NotFound)
-            .RequirePermission(AssetRegisterModuleConstants.Permissions.Issuance.View);
+            .RequirePermission(AssetRegisterPermissions.Issuance.View);
 
         endpoints.MapGet("/count/{sessionId:guid}", HandlePhysicalCountReport)
             .WithModuleName<GetPhysicalCountReportQuery>()
             .WithSummary("Generate physical count report view (RPCSEMEX/RPCPPE)")
             .Produces<PhysicalCountReportDto>()
             .Produces(StatusCodes.Status404NotFound)
-            .RequirePermission(AssetRegisterModuleConstants.Permissions.Count.View);
+            .RequirePermission(AssetRegisterPermissions.Count.View);
 
         endpoints.MapGet("/regspi", HandleRegSpiReport)
             .WithModuleName<GetRegSpiReportQuery>()
             .WithSummary("Generate RegSPI document view")
             .Produces<RegSpiReportDto>()
-            .RequirePermission(AssetRegisterModuleConstants.Permissions.Accountability.View);
+            .RequirePermission(AssetRegisterPermissions.Accountability.View);
 
         endpoints.MapGet("/incidents/{id:guid}", HandleIncidentReport)
             .WithModuleName<GetIncidentReportDocumentQuery>()
             .WithSummary("Generate incident document view (RLSDDSP)")
             .Produces<IncidentReportDocumentDto>()
             .Produces(StatusCodes.Status404NotFound)
-            .RequirePermission(AssetRegisterModuleConstants.Permissions.Incident.View);
+            .RequirePermission(AssetRegisterPermissions.Incident.View);
 
         endpoints.MapGet("/unserviceable/{id:guid}", HandleUnserviceableReport)
             .WithModuleName<GetUnserviceableReportDocumentQuery>()
             .WithSummary("Generate unserviceable document view (IIRUSP/IIRUP)")
             .Produces<UnserviceableReportDocumentDto>()
             .Produces(StatusCodes.Status404NotFound)
-            .RequirePermission(AssetRegisterModuleConstants.Permissions.Unserviceable.View);
+            .RequirePermission(AssetRegisterPermissions.Unserviceable.View);
 
         return endpoints;
     }

@@ -1,8 +1,9 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetManagement.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetManagement.Features.v1.SemiExpendableItems.GetSemiExpendableItemById;
 
@@ -14,7 +15,7 @@ public static class GetSemiExpendableItemByIdEndpoint
             .WithSummary("Get item catalog entry by ID")
             .Produces<PropertyItemCatalogDetailsDto>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound)
-            .RequirePermission(AssetManagementModuleConstants.Permissions.SemiExpendableItems.View);
+            .RequirePermission(AssetManagementPermissions.SemiExpendableItems.View);
 
     private static async Task<IResult> GetItemCatalogById(
         Guid id,

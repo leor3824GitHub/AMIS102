@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.ProcurementPlanning.Contracts.Permissions;
 
 namespace AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.ConsolidatePpmps;
 
@@ -14,7 +15,7 @@ public static class ConsolidatePpmpsEndpoint
             .WithName(nameof(ConsolidatePpmpsCommand))
             .WithSummary("Consolidate approved PPMPs into an APP")
             .Produces<AnnualProcurementPlanDto>()
-            .RequirePermission(ProcurementPlanningModuleConstants.Permissions.AnnualProcurementPlans.Consolidate);
+            .RequirePermission(ProcurementPlanningPermissions.AnnualProcurementPlans.Consolidate);
 
     private static async Task<IResult> Handle(
         Guid id, ConsolidatePpmpsCommand command, IMediator mediator, CancellationToken ct)

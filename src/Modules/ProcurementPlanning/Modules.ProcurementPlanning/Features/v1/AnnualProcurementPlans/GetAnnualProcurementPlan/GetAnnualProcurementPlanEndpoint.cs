@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.ProcurementPlanning.Contracts.Permissions;
 
 namespace AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.GetAnnualProcurementPlan;
 
@@ -15,7 +16,7 @@ public static class GetAnnualProcurementPlanEndpoint
             .WithSummary("Get an APP by ID")
             .Produces<AnnualProcurementPlanDto>()
             .Produces(StatusCodes.Status404NotFound)
-            .RequirePermission(ProcurementPlanningModuleConstants.Permissions.AnnualProcurementPlans.View);
+            .RequirePermission(ProcurementPlanningPermissions.AnnualProcurementPlans.View);
 
     private static async Task<IResult> Handle(Guid id, IMediator mediator, CancellationToken ct)
     {

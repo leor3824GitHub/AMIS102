@@ -1,9 +1,10 @@
-using AMIS.Modules.Vehicle.Contracts.v1.Vehicles;
+﻿using AMIS.Modules.Vehicle.Contracts.v1.Vehicles;
 using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.Vehicle.Contracts.Permissions;
 
 namespace AMIS.Modules.Vehicle.Features.v1.Vehicles.GetMotorVehicleInventory;
 
@@ -14,7 +15,7 @@ public static class GetMotorVehicleInventoryEndpoint
             .WithName(nameof(GetMotorVehicleInventoryQuery))
             .WithSummary("Inventory of Motor Vehicles report with specifications and accountable officers")
             .Produces<List<MotorVehicleInventoryItemDto>>(StatusCodes.Status200OK)
-            .RequirePermission(VehicleModuleConstants.Permissions.Vehicles.View);
+            .RequirePermission(VehiclePermissions.Vehicles.View);
 
     private static async Task<IResult> GetInventory(
         [AsParameters] GetMotorVehicleInventoryQuery query,

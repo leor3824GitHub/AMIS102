@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.Vehicle.Contracts.v1.Repairs;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.Vehicle.Contracts.Permissions;
 
 namespace AMIS.Modules.Vehicle.Features.v1.Repairs.CompleteRepair;
 
@@ -16,9 +17,9 @@ public static class CompleteRepairEndpoint
             return TypedResults.NoContent();
         })
         .WithName(nameof(CompleteRepairCommand))
-        .WithSummary("Complete a repair — reactivates vehicle if no other active repairs")
+        .WithSummary("Complete a repair â€” reactivates vehicle if no other active repairs")
         .Produces(StatusCodes.Status204NoContent)
         .Produces(StatusCodes.Status400BadRequest)
-        .RequirePermission(VehicleModuleConstants.Permissions.Repairs.Update);
+        .RequirePermission(VehiclePermissions.Repairs.Update);
 }
 

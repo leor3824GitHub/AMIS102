@@ -1,10 +1,11 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Framework.Shared.Persistence;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.ProcurementAcquisition.Contracts.Permissions;
 
 namespace AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.SearchPurchaseRequests;
 
@@ -15,7 +16,7 @@ public static class SearchPurchaseRequestsEndpoint
             .WithName($"Procurement.{nameof(SearchPurchaseRequestsQuery)}")
             .WithSummary("Search purchase requests with pagination")
             .Produces<PagedResponse<PurchaseRequestSummaryDto>>(StatusCodes.Status200OK)
-            .RequirePermission(ProcurementAcquisitionModuleConstants.Permissions.PurchaseRequests.View);
+            .RequirePermission(ProcurementPermissions.PurchaseRequests.View);
 
     private static async Task<IResult> SearchPurchaseRequests(
         [AsParameters] SearchPurchaseRequestsQuery query,

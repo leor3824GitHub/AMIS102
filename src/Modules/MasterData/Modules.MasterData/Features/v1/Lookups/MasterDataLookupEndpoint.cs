@@ -1,4 +1,4 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Framework.Shared.Persistence;
 using AMIS.Modules.MasterData.Contracts.v1.References;
 using Mediator;
@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.MasterData.Contracts.Permissions;
 
 namespace AMIS.Modules.MasterData.Features.v1.Lookups;
 
@@ -17,45 +18,45 @@ public static class MasterDataLookupEndpoint
             .WithName(nameof(SearchEmployeeReferencesQuery))
             .WithSummary("Search employee references")
             .Produces<PagedResponse<EmployeeReferenceDto>>(StatusCodes.Status200OK)
-            .RequirePermission(MasterDataModuleConstants.Permissions.Lookup.View);
+            .RequirePermission(MasterDataPermissions.Lookup.View);
 
         endpoints.MapGet("/employees/{id:guid}", GetEmployeeById)
             .WithName(nameof(GetEmployeeReferenceByIdQuery))
             .WithSummary("Get employee reference by id")
             .Produces<EmployeeReferenceDto>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound)
-            .RequirePermission(MasterDataModuleConstants.Permissions.Lookup.View);
+            .RequirePermission(MasterDataPermissions.Lookup.View);
 
         endpoints.MapGet("/employees/by-identity/{identityUserId}", GetEmployeeByIdentity)
             .WithName(nameof(GetEmployeeReferenceByIdentityUserIdQuery))
             .WithSummary("Get employee reference by identity user id")
             .Produces<EmployeeReferenceDto>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound)
-            .RequirePermission(MasterDataModuleConstants.Permissions.Lookup.View);
+            .RequirePermission(MasterDataPermissions.Lookup.View);
 
         endpoints.MapGet("/offices", ListOffices)
             .WithName(nameof(ListOfficeReferencesQuery))
             .WithSummary("Search office references with pagination")
             .Produces<PagedResponse<OfficeReferenceDto>>(StatusCodes.Status200OK)
-            .RequirePermission(MasterDataModuleConstants.Permissions.Lookup.View);
+            .RequirePermission(MasterDataPermissions.Lookup.View);
 
         endpoints.MapGet("/departments", ListDepartments)
             .WithName(nameof(ListDepartmentReferencesQuery))
             .WithSummary("Search department references with pagination")
             .Produces<PagedResponse<DepartmentReferenceDto>>(StatusCodes.Status200OK)
-            .RequirePermission(MasterDataModuleConstants.Permissions.Lookup.View);
+            .RequirePermission(MasterDataPermissions.Lookup.View);
 
         endpoints.MapGet("/positions", ListPositions)
             .WithName(nameof(ListPositionReferencesQuery))
             .WithSummary("Search position references with pagination")
             .Produces<PagedResponse<PositionReferenceDto>>(StatusCodes.Status200OK)
-            .RequirePermission(MasterDataModuleConstants.Permissions.Lookup.View);
+            .RequirePermission(MasterDataPermissions.Lookup.View);
 
         endpoints.MapGet("/unit-of-measures", ListUnitOfMeasures)
             .WithName(nameof(ListUnitOfMeasureReferencesQuery))
             .WithSummary("Search unit of measure references with pagination")
             .Produces<PagedResponse<UnitOfMeasureReferenceDto>>(StatusCodes.Status200OK)
-            .RequirePermission(MasterDataModuleConstants.Permissions.Lookup.View);
+            .RequirePermission(MasterDataPermissions.Lookup.View);
     }
 
     private static async Task<IResult> SearchEmployees(

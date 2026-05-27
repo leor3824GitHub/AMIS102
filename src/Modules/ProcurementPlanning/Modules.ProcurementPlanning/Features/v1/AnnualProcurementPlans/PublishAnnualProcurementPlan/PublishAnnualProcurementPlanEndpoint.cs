@@ -1,9 +1,10 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.ProcurementPlanning.Contracts.Permissions;
 
 namespace AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.PublishAnnualProcurementPlan;
 
@@ -14,7 +15,7 @@ public static class PublishAnnualProcurementPlanEndpoint
             .WithName(nameof(PublishAnnualProcurementPlanCommand))
             .WithSummary("Publish an APP (lock and make official)")
             .Produces<AnnualProcurementPlanDto>()
-            .RequirePermission(ProcurementPlanningModuleConstants.Permissions.AnnualProcurementPlans.Publish);
+            .RequirePermission(ProcurementPlanningPermissions.AnnualProcurementPlans.Publish);
 
     private static async Task<IResult> Handle(Guid id, IMediator mediator, CancellationToken ct)
     {

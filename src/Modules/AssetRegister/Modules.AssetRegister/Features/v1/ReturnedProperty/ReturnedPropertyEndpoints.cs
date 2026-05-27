@@ -1,4 +1,4 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Framework.Shared.Persistence;
 using AMIS.Modules.AssetRegister.Contracts.v1;
 using AMIS.Modules.AssetRegister.Contracts.v1.ReturnedProperty;
@@ -6,6 +6,7 @@ using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetRegister.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetRegister.Features.v1.ReturnedProperty;
 
@@ -20,7 +21,7 @@ internal static class ReturnedPropertyEndpoints
         })
             .WithModuleName<CreateReturnedPropertyReceiptCommand>()
             .WithSummary("Create a Receipt for Returned Property (RRSP / RRP)")
-            .RequirePermission(AssetRegisterModuleConstants.Permissions.ReturnedProperty.Create);
+            .RequirePermission(AssetRegisterPermissions.ReturnedProperty.Create);
 
         group.MapGet("/{id:guid}", async (Guid id, IMediator mediator, CancellationToken ct) =>
         {
@@ -29,7 +30,7 @@ internal static class ReturnedPropertyEndpoints
         })
             .WithModuleName<GetReturnedPropertyReceiptQuery>()
             .WithSummary("Get a returned-property receipt by ID")
-            .RequirePermission(AssetRegisterModuleConstants.Permissions.ReturnedProperty.View);
+            .RequirePermission(AssetRegisterPermissions.ReturnedProperty.View);
 
         group.MapGet("/", async (
             [AsParameters] SearchReturnedPropertyReceiptsQuery query,
@@ -37,6 +38,6 @@ internal static class ReturnedPropertyEndpoints
             TypedResults.Ok(await mediator.Send(query, ct)))
             .WithModuleName<SearchReturnedPropertyReceiptsQuery>()
             .WithSummary("Search returned-property receipts")
-            .RequirePermission(AssetRegisterModuleConstants.Permissions.ReturnedProperty.View);
+            .RequirePermission(AssetRegisterPermissions.ReturnedProperty.View);
     }
 }

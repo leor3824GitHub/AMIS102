@@ -91,6 +91,7 @@ Modules/{Module}/Features/v1/{Feature}/
 | Avoid mixing default and compact controls in one row                  | Prevents visible height mismatch and misalignment |
 | Use `IOrganizationProfileState` for agency/officer data in reports   | Scoped session state — zero HTTP calls per page   |
 | Never fetch org profile per-page with `IOrganizationProfileClient`   | Already loaded by `PlaygroundLayout` at session start |
+| Gate every action button with `UserProfileState.Permissions.Contains(...)` | Mirror the endpoint's `.RequirePermission()` so users don't see buttons they can't use |
 
 Details: See `.claude/rules/blazor.md`
 

@@ -1,9 +1,10 @@
-using AMIS.Modules.Expendable.Contracts.v1.Purchases;
+﻿using AMIS.Modules.Expendable.Contracts.v1.Purchases;
 using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.Expendable.Contracts.Permissions;
 
 namespace AMIS.Modules.Expendable.Features.v1.Purchases.AddPurchaseLineItem;
 
@@ -16,7 +17,7 @@ public static class AddPurchaseLineItemEndpoint
             .Produces(StatusCodes.Status204NoContent)
             .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status404NotFound)
-            .RequirePermission(ExpendableModuleConstants.Permissions.Purchases.Update);
+            .RequirePermission(ExpendablePermissions.Purchases.Update);
 
     private static async Task<IResult> AddLineItem(
         Guid purchaseId,

@@ -1,8 +1,9 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetManagement.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetManagement.Features.v1.TangibleInventory.DeleteTangibleInventory;
 
@@ -18,6 +19,6 @@ public static class DeleteTangibleInventoryEndpoint
         .WithSummary("Soft-delete a Tangible Inventory receiving report")
         .Produces(StatusCodes.Status204NoContent)
         .Produces(StatusCodes.Status404NotFound)
-        .RequirePermission(AssetManagementModuleConstants.Permissions.TangibleInventory.Delete);
+        .RequirePermission(AssetManagementPermissions.TangibleInventory.Delete);
 }
 

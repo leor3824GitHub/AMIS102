@@ -1,8 +1,9 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetManagement.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetManagement.Features.v1.ReceiptForReturnedProperties.GetRRSPById;
 
@@ -14,7 +15,7 @@ public static class GetRRSPByIdEndpoint
             .WithSummary("Get a Receipt for Returned Semi-Expendable Property by ID")
             .Produces<RRSPDetailsDto>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound)
-            .RequirePermission(AssetManagementModuleConstants.Permissions.ReceiptForReturnedProperties.View);
+            .RequirePermission(AssetManagementPermissions.ReceiptForReturnedProperties.View);
 
     private static async Task<IResult> GetRRSPById(
         Guid id,

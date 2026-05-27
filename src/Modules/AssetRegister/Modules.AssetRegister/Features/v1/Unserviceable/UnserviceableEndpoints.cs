@@ -1,4 +1,4 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Framework.Shared.Persistence;
 using AMIS.Modules.AssetRegister.Contracts.v1;
 using AMIS.Modules.AssetRegister.Contracts.v1.Unserviceable;
@@ -6,6 +6,7 @@ using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.AssetRegister.Contracts.Permissions;
 
 namespace AMIS.Modules.AssetRegister.Features.v1.Unserviceable;
 
@@ -22,7 +23,7 @@ public static class UnserviceableEndpoints
             .WithModuleName<CreateUnserviceableReportDraftCommand>()
             .WithSummary("Create a draft unserviceable property report (IIRUSP/IIRUP)")
             .Produces<UnserviceablePropertyReportDto>(StatusCodes.Status201Created)
-            .RequirePermission(AssetRegisterModuleConstants.Permissions.Unserviceable.File);
+            .RequirePermission(AssetRegisterPermissions.Unserviceable.File);
 
         endpoints.MapPost("/{id:guid}/items", async (
                 Guid id, AddUnserviceableReportItemCommand cmd, IMediator mediator, CancellationToken ct) =>
@@ -33,7 +34,7 @@ public static class UnserviceableEndpoints
             .WithModuleName<AddUnserviceableReportItemCommand>()
             .WithSummary("Add an item to a draft unserviceable report")
             .Produces<UnserviceablePropertyReportDto>()
-            .RequirePermission(AssetRegisterModuleConstants.Permissions.Unserviceable.File);
+            .RequirePermission(AssetRegisterPermissions.Unserviceable.File);
 
         endpoints.MapPost("/{id:guid}/submit", async (
                 Guid id, SubmitUnserviceableReportCommand cmd, IMediator mediator, CancellationToken ct) =>
@@ -44,7 +45,7 @@ public static class UnserviceableEndpoints
             .WithModuleName<SubmitUnserviceableReportCommand>()
             .WithSummary("Submit a draft unserviceable report")
             .Produces<UnserviceablePropertyReportDto>()
-            .RequirePermission(AssetRegisterModuleConstants.Permissions.Unserviceable.File);
+            .RequirePermission(AssetRegisterPermissions.Unserviceable.File);
 
         endpoints.MapPost("/{id:guid}/inspection", async (
                 Guid id, RecordUnserviceableInspectionCommand cmd, IMediator mediator, CancellationToken ct) =>
@@ -55,7 +56,7 @@ public static class UnserviceableEndpoints
             .WithModuleName<RecordUnserviceableInspectionCommand>()
             .WithSummary("Record inspection decisions per item")
             .Produces<UnserviceablePropertyReportDto>()
-            .RequirePermission(AssetRegisterModuleConstants.Permissions.Unserviceable.Dispose);
+            .RequirePermission(AssetRegisterPermissions.Unserviceable.Dispose);
 
         endpoints.MapPost("/{id:guid}/disposal", async (
                 Guid id, RecordUnserviceableDisposalCommand cmd, IMediator mediator, CancellationToken ct) =>
@@ -64,16 +65,16 @@ public static class UnserviceableEndpoints
                 return (IResult)TypedResults.Ok(await mediator.Send(cmd, ct));
             })
             .WithModuleName<RecordUnserviceableDisposalCommand>()
-            .WithSummary("Record disposal records — flips assets to Disposed")
+            .WithSummary("Record disposal records â€” flips assets to Disposed")
             .Produces<UnserviceablePropertyReportDto>()
-            .RequirePermission(AssetRegisterModuleConstants.Permissions.Unserviceable.Dispose);
+            .RequirePermission(AssetRegisterPermissions.Unserviceable.Dispose);
 
         endpoints.MapPost("/{id:guid}/close", async (Guid id, IMediator mediator, CancellationToken ct) =>
                 TypedResults.Ok(await mediator.Send(new CloseUnserviceableReportCommand(id), ct)))
             .WithModuleName<CloseUnserviceableReportCommand>()
             .WithSummary("Close a fully disposed unserviceable report")
             .Produces<UnserviceablePropertyReportDto>()
-            .RequirePermission(AssetRegisterModuleConstants.Permissions.Unserviceable.Dispose);
+            .RequirePermission(AssetRegisterPermissions.Unserviceable.Dispose);
 
         endpoints.MapGet("/{id:guid}", async (Guid id, IMediator mediator, CancellationToken ct) =>
             {
@@ -84,7 +85,7 @@ public static class UnserviceableEndpoints
             .WithSummary("Get an unserviceable report by id")
             .Produces<UnserviceablePropertyReportDto>()
             .Produces(StatusCodes.Status404NotFound)
-            .RequirePermission(AssetRegisterModuleConstants.Permissions.Unserviceable.View);
+            .RequirePermission(AssetRegisterPermissions.Unserviceable.View);
 
         endpoints.MapGet("/", async (
                 IMediator mediator,
@@ -104,7 +105,7 @@ public static class UnserviceableEndpoints
             .WithModuleName<SearchUnserviceableReportsQuery>()
             .WithSummary("Search unserviceable reports")
             .Produces<PagedResponse<UnserviceablePropertyReportSummaryDto>>()
-            .RequirePermission(AssetRegisterModuleConstants.Permissions.Unserviceable.View);
+            .RequirePermission(AssetRegisterPermissions.Unserviceable.View);
 
         return endpoints;
     }
