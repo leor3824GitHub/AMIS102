@@ -533,7 +533,8 @@
             [nameof(FastReportPageSetupDialog.PaperSize)] = "a4",
             [nameof(FastReportPageSetupDialog.Orientation)] = "landscape",
             [nameof(FastReportPageSetupDialog.Copies)] = 2,
-            [nameof(FastReportPageSetupDialog.MinRows)] = 10
+            [nameof(FastReportPageSetupDialog.MinRows)] = 10,
+            [nameof(FastReportPageSetupDialog.SupportsPortraitTwoCopies)] = true
         };
         var options = new DialogOptions { MaxWidth = MaxWidth.ExtraSmall, FullWidth = false, CloseOnEscapeKey = true };
         var dialog = await DialogService.ShowAsync<FastReportPageSetupDialog>("Page Setup", parameters, options);

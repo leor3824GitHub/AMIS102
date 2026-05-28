@@ -26,6 +26,9 @@ public sealed class PurchaseOrderConfiguration : IEntityTypeConfiguration<Purcha
         builder.Property(x => x.ModeOfProcurement).IsRequired();
         builder.Property(x => x.Status).IsRequired();
         builder.Property(x => x.CancellationReason).HasMaxLength(1000);
+
+        // Funds Available — Accountant
+        builder.Property(x => x.FundsAvailableCertifiedByName).HasMaxLength(200);
         // Version column kept for future xmin-based concurrency; not active until properly wired
 
         builder.HasIndex(x => new { x.TenantId, x.PoNumber }).IsUnique();

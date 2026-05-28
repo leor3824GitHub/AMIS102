@@ -376,9 +376,10 @@
             }
 
             PurchaseRequestSummaryDto? prSummary = null;
+            PurchaseRequestDto? pr = null;
             try
             {
-                var pr = await PurchaseRequestClient.GetAsync(canvass.PurchaseRequestId);
+                pr = await PurchaseRequestClient.GetAsync(canvass.PurchaseRequestId);
                 if (pr is not null)
                 {
                     prSummary = new PurchaseRequestSummaryDto(
@@ -388,6 +389,15 @@
                 }
             }
             catch { }
+
+            // The PO's UACS (and catalog reference) originate on the PR line items, certified at PR
+            // "Funds Available". The awarded canvass quotation carries neither, so match each canvass
+            // line back to its PR line by description to carry the certified UACS forward to the PO.
+            var prLineByDescription = pr?.LineItems
+                .GroupBy(li => NormalizeItem(li.ItemDescription))
+                .Where(g => g.Key.Length > 0)
+                .ToDictionary(g => g.Key, g => g.First())
+                ?? [];
 
             _prefilledCanvass = canvass;
             _selectedPurchaseRequest = prSummary;
@@ -413,15 +423,19 @@
                 DeliveryTerm = awarded.DeliveryTerms ?? "30 days",
                 PaymentTerm = "30 days",
                 LineItems = awarded.LineItems
-                    .Select(li => new PoLineItemRow
+                    .Select(li =>
                     {
-                        StockNumber = null,
-                        Unit = li.Unit,
-                        Description = li.Description,
-                        Quantity = li.Quantity,
-                        UnitCost = li.UnitPrice,
-                        CatalogItemId = null,
-                        UacsObjectCode = null
+                        prLineByDescription.TryGetValue(NormalizeItem(li.Description), out var prLine);
+                        return new PoLineItemRow
+                        {
+                            StockNumber = null,
+                            Unit = li.Unit,
+                            Description = li.Description,
+                            Quantity = li.Quantity,
+                            UnitCost = li.UnitPrice,
+                            CatalogItemId = prLine?.CatalogItemId,
+                            UacsObjectCode = prLine?.UacsObjectCode
+                        };
                     })
                     .ToList()
             };

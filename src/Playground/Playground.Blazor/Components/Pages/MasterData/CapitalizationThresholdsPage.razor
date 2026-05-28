@@ -3,6 +3,7 @@
 @using AMIS.Playground.Blazor.ApiClient
 @using MudBlazor
 @inject ICapitalizationThresholdClient Client
+@inject ICapitalizationThresholdState ThresholdState
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 
@@ -107,7 +108,7 @@ else if (_loaded)
                                      AdornmentText="?"
                                      Min="1"
                                      Required="true"
-                                     HelperText="Items at or below this amount are low-valued semi-expendable (§4.8)" />
+                                     HelperText="Items at or below this amount are low-valued semi-expendable (ï¿½4.8)" />
 
                     <MudDatePicker @bind-Date="_form.EffectivityDateNullable"
                                    Label="Effectivity Date"
@@ -177,7 +178,7 @@ else if (_loaded)
                                     <td>
                                         <MudText Typo="Typo.body2"><b>@t.CircularName</b></MudText>
                                         <MudText Typo="Typo.caption" Color="Color.Secondary" Style="max-width:260px;white-space:normal">
-                                            @(t.Description.Length > 80 ? t.Description[..80] + "…" : t.Description)
+                                            @(t.Description.Length > 80 ? t.Description[..80] + "ï¿½" : t.Description)
                                         </MudText>
                                     </td>
                                     <td style="text-align:right">?@t.CapitalizationAmount.ToString("N2")</td>
@@ -248,6 +249,7 @@ else if (_loaded)
         {
             _thresholds = (await Client.GetAllAsync()).ToList();
             _active = _thresholds.FirstOrDefault(x => x.IsActive);
+            ThresholdState.Set(_active);
         }
         catch (Exception ex)
         {

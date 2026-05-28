@@ -64,6 +64,9 @@ builder.Services.AddScoped<IUserProfileState, UserProfileState>();
 // Organization profile state — loaded once per session in PlaygroundLayout, consumed by report pages
 builder.Services.AddScoped<IOrganizationProfileState, OrganizationProfileState>();
 
+// Capitalization threshold state — loaded once per session, consumed by PR/receiving forms and reports
+builder.Services.AddScoped<ICapitalizationThresholdState, CapitalizationThresholdState>();
+
 // Auth state notifier for session expiration (Blazor-compatible)
 builder.Services.AddScoped<IAuthStateNotifier, AuthStateNotifier>();
 

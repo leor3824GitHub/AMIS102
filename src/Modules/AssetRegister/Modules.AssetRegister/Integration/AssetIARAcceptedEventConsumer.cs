@@ -5,7 +5,9 @@ using AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
 using AMIS.Modules.AssetRegister.Data;
 using AMIS.Modules.AssetRegister.Domain.Assets;
 using AMIS.Modules.AssetRegister.Domain.Catalog;
+using AMIS.Modules.MasterData.Contracts.v1.CapitalizationThresholds;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.AssetInspectionAcceptanceReports;
+using Mediator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -19,10 +21,15 @@ namespace AMIS.Modules.AssetRegister.Integration;
 /// </summary>
 internal sealed class AssetIARAcceptedEventConsumer(
     AssetRegisterDbContext db,
+    IMediator mediator,
     ILogger<AssetIARAcceptedEventConsumer> logger) : IIntegrationEventHandler<AssetIARAcceptedEvent>
 {
-    // High-valued threshold per COA 2022-004 §4.2 — Php 50,000.
-    private const decimal HighValuedThreshold = 50_000m;
+    // Used to classify materialized assets when no active CapitalizationThreshold master data row exists
+    // (PPE vs SE at Php 50,000 §4.2; high- vs low-value SE at Php 5,000 §4.8 — COA Circular 2022-004).
+    private static readonly CapitalizationThresholdDto FallbackThreshold = new(
+        Guid.Empty, "COA Circular 2022-004 (default)", string.Empty,
+        CapitalizationAmount: 50_000m, SemiExpendableLowValueThreshold: 5_000m,
+        EffectivityDate: default, IsActive: true);
 
     public async Task HandleAsync(AssetIARAcceptedEvent @event, CancellationToken ct = default)
     {
@@ -39,6 +46,9 @@ internal sealed class AssetIARAcceptedEventConsumer(
             ? new Dictionary<Guid, PropertyItemCatalog>()
             : await db.PropertyItemCatalogs.Where(c => ids.Contains(c.Id))
                 .ToDictionaryAsync(c => c.Id, ct).ConfigureAwait(false);
+
+        var threshold = await mediator.Send(new GetActiveCapitalizationThresholdQuery(), ct).ConfigureAwait(false)
+            ?? FallbackThreshold;
 
         var materialized = 0;
         var skipped = 0;
@@ -83,7 +93,7 @@ internal sealed class AssetIARAcceptedEventConsumer(
                 continue;
             }
 
-            var (assetType, category) = ClassifyFromCatalog(catalog, line.UnitCost);
+            var (assetType, category) = ClassifyFromCatalog(catalog, line.UnitCost, threshold);
             var quantity = (int)Math.Floor(line.Quantity);
             if (quantity <= 0)
             {
@@ -130,13 +140,15 @@ internal sealed class AssetIARAcceptedEventConsumer(
             tenantId, @event.IARId, materialized, skipped, @event.AcceptedItems.Count);
     }
 
-    private static (AssetType, AssetCategory) ClassifyFromCatalog(PropertyItemCatalog catalog, decimal unitCost)
+    private static (AssetType, AssetCategory) ClassifyFromCatalog(
+        PropertyItemCatalog catalog, decimal unitCost, CapitalizationThresholdDto threshold)
     {
-        // PropertyClass naming convention: contains "PPE" → PPE; else SE.
-        if (catalog.DefaultPropertyClass.Contains("PPE", StringComparison.OrdinalIgnoreCase))
+        // A catalog item tagged PPE in its PropertyClass is booked as PPE even below the cutoff — COA wins.
+        var isPpeClass = catalog.DefaultPropertyClass.Contains("PPE", StringComparison.OrdinalIgnoreCase);
+        if (isPpeClass || threshold.IsCapitalAsset(unitCost))
             return (AssetType.PPE, AssetCategory.PPE);
 
-        return unitCost >= HighValuedThreshold
+        return threshold.IsHighValueSemiExpendable(unitCost)
             ? (AssetType.SE, AssetCategory.HighValuedSemi)
             : (AssetType.SE, AssetCategory.LowValuedSemi);
     }

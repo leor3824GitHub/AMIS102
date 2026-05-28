@@ -3,7 +3,7 @@
 @inject IPPERRClient Client
 @inject ILookupClient LookupClient
 @inject ITangibleItemClient TangibleClient
-@inject ICapitalizationThresholdClient CapThresholdClient
+@inject ICapitalizationThresholdState ThresholdState
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 
@@ -373,8 +373,8 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var threshold = await CapThresholdClient.GetActiveAsync();
-        _capitalizationThreshold = threshold?.CapitalizationAmount ?? 0m;
+        await ThresholdState.EnsureLoadedAsync();
+        _capitalizationThreshold = ThresholdState.Threshold?.CapitalizationAmount ?? 0m;
         await LoadAsync();
     }
 

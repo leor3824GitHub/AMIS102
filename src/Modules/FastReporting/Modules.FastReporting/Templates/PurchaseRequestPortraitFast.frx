@@ -1,0 +1,494 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Report ScriptLanguage="CSharp" ReportInfo.Created="05/27/2026 00:00:00" ReportInfo.Modified="05/28/2026 00:00:00" ReportInfo.CreatorVersion="2025.1.0">
+  <Dictionary />
+  <!--
+    Data sources are registered at runtime via Report.RegisterData(IEnumerable, name).
+    Same data contract as PurchaseRequestFast.frx (landscape):
+      PurchaseRequestDS (header) + LineItemsDS (rows).
+
+    NOTE: This portrait template does NOT use a DataBand. Two full-width PR copies are
+    stacked vertically on a single page (top + bottom). Everything lives in one tall
+    ReportTitleBand so the whole layout is positioned deterministically and never spills
+    onto a second page. The handler populates each row slot by name (T_R{i}_* for the top
+    copy, B_R{i}_* for the bottom copy) because FastReport bands can't flow the same data
+    source into two non-contiguous regions of the same physical page. Capacity: 12 items.
+  -->
+
+  <!--
+    Layout: A4 portrait (210 × 297 mm), 8 mm margins.
+    Content width  = (210-16) × 3.7795 ≈ 733 units
+    Content height = (297-16) × 3.7795 ≈ 1062 units
+
+    Two identical PR copies stacked top/bottom, each full content width:
+      Top copy    : y = 2    … 493   (≈ 130 mm)
+      Cut zone     : y = 493  … 526   (≈  8.7 mm)  ← cut here
+      Bottom copy : y = 526  … 1017  (≈ 130 mm)
+    Entire content sits in ReportTitleBand (Height = 1018). A 16-unit PageFooterBand
+    holds pagination. 1018 + 16 = 1034 ≤ 1062 → always one page.
+
+    Column widths (per copy, total 733):
+      Stock No  ( 9.5%) :  70     x=0
+      Unit      ( 7.5%) :  55     x=70
+      Description (52%) : 380     x=125
+      Quantity  ( 8.9%) :  65     x=505
+      Unit Cost (10.6%) :  78     x=570
+      Total Cost(11.6%) :  85     x=648..733
+  -->
+
+  <ReportPage Name="Page1"
+    Watermark.Font="Arial, 60pt"
+    PaperWidth="210" PaperHeight="297"
+    LeftMargin="8" TopMargin="8" RightMargin="8" BottomMargin="8"
+    Landscape="false">
+
+    <!-- ═══════════════════════════════════════════════════════════
+         REPORT TITLE BAND  (renders once) — holds BOTH copies.
+         Height = 1018 covers top copy (2..493), cut line (500..516),
+         and bottom copy (526..1017). Bottom = top + 524 Y-offset.
+         ═══════════════════════════════════════════════════════════ -->
+    <ReportTitleBand Name="ReportTitle1" Width="733" Height="1018">
+
+      <!-- ╔══════════════════════ TOP COPY ══════════════════════╗ -->
+
+      <!-- ── TOP COPY: Org Header ─────────────────────────── -->
+      <TextObject Name="T_Republic" Left="0" Top="2" Width="733" Height="14.3"
+        Text="Republic of the Philippines" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt" />
+      <TextObject Name="T_NFA" Left="0" Top="18.3" Width="733" Height="17.6"
+        Text="National Food Authority" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 10pt, style=Bold" />
+      <TextObject Name="T_OrgName" Left="0" Top="37.9" Width="733" Height="14.3"
+        Text="[PurchaseRequestDS.OrgName]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt" />
+      <TextObject Name="T_OrgAddr" Left="0" Top="54.2" Width="733" Height="14.3"
+        Text="[PurchaseRequestDS.OrgAddress]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt" />
+
+      <!-- ── TOP COPY: Exhibit 4 + Title ──────────────────── -->
+      <TextObject Name="T_Exhibit" Left="0" Top="71.5" Width="733" Height="14.3"
+        Text="Exhibit 4" HorzAlign="Right" VertAlign="Center"
+        Font="Times New Roman, 10pt, style=Bold" />
+      <TextObject Name="T_Title" Left="0" Top="85.8" Width="733" Height="22"
+        Text="PURCHASE REQUEST" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 14pt, style=Bold" />
+
+      <!-- ── TOP COPY: PR Form Header  top=111, H=33.9 ── -->
+      <TextObject Name="T_DeptLbl" Left="0" Top="111" Width="60" Height="33.9"
+        Text="Name of Department/Office/Section:"
+        Font="Times New Roman, 7pt" HorzAlign="Left" VertAlign="Center" WordWrap="true"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="T_DeptVal" Left="60" Top="111" Width="220" Height="33.9"
+        Text="[PurchaseRequestDS.DepartmentName]"
+        Font="Times New Roman, 8pt" VertAlign="Center" WordWrap="true"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="T_PrNoLbl" Left="280" Top="111" Width="60" Height="16.95"
+        Text="PR No.:"
+        Font="Times New Roman, 7pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="T_PrNoVal" Left="340" Top="111" Width="200" Height="16.95"
+        Text="[PurchaseRequestDS.PrNumber]"
+        Font="Times New Roman, 8pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="T_RccLbl" Left="280" Top="127.95" Width="60" Height="16.95"
+        Text="RC Code:"
+        Font="Times New Roman, 7pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="T_RccVal" Left="340" Top="127.95" Width="200" Height="16.95"
+        Text="[PurchaseRequestDS.ResponsibilityCenterCode]"
+        Font="Times New Roman, 8pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="T_DateLbl" Left="540" Top="111" Width="40" Height="33.9"
+        Text="Date:"
+        Font="Times New Roman, 7pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="T_DateVal" Left="580" Top="111" Width="153" Height="33.9"
+        Text="[PurchaseRequestDS.PrDate]"
+        Font="Times New Roman, 8pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+
+      <!-- ── TOP COPY: Table Column Headers (top=144.9, H=33.9) ── -->
+      <TextObject Name="T_HStockNo" Left="0" Top="144.9" Width="70" Height="33.9"
+        Text="Stock&#10;Property&#10;No." HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 7pt, style=Bold"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="T_HUnit" Left="70" Top="144.9" Width="55" Height="33.9"
+        Text="Unit" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 7pt, style=Bold"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="T_HDesc" Left="125" Top="144.9" Width="380" Height="33.9"
+        Text="Item Description" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 7pt, style=Bold"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="T_HQty" Left="505" Top="144.9" Width="65" Height="33.9"
+        Text="Quantity" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 7pt, style=Bold"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="T_HUnitCost" Left="570" Top="144.9" Width="78" Height="33.9"
+        Text="Unit Cost" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 7pt, style=Bold"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="T_HTotalCost" Left="648" Top="144.9" Width="85" Height="33.9"
+        Text="Total Cost" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 7pt, style=Bold"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+
+      <!-- ── TOP COPY: Data Rows (12 fixed slots, top=178.8, row H=17.6) ── -->
+      <TextObject Name="T_R0_StockNo" Left="0" Top="178.8" Width="70" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="T_R0_Unit" Left="70" Top="178.8" Width="55" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="T_R0_Desc" Left="125" Top="178.8" Width="380" Height="17.6" Text="" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="T_R0_Qty" Left="505" Top="178.8" Width="65" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="T_R0_UnitCost" Left="570" Top="178.8" Width="78" Height="17.6" Text="" HorzAlign="Right" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+      <TextObject Name="T_R0_TotalCost" Left="648" Top="178.8" Width="85" Height="17.6" Text="" HorzAlign="Right" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+      <TextObject Name="T_R1_StockNo" Left="0" Top="196.4" Width="70" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="T_R1_Unit" Left="70" Top="196.4" Width="55" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="T_R1_Desc" Left="125" Top="196.4" Width="380" Height="17.6" Text="" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="T_R1_Qty" Left="505" Top="196.4" Width="65" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="T_R1_UnitCost" Left="570" Top="196.4" Width="78" Height="17.6" Text="" HorzAlign="Right" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+      <TextObject Name="T_R1_TotalCost" Left="648" Top="196.4" Width="85" Height="17.6" Text="" HorzAlign="Right" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+      <TextObject Name="T_R2_StockNo" Left="0" Top="214" Width="70" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="T_R2_Unit" Left="70" Top="214" Width="55" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="T_R2_Desc" Left="125" Top="214" Width="380" Height="17.6" Text="" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="T_R2_Qty" Left="505" Top="214" Width="65" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="T_R2_UnitCost" Left="570" Top="214" Width="78" Height="17.6" Text="" HorzAlign="Right" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+      <TextObject Name="T_R2_TotalCost" Left="648" Top="214" Width="85" Height="17.6" Text="" HorzAlign="Right" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+      <TextObject Name="T_R3_StockNo" Left="0" Top="231.6" Width="70" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="T_R3_Unit" Left="70" Top="231.6" Width="55" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="T_R3_Desc" Left="125" Top="231.6" Width="380" Height="17.6" Text="" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="T_R3_Qty" Left="505" Top="231.6" Width="65" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="T_R3_UnitCost" Left="570" Top="231.6" Width="78" Height="17.6" Text="" HorzAlign="Right" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+      <TextObject Name="T_R3_TotalCost" Left="648" Top="231.6" Width="85" Height="17.6" Text="" HorzAlign="Right" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+      <TextObject Name="T_R4_StockNo" Left="0" Top="249.2" Width="70" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="T_R4_Unit" Left="70" Top="249.2" Width="55" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="T_R4_Desc" Left="125" Top="249.2" Width="380" Height="17.6" Text="" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="T_R4_Qty" Left="505" Top="249.2" Width="65" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="T_R4_UnitCost" Left="570" Top="249.2" Width="78" Height="17.6" Text="" HorzAlign="Right" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+      <TextObject Name="T_R4_TotalCost" Left="648" Top="249.2" Width="85" Height="17.6" Text="" HorzAlign="Right" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+      <TextObject Name="T_R5_StockNo" Left="0" Top="266.8" Width="70" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="T_R5_Unit" Left="70" Top="266.8" Width="55" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="T_R5_Desc" Left="125" Top="266.8" Width="380" Height="17.6" Text="" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="T_R5_Qty" Left="505" Top="266.8" Width="65" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="T_R5_UnitCost" Left="570" Top="266.8" Width="78" Height="17.6" Text="" HorzAlign="Right" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+      <TextObject Name="T_R5_TotalCost" Left="648" Top="266.8" Width="85" Height="17.6" Text="" HorzAlign="Right" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+      <TextObject Name="T_R6_StockNo" Left="0" Top="284.4" Width="70" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="T_R6_Unit" Left="70" Top="284.4" Width="55" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="T_R6_Desc" Left="125" Top="284.4" Width="380" Height="17.6" Text="" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="T_R6_Qty" Left="505" Top="284.4" Width="65" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="T_R6_UnitCost" Left="570" Top="284.4" Width="78" Height="17.6" Text="" HorzAlign="Right" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+      <TextObject Name="T_R6_TotalCost" Left="648" Top="284.4" Width="85" Height="17.6" Text="" HorzAlign="Right" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+      <TextObject Name="T_R7_StockNo" Left="0" Top="302" Width="70" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="T_R7_Unit" Left="70" Top="302" Width="55" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="T_R7_Desc" Left="125" Top="302" Width="380" Height="17.6" Text="" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="T_R7_Qty" Left="505" Top="302" Width="65" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="T_R7_UnitCost" Left="570" Top="302" Width="78" Height="17.6" Text="" HorzAlign="Right" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+      <TextObject Name="T_R7_TotalCost" Left="648" Top="302" Width="85" Height="17.6" Text="" HorzAlign="Right" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+      <TextObject Name="T_R8_StockNo" Left="0" Top="319.6" Width="70" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="T_R8_Unit" Left="70" Top="319.6" Width="55" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="T_R8_Desc" Left="125" Top="319.6" Width="380" Height="17.6" Text="" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="T_R8_Qty" Left="505" Top="319.6" Width="65" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="T_R8_UnitCost" Left="570" Top="319.6" Width="78" Height="17.6" Text="" HorzAlign="Right" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+      <TextObject Name="T_R8_TotalCost" Left="648" Top="319.6" Width="85" Height="17.6" Text="" HorzAlign="Right" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+      <TextObject Name="T_R9_StockNo" Left="0" Top="337.2" Width="70" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="T_R9_Unit" Left="70" Top="337.2" Width="55" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="T_R9_Desc" Left="125" Top="337.2" Width="380" Height="17.6" Text="" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="T_R9_Qty" Left="505" Top="337.2" Width="65" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="T_R9_UnitCost" Left="570" Top="337.2" Width="78" Height="17.6" Text="" HorzAlign="Right" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+      <TextObject Name="T_R9_TotalCost" Left="648" Top="337.2" Width="85" Height="17.6" Text="" HorzAlign="Right" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+      <TextObject Name="T_R10_StockNo" Left="0" Top="354.8" Width="70" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="T_R10_Unit" Left="70" Top="354.8" Width="55" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="T_R10_Desc" Left="125" Top="354.8" Width="380" Height="17.6" Text="" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="T_R10_Qty" Left="505" Top="354.8" Width="65" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="T_R10_UnitCost" Left="570" Top="354.8" Width="78" Height="17.6" Text="" HorzAlign="Right" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+      <TextObject Name="T_R10_TotalCost" Left="648" Top="354.8" Width="85" Height="17.6" Text="" HorzAlign="Right" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+      <TextObject Name="T_R11_StockNo" Left="0" Top="372.4" Width="70" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="T_R11_Unit" Left="70" Top="372.4" Width="55" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="T_R11_Desc" Left="125" Top="372.4" Width="380" Height="17.6" Text="" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="T_R11_Qty" Left="505" Top="372.4" Width="65" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="T_R11_UnitCost" Left="570" Top="372.4" Width="78" Height="17.6" Text="" HorzAlign="Right" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+      <TextObject Name="T_R11_TotalCost" Left="648" Top="372.4" Width="85" Height="17.6" Text="" HorzAlign="Right" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+
+      <!-- ── TOP COPY: Purpose (top=390, H=44) ── -->
+      <TextObject Name="T_PurpLbl" Left="0" Top="390" Width="60" Height="44"
+        Text="Purpose :" Font="Times New Roman, 8pt" VertAlign="Top"
+        Border.Lines="15" Border.Width="0.5" Padding="2,2,2,2" />
+      <TextObject Name="T_PurpVal" Left="60" Top="390" Width="673" Height="44"
+        Text="[PurchaseRequestDS.Purpose]" Font="Times New Roman, 8pt" VertAlign="Top"
+        Border.Lines="15" Border.Width="0.5" Padding="2,2,2,2" />
+
+      <!-- ── TOP COPY: Signature headers (top=434, H=13.2) ── -->
+      <TextObject Name="T_SReqTitle" Left="0" Top="434" Width="366" Height="13.2"
+        Text="Requested by :" Font="Times New Roman, 8pt, style=Bold" VertAlign="Center"
+        Border.Lines="5" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="T_SApprTitle" Left="366" Top="434" Width="367" Height="13.2"
+        Text="Approved by :" Font="Times New Roman, 8pt, style=Bold" VertAlign="Center"
+        Border.Lines="7" Border.Width="0.5" Padding="2,1,2,1" />
+
+      <!-- ── TOP COPY: Requested by rows ── -->
+      <TextObject Name="T_SReqSigLbl"  Left="0"  Top="447.2" Width="56" Height="15.4"
+        Text="Signature :" Font="Times New Roman, 7pt" VertAlign="Bottom"
+        Border.Lines="1" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="T_SReqSigLine" Left="56" Top="447.2" Width="310" Height="15.4"
+        Text="" Border.Lines="10" Border.Width="0.5" />
+      <TextObject Name="T_SReqNmLbl"   Left="0"  Top="462.6" Width="56" Height="15.4"
+        Text="Printed Name :" Font="Times New Roman, 7pt" VertAlign="Bottom"
+        Border.Lines="1" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="T_SReqNmVal"   Left="56" Top="462.6" Width="310" Height="15.4"
+        Text="[PurchaseRequestDS.RequestedByName]" Font="Times New Roman, 9pt, style=Bold" VertAlign="Bottom"
+        Border.Lines="10" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="T_SReqDsLbl"   Left="0"  Top="478" Width="56" Height="15.4"
+        Text="Designation :" Font="Times New Roman, 7pt" VertAlign="Bottom"
+        Border.Lines="9" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="T_SReqDsVal"   Left="56" Top="478" Width="310" Height="15.4"
+        Text="[PurchaseRequestDS.RequestedByDesignation]" Font="Times New Roman, 7pt" VertAlign="Bottom"
+        Border.Lines="10" Border.Width="0.5" Padding="1,1,1,1" />
+
+      <!-- ── TOP COPY: Approved by rows ── -->
+      <TextObject Name="T_SApSigLbl"  Left="366" Top="447.2" Width="56" Height="15.4"
+        Text="Signature :" Font="Times New Roman, 7pt" VertAlign="Bottom"
+        Border.Lines="1" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="T_SApSigLine" Left="422" Top="447.2" Width="311" Height="15.4"
+        Text="" Border.Lines="10" Border.Width="0.5" />
+      <TextObject Name="T_SApNmLbl"   Left="366" Top="462.6" Width="56" Height="15.4"
+        Text="Printed Name :" Font="Times New Roman, 7pt" VertAlign="Bottom"
+        Border.Lines="1" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="T_SApNmVal"   Left="422" Top="462.6" Width="311" Height="15.4"
+        Text="[PurchaseRequestDS.ApprovedByName]" Font="Times New Roman, 9pt, style=Bold" VertAlign="Bottom"
+        Border.Lines="10" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="T_SApDsLbl"   Left="366" Top="478" Width="56" Height="15.4"
+        Text="Designation :" Font="Times New Roman, 7pt" VertAlign="Bottom"
+        Border.Lines="9" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="T_SApDsVal"   Left="422" Top="478" Width="311" Height="15.4"
+        Text="[PurchaseRequestDS.ApprovedByDesignation]" Font="Times New Roman, 7pt" VertAlign="Bottom"
+        Border.Lines="10" Border.Width="0.5" Padding="1,1,1,1" />
+
+      <!-- ╔═══════════════════ CUT-LINE INDICATOR (top=500, H=16) ═══════════════════╗ -->
+      <TextObject Name="CutLine" Left="0" Top="500" Width="733" Height="16"
+        Text="- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  ✂  cut here  ✂ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -"
+        HorzAlign="Center" VertAlign="Center"
+        Font="Arial, 7pt"
+        TextFill.Color="120, 120, 120" />
+
+      <!-- ╔═════════════════════ BOTTOM COPY (Y-offset +524) ═════════════════════╗ -->
+
+      <!-- ── BOTTOM COPY: Org Header ─────────────────────────── -->
+      <TextObject Name="B_Republic" Left="0" Top="526" Width="733" Height="14.3"
+        Text="Republic of the Philippines" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt" />
+      <TextObject Name="B_NFA" Left="0" Top="542.3" Width="733" Height="17.6"
+        Text="National Food Authority" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 10pt, style=Bold" />
+      <TextObject Name="B_OrgName" Left="0" Top="561.9" Width="733" Height="14.3"
+        Text="[PurchaseRequestDS.OrgName]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt" />
+      <TextObject Name="B_OrgAddr" Left="0" Top="578.2" Width="733" Height="14.3"
+        Text="[PurchaseRequestDS.OrgAddress]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt" />
+
+      <!-- ── BOTTOM COPY: Exhibit 4 + Title ──────────────────── -->
+      <TextObject Name="B_Exhibit" Left="0" Top="595.5" Width="733" Height="14.3"
+        Text="Exhibit 4" HorzAlign="Right" VertAlign="Center"
+        Font="Times New Roman, 10pt, style=Bold" />
+      <TextObject Name="B_Title" Left="0" Top="609.8" Width="733" Height="22"
+        Text="PURCHASE REQUEST" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 14pt, style=Bold" />
+
+      <!-- ── BOTTOM COPY: PR Form Header  top=635, H=33.9 ── -->
+      <TextObject Name="B_DeptLbl" Left="0" Top="635" Width="60" Height="33.9"
+        Text="Name of Department/Office/Section:"
+        Font="Times New Roman, 7pt" HorzAlign="Left" VertAlign="Center" WordWrap="true"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="B_DeptVal" Left="60" Top="635" Width="220" Height="33.9"
+        Text="[PurchaseRequestDS.DepartmentName]"
+        Font="Times New Roman, 8pt" VertAlign="Center" WordWrap="true"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="B_PrNoLbl" Left="280" Top="635" Width="60" Height="16.95"
+        Text="PR No.:"
+        Font="Times New Roman, 7pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="B_PrNoVal" Left="340" Top="635" Width="200" Height="16.95"
+        Text="[PurchaseRequestDS.PrNumber]"
+        Font="Times New Roman, 8pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="B_RccLbl" Left="280" Top="651.95" Width="60" Height="16.95"
+        Text="RC Code:"
+        Font="Times New Roman, 7pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="B_RccVal" Left="340" Top="651.95" Width="200" Height="16.95"
+        Text="[PurchaseRequestDS.ResponsibilityCenterCode]"
+        Font="Times New Roman, 8pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="B_DateLbl" Left="540" Top="635" Width="40" Height="33.9"
+        Text="Date:"
+        Font="Times New Roman, 7pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="B_DateVal" Left="580" Top="635" Width="153" Height="33.9"
+        Text="[PurchaseRequestDS.PrDate]"
+        Font="Times New Roman, 8pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+
+      <!-- ── BOTTOM COPY: Table Column Headers (top=668.9, H=33.9) ── -->
+      <TextObject Name="B_HStockNo" Left="0" Top="668.9" Width="70" Height="33.9"
+        Text="Stock&#10;Property&#10;No." HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 7pt, style=Bold"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="B_HUnit" Left="70" Top="668.9" Width="55" Height="33.9"
+        Text="Unit" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 7pt, style=Bold"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="B_HDesc" Left="125" Top="668.9" Width="380" Height="33.9"
+        Text="Item Description" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 7pt, style=Bold"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="B_HQty" Left="505" Top="668.9" Width="65" Height="33.9"
+        Text="Quantity" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 7pt, style=Bold"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="B_HUnitCost" Left="570" Top="668.9" Width="78" Height="33.9"
+        Text="Unit Cost" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 7pt, style=Bold"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="B_HTotalCost" Left="648" Top="668.9" Width="85" Height="33.9"
+        Text="Total Cost" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 7pt, style=Bold"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+
+      <!-- ── BOTTOM COPY: Data Rows (12 fixed slots, top=702.8, row H=17.6) ── -->
+      <TextObject Name="B_R0_StockNo" Left="0" Top="702.8" Width="70" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="B_R0_Unit" Left="70" Top="702.8" Width="55" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="B_R0_Desc" Left="125" Top="702.8" Width="380" Height="17.6" Text="" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="B_R0_Qty" Left="505" Top="702.8" Width="65" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="B_R0_UnitCost" Left="570" Top="702.8" Width="78" Height="17.6" Text="" HorzAlign="Right" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+      <TextObject Name="B_R0_TotalCost" Left="648" Top="702.8" Width="85" Height="17.6" Text="" HorzAlign="Right" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+      <TextObject Name="B_R1_StockNo" Left="0" Top="720.4" Width="70" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="B_R1_Unit" Left="70" Top="720.4" Width="55" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="B_R1_Desc" Left="125" Top="720.4" Width="380" Height="17.6" Text="" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="B_R1_Qty" Left="505" Top="720.4" Width="65" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="B_R1_UnitCost" Left="570" Top="720.4" Width="78" Height="17.6" Text="" HorzAlign="Right" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+      <TextObject Name="B_R1_TotalCost" Left="648" Top="720.4" Width="85" Height="17.6" Text="" HorzAlign="Right" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+      <TextObject Name="B_R2_StockNo" Left="0" Top="738" Width="70" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="B_R2_Unit" Left="70" Top="738" Width="55" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="B_R2_Desc" Left="125" Top="738" Width="380" Height="17.6" Text="" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="B_R2_Qty" Left="505" Top="738" Width="65" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="B_R2_UnitCost" Left="570" Top="738" Width="78" Height="17.6" Text="" HorzAlign="Right" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+      <TextObject Name="B_R2_TotalCost" Left="648" Top="738" Width="85" Height="17.6" Text="" HorzAlign="Right" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+      <TextObject Name="B_R3_StockNo" Left="0" Top="755.6" Width="70" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="B_R3_Unit" Left="70" Top="755.6" Width="55" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="B_R3_Desc" Left="125" Top="755.6" Width="380" Height="17.6" Text="" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="B_R3_Qty" Left="505" Top="755.6" Width="65" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="B_R3_UnitCost" Left="570" Top="755.6" Width="78" Height="17.6" Text="" HorzAlign="Right" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+      <TextObject Name="B_R3_TotalCost" Left="648" Top="755.6" Width="85" Height="17.6" Text="" HorzAlign="Right" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+      <TextObject Name="B_R4_StockNo" Left="0" Top="773.2" Width="70" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="B_R4_Unit" Left="70" Top="773.2" Width="55" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="B_R4_Desc" Left="125" Top="773.2" Width="380" Height="17.6" Text="" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="B_R4_Qty" Left="505" Top="773.2" Width="65" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="B_R4_UnitCost" Left="570" Top="773.2" Width="78" Height="17.6" Text="" HorzAlign="Right" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+      <TextObject Name="B_R4_TotalCost" Left="648" Top="773.2" Width="85" Height="17.6" Text="" HorzAlign="Right" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+      <TextObject Name="B_R5_StockNo" Left="0" Top="790.8" Width="70" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="B_R5_Unit" Left="70" Top="790.8" Width="55" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="B_R5_Desc" Left="125" Top="790.8" Width="380" Height="17.6" Text="" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="B_R5_Qty" Left="505" Top="790.8" Width="65" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="B_R5_UnitCost" Left="570" Top="790.8" Width="78" Height="17.6" Text="" HorzAlign="Right" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+      <TextObject Name="B_R5_TotalCost" Left="648" Top="790.8" Width="85" Height="17.6" Text="" HorzAlign="Right" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+      <TextObject Name="B_R6_StockNo" Left="0" Top="808.4" Width="70" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="B_R6_Unit" Left="70" Top="808.4" Width="55" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="B_R6_Desc" Left="125" Top="808.4" Width="380" Height="17.6" Text="" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="B_R6_Qty" Left="505" Top="808.4" Width="65" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="B_R6_UnitCost" Left="570" Top="808.4" Width="78" Height="17.6" Text="" HorzAlign="Right" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+      <TextObject Name="B_R6_TotalCost" Left="648" Top="808.4" Width="85" Height="17.6" Text="" HorzAlign="Right" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+      <TextObject Name="B_R7_StockNo" Left="0" Top="826" Width="70" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="B_R7_Unit" Left="70" Top="826" Width="55" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="B_R7_Desc" Left="125" Top="826" Width="380" Height="17.6" Text="" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="B_R7_Qty" Left="505" Top="826" Width="65" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="B_R7_UnitCost" Left="570" Top="826" Width="78" Height="17.6" Text="" HorzAlign="Right" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+      <TextObject Name="B_R7_TotalCost" Left="648" Top="826" Width="85" Height="17.6" Text="" HorzAlign="Right" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+      <TextObject Name="B_R8_StockNo" Left="0" Top="843.6" Width="70" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="B_R8_Unit" Left="70" Top="843.6" Width="55" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="B_R8_Desc" Left="125" Top="843.6" Width="380" Height="17.6" Text="" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="B_R8_Qty" Left="505" Top="843.6" Width="65" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="B_R8_UnitCost" Left="570" Top="843.6" Width="78" Height="17.6" Text="" HorzAlign="Right" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+      <TextObject Name="B_R8_TotalCost" Left="648" Top="843.6" Width="85" Height="17.6" Text="" HorzAlign="Right" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+      <TextObject Name="B_R9_StockNo" Left="0" Top="861.2" Width="70" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="B_R9_Unit" Left="70" Top="861.2" Width="55" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="B_R9_Desc" Left="125" Top="861.2" Width="380" Height="17.6" Text="" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="B_R9_Qty" Left="505" Top="861.2" Width="65" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="B_R9_UnitCost" Left="570" Top="861.2" Width="78" Height="17.6" Text="" HorzAlign="Right" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+      <TextObject Name="B_R9_TotalCost" Left="648" Top="861.2" Width="85" Height="17.6" Text="" HorzAlign="Right" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+      <TextObject Name="B_R10_StockNo" Left="0" Top="878.8" Width="70" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="B_R10_Unit" Left="70" Top="878.8" Width="55" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="B_R10_Desc" Left="125" Top="878.8" Width="380" Height="17.6" Text="" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="B_R10_Qty" Left="505" Top="878.8" Width="65" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="B_R10_UnitCost" Left="570" Top="878.8" Width="78" Height="17.6" Text="" HorzAlign="Right" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+      <TextObject Name="B_R10_TotalCost" Left="648" Top="878.8" Width="85" Height="17.6" Text="" HorzAlign="Right" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+      <TextObject Name="B_R11_StockNo" Left="0" Top="896.4" Width="70" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="B_R11_Unit" Left="70" Top="896.4" Width="55" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="B_R11_Desc" Left="125" Top="896.4" Width="380" Height="17.6" Text="" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="B_R11_Qty" Left="505" Top="896.4" Width="65" Height="17.6" Text="" HorzAlign="Center" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="B_R11_UnitCost" Left="570" Top="896.4" Width="78" Height="17.6" Text="" HorzAlign="Right" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+      <TextObject Name="B_R11_TotalCost" Left="648" Top="896.4" Width="85" Height="17.6" Text="" HorzAlign="Right" VertAlign="Center" Font="Times New Roman, 8pt" Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+
+      <!-- ── BOTTOM COPY: Purpose (top=914, H=44) ── -->
+      <TextObject Name="B_PurpLbl" Left="0" Top="914" Width="60" Height="44"
+        Text="Purpose :" Font="Times New Roman, 8pt" VertAlign="Top"
+        Border.Lines="15" Border.Width="0.5" Padding="2,2,2,2" />
+      <TextObject Name="B_PurpVal" Left="60" Top="914" Width="673" Height="44"
+        Text="[PurchaseRequestDS.Purpose]" Font="Times New Roman, 8pt" VertAlign="Top"
+        Border.Lines="15" Border.Width="0.5" Padding="2,2,2,2" />
+
+      <!-- ── BOTTOM COPY: Signature headers (top=958, H=13.2) ── -->
+      <TextObject Name="B_SReqTitle" Left="0" Top="958" Width="366" Height="13.2"
+        Text="Requested by :" Font="Times New Roman, 8pt, style=Bold" VertAlign="Center"
+        Border.Lines="5" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="B_SApprTitle" Left="366" Top="958" Width="367" Height="13.2"
+        Text="Approved by :" Font="Times New Roman, 8pt, style=Bold" VertAlign="Center"
+        Border.Lines="7" Border.Width="0.5" Padding="2,1,2,1" />
+
+      <!-- ── BOTTOM COPY: Requested by rows ── -->
+      <TextObject Name="B_SReqSigLbl"  Left="0"  Top="971.2" Width="56" Height="15.4"
+        Text="Signature :" Font="Times New Roman, 7pt" VertAlign="Bottom"
+        Border.Lines="1" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="B_SReqSigLine" Left="56" Top="971.2" Width="310" Height="15.4"
+        Text="" Border.Lines="10" Border.Width="0.5" />
+      <TextObject Name="B_SReqNmLbl"   Left="0"  Top="986.6" Width="56" Height="15.4"
+        Text="Printed Name :" Font="Times New Roman, 7pt" VertAlign="Bottom"
+        Border.Lines="1" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="B_SReqNmVal"   Left="56" Top="986.6" Width="310" Height="15.4"
+        Text="[PurchaseRequestDS.RequestedByName]" Font="Times New Roman, 9pt, style=Bold" VertAlign="Bottom"
+        Border.Lines="10" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="B_SReqDsLbl"   Left="0"  Top="1002" Width="56" Height="15.4"
+        Text="Designation :" Font="Times New Roman, 7pt" VertAlign="Bottom"
+        Border.Lines="9" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="B_SReqDsVal"   Left="56" Top="1002" Width="310" Height="15.4"
+        Text="[PurchaseRequestDS.RequestedByDesignation]" Font="Times New Roman, 7pt" VertAlign="Bottom"
+        Border.Lines="10" Border.Width="0.5" Padding="1,1,1,1" />
+
+      <!-- ── BOTTOM COPY: Approved by rows ── -->
+      <TextObject Name="B_SApSigLbl"  Left="366" Top="971.2" Width="56" Height="15.4"
+        Text="Signature :" Font="Times New Roman, 7pt" VertAlign="Bottom"
+        Border.Lines="1" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="B_SApSigLine" Left="422" Top="971.2" Width="311" Height="15.4"
+        Text="" Border.Lines="10" Border.Width="0.5" />
+      <TextObject Name="B_SApNmLbl"   Left="366" Top="986.6" Width="56" Height="15.4"
+        Text="Printed Name :" Font="Times New Roman, 7pt" VertAlign="Bottom"
+        Border.Lines="1" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="B_SApNmVal"   Left="422" Top="986.6" Width="311" Height="15.4"
+        Text="[PurchaseRequestDS.ApprovedByName]" Font="Times New Roman, 9pt, style=Bold" VertAlign="Bottom"
+        Border.Lines="10" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="B_SApDsLbl"   Left="366" Top="1002" Width="56" Height="15.4"
+        Text="Designation :" Font="Times New Roman, 7pt" VertAlign="Bottom"
+        Border.Lines="9" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="B_SApDsVal"   Left="422" Top="1002" Width="311" Height="15.4"
+        Text="[PurchaseRequestDS.ApprovedByDesignation]" Font="Times New Roman, 7pt" VertAlign="Bottom"
+        Border.Lines="10" Border.Width="0.5" Padding="1,1,1,1" />
+
+    </ReportTitleBand>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         PAGE FOOTER  (pagination only, anchored to page bottom)
+         ═══════════════════════════════════════════════════════════ -->
+    <PageFooterBand Name="PageFooter1" Width="733" Height="16">
+      <TextObject Name="PgFooterText" Left="0" Top="0" Width="733" Height="14"
+        Text="Page [Page#] of [TotalPages#]" HorzAlign="Right"
+        Font="Times New Roman, 6pt" TextFill.Color="120, 120, 120" />
+    </PageFooterBand>
+
+  </ReportPage>
+</Report>

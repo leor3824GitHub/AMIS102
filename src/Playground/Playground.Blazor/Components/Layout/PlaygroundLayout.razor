@@ -24,6 +24,7 @@
 @inject AMIS.Playground.Blazor.ApiClient.IEmployeesClient EmployeesClient
 @inject IUserProfileState UserProfileState
 @inject IOrganizationProfileState OrgProfileState
+@inject ICapitalizationThresholdState ThresholdState
 @inject IDialogService DialogService
 @inject IAuthStateNotifier AuthStateNotifier
 @inject IJSRuntime JS
@@ -239,6 +240,9 @@ else
 
                 // Show org profile setup dialog if tenant has no profile yet
                 await CheckOrganizationProfileAsync();
+
+                // Warm the active capitalization threshold once per session for PR/receiving forms
+                await ThresholdState.EnsureLoadedAsync();
 
                 // Handle toast notifications
                 var currentUri = new Uri(Navigation.Uri);

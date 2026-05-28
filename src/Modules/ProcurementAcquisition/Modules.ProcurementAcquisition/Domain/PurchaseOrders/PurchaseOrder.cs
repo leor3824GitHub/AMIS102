@@ -71,6 +71,13 @@ public sealed class PurchaseOrderLineItem
         CatalogItemId = catalogItemId == Guid.Empty ? null : catalogItemId;
         UacsObjectCode = string.IsNullOrWhiteSpace(uacsObjectCode) ? null : uacsObjectCode.Trim();
     }
+
+    internal void AssignUacs(string uacsObjectCode)
+    {
+        if (string.IsNullOrWhiteSpace(uacsObjectCode))
+            throw new InvalidOperationException($"Item {ItemNo}: UACS Object Code is required.");
+        UacsObjectCode = uacsObjectCode.Trim();
+    }
 }
 
 public sealed class PurchaseOrder : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
@@ -91,9 +98,15 @@ public sealed class PurchaseOrder : AggregateRoot<Guid>, IHasTenant, IAuditableE
     public string PaymentTerm { get; private set; } = default!;
     public string? FundCluster { get; private set; }
     public string? OursBursNumber { get; private set; }
+    public DateOnly? OursBursDate { get; private set; }
     public PurchaseOrderStatus Status { get; private set; }
     public string? CancellationReason { get; private set; }
     public byte[] Version { get; set; } = [];
+
+    // "Funds Available" — Accountant signs and assigns UACS codes
+    public Guid? FundsAvailableCertifiedById { get; private set; }
+    public string? FundsAvailableCertifiedByName { get; private set; }
+    public DateTimeOffset? FundsAvailableCertifiedOnUtc { get; private set; }
 
     private readonly List<PurchaseOrderLineItem> _lineItems = [];
     public IReadOnlyList<PurchaseOrderLineItem> LineItems => _lineItems.AsReadOnly();
@@ -148,6 +161,7 @@ public sealed class PurchaseOrder : AggregateRoot<Guid>, IHasTenant, IAuditableE
             PaymentTerm = paymentTerm,
             FundCluster = fundCluster,
             OursBursNumber = oursBursNumber,
+            OursBursDate = null,
             Status = PurchaseOrderStatus.Draft,
             CreatedOnUtc = DateTimeOffset.UtcNow
         };
@@ -203,10 +217,70 @@ public sealed class PurchaseOrder : AggregateRoot<Guid>, IHasTenant, IAuditableE
         }
     }
 
-    public void Issue()
+    /// <summary>
+    /// Buyer submits the PO. Moves Draft → PendingFundsAvailable (awaiting Accountant).
+    /// </summary>
+    public void Submit()
     {
         if (Status != PurchaseOrderStatus.Draft)
-            throw new InvalidOperationException("Only Draft purchase orders can be issued.");
+            throw new InvalidOperationException("Only Draft purchase orders can be submitted.");
+        if (_lineItems.Count == 0)
+            throw new InvalidOperationException("Purchase order must have at least one line item.");
+
+        Status = PurchaseOrderStatus.PendingFundsAvailable;
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;
+    }
+
+    /// <summary>
+    /// Accountant signs "Funds Available", assigns a UACS Object Code per line item, and optionally
+    /// captures ORS/BURS reference. Moves PendingFundsAvailable → PendingApproval (awaiting Issue).
+    /// </summary>
+    public void CertifyFundsAvailable(
+        Guid certifiedById,
+        string certifiedByName,
+        IReadOnlyDictionary<int, string> uacsByItemNo,
+        string? oursBursNumber,
+        DateOnly? oursBursDate,
+        string? fundCluster)
+    {
+        if (Status != PurchaseOrderStatus.PendingFundsAvailable)
+            throw new InvalidOperationException("Funds Available can only be certified on POs awaiting Accountant review.");
+        if (string.IsNullOrWhiteSpace(certifiedByName))
+            throw new InvalidOperationException("Accountant name is required.");
+        ArgumentNullException.ThrowIfNull(uacsByItemNo);
+
+        var missing = _lineItems
+            .Where(li => !uacsByItemNo.TryGetValue(li.ItemNo, out var u) || string.IsNullOrWhiteSpace(u))
+            .Select(li => li.ItemNo)
+            .ToList();
+        if (missing.Count > 0)
+            throw new InvalidOperationException(
+                $"Every line item requires a UACS Object Code. Missing on item(s): {string.Join(", ", missing)}.");
+
+        foreach (var li in _lineItems)
+            li.AssignUacs(uacsByItemNo[li.ItemNo]);
+
+        if (!string.IsNullOrWhiteSpace(oursBursNumber))
+        {
+            OursBursNumber = oursBursNumber;
+            OursBursDate = oursBursDate;
+        }
+
+        if (!string.IsNullOrWhiteSpace(fundCluster))
+            FundCluster = fundCluster;
+
+        FundsAvailableCertifiedById = certifiedById;
+        FundsAvailableCertifiedByName = certifiedByName;
+        FundsAvailableCertifiedOnUtc = DateTimeOffset.UtcNow;
+
+        Status = PurchaseOrderStatus.PendingApproval;
+        LastModifiedOnUtc = FundsAvailableCertifiedOnUtc;
+    }
+
+    public void Issue()
+    {
+        if (Status != PurchaseOrderStatus.PendingApproval)
+            throw new InvalidOperationException("Only POs that have passed Funds Available certification can be issued.");
         if (_lineItems.Count == 0)
             throw new InvalidOperationException("Purchase order must have at least one line item.");
 

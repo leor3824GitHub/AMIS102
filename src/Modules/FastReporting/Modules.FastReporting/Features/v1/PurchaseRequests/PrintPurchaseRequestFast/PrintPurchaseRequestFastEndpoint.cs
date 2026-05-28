@@ -13,7 +13,7 @@ public static class PrintPurchaseRequestFastEndpoint
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapGet("/{id:guid}/print", PrintFast)
             .WithName("FastReporting_PrintPurchaseRequest")
-            .WithSummary("Generate a landscape FastReport PDF for a purchase request (1 or 2 copies per page)")
+            .WithSummary("Generate a FastReport PDF for a purchase request (landscape or portrait, 1 or 2 copies per page)")
             .Produces(StatusCodes.Status200OK, null, "application/pdf")
             .Produces(StatusCodes.Status404NotFound)
             .RequirePermission(PurchaseRequestsView);

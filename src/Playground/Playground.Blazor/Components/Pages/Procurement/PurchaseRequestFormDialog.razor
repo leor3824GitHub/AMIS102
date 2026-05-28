@@ -1,9 +1,11 @@
 @using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests
 @using AMIS.Modules.AssetRegister.Contracts.v1.Catalog
+@using AMIS.Modules.MasterData.Contracts.v1.CapitalizationThresholds
 @using AMIS.Framework.Shared.Persistence
 @using AMIS.Playground.Blazor.ApiClient
 @inject IPurchaseRequestClient Client
 @inject IArCatalogClient CatalogClient
+@inject ICapitalizationThresholdState ThresholdState
 @inject ILookupClient LookupClient
 @inject IMaster_dataClient MasterDataClient
 @inject ISnackbar Snackbar
@@ -140,6 +142,15 @@
                                 UACS @_newLineItem.SelectedCatalog.UacsObjectCode
                             </MudChip>
                         }
+                        @{
+                            var newLineClass = ClassifyByCost(_newLineItem.EstimatedUnitCost);
+                        }
+                        @if (newLineClass is not null)
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="@newLineClass.Value.Color" Icon="@Icons.Material.Filled.Category">
+                                @newLineClass.Value.Label
+                            </MudChip>
+                        }
                     </MudStack>
                 }
             </MudPaper>
@@ -168,6 +179,15 @@
                                             <span> · UACS @context.SelectedCatalog.UacsObjectCode</span>
                                         }
                                     </div>
+                                }
+                                @{
+                                    var rowClass = ClassifyByCost(context.EstimatedUnitCost);
+                                }
+                                @if (rowClass is not null)
+                                {
+                                    <MudChip T="string" Size="Size.Small" Color="@rowClass.Value.Color" Icon="@Icons.Material.Filled.Category" Class="mt-1">
+                                        @rowClass.Value.Label
+                                    </MudChip>
                                 }
                             </div>
                         </MudTd>
@@ -205,9 +225,18 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadDepartmentsAsync();
+        await ThresholdState.EnsureLoadedAsync();
 
         if (PurchaseRequest is not null)
             await BeginEdit(PurchaseRequest);
+    }
+
+    private (string Label, Color Color)? ClassifyByCost(decimal unitCost)
+    {
+        if (ThresholdState.Threshold is not { } threshold || unitCost <= 0) return null;
+        return threshold.IsCapitalAsset(unitCost)
+            ? ("Will be PPE", Color.Primary)
+            : ("Will be SE", Color.Secondary);
     }
 
     private async Task LoadDepartmentsAsync()

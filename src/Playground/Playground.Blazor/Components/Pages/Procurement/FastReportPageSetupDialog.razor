@@ -27,10 +27,10 @@
 
             <MudField Label="Copies per page" Variant="Variant.Outlined" DisableUnderLine="true" InnerPadding="false">
                 <MudRadioGroup T="int" @bind-Value="Copies">
-                    <MudRadio Value="@(2)" Color="Color.Primary" Size="Size.Small" Disabled="@(Orientation == "portrait")">2 copies (cut in half)</MudRadio>
+                    <MudRadio Value="@(2)" Color="Color.Primary" Size="Size.Small" Disabled="@(Orientation == "portrait" && !SupportsPortraitTwoCopies)">2 copies (cut in half)</MudRadio>
                     <MudRadio Value="@(1)" Color="Color.Primary" Size="Size.Small">1 copy</MudRadio>
                 </MudRadioGroup>
-                @if (Orientation == "portrait")
+                @if (Orientation == "portrait" && !SupportsPortraitTwoCopies)
                 {
                     <MudText Typo="Typo.caption" Color="Color.Default" Class="mt-1">
                         Portrait orientation forces 1 copy per page.
@@ -66,6 +66,12 @@
     [Parameter] public int Copies { get; set; } = 2;
     [Parameter] public int MinRows { get; set; } = 10;
 
+    // Opt-in: when the calling report has a portrait .frx that lays out 2 side-by-side
+    // copies (e.g. PurchaseRequestPortraitFast.frx), allow the user to keep 2 copies in
+    // portrait. Default false preserves landscape-only-2-copy behavior for reports
+    // whose portrait template only renders a single copy.
+    [Parameter] public bool SupportsPortraitTwoCopies { get; set; }
+
     private readonly (string Value, string Label)[] _paperOptions =
     {
         ("a4",       "A4 — 210 × 297 mm (8.27 × 11.69 in)"),
@@ -78,7 +84,7 @@
 
     private void Submit()
     {
-        var copies = Orientation == "portrait" ? 1 : Copies;
+        var copies = (Orientation == "portrait" && !SupportsPortraitTwoCopies) ? 1 : Copies;
         var rows = Math.Clamp(MinRows, 1, 20);
         MudDialog.Close(DialogResult.Ok(new Result(PaperSize, Orientation, copies, rows)));
     }

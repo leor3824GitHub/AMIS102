@@ -29,6 +29,8 @@ public static class ProcurementPermissions
         public const string View = "Permissions.Procurement.PurchaseOrders.View";
         public const string Create = "Permissions.Procurement.PurchaseOrders.Create";
         public const string Update = "Permissions.Procurement.PurchaseOrders.Update";
+        public const string Submit = "Permissions.Procurement.PurchaseOrders.Submit";
+        public const string CertifyFundsAvailable = "Permissions.Procurement.PurchaseOrders.CertifyFundsAvailable";
         public const string Issue = "Permissions.Procurement.PurchaseOrders.Issue";
         public const string Cancel = "Permissions.Procurement.PurchaseOrders.Cancel";
     }

@@ -269,6 +269,8 @@ internal interface IPurchaseOrderClient
     Task<byte[]> GetFastReportPdfAsync(Guid id, string? pageWidth = null, string? orientation = null, int? minRows = null, CancellationToken ct = default);
     Task<PurchaseOrderDto> CreateAsync(PurchaseOrderContracts.CreatePurchaseOrderCommand command, CancellationToken ct = default);
     Task<PurchaseOrderDto> UpdateAsync(Guid id, UpdatePurchaseOrderCommand command, CancellationToken ct = default);
+    Task<PurchaseOrderDto> SubmitAsync(Guid id, CancellationToken ct = default);
+    Task<PurchaseOrderDto> CertifyFundsAvailableAsync(Guid id, CertifyPurchaseOrderFundsAvailableCommand command, CancellationToken ct = default);
     Task<PurchaseOrderDto> IssueAsync(Guid id, CancellationToken ct = default);
     Task<PurchaseOrderDto> CancelAsync(Guid id, string? reason = null, CancellationToken ct = default);
 }
@@ -347,6 +349,20 @@ internal sealed class PurchaseOrderClient(HttpClient http) : IPurchaseOrderClien
     public async Task<PurchaseOrderDto> UpdateAsync(Guid id, UpdatePurchaseOrderCommand command, CancellationToken ct = default)
     {
         using var r = await http.PutAsJsonAsync($"{Base}/{id}", command, ProcurementJson.Options, ct);
+        r.EnsureSuccessStatusCode();
+        return (await r.Content.ReadFromJsonAsync<PurchaseOrderDto>(ProcurementJson.Options, ct))!;
+    }
+
+    public async Task<PurchaseOrderDto> SubmitAsync(Guid id, CancellationToken ct = default)
+    {
+        using var r = await http.PostAsync($"{Base}/{id}/submit", null, ct);
+        r.EnsureSuccessStatusCode();
+        return (await r.Content.ReadFromJsonAsync<PurchaseOrderDto>(ProcurementJson.Options, ct))!;
+    }
+
+    public async Task<PurchaseOrderDto> CertifyFundsAvailableAsync(Guid id, CertifyPurchaseOrderFundsAvailableCommand command, CancellationToken ct = default)
+    {
+        using var r = await http.PostAsJsonAsync($"{Base}/{id}/certify-funds-available", command with { Id = id }, ProcurementJson.Options, ct);
         r.EnsureSuccessStatusCode();
         return (await r.Content.ReadFromJsonAsync<PurchaseOrderDto>(ProcurementJson.Options, ct))!;
     }

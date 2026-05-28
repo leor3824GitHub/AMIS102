@@ -1,3 +1,4 @@
+using AMIS.Framework.Caching;
 using AMIS.Framework.Core.Context;
 using AMIS.Framework.Core.Exceptions;
 using AMIS.Modules.MasterData.Contracts.v1.CapitalizationThresholds;
@@ -7,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AMIS.Modules.MasterData.Features.v1.CapitalizationThresholds.UpdateCapitalizationThreshold;
 
-public sealed class UpdateCapitalizationThresholdCommandHandler(MasterDataDbContext db, ICurrentUser currentUser)
+public sealed class UpdateCapitalizationThresholdCommandHandler(MasterDataDbContext db, ICurrentUser currentUser, ICacheService cache)
     : ICommandHandler<UpdateCapitalizationThresholdCommand, CapitalizationThresholdDto>
 {
     public async ValueTask<CapitalizationThresholdDto> Handle(
@@ -27,6 +28,8 @@ public sealed class UpdateCapitalizationThresholdCommandHandler(MasterDataDbCont
 
         threshold.LastModifiedBy = currentUser.GetUserId().ToString();
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        await cache.RemoveItemAsync(
+            CapitalizationThresholdCache.ActiveKey(db.TenantInfo?.Identifier), cancellationToken).ConfigureAwait(false);
 
         return new CapitalizationThresholdDto(
             threshold.Id,

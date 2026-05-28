@@ -1,5 +1,6 @@
 @using AMIS.Playground.Blazor.ApiClient
 @using AMIS.Modules.AssetRegister.Contracts.v1.Catalog
+@using AMIS.Modules.MasterData.Contracts.v1.CapitalizationThresholds
 @using Microsoft.AspNetCore.Components.Authorization
 @using ReceivingDocumentKind = AMIS.Modules.AssetRegister.Contracts.v1.ReceivingDocumentKind
 @using ReceiptType = AMIS.Modules.AssetRegister.Contracts.v1.ReceiptType
@@ -7,6 +8,7 @@
 @inject IArReceivingReportClient Client
 @inject IArReceivingReportClient ArReceivingReportClient
 @inject IArCatalogClient CatalogClient
+@inject ICapitalizationThresholdState ThresholdState
 @inject ILookupClient LookupClient
 @inject IEmployeesClient EmployeesClient
 @inject AuthenticationStateProvider AuthenticationStateProvider
@@ -131,7 +133,18 @@
                             </HeaderContent>
                             <RowTemplate>
                                 <MudTd DataLabel="Property No"><MudText Typo="Typo.body2">@context.StockPropertyNo</MudText></MudTd>
-                                <MudTd DataLabel="Description"><MudText Typo="Typo.body2">@context.Description</MudText></MudTd>
+                                <MudTd DataLabel="Description">
+                                    <MudText Typo="Typo.body2">@context.Description</MudText>
+                                    @{
+                                        var mismatch = LineMismatchMessage(context.UnitCost);
+                                    }
+                                    @if (!string.IsNullOrEmpty(mismatch))
+                                    {
+                                        <MudChip T="string" Size="Size.Small" Color="Color.Warning" Icon="@Icons.Material.Filled.Warning" Class="mt-1">
+                                            @mismatch
+                                        </MudChip>
+                                    }
+                                </MudTd>
                                 <MudTd DataLabel="Date Acquired"><MudText Typo="Typo.body2">@context.IARDate.ToString("yyyy-MM-dd")</MudText></MudTd>
                                 <MudTd DataLabel="Unit Cost" Style="text-align:right"><MudText Typo="Typo.body2">@context.UnitCost.ToString("N2")</MudText></MudTd>
                             </RowTemplate>
@@ -224,6 +237,15 @@
                                 <MudItem xs="6" md="3">
                                     <MudNumericField @bind-Value="line.UnitCost" Label="Original Cost *"
                                                      Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Min="0.01m" />
+                                    @{
+                                        var adhocMismatch = LineMismatchMessage(line.UnitCost);
+                                    }
+                                    @if (!string.IsNullOrEmpty(adhocMismatch))
+                                    {
+                                        <MudChip T="string" Size="Size.Small" Color="Color.Warning" Icon="@Icons.Material.Filled.Warning" Class="mt-1">
+                                            @adhocMismatch
+                                        </MudChip>
+                                    }
                                 </MudItem>
                                 <MudItem xs="6" md="3">
                                     <MudDatePicker @bind-Date="line.OriginalAcquisitionDate"
@@ -327,6 +349,22 @@
             try { _activeSeries = await Client.GetActiveSeriesAsync(); }
             catch { /* non-critical */ }
         }
+
+        await ThresholdState.EnsureLoadedAsync();
+    }
+
+    private string LineMismatchMessage(decimal unitCost)
+    {
+        if (ThresholdState.Threshold is not { } threshold || unitCost <= 0) return string.Empty;
+        var cap = threshold.CapitalizationAmount;
+        return DocumentKind switch
+        {
+            ReceivingDocumentKind.PPERR when !threshold.IsCapitalAsset(unitCost) =>
+                $"Below capitalization cutoff (₱{cap:N2}) — should be SMRR.",
+            ReceivingDocumentKind.SMRR when threshold.IsCapitalAsset(unitCost) =>
+                $"At/above capitalization cutoff (₱{cap:N2}) — should be PPERR.",
+            _ => string.Empty
+        };
     }
 
     private static string FormatEmployee(EmployeeReferenceDto? e) =>

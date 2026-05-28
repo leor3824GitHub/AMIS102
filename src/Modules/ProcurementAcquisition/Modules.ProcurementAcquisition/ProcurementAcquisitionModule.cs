@@ -21,6 +21,8 @@ using AMIS.Modules.ProcurementAcquisition.Features.v1.Canvass.GetCanvassRequest;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.Canvass.SearchCanvassRequests;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.CreatePurchaseOrder;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.UpdatePurchaseOrder;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.SubmitPurchaseOrder;
+using PoCertifyFundsAvailable = AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.CertifyFundsAvailable;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.IssuePurchaseOrder;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.CancelPurchaseOrder;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.GetPurchaseOrder;
@@ -68,6 +70,8 @@ public class ProcurementAcquisitionModule : IModule
         new("View Purchase Orders", "View", "Procurement.PurchaseOrders", IsBasic: true),
         new("Create Purchase Orders", "Create", "Procurement.PurchaseOrders"),
         new("Update Purchase Orders", "Update", "Procurement.PurchaseOrders"),
+        new("Submit Purchase Orders", "Submit", "Procurement.PurchaseOrders"),
+        new("Certify Funds Available on Purchase Orders", "CertifyFundsAvailable", "Procurement.PurchaseOrders"),
         new("Issue Purchase Orders", "Issue", "Procurement.PurchaseOrders"),
         new("Cancel Purchase Orders", "Cancel", "Procurement.PurchaseOrders"),
 
@@ -135,6 +139,8 @@ public class ProcurementAcquisitionModule : IModule
         // Purchase Orders
         CreatePurchaseOrderEndpoint.Map(purchaseOrdersGroup);
         UpdatePurchaseOrderEndpoint.Map(purchaseOrdersGroup);
+        SubmitPurchaseOrderEndpoint.Map(purchaseOrdersGroup);
+        PoCertifyFundsAvailable.CertifyPurchaseOrderFundsAvailableEndpoint.Map(purchaseOrdersGroup);
         IssuePurchaseOrderEndpoint.Map(purchaseOrdersGroup);
         CancelPurchaseOrderEndpoint.Map(purchaseOrdersGroup);
         GetPurchaseOrderEndpoint.Map(purchaseOrdersGroup);

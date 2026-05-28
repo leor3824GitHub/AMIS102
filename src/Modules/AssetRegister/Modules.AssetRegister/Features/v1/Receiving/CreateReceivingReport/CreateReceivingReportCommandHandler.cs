@@ -7,6 +7,7 @@ using AMIS.Modules.AssetRegister.Data;
 using AMIS.Modules.AssetRegister.Domain.Assets;
 using AMIS.Modules.AssetRegister.Domain.Receiving;
 using AMIS.Modules.AssetRegister.Domain.Services;
+using AMIS.Modules.MasterData.Contracts.v1.CapitalizationThresholds;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,12 +15,15 @@ namespace AMIS.Modules.AssetRegister.Features.v1.Receiving.CreateReceivingReport
 
 public sealed class CreateReceivingReportCommandHandler(
     AssetRegisterDbContext db,
-    IReceivingReportNumberGenerator reportNumbers)
+    IReceivingReportNumberGenerator reportNumbers,
+    IMediator mediator)
     : ICommandHandler<CreateReceivingReportCommand, ReceivingReportDto>
 {
     public async ValueTask<ReceivingReportDto> Handle(CreateReceivingReportCommand cmd, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(cmd);
+
+        await EnforceCapitalizationThresholdAsync(cmd, ct).ConfigureAwait(false);
 
         // Resolve catalog rows referenced by the request. As of Phase 3, every line MUST carry an explicit
         // CatalogItemId — the old fuzzy fallback (PropertyClassHint / substring / token overlap) is gone.
@@ -118,5 +122,33 @@ public sealed class CreateReceivingReportCommandHandler(
                 [], System.Net.HttpStatusCode.BadRequest);
 
         return c;
+    }
+
+    // No-op when no active threshold is configured — the master data is optional and back-compatible.
+    private async Task EnforceCapitalizationThresholdAsync(CreateReceivingReportCommand cmd, CancellationToken ct)
+    {
+        var threshold = await mediator.Send(new GetActiveCapitalizationThresholdQuery(), ct).ConfigureAwait(false);
+        if (threshold is null)
+            return;
+
+        var isPpe = cmd.DocumentKind == ReceivingDocumentKind.PPERR;
+
+        var offending = cmd.Items
+            .Select((line, idx) => (line, idx))
+            .Where(t => threshold.IsCapitalAsset(t.line.UnitCost) != isPpe)
+            .ToList();
+
+        if (offending.Count == 0)
+            return;
+
+        var expected = isPpe ? $">= ₱{threshold.CapitalizationAmount:N2}" : $"< ₱{threshold.CapitalizationAmount:N2}";
+        var otherKind = isPpe ? ReceivingDocumentKind.SMRR : ReceivingDocumentKind.PPERR;
+        var problems = string.Join("; ",
+            offending.Select(t => $"line {t.idx + 1} '{t.line.Description}' @ ₱{t.line.UnitCost:N2}"));
+
+        throw new CustomException(
+            $"{cmd.DocumentKind} requires every line's unit cost to be {expected} per COA Circular '{threshold.CircularName}'. " +
+            $"Mismatched line(s): {problems}. Move these to a {otherKind} or split the receipt.",
+            [], System.Net.HttpStatusCode.BadRequest);
     }
 }

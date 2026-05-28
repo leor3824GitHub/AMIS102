@@ -2,7 +2,7 @@
 @using AMIS.Playground.Blazor.ApiClient
 @inject ISMRRClient Client
 @inject ITangibleItemClient TangibleClient
-@inject ICapitalizationThresholdClient ThresholdClient
+@inject ICapitalizationThresholdState ThresholdState
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 
@@ -375,9 +375,9 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var threshold = await ThresholdClient.GetActiveAsync();
-        if (threshold is not null)
-            _capitalizationAmount = threshold.CapitalizationAmount;
+        await ThresholdState.EnsureLoadedAsync();
+        if (ThresholdState.Threshold is not null)
+            _capitalizationAmount = ThresholdState.Threshold.CapitalizationAmount;
         await LoadAsync();
     }
 

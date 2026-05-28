@@ -152,6 +152,7 @@ public sealed class CreatePurchaseOrderCommandHandler(
             po.PaymentTerm,
             po.FundCluster,
             po.OursBursNumber,
+            po.OursBursDate,
             po.Status,
             po.LineItems.Select(li => new PurchaseOrderLineItemDto(
                 li.ItemNo, li.StockNumber, li.Unit, li.Description, li.Quantity, li.UnitCost, li.Amount,
@@ -160,7 +161,10 @@ public sealed class CreatePurchaseOrderCommandHandler(
             AmountToWords(po.TotalAmount),
             po.CreatedOnUtc,
             po.CreatedBy,
-            po.LastModifiedOnUtc);
+            po.LastModifiedOnUtc,
+            po.FundsAvailableCertifiedById,
+            po.FundsAvailableCertifiedByName,
+            po.FundsAvailableCertifiedOnUtc);
     }
 
     internal static string AmountToWords(decimal amount)

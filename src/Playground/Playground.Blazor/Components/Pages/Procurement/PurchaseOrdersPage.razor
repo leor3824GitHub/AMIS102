@@ -108,23 +108,38 @@
                                                                        OnClick="@(async () => await OpenEditDialog(item.Id))" />
                                                     </MudTooltip>
                                                 }
-                                                @if (_canIssue)
+                                                @if (_canSubmit)
                                                 {
-                                                    <MudTooltip Text="Issue this PO">
-                                                        <MudIconButton Icon="@Icons.Material.Filled.TaskAlt" Size="Size.Small" Color="Color.Success"
-                                                                       OnClick="@(async () => await IssueAsync(item.Id))" />
+                                                    <MudTooltip Text="Submit for Funds Available certification">
+                                                        <MudIconButton Icon="@Icons.Material.Filled.Send" Size="Size.Small" Color="Color.Primary"
+                                                                       OnClick="@(async () => await SubmitAsync(item.Id))" />
                                                     </MudTooltip>
                                                 }
                                             }
-                                            @if (item.Status == PurchaseOrderStatus.Draft || item.Status == PurchaseOrderStatus.Issued)
+                                            @if (item.Status == PurchaseOrderStatus.PendingFundsAvailable && _canCertifyFundsAvailable)
                                             {
-                                                @if (_canCancel)
-                                                {
-                                                    <MudTooltip Text="Cancel this PO">
-                                                        <MudIconButton Icon="@Icons.Material.Filled.Cancel" Size="Size.Small" Color="Color.Error"
-                                                                       OnClick="@(async () => await CancelPoAsync(item.Id))" />
-                                                    </MudTooltip>
-                                                }
+                                                <MudTooltip Text="Certify Funds Available">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.AccountBalance" Size="Size.Small" Color="Color.Info"
+                                                                   OnClick="@(async () => await CertifyFundsAvailableAsync(item.Id))" />
+                                                </MudTooltip>
+                                            }
+                                            @if (item.Status == PurchaseOrderStatus.PendingApproval && _canIssue)
+                                            {
+                                                <MudTooltip Text="Issue this PO">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.TaskAlt" Size="Size.Small" Color="Color.Success"
+                                                                   OnClick="@(async () => await IssueAsync(item.Id))" />
+                                                </MudTooltip>
+                                            }
+                                            @if ((item.Status == PurchaseOrderStatus.Draft
+                                                  || item.Status == PurchaseOrderStatus.PendingFundsAvailable
+                                                  || item.Status == PurchaseOrderStatus.PendingApproval
+                                                  || item.Status == PurchaseOrderStatus.Issued)
+                                                 && _canCancel)
+                                            {
+                                                <MudTooltip Text="Cancel this PO">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.Cancel" Size="Size.Small" Color="Color.Error"
+                                                                   OnClick="@(async () => await CancelPoAsync(item.Id))" />
+                                                </MudTooltip>
                                             }
                                             <MudTooltip Text="View full details">
                                                 <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" Color="Color.Default"
@@ -256,6 +271,26 @@
                             <strong>Total in words:</strong> @_detail.TotalAmountInWords
                         </MudText>
                     }
+
+                    <MudDivider Class="my-3" />
+                    <MudGrid Spacing="2">
+                        <MudItem xs="12" md="6">
+                            <MudText Typo="Typo.subtitle2">Funds Available (Accountant)</MudText>
+                            <MudText Typo="Typo.body2">
+                                @(string.IsNullOrWhiteSpace(_detail.FundsAvailableCertifiedByName)
+                                    ? "— not yet certified —"
+                                    : $"{_detail.FundsAvailableCertifiedByName.ToUpperInvariant()}{(_detail.FundsAvailableCertifiedOnUtc is null ? "" : $" • {_detail.FundsAvailableCertifiedOnUtc.Value.ToLocalTime():MM/dd/yyyy}")}")
+                            </MudText>
+                        </MudItem>
+                        <MudItem xs="6" md="3">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">ORS/BURS No.</MudText>
+                            <MudText Typo="Typo.body2">@(_detail.OursBursNumber ?? "—")</MudText>
+                        </MudItem>
+                        <MudItem xs="6" md="3">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">ORS/BURS Date</MudText>
+                            <MudText Typo="Typo.body2">@(_detail.OursBursDate?.ToString("MM/dd/yyyy") ?? "—")</MudText>
+                        </MudItem>
+                    </MudGrid>
                 </MudCardContent>
             </MudCard>
         }
@@ -265,8 +300,12 @@
 @code {
     private bool _canCreate => UserProfileState.Permissions.Contains(ProcurementPermissions.PurchaseOrders.Create);
     private bool _canUpdate => UserProfileState.Permissions.Contains(ProcurementPermissions.PurchaseOrders.Update);
+    private bool _canSubmit => UserProfileState.Permissions.Contains(ProcurementPermissions.PurchaseOrders.Submit);
+    private bool _canCertifyFundsAvailable => UserProfileState.Permissions.Contains(ProcurementPermissions.PurchaseOrders.CertifyFundsAvailable);
     private bool _canIssue => UserProfileState.Permissions.Contains(ProcurementPermissions.PurchaseOrders.Issue);
     private bool _canCancel => UserProfileState.Permissions.Contains(ProcurementPermissions.PurchaseOrders.Cancel);
+
+    private string? _currentUserEmployeeName => UserProfileState.EmployeeFullName;
 
     [SupplyParameterFromQuery(Name = "canvassId")]
     public Guid? CanvassId { get; set; }
@@ -280,7 +319,7 @@
     private Guid? _appliedCanvassId;
     private Dictionary<string, int> _statusCounts = [];
 
-    private static readonly string[] _statusFilters = ["All", "Draft", "Issued", "PartiallyDelivered", "Fulfilled", "Cancelled"];
+    private static readonly string[] _statusFilters = ["All", "Draft", "PendingFundsAvailable", "PendingApproval", "Issued", "PartiallyDelivered", "Fulfilled", "Cancelled"];
 
     protected override async Task OnInitializedAsync()
     {
@@ -417,6 +456,53 @@
         }
     }
 
+    private async Task SubmitAsync(Guid id)
+    {
+        var po = _items.FirstOrDefault(x => x.Id == id);
+        var message = $"Submit purchase order {po?.PoNumber} for Funds Available certification?";
+        var ok = await DialogService.ShowMessageBox("Submit PO", message, "Submit", cancelText: "Cancel");
+        if (ok is not true) return;
+        try
+        {
+            await Client.SubmitAsync(id);
+            Snackbar.Add("PO submitted for Funds Available certification.", Severity.Success);
+            await LoadAsync();
+            await RefreshStatusCountsAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Submit failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task CertifyFundsAvailableAsync(Guid id)
+    {
+        if (string.IsNullOrWhiteSpace(_currentUserEmployeeName))
+        {
+            Snackbar.Add("Cannot determine current user identity. Please re-login.", Severity.Warning);
+            return;
+        }
+
+        PurchaseOrderDto? po;
+        try { po = await Client.GetAsync(id); }
+        catch (Exception ex) { Snackbar.Add($"Load PO failed: {ex.Message}", Severity.Error); return; }
+        if (po is null) { Snackbar.Add("PO not found.", Severity.Warning); return; }
+
+        var parameters = new DialogParameters<CertifyPurchaseOrderFundsAvailableDialog>
+        {
+            { x => x.PurchaseOrder, po },
+            { x => x.CertifiedByName, _currentUserEmployeeName }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true, CloseButton = true };
+        var dialog = await DialogService.ShowAsync<CertifyPurchaseOrderFundsAvailableDialog>($"Funds Available — {po.PoNumber}", parameters, options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
+        {
+            await LoadAsync();
+            await RefreshStatusCountsAsync();
+        }
+    }
+
     private async Task IssueAsync(Guid id)
     {
         var po = _items.FirstOrDefault(x => x.Id == id);
@@ -509,6 +595,8 @@
         var (color, icon) = status switch
         {
             PurchaseOrderStatus.Draft => (Color.Default, Icons.Material.Filled.Edit),
+            PurchaseOrderStatus.PendingFundsAvailable => (Color.Warning, Icons.Material.Filled.AccountBalance),
+            PurchaseOrderStatus.PendingApproval => (Color.Warning, Icons.Material.Filled.HourglassBottom),
             PurchaseOrderStatus.Issued => (Color.Info, Icons.Material.Filled.Send),
             PurchaseOrderStatus.PartiallyDelivered => (Color.Warning, Icons.Material.Filled.LocalShipping),
             PurchaseOrderStatus.Fulfilled => (Color.Success, Icons.Material.Filled.CheckCircle),

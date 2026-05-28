@@ -15,7 +15,8 @@ public sealed class PrintPurchaseRequestFastQueryHandler(IMediator mediator)
     : IQueryHandler<PrintPurchaseRequestFastQuery, ReportFileDto>
 {
     private static readonly Assembly Assembly = typeof(PrintPurchaseRequestFastQueryHandler).Assembly;
-    private const string TemplateName = "PurchaseRequestFast";
+    private const string LandscapeTemplate = "PurchaseRequestFast";
+    private const string PortraitTemplate = "PurchaseRequestPortraitFast";
 
     public async ValueTask<ReportFileDto> Handle(PrintPurchaseRequestFastQuery query, CancellationToken ct)
     {
@@ -43,10 +44,18 @@ public sealed class PrintPurchaseRequestFastQueryHandler(IMediator mediator)
         };
 
         var lineItemsTable = BuildLineItemsTable(pr, query.MinRows);
+        var lineItemsForPortrait = pr.LineItems.OrderBy(x => x.ItemNo).ToList();
+
+        // Landscape lays out two copies side-by-side using a DataBand. Portrait stacks two
+        // copies top/bottom — DataBand can't flow into two non-contiguous page regions, so
+        // the portrait template uses 12 fixed row slots per copy populated by name below.
+        var templateName = FastReportPaperSize.IsLandscape(query.Orientation)
+            ? LandscapeTemplate
+            : PortraitTemplate;
 
         return await FastReportService.GenerateAsync(
             Assembly,
-            TemplateName,
+            templateName,
             [
                 new ReportDataSource("PurchaseRequestDS", headerData),
                 new ReportDataSource("LineItemsDS", lineItemsTable),
@@ -55,15 +64,19 @@ public sealed class PrintPurchaseRequestFastQueryHandler(IMediator mediator)
             configureReport: report =>
             {
                 FastReportPaperSize.Apply(report, query.PaperSize, query.Orientation);
-                if (query.Copies == 1 || !FastReportPaperSize.IsLandscape(query.Orientation))
-                    HideRightCopy(report);
+                if (query.Copies == 1)
+                    HideSecondCopy(report);
             },
             configureDataBindings: report =>
             {
-                // FRX-based DataSource="LineItemsDS" reference is a name lookup that doesn't
-                // always re-resolve to a runtime-registered TableDataSource. Bind it explicitly.
+                // Landscape uses a DataBand; bind LineItemsDS explicitly because the FRX-based
+                // DataSource name lookup doesn't always re-resolve to the runtime-registered source.
                 if (report.FindObject("Data1") is DataBand dataBand)
                     dataBand.DataSource = report.GetDataSource("LineItemsDS");
+
+                // Portrait template has static T_R{i}_* / B_R{i}_* row slots — populate them
+                // from the ordered line items list. No-op for templates without those slots.
+                PopulatePortraitStaticRows(report, lineItemsForPortrait);
             },
             fileName: $"PR-{pr.PrNumber}",
             ct: ct).ConfigureAwait(false);
@@ -112,14 +125,62 @@ public sealed class PrintPurchaseRequestFastQueryHandler(IMediator mediator)
         return employee?.PositionName ?? string.Empty;
     }
 
-    // Hide every object whose Name starts with "R_" — the right-copy elements in the .frx.
-    private static void HideRightCopy(Report report)
+    // Hide the second copy: "R_*" (right copy in landscape), "B_*" (bottom copy in portrait),
+    // and the portrait cut-line indicator, which is meaningless without a second copy.
+    private static void HideSecondCopy(Report report)
     {
         foreach (var obj in report.AllObjects.OfType<ReportComponentBase>())
         {
-            if (obj.Name is { Length: > 1 } n && n.StartsWith("R_", StringComparison.Ordinal))
+            if (obj.Name is not { Length: > 1 } n)
+                continue;
+
+            if (n.StartsWith("R_", StringComparison.Ordinal)
+                || n.StartsWith("B_", StringComparison.Ordinal)
+                || string.Equals(n, "CutLine", StringComparison.Ordinal))
+            {
                 obj.Visible = false;
+            }
         }
+    }
+
+    // Portrait template has 12 fixed row slots per copy (T_R0..T_R11, B_R0..B_R11). Set each
+    // field by name; slots beyond the actual item count stay blank (template default Text="").
+    private const int PortraitRowSlots = 12;
+
+    private static void PopulatePortraitStaticRows(
+        Report report,
+        List<PurchaseRequestLineItemDto> items)
+    {
+        var nf = CultureInfo.InvariantCulture;
+        var count = Math.Min(items.Count, PortraitRowSlots);
+
+        for (int i = 0; i < count; i++)
+        {
+            var li = items[i];
+            var unit       = li.UnitOfIssue;
+            var desc       = li.ItemDescription;
+            var qty        = li.Quantity.ToString("N2", nf);
+            var unitCost   = li.EstimatedUnitCost.ToString("N2", nf);
+            var totalCost  = li.EstimatedTotalCost.ToString("N2", nf);
+
+            SetText(report, $"T_R{i}_Unit",      unit);
+            SetText(report, $"T_R{i}_Desc",      desc);
+            SetText(report, $"T_R{i}_Qty",       qty);
+            SetText(report, $"T_R{i}_UnitCost",  unitCost);
+            SetText(report, $"T_R{i}_TotalCost", totalCost);
+
+            SetText(report, $"B_R{i}_Unit",      unit);
+            SetText(report, $"B_R{i}_Desc",      desc);
+            SetText(report, $"B_R{i}_Qty",       qty);
+            SetText(report, $"B_R{i}_UnitCost",  unitCost);
+            SetText(report, $"B_R{i}_TotalCost", totalCost);
+        }
+    }
+
+    private static void SetText(Report report, string name, string value)
+    {
+        if (report.FindObject(name) is TextObject t)
+            t.Text = value;
     }
 }
 
