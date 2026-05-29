@@ -40,13 +40,13 @@ public sealed class PrintPurchaseRequestFastQueryHandler(IMediator mediator)
                 Purpose:                  pr.Purpose ?? string.Empty,
                 RequestedByName:          (pr.RequestedByName ?? string.Empty).ToUpperInvariant(),
                 RequestedByDesignation:   requestedByDesignation,
-                ApprovedByName:           (pr.ApprovedByName ?? org?.RegionalManagerName ?? string.Empty).ToUpperInvariant(),
+                ApprovedByName:           (pr.ApprovedByName ?? org?.ApprovingOfficialName ?? string.Empty).ToUpperInvariant(),
                 // Resolve the approver's designation from their employee position (same path as
-                // RequestedBy). Fall back to the configured org Regional Manager designation for
+                // RequestedBy). Fall back to the configured org approving-official designation for
                 // PRs approved before the approver id was captured — never a hard-coded title.
                 ApprovedByDesignation:    !string.IsNullOrWhiteSpace(approvedByDesignation)
                                               ? approvedByDesignation
-                                              : org?.RegionalManagerDesignation ?? string.Empty)
+                                              : org?.ApprovingOfficialDesignation ?? string.Empty)
         };
 
         var lineItemsTable = BuildLineItemsTable(pr, query.MinRows);

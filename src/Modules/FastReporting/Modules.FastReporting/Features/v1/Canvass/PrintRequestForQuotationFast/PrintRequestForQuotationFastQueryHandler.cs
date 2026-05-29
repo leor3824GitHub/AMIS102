@@ -32,8 +32,8 @@ public sealed class PrintRequestForQuotationFastQueryHandler(IMediator mediator)
                 OrgAddress:     org?.Address ?? string.Empty,
                 RivNumber:      canvass.RivNumber,
                 ReturnDeadline: canvass.ReturnDeadline.ToString("MMMM dd, yyyy", CultureInfo.InvariantCulture),
-                SignatoryName:  (org?.RegionalManagerName ?? string.Empty).ToUpperInvariant(),
-                SignatoryRole:  org?.RegionalManagerDesignation ?? "Regional Manager II")
+                SignatoryName:  (org?.ApprovingOfficialName ?? string.Empty).ToUpperInvariant(),
+                SignatoryRole:  org?.ApprovingOfficialDesignation ?? "Designation")
         };
 
         var lineItemsTable = BuildLineItemsTable(canvass.LineItems, query.MinRows, nf);

@@ -15,8 +15,8 @@ public sealed class OrganizationProfile : AggregateRoot<Guid>, IHasTenant, IAudi
     public string? AnnexECode { get; private set; }
 
     public Guid? RegionalManagerId { get; private set; }
-    public string? RegionalManagerName { get; private set; }
-    public string? RegionalManagerDesignation { get; private set; }
+    public string? ApprovingOfficialName { get; private set; }
+    public string? ApprovingOfficialDesignation { get; private set; }
     public Guid? AssistantRegionalManagerId { get; private set; }
     public string? AssistantRegionalManagerName { get; private set; }
     public string? AssistantRegionalManagerDesignation { get; private set; }
@@ -42,8 +42,8 @@ public sealed class OrganizationProfile : AggregateRoot<Guid>, IHasTenant, IAudi
         string? logoUrl,
         string? annexECode = null,
         Guid? regionalManagerId = null,
-        string? regionalManagerName = null,
-        string? regionalManagerDesignation = null,
+        string? approvingOfficialName = null,
+        string? approvingOfficialDesignation = null,
         Guid? assistantRegionalManagerId = null,
         string? assistantRegionalManagerName = null,
         string? assistantRegionalManagerDesignation = null,
@@ -64,8 +64,8 @@ public sealed class OrganizationProfile : AggregateRoot<Guid>, IHasTenant, IAudi
             LogoUrl = logoUrl,
             AnnexECode = annexECode,
             RegionalManagerId = regionalManagerId,
-            RegionalManagerName = regionalManagerName,
-            RegionalManagerDesignation = regionalManagerDesignation,
+            ApprovingOfficialName = approvingOfficialName,
+            ApprovingOfficialDesignation = approvingOfficialDesignation,
             AssistantRegionalManagerId = assistantRegionalManagerId,
             AssistantRegionalManagerName = assistantRegionalManagerName,
             AssistantRegionalManagerDesignation = assistantRegionalManagerDesignation,
@@ -87,8 +87,8 @@ public sealed class OrganizationProfile : AggregateRoot<Guid>, IHasTenant, IAudi
         string? logoUrl,
         string? annexECode = null,
         Guid? regionalManagerId = null,
-        string? regionalManagerName = null,
-        string? regionalManagerDesignation = null,
+        string? approvingOfficialName = null,
+        string? approvingOfficialDesignation = null,
         Guid? assistantRegionalManagerId = null,
         string? assistantRegionalManagerName = null,
         string? assistantRegionalManagerDesignation = null,
@@ -105,8 +105,8 @@ public sealed class OrganizationProfile : AggregateRoot<Guid>, IHasTenant, IAudi
         LogoUrl = logoUrl;
         AnnexECode = annexECode;
         RegionalManagerId = regionalManagerId;
-        RegionalManagerName = regionalManagerName;
-        RegionalManagerDesignation = regionalManagerDesignation;
+        ApprovingOfficialName = approvingOfficialName;
+        ApprovingOfficialDesignation = approvingOfficialDesignation;
         AssistantRegionalManagerId = assistantRegionalManagerId;
         AssistantRegionalManagerName = assistantRegionalManagerName;
         AssistantRegionalManagerDesignation = assistantRegionalManagerDesignation;

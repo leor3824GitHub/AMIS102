@@ -20,7 +20,7 @@ public sealed class GetOrganizationProfileQueryHandler(MasterDataDbContext db)
             ? null
             : new OrganizationProfileDto(
                 entity.Id, entity.Name, entity.ShortName, entity.Address, entity.LogoUrl, entity.AnnexECode,
-                entity.RegionalManagerId, entity.RegionalManagerName, entity.RegionalManagerDesignation,
+                entity.RegionalManagerId, entity.ApprovingOfficialName, entity.ApprovingOfficialDesignation,
                 entity.AssistantRegionalManagerId, entity.AssistantRegionalManagerName, entity.AssistantRegionalManagerDesignation,
                 entity.AccountantId, entity.AccountantName, entity.AccountantDesignation,
                 entity.SupervisingAdminOfficerId, entity.SupervisingAdminOfficerName, entity.SupervisingAdminOfficerDesignation);

@@ -69,8 +69,8 @@ public sealed class PrintAbstractOfCanvassFastQueryHandler(IMediator mediator)
                 Member4Role:      SignatoryLabel(signatories, 4, "ROPC Member"),
                 ViceChairName:    SignatoryName(signatories, 5, org?.SupervisingAdminOfficerName),
                 ViceChairRole:    SignatoryLabel(signatories, 5, org?.SupervisingAdminOfficerDesignation ?? "Supervising Administrative Officer"),
-                ChairName:        SignatoryName(signatories, 6, org?.AssistantRegionalManagerName ?? org?.RegionalManagerName),
-                ChairRole:        SignatoryLabel(signatories, 6, org?.AssistantRegionalManagerDesignation ?? org?.RegionalManagerDesignation ?? "Assistant Regional Manager II"))
+                ChairName:        SignatoryName(signatories, 6, org?.AssistantRegionalManagerName ?? org?.ApprovingOfficialName),
+                ChairRole:        SignatoryLabel(signatories, 6, org?.AssistantRegionalManagerDesignation ?? org?.ApprovingOfficialDesignation ?? "Assistant Regional Manager II"))
         };
 
         var lineItemsTable = BuildLineItemsTable(quotations, query.MinRows);

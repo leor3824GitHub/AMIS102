@@ -77,7 +77,7 @@ Two lines of new code per page:
 @OrgProfileState.Profile?.Name
 @OrgProfileState.Profile?.ShortName
 @OrgProfileState.Profile?.Address
-@OrgProfileState.Profile?.RegionalManagerName         @* Regional Manager II *@
+@OrgProfileState.Profile?.ApprovingOfficialName       @* Approving official — Regional Manager II / Branch Manager *@
 @OrgProfileState.Profile?.AssistantRegionalManagerName
 @OrgProfileState.Profile?.AccountantName              @* Accountant IV *@
 @OrgProfileState.Profile?.SupervisingAdminOfficerName
@@ -113,11 +113,11 @@ Use this markup at the top of every print-area `<div>` so all reports are consis
 Always use the stored designation — never hardcode the title string:
 
 ```razor
-@if (!string.IsNullOrWhiteSpace(_org?.RegionalManagerName))
+@if (!string.IsNullOrWhiteSpace(_org?.ApprovingOfficialName))
 {
     <div class="sign-block">
-        <div class="sign-name">@_org.RegionalManagerName</div>
-        <div class="sign-role">@(_org.RegionalManagerDesignation ?? "Regional Manager II")</div>
+        <div class="sign-name">@_org.ApprovingOfficialName</div>
+        <div class="sign-role">@(_org.ApprovingOfficialDesignation ?? "Designation")</div>
     </div>
 }
 ```
@@ -126,7 +126,7 @@ Available officer fields — always pair Name with Designation, never hardcode t
 
 | Name field | Designation field | Default fallback (if null) |
 | --- | --- | --- |
-| `RegionalManagerName` | `RegionalManagerDesignation` | "Regional Manager II" |
+| `ApprovingOfficialName` | `ApprovingOfficialDesignation` | "Designation" |
 | `AssistantRegionalManagerName` | `AssistantRegionalManagerDesignation` | "Assistant Regional Manager" |
 | `AccountantName` | `AccountantDesignation` | "Accountant IV" |
 | `SupervisingAdminOfficerName` | `SupervisingAdminOfficerDesignation` | "Supervising Administrative Officer" |

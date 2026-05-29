@@ -45,8 +45,8 @@ public sealed class PrintPurchaseOrderFastQueryHandler(IMediator mediator)
                 TotalAmount:              po.TotalAmount.ToString("N2", nf),
                 TotalAmountInWords:       po.TotalAmountInWords,
                 // Prefer the actual approver/certifier captured on the PO; fall back to the org-profile officials.
-                AuthorizedOfficialName:        (po.IssuedByName ?? org?.RegionalManagerName ?? string.Empty).ToUpperInvariant(),
-                AuthorizedOfficialDesignation: org?.RegionalManagerDesignation ?? "Regional Manager II",
+                AuthorizedOfficialName:        (po.IssuedByName ?? org?.ApprovingOfficialName ?? string.Empty).ToUpperInvariant(),
+                AuthorizedOfficialDesignation: org?.ApprovingOfficialDesignation ?? "Designation",
                 AccountantName:                (po.FundsAvailableCertifiedByName ?? org?.AccountantName ?? string.Empty).ToUpperInvariant())
         };
 
@@ -103,13 +103,13 @@ public sealed class PrintPurchaseOrderFastQueryHandler(IMediator mediator)
 
     private static string FormatMode(ModeOfProcurement mode) => mode switch
     {
-        ModeOfProcurement.DirectAcquisition     => "Direct Acquisition",
+        ModeOfProcurement.DirectAcquisition => "Direct Acquisition",
         ModeOfProcurement.SmallValueProcurement => "Small Value Procurement",
-        ModeOfProcurement.PublicBidding         => "Public Bidding",
+        ModeOfProcurement.PublicBidding => "Public Bidding",
         ModeOfProcurement.NegotiatedProcurement => "Negotiated Procurement",
-        ModeOfProcurement.ShoppingA             => "Shopping (A)",
-        ModeOfProcurement.ShoppingB             => "Shopping (B)",
-        _                                       => mode.ToString()
+        ModeOfProcurement.ShoppingA => "Shopping (A)",
+        ModeOfProcurement.ShoppingB => "Shopping (B)",
+        _ => mode.ToString()
     };
 }
 
