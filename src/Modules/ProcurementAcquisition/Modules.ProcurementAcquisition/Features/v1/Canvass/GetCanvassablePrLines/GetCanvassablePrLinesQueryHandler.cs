@@ -21,13 +21,12 @@ public sealed class GetCanvassablePrLinesQueryHandler(ProcurementDbContext dbCon
             .AsNoTracking()
             .Where(x => x.PurchaseRequestId == query.PurchaseRequestId
                         && x.Status != CanvassRequestStatus.Cancelled)
-            .Select(x => new { x.RivNumber, ItemNos = x.LineItems.Select(li => li.PrItemNo) })
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
         var coveredBy = new Dictionary<int, string>();
         foreach (var c in activeCanvasses)
-            foreach (var no in c.ItemNos)
+            foreach (var no in c.CoveredItemNos)
                 coveredBy.TryAdd(no, c.RivNumber);
 
         return pr.LineItems
