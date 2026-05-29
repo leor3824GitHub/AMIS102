@@ -16,7 +16,8 @@ public enum PurchaseRequestStatus
     Cancelled = 4,
     PendingFundsAvailable = 5,      // submitted by requester; awaiting Accountant
     PendingApproval = 6,            // certified by Accountant; awaiting HoPE
-    ReturnedForRevision = 7         // returned by Accountant or HoPE; back to Draft for edits
+    ReturnedForRevision = 7,        // returned by Accountant or HoPE; back to Draft for edits
+    Completed = 8                   // all resulting POs delivered & accepted (IAR) — procurement closed
 }
 
 public enum PrType
@@ -165,6 +166,14 @@ public sealed class SearchPurchaseRequestsQuery : IQuery<PagedResponse<PurchaseR
     public PrType? PrType { get; set; }
     public DateOnly? FromDate { get; set; }
     public DateOnly? ToDate { get; set; }
+
+    /// <summary>
+    /// When <c>true</c>, excludes purchase requests whose every line item is already covered by a
+    /// non-cancelled canvass request (RIV). PRs with at least one uncovered line remain eligible,
+    /// since one PR may be split across multiple canvasses. Used by the "New Canvass Request" PR picker.
+    /// </summary>
+    public bool ExcludeFullyCanvassed { get; set; }
+
     public int PageNumber { get; set; } = 1;
     public int PageSize { get; set; } = 10;
 }

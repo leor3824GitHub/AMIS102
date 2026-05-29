@@ -1,5 +1,6 @@
 using AMIS.Framework.Shared.Persistence;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.Canvass;
+using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders;
 using AMIS.Modules.ProcurementAcquisition.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
@@ -25,6 +26,18 @@ public sealed class SearchCanvassRequestsQueryHandler(ProcurementDbContext dbCon
         if (query.Status.HasValue)
             q = q.Where(x => x.Status == query.Status.Value);
 
+        if (query.FromDate.HasValue)
+        {
+            var from = new DateTimeOffset(query.FromDate.Value.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero);
+            q = q.Where(x => x.CreatedOnUtc >= from);
+        }
+
+        if (query.ToDate.HasValue)
+        {
+            var toExclusive = new DateTimeOffset(query.ToDate.Value.AddDays(1).ToDateTime(TimeOnly.MinValue), TimeSpan.Zero);
+            q = q.Where(x => x.CreatedOnUtc < toExclusive);
+        }
+
         var totalCount = await q.CountAsync(cancellationToken).ConfigureAwait(false);
 
         var pageNumber = query.PageNumber <= 0 ? 1 : query.PageNumber;
@@ -42,7 +55,13 @@ public sealed class SearchCanvassRequestsQueryHandler(ProcurementDbContext dbCon
                 x.ReturnDeadline,
                 x.Status,
                 x.Quotations.Count,
-                x.CreatedOnUtc))
+                x.LineItems.Count,
+                x.CreatedOnUtc,
+                dbContext.PurchaseOrders.Any(p => p.CanvassRequestId == x.Id && p.Status != PurchaseOrderStatus.Cancelled),
+                dbContext.PurchaseOrders
+                    .Where(p => p.CanvassRequestId == x.Id && p.Status != PurchaseOrderStatus.Cancelled)
+                    .Select(p => p.PoNumber)
+                    .FirstOrDefault()))
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 

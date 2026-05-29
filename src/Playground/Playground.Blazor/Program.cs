@@ -67,6 +67,9 @@ builder.Services.AddScoped<IOrganizationProfileState, OrganizationProfileState>(
 // Capitalization threshold state — loaded once per session, consumed by PR/receiving forms and reports
 builder.Services.AddScoped<ICapitalizationThresholdState, CapitalizationThresholdState>();
 
+// Remembers each report's last-used Fast Report Page Setup in encrypted browser localStorage
+builder.Services.AddScoped<IFastReportSetupPreferences, FastReportSetupPreferences>();
+
 // Auth state notifier for session expiration (Blazor-compatible)
 builder.Services.AddScoped<IAuthStateNotifier, AuthStateNotifier>();
 

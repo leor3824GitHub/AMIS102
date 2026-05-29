@@ -20,7 +20,6 @@ public partial class CanvassQuotationDialog
 
     [Inject] private IMaster_dataClient MasterDataClient { get; set; } = default!;
     [Inject] private ICanvassRequestClient CanvassClient { get; set; } = default!;
-    [Inject] private IPurchaseRequestClient PurchaseRequestClient { get; set; } = default!;
     [Inject] private ISnackbar Snackbar { get; set; } = default!;
 
     private SupplierDto? _selectedSupplier;
@@ -48,20 +47,21 @@ public partial class CanvassQuotationDialog
         _loadingLineItems = true;
         try
         {
-            var pr = await PurchaseRequestClient.GetAsync(PurchaseRequestId);
-            if (pr is null)
+            // Items quotable in this canvass are limited to the lines the canvass covers (a PR subset).
+            var canvass = await CanvassClient.GetAsync(CanvassRequestId);
+            if (canvass is null)
             {
-                Snackbar.Add("Linked purchase request not found.", Severity.Warning);
+                Snackbar.Add("Canvass request not found.", Severity.Warning);
                 Form.LineItems = new List<QLineItemRow>();
                 return;
             }
 
-            Form.LineItems = pr.LineItems
-                .OrderBy(x => x.ItemNo)
+            Form.LineItems = canvass.LineItems
+                .OrderBy(x => x.PrItemNo)
                 .Select(x => new QLineItemRow
                 {
-                    Description = x.ItemDescription,
-                    Unit = x.UnitOfIssue,
+                    Description = x.Description,
+                    Unit = x.Unit,
                     Quantity = x.Quantity,
                     UnitPrice = x.EstimatedUnitCost
                 })
@@ -69,7 +69,7 @@ public partial class CanvassQuotationDialog
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Failed to load purchase request items: {ex.Message}", Severity.Error);
+            Snackbar.Add($"Failed to load canvass items: {ex.Message}", Severity.Error);
             Form.LineItems = new List<QLineItemRow>();
         }
         finally

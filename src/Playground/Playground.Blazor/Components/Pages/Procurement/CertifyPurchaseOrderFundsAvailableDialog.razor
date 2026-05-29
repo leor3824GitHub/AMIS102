@@ -8,7 +8,8 @@
         <MudGrid Spacing="2">
             <MudItem xs="12">
                 <MudAlert Severity="Severity.Info" Dense="true">
-                    Assign a <b>UACS Object Code</b> per line item. The PO cannot be issued without all lines coded.
+                    Sign <b>Funds Available</b> and optionally capture the ORS/BURS reference and Fund Cluster.
+                    UACS object codes are certified on the source Purchase Request, not on the PO.
                 </MudAlert>
             </MudItem>
 
@@ -30,7 +31,7 @@
             </MudItem>
 
             <MudItem xs="12">
-                <MudText Typo="Typo.subtitle1" Class="mt-2"><b>Line Items — UACS Assignment</b></MudText>
+                <MudText Typo="Typo.subtitle1" Class="mt-2"><b>Line Items</b></MudText>
                 <MudSimpleTable Dense="true" Hover="true" Striped="true">
                     <thead>
                         <tr>
@@ -39,7 +40,6 @@
                             <th style="width:90px;text-align:right">Qty</th>
                             <th style="width:90px">Unit</th>
                             <th style="width:130px;text-align:right">Amount</th>
-                            <th style="width:220px">UACS Object Code *</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -51,17 +51,6 @@
                                 <td style="text-align:right">@line.Quantity.ToString("N2")</td>
                                 <td>@line.Unit</td>
                                 <td style="text-align:right">@line.Amount.ToString("N2")</td>
-                                <td>
-                                    <MudTextField Value="@(GetUacs(line.ItemNo))"
-                                                  T="string"
-                                                  ValueChanged="@((string v) => SetUacs(line.ItemNo, v))"
-                                                  Placeholder="e.g. 1-07-05-030"
-                                                  Dense="true"
-                                                  Margin="Margin.Dense"
-                                                  Variant="Variant.Outlined"
-                                                  MaxLength="64"
-                                                  Error="@(_submitted && string.IsNullOrWhiteSpace(GetUacs(line.ItemNo)))" />
-                                </td>
                             </tr>
                         }
                     </tbody>
@@ -82,41 +71,20 @@
     [Parameter] public PurchaseOrderDto PurchaseOrder { get; set; } = default!;
     [Parameter] public string CertifiedByName { get; set; } = string.Empty;
 
-    private readonly Dictionary<int, string> _uacs = new();
     private string? _oursBursNumber;
     private DateTime? _oursBursDate;
     private string? _fundCluster;
     private bool _busy;
-    private bool _submitted;
 
     protected override void OnInitialized()
     {
-        // Pre-fill from any existing UACS values already on the PO line (carried from PR or prior cert attempt).
-        foreach (var line in PurchaseOrder.LineItems)
-            _uacs[line.ItemNo] = line.UacsObjectCode ?? string.Empty;
-
         _oursBursNumber = PurchaseOrder.OursBursNumber;
         _oursBursDate = PurchaseOrder.OursBursDate?.ToDateTime(TimeOnly.MinValue);
         _fundCluster = PurchaseOrder.FundCluster;
     }
 
-    private string GetUacs(int itemNo) => _uacs.TryGetValue(itemNo, out var v) ? v : string.Empty;
-
-    private void SetUacs(int itemNo, string? value) => _uacs[itemNo] = value?.Trim() ?? string.Empty;
-
     private async Task CertifyAsync()
     {
-        _submitted = true;
-
-        var missing = PurchaseOrder.LineItems
-            .Where(li => string.IsNullOrWhiteSpace(GetUacs(li.ItemNo)))
-            .ToList();
-        if (missing.Count > 0)
-        {
-            Snackbar.Add($"UACS required on {missing.Count} line(s).", Severity.Warning);
-            return;
-        }
-
         if (string.IsNullOrWhiteSpace(CertifiedByName))
         {
             Snackbar.Add("Could not resolve your employee name. Please re-login.", Severity.Warning);
@@ -126,10 +94,6 @@
         _busy = true;
         try
         {
-            var assignments = PurchaseOrder.LineItems
-                .Select(li => new PoLineUacsAssignment(li.ItemNo, GetUacs(li.ItemNo)))
-                .ToList();
-
             var oursBursDate = _oursBursDate is null ? (DateOnly?)null : DateOnly.FromDateTime(_oursBursDate.Value);
 
             var result = await Client.CertifyFundsAvailableAsync(
@@ -137,7 +101,6 @@
                 new CertifyPurchaseOrderFundsAvailableCommand(
                     PurchaseOrder.Id,
                     CertifiedByName,
-                    assignments,
                     _oursBursNumber,
                     oursBursDate,
                     _fundCluster));

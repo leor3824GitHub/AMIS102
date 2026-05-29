@@ -25,6 +25,7 @@ public sealed class PrintPurchaseRequestFastQueryHandler(IMediator mediator)
 
         var org                    = await mediator.Send(new GetOrganizationProfileQuery(), ct).ConfigureAwait(false);
         var requestedByDesignation = await ResolveDesignationAsync(pr.CreatedBy, ct).ConfigureAwait(false);
+        var approvedByDesignation  = await ResolveDesignationAsync(pr.ApprovedById?.ToString(), ct).ConfigureAwait(false);
 
         var headerData = new List<PrFastHeader>
         {
@@ -40,7 +41,12 @@ public sealed class PrintPurchaseRequestFastQueryHandler(IMediator mediator)
                 RequestedByName:          (pr.RequestedByName ?? string.Empty).ToUpperInvariant(),
                 RequestedByDesignation:   requestedByDesignation,
                 ApprovedByName:           (pr.ApprovedByName ?? org?.RegionalManagerName ?? string.Empty).ToUpperInvariant(),
-                ApprovedByDesignation:    org?.RegionalManagerDesignation ?? "Regional Manager II")
+                // Resolve the approver's designation from their employee position (same path as
+                // RequestedBy). Fall back to the configured org Regional Manager designation for
+                // PRs approved before the approver id was captured — never a hard-coded title.
+                ApprovedByDesignation:    !string.IsNullOrWhiteSpace(approvedByDesignation)
+                                              ? approvedByDesignation
+                                              : org?.RegionalManagerDesignation ?? string.Empty)
         };
 
         var lineItemsTable = BuildLineItemsTable(pr, query.MinRows);

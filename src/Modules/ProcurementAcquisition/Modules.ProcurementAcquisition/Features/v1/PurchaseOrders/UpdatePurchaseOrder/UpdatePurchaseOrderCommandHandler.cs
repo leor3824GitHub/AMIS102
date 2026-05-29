@@ -21,7 +21,7 @@ public sealed class UpdatePurchaseOrderCommandHandler(
 
         var lineItems = command.LineItems.Select(li =>
             new PurchaseOrderLineItemData(li.StockNumber, li.Unit, li.Description, li.Quantity, li.UnitCost,
-                li.CatalogItemId, li.UacsObjectCode));
+                li.CatalogItemId));
 
         po.Update(
             command.SupplierId,

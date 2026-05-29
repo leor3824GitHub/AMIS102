@@ -10,6 +10,8 @@ public sealed class CreateCanvassRequestCommandValidator : AbstractValidator<Cre
         RuleFor(x => x.PurchaseRequestId).NotEmpty();
         RuleFor(x => x.ReturnDeadline).GreaterThan(DateOnly.FromDateTime(DateTime.UtcNow))
             .WithMessage("Return deadline must be a future date.");
+        RuleFor(x => x.PrItemNos).NotEmpty()
+            .WithMessage("Select at least one purchase request line item to canvass.");
     }
 }
 

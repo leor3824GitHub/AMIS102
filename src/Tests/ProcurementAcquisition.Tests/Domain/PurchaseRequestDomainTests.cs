@@ -127,6 +127,30 @@ public sealed class PurchaseRequestDomainTests
     }
 
     [Fact]
+    public void Complete_WhenApproved_MovesToCompleted()
+    {
+        var pr = CreatePr();
+        pr.Submit();
+        pr.CertifyFundsAvailable(Guid.NewGuid(), "Jane Accountant",
+            pr.LineItems.ToDictionary(li => li.ItemNo, _ => "1-07-05-030"), null, null);
+        pr.Approve("John HoPE");
+
+        pr.Complete();
+
+        pr.Status.ShouldBe(PurchaseRequestStatus.Completed);
+    }
+
+    [Fact]
+    public void Complete_WhenNotApproved_Throws()
+    {
+        var pr = CreatePr(); // Draft
+
+        var act = pr.Complete;
+
+        act.ShouldThrow<InvalidOperationException>();
+    }
+
+    [Fact]
     public void ReturnForRevision_FromPendingFundsAvailable_RevertsToDraftWithReason()
     {
         var pr = CreatePr();

@@ -1,4 +1,5 @@
 using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.ProcurementAcquisition.Contracts.v1.Canvass;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
 using AMIS.Modules.ProcurementAcquisition.Data;
 using Mediator;
@@ -33,6 +34,18 @@ public sealed class SearchPurchaseRequestsQueryHandler(ProcurementDbContext dbCo
 
         if (query.ToDate.HasValue)
             q = q.Where(x => x.PrDate <= query.ToDate.Value);
+
+        if (query.ExcludeFullyCanvassed)
+        {
+            // Hide a PR only when every one of its lines is covered by a non-cancelled canvass.
+            // Non-cancelled canvasses are guaranteed disjoint (partition invariant enforced on create),
+            // so the count of covered lines == the sum of their line-item counts. A PR is eligible
+            // while its line count still exceeds the covered count (i.e. at least one line uncovered).
+            q = q.Where(x => x.LineItems.Count >
+                dbContext.CanvassRequests
+                    .Where(c => c.PurchaseRequestId == x.Id && c.Status != CanvassRequestStatus.Cancelled)
+                    .Sum(c => c.LineItems.Count));
+        }
 
         var totalCount = await q.CountAsync(cancellationToken).ConfigureAwait(false);
 

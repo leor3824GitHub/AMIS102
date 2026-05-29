@@ -13,6 +13,7 @@
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 @inject IUserProfileState UserProfileState
+@inject IFastReportSetupPreferences FastReportSetupPrefs
 @inject IJSRuntime JS
 
 <AMISPageHeader Title="Purchase Orders" Description="Create and manage purchase orders (PO)" />
@@ -27,6 +28,12 @@
                                   Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
                                   Style="max-width:300px" DebounceInterval="400"
                                   OnDebounceIntervalElapsed="@(async () => await LoadAsync())" />
+                    <MudDatePicker Label="From" Date="_fromDate" DateChanged="OnFromDateChanged"
+                                   Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true"
+                                   Style="max-width:150px" />
+                    <MudDatePicker Label="To" Date="_toDate" DateChanged="OnToDateChanged"
+                                   Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true"
+                                   Style="max-width:150px" />
                     <MudSpacer />
                     @if (_canCreate)
                     {
@@ -314,6 +321,8 @@
     private PurchaseOrderDto? _detail;
     private bool _loaded;
     private string _keyword = string.Empty;
+    private DateTime? _fromDate;
+    private DateTime? _toDate;
     private string _statusFilter = "All";
     private int _page = 1, _pageSize = 15, _totalCount;
     private Guid? _appliedCanvassId;
@@ -342,7 +351,7 @@
         try
         {
             PurchaseOrderStatus? filter = _statusFilter == "All" ? null : Enum.Parse<PurchaseOrderStatus>(_statusFilter);
-            var result = await Client.SearchAsync(_keyword, filter, _page, _pageSize);
+            var result = await Client.SearchAsync(_keyword, filter, _page, _pageSize, fromDate: ToDateOnly(_fromDate), toDate: ToDateOnly(_toDate));
             _items = result.Items?.ToList() ?? [];
             _totalCount = (int)result.TotalCount;
         }
@@ -356,6 +365,25 @@
         _page = 1;
         await LoadAsync();
     }
+
+    private async Task OnFromDateChanged(DateTime? date)
+    {
+        _fromDate = date;
+        _page = 1;
+        await LoadAsync();
+        await RefreshStatusCountsAsync();
+    }
+
+    private async Task OnToDateChanged(DateTime? date)
+    {
+        _toDate = date;
+        _page = 1;
+        await LoadAsync();
+        await RefreshStatusCountsAsync();
+    }
+
+    private static DateOnly? ToDateOnly(DateTime? value) =>
+        value is null ? null : DateOnly.FromDateTime(value.Value);
 
     private async Task LoadStatusCountsAsync()
     {
@@ -391,7 +419,7 @@
 
     private async Task<(string status, int count)> LoadStatusCountAsync(string status, PurchaseOrderStatus filter)
     {
-        var result = await Client.SearchAsync(string.Empty, filter, 1, 1);
+        var result = await Client.SearchAsync(string.Empty, filter, 1, 1, fromDate: ToDateOnly(_fromDate), toDate: ToDateOnly(_toDate));
         return (status, (int)result.TotalCount);
     }
 
@@ -550,7 +578,11 @@
     {
         try
         {
-            var bytes = await Client.GetFastReportPdfAsync(id, pageWidth: "a4", orientation: "portrait", minRows: 8);
+            var saved = await FastReportSetupPrefs.GetAsync(FastReportKey);
+            var bytes = await Client.GetFastReportPdfAsync(id,
+                pageWidth: saved?.PaperSize ?? "a4",
+                orientation: saved?.Orientation ?? "portrait",
+                minRows: saved?.MinRows ?? 8);
             var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
             await JS.InvokeVoidAsync("open", dataUrl, "_blank");
             Snackbar.Add("PDF ready.", Severity.Success);
@@ -561,21 +593,26 @@
         }
     }
 
+    private const string FastReportKey = "purchase-order";
+
     private async Task OpenFastReportSetupAsync(Guid id)
     {
         // PO is always 1 copy per page; the dialog's Copies field is ignored on submit.
+        var saved = await FastReportSetupPrefs.GetAsync(FastReportKey);
         var parameters = new DialogParameters
         {
-            [nameof(FastReportPageSetupDialog.PaperSize)] = "a4",
-            [nameof(FastReportPageSetupDialog.Orientation)] = "portrait",
-            [nameof(FastReportPageSetupDialog.Copies)] = 1,
-            [nameof(FastReportPageSetupDialog.MinRows)] = 8
+            [nameof(FastReportPageSetupDialog.PaperSize)] = saved?.PaperSize ?? "a4",
+            [nameof(FastReportPageSetupDialog.Orientation)] = saved?.Orientation ?? "portrait",
+            [nameof(FastReportPageSetupDialog.Copies)] = saved?.Copies ?? 1,
+            [nameof(FastReportPageSetupDialog.MinRows)] = saved?.MinRows ?? 8
         };
         var options = new DialogOptions { MaxWidth = MaxWidth.ExtraSmall, FullWidth = false, CloseOnEscapeKey = true };
         var dialog = await DialogService.ShowAsync<FastReportPageSetupDialog>("Page Setup", parameters, options);
         var result = await dialog.Result;
         if (result is null || result.Canceled) return;
         if (result.Data is not FastReportPageSetupDialog.Result r) return;
+
+        await FastReportSetupPrefs.SaveAsync(FastReportKey, new FastReportSetup(r.PaperSize, r.Orientation, r.Copies, r.MinRows));
 
         try
         {

@@ -18,7 +18,7 @@ public sealed class IssuePurchaseOrderCommandHandler(
             .ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Purchase order '{command.Id}' not found.");
 
-        po.Issue();
+        po.Issue(currentUser.GetUserId(), currentUser.Name);
         po.LastModifiedBy = currentUser.GetUserId().ToString();
 
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);

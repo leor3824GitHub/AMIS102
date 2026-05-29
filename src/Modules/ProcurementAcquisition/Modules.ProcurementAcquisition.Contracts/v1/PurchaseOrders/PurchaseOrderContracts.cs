@@ -40,8 +40,7 @@ public sealed record PurchaseOrderLineItemDto(
     decimal Quantity,
     decimal UnitCost,
     decimal Amount,
-    Guid? CatalogItemId = null,
-    string? UacsObjectCode = null);
+    Guid? CatalogItemId = null);
 
 public sealed record PurchaseOrderDto(
     Guid Id,
@@ -72,7 +71,10 @@ public sealed record PurchaseOrderDto(
     DateTimeOffset? LastModifiedOnUtc,
     Guid? FundsAvailableCertifiedById = null,
     string? FundsAvailableCertifiedByName = null,
-    DateTimeOffset? FundsAvailableCertifiedOnUtc = null);
+    DateTimeOffset? FundsAvailableCertifiedOnUtc = null,
+    Guid? IssuedById = null,
+    string? IssuedByName = null,
+    DateTimeOffset? IssuedOnUtc = null);
 
 public sealed record PurchaseOrderSummaryDto(
     Guid Id,
@@ -95,8 +97,7 @@ public sealed record PurchaseOrderLineItemRequest(
     string Description,
     decimal Quantity,
     decimal UnitCost,
-    Guid? CatalogItemId = null,
-    string? UacsObjectCode = null);
+    Guid? CatalogItemId = null);
 
 public sealed record CreatePurchaseOrderCommand(
     Guid PurchaseRequestId,
@@ -133,17 +134,14 @@ public sealed record UpdatePurchaseOrderCommand(
 /// <summary>Submit a Draft PO for funds-available certification. Moves Draft → PendingFundsAvailable.</summary>
 public sealed record SubmitPurchaseOrderCommand(Guid Id) : ICommand<PurchaseOrderDto>;
 
-/// <summary>Per-line UACS assignment supplied by the Accountant during PO funds-available certification.</summary>
-public sealed record PoLineUacsAssignment(int ItemNo, string UacsObjectCode);
-
 /// <summary>
-/// Accountant signs the "Funds Available" portion of the PO. Assigns/confirms a UACS Object Code per line
-/// and (optionally) captures the ORS/BURS reference. Moves PO from PendingFundsAvailable to PendingApproval.
+/// Accountant signs the "Funds Available" portion of the PO and (optionally) captures the ORS/BURS
+/// reference and Fund Cluster. Moves PO from PendingFundsAvailable to PendingApproval. UACS object codes
+/// are certified on the source PR (and held on the catalog), not on the supplier-facing PO.
 /// </summary>
 public sealed record CertifyPurchaseOrderFundsAvailableCommand(
     Guid Id,
     string CertifiedByName,
-    IReadOnlyList<PoLineUacsAssignment> UacsByLine,
     string? OursBursNumber = null,
     DateOnly? OursBursDate = null,
     string? FundCluster = null) : ICommand<PurchaseOrderDto>;

@@ -1,10 +1,12 @@
 @page "/asset-register/receiving/smrr"
 @using AMIS.Playground.Blazor.ApiClient
+@using AMIS.Playground.Blazor.Components.Pages.Procurement
 @using ReceivingDocumentKind = AMIS.Modules.AssetRegister.Contracts.v1.ReceivingDocumentKind
 @using ReceiptType = AMIS.Modules.AssetRegister.Contracts.v1.ReceiptType
 @inject IArReceivingReportClient Client
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
+@inject IFastReportSetupPreferences FastReportSetupPrefs
 @inject IJSRuntime JS
 
 <AMISPageHeader Title="Supplies and Materials Receiving Reports (SMRR)"
@@ -94,9 +96,23 @@
                                     <td>
                                         <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small"
                                                        Color="Color.Primary" OnClick="@(() => ViewAsync(r.Id))" />
-                                        <MudIconButton Icon="@Icons.Material.Filled.PictureAsPdf" Size="Size.Small"
-                                                       Color="Color.Secondary" OnClick="@(() => PrintFastAsync(r.Id))"
-                                                       Title="Download PDF (SMRR)" />
+                                        <MudMenu Icon="@Icons.Material.Filled.Print"
+                                                 Color="Color.Secondary"
+                                                 Size="Size.Small"
+                                                 Dense="true"
+                                                 AnchorOrigin="Origin.BottomLeft"
+                                                 TransformOrigin="Origin.TopLeft"
+                                                 ToolTip="Print">
+                                            <MudMenuItem Icon="@Icons.Material.Filled.PictureAsPdf"
+                                                         OnClick="@(() => PrintFastAsync(r.Id))">
+                                                Download PDF
+                                            </MudMenuItem>
+                                            <MudDivider />
+                                            <MudMenuItem Icon="@Icons.Material.Filled.Settings"
+                                                         OnClick="@(() => OpenFastReportSetupAsync(r.Id))">
+                                                Fast Report – Page Setup…
+                                            </MudMenuItem>
+                                        </MudMenu>
                                         <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
                                                        Color="Color.Error" OnClick="@(() => DeleteAsync(r.Id, r.ReportNo))" />
                                     </td>
@@ -171,11 +187,17 @@
         }
     }
 
+    private const string FastReportKey = "smrr-receiving-report";
+
     private async Task PrintFastAsync(Guid id)
     {
         try
         {
-            var bytes = await Client.GetSmrrFastReportPdfAsync(id, pageWidth: "longbond", orientation: "portrait");
+            var saved = await FastReportSetupPrefs.GetAsync(FastReportKey);
+            var bytes = await Client.GetSmrrFastReportPdfAsync(id,
+                pageWidth: saved?.PaperSize ?? "longbond",
+                orientation: saved?.Orientation ?? "portrait",
+                minRows: saved?.MinRows);
             var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
             await JS.InvokeVoidAsync("open", dataUrl, "_blank");
             Snackbar.Add("PDF ready.", Severity.Success);
@@ -183,6 +205,37 @@
         catch (Exception ex)
         {
             Snackbar.Add($"PDF generation failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task OpenFastReportSetupAsync(Guid id)
+    {
+        var saved = await FastReportSetupPrefs.GetAsync(FastReportKey);
+        var parameters = new DialogParameters
+        {
+            [nameof(FastReportPageSetupDialog.PaperSize)] = saved?.PaperSize ?? "longbond",
+            [nameof(FastReportPageSetupDialog.Orientation)] = saved?.Orientation ?? "portrait",
+            [nameof(FastReportPageSetupDialog.Copies)] = saved?.Copies ?? 1,
+            [nameof(FastReportPageSetupDialog.MinRows)] = saved?.MinRows ?? 12
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.ExtraSmall, FullWidth = false, CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<FastReportPageSetupDialog>("Page Setup", parameters, options);
+        var result = await dialog.Result;
+        if (result is null || result.Canceled) return;
+        if (result.Data is not FastReportPageSetupDialog.Result r) return;
+
+        await FastReportSetupPrefs.SaveAsync(FastReportKey, new FastReportSetup(r.PaperSize, r.Orientation, r.Copies, r.MinRows));
+
+        try
+        {
+            var bytes = await Client.GetSmrrFastReportPdfAsync(id, pageWidth: r.PaperSize, orientation: r.Orientation, minRows: r.MinRows);
+            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
+            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            Snackbar.Add("PDF ready.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fast report failed: {ex.Message}", Severity.Error);
         }
     }
 

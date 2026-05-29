@@ -29,6 +29,8 @@ public sealed class PurchaseOrderConfiguration : IEntityTypeConfiguration<Purcha
 
         // Funds Available — Accountant
         builder.Property(x => x.FundsAvailableCertifiedByName).HasMaxLength(200);
+        // Approved — Authorized Official who issued the PO
+        builder.Property(x => x.IssuedByName).HasMaxLength(200);
         // Version column kept for future xmin-based concurrency; not active until properly wired
 
         builder.HasIndex(x => new { x.TenantId, x.PoNumber }).IsUnique();
@@ -47,7 +49,8 @@ public sealed class PurchaseOrderConfiguration : IEntityTypeConfiguration<Purcha
             b.Property(li => li.Description).HasMaxLength(500).IsRequired();
             b.Property(li => li.Quantity).HasPrecision(18, 4).IsRequired();
             b.Property(li => li.UnitCost).HasPrecision(18, 4).IsRequired();
-            b.Property(li => li.UacsObjectCode).HasMaxLength(64); // copied from PR line; flows through to IAR/PPERR
+            // CatalogItemId carries forward to the IAR so the accepted asset can be classified against its
+            // PropertyItemCatalog (which holds the authoritative UACS). The PO itself does not carry UACS.
         });
     }
 }

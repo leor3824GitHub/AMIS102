@@ -48,6 +48,36 @@
                              Margin="Margin.Dense"
                              Variant="Variant.Outlined"
                              HelperText="Pads the line-item table with empty rows up to this count." />
+
+            @if (SupportsDataOnlyOverlay)
+            {
+                <MudDivider />
+                <MudCheckBox T="bool" @bind-Value="DataOnly" Color="Color.Primary" Dense="true"
+                             Label="Print data only (for pre-printed forms)" />
+                <MudText Typo="Typo.caption" Color="Color.Default">
+                    Suppresses all labels, boxes and the form header — only the field values
+                    print, to overlay onto a pre-printed accountable form.
+                </MudText>
+                @if (DataOnly)
+                {
+                    <MudStack Row="true" Spacing="2">
+                        <MudNumericField T="double"
+                                         Label="Offset X (mm)"
+                                         @bind-Value="OffsetX"
+                                         Min="-30" Max="30" Step="0.5"
+                                         Dense="true" Margin="Margin.Dense"
+                                         Variant="Variant.Outlined"
+                                         HelperText="+ shifts right" />
+                        <MudNumericField T="double"
+                                         Label="Offset Y (mm)"
+                                         @bind-Value="OffsetY"
+                                         Min="-30" Max="30" Step="0.5"
+                                         Dense="true" Margin="Margin.Dense"
+                                         Variant="Variant.Outlined"
+                                         HelperText="+ shifts down" />
+                    </MudStack>
+                }
+            }
         </MudStack>
     </DialogContent>
     <DialogActions>
@@ -72,6 +102,14 @@
     // whose portrait template only renders a single copy.
     [Parameter] public bool SupportsPortraitTwoCopies { get; set; }
 
+    // Opt-in: reports backed by a pre-printed accountable form (PPERR / PPEIR) can print
+    // only the field values for overlay onto the physical form. Default false hides the
+    // section entirely for reports that have no overlay support.
+    [Parameter] public bool SupportsDataOnlyOverlay { get; set; }
+    [Parameter] public bool DataOnly { get; set; }
+    [Parameter] public double OffsetX { get; set; }
+    [Parameter] public double OffsetY { get; set; }
+
     private readonly (string Value, string Label)[] _paperOptions =
     {
         ("a4",       "A4 — 210 × 297 mm (8.27 × 11.69 in)"),
@@ -80,13 +118,18 @@
         ("legal",    "Legal — 216 × 356 mm (8.5 × 14 in)")
     };
 
-    public sealed record Result(string PaperSize, string Orientation, int Copies, int MinRows);
+    public sealed record Result(
+        string PaperSize, string Orientation, int Copies, int MinRows,
+        bool DataOnly, double OffsetX, double OffsetY);
 
     private void Submit()
     {
         var copies = (Orientation == "portrait" && !SupportsPortraitTwoCopies) ? 1 : Copies;
         var rows = Math.Clamp(MinRows, 1, 20);
-        MudDialog.Close(DialogResult.Ok(new Result(PaperSize, Orientation, copies, rows)));
+        var dataOnly = SupportsDataOnlyOverlay && DataOnly;
+        var offsetX = dataOnly ? Math.Clamp(OffsetX, -30, 30) : 0;
+        var offsetY = dataOnly ? Math.Clamp(OffsetY, -30, 30) : 0;
+        MudDialog.Close(DialogResult.Ok(new Result(PaperSize, Orientation, copies, rows, dataOnly, offsetX, offsetY)));
     }
 
     private void Cancel() => MudDialog.Cancel();

@@ -133,8 +133,8 @@ public sealed class CreatePurchaseRequestCommandValidatorTests
             AlobsDate: null,
             LineItems:
             [
-                new CreatePurchaseRequestLineItemRequest(10, "ream", "Bond Paper A4", 250m),
-                new CreatePurchaseRequestLineItemRequest(5, "box", "Ballpen black", 80m)
+                new CreatePurchaseRequestLineItemRequest(10, "ream", "Bond Paper A4", 250m, Guid.NewGuid()),
+                new CreatePurchaseRequestLineItemRequest(5, "box", "Ballpen black", 80m, Guid.NewGuid())
             ]);
 }
 

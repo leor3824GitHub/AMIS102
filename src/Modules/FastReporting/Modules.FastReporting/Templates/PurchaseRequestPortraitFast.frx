@@ -73,27 +73,27 @@
         Font="Times New Roman, 14pt, style=Bold" />
 
       <!-- ── TOP COPY: PR Form Header  top=111, H=33.9 ── -->
-      <TextObject Name="T_DeptLbl" Left="0" Top="111" Width="60" Height="33.9"
-        Text="Name of Department/Office/Section:"
+      <TextObject Name="T_DeptLbl" Left="0" Top="111" Width="95" Height="33.9"
+        Text="Name of Department/ Office/ Section:"
         Font="Times New Roman, 7pt" HorzAlign="Left" VertAlign="Center" WordWrap="true"
         Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
-      <TextObject Name="T_DeptVal" Left="60" Top="111" Width="220" Height="33.9"
+      <TextObject Name="T_DeptVal" Left="95" Top="111" Width="285" Height="33.9"
         Text="[PurchaseRequestDS.DepartmentName]"
         Font="Times New Roman, 8pt" VertAlign="Center" WordWrap="true"
         Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
-      <TextObject Name="T_PrNoLbl" Left="280" Top="111" Width="60" Height="16.95"
+      <TextObject Name="T_PrNoLbl" Left="380" Top="111" Width="60" Height="16.95"
         Text="PR No.:"
         Font="Times New Roman, 7pt" VertAlign="Center"
         Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
-      <TextObject Name="T_PrNoVal" Left="340" Top="111" Width="200" Height="16.95"
+      <TextObject Name="T_PrNoVal" Left="440" Top="111" Width="100" Height="16.95"
         Text="[PurchaseRequestDS.PrNumber]"
         Font="Times New Roman, 8pt" VertAlign="Center"
         Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
-      <TextObject Name="T_RccLbl" Left="280" Top="127.95" Width="60" Height="16.95"
+      <TextObject Name="T_RccLbl" Left="380" Top="127.95" Width="60" Height="16.95"
         Text="RC Code:"
         Font="Times New Roman, 7pt" VertAlign="Center"
         Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
-      <TextObject Name="T_RccVal" Left="340" Top="127.95" Width="200" Height="16.95"
+      <TextObject Name="T_RccVal" Left="440" Top="127.95" Width="100" Height="16.95"
         Text="[PurchaseRequestDS.ResponsibilityCenterCode]"
         Font="Times New Roman, 8pt" VertAlign="Center"
         Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
@@ -292,27 +292,27 @@
         Font="Times New Roman, 14pt, style=Bold" />
 
       <!-- ── BOTTOM COPY: PR Form Header  top=635, H=33.9 ── -->
-      <TextObject Name="B_DeptLbl" Left="0" Top="635" Width="60" Height="33.9"
+      <TextObject Name="B_DeptLbl" Left="0" Top="635" Width="95" Height="33.9"
         Text="Name of Department/Office/Section:"
         Font="Times New Roman, 7pt" HorzAlign="Left" VertAlign="Center" WordWrap="true"
         Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
-      <TextObject Name="B_DeptVal" Left="60" Top="635" Width="220" Height="33.9"
+      <TextObject Name="B_DeptVal" Left="95" Top="635" Width="285" Height="33.9"
         Text="[PurchaseRequestDS.DepartmentName]"
         Font="Times New Roman, 8pt" VertAlign="Center" WordWrap="true"
         Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
-      <TextObject Name="B_PrNoLbl" Left="280" Top="635" Width="60" Height="16.95"
+      <TextObject Name="B_PrNoLbl" Left="380" Top="635" Width="60" Height="16.95"
         Text="PR No.:"
         Font="Times New Roman, 7pt" VertAlign="Center"
         Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
-      <TextObject Name="B_PrNoVal" Left="340" Top="635" Width="200" Height="16.95"
+      <TextObject Name="B_PrNoVal" Left="440" Top="635" Width="100" Height="16.95"
         Text="[PurchaseRequestDS.PrNumber]"
         Font="Times New Roman, 8pt" VertAlign="Center"
         Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
-      <TextObject Name="B_RccLbl" Left="280" Top="651.95" Width="60" Height="16.95"
+      <TextObject Name="B_RccLbl" Left="380" Top="651.95" Width="60" Height="16.95"
         Text="RC Code:"
         Font="Times New Roman, 7pt" VertAlign="Center"
         Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
-      <TextObject Name="B_RccVal" Left="340" Top="651.95" Width="200" Height="16.95"
+      <TextObject Name="B_RccVal" Left="440" Top="651.95" Width="100" Height="16.95"
         Text="[PurchaseRequestDS.ResponsibilityCenterCode]"
         Font="Times New Roman, 8pt" VertAlign="Center"
         Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />

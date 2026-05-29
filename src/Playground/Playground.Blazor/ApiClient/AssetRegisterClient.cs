@@ -670,7 +670,7 @@ internal interface IArIssuanceReportClient
     Task<ArIssuanceReportDto> AddLinesAsync(Guid id, IReadOnlyList<Guid> accountabilityLineIds, CancellationToken ct = default);
     Task<ArIssuanceReportDto> PostAsync(Guid id, PostIssuanceReportRequest request, CancellationToken ct = default);
     Task<ArIssuanceReportDto> RemoveLineAsync(Guid id, Guid lineId, CancellationToken ct = default);
-    Task<byte[]> GetFastReportPdfAsync(Guid id, string? pageWidth = null, string? orientation = null, int? minRows = null, CancellationToken ct = default);
+    Task<byte[]> GetFastReportPdfAsync(Guid id, string? pageWidth = null, string? orientation = null, int? minRows = null, bool? dataOnly = null, double? offsetX = null, double? offsetY = null, CancellationToken ct = default);
     Task<byte[]> GetSmirFastReportPdfAsync(Guid id, string? pageWidth = null, string? orientation = null, int? minRows = null, CancellationToken ct = default);
 }
 
@@ -728,6 +728,9 @@ internal sealed class ArIssuanceReportClient(HttpClient http) : IArIssuanceRepor
         string? pageWidth = null,
         string? orientation = null,
         int? minRows = null,
+        bool? dataOnly = null,
+        double? offsetX = null,
+        double? offsetY = null,
         CancellationToken ct = default)
     {
         var url = ArUrlBuilder.Build($"api/v1/fast-reporting/asset-register/issuance-reports/{id}/print", new()
@@ -735,6 +738,9 @@ internal sealed class ArIssuanceReportClient(HttpClient http) : IArIssuanceRepor
             ["pageWidth"] = pageWidth,
             ["orientation"] = orientation,
             ["minRows"] = minRows?.ToString(CultureInfo.InvariantCulture),
+            ["dataOnly"] = dataOnly == true ? "true" : null,
+            ["offsetX"] = offsetX is { } ox && ox != 0 ? ox.ToString(CultureInfo.InvariantCulture) : null,
+            ["offsetY"] = offsetY is { } oy && oy != 0 ? oy.ToString(CultureInfo.InvariantCulture) : null,
         });
         return http.GetByteArrayAsync(url, ct);
     }
@@ -979,7 +985,7 @@ public interface IArReceivingReportClient
     Task DeleteAsync(Guid id, CancellationToken ct = default);
     Task<ArPagedResponse<AcceptedIARLineItemDto>> SearchAcceptedIARItemsAsync(
         string? keyword = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
-    Task<byte[]> GetFastReportPdfAsync(Guid id, string? pageWidth = null, string? orientation = null, int? minRows = null, CancellationToken ct = default);
+    Task<byte[]> GetFastReportPdfAsync(Guid id, string? pageWidth = null, string? orientation = null, int? minRows = null, bool? dataOnly = null, double? offsetX = null, double? offsetY = null, CancellationToken ct = default);
     Task<byte[]> GetSmrrFastReportPdfAsync(Guid id, string? pageWidth = null, string? orientation = null, int? minRows = null, CancellationToken ct = default);
 
     // PPERR Form Series
@@ -1049,6 +1055,9 @@ public sealed class ArReceivingReportClient(HttpClient http) : IArReceivingRepor
         string? pageWidth = null,
         string? orientation = null,
         int? minRows = null,
+        bool? dataOnly = null,
+        double? offsetX = null,
+        double? offsetY = null,
         CancellationToken ct = default)
     {
         var url = ArUrlBuilder.Build($"api/v1/fast-reporting/asset-register/receiving-reports/{id}/print", new()
@@ -1056,6 +1065,9 @@ public sealed class ArReceivingReportClient(HttpClient http) : IArReceivingRepor
             ["pageWidth"] = pageWidth,
             ["orientation"] = orientation,
             ["minRows"] = minRows?.ToString(CultureInfo.InvariantCulture),
+            ["dataOnly"] = dataOnly == true ? "true" : null,
+            ["offsetX"] = offsetX is { } ox && ox != 0 ? ox.ToString(CultureInfo.InvariantCulture) : null,
+            ["offsetY"] = offsetY is { } oy && oy != 0 ? oy.ToString(CultureInfo.InvariantCulture) : null,
         });
         return http.GetByteArrayAsync(url, ct);
     }

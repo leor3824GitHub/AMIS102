@@ -54,7 +54,16 @@ public sealed class PrintPPEIssuanceReportFastQueryHandler(IMediator mediator)
             ],
             format: ReportFormat.Pdf,
             configureReport: report =>
-                FastReportPaperSize.Apply(report, query.PaperSize, query.Orientation),
+            {
+                FastReportPaperSize.Apply(report, query.PaperSize, query.Orientation);
+                if (query.DataOnly)
+                    FastReportOverlay.ApplyDataOnly(
+                        report,
+                        dataSourceNames: ["IrDS", "LineItemsDS"],
+                        suppressFields: ["OrgName", "OrgAddress"],
+                        offsetXmm: query.OffsetXmm,
+                        offsetYmm: query.OffsetYmm);
+            },
             configureDataBindings: report =>
             {
                 if (report.FindObject("Data1") is DataBand dataBand)

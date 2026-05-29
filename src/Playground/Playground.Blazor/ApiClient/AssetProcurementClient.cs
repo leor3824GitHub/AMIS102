@@ -14,7 +14,7 @@ internal interface IAssetIarClient
 {
     Task<PagedResponse<AssetIARSummaryDto>> SearchAsync(
         string? keyword = null, AssetIARStatus? status = null,
-        int page = 1, int pageSize = 20, CancellationToken ct = default);
+        int page = 1, int pageSize = 20, DateOnly? fromDate = null, DateOnly? toDate = null, CancellationToken ct = default);
     Task<AssetIARDto?> GetAsync(Guid id, CancellationToken ct = default);
     Task<byte[]> GetFastReportPdfAsync(Guid id, string? pageWidth = null, string? orientation = null, int? minRows = null, CancellationToken ct = default);
     Task<AssetIARDto> CreateAsync(CreateAssetIARCommand command, CancellationToken ct = default);
@@ -38,11 +38,13 @@ internal sealed class AssetIarClient(HttpClient http) : IAssetIarClient
 
     public Task<PagedResponse<AssetIARSummaryDto>> SearchAsync(
         string? keyword = null, AssetIARStatus? status = null,
-        int page = 1, int pageSize = 20, CancellationToken ct = default)
+        int page = 1, int pageSize = 20, DateOnly? fromDate = null, DateOnly? toDate = null, CancellationToken ct = default)
     {
         var q = HttpUtility.ParseQueryString(string.Empty);
         if (!string.IsNullOrWhiteSpace(keyword)) q["Keyword"] = keyword;
         if (status.HasValue) q["Status"] = ((int)status.Value).ToString(CultureInfo.InvariantCulture);
+        if (fromDate.HasValue) q["FromDate"] = fromDate.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        if (toDate.HasValue) q["ToDate"] = toDate.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
         q["PageNumber"] = page.ToString(CultureInfo.InvariantCulture);
         q["PageSize"] = pageSize.ToString(CultureInfo.InvariantCulture);
         return http.GetFromJsonAsync<PagedResponse<AssetIARSummaryDto>>($"{Base}?{q}", JsonOptions, ct)!;

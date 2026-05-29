@@ -215,14 +215,6 @@
                                              Format="N2"
                                              Placeholder="0.00" />
                         </MudItem>
-                        <MudItem xs="12" sm="6" md="2">
-                            <MudTextField @bind-Value="_newLineItem.UacsObjectCode"
-                                          Label="UACS Code"
-                                          Variant="Variant.Outlined"
-                                          Dense="true"
-                                          Margin="Margin.Dense"
-                                          HelperText="Optional" />
-                        </MudItem>
                     </MudGrid>
                 </MudPaper>
 
@@ -272,14 +264,6 @@
                                                      Margin="Margin.Dense"
                                                      Min="0m"
                                                      Format="N2" />
-                                </EditTemplate>
-                            </PropertyColumn>
-                            <PropertyColumn Property="x => x.UacsObjectCode" Title="UACS Code">
-                                <EditTemplate>
-                                    <MudTextField @bind-Value="context.Item.UacsObjectCode"
-                                                  Variant="Variant.Outlined"
-                                                  Dense="true"
-                                                  Margin="Margin.Dense" />
                                 </EditTemplate>
                             </PropertyColumn>
                             <PropertyColumn Property="x => x.Quantity * x.UnitCost" Title="Amount" Format="C" Sortable="false" />
@@ -390,9 +374,10 @@
             }
             catch { }
 
-            // The PO's UACS (and catalog reference) originate on the PR line items, certified at PR
-            // "Funds Available". The awarded canvass quotation carries neither, so match each canvass
-            // line back to its PR line by description to carry the certified UACS forward to the PO.
+            // The PO's catalog reference originates on the PR line items. The awarded canvass quotation
+            // does not carry it, so match each canvass line back to its PR line by description to carry the
+            // CatalogItemId forward to the PO (the accepted asset is later classified against that catalog,
+            // which holds the authoritative UACS). UACS itself is not stored on the PO.
             var prLineByDescription = pr?.LineItems
                 .GroupBy(li => NormalizeItem(li.ItemDescription))
                 .Where(g => g.Key.Length > 0)
@@ -433,8 +418,7 @@
                             Description = li.Description,
                             Quantity = li.Quantity,
                             UnitCost = li.UnitPrice,
-                            CatalogItemId = prLine?.CatalogItemId,
-                            UacsObjectCode = prLine?.UacsObjectCode
+                            CatalogItemId = prLine?.CatalogItemId
                         };
                     })
                     .ToList()
@@ -551,7 +535,7 @@
         try
         {
             var lineItems = _form.LineItems
-                .Select(li => new PurchaseOrderLineItemRequest(li.StockNumber, li.Unit, li.Description, li.Quantity, li.UnitCost, li.CatalogItemId, li.UacsObjectCode))
+                .Select(li => new PurchaseOrderLineItemRequest(li.StockNumber, li.Unit, li.Description, li.Quantity, li.UnitCost, li.CatalogItemId))
                 .ToList();
 
             if (_editing is null)
@@ -635,8 +619,7 @@
                 Description = li.Description,
                 Quantity = li.Quantity,
                 UnitCost = li.UnitCost,
-                CatalogItemId = li.CatalogItemId,
-                UacsObjectCode = li.UacsObjectCode
+                CatalogItemId = li.CatalogItemId
             }).ToList()
         };
     }
@@ -806,8 +789,7 @@
                     Quantity = _newLineItem.Quantity,
                     UnitCost = _newLineItem.UnitCost,
                     StockNumber = _newLineItem.StockNumber,
-                    CatalogItemId = _newLineItem.CatalogItemId,
-                    UacsObjectCode = _newLineItem.UacsObjectCode
+                    CatalogItemId = _newLineItem.CatalogItemId
                 };
                 Snackbar.Add($"Item updated (₱{lineTotal:N2}).", Severity.Success);
             }
@@ -823,8 +805,7 @@
                 Quantity = _newLineItem.Quantity,
                 UnitCost = _newLineItem.UnitCost,
                 StockNumber = _newLineItem.StockNumber,
-                CatalogItemId = _newLineItem.CatalogItemId,
-                UacsObjectCode = _newLineItem.UacsObjectCode
+                CatalogItemId = _newLineItem.CatalogItemId
             });
             Snackbar.Add($"Item added (₱{lineTotal:N2}).", Severity.Success);
         }
@@ -845,8 +826,7 @@
             Quantity = item.Quantity,
             UnitCost = item.UnitCost,
             StockNumber = item.StockNumber,
-            CatalogItemId = item.CatalogItemId,
-            UacsObjectCode = item.UacsObjectCode
+            CatalogItemId = item.CatalogItemId
         };
         _editingLineItemIndex = idx;
         Snackbar.Add("Editing item. Click 'Add Item' to save changes.", Severity.Info);
@@ -932,7 +912,6 @@
         public decimal Quantity { get; set; } = 1;
         public decimal UnitCost { get; set; }
         public Guid? CatalogItemId { get; set; }
-        public string? UacsObjectCode { get; set; }
     }
 
     private static string FormatModeOfProcurement(ModeOfProcurement mode) => mode switch

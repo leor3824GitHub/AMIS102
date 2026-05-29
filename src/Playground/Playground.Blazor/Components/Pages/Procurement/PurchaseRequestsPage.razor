@@ -14,6 +14,7 @@
 @inject AuthenticationStateProvider AuthStateProvider
 @inject IEmployeesClient EmployeesClient
 @inject IUserProfileState UserProfileState
+@inject IFastReportSetupPreferences FastReportSetupPrefs
 @inject IJSRuntime JS
 
 <AMISPageHeader Title="Purchase Requests" Description="Manage procurement purchase requests (PR)" />
@@ -28,6 +29,12 @@
                                   Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
                                   Style="max-width:220px" DebounceInterval="400"
                                   OnDebounceIntervalElapsed="@(async () => await LoadAsync())" />
+                    <MudDatePicker Label="From" Date="_fromDate" DateChanged="OnFromDateChanged"
+                                   Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true"
+                                   Style="max-width:150px" />
+                    <MudDatePicker Label="To" Date="_toDate" DateChanged="OnToDateChanged"
+                                   Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true"
+                                   Style="max-width:150px" />
                     <MudSpacer />
                     @if (_canCreate)
                     {
@@ -48,6 +55,7 @@
                     <MudTabPanel Text="@GetTabLabel(4, "Approved")" />
                     <MudTabPanel Text="@GetTabLabel(5, "Rejected")" />
                     <MudTabPanel Text="@GetTabLabel(6, "Cancelled")" />
+                    <MudTabPanel Text="@GetTabLabel(7, "Completed")" />
                 </MudTabs>
 
                 @if (!_loaded)
@@ -216,6 +224,8 @@
     private List<PurchaseRequestSummaryDto> _items = [];
     private bool _loaded;
     private string _keyword = string.Empty;
+    private DateTime? _fromDate;
+    private DateTime? _toDate;
     private int _activeTabIndex = 0;
     private int _page = 1, _pageSize = 15, _totalCount;
     private string _currentUserEmployeeName = string.Empty;
@@ -262,7 +272,7 @@
         {
             _statusCounts.Clear();
 
-            // Load all status counts in parallel (6 statuses)
+            // Load all status counts in parallel (7 statuses)
             var statuses = new PurchaseRequestStatus?[]
             {
                 PurchaseRequestStatus.Draft,                    // Tab 1
@@ -270,7 +280,8 @@
                 PurchaseRequestStatus.PendingApproval,          // Tab 3
                 PurchaseRequestStatus.Approved,                 // Tab 4
                 PurchaseRequestStatus.Rejected,                 // Tab 5
-                PurchaseRequestStatus.Cancelled                 // Tab 6
+                PurchaseRequestStatus.Cancelled,                // Tab 6
+                PurchaseRequestStatus.Completed                 // Tab 7
             };
 
             var tasks = new Task<(int tabIndex, int count)>[statuses.Length];
@@ -294,7 +305,7 @@
 
     private async Task<(int tabIndex, int count)> LoadStatusCountAsync(int tabIndex, PurchaseRequestStatus? status)
     {
-        var result = await Client.SearchAsync(string.Empty, status, 1, 1);
+        var result = await Client.SearchAsync(string.Empty, status, 1, 1, ToDateOnly(_fromDate), ToDateOnly(_toDate));
         return (tabIndex, (int)result.TotalCount);
     }
 
@@ -304,7 +315,7 @@
         try
         {
             PurchaseRequestStatus? filter = GetStatusFromTabIndex(_activeTabIndex);
-            var result = await Client.SearchAsync(_keyword, filter, _page, _pageSize);
+            var result = await Client.SearchAsync(_keyword, filter, _page, _pageSize, ToDateOnly(_fromDate), ToDateOnly(_toDate));
             _items = result.Items?.ToList() ?? [];
             _totalCount = (int)result.TotalCount;
         }
@@ -318,6 +329,25 @@
         _page = 1;
         await LoadAsync();
     }
+
+    private async Task OnFromDateChanged(DateTime? date)
+    {
+        _fromDate = date;
+        _page = 1;
+        await LoadAsync();
+        await RefreshTabCountsAsync();
+    }
+
+    private async Task OnToDateChanged(DateTime? date)
+    {
+        _toDate = date;
+        _page = 1;
+        await LoadAsync();
+        await RefreshTabCountsAsync();
+    }
+
+    private static DateOnly? ToDateOnly(DateTime? value) =>
+        value is null ? null : DateOnly.FromDateTime(value.Value);
 
     private async Task RefreshTabCountsAsync()
     {
@@ -335,6 +365,7 @@
             4 => PurchaseRequestStatus.Approved,
             5 => PurchaseRequestStatus.Rejected,
             6 => PurchaseRequestStatus.Cancelled,
+            7 => PurchaseRequestStatus.Completed,
             _ => null
         };
 
@@ -515,7 +546,12 @@
     {
         try
         {
-            var bytes = await Client.GetFastReportPdfAsync(id, pageWidth: "a4", copies: 2, orientation: "landscape", minRows: 10);
+            var saved = await FastReportSetupPrefs.GetAsync(FastReportKey);
+            var bytes = await Client.GetFastReportPdfAsync(id,
+                pageWidth: saved?.PaperSize ?? "a4",
+                copies: saved?.Copies ?? 2,
+                orientation: saved?.Orientation ?? "landscape",
+                minRows: saved?.MinRows ?? 10);
             var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
             await JS.InvokeVoidAsync("open", dataUrl, "_blank");
             Snackbar.Add("PDF ready.", Severity.Success);
@@ -526,14 +562,17 @@
         }
     }
 
+    private const string FastReportKey = "purchase-request";
+
     private async Task OpenFastReportSetupAsync(Guid id)
     {
+        var saved = await FastReportSetupPrefs.GetAsync(FastReportKey);
         var parameters = new DialogParameters
         {
-            [nameof(FastReportPageSetupDialog.PaperSize)] = "a4",
-            [nameof(FastReportPageSetupDialog.Orientation)] = "landscape",
-            [nameof(FastReportPageSetupDialog.Copies)] = 2,
-            [nameof(FastReportPageSetupDialog.MinRows)] = 10,
+            [nameof(FastReportPageSetupDialog.PaperSize)] = saved?.PaperSize ?? "a4",
+            [nameof(FastReportPageSetupDialog.Orientation)] = saved?.Orientation ?? "landscape",
+            [nameof(FastReportPageSetupDialog.Copies)] = saved?.Copies ?? 2,
+            [nameof(FastReportPageSetupDialog.MinRows)] = saved?.MinRows ?? 10,
             [nameof(FastReportPageSetupDialog.SupportsPortraitTwoCopies)] = true
         };
         var options = new DialogOptions { MaxWidth = MaxWidth.ExtraSmall, FullWidth = false, CloseOnEscapeKey = true };
@@ -541,6 +580,8 @@
         var result = await dialog.Result;
         if (result is null || result.Canceled) return;
         if (result.Data is not FastReportPageSetupDialog.Result r) return;
+
+        await FastReportSetupPrefs.SaveAsync(FastReportKey, new FastReportSetup(r.PaperSize, r.Orientation, r.Copies, r.MinRows));
 
         try
         {
@@ -573,6 +614,7 @@
             PurchaseRequestStatus.Approved => (Color.Success, Icons.Material.Filled.CheckCircle),
             PurchaseRequestStatus.Rejected => (Color.Error, Icons.Material.Filled.Cancel),
             PurchaseRequestStatus.Cancelled => (Color.Warning, Icons.Material.Filled.Block),
+            PurchaseRequestStatus.Completed => (Color.Tertiary, Icons.Material.Filled.TaskAlt),
             _ => (Color.Default, Icons.Material.Filled.Help)
         };
         __builder.OpenComponent<MudChip<string>>(0);

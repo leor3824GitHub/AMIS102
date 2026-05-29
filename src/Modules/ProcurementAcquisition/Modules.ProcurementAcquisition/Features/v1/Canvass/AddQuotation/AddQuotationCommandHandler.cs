@@ -27,6 +27,22 @@ public sealed class AddQuotationCommandHandler(
         if (canvass.Quotations.Count >= 3)
             throw new InvalidOperationException("A canvass request can have at most 3 quotations.");
 
+        if (command.LineItems.Count == 0)
+            throw new InvalidOperationException("A quotation must include at least one line item.");
+
+        // Quoted items must be within this canvass's covered scope (partial quotes allowed).
+        var coveredDescriptions = canvass.LineItems
+            .Select(li => li.Description.Trim().ToLowerInvariant())
+            .ToHashSet();
+
+        var outOfScope = command.LineItems
+            .Where(li => !coveredDescriptions.Contains((li.Description ?? string.Empty).Trim().ToLowerInvariant()))
+            .Select(li => li.Description)
+            .ToList();
+        if (outOfScope.Count > 0)
+            throw new InvalidOperationException(
+                $"The following quoted item(s) are not part of this canvass: {string.Join(", ", outOfScope)}.");
+
         var lineItems = command.LineItems.Select(li =>
             (li.Description, li.Unit, li.Quantity, li.UnitPrice));
 

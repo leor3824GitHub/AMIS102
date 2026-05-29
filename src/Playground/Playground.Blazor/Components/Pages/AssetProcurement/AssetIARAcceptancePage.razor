@@ -90,110 +90,115 @@ else
 
     <MudCard Elevation="1">
         <MudCardContent>
-            <MudExpansionPanels Elevation="0">
-                <MudExpansionPanel Text="@($"Passed Lines ({PassedLines.Count})")" Expanded="true">
-                    @if (PassedLines.Count == 0)
-                    {
-                        <MudAlert Severity="Severity.Info" Dense="true">
-                            No passed lines are available for acceptance in this IAR.
-                        </MudAlert>
-                    }
-                    else
-                    {
-                        <MudSimpleTable Dense="true" Hover="true" Striped="true">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Description</th>
-                                    <th>Qty</th>
-                                    <th>Property No</th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var line in PassedLines)
-                                {
-                                    var input = GetPropertyNoInput(line.ItemNo, line.StockPropertyNo);
-                                    <tr>
-                                        <td>@line.ItemNo</td>
-                                        <td>@line.Description</td>
-                                        <td>@line.Quantity</td>
-                                        <td style="min-width: 320px;">
-                                            @if (_canAssignActions)
-                                            {
-                                                <PropertyNoField Value="@input"
-                                                                ValueChanged="@(v => OnPropertyNoChanged(line.ItemNo, v))"
-                                                                Label="Property No."
-                                                                Placeholder="Required for passed lines"
-                                                                MaxLength="64"
-                                                                InitialYear="@DateTime.Now.Year" />
-                                            }
-                                            else
-                                            {
-                                                <MudText>@(string.IsNullOrWhiteSpace(line.StockPropertyNo) ? "-" : line.StockPropertyNo)</MudText>
-                                            }
-                                        </td>
-                                        <td>
-                                            @if (_canAssignActions)
-                                            {
-                                                <MudStack Row="true" Spacing="1">
-                                                    <MudButton Variant="Variant.Outlined"
-                                                               Size="Size.Small"
-                                                               Color="Color.Primary"
-                                                               Disabled="@(!CanAssignPropertyNo(line))"
-                                                               OnClick="@(() => AssignPropertyNoAsync(line.ItemNo))">
-                                                        Assign
-                                                    </MudButton>
-                                                    <MudButton Variant="Variant.Outlined"
-                                                               Size="Size.Small"
-                                                               Color="Color.Secondary"
-                                                               Disabled="@(!CanExpandLine(line))"
-                                                               OnClick="@(() => ExpandLineAsync(line.ItemNo))">
-                                                        Expand Qty
-                                                    </MudButton>
-                                                </MudStack>
-                                            }
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </MudSimpleTable>
-                    }
-                </MudExpansionPanel>
+            @{
+                var filtered = FilteredLines;
+            }
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3" Wrap="Wrap.Wrap">
+                <MudChipSet T="string" SelectionMode="SelectionMode.SingleSelection"
+                            SelectedValue="_statusFilter"
+                            SelectedValueChanged="OnStatusFilterChanged"
+                            CheckMark="true" Variant="Variant.Text">
+                    <MudChip T="string" Value="@("All")" Size="Size.Small" Color="Color.Default">All (@_allLines.Count)</MudChip>
+                    <MudChip T="string" Value="@("Passed")" Size="Size.Small" Color="Color.Success">Passed (@_passedLines.Count)</MudChip>
+                    <MudChip T="string" Value="@("Rejected")" Size="Size.Small" Color="Color.Error">Rejected (@_rejectedLines.Count)</MudChip>
+                    <MudChip T="string" Value="@("Pending")" Size="Size.Small" Color="Color.Warning">Pending (@_pendingLines.Count)</MudChip>
+                </MudChipSet>
+            </MudStack>
 
-                <MudExpansionPanel Text="@($"Rejected Lines ({RejectedLines.Count})")">
-                    @if (RejectedLines.Count == 0)
-                    {
-                        <MudAlert Severity="Severity.Info" Dense="true">
-                            No rejected lines.
-                        </MudAlert>
-                    }
-                    else
-                    {
-                        <MudSimpleTable Dense="true" Hover="true" Striped="true">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Description</th>
-                                    <th>Qty</th>
-                                    <th>Inspector Remarks</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var line in RejectedLines)
-                                {
-                                    <tr>
-                                        <td>@line.ItemNo</td>
-                                        <td>@line.Description</td>
-                                        <td>@line.Quantity</td>
-                                        <td>@(string.IsNullOrWhiteSpace(line.InspectionRemarks) ? "-" : line.InspectionRemarks)</td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </MudSimpleTable>
-                    }
-                </MudExpansionPanel>
-            </MudExpansionPanels>
+            @if (filtered.Count == 0)
+            {
+                <MudAlert Severity="Severity.Info" Dense="true">
+                    @(_statusFilter == "All" ? "No lines to display." : $"No {_statusFilter.ToLowerInvariant()} lines.")
+                </MudAlert>
+            }
+            else
+            {
+                <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                    <thead>
+                        <tr>
+                            <th style="width:48px">#</th>
+                            <th>Description</th>
+                            <th style="width:60px; text-align:right">Qty</th>
+                            <th style="width:110px">Status</th>
+                            <th style="min-width:320px">Property No / Remarks</th>
+                            <th style="width:170px"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var line in filtered)
+                        {
+                            <tr>
+                                <td>@line.ItemNo</td>
+                                <td>@line.Description</td>
+                                <td style="text-align:right">@line.Quantity</td>
+                                <td>
+                                    @switch (line.InspectionResult)
+                                    {
+                                        case LineInspectionResult.Passed:
+                                            <MudChip T="string" Color="Color.Success" Size="Size.Small" Variant="Variant.Filled">Passed</MudChip>
+                                            break;
+                                        case LineInspectionResult.Rejected:
+                                            <MudChip T="string" Color="Color.Error" Size="Size.Small" Variant="Variant.Filled">Rejected</MudChip>
+                                            break;
+                                        default:
+                                            <MudChip T="string" Color="Color.Default" Size="Size.Small" Variant="Variant.Outlined">Pending</MudChip>
+                                            break;
+                                    }
+                                </td>
+                                <td style="min-width:320px;">
+                                    @if (line.InspectionResult == LineInspectionResult.Passed)
+                                    {
+                                        @if (_canAssignActions)
+                                        {
+                                            <PropertyNoField Value="@GetPropertyNoInput(line.ItemNo, line.StockPropertyNo)"
+                                                            ValueChanged="@(v => OnPropertyNoChanged(line.ItemNo, v))"
+                                                            Label="Property No."
+                                                            Placeholder="Required for passed lines"
+                                                            MaxLength="64"
+                                                            InitialYear="@DateTime.Now.Year" />
+                                        }
+                                        else
+                                        {
+                                            <MudText>@(string.IsNullOrWhiteSpace(line.StockPropertyNo) ? "-" : line.StockPropertyNo)</MudText>
+                                        }
+                                    }
+                                    else if (line.InspectionResult == LineInspectionResult.Rejected)
+                                    {
+                                        <MudText Typo="Typo.body2" Color="Color.Error">
+                                            @(string.IsNullOrWhiteSpace(line.InspectionRemarks) ? "No remarks provided." : line.InspectionRemarks)
+                                        </MudText>
+                                    }
+                                    else
+                                    {
+                                        <MudText Typo="Typo.body2" Color="Color.Secondary">Awaiting inspection decision.</MudText>
+                                    }
+                                </td>
+                                <td>
+                                    @if (line.InspectionResult == LineInspectionResult.Passed && _canAssignActions)
+                                    {
+                                        <MudStack Row="true" Spacing="1">
+                                            <MudButton Variant="Variant.Outlined"
+                                                       Size="Size.Small"
+                                                       Color="Color.Primary"
+                                                       Disabled="@(!CanAssignPropertyNo(line))"
+                                                       OnClick="@(() => AssignPropertyNoAsync(line.ItemNo))">
+                                                Assign
+                                            </MudButton>
+                                            <MudButton Variant="Variant.Outlined"
+                                                       Size="Size.Small"
+                                                       Color="Color.Secondary"
+                                                       Disabled="@(!CanExpandLine(line))"
+                                                       OnClick="@(() => ExpandLineAsync(line.ItemNo))">
+                                                Expand Qty
+                                            </MudButton>
+                                        </MudStack>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </MudSimpleTable>
+            }
 
             @if (PendingLines.Count > 0)
             {
@@ -229,12 +234,26 @@ else
     private bool _loading = true;
     private bool _busy;
     private readonly Dictionary<int, string> _propertyNoInputs = [];
+    private List<AssetIARLineItemDto> _allLines = [];
     private List<AssetIARLineItemDto> _passedLines = [];
     private List<AssetIARLineItemDto> _rejectedLines = [];
     private List<AssetIARLineItemDto> _pendingLines = [];
     private List<AssetIARLineItemDto> PassedLines => _passedLines;
     private List<AssetIARLineItemDto> RejectedLines => _rejectedLines;
     private List<AssetIARLineItemDto> PendingLines => _pendingLines;
+
+    private string _statusFilter = "Passed";
+
+    private List<AssetIARLineItemDto> FilteredLines => _statusFilter switch
+    {
+        "Passed" => _passedLines,
+        "Rejected" => _rejectedLines,
+        "Pending" => _pendingLines,
+        _ => _allLines
+    };
+
+    private void OnStatusFilterChanged(string? value)
+        => _statusFilter = string.IsNullOrWhiteSpace(value) ? "All" : value;
 
     private bool _canAcceptPermission => UserProfileState.Permissions.Contains(ProcurementPermissions.AssetIARs.Accept);
     private bool _canAssignPropertyNoPermission => UserProfileState.Permissions.Contains(ProcurementPermissions.AssetIARs.AssignPropertyNo);
@@ -269,6 +288,7 @@ else
         _propertyNoInputs.Clear();
         if (_iar is null)
         {
+            _allLines = [];
             _passedLines = [];
             _rejectedLines = [];
             _pendingLines = [];
@@ -279,6 +299,7 @@ else
             _propertyNoInputs[line.ItemNo] = line.StockPropertyNo ?? string.Empty;
 
         var ordered = _iar.LineItems.OrderBy(li => li.ItemNo).ToList();
+        _allLines = ordered;
         _passedLines = ordered.Where(li => li.InspectionResult == LineInspectionResult.Passed).ToList();
         _rejectedLines = ordered.Where(li => li.InspectionResult == LineInspectionResult.Rejected).ToList();
         _pendingLines = ordered.Where(li => li.InspectionResult == LineInspectionResult.Pending).ToList();

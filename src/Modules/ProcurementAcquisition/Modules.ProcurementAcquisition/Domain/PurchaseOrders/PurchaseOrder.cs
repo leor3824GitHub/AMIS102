@@ -10,8 +10,7 @@ public readonly record struct PurchaseOrderLineItemData(
     string Description,
     decimal Quantity,
     decimal UnitCost,
-    Guid? CatalogItemId = null,
-    string? UacsObjectCode = null);
+    Guid? CatalogItemId = null);
 
 public sealed class PurchaseOrderLineItem
 {
@@ -23,11 +22,9 @@ public sealed class PurchaseOrderLineItem
     public decimal UnitCost { get; private set; }
     public decimal Amount => Quantity * UnitCost;
 
-    /// <summary>Snapshot of the PR-side catalog reference. Carries forward to IAR / PPERR.</summary>
+    /// <summary>Snapshot of the PR-side catalog reference. Carries forward to IAR so the accepted asset
+    /// can be classified against its <c>PropertyItemCatalog</c> (which holds the authoritative UACS).</summary>
     public Guid? CatalogItemId { get; private set; }
-
-    /// <summary>Snapshot of the Accountant-assigned UACS Object Code. Carries forward to IAR / PPERR.</summary>
-    public string? UacsObjectCode { get; private set; }
 
     private PurchaseOrderLineItem() { }
 
@@ -38,8 +35,7 @@ public sealed class PurchaseOrderLineItem
         string description,
         decimal quantity,
         decimal unitCost,
-        Guid? catalogItemId = null,
-        string? uacsObjectCode = null)
+        Guid? catalogItemId = null)
     {
         return new PurchaseOrderLineItem
         {
@@ -49,8 +45,7 @@ public sealed class PurchaseOrderLineItem
             Description = description,
             Quantity = quantity,
             UnitCost = unitCost,
-            CatalogItemId = catalogItemId == Guid.Empty ? null : catalogItemId,
-            UacsObjectCode = string.IsNullOrWhiteSpace(uacsObjectCode) ? null : uacsObjectCode.Trim()
+            CatalogItemId = catalogItemId == Guid.Empty ? null : catalogItemId
         };
     }
 
@@ -60,8 +55,7 @@ public sealed class PurchaseOrderLineItem
         string description,
         decimal quantity,
         decimal unitCost,
-        Guid? catalogItemId = null,
-        string? uacsObjectCode = null)
+        Guid? catalogItemId = null)
     {
         StockNumber = stockNumber;
         Unit = unit;
@@ -69,14 +63,6 @@ public sealed class PurchaseOrderLineItem
         Quantity = quantity;
         UnitCost = unitCost;
         CatalogItemId = catalogItemId == Guid.Empty ? null : catalogItemId;
-        UacsObjectCode = string.IsNullOrWhiteSpace(uacsObjectCode) ? null : uacsObjectCode.Trim();
-    }
-
-    internal void AssignUacs(string uacsObjectCode)
-    {
-        if (string.IsNullOrWhiteSpace(uacsObjectCode))
-            throw new InvalidOperationException($"Item {ItemNo}: UACS Object Code is required.");
-        UacsObjectCode = uacsObjectCode.Trim();
     }
 }
 
@@ -107,6 +93,11 @@ public sealed class PurchaseOrder : AggregateRoot<Guid>, IHasTenant, IAuditableE
     public Guid? FundsAvailableCertifiedById { get; private set; }
     public string? FundsAvailableCertifiedByName { get; private set; }
     public DateTimeOffset? FundsAvailableCertifiedOnUtc { get; private set; }
+
+    // "Approved" — Authorized Official who issued the PO (printed in the bottom-right signature block)
+    public Guid? IssuedById { get; private set; }
+    public string? IssuedByName { get; private set; }
+    public DateTimeOffset? IssuedOnUtc { get; private set; }
 
     private readonly List<PurchaseOrderLineItem> _lineItems = [];
     public IReadOnlyList<PurchaseOrderLineItem> LineItems => _lineItems.AsReadOnly();
@@ -171,7 +162,7 @@ public sealed class PurchaseOrder : AggregateRoot<Guid>, IHasTenant, IAuditableE
         {
             po._lineItems.Add(PurchaseOrderLineItem.Create(
                 itemNo++, li.StockNumber, li.Unit, li.Description, li.Quantity, li.UnitCost,
-                li.CatalogItemId, li.UacsObjectCode));
+                li.CatalogItemId));
         }
 
         return po;
@@ -213,7 +204,7 @@ public sealed class PurchaseOrder : AggregateRoot<Guid>, IHasTenant, IAuditableE
         {
             _lineItems.Add(PurchaseOrderLineItem.Create(
                 itemNo++, li.StockNumber, li.Unit, li.Description, li.Quantity, li.UnitCost,
-                li.CatalogItemId, li.UacsObjectCode));
+                li.CatalogItemId));
         }
     }
 
@@ -232,13 +223,13 @@ public sealed class PurchaseOrder : AggregateRoot<Guid>, IHasTenant, IAuditableE
     }
 
     /// <summary>
-    /// Accountant signs "Funds Available", assigns a UACS Object Code per line item, and optionally
-    /// captures ORS/BURS reference. Moves PendingFundsAvailable → PendingApproval (awaiting Issue).
+    /// Accountant signs "Funds Available" and optionally captures the ORS/BURS reference and Fund Cluster.
+    /// Moves PendingFundsAvailable → PendingApproval (awaiting Issue). UACS object codes are certified on the
+    /// source PR (and held on the catalog), not on the supplier-facing PO.
     /// </summary>
     public void CertifyFundsAvailable(
         Guid certifiedById,
         string certifiedByName,
-        IReadOnlyDictionary<int, string> uacsByItemNo,
         string? oursBursNumber,
         DateOnly? oursBursDate,
         string? fundCluster)
@@ -247,18 +238,6 @@ public sealed class PurchaseOrder : AggregateRoot<Guid>, IHasTenant, IAuditableE
             throw new InvalidOperationException("Funds Available can only be certified on POs awaiting Accountant review.");
         if (string.IsNullOrWhiteSpace(certifiedByName))
             throw new InvalidOperationException("Accountant name is required.");
-        ArgumentNullException.ThrowIfNull(uacsByItemNo);
-
-        var missing = _lineItems
-            .Where(li => !uacsByItemNo.TryGetValue(li.ItemNo, out var u) || string.IsNullOrWhiteSpace(u))
-            .Select(li => li.ItemNo)
-            .ToList();
-        if (missing.Count > 0)
-            throw new InvalidOperationException(
-                $"Every line item requires a UACS Object Code. Missing on item(s): {string.Join(", ", missing)}.");
-
-        foreach (var li in _lineItems)
-            li.AssignUacs(uacsByItemNo[li.ItemNo]);
 
         if (!string.IsNullOrWhiteSpace(oursBursNumber))
         {
@@ -277,14 +256,45 @@ public sealed class PurchaseOrder : AggregateRoot<Guid>, IHasTenant, IAuditableE
         LastModifiedOnUtc = FundsAvailableCertifiedOnUtc;
     }
 
-    public void Issue()
+    /// <summary>
+    /// Authorized Official approves and issues the PO. Captures who issued it for the
+    /// "Very truly yours" signature block on the printed PO. Moves PendingApproval → Issued.
+    /// </summary>
+    public void Issue(Guid issuedById, string? issuedByName)
     {
         if (Status != PurchaseOrderStatus.PendingApproval)
             throw new InvalidOperationException("Only POs that have passed Funds Available certification can be issued.");
         if (_lineItems.Count == 0)
             throw new InvalidOperationException("Purchase order must have at least one line item.");
 
+        IssuedById = issuedById;
+        IssuedByName = issuedByName;
+        IssuedOnUtc = DateTimeOffset.UtcNow;
+
         Status = PurchaseOrderStatus.Issued;
+        LastModifiedOnUtc = IssuedOnUtc.Value;
+    }
+
+    /// <summary>
+    /// Records cumulative accepted delivery against this PO and advances its status.
+    /// <paramref name="totalAcceptedQuantity"/> is the running total of non-rejected IAR line
+    /// quantities across all accepted IARs for this PO. Matching is done on total quantity
+    /// (ordered vs. accepted), not per line item — IARs carry no PO-line key to join on.
+    /// No-ops unless the PO is currently Issued or PartiallyDelivered, so it is safe to call
+    /// again on an already-Fulfilled or Cancelled PO.
+    /// </summary>
+    public void RecordDelivery(decimal totalAcceptedQuantity)
+    {
+        if (Status is not (PurchaseOrderStatus.Issued or PurchaseOrderStatus.PartiallyDelivered))
+            return;
+
+        var orderedQuantity = _lineItems.Sum(x => x.Quantity);
+
+        if (totalAcceptedQuantity >= orderedQuantity)
+            Status = PurchaseOrderStatus.Fulfilled;
+        else if (totalAcceptedQuantity > 0)
+            Status = PurchaseOrderStatus.PartiallyDelivered;
+
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
     }
 

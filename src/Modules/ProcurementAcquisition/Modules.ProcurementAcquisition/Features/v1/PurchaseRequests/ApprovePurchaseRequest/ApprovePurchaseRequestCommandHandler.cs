@@ -18,8 +18,9 @@ public sealed class ApprovePurchaseRequestCommandHandler(
             .ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Purchase request '{command.Id}' not found.");
 
-        pr.Approve(command.ApprovedByName);
-        pr.LastModifiedBy = currentUser.GetUserId().ToString();
+        var approverId = currentUser.GetUserId();
+        pr.Approve(command.ApprovedByName, approverId);
+        pr.LastModifiedBy = approverId.ToString();
 
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return CreatePurchaseRequestCommandHandler.MapToDto(pr);

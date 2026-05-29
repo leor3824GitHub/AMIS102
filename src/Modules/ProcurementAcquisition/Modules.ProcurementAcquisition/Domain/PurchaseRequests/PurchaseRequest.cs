@@ -286,6 +286,19 @@ public sealed class PurchaseRequest : AggregateRoot<Guid>, IHasTenant, IAuditabl
     }
 
     /// <summary>
+    /// Closes the PR once every resulting PO has been fully delivered and accepted (via IAR).
+    /// Driven by the acquisition workflow, not a user action. Allowed only from Approved.
+    /// </summary>
+    public void Complete()
+    {
+        if (Status != PurchaseRequestStatus.Approved)
+            throw new InvalidOperationException("Only approved purchase requests can be completed.");
+
+        Status = PurchaseRequestStatus.Completed;
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;
+    }
+
+    /// <summary>
     /// Either approver returns the PR for revision. Reverts to Draft with a reason; requester re-edits and resubmits.
     /// </summary>
     public void ReturnForRevision(Guid returnedById, string returnedByName, string reason)

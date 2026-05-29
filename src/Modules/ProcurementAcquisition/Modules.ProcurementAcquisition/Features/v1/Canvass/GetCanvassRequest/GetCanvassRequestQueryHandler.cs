@@ -1,4 +1,5 @@
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.Canvass;
+using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders;
 using AMIS.Modules.ProcurementAcquisition.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
@@ -23,6 +24,13 @@ public sealed class GetCanvassRequestQueryHandler(ProcurementDbContext dbContext
             .FirstOrDefaultAsync(x => x.Id == canvass.PurchaseRequestId, cancellationToken)
             .ConfigureAwait(false);
 
+        var linkedPoNumber = await dbContext.PurchaseOrders
+            .AsNoTracking()
+            .Where(p => p.CanvassRequestId == canvass.Id && p.Status != PurchaseOrderStatus.Cancelled)
+            .Select(p => p.PoNumber)
+            .FirstOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false);
+
         return new CanvassRequestDto(
             canvass.Id,
             canvass.RivNumber,
@@ -45,7 +53,11 @@ public sealed class GetCanvassRequestQueryHandler(ProcurementDbContext dbContext
                     li.ItemNo, li.Description, li.Unit, li.Quantity, li.UnitPrice, li.Total)).ToList()
             )).ToList(),
             canvass.CreatedOnUtc,
-            canvass.CreatedBy);
+            canvass.CreatedBy,
+            canvass.LineItems.Select(li => new CanvassLineItemDto(
+                li.PrItemNo, li.Description, li.Unit, li.Quantity, li.EstimatedUnitCost, li.EstimatedTotalCost)).ToList(),
+            linkedPoNumber is not null,
+            linkedPoNumber);
     }
 }
 

@@ -26,7 +26,7 @@ public sealed class CreatePurchaseOrderCommandHandler(
 
         var lineItems = command.LineItems.Select(li =>
             new PurchaseOrderLineItemData(li.StockNumber, li.Unit, li.Description, li.Quantity, li.UnitCost,
-                li.CatalogItemId, li.UacsObjectCode));
+                li.CatalogItemId));
 
         var po = PurchaseOrder.Create(
             tenantId,
@@ -56,6 +56,26 @@ public sealed class CreatePurchaseOrderCommandHandler(
 
     private async Task EnsureNoDuplicateAsync(CreatePurchaseOrderCommand command, CancellationToken ct)
     {
+        // A canvass (RIV) can be awarded only once, so it must map to a single active PO.
+        // Reject outright if a non-cancelled PO already references this canvass.
+        if (command.CanvassRequestId.HasValue)
+        {
+            var existingFromCanvass = await dbContext.PurchaseOrders
+                .AsNoTracking()
+                .Where(p => p.CanvassRequestId == command.CanvassRequestId.Value
+                            && p.Status != PurchaseOrderStatus.Cancelled)
+                .Select(p => new { p.PoNumber, p.Status })
+                .FirstOrDefaultAsync(ct)
+                .ConfigureAwait(false);
+
+            if (existingFromCanvass is not null)
+            {
+                var canvassMessage = $"A purchase order has already been created from this canvass (RIV). "
+                              + $"Existing PO: {existingFromCanvass.PoNumber} ({existingFromCanvass.Status}).";
+                throw new CustomException(canvassMessage, Enumerable.Empty<string>(), HttpStatusCode.Conflict);
+            }
+        }
+
         var incomingDescriptions = command.LineItems
             .Select(li => (li.Description ?? string.Empty).Trim().ToLowerInvariant())
             .Where(d => d.Length > 0)
@@ -156,7 +176,7 @@ public sealed class CreatePurchaseOrderCommandHandler(
             po.Status,
             po.LineItems.Select(li => new PurchaseOrderLineItemDto(
                 li.ItemNo, li.StockNumber, li.Unit, li.Description, li.Quantity, li.UnitCost, li.Amount,
-                li.CatalogItemId, li.UacsObjectCode)).ToList(),
+                li.CatalogItemId)).ToList(),
             po.TotalAmount,
             AmountToWords(po.TotalAmount),
             po.CreatedOnUtc,
@@ -164,7 +184,10 @@ public sealed class CreatePurchaseOrderCommandHandler(
             po.LastModifiedOnUtc,
             po.FundsAvailableCertifiedById,
             po.FundsAvailableCertifiedByName,
-            po.FundsAvailableCertifiedOnUtc);
+            po.FundsAvailableCertifiedOnUtc,
+            po.IssuedById,
+            po.IssuedByName,
+            po.IssuedOnUtc);
     }
 
     internal static string AmountToWords(decimal amount)

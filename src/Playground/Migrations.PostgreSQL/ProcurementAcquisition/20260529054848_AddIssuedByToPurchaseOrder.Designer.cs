@@ -3,6 +3,7 @@ using System;
 using AMIS.Modules.ProcurementAcquisition.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AMIS.Playground.Migrations.PostgreSQL.ProcurementAcquisition
 {
     [DbContext(typeof(ProcurementDbContext))]
-    partial class ProcurementDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260529054848_AddIssuedByToPurchaseOrder")]
+    partial class AddIssuedByToPurchaseOrder
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -730,51 +733,6 @@ namespace AMIS.Playground.Migrations.PostgreSQL.ProcurementAcquisition
 
                             b1.WithOwner()
                                 .HasForeignKey("CanvassQuotationId");
-                        });
-
-                    b.Navigation("LineItems");
-                });
-
-            modelBuilder.Entity("AMIS.Modules.ProcurementAcquisition.Domain.Canvass.CanvassRequest", b =>
-                {
-                    b.OwnsMany("AMIS.Modules.ProcurementAcquisition.Domain.Canvass.CanvassRequestLineItem", "LineItems", b1 =>
-                        {
-                            b1.Property<Guid>("CanvassRequestId");
-
-                            b1.Property<int>("__synthesizedOrdinal")
-                                .ValueGeneratedOnAdd();
-
-                            b1.Property<Guid?>("CatalogItemId");
-
-                            b1.Property<string>("Description")
-                                .IsRequired()
-                                .HasMaxLength(500);
-
-                            b1.Property<decimal>("EstimatedUnitCost")
-                                .HasPrecision(18, 4);
-
-                            b1.Property<int>("PrItemNo");
-
-                            b1.Property<decimal>("Quantity")
-                                .HasPrecision(18, 4);
-
-                            b1.Property<string>("UacsObjectCode")
-                                .HasMaxLength(64);
-
-                            b1.Property<string>("Unit")
-                                .IsRequired()
-                                .HasMaxLength(64);
-
-                            b1.HasKey("CanvassRequestId", "__synthesizedOrdinal");
-
-                            b1.ToTable("CanvassRequests", "procurement");
-
-                            b1
-                                .ToJson("LineItems")
-                                .HasColumnType("jsonb");
-
-                            b1.WithOwner()
-                                .HasForeignKey("CanvassRequestId");
                         });
 
                     b.Navigation("LineItems");

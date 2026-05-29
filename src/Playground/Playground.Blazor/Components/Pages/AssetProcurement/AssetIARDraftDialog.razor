@@ -369,8 +369,9 @@
                 Quantity = poLine.Quantity,
                 UnitCost = poLine.UnitCost,
                 Selected = false,
-                CatalogItemId = poLine.CatalogItemId,
-                UacsObjectCode = poLine.UacsObjectCode
+                CatalogItemId = poLine.CatalogItemId
+                // UACS is not carried on the PO; the accepted asset is classified against its catalog
+                // (resolved via CatalogItemId), which holds the authoritative UACS.
             });
         }
 

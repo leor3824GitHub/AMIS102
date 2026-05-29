@@ -182,6 +182,7 @@
         PurchaseRequestStatus.Approved => Color.Success,
         PurchaseRequestStatus.Rejected => Color.Error,
         PurchaseRequestStatus.Cancelled => Color.Warning,
+        PurchaseRequestStatus.Completed => Color.Tertiary,
         _ => Color.Default
     };
 
@@ -194,6 +195,7 @@
         PurchaseRequestStatus.Approved => Icons.Material.Filled.CheckCircle,
         PurchaseRequestStatus.Rejected => Icons.Material.Filled.Cancel,
         PurchaseRequestStatus.Cancelled => Icons.Material.Filled.Block,
+        PurchaseRequestStatus.Completed => Icons.Material.Filled.TaskAlt,
         _ => Icons.Material.Filled.Help
     };
 }

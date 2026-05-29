@@ -20,13 +20,11 @@ public sealed class CertifyPurchaseOrderFundsAvailableCommandHandler(
             .ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Purchase order '{command.Id}' not found.");
 
-        var uacsByLine = command.UacsByLine.ToDictionary(x => x.ItemNo, x => x.UacsObjectCode);
         var accountantId = currentUser.GetUserId();
 
         po.CertifyFundsAvailable(
             accountantId,
             command.CertifiedByName,
-            uacsByLine,
             command.OursBursNumber,
             command.OursBursDate,
             command.FundCluster);

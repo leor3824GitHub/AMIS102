@@ -1,4 +1,6 @@
+using System.Net;
 using AMIS.Framework.Core.Context;
+using AMIS.Framework.Core.Exceptions;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.Canvass;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
 using AMIS.Modules.ProcurementAcquisition.Data;
@@ -24,16 +26,48 @@ public sealed class CreateCanvassRequestCommandHandler(
         if (pr.Status != PurchaseRequestStatus.Approved)
             throw new InvalidOperationException("Can only create a canvass request for an Approved purchase request.");
 
-        var alreadyExists = await dbContext.CanvassRequests
-            .AnyAsync(x => x.PurchaseRequestId == command.PurchaseRequestId, cancellationToken)
+        // Resolve requested PR lines and validate they exist on the PR.
+        var requestedItemNos = command.PrItemNos.Distinct().ToList();
+        var prLinesByItemNo = pr.LineItems.ToDictionary(li => li.ItemNo);
+
+        var unknown = requestedItemNos.Where(no => !prLinesByItemNo.ContainsKey(no)).ToList();
+        if (unknown.Count > 0)
+            throw new CustomException(
+                $"Item No(s) {string.Join(", ", unknown)} do not exist on purchase request {pr.PrNumber}.",
+                Enumerable.Empty<string>(), HttpStatusCode.BadRequest);
+
+        // Partition check: a PR line may belong to at most one non-cancelled canvass.
+        var activeCanvasses = await dbContext.CanvassRequests
+            .AsNoTracking()
+            .Where(x => x.PurchaseRequestId == command.PurchaseRequestId
+                        && x.Status != CanvassRequestStatus.Cancelled)
+            .Select(x => new { x.RivNumber, ItemNos = x.LineItems.Select(li => li.PrItemNo) })
+            .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
-        if (alreadyExists)
-            throw new InvalidOperationException("A canvass request already exists for this purchase request.");
+        var coveredBy = new Dictionary<int, string>();
+        foreach (var c in activeCanvasses)
+            foreach (var no in c.ItemNos)
+                coveredBy.TryAdd(no, c.RivNumber);
+
+        var conflicts = requestedItemNos
+            .Where(coveredBy.ContainsKey)
+            .Select(no => $"Item {no} (already on {coveredBy[no]})")
+            .ToList();
+        if (conflicts.Count > 0)
+            throw new CustomException(
+                $"The following line item(s) are already covered by another canvass: {string.Join("; ", conflicts)}.",
+                Enumerable.Empty<string>(), HttpStatusCode.Conflict);
 
         var rivNumber = await GenerateRivNumberAsync(tenantId, cancellationToken).ConfigureAwait(false);
 
-        var canvass = CanvassRequest.Create(tenantId, rivNumber, command.PurchaseRequestId, command.ReturnDeadline);
+        var lineItems = requestedItemNos
+            .OrderBy(no => no)
+            .Select(no => prLinesByItemNo[no])
+            .Select(li => new CanvassRequestLineItemData(
+                li.ItemNo, li.ItemDescription, li.UnitOfIssue, li.Quantity, li.EstimatedUnitCost, li.CatalogItemId, li.UacsObjectCode));
+
+        var canvass = CanvassRequest.Create(tenantId, rivNumber, command.PurchaseRequestId, command.ReturnDeadline, lineItems);
         canvass.CreatedBy = currentUser.GetUserId().ToString();
 
         dbContext.CanvassRequests.Add(canvass);
@@ -93,7 +127,9 @@ public sealed class CreateCanvassRequestCommandHandler(
                     li.ItemNo, li.Description, li.Unit, li.Quantity, li.UnitPrice, li.Total)).ToList()
             )).ToList(),
             canvass.CreatedOnUtc,
-            canvass.CreatedBy);
+            canvass.CreatedBy,
+            canvass.LineItems.Select(li => new CanvassLineItemDto(
+                li.PrItemNo, li.Description, li.Unit, li.Quantity, li.EstimatedUnitCost, li.EstimatedTotalCost)).ToList());
     }
 }
 

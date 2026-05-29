@@ -38,6 +38,25 @@ public sealed record CanvassQuotationDto(
     bool IsAwarded,
     IReadOnlyList<CanvassQuotationLineItemDto> LineItems);
 
+/// <summary>A Purchase Request line item covered by a canvass (snapshot taken at canvass creation).</summary>
+public sealed record CanvassLineItemDto(
+    int PrItemNo,
+    string Description,
+    string Unit,
+    decimal Quantity,
+    decimal EstimatedUnitCost,
+    decimal EstimatedTotalCost);
+
+/// <summary>A Purchase Request line with its current canvass-coverage status, used to populate the canvass create form.</summary>
+public sealed record CanvassablePrLineDto(
+    int ItemNo,
+    string Description,
+    string Unit,
+    decimal Quantity,
+    decimal EstimatedUnitCost,
+    bool IsCovered,
+    string? CoveringRivNumber);
+
 public sealed record CanvassRequestDto(
     Guid Id,
     string RivNumber,
@@ -49,7 +68,10 @@ public sealed record CanvassRequestDto(
     string? AwardedSupplierName,
     IReadOnlyList<CanvassQuotationDto> Quotations,
     DateTimeOffset CreatedOnUtc,
-    string? CreatedBy);
+    string? CreatedBy,
+    IReadOnlyList<CanvassLineItemDto> LineItems,
+    bool HasPurchaseOrder = false,
+    string? PurchaseOrderNumber = null);
 
 public sealed record CanvassRequestSummaryDto(
     Guid Id,
@@ -59,7 +81,10 @@ public sealed record CanvassRequestSummaryDto(
     DateOnly ReturnDeadline,
     CanvassRequestStatus Status,
     int QuotationCount,
-    DateTimeOffset CreatedOnUtc);
+    int LineItemCount,
+    DateTimeOffset CreatedOnUtc,
+    bool HasPurchaseOrder = false,
+    string? PurchaseOrderNumber = null);
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Commands
@@ -67,7 +92,8 @@ public sealed record CanvassRequestSummaryDto(
 
 public sealed record CreateCanvassRequestCommand(
     Guid PurchaseRequestId,
-    DateOnly ReturnDeadline) : ICommand<CanvassRequestDto>;
+    DateOnly ReturnDeadline,
+    IReadOnlyList<int> PrItemNos) : ICommand<CanvassRequestDto>;
 
 public sealed record AddQuotationLineItemRequest(
     string Description,
@@ -104,11 +130,16 @@ public sealed record AwardCanvassCommand(
 
 public sealed record GetCanvassRequestQuery(Guid Id) : IQuery<CanvassRequestDto?>;
 
+/// <summary>Returns every line of a PR with its current canvass-coverage status (for the canvass create form).</summary>
+public sealed record GetCanvassablePrLinesQuery(Guid PurchaseRequestId) : IQuery<IReadOnlyList<CanvassablePrLineDto>>;
+
 public sealed class SearchCanvassRequestsQuery : IQuery<PagedResponse<CanvassRequestSummaryDto>>
 {
     public string? Keyword { get; set; }
     public Guid? PurchaseRequestId { get; set; }
     public CanvassRequestStatus? Status { get; set; }
+    public DateOnly? FromDate { get; set; }
+    public DateOnly? ToDate { get; set; }
     public int PageNumber { get; set; } = 1;
     public int PageSize { get; set; } = 10;
 }

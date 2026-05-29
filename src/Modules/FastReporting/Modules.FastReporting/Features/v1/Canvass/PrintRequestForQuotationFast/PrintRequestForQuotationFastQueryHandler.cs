@@ -5,7 +5,6 @@ using AMIS.Modules.FastReporting.Contracts.v1.Reports;
 using AMIS.Modules.FastReporting.Services;
 using AMIS.Modules.MasterData.Contracts.v1.OrganizationProfile;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.Canvass;
-using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
 using FastReport;
 using Mediator;
 
@@ -22,7 +21,6 @@ public sealed class PrintRequestForQuotationFastQueryHandler(IMediator mediator)
         var canvass = await mediator.Send(new GetCanvassRequestQuery(query.Id), ct).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Canvass request '{query.Id}' not found.");
 
-        var pr = await mediator.Send(new GetPurchaseRequestQuery(canvass.PurchaseRequestId), ct).ConfigureAwait(false);
         var org = await mediator.Send(new GetOrganizationProfileQuery(), ct).ConfigureAwait(false);
 
         var nf = CultureInfo.InvariantCulture;
@@ -38,7 +36,7 @@ public sealed class PrintRequestForQuotationFastQueryHandler(IMediator mediator)
                 SignatoryRole:  org?.RegionalManagerDesignation ?? "Regional Manager II")
         };
 
-        var lineItemsTable = BuildLineItemsTable(pr?.LineItems, query.MinRows, nf);
+        var lineItemsTable = BuildLineItemsTable(canvass.LineItems, query.MinRows, nf);
 
         return await FastReportService.GenerateAsync(
             Assembly,
@@ -62,7 +60,7 @@ public sealed class PrintRequestForQuotationFastQueryHandler(IMediator mediator)
     }
 
     private static DataTable BuildLineItemsTable(
-        IReadOnlyList<PurchaseRequestLineItemDto>? lineItems,
+        IReadOnlyList<CanvassLineItemDto>? lineItems,
         int minRows,
         IFormatProvider nf)
     {
@@ -74,8 +72,8 @@ public sealed class PrintRequestForQuotationFastQueryHandler(IMediator mediator)
 
         var rows = new List<(string Desc, string Unit, string Qty)>();
         if (lineItems is not null)
-            foreach (var item in lineItems.OrderBy(x => x.ItemNo))
-                rows.Add((item.ItemDescription, item.UnitOfIssue, item.Quantity.ToString("N0", nf)));
+            foreach (var item in lineItems.OrderBy(x => x.PrItemNo))
+                rows.Add((item.Description, item.Unit, item.Quantity.ToString("N0", nf)));
 
         var padTo = Math.Max(minRows, rows.Count);
         while (rows.Count < padTo)

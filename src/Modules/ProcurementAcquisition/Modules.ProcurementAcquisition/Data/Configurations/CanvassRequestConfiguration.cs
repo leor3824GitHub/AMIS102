@@ -29,6 +29,17 @@ public sealed class CanvassRequestConfiguration : IEntityTypeConfiguration<Canva
             .WithOne()
             .HasForeignKey(q => q.CanvassRequestId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.OwnsMany(x => x.LineItems, b =>
+        {
+            b.ToJson();
+            b.Property(li => li.PrItemNo).IsRequired();
+            b.Property(li => li.Description).HasMaxLength(500).IsRequired();
+            b.Property(li => li.Unit).HasMaxLength(64).IsRequired();
+            b.Property(li => li.Quantity).HasPrecision(18, 4).IsRequired();
+            b.Property(li => li.EstimatedUnitCost).HasPrecision(18, 4).IsRequired();
+            b.Property(li => li.UacsObjectCode).HasMaxLength(64);
+        });
     }
 }
 

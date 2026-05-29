@@ -6,6 +6,7 @@
 @inject IArIssuanceReportClient Client
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
+@inject IFastReportSetupPreferences FastReportSetupPrefs
 @inject IJSRuntime JS
 
 <AMISPageHeader Title="Property Issuance Reports (SMIR / PPEIR)"
@@ -148,6 +149,10 @@
                                         <MudMenuItem Icon="@Icons.Material.Filled.PictureAsPdf"
                                                      OnClick="@(() => DownloadFastReportPdfAsync(context.Id))">
                                             Download PDF
+                                        </MudMenuItem>
+                                        <MudMenuItem Icon="@Icons.Material.Filled.Layers"
+                                                     OnClick="@(() => PrintDataOnlyAsync(context.Id))">
+                                            Print – data only (pre-printed form)…
                                         </MudMenuItem>
                                         <MudDivider />
                                         <MudMenuItem Icon="@Icons.Material.Filled.Settings"
@@ -489,7 +494,14 @@
     {
         try
         {
-            var bytes = await Client.GetFastReportPdfAsync(id, pageWidth: "longbond", orientation: "portrait");
+            var saved = await FastReportSetupPrefs.GetAsync(FastReportKey);
+            var bytes = await Client.GetFastReportPdfAsync(id,
+                pageWidth: saved?.PaperSize ?? "longbond",
+                orientation: saved?.Orientation ?? "portrait",
+                minRows: saved?.MinRows,
+                dataOnly: saved?.DataOnly,
+                offsetX: saved?.OffsetX,
+                offsetY: saved?.OffsetY);
             var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
             await JS.InvokeVoidAsync("open", dataUrl, "_blank");
             Snackbar.Add("PDF ready.", Severity.Success);
@@ -500,14 +512,26 @@
         }
     }
 
-    private async Task OpenFastReportSetupAsync(Guid id)
+    private const string FastReportKey = "issuance-report";
+    private const string SmirFastReportKey = "issuance-smir";
+
+    private Task OpenFastReportSetupAsync(Guid id) => ShowFastReportSetupAsync(id, forceDataOnly: false);
+
+    private Task PrintDataOnlyAsync(Guid id) => ShowFastReportSetupAsync(id, forceDataOnly: true);
+
+    private async Task ShowFastReportSetupAsync(Guid id, bool forceDataOnly)
     {
+        var saved = await FastReportSetupPrefs.GetAsync(FastReportKey);
         var parameters = new DialogParameters
         {
-            [nameof(FastReportPageSetupDialog.PaperSize)] = "longbond",
-            [nameof(FastReportPageSetupDialog.Orientation)] = "portrait",
-            [nameof(FastReportPageSetupDialog.Copies)] = 1,
-            [nameof(FastReportPageSetupDialog.MinRows)] = 12
+            [nameof(FastReportPageSetupDialog.PaperSize)] = saved?.PaperSize ?? "longbond",
+            [nameof(FastReportPageSetupDialog.Orientation)] = saved?.Orientation ?? "portrait",
+            [nameof(FastReportPageSetupDialog.Copies)] = saved?.Copies ?? 1,
+            [nameof(FastReportPageSetupDialog.MinRows)] = saved?.MinRows ?? 12,
+            [nameof(FastReportPageSetupDialog.SupportsDataOnlyOverlay)] = true,
+            [nameof(FastReportPageSetupDialog.DataOnly)] = forceDataOnly || (saved?.DataOnly ?? false),
+            [nameof(FastReportPageSetupDialog.OffsetX)] = saved?.OffsetX ?? 0d,
+            [nameof(FastReportPageSetupDialog.OffsetY)] = saved?.OffsetY ?? 0d
         };
         var options = new DialogOptions { MaxWidth = MaxWidth.ExtraSmall, FullWidth = false, CloseOnEscapeKey = true };
         var dialog = await DialogService.ShowAsync<FastReportPageSetupDialog>("Page Setup", parameters, options);
@@ -515,9 +539,12 @@
         if (result is null || result.Canceled) return;
         if (result.Data is not FastReportPageSetupDialog.Result r) return;
 
+        await FastReportSetupPrefs.SaveAsync(FastReportKey, new FastReportSetup(r.PaperSize, r.Orientation, r.Copies, r.MinRows, r.DataOnly, r.OffsetX, r.OffsetY));
+
         try
         {
-            var bytes = await Client.GetFastReportPdfAsync(id, pageWidth: r.PaperSize, orientation: r.Orientation, minRows: r.MinRows);
+            var bytes = await Client.GetFastReportPdfAsync(id, pageWidth: r.PaperSize, orientation: r.Orientation, minRows: r.MinRows,
+                dataOnly: r.DataOnly, offsetX: r.OffsetX, offsetY: r.OffsetY);
             var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
             await JS.InvokeVoidAsync("open", dataUrl, "_blank");
             Snackbar.Add("PDF ready.", Severity.Success);
@@ -532,7 +559,11 @@
     {
         try
         {
-            var bytes = await Client.GetSmirFastReportPdfAsync(id, pageWidth: "longbond", orientation: "portrait");
+            var saved = await FastReportSetupPrefs.GetAsync(SmirFastReportKey);
+            var bytes = await Client.GetSmirFastReportPdfAsync(id,
+                pageWidth: saved?.PaperSize ?? "longbond",
+                orientation: saved?.Orientation ?? "portrait",
+                minRows: saved?.MinRows);
             var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
             await JS.InvokeVoidAsync("open", dataUrl, "_blank");
             Snackbar.Add("SMIR PDF ready.", Severity.Success);
@@ -545,18 +576,21 @@
 
     private async Task OpenSmirFastReportSetupAsync(Guid id)
     {
+        var saved = await FastReportSetupPrefs.GetAsync(SmirFastReportKey);
         var parameters = new DialogParameters
         {
-            [nameof(FastReportPageSetupDialog.PaperSize)] = "longbond",
-            [nameof(FastReportPageSetupDialog.Orientation)] = "portrait",
-            [nameof(FastReportPageSetupDialog.Copies)] = 1,
-            [nameof(FastReportPageSetupDialog.MinRows)] = 12
+            [nameof(FastReportPageSetupDialog.PaperSize)] = saved?.PaperSize ?? "longbond",
+            [nameof(FastReportPageSetupDialog.Orientation)] = saved?.Orientation ?? "portrait",
+            [nameof(FastReportPageSetupDialog.Copies)] = saved?.Copies ?? 1,
+            [nameof(FastReportPageSetupDialog.MinRows)] = saved?.MinRows ?? 12
         };
         var options = new DialogOptions { MaxWidth = MaxWidth.ExtraSmall, FullWidth = false, CloseOnEscapeKey = true };
         var dialog = await DialogService.ShowAsync<FastReportPageSetupDialog>("Page Setup", parameters, options);
         var result = await dialog.Result;
         if (result is null || result.Canceled) return;
         if (result.Data is not FastReportPageSetupDialog.Result r) return;
+
+        await FastReportSetupPrefs.SaveAsync(SmirFastReportKey, new FastReportSetup(r.PaperSize, r.Orientation, r.Copies, r.MinRows));
 
         try
         {
