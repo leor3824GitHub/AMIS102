@@ -42,6 +42,23 @@ public sealed class CanvassRequestDomainTests
         canvass.Status.ShouldBe(CanvassRequestStatus.Cancelled);
     }
 
+    [Fact]
+    public void Award_FreezesCommitteeSignatories()
+    {
+        var canvass = CreateCanvass(itemNos: [1]);
+        var committee = new[]
+        {
+            CanvassAwardSignatory.Create(6, "Maria Santos", "Assistant Regional Manager II"),
+            CanvassAwardSignatory.Create(2, "Jane Cruz", "Accountant IV"),
+        };
+
+        canvass.Award(Guid.NewGuid(), committee);
+
+        canvass.Status.ShouldBe(CanvassRequestStatus.Awarded);
+        canvass.AwardSignatories.Count.ShouldBe(2);
+        canvass.AwardSignatories.ShouldContain(s => s.SortOrder == 6 && s.Name == "Maria Santos");
+    }
+
     private static CanvassRequest CreateCanvass(int[] itemNos, decimal quantity = 1m, decimal unitCost = 100m) =>
         CanvassRequest.Create(
             tenantId: "root",

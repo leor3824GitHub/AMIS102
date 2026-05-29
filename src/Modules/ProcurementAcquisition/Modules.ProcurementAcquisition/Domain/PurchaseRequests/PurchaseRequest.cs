@@ -89,15 +89,22 @@ public sealed class PurchaseRequest : AggregateRoot<Guid>, IHasTenant, IAuditabl
     public PrType PrType { get; private set; }
     public string? Justification { get; private set; }
     public PurchaseRequestStatus Status { get; private set; }
+
+    // "Requested by" — snapshot of the requesting employee, frozen at create/update so reprints
+    // stay faithful to who requested and their title at the time.
+    public Guid? RequestedById { get; private set; }
     public string RequestedByName { get; private set; } = default!;
+    public string? RequestedByDesignation { get; private set; }
 
     // "Funds Available" — Accountant signs and assigns UACS codes
     public Guid? FundsAvailableCertifiedById { get; private set; }
     public string? FundsAvailableCertifiedByName { get; private set; }
+    public string? FundsAvailableCertifiedByDesignation { get; private set; }
     public DateTimeOffset? FundsAvailableCertifiedOnUtc { get; private set; }
 
     // "Approved by" — HoPE
     public string? ApprovedByName { get; private set; }
+    public string? ApprovedByDesignation { get; private set; }
     public Guid? ApprovedById { get; private set; }
     public DateTimeOffset? ApprovedOnUtc { get; private set; }
 
@@ -137,7 +144,9 @@ public sealed class PurchaseRequest : AggregateRoot<Guid>, IHasTenant, IAuditabl
         DateOnly? saiDate,
         string? alobsNumber,
         DateOnly? alobsDate,
-        IEnumerable<PurchaseRequestLineItemData> lineItems)
+        IEnumerable<PurchaseRequestLineItemData> lineItems,
+        Guid? requestedById = null,
+        string? requestedByDesignation = null)
     {
         var pr = new PurchaseRequest
         {
@@ -150,7 +159,9 @@ public sealed class PurchaseRequest : AggregateRoot<Guid>, IHasTenant, IAuditabl
             Purpose = purpose,
             PrType = prType,
             Justification = justification,
+            RequestedById = requestedById,
             RequestedByName = requestedByName,
+            RequestedByDesignation = requestedByDesignation,
             SaiNumber = saiNumber,
             SaiDate = saiDate,
             AlobsNumber = alobsNumber,
@@ -180,7 +191,9 @@ public sealed class PurchaseRequest : AggregateRoot<Guid>, IHasTenant, IAuditabl
         DateOnly? saiDate,
         string? alobsNumber,
         DateOnly? alobsDate,
-        IEnumerable<PurchaseRequestLineItemData> lineItems)
+        IEnumerable<PurchaseRequestLineItemData> lineItems,
+        Guid? requestedById = null,
+        string? requestedByDesignation = null)
     {
         if (Status != PurchaseRequestStatus.Draft)
             throw new InvalidOperationException("Only Draft purchase requests can be updated.");
@@ -190,7 +203,9 @@ public sealed class PurchaseRequest : AggregateRoot<Guid>, IHasTenant, IAuditabl
         Purpose = purpose;
         PrType = prType;
         Justification = justification;
+        RequestedById = requestedById;
         RequestedByName = requestedByName;
+        RequestedByDesignation = requestedByDesignation;
         SaiNumber = saiNumber;
         SaiDate = saiDate;
         AlobsNumber = alobsNumber;
@@ -234,7 +249,8 @@ public sealed class PurchaseRequest : AggregateRoot<Guid>, IHasTenant, IAuditabl
         string certifiedByName,
         IReadOnlyDictionary<int, string> uacsByItemNo,
         string? alobsNumber,
-        DateOnly? alobsDate)
+        DateOnly? alobsDate,
+        string? certifiedByDesignation = null)
     {
         if (Status != PurchaseRequestStatus.PendingFundsAvailable)
             throw new InvalidOperationException("Funds Available can only be certified on PRs awaiting Accountant review.");
@@ -261,6 +277,7 @@ public sealed class PurchaseRequest : AggregateRoot<Guid>, IHasTenant, IAuditabl
 
         FundsAvailableCertifiedById = certifiedById;
         FundsAvailableCertifiedByName = certifiedByName;
+        FundsAvailableCertifiedByDesignation = certifiedByDesignation;
         FundsAvailableCertifiedOnUtc = DateTimeOffset.UtcNow;
 
         Status = PurchaseRequestStatus.PendingApproval;
@@ -270,7 +287,7 @@ public sealed class PurchaseRequest : AggregateRoot<Guid>, IHasTenant, IAuditabl
     /// <summary>
     /// HoPE final approval. Allowed from PendingApproval status.
     /// </summary>
-    public void Approve(string approvedByName, Guid? approvedById = null)
+    public void Approve(string approvedByName, Guid? approvedById = null, string? approvedByDesignation = null)
     {
         if (Status != PurchaseRequestStatus.PendingApproval)
             throw new InvalidOperationException("Only PRs awaiting HoPE approval can be approved.");
@@ -279,6 +296,7 @@ public sealed class PurchaseRequest : AggregateRoot<Guid>, IHasTenant, IAuditabl
 
         Status = PurchaseRequestStatus.Approved;
         ApprovedByName = approvedByName;
+        ApprovedByDesignation = approvedByDesignation;
         ApprovedById = approvedById;
         ApprovedOnUtc = DateTimeOffset.UtcNow;
         LastModifiedOnUtc = ApprovedOnUtc;

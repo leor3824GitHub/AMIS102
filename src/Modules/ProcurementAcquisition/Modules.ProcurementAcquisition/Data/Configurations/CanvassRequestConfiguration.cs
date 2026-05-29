@@ -46,6 +46,15 @@ public sealed class CanvassRequestConfiguration : IEntityTypeConfiguration<Canva
             b.Property(li => li.EstimatedUnitCost).HasPrecision(18, 4).IsRequired();
             b.Property(li => li.UacsObjectCode).HasMaxLength(64);
         });
+
+        // ROPC committee frozen at award time (Abstract of Canvass faithful reprint).
+        builder.OwnsMany(x => x.AwardSignatories, b =>
+        {
+            b.ToJson();
+            b.Property(s => s.SortOrder).IsRequired();
+            b.Property(s => s.Name).HasMaxLength(200);
+            b.Property(s => s.Role).HasMaxLength(200);
+        });
     }
 }
 

@@ -187,7 +187,9 @@ public sealed class CreatePurchaseOrderCommandHandler(
             po.FundsAvailableCertifiedOnUtc,
             po.IssuedById,
             po.IssuedByName,
-            po.IssuedOnUtc);
+            po.IssuedOnUtc,
+            FundsAvailableCertifiedByDesignation: po.FundsAvailableCertifiedByDesignation,
+            IssuedByDesignation: po.IssuedByDesignation);
     }
 
     internal static string AmountToWords(decimal amount)

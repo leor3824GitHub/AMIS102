@@ -70,7 +70,13 @@ public sealed record PurchaseRequestDto(
     Guid? ReturnedById = null,
     string? ReturnedByName = null,
     DateTimeOffset? ReturnedOnUtc = null,
-    string? RejectionReason = null);
+    string? RejectionReason = null,
+    // Signatory snapshots — frozen at the action so reprints stay faithful to who signed and their
+    // title at the time. See faithful-reprint plan.
+    Guid? RequestedById = null,
+    string? RequestedByDesignation = null,
+    string? ApprovedByDesignation = null,
+    string? FundsAvailableCertifiedByDesignation = null);
 
 public sealed record PurchaseRequestSummaryDto(
     Guid Id,
@@ -103,7 +109,7 @@ public sealed record CreatePurchaseRequestCommand(
     string Purpose,
     PrType PrType,
     string? Justification,
-    string RequestedByName,
+    Guid RequestedById,
     string? SaiNumber,
     DateOnly? SaiDate,
     string? AlobsNumber,
@@ -117,7 +123,7 @@ public sealed record UpdatePurchaseRequestCommand(
     string Purpose,
     PrType PrType,
     string? Justification,
-    string RequestedByName,
+    Guid RequestedById,
     string? SaiNumber,
     DateOnly? SaiDate,
     string? AlobsNumber,

@@ -4,7 +4,6 @@ using System.Reflection;
 using AMIS.Modules.FastReporting.Contracts.v1.Reports;
 using AMIS.Modules.FastReporting.Services;
 using AMIS.Modules.MasterData.Contracts.v1.OrganizationProfile;
-using AMIS.Modules.MasterData.Contracts.v1.ReportSignatories;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.Canvass;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
 using FastReport;
@@ -32,7 +31,12 @@ public sealed class PrintAbstractOfCanvassFastQueryHandler(IMediator mediator)
 
         var pr = await mediator.Send(new GetPurchaseRequestQuery(canvass.PurchaseRequestId), ct).ConfigureAwait(false);
         var org = await mediator.Send(new GetOrganizationProfileQuery(), ct).ConfigureAwait(false);
-        var signatories = await mediator.Send(new GetReportSignatoriesQuery("AbstractOfCanvass"), ct).ConfigureAwait(false);
+
+        // The ROPC committee was frozen at award time — read the snapshot. Canvasses not yet awarded,
+        // or awarded before snapshots existed, have none, so those signature slots print blank.
+        var committee = (canvass.AwardSignatories ?? [])
+            .GroupBy(s => s.SortOrder)
+            .ToDictionary(g => g.Key, g => g.First());
 
         var nf = CultureInfo.InvariantCulture;
         var quotations = canvass.Quotations.ToList();
@@ -59,18 +63,18 @@ public sealed class PrintAbstractOfCanvassFastQueryHandler(IMediator mediator)
                 Sup3Name:         supplierNames[2],
                 Sup4Name:         supplierNames[3],
                 Sup5Name:         supplierNames[4],
-                Member1Name:      SignatoryName(signatories, 1),
-                Member1Role:      SignatoryLabel(signatories, 1, "TWG Goods/Services-Chairperson"),
-                Member2Name:      SignatoryName(signatories, 2, org?.AccountantName),
-                Member2Role:      SignatoryLabel(signatories, 2, org?.AccountantDesignation ?? "Accountant IV"),
-                Member3Name:      SignatoryName(signatories, 3),
-                Member3Role:      SignatoryLabel(signatories, 3, "ROPC Member"),
-                Member4Name:      SignatoryName(signatories, 4),
-                Member4Role:      SignatoryLabel(signatories, 4, "ROPC Member"),
-                ViceChairName:    SignatoryName(signatories, 5, org?.SupervisingAdminOfficerName),
-                ViceChairRole:    SignatoryLabel(signatories, 5, org?.SupervisingAdminOfficerDesignation ?? "Supervising Administrative Officer"),
-                ChairName:        SignatoryName(signatories, 6, org?.AssistantRegionalManagerName ?? org?.ApprovingOfficialName),
-                ChairRole:        SignatoryLabel(signatories, 6, org?.AssistantRegionalManagerDesignation ?? org?.ApprovingOfficialDesignation ?? "Assistant Regional Manager II"))
+                Member1Name:      CommitteeName(committee, 1),
+                Member1Role:      CommitteeRole(committee, 1),
+                Member2Name:      CommitteeName(committee, 2),
+                Member2Role:      CommitteeRole(committee, 2),
+                Member3Name:      CommitteeName(committee, 3),
+                Member3Role:      CommitteeRole(committee, 3),
+                Member4Name:      CommitteeName(committee, 4),
+                Member4Role:      CommitteeRole(committee, 4),
+                ViceChairName:    CommitteeName(committee, 5),
+                ViceChairRole:    CommitteeRole(committee, 5),
+                ChairName:        CommitteeName(committee, 6),
+                ChairRole:        CommitteeRole(committee, 6))
         };
 
         var lineItemsTable = BuildLineItemsTable(quotations, query.MinRows);
@@ -97,18 +101,11 @@ public sealed class PrintAbstractOfCanvassFastQueryHandler(IMediator mediator)
             ct: ct).ConfigureAwait(false);
     }
 
-    private static string SignatoryName(IReadOnlyList<ReportSignatoryDto> list, int order, string? orgFallback = null)
-    {
-        var match = list.FirstOrDefault(s => s.SortOrder == order && s.IsActive);
-        var name = match?.Name ?? orgFallback ?? string.Empty;
-        return name.ToUpperInvariant();
-    }
+    private static string CommitteeName(IReadOnlyDictionary<int, CanvassAwardSignatoryDto> committee, int order) =>
+        committee.TryGetValue(order, out var s) ? (s.Name ?? string.Empty).ToUpperInvariant() : string.Empty;
 
-    private static string SignatoryLabel(IReadOnlyList<ReportSignatoryDto> list, int order, string? fallback = null)
-    {
-        var match = list.FirstOrDefault(s => s.SortOrder == order && s.IsActive);
-        return match?.Label ?? fallback ?? string.Empty;
-    }
+    private static string CommitteeRole(IReadOnlyDictionary<int, CanvassAwardSignatoryDto> committee, int order) =>
+        committee.TryGetValue(order, out var s) ? s.Role ?? string.Empty : string.Empty;
 
     // Build the cross-supplier price table. For each unique item description across
     // all quotations, emit one row with qty/unit/description and up to 5 supplier prices.

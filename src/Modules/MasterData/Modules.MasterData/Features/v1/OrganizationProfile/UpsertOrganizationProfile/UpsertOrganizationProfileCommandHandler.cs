@@ -21,7 +21,7 @@ public sealed class UpsertOrganizationProfileCommandHandler(MasterDataDbContext 
             var tenantId = currentUser.GetTenant() ?? string.Empty;
             existing = Domain.OrganizationProfile.Create(
                 tenantId, command.Name, command.ShortName, command.Address, command.LogoUrl, command.AnnexECode,
-                command.RegionalManagerId, command.ApprovingOfficialName, command.ApprovingOfficialDesignation,
+                command.ApprovingOfficialId, command.ApprovingOfficialName, command.ApprovingOfficialDesignation,
                 command.AssistantRegionalManagerId, command.AssistantRegionalManagerName, command.AssistantRegionalManagerDesignation,
                 command.AccountantId, command.AccountantName, command.AccountantDesignation,
                 command.SupervisingAdminOfficerId, command.SupervisingAdminOfficerName, command.SupervisingAdminOfficerDesignation);
@@ -31,7 +31,7 @@ public sealed class UpsertOrganizationProfileCommandHandler(MasterDataDbContext 
         else
         {
             existing.Update(command.Name, command.ShortName, command.Address, command.LogoUrl, command.AnnexECode,
-                command.RegionalManagerId, command.ApprovingOfficialName, command.ApprovingOfficialDesignation,
+                command.ApprovingOfficialId, command.ApprovingOfficialName, command.ApprovingOfficialDesignation,
                 command.AssistantRegionalManagerId, command.AssistantRegionalManagerName, command.AssistantRegionalManagerDesignation,
                 command.AccountantId, command.AccountantName, command.AccountantDesignation,
                 command.SupervisingAdminOfficerId, command.SupervisingAdminOfficerName, command.SupervisingAdminOfficerDesignation);
@@ -42,7 +42,7 @@ public sealed class UpsertOrganizationProfileCommandHandler(MasterDataDbContext 
 
         return new OrganizationProfileDto(
             existing.Id, existing.Name, existing.ShortName, existing.Address, existing.LogoUrl, existing.AnnexECode,
-            existing.RegionalManagerId, existing.ApprovingOfficialName, existing.ApprovingOfficialDesignation,
+            existing.ApprovingOfficialId, existing.ApprovingOfficialName, existing.ApprovingOfficialDesignation,
             existing.AssistantRegionalManagerId, existing.AssistantRegionalManagerName, existing.AssistantRegionalManagerDesignation,
             existing.AccountantId, existing.AccountantName, existing.AccountantDesignation,
             existing.SupervisingAdminOfficerId, existing.SupervisingAdminOfficerName, existing.SupervisingAdminOfficerDesignation);

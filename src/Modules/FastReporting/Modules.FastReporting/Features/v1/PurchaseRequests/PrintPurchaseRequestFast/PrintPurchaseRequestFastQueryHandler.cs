@@ -4,7 +4,6 @@ using System.Reflection;
 using AMIS.Modules.FastReporting.Contracts.v1.Reports;
 using AMIS.Modules.FastReporting.Services;
 using AMIS.Modules.MasterData.Contracts.v1.OrganizationProfile;
-using AMIS.Modules.MasterData.Contracts.v1.References;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
 using FastReport;
 using Mediator;
@@ -23,9 +22,15 @@ public sealed class PrintPurchaseRequestFastQueryHandler(IMediator mediator)
         var pr = await mediator.Send(new GetPurchaseRequestQuery(query.Id), ct).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Purchase request '{query.Id}' not found.");
 
-        var org                    = await mediator.Send(new GetOrganizationProfileQuery(), ct).ConfigureAwait(false);
-        var requestedByDesignation = await ResolveDesignationAsync(pr.CreatedBy, ct).ConfigureAwait(false);
-        var approvedByDesignation  = await ResolveDesignationAsync(pr.ApprovedById?.ToString(), ct).ConfigureAwait(false);
+        var org = await mediator.Send(new GetOrganizationProfileQuery(), ct).ConfigureAwait(false);
+
+        // Designations are frozen onto the PR at the signing action (faithful reprint). Legacy PRs
+        // signed before snapshots existed have null — fall back to blank (requester) or the static
+        // org-profile default (approver). No live per-employee re-resolution.
+        var requestedByDesignation = pr.RequestedByDesignation ?? string.Empty;
+        var approvedByDesignation  = pr.ApprovedByDesignation
+                                     ?? org?.ApprovingOfficialDesignation
+                                     ?? string.Empty;
 
         var headerData = new List<PrFastHeader>
         {
@@ -41,12 +46,7 @@ public sealed class PrintPurchaseRequestFastQueryHandler(IMediator mediator)
                 RequestedByName:          (pr.RequestedByName ?? string.Empty).ToUpperInvariant(),
                 RequestedByDesignation:   requestedByDesignation,
                 ApprovedByName:           (pr.ApprovedByName ?? org?.ApprovingOfficialName ?? string.Empty).ToUpperInvariant(),
-                // Resolve the approver's designation from their employee position (same path as
-                // RequestedBy). Fall back to the configured org approving-official designation for
-                // PRs approved before the approver id was captured — never a hard-coded title.
-                ApprovedByDesignation:    !string.IsNullOrWhiteSpace(approvedByDesignation)
-                                              ? approvedByDesignation
-                                              : org?.ApprovingOfficialDesignation ?? string.Empty)
+                ApprovedByDesignation:    approvedByDesignation)
         };
 
         var lineItemsTable = BuildLineItemsTable(pr, query.MinRows);
@@ -118,17 +118,6 @@ public sealed class PrintPurchaseRequestFastQueryHandler(IMediator mediator)
             table.Rows.Add(string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
 
         return table;
-    }
-
-    private async ValueTask<string> ResolveDesignationAsync(string? identityUserId, CancellationToken ct)
-    {
-        if (string.IsNullOrWhiteSpace(identityUserId))
-            return string.Empty;
-
-        var employee = await mediator.Send(
-            new GetEmployeeReferenceByIdentityUserIdQuery(identityUserId), ct).ConfigureAwait(false);
-
-        return employee?.PositionName ?? string.Empty;
     }
 
     // Hide the second copy: "R_*" (right copy in landscape), "B_*" (bottom copy in portrait),

@@ -128,7 +128,9 @@ public sealed class CreateCanvassRequestCommandHandler(
             canvass.CreatedOnUtc,
             canvass.CreatedBy,
             canvass.LineItems.Select(li => new CanvassLineItemDto(
-                li.PrItemNo, li.Description, li.Unit, li.Quantity, li.EstimatedUnitCost, li.EstimatedTotalCost)).ToList());
+                li.PrItemNo, li.Description, li.Unit, li.Quantity, li.EstimatedUnitCost, li.EstimatedTotalCost)).ToList(),
+            AwardSignatories: canvass.AwardSignatories
+                .Select(s => new CanvassAwardSignatoryDto(s.SortOrder, s.Name, s.Role)).ToList());
     }
 }
 

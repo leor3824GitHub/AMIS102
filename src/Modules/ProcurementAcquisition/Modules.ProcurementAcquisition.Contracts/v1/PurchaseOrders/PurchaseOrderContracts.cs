@@ -74,7 +74,10 @@ public sealed record PurchaseOrderDto(
     DateTimeOffset? FundsAvailableCertifiedOnUtc = null,
     Guid? IssuedById = null,
     string? IssuedByName = null,
-    DateTimeOffset? IssuedOnUtc = null);
+    DateTimeOffset? IssuedOnUtc = null,
+    // Signatory designation snapshots — frozen at the action (faithful-reprint plan).
+    string? FundsAvailableCertifiedByDesignation = null,
+    string? IssuedByDesignation = null);
 
 public sealed record PurchaseOrderSummaryDto(
     Guid Id,

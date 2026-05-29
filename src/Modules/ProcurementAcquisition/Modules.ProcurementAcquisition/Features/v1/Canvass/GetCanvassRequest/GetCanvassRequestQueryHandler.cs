@@ -57,7 +57,9 @@ public sealed class GetCanvassRequestQueryHandler(ProcurementDbContext dbContext
             canvass.LineItems.Select(li => new CanvassLineItemDto(
                 li.PrItemNo, li.Description, li.Unit, li.Quantity, li.EstimatedUnitCost, li.EstimatedTotalCost)).ToList(),
             linkedPoNumber is not null,
-            linkedPoNumber);
+            linkedPoNumber,
+            canvass.AwardSignatories
+                .Select(s => new CanvassAwardSignatoryDto(s.SortOrder, s.Name, s.Role)).ToList());
     }
 }
 

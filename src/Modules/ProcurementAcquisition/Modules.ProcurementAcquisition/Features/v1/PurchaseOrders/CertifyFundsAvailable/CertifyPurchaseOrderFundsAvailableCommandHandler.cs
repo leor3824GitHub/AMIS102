@@ -23,15 +23,16 @@ public sealed class CertifyPurchaseOrderFundsAvailableCommandHandler(
             ?? throw new AMIS.Framework.Core.Exceptions.NotFoundException($"Purchase order '{command.Id}' not found.");
 
         var accountantId = currentUser.GetUserId();
-        // Signatory name comes from the authenticated identity, never from the request body.
-        var certifiedByName = await SignatoryResolver.ResolveNameAsync(currentUser, mediator, cancellationToken).ConfigureAwait(false);
+        // Signatory name + designation come from the authenticated identity, never from the request body.
+        var certifier = await SignatoryResolver.ResolveSignatoryAsync(currentUser, mediator, cancellationToken).ConfigureAwait(false);
 
         po.CertifyFundsAvailable(
             accountantId,
-            certifiedByName,
+            certifier.Name,
             command.OursBursNumber,
             command.OursBursDate,
-            command.FundCluster);
+            command.FundCluster,
+            certifiedByDesignation: certifier.Designation);
 
         po.LastModifiedBy = accountantId.ToString();
 

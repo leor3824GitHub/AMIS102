@@ -108,11 +108,42 @@ public sealed class PurchaseRequestDomainTests
         pr.CertifyFundsAvailable(Guid.NewGuid(), "Jane Accountant",
             pr.LineItems.ToDictionary(li => li.ItemNo, _ => "1-07-05-030"), null, null);
 
-        pr.Approve("John HoPE", Guid.NewGuid());
+        pr.Approve("John HoPE", Guid.NewGuid(), "Regional Director");
 
         pr.Status.ShouldBe(PurchaseRequestStatus.Approved);
         pr.ApprovedByName.ShouldBe("John HoPE");
+        pr.ApprovedByDesignation.ShouldBe("Regional Director");  // frozen at approval
         pr.ApprovedOnUtc.ShouldNotBeNull();
+    }
+
+    [Fact]
+    public void CertifyFundsAvailable_FreezesCertifierDesignation()
+    {
+        var pr = CreatePr();
+        pr.Submit();
+
+        pr.CertifyFundsAvailable(Guid.NewGuid(), "Jane Accountant",
+            pr.LineItems.ToDictionary(li => li.ItemNo, _ => "1-07-05-030"), null, null,
+            certifiedByDesignation: "Accountant IV");
+
+        pr.FundsAvailableCertifiedByDesignation.ShouldBe("Accountant IV");
+    }
+
+    [Fact]
+    public void Create_FreezesRequesterIdentityAndDesignation()
+    {
+        var requesterId = Guid.NewGuid();
+        var pr = PurchaseRequest.Create(
+            tenantId: "tenant-1", prNumber: "PR-2026-009", departmentId: Guid.NewGuid(),
+            responsibilityCenterCode: null, purpose: "Office supplies", prType: PrType.Planned,
+            justification: null, requestedByName: "Roel Caperig",
+            saiNumber: null, saiDate: null, alobsNumber: null, alobsDate: null,
+            lineItems: [new PurchaseRequestLineItemData(1, "piece", "Bond Paper", 100m)],
+            requestedById: requesterId, requestedByDesignation: "Senior Engineer");
+
+        pr.RequestedById.ShouldBe(requesterId);
+        pr.RequestedByName.ShouldBe("Roel Caperig");
+        pr.RequestedByDesignation.ShouldBe("Senior Engineer");
     }
 
     [Fact]

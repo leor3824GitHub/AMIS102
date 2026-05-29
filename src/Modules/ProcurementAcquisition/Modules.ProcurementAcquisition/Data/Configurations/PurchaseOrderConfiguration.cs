@@ -29,8 +29,10 @@ public sealed class PurchaseOrderConfiguration : IEntityTypeConfiguration<Purcha
 
         // Funds Available — Accountant
         builder.Property(x => x.FundsAvailableCertifiedByName).HasMaxLength(200);
+        builder.Property(x => x.FundsAvailableCertifiedByDesignation).HasMaxLength(200);
         // Approved — Authorized Official who issued the PO
         builder.Property(x => x.IssuedByName).HasMaxLength(200);
+        builder.Property(x => x.IssuedByDesignation).HasMaxLength(200);
 
         // PostgreSQL xmin system column — true optimistic concurrency, auto-updated by the DB on every UPDATE.
         builder.Property<uint>("xmin")

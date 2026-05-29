@@ -255,8 +255,8 @@
     {
         var tasks = new List<Task>();
 
-        if (profile.RegionalManagerId.HasValue)
-            tasks.Add(LoadEmployeeAsync(profile.RegionalManagerId.Value, e => _form.RegionalManager = e));
+        if (profile.ApprovingOfficialId.HasValue)
+            tasks.Add(LoadEmployeeAsync(profile.ApprovingOfficialId.Value, e => _form.RegionalManager = e));
         if (profile.AssistantRegionalManagerId.HasValue)
             tasks.Add(LoadEmployeeAsync(profile.AssistantRegionalManagerId.Value, e => _form.AssistantRegionalManager = e));
         if (profile.AccountantId.HasValue)

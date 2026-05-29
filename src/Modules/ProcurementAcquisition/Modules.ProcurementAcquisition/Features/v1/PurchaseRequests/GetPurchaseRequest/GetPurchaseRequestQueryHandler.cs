@@ -53,7 +53,11 @@ public sealed class GetPurchaseRequestQueryHandler(ProcurementDbContext dbContex
             ReturnedById: pr.ReturnedById,
             ReturnedByName: pr.ReturnedByName,
             ReturnedOnUtc: pr.ReturnedOnUtc,
-            RejectionReason: pr.RejectionReason);
+            RejectionReason: pr.RejectionReason,
+            RequestedById: pr.RequestedById,
+            RequestedByDesignation: pr.RequestedByDesignation,
+            ApprovedByDesignation: pr.ApprovedByDesignation,
+            FundsAvailableCertifiedByDesignation: pr.FundsAvailableCertifiedByDesignation);
     }
 }
 

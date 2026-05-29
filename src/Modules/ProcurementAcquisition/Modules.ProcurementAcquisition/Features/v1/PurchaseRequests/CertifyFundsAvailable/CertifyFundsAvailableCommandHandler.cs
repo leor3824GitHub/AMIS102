@@ -26,15 +26,16 @@ public sealed class CertifyFundsAvailableCommandHandler(
 
         var uacsByLine = command.UacsByLine.ToDictionary(x => x.ItemNo, x => x.UacsObjectCode);
         var accountantId = currentUser.GetUserId();
-        // Signatory name comes from the authenticated identity, never from the request body.
-        var certifiedByName = await SignatoryResolver.ResolveNameAsync(currentUser, mediator, cancellationToken).ConfigureAwait(false);
+        // Signatory name + designation come from the authenticated identity, never from the request body.
+        var certifier = await SignatoryResolver.ResolveSignatoryAsync(currentUser, mediator, cancellationToken).ConfigureAwait(false);
 
         pr.CertifyFundsAvailable(
             accountantId,
-            certifiedByName,
+            certifier.Name,
             uacsByLine,
             command.AlobsNumber,
-            command.AlobsDate);
+            command.AlobsDate,
+            certifiedByDesignation: certifier.Designation);
 
         pr.LastModifiedBy = accountantId.ToString();
 

@@ -14,7 +14,7 @@ public sealed class OrganizationProfile : AggregateRoot<Guid>, IHasTenant, IAudi
     /// <summary>3-character office code used in property code generation (e.g. "00B" for Caraga Regional Office).</summary>
     public string? AnnexECode { get; private set; }
 
-    public Guid? RegionalManagerId { get; private set; }
+    public Guid? ApprovingOfficialId { get; private set; }
     public string? ApprovingOfficialName { get; private set; }
     public string? ApprovingOfficialDesignation { get; private set; }
     public Guid? AssistantRegionalManagerId { get; private set; }
@@ -41,7 +41,7 @@ public sealed class OrganizationProfile : AggregateRoot<Guid>, IHasTenant, IAudi
         string? address,
         string? logoUrl,
         string? annexECode = null,
-        Guid? regionalManagerId = null,
+        Guid? approvingOfficialId = null,
         string? approvingOfficialName = null,
         string? approvingOfficialDesignation = null,
         Guid? assistantRegionalManagerId = null,
@@ -63,7 +63,7 @@ public sealed class OrganizationProfile : AggregateRoot<Guid>, IHasTenant, IAudi
             Address = address,
             LogoUrl = logoUrl,
             AnnexECode = annexECode,
-            RegionalManagerId = regionalManagerId,
+            ApprovingOfficialId = approvingOfficialId,
             ApprovingOfficialName = approvingOfficialName,
             ApprovingOfficialDesignation = approvingOfficialDesignation,
             AssistantRegionalManagerId = assistantRegionalManagerId,
@@ -86,7 +86,7 @@ public sealed class OrganizationProfile : AggregateRoot<Guid>, IHasTenant, IAudi
         string? address,
         string? logoUrl,
         string? annexECode = null,
-        Guid? regionalManagerId = null,
+        Guid? approvingOfficialId = null,
         string? approvingOfficialName = null,
         string? approvingOfficialDesignation = null,
         Guid? assistantRegionalManagerId = null,
@@ -104,7 +104,7 @@ public sealed class OrganizationProfile : AggregateRoot<Guid>, IHasTenant, IAudi
         Address = address;
         LogoUrl = logoUrl;
         AnnexECode = annexECode;
-        RegionalManagerId = regionalManagerId;
+        ApprovingOfficialId = approvingOfficialId;
         ApprovingOfficialName = approvingOfficialName;
         ApprovingOfficialDesignation = approvingOfficialDesignation;
         AssistantRegionalManagerId = assistantRegionalManagerId;

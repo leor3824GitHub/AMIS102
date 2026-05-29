@@ -44,9 +44,10 @@ public sealed class PrintPurchaseOrderFastQueryHandler(IMediator mediator)
                 OursBursNumber:           po.OursBursNumber ?? string.Empty,
                 TotalAmount:              po.TotalAmount.ToString("N2", nf),
                 TotalAmountInWords:       po.TotalAmountInWords,
-                // Prefer the actual approver/certifier captured on the PO; fall back to the org-profile officials.
+                // Name + designation are frozen on the PO at issue (faithful reprint); fall back to the
+                // org-profile official only for POs issued before snapshots existed.
                 AuthorizedOfficialName:        (po.IssuedByName ?? org?.ApprovingOfficialName ?? string.Empty).ToUpperInvariant(),
-                AuthorizedOfficialDesignation: org?.ApprovingOfficialDesignation ?? "Designation",
+                AuthorizedOfficialDesignation: po.IssuedByDesignation ?? org?.ApprovingOfficialDesignation ?? "Designation",
                 AccountantName:                (po.FundsAvailableCertifiedByName ?? org?.AccountantName ?? string.Empty).ToUpperInvariant())
         };
 

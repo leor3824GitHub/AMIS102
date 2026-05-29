@@ -43,14 +43,14 @@ public sealed class CreatePurchaseRequestCommandValidatorTests
     }
 
     [Fact]
-    public void Validate_EmptyRequestedByName_Fails()
+    public void Validate_EmptyRequestedById_Fails()
     {
-        var command = ValidCommand() with { RequestedByName = string.Empty };
+        var command = ValidCommand() with { RequestedById = Guid.Empty };
 
         var result = _sut.Validate(command);
 
         result.IsValid.ShouldBeFalse();
-        result.Errors.ShouldContain(e => e.PropertyName == nameof(command.RequestedByName));
+        result.Errors.ShouldContain(e => e.PropertyName == nameof(command.RequestedById));
     }
 
     [Fact]
@@ -126,7 +126,7 @@ public sealed class CreatePurchaseRequestCommandValidatorTests
             Purpose: "Purchase of office supplies for Q1",
             PrType: PrType.Planned,
             Justification: null,
-            RequestedByName: "Juan dela Cruz",
+            RequestedById: Guid.NewGuid(),
             SaiNumber: null,
             SaiDate: null,
             AlobsNumber: null,

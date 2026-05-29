@@ -21,9 +21,10 @@ public sealed class ApprovePurchaseRequestCommandHandler(
             ?? throw new AMIS.Framework.Core.Exceptions.NotFoundException($"Purchase request '{command.Id}' not found.");
 
         var approverId = currentUser.GetUserId();
-        // Signatory name comes from the authenticated identity, never from the request body.
-        var approvedByName = await SignatoryResolver.ResolveNameAsync(currentUser, mediator, cancellationToken).ConfigureAwait(false);
-        pr.Approve(approvedByName, approverId);
+        // Signatory name + designation come from the authenticated identity, never from the request body,
+        // and are frozen onto the PR so reprints stay faithful to who approved and their title at the time.
+        var approver = await SignatoryResolver.ResolveSignatoryAsync(currentUser, mediator, cancellationToken).ConfigureAwait(false);
+        pr.Approve(approver.Name, approverId, approver.Designation);
         pr.LastModifiedBy = approverId.ToString();
 
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);

@@ -20,9 +20,9 @@ public sealed class IssuePurchaseOrderCommandHandler(
             .ConfigureAwait(false)
             ?? throw new AMIS.Framework.Core.Exceptions.NotFoundException($"Purchase order '{command.Id}' not found.");
 
-        // Signatory name comes from the authenticated identity (employee profile), not a request value.
-        var issuedByName = await SignatoryResolver.ResolveNameAsync(currentUser, mediator, cancellationToken).ConfigureAwait(false);
-        po.Issue(currentUser.GetUserId(), issuedByName);
+        // Signatory name + designation come from the authenticated identity (employee profile), not a request value.
+        var issuer = await SignatoryResolver.ResolveSignatoryAsync(currentUser, mediator, cancellationToken).ConfigureAwait(false);
+        po.Issue(currentUser.GetUserId(), issuer.Name, issuer.Designation);
         po.LastModifiedBy = currentUser.GetUserId().ToString();
 
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);

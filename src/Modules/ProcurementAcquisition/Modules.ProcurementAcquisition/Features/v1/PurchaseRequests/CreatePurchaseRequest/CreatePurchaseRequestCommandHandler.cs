@@ -2,6 +2,7 @@ using AMIS.Framework.Core.Context;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
 using AMIS.Modules.ProcurementAcquisition.Data;
 using AMIS.Modules.ProcurementAcquisition.Domain.PurchaseRequests;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.Shared;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,12 +10,18 @@ namespace AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.Creat
 
 public sealed class CreatePurchaseRequestCommandHandler(
     ProcurementDbContext dbContext,
-    ICurrentUser currentUser) : ICommandHandler<CreatePurchaseRequestCommand, PurchaseRequestDto>
+    ICurrentUser currentUser,
+    IMediator mediator) : ICommandHandler<CreatePurchaseRequestCommand, PurchaseRequestDto>
 {
     public async ValueTask<PurchaseRequestDto> Handle(CreatePurchaseRequestCommand command, CancellationToken cancellationToken)
     {
         var tenantId = GetRequiredTenantId();
         var now = DateTime.UtcNow;
+
+        // Freeze the requester's name + designation from the selected employee at create time.
+        var requester = await SignatoryResolver
+            .ResolveByEmployeeIdAsync(command.RequestedById, mediator, cancellationToken)
+            .ConfigureAwait(false);
 
         for (var attempt = 0; attempt < 5; attempt++)
         {
@@ -43,12 +50,14 @@ public sealed class CreatePurchaseRequestCommandHandler(
                 command.Purpose,
                 command.PrType,
                 command.Justification,
-                command.RequestedByName,
+                requester.Name,
                 command.SaiNumber,
                 command.SaiDate,
                 command.AlobsNumber,
                 command.AlobsDate,
-                lineItems);
+                lineItems,
+                requestedById: command.RequestedById,
+                requestedByDesignation: requester.Designation);
 
             pr.CreatedBy = currentUser.GetUserId().ToString();
             dbContext.PurchaseRequests.Add(pr);
@@ -108,6 +117,10 @@ public sealed class CreatePurchaseRequestCommandHandler(
             ReturnedById: pr.ReturnedById,
             ReturnedByName: pr.ReturnedByName,
             ReturnedOnUtc: pr.ReturnedOnUtc,
-            RejectionReason: pr.RejectionReason);
+            RejectionReason: pr.RejectionReason,
+            RequestedById: pr.RequestedById,
+            RequestedByDesignation: pr.RequestedByDesignation,
+            ApprovedByDesignation: pr.ApprovedByDesignation,
+            FundsAvailableCertifiedByDesignation: pr.FundsAvailableCertifiedByDesignation);
     }
 }

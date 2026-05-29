@@ -25,10 +25,13 @@ public sealed class PurchaseRequestConfiguration : IEntityTypeConfiguration<Purc
         builder.Property(x => x.PrType).IsRequired();
         builder.Property(x => x.Status).IsRequired();
         builder.Property(x => x.RequestedByName).HasMaxLength(200).IsRequired();
+        builder.Property(x => x.RequestedByDesignation).HasMaxLength(200);
         builder.Property(x => x.ApprovedByName).HasMaxLength(200);
+        builder.Property(x => x.ApprovedByDesignation).HasMaxLength(200);
 
         // Funds Available — Accountant
         builder.Property(x => x.FundsAvailableCertifiedByName).HasMaxLength(200);
+        builder.Property(x => x.FundsAvailableCertifiedByDesignation).HasMaxLength(200);
 
         // Return-for-revision audit trail
         builder.Property(x => x.ReturnedByName).HasMaxLength(200);

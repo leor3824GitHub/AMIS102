@@ -57,6 +57,9 @@ public sealed record CanvassablePrLineDto(
     bool IsCovered,
     string? CoveringRivNumber);
 
+/// <summary>One ROPC committee signatory frozen at award time (Abstract of Canvass faithful reprint).</summary>
+public sealed record CanvassAwardSignatoryDto(int SortOrder, string Name, string Role);
+
 public sealed record CanvassRequestDto(
     Guid Id,
     string RivNumber,
@@ -71,7 +74,8 @@ public sealed record CanvassRequestDto(
     string? CreatedBy,
     IReadOnlyList<CanvassLineItemDto> LineItems,
     bool HasPurchaseOrder = false,
-    string? PurchaseOrderNumber = null);
+    string? PurchaseOrderNumber = null,
+    IReadOnlyList<CanvassAwardSignatoryDto>? AwardSignatories = null);
 
 public sealed record CanvassRequestSummaryDto(
     Guid Id,

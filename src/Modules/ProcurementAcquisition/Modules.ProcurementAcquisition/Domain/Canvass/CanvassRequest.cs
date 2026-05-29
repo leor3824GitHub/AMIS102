@@ -53,6 +53,24 @@ public sealed class CanvassRequestLineItem
     }
 }
 
+/// <summary>
+/// One ROPC committee signatory frozen onto the canvass at award time, so the printed Abstract of
+/// Canvass stays faithful to who was on the committee when it was awarded — even if the configured
+/// <c>ReportSignatories</c> table changes later. <see cref="SortOrder"/> mirrors the report slot
+/// (1–4 = Members, 5 = Vice-Chair, 6 = Chair).
+/// </summary>
+public sealed class CanvassAwardSignatory
+{
+    public int SortOrder { get; private set; }
+    public string Name { get; private set; } = default!;
+    public string Role { get; private set; } = default!;
+
+    private CanvassAwardSignatory() { }
+
+    public static CanvassAwardSignatory Create(int sortOrder, string name, string role) =>
+        new() { SortOrder = sortOrder, Name = name ?? string.Empty, Role = role ?? string.Empty };
+}
+
 public sealed class CanvassRequest : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 {
     public string TenantId { get; private set; } = default!;
@@ -66,6 +84,11 @@ public sealed class CanvassRequest : AggregateRoot<Guid>, IHasTenant, IAuditable
 
     /// <summary>The PR line items this canvass covers (a subset of the PR's lines).</summary>
     public IReadOnlyList<CanvassRequestLineItem> LineItems => _lineItems.AsReadOnly();
+
+    private readonly List<CanvassAwardSignatory> _awardSignatories = [];
+
+    /// <summary>ROPC committee signatories frozen at award time for the Abstract of Canvass.</summary>
+    public IReadOnlyList<CanvassAwardSignatory> AwardSignatories => _awardSignatories.AsReadOnly();
 
     /// <summary>The PR <c>ItemNo</c>s covered by this canvass — used for partition checks across canvasses.</summary>
     public IEnumerable<int> CoveredItemNos => _lineItems.Select(li => li.PrItemNo);
@@ -114,13 +137,19 @@ public sealed class CanvassRequest : AggregateRoot<Guid>, IHasTenant, IAuditable
         return canvass;
     }
 
-    public void Award(Guid awardedSupplierId)
+    public void Award(Guid awardedSupplierId, IEnumerable<CanvassAwardSignatory>? signatories = null)
     {
         if (Status != CanvassRequestStatus.Open && Status != CanvassRequestStatus.Evaluated)
             throw new InvalidOperationException("Cannot award a canvass that is not Open or Evaluated.");
 
         Status = CanvassRequestStatus.Awarded;
         AwardedSupplierId = awardedSupplierId;
+
+        // Freeze the committee that signed at award time so the Abstract of Canvass reprints faithfully.
+        _awardSignatories.Clear();
+        if (signatories is not null)
+            _awardSignatories.AddRange(signatories);
+
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
     }
 

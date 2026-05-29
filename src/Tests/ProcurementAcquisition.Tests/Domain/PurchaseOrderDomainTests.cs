@@ -81,6 +81,20 @@ public sealed class PurchaseOrderDomainTests
         po.Status.ShouldBe(PurchaseOrderStatus.Fulfilled);
     }
 
+    [Fact]
+    public void Issue_FreezesAuthorizedOfficialDesignation()
+    {
+        var po = CreateDraftPo();
+        po.Submit();
+        po.CertifyFundsAvailable(Guid.NewGuid(), "Jane Accountant", null, null, null,
+            certifiedByDesignation: "Accountant IV");
+        po.Issue(Guid.NewGuid(), "John Officer", "Regional Director");
+
+        po.IssuedByName.ShouldBe("John Officer");
+        po.IssuedByDesignation.ShouldBe("Regional Director");                       // frozen at issue
+        po.FundsAvailableCertifiedByDesignation.ShouldBe("Accountant IV");          // frozen at certify
+    }
+
     private static PurchaseOrder CreateDraftPo(decimal quantity = 10m) =>
         PurchaseOrder.Create(
             tenantId: "tenant-1",

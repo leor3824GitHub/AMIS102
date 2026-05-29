@@ -91,11 +91,13 @@ public sealed class PurchaseOrder : AggregateRoot<Guid>, IHasTenant, IAuditableE
     // "Funds Available" — Accountant signs and assigns UACS codes
     public Guid? FundsAvailableCertifiedById { get; private set; }
     public string? FundsAvailableCertifiedByName { get; private set; }
+    public string? FundsAvailableCertifiedByDesignation { get; private set; }
     public DateTimeOffset? FundsAvailableCertifiedOnUtc { get; private set; }
 
     // "Approved" — Authorized Official who issued the PO (printed in the bottom-right signature block)
     public Guid? IssuedById { get; private set; }
     public string? IssuedByName { get; private set; }
+    public string? IssuedByDesignation { get; private set; }
     public DateTimeOffset? IssuedOnUtc { get; private set; }
 
     private readonly List<PurchaseOrderLineItem> _lineItems = [];
@@ -231,7 +233,8 @@ public sealed class PurchaseOrder : AggregateRoot<Guid>, IHasTenant, IAuditableE
         string certifiedByName,
         string? oursBursNumber,
         DateOnly? oursBursDate,
-        string? fundCluster)
+        string? fundCluster,
+        string? certifiedByDesignation = null)
     {
         if (Status != PurchaseOrderStatus.PendingFundsAvailable)
             throw new InvalidOperationException("Funds Available can only be certified on POs awaiting Accountant review.");
@@ -249,6 +252,7 @@ public sealed class PurchaseOrder : AggregateRoot<Guid>, IHasTenant, IAuditableE
 
         FundsAvailableCertifiedById = certifiedById;
         FundsAvailableCertifiedByName = certifiedByName;
+        FundsAvailableCertifiedByDesignation = certifiedByDesignation;
         FundsAvailableCertifiedOnUtc = DateTimeOffset.UtcNow;
 
         Status = PurchaseOrderStatus.PendingApproval;
@@ -259,7 +263,7 @@ public sealed class PurchaseOrder : AggregateRoot<Guid>, IHasTenant, IAuditableE
     /// Authorized Official approves and issues the PO. Captures who issued it for the
     /// "Very truly yours" signature block on the printed PO. Moves PendingApproval → Issued.
     /// </summary>
-    public void Issue(Guid issuedById, string? issuedByName)
+    public void Issue(Guid issuedById, string? issuedByName, string? issuedByDesignation = null)
     {
         if (Status != PurchaseOrderStatus.PendingApproval)
             throw new InvalidOperationException("Only POs that have passed Funds Available certification can be issued.");
@@ -268,6 +272,7 @@ public sealed class PurchaseOrder : AggregateRoot<Guid>, IHasTenant, IAuditableE
 
         IssuedById = issuedById;
         IssuedByName = issuedByName;
+        IssuedByDesignation = issuedByDesignation;
         IssuedOnUtc = DateTimeOffset.UtcNow;
 
         Status = PurchaseOrderStatus.Issued;
