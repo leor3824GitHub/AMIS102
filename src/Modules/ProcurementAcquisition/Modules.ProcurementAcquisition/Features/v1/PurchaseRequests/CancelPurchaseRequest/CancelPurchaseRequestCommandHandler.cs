@@ -16,7 +16,7 @@ public sealed class CancelPurchaseRequestCommandHandler(
         var pr = await dbContext.PurchaseRequests
             .FirstOrDefaultAsync(x => x.Id == command.Id, cancellationToken)
             .ConfigureAwait(false)
-            ?? throw new KeyNotFoundException($"Purchase request '{command.Id}' not found.");
+            ?? throw new AMIS.Framework.Core.Exceptions.NotFoundException($"Purchase request '{command.Id}' not found.");
 
         pr.Cancel(command.Reason);
         pr.LastModifiedBy = currentUser.GetUserId().ToString();

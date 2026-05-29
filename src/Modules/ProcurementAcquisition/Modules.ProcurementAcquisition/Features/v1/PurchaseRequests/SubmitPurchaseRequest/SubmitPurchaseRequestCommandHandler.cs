@@ -16,7 +16,7 @@ public sealed class SubmitPurchaseRequestCommandHandler(
         var pr = await dbContext.PurchaseRequests
             .FirstOrDefaultAsync(x => x.Id == command.Id, cancellationToken)
             .ConfigureAwait(false)
-            ?? throw new KeyNotFoundException($"Purchase request '{command.Id}' not found.");
+            ?? throw new AMIS.Framework.Core.Exceptions.NotFoundException($"Purchase request '{command.Id}' not found.");
 
         pr.Submit();
         pr.LastModifiedBy = currentUser.GetUserId().ToString();

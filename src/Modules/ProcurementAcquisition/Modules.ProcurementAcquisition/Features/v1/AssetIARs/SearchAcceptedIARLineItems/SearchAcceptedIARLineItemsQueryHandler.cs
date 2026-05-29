@@ -74,7 +74,7 @@ public sealed class SearchAcceptedIARLineItemsQueryHandler(
 
         var materialized = flat.ToList();
         var pageNumber = query.PageNumber <= 0 ? 1 : query.PageNumber;
-        var pageSize = query.PageSize <= 0 ? 20 : query.PageSize;
+        var pageSize = Math.Clamp(query.PageSize, 1, 200);
 
         var page = materialized
             .Skip((pageNumber - 1) * pageSize)

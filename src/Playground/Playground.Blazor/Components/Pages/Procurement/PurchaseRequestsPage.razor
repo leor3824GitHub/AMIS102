@@ -272,41 +272,21 @@
         {
             _statusCounts.Clear();
 
-            // Load all status counts in parallel (7 statuses)
-            var statuses = new PurchaseRequestStatus?[]
-            {
-                PurchaseRequestStatus.Draft,                    // Tab 1
-                PurchaseRequestStatus.PendingFundsAvailable,   // Tab 2
-                PurchaseRequestStatus.PendingApproval,          // Tab 3
-                PurchaseRequestStatus.Approved,                 // Tab 4
-                PurchaseRequestStatus.Rejected,                 // Tab 5
-                PurchaseRequestStatus.Cancelled,                // Tab 6
-                PurchaseRequestStatus.Completed                 // Tab 7
-            };
+            // Single grouped query (GROUP BY Status) instead of one count request per status tab.
+            var counts = await Client.GetStatusCountsAsync(ToDateOnly(_fromDate), ToDateOnly(_toDate));
+            var byStatus = counts.ToDictionary(c => c.Status, c => c.Count);
 
-            var tasks = new Task<(int tabIndex, int count)>[statuses.Length];
-            for (int i = 0; i < statuses.Length; i++)
-                tasks[i] = LoadStatusCountAsync(i + 1, statuses[i]);
-
-            var results = await Task.WhenAll(tasks);
-
-            // Store counts and calculate "All" as sum
-            int allCount = 0;
-            foreach (var (tabIndex, count) in results)
-            {
-                _statusCounts[tabIndex] = count;
-                allCount += count;
-            }
-
-            _statusCounts[0] = allCount; // Tab 0 "All"
+            // Tab index → status mapping mirrors GetStatusFromTabIndex (tab 0 = "All").
+            _statusCounts[1] = byStatus.GetValueOrDefault(PurchaseRequestStatus.Draft);
+            _statusCounts[2] = byStatus.GetValueOrDefault(PurchaseRequestStatus.PendingFundsAvailable);
+            _statusCounts[3] = byStatus.GetValueOrDefault(PurchaseRequestStatus.PendingApproval);
+            _statusCounts[4] = byStatus.GetValueOrDefault(PurchaseRequestStatus.Approved);
+            _statusCounts[5] = byStatus.GetValueOrDefault(PurchaseRequestStatus.Rejected);
+            _statusCounts[6] = byStatus.GetValueOrDefault(PurchaseRequestStatus.Cancelled);
+            _statusCounts[7] = byStatus.GetValueOrDefault(PurchaseRequestStatus.Completed);
+            _statusCounts[0] = byStatus.Values.Sum(); // Tab 0 "All"
         }
         catch { _statusCounts = []; }
-    }
-
-    private async Task<(int tabIndex, int count)> LoadStatusCountAsync(int tabIndex, PurchaseRequestStatus? status)
-    {
-        var result = await Client.SearchAsync(string.Empty, status, 1, 1, ToDateOnly(_fromDate), ToDateOnly(_toDate));
-        return (tabIndex, (int)result.TotalCount);
     }
 
     private async Task LoadAsync()
@@ -369,14 +349,14 @@
             _ => null
         };
 
-    private void OpenCreateDialog()
+    private async Task OpenCreateDialog()
     {
         var parameters = new DialogParameters<PurchaseRequestFormDialog>
         {
             { x => x.PurchaseRequest, null }
         };
         var options = new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true, CloseButton = true };
-        OpenFormDialog(parameters, options);
+        await OpenFormDialog(parameters, options);
     }
 
     private async Task OpenEditDialog(Guid id)
@@ -389,10 +369,10 @@
             { x => x.PurchaseRequest, pr }
         };
         var options = new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true, CloseButton = true };
-        OpenFormDialog(parameters, options);
+        await OpenFormDialog(parameters, options);
     }
 
-    private async void OpenFormDialog(DialogParameters<PurchaseRequestFormDialog> parameters, DialogOptions options)
+    private async Task OpenFormDialog(DialogParameters<PurchaseRequestFormDialog> parameters, DialogOptions options)
     {
         var dialog = await DialogService.ShowAsync<PurchaseRequestFormDialog>("Purchase Request", parameters, options);
         var result = await dialog.Result;

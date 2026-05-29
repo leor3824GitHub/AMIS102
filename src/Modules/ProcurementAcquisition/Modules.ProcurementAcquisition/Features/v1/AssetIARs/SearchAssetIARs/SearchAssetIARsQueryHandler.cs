@@ -15,7 +15,10 @@ public sealed class SearchAssetIARsQueryHandler(
         var q = dbContext.AssetIARs.AsNoTracking();
 
         if (!string.IsNullOrWhiteSpace(query.Keyword))
-            q = q.Where(x => x.IarNumber.Contains(query.Keyword) || x.SupplierName.Contains(query.Keyword));
+        {
+            var kw = query.Keyword.Trim();
+            q = q.Where(x => EF.Functions.ILike(x.IarNumber, $"%{kw}%") || EF.Functions.ILike(x.SupplierName, $"%{kw}%"));
+        }
 
         if (query.PurchaseOrderId.HasValue)
             q = q.Where(x => x.PurchaseOrderId == query.PurchaseOrderId.Value);
@@ -31,10 +34,13 @@ public sealed class SearchAssetIARsQueryHandler(
 
         var totalCount = await q.CountAsync(cancellationToken).ConfigureAwait(false);
 
+        var pageNumber = query.PageNumber <= 0 ? 1 : query.PageNumber;
+        var pageSize = Math.Clamp(query.PageSize, 1, 200);
+
         var items = await q
             .OrderByDescending(x => x.CreatedOnUtc)
-            .Skip((query.PageNumber - 1) * query.PageSize)
-            .Take(query.PageSize)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
@@ -62,8 +68,8 @@ public sealed class SearchAssetIARsQueryHandler(
         {
             Items = dtos,
             TotalCount = totalCount,
-            PageNumber = query.PageNumber,
-            PageSize = query.PageSize
+            PageNumber = pageNumber,
+            PageSize = pageSize
         };
     }
 }

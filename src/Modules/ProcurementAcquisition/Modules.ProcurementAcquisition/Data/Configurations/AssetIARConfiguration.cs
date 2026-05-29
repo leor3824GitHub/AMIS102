@@ -24,6 +24,13 @@ internal sealed class AssetIARConfiguration : IEntityTypeConfiguration<AssetInsp
         builder.Property(x => x.AcceptedOnUtc);
         builder.Property(x => x.CancelledOnUtc);
 
+        // PostgreSQL xmin system column — true optimistic concurrency, auto-updated by the DB on every UPDATE.
+        builder.Property<uint>("xmin")
+            .HasColumnName("xmin")
+            .HasColumnType("xid")
+            .ValueGeneratedOnAddOrUpdate()
+            .IsConcurrencyToken();
+
         builder.OwnsMany(x => x.LineItems, li =>
         {
             li.ToJson();

@@ -16,7 +16,13 @@ public sealed class CanvassRequestConfiguration : IEntityTypeConfiguration<Canva
         builder.Property(x => x.TenantId).HasMaxLength(64).IsRequired();
         builder.Property(x => x.RivNumber).HasMaxLength(32).IsRequired();
         builder.Property(x => x.Status).IsRequired();
-        // Version column kept for future xmin-based concurrency; not active until properly wired
+
+        // PostgreSQL xmin system column — true optimistic concurrency, auto-updated by the DB on every UPDATE.
+        builder.Property<uint>("xmin")
+            .HasColumnName("xmin")
+            .HasColumnType("xid")
+            .ValueGeneratedOnAddOrUpdate()
+            .IsConcurrencyToken();
 
         builder.HasIndex(x => new { x.TenantId, x.RivNumber }).IsUnique();
         builder.HasIndex(x => x.PurchaseRequestId);

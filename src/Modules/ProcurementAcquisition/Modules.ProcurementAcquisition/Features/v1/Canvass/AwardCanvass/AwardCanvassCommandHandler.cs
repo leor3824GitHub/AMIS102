@@ -17,10 +17,10 @@ public sealed class AwardCanvassCommandHandler(
             .Include(x => x.Quotations)
             .FirstOrDefaultAsync(x => x.Id == command.CanvassRequestId, cancellationToken)
             .ConfigureAwait(false)
-            ?? throw new KeyNotFoundException($"Canvass request '{command.CanvassRequestId}' not found.");
+            ?? throw new AMIS.Framework.Core.Exceptions.NotFoundException($"Canvass request '{command.CanvassRequestId}' not found.");
 
         var awardedQuotation = canvass.Quotations.FirstOrDefault(q => q.Id == command.AwardedQuotationId)
-            ?? throw new KeyNotFoundException($"Quotation '{command.AwardedQuotationId}' not found in canvass request.");
+            ?? throw new AMIS.Framework.Core.Exceptions.NotFoundException($"Quotation '{command.AwardedQuotationId}' not found in canvass request.");
 
         // Clear previous award flags
         foreach (var q in canvass.Quotations)

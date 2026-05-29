@@ -3,6 +3,7 @@ using AMIS.Framework.Eventing.Abstractions;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
 using AMIS.Modules.ProcurementAcquisition.Data;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.CreatePurchaseRequest;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.Shared;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,6 +12,7 @@ namespace AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.Certi
 public sealed class CertifyFundsAvailableCommandHandler(
     ProcurementDbContext dbContext,
     ICurrentUser currentUser,
+    IMediator mediator,
     IEventBus eventBus) : ICommandHandler<CertifyFundsAvailableCommand, PurchaseRequestDto>
 {
     public async ValueTask<PurchaseRequestDto> Handle(CertifyFundsAvailableCommand command, CancellationToken cancellationToken)
@@ -20,14 +22,16 @@ public sealed class CertifyFundsAvailableCommandHandler(
         var pr = await dbContext.PurchaseRequests
             .FirstOrDefaultAsync(x => x.Id == command.Id, cancellationToken)
             .ConfigureAwait(false)
-            ?? throw new KeyNotFoundException($"Purchase request '{command.Id}' not found.");
+            ?? throw new AMIS.Framework.Core.Exceptions.NotFoundException($"Purchase request '{command.Id}' not found.");
 
         var uacsByLine = command.UacsByLine.ToDictionary(x => x.ItemNo, x => x.UacsObjectCode);
         var accountantId = currentUser.GetUserId();
+        // Signatory name comes from the authenticated identity, never from the request body.
+        var certifiedByName = await SignatoryResolver.ResolveNameAsync(currentUser, mediator, cancellationToken).ConfigureAwait(false);
 
         pr.CertifyFundsAvailable(
             accountantId,
-            command.CertifiedByName,
+            certifiedByName,
             uacsByLine,
             command.AlobsNumber,
             command.AlobsDate);

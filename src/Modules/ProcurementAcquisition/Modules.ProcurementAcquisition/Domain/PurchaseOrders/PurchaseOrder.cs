@@ -87,7 +87,6 @@ public sealed class PurchaseOrder : AggregateRoot<Guid>, IHasTenant, IAuditableE
     public DateOnly? OursBursDate { get; private set; }
     public PurchaseOrderStatus Status { get; private set; }
     public string? CancellationReason { get; private set; }
-    public byte[] Version { get; set; } = [];
 
     // "Funds Available" — Accountant signs and assigns UACS codes
     public Guid? FundsAvailableCertifiedById { get; private set; }

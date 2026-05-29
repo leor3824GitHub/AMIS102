@@ -14,7 +14,7 @@ public sealed class GetCanvassablePrLinesQueryHandler(ProcurementDbContext dbCon
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == query.PurchaseRequestId, cancellationToken)
             .ConfigureAwait(false)
-            ?? throw new KeyNotFoundException($"Purchase request '{query.PurchaseRequestId}' not found.");
+            ?? throw new AMIS.Framework.Core.Exceptions.NotFoundException($"Purchase request '{query.PurchaseRequestId}' not found.");
 
         // A PR line is "covered" when it belongs to a non-cancelled canvass for this PR.
         var activeCanvasses = await dbContext.CanvassRequests

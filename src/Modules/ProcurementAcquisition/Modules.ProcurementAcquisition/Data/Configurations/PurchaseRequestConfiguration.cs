@@ -33,7 +33,14 @@ public sealed class PurchaseRequestConfiguration : IEntityTypeConfiguration<Purc
         // Return-for-revision audit trail
         builder.Property(x => x.ReturnedByName).HasMaxLength(200);
         builder.Property(x => x.ReturnedReason).HasMaxLength(1000);
-        // Version column kept for future xmin-based concurrency; not active until properly wired
+
+        // PostgreSQL xmin system column — true optimistic concurrency, auto-updated by the DB on
+        // every UPDATE. Guards the multi-actor approval workflow against lost updates.
+        builder.Property<uint>("xmin")
+            .HasColumnName("xmin")
+            .HasColumnType("xid")
+            .ValueGeneratedOnAddOrUpdate()
+            .IsConcurrencyToken();
 
         builder.HasIndex(x => new { x.TenantId, x.PrNumber }).IsUnique();
         builder.HasIndex(x => x.Status);

@@ -15,7 +15,7 @@ public sealed class UpdateQuotationCommandHandler(
         var quotation = await dbContext.CanvassQuotations
             .FirstOrDefaultAsync(x => x.Id == command.QuotationId, cancellationToken)
             .ConfigureAwait(false)
-            ?? throw new KeyNotFoundException($"Canvass quotation '{command.QuotationId}' not found.");
+            ?? throw new AMIS.Framework.Core.Exceptions.NotFoundException($"Canvass quotation '{command.QuotationId}' not found.");
 
         var lineItems = command.LineItems.Select(li =>
             (li.Description, li.Unit, li.Quantity, li.UnitPrice));

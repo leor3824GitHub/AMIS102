@@ -17,7 +17,7 @@ public sealed class UpdatePurchaseOrderCommandHandler(
         var po = await dbContext.PurchaseOrders
             .FirstOrDefaultAsync(x => x.Id == command.Id, cancellationToken)
             .ConfigureAwait(false)
-            ?? throw new KeyNotFoundException($"Purchase order '{command.Id}' not found.");
+            ?? throw new AMIS.Framework.Core.Exceptions.NotFoundException($"Purchase order '{command.Id}' not found.");
 
         var lineItems = command.LineItems.Select(li =>
             new PurchaseOrderLineItemData(li.StockNumber, li.Unit, li.Description, li.Quantity, li.UnitCost,

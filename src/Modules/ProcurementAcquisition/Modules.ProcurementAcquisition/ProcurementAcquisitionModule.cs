@@ -13,6 +13,7 @@ using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.RejectPur
 using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.CancelPurchaseRequest;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.GetPurchaseRequest;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.SearchPurchaseRequests;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.GetStatusCounts;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.Canvass.CreateCanvassRequest;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.Canvass.AddQuotation;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.Canvass.UpdateQuotation;
@@ -83,6 +84,7 @@ public class ProcurementAcquisitionModule : IModule
         new("Submit Asset IARs For Inspection","SubmitForInspection","Procurement.AssetIARs"),
         new("Inspect Asset IARs",             "Inspect",             "Procurement.AssetIARs"),
         new("Assign Property No",             "AssignPropertyNo",    "Procurement.AssetIARs"),
+        new("Expand IAR Lines",               "ExpandLine",          "Procurement.AssetIARs"),
         new("Cancel Asset IARs",              "Cancel",              "Procurement.AssetIARs"),
     ];
 
@@ -128,6 +130,7 @@ public class ProcurementAcquisitionModule : IModule
         CancelPurchaseRequestEndpoint.Map(purchaseRequestsGroup);
         GetPurchaseRequestEndpoint.Map(purchaseRequestsGroup);
         SearchPurchaseRequestsEndpoint.Map(purchaseRequestsGroup);
+        GetPurchaseRequestStatusCountsEndpoint.Map(purchaseRequestsGroup);
 
         // Canvass Requests
         CreateCanvassRequestEndpoint.Map(canvassRequestsGroup);

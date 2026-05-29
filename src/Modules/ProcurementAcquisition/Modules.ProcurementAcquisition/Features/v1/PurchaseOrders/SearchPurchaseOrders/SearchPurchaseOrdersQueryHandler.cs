@@ -15,8 +15,8 @@ public sealed class SearchPurchaseOrdersQueryHandler(ProcurementDbContext dbCont
 
         if (!string.IsNullOrWhiteSpace(query.Keyword))
         {
-            var kw = query.Keyword.ToLower();
-            q = q.Where(x => x.PoNumber.ToLower().Contains(kw) || x.SupplierName.ToLower().Contains(kw));
+            var kw = query.Keyword.Trim();
+            q = q.Where(x => EF.Functions.ILike(x.PoNumber, $"%{kw}%") || EF.Functions.ILike(x.SupplierName, $"%{kw}%"));
         }
 
         if (query.PurchaseRequestId.HasValue)
@@ -40,7 +40,7 @@ public sealed class SearchPurchaseOrdersQueryHandler(ProcurementDbContext dbCont
         var totalCount = await q.CountAsync(cancellationToken).ConfigureAwait(false);
 
         var pageNumber = query.PageNumber <= 0 ? 1 : query.PageNumber;
-        var pageSize = query.PageSize <= 0 ? 10 : query.PageSize;
+        var pageSize = Math.Clamp(query.PageSize, 1, 200);
 
         var items = await q
             .OrderByDescending(x => x.PoDate)

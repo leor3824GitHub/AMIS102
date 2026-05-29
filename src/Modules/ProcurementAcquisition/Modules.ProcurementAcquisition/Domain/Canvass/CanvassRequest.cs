@@ -61,7 +61,6 @@ public sealed class CanvassRequest : AggregateRoot<Guid>, IHasTenant, IAuditable
     public DateOnly ReturnDeadline { get; private set; }
     public CanvassRequestStatus Status { get; private set; }
     public Guid? AwardedSupplierId { get; private set; }
-    public byte[] Version { get; set; } = [];
 
     private readonly List<CanvassRequestLineItem> _lineItems = [];
 

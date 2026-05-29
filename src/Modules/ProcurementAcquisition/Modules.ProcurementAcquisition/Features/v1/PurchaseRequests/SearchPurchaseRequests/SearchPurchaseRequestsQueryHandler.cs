@@ -16,8 +16,8 @@ public sealed class SearchPurchaseRequestsQueryHandler(ProcurementDbContext dbCo
 
         if (!string.IsNullOrWhiteSpace(query.Keyword))
         {
-            var kw = query.Keyword.ToLower();
-            q = q.Where(x => x.PrNumber.ToLower().Contains(kw) || x.Purpose.ToLower().Contains(kw));
+            var kw = query.Keyword.Trim();
+            q = q.Where(x => EF.Functions.ILike(x.PrNumber, $"%{kw}%") || EF.Functions.ILike(x.Purpose, $"%{kw}%"));
         }
 
         if (query.DepartmentId.HasValue)
@@ -35,7 +35,7 @@ public sealed class SearchPurchaseRequestsQueryHandler(ProcurementDbContext dbCo
         if (query.ToDate.HasValue)
             q = q.Where(x => x.PrDate <= query.ToDate.Value);
 
-        if (query.ExcludeFullyCanvassed)
+        if (query.ExcludeFullyCanvassed == true)
         {
             // Hide a PR only when every one of its lines is covered by a non-cancelled canvass.
             // Non-cancelled canvasses are guaranteed disjoint (partition invariant enforced on create),
@@ -50,7 +50,7 @@ public sealed class SearchPurchaseRequestsQueryHandler(ProcurementDbContext dbCo
         var totalCount = await q.CountAsync(cancellationToken).ConfigureAwait(false);
 
         var pageNumber = query.PageNumber <= 0 ? 1 : query.PageNumber;
-        var pageSize = query.PageSize <= 0 ? 10 : query.PageSize;
+        var pageSize = Math.Clamp(query.PageSize, 1, 200);
 
         var items = await q
             .OrderByDescending(x => x.PrDate)

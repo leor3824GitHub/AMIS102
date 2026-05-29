@@ -109,7 +109,6 @@ public sealed class PurchaseRequest : AggregateRoot<Guid>, IHasTenant, IAuditabl
 
     public string? RejectionReason { get; private set; }
     public string? CancellationReason { get; private set; }
-    public byte[] Version { get; set; } = [];
 
     private readonly List<PurchaseRequestLineItem> _lineItems = [];
     public IReadOnlyList<PurchaseRequestLineItem> LineItems => _lineItems.AsReadOnly();

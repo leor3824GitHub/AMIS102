@@ -19,7 +19,7 @@ public sealed class AddQuotationCommandHandler(
             .Include(x => x.Quotations)
             .FirstOrDefaultAsync(x => x.Id == command.CanvassRequestId, cancellationToken)
             .ConfigureAwait(false)
-            ?? throw new KeyNotFoundException($"Canvass request '{command.CanvassRequestId}' not found.");
+            ?? throw new AMIS.Framework.Core.Exceptions.NotFoundException($"Canvass request '{command.CanvassRequestId}' not found.");
 
         if (canvass.Status != CanvassRequestStatus.Open)
             throw new InvalidOperationException("Quotations can only be added to Open canvass requests.");

@@ -21,7 +21,7 @@ public sealed class CreateCanvassRequestCommandHandler(
         var pr = await dbContext.PurchaseRequests
             .FirstOrDefaultAsync(x => x.Id == command.PurchaseRequestId, cancellationToken)
             .ConfigureAwait(false)
-            ?? throw new KeyNotFoundException($"Purchase request '{command.PurchaseRequestId}' not found.");
+            ?? throw new AMIS.Framework.Core.Exceptions.NotFoundException($"Purchase request '{command.PurchaseRequestId}' not found.");
 
         if (pr.Status != PurchaseRequestStatus.Approved)
             throw new InvalidOperationException("Can only create a canvass request for an Approved purchase request.");

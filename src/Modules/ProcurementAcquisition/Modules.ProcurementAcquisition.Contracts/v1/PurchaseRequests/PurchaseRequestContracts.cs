@@ -172,10 +172,24 @@ public sealed class SearchPurchaseRequestsQuery : IQuery<PagedResponse<PurchaseR
     /// non-cancelled canvass request (RIV). PRs with at least one uncovered line remain eligible,
     /// since one PR may be split across multiple canvasses. Used by the "New Canvass Request" PR picker.
     /// </summary>
-    public bool ExcludeFullyCanvassed { get; set; }
+    public bool? ExcludeFullyCanvassed { get; set; }
 
     public int PageNumber { get; set; } = 1;
     public int PageSize { get; set; } = 10;
+}
+
+/// <summary>One status tally returned by <see cref="GetPurchaseRequestStatusCountsQuery"/>.</summary>
+public sealed record PurchaseRequestStatusCountDto(PurchaseRequestStatus Status, int Count);
+
+/// <summary>
+/// Returns the count of purchase requests per status in a single grouped query, optionally
+/// scoped to a PR-date range. Backs the status-filter tab badges so the UI no longer fires
+/// one search-count request per status.
+/// </summary>
+public sealed class GetPurchaseRequestStatusCountsQuery : IQuery<IReadOnlyList<PurchaseRequestStatusCountDto>>
+{
+    public DateOnly? FromDate { get; set; }
+    public DateOnly? ToDate { get; set; }
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
