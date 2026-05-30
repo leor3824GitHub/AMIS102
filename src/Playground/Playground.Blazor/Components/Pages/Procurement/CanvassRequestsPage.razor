@@ -248,10 +248,11 @@
                                                                    Color="Color.Default" Disabled="true" />
                                                 </MudTooltip>
                                             }
-                                            @if (_canViewSignedCopy && item.Status == CanvassRequestStatus.Awarded)
+                                            @if (item.Status == CanvassRequestStatus.Awarded && (item.HasSignedCopy ? _canViewSignedCopy : _canUploadSignedCopy))
                                             {
-                                                <MudTooltip Text="Signed copy (Abstract of Canvass)">
-                                                    <MudIconButton Icon="@Icons.Material.Filled.Verified" Size="Size.Small" Color="Color.Secondary"
+                                                <MudTooltip Text="@(item.HasSignedCopy ? "Signed copy uploaded — click to view (Abstract of Canvass)" : "Upload signed copy (Abstract of Canvass)")">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.Verified" Size="Size.Small"
+                                                                   Color="@(item.HasSignedCopy ? Color.Success : Color.Secondary)"
                                                                    OnClick="@(() => OpenSignedCopyAsync(item.Id, item.RivNumber, item.Status))" />
                                                 </MudTooltip>
                                             }
@@ -394,6 +395,7 @@
     private bool _canUpdate => UserProfileState.Permissions.Contains(ProcurementPermissions.CanvassRequests.Update);
     private bool _canAward => UserProfileState.Permissions.Contains(ProcurementPermissions.CanvassRequests.Award);
     private bool _canViewSignedCopy => UserProfileState.Permissions.Contains(ProcurementPermissions.SignedDocuments.View);
+    private bool _canUploadSignedCopy => UserProfileState.Permissions.Contains(ProcurementPermissions.SignedDocuments.Upload);
 
     private async Task OpenSignedCopyAsync(Guid id, string rivNumber, CanvassRequestStatus status)
     {

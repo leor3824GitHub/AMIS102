@@ -89,7 +89,8 @@ public sealed record PurchaseRequestSummaryDto(
     PurchaseRequestStatus Status,
     int LineItemCount,
     decimal TotalEstimatedCost,
-    DateTimeOffset CreatedOnUtc);
+    DateTimeOffset CreatedOnUtc,
+    bool HasSignedCopy = false);
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Commands

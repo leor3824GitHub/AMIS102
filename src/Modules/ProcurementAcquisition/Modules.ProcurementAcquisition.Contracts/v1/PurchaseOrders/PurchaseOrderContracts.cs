@@ -88,7 +88,8 @@ public sealed record PurchaseOrderSummaryDto(
     ModeOfProcurement ModeOfProcurement,
     PurchaseOrderStatus Status,
     decimal TotalAmount,
-    DateTimeOffset CreatedOnUtc);
+    DateTimeOffset CreatedOnUtc,
+    bool HasSignedCopy = false);
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Commands

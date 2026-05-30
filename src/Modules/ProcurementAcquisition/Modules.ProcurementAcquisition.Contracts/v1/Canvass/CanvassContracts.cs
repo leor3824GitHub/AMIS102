@@ -88,7 +88,8 @@ public sealed record CanvassRequestSummaryDto(
     int LineItemCount,
     DateTimeOffset CreatedOnUtc,
     bool HasPurchaseOrder = false,
-    string? PurchaseOrderNumber = null);
+    string? PurchaseOrderNumber = null,
+    bool HasSignedCopy = false);
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Commands

@@ -1,5 +1,6 @@
 using AMIS.Framework.Shared.Persistence;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders;
+using AMIS.Modules.ProcurementAcquisition.Contracts.v1.SignedDocuments;
 using AMIS.Modules.ProcurementAcquisition.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
@@ -56,7 +57,9 @@ public sealed class SearchPurchaseOrdersQueryHandler(ProcurementDbContext dbCont
                 x.ModeOfProcurement,
                 x.Status,
                 x.LineItems.Sum(li => li.Quantity * li.UnitCost),
-                x.CreatedOnUtc))
+                x.CreatedOnUtc,
+                dbContext.SignedDocuments.Any(sd =>
+                    sd.DocumentType == ProcurementDocumentType.PurchaseOrder && sd.DocumentId == x.Id)))
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 

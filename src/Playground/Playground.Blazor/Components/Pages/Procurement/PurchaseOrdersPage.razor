@@ -153,10 +153,11 @@
                                                 <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" Color="Color.Default"
                                                                OnClick="@(async () => await ViewDetailsAsync(item.Id))" />
                                             </MudTooltip>
-                                            @if (_canViewSignedCopy && IsSignedPo(item.Status))
+                                            @if (IsSignedPo(item.Status) && (item.HasSignedCopy ? _canViewSignedCopy : _canUploadSignedCopy))
                                             {
-                                                <MudTooltip Text="Signed copy">
-                                                    <MudIconButton Icon="@Icons.Material.Filled.Verified" Size="Size.Small" Color="Color.Secondary"
+                                                <MudTooltip Text="@(item.HasSignedCopy ? "Signed copy uploaded — click to view" : "Upload signed copy")">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.Verified" Size="Size.Small"
+                                                                   Color="@(item.HasSignedCopy ? Color.Success : Color.Secondary)"
                                                                    OnClick="@(() => OpenSignedCopyAsync(item.Id, item.PoNumber, item.Status))" />
                                                 </MudTooltip>
                                             }
@@ -320,6 +321,7 @@
     private bool _canIssue => UserProfileState.Permissions.Contains(ProcurementPermissions.PurchaseOrders.Issue);
     private bool _canCancel => UserProfileState.Permissions.Contains(ProcurementPermissions.PurchaseOrders.Cancel);
     private bool _canViewSignedCopy => UserProfileState.Permissions.Contains(ProcurementPermissions.SignedDocuments.View);
+    private bool _canUploadSignedCopy => UserProfileState.Permissions.Contains(ProcurementPermissions.SignedDocuments.Upload);
 
     // Issued and every post-issue state — the PO is a signed record once issued, including while deliveries land.
     private static bool IsSignedPo(PurchaseOrderStatus status) =>

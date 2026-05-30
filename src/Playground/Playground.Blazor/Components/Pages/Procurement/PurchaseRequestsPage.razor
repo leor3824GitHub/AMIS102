@@ -1,6 +1,7 @@
 @page "/procurement/purchase-requests"
 @using AMIS.Modules.ProcurementAcquisition.Contracts.Permissions
 @using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests
+@using AMIS.Modules.ProcurementAcquisition.Contracts.v1.SignedDocuments
 @using AMIS.Framework.Shared.Persistence
 @using AMIS.Playground.Blazor.ApiClient
 @using AMIS.Playground.Blazor.Components.Shared
@@ -102,7 +103,19 @@
                                         </MudChip>
                                     </td>
                                     <td style="text-align:right">₱@item.TotalEstimatedCost.ToString("N2")</td>
-                                    <td>@StatusChip(item.Status)</td>
+                                    <td>
+                                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                            @StatusChip(item.Status)
+                                            @if (IsSignedPr(item.Status) && (item.HasSignedCopy ? _canViewSignedCopy : _canUploadSignedCopy))
+                                            {
+                                                <MudTooltip Text="@(item.HasSignedCopy ? "Signed copy uploaded — click to view" : "Upload signed copy")">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.Verified" Size="Size.Small"
+                                                                   Color="@(item.HasSignedCopy ? Color.Success : Color.Secondary)"
+                                                                   OnClick="@(() => OpenSignedCopyAsync(item))" />
+                                                </MudTooltip>
+                                            }
+                                        </MudStack>
+                                    </td>
                                     <td>
                                         <MudStack Row="true" Spacing="0">
                                             <MudTooltip Text="View Details">
@@ -220,6 +233,8 @@
     private bool _canApprove => UserProfileState.Permissions.Contains(ProcurementPermissions.PurchaseRequests.Approve);
     private bool _canReturnForRevision => UserProfileState.Permissions.Contains(ProcurementPermissions.PurchaseRequests.ReturnForRevision);
     private bool _canReject => UserProfileState.Permissions.Contains(ProcurementPermissions.PurchaseRequests.Reject);
+    private bool _canViewSignedCopy => UserProfileState.Permissions.Contains(ProcurementPermissions.SignedDocuments.View);
+    private bool _canUploadSignedCopy => UserProfileState.Permissions.Contains(ProcurementPermissions.SignedDocuments.Upload);
 
     private List<PurchaseRequestSummaryDto> _items = [];
     private bool _loaded;
@@ -411,6 +426,22 @@
         {
             Snackbar.Add($"Unable to load PR details: {ex.Message}", Severity.Error);
         }
+    }
+
+    private static bool IsSignedPr(PurchaseRequestStatus status) =>
+        status is PurchaseRequestStatus.Approved or PurchaseRequestStatus.Completed;
+
+    private async Task OpenSignedCopyAsync(PurchaseRequestSummaryDto item)
+    {
+        var parameters = new DialogParameters<SignedCopyDialog>
+        {
+            { x => x.DocumentType, ProcurementDocumentType.PurchaseRequest },
+            { x => x.DocumentId, item.Id },
+            { x => x.DocumentNumber, item.PrNumber },
+            { x => x.IsTerminalState, IsSignedPr(item.Status) }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, CloseButton = true };
+        await DialogService.ShowAsync<SignedCopyDialog>("Signed Copy", parameters, options);
     }
 
     private async Task SubmitAsync(Guid id)
