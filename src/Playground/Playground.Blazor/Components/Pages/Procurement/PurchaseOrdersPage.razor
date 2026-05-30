@@ -3,6 +3,7 @@
 @using AMIS.Modules.ProcurementAcquisition.Contracts.v1.Canvass
 @using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders
 @using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests
+@using AMIS.Modules.ProcurementAcquisition.Contracts.v1.SignedDocuments
 @using AMIS.Framework.Shared.Persistence
 @using AMIS.Playground.Blazor.ApiClient
 @using PurchaseOrderContracts = AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders
@@ -152,6 +153,13 @@
                                                 <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" Color="Color.Default"
                                                                OnClick="@(async () => await ViewDetailsAsync(item.Id))" />
                                             </MudTooltip>
+                                            @if (_canViewSignedCopy && IsSignedPo(item.Status))
+                                            {
+                                                <MudTooltip Text="Signed copy">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.Verified" Size="Size.Small" Color="Color.Secondary"
+                                                                   OnClick="@(() => OpenSignedCopyAsync(item.Id, item.PoNumber, item.Status))" />
+                                                </MudTooltip>
+                                            }
                                             <MudMenu Icon="@Icons.Material.Filled.Print"
                                                      Color="Color.Secondary"
                                                      Size="Size.Small"
@@ -311,6 +319,24 @@
     private bool _canCertifyFundsAvailable => UserProfileState.Permissions.Contains(ProcurementPermissions.PurchaseOrders.CertifyFundsAvailable);
     private bool _canIssue => UserProfileState.Permissions.Contains(ProcurementPermissions.PurchaseOrders.Issue);
     private bool _canCancel => UserProfileState.Permissions.Contains(ProcurementPermissions.PurchaseOrders.Cancel);
+    private bool _canViewSignedCopy => UserProfileState.Permissions.Contains(ProcurementPermissions.SignedDocuments.View);
+
+    // Issued and every post-issue state — the PO is a signed record once issued, including while deliveries land.
+    private static bool IsSignedPo(PurchaseOrderStatus status) =>
+        status is PurchaseOrderStatus.Issued or PurchaseOrderStatus.PartiallyDelivered or PurchaseOrderStatus.Fulfilled;
+
+    private async Task OpenSignedCopyAsync(Guid id, string poNumber, PurchaseOrderStatus status)
+    {
+        var parameters = new DialogParameters<SignedCopyDialog>
+        {
+            { x => x.DocumentType, ProcurementDocumentType.PurchaseOrder },
+            { x => x.DocumentId, id },
+            { x => x.DocumentNumber, poNumber },
+            { x => x.IsTerminalState, IsSignedPo(status) }
+        };
+        await DialogService.ShowAsync<SignedCopyDialog>("Signed Copy", parameters,
+            new DialogOptions { MaxWidth = MaxWidth.Small, CloseButton = true });
+    }
 
     private string? _currentUserEmployeeName => UserProfileState.EmployeeFullName;
 

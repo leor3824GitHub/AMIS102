@@ -18,9 +18,11 @@ public sealed class CreatePurchaseRequestCommandHandler(
         var tenantId = GetRequiredTenantId();
         var now = DateTime.UtcNow;
 
-        // Freeze the requester's name + designation from the selected employee at create time.
+        // Freeze the requester's name + designation from the authenticated user at create time
+        // (the act of "requesting"), so reprints stay faithful to who requested and their title.
+        var requesterId = currentUser.GetUserId();
         var requester = await SignatoryResolver
-            .ResolveByEmployeeIdAsync(command.RequestedById, mediator, cancellationToken)
+            .ResolveSignatoryAsync(currentUser, mediator, cancellationToken)
             .ConfigureAwait(false);
 
         for (var attempt = 0; attempt < 5; attempt++)
@@ -56,7 +58,7 @@ public sealed class CreatePurchaseRequestCommandHandler(
                 command.AlobsNumber,
                 command.AlobsDate,
                 lineItems,
-                requestedById: command.RequestedById,
+                requestedById: requesterId,
                 requestedByDesignation: requester.Designation);
 
             pr.CreatedBy = currentUser.GetUserId().ToString();

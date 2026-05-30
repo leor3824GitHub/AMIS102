@@ -3,6 +3,7 @@
 @using AMIS.Modules.ProcurementAcquisition.Contracts.Permissions
 @using AMIS.Modules.ProcurementAcquisition.Contracts.v1.Canvass
 @using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests
+@using AMIS.Modules.ProcurementAcquisition.Contracts.v1.SignedDocuments
 @using AMIS.Framework.Shared.Persistence
 @using AMIS.Playground.Blazor.ApiClient
 @inject ICanvassRequestClient Client
@@ -247,6 +248,13 @@
                                                                    Color="Color.Default" Disabled="true" />
                                                 </MudTooltip>
                                             }
+                                            @if (_canViewSignedCopy && item.Status == CanvassRequestStatus.Awarded)
+                                            {
+                                                <MudTooltip Text="Signed copy (Abstract of Canvass)">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.Verified" Size="Size.Small" Color="Color.Secondary"
+                                                                   OnClick="@(() => OpenSignedCopyAsync(item.Id, item.RivNumber, item.Status))" />
+                                                </MudTooltip>
+                                            }
                                             <MudMenu Icon="@Icons.Material.Filled.Print"
                                                      Color="Color.Secondary"
                                                      Size="Size.Small"
@@ -385,6 +393,20 @@
     private bool _canCreate => UserProfileState.Permissions.Contains(ProcurementPermissions.CanvassRequests.Create);
     private bool _canUpdate => UserProfileState.Permissions.Contains(ProcurementPermissions.CanvassRequests.Update);
     private bool _canAward => UserProfileState.Permissions.Contains(ProcurementPermissions.CanvassRequests.Award);
+    private bool _canViewSignedCopy => UserProfileState.Permissions.Contains(ProcurementPermissions.SignedDocuments.View);
+
+    private async Task OpenSignedCopyAsync(Guid id, string rivNumber, CanvassRequestStatus status)
+    {
+        var parameters = new DialogParameters<SignedCopyDialog>
+        {
+            { x => x.DocumentType, ProcurementDocumentType.AbstractOfCanvass },
+            { x => x.DocumentId, id },
+            { x => x.DocumentNumber, rivNumber },
+            { x => x.IsTerminalState, status == CanvassRequestStatus.Awarded }
+        };
+        await DialogService.ShowAsync<SignedCopyDialog>("Signed Copy", parameters,
+            new DialogOptions { MaxWidth = MaxWidth.Small, CloseButton = true });
+    }
     private bool _canCreatePo => UserProfileState.Permissions.Contains(ProcurementPermissions.PurchaseOrders.Create);
 
     private List<CanvassRequestSummaryDto> _items = [];

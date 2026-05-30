@@ -43,31 +43,11 @@
                         <MudSelectItem Value="PrType.Unplanned">Unplanned</MudSelectItem>
                     </MudSelect>
                 </MudItem>
-                <MudItem xs="12" sm="6" md="6">
-                    <MudAutocomplete T="EmployeeReferenceDto"
-                                     Value="_form.Requester"
-                                     ValueChanged="@(e => _form.Requester = e)"
-                                     SearchFunc="SearchEmployeesAsync"
-                                     ToStringFunc="EmployeeDisplayName"
-                                     Label="Requested by *"
-                                     Variant="Variant.Outlined"
-                                     Placeholder="Search employee..."
-                                     Clearable="true"
-                                     CoerceText="true"
-                                     ResetValueOnEmptyText="true"
-                                     MinCharacters="1"
-                                     Error="@(_submitted && _form.Requester is null)"
-                                     ErrorText="Requested by is required."
-                                     HelperText="Name + designation are frozen onto this PR for the printed form."
-                                     Dense="true" Margin="Margin.Dense" />
-                </MudItem>
-                <MudItem xs="12" sm="6" md="6" Class="d-flex align-center">
-                    @if (_form.Requester is not null && !string.IsNullOrWhiteSpace(_form.Requester.PositionName))
-                    {
-                        <MudText Typo="Typo.body2" Color="Color.Secondary">@_form.Requester.PositionName</MudText>
-                    }
-                </MudItem>
             </MudGrid>
+
+            <MudAlert Severity="Severity.Info" Dense="true" Class="mt-1">
+                Requested by: <b>@UserProfileState.EmployeeFullName</b>@(string.IsNullOrWhiteSpace(UserProfileState.EmployeePositionName) ? "" : $" — {UserProfileState.EmployeePositionName}") — captured automatically for the printed form.
+            </MudAlert>
 
             <MudTextField @bind-Value="_form.Purpose"
                           Label="Purpose / Title *"
@@ -253,30 +233,7 @@
 
         if (PurchaseRequest is not null)
             await BeginEdit(PurchaseRequest);
-        else if (UserProfileState.EmployeeId != Guid.Empty)
-            _form.Requester = await LoadEmployeeAsync(UserProfileState.EmployeeId);  // default to current user
     }
-
-    private async Task<EmployeeReferenceDto?> LoadEmployeeAsync(Guid id)
-    {
-        try { return await LookupClient.EmployeesGetAsync(id); }
-        catch { return null; }
-    }
-
-    private async Task<IEnumerable<EmployeeReferenceDto>> SearchEmployeesAsync(string value, CancellationToken ct)
-    {
-        if (string.IsNullOrWhiteSpace(value)) return [];
-        try
-        {
-            var result = await LookupClient.EmployeesGetAsync(
-                keyword: value, isActive: true, pageNumber: 1, pageSize: 20, cancellationToken: ct);
-            return result?.Items ?? [];
-        }
-        catch { return []; }
-    }
-
-    private static string EmployeeDisplayName(EmployeeReferenceDto? e) =>
-        e is null ? string.Empty : $"{e.FirstName} {e.LastName}";
 
     private (string Label, Color Color)? ClassifyByCost(decimal unitCost)
     {
@@ -339,6 +296,12 @@
             return;
         }
 
+        if (string.IsNullOrWhiteSpace(UserProfileState.EmployeeFullName))
+        {
+            Snackbar.Add("Your employee record could not be loaded. Please refresh the page or contact your administrator.", Severity.Warning);
+            return;
+        }
+
         _busy = true;
         try
         {
@@ -352,7 +315,7 @@
             {
                 await Client.CreateAsync(new CreatePurchaseRequestCommand(
                     _form.Department!.Id, _form.ResponsibilityCenterCode, _form.Purpose, _form.PrType, _form.Justification,
-                    _form.Requester!.Id, _form.SaiNumber, ToDateOnly(_form.SaiDateNullable),
+                    _form.SaiNumber, ToDateOnly(_form.SaiDateNullable),
                     _form.AlobsNumber, ToDateOnly(_form.AlobsDateNullable), lineItems));
                 Snackbar.Add("Purchase request created.", Severity.Success);
             }
@@ -360,7 +323,7 @@
             {
                 await Client.UpdateAsync(_editing.Id, new UpdatePurchaseRequestCommand(
                     _editing.Id, _form.Department!.Id, _form.ResponsibilityCenterCode, _form.Purpose, _form.PrType, _form.Justification,
-                    _form.Requester!.Id, _form.SaiNumber, ToDateOnly(_form.SaiDateNullable),
+                    _form.SaiNumber, ToDateOnly(_form.SaiDateNullable),
                     _form.AlobsNumber, ToDateOnly(_form.AlobsDateNullable), lineItems));
                 Snackbar.Add("Purchase request updated.", Severity.Success);
             }
@@ -386,12 +349,8 @@
         _submitted = false;
         _editing = pr;
         _newLineItem = new LineItemRow();
-        var requester = pr.RequestedById is { } reqId && reqId != Guid.Empty
-            ? await LoadEmployeeAsync(reqId)
-            : null;
         _form = new PrForm
         {
-            Requester = requester,
             Department = department,
             ResponsibilityCenterCode = pr.ResponsibilityCenterCode,
             Purpose = pr.Purpose,
@@ -536,7 +495,6 @@
 
     private bool IsFormValid() =>
         _form.Department is not null &&
-        _form.Requester is not null &&
         !string.IsNullOrWhiteSpace(_form.Purpose) &&
         (_form.PrType != PrType.Unplanned || !string.IsNullOrWhiteSpace(_form.Justification)) &&
         _form.LineItems.Count > 0 &&
@@ -551,7 +509,6 @@
 
     private sealed class PrForm
     {
-        public EmployeeReferenceDto? Requester { get; set; }
         public DepartmentReferenceDto? Department { get; set; }
         public string? ResponsibilityCenterCode { get; set; }
         public string Purpose { get; set; } = string.Empty;

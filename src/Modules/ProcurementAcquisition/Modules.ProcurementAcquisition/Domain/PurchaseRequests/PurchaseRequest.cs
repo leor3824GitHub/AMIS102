@@ -186,26 +186,21 @@ public sealed class PurchaseRequest : AggregateRoot<Guid>, IHasTenant, IAuditabl
         string purpose,
         PrType prType,
         string? justification,
-        string requestedByName,
         string? saiNumber,
         DateOnly? saiDate,
         string? alobsNumber,
         DateOnly? alobsDate,
-        IEnumerable<PurchaseRequestLineItemData> lineItems,
-        Guid? requestedById = null,
-        string? requestedByDesignation = null)
+        IEnumerable<PurchaseRequestLineItemData> lineItems)
     {
         if (Status != PurchaseRequestStatus.Draft)
             throw new InvalidOperationException("Only Draft purchase requests can be updated.");
 
+        // RequestedBy* are frozen at create and intentionally not modified on edit.
         DepartmentId = departmentId;
         ResponsibilityCenterCode = responsibilityCenterCode;
         Purpose = purpose;
         PrType = prType;
         Justification = justification;
-        RequestedById = requestedById;
-        RequestedByName = requestedByName;
-        RequestedByDesignation = requestedByDesignation;
         SaiNumber = saiNumber;
         SaiDate = saiDate;
         AlobsNumber = alobsNumber;

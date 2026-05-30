@@ -4,6 +4,7 @@ using System.Reflection;
 using AMIS.Modules.FastReporting.Contracts.v1.Reports;
 using AMIS.Modules.FastReporting.Services;
 using AMIS.Modules.MasterData.Contracts.v1.OrganizationProfile;
+using AMIS.Modules.MasterData.Contracts.v1.ReportSignatories;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.Canvass;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
 using FastReport;
@@ -32,11 +33,15 @@ public sealed class PrintAbstractOfCanvassFastQueryHandler(IMediator mediator)
         var pr = await mediator.Send(new GetPurchaseRequestQuery(canvass.PurchaseRequestId), ct).ConfigureAwait(false);
         var org = await mediator.Send(new GetOrganizationProfileQuery(), ct).ConfigureAwait(false);
 
-        // The ROPC committee was frozen at award time — read the snapshot. Canvasses not yet awarded,
-        // or awarded before snapshots existed, have none, so those signature slots print blank.
-        var committee = (canvass.AwardSignatories ?? [])
-            .GroupBy(s => s.SortOrder)
-            .ToDictionary(g => g.Key, g => g.First());
+        // The ROPC committee is frozen at award time (faithful reprint). For canvasses NOT yet awarded —
+        // the abstract is being printed for the committee to sign and recommend the award — and for
+        // legacy awarded canvasses with no snapshot, fall back to the live configured ReportSignatories +
+        // org officers, mirroring how the PR/PO reports show org defaults before the signing action.
+        IReadOnlyList<CanvassAwardSignatoryDto> committeeList = canvass.AwardSignatories is { Count: > 0 } snapshot
+            ? snapshot
+            : BuildLiveCommittee(
+                await mediator.Send(new GetReportSignatoriesQuery("AbstractOfCanvass"), ct).ConfigureAwait(false), org);
+        var committee = committeeList.GroupBy(s => s.SortOrder).ToDictionary(g => g.Key, g => g.First());
 
         var nf = CultureInfo.InvariantCulture;
         var quotations = canvass.Quotations.ToList();
@@ -99,6 +104,29 @@ public sealed class PrintAbstractOfCanvassFastQueryHandler(IMediator mediator)
             },
             fileName: $"AOC-{canvass.RivNumber}",
             ct: ct).ConfigureAwait(false);
+    }
+
+    // Live committee resolution for un-awarded / legacy canvasses (no frozen snapshot). MUST stay in sync
+    // with AwardCanvassCommandHandler.ResolveCommitteeAsync, which freezes the same slots at award time.
+    private static IReadOnlyList<CanvassAwardSignatoryDto> BuildLiveCommittee(
+        IReadOnlyList<ReportSignatoryDto> signatories, OrganizationProfileDto? org)
+    {
+        string Name(int order, string? orgFallback = null) =>
+            signatories.FirstOrDefault(s => s.SortOrder == order && s.IsActive)?.Name ?? orgFallback ?? string.Empty;
+        string Role(int order, string? fallback = null) =>
+            signatories.FirstOrDefault(s => s.SortOrder == order && s.IsActive)?.Label ?? fallback ?? string.Empty;
+
+        return
+        [
+            new(1, Name(1), Role(1, "TWG Goods/Services-Chairperson")),
+            new(2, Name(2, org?.AccountantName), Role(2, org?.AccountantDesignation ?? "Accountant IV")),
+            new(3, Name(3), Role(3, "ROPC Member")),
+            new(4, Name(4), Role(4, "ROPC Member")),
+            new(5, Name(5, org?.SupervisingAdminOfficerName),
+                Role(5, org?.SupervisingAdminOfficerDesignation ?? "Supervising Administrative Officer")),
+            new(6, Name(6, org?.AssistantRegionalManagerName ?? org?.ApprovingOfficialName),
+                Role(6, org?.AssistantRegionalManagerDesignation ?? org?.ApprovingOfficialDesignation ?? "Assistant Regional Manager II")),
+        ];
     }
 
     private static string CommitteeName(IReadOnlyDictionary<int, CanvassAwardSignatoryDto> committee, int order) =>

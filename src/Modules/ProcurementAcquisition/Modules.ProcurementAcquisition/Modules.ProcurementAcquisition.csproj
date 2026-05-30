@@ -20,6 +20,7 @@
     <ProjectReference Include="..\..\..\BuildingBlocks\Caching\Caching.csproj" />
     <ProjectReference Include="..\..\..\BuildingBlocks\Eventing\Eventing.csproj" />
     <ProjectReference Include="..\..\..\BuildingBlocks\Persistence\Persistence.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\Storage\Storage.csproj" />
     <ProjectReference Include="..\..\..\BuildingBlocks\Web\Web.csproj" />
     <ProjectReference Include="..\Modules.ProcurementAcquisition.Contracts\Modules.ProcurementAcquisition.Contracts.csproj" />
     <ProjectReference Include="..\..\MasterData\Modules.MasterData.Contracts\Modules.MasterData.Contracts.csproj" />

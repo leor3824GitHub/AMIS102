@@ -1,4 +1,8 @@
 @using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests
+@using AMIS.Modules.ProcurementAcquisition.Contracts.v1.SignedDocuments
+@using AMIS.Modules.ProcurementAcquisition.Contracts.Permissions
+@inject IDialogService DialogService
+@inject IUserProfileState UserProfileState
 
 <MudDialog>
     <DialogContent>
@@ -146,6 +150,11 @@
         </MudGrid>
     </DialogContent>
     <DialogActions>
+        @if (_canViewSignedCopy && _isSigned)
+        {
+            <MudButton StartIcon="@Icons.Material.Filled.Verified" Variant="Variant.Outlined" Color="Color.Secondary"
+                       OnClick="OpenSignedCopyAsync">Signed Copy</MudButton>
+        }
         <MudButton OnClick="Close">Close</MudButton>
     </DialogActions>
 </MudDialog>
@@ -157,6 +166,22 @@
     public PurchaseRequestDto PurchaseRequest { get; set; } = default!;
 
     private void Close() => MudDialog.Close();
+
+    private bool _canViewSignedCopy => UserProfileState.Permissions.Contains(ProcurementPermissions.SignedDocuments.View);
+    private bool _isSigned => PurchaseRequest.Status is PurchaseRequestStatus.Approved or PurchaseRequestStatus.Completed;
+
+    private async Task OpenSignedCopyAsync()
+    {
+        var parameters = new DialogParameters<SignedCopyDialog>
+        {
+            { x => x.DocumentType, ProcurementDocumentType.PurchaseRequest },
+            { x => x.DocumentId, PurchaseRequest.Id },
+            { x => x.DocumentNumber, PurchaseRequest.PrNumber },
+            { x => x.IsTerminalState, _isSigned }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, CloseButton = true };
+        await DialogService.ShowAsync<SignedCopyDialog>("Signed Copy", parameters, options);
+    }
 
     private static string FormatDoc(string? number, DateOnly? date)
     {

@@ -41,6 +41,9 @@ using AMIS.Modules.ProcurementAcquisition.Features.v1.AssetIARs.ReassignInspecto
 using AMIS.Modules.ProcurementAcquisition.Features.v1.AssetIARs.RecordInspection;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.AssetIARs.AssignPropertyNo;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.AssetIARs.ExpandLineByQuantity;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.SignedDocuments.UploadSignedDocument;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.SignedDocuments.GetSignedDocument;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.SignedDocuments.DownloadSignedDocument;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -76,6 +79,9 @@ public class ProcurementAcquisitionModule : IModule
         new("Certify Funds Available on Purchase Orders", "CertifyFundsAvailable", "Procurement.PurchaseOrders"),
         new("Issue Purchase Orders", "Issue", "Procurement.PurchaseOrders"),
         new("Cancel Purchase Orders", "Cancel", "Procurement.PurchaseOrders"),
+
+        new("View Signed Document Copies", "View", "Procurement.SignedDocuments", IsBasic: true),
+        new("Upload Signed Document Copies", "Upload", "Procurement.SignedDocuments"),
 
         new("View Asset IARs",                "View",                "Procurement.AssetIARs", IsBasic: true),
         new("Create Asset IARs",              "Create",              "Procurement.AssetIARs"),
@@ -118,6 +124,7 @@ public class ProcurementAcquisitionModule : IModule
         var canvassRequestsGroup = moduleGroup.MapGroup("/canvass-requests");
         var purchaseOrdersGroup = moduleGroup.MapGroup("/purchase-orders");
         var iarGroup = moduleGroup.MapGroup("/iars");
+        var signedDocumentsGroup = moduleGroup.MapGroup("/signed-documents");
 
         // Purchase Requests
         CreatePurchaseRequestEndpoint.Map(purchaseRequestsGroup);
@@ -164,6 +171,11 @@ public class ProcurementAcquisitionModule : IModule
         RecordIARInspectionEndpoint.Map(iarGroup);
         AssignPropertyNoEndpoint.Map(iarGroup);
         ExpandLineByQuantityEndpoint.Map(iarGroup);
+
+        // Signed Documents (wet-signed scanned copies of records)
+        UploadSignedDocumentEndpoint.Map(signedDocumentsGroup);
+        GetSignedDocumentEndpoint.Map(signedDocumentsGroup);
+        DownloadSignedDocumentEndpoint.Map(signedDocumentsGroup);
     }
 }
 

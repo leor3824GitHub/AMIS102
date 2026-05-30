@@ -49,22 +49,4 @@ internal static class SignatoryResolver
 
         return new SignatoryInfo(currentUser.Name ?? string.Empty, null);
     }
-
-    /// <summary>
-    /// Resolves the name + designation of a <em>selected</em> employee (e.g. the PR requester, who is
-    /// not necessarily the authenticated user) so both can be frozen onto the document at create time.
-    /// </summary>
-    public static async ValueTask<SignatoryInfo> ResolveByEmployeeIdAsync(
-        Guid employeeId, IMediator mediator, CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(mediator);
-
-        var employee = await mediator
-            .Send(new GetEmployeeReferenceByIdQuery(employeeId), cancellationToken)
-            .ConfigureAwait(false)
-            ?? throw new AMIS.Framework.Core.Exceptions.NotFoundException($"Employee '{employeeId}' not found.");
-
-        var fullName = $"{employee.FirstName} {employee.LastName}".Trim();
-        return new SignatoryInfo(fullName, employee.PositionName);
-    }
 }

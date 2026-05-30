@@ -35,6 +35,12 @@ public static class ProcurementPermissions
         public const string Cancel = "Permissions.Procurement.PurchaseOrders.Cancel";
     }
 
+    public static class SignedDocuments
+    {
+        public const string View = "Permissions.Procurement.SignedDocuments.View";
+        public const string Upload = "Permissions.Procurement.SignedDocuments.Upload";
+    }
+
     public static class AssetIARs
     {
         public const string View = "Permissions.Procurement.AssetIARs.View";

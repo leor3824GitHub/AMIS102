@@ -7,6 +7,7 @@ using AMIS.Modules.ProcurementAcquisition.Domain.AssetInspectionAcceptanceReport
 using AMIS.Modules.ProcurementAcquisition.Domain.Canvass;
 using AMIS.Modules.ProcurementAcquisition.Domain.PurchaseOrders;
 using AMIS.Modules.ProcurementAcquisition.Domain.PurchaseRequests;
+using AMIS.Modules.ProcurementAcquisition.Domain.SignedDocuments;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
@@ -22,6 +23,7 @@ public class ProcurementDbContext : BaseDbContext
     public DbSet<PurchaseOrder> PurchaseOrders => Set<PurchaseOrder>();
     public DbSet<AssetInspectionAcceptanceReport> AssetIARs => Set<AssetInspectionAcceptanceReport>();
     public DbSet<IarNumberSequence> IarNumberSequences => Set<IarNumberSequence>();
+    public DbSet<SignedDocument> SignedDocuments => Set<SignedDocument>();
 
     public ProcurementDbContext(
         IMultiTenantContextAccessor<AppTenantInfo> multiTenantContextAccessor,
