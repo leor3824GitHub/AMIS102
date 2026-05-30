@@ -1,14 +1,20 @@
 @page "/expendable/requests"
 @using AMIS.Framework.Blazor.UI.Components.Cards
 @using AMIS.Playground.Blazor.ApiClient
+@using AMIS.Playground.Blazor.Components.Pages.Procurement
+@using AMIS.Modules.Expendable.Contracts.Permissions
 @inherits ComponentBase
 @inject ISnackbar Snackbar
 @inject IExpendableClient ExpendableClient
 @inject ISupply_requestsClient SupplyRequestsClient
 @inject IInventoryClient InventoryClient
 @inject ILookupClient LookupClient
+@inject IJSRuntime JS
+@inject IDialogService DialogService
+@inject IFastReportSetupPreferences FastReportSetupPrefs
+@inject IUserProfileState UserProfileState
 
-<AMISPageHeader Title="Supply Requests" Description="Supply officer — approve, fulfill, and track employee supply requests" />
+<AMISPageHeader Title="Supply Requests" Description="Supply officer ï¿½ approve, fulfill, and track employee supply requests" />
 
 <div class="mt-4">
     <MudTabs Elevation="1" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-4"
@@ -49,8 +55,8 @@
             </MudTable>
         </MudTabPanel>
 
-        <!-- ===== APPROVED — AWAITING ISSUE ===== -->
-        <MudTabPanel Text="Approved — Awaiting Issue" Icon="@Icons.Material.Filled.Inventory" BadgeData="@_approvedCount" BadgeColor="Color.Info">
+        <!-- ===== APPROVED ï¿½ AWAITING ISSUE ===== -->
+        <MudTabPanel Text="Approved ï¿½ Awaiting Issue" Icon="@Icons.Material.Filled.Inventory" BadgeData="@_approvedCount" BadgeColor="Color.Info">
             <MudTable @ref="_approvedTable" T="SupplyRequestDto"
                       ServerData="@(async (s, ct) => await LoadRequests(s, ct, "Approved"))"
                       Dense="true" Hover="true" Striped="true">
@@ -91,6 +97,7 @@
                     <MudTh>Date Issued</MudTh>
                     <MudTh>Items</MudTh>
                     <MudTh>Status</MudTh>
+                    <MudTh Style="text-align:center">Actions</MudTh>
                 </HeaderContent>
                 <RowTemplate>
                     <MudTd><MudText Typo="Typo.body2" Style="font-weight:500">@context.RequestNumber</MudText></MudTd>
@@ -102,6 +109,24 @@
                         <MudChip T="string" Size="Size.Small" Color="Color.Success" Icon="@Icons.Material.Filled.Done">
                             Issued
                         </MudChip>
+                    </MudTd>
+                    <MudTd Style="text-align:center">
+                        @if (_canPrintRis)
+                        {
+                            <MudMenu Icon="@Icons.Material.Filled.Print" Color="Color.Secondary" Size="Size.Small"
+                                     Dense="true" AnchorOrigin="Origin.BottomLeft" TransformOrigin="Origin.TopLeft"
+                                     ToolTip="Print Requisition and Issue Slip">
+                                <MudMenuItem Icon="@Icons.Material.Filled.PictureAsPdf"
+                                             OnClick="@(() => DownloadRisPdfAsync(context.Id))">
+                                    Download PDF
+                                </MudMenuItem>
+                                <MudDivider />
+                                <MudMenuItem Icon="@Icons.Material.Filled.Settings"
+                                             OnClick="@(() => OpenRisFastReportSetupAsync(context.Id))">
+                                    Fast Report â€“ Page Setupâ€¦
+                                </MudMenuItem>
+                            </MudMenu>
+                        }
                     </MudTd>
                 </RowTemplate>
                 <NoRecordsContent><MudText Class="my-4">No fulfilled requests yet.</MudText></NoRecordsContent>
@@ -145,7 +170,7 @@
         <MudPaper Class="pa-4" Elevation="24" Style="width: min(900px, 95vw); max-height: 90vh; overflow: auto;">
             <MudText Typo="Typo.h6" Class="mb-3">
                 <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Class="mr-2" />
-                Approve Request — @_approveDialog.RequestNumber
+                Approve Request ï¿½ @_approveDialog.RequestNumber
             </MudText>
 
             <MudStack Spacing="3">
@@ -213,7 +238,7 @@
         <MudPaper Class="pa-4" Elevation="24" Style="width: min(560px, 95vw);">
             <MudText Typo="Typo.h6" Class="mb-3">
                 <MudIcon Icon="@Icons.Material.Filled.Cancel" Color="Color.Error" Class="mr-2" />
-                Reject Request — @_rejectDialog.RequestNumber
+                Reject Request ï¿½ @_rejectDialog.RequestNumber
             </MudText>
             <MudTextField @bind-Value="_rejectReason" Label="Reason for Rejection" Lines="3"
                           Placeholder="Enter reason..." Variant="Variant.Outlined" />
@@ -236,7 +261,7 @@
         <MudPaper Class="pa-4" Elevation="24" Style="width: min(560px, 95vw);">
             <MudText Typo="Typo.h6" Class="mb-3">
                 <MudIcon Icon="@Icons.Material.Filled.LocalShipping" Color="Color.Primary" Class="mr-2" />
-                Issue Supplies — @_fulfillDialog.RequestNumber
+                Issue Supplies ï¿½ @_fulfillDialog.RequestNumber
             </MudText>
             <MudStack Spacing="2">
                 <MudAlert Severity="Severity.Info" Dense="true">
@@ -300,6 +325,9 @@
     private WarehouseOption? _selectedWarehouse;
     private Dictionary<Guid, int> _approveQuantities = [];
     private string _rejectReason = string.Empty;
+
+    private const string RisFastReportKey = "expendable-ris";
+    private bool _canPrintRis => UserProfileState.Permissions.Contains(ExpendablePermissions.SupplyRequests.View);
 
     protected override async Task OnInitializedAsync()
     {
@@ -373,7 +401,7 @@
                 {
                     var name = g.First().WarehouseLocationName;
                     var display = string.IsNullOrWhiteSpace(name)
-                        ? $"Warehouse {g.Key.ToString()[..8]}…"
+                        ? $"Warehouse {g.Key.ToString()[..8]}ï¿½"
                         : name;
                     return new WarehouseOption(g.Key, display);
                 })
@@ -397,24 +425,24 @@
             var product = await ExpendableClient.ProductsGetAsync(productId);
             if (product != null) _productNames[productId] = product.Name;
         }
-        catch { _productNames[productId] = productId.ToString()[..8] + "…"; }
+        catch { _productNames[productId] = productId.ToString()[..8] + "ï¿½"; }
     }
 
     private string GetProductName(Guid productId) =>
-        _productNames.TryGetValue(productId, out var name) ? name : productId.ToString()[..8] + "…";
+        _productNames.TryGetValue(productId, out var name) ? name : productId.ToString()[..8] + "ï¿½";
 
     private string GetEmployeeName(string employeeId)
     {
         if (string.IsNullOrWhiteSpace(employeeId) || !Guid.TryParse(employeeId, out var id))
             return employeeId ?? "Unknown";
-        return _employeeNames.TryGetValue(id, out var name) ? name : id.ToString()[..8] + "…";
+        return _employeeNames.TryGetValue(id, out var name) ? name : id.ToString()[..8] + "ï¿½";
     }
 
     private string GetDepartmentName(string departmentId)
     {
         if (string.IsNullOrWhiteSpace(departmentId) || !Guid.TryParse(departmentId, out var id))
             return departmentId ?? "Unknown";
-        return _departmentNames.TryGetValue(id, out var name) ? name : id.ToString()[..8] + "…";
+        return _departmentNames.TryGetValue(id, out var name) ? name : id.ToString()[..8] + "ï¿½";
     }
 
     // ===== APPROVE =====
@@ -459,7 +487,7 @@
                 WarehouseLocationId = warehouseId
             };
             await SupplyRequestsClient.ApproveAsync(_approveDialog.Id, command);
-            Snackbar.Add($"Request {_approveDialog.RequestNumber} approved — stock reserved.", Severity.Success);
+            Snackbar.Add($"Request {_approveDialog.RequestNumber} approved ï¿½ stock reserved.", Severity.Success);
             _showApproveDialog = false;
             await ReloadAllTables();
         }
@@ -512,7 +540,7 @@
         _isActioning = true;
         try
         {
-            // WarehouseLocationId stored at approval — pass null so server uses stored value
+            // WarehouseLocationId stored at approval ï¿½ pass null so server uses stored value
             await SupplyRequestsClient.FulfillAsync(_fulfillDialog.Id);
             Snackbar.Add($"Supplies issued for {_fulfillDialog.RequestNumber}.", Severity.Success);
             _showFulfillDialog = false;
@@ -520,6 +548,59 @@
         }
         catch (Exception ex) { Snackbar.Add($"Issuance failed: {ex.Message}", Severity.Error); }
         finally { _isActioning = false; }
+    }
+
+    // ===== PRINT RIS (FastReport) =====
+
+    private async Task DownloadRisPdfAsync(Guid id)
+    {
+        try
+        {
+            var saved = await FastReportSetupPrefs.GetAsync(RisFastReportKey);
+            var bytes = await SupplyRequestsClient.GetRISFastReportPdfAsync(id,
+                pageWidth: saved?.PaperSize ?? "longbond",
+                orientation: saved?.Orientation ?? "portrait",
+                minRows: saved?.MinRows);
+            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
+            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            Snackbar.Add("RIS PDF ready.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"PDF generation failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task OpenRisFastReportSetupAsync(Guid id)
+    {
+        var saved = await FastReportSetupPrefs.GetAsync(RisFastReportKey);
+        var parameters = new DialogParameters
+        {
+            [nameof(FastReportPageSetupDialog.PaperSize)] = saved?.PaperSize ?? "longbond",
+            [nameof(FastReportPageSetupDialog.Orientation)] = saved?.Orientation ?? "portrait",
+            [nameof(FastReportPageSetupDialog.Copies)] = saved?.Copies ?? 1,
+            [nameof(FastReportPageSetupDialog.MinRows)] = saved?.MinRows ?? 12
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.ExtraSmall, FullWidth = false, CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<FastReportPageSetupDialog>("Page Setup", parameters, options);
+        var result = await dialog.Result;
+        if (result is null || result.Canceled) return;
+        if (result.Data is not FastReportPageSetupDialog.Result r) return;
+
+        await FastReportSetupPrefs.SaveAsync(RisFastReportKey, new FastReportSetup(r.PaperSize, r.Orientation, r.Copies, r.MinRows));
+
+        try
+        {
+            var bytes = await SupplyRequestsClient.GetRISFastReportPdfAsync(id,
+                pageWidth: r.PaperSize, orientation: r.Orientation, minRows: r.MinRows);
+            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
+            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            Snackbar.Add("RIS PDF ready.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fast report failed: {ex.Message}", Severity.Error);
+        }
     }
 
     private async Task ReloadAllTables()

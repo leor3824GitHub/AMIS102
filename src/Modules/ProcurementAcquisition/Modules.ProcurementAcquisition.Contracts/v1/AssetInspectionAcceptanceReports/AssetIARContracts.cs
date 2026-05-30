@@ -85,7 +85,7 @@ public sealed record AssetIARSummaryDto(
     decimal TotalAmount,
     AssetIARStatus Status,
     DateTimeOffset CreatedOnUtc,
-    Guid AssignedInspectorId = default);
+    Guid AssignedInspectorId);
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Commands — existing

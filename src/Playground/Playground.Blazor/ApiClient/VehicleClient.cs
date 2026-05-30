@@ -54,6 +54,12 @@ internal interface IVehicleClient
         DateTime? asOfDate = null,
         CancellationToken cancellationToken = default);
 
+    Task<byte[]> GenerateVehicleInventoryFastPdfAsync(
+        string? status = null,
+        DateTime? asOfDate = null,
+        string? pageWidth = null,
+        CancellationToken cancellationToken = default);
+
     Task<VehicleDailyUsageDto> CreateVehicleDailyUsageAsync(CreateVehicleDailyUsageCommand command, CancellationToken cancellationToken = default);
     Task<VehicleDailyUsageDto> UpdateVehicleDailyUsageAsync(Guid id, UpdateVehicleDailyUsageCommand command, CancellationToken cancellationToken = default);
     Task<PagedResponse<VehicleDailyUsageDto>> SearchVehicleDailyUsageAsync(SearchVehicleDailyUsageQuery query, CancellationToken cancellationToken = default);
@@ -77,6 +83,7 @@ internal sealed class VehicleClient : IVehicleClient
         public const string MaintenanceLogsSearch = MaintenanceLogs + "/search";
         public const string InventoryReport = Vehicles + "/inventory-report";
         public const string InventoryPdf = Vehicles + "/inventory/pdf";
+        public const string InventoryFastPdf = "api/v1/fast-reporting/vehicle/inventory/print";
         public const string FuelOdometer = Root + "/fuel-odometer";
         public const string FuelOdometerSummary = FuelOdometer + "/summary";
 
@@ -269,6 +276,21 @@ internal sealed class VehicleClient : IVehicleClient
             VehicleApiRoutes.InventoryPdf, command, cancellationToken);
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadAsByteArrayAsync(cancellationToken);
+    }
+
+    public async Task<byte[]> GenerateVehicleInventoryFastPdfAsync(
+        string? status = null,
+        DateTime? asOfDate = null,
+        string? pageWidth = null,
+        CancellationToken cancellationToken = default)
+    {
+        var url = BuildUrl(VehicleApiRoutes.InventoryFastPdf, new Dictionary<string, string?>
+        {
+            ["status"] = status,
+            ["asOfDate"] = asOfDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+            ["pageWidth"] = pageWidth
+        });
+        return await _httpClient.GetByteArrayAsync(new Uri(url, UriKind.Relative), cancellationToken);
     }
 
     public Task<VehicleDailyUsageDto> CreateVehicleDailyUsageAsync(CreateVehicleDailyUsageCommand command, CancellationToken cancellationToken = default) =>

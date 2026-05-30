@@ -1,0 +1,328 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Report ScriptLanguage="CSharp" ReportInfo.Created="05/30/2026 00:00:00" ReportInfo.Modified="05/30/2026 00:00:00" ReportInfo.CreatorVersion="2025.1.0">
+  <Dictionary />
+  <!--
+    Requisition and Issue Slip (RIS) — Appendix 63.
+
+    Data sources registered at runtime via Report.RegisterData(...).
+
+    Layout: Long Bond (216 × 330 mm) portrait, 10 mm margins.
+    Content width = (216-20) × 3.7795 ≈ 741 units
+
+    DataSources:
+      RisDS       – single-row header / purpose / signatory record
+      LineItemsDS – one row per requisition item (DataTable)
+
+    Column widths (total 741):
+      Stock No.       :  70   x=0
+      Unit            :  50   x=70
+      Description     : 200   x=120
+      Requisition Qty :  60   x=320
+      Available Yes   :  50   x=380
+      Available No    :  50   x=430
+      Issue Qty       :  60   x=480
+      Remarks         : 201   x=540  → 741
+
+    Column groups:
+      Requisition      : x=0   W=380  (Stock No. + Unit + Description + Quantity)
+      Stock Available? : x=380 W=100  (Yes + No)
+      Issue            : x=480 W=261  (Quantity + Remarks)
+
+    Border.Lines bitmap: Left=1, Right=2, Top=4, Bottom=8, All=15
+  -->
+
+  <ReportPage Name="Page1"
+    PaperWidth="216" PaperHeight="330"
+    LeftMargin="10" TopMargin="10" RightMargin="10" BottomMargin="10">
+
+    <!-- ═══════════════════════════════════════════════════════════
+         TITLE BAND  (appears once)  Height = 140
+         ═══════════════════════════════════════════════════════════ -->
+    <ReportTitleBand Name="ReportTitle1" Width="741" Height="140">
+
+      <!-- Appendix tag -->
+      <TextObject Name="Appendix" Left="0" Top="0" Width="741" Height="14"
+        Text="Appendix 63" HorzAlign="Right" VertAlign="Center"
+        Font="Times New Roman, 8pt, style=Italic" />
+
+      <!-- Title -->
+      <TextObject Name="Title" Left="0" Top="14" Width="741" Height="24"
+        Text="REQUISITION AND ISSUE SLIP" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 14pt, style=Bold" />
+
+      <!-- Entity Name / Fund Cluster row -->
+      <TextObject Name="EntityLbl" Left="0" Top="38" Width="72" Height="20"
+        Text="Entity Name:" VertAlign="Center"
+        Font="Times New Roman, 8pt" Padding="2,0,2,0" />
+      <TextObject Name="EntityVal" Left="72" Top="38" Width="288" Height="20"
+        Text="[RisDS.EntityName]" VertAlign="Bottom"
+        Font="Times New Roman, 9pt, style=Bold"
+        Border.Lines="8" Border.Width="0.5" Padding="2,0,2,0" />
+      <TextObject Name="FundClusterLbl" Left="480" Top="38" Width="80" Height="20"
+        Text="Fund Cluster:" VertAlign="Center" HorzAlign="Right"
+        Font="Times New Roman, 8pt" Padding="0,0,4,0" />
+      <TextObject Name="FundClusterVal" Left="560" Top="38" Width="181" Height="20"
+        Text="[RisDS.FundCluster]" VertAlign="Bottom"
+        Font="Times New Roman, 9pt"
+        Border.Lines="8" Border.Width="0.5" Padding="2,0,2,0" />
+
+      <!-- Section / Responsibility Center Code row -->
+      <TextObject Name="SectionLbl" Left="0" Top="58" Width="72" Height="20"
+        Text="Section:" VertAlign="Center"
+        Font="Times New Roman, 8pt" Padding="2,0,2,0" />
+      <TextObject Name="SectionVal" Left="72" Top="58" Width="288" Height="20"
+        Text="[RisDS.Section]" VertAlign="Bottom"
+        Font="Times New Roman, 9pt"
+        Border.Lines="8" Border.Width="0.5" Padding="2,0,2,0" />
+      <TextObject Name="RccLbl" Left="440" Top="58" Width="160" Height="20"
+        Text="Responsibility Center Code:" VertAlign="Center" HorzAlign="Right"
+        Font="Times New Roman, 8pt" Padding="0,0,4,0" />
+      <TextObject Name="RccVal" Left="600" Top="58" Width="141" Height="20"
+        Text="[RisDS.ResponsibilityCenterCode]" VertAlign="Bottom" HorzAlign="Center"
+        Font="Times New Roman, 9pt, style=Bold"
+        Border.Lines="8" Border.Width="0.5" Padding="2,0,2,0" />
+
+      <!-- Office / RIS No. row -->
+      <TextObject Name="OfficeLbl" Left="0" Top="78" Width="72" Height="20"
+        Text="Office:" VertAlign="Center"
+        Font="Times New Roman, 8pt" Padding="2,0,2,0" />
+      <TextObject Name="OfficeVal" Left="72" Top="78" Width="288" Height="20"
+        Text="[RisDS.Office]" VertAlign="Bottom"
+        Font="Times New Roman, 9pt"
+        Border.Lines="8" Border.Width="0.5" Padding="2,0,2,0" />
+      <TextObject Name="RisNoLbl" Left="480" Top="78" Width="80" Height="20"
+        Text="RIS No.:" VertAlign="Center" HorzAlign="Right"
+        Font="Times New Roman, 8pt" Padding="0,0,4,0" />
+      <TextObject Name="RisNoVal" Left="560" Top="78" Width="181" Height="20"
+        Text="[RisDS.RisNo]" VertAlign="Bottom" HorzAlign="Center"
+        Font="Times New Roman, 9pt, style=Bold"
+        Border.Lines="8" Border.Width="0.5" Padding="2,0,2,0" />
+
+      <!-- ── Column group header row (top=98, H=18) ─────────────── -->
+      <TextObject Name="GRequisition" Left="0" Top="98" Width="380" Height="18"
+        Text="Requisition" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt, style=Bold,Italic"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="GAvailable" Left="380" Top="98" Width="100" Height="18"
+        Text="Stock Available?" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 7pt, style=Bold,Italic"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="GIssue" Left="480" Top="98" Width="261" Height="18"
+        Text="Issue" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt, style=Bold,Italic"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+
+      <!-- ── Column header row (top=116, H=24) ──────────────────── -->
+      <TextObject Name="HStockNo" Left="0" Top="116" Width="70" Height="24"
+        Text="Stock No." HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 7pt, style=Bold,Italic"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="HUnit" Left="70" Top="116" Width="50" Height="24"
+        Text="Unit" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt, style=Bold,Italic"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="HDesc" Left="120" Top="116" Width="200" Height="24"
+        Text="Description" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt, style=Bold,Italic"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="HReqQty" Left="320" Top="116" Width="60" Height="24"
+        Text="Quantity" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 7pt, style=Bold,Italic"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="HYes" Left="380" Top="116" Width="50" Height="24"
+        Text="Yes" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt, style=Bold,Italic"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="HNo" Left="430" Top="116" Width="50" Height="24"
+        Text="No" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt, style=Bold,Italic"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="HIssueQty" Left="480" Top="116" Width="60" Height="24"
+        Text="Quantity" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 7pt, style=Bold,Italic"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="HRemarks" Left="540" Top="116" Width="201" Height="24"
+        Text="Remarks" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt, style=Bold,Italic"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+
+    </ReportTitleBand>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         DATA BAND  (repeats once per line item, height = 18)
+         ═══════════════════════════════════════════════════════════ -->
+    <DataBand Name="Data1" DataSource="LineItemsDS" Width="741" Height="18" CanGrow="true">
+
+      <TextObject Name="DStockNo" Left="0" Top="0" Width="70" Height="18"
+        Text="[LineItemsDS.StockNo]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1"
+        GrowToBottom="true" />
+      <TextObject Name="DUnit" Left="70" Top="0" Width="50" Height="18"
+        Text="[LineItemsDS.Unit]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1"
+        GrowToBottom="true" />
+      <TextObject Name="DDesc" Left="120" Top="0" Width="200" Height="18"
+        Text="[LineItemsDS.Description]" HorzAlign="Left" VertAlign="Center"
+        Font="Times New Roman, 8pt"
+        Border.Lines="15" Border.Width="0.5" Padding="4,1,2,1"
+        CanGrow="true" GrowToBottom="true" WordWrap="true" />
+      <TextObject Name="DReqQty" Left="320" Top="0" Width="60" Height="18"
+        Text="[LineItemsDS.RequisitionQty]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1"
+        GrowToBottom="true" />
+      <TextObject Name="DYes" Left="380" Top="0" Width="50" Height="18"
+        Text="[LineItemsDS.AvailableYes]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1"
+        GrowToBottom="true" />
+      <TextObject Name="DNo" Left="430" Top="0" Width="50" Height="18"
+        Text="[LineItemsDS.AvailableNo]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1"
+        GrowToBottom="true" />
+      <TextObject Name="DIssueQty" Left="480" Top="0" Width="60" Height="18"
+        Text="[LineItemsDS.IssueQty]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1"
+        GrowToBottom="true" />
+      <TextObject Name="DRemarks" Left="540" Top="0" Width="201" Height="18"
+        Text="[LineItemsDS.Remarks]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1"
+        CanGrow="true" GrowToBottom="true" WordWrap="true" />
+
+    </DataBand>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SUMMARY BAND  (Purpose + 4 signatory columns)  Height = 122
+         ═══════════════════════════════════════════════════════════ -->
+    <ReportSummaryBand Name="ReportSummary1" Width="741" Height="122">
+
+      <!-- Purpose row (H=22) -->
+      <TextObject Name="PurposeLbl" Left="0" Top="0" Width="60" Height="22"
+        Text="Purpose:" VertAlign="Center"
+        Font="Times New Roman, 8pt, style=Bold"
+        Border.Lines="13" Border.Width="0.5" Padding="2,0,2,0" />
+      <TextObject Name="PurposeVal" Left="60" Top="0" Width="681" Height="22"
+        Text="[RisDS.Purpose]" VertAlign="Center"
+        Font="Times New Roman, 9pt"
+        Border.Lines="14" Border.Width="0.5" Padding="4,0,2,0"
+        CanGrow="true" WordWrap="true" />
+
+      <!-- ── Signatory grid ───────────────────────────────────────
+           Left label column : x=0   W=85
+           Requested by      : x=85  W=164
+           Approved by       : x=249 W=164
+           Issued by         : x=413 W=164
+           Received by       : x=577 W=164  → 741
+           Rows: header(22..38) signature(38..68) name(68..86)
+                 designation(86..104) date(104..122)
+      ── -->
+
+      <!-- Role header row (top=22, H=16) -->
+      <TextObject Name="LblHeader" Left="0" Top="22" Width="85" Height="16"
+        Text="" Border.Lines="11" Border.Width="0.5" />
+      <TextObject Name="ReqHdr" Left="85" Top="22" Width="164" Height="16"
+        Text="Requested by:" VertAlign="Center"
+        Font="Times New Roman, 8pt, style=Bold"
+        Border.Lines="15" Border.Width="0.5" Padding="3,0,2,0" />
+      <TextObject Name="AppHdr" Left="249" Top="22" Width="164" Height="16"
+        Text="Approved by:" VertAlign="Center"
+        Font="Times New Roman, 8pt, style=Bold"
+        Border.Lines="15" Border.Width="0.5" Padding="3,0,2,0" />
+      <TextObject Name="IssHdr" Left="413" Top="22" Width="164" Height="16"
+        Text="Issued by:" VertAlign="Center"
+        Font="Times New Roman, 8pt, style=Bold"
+        Border.Lines="15" Border.Width="0.5" Padding="3,0,2,0" />
+      <TextObject Name="RecHdr" Left="577" Top="22" Width="164" Height="16"
+        Text="Received by:" VertAlign="Center"
+        Font="Times New Roman, 8pt, style=Bold"
+        Border.Lines="15" Border.Width="0.5" Padding="3,0,2,0" />
+
+      <!-- Signature row (top=38, H=30) — blank space for wet signature -->
+      <TextObject Name="LblSignature" Left="0" Top="38" Width="85" Height="30"
+        Text="Signature:" VertAlign="Center"
+        Font="Times New Roman, 8pt"
+        Border.Lines="11" Border.Width="0.5" Padding="2,0,2,0" />
+      <TextObject Name="ReqSig" Left="85" Top="38" Width="164" Height="30"
+        Text="" Border.Lines="11" Border.Width="0.5" />
+      <TextObject Name="AppSig" Left="249" Top="38" Width="164" Height="30"
+        Text="" Border.Lines="11" Border.Width="0.5" />
+      <TextObject Name="IssSig" Left="413" Top="38" Width="164" Height="30"
+        Text="" Border.Lines="11" Border.Width="0.5" />
+      <TextObject Name="RecSig" Left="577" Top="38" Width="164" Height="30"
+        Text="" Border.Lines="11" Border.Width="0.5" />
+
+      <!-- Printed Name row (top=68, H=18) -->
+      <TextObject Name="LblName" Left="0" Top="68" Width="85" Height="18"
+        Text="Printed Name:" VertAlign="Center"
+        Font="Times New Roman, 8pt"
+        Border.Lines="11" Border.Width="0.5" Padding="2,0,2,0" />
+      <TextObject Name="ReqName" Left="85" Top="68" Width="164" Height="18"
+        Text="[RisDS.RequestedByName]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt, style=Bold"
+        Border.Lines="11" Border.Width="0.5" Padding="2,0,2,0" />
+      <TextObject Name="AppName" Left="249" Top="68" Width="164" Height="18"
+        Text="[RisDS.ApprovedByName]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt, style=Bold"
+        Border.Lines="11" Border.Width="0.5" Padding="2,0,2,0" />
+      <TextObject Name="IssName" Left="413" Top="68" Width="164" Height="18"
+        Text="[RisDS.IssuedByName]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt, style=Bold"
+        Border.Lines="11" Border.Width="0.5" Padding="2,0,2,0" />
+      <TextObject Name="RecName" Left="577" Top="68" Width="164" Height="18"
+        Text="[RisDS.ReceivedByName]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt, style=Bold"
+        Border.Lines="11" Border.Width="0.5" Padding="2,0,2,0" />
+
+      <!-- Designation row (top=86, H=18) -->
+      <TextObject Name="LblDesignation" Left="0" Top="86" Width="85" Height="18"
+        Text="Designation:" VertAlign="Center"
+        Font="Times New Roman, 8pt"
+        Border.Lines="11" Border.Width="0.5" Padding="2,0,2,0" />
+      <TextObject Name="ReqDesig" Left="85" Top="86" Width="164" Height="18"
+        Text="[RisDS.RequestedByDesignation]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt"
+        Border.Lines="11" Border.Width="0.5" Padding="2,0,2,0" />
+      <TextObject Name="AppDesig" Left="249" Top="86" Width="164" Height="18"
+        Text="[RisDS.ApprovedByDesignation]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt"
+        Border.Lines="11" Border.Width="0.5" Padding="2,0,2,0" />
+      <TextObject Name="IssDesig" Left="413" Top="86" Width="164" Height="18"
+        Text="[RisDS.IssuedByDesignation]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt"
+        Border.Lines="11" Border.Width="0.5" Padding="2,0,2,0" />
+      <TextObject Name="RecDesig" Left="577" Top="86" Width="164" Height="18"
+        Text="[RisDS.ReceivedByDesignation]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt"
+        Border.Lines="11" Border.Width="0.5" Padding="2,0,2,0" />
+
+      <!-- Date row (top=104, H=18) -->
+      <TextObject Name="LblDate" Left="0" Top="104" Width="85" Height="18"
+        Text="Date:" VertAlign="Center"
+        Font="Times New Roman, 8pt"
+        Border.Lines="15" Border.Width="0.5" Padding="2,0,2,0" />
+      <TextObject Name="ReqDate" Left="85" Top="104" Width="164" Height="18"
+        Text="" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt"
+        Border.Lines="15" Border.Width="0.5" Padding="2,0,2,0" />
+      <TextObject Name="AppDate" Left="249" Top="104" Width="164" Height="18"
+        Text="" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt"
+        Border.Lines="15" Border.Width="0.5" Padding="2,0,2,0" />
+      <TextObject Name="IssDate" Left="413" Top="104" Width="164" Height="18"
+        Text="" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt"
+        Border.Lines="15" Border.Width="0.5" Padding="2,0,2,0" />
+      <TextObject Name="RecDate" Left="577" Top="104" Width="164" Height="18"
+        Text="[RisDS.RisDate]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt"
+        Border.Lines="15" Border.Width="0.5" Padding="2,0,2,0" />
+
+    </ReportSummaryBand>
+
+  </ReportPage>
+</Report>

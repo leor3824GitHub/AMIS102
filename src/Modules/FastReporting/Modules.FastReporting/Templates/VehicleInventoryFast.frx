@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Report ScriptLanguage="CSharp" ReportInfo.Created="05/30/2026 00:00:00" ReportInfo.Modified="05/30/2026 00:00:00" ReportInfo.CreatorVersion="2025.1.0">
+  <Dictionary />
+  <!--
+    Layout: A4 landscape (297 × 210 mm), 8 mm margins.
+    Content width  = (297-16) × 3.7795 ≈ 1062 units
+    Content height = (210-16) × 3.7795 ≈ 733 units
+
+    Inventory of Motor Vehicles — one row per vehicle.
+
+    Table column widths (total 1062):
+      QTY                    40   x=0
+      DESCRIPTION           250   x=40
+      PLATE NUMBER           80   x=290
+      VEHICLE TYPE/USE       90   x=370   ┐
+      NO. CYL                50   x=460   ├ SPECIFICATION (x=370, w=220)
+      ENGINE DISP. (CC)      80   x=510   ┘
+      FUEL TYPE              70   x=590   ┐
+      YEAR                   50   x=660   ├ ACQUISITION (x=590, w=220)
+      COST                  100   x=710   ┘
+      RUNNING CONDITION     120   x=810
+      ACCOUNTABLE OFFICER   132   x=930
+                                  end=1062
+  -->
+
+  <ReportPage Name="Page1"
+    PaperWidth="297" PaperHeight="210"
+    LeftMargin="8" TopMargin="8" RightMargin="8" BottomMargin="8"
+    Landscape="true">
+
+    <!-- ═══════════════════════════════════════════════════════════
+         TITLE BAND — org header, report title, as-of date, column headers
+         ═══════════════════════════════════════════════════════════ -->
+    <ReportTitleBand Name="ReportTitle1" Width="1062" Height="126">
+
+      <!-- ── Organization Header ─────────────────────────── -->
+      <TextObject Name="OrgName" Left="0" Top="2" Width="1062" Height="18"
+        Text="[VehicleInventoryDS.OrgName]" HorzAlign="Center" VertAlign="Center"
+        Font="Arial, 12pt, style=Bold" />
+      <TextObject Name="OrgAddr" Left="0" Top="20" Width="1062" Height="16"
+        Text="[VehicleInventoryDS.OrgAddress]" HorzAlign="Center" VertAlign="Center"
+        Font="Arial, 9pt" />
+
+      <!-- ── Title / As-of date ──────────────────── -->
+      <TextObject Name="Title" Left="0" Top="42" Width="1062" Height="18"
+        Text="INVENTORY OF MOTOR VEHICLES" HorzAlign="Center" VertAlign="Center"
+        Font="Arial, 12pt, style=Bold" />
+      <TextObject Name="AsOf" Left="0" Top="60" Width="1062" Height="16"
+        Text="[VehicleInventoryDS.AsOfDate]" HorzAlign="Center" VertAlign="Center"
+        Font="Arial, 9pt" />
+
+      <!-- ═══ Column Headers — row 1 (top=80,h=16) / row 2 (top=96,h=30) ═══ -->
+      <TextObject Name="HQty" Left="0" Top="80" Width="40" Height="46"
+        Text="QTY" HorzAlign="Center" VertAlign="Center"
+        Font="Arial, 7pt, style=Bold"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="HDesc" Left="40" Top="80" Width="250" Height="46"
+        Text="DESCRIPTION" HorzAlign="Center" VertAlign="Center"
+        Font="Arial, 7pt, style=Bold"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="HPlate" Left="290" Top="80" Width="80" Height="46"
+        Text="PLATE NUMBER" HorzAlign="Center" VertAlign="Center" WordWrap="true"
+        Font="Arial, 7pt, style=Bold"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+
+      <!-- Group header: SPECIFICATION -->
+      <TextObject Name="HSpec" Left="370" Top="80" Width="220" Height="16"
+        Text="SPECIFICATION" HorzAlign="Center" VertAlign="Center"
+        Font="Arial, 7pt, style=Bold" Fill.Color="LightCyan"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <!-- Group header: ACQUISITION -->
+      <TextObject Name="HAcq" Left="590" Top="80" Width="220" Height="16"
+        Text="ACQUISITION" HorzAlign="Center" VertAlign="Center"
+        Font="Arial, 7pt, style=Bold" Fill.Color="Honeydew"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+
+      <TextObject Name="HRunCond" Left="810" Top="80" Width="120" Height="46"
+        Text="RUNNING CONDITION" HorzAlign="Center" VertAlign="Center" WordWrap="true"
+        Font="Arial, 7pt, style=Bold"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="HOfficer" Left="930" Top="80" Width="132" Height="46"
+        Text="ACCOUNTABLE OFFICER" HorzAlign="Center" VertAlign="Center" WordWrap="true"
+        Font="Arial, 7pt, style=Bold"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+
+      <!-- Sub-headers row 2 (top=96, h=30) -->
+      <TextObject Name="HVType" Left="370" Top="96" Width="90" Height="30"
+        Text="VEHICLE TYPE / USE" HorzAlign="Center" VertAlign="Center" WordWrap="true"
+        Font="Arial, 7pt, style=Bold" Fill.Color="LightCyan"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="HNoCyl" Left="460" Top="96" Width="50" Height="30"
+        Text="NO. CYL" HorzAlign="Center" VertAlign="Center" WordWrap="true"
+        Font="Arial, 7pt, style=Bold" Fill.Color="LightCyan"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="HEngCC" Left="510" Top="96" Width="80" Height="30"
+        Text="ENGINE DISPLACEMENT" HorzAlign="Center" VertAlign="Center" WordWrap="true"
+        Font="Arial, 7pt, style=Bold" Fill.Color="LightCyan"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="HFuel" Left="590" Top="96" Width="70" Height="30"
+        Text="FUEL TYPE" HorzAlign="Center" VertAlign="Center" WordWrap="true"
+        Font="Arial, 7pt, style=Bold" Fill.Color="Honeydew"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="HYear" Left="660" Top="96" Width="50" Height="30"
+        Text="YEAR" HorzAlign="Center" VertAlign="Center"
+        Font="Arial, 7pt, style=Bold" Fill.Color="Honeydew"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="HCost" Left="710" Top="96" Width="100" Height="30"
+        Text="COST" HorzAlign="Center" VertAlign="Center"
+        Font="Arial, 7pt, style=Bold" Fill.Color="Honeydew"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+
+    </ReportTitleBand>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         DATA BAND  (repeats once per vehicle, height = 46)
+         ═══════════════════════════════════════════════════════════ -->
+    <DataBand Name="Data1" DataSource="LineItemsDS" Width="1062" Height="46">
+
+      <TextObject Name="DQty" Left="0" Top="0" Width="40" Height="46"
+        Text="[LineItemsDS.Qty]" HorzAlign="Center" VertAlign="Center"
+        Font="Arial, 7pt"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="DDesc" Left="40" Top="0" Width="250" Height="46"
+        Text="[LineItemsDS.Description]" HorzAlign="Left" VertAlign="Top" WordWrap="true"
+        Font="Arial, 7pt"
+        Border.Lines="15" Border.Width="0.5" Padding="3,2,2,2" />
+      <TextObject Name="DPlate" Left="290" Top="0" Width="80" Height="46"
+        Text="[LineItemsDS.PlateNumber]" HorzAlign="Center" VertAlign="Center"
+        Font="Arial, 7pt"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="DVType" Left="370" Top="0" Width="90" Height="46"
+        Text="[LineItemsDS.VehicleUse]" HorzAlign="Center" VertAlign="Center" WordWrap="true"
+        Font="Arial, 7pt"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="DNoCyl" Left="460" Top="0" Width="50" Height="46"
+        Text="[LineItemsDS.NoCyl]" HorzAlign="Center" VertAlign="Center"
+        Font="Arial, 7pt"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="DEngCC" Left="510" Top="0" Width="80" Height="46"
+        Text="[LineItemsDS.EngineCC]" HorzAlign="Center" VertAlign="Center"
+        Font="Arial, 7pt"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="DFuel" Left="590" Top="0" Width="70" Height="46"
+        Text="[LineItemsDS.FuelType]" HorzAlign="Center" VertAlign="Center"
+        Font="Arial, 7pt"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="DYear" Left="660" Top="0" Width="50" Height="46"
+        Text="[LineItemsDS.Year]" HorzAlign="Center" VertAlign="Center"
+        Font="Arial, 7pt"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="DCost" Left="710" Top="0" Width="100" Height="46"
+        Text="[LineItemsDS.Cost]" HorzAlign="Right" VertAlign="Center"
+        Font="Arial, 7pt"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,4,1" />
+      <TextObject Name="DRunCond" Left="810" Top="0" Width="120" Height="46"
+        Text="[LineItemsDS.RunningCondition]" HorzAlign="Center" VertAlign="Center" WordWrap="true"
+        Font="Arial, 7pt"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+      <TextObject Name="DOfficer" Left="930" Top="0" Width="132" Height="46"
+        Text="[LineItemsDS.AccountableOfficer]" HorzAlign="Left" VertAlign="Top" WordWrap="true"
+        Font="Arial, 7pt"
+        Border.Lines="15" Border.Width="0.5" Padding="3,2,2,2" />
+
+    </DataBand>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SUMMARY BAND — Prepared / Certified / Noted signature blocks
+         3 blocks across the page (each 354 wide).
+         ═══════════════════════════════════════════════════════════ -->
+    <ReportSummaryBand Name="ReportSummary1" Width="1062" Height="110">
+
+      <!-- Labels -->
+      <TextObject Name="Sig1Lbl" Left="0" Top="14" Width="354" Height="14"
+        Text="[VehicleInventoryDS.Sig1Label]" Font="Arial, 8pt" HorzAlign="Left" VertAlign="Center" Padding="4,0,0,0" />
+      <TextObject Name="Sig2Lbl" Left="354" Top="14" Width="354" Height="14"
+        Text="[VehicleInventoryDS.Sig2Label]" Font="Arial, 8pt" HorzAlign="Left" VertAlign="Center" Padding="4,0,0,0" />
+      <TextObject Name="Sig3Lbl" Left="708" Top="14" Width="354" Height="14"
+        Text="[VehicleInventoryDS.Sig3Label]" Font="Arial, 8pt" HorzAlign="Left" VertAlign="Center" Padding="4,0,0,0" />
+
+      <!-- Names (bold) -->
+      <TextObject Name="Sig1Name" Left="20" Top="58" Width="314" Height="16"
+        Text="[VehicleInventoryDS.Sig1Name]" Font="Arial, 9pt, style=Bold" HorzAlign="Center" VertAlign="Bottom" />
+      <TextObject Name="Sig2Name" Left="374" Top="58" Width="314" Height="16"
+        Text="[VehicleInventoryDS.Sig2Name]" Font="Arial, 9pt, style=Bold" HorzAlign="Center" VertAlign="Bottom" />
+      <TextObject Name="Sig3Name" Left="728" Top="58" Width="314" Height="16"
+        Text="[VehicleInventoryDS.Sig3Name]" Font="Arial, 9pt, style=Bold" HorzAlign="Center" VertAlign="Bottom" />
+
+      <!-- Underlines -->
+      <TextObject Name="Sig1Line" Left="20" Top="74" Width="314" Height="1.1"
+        Text="" Border.Lines="4" Border.Width="0.75" />
+      <TextObject Name="Sig2Line" Left="374" Top="74" Width="314" Height="1.1"
+        Text="" Border.Lines="4" Border.Width="0.75" />
+      <TextObject Name="Sig3Line" Left="728" Top="74" Width="314" Height="1.1"
+        Text="" Border.Lines="4" Border.Width="0.75" />
+
+      <!-- Titles -->
+      <TextObject Name="Sig1Title" Left="0" Top="76" Width="354" Height="14"
+        Text="[VehicleInventoryDS.Sig1Title]" Font="Arial, 8pt" HorzAlign="Center" VertAlign="Top" />
+      <TextObject Name="Sig2Title" Left="354" Top="76" Width="354" Height="14"
+        Text="[VehicleInventoryDS.Sig2Title]" Font="Arial, 8pt" HorzAlign="Center" VertAlign="Top" />
+      <TextObject Name="Sig3Title" Left="708" Top="76" Width="354" Height="14"
+        Text="[VehicleInventoryDS.Sig3Title]" Font="Arial, 8pt" HorzAlign="Center" VertAlign="Top" />
+
+    </ReportSummaryBand>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         PAGE FOOTER
+         ═══════════════════════════════════════════════════════════ -->
+    <PageFooterBand Name="PageFooter1" Top="720" Width="1062" Height="14">
+      <TextObject Name="PgNo" Left="0" Top="0" Width="1062" Height="14"
+        Text="Page [Page#] of [TotalPages#]" HorzAlign="Right"
+        Font="Arial, 7pt" />
+    </PageFooterBand>
+
+  </ReportPage>
+</Report>

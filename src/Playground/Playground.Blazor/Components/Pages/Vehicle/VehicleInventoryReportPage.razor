@@ -7,6 +7,7 @@
 @inherits ComponentBase
 @inject IVehicleClient VehicleClient
 @inject IReportSignatoryClient SignatoryClient
+@inject IOrganizationProfileState OrgProfileState
 @inject ISnackbar Snackbar
 @inject IJSRuntime JS
 
@@ -133,6 +134,20 @@
                                Disabled="_loading || _items.Count == 0">
                         Download PDF
                     </MudButton>
+                    <MudMenu Label="FastReport" Variant="Variant.Filled" Color="Color.Tertiary"
+                             StartIcon="@Icons.Material.Filled.PictureAsPdf"
+                             EndIcon="@Icons.Material.Filled.ArrowDropDown"
+                             Disabled="_loading || _items.Count == 0"
+                             AnchorOrigin="Origin.BottomLeft" TransformOrigin="Origin.TopLeft">
+                        <MudMenuItem Icon="@Icons.Material.Filled.PictureAsPdf"
+                                     OnClick="@(() => DownloadFastPdfAsync("a4"))">
+                            FastReport – A4
+                        </MudMenuItem>
+                        <MudMenuItem Icon="@Icons.Material.Filled.PictureAsPdf"
+                                     OnClick="@(() => DownloadFastPdfAsync("longbond"))">
+                            FastReport – Long Bond
+                        </MudMenuItem>
+                    </MudMenu>
                 </MudStack>
             </MudItem>
         </MudGrid>
@@ -149,10 +164,15 @@
     <div class="vir-page" id="print-area">
 
         <!-- Header -->
+        @{
+            var _org = OrgProfileState.Profile;
+        }
         <div class="vir-title-block">
-            <div>NATIONAL FOOD AUTHORITY</div>
-            <div>CARAGA REGION</div>
-            <div>BUTUAN CITY</div>
+            <div>@(_org?.Name ?? "")</div>
+            @if (!string.IsNullOrWhiteSpace(_org?.Address))
+            {
+                <div>@_org.Address</div>
+            }
             <div class="vir-report-title">INVENTORY OF MOTOR VEHICLES</div>
             <div class="vir-asof">as of @_asOfDate?.ToString("MMMM d, yyyy", CultureInfo.InvariantCulture)</div>
         </div>
@@ -346,6 +366,26 @@ else if (!_loading)
         catch (Exception ex)
         {
             Snackbar.Add($"PDF generation failed: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task DownloadFastPdfAsync(string pageWidth)
+    {
+        _loading = true;
+        try
+        {
+            var bytes = await VehicleClient.GenerateVehicleInventoryFastPdfAsync(_statusFilter, _asOfDate, pageWidth);
+            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
+            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            Snackbar.Add("FastReport PDF ready.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"FastReport generation failed: {ex.Message}", Severity.Error);
         }
         finally
         {

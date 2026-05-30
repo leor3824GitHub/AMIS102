@@ -47,8 +47,8 @@ public sealed class FastReportingModule : IModule
         moduleGroup.MapProcurementFastReports();
         moduleGroup.MapAssetRegisterFastReports();
         moduleGroup.MapAssetManagementFastReports();
-        // moduleGroup.MapExpendableFastReports();
-        // moduleGroup.MapVehicleFastReports();
+        moduleGroup.MapExpendableFastReports();
+        moduleGroup.MapVehicleFastReports();
         // moduleGroup.MapFinanceFastReports();
         // moduleGroup.MapProcurementPlanningFastReports();
     }

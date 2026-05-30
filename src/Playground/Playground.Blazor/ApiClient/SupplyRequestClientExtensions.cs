@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Globalization;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading;
@@ -8,6 +10,28 @@ namespace AMIS.Playground.Blazor.ApiClient;
 
 public static class SupplyRequestClientExtensions
 {
+    /// <summary>Generate the Requisition and Issue Slip (RIS) FastReport PDF for a supply request.</summary>
+    public static Task<byte[]> GetRISFastReportPdfAsync(
+        this ISupply_requestsClient client,
+        System.Guid id,
+        string? pageWidth = null,
+        string? orientation = null,
+        int? minRows = null,
+        CancellationToken cancellationToken = default)
+    {
+        var httpClient = GetHttpClient(client);
+
+        var query = new List<string>();
+        if (!string.IsNullOrWhiteSpace(pageWidth)) query.Add($"pageWidth={Uri.EscapeDataString(pageWidth)}");
+        if (!string.IsNullOrWhiteSpace(orientation)) query.Add($"orientation={Uri.EscapeDataString(orientation)}");
+        if (minRows.HasValue) query.Add($"minRows={minRows.Value.ToString(CultureInfo.InvariantCulture)}");
+
+        var url = $"api/v1/fast-reporting/expendable/supply-requests/{id}/print";
+        if (query.Count > 0) url += "?" + string.Join("&", query);
+
+        return httpClient.GetByteArrayAsync(url, cancellationToken);
+    }
+
     /// <summary>Fulfill an approved supply request — issues from warehouse and records per-employee receipt</summary>
     public static async Task<FulfillSupplyRequestResponse> FulfillAsync(
         this ISupply_requestsClient client,
