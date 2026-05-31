@@ -3,6 +3,7 @@
 @using AMIS.Playground.Blazor.Components.Pages.Procurement
 @using AMIS.Modules.ProcurementAcquisition.Contracts.Permissions
 @using AMIS.Modules.ProcurementAcquisition.Contracts.v1.AssetInspectionAcceptanceReports
+@using AMIS.Modules.ProcurementAcquisition.Contracts.v1.SignedDocuments
 @inject IAssetIarClient IarClient
 @inject IUserProfileState UserProfileState
 @inject ISnackbar Snackbar
@@ -173,6 +174,14 @@
                                                            OnClick="@(() => OpenDetailPage(iar.Id))" />
                                         </MudTooltip>
                                     }
+                                    @if (iar.Status == AssetIARStatus.Accepted && (iar.HasSignedCopy ? _canViewSignedCopy : _canUploadSignedCopy))
+                                    {
+                                        <MudTooltip Text="@(iar.HasSignedCopy ? "Signed copy uploaded — click to view" : "Upload signed copy")">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Verified" Size="Size.Small"
+                                                           Color="@(iar.HasSignedCopy ? Color.Success : Color.Secondary)"
+                                                           OnClick="@(() => OpenSignedCopyAsync(iar.Id, iar.IarNumber))" />
+                                        </MudTooltip>
+                                    }
                                     <MudMenu Icon="@Icons.Material.Filled.Print"
                                              Color="Color.Secondary"
                                              Size="Size.Small"
@@ -226,6 +235,8 @@
     private bool _canAssignPropertyNo => UserProfileState.Permissions.Contains(ProcurementPermissions.AssetIARs.AssignPropertyNo);
     private bool _canAccept => UserProfileState.Permissions.Contains(ProcurementPermissions.AssetIARs.Accept);
     private bool _canCancel => UserProfileState.Permissions.Contains(ProcurementPermissions.AssetIARs.Cancel);
+    private bool _canViewSignedCopy => UserProfileState.Permissions.Contains(ProcurementPermissions.SignedDocuments.View);
+    private bool _canUploadSignedCopy => UserProfileState.Permissions.Contains(ProcurementPermissions.SignedDocuments.Upload);
 
     protected override async Task OnInitializedAsync()
     {
@@ -455,5 +466,18 @@
         {
             Snackbar.Add($"Fast report failed: {ex.Message}", Severity.Error);
         }
+    }
+
+    private async Task OpenSignedCopyAsync(Guid id, string iarNumber)
+    {
+        var parameters = new DialogParameters<SignedCopyDialog>
+        {
+            { x => x.DocumentType, ProcurementDocumentType.InspectionAcceptanceReport },
+            { x => x.DocumentId, id },
+            { x => x.DocumentNumber, iarNumber },
+            { x => x.IsTerminalState, true }
+        };
+        await DialogService.ShowAsync<SignedCopyDialog>("Signed Copy", parameters,
+            new DialogOptions { MaxWidth = MaxWidth.Small, CloseButton = true });
     }
 }
