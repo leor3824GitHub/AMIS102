@@ -158,15 +158,15 @@
             <MudCardContent>
                 <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
                     <MudText Typo="Typo.h6" Class="flex-grow-1">Canvass Requests</MudText>
-                    <MudTextField @bind-Value="_keyword" Label="Search" Variant="Variant.Outlined" Size="Size.Small"
+                    <MudTextField @bind-Value="_keyword" Label="Search" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense"
                                   Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
                                   Style="max-width:220px" DebounceInterval="400"
                                   OnDebounceIntervalElapsed="@(async () => await LoadAsync())" />
                     <MudDatePicker Label="From" Date="_fromDate" DateChanged="OnFromDateChanged"
-                                   Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true"
+                                   Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Clearable="true"
                                    Style="max-width:150px" />
                     <MudDatePicker Label="To" Date="_toDate" DateChanged="OnToDateChanged"
-                                   Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true"
+                                   Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Clearable="true"
                                    Style="max-width:150px" />
                 </MudStack>
 

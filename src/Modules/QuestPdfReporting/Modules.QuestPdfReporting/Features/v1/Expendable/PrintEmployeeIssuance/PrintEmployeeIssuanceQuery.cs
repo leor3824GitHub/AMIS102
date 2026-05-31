@@ -5,4 +5,6 @@ namespace AMIS.Modules.QuestPdfReporting.Features.v1.Expendable.PrintEmployeeIss
 public sealed record PrintEmployeeIssuanceQuery(
     string?         EmployeeId,
     DateTimeOffset? From,
-    DateTimeOffset? To) : IQuery<byte[]>;
+    DateTimeOffset? To,
+    string          PaperSize   = "a4",
+    string          Orientation = "landscape") : IQuery<byte[]>;

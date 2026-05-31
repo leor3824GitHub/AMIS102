@@ -39,17 +39,20 @@
         <MudItem xs="12" md="8">
             <MudCard Class="AMIS-card">
                 <MudCardContent>
-                    <MudStack Row="true" Spacing="2" Class="mb-2">
+                    <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Class="mb-2">
                         <MudAutocomplete T="VehicleDto" @bind-Value="_query.SelectedVehicle" Label="Vehicle"
+                                         Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense"
                                          SearchFunc="@SearchVehicles" ToStringFunc="@(v => v == null ? null : $"{v.PlateNumber} - {v.Make} {v.Model} ({v.Year})")"
                                          Clearable="true" />
-                        <MudTextField @bind-Value="_query.MaintenanceType" Label="Type" />
-                        <MudSelect T="bool?" @bind-Value="_query.IsActive" Label="Status" Dense="true" Clearable="true">
+                        <MudTextField @bind-Value="_query.MaintenanceType" Label="Type"
+                                      Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+                        <MudSelect T="bool?" @bind-Value="_query.IsActive" Label="Status"
+                                   Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Clearable="true">
                             <MudSelectItem T="bool?" Value="@((bool?)true)">Active</MudSelectItem>
                             <MudSelectItem T="bool?" Value="@((bool?)false)">Inactive</MudSelectItem>
                         </MudSelect>
-                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Load" StartIcon="@Icons.Material.Filled.Search" Disabled="_busy">Search</MudButton>
-                        <MudButton Variant="Variant.Outlined" Color="Color.Default" OnClick="ClearFilters" Disabled="_busy">Clear</MudButton>
+                        <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" OnClick="Load" StartIcon="@Icons.Material.Filled.Search" Disabled="_busy">Search</MudButton>
+                        <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Default" OnClick="ClearFilters" Disabled="_busy">Clear</MudButton>
                     </MudStack>
 
                     <MudTable Items="_items" Dense="true" Hover="true" Striped="true" RowClassFunc="@( (row, _) => IsOverdue(row) ? "overdue-row" : string.Empty)">

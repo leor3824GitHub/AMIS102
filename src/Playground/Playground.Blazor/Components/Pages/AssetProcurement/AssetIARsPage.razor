@@ -19,15 +19,15 @@
     <MudCardContent>
         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
             <MudTextField @bind-Value="_keyword" Label="Search IAR No / Supplier" Variant="Variant.Outlined"
-                          Size="Size.Small" Margin="Margin.Dense"
+                          Dense="true" Margin="Margin.Dense"
                           Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
                           DebounceInterval="350" OnDebounceIntervalElapsed="@(() => LoadAsync())"
                           Style="max-width:320px" />
             <MudDatePicker Label="From" Date="_fromDate" DateChanged="OnFromDateChanged"
-                           Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true"
+                           Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Clearable="true"
                            Style="max-width:150px" />
             <MudDatePicker Label="To" Date="_toDate" DateChanged="OnToDateChanged"
-                           Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true"
+                           Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Clearable="true"
                            Style="max-width:150px" />
             <MudSpacer />
             @if (_canCreate)

@@ -16,13 +16,21 @@ internal static class PrintVehicleInventoryEndpoint
             .Produces(StatusCodes.Status200OK, contentType: "application/pdf")
             .RequirePermission(QuestPdfReportingPermissions.ViewVehicleReports);
 
+    // ?pageWidth=a4|legal|longbond|letter   (default a4)
+    // ?orientation=landscape|portrait        (default landscape)
     private static async Task<IResult> Print(
         IMediator mediator,
         CancellationToken ct,
-        string?   status    = null,
-        DateTime? asOfDate  = null)
+        string?   status      = null,
+        DateTime? asOfDate    = null,
+        string?   pageWidth   = null,
+        string?   orientation = null)
     {
-        var bytes = await mediator.Send(new PrintVehicleInventoryQuery(status, asOfDate), ct);
+        var paperSize = (pageWidth ?? "a4").ToLowerInvariant();
+        var orient = (orientation ?? "landscape").ToLowerInvariant() == "portrait" ? "portrait" : "landscape";
+
+        var bytes = await mediator.Send(
+            new PrintVehicleInventoryQuery(status, asOfDate, paperSize, orient), ct);
         return TypedResults.File(bytes, "application/pdf", "VehicleInventory.pdf");
     }
 }

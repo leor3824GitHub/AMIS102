@@ -27,17 +27,18 @@
                                          Clearable="true"
                                          Placeholder="All warehouses"
                                          Variant="Variant.Outlined"
+                                         Dense="true"
                                          Margin="Margin.Dense"
                                          ValueChanged="@(async (WarehouseOption? w) => { _invWarehouse = w; await (_invTable?.ReloadServerData() ?? Task.CompletedTask); })" />
                     </MudItem>
                     <MudItem xs="12" sm="5">
                         <MudTextField @bind-Value="_invSearch" Placeholder="Search by product name..."
                                       Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
-                                      Variant="Variant.Outlined" Margin="Margin.Dense"
+                                      Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense"
                                       DebounceInterval="400" OnDebounceIntervalElapsed="() => _invTable?.ReloadServerData()" />
                     </MudItem>
                     <MudItem xs="12" sm="2">
-                        <MudButton Variant="Variant.Outlined" Color="Color.Default" FullWidth="true"
+                        <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Default" FullWidth="true"
                                    OnClick="ClearInvFilters">Clear</MudButton>
                     </MudItem>
                 </MudGrid>
@@ -130,6 +131,7 @@
                                      Clearable="true"
                                      Placeholder="All warehouses"
                                      Variant="Variant.Outlined"
+                                     Dense="true"
                                      Margin="Margin.Dense"
                                      ValueChanged="@(async (WarehouseOption? w) => { _rejWarehouse = w; await (_rejTable?.ReloadServerData() ?? Task.CompletedTask); })" />
                 </MudStack>
@@ -220,7 +222,7 @@
                 Return to Supplier
             </MudText>
             <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
-                @_actionRejected.ProductName — @_actionRejected.QuantityRejected rejected unit(s)
+                @_actionRejected.ProductName ï¿½ @_actionRejected.QuantityRejected rejected unit(s)
             </MudText>
             <MudStack Spacing="3">
                 <MudNumericField T="int?" @bind-Value="_returnQty"
@@ -254,7 +256,7 @@
                 Dispose Rejected Inventory
             </MudText>
             <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
-                @_actionRejected.ProductName — @_actionRejected.QuantityRejected rejected unit(s)
+                @_actionRejected.ProductName ï¿½ @_actionRejected.QuantityRejected rejected unit(s)
             </MudText>
             <MudStack Spacing="3">
                 <MudSelect T="string" @bind-Value="_disposeMethod" Label="Disposal Method"
@@ -338,7 +340,7 @@
                 {
                     var name = g.First().WarehouseLocationName;
                     var display = string.IsNullOrWhiteSpace(name)
-                        ? $"Warehouse {g.Key.ToString()[..8]}…"
+                        ? $"Warehouse {g.Key.ToString()[..8]}ï¿½"
                         : name;
                     return new WarehouseOption(g.Key, display);
                 })

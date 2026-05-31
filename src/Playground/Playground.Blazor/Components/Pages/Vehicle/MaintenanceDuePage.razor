@@ -24,13 +24,15 @@
 
     <MudCard Class="AMIS-card">
         <MudCardContent>
-            <MudStack Row="true" Spacing="2" Class="mb-3">
+            <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Class="mb-3">
                 <MudAutocomplete T="VehicleDto" @bind-Value="_selectedVehicle" Label="Vehicle (optional)"
+                                 Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense"
                                  SearchFunc="@SearchVehicles" ToStringFunc="@(v => v == null ? null : $"{v.PlateNumber} - {v.Make} {v.Model} ({v.Year})")"
                                  Clearable="true" />
-                <MudNumericField @bind-Value="_daysAhead" Label="Days Ahead" Min="1" Max="365" />
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Load" StartIcon="@Icons.Material.Filled.Search">Load Due</MudButton>
-                <MudButton Variant="Variant.Outlined" Color="Color.Default" OnClick="Clear">Clear</MudButton>
+                <MudNumericField @bind-Value="_daysAhead" Label="Days Ahead" Min="1" Max="365"
+                                 Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+                <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" OnClick="Load" StartIcon="@Icons.Material.Filled.Search">Load Due</MudButton>
+                <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Default" OnClick="Clear">Clear</MudButton>
             </MudStack>
 
             @if (_items.Count == 0)

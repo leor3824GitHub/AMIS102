@@ -17,18 +17,25 @@ internal static class PrintRSPIEndpoint
             .Produces(StatusCodes.Status200OK, contentType: "application/pdf")
             .RequirePermission(QuestPdfReportingPermissions.ViewAssetReports);
 
+    // ?pageWidth=a4|legal|longbond|letter   (default a4)
+    // ?orientation=landscape|portrait        (default landscape)
     private static async Task<IResult> Print(
         IMediator mediator,
         CancellationToken ct,
-        DateOnly?  dateFrom   = null,
-        DateOnly?  dateTo     = null,
-        AssetType? assetType  = null,
-        bool       activeOnly = false,
-        int        pageNumber = 1,
-        int        pageSize   = 10000)
+        DateOnly?  dateFrom    = null,
+        DateOnly?  dateTo      = null,
+        AssetType? assetType   = null,
+        bool       activeOnly  = false,
+        int        pageNumber  = 1,
+        int        pageSize    = 10000,
+        string?    pageWidth   = null,
+        string?    orientation = null)
     {
+        var paperSize = (pageWidth ?? "a4").ToLowerInvariant();
+        var orient = (orientation ?? "landscape").ToLowerInvariant() == "portrait" ? "portrait" : "landscape";
+
         var bytes = await mediator.Send(
-            new PrintRSPIQuery(dateFrom, dateTo, assetType, activeOnly, pageNumber, pageSize), ct);
+            new PrintRSPIQuery(dateFrom, dateTo, assetType, activeOnly, pageNumber, pageSize, paperSize, orient), ct);
         return TypedResults.File(bytes, "application/pdf", "RSPIReport.pdf");
     }
 }

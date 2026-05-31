@@ -5,4 +5,6 @@ namespace AMIS.Modules.QuestPdfReporting.Features.v1.Expendable.PrintDepartmentI
 public sealed record PrintDepartmentIssuanceQuery(
     string?         DepartmentId,
     DateTimeOffset? From,
-    DateTimeOffset? To) : IQuery<byte[]>;
+    DateTimeOffset? To,
+    string          PaperSize   = "a4",
+    string          Orientation = "landscape") : IQuery<byte[]>;

@@ -14,8 +14,8 @@
         <MudStack Row="true" Spacing="2" Style="width: 100%; max-width: 400px;">
             <MudTextField @bind-Value="_searchKeyword" Label="Search" Placeholder="Search employees..."
                           DebounceInterval="300" OnDebounceIntervalElapsed="@(async () => await SearchEmployees())"
-                          Variant="Variant.Outlined" Size="Size.Small" />
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SearchEmployees">
+                          Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" OnClick="SearchEmployees">
                 Search
             </MudButton>
         </MudStack>
@@ -127,7 +127,7 @@
                                             }
                                             else
                                             {
-                                                <MudText Typo="Typo.body2" Color="Color.Default">—</MudText>
+                                                <MudText Typo="Typo.body2" Color="Color.Default">ï¿½</MudText>
                                             }
                                         </td>
                                         <td>
@@ -151,7 +151,7 @@
                                                 }
                                                 else
                                                 {
-                                                    <MudTooltip Text="Owned by another office — read only">
+                                                    <MudTooltip Text="Owned by another office ï¿½ read only">
                                                         <MudIconButton Icon="@Icons.Material.Filled.Lock" Size="Size.Small" Color="Color.Default" Disabled="true" />
                                                     </MudTooltip>
                                                 }
@@ -320,7 +320,7 @@
             }
             catch
             {
-                _linkedAccountDisplays[identityUserId] = identityUserId[..8] + "…";
+                _linkedAccountDisplays[identityUserId] = identityUserId[..8] + "ï¿½";
             }
         }
 

@@ -15,6 +15,6 @@ public sealed class PrintStockCardQueryHandler(IMediator mediator)
 
         var org = await mediator.Send(new GetOrganizationProfileQuery(), ct).ConfigureAwait(false);
 
-        return new StockCardPdfDocument(card, org).GeneratePdf();
+        return new StockCardPdfDocument(card, org, query.PaperSize, query.Orientation).GeneratePdf();
     }
 }

@@ -16,14 +16,16 @@
     <MudItem xs="12">
         <MudCard Elevation="1">
             <MudCardContent>
-                <MudGrid Spacing="2">
+                <MudGrid Spacing="2" AlignItems="AlignItems.Center">
                     <MudItem xs="12" md="4">
                         <MudTextField @bind-Value="_keyword" Label="Report No. / Received From" Variant="Variant.Outlined"
+                                      Dense="true" Margin="Margin.Dense"
                                       Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Outlined.Search"
                                       OnKeyDown="OnSearchKeyDown" Immediate="false" />
                     </MudItem>
                     <MudItem xs="6" md="2">
-                        <MudSelect @bind-Value="_receiptTypeFilter" Label="Type" Variant="Variant.Outlined" T="ReceiptType?" Clearable="true">
+                        <MudSelect @bind-Value="_receiptTypeFilter" Label="Type" Variant="Variant.Outlined" T="ReceiptType?" Clearable="true"
+                                   Dense="true" Margin="Margin.Dense">
                             <MudSelectItem T="ReceiptType?" Value="@((ReceiptType?)null)">All</MudSelectItem>
                             <MudSelectItem T="ReceiptType?" Value="@((ReceiptType?)ReceiptType.Purchase)">Purchase</MudSelectItem>
                             <MudSelectItem T="ReceiptType?" Value="@((ReceiptType?)ReceiptType.Transfer)">Transfer</MudSelectItem>
@@ -31,14 +33,14 @@
                             <MudSelectItem T="ReceiptType?" Value="@((ReceiptType?)ReceiptType.Other)">Other</MudSelectItem>
                         </MudSelect>
                     </MudItem>
-                    <MudItem xs="12" md="2" Class="d-flex align-end">
-                        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                    <MudItem xs="12" md="2">
+                        <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
                                    StartIcon="@Icons.Material.Outlined.Search" OnClick="LoadAsync" Disabled="_busy">
                             Search
                         </MudButton>
                     </MudItem>
-                    <MudItem xs="12" md="2" Class="d-flex align-end">
-                        <MudButton Variant="Variant.Outlined" Color="Color.Success" FullWidth="true"
+                    <MudItem xs="12" md="2">
+                        <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Success" FullWidth="true"
                                    StartIcon="@Icons.Material.Outlined.Add" OnClick="@(() => _showCreateForm = !_showCreateForm)">
                             New PPERR
                         </MudButton>

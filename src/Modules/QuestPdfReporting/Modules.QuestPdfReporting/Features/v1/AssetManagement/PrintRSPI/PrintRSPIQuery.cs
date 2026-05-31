@@ -7,6 +7,8 @@ public sealed record PrintRSPIQuery(
     DateOnly?  DateFrom,
     DateOnly?  DateTo,
     AssetType? AssetType,
-    bool       ActiveOnly = false,
-    int        PageNumber = 1,
-    int        PageSize   = 10000) : IQuery<byte[]>;
+    bool       ActiveOnly  = false,
+    int        PageNumber  = 1,
+    int        PageSize    = 10000,
+    string     PaperSize   = "a4",
+    string     Orientation = "landscape") : IQuery<byte[]>;

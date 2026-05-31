@@ -20,8 +20,10 @@
             <MudStack Row="true" Spacing="2" Class="mb-3" AlignItems="AlignItems.Center">
                 <MudTextField @bind-Value="_search" Placeholder="Search APP number..." Adornment="Adornment.Start"
                               AdornmentIcon="@Icons.Material.Filled.Search" Variant="Variant.Outlined" Immediate="true"
+                              Dense="true" Margin="Margin.Dense"
                               DebounceInterval="400" OnDebounceIntervalElapsed="LoadAsync" Class="flex-1" />
                 <MudSelect Value="@_filterFiscalYear" Label="FY" Variant="Variant.Outlined" T="int?" Style="width:100px"
+                           Dense="true" Margin="Margin.Dense"
                            ValueChanged="OnFyFilterChanged">
                     <MudSelectItem T="int?" Value="null">All</MudSelectItem>
                     @foreach (var fy in _fiscalYears)
@@ -30,6 +32,7 @@
                     }
                 </MudSelect>
                 <MudSelect Value="@_filterStatus" Label="Status" Variant="Variant.Outlined" T="AppStatus?"
+                           Dense="true" Margin="Margin.Dense"
                            Style="width:150px" ValueChanged="OnStatusFilterChanged">
                     <MudSelectItem T="AppStatus?" Value="null">All</MudSelectItem>
                     @foreach (AppStatus s in Enum.GetValues<AppStatus>())
@@ -38,6 +41,7 @@
                     }
                 </MudSelect>
                 <MudSelect Value="@_filterPhase" Label="Phase" Variant="Variant.Outlined" T="AppPhase?"
+                           Dense="true" Margin="Margin.Dense"
                            Style="width:140px" ValueChanged="OnPhaseFilterChanged">
                     <MudSelectItem T="AppPhase?" Value="null">All</MudSelectItem>
                     @foreach (AppPhase p in Enum.GetValues<AppPhase>())
@@ -45,7 +49,7 @@
                         <MudSelectItem T="AppPhase?" Value="p">@p</MudSelectItem>
                     }
                 </MudSelect>
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+                <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
                            OnClick="StartNew">
                     New APP
                 </MudButton>
@@ -138,7 +142,7 @@
                         <MudStack Spacing="0">
                             <MudText Typo="Typo.subtitle1" Style="font-weight:700">@(_editing.AppNumber)</MudText>
                             <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                FY @(_editing.FiscalYear) · v@(_editing.VersionNumber) · @(_editing.Phase)
+                                FY @(_editing.FiscalYear) ï¿½ v@(_editing.VersionNumber) ï¿½ @(_editing.Phase)
                             </MudText>
                         </MudStack>
                         @StatusChip(_editing.Status)
@@ -158,7 +162,7 @@
                                 <MudChip T="Guid" Value="v.Id" Size="Size.Small"
                                          Color="@(v.IsCurrentVersion ? Color.Primary : Color.Default)"
                                          OnClick="@(() => LoadVersionAsync(v.Id))">
-                                    v@(v.VersionNumber) · @v.Status
+                                    v@(v.VersionNumber) ï¿½ @v.Status
                                 </MudChip>
                             }
                         </MudChipSet>
@@ -404,7 +408,7 @@
 
                                         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
                                             <MudText Typo="Typo.caption">
-                                                @_selectedPpmpIds.Count of @selectablePpmps.Count available selected ·
+                                                @_selectedPpmpIds.Count of @selectablePpmps.Count available selected ï¿½
                                                 ? @selectablePpmps.Where(p => _selectedPpmpIds.Contains(p.Id)).Sum(p =>
                                                                                 p.TotalEstimatedBudget).ToString("N2") to add
                                             </MudText>
@@ -448,7 +452,7 @@
                                                 @officeGroup.Key
                                             </MudText>
                                             <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                                · @officeGroup.First().EndUserUnit
+                                                ï¿½ @officeGroup.First().EndUserUnit
                                             </MudText>
                                             <MudSpacer />
                                             <MudText Typo="Typo.caption" Style="font-weight:600; color:var(--mud-palette-primary)">
@@ -494,7 +498,7 @@
                                                         <td style="text-align:right">@item.Quantity.ToString("N2")</td>
                                                         <td style="font-family:monospace">@item.Unit</td>
                                                         <td>
-                                                            <MudText Typo="Typo.caption">@item.ProcurementStart – @item.ProcurementEnd
+                                                            <MudText Typo="Typo.caption">@item.ProcurementStart ï¿½ @item.ProcurementEnd
                                                             </MudText>
                                                             <MudText Typo="Typo.caption" Color="Color.Secondary">Del: @item.ExpectedDelivery
                                                             </MudText>

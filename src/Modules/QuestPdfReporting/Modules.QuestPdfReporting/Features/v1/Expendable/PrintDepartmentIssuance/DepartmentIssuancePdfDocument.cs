@@ -1,6 +1,7 @@
 using AMIS.Modules.Expendable.Contracts.v1.Requests;
 using AMIS.Modules.MasterData.Contracts.v1.OrganizationProfile;
 using AMIS.Modules.MasterData.Contracts.v1.ReportSignatories;
+using AMIS.Modules.QuestPdfReporting.Services;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
@@ -13,7 +14,9 @@ internal sealed class DepartmentIssuancePdfDocument(
     List<ReportSignatoryDto>           signatories,
     DateTimeOffset?                    from,
     DateTimeOffset?                    to,
-    Dictionary<string, string>         departmentNames) : IDocument
+    Dictionary<string, string>         departmentNames,
+    string                             paperSize   = "a4",
+    string                             orientation = "landscape") : IDocument
 {
     public DocumentMetadata GetMetadata() => new()
     {
@@ -25,7 +28,7 @@ internal sealed class DepartmentIssuancePdfDocument(
     {
         container.Page(page =>
         {
-            page.Size(PageSizes.A4.Landscape());
+            QuestPdfPaperSize.Apply(page, paperSize, orientation);
             page.Margin(1.5f, Unit.Centimetre);
             page.DefaultTextStyle(x => x.FontSize(9).FontFamily("Arial"));
             page.Header().Element(ComposeHeader);

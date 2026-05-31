@@ -31,7 +31,8 @@ public sealed class PrintEmployeeIssuanceQueryHandler(IMediator mediator)
             .ToDictionary(id => id, id => id);
 
         return new EmployeeIssuancePdfDocument(
-            records, org, query.From, query.To, employeeNames, departmentNames)
+            records, org, query.From, query.To, employeeNames, departmentNames,
+            query.PaperSize, query.Orientation)
             .GeneratePdf();
     }
 }

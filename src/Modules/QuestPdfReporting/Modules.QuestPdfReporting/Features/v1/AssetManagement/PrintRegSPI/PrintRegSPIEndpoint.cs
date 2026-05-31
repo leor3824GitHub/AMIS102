@@ -17,17 +17,24 @@ internal static class PrintRegSPIEndpoint
             .Produces(StatusCodes.Status200OK, contentType: "application/pdf")
             .RequirePermission(QuestPdfReportingPermissions.ViewAssetReports);
 
+    // ?pageWidth=a4|legal|longbond|letter   (default a4)
+    // ?orientation=landscape|portrait        (default landscape)
     private static async Task<IResult> Print(
         Guid       employeeId,
         IMediator  mediator,
         CancellationToken ct,
-        AssetType? assetType  = null,
-        ICSStatus? status     = null,
-        int        pageNumber = 1,
-        int        pageSize   = 10000)
+        AssetType? assetType   = null,
+        ICSStatus? status      = null,
+        int        pageNumber  = 1,
+        int        pageSize    = 10000,
+        string?    pageWidth   = null,
+        string?    orientation = null)
     {
+        var paperSize = (pageWidth ?? "a4").ToLowerInvariant();
+        var orient = (orientation ?? "landscape").ToLowerInvariant() == "portrait" ? "portrait" : "landscape";
+
         var bytes = await mediator.Send(
-            new PrintRegSPIQuery(employeeId, assetType, status, pageNumber, pageSize), ct);
+            new PrintRegSPIQuery(employeeId, assetType, status, pageNumber, pageSize, paperSize, orient), ct);
         return TypedResults.File(bytes, "application/pdf", "RegSPIReport.pdf");
     }
 }

@@ -14,8 +14,8 @@
         <MudStack Row="true" Spacing="2" Style="width: 100%; max-width: 400px;">
             <MudTextField @bind-Value="_searchKeyword" Label="Search" Placeholder="Search products..."
                           DebounceInterval="300" OnDebounceIntervalElapsed="@(async () => await ReloadTable())"
-                          Variant="Variant.Outlined" Size="Size.Small" />
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ReloadTable">
+                          Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" OnClick="ReloadTable">
                 Search
             </MudButton>
         </MudStack>
@@ -76,7 +76,7 @@
                                          Placeholder="Select a base product to create a variant of..." />
                         <MudTextField @bind-Value="_form.VariantName" Label="Variant Name"
                                       Placeholder="e.g., Red / Large"
-                                      HelperText="@(_selectedParentProduct != null ? "Required — enter a variant name" : "Optional — select a parent product first")"
+                                      HelperText="@(_selectedParentProduct != null ? "Required ï¿½ enter a variant name" : "Optional ï¿½ select a parent product first")"
                                       Required="@(_selectedParentProduct != null)" />
 
                         <!-- Image Upload Section -->

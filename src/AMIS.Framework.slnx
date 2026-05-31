@@ -90,6 +90,7 @@
     <Project Path="Tests/Multitenancy.Tests/Multitenancy.Tests.csproj" Id="985345a2-edb4-4ef9-9a1b-59b704f523b6" />
     <Project Path="Tests/ProcurementAcquisition.Tests/ProcurementAcquisition.Tests.csproj" />
     <Project Path="Tests/ProcurementPlanning.Tests/ProcurementPlanning.Tests.csproj" />
+    <Project Path="Tests/QuestPdfReporting.Tests/QuestPdfReporting.Tests.csproj" />
     <Project Path="Tests/Vehicle.Tests/Vehicle.Tests.csproj" />
   </Folder>
   <Folder Name="/Tools/">

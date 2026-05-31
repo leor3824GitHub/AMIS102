@@ -19,6 +19,7 @@ public sealed class PrintVehicleInventoryQueryHandler(IMediator mediator)
         var signatories = await mediator.Send(
             new GetReportSignatoriesQuery("VehicleInventory"), ct).ConfigureAwait(false);
 
-        return new VehicleInventoryPdfDocument(inventory, org, signatories, query.AsOfDate).GeneratePdf();
+        return new VehicleInventoryPdfDocument(
+            inventory, org, signatories, query.AsOfDate, query.PaperSize, query.Orientation).GeneratePdf();
     }
 }

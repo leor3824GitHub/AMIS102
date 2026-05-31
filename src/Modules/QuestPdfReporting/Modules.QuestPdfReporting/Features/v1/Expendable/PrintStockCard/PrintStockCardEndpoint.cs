@@ -17,12 +17,19 @@ internal static class PrintStockCardEndpoint
             .Produces(StatusCodes.Status404NotFound)
             .RequirePermission(QuestPdfReportingPermissions.ViewExpenditureReports);
 
+    // ?pageWidth=a4|legal|longbond|letter   (default a4)
+    // ?orientation=landscape|portrait        (default landscape)
     private static async Task<IResult> Print(
         Guid productId,
         IMediator mediator,
-        CancellationToken ct)
+        CancellationToken ct,
+        string? pageWidth   = null,
+        string? orientation = null)
     {
-        var bytes = await mediator.Send(new PrintStockCardQuery(productId), ct);
+        var paperSize = (pageWidth ?? "a4").ToLowerInvariant();
+        var orient = (orientation ?? "landscape").ToLowerInvariant() == "portrait" ? "portrait" : "landscape";
+
+        var bytes = await mediator.Send(new PrintStockCardQuery(productId, paperSize, orient), ct);
         return TypedResults.File(bytes, "application/pdf", "StockCard.pdf");
     }
 }

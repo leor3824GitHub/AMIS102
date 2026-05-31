@@ -70,12 +70,14 @@
                                 <MudItem xs="12" md="8">
                                     <MudCard Class="AMIS-card">
                                         <MudCardContent>
-                                            <MudStack Row="true" Spacing="2" Class="mb-3" AlignItems="AlignItems.End">
+                                            <MudStack Row="true" Spacing="2" Class="mb-3" AlignItems="AlignItems.Center">
                                                 <MudDatePicker Label="From" @bind-Date="_fromDate" Variant="Variant.Outlined"
+                                                               Dense="true" Margin="Margin.Dense"
                                                                DateFormat="yyyy-MM-dd" />
                                                 <MudDatePicker Label="To" @bind-Date="_toDate" Variant="Variant.Outlined"
+                                                               Dense="true" Margin="Margin.Dense"
                                                                DateFormat="yyyy-MM-dd" />
-                                                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="LoadData"
+                                                <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" OnClick="LoadData"
                                                            Disabled="_busy || _selectedVehicle is null">Refresh</MudButton>
                                             </MudStack>
 

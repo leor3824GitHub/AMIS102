@@ -4,4 +4,6 @@ namespace AMIS.Modules.QuestPdfReporting.Features.v1.Vehicle.PrintVehicleInvento
 
 public sealed record PrintVehicleInventoryQuery(
     string?   Status,
-    DateTime? AsOfDate) : IQuery<byte[]>;
+    DateTime? AsOfDate,
+    string    PaperSize   = "a4",
+    string    Orientation = "landscape") : IQuery<byte[]>;

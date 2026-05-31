@@ -1,5 +1,6 @@
 using AMIS.Modules.MasterData.Contracts.v1.OrganizationProfile;
 using AMIS.Modules.MasterData.Contracts.v1.ReportSignatories;
+using AMIS.Modules.QuestPdfReporting.Services;
 using AMIS.Modules.Vehicle.Contracts.v1.Vehicles;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
@@ -11,7 +12,9 @@ internal sealed class VehicleInventoryPdfDocument(
     List<MotorVehicleInventoryItemDto> items,
     OrganizationProfileDto?            org,
     List<ReportSignatoryDto>           signatories,
-    DateTime?                          asOfDate) : IDocument
+    DateTime?                          asOfDate,
+    string                             paperSize   = "a4",
+    string                             orientation = "landscape") : IDocument
 {
     public DocumentMetadata GetMetadata() => new()
     {
@@ -23,7 +26,7 @@ internal sealed class VehicleInventoryPdfDocument(
     {
         container.Page(page =>
         {
-            page.Size(PageSizes.A4.Landscape());
+            QuestPdfPaperSize.Apply(page, paperSize, orientation);
             page.Margin(1.5f, Unit.Centimetre);
             page.DefaultTextStyle(x => x.FontSize(8).FontFamily("Arial"));
             page.Header().Element(ComposeHeader);

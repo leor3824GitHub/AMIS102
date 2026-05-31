@@ -16,14 +16,22 @@ internal static class PrintEmployeeIssuanceEndpoint
             .Produces(StatusCodes.Status200OK, contentType: "application/pdf")
             .RequirePermission(QuestPdfReportingPermissions.ViewExpenditureReports);
 
+    // ?pageWidth=a4|legal|longbond|letter   (default a4)
+    // ?orientation=landscape|portrait        (default landscape)
     private static async Task<IResult> Print(
         IMediator mediator,
         CancellationToken ct,
-        string?         employeeId = null,
-        DateTimeOffset? from       = null,
-        DateTimeOffset? to         = null)
+        string?         employeeId  = null,
+        DateTimeOffset? from        = null,
+        DateTimeOffset? to          = null,
+        string?         pageWidth   = null,
+        string?         orientation = null)
     {
-        var bytes = await mediator.Send(new PrintEmployeeIssuanceQuery(employeeId, from, to), ct);
+        var paperSize = (pageWidth ?? "a4").ToLowerInvariant();
+        var orient = (orientation ?? "landscape").ToLowerInvariant() == "portrait" ? "portrait" : "landscape";
+
+        var bytes = await mediator.Send(
+            new PrintEmployeeIssuanceQuery(employeeId, from, to, paperSize, orient), ct);
         return TypedResults.File(bytes, "application/pdf", "EmployeeIssuanceHistory.pdf");
     }
 }

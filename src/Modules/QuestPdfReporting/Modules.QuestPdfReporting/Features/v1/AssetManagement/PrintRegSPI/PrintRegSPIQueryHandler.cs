@@ -1,5 +1,6 @@
 using System.Globalization;
 using AMIS.Modules.AssetManagement.Contracts.v1.Reports;
+using AMIS.Modules.QuestPdfReporting.Services;
 using Mediator;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
@@ -27,7 +28,7 @@ public sealed class PrintRegSPIQueryHandler(IMediator mediator)
         {
             container.Page(page =>
             {
-                page.Size(PageSizes.A4.Landscape());
+                QuestPdfPaperSize.Apply(page, query.PaperSize, query.Orientation);
                 page.Margin(20);
                 page.DefaultTextStyle(x => x.FontSize(9));
 

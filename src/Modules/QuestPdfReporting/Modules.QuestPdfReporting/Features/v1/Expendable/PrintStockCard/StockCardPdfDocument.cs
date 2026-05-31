@@ -1,12 +1,17 @@
 using AMIS.Modules.Expendable.Contracts.v1.Warehouse;
 using AMIS.Modules.MasterData.Contracts.v1.OrganizationProfile;
+using AMIS.Modules.QuestPdfReporting.Services;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 
 namespace AMIS.Modules.QuestPdfReporting.Features.v1.Expendable.PrintStockCard;
 
-internal sealed class StockCardPdfDocument(StockCardDto card, OrganizationProfileDto? org) : IDocument
+internal sealed class StockCardPdfDocument(
+    StockCardDto            card,
+    OrganizationProfileDto? org,
+    string                  paperSize   = "a4",
+    string                  orientation = "landscape") : IDocument
 {
     public DocumentMetadata GetMetadata() => new()
     {
@@ -18,7 +23,7 @@ internal sealed class StockCardPdfDocument(StockCardDto card, OrganizationProfil
     {
         container.Page(page =>
         {
-            page.Size(PageSizes.A4.Landscape());
+            QuestPdfPaperSize.Apply(page, paperSize, orientation);
             page.Margin(1.5f, Unit.Centimetre);
             page.DefaultTextStyle(x => x.FontSize(9).FontFamily("Arial").FontColor(Colors.Black));
             page.Header().Element(ComposeHeader);

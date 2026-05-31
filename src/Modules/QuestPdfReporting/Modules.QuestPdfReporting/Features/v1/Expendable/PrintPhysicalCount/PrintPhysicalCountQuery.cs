@@ -4,4 +4,6 @@ namespace AMIS.Modules.QuestPdfReporting.Features.v1.Expendable.PrintPhysicalCou
 
 public sealed record PrintPhysicalCountQuery(
     Guid?     WarehouseLocationId,
-    DateTime? AsOfDate) : IQuery<byte[]>;
+    DateTime? AsOfDate,
+    string    PaperSize   = "a4",
+    string    Orientation = "landscape") : IQuery<byte[]>;

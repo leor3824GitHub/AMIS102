@@ -15,21 +15,24 @@
     <MudItem xs="12">
         <MudCard Elevation="1">
             <MudCardContent>
-                <MudGrid Spacing="2">
+                <MudGrid Spacing="2" AlignItems="AlignItems.Center">
                     <MudItem xs="12" md="4">
                         <MudTextField @bind-Value="_keyword" Label="Keyword / Property No." Variant="Variant.Outlined"
+                                      Dense="true" Margin="Margin.Dense"
                                       Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Outlined.Search"
                                       OnKeyDown="OnSearchKeyDown" Immediate="false" />
                     </MudItem>
                     <MudItem xs="6" md="3">
-                        <MudSelect @bind-Value="_assetTypeFilter" Label="Asset Type" Variant="Variant.Outlined" T="AssetType?" Clearable="true">
+                        <MudSelect @bind-Value="_assetTypeFilter" Label="Asset Type" Variant="Variant.Outlined" T="AssetType?" Clearable="true"
+                                   Dense="true" Margin="Margin.Dense">
                             <MudSelectItem Value="@((AssetType?)null)">All</MudSelectItem>
                             <MudSelectItem Value="@((AssetType?)AssetType.SE)">SE (Semi-Expendable)</MudSelectItem>
                             <MudSelectItem Value="@((AssetType?)AssetType.PPE)">PPE (Property, Plant & Equipment)</MudSelectItem>
                         </MudSelect>
                     </MudItem>
                     <MudItem xs="6" md="3">
-                        <MudSelect @bind-Value="_lifecycleFilter" Label="Lifecycle State" Variant="Variant.Outlined" T="LifecycleState?" Clearable="true">
+                        <MudSelect @bind-Value="_lifecycleFilter" Label="Lifecycle State" Variant="Variant.Outlined" T="LifecycleState?" Clearable="true"
+                                   Dense="true" Margin="Margin.Dense">
                             <MudSelectItem Value="@((LifecycleState?)null)">All</MudSelectItem>
                             <MudSelectItem Value="@((LifecycleState?)LifecycleState.Available)">Available</MudSelectItem>
                             <MudSelectItem Value="@((LifecycleState?)LifecycleState.Assigned)">Assigned</MudSelectItem>
@@ -38,8 +41,8 @@
                             <MudSelectItem Value="@((LifecycleState?)LifecycleState.Disposed)">Disposed</MudSelectItem>
                         </MudSelect>
                     </MudItem>
-                    <MudItem xs="12" md="2" Class="d-flex align-end">
-                        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                    <MudItem xs="12" md="2">
+                        <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
                                    StartIcon="@Icons.Material.Outlined.Search" OnClick="LoadAsync" Disabled="_busy">
                             Search
                         </MudButton>

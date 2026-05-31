@@ -30,7 +30,8 @@ public sealed class PrintDepartmentIssuanceQueryHandler(IMediator mediator)
             .ToDictionary(id => id, id => id);
 
         return new DepartmentIssuancePdfDocument(
-            data, org, signatories, query.From, query.To, departmentNames)
+            data, org, signatories, query.From, query.To, departmentNames,
+            query.PaperSize, query.Orientation)
             .GeneratePdf();
     }
 }

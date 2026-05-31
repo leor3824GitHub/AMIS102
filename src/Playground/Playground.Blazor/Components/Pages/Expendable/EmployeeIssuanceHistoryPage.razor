@@ -25,6 +25,8 @@
                                      SearchFunc="SearchEmployees"
                                      Label="Employee"
                                      Variant="Variant.Outlined"
+                                     Dense="true"
+                                     Margin="Margin.Dense"
                                      Clearable="true"
                                      CoerceValue="true"
                                      ToStringFunc="FormatEmployee"
@@ -32,33 +34,35 @@
                 </MudItem>
                 <MudItem xs="12" sm="3">
                     <MudDatePicker @bind-Date="_filterFrom" Label="From" Variant="Variant.Outlined"
+                                   Margin="Margin.Dense"
                                    DateFormat="yyyy-MM-dd" Clearable="true" />
                 </MudItem>
                 <MudItem xs="12" sm="3">
                     <MudDatePicker @bind-Date="_filterTo" Label="To" Variant="Variant.Outlined"
+                                   Margin="Margin.Dense"
                                    DateFormat="yyyy-MM-dd" Clearable="true" />
                 </MudItem>
                 <MudItem xs="12" sm="2">
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                    <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
                                OnClick="OnFilterClicked">
                         Filter
                     </MudButton>
                 </MudItem>
                 <MudItem xs="12" sm="2">
-                    <MudButton Variant="Variant.Outlined" Color="Color.Default" FullWidth="true"
+                    <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Default" FullWidth="true"
                                OnClick="OnClearFiltersClicked">
                         Clear
                     </MudButton>
                 </MudItem>
                 <MudItem xs="12" sm="2">
-                    <MudButton Variant="Variant.Outlined" Color="Color.Secondary" FullWidth="true"
+                    <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Secondary" FullWidth="true"
                                StartIcon="@Icons.Material.Filled.Download"
                                OnClick="ExportCsvAsync">
                         Export CSV
                     </MudButton>
                 </MudItem>
                 <MudItem xs="12" sm="2">
-                    <MudButton Variant="Variant.Filled" Color="Color.Error" FullWidth="true"
+                    <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Error" FullWidth="true"
                                StartIcon="@Icons.Material.Filled.PictureAsPdf"
                                OnClick="DownloadQuestPdfAsync">
                         Download PDF

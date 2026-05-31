@@ -52,17 +52,17 @@
     <MudItem xs="12" md="8">
         <MudCard Elevation="1">
             <MudCardContent>
-                <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3">
-                    <MudTextField @bind-Value="_keyword" Label="Search" Variant="Variant.Outlined" Dense="true"
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
+                    <MudTextField @bind-Value="_keyword" Label="Search" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense"
                                   Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Outlined.Search"
                                   OnKeyDown="OnSearchKeyDown" Style="flex:1;" />
-                    <MudSelect @bind-Value="_activeFilter" Label="Active" Variant="Variant.Outlined" Dense="true"
+                    <MudSelect @bind-Value="_activeFilter" Label="Active" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense"
                                T="bool?" Clearable="true" Style="width:120px;">
                         <MudSelectItem Value="@((bool?)null)">All</MudSelectItem>
                         <MudSelectItem Value="@((bool?)true)">Active</MudSelectItem>
                         <MudSelectItem Value="@((bool?)false)">Inactive</MudSelectItem>
                     </MudSelect>
-                    <MudButton Variant="Variant.Outlined" Color="Color.Primary" Dense="true"
+                    <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary"
                                OnClick="LoadAsync" Disabled="_busy">Search</MudButton>
                 </MudStack>
 

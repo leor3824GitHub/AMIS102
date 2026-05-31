@@ -107,17 +107,19 @@
                                  Clearable="true"
                                  Placeholder="Type to search products..."
                                  Variant="Variant.Outlined"
+                                 Dense="true"
+                                 Margin="Margin.Dense"
                                  MinCharacters="1"
                                  ResetValueOnEmptyText="true" />
             </MudItem>
             <MudItem xs="12" sm="4">
                 <MudStack Row="true" Spacing="2">
-                    <MudButton Variant="Variant.Outlined" Color="Color.Default" OnClick="ExportCsvAsync"
+                    <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Default" OnClick="ExportCsvAsync"
                                StartIcon="@Icons.Material.Filled.Download"
                                Disabled="_loading || _stockCard is null">
                         Export CSV
                     </MudButton>
-                    <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="DownloadQuestPdfAsync"
+                    <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Error" OnClick="DownloadQuestPdfAsync"
                                StartIcon="@Icons.Material.Filled.PictureAsPdf"
                                Disabled="_loading || _stockCard is null">
                         Download PDF

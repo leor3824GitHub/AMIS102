@@ -10,8 +10,8 @@
         <MudStack Row="true" Spacing="2" Style="width: 100%; max-width: 400px;">
             <MudTextField @bind-Value="_searchKeyword" Label="Search" Placeholder="Search modes..."
                           DebounceInterval="300" OnDebounceIntervalElapsed="@(async () => await SearchAsync())"
-                          Variant="Variant.Outlined" Size="Size.Small" />
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SearchAsync">
+                          Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" OnClick="SearchAsync">
                 Search
             </MudButton>
         </MudStack>

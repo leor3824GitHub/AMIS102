@@ -12,8 +12,8 @@
         <MudStack Row="true" Spacing="2" Style="width: 100%; max-width: 400px;">
             <MudTextField @bind-Value="_searchKeyword" Label="Search" Placeholder="Search departments..."
                           DebounceInterval="300" OnDebounceIntervalElapsed="@(async () => await SearchDepartments())"
-                          Variant="Variant.Outlined" Size="Size.Small" />
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SearchDepartments">
+                          Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" OnClick="SearchDepartments">
                 Search
             </MudButton>
         </MudStack>
@@ -101,7 +101,7 @@
                                             }
                                             else
                                             {
-                                                <MudTooltip Text="@(string.IsNullOrWhiteSpace(department.OfficeCode) ? "Shared record — read only" : "Owned by another office — read only")">
+                                                <MudTooltip Text="@(string.IsNullOrWhiteSpace(department.OfficeCode) ? "Shared record ï¿½ read only" : "Owned by another office ï¿½ read only")">
                                                     <MudIconButton Icon="@Icons.Material.Filled.Lock" Size="Size.Small" Color="Color.Default" Disabled="true" />
                                                 </MudTooltip>
                                             }

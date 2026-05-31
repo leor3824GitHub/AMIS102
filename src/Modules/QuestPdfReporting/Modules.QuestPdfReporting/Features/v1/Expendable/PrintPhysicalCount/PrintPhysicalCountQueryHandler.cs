@@ -18,6 +18,7 @@ public sealed class PrintPhysicalCountQueryHandler(IMediator mediator)
         var org = await mediator.Send(new GetOrganizationProfileQuery(), ct).ConfigureAwait(false);
         var signatories = await mediator.Send(new GetReportSignatoriesQuery("PhysicalCount"), ct).ConfigureAwait(false);
 
-        return new PhysicalCountPdfDocument(items, org, signatories, query.AsOfDate).GeneratePdf();
+        return new PhysicalCountPdfDocument(
+            items, org, signatories, query.AsOfDate, query.PaperSize, query.Orientation).GeneratePdf();
     }
 }
