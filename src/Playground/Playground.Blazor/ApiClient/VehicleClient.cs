@@ -271,9 +271,12 @@ internal sealed class VehicleClient : IVehicleClient
         DateTime? asOfDate = null,
         CancellationToken cancellationToken = default)
     {
-        var command = new { Status = status, AsOfDate = asOfDate };
-        using var response = await _httpClient.PostAsJsonAsync(
-            VehicleApiRoutes.InventoryPdf, command, cancellationToken);
+        var url = BuildUrl("api/v1/quest-pdf-reporting/vehicle/inventory/pdf", new Dictionary<string, string?>
+        {
+            ["status"] = status,
+            ["asOfDate"] = asOfDate?.ToString("O"),
+        });
+        using var response = await _httpClient.GetAsync(url, cancellationToken);
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadAsByteArrayAsync(cancellationToken);
     }

@@ -17,8 +17,6 @@ using AMIS.Modules.AssetManagement.Features.v1.Reclassification.GetReclassificat
 using AMIS.Modules.AssetManagement.Features.v1.Reclassification.ReclassifyProperties;
 using AMIS.Modules.AssetManagement.Features.v1.PropertyIncidentReports.CreatePropertyIncidentReport;
 using AMIS.Modules.AssetManagement.Features.v1.Reports.PropertyHistory;
-using AMIS.Modules.AssetManagement.Features.v1.Reports.GenerateRegSPIPdf;
-using AMIS.Modules.AssetManagement.Features.v1.Reports.GenerateRSPIPdf;
 using AMIS.Modules.AssetManagement.Features.v1.Reports.RegistryOfSPIssued;
 using AMIS.Modules.AssetManagement.Features.v1.Reports.ReportOfSPIssued;
 using AMIS.Modules.AssetManagement.Features.v1.Reports.SemiExpendablePropertyCard;
@@ -81,8 +79,6 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using QuestPDF.Infrastructure;
-
 namespace AMIS.Modules.AssetManagement;
 
 public class AssetManagementModule : IModule
@@ -162,8 +158,6 @@ public class AssetManagementModule : IModule
     public void ConfigureServices(IHostApplicationBuilder builder)
     {
         ArgumentNullException.ThrowIfNull(builder);
-
-        QuestPDF.Settings.License = LicenseType.Community;
 
         PermissionConstants.Register(RegisteredPermissions);
         builder.Services.AddHeroDbContext<AssetManagementDbContext>();
@@ -294,8 +288,6 @@ public class AssetManagementModule : IModule
         GetSPCEndpoint.Map(reportsGroup);
         GetRegSPIEndpoint.Map(reportsGroup);
         GetRSPIEndpoint.Map(reportsGroup);
-        GenerateRegSPIPdfEndpoint.Map(reportsGroup);
-        GenerateRSPIPdfEndpoint.Map(reportsGroup);
         GetPropertyHistoryEndpoint.Map(reportsGroup);
 
         // Tangible Items

@@ -44,10 +44,6 @@ using AMIS.Modules.Expendable.Features.v1.Reports.GetDepartmentIssuanceReport;
 using AMIS.Modules.Expendable.Features.v1.Reports.GetEmployeeIssuanceHistory;
 using AMIS.Modules.Expendable.Features.v1.Reports.GetPhysicalCountReport;
 using AMIS.Modules.Expendable.Features.v1.Reports.GetStockCard;
-using AMIS.Modules.Expendable.Features.v1.Reports.GenerateDepartmentIssuancePdf;
-using AMIS.Modules.Expendable.Features.v1.Reports.GeneratePhysicalCountPdf;
-using AMIS.Modules.Expendable.Features.v1.Reports.GenerateStockCardPdf;
-using AMIS.Modules.Expendable.Features.v1.Reports.GenerateEmployeeIssuancePdf;
 using AMIS.Modules.Expendable.Features.v1.Cart.GetOrCreateCart;
 using AMIS.Modules.Expendable.Features.v1.Cart.AddToCart;
 using AMIS.Modules.Expendable.Features.v1.Cart.GetCart;
@@ -128,9 +124,6 @@ public class ExpendableModule : IModule
 
         // Register module permissions so Identity role seeding can assign them.
         PermissionConstants.Register(RegisteredPermissions);
-
-        // QuestPDF community license (free for organisations with <1M USD revenue)
-        QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 
         // Register DbContext
         services.AddHeroDbContext<ExpendableDbContext>();
@@ -229,10 +222,6 @@ public class ExpendableModule : IModule
         GetEmployeeIssuanceHistoryEndpoint.Map(reportsGroup);
         GetPhysicalCountReportEndpoint.Map(reportsGroup);
         GetStockCardEndpoint.Map(reportsGroup);
-        GenerateDepartmentIssuancePdfEndpoint.Map(reportsGroup);
-        GeneratePhysicalCountPdfEndpoint.Map(reportsGroup);
-        GenerateStockCardPdfEndpoint.Map(reportsGroup);
-        GenerateEmployeeIssuancePdfEndpoint.Map(reportsGroup);
     }
 }
 

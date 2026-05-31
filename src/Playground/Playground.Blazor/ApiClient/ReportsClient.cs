@@ -6,7 +6,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Globalization;
 using AMIS.Framework.Shared.Persistence;
-using AMIS.Modules.Expendable.Contracts.v1.Reports;
 using AMIS.Modules.Expendable.Contracts.v1.Requests;
 using AMIS.Modules.Expendable.Contracts.v1.Warehouse;
 
@@ -144,14 +143,13 @@ public sealed class ReportsClient : IReportsClient
         System.DateTimeOffset? to = null,
         CancellationToken cancellationToken = default)
     {
-        var command = new GenerateDepartmentIssuancePdfCommand
+        var url = BuildUrl("api/v1/quest-pdf-reporting/expendable/department-issuance/pdf", new()
         {
-            DepartmentId = departmentId,
-            From = from,
-            To = to
-        };
-        using var response = await _httpClient.PostAsJsonAsync(
-            "api/v1/expendable/reports/department-issuance/pdf", command, cancellationToken);
+            ["departmentId"] = departmentId,
+            ["from"] = from?.ToString("O"),
+            ["to"] = to?.ToString("O"),
+        });
+        using var response = await _httpClient.GetAsync(url, cancellationToken);
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadAsByteArrayAsync(cancellationToken);
     }
@@ -161,9 +159,12 @@ public sealed class ReportsClient : IReportsClient
         DateTime? asOfDate = null,
         CancellationToken cancellationToken = default)
     {
-        var command = new { WarehouseLocationId = warehouseLocationId, AsOfDate = asOfDate };
-        using var response = await _httpClient.PostAsJsonAsync(
-            "api/v1/expendable/reports/physical-count/pdf", command, cancellationToken);
+        var url = BuildUrl("api/v1/quest-pdf-reporting/expendable/physical-count/pdf", new()
+        {
+            ["warehouseLocationId"] = warehouseLocationId?.ToString(),
+            ["asOfDate"] = asOfDate?.ToString("O"),
+        });
+        using var response = await _httpClient.GetAsync(url, cancellationToken);
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadAsByteArrayAsync(cancellationToken);
     }
@@ -172,9 +173,8 @@ public sealed class ReportsClient : IReportsClient
         Guid productId,
         CancellationToken cancellationToken = default)
     {
-        var command = new { ProductId = productId };
-        using var response = await _httpClient.PostAsJsonAsync(
-            "api/v1/expendable/reports/stock-card/pdf", command, cancellationToken);
+        using var response = await _httpClient.GetAsync(
+            $"api/v1/quest-pdf-reporting/expendable/stock-card/{productId}/pdf", cancellationToken);
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadAsByteArrayAsync(cancellationToken);
     }
@@ -185,9 +185,13 @@ public sealed class ReportsClient : IReportsClient
         System.DateTimeOffset? to = null,
         CancellationToken cancellationToken = default)
     {
-        var command = new { EmployeeId = employeeId, From = from, To = to };
-        using var response = await _httpClient.PostAsJsonAsync(
-            "api/v1/expendable/reports/employee-issuance/pdf", command, cancellationToken);
+        var url = BuildUrl("api/v1/quest-pdf-reporting/expendable/employee-issuance/pdf", new()
+        {
+            ["employeeId"] = employeeId,
+            ["from"] = from?.ToString("O"),
+            ["to"] = to?.ToString("O"),
+        });
+        using var response = await _httpClient.GetAsync(url, cancellationToken);
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadAsByteArrayAsync(cancellationToken);
     }

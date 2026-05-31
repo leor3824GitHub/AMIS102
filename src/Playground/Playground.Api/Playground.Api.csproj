@@ -48,6 +48,8 @@
     <ProjectReference Include="..\..\Modules\FastReporting\Modules.FastReporting\Modules.FastReporting.csproj" />
     <ProjectReference Include="..\..\Modules\RdlcReporting\Modules.RdlcReporting.Contracts\Modules.RdlcReporting.Contracts.csproj" />
     <ProjectReference Include="..\..\Modules\RdlcReporting\Modules.RdlcReporting\Modules.RdlcReporting.csproj" />
+    <ProjectReference Include="..\..\Modules\QuestPdfReporting\Modules.QuestPdfReporting.Contracts\Modules.QuestPdfReporting.Contracts.csproj" />
+    <ProjectReference Include="..\..\Modules\QuestPdfReporting\Modules.QuestPdfReporting\Modules.QuestPdfReporting.csproj" />
     <ProjectReference Include="..\..\Modules\Identity\Modules.Identity\Modules.Identity.csproj" />
     <ProjectReference Include="..\..\Modules\Multitenancy\Modules.Multitenancy\Modules.Multitenancy.csproj" />
     <ProjectReference Include="..\Migrations.PostgreSQL\Migrations.PostgreSQL.csproj" />

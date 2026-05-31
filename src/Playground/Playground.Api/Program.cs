@@ -18,6 +18,7 @@ using AMIS.Modules.ProcurementPlanning;
 using AMIS.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
 using AMIS.Modules.FastReporting;
 using AMIS.Modules.RdlcReporting;
+using AMIS.Modules.QuestPdfReporting;
 using AMIS.Modules.Identity;
 using AMIS.Modules.Identity.Contracts.v1.Tokens.TokenGeneration;
 using AMIS.Modules.Identity.Features.v1.Tokens.TokenGeneration;
@@ -74,7 +75,8 @@ builder.Services.AddMediator(o =>
         typeof(ProcurementPlanningModule),
         typeof(CreatePpmpCommand),
         typeof(FastReportingModule),
-        typeof(RdlcReportingModule)];
+        typeof(RdlcReportingModule),
+        typeof(QuestPdfReportingModule)];
 });
 
 var moduleAssemblies = new Assembly[]
@@ -91,7 +93,8 @@ var moduleAssemblies = new Assembly[]
     typeof(AssetRegisterModule).Assembly,
     typeof(ProcurementPlanningModule).Assembly,
     typeof(FastReportingModule).Assembly,
-    typeof(RdlcReportingModule).Assembly
+    typeof(RdlcReportingModule).Assembly,
+    typeof(QuestPdfReportingModule).Assembly
 };
 
 builder.AddHeroPlatform(o =>

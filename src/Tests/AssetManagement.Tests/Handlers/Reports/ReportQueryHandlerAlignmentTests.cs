@@ -5,6 +5,7 @@ using AMIS.Framework.Shared.Persistence;
 using AMIS.Modules.AssetManagement.Data;
 using AMIS.Modules.AssetManagement.Domain;
 using AMIS.Modules.AssetManagement.Features.v1.PPEIssuanceReports.GetPTR;
+using AMIS.Modules.AssetManagement.Contracts.v1.Reports;
 using AMIS.Modules.AssetManagement.Features.v1.Reports.RegistryOfSPIssued;
 using AMIS.Modules.AssetManagement.Features.v1.Reports.ReportOfSPIssued;
 using AMIS.Modules.MasterData.Contracts.v1.References;

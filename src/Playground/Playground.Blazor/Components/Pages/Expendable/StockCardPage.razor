@@ -112,11 +112,6 @@
             </MudItem>
             <MudItem xs="12" sm="4">
                 <MudStack Row="true" Spacing="2">
-                    <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="PrintReport"
-                               StartIcon="@Icons.Material.Filled.Print"
-                               Disabled="_loading || _stockCard is null">
-                        Print
-                    </MudButton>
                     <MudButton Variant="Variant.Outlined" Color="Color.Default" OnClick="ExportCsvAsync"
                                StartIcon="@Icons.Material.Filled.Download"
                                Disabled="_loading || _stockCard is null">
@@ -343,8 +338,6 @@ else if (!_loading)
             _loading = false;
         }
     }
-
-    private async Task PrintReport() => await JS.InvokeVoidAsync("print");
 
     private async Task ExportCsvAsync()
     {

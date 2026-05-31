@@ -15,7 +15,6 @@ using AMIS.Modules.Vehicle.Features.v1.Vehicles.DeleteVehicle;
 using AMIS.Modules.Vehicle.Features.v1.Vehicles.GetVehicle;
 using AMIS.Modules.Vehicle.Features.v1.Vehicles.SearchVehicles;
 using AMIS.Modules.Vehicle.Features.v1.Vehicles.GetMotorVehicleInventory;
-using AMIS.Modules.Vehicle.Features.v1.Vehicles.GenerateVehicleInventoryPdf;
 using AMIS.Modules.Vehicle.Features.v1.FuelOdometer.CreateVehicleDailyUsage;
 using AMIS.Modules.Vehicle.Features.v1.FuelOdometer.UpdateVehicleDailyUsage;
 using AMIS.Modules.Vehicle.Features.v1.FuelOdometer.SearchVehicleDailyUsage;
@@ -81,9 +80,6 @@ public class VehicleModule : IModule
 
         PermissionConstants.Register(RegisteredPermissions);
 
-        // QuestPDF community license
-        QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
-
         builder.Services.AddHeroDbContext<VehicleDbContext>();
         builder.Services.AddScoped<IDbInitializer, VehicleDbInitializer>();
         builder.Services.AddHostedService<Provisioning.VehicleDbInitializerHostedService>();
@@ -124,7 +120,6 @@ public class VehicleModule : IModule
         GetVehicleEndpoint.Map(vehiclesGroup);
         SearchVehiclesEndpoint.Map(vehiclesGroup);
         GetMotorVehicleInventoryEndpoint.Map(vehiclesGroup);
-        GenerateVehicleInventoryPdfEndpoint.Map(vehiclesGroup);
 
         // Fuel and odometer daily usage endpoints
         CreateVehicleDailyUsageEndpoint.Map(fuelOdometerGroup);
