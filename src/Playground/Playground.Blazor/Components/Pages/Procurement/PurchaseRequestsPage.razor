@@ -104,17 +104,7 @@
                                     </td>
                                     <td style="text-align:right">₱@item.TotalEstimatedCost.ToString("N2")</td>
                                     <td>
-                                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-                                            @StatusChip(item.Status)
-                                            @if (IsSignedPr(item.Status) && (item.HasSignedCopy ? _canViewSignedCopy : _canUploadSignedCopy))
-                                            {
-                                                <MudTooltip Text="@(item.HasSignedCopy ? "Signed copy uploaded — click to view" : "Upload signed copy")">
-                                                    <MudIconButton Icon="@Icons.Material.Filled.Verified" Size="Size.Small"
-                                                                   Color="@(item.HasSignedCopy ? Color.Success : Color.Secondary)"
-                                                                   OnClick="@(() => OpenSignedCopyAsync(item))" />
-                                                </MudTooltip>
-                                            }
-                                        </MudStack>
+                                        @StatusChip(item.Status)
                                     </td>
                                     <td>
                                         <MudStack Row="true" Spacing="0">
@@ -203,6 +193,14 @@
                                                                        OnClick="@(async () => await RejectAsync(item.Id))" />
                                                     </MudTooltip>
                                                 }
+                                            }
+                                            @if (IsSignedPr(item.Status) && (item.HasSignedCopy ? _canViewSignedCopy : _canUploadSignedCopy))
+                                            {
+                                                <MudTooltip Text="@(item.HasSignedCopy ? "Signed copy uploaded — click to view" : "Upload signed copy")">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.Verified" Size="Size.Small"
+                                                                   Color="@(item.HasSignedCopy ? Color.Success : Color.Secondary)"
+                                                                   OnClick="@(() => OpenSignedCopyAsync(item))" />
+                                                </MudTooltip>
                                             }
                                         </MudStack>
                                     </td>
