@@ -1,5 +1,6 @@
 using AMIS.Framework.Shared.Persistence;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.AssetInspectionAcceptanceReports;
+using AMIS.Modules.ProcurementAcquisition.Contracts.v1.SignedDocuments;
 using AMIS.Modules.ProcurementAcquisition.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
@@ -52,6 +53,14 @@ public sealed class SearchAssetIARsQueryHandler(
             .ToDictionaryAsync(x => x.Id, x => x.PoNumber, cancellationToken)
             .ConfigureAwait(false);
 
+        var iarIds = items.Select(x => x.Id).ToList();
+        var signedDocuments = await dbContext.SignedDocuments
+            .AsNoTracking()
+            .Where(x => x.DocumentType == ProcurementDocumentType.InspectionAcceptanceReport && iarIds.Contains(x.DocumentId))
+            .Select(x => x.DocumentId)
+            .ToHashSetAsync(cancellationToken)
+            .ConfigureAwait(false);
+
         var dtos = items.Select(iar => new AssetIARSummaryDto(
             iar.Id,
             iar.IarNumber,
@@ -62,7 +71,8 @@ public sealed class SearchAssetIARsQueryHandler(
             iar.TotalAmount,
             iar.Status,
             iar.CreatedOnUtc,
-            iar.InspectedById)).ToList();
+            iar.InspectedById,
+            signedDocuments.Contains(iar.Id))).ToList();
 
         return new PagedResponse<AssetIARSummaryDto>
         {

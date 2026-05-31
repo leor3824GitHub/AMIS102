@@ -11,7 +11,8 @@ internal static class AssetIARMapper
         AssetInspectionAcceptanceReport iar,
         string poNumber,
         string inspectorName = "",
-        string custodianName = "") =>
+        string custodianName = "",
+        bool hasSignedCopy = false) =>
         new(iar.Id,
             iar.IarNumber,
             iar.IarDate,
@@ -44,7 +45,8 @@ internal static class AssetIARMapper
             iar.SubmittedForInspectionOnUtc,
             iar.InspectedOnUtc,
             iar.AcceptedOnUtc,
-            iar.CancelledOnUtc);
+            iar.CancelledOnUtc,
+            hasSignedCopy);
 
     internal static async Task<(string InspectorName, string CustodianName)> ResolveEmployeeNamesAsync(
         Guid inspectedById,

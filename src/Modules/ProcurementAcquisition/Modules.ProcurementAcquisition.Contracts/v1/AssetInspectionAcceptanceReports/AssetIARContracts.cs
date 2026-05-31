@@ -73,7 +73,8 @@ public sealed record AssetIARDto(
     DateTimeOffset? SubmittedForInspectionOnUtc = null,
     DateTimeOffset? InspectedOnUtc = null,
     DateTimeOffset? AcceptedOnUtc = null,
-    DateTimeOffset? CancelledOnUtc = null);
+    DateTimeOffset? CancelledOnUtc = null,
+    bool HasSignedCopy = false);
 
 public sealed record AssetIARSummaryDto(
     Guid Id,
@@ -85,7 +86,8 @@ public sealed record AssetIARSummaryDto(
     decimal TotalAmount,
     AssetIARStatus Status,
     DateTimeOffset CreatedOnUtc,
-    Guid AssignedInspectorId);
+    Guid AssignedInspectorId,
+    bool HasSignedCopy = false);
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Commands — existing

@@ -11,7 +11,8 @@ public enum ProcurementDocumentType
 {
     PurchaseRequest = 0,
     PurchaseOrder = 1,
-    AbstractOfCanvass = 2
+    AbstractOfCanvass = 2,
+    InspectionAcceptanceReport = 3
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
