@@ -109,14 +109,19 @@ internal sealed class PhysicalCountPdfDocument(
     {
         container.Column(col =>
         {
-            if (signatories.Count > 0)
+            var activeSignatories = signatories
+                .Where(s => s.IsActive)
+                .OrderBy(s => s.SortOrder)
+                .ToList();
+
+            if (activeSignatories.Count > 0)
             {
                 col.Item().PaddingTop(8).Table(table =>
                 {
-                    var rows = signatories.Chunk(3).ToList();
+                    var rows = activeSignatories.Chunk(3).ToList();
                     table.ColumnsDefinition(c =>
                     {
-                        for (var i = 0; i < Math.Min(signatories.Count, 3); i++)
+                        for (var i = 0; i < Math.Min(activeSignatories.Count, 3); i++)
                             c.RelativeColumn();
                     });
                     foreach (var row in rows)
@@ -126,8 +131,7 @@ internal sealed class PhysicalCountPdfDocument(
                             table.Cell().Padding(4).Column(inner =>
                             {
                                 inner.Item().Text(sig.Label).Bold().FontSize(7).AlignCenter();
-                                inner.Item().PaddingTop(10).LineHorizontal(0.5f);
-                                inner.Item().Text(sig.Name).Bold().FontSize(8).AlignCenter();
+                                inner.Item().PaddingTop(14).Text(sig.Name).Bold().FontSize(8).AlignCenter();
                                 inner.Item().Text(sig.Title).FontSize(7).AlignCenter();
                             });
                         }

@@ -218,12 +218,80 @@ Blazor page (already references the Contracts project):
 
 ## Compact UI Controls
 
+All filter bars, form rows, and action button groups share a **40px compact baseline**. Every control on the same horizontal row MUST resolve to that baseline — otherwise `AlignItems.Center` centers controls of unequal height and the row visibly floats off-axis.
+
+### Rules
+
 | ⚠️ Rule | Why |
 | --- | --- |
-| Prefer `AMISTextField`, `AMISSelect`, `AMISAutocomplete` | Enforces compact defaults consistently |
-| If using raw Mud inputs, set `Dense="true"` + `Margin="Margin.Dense"` | Keeps filter/form rows aligned and compact |
-| Use `Size="Size.Small"` for filter-row inputs and action buttons | Establishes the 40px compact baseline |
-| Avoid mixing default and compact controls in one row | Prevents visible height mismatch and misalignment |
+| Prefer `AMISTextField`, `AMISSelect`, `AMISAutocomplete` from `BuildingBlocks/Blazor.UI` | Wrappers enforce `Dense="true" + Margin="Margin.Dense" + InputSize="Size.Small"` — no per-page sizing drift |
+| If using raw Mud inputs, set `Dense="true"` + `Margin="Margin.Dense"` | Drops a 56px Outlined input to the 40px compact baseline |
+| Use `Size="Size.Small"` on every filter-row input and action button | Drops a 48px default MudButton to 40px — matches the input baseline |
+| Every control in the same `MudGrid`/`MudStack` row must share the same density | `AlignItems.Center` only looks right when all heights are equal |
+| Action buttons paired with inputs in the same row → all must be Size.Small | The most common misalignment is a default-size input + default-size button (56 vs 48px) |
+| If a single button must stay at default size (e.g. primary CTA), drop it to its own row | Don't try to mix heights in one row — split rows instead |
+
+### Filter + Action Bar — Canonical Pattern
+
+**Two acceptable layouts.** Pick one per page; do not mix.
+
+#### Pattern A — Inputs and buttons on the same row (compact)
+
+Use when filters are few (≤ 3) and actions are secondary (export, download). Every control MUST be compact.
+
+```razor
+<MudPaper Class="pa-4 mb-4" Elevation="1">
+    <MudGrid Spacing="2" AlignItems="AlignItems.Center">
+        <MudItem xs="12" sm="8">
+            <MudAutocomplete T="ProductDto"
+                             Label="Select Product"
+                             Value="_selectedProduct"
+                             ValueChanged="OnProductSelected"
+                             SearchFunc="SearchProductsAsync"
+                             Variant="Variant.Outlined"
+                             Dense="true"
+                             Margin="Margin.Dense" />        @* ← compact baseline *@
+        </MudItem>
+        <MudItem xs="12" sm="4">
+            <MudStack Row="true" Spacing="2">
+                <MudButton Size="Size.Small"                 @* ← matches input baseline *@
+                           Variant="Variant.Outlined"
+                           StartIcon="@Icons.Material.Filled.Download"
+                           OnClick="ExportCsvAsync">Export CSV</MudButton>
+                <MudButton Size="Size.Small"
+                           Variant="Variant.Filled" Color="Color.Error"
+                           StartIcon="@Icons.Material.Filled.PictureAsPdf"
+                           OnClick="DownloadPdfAsync">Download PDF</MudButton>
+            </MudStack>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+```
+
+#### Pattern B — Inputs on top, action buttons in a row below
+
+Use when filters are many (4+) or the primary action is a "Generate Report" CTA. Filters can be default-density; buttons live on their own row so the mismatch is irrelevant.
+
+Canonical reference: [DepartmentIssuanceReportPage.razor](../../src/Playground/Playground.Blazor/Components/Pages/Expendable/DepartmentIssuanceReportPage.razor), [PhysicalCountReportPage.razor](../../src/Playground/Playground.Blazor/Components/Pages/Expendable/PhysicalCountReportPage.razor).
+
+### Anti-Pattern
+
+```razor
+@* ❌ Wrong — input is 56px (default Outlined), buttons are 48px (default).
+   AlignItems.Center centers them by vertical mid-line, so buttons "float"
+   above the input's text baseline. Visually misaligned. *@
+<MudGrid Spacing="2" AlignItems="AlignItems.Center">
+    <MudItem xs="8">
+        <MudAutocomplete ... Variant="Variant.Outlined" />          @* 56px *@
+    </MudItem>
+    <MudItem xs="4">
+        <MudStack Row="true">
+            <MudButton Variant="Variant.Outlined">Export CSV</MudButton>     @* 48px *@
+            <MudButton Variant="Variant.Filled">Download PDF</MudButton>     @* 48px *@
+        </MudStack>
+    </MudItem>
+</MudGrid>
+```
 
 ---
 

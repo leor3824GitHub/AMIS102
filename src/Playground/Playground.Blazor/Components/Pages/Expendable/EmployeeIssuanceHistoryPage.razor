@@ -60,7 +60,7 @@
                 <MudItem xs="12" sm="2">
                     <MudButton Variant="Variant.Filled" Color="Color.Error" FullWidth="true"
                                StartIcon="@Icons.Material.Filled.PictureAsPdf"
-                               OnClick="DownloadPdfAsync">
+                               OnClick="DownloadQuestPdfAsync">
                         Download PDF
                     </MudButton>
                 </MudItem>
@@ -453,7 +453,7 @@
         return employeeId;
     }
 
-    private async Task DownloadPdfAsync()
+    private async Task DownloadQuestPdfAsync()
     {
         _loading = true;
         try
@@ -477,5 +477,6 @@
             _loading = false;
         }
     }
+
 }
 

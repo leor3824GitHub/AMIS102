@@ -128,15 +128,11 @@
                                StartIcon="@Icons.Material.Filled.Refresh" Disabled="_loading">
                         Generate Report
                     </MudButton>
-                    <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="PrintReport"
-                               StartIcon="@Icons.Material.Filled.Print" Disabled="_loading || _items.Count == 0">
-                        Print
-                    </MudButton>
                     <MudButton Variant="Variant.Outlined" Color="Color.Default" OnClick="ExportCsvAsync"
                                StartIcon="@Icons.Material.Filled.Download" Disabled="_loading || _items.Count == 0">
                         Export CSV
                     </MudButton>
-                    <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="DownloadPdfAsync"
+                    <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="DownloadQuestPdfAsync"
                                StartIcon="@Icons.Material.Filled.PictureAsPdf" Disabled="_loading || _items.Count == 0">
                         Download PDF
                     </MudButton>
@@ -302,8 +298,6 @@ else if (!_loading)
         }
     }
 
-    private async Task PrintReport() => await JS.InvokeVoidAsync("print");
-
     private async Task ExportCsvAsync()
     {
         if (_items.Count == 0) return;
@@ -331,8 +325,9 @@ else if (!_loading)
         Snackbar.Add("CSV export ready.", Severity.Success);
     }
 
-    private async Task DownloadPdfAsync()
+    private async Task DownloadQuestPdfAsync()
     {
+        if (_items.Count == 0) return;
         _loading = true;
         try
         {
