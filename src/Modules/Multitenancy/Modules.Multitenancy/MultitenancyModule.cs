@@ -12,12 +12,14 @@ using AMIS.Modules.Multitenancy.Contracts;
 using AMIS.Modules.Multitenancy.Data;
 using AMIS.Modules.Multitenancy.Features.v1.ChangeTenantActivation;
 using AMIS.Modules.Multitenancy.Features.v1.CreateTenant;
+using AMIS.Modules.Multitenancy.Features.v1.GetPlatformSettings;
 using AMIS.Modules.Multitenancy.Features.v1.GetTenants;
 using AMIS.Modules.Multitenancy.Features.v1.GetTenantStatus;
 using AMIS.Modules.Multitenancy.Features.v1.GetTenantTheme;
 using AMIS.Modules.Multitenancy.Features.v1.ResetTenantTheme;
 using AMIS.Modules.Multitenancy.Features.v1.TenantProvisioning.GetTenantProvisioningStatus;
 using AMIS.Modules.Multitenancy.Features.v1.TenantProvisioning.RetryTenantProvisioning;
+using AMIS.Modules.Multitenancy.Features.v1.UpdatePlatformSettings;
 using AMIS.Modules.Multitenancy.Features.v1.UpdateTenantTheme;
 using AMIS.Modules.Multitenancy.Features.v1.UpgradeTenant;
 using AMIS.Modules.Multitenancy.Provisioning;
@@ -48,6 +50,7 @@ public sealed class MultitenancyModule : IModule
 
         builder.Services.AddScoped<ITenantService, TenantService>();
         builder.Services.AddScoped<ITenantThemeService, TenantThemeService>();
+        builder.Services.AddScoped<IPlatformSettingsService, PlatformSettingsService>();
         builder.Services.AddTransient<IConnectionStringValidator, ConnectionStringValidator>();
         builder.Services.AddScoped<ITenantProvisioningService, TenantProvisioningService>();
         builder.Services.AddHostedService<TenantStoreInitializerHostedService>();
@@ -137,6 +140,10 @@ public sealed class MultitenancyModule : IModule
         GetTenantThemeEndpoint.Map(group);
         UpdateTenantThemeEndpoint.Map(group);
         ResetTenantThemeEndpoint.Map(group);
+
+        // Global platform settings endpoints
+        GetPlatformSettingsEndpoint.Map(group);
+        UpdatePlatformSettingsEndpoint.Map(group);
     }
 }
 

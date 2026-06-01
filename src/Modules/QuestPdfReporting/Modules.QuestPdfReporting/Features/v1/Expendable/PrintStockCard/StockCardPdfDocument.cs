@@ -11,7 +11,8 @@ internal sealed class StockCardPdfDocument(
     StockCardDto            card,
     OrganizationProfileDto? org,
     string                  paperSize   = "a4",
-    string                  orientation = "landscape") : IDocument
+    string                  orientation = "landscape",
+    float                   marginMm    = 15f) : IDocument
 {
     public DocumentMetadata GetMetadata() => new()
     {
@@ -23,8 +24,7 @@ internal sealed class StockCardPdfDocument(
     {
         container.Page(page =>
         {
-            QuestPdfPaperSize.Apply(page, paperSize, orientation);
-            page.Margin(1.5f, Unit.Centimetre);
+            QuestPdfPaperSize.Apply(page, paperSize, orientation, marginMm);
             page.DefaultTextStyle(x => x.FontSize(9).FontFamily("Arial").FontColor(Colors.Black));
             page.Header().Element(ComposeHeader);
             page.Content().Element(ComposeBody);

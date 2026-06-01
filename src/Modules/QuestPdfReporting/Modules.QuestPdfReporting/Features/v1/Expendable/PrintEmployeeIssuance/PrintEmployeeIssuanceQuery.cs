@@ -7,4 +7,5 @@ public sealed record PrintEmployeeIssuanceQuery(
     DateTimeOffset? From,
     DateTimeOffset? To,
     string          PaperSize   = "a4",
-    string          Orientation = "landscape") : IQuery<byte[]>;
+    string          Orientation = "landscape",
+    double          Margin      = 15d) : IQuery<byte[]>;

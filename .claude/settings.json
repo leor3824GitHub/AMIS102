@@ -16,7 +16,10 @@
       "PowerShell(dotnet build \"d:\\\\VB\\\\AMIS102\\\\src\\\\AMIS.Framework.slnx\" --no-incremental -v quiet 2>&1)",
       "PowerShell(dotnet build \"d:\\\\VB\\\\AMIS102\\\\src\\\\Modules\\\\FastReporting\\\\Modules.FastReporting\\\\Modules.FastReporting.csproj\" --no-incremental 2>&1)",
       "PowerShell(dotnet build \"d:\\\\VB\\\\AMIS102\\\\src\\\\Modules\\\\FastReporting\\\\Modules.FastReporting\\\\Modules.FastReporting.csproj\" -v q 2>&1)",
-      "Bash(grep -i \"\\\\.cs$\")"
+      "Bash(grep -i \"\\\\.cs$\")",
+      "Bash(Select-Object -Last 30)",
+      "PowerShell(dotnet build src/Playground/Playground.Blazor/Playground.Blazor.csproj -clp:ErrorsOnly)",
+      "PowerShell(dotnet build src/Modules/Multitenancy/Modules.Multitenancy/Modules.Multitenancy.csproj -v q --nologo 2>&1)"
     ]
   }
 }

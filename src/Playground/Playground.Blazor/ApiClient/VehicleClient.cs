@@ -52,6 +52,9 @@ internal interface IVehicleClient
     Task<byte[]> GenerateVehicleInventoryPdfAsync(
         string? status = null,
         DateTime? asOfDate = null,
+        string? pageWidth = null,
+        string? orientation = null,
+        double? marginMm = null,
         CancellationToken cancellationToken = default);
 
     Task<byte[]> GenerateVehicleInventoryFastPdfAsync(
@@ -269,12 +272,18 @@ internal sealed class VehicleClient : IVehicleClient
     public async Task<byte[]> GenerateVehicleInventoryPdfAsync(
         string? status = null,
         DateTime? asOfDate = null,
+        string? pageWidth = null,
+        string? orientation = null,
+        double? marginMm = null,
         CancellationToken cancellationToken = default)
     {
         var url = BuildUrl("api/v1/quest-pdf-reporting/vehicle/inventory/pdf", new Dictionary<string, string?>
         {
             ["status"] = status,
             ["asOfDate"] = asOfDate?.ToString("O"),
+            ["pageWidth"] = pageWidth,
+            ["orientation"] = orientation,
+            ["marginMm"] = marginMm?.ToString(CultureInfo.InvariantCulture),
         });
         using var response = await _httpClient.GetAsync(url, cancellationToken);
         response.EnsureSuccessStatusCode();

@@ -126,6 +126,9 @@
                     </MudButton>
                 </MudStack>
             </MudItem>
+            <MudItem xs="12">
+                <PdfPaperSettings @bind-PaperSize="_paperSize" @bind-Orientation="_orientation" @bind-MarginMm="_marginMm" />
+            </MudItem>
         </MudGrid>
     </MudPaper>
 
@@ -278,6 +281,9 @@ else if (!_loading)
     private ProductDto? _selectedProduct;
     private StockCardDto? _stockCard;
     private Dictionary<Guid, string> _departmentNames = [];
+    private string _paperSize = "a4";
+    private string _orientation = "landscape";
+    private double _marginMm = 15d;
 
     [Parameter]
     [SupplyParameterFromQuery(Name = "productId")]
@@ -385,7 +391,7 @@ else if (!_loading)
         _loading = true;
         try
         {
-            var bytes = await ReportsClient.GenerateStockCardPdfAsync(_selectedProduct.Id);
+            var bytes = await ReportsClient.GenerateStockCardPdfAsync(_selectedProduct.Id, _paperSize, _orientation, _marginMm);
             var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
             await JS.InvokeVoidAsync("open", dataUrl, "_blank");
             Snackbar.Add("PDF ready.", Severity.Success);

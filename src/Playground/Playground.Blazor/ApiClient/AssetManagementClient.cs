@@ -1055,8 +1055,8 @@ internal interface IAssetManagementReportsClient
     Task<SPCDto?> GetSPCAsync(Guid itemId, DateOnly? dateFrom = null, DateOnly? dateTo = null, CancellationToken ct = default);
     Task<PagedRegSPIResponse?> GetRegSPIAsync(Guid employeeId, AssetType? assetType = null, ICSStatus? status = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
     Task<PagedRSPIResponse?> GetRSPIAsync(DateOnly? dateFrom = null, DateOnly? dateTo = null, AssetType? assetType = null, bool activeOnly = true, int page = 1, int pageSize = 20, CancellationToken ct = default);
-    Task<byte[]> GetRegSPIPdfAsync(Guid employeeId, AssetType? assetType = null, ICSStatus? status = null, int page = 1, int pageSize = 1000, CancellationToken ct = default);
-    Task<byte[]> GetRSPIPdfAsync(DateOnly? dateFrom = null, DateOnly? dateTo = null, AssetType? assetType = null, bool activeOnly = true, int page = 1, int pageSize = 1000, CancellationToken ct = default);
+    Task<byte[]> GetRegSPIPdfAsync(Guid employeeId, AssetType? assetType = null, ICSStatus? status = null, int page = 1, int pageSize = 1000, string? pageWidth = null, string? orientation = null, double? marginMm = null, CancellationToken ct = default);
+    Task<byte[]> GetRSPIPdfAsync(DateOnly? dateFrom = null, DateOnly? dateTo = null, AssetType? assetType = null, bool activeOnly = true, int page = 1, int pageSize = 1000, string? pageWidth = null, string? orientation = null, double? marginMm = null, CancellationToken ct = default);
     Task<PropertyHistoryDto?> GetPropertyHistoryAsync(Guid propertyId, CancellationToken ct = default);
 }
 
@@ -1096,20 +1096,23 @@ internal sealed class AssetManagementReportsClient(HttpClient http) : IAssetMana
         return http.GetFromJsonAsync<PagedRSPIResponse>($"{Base}/rspi?{q}", ct);
     }
 
-    public async Task<byte[]> GetRegSPIPdfAsync(Guid employeeId, AssetType? assetType = null, ICSStatus? status = null, int page = 1, int pageSize = 10000, CancellationToken ct = default)
+    public async Task<byte[]> GetRegSPIPdfAsync(Guid employeeId, AssetType? assetType = null, ICSStatus? status = null, int page = 1, int pageSize = 10000, string? pageWidth = null, string? orientation = null, double? marginMm = null, CancellationToken ct = default)
     {
         var q = new System.Collections.Specialized.NameValueCollection();
         if (assetType.HasValue) q["assetType"] = ((int)assetType.Value).ToString(CultureInfo.InvariantCulture);
         if (status.HasValue) q["status"] = ((int)status.Value).ToString(CultureInfo.InvariantCulture);
         q["pageNumber"] = page.ToString(CultureInfo.InvariantCulture);
         q["pageSize"] = pageSize.ToString(CultureInfo.InvariantCulture);
+        if (!string.IsNullOrWhiteSpace(pageWidth)) q["pageWidth"] = pageWidth;
+        if (!string.IsNullOrWhiteSpace(orientation)) q["orientation"] = orientation;
+        if (marginMm.HasValue) q["marginMm"] = marginMm.Value.ToString(CultureInfo.InvariantCulture);
         var queryString = string.Join("&", q.AllKeys.Select(k => $"{k}={Uri.EscapeDataString(q[k]!)}"));
         using var response = await http.GetAsync($"api/v1/quest-pdf-reporting/asset-management/{employeeId}/reg-spi/pdf?{queryString}", ct);
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadAsByteArrayAsync(ct);
     }
 
-    public async Task<byte[]> GetRSPIPdfAsync(DateOnly? dateFrom = null, DateOnly? dateTo = null, AssetType? assetType = null, bool activeOnly = false, int page = 1, int pageSize = 10000, CancellationToken ct = default)
+    public async Task<byte[]> GetRSPIPdfAsync(DateOnly? dateFrom = null, DateOnly? dateTo = null, AssetType? assetType = null, bool activeOnly = false, int page = 1, int pageSize = 10000, string? pageWidth = null, string? orientation = null, double? marginMm = null, CancellationToken ct = default)
     {
         var q = new System.Collections.Specialized.NameValueCollection();
         if (dateFrom.HasValue) q["dateFrom"] = dateFrom.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
@@ -1118,6 +1121,9 @@ internal sealed class AssetManagementReportsClient(HttpClient http) : IAssetMana
         q["activeOnly"] = activeOnly.ToString().ToLowerInvariant();
         q["pageNumber"] = page.ToString(CultureInfo.InvariantCulture);
         q["pageSize"] = pageSize.ToString(CultureInfo.InvariantCulture);
+        if (!string.IsNullOrWhiteSpace(pageWidth)) q["pageWidth"] = pageWidth;
+        if (!string.IsNullOrWhiteSpace(orientation)) q["orientation"] = orientation;
+        if (marginMm.HasValue) q["marginMm"] = marginMm.Value.ToString(CultureInfo.InvariantCulture);
         var queryString = string.Join("&", q.AllKeys.Select(k => $"{k}={Uri.EscapeDataString(q[k]!)}"));
         using var response = await http.GetAsync($"api/v1/quest-pdf-reporting/asset-management/rspi/pdf?{queryString}", ct);
         response.EnsureSuccessStatusCode();

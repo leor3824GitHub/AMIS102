@@ -21,6 +21,8 @@ public class TenantDbContext : EFCoreStoreDbContext<AppTenantInfo>
 
     public DbSet<TenantTheme> TenantThemes => Set<TenantTheme>();
 
+    public DbSet<PlatformSettings> PlatformSettings => Set<PlatformSettings>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);

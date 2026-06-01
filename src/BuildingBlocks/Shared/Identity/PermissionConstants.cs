@@ -10,6 +10,8 @@ public static class PermissionConstants
         new("Create Tenants", ActionConstants.Create, ResourceConstants.Tenants, IsRoot: true),
         new("Update Tenants", ActionConstants.Update, ResourceConstants.Tenants, IsRoot: true),
         new("Upgrade Tenant Subscription", ActionConstants.UpgradeSubscription, ResourceConstants.Tenants, IsRoot: true),
+        new("View Platform Settings", ActionConstants.ViewSettings, ResourceConstants.Tenants, IsRoot: true),
+        new("Update Platform Settings", ActionConstants.UpdateSettings, ResourceConstants.Tenants, IsRoot: true),
 
         // Identity
         new("View Users", ActionConstants.View, ResourceConstants.Users, IsBasic: true),

@@ -14,7 +14,8 @@ internal sealed class VehicleInventoryPdfDocument(
     List<ReportSignatoryDto>           signatories,
     DateTime?                          asOfDate,
     string                             paperSize   = "a4",
-    string                             orientation = "landscape") : IDocument
+    string                             orientation = "landscape",
+    float                              marginMm    = 15f) : IDocument
 {
     public DocumentMetadata GetMetadata() => new()
     {
@@ -26,8 +27,7 @@ internal sealed class VehicleInventoryPdfDocument(
     {
         container.Page(page =>
         {
-            QuestPdfPaperSize.Apply(page, paperSize, orientation);
-            page.Margin(1.5f, Unit.Centimetre);
+            QuestPdfPaperSize.Apply(page, paperSize, orientation, marginMm);
             page.DefaultTextStyle(x => x.FontSize(8).FontFamily("Arial"));
             page.Header().Element(ComposeHeader);
             page.Content().Element(ComposeBody);

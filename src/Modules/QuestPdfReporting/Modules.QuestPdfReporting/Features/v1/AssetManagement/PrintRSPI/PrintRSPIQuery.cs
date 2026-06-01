@@ -11,4 +11,5 @@ public sealed record PrintRSPIQuery(
     int        PageNumber  = 1,
     int        PageSize    = 10000,
     string     PaperSize   = "a4",
-    string     Orientation = "landscape") : IQuery<byte[]>;
+    string     Orientation = "landscape",
+    double     Margin      = 7d) : IQuery<byte[]>;

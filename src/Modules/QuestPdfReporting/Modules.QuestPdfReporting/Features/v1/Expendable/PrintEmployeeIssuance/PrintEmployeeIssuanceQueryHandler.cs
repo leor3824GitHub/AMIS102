@@ -32,7 +32,7 @@ public sealed class PrintEmployeeIssuanceQueryHandler(IMediator mediator)
 
         return new EmployeeIssuancePdfDocument(
             records, org, query.From, query.To, employeeNames, departmentNames,
-            query.PaperSize, query.Orientation)
+            query.PaperSize, query.Orientation, (float)query.Margin)
             .GeneratePdf();
     }
 }

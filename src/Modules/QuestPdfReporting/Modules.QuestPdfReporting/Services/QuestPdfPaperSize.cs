@@ -39,11 +39,14 @@ public static class QuestPdfPaperSize
         !string.Equals(orientation, Portrait, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
-    /// Applies the resolved paper size and orientation to a QuestPDF page.
-    /// Call inside the <c>container.Page(page =&gt; ...)</c> lambda in place of
-    /// <c>page.Size(PageSizes.A4.Landscape())</c>. Safe to call once per page.
+    /// Applies the resolved paper size and orientation to a QuestPDF page, and
+    /// (optionally) a uniform page margin in millimetres. Call inside the
+    /// <c>container.Page(page =&gt; ...)</c> lambda in place of
+    /// <c>page.Size(PageSizes.A4.Landscape())</c> + <c>page.Margin(...)</c>.
+    /// Safe to call once per page. When <paramref name="marginMm"/> is null the
+    /// page margin is left untouched (caller may set it separately).
     /// </summary>
-    public static void Apply(PageDescriptor page, string? paperSize, string? orientation)
+    public static void Apply(PageDescriptor page, string? paperSize, string? orientation, float? marginMm = null)
     {
         ArgumentNullException.ThrowIfNull(page);
 
@@ -53,5 +56,8 @@ public static class QuestPdfPaperSize
             page.Size(longSide, shortSide, Unit.Millimetre);
         else
             page.Size(shortSide, longSide, Unit.Millimetre);
+
+        if (marginMm is > 0f)
+            page.Margin(marginMm.Value, Unit.Millimetre);
     }
 }

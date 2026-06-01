@@ -68,6 +68,9 @@
                         Download PDF
                     </MudButton>
                 </MudItem>
+                <MudItem xs="12">
+                    <PdfPaperSettings @bind-PaperSize="_paperSize" @bind-Orientation="_orientation" @bind-MarginMm="_marginMm" />
+                </MudItem>
             </MudGrid>
         </MudCardContent>
     </MudCard>
@@ -142,6 +145,9 @@
     private readonly Dictionary<string, EmployeeReferenceDto> _employeeCache = [];
     private readonly Dictionary<Guid, string> _departmentCache = [];
     private const int ApiPageSizeLimit = 200;
+    private string _paperSize = "a4";
+    private string _orientation = "landscape";
+    private double _marginMm = 15d;
 
     [Parameter]
     [SupplyParameterFromQuery(Name = "preset")]
@@ -467,7 +473,10 @@
             var bytes = await ReportsClient.GenerateEmployeeIssuancePdfAsync(
                 employeeId: _selectedEmployee?.Id.ToString(),
                 from: from,
-                to: to);
+                to: to,
+                pageWidth: _paperSize,
+                orientation: _orientation,
+                marginMm: _marginMm);
             var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
             await JS.InvokeVoidAsync("open", dataUrl, "_blank");
             Snackbar.Add("PDF ready.", Severity.Success);

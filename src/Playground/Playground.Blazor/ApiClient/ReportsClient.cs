@@ -41,21 +41,33 @@ public interface IReportsClient
         string? departmentId = null,
         System.DateTimeOffset? from = null,
         System.DateTimeOffset? to = null,
+        string? pageWidth = null,
+        string? orientation = null,
+        double? marginMm = null,
         CancellationToken cancellationToken = default);
 
     Task<byte[]> GeneratePhysicalCountPdfAsync(
         Guid? warehouseLocationId = null,
         DateTime? asOfDate = null,
+        string? pageWidth = null,
+        string? orientation = null,
+        double? marginMm = null,
         CancellationToken cancellationToken = default);
 
     Task<byte[]> GenerateStockCardPdfAsync(
         Guid productId,
+        string? pageWidth = null,
+        string? orientation = null,
+        double? marginMm = null,
         CancellationToken cancellationToken = default);
 
     Task<byte[]> GenerateEmployeeIssuancePdfAsync(
         string? employeeId = null,
         System.DateTimeOffset? from = null,
         System.DateTimeOffset? to = null,
+        string? pageWidth = null,
+        string? orientation = null,
+        double? marginMm = null,
         CancellationToken cancellationToken = default);
 }
 
@@ -141,6 +153,9 @@ public sealed class ReportsClient : IReportsClient
         string? departmentId = null,
         System.DateTimeOffset? from = null,
         System.DateTimeOffset? to = null,
+        string? pageWidth = null,
+        string? orientation = null,
+        double? marginMm = null,
         CancellationToken cancellationToken = default)
     {
         var url = BuildUrl("api/v1/quest-pdf-reporting/expendable/department-issuance/pdf", new()
@@ -148,6 +163,9 @@ public sealed class ReportsClient : IReportsClient
             ["departmentId"] = departmentId,
             ["from"] = from?.ToString("O"),
             ["to"] = to?.ToString("O"),
+            ["pageWidth"] = pageWidth,
+            ["orientation"] = orientation,
+            ["marginMm"] = marginMm?.ToString(CultureInfo.InvariantCulture),
         });
         using var response = await _httpClient.GetAsync(url, cancellationToken);
         response.EnsureSuccessStatusCode();
@@ -157,12 +175,18 @@ public sealed class ReportsClient : IReportsClient
     public async Task<byte[]> GeneratePhysicalCountPdfAsync(
         Guid? warehouseLocationId = null,
         DateTime? asOfDate = null,
+        string? pageWidth = null,
+        string? orientation = null,
+        double? marginMm = null,
         CancellationToken cancellationToken = default)
     {
         var url = BuildUrl("api/v1/quest-pdf-reporting/expendable/physical-count/pdf", new()
         {
             ["warehouseLocationId"] = warehouseLocationId?.ToString(),
             ["asOfDate"] = asOfDate?.ToString("O"),
+            ["pageWidth"] = pageWidth,
+            ["orientation"] = orientation,
+            ["marginMm"] = marginMm?.ToString(CultureInfo.InvariantCulture),
         });
         using var response = await _httpClient.GetAsync(url, cancellationToken);
         response.EnsureSuccessStatusCode();
@@ -171,10 +195,18 @@ public sealed class ReportsClient : IReportsClient
 
     public async Task<byte[]> GenerateStockCardPdfAsync(
         Guid productId,
+        string? pageWidth = null,
+        string? orientation = null,
+        double? marginMm = null,
         CancellationToken cancellationToken = default)
     {
-        using var response = await _httpClient.GetAsync(
-            $"api/v1/quest-pdf-reporting/expendable/stock-card/{productId}/pdf", cancellationToken);
+        var url = BuildUrl($"api/v1/quest-pdf-reporting/expendable/stock-card/{productId}/pdf", new()
+        {
+            ["pageWidth"] = pageWidth,
+            ["orientation"] = orientation,
+            ["marginMm"] = marginMm?.ToString(CultureInfo.InvariantCulture),
+        });
+        using var response = await _httpClient.GetAsync(url, cancellationToken);
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadAsByteArrayAsync(cancellationToken);
     }
@@ -183,6 +215,9 @@ public sealed class ReportsClient : IReportsClient
         string? employeeId = null,
         System.DateTimeOffset? from = null,
         System.DateTimeOffset? to = null,
+        string? pageWidth = null,
+        string? orientation = null,
+        double? marginMm = null,
         CancellationToken cancellationToken = default)
     {
         var url = BuildUrl("api/v1/quest-pdf-reporting/expendable/employee-issuance/pdf", new()
@@ -190,6 +225,9 @@ public sealed class ReportsClient : IReportsClient
             ["employeeId"] = employeeId,
             ["from"] = from?.ToString("O"),
             ["to"] = to?.ToString("O"),
+            ["pageWidth"] = pageWidth,
+            ["orientation"] = orientation,
+            ["marginMm"] = marginMm?.ToString(CultureInfo.InvariantCulture),
         });
         using var response = await _httpClient.GetAsync(url, cancellationToken);
         response.EnsureSuccessStatusCode();

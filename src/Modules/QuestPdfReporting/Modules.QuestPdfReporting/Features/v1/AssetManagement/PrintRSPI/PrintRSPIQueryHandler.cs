@@ -29,8 +29,7 @@ public sealed class PrintRSPIQueryHandler(IMediator mediator)
         {
             container.Page(page =>
             {
-                QuestPdfPaperSize.Apply(page, query.PaperSize, query.Orientation);
-                page.Margin(20);
+                QuestPdfPaperSize.Apply(page, query.PaperSize, query.Orientation, (float)query.Margin);
                 page.DefaultTextStyle(x => x.FontSize(9));
 
                 page.Header().Column(col =>

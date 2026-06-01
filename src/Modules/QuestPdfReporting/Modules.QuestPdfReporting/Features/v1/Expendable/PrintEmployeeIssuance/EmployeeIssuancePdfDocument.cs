@@ -15,7 +15,8 @@ internal sealed class EmployeeIssuancePdfDocument(
     Dictionary<string, string>  employeeNames,
     Dictionary<string, string>  departmentNames,
     string                      paperSize   = "a4",
-    string                      orientation = "landscape") : IDocument
+    string                      orientation = "landscape",
+    float                       marginMm    = 15f) : IDocument
 {
     public DocumentMetadata GetMetadata() => new()
     {
@@ -27,8 +28,7 @@ internal sealed class EmployeeIssuancePdfDocument(
     {
         container.Page(page =>
         {
-            QuestPdfPaperSize.Apply(page, paperSize, orientation);
-            page.Margin(1.5f, Unit.Centimetre);
+            QuestPdfPaperSize.Apply(page, paperSize, orientation, marginMm);
             page.DefaultTextStyle(x => x.FontSize(9).FontFamily("Arial"));
             page.Header().Element(ComposeHeader);
             page.Content().Element(ComposeBody);

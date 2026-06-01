@@ -14,7 +14,8 @@ internal sealed class PhysicalCountPdfDocument(
     List<ReportSignatoryDto>    signatories,
     DateTime?                   asOfDate,
     string                      paperSize   = "a4",
-    string                      orientation = "landscape") : IDocument
+    string                      orientation = "landscape",
+    float                       marginMm    = 15f) : IDocument
 {
     public DocumentMetadata GetMetadata() => new()
     {
@@ -26,8 +27,7 @@ internal sealed class PhysicalCountPdfDocument(
     {
         container.Page(page =>
         {
-            QuestPdfPaperSize.Apply(page, paperSize, orientation);
-            page.Margin(1.5f, Unit.Centimetre);
+            QuestPdfPaperSize.Apply(page, paperSize, orientation, marginMm);
             page.DefaultTextStyle(x => x.FontSize(9).FontFamily("Arial"));
             page.Header().Element(ComposeHeader);
             page.Content().Element(ComposeBody);
@@ -53,14 +53,15 @@ internal sealed class PhysicalCountPdfDocument(
             {
                 table.ColumnsDefinition(c =>
                 {
-                    c.RelativeColumn(); c.RelativeColumn();
-                    c.RelativeColumn(); c.RelativeColumn();
+                    c.ConstantColumn(72);  // "Entity Name:" label
+                    c.RelativeColumn(3);   // entity value
+                    c.ConstantColumn(42);  // "As of:" label
+                    c.RelativeColumn(2);   // as-of date
                 });
                 table.Cell().Text("Entity Name:").Bold();
                 table.Cell().Text(org?.Name ?? string.Empty);
                 table.Cell().Text("As of:").Bold();
                 table.Cell().Text((asOfDate ?? DateTime.Today).ToString("MMMM d, yyyy"));
-                table.Cell(); table.Cell();
             });
             col.Item().PaddingTop(4).LineHorizontal(1);
         });

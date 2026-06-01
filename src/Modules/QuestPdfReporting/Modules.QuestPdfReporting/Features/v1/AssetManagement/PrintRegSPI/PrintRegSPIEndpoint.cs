@@ -19,6 +19,7 @@ internal static class PrintRegSPIEndpoint
 
     // ?pageWidth=a4|legal|longbond|letter   (default a4)
     // ?orientation=landscape|portrait        (default landscape)
+    // ?marginMm=<page margin in millimetres>  (default 7)
     private static async Task<IResult> Print(
         Guid       employeeId,
         IMediator  mediator,
@@ -28,13 +29,15 @@ internal static class PrintRegSPIEndpoint
         int        pageNumber  = 1,
         int        pageSize    = 10000,
         string?    pageWidth   = null,
-        string?    orientation = null)
+        string?    orientation = null,
+        double?    marginMm    = null)
     {
         var paperSize = (pageWidth ?? "a4").ToLowerInvariant();
         var orient = (orientation ?? "landscape").ToLowerInvariant() == "portrait" ? "portrait" : "landscape";
+        var margin = marginMm is > 0 ? marginMm.Value : 7d;
 
         var bytes = await mediator.Send(
-            new PrintRegSPIQuery(employeeId, assetType, status, pageNumber, pageSize, paperSize, orient), ct);
+            new PrintRegSPIQuery(employeeId, assetType, status, pageNumber, pageSize, paperSize, orient, margin), ct);
         return TypedResults.File(bytes, "application/pdf", "RegSPIReport.pdf");
     }
 }

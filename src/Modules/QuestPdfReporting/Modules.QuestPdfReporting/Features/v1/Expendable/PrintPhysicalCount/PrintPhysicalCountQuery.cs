@@ -6,4 +6,5 @@ public sealed record PrintPhysicalCountQuery(
     Guid?     WarehouseLocationId,
     DateTime? AsOfDate,
     string    PaperSize   = "a4",
-    string    Orientation = "landscape") : IQuery<byte[]>;
+    string    Orientation = "landscape",
+    double    Margin      = 15d) : IQuery<byte[]>;

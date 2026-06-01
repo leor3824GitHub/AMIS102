@@ -22,6 +22,10 @@ public static class MultitenancyConstants
         public const string Update = "Permissions.Tenants.Update";
         public const string ViewTheme = "Permissions.Tenants.ViewTheme";
         public const string UpdateTheme = "Permissions.Tenants.UpdateTheme";
+
+        // Global platform settings (root tenant only)
+        public const string ViewSettings = "Permissions.Tenants.ViewSettings";
+        public const string UpdateSettings = "Permissions.Tenants.UpdateSettings";
     }
 }
 

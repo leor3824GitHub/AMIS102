@@ -10,5 +10,7 @@ public static class ActionConstants
     public const string Generate = nameof(Generate);
     public const string Clean = nameof(Clean);
     public const string UpgradeSubscription = nameof(UpgradeSubscription);
+    public const string ViewSettings = nameof(ViewSettings);
+    public const string UpdateSettings = nameof(UpdateSettings);
 }
 

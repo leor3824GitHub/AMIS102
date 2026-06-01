@@ -12,27 +12,27 @@
         </MudNavLink>
 
         <!-- Administration Section -->
-        <div class="AMIS-nav-section-title">Administration</div>
-
-        <MudNavLink Href="/users" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Person">
-            Users
-        </MudNavLink>
-        <MudNavLink Href="/roles" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.AdminPanelSettings">
-            Roles
-        </MudNavLink>
-        <MudNavLink Href="/groups" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Groups">
-            Groups
-        </MudNavLink>
-
-        @if (_isRootTenantAdmin)
-        {
-            <MudNavLink Href="/tenants" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.CorporateFare">
-                Tenants
+        <MudNavGroup Title="Administration" Icon="@Icons.Material.Outlined.AdminPanelSettings" @bind-Expanded="_administrationExpanded">
+            <MudNavLink Href="/users" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Person">
+                Users
             </MudNavLink>
-            <MudNavLink Href="/tenants/settings" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Tune">
-                Tenant Settings
+            <MudNavLink Href="/roles" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Badge">
+                Roles
             </MudNavLink>
-        }
+            <MudNavLink Href="/groups" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Groups">
+                Groups
+            </MudNavLink>
+
+            @if (_isRootTenantAdmin)
+            {
+                <MudNavLink Href="/tenants" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.CorporateFare">
+                    Tenants
+                </MudNavLink>
+                <MudNavLink Href="/tenants/settings" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Tune">
+                    Tenant Settings
+                </MudNavLink>
+            }
+        </MudNavGroup>
 
         <MudNavLink Href="/audits" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.History">
             Audit Logs
@@ -320,6 +320,7 @@
 
 @code {
     private bool _isRootTenantAdmin;
+    private bool _administrationExpanded;
     private bool _expendableExpanded;
     private bool _vehicleExpanded;
     private bool _masterDataExpanded;
@@ -334,6 +335,10 @@
     protected override async Task OnInitializedAsync()
     {
         var uri = Navigation.Uri;
+        _administrationExpanded = uri.Contains("/users", StringComparison.OrdinalIgnoreCase)
+                               || uri.Contains("/roles", StringComparison.OrdinalIgnoreCase)
+                               || uri.Contains("/groups", StringComparison.OrdinalIgnoreCase)
+                               || uri.Contains("/tenants", StringComparison.OrdinalIgnoreCase);
         _expendableExpanded = uri.Contains("/expendable", StringComparison.OrdinalIgnoreCase);
         _vehicleExpanded = uri.Contains("/vehicle", StringComparison.OrdinalIgnoreCase);
         _procurementPlanningExpanded = uri.Contains("/procurement-planning", StringComparison.OrdinalIgnoreCase);
