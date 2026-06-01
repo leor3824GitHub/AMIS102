@@ -11,28 +11,24 @@
 
 <div>
     <MudPaper Class="pa-4 mb-4" Elevation="1">
-        <MudGrid Spacing="2" AlignItems="AlignItems.Center">
-            <MudItem xs="12" sm="4">
-                <MudDatePicker @bind-Date="_asOfDate" Label="As of Date" Variant="Variant.Outlined"
-                               DateFormat="yyyy-MM-dd" Clearable="false" />
-            </MudItem>
-            <MudItem xs="12" sm="8">
-                <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="LoadReportAsync"
-                               StartIcon="@Icons.Material.Filled.Refresh" Disabled="_loading">
-                        Generate Report
-                    </MudButton>
-                    <MudButton Variant="Variant.Outlined" Color="Color.Default" OnClick="ExportCsvAsync"
-                               StartIcon="@Icons.Material.Filled.Download" Disabled="_loading || _items.Count == 0">
-                        Export CSV
-                    </MudButton>
-                    <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="DownloadQuestPdfAsync"
-                               StartIcon="@Icons.Material.Filled.PictureAsPdf" Disabled="_loading || _items.Count == 0">
-                        Download PDF
-                    </MudButton>
-                </MudStack>
-            </MudItem>
-        </MudGrid>
+        <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+            <MudDatePicker @bind-Date="_asOfDate" Label="As of Date" Variant="Variant.Outlined" DateFormat="yyyy-MM-dd"
+                           Clearable="false" Margin="Margin.Dense" Style="width:220px;" Class="mt-0 mb-0" />
+            <MudDatePicker @bind-Date="_assumedDate" Label="Date Assumed Accountability" Variant="Variant.Outlined"
+                           DateFormat="yyyy-MM-dd" Clearable="true" Margin="Margin.Dense" Style="width:260px;" Class="mt-0 mb-0" />
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="LoadReportAsync"
+                       StartIcon="@Icons.Material.Filled.Refresh" Disabled="_loading">
+                Generate Report
+            </MudButton>
+            <MudButton Variant="Variant.Outlined" Color="Color.Default" OnClick="ExportCsvAsync"
+                       StartIcon="@Icons.Material.Filled.Download" Disabled="_loading || _items.Count == 0">
+                Export CSV
+            </MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="DownloadQuestPdfAsync"
+                       StartIcon="@Icons.Material.Filled.PictureAsPdf" Disabled="_loading || _items.Count == 0">
+                Download PDF
+            </MudButton>
+        </MudStack>
     </MudPaper>
 
     @if (_loading)
@@ -41,9 +37,8 @@
     }
 </div>
 
-<MudDataGrid T="PhysicalCountItemDto" Items="_items" Dense="true" Hover="true" Striped="true"
-             Bordered="true" Loading="_loading" Filterable="true" SortMode="SortMode.Multiple"
-             Elevation="1">
+<MudDataGrid T="PhysicalCountItemDto" Items="_items" Dense="true" Hover="true" Striped="true" Bordered="true"
+             Loading="_loading" Filterable="true" SortMode="SortMode.Multiple" Elevation="1">
     <Columns>
         <PropertyColumn Property="x => x.ArticleNumber" Title="Article" CellStyle="text-align:center" />
         <PropertyColumn Property="x => x.Description" Title="Description" />
@@ -53,7 +48,8 @@
         <PropertyColumn Property="x => x.BalancePerCard" Title="Balance Per Card (Qty)" CellStyle="text-align:right" />
         <PropertyColumn Property="x => x.OnHandPerCount" Title="On Hand Per Count (Qty)" CellStyle="text-align:right" />
         <PropertyColumn Property="x => x.ShortageQuantity" Title="Shortage Qty" CellStyle="text-align:right" />
-        <PropertyColumn Property="x => x.ShortageValue" Title="Shortage Value" Format="N2" CellStyle="text-align:right" />
+        <PropertyColumn Property="x => x.ShortageValue" Title="Shortage Value" Format="N2"
+                        CellStyle="text-align:right" />
         <PropertyColumn Property="x => x.Remarks" Title="Remarks" />
     </Columns>
     <PagerContent>
@@ -70,6 +66,7 @@
     private bool _loading;
     private List<PhysicalCountItemDto> _items = [];
     private DateTime? _asOfDate = DateTime.Today;
+    private DateTime? _assumedDate;
     private const string ReportKey = "quest-physical-count";
 
     protected override async Task OnInitializedAsync()
@@ -132,7 +129,7 @@
         _loading = true;
         try
         {
-            var bytes = await ReportsClient.GeneratePhysicalCountPdfAsync(null, _asOfDate, r.PaperSize, r.Orientation, r.MarginMm);
+            var bytes = await ReportsClient.GeneratePhysicalCountPdfAsync(null, _asOfDate, _assumedDate, r.PaperSize, r.Orientation, r.MarginMm);
             var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
             await JS.InvokeVoidAsync("open", dataUrl, "_blank");
             Snackbar.Add("PDF ready.", Severity.Success);

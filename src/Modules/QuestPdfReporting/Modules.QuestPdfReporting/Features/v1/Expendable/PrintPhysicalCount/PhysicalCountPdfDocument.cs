@@ -13,10 +13,18 @@ internal sealed class PhysicalCountPdfDocument(
     OrganizationProfileDto?     org,
     List<ReportSignatoryDto>    signatories,
     DateTime?                   asOfDate,
+    DateTime?                   assumedAccountabilityDate = null,
     string                      paperSize   = "a4",
     string                      orientation = "landscape",
     float                       marginMm    = 15f) : IDocument
 {
+    // Signatory entry that supplies the accountable officer for the accountability
+    // sentence. Matched by Label and excluded from the footer signature grid.
+    private const string AccountableOfficerLabel = "Accountable Officer";
+
+    private ReportSignatoryDto? AccountableOfficer => signatories
+        .FirstOrDefault(s => string.Equals(s.Label.Trim(), AccountableOfficerLabel, StringComparison.OrdinalIgnoreCase));
+
     public DocumentMetadata GetMetadata() => new()
     {
         Title  = "Report on the Physical Count of Inventories",
@@ -63,7 +71,38 @@ internal sealed class PhysicalCountPdfDocument(
                 table.Cell().Text("As of:").Bold();
                 table.Cell().Text((asOfDate ?? DateTime.Today).ToString("MMMM d, yyyy"));
             });
+
+            ComposeAccountabilityStatement(col);
+
             col.Item().PaddingTop(4).LineHorizontal(1);
+        });
+    }
+
+    private void ComposeAccountabilityStatement(ColumnDescriptor col)
+    {
+        var officer = AccountableOfficer;
+        if (officer is null || string.IsNullOrWhiteSpace(officer.Name))
+            return;
+
+        col.Item().PaddingTop(4).Text(text =>
+        {
+            text.DefaultTextStyle(x => x.FontSize(9));
+            text.Span("For which ");
+            text.Span(officer.Name.ToUpperInvariant()).Bold().Underline();
+            if (!string.IsNullOrWhiteSpace(officer.Title))
+            {
+                text.Span(", ");
+                text.Span(officer.Title).Bold().Underline();
+            }
+            text.Span(", of ");
+            text.Span(org?.Name ?? string.Empty).Bold().Underline();
+            text.Span(" is accountable");
+            if (assumedAccountabilityDate is { } assumed)
+            {
+                text.Span(", having assumed such accountability on ");
+                text.Span(assumed.ToString("MMMM dd, yyyy")).Bold().Underline();
+            }
+            text.Span(".");
         });
     }
 
@@ -111,39 +150,37 @@ internal sealed class PhysicalCountPdfDocument(
 
     private void ComposeFooter(IContainer container)
     {
+        var accountableOfficer = AccountableOfficer;
+        var active = signatories
+            .Where(s => s.IsActive && s != accountableOfficer)
+            .OrderBy(s => s.SortOrder)
+            .ToList();
+
+        var approved = active.FirstOrDefault(s => s.Label.Contains("APPROVED", StringComparison.OrdinalIgnoreCase));
+        var verified = active.FirstOrDefault(s => s.Label.Contains("VERIFIED", StringComparison.OrdinalIgnoreCase));
+        var members = active.Where(s => s != approved && s != verified).ToList();
+
         container.Column(col =>
         {
-            var activeSignatories = signatories
-                .Where(s => s.IsActive)
-                .OrderBy(s => s.SortOrder)
-                .ToList();
-
-            if (activeSignatories.Count > 0)
+            col.Item().PaddingTop(10).Table(table =>
             {
-                col.Item().PaddingTop(8).Table(table =>
+                table.ColumnsDefinition(c =>
                 {
-                    var rows = activeSignatories.Chunk(3).ToList();
-                    table.ColumnsDefinition(c =>
-                    {
-                        for (var i = 0; i < Math.Min(activeSignatories.Count, 3); i++)
-                            c.RelativeColumn();
-                    });
-                    foreach (var row in rows)
-                    {
-                        foreach (var sig in row)
-                        {
-                            table.Cell().Padding(4).Column(inner =>
-                            {
-                                inner.Item().Text(sig.Label).Bold().FontSize(7).AlignCenter();
-                                inner.Item().PaddingTop(14).Text(sig.Name).Bold().FontSize(8).AlignCenter();
-                                inner.Item().Text(sig.Title).FontSize(7).AlignCenter();
-                            });
-                        }
-                        for (var i = row.Length; i < 3; i++) table.Cell();
-                    }
+                    c.RelativeColumn(2);   // Certified Correct (inventory committee)
+                    c.RelativeColumn(1);   // Approved by
+                    c.RelativeColumn(1);   // Verified by
                 });
-            }
-            col.Item().AlignRight().Text(x =>
+
+                table.Cell().Padding(2).Text("Certified Correct by:").FontSize(8);
+                table.Cell().Padding(2).AlignCenter().Text("Approved by:").FontSize(8);
+                table.Cell().Padding(2).AlignCenter().Text("Verified by:").FontSize(8);
+
+                table.Cell().Element(c => ComposeCommittee(c, members));
+                table.Cell().Element(c => ComposeSignatory(c, approved));
+                table.Cell().Element(c => ComposeSignatory(c, verified));
+            });
+
+            col.Item().PaddingTop(4).AlignRight().Text(x =>
             {
                 x.Span("Page ").FontSize(7);
                 x.CurrentPageNumber().FontSize(7);
@@ -151,5 +188,57 @@ internal sealed class PhysicalCountPdfDocument(
                 x.TotalPages().FontSize(7);
             });
         });
+    }
+
+    private static void ComposeCommittee(IContainer container, List<ReportSignatoryDto> members)
+    {
+        container.Column(outer =>
+        {
+            outer.Item().Table(table =>
+            {
+                table.ColumnsDefinition(c =>
+                {
+                    c.RelativeColumn();
+                    c.RelativeColumn();
+                });
+
+                foreach (var m in members)
+                {
+                    table.Cell().Padding(2).PaddingTop(16).PaddingRight(8).Column(cell =>
+                    {
+                        cell.Item().Text(m.Name).Bold().FontSize(8);
+                        cell.Item().Text(FormatMemberTitle(m)).FontSize(7);
+                    });
+                }
+                if (members.Count % 2 != 0) table.Cell();
+            });
+
+            outer.Item().PaddingTop(4).Text(
+                "(Signature over Printed Name of Inventory Committee Chair and Members)")
+                .Italic().FontSize(7);
+        });
+    }
+
+    private static void ComposeSignatory(IContainer container, ReportSignatoryDto? sig)
+    {
+        if (sig is null)
+        {
+            container.Text(string.Empty);
+            return;
+        }
+
+        container.PaddingTop(16).Column(cell =>
+        {
+            cell.Item().AlignCenter().Text(sig.Name).Bold().FontSize(8);
+            cell.Item().AlignCenter().Text(sig.Title).FontSize(7);
+        });
+    }
+
+    private static string FormatMemberTitle(ReportSignatoryDto sig)
+    {
+        var role = sig.Label.Contains("CHAIR", StringComparison.OrdinalIgnoreCase)
+            ? "Chairperson"
+            : "Member";
+        return string.IsNullOrWhiteSpace(sig.Title) ? $"/ {role}" : $"{sig.Title} / {role}";
     }
 }

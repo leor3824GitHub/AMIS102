@@ -49,6 +49,7 @@ public interface IReportsClient
     Task<byte[]> GeneratePhysicalCountPdfAsync(
         Guid? warehouseLocationId = null,
         DateTime? asOfDate = null,
+        DateTime? assumedAccountabilityDate = null,
         string? pageWidth = null,
         string? orientation = null,
         double? marginMm = null,
@@ -175,6 +176,7 @@ public sealed class ReportsClient : IReportsClient
     public async Task<byte[]> GeneratePhysicalCountPdfAsync(
         Guid? warehouseLocationId = null,
         DateTime? asOfDate = null,
+        DateTime? assumedAccountabilityDate = null,
         string? pageWidth = null,
         string? orientation = null,
         double? marginMm = null,
@@ -184,6 +186,7 @@ public sealed class ReportsClient : IReportsClient
         {
             ["warehouseLocationId"] = warehouseLocationId?.ToString(),
             ["asOfDate"] = asOfDate?.ToString("O"),
+            ["assumedAccountabilityDate"] = assumedAccountabilityDate?.ToString("O"),
             ["pageWidth"] = pageWidth,
             ["orientation"] = orientation,
             ["marginMm"] = marginMm?.ToString(CultureInfo.InvariantCulture),

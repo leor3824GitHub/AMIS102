@@ -24,6 +24,7 @@ internal static class PrintPhysicalCountEndpoint
         CancellationToken ct,
         Guid? warehouseLocationId = null,
         DateTime? asOfDate = null,
+        DateTime? assumedAccountabilityDate = null,
         string? pageWidth = null,
         string? orientation = null,
         double? marginMm = null)
@@ -33,7 +34,7 @@ internal static class PrintPhysicalCountEndpoint
         var margin = marginMm is > 0 ? marginMm.Value : 15d;
 
         var bytes = await mediator.Send(
-            new PrintPhysicalCountQuery(warehouseLocationId, asOfDate, paperSize, orient, margin), ct);
+            new PrintPhysicalCountQuery(warehouseLocationId, asOfDate, assumedAccountabilityDate, paperSize, orient, margin), ct);
         return TypedResults.File(bytes, "application/pdf", "PhysicalCount.pdf");
     }
 }
