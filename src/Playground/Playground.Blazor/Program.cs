@@ -70,6 +70,9 @@ builder.Services.AddScoped<ICapitalizationThresholdState, CapitalizationThreshol
 // Remembers each report's last-used Fast Report Page Setup in encrypted browser localStorage
 builder.Services.AddScoped<IFastReportSetupPreferences, FastReportSetupPreferences>();
 
+// Remembers each report's last-used QuestPDF Page Setup (paper, orientation, margin) per report
+builder.Services.AddScoped<IQuestPdfSetupPreferences, QuestPdfSetupPreferences>();
+
 // Auth state notifier for session expiration (Blazor-compatible)
 builder.Services.AddScoped<IAuthStateNotifier, AuthStateNotifier>();
 

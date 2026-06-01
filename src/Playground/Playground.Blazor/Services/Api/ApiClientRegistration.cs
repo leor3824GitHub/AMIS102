@@ -68,6 +68,10 @@ internal static class ApiClientRegistration
         services.AddTransient<IThemeClient>(sp =>
             new ThemeClient(ResolveClient(sp)));
 
+        // Global platform settings (manual client; pending NSwag regeneration)
+        services.AddTransient<IPlatformSettingsClient>(sp =>
+            new PlatformSettingsClient(ResolveClient(sp)));
+
         services.AddTransient<IUsersClient>(sp =>
             new UsersClient(ResolveClient(sp)));
 

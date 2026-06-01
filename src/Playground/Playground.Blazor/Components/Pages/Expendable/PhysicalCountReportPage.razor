@@ -6,6 +6,8 @@
 @inject IReportsClient ReportsClient
 @inject ISnackbar Snackbar
 @inject IJSRuntime JS
+@inject IDialogService DialogService
+@inject IQuestPdfSetupPreferences QuestPdfSetupPrefs
 
 <div>
     <MudPaper Class="pa-4 mb-4" Elevation="1">
@@ -24,8 +26,6 @@
                                StartIcon="@Icons.Material.Filled.Download" Disabled="_loading || _items.Count == 0">
                         Export CSV
                     </MudButton>
-                    <MudSpacer />
-                    <PdfPaperSettings @bind-PaperSize="_paperSize" @bind-Orientation="_orientation" @bind-MarginMm="_marginMm" />
                     <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="DownloadQuestPdfAsync"
                                StartIcon="@Icons.Material.Filled.PictureAsPdf" Disabled="_loading || _items.Count == 0">
                         Download PDF
@@ -70,9 +70,7 @@
     private bool _loading;
     private List<PhysicalCountItemDto> _items = [];
     private DateTime? _asOfDate = DateTime.Today;
-    private string _paperSize = "a4";
-    private string _orientation = "landscape";
-    private double _marginMm = 15d;
+    private const string ReportKey = "quest-physical-count";
 
     protected override async Task OnInitializedAsync()
     {
@@ -127,10 +125,14 @@
     private async Task DownloadQuestPdfAsync()
     {
         if (_items.Count == 0) return;
+
+        var r = await QuestPdfSetupPrefs.ShowSetupDialogAsync(DialogService, ReportKey, defaultMarginMm: 15d);
+        if (r is null) return;
+
         _loading = true;
         try
         {
-            var bytes = await ReportsClient.GeneratePhysicalCountPdfAsync(null, _asOfDate, _paperSize, _orientation, _marginMm);
+            var bytes = await ReportsClient.GeneratePhysicalCountPdfAsync(null, _asOfDate, r.PaperSize, r.Orientation, r.MarginMm);
             var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
             await JS.InvokeVoidAsync("open", dataUrl, "_blank");
             Snackbar.Add("PDF ready.", Severity.Success);

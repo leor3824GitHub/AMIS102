@@ -9,6 +9,8 @@
 @inject ILookupClient LookupClient
 @inject ISnackbar Snackbar
 @inject IJSRuntime JS
+@inject IDialogService DialogService
+@inject IQuestPdfSetupPreferences QuestPdfSetupPrefs
 
 <style>
     .sc-page {
@@ -125,9 +127,6 @@
                         Download PDF
                     </MudButton>
                 </MudStack>
-            </MudItem>
-            <MudItem xs="12">
-                <PdfPaperSettings @bind-PaperSize="_paperSize" @bind-Orientation="_orientation" @bind-MarginMm="_marginMm" />
             </MudItem>
         </MudGrid>
     </MudPaper>
@@ -281,9 +280,7 @@ else if (!_loading)
     private ProductDto? _selectedProduct;
     private StockCardDto? _stockCard;
     private Dictionary<Guid, string> _departmentNames = [];
-    private string _paperSize = "a4";
-    private string _orientation = "landscape";
-    private double _marginMm = 15d;
+    private const string ReportKey = "quest-stock-card";
 
     [Parameter]
     [SupplyParameterFromQuery(Name = "productId")]
@@ -388,10 +385,14 @@ else if (!_loading)
     private async Task DownloadQuestPdfAsync()
     {
         if (_selectedProduct is null) return;
+
+        var r = await QuestPdfSetupPrefs.ShowSetupDialogAsync(DialogService, ReportKey, defaultMarginMm: 15d);
+        if (r is null) return;
+
         _loading = true;
         try
         {
-            var bytes = await ReportsClient.GenerateStockCardPdfAsync(_selectedProduct.Id, _paperSize, _orientation, _marginMm);
+            var bytes = await ReportsClient.GenerateStockCardPdfAsync(_selectedProduct.Id, r.PaperSize, r.Orientation, r.MarginMm);
             var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
             await JS.InvokeVoidAsync("open", dataUrl, "_blank");
             Snackbar.Add("PDF ready.", Severity.Success);

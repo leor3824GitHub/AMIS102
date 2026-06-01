@@ -10,6 +10,8 @@
 @inject ISnackbar Snackbar
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JS
+@inject IDialogService DialogService
+@inject IQuestPdfSetupPreferences QuestPdfSetupPrefs
 
 <AMISPageHeader Title="Employee Issuance History" Description="Office supplies issued per employee">
 </AMISPageHeader>
@@ -67,9 +69,6 @@
                                OnClick="DownloadQuestPdfAsync">
                         Download PDF
                     </MudButton>
-                </MudItem>
-                <MudItem xs="12">
-                    <PdfPaperSettings @bind-PaperSize="_paperSize" @bind-Orientation="_orientation" @bind-MarginMm="_marginMm" />
                 </MudItem>
             </MudGrid>
         </MudCardContent>
@@ -145,9 +144,7 @@
     private readonly Dictionary<string, EmployeeReferenceDto> _employeeCache = [];
     private readonly Dictionary<Guid, string> _departmentCache = [];
     private const int ApiPageSizeLimit = 200;
-    private string _paperSize = "a4";
-    private string _orientation = "landscape";
-    private double _marginMm = 15d;
+    private const string ReportKey = "quest-employee-issuance";
 
     [Parameter]
     [SupplyParameterFromQuery(Name = "preset")]
@@ -465,6 +462,9 @@
 
     private async Task DownloadQuestPdfAsync()
     {
+        var r = await QuestPdfSetupPrefs.ShowSetupDialogAsync(DialogService, ReportKey, defaultMarginMm: 15d);
+        if (r is null) return;
+
         _loading = true;
         try
         {
@@ -474,9 +474,9 @@
                 employeeId: _selectedEmployee?.Id.ToString(),
                 from: from,
                 to: to,
-                pageWidth: _paperSize,
-                orientation: _orientation,
-                marginMm: _marginMm);
+                pageWidth: r.PaperSize,
+                orientation: r.Orientation,
+                marginMm: r.MarginMm);
             var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
             await JS.InvokeVoidAsync("open", dataUrl, "_blank");
             Snackbar.Add("PDF ready.", Severity.Success);
