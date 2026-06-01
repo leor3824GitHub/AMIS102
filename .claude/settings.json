@@ -20,7 +20,9 @@
       "Bash(Select-Object -Last 30)",
       "PowerShell(dotnet build src/Playground/Playground.Blazor/Playground.Blazor.csproj -clp:ErrorsOnly)",
       "PowerShell(dotnet build src/Modules/Multitenancy/Modules.Multitenancy/Modules.Multitenancy.csproj -v q --nologo 2>&1)",
-      "PowerShell(dotnet ef migrations add AddPlatformSettings --project src/Playground/Migrations.PostgreSQL --startup-project src/Playground/Playground.Api --context TenantDbContext --output-dir MultiTenancy 2>&1)"
+      "PowerShell(dotnet ef migrations add AddPlatformSettings --project src/Playground/Migrations.PostgreSQL --startup-project src/Playground/Playground.Api --context TenantDbContext --output-dir MultiTenancy 2>&1)",
+      "PowerShell(git -C d:\\\\VB\\\\AMIS102 log --oneline -5)",
+      "PowerShell(git -C d:\\\\VB\\\\AMIS102 status --short)"
     ]
   }
 }

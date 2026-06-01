@@ -7,6 +7,8 @@
 @inject ISemiExpendablePropertyClient PropertyClient
 @inject ILookupClient LookupClient
 @inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject IQuestPdfSetupPreferences QuestPdfSetupPrefs
 
 <AMISPageHeader Title="Semi-Expendable Property Reports"
                Description="COA Circular 2022-004 prescribed reports: Property Card, Registry of Issued, Report of Issued, and Property History." />
@@ -162,8 +164,6 @@
                                 <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Download" OnClick="ExportRegSPICsvAsync">
                                     Export CSV
                                 </MudButton>
-                                <MudSpacer />
-                                <PdfPaperSettings @bind-PaperSize="_regspiPaperSize" @bind-Orientation="_regspiOrientation" @bind-MarginMm="_regspiMarginMm" />
                             </MudStack>
 
                             <MudStack Row="true" Spacing="1" Class="mb-2" AlignItems="AlignItems.Center">
@@ -360,8 +360,6 @@
                                 <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Download" OnClick="ExportRSPICsvAsync">
                                     Export CSV
                                 </MudButton>
-                                <MudSpacer />
-                                <PdfPaperSettings @bind-PaperSize="_rspiPaperSize" @bind-Orientation="_rspiOrientation" @bind-MarginMm="_rspiMarginMm" />
                             </MudStack>
 
                             <MudStack Row="true" Spacing="1" Class="mb-2" AlignItems="AlignItems.Center">
@@ -585,13 +583,9 @@
 </MudTabs>
 
 @code {
-    // --- PDF paper settings (per report) -------------------------------------
-    private string _regspiPaperSize = "a4";
-    private string _regspiOrientation = "landscape";
-    private double _regspiMarginMm = 7d;
-    private string _rspiPaperSize = "a4";
-    private string _rspiOrientation = "landscape";
-    private double _rspiMarginMm = 7d;
+    // --- PDF page setup (per report) -----------------------------------------
+    private const string RegSpiReportKey = "quest-regspi";
+    private const string RspiReportKey = "quest-rspi";
 
     // --- SPC state ------------------------------------------------------------
     private readonly SpcState _spc = new();
@@ -888,6 +882,9 @@
             return;
         }
 
+        var r = await QuestPdfSetupPrefs.ShowSetupDialogAsync(DialogService, RegSpiReportKey, defaultMarginMm: 7d);
+        if (r is null) return;
+
         try
         {
             var bytes = await Client.GetRegSPIPdfAsync(
@@ -896,9 +893,9 @@
                 _regspi.Status,
                 _regspi.Page,
                 1000,
-                _regspiPaperSize,
-                _regspiOrientation,
-                _regspiMarginMm);
+                r.PaperSize,
+                r.Orientation,
+                r.MarginMm);
 
             var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
             await JS.InvokeVoidAsync("open", dataUrl, "_blank");
@@ -912,6 +909,9 @@
 
     private async Task DownloadRSPIPdfAsync()
     {
+        var r = await QuestPdfSetupPrefs.ShowSetupDialogAsync(DialogService, RspiReportKey, defaultMarginMm: 7d);
+        if (r is null) return;
+
         try
         {
             var bytes = await Client.GetRSPIPdfAsync(
@@ -921,9 +921,9 @@
                 _rspi.ActiveOnly,
                 _rspi.Page,
                 1000,
-                _rspiPaperSize,
-                _rspiOrientation,
-                _rspiMarginMm);
+                r.PaperSize,
+                r.Orientation,
+                r.MarginMm);
 
             var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
             await JS.InvokeVoidAsync("open", dataUrl, "_blank");
