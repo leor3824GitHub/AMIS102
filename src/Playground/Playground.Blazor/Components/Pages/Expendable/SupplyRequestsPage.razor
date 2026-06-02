@@ -194,7 +194,7 @@
                                  Clearable="true"
                                  Variant="Variant.Outlined"
                                  Placeholder="@(_warehouses.Count == 0 ? "No warehouses in inventory yet" : "Search by warehouse name...")"
-                                 HelperText="@(_warehouses.Count == 0 ? "Receive stock via Purchase Orders to populate warehouse list" : $"{_warehouses.Count} warehouse(s) available")" />
+                                 HelperText="@(_warehouses.Count == 0 ? "Accept supply deliveries (Procurement IAR) to populate the warehouse list" : $"{_warehouses.Count} warehouse(s) available")" />
 
                 <MudText Typo="Typo.subtitle2">Approve Quantities per Item</MudText>
                 <MudTable Items="@_approveDialog.Items" Dense="true" Elevation="0">

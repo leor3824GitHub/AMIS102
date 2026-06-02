@@ -92,9 +92,6 @@ internal static class ApiClientRegistration
         services.AddTransient<IProductsClient>(sp =>
             new ProductsClient(ResolveClient(sp)));
 
-        services.AddTransient<IPurchasesClient>(sp =>
-            new PurchasesClient(ResolveClient(sp)));
-
         services.AddTransient<ISupply_requestsClient>(sp =>
             new Supply_requestsClient(ResolveClient(sp)));
 
@@ -107,14 +104,8 @@ internal static class ApiClientRegistration
         services.AddTransient<IWarehouseClient>(sp =>
             new WarehouseClient(ResolveClient(sp)));
 
-        services.AddTransient<IInspectionsClient>(sp =>
-            new InspectionsClient(ResolveClient(sp)));
-
         services.AddTransient<IInventoryClient>(sp =>
             new InventoryClient(ResolveClient(sp)));
-
-        services.AddTransient<IRejectedClient>(sp =>
-            new RejectedClient(ResolveClient(sp)));
 
         services.AddTransient<IReportsClient>(sp =>
             new ReportsClient(ResolveClient(sp)));
