@@ -18,12 +18,12 @@ internal sealed class PhysicalCountPdfDocument(
     string                      orientation = "landscape",
     float                       marginMm    = 15f) : IDocument
 {
-    // Signatory entry that supplies the accountable officer for the accountability
-    // sentence. Matched by Label and excluded from the footer signature grid.
-    private const string AccountableOfficerLabel = "Accountable Officer";
-
-    private ReportSignatoryDto? AccountableOfficer => signatories
-        .FirstOrDefault(s => string.Equals(s.Label.Trim(), AccountableOfficerLabel, StringComparison.OrdinalIgnoreCase));
+    // The accountability sentence names the first PhysicalCount signatory (order 1).
+    // This person still appears in the footer committee grid as well.
+    private ReportSignatoryDto? AccountabilityOfficer => signatories
+        .Where(s => s.IsActive)
+        .OrderBy(s => s.SortOrder)
+        .FirstOrDefault();
 
     public DocumentMetadata GetMetadata() => new()
     {
@@ -48,6 +48,7 @@ internal sealed class PhysicalCountPdfDocument(
         container.Column(col =>
         {
             col.Item().AlignCenter().Text("Republic of the Philippines").FontSize(9);
+            col.Item().AlignCenter().Text("NATIONAL FOOD AUTHORITY").Bold().FontSize(10);
             if (org is not null)
             {
                 col.Item().AlignCenter().Text(org.Name).Bold().FontSize(11);
@@ -57,20 +58,7 @@ internal sealed class PhysicalCountPdfDocument(
             col.Item().PaddingTop(6).AlignCenter()
                 .Text("REPORT ON THE PHYSICAL COUNT OF INVENTORIES").Bold().FontSize(11);
             col.Item().AlignCenter().Text("(Type of Inventory Item: Office Supplies)").FontSize(9);
-            col.Item().PaddingTop(4).Table(table =>
-            {
-                table.ColumnsDefinition(c =>
-                {
-                    c.ConstantColumn(72);  // "Entity Name:" label
-                    c.RelativeColumn(3);   // entity value
-                    c.ConstantColumn(42);  // "As of:" label
-                    c.RelativeColumn(2);   // as-of date
-                });
-                table.Cell().Text("Entity Name:").Bold();
-                table.Cell().Text(org?.Name ?? string.Empty);
-                table.Cell().Text("As of:").Bold();
-                table.Cell().Text((asOfDate ?? DateTime.Today).ToString("MMMM d, yyyy"));
-            });
+            col.Item().AlignCenter().Text($"As of {(asOfDate ?? DateTime.Today):MMMM d, yyyy}").FontSize(9);
 
             ComposeAccountabilityStatement(col);
 
@@ -80,28 +68,23 @@ internal sealed class PhysicalCountPdfDocument(
 
     private void ComposeAccountabilityStatement(ColumnDescriptor col)
     {
-        var officer = AccountableOfficer;
-        if (officer is null || string.IsNullOrWhiteSpace(officer.Name))
-            return;
+        var officer = AccountabilityOfficer;
+        var officerName  = string.IsNullOrWhiteSpace(officer?.Name)  ? "________________________" : officer!.Name.ToUpperInvariant();
+        var officerTitle = string.IsNullOrWhiteSpace(officer?.Title) ? "________________________" : officer!.Title;
+        var officeName   = string.IsNullOrWhiteSpace(org?.Name)      ? "________________________" : org!.Name;
+        var assumedDate  = assumedAccountabilityDate?.ToString("MMMM dd, yyyy") ?? "________________";
 
-        col.Item().PaddingTop(4).Text(text =>
+        col.Item().PaddingTop(10).PaddingBottom(6).Text(text =>
         {
-            text.DefaultTextStyle(x => x.FontSize(9));
+            text.DefaultTextStyle(x => x.FontSize(9).LineHeight(1.3f));
             text.Span("For which ");
-            text.Span(officer.Name.ToUpperInvariant()).Bold().Underline();
-            if (!string.IsNullOrWhiteSpace(officer.Title))
-            {
-                text.Span(", ");
-                text.Span(officer.Title).Bold().Underline();
-            }
+            text.Span(officerName).Bold().Underline();
+            text.Span(", ");
+            text.Span(officerTitle).Bold().Underline();
             text.Span(", of ");
-            text.Span(org?.Name ?? string.Empty).Bold().Underline();
-            text.Span(" is accountable");
-            if (assumedAccountabilityDate is { } assumed)
-            {
-                text.Span(", having assumed such accountability on ");
-                text.Span(assumed.ToString("MMMM dd, yyyy")).Bold().Underline();
-            }
+            text.Span(officeName).Bold().Underline();
+            text.Span(" is accountable, having assumed such accountability on ");
+            text.Span(assumedDate).Bold().Underline();
             text.Span(".");
         });
     }
@@ -157,9 +140,8 @@ internal sealed class PhysicalCountPdfDocument(
 
     private void ComposeFooter(IContainer container)
     {
-        var accountableOfficer = AccountableOfficer;
         var active = signatories
-            .Where(s => s.IsActive && s != accountableOfficer)
+            .Where(s => s.IsActive)
             .OrderBy(s => s.SortOrder)
             .ToList();
 

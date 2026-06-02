@@ -8,14 +8,16 @@
 @inject IJSRuntime JS
 @inject IDialogService DialogService
 @inject IQuestPdfSetupPreferences QuestPdfSetupPrefs
+@inject IAssumedAccountabilityDatePreference AssumedDatePref
 
 <div>
     <MudPaper Class="pa-4 mb-4" Elevation="1">
         <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
             <MudDatePicker @bind-Date="_asOfDate" Label="As of Date" Variant="Variant.Outlined" DateFormat="yyyy-MM-dd"
                            Clearable="false" Margin="Margin.Dense" Style="width:220px;" Class="mt-0 mb-0" />
-            <MudDatePicker @bind-Date="_assumedDate" Label="Date Assumed Accountability" Variant="Variant.Outlined"
-                           DateFormat="yyyy-MM-dd" Clearable="true" Margin="Margin.Dense" Style="width:260px;" Class="mt-0 mb-0" />
+            <MudDatePicker Date="_assumedDate" DateChanged="OnAssumedDateChanged" Label="Date Assumed Accountability"
+                           Variant="Variant.Outlined" DateFormat="yyyy-MM-dd" Clearable="true" Margin="Margin.Dense"
+                           Style="width:260px;" Class="mt-0 mb-0" />
             <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="LoadReportAsync"
                        StartIcon="@Icons.Material.Filled.Refresh" Disabled="_loading">
                 Generate Report
@@ -88,6 +90,25 @@ else
     protected override async Task OnInitializedAsync()
     {
         await LoadReportAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        // ProtectedLocalStorage relies on JS interop — only available after first render.
+        var saved = await AssumedDatePref.GetAsync();
+        if (saved is not null && _assumedDate != saved)
+        {
+            _assumedDate = saved;
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnAssumedDateChanged(DateTime? date)
+    {
+        _assumedDate = date;
+        await AssumedDatePref.SaveAsync(date);
     }
 
     private async Task LoadReportAsync()

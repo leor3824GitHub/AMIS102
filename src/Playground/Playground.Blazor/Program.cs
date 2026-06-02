@@ -73,6 +73,9 @@ builder.Services.AddScoped<IFastReportSetupPreferences, FastReportSetupPreferenc
 // Remembers each report's last-used QuestPDF Page Setup (paper, orientation, margin) per report
 builder.Services.AddScoped<IQuestPdfSetupPreferences, QuestPdfSetupPreferences>();
 
+// Remembers the user's last-used "Date Assumed Accountability" for the Physical Count report
+builder.Services.AddScoped<IAssumedAccountabilityDatePreference, AssumedAccountabilityDatePreference>();
+
 // Auth state notifier for session expiration (Blazor-compatible)
 builder.Services.AddScoped<IAuthStateNotifier, AuthStateNotifier>();
 

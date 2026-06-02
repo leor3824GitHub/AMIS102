@@ -110,12 +110,6 @@ public sealed record GetMotorVehicleInventoryQuery : IQuery<List<MotorVehicleInv
     public string? Status { get; init; }  // optional filter: Active, Retired, etc.
 }
 
-public sealed class GenerateVehicleInventoryPdfCommand : ICommand<byte[]>
-{
-    public string? Status { get; set; }
-    public DateTime? AsOfDate { get; set; }
-}
-
 public record VehicleDailyUsageDto(
     Guid Id,
     Guid VehicleId,
