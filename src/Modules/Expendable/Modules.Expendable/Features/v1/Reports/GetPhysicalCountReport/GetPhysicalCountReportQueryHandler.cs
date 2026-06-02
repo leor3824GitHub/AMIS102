@@ -6,8 +6,10 @@ using Microsoft.EntityFrameworkCore;
 namespace AMIS.Modules.Expendable.Features.v1.Reports.GetPhysicalCountReport;
 
 public sealed class GetPhysicalCountReportQueryHandler
-    : IQueryHandler<GetPhysicalCountReportQuery, List<PhysicalCountItemDto>>
+    : IQueryHandler<GetPhysicalCountReportQuery, List<PhysicalCountGroupDto>>
 {
+    private const string UnclassifiedArticle = "(Unclassified)";
+
     private readonly ExpendableDbContext _dbContext;
 
     public GetPhysicalCountReportQueryHandler(ExpendableDbContext dbContext)
@@ -15,14 +17,14 @@ public sealed class GetPhysicalCountReportQueryHandler
         _dbContext = dbContext;
     }
 
-    public async ValueTask<List<PhysicalCountItemDto>> Handle(
+    public async ValueTask<List<PhysicalCountGroupDto>> Handle(
         GetPhysicalCountReportQuery query, CancellationToken cancellationToken)
     {
         var products = await _dbContext.Products
             .AsNoTracking()
             .Where(p => !p.IsDeleted)
             .OrderBy(p => p.StockNo)
-            .Select(p => new { p.Id, p.StockNo, p.Name, p.UnitOfMeasure, p.UnitPrice })
+            .Select(p => new { p.Id, p.StockNo, p.Name, p.UnitOfMeasure, p.UnitPrice, p.Article })
             .ToListAsync(cancellationToken);
 
         var inventoryQuery = _dbContext.ProductInventories.AsNoTracking();
@@ -53,7 +55,7 @@ public sealed class GetPhysicalCountReportQueryHandler
                         : 0m
                 });
 
-        var items = products.Select((p, index) =>
+        var items = products.Select(p =>
         {
             var inv = inventoryByProduct.GetValueOrDefault(p.Id);
             var unitValue = inv?.AverageUnitPrice > 0 ? inv.AverageUnitPrice : 0m;
@@ -63,21 +65,32 @@ public sealed class GetPhysicalCountReportQueryHandler
             var shortageQty = balancePerCard - onHandPerCount;
             var shortageValue = shortageQty != 0 ? Math.Round(Math.Abs(shortageQty) * unitValue, 2) : 0m;
 
-            return new PhysicalCountItemDto(
-                index + 1,
-                p.Name,
-                p.StockNo,
-                p.UnitOfMeasure,
-                unitValue,
-                balancePerCard,
-                onHandPerCount,
-                shortageQty,
-                shortageValue,
-                null
-            );
-        }).ToList();
+            var article = string.IsNullOrWhiteSpace(p.Article) ? UnclassifiedArticle : p.Article;
 
-        return items;
+            return new
+            {
+                Article = article,
+                Item = new PhysicalCountItemDto(
+                    p.Name,
+                    p.StockNo,
+                    p.UnitOfMeasure,
+                    unitValue,
+                    balancePerCard,
+                    onHandPerCount,
+                    shortageQty,
+                    shortageValue,
+                    null)
+            };
+        });
+
+        // Group by Article; classified articles alphabetically first, "(Unclassified)" last.
+        // Items keep their StockNo ordering within each group (GroupBy is stable).
+        return items
+            .GroupBy(x => x.Article)
+            .Select(g => new PhysicalCountGroupDto(g.Key, g.Select(x => x.Item).ToList()))
+            .OrderBy(g => g.Article == UnclassifiedArticle)
+            .ThenBy(g => g.Article, StringComparer.OrdinalIgnoreCase)
+            .ToList();
     }
 }
 

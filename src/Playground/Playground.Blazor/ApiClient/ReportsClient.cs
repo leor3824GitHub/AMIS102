@@ -29,7 +29,7 @@ public interface IReportsClient
         int? pageSize = null,
         CancellationToken cancellationToken = default);
 
-    Task<List<PhysicalCountItemDto>> GetPhysicalCountReportAsync(
+    Task<List<PhysicalCountGroupDto>> GetPhysicalCountReportAsync(
         Guid? warehouseLocationId = null,
         CancellationToken cancellationToken = default);
 
@@ -135,7 +135,7 @@ public sealed class ReportsClient : IReportsClient
             $"api/v1/expendable/reports/stock-card/{productId}", cancellationToken);
     }
 
-    public async Task<List<PhysicalCountItemDto>> GetPhysicalCountReportAsync(
+    public async Task<List<PhysicalCountGroupDto>> GetPhysicalCountReportAsync(
         Guid? warehouseLocationId = null,
         CancellationToken cancellationToken = default)
     {
@@ -144,7 +144,7 @@ public sealed class ReportsClient : IReportsClient
             ["warehouseLocationId"] = warehouseLocationId?.ToString()
         });
 
-        var response = await _httpClient.GetFromJsonAsync<List<PhysicalCountItemDto>>(
+        var response = await _httpClient.GetFromJsonAsync<List<PhysicalCountGroupDto>>(
             url, cancellationToken);
 
         return response ?? [];

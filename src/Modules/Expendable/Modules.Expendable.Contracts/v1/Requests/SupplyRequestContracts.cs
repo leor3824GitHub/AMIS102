@@ -171,14 +171,19 @@ public record IssuanceItemDto(
 
 // ============= PHYSICAL COUNT REPORT =============
 
-/// <summary>Physical count report — all products with system balance vs on-hand count</summary>
-public sealed class GetPhysicalCountReportQuery : IQuery<List<PhysicalCountItemDto>>
+/// <summary>Physical count report — all products with system balance vs on-hand count, grouped by Article</summary>
+public sealed class GetPhysicalCountReportQuery : IQuery<List<PhysicalCountGroupDto>>
 {
     public Guid? WarehouseLocationId { get; set; }
 }
 
+/// <summary>Physical count items grouped by their inventory Article (classification).</summary>
+public record PhysicalCountGroupDto(
+    string Article,
+    List<PhysicalCountItemDto> Items
+);
+
 public record PhysicalCountItemDto(
-    int ArticleNumber,
     string Description,
     string StockNo,
     string UnitOfMeasure,

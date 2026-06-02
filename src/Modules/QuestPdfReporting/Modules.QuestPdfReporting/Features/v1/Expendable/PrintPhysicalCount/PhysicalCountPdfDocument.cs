@@ -9,7 +9,7 @@ using QuestPDF.Infrastructure;
 namespace AMIS.Modules.QuestPdfReporting.Features.v1.Expendable.PrintPhysicalCount;
 
 internal sealed class PhysicalCountPdfDocument(
-    List<PhysicalCountItemDto>  items,
+    List<PhysicalCountGroupDto> groups,
     OrganizationProfileDto?     org,
     List<ReportSignatoryDto>    signatories,
     DateTime?                   asOfDate,
@@ -108,11 +108,13 @@ internal sealed class PhysicalCountPdfDocument(
 
     private void ComposeBody(IContainer container)
     {
+        const int ColumnCount = 9;
+
         container.PaddingTop(4).Table(table =>
         {
             table.ColumnsDefinition(c =>
             {
-                c.ConstantColumn(28); c.RelativeColumn(5); c.RelativeColumn(2); c.RelativeColumn(2);
+                c.RelativeColumn(5); c.RelativeColumn(2); c.RelativeColumn(2);
                 c.RelativeColumn(2); c.ConstantColumn(60); c.ConstantColumn(60);
                 c.ConstantColumn(50); c.RelativeColumn(2); c.RelativeColumn(2);
             });
@@ -120,7 +122,6 @@ internal sealed class PhysicalCountPdfDocument(
             var style = TextStyle.Default.Bold().FontSize(8);
             table.Header(h =>
             {
-                h.Cell().Border(1).Padding(2).AlignCenter().Text("Article").Style(style);
                 h.Cell().Border(1).Padding(2).AlignCenter().Text("Description").Style(style);
                 h.Cell().Border(1).Padding(2).AlignCenter().Text("Stock No.").Style(style);
                 h.Cell().Border(1).Padding(2).AlignCenter().Text("Unit of Measure").Style(style);
@@ -132,18 +133,24 @@ internal sealed class PhysicalCountPdfDocument(
                 h.Cell().Border(1).Padding(2).AlignCenter().Text("Remarks").Style(style);
             });
 
-            foreach (var item in items)
+            foreach (var group in groups)
             {
-                table.Cell().Border(0.5f).Padding(2).AlignCenter().Text(item.ArticleNumber.ToString()).FontSize(8);
-                table.Cell().Border(0.5f).Padding(2).Text(item.Description).FontSize(8);
-                table.Cell().Border(0.5f).Padding(2).AlignCenter().Text(item.StockNo).FontSize(8);
-                table.Cell().Border(0.5f).Padding(2).AlignCenter().Text(item.UnitOfMeasure).FontSize(8);
-                table.Cell().Border(0.5f).Padding(2).AlignRight().Text(item.UnitValue.ToString("N2")).FontSize(8);
-                table.Cell().Border(0.5f).Padding(2).AlignCenter().Text(item.BalancePerCard.ToString()).FontSize(8);
-                table.Cell().Border(0.5f).Padding(2).AlignCenter().Text(item.OnHandPerCount.ToString()).FontSize(8);
-                table.Cell().Border(0.5f).Padding(2).AlignCenter().Text(item.ShortageQuantity.ToString()).FontSize(8);
-                table.Cell().Border(0.5f).Padding(2).AlignRight().Text(item.ShortageValue.ToString("N2")).FontSize(8);
-                table.Cell().Border(0.5f).Padding(2).Text(item.Remarks ?? string.Empty).FontSize(8);
+                // Article group header band spanning the full table width.
+                table.Cell().ColumnSpan(ColumnCount).Border(0.5f).Background(Colors.Grey.Lighten3)
+                    .Padding(2).Text(group.Article).Style(style);
+
+                foreach (var item in group.Items)
+                {
+                    table.Cell().Border(0.5f).Padding(2).Text(item.Description).FontSize(8);
+                    table.Cell().Border(0.5f).Padding(2).AlignCenter().Text(item.StockNo).FontSize(8);
+                    table.Cell().Border(0.5f).Padding(2).AlignCenter().Text(item.UnitOfMeasure).FontSize(8);
+                    table.Cell().Border(0.5f).Padding(2).AlignRight().Text(item.UnitValue.ToString("N2")).FontSize(8);
+                    table.Cell().Border(0.5f).Padding(2).AlignCenter().Text(item.BalancePerCard.ToString()).FontSize(8);
+                    table.Cell().Border(0.5f).Padding(2).AlignCenter().Text(item.OnHandPerCount.ToString()).FontSize(8);
+                    table.Cell().Border(0.5f).Padding(2).AlignCenter().Text(item.ShortageQuantity.ToString()).FontSize(8);
+                    table.Cell().Border(0.5f).Padding(2).AlignRight().Text(item.ShortageValue.ToString("N2")).FontSize(8);
+                    table.Cell().Border(0.5f).Padding(2).Text(item.Remarks ?? string.Empty).FontSize(8);
+                }
             }
         });
     }

@@ -28,7 +28,7 @@ public sealed class SearchProductsQueryHandler : IQueryHandler<SearchProductsQue
             productQuery = productQuery.Where(p =>
                 EF.Functions.ILike(p.Name, pattern) ||
                 EF.Functions.ILike(p.StockNo, pattern) ||
-                (p.Article != null && EF.Functions.ILike(p.Article, pattern)) ||
+                EF.Functions.ILike(p.Article, pattern) ||
                 EF.Functions.ILike(p.Description, pattern));
         }
 

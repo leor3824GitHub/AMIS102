@@ -21,11 +21,11 @@
                 Generate Report
             </MudButton>
             <MudButton Variant="Variant.Outlined" Color="Color.Default" OnClick="ExportCsvAsync"
-                       StartIcon="@Icons.Material.Filled.Download" Disabled="_loading || _items.Count == 0">
+                       StartIcon="@Icons.Material.Filled.Download" Disabled="_loading || _groups.Count == 0">
                 Export CSV
             </MudButton>
             <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="DownloadQuestPdfAsync"
-                       StartIcon="@Icons.Material.Filled.PictureAsPdf" Disabled="_loading || _items.Count == 0">
+                       StartIcon="@Icons.Material.Filled.PictureAsPdf" Disabled="_loading || _groups.Count == 0">
                 Download PDF
             </MudButton>
         </MudStack>
@@ -37,34 +37,50 @@
     }
 </div>
 
-<MudDataGrid T="PhysicalCountItemDto" Items="_items" Dense="true" Hover="true" Striped="true" Bordered="true"
-             Loading="_loading" Filterable="true" SortMode="SortMode.Multiple" Elevation="1">
-    <Columns>
-        <PropertyColumn Property="x => x.ArticleNumber" Title="Article" CellStyle="text-align:center" />
-        <PropertyColumn Property="x => x.Description" Title="Description" />
-        <PropertyColumn Property="x => x.StockNo" Title="Stock No." CellStyle="text-align:center" />
-        <PropertyColumn Property="x => x.UnitOfMeasure" Title="Unit of Measure" CellStyle="text-align:center" />
-        <PropertyColumn Property="x => x.UnitValue" Title="Unit Value" Format="N2" CellStyle="text-align:right" />
-        <PropertyColumn Property="x => x.BalancePerCard" Title="Balance Per Card (Qty)" CellStyle="text-align:right" />
-        <PropertyColumn Property="x => x.OnHandPerCount" Title="On Hand Per Count (Qty)" CellStyle="text-align:right" />
-        <PropertyColumn Property="x => x.ShortageQuantity" Title="Shortage Qty" CellStyle="text-align:right" />
-        <PropertyColumn Property="x => x.ShortageValue" Title="Shortage Value" Format="N2"
-                        CellStyle="text-align:right" />
-        <PropertyColumn Property="x => x.Remarks" Title="Remarks" />
-    </Columns>
-    <PagerContent>
-        <MudDataGridPager T="PhysicalCountItemDto" />
-    </PagerContent>
-    <NoRecordsContent>
-        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="pa-4">
+@if (_groups.Count == 0)
+{
+    <MudPaper Class="pa-4" Elevation="1">
+        <MudText Typo="Typo.body2" Color="Color.Secondary">
             No products found. Click Generate Report to load data.
         </MudText>
-    </NoRecordsContent>
-</MudDataGrid>
+    </MudPaper>
+}
+else
+{
+    @foreach (var group in _groups)
+    {
+        <MudText Typo="Typo.subtitle1" Class="mt-4 mb-1"><b>@group.Article</b></MudText>
+        <MudTable T="PhysicalCountItemDto" Items="group.Items" Dense="true" Hover="true"
+                  Striped="true" Bordered="true" Elevation="1">
+            <HeaderContent>
+                <MudTh>Description</MudTh>
+                <MudTh Style="text-align:center">Stock No.</MudTh>
+                <MudTh Style="text-align:center">Unit of Measure</MudTh>
+                <MudTh Style="text-align:right">Unit Value</MudTh>
+                <MudTh Style="text-align:right">Balance Per Card (Qty)</MudTh>
+                <MudTh Style="text-align:right">On Hand Per Count (Qty)</MudTh>
+                <MudTh Style="text-align:right">Shortage Qty</MudTh>
+                <MudTh Style="text-align:right">Shortage Value</MudTh>
+                <MudTh>Remarks</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Description">@context.Description</MudTd>
+                <MudTd DataLabel="Stock No." Style="text-align:center">@context.StockNo</MudTd>
+                <MudTd DataLabel="Unit of Measure" Style="text-align:center">@context.UnitOfMeasure</MudTd>
+                <MudTd DataLabel="Unit Value" Style="text-align:right">@context.UnitValue.ToString("N2")</MudTd>
+                <MudTd DataLabel="Balance Per Card (Qty)" Style="text-align:right">@context.BalancePerCard</MudTd>
+                <MudTd DataLabel="On Hand Per Count (Qty)" Style="text-align:right">@context.OnHandPerCount</MudTd>
+                <MudTd DataLabel="Shortage Qty" Style="text-align:right">@context.ShortageQuantity</MudTd>
+                <MudTd DataLabel="Shortage Value" Style="text-align:right">@context.ShortageValue.ToString("N2")</MudTd>
+                <MudTd DataLabel="Remarks">@context.Remarks</MudTd>
+            </RowTemplate>
+        </MudTable>
+    }
+}
 
 @code {
     private bool _loading;
-    private List<PhysicalCountItemDto> _items = [];
+    private List<PhysicalCountGroupDto> _groups = [];
     private DateTime? _asOfDate = DateTime.Today;
     private DateTime? _assumedDate;
     private const string ReportKey = "quest-physical-count";
@@ -77,10 +93,10 @@
     private async Task LoadReportAsync()
     {
         _loading = true;
-        _items = [];
+        _groups = [];
         try
         {
-            _items = await ReportsClient.GetPhysicalCountReportAsync();
+            _groups = await ReportsClient.GetPhysicalCountReportAsync();
         }
         catch (Exception ex)
         {
@@ -94,24 +110,27 @@
 
     private async Task ExportCsvAsync()
     {
-        if (_items.Count == 0) return;
+        if (_groups.Count == 0) return;
 
         var sb = new StringBuilder();
         sb.AppendLine("Article,Description,Stock No.,Unit of Measure,Unit Value,Balance Per Card (Qty),On Hand Per Count (Qty),Shortage Qty,Shortage Value,Remarks");
 
-        foreach (var item in _items)
+        foreach (var group in _groups)
         {
-            sb.AppendLine(string.Join(",",
-                item.ArticleNumber,
-                Quote(item.Description),
-                Quote(item.StockNo),
-                Quote(item.UnitOfMeasure),
-                item.UnitValue.ToString("N2"),
-                item.BalancePerCard > 0 ? item.BalancePerCard.ToString() : "",
-                item.OnHandPerCount > 0 ? item.OnHandPerCount.ToString() : "",
-                item.ShortageQuantity != 0 ? item.ShortageQuantity.ToString() : "",
-                item.ShortageValue > 0 ? item.ShortageValue.ToString("N2") : "",
-                Quote(item.Remarks ?? "")));
+            foreach (var item in group.Items)
+            {
+                sb.AppendLine(string.Join(",",
+                    Quote(group.Article),
+                    Quote(item.Description),
+                    Quote(item.StockNo),
+                    Quote(item.UnitOfMeasure),
+                    item.UnitValue.ToString("N2"),
+                    item.BalancePerCard > 0 ? item.BalancePerCard.ToString() : "",
+                    item.OnHandPerCount > 0 ? item.OnHandPerCount.ToString() : "",
+                    item.ShortageQuantity != 0 ? item.ShortageQuantity.ToString() : "",
+                    item.ShortageValue > 0 ? item.ShortageValue.ToString("N2") : "",
+                    Quote(item.Remarks ?? "")));
+            }
         }
 
         var dataUrl = $"data:text/csv;base64,{Convert.ToBase64String(Encoding.UTF8.GetBytes(sb.ToString()))}";
@@ -121,7 +140,7 @@
 
     private async Task DownloadQuestPdfAsync()
     {
-        if (_items.Count == 0) return;
+        if (_groups.Count == 0) return;
 
         var r = await QuestPdfSetupPrefs.ShowSetupDialogAsync(DialogService, ReportKey, defaultMarginMm: 15d);
         if (r is null) return;

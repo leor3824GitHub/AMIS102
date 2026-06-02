@@ -13,7 +13,7 @@ public sealed class PhysicalCountPdfDocumentPreviewTests
     public void Show_PhysicalCount_InCompanion()
     {
         var doc = new PhysicalCountPdfDocument(
-            items:       SampleItems(),
+            groups:      SampleGroups(),
             org:         SampleOrg(),
             signatories: SampleSignatories(),
             asOfDate:    new DateTime(2026, 1, 31, 0, 0, 0, DateTimeKind.Utc));
@@ -21,24 +21,36 @@ public sealed class PhysicalCountPdfDocumentPreviewTests
         doc.ShowInCompanion();
     }
 
-    private static List<PhysicalCountItemDto> SampleItems() =>
+    private static List<PhysicalCountGroupDto> SampleGroups() =>
     [
-        new(ArticleNumber: 1, Description: "Bond Paper, A4, 80gsm",
-            StockNo: "OS-001", UnitOfMeasure: "Ream", UnitValue: 220.50m,
-            BalancePerCard: 375, OnHandPerCount: 372,
-            ShortageQuantity: 3, ShortageValue: 661.50m, Remarks: "3 reams missing"),
-        new(ArticleNumber: 2, Description: "Ballpen, Black, 0.5mm",
-            StockNo: "OS-018", UnitOfMeasure: "Piece", UnitValue: 8.75m,
-            BalancePerCard: 1200, OnHandPerCount: 1200,
-            ShortageQuantity: 0, ShortageValue: 0m, Remarks: null),
-        new(ArticleNumber: 3, Description: "Stapler, Heavy Duty",
-            StockNo: "OS-042", UnitOfMeasure: "Piece", UnitValue: 285m,
-            BalancePerCard: 18, OnHandPerCount: 17,
-            ShortageQuantity: 1, ShortageValue: 285m, Remarks: "Damaged; for disposal"),
-        new(ArticleNumber: 4, Description: "Toner Cartridge, HP 12A",
-            StockNo: "OS-095", UnitOfMeasure: "Piece", UnitValue: 3_250m,
-            BalancePerCard: 6, OnHandPerCount: 6,
-            ShortageQuantity: 0, ShortageValue: 0m, Remarks: null)
+        new("Paper",
+        [
+            new(Description: "Bond Paper, A4, 80gsm",
+                StockNo: "OS-001", UnitOfMeasure: "Ream", UnitValue: 220.50m,
+                BalancePerCard: 375, OnHandPerCount: 372,
+                ShortageQuantity: 3, ShortageValue: 661.50m, Remarks: "3 reams missing")
+        ]),
+        new("Pen",
+        [
+            new(Description: "Ballpen, Black, 0.5mm",
+                StockNo: "OS-018", UnitOfMeasure: "Piece", UnitValue: 8.75m,
+                BalancePerCard: 1200, OnHandPerCount: 1200,
+                ShortageQuantity: 0, ShortageValue: 0m, Remarks: null)
+        ]),
+        new("Stapler",
+        [
+            new(Description: "Stapler, Heavy Duty",
+                StockNo: "OS-042", UnitOfMeasure: "Piece", UnitValue: 285m,
+                BalancePerCard: 18, OnHandPerCount: 17,
+                ShortageQuantity: 1, ShortageValue: 285m, Remarks: "Damaged; for disposal")
+        ]),
+        new("Toner",
+        [
+            new(Description: "Toner Cartridge, HP 12A",
+                StockNo: "OS-095", UnitOfMeasure: "Piece", UnitValue: 3_250m,
+                BalancePerCard: 6, OnHandPerCount: 6,
+                ShortageQuantity: 0, ShortageValue: 0m, Remarks: null)
+        ])
     ];
 
     private static OrganizationProfileDto SampleOrg() =>
