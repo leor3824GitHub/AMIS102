@@ -99,7 +99,7 @@ public sealed class PrintRISFastQueryHandler(IMediator mediator)
             var remarks = item.FulfilledQuantity > 0 ? "Served" : (item.Notes ?? string.Empty);
 
             table.Rows.Add(
-                product?.SKU ?? string.Empty,
+                product?.StockNo ?? string.Empty,
                 product?.UnitOfMeasure ?? string.Empty,
                 product?.Name ?? string.Empty,
                 item.RequestedQuantity.ToString(CultureInfo.InvariantCulture),

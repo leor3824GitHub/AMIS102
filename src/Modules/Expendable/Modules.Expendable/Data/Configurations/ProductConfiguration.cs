@@ -20,8 +20,12 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
             .HasMaxLength(50)
             .IsRequired();
 
-        builder.Property(p => p.SKU)
+        builder.Property(p => p.StockNo)
             .HasMaxLength(50)
+            .IsRequired();
+
+        builder.Property(p => p.Article)
+            .HasMaxLength(100)
             .IsRequired();
 
         builder.Property(p => p.Name)
@@ -55,7 +59,7 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
             .OnDelete(DeleteBehavior.Restrict);
 
         // Indexes
-        builder.HasIndex(p => new { p.TenantId, p.SKU })
+        builder.HasIndex(p => new { p.TenantId, p.StockNo })
             .IsUnique();
 
         builder.HasIndex(p => new { p.TenantId, p.Status });

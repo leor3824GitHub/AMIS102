@@ -63,7 +63,7 @@ public sealed class GetEmployeeIssuanceHistoryQueryHandler
         var products = await _dbContext.Products
             .AsNoTracking()
             .Where(p => productIds.Contains(p.Id))
-            .Select(p => new { p.Id, p.Name, p.SKU })
+            .Select(p => new { p.Id, p.Name, p.StockNo })
             .ToDictionaryAsync(p => p.Id, cancellationToken);
 
         var issuances = requests.Select(r =>
@@ -79,7 +79,7 @@ public sealed class GetEmployeeIssuanceHistoryQueryHandler
                     return new IssuanceItemDto(
                         i.ProductId,
                         product?.Name ?? "Unknown",
-                        product?.SKU ?? string.Empty,
+                        product?.StockNo ?? string.Empty,
                         i.FulfilledQuantity,
                         unitPrice,
                         i.FulfilledValue

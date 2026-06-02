@@ -21,7 +21,7 @@ public sealed class GetStockCardQueryHandler : IQueryHandler<GetStockCardQuery, 
         var product = await _dbContext.Products
             .AsNoTracking()
             .Where(p => p.Id == query.ProductId && !p.IsDeleted)
-            .Select(p => new { p.Id, p.SKU, p.Name, p.UnitOfMeasure })
+            .Select(p => new { p.Id, p.StockNo, p.Name, p.UnitOfMeasure })
             .FirstOrDefaultAsync(cancellationToken);
 
         if (product is null)
@@ -164,7 +164,7 @@ public sealed class GetStockCardQueryHandler : IQueryHandler<GetStockCardQuery, 
 
         return new StockCardDto(
             product.Id,
-            product.SKU,
+            product.StockNo,
             product.Name,
             product.UnitOfMeasure,
             lines

@@ -18705,9 +18705,13 @@ namespace AMIS.Playground.Blazor.ApiClient
     public partial class CreateProductCommand
     {
 
-        [System.Text.Json.Serialization.JsonPropertyName("sku")]
+        [System.Text.Json.Serialization.JsonPropertyName("stockNo")]
         [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public string Sku { get; set; }
+        public string StockNo { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("article")]
+        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+        public string Article { get; set; }
 
         [System.Text.Json.Serialization.JsonPropertyName("name")]
         [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -20338,9 +20342,13 @@ namespace AMIS.Playground.Blazor.ApiClient
         [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
         public System.Guid Id { get; set; }
 
-        [System.Text.Json.Serialization.JsonPropertyName("sku")]
+        [System.Text.Json.Serialization.JsonPropertyName("stockNo")]
         [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public string Sku { get; set; }
+        public string StockNo { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("article")]
+        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+        public string Article { get; set; }
 
         [System.Text.Json.Serialization.JsonPropertyName("name")]
         [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -22082,6 +22090,10 @@ namespace AMIS.Playground.Blazor.ApiClient
         [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
         [System.ComponentModel.DataAnnotations.RegularExpression(@"^-?(?:0|[1-9]\d*)$")]
         public int ReorderQuantity { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("article")]
+        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+        public string Article { get; set; }
 
         [System.Text.Json.Serialization.JsonPropertyName("variantName")]
         public string VariantName { get; set; }

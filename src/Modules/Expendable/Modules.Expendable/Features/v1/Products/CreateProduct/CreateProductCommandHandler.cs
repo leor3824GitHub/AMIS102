@@ -20,16 +20,16 @@ public sealed class CreateProductCommandHandler : ICommandHandler<CreateProductC
 
     public async ValueTask<ProductDto> Handle(CreateProductCommand command, CancellationToken cancellationToken)
     {
-        var skuInUse = await _dbContext.Products
+        var stockNoInUse = await _dbContext.Products
             .IgnoreQueryFilters()
-            .AnyAsync(p => p.TenantId == (_currentUser.GetTenant() ?? string.Empty) && p.SKU == command.SKU, cancellationToken)
+            .AnyAsync(p => p.TenantId == (_currentUser.GetTenant() ?? string.Empty) && p.StockNo == command.StockNo, cancellationToken)
             .ConfigureAwait(false);
 
-        if (skuInUse)
+        if (stockNoInUse)
         {
             throw new FluentValidation.ValidationException(
             [
-                new FluentValidation.Results.ValidationFailure(nameof(command.SKU), "A product with this SKU already exists.")
+                new FluentValidation.Results.ValidationFailure(nameof(command.StockNo), "A product with this Stock No. already exists.")
             ]);
         }
 
@@ -58,7 +58,7 @@ public sealed class CreateProductCommandHandler : ICommandHandler<CreateProductC
             }
 
             product = parent.CreateVariant(
-                command.SKU,
+                command.StockNo,
                 command.VariantName!,
                 command.UnitPrice,
                 command.UnitOfMeasure,
@@ -71,7 +71,8 @@ public sealed class CreateProductCommandHandler : ICommandHandler<CreateProductC
         {
             product = Product.Create(
                 _currentUser.GetTenant() ?? throw new InvalidOperationException("Tenant ID required"),
-                command.SKU,
+                command.StockNo,
+                command.Article,
                 command.Name,
                 command.Description,
                 command.UnitPrice,
@@ -91,12 +92,12 @@ public sealed class CreateProductCommandHandler : ICommandHandler<CreateProductC
         {
             await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
-        catch (DbUpdateException ex) when ((ex.InnerException?.Message?.Contains("IX_Products_TenantId_SKU", StringComparison.OrdinalIgnoreCase) ?? false)
+        catch (DbUpdateException ex) when ((ex.InnerException?.Message?.Contains("IX_Products_TenantId_StockNo", StringComparison.OrdinalIgnoreCase) ?? false)
             || (ex.InnerException?.Message?.Contains("duplicate key", StringComparison.OrdinalIgnoreCase) ?? false))
         {
             throw new FluentValidation.ValidationException(
             [
-                new FluentValidation.Results.ValidationFailure(nameof(command.SKU), "A product with this SKU already exists.")
+                new FluentValidation.Results.ValidationFailure(nameof(command.StockNo), "A product with this Stock No. already exists.")
             ]);
         }
 

@@ -27,6 +27,7 @@ public sealed class UpdateProductCommandHandler : ICommandHandler<UpdateProductC
         product.Update(
             command.Name,
             command.Description,
+            command.Article,
             command.UnitPrice,
             command.MinimumStockLevel,
             command.ReorderQuantity,

@@ -8,7 +8,8 @@ internal static class ProductMapper
     internal static ProductDto ToProductDto(this Product product) =>
         new(
             product.Id,
-            product.SKU,
+            product.StockNo,
+            product.Article,
             product.Name,
             product.Description,
             product.UnitPrice,
@@ -29,7 +30,8 @@ internal static class ProductMapper
     internal static ProductCatalogCardDto ToCatalogCardDto(this Product product, int quantityAvailable) =>
         new(
             product.Id,
-            product.SKU,
+            product.StockNo,
+            product.Article,
             product.Name,
             product.UnitPrice,
             product.UnitOfMeasure,

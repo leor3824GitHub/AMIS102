@@ -21,9 +21,13 @@ public sealed class CreateProductCommandValidator : AbstractValidator<CreateProd
 
     public CreateProductCommandValidator()
     {
-        RuleFor(x => x.SKU)
-            .NotEmpty().WithMessage("SKU is required")
-            .MaximumLength(50).WithMessage("SKU must not exceed 50 characters");
+        RuleFor(x => x.StockNo)
+            .NotEmpty().WithMessage("Stock No. is required")
+            .MaximumLength(50).WithMessage("Stock No. must not exceed 50 characters");
+
+        RuleFor(x => x.Article)
+            .NotEmpty().WithMessage("Article is required")
+            .MaximumLength(100).WithMessage("Article must not exceed 100 characters");
 
         RuleFor(x => x.Name)
             .NotEmpty().WithMessage("Product name is required")

@@ -36,7 +36,8 @@ public sealed class CreateProductCommandHandlerTests
         // Arrange
         var validator = new CreateProductCommandValidator();
         var command = new CreateProductCommand(
-            SKU: "TEST-SKU-001",
+            StockNo: "TEST-SKU-001",
+            Article: "Test Article",
             Name: "Test Product",
             Description: "Test Description",
             UnitPrice: 99.99m,
@@ -61,7 +62,7 @@ public sealed class CreateProductCommandHandlerTests
         // Arrange
         var validator = new CreateProductCommandValidator();
         var command = _fixture.Build<CreateProductCommand>()
-            .With(c => c.SKU, string.Empty)
+            .With(c => c.StockNo, string.Empty)
             .With(c => c.Name, "Test Product")
             .With(c => c.Description, "Test Description")
             .With(c => c.UnitPrice, 99.99m)
@@ -75,7 +76,7 @@ public sealed class CreateProductCommandHandlerTests
 
         // Assert
         result.IsValid.ShouldBeFalse();
-        result.Errors.ShouldContain(e => e.PropertyName == nameof(command.SKU));
+        result.Errors.ShouldContain(e => e.PropertyName == nameof(command.StockNo));
     }
 
     /// <summary>
@@ -87,7 +88,7 @@ public sealed class CreateProductCommandHandlerTests
         // Arrange
         var validator = new CreateProductCommandValidator();
         var command = _fixture.Build<CreateProductCommand>()
-            .With(c => c.SKU, new string('A', 51)) // Max length is 50
+            .With(c => c.StockNo, new string('A', 51)) // Max length is 50
             .With(c => c.Name, "Test Product")
             .With(c => c.Description, "Test Description")
             .With(c => c.UnitPrice, 99.99m)
@@ -101,7 +102,7 @@ public sealed class CreateProductCommandHandlerTests
 
         // Assert
         result.IsValid.ShouldBeFalse();
-        result.Errors.ShouldContain(e => e.PropertyName == nameof(command.SKU));
+        result.Errors.ShouldContain(e => e.PropertyName == nameof(command.StockNo));
     }
 
     /// <summary>
@@ -113,7 +114,7 @@ public sealed class CreateProductCommandHandlerTests
         // Arrange
         var validator = new CreateProductCommandValidator();
         var command = _fixture.Build<CreateProductCommand>()
-            .With(c => c.SKU, "TEST-SKU")
+            .With(c => c.StockNo, "TEST-SKU")
             .With(c => c.Name, string.Empty)
             .With(c => c.Description, "Test Description")
             .With(c => c.UnitPrice, 99.99m)
@@ -131,6 +132,33 @@ public sealed class CreateProductCommandHandlerTests
     }
 
     /// <summary>
+    /// Test: CreateProduct with missing article should fail validation
+    /// </summary>
+    [Fact]
+    public void CreateProductCommandValidator_EmptyArticle_ShouldFail()
+    {
+        // Arrange
+        var validator = new CreateProductCommandValidator();
+        var command = _fixture.Build<CreateProductCommand>()
+            .With(c => c.StockNo, "TEST-SKU")
+            .With(c => c.Article, string.Empty)
+            .With(c => c.Name, "Test Product")
+            .With(c => c.Description, "Test Description")
+            .With(c => c.UnitPrice, 99.99m)
+            .With(c => c.UnitOfMeasure, "Each")
+            .With(c => c.MinimumStockLevel, 10)
+            .With(c => c.ReorderQuantity, 50)
+            .Create();
+
+        // Act
+        var result = validator.Validate(command);
+
+        // Assert
+        result.IsValid.ShouldBeFalse();
+        result.Errors.ShouldContain(e => e.PropertyName == nameof(command.Article));
+    }
+
+    /// <summary>
     /// Test: CreateProduct with negative unit price should fail validation
     /// </summary>
     [Fact]
@@ -139,7 +167,7 @@ public sealed class CreateProductCommandHandlerTests
         // Arrange
         var validator = new CreateProductCommandValidator();
         var command = _fixture.Build<CreateProductCommand>()
-            .With(c => c.SKU, "TEST-SKU")
+            .With(c => c.StockNo, "TEST-SKU")
             .With(c => c.Name, "Test Product")
             .With(c => c.Description, "Test Description")
             .With(c => c.UnitPrice, -10m) // Negative price
@@ -165,7 +193,7 @@ public sealed class CreateProductCommandHandlerTests
         // Arrange
         var validator = new CreateProductCommandValidator();
         var command = _fixture.Build<CreateProductCommand>()
-            .With(c => c.SKU, "TEST-SKU")
+            .With(c => c.StockNo, "TEST-SKU")
             .With(c => c.Name, "Test Product")
             .With(c => c.Description, "Test Description")
             .With(c => c.UnitPrice, 0m) // Zero price
@@ -191,7 +219,7 @@ public sealed class CreateProductCommandHandlerTests
         // Arrange
         var validator = new CreateProductCommandValidator();
         var command = _fixture.Build<CreateProductCommand>()
-            .With(c => c.SKU, "TEST-SKU")
+            .With(c => c.StockNo, "TEST-SKU")
             .With(c => c.Name, "Test Product")
             .With(c => c.Description, "Test Description")
             .With(c => c.UnitPrice, 99.99m)
@@ -217,7 +245,7 @@ public sealed class CreateProductCommandHandlerTests
         // Arrange
         var validator = new CreateProductCommandValidator();
         var command = _fixture.Build<CreateProductCommand>()
-            .With(c => c.SKU, "TEST-SKU")
+            .With(c => c.StockNo, "TEST-SKU")
             .With(c => c.Name, "Test Product")
             .With(c => c.Description, "Test Description")
             .With(c => c.UnitPrice, 99.99m)
@@ -243,7 +271,7 @@ public sealed class CreateProductCommandHandlerTests
         // Arrange
         var validator = new CreateProductCommandValidator();
         var command = _fixture.Build<CreateProductCommand>()
-            .With(c => c.SKU, "TEST-SKU")
+            .With(c => c.StockNo, "TEST-SKU")
             .With(c => c.Name, "Test Product")
             .With(c => c.Description, "Test Description")
             .With(c => c.UnitPrice, 99.99m)
@@ -269,7 +297,7 @@ public sealed class CreateProductCommandHandlerTests
         // Arrange
         var validator = new CreateProductCommandValidator();
         var command = _fixture.Build<CreateProductCommand>()
-            .With(c => c.SKU, "VARIANT-SKU-001")
+            .With(c => c.StockNo, "VARIANT-SKU-001")
             .With(c => c.Name, "Test Variant Product")
             .With(c => c.Description, "Test Description")
             .With(c => c.UnitPrice, 99.99m)
@@ -297,7 +325,8 @@ public sealed class CreateProductCommandHandlerTests
         // Arrange
         var validator = new CreateProductCommandValidator();
         var command = new CreateProductCommand(
-            SKU: "VARIANT-SKU-001",
+            StockNo: "VARIANT-SKU-001",
+            Article: "Test Article",
             Name: "Test Variant Product",
             Description: "Test Description",
             UnitPrice: 99.99m,
@@ -324,7 +353,8 @@ public sealed class CreateProductCommandHandlerTests
         // Arrange
         var validator = new CreateProductCommandValidator();
         var command = new CreateProductCommand(
-            SKU: "BASE-SKU-001",
+            StockNo: "BASE-SKU-001",
+            Article: "Test Article",
             Name: "Base Product",
             Description: "Test Description",
             UnitPrice: 99.99m,

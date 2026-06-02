@@ -21,8 +21,8 @@ public sealed class GetPhysicalCountReportQueryHandler
         var products = await _dbContext.Products
             .AsNoTracking()
             .Where(p => !p.IsDeleted)
-            .OrderBy(p => p.SKU)
-            .Select(p => new { p.Id, p.SKU, p.Name, p.UnitOfMeasure, p.UnitPrice })
+            .OrderBy(p => p.StockNo)
+            .Select(p => new { p.Id, p.StockNo, p.Name, p.UnitOfMeasure, p.UnitPrice })
             .ToListAsync(cancellationToken);
 
         var inventoryQuery = _dbContext.ProductInventories.AsNoTracking();
@@ -66,7 +66,7 @@ public sealed class GetPhysicalCountReportQueryHandler
             return new PhysicalCountItemDto(
                 index + 1,
                 p.Name,
-                p.SKU,
+                p.StockNo,
                 p.UnitOfMeasure,
                 unitValue,
                 balancePerCard,

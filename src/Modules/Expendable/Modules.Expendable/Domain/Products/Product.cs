@@ -15,7 +15,8 @@ public enum ProductStatus
 public class Product : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 {
     public string TenantId { get; private set; } = default!;
-    public string SKU { get; private set; } = default!;
+    public string StockNo { get; private set; } = default!;
+    public string Article { get; private set; } = default!; // Generic noun/class of the item, e.g., "Paper", "Toner"
     public string Name { get; private set; } = default!;
     public string Description { get; private set; } = default!;
     public decimal UnitPrice { get; private set; }
@@ -47,7 +48,7 @@ public class Product : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
     public virtual ICollection<Product> Variants { get; private set; } = new List<Product>();
 
     /// <summary>Factory method to create a new product</summary>
-    public static Product Create(string tenantId, string sku, string name, string description,
+    public static Product Create(string tenantId, string stockNo, string article, string name, string description,
         decimal unitPrice, string unitOfMeasure, int minimumStockLevel, int reorderQuantity,
         string? categoryId = null, string? supplierId = null, string? imageUrl = null)
     {
@@ -55,7 +56,8 @@ public class Product : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
         {
             Id = Guid.NewGuid(),
             TenantId = tenantId,
-            SKU = sku,
+            StockNo = stockNo,
+            Article = article,
             Name = name,
             Description = description,
             UnitPrice = unitPrice,
@@ -71,7 +73,7 @@ public class Product : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
     }
 
     /// <summary>Factory method to create a variant from an existing base product</summary>
-    public Product CreateVariant(string sku, string variantName, decimal unitPrice, 
+    public Product CreateVariant(string stockNo, string variantName, decimal unitPrice,
         string unitOfMeasure, int minimumStockLevel, int reorderQuantity)
     {
         return new Product
@@ -82,10 +84,11 @@ public class Product : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
             VariantName = variantName,
             Name = $"{this.Name} - {variantName}", // Automatically format: "Bond Paper - A4"
             Description = this.Description, // Inherit parent description
+            Article = this.Article,         // Inherit parent article
             CategoryId = this.CategoryId,   // Inherit parent category
             SupplierId = this.SupplierId,   // Inherit parent supplier
             ImageUrl = this.ImageUrl,       // Inherit parent image
-            SKU = sku,
+            StockNo = stockNo,
             UnitPrice = unitPrice,
             UnitOfMeasure = unitOfMeasure,
             MinimumStockLevel = minimumStockLevel,
@@ -124,11 +127,12 @@ public class Product : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
     }
 
     /// <summary>Update product details</summary>
-    public void Update(string name, string description, decimal unitPrice,
+    public void Update(string name, string description, string article, decimal unitPrice,
         int minimumStockLevel, int reorderQuantity, string? imageUrl = null)
     {
         Name = name;
         Description = description;
+        Article = article;
         UnitPrice = unitPrice;
         MinimumStockLevel = minimumStockLevel;
         ReorderQuantity = reorderQuantity;

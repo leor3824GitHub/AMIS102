@@ -5,7 +5,8 @@ namespace AMIS.Modules.Expendable.Contracts.v1.Products;
 
 public record ProductDto(
     Guid Id,
-    string SKU,
+    string StockNo,
+    string Article,
     string Name,
     string Description,
     decimal UnitPrice,
@@ -25,7 +26,8 @@ public record ProductDto(
 
 public record ProductCatalogCardDto(
     Guid Id,
-    string SKU,
+    string StockNo,
+    string Article,
     string Name,
     decimal UnitPrice,
     string UnitOfMeasure,
@@ -38,7 +40,8 @@ public record ProductCatalogCardDto(
     string? VariantName);
 
 public record CreateProductCommand(
-    string SKU,
+    string StockNo,
+    string Article,
     string Name,
     string Description,
     decimal UnitPrice,
@@ -53,6 +56,7 @@ public record CreateProductCommand(
 
 public record UpdateProductCommand(
     Guid Id,
+    string Article,
     string Name,
     string Description,
     decimal UnitPrice,

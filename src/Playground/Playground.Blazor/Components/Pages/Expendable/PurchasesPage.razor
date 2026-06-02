@@ -224,7 +224,7 @@
                                      Label="Product"
                                      Value="_addProduct"
                                      SearchFunc="@SearchProducts"
-                                     ToStringFunc="@(p => p == null ? string.Empty : $"{p.Name} ({p.Sku})")"
+                                     ToStringFunc="@(p => p == null ? string.Empty : $"{p.Name} ({p.StockNo})")"
                                      CoerceValue="true"
                                      Clearable="true"
                                      Placeholder="Search product..."
@@ -643,7 +643,7 @@
         try
         {
             var product = await ExpendableClient.ProductsGetAsync(productId);
-            if (product != null) _productNames[productId] = $"{product.Name} ({product.Sku})";
+            if (product != null) _productNames[productId] = $"{product.Name} ({product.StockNo})";
         }
         catch { _productNames[productId] = productId.ToString()[..8] + "�"; }
     }
@@ -817,14 +817,14 @@
             {
                 PurchaseId = _editingPO.Id,
                 ProductId = _addProduct.Id,
-                ProductCode = _addProduct.Sku,
+                ProductCode = _addProduct.StockNo,
                 ProductName = _addProduct.Name,
                 Quantity = _addQuantity,
                 UnitPrice = (double)_addUnitPrice
             });
 
             // Cache product name
-            _productNames[_addProduct.Id] = $"{_addProduct.Name} ({_addProduct.Sku})";
+            _productNames[_addProduct.Id] = $"{_addProduct.Name} ({_addProduct.StockNo})";
 
             Snackbar.Add($"Added {_addProduct.Name}.", Severity.Success);
             _addProduct = null;

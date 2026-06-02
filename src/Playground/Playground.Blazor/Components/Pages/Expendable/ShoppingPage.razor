@@ -83,7 +83,7 @@
                                                 <strong>@product.Name</strong>
                                             </MudText>
                                             <MudText Typo="Typo.caption" Color="Color.Default">
-                                                SKU: @product.Sku
+                                                Stock No.: @product.StockNo
                                             </MudText>
                                         </MudItem>
                                         <MudItem xs="12" sm="5" Class="text-sm-right">
@@ -152,7 +152,7 @@
                                   Style="width: 100%; border-radius: 8px;" />
                     </MudItem>
                     <MudItem xs="12" sm="6">
-                        <MudText Typo="Typo.caption" Color="Color.Default">SKU: @_selectedProduct.Sku</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Default">Stock No.: @_selectedProduct.StockNo</MudText>
                         <MudText Typo="Typo.h5" Class="my-3">@($"${GetDisplayedPrice(_selectedProduct):F2}")</MudText>
                         <MudText Typo="Typo.body2" Class="mb-4">@_selectedProduct.Description</MudText>
                         

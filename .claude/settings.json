@@ -24,7 +24,8 @@
       "PowerShell(git -C d:\\\\VB\\\\AMIS102 log --oneline -5)",
       "PowerShell(git -C d:\\\\VB\\\\AMIS102 status --short)",
       "PowerShell(dotnet build src/Playground/Playground.Blazor/Playground.Blazor.csproj -c Debug --nologo -clp:ErrorsOnly)",
-      "PowerShell(dotnet build src/Modules/QuestPdfReporting/Modules.QuestPdfReporting/Modules.QuestPdfReporting.csproj -clp:ErrorsOnly -nologo)"
+      "PowerShell(dotnet build src/Modules/QuestPdfReporting/Modules.QuestPdfReporting/Modules.QuestPdfReporting.csproj -clp:ErrorsOnly -nologo)",
+      "Bash(dotnet test *)"
     ]
   }
 }

@@ -26,7 +26,8 @@ public sealed class GetProductCatalogCardsQueryHandler : IQueryHandler<GetProduc
             var pattern = $"%{query.Keyword}%";
             productQuery = productQuery.Where(p =>
                 EF.Functions.ILike(p.Name, pattern) ||
-                EF.Functions.ILike(p.SKU, pattern) ||
+                EF.Functions.ILike(p.StockNo, pattern) ||
+                (p.Article != null && EF.Functions.ILike(p.Article, pattern)) ||
                 EF.Functions.ILike(p.Description, pattern));
         }
 
@@ -44,7 +45,8 @@ public sealed class GetProductCatalogCardsQueryHandler : IQueryHandler<GetProduc
             from inventory in inventoryJoin.DefaultIfEmpty()
             select new ProductCatalogCardDto(
                 product.Id,
-                product.SKU,
+                product.StockNo,
+                product.Article,
                 product.Name,
                 product.UnitPrice,
                 product.UnitOfMeasure,

@@ -57,7 +57,7 @@ public sealed class FulfillSupplyRequestCommandHandler : ICommandHandler<Fulfill
         // Load product details for report DTOs
         var products = await _dbContext.Products
             .Where(p => productIds.Contains(p.Id))
-            .Select(p => new { p.Id, p.Name, p.SKU })
+            .Select(p => new { p.Id, p.Name, p.StockNo })
             .ToListAsync(cancellationToken);
 
         // Load warehouse inventory for all items
@@ -119,7 +119,7 @@ public sealed class FulfillSupplyRequestCommandHandler : ICommandHandler<Fulfill
             resultItems.Add(new FulfillmentItemResultDto(
                 item.ProductId,
                 product?.Name ?? "Unknown",
-                product?.SKU ?? string.Empty,
+                product?.StockNo ?? string.Empty,
                 item.ApprovedQuantity,
                 unitPrice,
                 totalValue

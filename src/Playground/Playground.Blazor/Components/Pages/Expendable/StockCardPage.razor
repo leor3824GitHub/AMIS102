@@ -104,7 +104,7 @@
                                  Value="_selectedProduct"
                                  ValueChanged="OnProductSelected"
                                  SearchFunc="SearchProductsAsync"
-                                 ToStringFunc="@(p => p == null ? string.Empty : $"{p.Sku} — {p.Name}")"
+                                 ToStringFunc="@(p => p == null ? string.Empty : $"{p.StockNo} — {p.Name}")"
                                  CoerceValue="true"
                                  Clearable="true"
                                  Placeholder="Type to search products..."

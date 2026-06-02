@@ -30,11 +30,13 @@
                 <MudCardContent>
                     <MudText Typo="Typo.h6" Class="mb-3">@(EditingProduct != null ? "Edit Product" : "Create Product")</MudText>
                     <MudStack Spacing="3">
+                        <MudTextField @bind-Value="_form.Article" Label="Article" Placeholder="Generic class, e.g. Paper, Toner"
+                                      Required="true" HelperText="The generic noun or class of the item" />
                         <MudTextField @bind-Value="_form.Name" Label="Product Name" Placeholder="Enter product name"
                                       Required="true" />
-                        <MudTextField @bind-Value="_form.SKU" Label="SKU" Placeholder="Enter SKU code"
+                        <MudTextField @bind-Value="_form.StockNo" Label="Stock No." Placeholder="Enter stock number"
                                       Required="true" Disabled="@(EditingProduct != null)"
-                                      HelperText="@(EditingProduct != null ? "SKU cannot be changed after creation" : null)" />
+                                      HelperText="@(EditingProduct != null ? "Stock No. cannot be changed after creation" : null)" />
                         <MudTextField @bind-Value="_form.Description" Label="Description"
                                       Placeholder="Product description" Lines="2" />
                         <MudNumericField @bind-Value="_form.UnitPrice" Label="Unit Price" Min="0" Step="0.01m" />
@@ -176,8 +178,9 @@
                               Dense="true" Hover="true" Striped="true">
                         <HeaderContent>
                             <MudTh>Image</MudTh>
+                            <MudTh>Article</MudTh>
                             <MudTh>Name</MudTh>
-                            <MudTh>SKU</MudTh>
+                            <MudTh>Stock No.</MudTh>
                             <MudTh>Price</MudTh>
                             <MudTh>UoM</MudTh>
                             <MudTh>Min Stock</MudTh>
@@ -197,8 +200,9 @@
                                     <MudAvatar>@context.Name.FirstOrDefault()</MudAvatar>
                                 }
                             </MudTd>
+                            <MudTd>@context.Article</MudTd>
                             <MudTd>@context.Name</MudTd>
-                            <MudTd>@context.Sku</MudTd>
+                            <MudTd>@context.StockNo</MudTd>
                             <MudTd>@context.UnitPrice.ToString("C")</MudTd>
                             <MudTd>@context.UnitOfMeasure</MudTd>
                             <MudTd>@context.MinimumStockLevel</MudTd>
@@ -287,7 +291,8 @@
     public class ProductForm
     {
         public string Name { get; set; } = string.Empty;
-        public string SKU { get; set; } = string.Empty;
+        public string StockNo { get; set; } = string.Empty;
+        public string Article { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
         public decimal UnitPrice { get; set; } = 10.00m;
         public string UnitOfMeasure { get; set; } = "PCS";
@@ -455,7 +460,7 @@
         var search = searchText.ToLower();
         return _parentProducts
             .Where(x => (x.Name?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                       (x.Sku?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false))
+                       (x.StockNo?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false))
             .ToList();
     }
 
@@ -478,9 +483,10 @@
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(_form.Name) || string.IsNullOrWhiteSpace(_form.SKU))
+        if (string.IsNullOrWhiteSpace(_form.Name) || string.IsNullOrWhiteSpace(_form.StockNo)
+            || string.IsNullOrWhiteSpace(_form.Article))
         {
-            Snackbar.Add("Name and SKU are required", Severity.Warning);
+            Snackbar.Add("Article, Name and Stock No. are required", Severity.Warning);
             return;
         }
 
@@ -505,6 +511,7 @@
                 {
                     Name = _form.Name,
                     Description = _form.Description,
+                    Article = _form.Article,
                     UnitPrice = (double)_form.UnitPrice,
                     MinimumStockLevel = _form.MinimumStockLevel,
                     ReorderQuantity = _form.ReorderQuantity,
@@ -521,7 +528,8 @@
             {
                 var createCmd = new CreateProductCommand
                 {
-                    Sku = _form.SKU,
+                    StockNo = _form.StockNo,
+                    Article = _form.Article,
                     Name = _form.Name,
                     Description = _form.Description,
                     UnitPrice = (double)_form.UnitPrice,
@@ -581,7 +589,8 @@
         _form = new ProductForm
         {
             Name = product.Name,
-            SKU = product.Sku,
+            StockNo = product.StockNo,
+            Article = product.Article,
             Description = product.Description,
             UnitPrice = (decimal)product.UnitPrice,
             UnitOfMeasure = product.UnitOfMeasure,
