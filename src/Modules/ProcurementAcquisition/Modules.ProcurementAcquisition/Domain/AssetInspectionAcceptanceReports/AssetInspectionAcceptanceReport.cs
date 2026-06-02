@@ -1,5 +1,6 @@
 using AMIS.Framework.Core.Domain;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.AssetInspectionAcceptanceReports;
+using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
 
 namespace AMIS.Modules.ProcurementAcquisition.Domain.AssetInspectionAcceptanceReports;
 
@@ -20,6 +21,11 @@ public sealed class AssetIARLineItem
 
     /// <summary>Stock / Property No assigned by the operator at IAR time (SOP GS-PD26 column). Optional during Draft; required before acceptance.</summary>
     public string? StockPropertyNo { get; private set; }
+
+    /// <summary>For Supply IARs: the StockNo of the screened Expendable product (copied from the PO line).
+    /// Distinct from <see cref="StockPropertyNo"/> (the asset property number). Used by the Expendable module
+    /// to match the accepted line to a product. Null for Asset IARs.</summary>
+    public string? StockNumber { get; private set; }
 
     /// <summary>Snapshot of the PR/PO catalog reference. Carries forward into PPERR and AssetRegistry.</summary>
     public Guid? CatalogItemId { get; private set; }
@@ -48,7 +54,8 @@ public sealed class AssetIARLineItem
         string? inspectionRemarks,
         string? stockPropertyNo,
         Guid? catalogItemId = null,
-        string? uacsObjectCode = null) =>
+        string? uacsObjectCode = null,
+        string? stockNumber = null) =>
         new()
         {
             ItemNo = itemNo,
@@ -64,7 +71,8 @@ public sealed class AssetIARLineItem
             InspectionRemarks = inspectionRemarks,
             StockPropertyNo = string.IsNullOrWhiteSpace(stockPropertyNo) ? null : stockPropertyNo.Trim(),
             CatalogItemId = catalogItemId == Guid.Empty ? null : catalogItemId,
-            UacsObjectCode = string.IsNullOrWhiteSpace(uacsObjectCode) ? null : uacsObjectCode.Trim()
+            UacsObjectCode = string.IsNullOrWhiteSpace(uacsObjectCode) ? null : uacsObjectCode.Trim(),
+            StockNumber = string.IsNullOrWhiteSpace(stockNumber) ? null : stockNumber.Trim()
         };
 
     internal void RecordInspection(LineInspectionResult result, string? remarks, Guid inspectorId, DateTimeOffset whenUtc)
@@ -109,6 +117,7 @@ public sealed class AssetIARLineItem
             StockPropertyNo = null,
             CatalogItemId = CatalogItemId,
             UacsObjectCode = UacsObjectCode,
+            StockNumber = StockNumber,
             InspectionResult = InspectionResult,
             InspectedById = InspectedById,
             InspectedOnUtc = InspectedOnUtc
@@ -135,6 +144,10 @@ public sealed class AssetInspectionAcceptanceReport : AggregateRoot<Guid>, IHasT
     public string? DeliveryReceiptNo { get; private set; }
     public DateOnly? DeliveryDate { get; private set; }
     public AssetIARStatus Status { get; private set; }
+
+    /// <summary>Asset vs Supply — copied from the PO at creation (not operator-chosen). Supply IARs skip the
+    /// one-line-per-unit + Property-No acceptance rules and publish <see cref="SupplyIARAcceptedEvent"/>.</summary>
+    public ProcurementCategory Category { get; private set; }
     public string? Remarks { get; private set; }
     public DateTimeOffset? SubmittedForInspectionOnUtc { get; private set; }
     public DateTimeOffset? InspectedOnUtc { get; private set; }
@@ -166,7 +179,8 @@ public sealed class AssetInspectionAcceptanceReport : AggregateRoot<Guid>, IHasT
         string? deliveryReceiptNo,
         DateOnly? deliveryDate,
         string? remarks,
-        IEnumerable<AssetIARLineItemRequest> lineItems)
+        IEnumerable<AssetIARLineItemRequest> lineItems,
+        ProcurementCategory category = ProcurementCategory.Asset)
     {
         var iar = new AssetInspectionAcceptanceReport
         {
@@ -183,6 +197,7 @@ public sealed class AssetInspectionAcceptanceReport : AggregateRoot<Guid>, IHasT
             DeliveryDate = deliveryDate,
             Remarks = remarks,
             Status = AssetIARStatus.Draft,
+            Category = category,
             CreatedOnUtc = DateTimeOffset.UtcNow
         };
 
@@ -192,7 +207,7 @@ public sealed class AssetInspectionAcceptanceReport : AggregateRoot<Guid>, IHasT
                 itemNo++, li.Description, li.TechnicalSpecifications,
                 li.Brand, li.Model, li.SerialNo, li.PropertyClassHint,
                 li.Unit, li.Quantity, li.UnitCost, li.InspectionRemarks,
-                li.StockPropertyNo, li.CatalogItemId, li.UacsObjectCode));
+                li.StockPropertyNo, li.CatalogItemId, li.UacsObjectCode, li.StockNumber));
 
         return iar;
     }
@@ -222,7 +237,7 @@ public sealed class AssetInspectionAcceptanceReport : AggregateRoot<Guid>, IHasT
                 itemNo++, li.Description, li.TechnicalSpecifications,
                 li.Brand, li.Model, li.SerialNo, li.PropertyClassHint,
                 li.Unit, li.Quantity, li.UnitCost, li.InspectionRemarks,
-                li.StockPropertyNo));
+                li.StockPropertyNo, li.CatalogItemId, li.UacsObjectCode, li.StockNumber));
     }
 
     /// <summary>Property Custodian sends the IAR to the assigned inspector. Header becomes locked for editing.</summary>
@@ -330,22 +345,28 @@ public sealed class AssetInspectionAcceptanceReport : AggregateRoot<Guid>, IHasT
         if (_lineItems.Count == 0)
             throw new InvalidOperationException("IAR must have at least one line item.");
 
-        var nonUnit = _lineItems
-            .Where(li => li.InspectionResult != LineInspectionResult.Rejected && li.Quantity != 1m)
-            .Select(li => li.ItemNo)
-            .ToList();
-        if (nonUnit.Count > 0)
-            throw new InvalidOperationException(
-                $"Cannot accept IAR: every non-rejected line must have quantity 1 (one line per physical unit). Expand quantity first. Offending item(s): {string.Join(", ", nonUnit)}.");
+        // Asset (PPE/SE) IARs are accountable property: NFA policy requires one line per physical unit and a
+        // Property No per unit. Supply (expendable) IARs are consumables — quantities stay bulk and need no
+        // Property No, so these two checks are Asset-only.
+        if (Category == ProcurementCategory.Asset)
+        {
+            var nonUnit = _lineItems
+                .Where(li => li.InspectionResult != LineInspectionResult.Rejected && li.Quantity != 1m)
+                .Select(li => li.ItemNo)
+                .ToList();
+            if (nonUnit.Count > 0)
+                throw new InvalidOperationException(
+                    $"Cannot accept IAR: every non-rejected line must have quantity 1 (one line per physical unit). Expand quantity first. Offending item(s): {string.Join(", ", nonUnit)}.");
 
-        var missing = _lineItems
-            .Where(li => li.InspectionResult != LineInspectionResult.Rejected
-                         && string.IsNullOrWhiteSpace(li.StockPropertyNo))
-            .Select(li => li.ItemNo)
-            .ToList();
-        if (missing.Count > 0)
-            throw new InvalidOperationException(
-                $"Cannot accept IAR: Stock/Property No is required on every non-rejected line. Missing on item(s): {string.Join(", ", missing)}.");
+            var missing = _lineItems
+                .Where(li => li.InspectionResult != LineInspectionResult.Rejected
+                             && string.IsNullOrWhiteSpace(li.StockPropertyNo))
+                .Select(li => li.ItemNo)
+                .ToList();
+            if (missing.Count > 0)
+                throw new InvalidOperationException(
+                    $"Cannot accept IAR: Stock/Property No is required on every non-rejected line. Missing on item(s): {string.Join(", ", missing)}.");
+        }
 
         Status = AssetIARStatus.Accepted;
         AcceptedOnUtc = DateTimeOffset.UtcNow;

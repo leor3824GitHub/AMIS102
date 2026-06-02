@@ -20,7 +20,7 @@ public sealed class UpdatePurchaseRequestCommandHandler(
             ?? throw new AMIS.Framework.Core.Exceptions.NotFoundException($"Purchase request '{command.Id}' not found.");
 
         var lineItems = command.LineItems.Select(li =>
-            new PurchaseRequestLineItemData(li.Quantity, li.UnitOfIssue, li.ItemDescription, li.EstimatedUnitCost, li.CatalogItemId, li.UacsObjectCode));
+            new PurchaseRequestLineItemData(li.Quantity, li.UnitOfIssue, li.ItemDescription, li.EstimatedUnitCost, li.CatalogItemId, li.UacsObjectCode, li.StockNumber));
 
         // Requester snapshot was frozen at create ("requesting") and is preserved across edits.
         pr.Update(
@@ -33,7 +33,8 @@ public sealed class UpdatePurchaseRequestCommandHandler(
             command.SaiDate,
             command.AlobsNumber,
             command.AlobsDate,
-            lineItems);
+            lineItems,
+            category: command.Category);
 
         pr.LastModifiedBy = currentUser.GetUserId().ToString();
 

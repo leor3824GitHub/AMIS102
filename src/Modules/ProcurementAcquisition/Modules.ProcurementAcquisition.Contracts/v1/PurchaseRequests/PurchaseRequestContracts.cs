@@ -26,6 +26,18 @@ public enum PrType
     Unplanned = 1
 }
 
+/// <summary>
+/// Whether a procurement document covers fixed/semi-expendable property (Asset) or consumable
+/// supplies (Supply). Set once on the PR header and carried forward to PO and IAR. One PR is wholly
+/// Asset or wholly Supply — never mixed. Drives the IAR acceptance rules and which integration event
+/// fires on acceptance (AssetRegister vs. Expendable).
+/// </summary>
+public enum ProcurementCategory
+{
+    Asset = 0,
+    Supply = 1
+}
+
 // ──────────────────────────────────────────────────────────────────────────────
 // DTOs
 // ──────────────────────────────────────────────────────────────────────────────
@@ -38,7 +50,8 @@ public sealed record PurchaseRequestLineItemDto(
     decimal EstimatedUnitCost,
     decimal EstimatedTotalCost,
     string? UacsObjectCode = null,
-    Guid? CatalogItemId = null);
+    Guid? CatalogItemId = null,
+    string? StockNumber = null);
 
 public sealed record PurchaseRequestDto(
     Guid Id,
@@ -76,7 +89,8 @@ public sealed record PurchaseRequestDto(
     Guid? RequestedById = null,
     string? RequestedByDesignation = null,
     string? ApprovedByDesignation = null,
-    string? FundsAvailableCertifiedByDesignation = null);
+    string? FundsAvailableCertifiedByDesignation = null,
+    ProcurementCategory Category = ProcurementCategory.Asset);
 
 public sealed record PurchaseRequestSummaryDto(
     Guid Id,
@@ -90,7 +104,8 @@ public sealed record PurchaseRequestSummaryDto(
     int LineItemCount,
     decimal TotalEstimatedCost,
     DateTimeOffset CreatedOnUtc,
-    bool HasSignedCopy = false);
+    bool HasSignedCopy = false,
+    ProcurementCategory Category = ProcurementCategory.Asset);
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Commands
@@ -102,7 +117,8 @@ public sealed record CreatePurchaseRequestLineItemRequest(
     string ItemDescription,
     decimal EstimatedUnitCost,
     Guid? CatalogItemId = null,
-    string? UacsObjectCode = null);
+    string? UacsObjectCode = null,
+    string? StockNumber = null);
 
 public sealed record CreatePurchaseRequestCommand(
     Guid DepartmentId,
@@ -114,7 +130,8 @@ public sealed record CreatePurchaseRequestCommand(
     DateOnly? SaiDate,
     string? AlobsNumber,
     DateOnly? AlobsDate,
-    IReadOnlyList<CreatePurchaseRequestLineItemRequest> LineItems) : ICommand<PurchaseRequestDto>;
+    IReadOnlyList<CreatePurchaseRequestLineItemRequest> LineItems,
+    ProcurementCategory Category = ProcurementCategory.Asset) : ICommand<PurchaseRequestDto>;
 
 public sealed record UpdatePurchaseRequestCommand(
     Guid Id,
@@ -127,7 +144,8 @@ public sealed record UpdatePurchaseRequestCommand(
     DateOnly? SaiDate,
     string? AlobsNumber,
     DateOnly? AlobsDate,
-    IReadOnlyList<CreatePurchaseRequestLineItemRequest> LineItems) : ICommand<PurchaseRequestDto>;
+    IReadOnlyList<CreatePurchaseRequestLineItemRequest> LineItems,
+    ProcurementCategory Category = ProcurementCategory.Asset) : ICommand<PurchaseRequestDto>;
 
 public sealed record SubmitPurchaseRequestCommand(Guid Id) : ICommand<PurchaseRequestDto>;
 

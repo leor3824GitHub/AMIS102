@@ -6,7 +6,6 @@ using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Framework.Web.Modules;
 using AMIS.Modules.Expendable.Contracts.v1.Cart;
 using AMIS.Modules.Expendable.Contracts.v1.Products;
-using AMIS.Modules.Expendable.Contracts.v1.Purchases;
 using AMIS.Modules.Expendable.Contracts.v1.Requests;
 using AMIS.Modules.Expendable.Contracts.v1.Warehouse;
 using AMIS.Modules.Expendable.Data;
@@ -21,16 +20,7 @@ using AMIS.Modules.Expendable.Features.v1.Products.GetProduct;
 using AMIS.Modules.Expendable.Features.v1.Products.GetProductCatalogCards;
 using AMIS.Modules.Expendable.Features.v1.Products.ListActiveProducts;
 using AMIS.Modules.Expendable.Features.v1.Products.SearchProducts;
-using AMIS.Modules.Expendable.Features.v1.Purchases.CreatePurchaseOrder;
-using AMIS.Modules.Expendable.Features.v1.Purchases.AddPurchaseLineItem;
-using AMIS.Modules.Expendable.Features.v1.Purchases.RemovePurchaseLineItem;
-using AMIS.Modules.Expendable.Features.v1.Purchases.SubmitPurchaseOrder;
-using AMIS.Modules.Expendable.Features.v1.Purchases.ApprovePurchaseOrder;
-using AMIS.Modules.Expendable.Features.v1.Purchases.RecordPurchaseReceipt;
-using AMIS.Modules.Expendable.Features.v1.Purchases.CancelPurchaseOrder;
-using AMIS.Modules.Expendable.Features.v1.Purchases.GetPurchase;
-using AMIS.Modules.Expendable.Features.v1.Purchases.GetPurchasesBySupplier;
-using AMIS.Modules.Expendable.Features.v1.Purchases.SearchPurchases;
+using AMIS.Modules.Expendable.Features.v1.Products.GetProductArticles;
 using AMIS.Modules.Expendable.Features.v1.Requests.CreateSupplyRequest;
 using AMIS.Modules.Expendable.Features.v1.Requests.SubmitSupplyRequest;
 using AMIS.Modules.Expendable.Features.v1.Requests.ApproveSupplyRequest;
@@ -50,17 +40,12 @@ using AMIS.Modules.Expendable.Features.v1.Cart.GetCart;
 using AMIS.Modules.Expendable.Features.v1.Cart.ConvertCartToRequest;
 using AMIS.Modules.Expendable.Features.v1.Cart.RemoveFromCart;
 using AMIS.Modules.Expendable.Features.v1.Cart.ClearCart;
-using AMIS.Modules.Expendable.Features.v1.Warehouse.RecordInspection;
 using AMIS.Modules.Expendable.Features.v1.Warehouse.ReserveProductInventory;
 using AMIS.Modules.Expendable.Features.v1.Warehouse.CancelProductInventoryReservation;
 using AMIS.Modules.Expendable.Features.v1.Warehouse.IssueFromProductInventory;
-using AMIS.Modules.Expendable.Features.v1.Warehouse.MarkRejectedInventoryReturned;
-using AMIS.Modules.Expendable.Features.v1.Warehouse.MarkRejectedInventoryDisposed;
 using AMIS.Modules.Expendable.Features.v1.Warehouse.GetProductInventory;
 using AMIS.Modules.Expendable.Features.v1.Warehouse.SearchProductInventory;
 using AMIS.Modules.Expendable.Features.v1.Warehouse.GetWarehouseStockLevels;
-using AMIS.Modules.Expendable.Features.v1.Warehouse.GetRejectedInventory;
-using AMIS.Modules.Expendable.Features.v1.Warehouse.GetPendingInspections;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -88,13 +73,6 @@ public class ExpendableModule : IModule
         new("Deactivate Expendable Products", "Deactivate", "Expendable.Products"),
         new("Discontinue Expendable Products", "Discontinue", "Expendable.Products"),
         new("Mark Expendable Products Out Of Stock", "MarkOutOfStock", "Expendable.Products"),
-
-        new("View Expendable Purchases", "View", "Expendable.Purchases", IsBasic: true),
-        new("Create Expendable Purchases", "Create", "Expendable.Purchases"),
-        new("Update Expendable Purchases", "Update", "Expendable.Purchases"),
-        new("Delete Expendable Purchases", "Delete", "Expendable.Purchases"),
-        new("Approve Expendable Purchases", "Approve", "Expendable.Purchases"),
-        new("Receive Expendable Purchases", "Receive", "Expendable.Purchases"),
 
         new("View Expendable Supply Requests", "View", "Expendable.SupplyRequests", IsBasic: true),
         new("Create Expendable Supply Requests", "Create", "Expendable.SupplyRequests"),
@@ -134,6 +112,12 @@ public class ExpendableModule : IModule
         // Register hosted service to initialize core database schema on app startup
         services.AddHostedService<AMIS.Modules.Expendable.Provisioning.ExpendableDbInitializerHostedService>();
 
+        // Inbound integration: land accepted Supply IAR lines into ProductInventory.
+        services.AddScoped<
+            AMIS.Framework.Eventing.Abstractions.IIntegrationEventHandler<
+                AMIS.Modules.ProcurementAcquisition.Contracts.v1.AssetInspectionAcceptanceReports.SupplyIARAcceptedEvent>,
+            AMIS.Modules.Expendable.Integration.SupplyIARAcceptedEventConsumer>();
+
         // Fluent Validation will be auto-discovered
     }
 
@@ -152,7 +136,6 @@ public class ExpendableModule : IModule
             .WithApiVersionSet(apiVersionSet);
 
         var productsGroup = moduleGroup.MapGroup("/products");
-        var purchasesGroup = moduleGroup.MapGroup("/purchases");
         var supplyRequestsGroup = moduleGroup.MapGroup("/supply-requests");
         var cartGroup = moduleGroup.MapGroup("/cart");
         var warehouseGroup = moduleGroup.MapGroup("/warehouse");
@@ -170,18 +153,10 @@ public class ExpendableModule : IModule
         GetProductCatalogCardsEndpoint.Map(productsGroup);
         ListActiveProductsEndpoint.Map(productsGroup);
         SearchProductsEndpoint.Map(productsGroup);
+        GetProductArticlesEndpoint.Map(productsGroup);
 
-        // Purchase Order Endpoints - Vertical Slices
-        CreatePurchaseOrderEndpoint.Map(purchasesGroup);
-        AddPurchaseLineItemEndpoint.Map(purchasesGroup);
-        RemovePurchaseLineItemEndpoint.Map(purchasesGroup);
-        SubmitPurchaseOrderEndpoint.Map(purchasesGroup);
-        ApprovePurchaseOrderEndpoint.Map(purchasesGroup);
-        RecordPurchaseReceiptEndpoint.Map(purchasesGroup);
-        CancelPurchaseOrderEndpoint.Map(purchasesGroup);
-        GetPurchaseEndpoint.Map(purchasesGroup);
-        SearchPurchasesEndpoint.Map(purchasesGroup);
-        GetPurchasesBySupplierEndpoint.Map(purchasesGroup);
+        // Purchase orders + receiving/inspection now live in ProcurementAcquisition. Expendable consumes
+        // accepted Supply IAR lines into ProductInventory via SupplyIARAcceptedEvent (no PO endpoints here).
 
         // Supply Request Endpoints - Vertical Slices
         CreateSupplyRequestEndpoint.Map(supplyRequestsGroup);
@@ -204,18 +179,13 @@ public class ExpendableModule : IModule
         ClearCartEndpoint.Map(cartGroup);
         ConvertCartToSupplyRequestEndpoint.Map(cartGroup);
 
-        // Warehouse Endpoints - Vertical Slices
-        RecordInspectionEndpoint.Map(warehouseGroup);
+        // Warehouse Endpoints - Vertical Slices (issue-side only; receiving/inspection moved to ProcurementAcquisition)
         ReserveProductInventoryEndpoint.Map(warehouseGroup);
         CancelProductInventoryReservationEndpoint.Map(warehouseGroup);
         IssueFromProductInventoryEndpoint.Map(warehouseGroup);
-        MarkRejectedInventoryReturnedEndpoint.Map(warehouseGroup);
-        MarkRejectedInventoryDisposedEndpoint.Map(warehouseGroup);
         GetProductInventoryEndpoint.Map(warehouseGroup);
         SearchProductInventoryEndpoint.Map(warehouseGroup);
         GetWarehouseStockLevelsEndpoint.Map(warehouseGroup);
-        GetRejectedInventoryEndpoint.Map(warehouseGroup);
-        GetPendingInspectionsEndpoint.Map(warehouseGroup);
 
         // Issuance Reports
         GetDepartmentIssuanceReportEndpoint.Map(reportsGroup);

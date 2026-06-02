@@ -23,6 +23,7 @@ public sealed class PurchaseRequestConfiguration : IEntityTypeConfiguration<Purc
         builder.Property(x => x.RejectionReason).HasMaxLength(1000);
         builder.Property(x => x.CancellationReason).HasMaxLength(1000);
         builder.Property(x => x.PrType).IsRequired();
+        builder.Property(x => x.Category).IsRequired().HasDefaultValue(Contracts.v1.PurchaseRequests.ProcurementCategory.Asset);
         builder.Property(x => x.Status).IsRequired();
         builder.Property(x => x.RequestedByName).HasMaxLength(200).IsRequired();
         builder.Property(x => x.RequestedByDesignation).HasMaxLength(200);
@@ -61,6 +62,7 @@ public sealed class PurchaseRequestConfiguration : IEntityTypeConfiguration<Purc
             b.Property(li => li.ItemDescription).HasMaxLength(500).IsRequired();
             b.Property(li => li.EstimatedUnitCost).HasPrecision(18, 4).IsRequired();
             b.Property(li => li.UacsObjectCode).HasMaxLength(64); // assigned by Accountant; stays in JSON blob
+            b.Property(li => li.StockNumber).HasMaxLength(64);    // Supply PRs: screened product StockNo (JSON blob)
         });
     }
 }

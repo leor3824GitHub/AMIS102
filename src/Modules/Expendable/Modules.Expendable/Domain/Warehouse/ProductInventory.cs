@@ -100,19 +100,22 @@ public class ProductInventory : AggregateRoot<Guid>
 
     private static byte[] NewVersion() => RandomNumberGenerator.GetBytes(8);
 
-    /// <summary>Receive inspected stock into warehouse</summary>
+    /// <summary>Receive inspected/accepted stock into the warehouse.
+    /// <paramref name="sourceReceiptId"/> is the originating receipt id (an accepted IAR's id);
+    /// <paramref name="sourceReference"/> is its human-readable document number (e.g. IAR number) for the Stock Card.</summary>
     public void ReceiveFromPurchase(
-        Guid purchaseId,
+        Guid sourceReceiptId,
         Guid productId,
         int quantityAccepted,
-        decimal unitPrice)
+        decimal unitPrice,
+        string? sourceReference = null)
     {
         if (quantityAccepted <= 0)
             throw new ArgumentException("Quantity must be greater than 0");
         if (unitPrice < 0)
             throw new ArgumentException("Unit price cannot be negative");
 
-        var batch = InventoryBatch.Create(purchaseId, productId, quantityAccepted, unitPrice);
+        var batch = InventoryBatch.Create(sourceReceiptId, productId, quantityAccepted, unitPrice, sourceReference);
         Batches.Add(batch);
 
         QuantityAvailable += quantityAccepted;
@@ -227,6 +230,10 @@ public class InventoryBatch
     public decimal UnitPrice { get; private set; }
     public decimal TotalValue => QuantityRemaining * UnitPrice;
 
+    /// <summary>Human-readable source document number for this receipt (e.g. the IAR number). Shown as the
+    /// Reference on the Stock Card. Null for legacy batches received before this field existed.</summary>
+    public string? SourceReference { get; private set; }
+
     // Dates
     public DateTimeOffset ReceivedDate { get; private set; }
     public DateTimeOffset? InspectionDate { get; private set; }
@@ -241,7 +248,8 @@ public class InventoryBatch
         Guid purchaseId,
         Guid productId,
         int quantity,
-        decimal unitPrice)
+        decimal unitPrice,
+        string? sourceReference = null)
     {
         if (quantity <= 0)
             throw new ArgumentException("Quantity must be greater than 0");
@@ -255,6 +263,7 @@ public class InventoryBatch
             QuantityAvailable = quantity,
             QuantityIssued = 0,
             UnitPrice = unitPrice,
+            SourceReference = string.IsNullOrWhiteSpace(sourceReference) ? null : sourceReference.Trim(),
             ReceivedDate = DateTimeOffset.UtcNow,
             InspectionDate = DateTimeOffset.UtcNow,
             Version = 1

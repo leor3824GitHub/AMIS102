@@ -6,25 +6,8 @@ namespace AMIS.Modules.Expendable.Contracts.v1.Warehouse;
 
 // ============= COMMANDS (Write Operations) =============
 
-/// <summary>Record inspection results for a purchase line item</summary>
-public sealed record RecordInspectionCommand(
-    Guid PurchaseId,
-    Guid ProductId,
-    int QuantityAccepted,
-    int QuantityRejected,
-    string RejectionReason,
-    string? Notes = null,
-    List<InspectionDefectDto>? Defects = null
-) : ICommand<RecordInspectionResponse>;
-
-public record InspectionDefectDto(int UnitNumber, string Description, string? Severity = null);
-
-public record RecordInspectionResponse(
-    Guid InspectionId,
-    string Status,
-    int QuantityAccepted,
-    int QuantityRejected
-);
+// Receiving + inspection of purchased stock now lives in ProcurementAcquisition (IAR). Accepted Supply IAR
+// lines flow into ProductInventory via SupplyIARAcceptedEvent. The commands below are issue-side only.
 
 /// <summary>Reserve product inventory for supply request allocation</summary>
 public sealed record ReserveProductInventoryCommand(
@@ -63,30 +46,6 @@ public record IssueFromProductInventoryResponse(
     decimal TotalIssuedValue
 );
 
-/// <summary>Mark rejected inventory as returned to supplier</summary>
-public sealed record MarkRejectedInventoryReturnedCommand(
-    Guid RejectedInventoryId,
-    int? QuantityReturned = null,
-    string? Notes = null
-) : ICommand<MarkRejectedInventoryReturnedResponse>;
-
-public record MarkRejectedInventoryReturnedResponse(
-    Guid RejectedInventoryId,
-    string Status
-);
-
-/// <summary>Mark rejected inventory as disposed</summary>
-public sealed record MarkRejectedInventoryDisposedCommand(
-    Guid RejectedInventoryId,
-    string DisposalMethod,
-    string? Notes = null
-) : ICommand<MarkRejectedInventoryDisposedResponse>;
-
-public record MarkRejectedInventoryDisposedResponse(
-    Guid RejectedInventoryId,
-    string Status
-);
-
 // ============= QUERIES (Read Operations) =============
 
 /// <summary>Get product inventory by product and warehouse</summary>
@@ -115,25 +74,6 @@ public sealed class GetWarehouseStockLevelsQuery : IPagedQuery, IQuery<PagedResp
     public string? Sort { get; set; }
 }
 
-/// <summary>Get rejected inventory awaiting disposition</summary>
-public sealed class GetRejectedInventoryQuery : IPagedQuery, IQuery<PagedResponse<RejectedInventoryDto>>
-{
-    public Guid? WarehouseLocationId { get; set; }
-    public string? Status { get; set; }
-    public int? PageNumber { get; set; }
-    public int? PageSize { get; set; }
-    public string? Sort { get; set; }
-}
-
-/// <summary>Get inspections pending processing</summary>
-public sealed class GetPendingInspectionsQuery : IPagedQuery, IQuery<PagedResponse<PurchaseInspectionDto>>
-{
-    public Guid? WarehouseLocationId { get; set; }
-    public int? PageNumber { get; set; }
-    public int? PageSize { get; set; }
-    public string? Sort { get; set; }
-}
-
 // ============= DTOs =============
 
 public record ProductInventoryDto(
@@ -154,39 +94,6 @@ public record ProductInventoryDto(
     DateTimeOffset? FirstReceiptDate,
     DateTimeOffset? LastReceiptDate,
     DateTimeOffset? LastIssueDate
-);
-
-public record RejectedInventoryDto(
-    Guid Id,
-    Guid PurchaseId,
-    Guid ProductId,
-    string ProductCode,
-    string ProductName,
-    Guid WarehouseLocationId,
-    string WarehouseLocationName,
-    int QuantityRejected,
-    decimal UnitPrice,
-    decimal TotalValue,
-    string RejectionReason,
-    string? Notes,
-    string Status,
-    DateTimeOffset RejectionDate,
-    DateTimeOffset? DispositionDate,
-    string? DispositionNotes
-);
-
-public record PurchaseInspectionDto(
-    Guid Id,
-    Guid PurchaseId,
-    Guid ProductId,
-    int QuantityReceivedForInspection,
-    int QuantityAccepted,
-    int QuantityRejected,
-    string Status,
-    string RejectionReason,
-    string? Notes,
-    DateTimeOffset InspectionDate,
-    List<InspectionDefectDto> Defects
 );
 
 // ============= STOCK CARD REPORT =============

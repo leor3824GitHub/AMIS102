@@ -25,6 +25,7 @@ public sealed class PurchaseOrderConfiguration : IEntityTypeConfiguration<Purcha
         builder.Property(x => x.OursBursNumber).HasMaxLength(100);
         builder.Property(x => x.ModeOfProcurement).IsRequired();
         builder.Property(x => x.Status).IsRequired();
+        builder.Property(x => x.Category).IsRequired().HasDefaultValue(Contracts.v1.PurchaseRequests.ProcurementCategory.Asset);
         builder.Property(x => x.CancellationReason).HasMaxLength(1000);
 
         // Funds Available — Accountant

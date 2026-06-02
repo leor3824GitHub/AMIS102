@@ -1,4 +1,5 @@
 using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
 using Mediator;
 
 namespace AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders;
@@ -77,7 +78,8 @@ public sealed record PurchaseOrderDto(
     DateTimeOffset? IssuedOnUtc = null,
     // Signatory designation snapshots — frozen at the action (faithful-reprint plan).
     string? FundsAvailableCertifiedByDesignation = null,
-    string? IssuedByDesignation = null);
+    string? IssuedByDesignation = null,
+    ProcurementCategory Category = ProcurementCategory.Asset);
 
 public sealed record PurchaseOrderSummaryDto(
     Guid Id,
@@ -89,7 +91,8 @@ public sealed record PurchaseOrderSummaryDto(
     PurchaseOrderStatus Status,
     decimal TotalAmount,
     DateTimeOffset CreatedOnUtc,
-    bool HasSignedCopy = false);
+    bool HasSignedCopy = false,
+    ProcurementCategory Category = ProcurementCategory.Asset);
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Commands

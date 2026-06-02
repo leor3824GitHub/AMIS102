@@ -37,7 +37,8 @@ internal static class AssetIARMapper
                 li.InspectedOnUtc,
                 li.InspectedById,
                 li.CatalogItemId,
-                li.UacsObjectCode)).ToList(),
+                li.UacsObjectCode,
+                li.StockNumber)).ToList(),
             iar.TotalAmount,
             iar.CreatedOnUtc,
             iar.CreatedBy,
@@ -46,7 +47,8 @@ internal static class AssetIARMapper
             iar.InspectedOnUtc,
             iar.AcceptedOnUtc,
             iar.CancelledOnUtc,
-            hasSignedCopy);
+            hasSignedCopy,
+            iar.Category);
 
     internal static async Task<(string InspectorName, string CustodianName)> ResolveEmployeeNamesAsync(
         Guid inspectedById,

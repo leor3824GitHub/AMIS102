@@ -1,9 +1,9 @@
 @page "/expendable/products"
 @using AMIS.Framework.Blazor.UI.Components.Cards
 @using AMIS.Playground.Blazor.ApiClient
-@using System.IO
 @inherits ComponentBase
 @inject ISnackbar Snackbar
+@inject IDialogService DialogService
 @inject IExpendableClient ExpendableClient
 @inject IProductsClient ProductsClient
 @inject IMaster_dataClient MasterDataClient
@@ -11,300 +11,173 @@
 
 <AMISPageHeader Title="Products" Description="Manage product catalog">
     <ActionContent>
-        <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Style="width: 100%; max-width: 400px;">
+        <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Style="width: 100%; max-width: 560px;">
             <MudTextField @bind-Value="_searchKeyword" Label="Search" Placeholder="Search products..."
                           DebounceInterval="300" OnDebounceIntervalElapsed="@(async () => await ReloadTable())"
                           Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
             <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" OnClick="ReloadTable">
                 Search
             </MudButton>
+            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateDialog">
+                New Product
+            </MudButton>
         </MudStack>
     </ActionContent>
 </AMISPageHeader>
 
 <div class="mt-4">
-    <MudGrid Spacing="2">
-        <!-- Create/Edit Form -->
-        <MudItem xs="12" md="4">
-            <MudCard Class="AMIS-card">
-                <MudCardContent>
-                    <MudText Typo="Typo.h6" Class="mb-3">@(EditingProduct != null ? "Edit Product" : "Create Product")</MudText>
-                    <MudStack Spacing="3">
-                        <MudTextField @bind-Value="_form.Article" Label="Article" Placeholder="Generic class, e.g. Paper, Toner"
-                                      Required="true" HelperText="The generic noun or class of the item" />
-                        <MudTextField @bind-Value="_form.Name" Label="Product Name" Placeholder="Enter product name"
-                                      Required="true" />
-                        <MudTextField @bind-Value="_form.StockNo" Label="Stock No." Placeholder="Enter stock number"
-                                      Required="true" Disabled="@(EditingProduct != null)"
-                                      HelperText="@(EditingProduct != null ? "Stock No. cannot be changed after creation" : null)" />
-                        <MudTextField @bind-Value="_form.Description" Label="Description"
-                                      Placeholder="Product description" Lines="2" />
-                        <MudNumericField @bind-Value="_form.UnitPrice" Label="Unit Price" Min="0" Step="0.01m" />
-                        <MudAutocomplete T="UnitOfMeasureReferenceDto"
-                                         @bind-Value="_selectedUnitOfMeasure"
-                                         SearchFunc="SearchUnitOfMeasures"
-                                         Label="Unit of Measure"
-                                         CoerceValue="true"
-                                         Clearable="true"
-                                         Disabled="@(EditingProduct != null)"
-                                         ToStringFunc="@(um => um != null ? um.Code : "")"
-                                         Placeholder="Search or select unit..." />
-                        <MudNumericField @bind-Value="_form.MinimumStockLevel" Label="Minimum Stock Level" Min="0" />
-                        <MudNumericField @bind-Value="_form.ReorderQuantity" Label="Reorder Quantity" Min="0" />
-                        <MudAutocomplete T="CategoryDto"
-                                         @bind-Value="_selectedCategory"
-                                         SearchFunc="SearchCategories"
-                                         Label="Category"
-                                         CoerceValue="true"
-                                         Clearable="true"
-                                         ToStringFunc="@(c => c != null ? c.Name : "")"
-                                         Placeholder="Search or select category..." />
-                        <MudAutocomplete T="SupplierDto"
-                                         @bind-Value="_selectedSupplier"
-                                         SearchFunc="SearchSuppliers"
-                                         Label="Supplier"
-                                         CoerceValue="true"
-                                         Clearable="true"
-                                         ToStringFunc="@(s => s != null ? s.Name : "")"
-                                         Placeholder="Search or select supplier..." />
-                        <MudAutocomplete T="ProductDto"
-                                         @bind-Value="_selectedParentProduct"
-                                         SearchFunc="SearchParentProducts"
-                                         Label="Parent Product"
-                                         CoerceValue="true"
-                                         Clearable="true"
-                                         Disabled="@(EditingProduct != null)"
-                                         ToStringFunc="@(p => p != null ? p.Name : "")"
-                                         Placeholder="Select a base product to create a variant of..." />
-                        <MudTextField @bind-Value="_form.VariantName" Label="Variant Name"
-                                      Placeholder="e.g., Red / Large"
-                                      HelperText="@(_selectedParentProduct != null ? "Required � enter a variant name" : "Optional � select a parent product first")"
-                                      Required="@(_selectedParentProduct != null)" />
+    <MudCard Class="AMIS-card">
+        <MudCardContent>
+            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-2">
+                <MudText Typo="Typo.h6">Products List</MudText>
+                <MudChipSet T="string" SelectionMode="SelectionMode.SingleSelection"
+                            SelectedValue="_statusFilter"
+                            SelectedValueChanged="@(async (string v) => { _statusFilter = v; await ReloadTable(); })">
+                    <MudChip T="string" Value="@((string?)null)" Variant="Variant.Outlined" Size="Size.Small">All</MudChip>
+                    <MudChip T="string" Value="@("Active")" Variant="Variant.Outlined" Size="Size.Small" Color="Color.Success">Active</MudChip>
+                    <MudChip T="string" Value="@("Inactive")" Variant="Variant.Outlined" Size="Size.Small" Color="Color.Default">Inactive</MudChip>
+                    <MudChip T="string" Value="@("OutOfStock")" Variant="Variant.Outlined" Size="Size.Small" Color="Color.Warning">Out of Stock</MudChip>
+                    <MudChip T="string" Value="@("Discontinued")" Variant="Variant.Outlined" Size="Size.Small" Color="Color.Error">Discontinued</MudChip>
+                </MudChipSet>
+            </MudStack>
 
-                        <!-- Image Upload Section -->
-                        <MudDivider Class="my-3" />
-                        <MudText Typo="Typo.subtitle2" Color="Color.Primary">Product Image</MudText>
-
-                        @if (!string.IsNullOrEmpty(_form.ImagePreview))
+            <MudGrid Spacing="2" Class="mb-3">
+                <MudItem xs="12" md="4">
+                    <MudSelect T="string" @bind-Value="_categoryFilter" @bind-Value:after="ReloadTable"
+                               Label="Category" Placeholder="All Categories"
+                               Dense="true" Clearable="true" Variant="Variant.Outlined">
+                        @foreach (var cat in _categories)
                         {
-                            <div class="mb-3">
-                                <MudImage Src="@_form.ImagePreview" Alt="Product preview"
-                                         ObjectFit="ObjectFit.Cover" Width="150" Height="150" Class="rounded" />
-                                <MudButton Size="Size.Small" Color="Color.Error" OnClick="ClearImagePreview" Class="mt-2">
-                                    Clear Image
-                                </MudButton>
-                            </div>
+                            <MudSelectItem T="string" Value="@cat.Id.ToString()">@cat.Name</MudSelectItem>
                         }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudSelect T="string" @bind-Value="_supplierFilter" @bind-Value:after="ReloadTable"
+                               Label="Supplier" Placeholder="All Suppliers"
+                               Dense="true" Clearable="true" Variant="Variant.Outlined">
+                        @foreach (var sup in _suppliers)
+                        {
+                            <MudSelectItem T="string" Value="@sup.Id.ToString()">@sup.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudSelect T="Guid?" @bind-Value="_parentProductFilter" @bind-Value:after="ReloadTable"
+                               Label="Parent Product" Placeholder="All Products"
+                               Dense="true" Clearable="true" Variant="Variant.Outlined">
+                        @foreach (var p in _parentProducts)
+                        {
+                            <MudSelectItem T="Guid?" Value="@((Guid?)p.Id)">@p.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+            </MudGrid>
 
-                        <MudFileUpload T="IBrowserFile" OnFilesChanged="HandleImageUpload"
-                                      Accept=".jpg,.jpeg,.png,.gif,.webp" MaxFileSize="5242880"
-                                      Hidden="false" Class="mb-3">
-                            <MudButton HtmlTag="label" Variant="Variant.Outlined" Color="Color.Primary"
-                                      StartIcon="@Icons.Material.Filled.CloudUpload">
-                                Choose Image (Max 5MB)
-                            </MudButton>
-                        </MudFileUpload>
-
-                        <MudTextField @bind-Value="_form.ImageUrl" Label="Or Paste Image URL"
-                                      Placeholder="https://example.com/image.jpg"
-                                      HelperText="Or provide an absolute URL instead" />
-
-                        <MudStack Row="true" Spacing="2" Class="mt-4">
-                            <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
-                                       OnClick="SaveProduct" Disabled="_isLoading">
-                                @(EditingProduct != null ? "Update" : "Create")
-                            </MudButton>
-                            <MudButton Variant="Variant.Outlined" Color="Color.Default" FullWidth="true"
-                                       OnClick="ResetForm">
-                                Clear
-                            </MudButton>
+            <MudTable @ref="_table" T="ProductDto" ServerData="LoadServerData"
+                      Dense="true" Hover="true" Striped="true">
+                <HeaderContent>
+                    <MudTh>Image</MudTh>
+                    <MudTh>Article</MudTh>
+                    <MudTh>Name</MudTh>
+                    <MudTh>Stock No.</MudTh>
+                    <MudTh>Price</MudTh>
+                    <MudTh>UoM</MudTh>
+                    <MudTh>Min Stock</MudTh>
+                    <MudTh>Variant</MudTh>
+                    <MudTh>Status</MudTh>
+                    <MudTh>Actions</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>
+                        @if (!string.IsNullOrEmpty(context.ImageUrl))
+                        {
+                            <MudImage Src="@context.ImageUrl" Alt="@context.Name"
+                                     ObjectFit="ObjectFit.Cover" Width="48" Height="48" Class="rounded" />
+                        }
+                        else
+                        {
+                            <MudAvatar>@context.Name.FirstOrDefault()</MudAvatar>
+                        }
+                    </MudTd>
+                    <MudTd>@context.Article</MudTd>
+                    <MudTd>@context.Name</MudTd>
+                    <MudTd>@context.StockNo</MudTd>
+                    <MudTd>@context.UnitPrice.ToString("C")</MudTd>
+                    <MudTd>@context.UnitOfMeasure</MudTd>
+                    <MudTd>@context.MinimumStockLevel</MudTd>
+                    <MudTd>@context.VariantName</MudTd>
+                    <MudTd>
+                        <MudChip T="string" Size="Size.Small" Color="@GetStatusColor(context.Status)">
+                            @context.Status
+                        </MudChip>
+                    </MudTd>
+                    <MudTd>
+                        <MudStack Row="true" Spacing="1">
+                            @if (context.Status == "Active")
+                            {
+                                <MudIconButton Icon="@Icons.Material.Filled.PauseCircle"
+                                               Size="Size.Small" Color="Color.Warning"
+                                               Title="Deactivate"
+                                               OnClick="@(() => ChangeStatus(context, "deactivate"))" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Inventory2"
+                                               Size="Size.Small" Color="Color.Info"
+                                               Title="Mark Out Of Stock"
+                                               OnClick="@(() => ChangeStatus(context, "out-of-stock"))" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Block"
+                                               Size="Size.Small" Color="Color.Error"
+                                               Title="Discontinue"
+                                               OnClick="@(() => ChangeStatus(context, "discontinue"))" />
+                            }
+                            else if (context.Status is "Inactive" or "OutOfStock")
+                            {
+                                <MudIconButton Icon="@Icons.Material.Filled.PlayCircle"
+                                               Size="Size.Small" Color="Color.Success"
+                                               Title="Activate"
+                                               OnClick="@(() => ChangeStatus(context, "activate"))" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Block"
+                                               Size="Size.Small" Color="Color.Error"
+                                               Title="Discontinue"
+                                               OnClick="@(() => ChangeStatus(context, "discontinue"))" />
+                            }
+                            <MudTooltip Text="Edit product">
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                               Color="Color.Primary" OnClick="@(async () => await OpenEditDialog(context))" />
+                            </MudTooltip>
+                            <MudTooltip Text="Delete product">
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                               Color="Color.Error" OnClick="@(() => DeleteProduct(context.Id))" />
+                            </MudTooltip>
                         </MudStack>
-                    </MudStack>
-                </MudCardContent>
-            </MudCard>
-        </MudItem>
-
-        <!-- Products List -->
-        <MudItem xs="12" md="8">
-            <MudCard Class="AMIS-card">
-                <MudCardContent>
-                    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-2">
-                        <MudText Typo="Typo.h6">Products List</MudText>
-                        <MudChipSet T="string" SelectionMode="SelectionMode.SingleSelection"
-                                    SelectedValue="_statusFilter"
-                                    SelectedValueChanged="@(async (string v) => { _statusFilter = v; await ReloadTable(); })">
-                            <MudChip T="string" Value="@((string?)null)" Variant="Variant.Outlined" Size="Size.Small">All</MudChip>
-                            <MudChip T="string" Value="@("Active")" Variant="Variant.Outlined" Size="Size.Small" Color="Color.Success">Active</MudChip>
-                            <MudChip T="string" Value="@("Inactive")" Variant="Variant.Outlined" Size="Size.Small" Color="Color.Default">Inactive</MudChip>
-                            <MudChip T="string" Value="@("OutOfStock")" Variant="Variant.Outlined" Size="Size.Small" Color="Color.Warning">Out of Stock</MudChip>
-                            <MudChip T="string" Value="@("Discontinued")" Variant="Variant.Outlined" Size="Size.Small" Color="Color.Error">Discontinued</MudChip>
-                        </MudChipSet>
-                    </MudStack>
-
-                    <MudGrid Spacing="2" Class="mb-3">
-                        <MudItem xs="12" md="4">
-                            <MudSelect T="string" @bind-Value="_categoryFilter" @bind-Value:after="ReloadTable"
-                                       Label="Category" Placeholder="All Categories"
-                                       Dense="true" Clearable="true" Variant="Variant.Outlined">
-                                @foreach (var cat in _categories)
-                                {
-                                    <MudSelectItem T="string" Value="@cat.Id.ToString()">@cat.Name</MudSelectItem>
-                                }
-                            </MudSelect>
-                        </MudItem>
-                        <MudItem xs="12" md="4">
-                            <MudSelect T="string" @bind-Value="_supplierFilter" @bind-Value:after="ReloadTable"
-                                       Label="Supplier" Placeholder="All Suppliers"
-                                       Dense="true" Clearable="true" Variant="Variant.Outlined">
-                                @foreach (var sup in _suppliers)
-                                {
-                                    <MudSelectItem T="string" Value="@sup.Id.ToString()">@sup.Name</MudSelectItem>
-                                }
-                            </MudSelect>
-                        </MudItem>
-                        <MudItem xs="12" md="4">
-                            <MudSelect T="Guid?" @bind-Value="_parentProductFilter" @bind-Value:after="ReloadTable"
-                                       Label="Parent Product" Placeholder="All Products"
-                                       Dense="true" Clearable="true" Variant="Variant.Outlined">
-                                @foreach (var p in _parentProducts)
-                                {
-                                    <MudSelectItem T="Guid?" Value="@((Guid?)p.Id)">@p.Name</MudSelectItem>
-                                }
-                            </MudSelect>
-                        </MudItem>
-                    </MudGrid>
-
-                    <MudTable @ref="_table" T="ProductDto" ServerData="LoadServerData"
-                              Dense="true" Hover="true" Striped="true">
-                        <HeaderContent>
-                            <MudTh>Image</MudTh>
-                            <MudTh>Article</MudTh>
-                            <MudTh>Name</MudTh>
-                            <MudTh>Stock No.</MudTh>
-                            <MudTh>Price</MudTh>
-                            <MudTh>UoM</MudTh>
-                            <MudTh>Min Stock</MudTh>
-                            <MudTh>Variant</MudTh>
-                            <MudTh>Status</MudTh>
-                            <MudTh>Actions</MudTh>
-                        </HeaderContent>
-                        <RowTemplate>
-                            <MudTd>
-                                @if (!string.IsNullOrEmpty(context.ImageUrl))
-                                {
-                                    <MudImage Src="@context.ImageUrl" Alt="@context.Name"
-                                             ObjectFit="ObjectFit.Cover" Width="48" Height="48" Class="rounded" />
-                                }
-                                else
-                                {
-                                    <MudAvatar>@context.Name.FirstOrDefault()</MudAvatar>
-                                }
-                            </MudTd>
-                            <MudTd>@context.Article</MudTd>
-                            <MudTd>@context.Name</MudTd>
-                            <MudTd>@context.StockNo</MudTd>
-                            <MudTd>@context.UnitPrice.ToString("C")</MudTd>
-                            <MudTd>@context.UnitOfMeasure</MudTd>
-                            <MudTd>@context.MinimumStockLevel</MudTd>
-                            <MudTd>@context.VariantName</MudTd>
-                            <MudTd>
-                                <MudChip T="string" Size="Size.Small" Color="@GetStatusColor(context.Status)">
-                                    @context.Status
-                                </MudChip>
-                            </MudTd>
-                            <MudTd>
-                                <MudStack Row="true" Spacing="1">
-                                    @if (context.Status == "Active")
-                                    {
-                                        <MudIconButton Icon="@Icons.Material.Filled.PauseCircle"
-                                                       Size="Size.Small" Color="Color.Warning"
-                                                       Title="Deactivate"
-                                                       OnClick="@(() => ChangeStatus(context, "deactivate"))" />
-                                        <MudIconButton Icon="@Icons.Material.Filled.Inventory2"
-                                                       Size="Size.Small" Color="Color.Info"
-                                                       Title="Mark Out Of Stock"
-                                                       OnClick="@(() => ChangeStatus(context, "out-of-stock"))" />
-                                        <MudIconButton Icon="@Icons.Material.Filled.Block"
-                                                       Size="Size.Small" Color="Color.Error"
-                                                       Title="Discontinue"
-                                                       OnClick="@(() => ChangeStatus(context, "discontinue"))" />
-                                    }
-                                    else if (context.Status is "Inactive" or "OutOfStock")
-                                    {
-                                        <MudIconButton Icon="@Icons.Material.Filled.PlayCircle"
-                                                       Size="Size.Small" Color="Color.Success"
-                                                       Title="Activate"
-                                                       OnClick="@(() => ChangeStatus(context, "activate"))" />
-                                        <MudIconButton Icon="@Icons.Material.Filled.Block"
-                                                       Size="Size.Small" Color="Color.Error"
-                                                       Title="Discontinue"
-                                                       OnClick="@(() => ChangeStatus(context, "discontinue"))" />
-                                    }
-                                    <MudTooltip Text="Edit product">
-                                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
-                                                       Color="Color.Primary" OnClick="@(async () => await EditProduct(context))" />
-                                    </MudTooltip>
-                                    <MudTooltip Text="Delete product">
-                                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
-                                                       Color="Color.Error" OnClick="@(() => DeleteProduct(context.Id))" />
-                                    </MudTooltip>
-                                </MudStack>
-                            </MudTd>
-                        </RowTemplate>
-                        <NoRecordsContent>
-                            <MudText Typo="Typo.body1" Class="my-4">
-                                @((!string.IsNullOrWhiteSpace(_searchKeyword) || _statusFilter != null || _categoryFilter != null || _supplierFilter != null || _parentProductFilter != null)
-                                    ? "No products match the current filters."
-                                    : "No products yet. Create one to get started.")
-                            </MudText>
-                        </NoRecordsContent>
-                        <PagerContent>
-                            <MudTablePager />
-                        </PagerContent>
-                    </MudTable>
-                </MudCardContent>
-            </MudCard>
-        </MudItem>
-    </MudGrid>
+                    </MudTd>
+                </RowTemplate>
+                <NoRecordsContent>
+                    <MudText Typo="Typo.body1" Class="my-4">
+                        @((!string.IsNullOrWhiteSpace(_searchKeyword) || _statusFilter != null || _categoryFilter != null || _supplierFilter != null || _parentProductFilter != null)
+                            ? "No products match the current filters."
+                            : "No products yet. Create one to get started.")
+                    </MudText>
+                </NoRecordsContent>
+                <PagerContent>
+                    <MudTablePager />
+                </PagerContent>
+            </MudTable>
+        </MudCardContent>
+    </MudCard>
 </div>
 
 @code {
     private MudTable<ProductDto>? _table;
-    private ProductForm _form = new();
-    private ProductDto? EditingProduct { get; set; }
-    private List<UnitOfMeasureReferenceDto> _unitOfMeasures = new();
     private List<CategoryDto> _categories = new();
     private List<SupplierDto> _suppliers = new();
     private List<ProductDto> _parentProducts = new();
-    private UnitOfMeasureReferenceDto? _selectedUnitOfMeasure;
-    private CategoryDto? _selectedCategory;
-    private SupplierDto? _selectedSupplier;
-    private ProductDto? _selectedParentProduct;
     private bool _initialized = false;
-    private bool _isLoading = false;
     private string _searchKeyword = string.Empty;
     private string? _statusFilter = null;
     private string? _categoryFilter = null;
     private string? _supplierFilter = null;
     private Guid? _parentProductFilter = null;
-
-    public class ProductForm
-    {
-        public string Name { get; set; } = string.Empty;
-        public string StockNo { get; set; } = string.Empty;
-        public string Article { get; set; } = string.Empty;
-        public string Description { get; set; } = string.Empty;
-        public decimal UnitPrice { get; set; } = 10.00m;
-        public string UnitOfMeasure { get; set; } = "PCS";
-        public int MinimumStockLevel { get; set; } = 1;
-        public int ReorderQuantity { get; set; } = 10;
-        public string? CategoryId { get; set; }
-        public string? SupplierId { get; set; }
-        public string? ImageUrl { get; set; }
-        public string? ImagePreview { get; set; }
-        public Guid? ParentProductId { get; set; }
-        public string? VariantName { get; set; }
-    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -312,7 +185,6 @@
         _initialized = true;
 
         await Task.WhenAll(
-            LoadUnitOfMeasures(),
             LoadCategories(),
             LoadSuppliers(),
             LoadParentProducts());
@@ -372,22 +244,6 @@
         }
     }
 
-    private async Task LoadUnitOfMeasures()
-    {
-        try
-        {
-            var response = await LookupClient.UnitOfMeasuresAsync(
-                pageSize: 1000,
-                isActive: true);
-            _unitOfMeasures = response?.Items?.ToList() ?? new();
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Failed to load unit of measures: {ex.Message}", Severity.Error);
-            _unitOfMeasures = new();
-        }
-    }
-
     private async Task LoadCategories()
     {
         try
@@ -416,206 +272,29 @@
         }
     }
 
-    private async Task<IEnumerable<UnitOfMeasureReferenceDto>> SearchUnitOfMeasures(string searchText, CancellationToken cancellationToken = default)
+    private async Task OpenCreateDialog()
     {
-        if (string.IsNullOrWhiteSpace(searchText))
-            return _unitOfMeasures;
-
-        var search = searchText.ToLower();
-        return _unitOfMeasures
-            .Where(x => x.Code.Contains(search, StringComparison.OrdinalIgnoreCase) ||
-                       x.Name.Contains(search, StringComparison.OrdinalIgnoreCase))
-            .ToList();
-    }
-
-    private async Task<IEnumerable<CategoryDto>> SearchCategories(string searchText, CancellationToken cancellationToken = default)
-    {
-        if (string.IsNullOrWhiteSpace(searchText))
-            return _categories;
-
-        var search = searchText.ToLower();
-        return _categories
-            .Where(x => x.Code.Contains(search, StringComparison.OrdinalIgnoreCase) ||
-                       x.Name.Contains(search, StringComparison.OrdinalIgnoreCase))
-            .ToList();
-    }
-
-    private async Task<IEnumerable<SupplierDto>> SearchSuppliers(string searchText, CancellationToken cancellationToken = default)
-    {
-        if (string.IsNullOrWhiteSpace(searchText))
-            return _suppliers;
-
-        var search = searchText.ToLower();
-        return _suppliers
-            .Where(x => x.Code.Contains(search, StringComparison.OrdinalIgnoreCase) ||
-                       x.Name.Contains(search, StringComparison.OrdinalIgnoreCase))
-            .ToList();
-    }
-
-    private async Task<IEnumerable<ProductDto>> SearchParentProducts(string searchText, CancellationToken cancellationToken = default)
-    {
-        if (string.IsNullOrWhiteSpace(searchText))
-            return _parentProducts;
-
-        var search = searchText.ToLower();
-        return _parentProducts
-            .Where(x => (x.Name?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                       (x.StockNo?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false))
-            .ToList();
-    }
-
-    private async Task SaveProduct()
-    {
-        if (_selectedUnitOfMeasure != null)
-            _form.UnitOfMeasure = _selectedUnitOfMeasure.Code;
-
-        if (_selectedCategory != null)
-            _form.CategoryId = _selectedCategory.Id.ToString();
-
-        if (_selectedSupplier != null)
-            _form.SupplierId = _selectedSupplier.Id.ToString();
-
-        _form.ParentProductId = _selectedParentProduct?.Id;
-
-        if (_form.ParentProductId != null && string.IsNullOrWhiteSpace(_form.VariantName))
+        var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true, MaxWidth = MaxWidth.Small };
+        var dialog = await DialogService.ShowAsync<ProductFormDialog>("Create Product", options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
         {
-            Snackbar.Add("Variant Name is required when a Parent Product is selected", Severity.Warning);
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(_form.Name) || string.IsNullOrWhiteSpace(_form.StockNo)
-            || string.IsNullOrWhiteSpace(_form.Article))
-        {
-            Snackbar.Add("Article, Name and Stock No. are required", Severity.Warning);
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(_form.Description))
-        {
-            Snackbar.Add("Description is required", Severity.Warning);
-            return;
-        }
-
-        if (_form.UnitPrice <= 0)
-        {
-            Snackbar.Add("Unit price must be greater than zero", Severity.Warning);
-            return;
-        }
-
-        try
-        {
-            _isLoading = true;
-            if (EditingProduct != null)
-            {
-                var updateCmd = new UpdateProductCommand
-                {
-                    Name = _form.Name,
-                    Description = _form.Description,
-                    Article = _form.Article,
-                    UnitPrice = (double)_form.UnitPrice,
-                    MinimumStockLevel = _form.MinimumStockLevel,
-                    ReorderQuantity = _form.ReorderQuantity,
-                    CategoryId = _form.CategoryId,
-                    SupplierId = _form.SupplierId,
-                    ImageUrl = _form.ImageUrl,
-                    VariantName = _form.VariantName
-                };
-
-                await ExpendableClient.ProductsPutAsync(EditingProduct.Id, updateCmd);
-                Snackbar.Add("Product updated successfully", Severity.Success);
-            }
-            else
-            {
-                var createCmd = new CreateProductCommand
-                {
-                    StockNo = _form.StockNo,
-                    Article = _form.Article,
-                    Name = _form.Name,
-                    Description = _form.Description,
-                    UnitPrice = (double)_form.UnitPrice,
-                    UnitOfMeasure = _form.UnitOfMeasure,
-                    MinimumStockLevel = _form.MinimumStockLevel,
-                    ReorderQuantity = _form.ReorderQuantity,
-                    CategoryId = _form.CategoryId,
-                    SupplierId = _form.SupplierId,
-                    ImageUrl = _form.ImageUrl,
-                    ParentProductId = _form.ParentProductId,
-                    VariantName = _form.VariantName
-                };
-
-                await ExpendableClient.ProductsPostAsync(createCmd);
-                Snackbar.Add("Product created successfully", Severity.Success);
-            }
-
             await ReloadTable();
             await LoadParentProducts();
-            ResetForm();
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Failed to save product: {ex.Message}", Severity.Error);
-        }
-        finally
-        {
-            _isLoading = false;
         }
     }
 
-    private async Task EditProduct(ProductDto product)
+    private async Task OpenEditDialog(ProductDto product)
     {
-        // Ensure lookup data is loaded before populating the form
-        if (_unitOfMeasures.Count == 0)
-            await LoadUnitOfMeasures();
-        if (_categories.Count == 0)
-            await LoadCategories();
-        if (_suppliers.Count == 0)
-            await LoadSuppliers();
-        if (_parentProducts.Count == 0)
+        var parameters = new DialogParameters { ["Existing"] = product };
+        var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true, MaxWidth = MaxWidth.Small };
+        var dialog = await DialogService.ShowAsync<ProductFormDialog>($"Edit {product.Name}", parameters, options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
+        {
+            await ReloadTable();
             await LoadParentProducts();
-        
-        EditingProduct = product;
-        _selectedUnitOfMeasure = _unitOfMeasures.FirstOrDefault(x => x.Code == product.UnitOfMeasure);
-
-        if (!string.IsNullOrEmpty(product.CategoryId) && Guid.TryParse(product.CategoryId, out var categoryId))
-            _selectedCategory = _categories.FirstOrDefault(x => x.Id == categoryId);
-        else
-            _selectedCategory = null;
-
-        if (!string.IsNullOrEmpty(product.SupplierId) && Guid.TryParse(product.SupplierId, out var supplierId))
-            _selectedSupplier = _suppliers.FirstOrDefault(x => x.Id == supplierId);
-        else
-            _selectedSupplier = null;
-
-        _form = new ProductForm
-        {
-            Name = product.Name,
-            StockNo = product.StockNo,
-            Article = product.Article,
-            Description = product.Description,
-            UnitPrice = (decimal)product.UnitPrice,
-            UnitOfMeasure = product.UnitOfMeasure,
-            MinimumStockLevel = product.MinimumStockLevel,
-            ReorderQuantity = product.ReorderQuantity,
-            CategoryId = product.CategoryId,
-            SupplierId = product.SupplierId,
-            ImageUrl = product.ImageUrl,
-            ImagePreview = product.ImageUrl,
-            ParentProductId = product.ParentProductId,
-            VariantName = product.VariantName
-        };
-
-        if (product.ParentProductId != null)
-            _selectedParentProduct = _parentProducts.FirstOrDefault(p => p.Id == product.ParentProductId);
-    }
-
-    private void ResetForm()
-    {
-        _form = new();
-        _selectedUnitOfMeasure = null;
-        _selectedCategory = null;
-        _selectedSupplier = null;
-        _selectedParentProduct = null;
-        EditingProduct = null;
+        }
     }
 
     private async Task DeleteProduct(Guid id)
@@ -673,52 +352,4 @@
         "Discontinued" => Color.Error,
         _ => Color.Default
     };
-
-    private async Task HandleImageUpload(InputFileChangeEventArgs e)
-    {
-        try
-        {
-            if (e.File == null)
-                return;
-
-            if (e.File.Size > 5242880)
-            {
-                Snackbar.Add("Image file must be smaller than 5MB", Severity.Warning);
-                return;
-            }
-
-            var validTypes = new[] { "image/jpeg", "image/png", "image/gif", "image/webp" };
-            if (!validTypes.Contains(e.File.ContentType))
-            {
-                Snackbar.Add("Please upload a valid image file (JPG, PNG, GIF, WebP)", Severity.Warning);
-                return;
-            }
-
-            using var stream = e.File.OpenReadStream(e.File.Size);
-            using var memoryStream = new MemoryStream();
-            await stream.CopyToAsync(memoryStream);
-
-            var bytes = memoryStream.ToArray();
-            var base64 = Convert.ToBase64String(bytes);
-            var dataUrl = $"data:{e.File.ContentType};base64,{base64}";
-
-            _form.ImagePreview = dataUrl;
-            _form.ImageUrl = dataUrl;
-
-            Snackbar.Add("Image uploaded successfully", Severity.Success);
-            StateHasChanged();
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Failed to upload image: {ex.Message}", Severity.Error);
-        }
-    }
-
-    private void ClearImagePreview()
-    {
-        _form.ImagePreview = null;
-        _form.ImageUrl = null;
-        StateHasChanged();
-    }
 }
-

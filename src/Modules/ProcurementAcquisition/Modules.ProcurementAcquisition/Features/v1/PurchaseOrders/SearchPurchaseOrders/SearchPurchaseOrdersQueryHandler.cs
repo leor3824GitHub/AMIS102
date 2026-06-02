@@ -59,7 +59,8 @@ public sealed class SearchPurchaseOrdersQueryHandler(ProcurementDbContext dbCont
                 x.LineItems.Sum(li => li.Quantity * li.UnitCost),
                 x.CreatedOnUtc,
                 dbContext.SignedDocuments.Any(sd =>
-                    sd.DocumentType == ProcurementDocumentType.PurchaseOrder && sd.DocumentId == x.Id)))
+                    sd.DocumentType == ProcurementDocumentType.PurchaseOrder && sd.DocumentId == x.Id),
+                x.Category))
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 

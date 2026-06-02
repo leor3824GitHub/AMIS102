@@ -1,5 +1,6 @@
 using AMIS.Framework.Core.Domain;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders;
+using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
 
 namespace AMIS.Modules.ProcurementAcquisition.Domain.PurchaseOrders;
 
@@ -88,6 +89,10 @@ public sealed class PurchaseOrder : AggregateRoot<Guid>, IHasTenant, IAuditableE
     public PurchaseOrderStatus Status { get; private set; }
     public string? CancellationReason { get; private set; }
 
+    /// <summary>Asset vs Supply — copied from the source PR at creation. Drives the IAR acceptance rules
+    /// and which acceptance event fires (AssetRegister vs. Expendable).</summary>
+    public ProcurementCategory Category { get; private set; }
+
     // "Funds Available" — Accountant signs and assigns UACS codes
     public Guid? FundsAvailableCertifiedById { get; private set; }
     public string? FundsAvailableCertifiedByName { get; private set; }
@@ -132,7 +137,8 @@ public sealed class PurchaseOrder : AggregateRoot<Guid>, IHasTenant, IAuditableE
         string paymentTerm,
         string? fundCluster,
         string? oursBursNumber,
-        IEnumerable<PurchaseOrderLineItemData> lineItems)
+        IEnumerable<PurchaseOrderLineItemData> lineItems,
+        ProcurementCategory category = ProcurementCategory.Asset)
     {
         var po = new PurchaseOrder
         {
@@ -155,6 +161,7 @@ public sealed class PurchaseOrder : AggregateRoot<Guid>, IHasTenant, IAuditableE
             OursBursNumber = oursBursNumber,
             OursBursDate = null,
             Status = PurchaseOrderStatus.Draft,
+            Category = category,
             CreatedOnUtc = DateTimeOffset.UtcNow
         };
 

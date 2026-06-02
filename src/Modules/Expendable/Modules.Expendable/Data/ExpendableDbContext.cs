@@ -8,7 +8,6 @@ using AMIS.Framework.Shared.Persistence;
 using AMIS.Modules.Expendable.Domain.Cart;
 using AMIS.Modules.Expendable.Domain.Inventory;
 using AMIS.Modules.Expendable.Domain.Products;
-using AMIS.Modules.Expendable.Domain.Purchases;
 using AMIS.Modules.Expendable.Domain.Requests;
 using AMIS.Modules.Expendable.Domain.Warehouse;
 using Microsoft.EntityFrameworkCore;
@@ -26,9 +25,6 @@ public class ExpendableDbContext : BaseDbContext
     // Product Management
     public DbSet<Product> Products => Set<Product>();
 
-    // Purchase Orders
-    public DbSet<Purchase> Purchases => Set<Purchase>();
-
     // Supply Requests
     public DbSet<SupplyRequest> SupplyRequests => Set<SupplyRequest>();
 
@@ -41,8 +37,6 @@ public class ExpendableDbContext : BaseDbContext
 
     // Warehouse Operations
     public DbSet<ProductInventory> ProductInventories => Set<ProductInventory>();
-    public DbSet<PurchaseInspection> PurchaseInspections => Set<PurchaseInspection>();
-    public DbSet<RejectedInventory> RejectedInventories => Set<RejectedInventory>();
 
     public ExpendableDbContext(
         IMultiTenantContextAccessor<AppTenantInfo> multiTenantContextAccessor,

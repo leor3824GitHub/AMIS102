@@ -1,5 +1,6 @@
 using AMIS.Framework.Eventing.Abstractions;
 using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
 using Mediator;
 
 namespace AMIS.Modules.ProcurementAcquisition.Contracts.v1.AssetInspectionAcceptanceReports;
@@ -47,7 +48,8 @@ public sealed record AssetIARLineItemDto(
     DateTimeOffset? InspectedOnUtc = null,
     Guid? InspectedById = null,
     Guid? CatalogItemId = null,
-    string? UacsObjectCode = null);
+    string? UacsObjectCode = null,
+    string? StockNumber = null);
 
 public sealed record AssetIARDto(
     Guid Id,
@@ -74,7 +76,8 @@ public sealed record AssetIARDto(
     DateTimeOffset? InspectedOnUtc = null,
     DateTimeOffset? AcceptedOnUtc = null,
     DateTimeOffset? CancelledOnUtc = null,
-    bool HasSignedCopy = false);
+    bool HasSignedCopy = false,
+    ProcurementCategory Category = ProcurementCategory.Asset);
 
 public sealed record AssetIARSummaryDto(
     Guid Id,
@@ -87,7 +90,8 @@ public sealed record AssetIARSummaryDto(
     AssetIARStatus Status,
     DateTimeOffset CreatedOnUtc,
     Guid AssignedInspectorId,
-    bool HasSignedCopy = false);
+    bool HasSignedCopy = false,
+    ProcurementCategory Category = ProcurementCategory.Asset);
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Commands — existing
@@ -106,7 +110,8 @@ public sealed record AssetIARLineItemRequest(
     string? InspectionRemarks,
     string? StockPropertyNo = null,
     Guid? CatalogItemId = null,
-    string? UacsObjectCode = null);
+    string? UacsObjectCode = null,
+    string? StockNumber = null);
 
 public sealed record CreateAssetIARCommand(
     Guid PurchaseOrderId,
@@ -221,6 +226,36 @@ public sealed record AssetIARAcceptedEvent(
     Guid SupplierId,
     string SupplierName,
     IReadOnlyList<AssetIARAcceptedEventItem> AcceptedItems,
+    string? TenantId,
+    string CorrelationId = "") : IIntegrationEvent
+{
+    public Guid Id { get; } = Guid.NewGuid();
+    public DateTime OccurredOnUtc { get; } = DateTime.UtcNow;
+    public string Source { get; } = "Procurement";
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Supply (expendable) acceptance — consumed by the Expendable module to land stock
+// into ProductInventory. Mirrors AssetIARAcceptedEvent but carries the product StockNo
+// (for matching) and no asset-only fields (property/serial). One line per accepted,
+// non-rejected supply IAR line; quantities are NOT split per unit.
+// ──────────────────────────────────────────────────────────────────────────────
+
+public sealed record SupplyIARAcceptedEventItem(
+    string? StockNumber,
+    string Description,
+    string Unit,
+    decimal Quantity,
+    decimal UnitCost);
+
+public sealed record SupplyIARAcceptedEvent(
+    Guid IARId,
+    string IarNumber,
+    Guid PurchaseOrderId,
+    string PoNumber,
+    Guid SupplierId,
+    string SupplierName,
+    IReadOnlyList<SupplyIARAcceptedEventItem> AcceptedItems,
     string? TenantId,
     string CorrelationId = "") : IIntegrationEvent
 {

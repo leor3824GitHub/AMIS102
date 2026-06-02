@@ -1,6 +1,5 @@
 using AMIS.Modules.Expendable.Contracts.v1.Warehouse;
 using AMIS.Modules.Expendable.Data;
-using AMIS.Modules.Expendable.Domain.Purchases;
 using AMIS.Modules.Expendable.Domain.Requests;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
@@ -27,25 +26,26 @@ public sealed class GetStockCardQueryHandler : IQueryHandler<GetStockCardQuery, 
         if (product is null)
             return null;
 
-        // --- RECEIPTS: accepted purchase inspections for this product ---
-        var inspections = await _dbContext.PurchaseInspections
+        // --- RECEIPTS: accepted-stock batches from ProductInventory ---
+        // Batches are a JSON-owned collection (cannot be filtered in SQL), so load the product's inventory
+        // rows and flatten in memory. Each batch is one receipt; its SourceReference is the IAR number.
+        var inventories = await _dbContext.ProductInventories
             .AsNoTracking()
-            .Where(pi => pi.ProductId == query.ProductId
-                      && pi.QuantityAccepted > 0
-                      && !pi.IsDeleted)
-            .OrderBy(pi => pi.InspectionDate)
-            .Select(pi => new { pi.PurchaseId, pi.InspectionDate, pi.QuantityAccepted })
+            .Where(pi => pi.ProductId == query.ProductId && !pi.IsDeleted)
             .ToListAsync(cancellationToken);
 
-        // Load the relevant purchases (for PO# and unit price from line items)
-        var purchaseIds = inspections.Select(i => i.PurchaseId).Distinct().ToList();
-
-        var purchases = await _dbContext.Purchases
-            .AsNoTracking()
-            .Where(p => purchaseIds.Contains(p.Id))
-            .ToListAsync(cancellationToken);
-
-        var purchaseMap = purchases.ToDictionary(p => p.Id);
+        var receiptRows = inventories
+            .SelectMany(pi => pi.Batches)
+            .Select(b => new
+            {
+                Date = b.ReceivedDate,
+                Reference = string.IsNullOrWhiteSpace(b.SourceReference)
+                    ? $"IAR-{b.PurchaseId.ToString()[..8]}"
+                    : b.SourceReference!,
+                Qty = b.QuantityAvailable,
+                UnitCost = b.UnitPrice
+            })
+            .ToList();
 
         // --- ISSUANCES: fulfilled supply request items for this product ---
         // Load all fulfilled requests, then filter in memory (Items is a JSON-owned collection)
@@ -71,20 +71,16 @@ public sealed class GetStockCardQueryHandler : IQueryHandler<GetStockCardQuery, 
         var transactions = new List<(DateTimeOffset Date, string Reference, string Type, string? Office,
             int Qty, decimal UnitCost, decimal TotalCost)>();
 
-        foreach (var insp in inspections)
+        foreach (var receipt in receiptRows)
         {
-            var purchase = purchaseMap.GetValueOrDefault(insp.PurchaseId);
-            var lineItem = purchase?.LineItems.FirstOrDefault(li => li.ProductId == query.ProductId);
-            var unitPrice = lineItem?.UnitPrice ?? 0m;
-            var total = Math.Round(insp.QuantityAccepted * unitPrice, 2);
-
+            var total = Math.Round(receipt.Qty * receipt.UnitCost, 2);
             transactions.Add((
-                insp.InspectionDate,
-                purchase?.PurchaseOrderNumber ?? $"PO-{insp.PurchaseId.ToString()[..8]}",
+                receipt.Date,
+                receipt.Reference,
                 "Receipt",
                 null,
-                insp.QuantityAccepted,
-                unitPrice,
+                receipt.Qty,
+                receipt.UnitCost,
                 total
             ));
         }
@@ -171,4 +167,3 @@ public sealed class GetStockCardQueryHandler : IQueryHandler<GetStockCardQuery, 
         );
     }
 }
-

@@ -42,7 +42,7 @@ public sealed class CreatePurchaseRequestCommandHandler(
             var prNumber = $"{now.Year:D4}-{now.Month:D2}-{serial:D4}";
 
             var lineItems = command.LineItems.Select(li =>
-                new PurchaseRequestLineItemData(li.Quantity, li.UnitOfIssue, li.ItemDescription, li.EstimatedUnitCost, li.CatalogItemId, li.UacsObjectCode));
+                new PurchaseRequestLineItemData(li.Quantity, li.UnitOfIssue, li.ItemDescription, li.EstimatedUnitCost, li.CatalogItemId, li.UacsObjectCode, li.StockNumber));
 
             var pr = PurchaseRequest.Create(
                 tenantId,
@@ -59,7 +59,8 @@ public sealed class CreatePurchaseRequestCommandHandler(
                 command.AlobsDate,
                 lineItems,
                 requestedById: requesterId,
-                requestedByDesignation: requester.Designation);
+                requestedByDesignation: requester.Designation,
+                category: command.Category);
 
             pr.CreatedBy = currentUser.GetUserId().ToString();
             dbContext.PurchaseRequests.Add(pr);
@@ -106,7 +107,7 @@ public sealed class CreatePurchaseRequestCommandHandler(
             pr.ApprovedByName,
             pr.LineItems.Select(li => new PurchaseRequestLineItemDto(
                 li.ItemNo, li.Quantity, li.UnitOfIssue, li.ItemDescription,
-                li.EstimatedUnitCost, li.EstimatedTotalCost, li.UacsObjectCode, li.CatalogItemId)).ToList(),
+                li.EstimatedUnitCost, li.EstimatedTotalCost, li.UacsObjectCode, li.CatalogItemId, li.StockNumber)).ToList(),
             pr.CreatedOnUtc,
             pr.CreatedBy,
             pr.LastModifiedOnUtc,
@@ -123,6 +124,7 @@ public sealed class CreatePurchaseRequestCommandHandler(
             RequestedById: pr.RequestedById,
             RequestedByDesignation: pr.RequestedByDesignation,
             ApprovedByDesignation: pr.ApprovedByDesignation,
-            FundsAvailableCertifiedByDesignation: pr.FundsAvailableCertifiedByDesignation);
+            FundsAvailableCertifiedByDesignation: pr.FundsAvailableCertifiedByDesignation,
+            Category: pr.Category);
     }
 }

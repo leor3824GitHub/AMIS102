@@ -72,7 +72,8 @@ public sealed class SearchAssetIARsQueryHandler(
             iar.Status,
             iar.CreatedOnUtc,
             iar.InspectedById,
-            signedDocuments.Contains(iar.Id))).ToList();
+            signedDocuments.Contains(iar.Id),
+            iar.Category)).ToList();
 
         return new PagedResponse<AssetIARSummaryDto>
         {

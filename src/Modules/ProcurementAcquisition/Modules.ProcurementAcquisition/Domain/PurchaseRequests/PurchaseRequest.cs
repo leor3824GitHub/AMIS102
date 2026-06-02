@@ -10,7 +10,8 @@ public readonly record struct PurchaseRequestLineItemData(
     string ItemDescription,
     decimal EstimatedUnitCost,
     Guid? CatalogItemId = null,
-    string? UacsObjectCode = null);
+    string? UacsObjectCode = null,
+    string? StockNumber = null);
 
 public sealed class PurchaseRequestLineItem
 {
@@ -20,6 +21,10 @@ public sealed class PurchaseRequestLineItem
     public string ItemDescription { get; private set; } = default!;
     public decimal EstimatedUnitCost { get; private set; }
     public decimal EstimatedTotalCost => Quantity * EstimatedUnitCost;
+
+    /// <summary>For Supply PRs: the StockNo of the screened Expendable product. Carries forward to PO/IAR
+    /// so the Expendable module can match the accepted line to a product. Null for Asset PRs.</summary>
+    public string? StockNumber { get; private set; }
 
     /// <summary>
     /// Optional reference to a <c>PropertyItemCatalog</c> row (in the AssetRegister module).
@@ -43,7 +48,8 @@ public sealed class PurchaseRequestLineItem
         string itemDescription,
         decimal estimatedUnitCost,
         Guid? catalogItemId = null,
-        string? uacsObjectCode = null)
+        string? uacsObjectCode = null,
+        string? stockNumber = null)
     {
         return new PurchaseRequestLineItem
         {
@@ -53,17 +59,19 @@ public sealed class PurchaseRequestLineItem
             ItemDescription = itemDescription,
             EstimatedUnitCost = estimatedUnitCost,
             CatalogItemId = catalogItemId == Guid.Empty ? null : catalogItemId,
-            UacsObjectCode = string.IsNullOrWhiteSpace(uacsObjectCode) ? null : uacsObjectCode.Trim()
+            UacsObjectCode = string.IsNullOrWhiteSpace(uacsObjectCode) ? null : uacsObjectCode.Trim(),
+            StockNumber = string.IsNullOrWhiteSpace(stockNumber) ? null : stockNumber.Trim()
         };
     }
 
-    public void Update(decimal quantity, string unitOfIssue, string itemDescription, decimal estimatedUnitCost, Guid? catalogItemId = null)
+    public void Update(decimal quantity, string unitOfIssue, string itemDescription, decimal estimatedUnitCost, Guid? catalogItemId = null, string? stockNumber = null)
     {
         Quantity = quantity;
         UnitOfIssue = unitOfIssue;
         ItemDescription = itemDescription;
         EstimatedUnitCost = estimatedUnitCost;
         CatalogItemId = catalogItemId == Guid.Empty ? null : catalogItemId;
+        StockNumber = string.IsNullOrWhiteSpace(stockNumber) ? null : stockNumber.Trim();
     }
 
     internal void AssignUacs(string uacsObjectCode)
@@ -87,6 +95,10 @@ public sealed class PurchaseRequest : AggregateRoot<Guid>, IHasTenant, IAuditabl
     public string? ResponsibilityCenterCode { get; private set; }
     public string Purpose { get; private set; } = default!;
     public PrType PrType { get; private set; }
+
+    /// <summary>Whether this PR is for Asset (PPE/SE) or Supply (expendable) items. One PR is wholly one or
+    /// the other. Carried forward to PO/IAR; drives acceptance rules and which acceptance event fires.</summary>
+    public ProcurementCategory Category { get; private set; }
     public string? Justification { get; private set; }
     public PurchaseRequestStatus Status { get; private set; }
 
@@ -146,7 +158,8 @@ public sealed class PurchaseRequest : AggregateRoot<Guid>, IHasTenant, IAuditabl
         DateOnly? alobsDate,
         IEnumerable<PurchaseRequestLineItemData> lineItems,
         Guid? requestedById = null,
-        string? requestedByDesignation = null)
+        string? requestedByDesignation = null,
+        ProcurementCategory category = ProcurementCategory.Asset)
     {
         var pr = new PurchaseRequest
         {
@@ -158,6 +171,7 @@ public sealed class PurchaseRequest : AggregateRoot<Guid>, IHasTenant, IAuditabl
             ResponsibilityCenterCode = responsibilityCenterCode,
             Purpose = purpose,
             PrType = prType,
+            Category = category,
             Justification = justification,
             RequestedById = requestedById,
             RequestedByName = requestedByName,
@@ -174,7 +188,7 @@ public sealed class PurchaseRequest : AggregateRoot<Guid>, IHasTenant, IAuditabl
         foreach (var li in lineItems)
         {
             pr._lineItems.Add(PurchaseRequestLineItem.Create(
-                itemNo++, li.Quantity, li.UnitOfIssue, li.ItemDescription, li.EstimatedUnitCost, li.CatalogItemId, li.UacsObjectCode));
+                itemNo++, li.Quantity, li.UnitOfIssue, li.ItemDescription, li.EstimatedUnitCost, li.CatalogItemId, li.UacsObjectCode, li.StockNumber));
         }
 
         return pr;
@@ -190,7 +204,8 @@ public sealed class PurchaseRequest : AggregateRoot<Guid>, IHasTenant, IAuditabl
         DateOnly? saiDate,
         string? alobsNumber,
         DateOnly? alobsDate,
-        IEnumerable<PurchaseRequestLineItemData> lineItems)
+        IEnumerable<PurchaseRequestLineItemData> lineItems,
+        ProcurementCategory category = ProcurementCategory.Asset)
     {
         if (Status != PurchaseRequestStatus.Draft)
             throw new InvalidOperationException("Only Draft purchase requests can be updated.");
@@ -200,6 +215,7 @@ public sealed class PurchaseRequest : AggregateRoot<Guid>, IHasTenant, IAuditabl
         ResponsibilityCenterCode = responsibilityCenterCode;
         Purpose = purpose;
         PrType = prType;
+        Category = category;
         Justification = justification;
         SaiNumber = saiNumber;
         SaiDate = saiDate;
@@ -212,7 +228,7 @@ public sealed class PurchaseRequest : AggregateRoot<Guid>, IHasTenant, IAuditabl
         foreach (var li in lineItems)
         {
             _lineItems.Add(PurchaseRequestLineItem.Create(
-                itemNo++, li.Quantity, li.UnitOfIssue, li.ItemDescription, li.EstimatedUnitCost, li.CatalogItemId, li.UacsObjectCode));
+                itemNo++, li.Quantity, li.UnitOfIssue, li.ItemDescription, li.EstimatedUnitCost, li.CatalogItemId, li.UacsObjectCode, li.StockNumber));
         }
     }
 

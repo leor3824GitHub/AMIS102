@@ -19,15 +19,7 @@ public static class ExpendablePermissions
         public const string MarkOutOfStock = "Permissions.Expendable.Products.MarkOutOfStock";
     }
 
-    public static class Purchases
-    {
-        public const string View = "Permissions.Expendable.Purchases.View";
-        public const string Create = "Permissions.Expendable.Purchases.Create";
-        public const string Update = "Permissions.Expendable.Purchases.Update";
-        public const string Delete = "Permissions.Expendable.Purchases.Delete";
-        public const string Approve = "Permissions.Expendable.Purchases.Approve";
-        public const string Receive = "Permissions.Expendable.Purchases.Receive";
-    }
+    // Purchase orders + receiving moved to ProcurementAcquisition; Expendable no longer owns PO permissions.
 
     public static class SupplyRequests
     {

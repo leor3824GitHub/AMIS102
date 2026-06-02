@@ -18,6 +18,7 @@ internal sealed class AssetIARConfiguration : IEntityTypeConfiguration<AssetInsp
         builder.Property(x => x.SupplierName).IsRequired().HasMaxLength(500);
         builder.Property(x => x.DeliveryReceiptNo).HasMaxLength(64);
         builder.Property(x => x.Remarks).HasMaxLength(1000);
+        builder.Property(x => x.Category).IsRequired().HasDefaultValue(Contracts.v1.PurchaseRequests.ProcurementCategory.Asset);
 
         builder.Property(x => x.SubmittedForInspectionOnUtc);
         builder.Property(x => x.InspectedOnUtc);
@@ -44,6 +45,8 @@ internal sealed class AssetIARConfiguration : IEntityTypeConfiguration<AssetInsp
             li.Property(x => x.InspectionRemarks).HasMaxLength(500);
             li.Property(x => x.InspectionResult).HasConversion<int>();
             li.Property(x => x.UacsObjectCode).HasMaxLength(64); // copied from PO line snapshot
+            li.Property(x => x.StockPropertyNo).HasMaxLength(64);
+            li.Property(x => x.StockNumber).HasMaxLength(64);     // Supply IARs: product StockNo (JSON blob)
         });
 
         builder.HasQueryFilter("SoftDelete", x => !x.IsDeleted);

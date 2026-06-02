@@ -73,21 +73,46 @@ public sealed class AcceptAssetIARCommandHandler(
 
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-        var integrationEvent = new AssetIARAcceptedEvent(
-            IARId: iar.Id,
-            PurchaseOrderId: iar.PurchaseOrderId,
-            PoNumber: poNumber,
-            SupplierId: iar.SupplierId,
-            SupplierName: iar.SupplierName,
-            AcceptedItems: iar.LineItems
-                .Where(li => li.InspectionResult != LineInspectionResult.Rejected)
-                .Select(li => new AssetIARAcceptedEventItem(
-                    li.Description, li.TechnicalSpecifications, li.Brand, li.Model,
-                    li.SerialNo, li.PropertyClassHint, li.Unit, li.Quantity, li.UnitCost,
-                    li.StockPropertyNo, li.CatalogItemId, li.UacsObjectCode)).ToList(),
-            TenantId: dbContext.TenantInfo?.Identifier);
+        var tenantId = dbContext.TenantInfo?.Identifier;
+        var acceptedLines = iar.LineItems
+            .Where(li => li.InspectionResult != LineInspectionResult.Rejected)
+            .ToList();
 
-        await eventBus.PublishAsync(integrationEvent, cancellationToken).ConfigureAwait(false);
+        // Supply IARs land their accepted stock into the Expendable module's ProductInventory; Asset IARs
+        // materialize fixed-asset rows in AssetRegister. One PR/PO/IAR is wholly one category — see ProcurementCategory.
+        if (iar.Category == ProcurementCategory.Supply)
+        {
+            var supplyEvent = new SupplyIARAcceptedEvent(
+                IARId: iar.Id,
+                IarNumber: iar.IarNumber,
+                PurchaseOrderId: iar.PurchaseOrderId,
+                PoNumber: poNumber,
+                SupplierId: iar.SupplierId,
+                SupplierName: iar.SupplierName,
+                AcceptedItems: acceptedLines
+                    .Select(li => new SupplyIARAcceptedEventItem(
+                        li.StockNumber, li.Description, li.Unit, li.Quantity, li.UnitCost)).ToList(),
+                TenantId: tenantId);
+
+            await eventBus.PublishAsync(supplyEvent, cancellationToken).ConfigureAwait(false);
+        }
+        else
+        {
+            var assetEvent = new AssetIARAcceptedEvent(
+                IARId: iar.Id,
+                PurchaseOrderId: iar.PurchaseOrderId,
+                PoNumber: poNumber,
+                SupplierId: iar.SupplierId,
+                SupplierName: iar.SupplierName,
+                AcceptedItems: acceptedLines
+                    .Select(li => new AssetIARAcceptedEventItem(
+                        li.Description, li.TechnicalSpecifications, li.Brand, li.Model,
+                        li.SerialNo, li.PropertyClassHint, li.Unit, li.Quantity, li.UnitCost,
+                        li.StockPropertyNo, li.CatalogItemId, li.UacsObjectCode)).ToList(),
+                TenantId: tenantId);
+
+            await eventBus.PublishAsync(assetEvent, cancellationToken).ConfigureAwait(false);
+        }
 
         return AssetIARMapper.ToDto(iar, poNumber);
     }

@@ -2,6 +2,7 @@ using System.Net;
 using AMIS.Framework.Core.Context;
 using AMIS.Framework.Core.Exceptions;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders;
+using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
 using AMIS.Modules.ProcurementAcquisition.Data;
 using AMIS.Modules.ProcurementAcquisition.Domain.PurchaseOrders;
 using Mediator;
@@ -24,6 +25,15 @@ public sealed class CreatePurchaseOrderCommandHandler(
 
         var poNumber = await GeneratePoNumberAsync(tenantId, cancellationToken).ConfigureAwait(false);
 
+        // The PO inherits Asset/Supply from its source PR (one PR is wholly one or the other). Drives the
+        // downstream IAR acceptance rules and which acceptance event fires.
+        var category = await dbContext.PurchaseRequests
+            .AsNoTracking()
+            .Where(x => x.Id == command.PurchaseRequestId)
+            .Select(x => (ProcurementCategory?)x.Category)
+            .FirstOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false) ?? ProcurementCategory.Asset;
+
         var lineItems = command.LineItems.Select(li =>
             new PurchaseOrderLineItemData(li.StockNumber, li.Unit, li.Description, li.Quantity, li.UnitCost,
                 li.CatalogItemId));
@@ -44,7 +54,8 @@ public sealed class CreatePurchaseOrderCommandHandler(
             command.PaymentTerm,
             command.FundCluster,
             command.OursBursNumber,
-            lineItems);
+            lineItems,
+            category);
 
         po.CreatedBy = currentUser.GetUserId().ToString();
 
@@ -189,7 +200,8 @@ public sealed class CreatePurchaseOrderCommandHandler(
             po.IssuedByName,
             po.IssuedOnUtc,
             FundsAvailableCertifiedByDesignation: po.FundsAvailableCertifiedByDesignation,
-            IssuedByDesignation: po.IssuedByDesignation);
+            IssuedByDesignation: po.IssuedByDesignation,
+            Category: po.Category);
     }
 
     internal static string AmountToWords(decimal amount)

@@ -53,7 +53,8 @@ public sealed class CreateAssetIARCommandHandler(
                 command.DeliveryReceiptNo,
                 command.DeliveryDate,
                 command.Remarks,
-                command.LineItems);
+                command.LineItems,
+                po.Category);
 
             iar.CreatedBy = currentUser.GetUserId().ToString();
             dbContext.AssetIARs.Add(iar);

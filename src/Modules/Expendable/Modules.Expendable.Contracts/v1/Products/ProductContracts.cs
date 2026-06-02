@@ -98,6 +98,12 @@ public sealed class ListActiveProductsQuery : IPagedQuery, IQuery<PagedResponse<
     public string? Sort { get; set; }
 }
 
+public sealed class GetProductArticlesQuery : IQuery<IReadOnlyList<string>>
+{
+    public string? Keyword { get; set; }
+    public int? Take { get; set; }
+}
+
 public sealed class GetProductCatalogCardsQuery : IPagedQuery, IQuery<PagedResponse<ProductCatalogCardDto>>
 {
     public string? Keyword { get; set; }
