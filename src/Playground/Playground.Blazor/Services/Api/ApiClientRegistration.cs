@@ -200,8 +200,8 @@ internal static class ApiClientRegistration
             new TangibleItemClient(ResolveClient(sp)));
 
         // Asset IAR client (merged into Procurement module)
-        services.AddTransient<IAssetIarClient>(sp =>
-            new AssetIarClient(ResolveClient(sp)));
+        services.AddTransient<IInspectionAcceptanceReportClient>(sp =>
+            new InspectionAcceptanceReportClient(ResolveClient(sp)));
 
         // Procurement module manual clients
         services.AddTransient<IPurchaseRequestClient>(sp =>

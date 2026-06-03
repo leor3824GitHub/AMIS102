@@ -41,16 +41,16 @@ public static class ProcurementPermissions
         public const string Upload = "Permissions.Procurement.SignedDocuments.Upload";
     }
 
-    public static class AssetIARs
+    public static class InspectionAcceptanceReports
     {
-        public const string View = "Permissions.Procurement.AssetIARs.View";
-        public const string Create = "Permissions.Procurement.AssetIARs.Create";
-        public const string Update = "Permissions.Procurement.AssetIARs.Update";
-        public const string Accept = "Permissions.Procurement.AssetIARs.Accept";
-        public const string SubmitForInspection = "Permissions.Procurement.AssetIARs.SubmitForInspection";
-        public const string Inspect = "Permissions.Procurement.AssetIARs.Inspect";
-        public const string AssignPropertyNo = "Permissions.Procurement.AssetIARs.AssignPropertyNo";
-        public const string ExpandLine = "Permissions.Procurement.AssetIARs.ExpandLine";
-        public const string Cancel = "Permissions.Procurement.AssetIARs.Cancel";
+        public const string View = "Permissions.Procurement.InspectionAcceptanceReports.View";
+        public const string Create = "Permissions.Procurement.InspectionAcceptanceReports.Create";
+        public const string Update = "Permissions.Procurement.InspectionAcceptanceReports.Update";
+        public const string Accept = "Permissions.Procurement.InspectionAcceptanceReports.Accept";
+        public const string SubmitForInspection = "Permissions.Procurement.InspectionAcceptanceReports.SubmitForInspection";
+        public const string Inspect = "Permissions.Procurement.InspectionAcceptanceReports.Inspect";
+        public const string AssignPropertyNo = "Permissions.Procurement.InspectionAcceptanceReports.AssignPropertyNo";
+        public const string ExpandLine = "Permissions.Procurement.InspectionAcceptanceReports.ExpandLine";
+        public const string Cancel = "Permissions.Procurement.InspectionAcceptanceReports.Cancel";
     }
 }

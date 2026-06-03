@@ -115,7 +115,7 @@ public class ExpendableModule : IModule
         // Inbound integration: land accepted Supply IAR lines into ProductInventory.
         services.AddScoped<
             AMIS.Framework.Eventing.Abstractions.IIntegrationEventHandler<
-                AMIS.Modules.ProcurementAcquisition.Contracts.v1.AssetInspectionAcceptanceReports.SupplyIARAcceptedEvent>,
+                AMIS.Modules.ProcurementAcquisition.Contracts.v1.InspectionAcceptanceReports.SupplyIARAcceptedEvent>,
             AMIS.Modules.Expendable.Integration.SupplyIARAcceptedEventConsumer>();
 
         // Fluent Validation will be auto-discovered

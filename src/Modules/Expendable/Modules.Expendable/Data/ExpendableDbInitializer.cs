@@ -26,16 +26,23 @@ internal sealed class ExpendableDbInitializer(
         try
         {
             await context.Database.ExecuteSqlRawAsync("CREATE EXTENSION IF NOT EXISTS pgcrypto;", cancellationToken).ConfigureAwait(false);
-            // Backfill empty/null Version bytes for all concurrency-token columns so EF WHERE checks always match
-            foreach (var table in new[] { "Products", "ProductInventory", "SupplyRequests", "EmployeeInventory", "Purchases", "RejectedInventory" })
-            {
-                await context.Database.ExecuteSqlRawAsync(
-                    $"UPDATE expendable.\"{table}\" SET \"Version\" = gen_random_bytes(8) WHERE \"Version\" IS NULL OR \"Version\" = '\\x';",
-                    cancellationToken).ConfigureAwait(false);
-                await context.Database.ExecuteSqlRawAsync(
-                    $"ALTER TABLE expendable.\"{table}\" ALTER COLUMN \"Version\" SET DEFAULT gen_random_bytes(8);",
-                    cancellationToken).ConfigureAwait(false);
-            }
+            // Backfill empty/null Version bytes for every concurrency-token column so EF WHERE checks always match.
+            // Discover tables dynamically so the list never drifts as entities are added/removed.
+            await context.Database.ExecuteSqlRawAsync(
+                """
+                DO $$
+                DECLARE r record;
+                BEGIN
+                    FOR r IN
+                        SELECT table_name FROM information_schema.columns
+                        WHERE table_schema = 'expendable' AND column_name = 'Version'
+                    LOOP
+                        EXECUTE format('UPDATE expendable.%I SET "Version" = gen_random_bytes(8) WHERE "Version" IS NULL OR "Version" = ''\x'';', r.table_name);
+                        EXECUTE format('ALTER TABLE expendable.%I ALTER COLUMN "Version" SET DEFAULT gen_random_bytes(8);', r.table_name);
+                    END LOOP;
+                END $$;
+                """,
+                cancellationToken).ConfigureAwait(false);
             logger.LogInformation("[{Tenant}] ensured Version defaults for all expendable tables.", context.TenantInfo?.Identifier);
         }
         catch (Exception ex)
