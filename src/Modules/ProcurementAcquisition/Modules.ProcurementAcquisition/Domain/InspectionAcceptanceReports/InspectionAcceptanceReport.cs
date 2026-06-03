@@ -154,6 +154,12 @@ public sealed class InspectionAcceptanceReport : AggregateRoot<Guid>, IHasTenant
     public DateTimeOffset? AcceptedOnUtc { get; private set; }
     public DateTimeOffset? CancelledOnUtc { get; private set; }
 
+    /// <summary>The authenticated user who performed the acceptance. Frozen at the moment of the action
+    /// (faithful-reprint plan) — distinct from <see cref="ReceivedById"/>, the custodian assigned at creation.</summary>
+    public Guid? AcceptedById { get; private set; }
+    public string? AcceptedByName { get; private set; }
+    public string? AcceptedByDesignation { get; private set; }
+
     private readonly List<InspectionAcceptanceReportLineItem> _lineItems = [];
     public IReadOnlyList<InspectionAcceptanceReportLineItem> LineItems => _lineItems.AsReadOnly();
     public decimal TotalAmount => _lineItems.Sum(x => x.Amount);
@@ -338,7 +344,11 @@ public sealed class InspectionAcceptanceReport : AggregateRoot<Guid>, IHasTenant
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
     }
 
-    public void Accept()
+    /// <summary>
+    /// Property Custodian accepts the inspected IAR. Captures the authenticated actor (name + designation
+    /// frozen at this moment) for the acceptance signature block. Moves Inspected → Accepted.
+    /// </summary>
+    public void Accept(Guid acceptedById, string? acceptedByName, string? acceptedByDesignation = null)
     {
         if (Status != InspectionAcceptanceReportStatus.Inspected)
             throw new InvalidOperationException("IAR can only be accepted after inspection is complete.");
@@ -370,6 +380,9 @@ public sealed class InspectionAcceptanceReport : AggregateRoot<Guid>, IHasTenant
 
         Status = InspectionAcceptanceReportStatus.Accepted;
         AcceptedOnUtc = DateTimeOffset.UtcNow;
+        AcceptedById = acceptedById;
+        AcceptedByName = acceptedByName;
+        AcceptedByDesignation = acceptedByDesignation;
         LastModifiedOnUtc = AcceptedOnUtc;
     }
 

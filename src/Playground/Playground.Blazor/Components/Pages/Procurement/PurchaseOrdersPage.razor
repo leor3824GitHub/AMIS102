@@ -298,6 +298,14 @@
                                     : $"{_detail.FundsAvailableCertifiedByName.ToUpperInvariant()}{(_detail.FundsAvailableCertifiedOnUtc is null ? "" : $" • {_detail.FundsAvailableCertifiedOnUtc.Value.ToLocalTime():MM/dd/yyyy}")}")
                             </MudText>
                         </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudText Typo="Typo.subtitle2">Approved By (Authorized Official)</MudText>
+                            <MudText Typo="Typo.body2">
+                                @(string.IsNullOrWhiteSpace(_detail.IssuedByName)
+                                    ? "— not yet approved —"
+                                    : $"{_detail.IssuedByName.ToUpperInvariant()}{(_detail.IssuedOnUtc is null ? "" : $" • {_detail.IssuedOnUtc.Value.ToLocalTime():MM/dd/yyyy}")}")
+                            </MudText>
+                        </MudItem>
                         <MudItem xs="6" md="3">
                             <MudText Typo="Typo.caption" Color="Color.Secondary">ORS/BURS No.</MudText>
                             <MudText Typo="Typo.body2">@(_detail.OursBursNumber ?? "—")</MudText>

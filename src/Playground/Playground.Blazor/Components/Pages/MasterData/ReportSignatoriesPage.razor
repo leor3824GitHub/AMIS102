@@ -294,7 +294,10 @@
             cancellationToken: ct);
 
         var items = result.Items?.ToList() ?? [];
-        _employeeNameToTitle.Clear();
+        // Accumulate name->position across searches (do NOT clear): selecting an item
+        // re-triggers this search with the full "First Last" string, which the keyword
+        // search won't match — clearing here would wipe the entry before OnNameChanged
+        // can read it, leaving the designation blank.
         foreach (var e in items)
         {
             var fullName = $"{e.FirstName} {e.LastName}";

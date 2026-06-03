@@ -2,9 +2,9 @@ using System.Net;
 using AMIS.Framework.Core.Context;
 using AMIS.Framework.Core.Exceptions;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders;
-using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
 using AMIS.Modules.ProcurementAcquisition.Data;
 using AMIS.Modules.ProcurementAcquisition.Domain.PurchaseOrders;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.Shared;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
@@ -23,46 +23,76 @@ public sealed class CreatePurchaseOrderCommandHandler(
             await EnsureNoDuplicateAsync(command, cancellationToken).ConfigureAwait(false);
         }
 
-        var poNumber = await GeneratePoNumberAsync(tenantId, cancellationToken).ConfigureAwait(false);
-
         // The PO inherits Asset/Supply from its source PR (one PR is wholly one or the other). Drives the
-        // downstream IAR acceptance rules and which acceptance event fires.
-        var category = await dbContext.PurchaseRequests
-            .AsNoTracking()
-            .Where(x => x.Id == command.PurchaseRequestId)
-            .Select(x => (ProcurementCategory?)x.Category)
-            .FirstOrDefaultAsync(cancellationToken)
-            .ConfigureAwait(false) ?? ProcurementCategory.Asset;
+        // downstream IAR acceptance rules and which acceptance event fires. The PR's lines also let us recover
+        // the screened StockNumber/CatalogItemId that the awarded canvass doesn't carry — see the resolver.
+        // These are stable across number-allocation retries, so resolve them once, before the loop.
+        var (category, prLines) = await PurchaseOrderLineResolver
+            .LoadSourcePrAsync(dbContext, command.PurchaseRequestId, cancellationToken)
+            .ConfigureAwait(false);
 
-        var lineItems = command.LineItems.Select(li =>
-            new PurchaseOrderLineItemData(li.StockNumber, li.Unit, li.Description, li.Quantity, li.UnitCost,
-                li.CatalogItemId));
+        var lineItems = PurchaseOrderLineResolver.ResolveAndValidate(command.LineItems, category, prLines);
 
-        var po = PurchaseOrder.Create(
-            tenantId,
-            poNumber,
-            command.PurchaseRequestId,
-            command.CanvassRequestId,
-            command.SupplierId,
-            command.SupplierName,
-            command.SupplierAddress,
-            command.SupplierTin,
-            command.ModeOfProcurement,
-            command.PlaceOfDelivery,
-            command.DateOfDelivery,
-            command.DeliveryTerm,
-            command.PaymentTerm,
-            command.FundCluster,
-            command.OursBursNumber,
-            lineItems,
-            category);
+        // Allocate the PO number from a per-(tenant, year, month) counter guarded by xmin optimistic
+        // concurrency, retrying on conflict — same race-safe pattern as PR/IAR. Replaces the old
+        // "max(PoNumber) + 1" scan, which could mint duplicate numbers (or fail the unique index) when two
+        // POs were created concurrently.
+        var now = DateTime.UtcNow;
+        for (var attempt = 0; attempt < SequenceAllocation.MaxAttempts; attempt++)
+        {
+            var sequence = await dbContext.PoNumberSequences
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(
+                    x => x.TenantId == tenantId && x.Year == now.Year && x.Month == now.Month,
+                    cancellationToken)
+                .ConfigureAwait(false);
 
-        po.CreatedBy = currentUser.GetUserId().ToString();
+            if (sequence is null)
+            {
+                sequence = PoNumberSequence.Create(tenantId, now.Year, now.Month);
+                dbContext.PoNumberSequences.Add(sequence);
+            }
 
-        dbContext.PurchaseOrders.Add(po);
-        await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            var serial = sequence.NextSerial();
+            var poNumber = $"{now.Year:D4}-{now.Month:D2}-{serial:D3}";
 
-        return MapToDto(po);
+            var po = PurchaseOrder.Create(
+                tenantId,
+                poNumber,
+                command.PurchaseRequestId,
+                command.CanvassRequestId,
+                command.SupplierId,
+                command.SupplierName,
+                command.SupplierAddress,
+                command.SupplierTin,
+                command.ModeOfProcurement,
+                command.PlaceOfDelivery,
+                command.DateOfDelivery,
+                command.DeliveryTerm,
+                command.PaymentTerm,
+                command.FundCluster,
+                command.OursBursNumber,
+                lineItems,
+                category);
+
+            po.CreatedBy = currentUser.GetUserId().ToString();
+            dbContext.PurchaseOrders.Add(po);
+
+            try
+            {
+                await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                return MapToDto(po);
+            }
+            catch (DbUpdateException ex) when (SequenceAllocation.IsRetryableAllocationConflict(ex))
+            {
+                // Counter row advanced (xmin) or the generated number collided with an existing PO (unique
+                // violation) between our read and save. Drop tracked state and retry with the latest value.
+                dbContext.ChangeTracker.Clear();
+            }
+        }
+
+        throw new CustomException("Failed to allocate a unique PO number. Please try again.",
+            Enumerable.Empty<string>(), HttpStatusCode.Conflict);
     }
 
     private async Task EnsureNoDuplicateAsync(CreatePurchaseOrderCommand command, CancellationToken ct)
@@ -131,30 +161,6 @@ public sealed class CreatePurchaseOrderCommandHandler(
         var message = $"A purchase order already exists for this purchase request and supplier with overlapping item(s). Existing PO(s): {poList}.";
 
         throw new CustomException(message, Enumerable.Empty<string>(), HttpStatusCode.Conflict);
-    }
-
-    private async Task<string> GeneratePoNumberAsync(string tenantId, CancellationToken ct)
-    {
-        var now = DateTime.UtcNow;
-        var year = now.Year;
-        var month = now.Month;
-        var prefix = $"{year:D4}-{month:D2}-";
-
-        var lastNumber = await dbContext.PurchaseOrders
-            .IgnoreQueryFilters()
-            .Where(x => x.TenantId == tenantId && x.PoNumber.StartsWith(prefix))
-            .Select(x => x.PoNumber)
-            .OrderByDescending(x => x)
-            .FirstOrDefaultAsync(ct)
-            .ConfigureAwait(false);
-
-        var next = 1;
-        if (lastNumber != null && int.TryParse(lastNumber[prefix.Length..], out var last))
-        {
-            next = last + 1;
-        }
-
-        return $"{prefix}{next:D3}";
     }
 
     private string GetRequiredTenantId() =>

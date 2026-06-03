@@ -48,7 +48,10 @@ internal static class InspectionAcceptanceReportMapper
             iar.AcceptedOnUtc,
             iar.CancelledOnUtc,
             hasSignedCopy,
-            iar.Category);
+            iar.Category,
+            iar.AcceptedById,
+            iar.AcceptedByName,
+            iar.AcceptedByDesignation);
 
     internal static async Task<(string InspectorName, string CustodianName)> ResolveEmployeeNamesAsync(
         Guid inspectedById,

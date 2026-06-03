@@ -62,7 +62,9 @@ public sealed class PrintInspectionAcceptanceReportFastQueryHandler(IMediator me
                 CompleteCheck:            iar.Status == InspectionAcceptanceReportStatus.Accepted ? "X" : string.Empty,
                 PartialCheck:             iar.Status == InspectionAcceptanceReportStatus.Inspected ? "X" : string.Empty,
                 InspectorName:            (iar.InspectedByName ?? string.Empty).ToUpperInvariant(),
-                CustodianName:            (iar.ReceivedByName ?? string.Empty).ToUpperInvariant())
+                // Acceptance signature = the user who actually accepted the IAR. Fall back to the assigned
+                // custodian for records accepted before the acceptor was captured (or not yet accepted).
+                CustodianName:            (string.IsNullOrWhiteSpace(iar.AcceptedByName) ? iar.ReceivedByName : iar.AcceptedByName ?? string.Empty).ToUpperInvariant())
         };
 
         var lineItemsTable = BuildLineItemsTable(iar, query.MinRows);

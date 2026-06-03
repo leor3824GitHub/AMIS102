@@ -25,6 +25,9 @@ internal sealed class InspectionAcceptanceReportConfiguration : IEntityTypeConfi
         builder.Property(x => x.AcceptedOnUtc);
         builder.Property(x => x.CancelledOnUtc);
 
+        builder.Property(x => x.AcceptedByName).HasMaxLength(200);
+        builder.Property(x => x.AcceptedByDesignation).HasMaxLength(200);
+
         // PostgreSQL xmin system column — true optimistic concurrency, auto-updated by the DB on every UPDATE.
         builder.Property<uint>("xmin")
             .HasColumnName("xmin")

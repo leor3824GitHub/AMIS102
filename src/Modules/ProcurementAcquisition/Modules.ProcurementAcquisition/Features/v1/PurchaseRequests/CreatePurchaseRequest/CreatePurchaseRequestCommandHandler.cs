@@ -25,7 +25,7 @@ public sealed class CreatePurchaseRequestCommandHandler(
             .ResolveSignatoryAsync(currentUser, mediator, cancellationToken)
             .ConfigureAwait(false);
 
-        for (var attempt = 0; attempt < 5; attempt++)
+        for (var attempt = 0; attempt < SequenceAllocation.MaxAttempts; attempt++)
         {
             var sequence = await dbContext.PrNumberSequences
                 .IgnoreQueryFilters()
@@ -70,10 +70,10 @@ public sealed class CreatePurchaseRequestCommandHandler(
                 await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
                 return MapToDto(pr);
             }
-            catch (DbUpdateConcurrencyException)
+            catch (DbUpdateException ex) when (SequenceAllocation.IsRetryableAllocationConflict(ex))
             {
-                // Another request modified the sequence row between our read and save.
-                // Clear tracked entities and retry with the latest sequence value.
+                // Counter row advanced (xmin) or the generated number collided (unique violation) between our
+                // read and save. Clear tracked entities and retry with the latest sequence value.
                 dbContext.ChangeTracker.Clear();
             }
         }

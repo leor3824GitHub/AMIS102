@@ -52,6 +52,7 @@ internal sealed class AssetIARAcceptedEventConsumer(
 
         var materialized = 0;
         var skipped = 0;
+        var alreadyPresent = 0;
 
         foreach (var line in @event.AcceptedItems)
         {
@@ -108,10 +109,29 @@ internal sealed class AssetIARAcceptedEventConsumer(
                 logger.LogWarning(
                     "[{Tenant}] IAR line '{Description}' has quantity {Qty} but only one StockPropertyNo. " +
                     "Per NFA policy, tracked items must use one IAR line per unit. Materializing 1 row.",
-                    line.Description, quantity);
+                    tenantId, line.Description, quantity);
             }
 
             var propertyNo = PropertyNumber.Create(line.StockPropertyNo);
+
+            // Idempotency (line-level): a unit whose Property No is already registered was materialized by an
+            // earlier delivery. Skip it — but keep processing sibling lines, so an operator can correct a
+            // previously-skipped line and re-fire the IAR without tripping the PropertyNo unique constraint.
+            // A line-level guard is used instead of an IAR-level inbox marker precisely to preserve that re-fire
+            // workflow (an IAR may be only partially materialized on the first pass).
+            var alreadyMaterialized = await db.AssetRegistries
+                .AnyAsync(a => a.PropertyNo == propertyNo, ct)
+                .ConfigureAwait(false);
+            if (alreadyMaterialized)
+            {
+                logger.LogInformation(
+                    "[{Tenant}] IAR {IARId} line '{Description}' (Property No {PropertyNo}) already registered; " +
+                    "skipping (idempotent redelivery / re-fire).",
+                    tenantId, @event.IARId, line.Description, line.StockPropertyNo);
+                alreadyPresent++;
+                continue;
+            }
+
             var asset = AssetRegistry.Register(
                 tenantId,
                 catalog,
@@ -136,8 +156,8 @@ internal sealed class AssetIARAcceptedEventConsumer(
             await db.SaveChangesAsync(ct).ConfigureAwait(false);
 
         logger.LogInformation(
-            "[{Tenant}] AssetRegister processed IAR {IARId}: materialized={Materialized} skipped={Skipped} of {LineCount} lines.",
-            tenantId, @event.IARId, materialized, skipped, @event.AcceptedItems.Count);
+            "[{Tenant}] AssetRegister processed IAR {IARId}: materialized={Materialized} alreadyPresent={AlreadyPresent} skipped={Skipped} of {LineCount} lines.",
+            tenantId, @event.IARId, materialized, alreadyPresent, skipped, @event.AcceptedItems.Count);
     }
 
     private static (AssetType, AssetCategory) ClassifyFromCatalog(

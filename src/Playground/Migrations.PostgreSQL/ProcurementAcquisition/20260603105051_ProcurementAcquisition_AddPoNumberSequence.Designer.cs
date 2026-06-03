@@ -3,6 +3,7 @@ using System;
 using AMIS.Modules.ProcurementAcquisition.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AMIS.Playground.Migrations.PostgreSQL.ProcurementAcquisition
 {
     [DbContext(typeof(ProcurementDbContext))]
-    partial class ProcurementDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260603105051_ProcurementAcquisition_AddPoNumberSequence")]
+    partial class ProcurementAcquisition_AddPoNumberSequence
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -164,41 +167,6 @@ namespace AMIS.Playground.Migrations.PostgreSQL.ProcurementAcquisition
                         .IsUnique();
 
                     b.ToTable("CanvassRequests", "procurement");
-
-                    b.HasAnnotation("Finbuckle:MultiTenant", true);
-                });
-
-            modelBuilder.Entity("AMIS.Modules.ProcurementAcquisition.Domain.Canvass.RivNumberSequence", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("LastSerial")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(0);
-
-                    b.Property<string>("TenantId")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
-
-                    b.Property<int>("Year")
-                        .HasColumnType("integer");
-
-                    b.Property<uint>("xmin")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("xid")
-                        .HasColumnName("xmin");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TenantId", "Year")
-                        .IsUnique();
-
-                    b.ToTable("RivNumberSequences", "procurement");
 
                     b.HasAnnotation("Finbuckle:MultiTenant", true);
                 });

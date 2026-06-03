@@ -49,7 +49,7 @@ public sealed class PrintPurchaseOrderFastQueryHandler(IMediator mediator)
                 AuthorizedOfficialName:        (po.IssuedByName ?? org?.ApprovingOfficialName ?? string.Empty).ToUpperInvariant(),
                 AuthorizedOfficialDesignation: po.IssuedByDesignation ?? org?.ApprovingOfficialDesignation ?? "Designation",
                 AccountantName:                (po.FundsAvailableCertifiedByName ?? org?.AccountantName ?? string.Empty).ToUpperInvariant(),
-                AccountantDesignation:         po.FundsAvailableCertifiedByDesignation ?? org?.AccountantDesignation ?? "Accountant IV",
+                AccountantDesignation:         po.FundsAvailableCertifiedByDesignation ?? org?.AccountantDesignation ?? "Accountant",
                 FundCluster:                   po.FundCluster ?? string.Empty)
         };
 

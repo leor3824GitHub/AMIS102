@@ -19,8 +19,10 @@ public class ProcurementDbContext : BaseDbContext
     public DbSet<PurchaseRequest> PurchaseRequests => Set<PurchaseRequest>();
     public DbSet<PrNumberSequence> PrNumberSequences => Set<PrNumberSequence>();
     public DbSet<CanvassRequest> CanvassRequests => Set<CanvassRequest>();
+    public DbSet<RivNumberSequence> RivNumberSequences => Set<RivNumberSequence>();
     public DbSet<CanvassQuotation> CanvassQuotations => Set<CanvassQuotation>();
     public DbSet<PurchaseOrder> PurchaseOrders => Set<PurchaseOrder>();
+    public DbSet<PoNumberSequence> PoNumberSequences => Set<PoNumberSequence>();
     public DbSet<InspectionAcceptanceReport> InspectionAcceptanceReports => Set<InspectionAcceptanceReport>();
     public DbSet<IarNumberSequence> IarNumberSequences => Set<IarNumberSequence>();
     public DbSet<SignedDocument> SignedDocuments => Set<SignedDocument>();

@@ -77,7 +77,11 @@ public sealed record InspectionAcceptanceReportDto(
     DateTimeOffset? AcceptedOnUtc = null,
     DateTimeOffset? CancelledOnUtc = null,
     bool HasSignedCopy = false,
-    ProcurementCategory Category = ProcurementCategory.Asset);
+    ProcurementCategory Category = ProcurementCategory.Asset,
+    // Acceptance signatory snapshot — the authenticated user who clicked Accept, frozen at the action.
+    Guid? AcceptedById = null,
+    string? AcceptedByName = null,
+    string? AcceptedByDesignation = null);
 
 public sealed record InspectionAcceptanceReportSummaryDto(
     Guid Id,

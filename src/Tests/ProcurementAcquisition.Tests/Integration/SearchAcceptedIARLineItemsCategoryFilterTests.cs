@@ -62,7 +62,7 @@ public sealed class SearchAcceptedIARLineItemsCategoryFilterTests
         iar.SubmitForInspection();
         iar.RecordInspection(inspectorId, [new LineInspectionDecision(1, LineInspectionResult.Passed, null)]);
         iar.AssignPropertyNo(1, stockPropertyNo);
-        iar.Accept();
+        iar.Accept(inspectorId, "Test Acceptor");
 
         db.InspectionAcceptanceReports.Add(iar);
         await db.SaveChangesAsync();

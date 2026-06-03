@@ -70,7 +70,7 @@
                 <MudAutocomplete T="EmployeeReferenceDto"
                                  Value="_form.RegionalManager"
                                  ValueChanged="e => _form.RegionalManager = e"
-                                 Label="Regional Manager II — Name"
+                                 Label="Approving Official — Name"
                                  Variant="Variant.Outlined"
                                  SearchFunc="SearchEmployeesAsync"
                                  ToStringFunc="EmployeeDisplayName"
@@ -80,15 +80,15 @@
                                  Clearable="true"
                                  HelperText="Type to search employees" />
                 <MudTextField @bind-Value="_form.RegionalManagerDesignation"
-                              Label="Regional Manager II — Designation"
+                              Label="Approving Official — Designation"
                               Variant="Variant.Outlined"
                               MaxLength="200"
-                              Placeholder="e.g. Regional Manager II, Acting Regional Manager II" />
+                              Placeholder="e.g. Regional Manager II, Branch Manager, OIC" />
 
                 <MudAutocomplete T="EmployeeReferenceDto"
                                  Value="_form.AssistantRegionalManager"
                                  ValueChanged="e => _form.AssistantRegionalManager = e"
-                                 Label="Assistant Regional Manager — Name"
+                                 Label="Co-Approving Official — Name"
                                  Variant="Variant.Outlined"
                                  SearchFunc="SearchEmployeesAsync"
                                  ToStringFunc="EmployeeDisplayName"
@@ -98,15 +98,15 @@
                                  Clearable="true"
                                  HelperText="Type to search employees" />
                 <MudTextField @bind-Value="_form.AssistantRegionalManagerDesignation"
-                              Label="Assistant Regional Manager — Designation"
+                              Label="Co-Approving Official — Designation"
                               Variant="Variant.Outlined"
                               MaxLength="200"
-                              Placeholder="e.g. Assistant Regional Manager, Acting Assistant Regional Manager" />
+                              Placeholder="e.g. Assistant Regional Manager, Assistant Branch Manager, OIC" />
 
                 <MudAutocomplete T="EmployeeReferenceDto"
                                  Value="_form.Accountant"
                                  ValueChanged="e => _form.Accountant = e"
-                                 Label="Accountant IV — Name"
+                                 Label="Accountant — Name"
                                  Variant="Variant.Outlined"
                                  SearchFunc="SearchEmployeesAsync"
                                  ToStringFunc="EmployeeDisplayName"
@@ -116,15 +116,15 @@
                                  Clearable="true"
                                  HelperText="Type to search employees" />
                 <MudTextField @bind-Value="_form.AccountantDesignation"
-                              Label="Accountant IV — Designation"
+                              Label="Accountant — Designation"
                               Variant="Variant.Outlined"
                               MaxLength="200"
-                              Placeholder="e.g. Accountant IV, OIC-Accountant IV" />
+                              Placeholder="e.g. Accountant IV, Chief Accountant, OIC-Accountant" />
 
                 <MudAutocomplete T="EmployeeReferenceDto"
                                  Value="_form.SupervisingAdminOfficer"
                                  ValueChanged="e => _form.SupervisingAdminOfficer = e"
-                                 Label="Supervising Administrative Officer — Name"
+                                 Label="Administrative Officer — Name"
                                  Variant="Variant.Outlined"
                                  SearchFunc="SearchEmployeesAsync"
                                  ToStringFunc="EmployeeDisplayName"
@@ -134,10 +134,10 @@
                                  Clearable="true"
                                  HelperText="Type to search employees" />
                 <MudTextField @bind-Value="_form.SupervisingAdminOfficerDesignation"
-                              Label="Supervising Administrative Officer — Designation"
+                              Label="Administrative Officer — Designation"
                               Variant="Variant.Outlined"
                               MaxLength="200"
-                              Placeholder="e.g. Supervising Administrative Officer, OIC-Admin Officer" />
+                              Placeholder="e.g. Supervising Administrative Officer, Administrative Officer V, OIC" />
             </MudStack>
         </MudPaper>
 
@@ -184,28 +184,28 @@
                             @if (_form.RegionalManager is not null)
                             {
                                 <tr>
-                                    <td><MudText Typo="Typo.caption" Color="Color.Secondary">@(NullIfEmpty(_form.RegionalManagerDesignation) ?? "Regional Manager II")</MudText></td>
+                                    <td><MudText Typo="Typo.caption" Color="Color.Secondary">@(NullIfEmpty(_form.RegionalManagerDesignation) ?? "Approving Official")</MudText></td>
                                     <td><MudText Typo="Typo.body2"><b>@($"{_form.RegionalManager.FirstName} {_form.RegionalManager.LastName}")</b></MudText></td>
                                 </tr>
                             }
                             @if (_form.AssistantRegionalManager is not null)
                             {
                                 <tr>
-                                    <td><MudText Typo="Typo.caption" Color="Color.Secondary">@(NullIfEmpty(_form.AssistantRegionalManagerDesignation) ?? "Assistant Regional Manager")</MudText></td>
+                                    <td><MudText Typo="Typo.caption" Color="Color.Secondary">@(NullIfEmpty(_form.AssistantRegionalManagerDesignation) ?? "Co-Approving Official")</MudText></td>
                                     <td><MudText Typo="Typo.body2"><b>@($"{_form.AssistantRegionalManager.FirstName} {_form.AssistantRegionalManager.LastName}")</b></MudText></td>
                                 </tr>
                             }
                             @if (_form.Accountant is not null)
                             {
                                 <tr>
-                                    <td><MudText Typo="Typo.caption" Color="Color.Secondary">@(NullIfEmpty(_form.AccountantDesignation) ?? "Accountant IV")</MudText></td>
+                                    <td><MudText Typo="Typo.caption" Color="Color.Secondary">@(NullIfEmpty(_form.AccountantDesignation) ?? "Accountant")</MudText></td>
                                     <td><MudText Typo="Typo.body2"><b>@($"{_form.Accountant.FirstName} {_form.Accountant.LastName}")</b></MudText></td>
                                 </tr>
                             }
                             @if (_form.SupervisingAdminOfficer is not null)
                             {
                                 <tr>
-                                    <td><MudText Typo="Typo.caption" Color="Color.Secondary">@(NullIfEmpty(_form.SupervisingAdminOfficerDesignation) ?? "Supervising Administrative Officer")</MudText></td>
+                                    <td><MudText Typo="Typo.caption" Color="Color.Secondary">@(NullIfEmpty(_form.SupervisingAdminOfficerDesignation) ?? "Administrative Officer")</MudText></td>
                                     <td><MudText Typo="Typo.body2"><b>@($"{_form.SupervisingAdminOfficer.FirstName} {_form.SupervisingAdminOfficer.LastName}")</b></MudText></td>
                                 </tr>
                             }

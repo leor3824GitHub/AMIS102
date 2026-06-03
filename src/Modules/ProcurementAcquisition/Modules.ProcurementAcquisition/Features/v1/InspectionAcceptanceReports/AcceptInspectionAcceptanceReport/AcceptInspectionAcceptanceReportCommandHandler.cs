@@ -1,3 +1,4 @@
+using AMIS.Framework.Core.Context;
 using AMIS.Framework.Core.Exceptions;
 using AMIS.Framework.Eventing.Abstractions;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.InspectionAcceptanceReports;
@@ -5,6 +6,7 @@ using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
 using AMIS.Modules.ProcurementAcquisition.Data;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.InspectionAcceptanceReports;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.Shared;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,6 +14,8 @@ namespace AMIS.Modules.ProcurementAcquisition.Features.v1.InspectionAcceptanceRe
 
 public sealed class AcceptInspectionAcceptanceReportCommandHandler(
     ProcurementDbContext dbContext,
+    ICurrentUser currentUser,
+    IMediator mediator,
     IEventBus eventBus) : ICommandHandler<AcceptInspectionAcceptanceReportCommand, InspectionAcceptanceReportDto>
 {
     public async ValueTask<InspectionAcceptanceReportDto> Handle(AcceptInspectionAcceptanceReportCommand command, CancellationToken cancellationToken)
@@ -20,7 +24,11 @@ public sealed class AcceptInspectionAcceptanceReportCommandHandler(
             .FirstOrDefaultAsync(x => x.Id == command.Id, cancellationToken).ConfigureAwait(false)
             ?? throw new NotFoundException($"Asset IAR '{command.Id}' not found.");
 
-        try { iar.Accept(); }
+        // Acceptance signatory comes from the authenticated identity, not a request value, so a user
+        // holding the permission cannot accept under someone else's name.
+        var acceptor = await SignatoryResolver.ResolveSignatoryAsync(currentUser, mediator, cancellationToken).ConfigureAwait(false);
+
+        try { iar.Accept(currentUser.GetUserId(), acceptor.Name, acceptor.Designation); }
         catch (InvalidOperationException ex)
         {
             throw new CustomException(ex.Message, [], System.Net.HttpStatusCode.BadRequest);

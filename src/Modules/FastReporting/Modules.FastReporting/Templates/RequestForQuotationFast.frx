@@ -132,10 +132,11 @@
         Font="Times New Roman, 9pt, style=Bold"
         Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
 
-    </GroupHeaderBand>
-
     <!-- ═══════════════════════════════════════════════════════════
          DATA BAND  (one row per line item per copy)
+         Nested inside the GroupHeaderBand so FastReport associates the
+         group header/footer with this band. As flat siblings the group
+         bands never print — only the data rows would render.
          ═══════════════════════════════════════════════════════════ -->
     <DataBand Name="Data1" DataSource="LineItemsDS" Width="733" Height="20">
 
@@ -174,53 +175,61 @@
         Font="Times New Roman, 8pt" VertAlign="Center" HorzAlign="Left" WordWrap="true"
         Border.Lines="15" Border.Width="0.5" Padding="4,2,4,2" />
 
-      <!-- ── Signature Row ───────────────────────────────────────
-           Left  200 : Regional Manager signature area
+      <!-- ── Label Row (top=36, h=34) — full-bordered cells, no gaps ──
+           Left  200 : Approving official signature area
            Mid   200 : Terms of Delivery (blank for supplier)
            Right 333 : SUPPLIER'S NAME & SIGNATURE (blank for supplier)
       ─────────────────────────────────────────────────────────── -->
-      <TextObject Name="RmSignArea" Left="0" Top="38" Width="200" Height="34"
+      <TextObject Name="RmSignArea" Left="0" Top="36" Width="200" Height="34"
         Text="" Font="Times New Roman, 9pt"
         Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
-      <TextObject Name="TermsLbl" Left="200" Top="38" Width="200" Height="34"
+      <TextObject Name="TermsLbl" Left="200" Top="36" Width="200" Height="34"
         Text="Terms of Delivery" HorzAlign="Center" VertAlign="Center"
         Font="Times New Roman, 8pt, style=Bold"
         Border.Lines="15" Border.Width="0.5" Padding="2,2,2,2" />
-      <TextObject Name="SupSigLbl" Left="400" Top="38" Width="333" Height="34"
+      <TextObject Name="SupSigLbl" Left="400" Top="36" Width="333" Height="34"
         Text="SUPPLIER'S NAME &amp; SIGNATURE" HorzAlign="Center" VertAlign="Center"
         Font="Times New Roman, 8pt, style=Bold"
         Border.Lines="15" Border.Width="0.5" Padding="2,2,2,2" />
 
-      <!-- ── Signatory Name Row ──────────────────────────────────── -->
-      <TextObject Name="SignatoryNameVal" Left="0" Top="74" Width="200" Height="18"
+      <!-- ── Signature Row (top=70, h=42) — three full-bordered cells.
+           Name/designation and the supplier signature line + DATE are
+           overlaid (borderless) inside these cells so the grid stays
+           a clean, closed rectangle (no partial borders / open boxes). ── -->
+      <TextObject Name="LeftSigCell" Left="0" Top="70" Width="200" Height="42"
+        Text="" Border.Lines="15" Border.Width="0.5" />
+      <TextObject Name="MidTermsCell" Left="200" Top="70" Width="200" Height="42"
+        Text="" Border.Lines="15" Border.Width="0.5" />
+      <TextObject Name="SupSigCell" Left="400" Top="70" Width="333" Height="42"
+        Text="" Border.Lines="15" Border.Width="0.5" />
+
+      <!-- Left signature block: name above the line, designation below. -->
+      <TextObject Name="SignatoryNameVal" Left="0" Top="74" Width="200" Height="16"
         Text="[RfqDS.SignatoryName]" HorzAlign="Center" VertAlign="Bottom"
-        Font="Times New Roman, 9pt, style=Bold"
-        Border.Lines="9" Border.Width="0.5" Padding="2,1,2,1" />
-      <TextObject Name="SignatoryNameUnderline" Left="10" Top="92" Width="180" Height="1.1"
+        Font="Times New Roman, 9pt, style=Bold" Padding="2,1,2,1" />
+      <TextObject Name="SignatoryNameUnderline" Left="15" Top="90" Width="170" Height="1.1"
         Text="" Border.Lines="4" Border.Width="0.75" />
-      <TextObject Name="TermsBlankMid" Left="200" Top="74" Width="200" Height="18"
-        Text="" Border.Lines="9" Border.Width="0.5" />
-      <TextObject Name="SupSigBlankRight" Left="400" Top="74" Width="333" Height="18"
-        Text="" Border.Lines="9" Border.Width="0.5" />
-
-      <!-- ── Signatory Role Row ──────────────────────────────────── -->
-      <TextObject Name="SignatoryRoleVal" Left="0" Top="94" Width="200" Height="17"
+      <TextObject Name="SignatoryRoleVal" Left="0" Top="92" Width="200" Height="16"
         Text="[RfqDS.SignatoryRole]" HorzAlign="Center" VertAlign="Top"
-        Font="Times New Roman, 8pt"
-        Border.Lines="6" Border.Width="0.5" Padding="2,1,2,1" />
-      <TextObject Name="DateLblBottom" Left="400" Top="94" Width="333" Height="17"
-        Text="DATE:" HorzAlign="Left" VertAlign="Center"
-        Font="Times New Roman, 8pt, style=Bold"
-        Border.Lines="6" Border.Width="0.5" Padding="4,1,2,1" />
+        Font="Times New Roman, 8pt" Padding="2,1,2,1" />
 
-      <!-- ── Important Note ─────────────────────────────────────── -->
-      <TextObject Name="ImportantNote" Left="0" Top="113" Width="733" Height="15"
+      <!-- Supplier cell: signature line, then DATE label beneath it. -->
+      <TextObject Name="SupSigUnderline" Left="420" Top="90" Width="293" Height="1.1"
+        Text="" Border.Lines="4" Border.Width="0.75" />
+      <TextObject Name="DateLblBottom" Left="400" Top="93" Width="333" Height="16"
+        Text="DATE:" HorzAlign="Left" VertAlign="Center"
+        Font="Times New Roman, 8pt, style=Bold" Padding="6,1,2,1" />
+
+      <!-- ── Important Note (top=112) ───────────────────────────── -->
+      <TextObject Name="ImportantNote" Left="0" Top="112" Width="733" Height="15"
         Text="IMPORTANT: ERASURE / ALTERATIONS / INTER CANCELLATIONS WILL INVALIDATE THE OFFER."
         HorzAlign="Center" VertAlign="Center"
         Font="Times New Roman, 8pt, style=Italic"
         Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
 
     </GroupFooterBand>
+
+    </GroupHeaderBand>
 
     <!-- ═══════════════════════════════════════════════════════════
          PAGE FOOTER

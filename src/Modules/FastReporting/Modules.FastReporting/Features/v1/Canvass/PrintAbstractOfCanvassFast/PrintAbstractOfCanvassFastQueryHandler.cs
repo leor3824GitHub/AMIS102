@@ -119,13 +119,13 @@ public sealed class PrintAbstractOfCanvassFastQueryHandler(IMediator mediator)
         return
         [
             new(1, Name(1), Role(1, "TWG Goods/Services-Chairperson")),
-            new(2, Name(2, org?.AccountantName), Role(2, org?.AccountantDesignation ?? "Accountant IV")),
+            new(2, Name(2, org?.AccountantName), Role(2, org?.AccountantDesignation ?? "Accountant")),
             new(3, Name(3), Role(3, "ROPC Member")),
             new(4, Name(4), Role(4, "ROPC Member")),
             new(5, Name(5, org?.SupervisingAdminOfficerName),
-                Role(5, org?.SupervisingAdminOfficerDesignation ?? "Supervising Administrative Officer")),
+                Role(5, org?.SupervisingAdminOfficerDesignation ?? "Administrative Officer")),
             new(6, Name(6, org?.AssistantRegionalManagerName ?? org?.ApprovingOfficialName),
-                Role(6, org?.AssistantRegionalManagerDesignation ?? org?.ApprovingOfficialDesignation ?? "Assistant Regional Manager II")),
+                Role(6, org?.AssistantRegionalManagerDesignation ?? org?.ApprovingOfficialDesignation ?? "Co-Approving Official")),
         ];
     }
 

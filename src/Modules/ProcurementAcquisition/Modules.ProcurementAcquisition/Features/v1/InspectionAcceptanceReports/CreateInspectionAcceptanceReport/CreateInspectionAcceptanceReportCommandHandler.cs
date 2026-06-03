@@ -5,6 +5,7 @@ using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders;
 using AMIS.Modules.ProcurementAcquisition.Data;
 using AMIS.Modules.ProcurementAcquisition.Domain.InspectionAcceptanceReports;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.InspectionAcceptanceReports;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.Shared;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
@@ -34,7 +35,7 @@ public sealed class CreateInspectionAcceptanceReportCommandHandler(
                 "Only Issued or Partially Delivered purchase orders can be received.",
                 [], System.Net.HttpStatusCode.BadRequest);
 
-        for (var attempt = 0; attempt < 5; attempt++)
+        for (var attempt = 0; attempt < SequenceAllocation.MaxAttempts; attempt++)
         {
             var year = DateTime.UtcNow.Year;
 
@@ -79,9 +80,9 @@ public sealed class CreateInspectionAcceptanceReportCommandHandler(
 
                 return InspectionAcceptanceReportMapper.ToDto(iar, po.PoNumber, inspectorName, custodianName);
             }
-            catch (DbUpdateConcurrencyException)
+            catch (DbUpdateException ex) when (SequenceAllocation.IsRetryableAllocationConflict(ex))
             {
-                // Another request modified the sequence row between our read and save. Retry.
+                // Counter row advanced (xmin) or the generated number collided (unique violation). Retry.
                 dbContext.ChangeTracker.Clear();
             }
         }

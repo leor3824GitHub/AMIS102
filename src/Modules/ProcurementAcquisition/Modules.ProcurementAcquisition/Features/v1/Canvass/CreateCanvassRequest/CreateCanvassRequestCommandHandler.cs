@@ -5,6 +5,7 @@ using AMIS.Modules.ProcurementAcquisition.Contracts.v1.Canvass;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
 using AMIS.Modules.ProcurementAcquisition.Data;
 using AMIS.Modules.ProcurementAcquisition.Domain.Canvass;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.Shared;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
@@ -58,43 +59,53 @@ public sealed class CreateCanvassRequestCommandHandler(
                 $"The following line item(s) are already covered by another canvass: {string.Join("; ", conflicts)}.",
                 Enumerable.Empty<string>(), HttpStatusCode.Conflict);
 
-        var rivNumber = await GenerateRivNumberAsync(tenantId, cancellationToken).ConfigureAwait(false);
-
+        // Line items are stable across number-allocation retries, so build them once, before the loop.
         var lineItems = requestedItemNos
             .OrderBy(no => no)
             .Select(no => prLinesByItemNo[no])
             .Select(li => new CanvassRequestLineItemData(
-                li.ItemNo, li.ItemDescription, li.UnitOfIssue, li.Quantity, li.EstimatedUnitCost, li.CatalogItemId, li.UacsObjectCode));
+                li.ItemNo, li.ItemDescription, li.UnitOfIssue, li.Quantity, li.EstimatedUnitCost, li.CatalogItemId, li.UacsObjectCode))
+            .ToList();
 
-        var canvass = CanvassRequest.Create(tenantId, rivNumber, command.PurchaseRequestId, command.ReturnDeadline, lineItems);
-        canvass.CreatedBy = currentUser.GetUserId().ToString();
-
-        dbContext.CanvassRequests.Add(canvass);
-        await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-
-        return MapToDto(canvass, pr.PrNumber);
-    }
-
-    private async Task<string> GenerateRivNumberAsync(string tenantId, CancellationToken ct)
-    {
+        // Allocate the RIV number from a per-(tenant, year) counter guarded by xmin optimistic concurrency,
+        // retrying on conflict — same race-safe pattern as PR/IAR/PO. Replaces the old "max(RivNumber) + 1"
+        // scan, which could mint duplicate numbers (or fail the unique index) under concurrent creation.
         var year = DateTime.UtcNow.Year;
-        var prefix = $"RIV-{year}-";
-
-        var lastNumber = await dbContext.CanvassRequests
-            .IgnoreQueryFilters()
-            .Where(x => x.TenantId == tenantId && x.RivNumber.StartsWith(prefix))
-            .Select(x => x.RivNumber)
-            .OrderByDescending(x => x)
-            .FirstOrDefaultAsync(ct)
-            .ConfigureAwait(false);
-
-        var next = 1;
-        if (lastNumber != null && int.TryParse(lastNumber[prefix.Length..], out var last))
+        for (var attempt = 0; attempt < SequenceAllocation.MaxAttempts; attempt++)
         {
-            next = last + 1;
+            var sequence = await dbContext.RivNumberSequences
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(x => x.TenantId == tenantId && x.Year == year, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (sequence is null)
+            {
+                sequence = RivNumberSequence.Create(tenantId, year);
+                dbContext.RivNumberSequences.Add(sequence);
+            }
+
+            var serial = sequence.NextSerial();
+            var rivNumber = $"RIV-{year}-{serial:0000}";
+
+            var canvass = CanvassRequest.Create(tenantId, rivNumber, command.PurchaseRequestId, command.ReturnDeadline, lineItems);
+            canvass.CreatedBy = currentUser.GetUserId().ToString();
+            dbContext.CanvassRequests.Add(canvass);
+
+            try
+            {
+                await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                return MapToDto(canvass, pr.PrNumber);
+            }
+            catch (DbUpdateException ex) when (SequenceAllocation.IsRetryableAllocationConflict(ex))
+            {
+                // Counter row advanced (xmin) or the generated number collided with an existing canvass (unique
+                // violation) between our read and save. Drop tracked state and retry with the latest value.
+                dbContext.ChangeTracker.Clear();
+            }
         }
 
-        return $"{prefix}{next:0000}";
+        throw new CustomException("Failed to allocate a unique RIV number. Please try again.",
+            Enumerable.Empty<string>(), HttpStatusCode.Conflict);
     }
 
     private string GetRequiredTenantId() =>

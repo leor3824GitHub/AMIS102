@@ -1,7 +1,6 @@
 using AMIS.Framework.Core.Context;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders;
 using AMIS.Modules.ProcurementAcquisition.Data;
-using AMIS.Modules.ProcurementAcquisition.Domain.PurchaseOrders;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.CreatePurchaseOrder;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
@@ -19,9 +18,14 @@ public sealed class UpdatePurchaseOrderCommandHandler(
             .ConfigureAwait(false)
             ?? throw new AMIS.Framework.Core.Exceptions.NotFoundException($"Purchase order '{command.Id}' not found.");
 
-        var lineItems = command.LineItems.Select(li =>
-            new PurchaseOrderLineItemData(li.StockNumber, li.Unit, li.Description, li.Quantity, li.UnitCost,
-                li.CatalogItemId));
+        // Recover the screened StockNumber/CatalogItemId from the source PR (the awarded canvass doesn't carry
+        // them) and guard Supply POs against unresolved Stock Nos — same rule as PO creation, so an edit can't
+        // quietly strip the StockNumber a later IAR acceptance depends on. The PO already knows its own category.
+        var (_, prLines) = await PurchaseOrderLineResolver
+            .LoadSourcePrAsync(dbContext, po.PurchaseRequestId, cancellationToken)
+            .ConfigureAwait(false);
+
+        var lineItems = PurchaseOrderLineResolver.ResolveAndValidate(command.LineItems, po.Category, prLines);
 
         po.Update(
             command.SupplierId,
