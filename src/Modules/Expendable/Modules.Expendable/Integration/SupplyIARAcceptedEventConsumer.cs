@@ -1,5 +1,6 @@
 using AMIS.Framework.Caching;
 using AMIS.Framework.Eventing.Abstractions;
+using AMIS.Framework.Eventing.Inbox;
 using AMIS.Modules.Expendable.Data;
 using AMIS.Modules.Expendable.Domain.Warehouse;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.InspectionAcceptanceReports;
@@ -21,10 +22,30 @@ internal sealed class SupplyIARAcceptedEventConsumer(
     ICacheService cache,
     ILogger<SupplyIARAcceptedEventConsumer> logger) : IIntegrationEventHandler<SupplyIARAcceptedEvent>
 {
+    // Idempotency key for the inbox marker. Integration events are delivered at-least-once (outbox retry,
+    // RabbitMQ redelivery), so a redelivery must not run twice — inventory is a running total and would
+    // double-count. We key the marker on the stable IARId, not @event.Id (which is a get-only Guid.NewGuid()
+    // regenerated on every deserialize, so it can't survive the distributed path).
+    private const string HandlerName = "Expendable.SupplyIARAcceptedEventConsumer";
+
     public async Task HandleAsync(SupplyIARAcceptedEvent @event, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(@event);
         var tenantId = @event.TenantId ?? db.TenantInfo?.Identifier ?? string.Empty;
+
+        // Bail if this IAR was already landed. The marker below is written in the same SaveChanges as the
+        // stock mutation, so a committed marker guarantees the stock was committed too (and vice-versa).
+        var alreadyProcessed = await db.InboxMessages
+            .AnyAsync(i => i.Id == @event.IARId && i.HandlerName == HandlerName, ct)
+            .ConfigureAwait(false);
+        if (alreadyProcessed)
+        {
+            logger.LogInformation(
+                "[{Tenant}] Supply IAR {IARNumber} (IARId {IARId}) already landed into inventory; skipping redelivery.",
+                tenantId, @event.IarNumber, @event.IARId);
+            return;
+        }
+
         var warehouseId = ExpendableModuleConstants.DefaultSupplyLocation.Id;
         var warehouseName = ExpendableModuleConstants.DefaultSupplyLocation.Name;
 
@@ -85,7 +106,20 @@ internal sealed class SupplyIARAcceptedEventConsumer(
         }
 
         if (received > 0)
+        {
+            // Commit the dedup marker atomically with the stock it accounts for. If two redeliveries race,
+            // the composite PK (Id, HandlerName) rejects the second insert — its inventory write rolls back
+            // with it, so no double-count; the retry then sees the committed marker and skips cleanly.
+            db.InboxMessages.Add(new InboxMessage
+            {
+                Id = @event.IARId,
+                HandlerName = HandlerName,
+                EventType = nameof(SupplyIARAcceptedEvent),
+                TenantId = tenantId,
+                ProcessedOnUtc = DateTime.UtcNow,
+            });
             await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        }
 
         foreach (var productId in touchedProductIds)
             await cache.RemoveItemAsync($"inventory:{productId}:{warehouseId}", ct).ConfigureAwait(false);

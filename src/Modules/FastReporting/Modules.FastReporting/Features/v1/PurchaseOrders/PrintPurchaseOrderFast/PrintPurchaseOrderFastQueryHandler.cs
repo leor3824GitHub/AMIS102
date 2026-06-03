@@ -48,7 +48,9 @@ public sealed class PrintPurchaseOrderFastQueryHandler(IMediator mediator)
                 // org-profile official only for POs issued before snapshots existed.
                 AuthorizedOfficialName:        (po.IssuedByName ?? org?.ApprovingOfficialName ?? string.Empty).ToUpperInvariant(),
                 AuthorizedOfficialDesignation: po.IssuedByDesignation ?? org?.ApprovingOfficialDesignation ?? "Designation",
-                AccountantName:                (po.FundsAvailableCertifiedByName ?? org?.AccountantName ?? string.Empty).ToUpperInvariant())
+                AccountantName:                (po.FundsAvailableCertifiedByName ?? org?.AccountantName ?? string.Empty).ToUpperInvariant(),
+                AccountantDesignation:         po.FundsAvailableCertifiedByDesignation ?? org?.AccountantDesignation ?? "Accountant IV",
+                FundCluster:                   po.FundCluster ?? string.Empty)
         };
 
         var lineItemsTable = BuildLineItemsTable(po, query.MinRows);
@@ -133,4 +135,6 @@ internal sealed record PoFastHeader(
     string TotalAmountInWords,
     string AuthorizedOfficialName,
     string AuthorizedOfficialDesignation,
-    string AccountantName);
+    string AccountantName,
+    string AccountantDesignation,
+    string FundCluster);

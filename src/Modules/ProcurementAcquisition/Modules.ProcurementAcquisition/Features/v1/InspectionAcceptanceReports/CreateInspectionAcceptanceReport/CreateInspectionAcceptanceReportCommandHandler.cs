@@ -1,6 +1,7 @@
 using AMIS.Framework.Core.Context;
 using AMIS.Framework.Core.Exceptions;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.InspectionAcceptanceReports;
+using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders;
 using AMIS.Modules.ProcurementAcquisition.Data;
 using AMIS.Modules.ProcurementAcquisition.Domain.InspectionAcceptanceReports;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.InspectionAcceptanceReports;
@@ -23,6 +24,15 @@ public sealed class CreateInspectionAcceptanceReportCommandHandler(
             .FirstOrDefaultAsync(x => x.Id == command.PurchaseOrderId, cancellationToken)
             .ConfigureAwait(false)
             ?? throw new NotFoundException($"Purchase order '{command.PurchaseOrderId}' not found.");
+
+        // An IAR receives goods against an issued PO; only Issued or PartiallyDelivered POs are eligible.
+        // The UI already filters the picker to these, but enforce it server-side too so a direct API call
+        // (or stale client) can't raise an IAR against a Draft/Submitted/Fulfilled/Cancelled PO.
+        if (po.Status is not (PurchaseOrderStatus.Issued or PurchaseOrderStatus.PartiallyDelivered))
+            throw new CustomException(
+                $"Cannot create an IAR for purchase order '{po.PoNumber}' because it is {po.Status}. " +
+                "Only Issued or Partially Delivered purchase orders can be received.",
+                [], System.Net.HttpStatusCode.BadRequest);
 
         for (var attempt = 0; attempt < 5; attempt++)
         {

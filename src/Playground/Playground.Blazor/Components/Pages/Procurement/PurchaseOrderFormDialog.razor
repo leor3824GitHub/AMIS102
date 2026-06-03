@@ -29,25 +29,40 @@
                 </MudAlert>
             }
 
-            <!-- Purchase Request Section -->
+            <!-- Awarded Canvass Section -->
             <div>
-                <MudText Typo="Typo.subtitle2" Class="section-header">Purchase Request</MudText>
+                <MudText Typo="Typo.subtitle2" Class="section-header">Awarded Canvass</MudText>
                 <MudGrid Spacing="1">
                     <MudItem xs="12" sm="6" md="4">
-                        <MudAutocomplete T="PurchaseRequestSummaryDto"
-                                         Value="_selectedPurchaseRequest"
-                                         ValueChanged="OnPurchaseRequestChanged"
-                                         SearchFunc="SearchPurchaseRequests"
-                                         ToStringFunc="FormatPurchaseRequest"
-                                         Label="Purchase Request *"
-                                         Variant="Variant.Outlined"
-                                         Placeholder="Search PR number or purpose..."
-                                         Required="true"
-                                         Clearable="true"
-                                         CoerceValue="true"
-                                         ResetValueOnEmptyText="true"
-                                         Dense="true" Margin="Margin.Dense"
-                                         HelperText="Select from existing purchase requests" />
+                        @if (_editing is not null || PrefilledCanvassId.HasValue)
+                        {
+                            <!-- Editing an existing PO, or opened from a specific awarded canvass (cart icon):
+                                 the source is already fixed, so show the resolved PR read-only. -->
+                            <MudTextField Value="@FormatPurchaseRequest(_selectedPurchaseRequest)"
+                                          Label="Purchase Request"
+                                          Variant="Variant.Outlined"
+                                          ReadOnly="true"
+                                          Dense="true" Margin="Margin.Dense"
+                                          HelperText="@(PrefilledCanvassId.HasValue ? "From awarded canvass" : "Linked purchase request")" />
+                        }
+                        else
+                        {
+                            <MudAutocomplete T="CanvassRequestSummaryDto"
+                                             Value="_selectedAwardedCanvass"
+                                             ValueChanged="OnAwardedCanvassChanged"
+                                             SearchFunc="SearchAwardedCanvasses"
+                                             ToStringFunc="FormatCanvass"
+                                             Label="Awarded Canvass *"
+                                             Variant="Variant.Outlined"
+                                             Placeholder="Search awarded RIV..."
+                                             Required="true"
+                                             Clearable="true"
+                                             CoerceValue="false"
+                                             ResetValueOnEmptyText="true"
+                                             MinCharacters="0"
+                                             Dense="true" Margin="Margin.Dense"
+                                             HelperText="Only awarded canvasses without a PO" />
+                        }
                     </MudItem>
                     <MudItem xs="12" sm="6" md="4">
                         @if (_prefilledCanvass is not null)
@@ -59,10 +74,6 @@
                                     <span> • <strong>Supplier:</strong> @_prefilledCanvass.AwardedSupplierName</span>
                                 }
                             </MudAlert>
-                        }
-                        else
-                        {
-                            <MudTextField @bind-Value="_form.CanvassRequestId" Label="Canvass Request ID (optional)" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" HelperText="Link to source canvass if available" />
                         }
                     </MudItem>
                 </MudGrid>
@@ -320,6 +331,7 @@
     private int? _editingLineItemIndex;
     private bool _busy;
     private PurchaseRequestSummaryDto? _selectedPurchaseRequest;
+    private CanvassRequestSummaryDto? _selectedAwardedCanvass;
     private SupplierDto? _selectedSupplier;
     private CanvassRequestDto? _prefilledCanvass;
 
@@ -437,22 +449,25 @@
         }
     }
 
-    private async Task<IEnumerable<PurchaseRequestSummaryDto>> SearchPurchaseRequests(string value, CancellationToken ct)
+    private async Task<IEnumerable<CanvassRequestSummaryDto>> SearchAwardedCanvasses(string value, CancellationToken ct)
     {
         try
         {
-            var result = await PurchaseRequestClient.SearchAsync(
+            var result = await CanvassClient.SearchAsync(
                 keyword: string.IsNullOrWhiteSpace(value) ? null : value,
-                status: null,
+                status: CanvassRequestStatus.Awarded,
                 page: 1,
                 pageSize: 20,
                 ct: ct);
 
-            return result.Items ?? Enumerable.Empty<PurchaseRequestSummaryDto>();
+            // Only awards still awaiting a PO — once a canvass has a (non-cancelled) PO it drops off here,
+            // mirroring the canvass page's "Create PO" eligibility.
+            return (result.Items ?? Enumerable.Empty<CanvassRequestSummaryDto>())
+                .Where(c => !c.HasPurchaseOrder);
         }
         catch
         {
-            return Enumerable.Empty<PurchaseRequestSummaryDto>();
+            return Enumerable.Empty<CanvassRequestSummaryDto>();
         }
     }
 
@@ -468,10 +483,33 @@
         return result?.Items ?? Enumerable.Empty<SupplierDto>();
     }
 
-    private Task OnPurchaseRequestChanged(PurchaseRequestSummaryDto? request)
+    private async Task OnAwardedCanvassChanged(CanvassRequestSummaryDto? canvass)
     {
-        _selectedPurchaseRequest = request;
-        return Task.CompletedTask;
+        _selectedAwardedCanvass = canvass;
+
+        if (canvass is null)
+        {
+            // Cleared — reset everything the prefill populated so the form is blank again.
+            _prefilledCanvass = null;
+            _selectedPurchaseRequest = null;
+            _selectedSupplier = null;
+            _form = new PoForm();
+            return;
+        }
+
+        // Selecting an award prefills supplier + line items + PR + canvass link, exactly like the
+        // canvass page's "Create PO" cart action.
+        await PrefillFromCanvassAsync(canvass.Id);
+    }
+
+    private static string FormatCanvass(CanvassRequestSummaryDto? canvass)
+    {
+        if (canvass is null)
+            return string.Empty;
+
+        return string.IsNullOrWhiteSpace(canvass.PrNumber)
+            ? canvass.RivNumber
+            : $"{canvass.RivNumber} · PR {canvass.PrNumber}";
     }
 
     private Task OnSupplierChanged(SupplierDto? supplier)
@@ -858,7 +896,9 @@
         var errors = new List<string>();
 
         if (_selectedPurchaseRequest is null)
-            errors.Add("Select a Purchase Request");
+            errors.Add(_editing is null && !PrefilledCanvassId.HasValue
+                ? "Select an awarded canvass"
+                : "Select a Purchase Request");
 
         if (_selectedSupplier is null)
             errors.Add("Select a Supplier");

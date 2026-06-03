@@ -52,7 +52,10 @@ public sealed class SearchCanvassRequestsQueryHandler(ProcurementDbContext dbCon
                 x.Id,
                 x.RivNumber,
                 x.PurchaseRequestId,
-                string.Empty,
+                dbContext.PurchaseRequests
+                    .Where(pr => pr.Id == x.PurchaseRequestId)
+                    .Select(pr => pr.PrNumber)
+                    .FirstOrDefault() ?? string.Empty,
                 x.ReturnDeadline,
                 x.Status,
                 x.Quotations.Count,

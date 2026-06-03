@@ -1,5 +1,6 @@
 using AMIS.Framework.Shared.Persistence;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.InspectionAcceptanceReports;
+using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
 using AMIS.Modules.ProcurementAcquisition.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
@@ -20,9 +21,14 @@ public sealed class SearchAcceptedIARLineItemsQueryHandler(
     {
         ArgumentNullException.ThrowIfNull(query);
 
+        // Asset-only: this feeds AssetRegister's Receiving Report "From IAR" picker. Supply IARs now share
+        // this table, so without the Category filter expendable lines would surface in asset receiving reports.
+        // (Today they also lack a StockPropertyNo and would be dropped below, but that is incidental — filter
+        // explicitly at the source so the guarantee doesn't depend on the property-number convention.)
         var iars = await dbContext.InspectionAcceptanceReports
             .AsNoTracking()
-            .Where(x => x.Status == InspectionAcceptanceReportStatus.Accepted)
+            .Where(x => x.Status == InspectionAcceptanceReportStatus.Accepted
+                     && x.Category == ProcurementCategory.Asset)
             .OrderByDescending(x => x.AcceptedOnUtc ?? x.CreatedOnUtc)
             .Take(500)
             .ToListAsync(cancellationToken)

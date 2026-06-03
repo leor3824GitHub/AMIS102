@@ -7,6 +7,10 @@
 		<NoWarn>$(NoWarn);CA1031;CA1812;CA2208;S3267;S3928;CA1062;CA1304;CA1308;CA1311;CA1862;CA2227</NoWarn>
 	</PropertyGroup>
 	<ItemGroup>
+		<!-- Expose internal types (e.g. SupplyIARAcceptedEventConsumer) to the test project. -->
+		<InternalsVisibleTo Include="Expendable.Tests" />
+	</ItemGroup>
+	<ItemGroup>
 		<FrameworkReference Include="Microsoft.AspNetCore.App" />
 	</ItemGroup>
 	<ItemGroup>

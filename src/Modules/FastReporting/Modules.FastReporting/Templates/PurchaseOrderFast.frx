@@ -34,7 +34,7 @@
          Contains: org header, Exhibit 5, title, supplier/PO box,
                    gentlemen line, delivery/payment box, col headers
          ═══════════════════════════════════════════════════════════ -->
-    <ReportTitleBand Name="ReportTitle1" Width="733" Height="330">
+    <ReportTitleBand Name="ReportTitle1" Width="733" Height="303">
 
       <!-- ── Organization Header ─────────────────────────── -->
       <TextObject Name="Republic" Left="0" Top="2" Width="733" Height="14.3"
@@ -282,51 +282,56 @@
         Text="Designation" Font="Times New Roman, 7pt, style=Italic" HorzAlign="Center" VertAlign="Top"
         Padding="2,1,2,1" />
 
-      <!-- ═══ Funds Available + ORS/BURS box (top=202, H=110) ══════
-           Left (0-366) : Funds Available signature
+      <!-- ═══ Fund Cluster + Funds Available + ORS/BURS box (top=202, bottom=278) ══════
+           Left (0-366) : Fund Cluster row, then Funds Available label + accountant signature
            Right (366-733) : ORS/BURS No., Date, Amount
       -->
-      <TextObject Name="FaLbl" Left="0" Top="202" Width="100" Height="22"
-        Text="Funds Available :" Font="Times New Roman, 8pt" VertAlign="Center"
+      <!-- Fund Cluster row -->
+      <TextObject Name="FcLbl" Left="0" Top="202" Width="100" Height="20"
+        Text="Fund Cluster :" Font="Times New Roman, 8pt" VertAlign="Center"
         Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
-      <TextObject Name="FaSig" Left="100" Top="202" Width="266" Height="22"
+      <TextObject Name="FcVal" Left="100" Top="202" Width="266" Height="20"
+        Text="[PurchaseOrderDS.FundCluster]" Font="Times New Roman, 9pt" VertAlign="Center"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+
+      <!-- Funds Available label + accountant signature box. Box is 222-296: ~22 units of blank
+           signature space at the top (for the wet signature), then name / caption / designation. -->
+      <TextObject Name="FaLbl" Left="0" Top="222" Width="100" Height="74"
+        Text="Funds Available :" Font="Times New Roman, 8pt" VertAlign="Top"
+        Border.Lines="15" Border.Width="0.5" Padding="2,2,2,2" />
+      <TextObject Name="FaSig" Left="100" Top="222" Width="266" Height="74"
         Text="" Border.Lines="15" Border.Width="0.5" />
-      <TextObject Name="FaNameVal" Left="100" Top="202" Width="266" Height="22"
-        Text="[PurchaseOrderDS.AccountantName]" Font="Times New Roman, 9pt, style=Bold" HorzAlign="Center" VertAlign="Bottom" Padding="1,1,1,2" />
+      <TextObject Name="FaNameVal" Left="100" Top="244" Width="266" Height="16"
+        Text="[PurchaseOrderDS.AccountantName]" Font="Times New Roman, 9pt, style=Bold" HorzAlign="Center" VertAlign="Center" />
+      <TextObject Name="FaCapBox" Left="100" Top="260" Width="266" Height="22"
+        Text="Signature over Printed Name of Chief&#10;Accountant/Head of Accounting Division/Unit"
+        Font="Times New Roman, 7pt, style=Italic" HorzAlign="Center" VertAlign="Center" Padding="2,0,2,0" />
+      <TextObject Name="FaDsVal" Left="100" Top="282" Width="266" Height="14"
+        Text="[PurchaseOrderDS.AccountantDesignation]" Font="Times New Roman, 8pt, style=Bold" HorzAlign="Center" VertAlign="Center" />
 
       <!-- Right column: ORS/BURS No. -->
-      <TextObject Name="OrsNoLbl" Left="366" Top="202" Width="120" Height="22"
+      <TextObject Name="OrsNoLbl" Left="366" Top="202" Width="120" Height="31"
         Text="ORS/BURS No. :" Font="Times New Roman, 8pt" VertAlign="Center"
         Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
-      <TextObject Name="OrsNoVal" Left="486" Top="202" Width="247" Height="22"
+      <TextObject Name="OrsNoVal" Left="486" Top="202" Width="247" Height="31"
         Text="[PurchaseOrderDS.OursBursNumber]" Font="Times New Roman, 9pt" VertAlign="Center"
         Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
 
-      <!-- Empty cell under FaSig for layout balance + caption row -->
-      <TextObject Name="FaCapBox" Left="0" Top="224" Width="366" Height="32"
-        Text="Signature over Printed Name of Chief&#10;Accountant/Head of Accounting Division/Unit"
-        Font="Times New Roman, 7pt, style=Italic" HorzAlign="Center" VertAlign="Center"
-        Border.Lines="11" Border.Width="0.5" Padding="2,2,2,2" />
-
       <!-- Right column: Date of ORS/BURS -->
-      <TextObject Name="OrsDtLbl" Left="366" Top="224" Width="120" Height="22"
+      <TextObject Name="OrsDtLbl" Left="366" Top="233" Width="120" Height="31"
         Text="Date of the ORS/BURS :" Font="Times New Roman, 7pt" VertAlign="Center" WordWrap="true"
         Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
-      <TextObject Name="OrsDtVal" Left="486" Top="224" Width="247" Height="22"
+      <TextObject Name="OrsDtVal" Left="486" Top="233" Width="247" Height="31"
         Text="[PurchaseOrderDS.PoDate]" Font="Times New Roman, 9pt" VertAlign="Center"
         Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
 
       <!-- Right column: Amount -->
-      <TextObject Name="AmtLbl" Left="366" Top="246" Width="120" Height="22"
+      <TextObject Name="AmtLbl" Left="366" Top="264" Width="120" Height="32"
         Text="Amount :" Font="Times New Roman, 8pt" VertAlign="Center"
         Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
-      <TextObject Name="AmtVal" Left="486" Top="246" Width="247" Height="22"
+      <TextObject Name="AmtVal" Left="486" Top="264" Width="247" Height="32"
         Text="[PurchaseOrderDS.TotalAmount]" Font="Times New Roman, 9pt, style=Bold" HorzAlign="Right" VertAlign="Center"
         Border.Lines="15" Border.Width="0.5" Padding="2,1,4,1" />
-
-      <!-- Bottom filler row for left column (to match height of 3 right-column rows) -->
-      <TextObject Name="FaFiller" Left="0" Top="256" Width="366" Height="12"
-        Text="" Border.Lines="11" Border.Width="0.5" />
 
     </ReportSummaryBand>
 
