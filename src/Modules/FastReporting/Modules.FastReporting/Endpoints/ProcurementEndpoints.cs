@@ -1,4 +1,4 @@
-using AMIS.Modules.FastReporting.Features.v1.AssetIARs.PrintAssetIARFast;
+using AMIS.Modules.FastReporting.Features.v1.InspectionAcceptanceReports.PrintInspectionAcceptanceReportFast;
 using AMIS.Modules.FastReporting.Features.v1.Canvass.PrintAbstractOfCanvassFast;
 using AMIS.Modules.FastReporting.Features.v1.Canvass.PrintRequestForQuotationFast;
 using AMIS.Modules.FastReporting.Features.v1.PurchaseOrders.PrintPurchaseOrderFast;
@@ -22,7 +22,7 @@ internal static class ProcurementEndpoints
         procurement.MapGroup("/purchase-requests").MapPurchaseRequestFastReports();
         procurement.MapGroup("/purchase-orders").MapPurchaseOrderFastReports();
         procurement.MapGroup("/canvass-requests").MapCanvassRequestFastReports();
-        procurement.MapGroup("/iars").MapAssetIARFastReports();
+        procurement.MapGroup("/inspection-acceptance-reports").MapInspectionAcceptanceReportFastReports();
 
         return moduleGroup;
     }
@@ -46,9 +46,9 @@ internal static class ProcurementEndpoints
         return group;
     }
 
-    private static IEndpointRouteBuilder MapAssetIARFastReports(this IEndpointRouteBuilder group)
+    private static IEndpointRouteBuilder MapInspectionAcceptanceReportFastReports(this IEndpointRouteBuilder group)
     {
-        PrintAssetIARFastEndpoint.Map(group);
+        PrintInspectionAcceptanceReportFastEndpoint.Map(group);
         return group;
     }
 }

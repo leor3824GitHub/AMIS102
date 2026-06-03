@@ -6,7 +6,7 @@ using AMIS.Modules.AssetRegister.Data;
 using AMIS.Modules.AssetRegister.Domain.Assets;
 using AMIS.Modules.AssetRegister.Domain.Catalog;
 using AMIS.Modules.MasterData.Contracts.v1.CapitalizationThresholds;
-using AMIS.Modules.ProcurementAcquisition.Contracts.v1.AssetInspectionAcceptanceReports;
+using AMIS.Modules.ProcurementAcquisition.Contracts.v1.InspectionAcceptanceReports;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;

@@ -29,18 +29,18 @@ using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.IssuePurcha
 using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.CancelPurchaseOrder;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.GetPurchaseOrder;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.SearchPurchaseOrders;
-using AMIS.Modules.ProcurementAcquisition.Features.v1.AssetIARs.CreateAssetIAR;
-using AMIS.Modules.ProcurementAcquisition.Features.v1.AssetIARs.UpdateAssetIAR;
-using AMIS.Modules.ProcurementAcquisition.Features.v1.AssetIARs.AcceptAssetIAR;
-using AMIS.Modules.ProcurementAcquisition.Features.v1.AssetIARs.CancelAssetIAR;
-using AMIS.Modules.ProcurementAcquisition.Features.v1.AssetIARs.GetAssetIAR;
-using AMIS.Modules.ProcurementAcquisition.Features.v1.AssetIARs.SearchAssetIARs;
-using AMIS.Modules.ProcurementAcquisition.Features.v1.AssetIARs.SearchAcceptedIARLineItems;
-using AMIS.Modules.ProcurementAcquisition.Features.v1.AssetIARs.SubmitForInspection;
-using AMIS.Modules.ProcurementAcquisition.Features.v1.AssetIARs.ReassignInspector;
-using AMIS.Modules.ProcurementAcquisition.Features.v1.AssetIARs.RecordInspection;
-using AMIS.Modules.ProcurementAcquisition.Features.v1.AssetIARs.AssignPropertyNo;
-using AMIS.Modules.ProcurementAcquisition.Features.v1.AssetIARs.ExpandLineByQuantity;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.InspectionAcceptanceReports.CreateInspectionAcceptanceReport;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.InspectionAcceptanceReports.UpdateInspectionAcceptanceReport;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.InspectionAcceptanceReports.AcceptInspectionAcceptanceReport;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.InspectionAcceptanceReports.CancelInspectionAcceptanceReport;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.InspectionAcceptanceReports.GetInspectionAcceptanceReport;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.InspectionAcceptanceReports.SearchInspectionAcceptanceReports;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.InspectionAcceptanceReports.SearchAcceptedIARLineItems;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.InspectionAcceptanceReports.SubmitForInspection;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.InspectionAcceptanceReports.ReassignInspector;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.InspectionAcceptanceReports.RecordInspection;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.InspectionAcceptanceReports.AssignPropertyNo;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.InspectionAcceptanceReports.ExpandLineByQuantity;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.SignedDocuments.UploadSignedDocument;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.SignedDocuments.GetSignedDocument;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.SignedDocuments.DownloadSignedDocument;
@@ -83,15 +83,15 @@ public class ProcurementAcquisitionModule : IModule
         new("View Signed Document Copies", "View", "Procurement.SignedDocuments", IsBasic: true),
         new("Upload Signed Document Copies", "Upload", "Procurement.SignedDocuments"),
 
-        new("View Asset IARs",                "View",                "Procurement.AssetIARs", IsBasic: true),
-        new("Create Asset IARs",              "Create",              "Procurement.AssetIARs"),
-        new("Update Asset IARs",              "Update",              "Procurement.AssetIARs"),
-        new("Accept Asset IARs",              "Accept",              "Procurement.AssetIARs"),
-        new("Submit Asset IARs For Inspection","SubmitForInspection","Procurement.AssetIARs"),
-        new("Inspect Asset IARs",             "Inspect",             "Procurement.AssetIARs"),
-        new("Assign Property No",             "AssignPropertyNo",    "Procurement.AssetIARs"),
-        new("Expand IAR Lines",               "ExpandLine",          "Procurement.AssetIARs"),
-        new("Cancel Asset IARs",              "Cancel",              "Procurement.AssetIARs"),
+        new("View Asset IARs",                "View",                "Procurement.InspectionAcceptanceReports", IsBasic: true),
+        new("Create Asset IARs",              "Create",              "Procurement.InspectionAcceptanceReports"),
+        new("Update Asset IARs",              "Update",              "Procurement.InspectionAcceptanceReports"),
+        new("Accept Asset IARs",              "Accept",              "Procurement.InspectionAcceptanceReports"),
+        new("Submit Asset IARs For Inspection","SubmitForInspection","Procurement.InspectionAcceptanceReports"),
+        new("Inspect Asset IARs",             "Inspect",             "Procurement.InspectionAcceptanceReports"),
+        new("Assign Property No",             "AssignPropertyNo",    "Procurement.InspectionAcceptanceReports"),
+        new("Expand IAR Lines",               "ExpandLine",          "Procurement.InspectionAcceptanceReports"),
+        new("Cancel Asset IARs",              "Cancel",              "Procurement.InspectionAcceptanceReports"),
     ];
 
     public void ConfigureServices(IHostApplicationBuilder builder)
@@ -123,7 +123,7 @@ public class ProcurementAcquisitionModule : IModule
         var purchaseRequestsGroup = moduleGroup.MapGroup("/purchase-requests");
         var canvassRequestsGroup = moduleGroup.MapGroup("/canvass-requests");
         var purchaseOrdersGroup = moduleGroup.MapGroup("/purchase-orders");
-        var iarGroup = moduleGroup.MapGroup("/iars");
+        var iarGroup = moduleGroup.MapGroup("/inspection-acceptance-reports");
         var signedDocumentsGroup = moduleGroup.MapGroup("/signed-documents");
 
         // Purchase Requests
@@ -159,12 +159,12 @@ public class ProcurementAcquisitionModule : IModule
         SearchPurchaseOrdersEndpoint.Map(purchaseOrdersGroup);
 
         // Asset IARs
-        CreateAssetIAREndpoint.Map(iarGroup);
-        UpdateAssetIAREndpoint.Map(iarGroup);
-        AcceptAssetIAREndpoint.Map(iarGroup);
-        CancelAssetIAREndpoint.Map(iarGroup);
-        GetAssetIAREndpoint.Map(iarGroup);
-        SearchAssetIARsEndpoint.Map(iarGroup);
+        CreateInspectionAcceptanceReportEndpoint.Map(iarGroup);
+        UpdateInspectionAcceptanceReportEndpoint.Map(iarGroup);
+        AcceptInspectionAcceptanceReportEndpoint.Map(iarGroup);
+        CancelInspectionAcceptanceReportEndpoint.Map(iarGroup);
+        GetInspectionAcceptanceReportEndpoint.Map(iarGroup);
+        SearchInspectionAcceptanceReportsEndpoint.Map(iarGroup);
         SearchAcceptedIARLineItemsEndpoint.Map(iarGroup);
         SubmitIARForInspectionEndpoint.Map(iarGroup);
         ReassignInspectorEndpoint.Map(iarGroup);

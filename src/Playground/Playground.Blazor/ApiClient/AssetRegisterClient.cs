@@ -1040,7 +1040,7 @@ public sealed class ArReceivingReportClient(HttpClient http) : IArReceivingRepor
     public async Task<ArPagedResponse<AcceptedIARLineItemDto>> SearchAcceptedIARItemsAsync(
         string? keyword = null, int page = 1, int pageSize = 20, CancellationToken ct = default)
     {
-        var url = ArUrlBuilder.Build("api/v1/procurement/iars/accepted-line-items", new()
+        var url = ArUrlBuilder.Build("api/v1/procurement/inspection-acceptance-reports/accepted-line-items", new()
         {
             ["keyword"] = keyword,
             ["pageNumber"] = page.ToString(CultureInfo.InvariantCulture),

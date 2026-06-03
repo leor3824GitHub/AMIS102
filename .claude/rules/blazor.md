@@ -139,7 +139,7 @@ Designations are free-text and can be "Acting Regional Manager II", "OIC-Regiona
 
 ### Reference Implementation
 
-`src/Playground/Playground.Blazor/Components/Pages/AssetProcurement/AssetIARExhibit3PrintPage.razor` is the canonical example. Replicate the pattern for all other report pages.
+`src/Playground/Playground.Blazor/Components/Pages/InspectionAcceptanceReports/InspectionAcceptanceReportExhibit3PrintPage.razor` is the canonical example. Replicate the pattern for all other report pages.
 
 ---
 
@@ -212,7 +212,7 @@ Blazor page (already references the Contracts project):
 ### Canonical references
 
 - Constants: [ProcurementPermissions.cs](../../src/Modules/ProcurementAcquisition/Modules.ProcurementAcquisition.Contracts/Permissions/ProcurementPermissions.cs)
-- UI usage: [AssetIARsPage.razor](../../src/Playground/Playground.Blazor/Components/Pages/AssetProcurement/AssetIARsPage.razor)
+- UI usage: [InspectionAcceptanceReportsPage.razor](../../src/Playground/Playground.Blazor/Components/Pages/InspectionAcceptanceReports/InspectionAcceptanceReportsPage.razor)
 
 ---
 

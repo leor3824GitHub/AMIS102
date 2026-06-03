@@ -2,7 +2,7 @@ using AMIS.Framework.Caching;
 using AMIS.Framework.Eventing.Abstractions;
 using AMIS.Modules.Expendable.Data;
 using AMIS.Modules.Expendable.Domain.Warehouse;
-using AMIS.Modules.ProcurementAcquisition.Contracts.v1.AssetInspectionAcceptanceReports;
+using AMIS.Modules.ProcurementAcquisition.Contracts.v1.InspectionAcceptanceReports;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 

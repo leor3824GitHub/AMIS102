@@ -1,4 +1,4 @@
-using AMIS.Modules.ProcurementAcquisition.Domain.AssetInspectionAcceptanceReports;
+using AMIS.Modules.ProcurementAcquisition.Domain.InspectionAcceptanceReports;
 using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;

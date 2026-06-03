@@ -22,151 +22,6 @@ namespace AMIS.Playground.Migrations.PostgreSQL.ProcurementAcquisition
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("AMIS.Modules.ProcurementAcquisition.Domain.AssetInspectionAcceptanceReports.AssetInspectionAcceptanceReport", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset?>("AcceptedOnUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTimeOffset?>("CancelledOnUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("Category")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(0);
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTimeOffset>("CreatedOnUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("DeletedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTimeOffset?>("DeletedOnUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateOnly?>("DeliveryDate")
-                        .HasColumnType("date");
-
-                    b.Property<string>("DeliveryReceiptNo")
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
-
-                    b.Property<DateOnly>("IarDate")
-                        .HasColumnType("date");
-
-                    b.Property<string>("IarNumber")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
-
-                    b.Property<Guid>("InspectedById")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset?>("InspectedOnUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTimeOffset?>("LastModifiedOnUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("PurchaseOrderId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("ReceivedById")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Remarks")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTimeOffset?>("SubmittedForInspectionOnUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("SupplierId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("SupplierName")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<string>("TenantId")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<uint>("xmin")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("xid")
-                        .HasColumnName("xmin");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CreatedOnUtc");
-
-                    b.HasIndex("TenantId", "IarNumber")
-                        .IsUnique();
-
-                    b.HasIndex("TenantId", "PurchaseOrderId");
-
-                    b.HasIndex("TenantId", "Status");
-
-                    b.ToTable("AssetIARs", "procurement");
-
-                    b.HasAnnotation("Finbuckle:MultiTenant", true);
-                });
-
-            modelBuilder.Entity("AMIS.Modules.ProcurementAcquisition.Domain.AssetInspectionAcceptanceReports.IarNumberSequence", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("LastSerial")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(0);
-
-                    b.Property<string>("TenantId")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
-
-                    b.Property<int>("Year")
-                        .HasColumnType("integer");
-
-                    b.Property<uint>("xmin")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("xid")
-                        .HasColumnName("xmin");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TenantId", "Year")
-                        .IsUnique();
-
-                    b.ToTable("IarNumberSequences", "procurement");
-
-                    b.HasAnnotation("Finbuckle:MultiTenant", true);
-                });
-
             modelBuilder.Entity("AMIS.Modules.ProcurementAcquisition.Domain.Canvass.CanvassQuotation", b =>
                 {
                     b.Property<Guid>("Id")
@@ -309,6 +164,151 @@ namespace AMIS.Playground.Migrations.PostgreSQL.ProcurementAcquisition
                         .IsUnique();
 
                     b.ToTable("CanvassRequests", "procurement");
+
+                    b.HasAnnotation("Finbuckle:MultiTenant", true);
+                });
+
+            modelBuilder.Entity("AMIS.Modules.ProcurementAcquisition.Domain.InspectionAcceptanceReports.IarNumberSequence", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("LastSerial")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("integer");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "Year")
+                        .IsUnique();
+
+                    b.ToTable("IarNumberSequences", "procurement");
+
+                    b.HasAnnotation("Finbuckle:MultiTenant", true);
+                });
+
+            modelBuilder.Entity("AMIS.Modules.ProcurementAcquisition.Domain.InspectionAcceptanceReports.InspectionAcceptanceReport", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("AcceptedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("CancelledOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Category")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("DeletedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateOnly?>("DeliveryDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("DeliveryReceiptNo")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateOnly>("IarDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("IarNumber")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid>("InspectedById")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("InspectedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("LastModifiedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("PurchaseOrderId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ReceivedById")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Remarks")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("SubmittedForInspectionOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("SupplierId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("SupplierName")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedOnUtc");
+
+                    b.HasIndex("TenantId", "IarNumber")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId", "PurchaseOrderId");
+
+                    b.HasIndex("TenantId", "Status");
+
+                    b.ToTable("InspectionAcceptanceReports", "procurement");
 
                     b.HasAnnotation("Finbuckle:MultiTenant", true);
                 });
@@ -753,79 +753,6 @@ namespace AMIS.Playground.Migrations.PostgreSQL.ProcurementAcquisition
                     b.HasAnnotation("Finbuckle:MultiTenant", true);
                 });
 
-            modelBuilder.Entity("AMIS.Modules.ProcurementAcquisition.Domain.AssetInspectionAcceptanceReports.AssetInspectionAcceptanceReport", b =>
-                {
-                    b.OwnsMany("AMIS.Modules.ProcurementAcquisition.Domain.AssetInspectionAcceptanceReports.AssetIARLineItem", "LineItems", b1 =>
-                        {
-                            b1.Property<Guid>("AssetInspectionAcceptanceReportId");
-
-                            b1.Property<int>("__synthesizedOrdinal")
-                                .ValueGeneratedOnAdd();
-
-                            b1.Property<string>("Brand")
-                                .HasMaxLength(200);
-
-                            b1.Property<Guid?>("CatalogItemId");
-
-                            b1.Property<string>("Description")
-                                .IsRequired()
-                                .HasMaxLength(500);
-
-                            b1.Property<Guid?>("InspectedById");
-
-                            b1.Property<DateTimeOffset?>("InspectedOnUtc");
-
-                            b1.Property<string>("InspectionRemarks")
-                                .HasMaxLength(500);
-
-                            b1.Property<int>("InspectionResult");
-
-                            b1.Property<int>("ItemNo");
-
-                            b1.Property<string>("Model")
-                                .HasMaxLength(200);
-
-                            b1.Property<string>("PropertyClassHint")
-                                .HasMaxLength(64);
-
-                            b1.Property<decimal>("Quantity");
-
-                            b1.Property<string>("SerialNo")
-                                .HasMaxLength(200);
-
-                            b1.Property<string>("StockNumber")
-                                .HasMaxLength(64);
-
-                            b1.Property<string>("StockPropertyNo")
-                                .HasMaxLength(64);
-
-                            b1.Property<string>("TechnicalSpecifications")
-                                .HasMaxLength(1000);
-
-                            b1.Property<string>("UacsObjectCode")
-                                .HasMaxLength(64);
-
-                            b1.Property<string>("Unit")
-                                .IsRequired()
-                                .HasMaxLength(64);
-
-                            b1.Property<decimal>("UnitCost");
-
-                            b1.HasKey("AssetInspectionAcceptanceReportId", "__synthesizedOrdinal");
-
-                            b1.ToTable("AssetIARs", "procurement");
-
-                            b1
-                                .ToJson("LineItems")
-                                .HasColumnType("jsonb");
-
-                            b1.WithOwner()
-                                .HasForeignKey("AssetInspectionAcceptanceReportId");
-                        });
-
-                    b.Navigation("LineItems");
-                });
-
             modelBuilder.Entity("AMIS.Modules.ProcurementAcquisition.Domain.Canvass.CanvassQuotation", b =>
                 {
                     b.HasOne("AMIS.Modules.ProcurementAcquisition.Domain.Canvass.CanvassRequest", null)
@@ -944,6 +871,79 @@ namespace AMIS.Playground.Migrations.PostgreSQL.ProcurementAcquisition
                         });
 
                     b.Navigation("AwardSignatories");
+
+                    b.Navigation("LineItems");
+                });
+
+            modelBuilder.Entity("AMIS.Modules.ProcurementAcquisition.Domain.InspectionAcceptanceReports.InspectionAcceptanceReport", b =>
+                {
+                    b.OwnsMany("AMIS.Modules.ProcurementAcquisition.Domain.InspectionAcceptanceReports.InspectionAcceptanceReportLineItem", "LineItems", b1 =>
+                        {
+                            b1.Property<Guid>("InspectionAcceptanceReportId");
+
+                            b1.Property<int>("__synthesizedOrdinal")
+                                .ValueGeneratedOnAdd();
+
+                            b1.Property<string>("Brand")
+                                .HasMaxLength(200);
+
+                            b1.Property<Guid?>("CatalogItemId");
+
+                            b1.Property<string>("Description")
+                                .IsRequired()
+                                .HasMaxLength(500);
+
+                            b1.Property<Guid?>("InspectedById");
+
+                            b1.Property<DateTimeOffset?>("InspectedOnUtc");
+
+                            b1.Property<string>("InspectionRemarks")
+                                .HasMaxLength(500);
+
+                            b1.Property<int>("InspectionResult");
+
+                            b1.Property<int>("ItemNo");
+
+                            b1.Property<string>("Model")
+                                .HasMaxLength(200);
+
+                            b1.Property<string>("PropertyClassHint")
+                                .HasMaxLength(64);
+
+                            b1.Property<decimal>("Quantity");
+
+                            b1.Property<string>("SerialNo")
+                                .HasMaxLength(200);
+
+                            b1.Property<string>("StockNumber")
+                                .HasMaxLength(64);
+
+                            b1.Property<string>("StockPropertyNo")
+                                .HasMaxLength(64);
+
+                            b1.Property<string>("TechnicalSpecifications")
+                                .HasMaxLength(1000);
+
+                            b1.Property<string>("UacsObjectCode")
+                                .HasMaxLength(64);
+
+                            b1.Property<string>("Unit")
+                                .IsRequired()
+                                .HasMaxLength(64);
+
+                            b1.Property<decimal>("UnitCost");
+
+                            b1.HasKey("InspectionAcceptanceReportId", "__synthesizedOrdinal");
+
+                            b1.ToTable("InspectionAcceptanceReports", "procurement");
+
+                            b1
+                                .ToJson("LineItems")
+                                .HasColumnType("jsonb");
+
+                            b1.WithOwner()
+                                .HasForeignKey("InspectionAcceptanceReportId");
+                        });
 
                     b.Navigation("LineItems");
                 });
