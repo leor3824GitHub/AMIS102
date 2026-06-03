@@ -69,7 +69,7 @@
             <MudStack Spacing="3">
                 <MudAutocomplete T="EmployeeReferenceDto"
                                  Value="_form.RegionalManager"
-                                 ValueChanged="e => _form.RegionalManager = e"
+                                 ValueChanged="OnRegionalManagerChanged"
                                  Label="Approving Official — Name"
                                  Variant="Variant.Outlined"
                                  SearchFunc="SearchEmployeesAsync"
@@ -87,7 +87,7 @@
 
                 <MudAutocomplete T="EmployeeReferenceDto"
                                  Value="_form.AssistantRegionalManager"
-                                 ValueChanged="e => _form.AssistantRegionalManager = e"
+                                 ValueChanged="OnAssistantRegionalManagerChanged"
                                  Label="Co-Approving Official — Name"
                                  Variant="Variant.Outlined"
                                  SearchFunc="SearchEmployeesAsync"
@@ -105,7 +105,7 @@
 
                 <MudAutocomplete T="EmployeeReferenceDto"
                                  Value="_form.Accountant"
-                                 ValueChanged="e => _form.Accountant = e"
+                                 ValueChanged="OnAccountantChanged"
                                  Label="Accountant — Name"
                                  Variant="Variant.Outlined"
                                  SearchFunc="SearchEmployeesAsync"
@@ -123,7 +123,7 @@
 
                 <MudAutocomplete T="EmployeeReferenceDto"
                                  Value="_form.SupervisingAdminOfficer"
-                                 ValueChanged="e => _form.SupervisingAdminOfficer = e"
+                                 ValueChanged="OnSupervisingAdminOfficerChanged"
                                  Label="Administrative Officer — Name"
                                  Variant="Variant.Outlined"
                                  SearchFunc="SearchEmployeesAsync"
@@ -361,6 +361,34 @@
         {
             _busy = false;
         }
+    }
+
+    private void OnRegionalManagerChanged(EmployeeReferenceDto? employee)
+    {
+        _form.RegionalManager = employee;
+        if (employee is not null && !string.IsNullOrWhiteSpace(employee.PositionName))
+            _form.RegionalManagerDesignation = employee.PositionName;
+    }
+
+    private void OnAssistantRegionalManagerChanged(EmployeeReferenceDto? employee)
+    {
+        _form.AssistantRegionalManager = employee;
+        if (employee is not null && !string.IsNullOrWhiteSpace(employee.PositionName))
+            _form.AssistantRegionalManagerDesignation = employee.PositionName;
+    }
+
+    private void OnAccountantChanged(EmployeeReferenceDto? employee)
+    {
+        _form.Accountant = employee;
+        if (employee is not null && !string.IsNullOrWhiteSpace(employee.PositionName))
+            _form.AccountantDesignation = employee.PositionName;
+    }
+
+    private void OnSupervisingAdminOfficerChanged(EmployeeReferenceDto? employee)
+    {
+        _form.SupervisingAdminOfficer = employee;
+        if (employee is not null && !string.IsNullOrWhiteSpace(employee.PositionName))
+            _form.SupervisingAdminOfficerDesignation = employee.PositionName;
     }
 
     private static string EmployeeDisplayName(EmployeeReferenceDto? e) =>

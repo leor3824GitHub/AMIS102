@@ -1,0 +1,146 @@
+@using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders
+
+<MudDialog>
+    <DialogContent>
+        <MudGrid Spacing="2">
+            <MudItem xs="6" sm="3">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Date</MudText>
+                <MudText Typo="Typo.body2">@PurchaseOrder.PoDate.ToString("MMMM dd, yyyy")</MudText>
+            </MudItem>
+            <MudItem xs="6" sm="3">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Status</MudText>
+                <div Class="mt-1">@PoStatusChip(PurchaseOrder.Status)</div>
+            </MudItem>
+            <MudItem xs="6" sm="3">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Mode of Procurement</MudText>
+                <MudText Typo="Typo.body2">@PurchaseOrder.ModeOfProcurement.ToString().Replace("_", " ")</MudText>
+            </MudItem>
+            <MudItem xs="6" sm="3">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Total Amount</MudText>
+                <MudText Typo="Typo.body2" Style="font-weight: 600;">₱@PurchaseOrder.TotalAmount.ToString("N2")</MudText>
+            </MudItem>
+        </MudGrid>
+        <MudDivider Class="my-3" />
+        <MudGrid Spacing="2">
+            <MudItem xs="6" sm="3">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Supplier</MudText>
+                <MudText Typo="Typo.body2">@PurchaseOrder.SupplierName</MudText>
+                <MudText Typo="Typo.caption">@PurchaseOrder.SupplierAddress</MudText>
+            </MudItem>
+            <MudItem xs="6" sm="3">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Place of Delivery</MudText>
+                <MudText Typo="Typo.body2">@PurchaseOrder.PlaceOfDelivery</MudText>
+            </MudItem>
+            <MudItem xs="6" sm="3">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Delivery Term</MudText>
+                <MudText Typo="Typo.body2">@PurchaseOrder.DeliveryTerm</MudText>
+            </MudItem>
+            <MudItem xs="6" sm="3">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Payment Term</MudText>
+                <MudText Typo="Typo.body2">@PurchaseOrder.PaymentTerm</MudText>
+            </MudItem>
+        </MudGrid>
+        <MudDivider Class="my-3" />
+        <MudText Typo="Typo.subtitle2" Style="margin-bottom: 8px;">Line Items</MudText>
+        <MudSimpleTable Dense="true" Hover="true" Striped="true">
+            <thead>
+                <tr>
+                    <th style="width:40px">#</th>
+                    <th style="width:100px">Stock No.</th>
+                    <th>Description</th>
+                    <th style="width:70px">Unit</th>
+                    <th style="text-align:right; width:70px">Qty</th>
+                    <th style="text-align:right; width:100px">Unit Cost</th>
+                    <th style="text-align:right; width:100px">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var li in PurchaseOrder.LineItems)
+                {
+                    <tr>
+                        <td>@li.ItemNo</td>
+                        <td><MudText Typo="Typo.caption">@(li.StockNumber ?? "—")</MudText></td>
+                        <td><MudText Typo="Typo.body2">@li.Description</MudText></td>
+                        <td>@li.Unit</td>
+                        <td style="text-align:right">@li.Quantity.ToString("N2")</td>
+                        <td style="text-align:right">₱@li.UnitCost.ToString("N2")</td>
+                        <td style="text-align:right"><b>₱@li.Amount.ToString("N2")</b></td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="6" style="text-align:right"><b>Total:</b></td>
+                    <td style="text-align:right"><b style="font-size:1.1em">₱@PurchaseOrder.TotalAmount.ToString("N2")</b></td>
+                </tr>
+            </tfoot>
+        </MudSimpleTable>
+        @if (!string.IsNullOrWhiteSpace(PurchaseOrder.TotalAmountInWords))
+        {
+            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2" Style="font-style:italic;">
+                <strong>Total in words:</strong> @PurchaseOrder.TotalAmountInWords
+            </MudText>
+        }
+
+        <MudDivider Class="my-3" />
+        <MudGrid Spacing="2">
+            <MudItem xs="12" md="6">
+                <MudText Typo="Typo.subtitle2">Funds Available (Accountant)</MudText>
+                <MudText Typo="Typo.body2">
+                    @(string.IsNullOrWhiteSpace(PurchaseOrder.FundsAvailableCertifiedByName)
+                        ? "— not yet certified —"
+                        : $"{PurchaseOrder.FundsAvailableCertifiedByName.ToUpperInvariant()}{(PurchaseOrder.FundsAvailableCertifiedOnUtc is null ? "" : $" • {PurchaseOrder.FundsAvailableCertifiedOnUtc.Value.ToLocalTime():MM/dd/yyyy}")}")
+                </MudText>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudText Typo="Typo.subtitle2">Approved By (Authorized Official)</MudText>
+                <MudText Typo="Typo.body2">
+                    @(string.IsNullOrWhiteSpace(PurchaseOrder.IssuedByName)
+                        ? "— not yet approved —"
+                        : $"{PurchaseOrder.IssuedByName.ToUpperInvariant()}{(PurchaseOrder.IssuedOnUtc is null ? "" : $" • {PurchaseOrder.IssuedOnUtc.Value.ToLocalTime():MM/dd/yyyy}")}")
+                </MudText>
+            </MudItem>
+            <MudItem xs="6" md="3">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">ORS/BURS No.</MudText>
+                <MudText Typo="Typo.body2">@(PurchaseOrder.OursBursNumber ?? "—")</MudText>
+            </MudItem>
+            <MudItem xs="6" md="3">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">ORS/BURS Date</MudText>
+                <MudText Typo="Typo.body2">@(PurchaseOrder.OursBursDate?.ToString("MM/dd/yyyy") ?? "—")</MudText>
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Close">Close</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter]
+    public PurchaseOrderDto PurchaseOrder { get; set; } = default!;
+
+    private void Close() => MudDialog.Close();
+
+    private static RenderFragment PoStatusChip(PurchaseOrderStatus status) => __builder =>
+    {
+        var (color, icon) = status switch
+        {
+            PurchaseOrderStatus.Draft => (Color.Default, Icons.Material.Filled.Edit),
+            PurchaseOrderStatus.PendingFundsAvailable => (Color.Warning, Icons.Material.Filled.AccountBalance),
+            PurchaseOrderStatus.PendingApproval => (Color.Warning, Icons.Material.Filled.HourglassBottom),
+            PurchaseOrderStatus.Issued => (Color.Info, Icons.Material.Filled.Send),
+            PurchaseOrderStatus.PartiallyDelivered => (Color.Warning, Icons.Material.Filled.LocalShipping),
+            PurchaseOrderStatus.Fulfilled => (Color.Success, Icons.Material.Filled.CheckCircle),
+            PurchaseOrderStatus.Cancelled => (Color.Error, Icons.Material.Filled.Cancel),
+            _ => (Color.Default, Icons.Material.Filled.Help)
+        };
+        __builder.OpenComponent<MudChip<string>>(0);
+        __builder.AddAttribute(1, "Size", Size.Small);
+        __builder.AddAttribute(2, "Color", color);
+        __builder.AddAttribute(3, "Icon", icon);
+        __builder.AddAttribute(4, "ChildContent", (RenderFragment)(b => b.AddContent(0, status.ToString())));
+        __builder.CloseComponent();
+    };
+}

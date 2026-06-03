@@ -71,7 +71,8 @@
                         <th>Supplier</th>
                         <th>Lines</th>
                         <th class="text-right">Total</th>
-                        <th>Status</th>
+                        <th class="text-center">Inspected</th>
+                        <th class="text-center">Accepted</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -85,11 +86,33 @@
                             <td>@iar.SupplierName</td>
                             <td>@iar.LineItemCount</td>
                             <td class="text-right">@iar.TotalAmount.ToString("N2")</td>
-                            <td>
-                                <MudChip T="string" Size="Size.Small" Color="@StatusColor(iar.Status)">
-                                    @iar.Status
-                                </MudChip>
-                            </td>
+                            @if (iar.Status == InspectionAcceptanceReportStatus.Cancelled)
+                            {
+                                <td colspan="2" class="text-center">
+                                    <MudChip T="string" Size="Size.Small" Color="@StatusColor(iar.Status)">
+                                        Cancelled
+                                    </MudChip>
+                                </td>
+                            }
+                            else
+                            {
+                                var inspected = Milestone(InspectedState(iar.Status),
+                                    "Inspected", "Awaiting inspection", "Not yet inspected");
+                                var accepted = Milestone(AcceptedState(iar.Status),
+                                    "Accepted", "Awaiting acceptance", "Not yet accepted");
+                                <td class="text-center">
+                                    <MudTooltip Text="@inspected.Tooltip">
+                                        <MudIcon Icon="@inspected.Icon" Color="@inspected.Color" Size="Size.Small"
+                                                 Style="@(inspected.Muted ? "opacity:.35" : null)" />
+                                    </MudTooltip>
+                                </td>
+                                <td class="text-center">
+                                    <MudTooltip Text="@accepted.Tooltip">
+                                        <MudIcon Icon="@accepted.Icon" Color="@accepted.Color" Size="Size.Small"
+                                                 Style="@(accepted.Muted ? "opacity:.35" : null)" />
+                                    </MudTooltip>
+                                </td>
+                            }
                             <td>
                                 <MudStack Row="true" Spacing="0">
                                     @if (iar.Status == InspectionAcceptanceReportStatus.Draft)
@@ -154,7 +177,7 @@
                                             <MudTooltip Text="Accept">
                                                 <MudIconButton Icon="@Icons.Material.Filled.CheckCircle"
                                                                Color="Color.Success" Size="Size.Small"
-                                                               OnClick="@(() => OpenAcceptancePage(iar.Id))" />
+                                                               OnClick="@(() => OpenAcceptanceDialog(iar))" />
                                             </MudTooltip>
                                         }
                                         @if (_canCancel)
@@ -171,7 +194,7 @@
                                         <MudTooltip Text="View">
                                             <MudIconButton Icon="@Icons.Material.Filled.Visibility"
                                                            Color="Color.Default" Size="Size.Small"
-                                                           OnClick="@(() => OpenDetailPage(iar.Id))" />
+                                                           OnClick="@(() => OpenAcceptanceDialog(iar))" />
                                         </MudTooltip>
                                     }
                                     @if (iar.Status == InspectionAcceptanceReportStatus.Accepted && (iar.HasSignedCopy ? _canViewSignedCopy : _canUploadSignedCopy))
@@ -329,8 +352,21 @@
         }
     }
 
-    private void OpenDetailPage(Guid id) =>
-        Navigation.NavigateTo($"/procurement/inspection-acceptance-reports/{id}/accept");
+    private async Task OpenAcceptanceDialog(InspectionAcceptanceReportSummaryDto iar)
+    {
+        var parameters = new DialogParameters<InspectionAcceptanceReportAcceptanceDialog>
+        {
+            { x => x.Id, iar.Id }
+        };
+        var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true, MaxWidth = MaxWidth.Large };
+        var dialog = await DialogService.ShowAsync<InspectionAcceptanceReportAcceptanceDialog>(
+            $"Inspection & Acceptance Report — {iar.IarNumber}", parameters, options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled && result.Data is true)
+        {
+            await LoadAsync();
+        }
+    }
 
     private async Task SubmitForInspectionAsync(Guid id)
     {
@@ -413,6 +449,35 @@
         InspectionAcceptanceReportStatus.Accepted => Color.Success,
         InspectionAcceptanceReportStatus.Cancelled => Color.Error,
         _ => Color.Default
+    };
+
+    // Each IAR progresses through two milestones — Inspected, then Accepted.
+    // A milestone is Done (green ✔), Active (amber ◷ — the step currently in
+    // progress), or NotStarted (muted grey ○). Cancelled is handled separately
+    // as a chip, since an X in two boxes reads like "failed inspection".
+    private enum MilestoneState { NotStarted, Active, Done }
+
+    private static MilestoneState InspectedState(InspectionAcceptanceReportStatus status) => status switch
+    {
+        InspectionAcceptanceReportStatus.PendingInspection => MilestoneState.Active,
+        InspectionAcceptanceReportStatus.Inspected => MilestoneState.Done,
+        InspectionAcceptanceReportStatus.Accepted => MilestoneState.Done,
+        _ => MilestoneState.NotStarted
+    };
+
+    private static MilestoneState AcceptedState(InspectionAcceptanceReportStatus status) => status switch
+    {
+        InspectionAcceptanceReportStatus.Inspected => MilestoneState.Active,
+        InspectionAcceptanceReportStatus.Accepted => MilestoneState.Done,
+        _ => MilestoneState.NotStarted
+    };
+
+    private static (string Icon, Color Color, string Tooltip, bool Muted) Milestone(
+        MilestoneState state, string doneText, string activeText, string pendingText) => state switch
+    {
+        MilestoneState.Done => (Icons.Material.Filled.CheckCircle, Color.Success, doneText, false),
+        MilestoneState.Active => (Icons.Material.Filled.Schedule, Color.Warning, activeText, false),
+        _ => (Icons.Material.Outlined.RadioButtonUnchecked, Color.Default, pendingText, true)
     };
 
     private async Task DownloadFastReportPdfAsync(Guid id)

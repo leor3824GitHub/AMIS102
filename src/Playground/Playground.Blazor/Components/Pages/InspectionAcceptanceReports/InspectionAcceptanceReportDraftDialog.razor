@@ -419,7 +419,8 @@
         UnitCost = lineItem.UnitCost,
         PropertyClassHint = lineItem.PropertyClassHint,
         CatalogItemId = lineItem.CatalogItemId,
-        UacsObjectCode = lineItem.UacsObjectCode
+        UacsObjectCode = lineItem.UacsObjectCode,
+        StockNumber = lineItem.StockNumber
     };
 
     private void SelectAllPoLines()
@@ -531,7 +532,8 @@
                 null,
                 null,
                 line.CatalogItemId,
-                line.UacsObjectCode))
+                line.UacsObjectCode,
+                line.StockNumber))
             .Concat(_unmappedExistingLines.Select(line => new InspectionAcceptanceReportLineItemRequest(
                 line.Description!,
                 line.TechnicalSpecifications,
@@ -545,7 +547,8 @@
                 null,
                 null,
                 line.CatalogItemId,
-                line.UacsObjectCode)))
+                line.UacsObjectCode,
+                line.StockNumber)))
             .ToList();
 
         var deliveryDate = _deliveryDate is null ? (DateOnly?)null : DateOnly.FromDateTime(_deliveryDate.Value);
@@ -640,6 +643,7 @@
         public decimal UnitCost { get; set; }
         public Guid? CatalogItemId { get; set; }
         public string? UacsObjectCode { get; set; }
+        public string? StockNumber { get; set; }
     }
 
     private sealed class PoLineChoice

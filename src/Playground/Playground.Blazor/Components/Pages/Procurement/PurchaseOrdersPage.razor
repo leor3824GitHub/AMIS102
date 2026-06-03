@@ -195,129 +195,6 @@
                 }
             </MudCardContent>
         </MudCard>
-
-        <!-- PO Detail View -->
-        @if (_detail is not null)
-        {
-            <MudCard Elevation="1" Class="mt-3">
-                <MudCardContent>
-                    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3">
-                        <div Class="flex-grow-1">
-                            <MudText Typo="Typo.h6" Style="margin-bottom: 2px;">@_detail.PoNumber</MudText>
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">Purchase Order Details</MudText>
-                        </div>
-                        <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="@(() => _detail = null)" Title="Close" />
-                    </MudStack>
-                    <MudGrid Spacing="2">
-                        <MudItem xs="6" sm="3">
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">Date</MudText>
-                            <MudText Typo="Typo.body2">@_detail.PoDate.ToString("MMMM dd, yyyy")</MudText>
-                        </MudItem>
-                        <MudItem xs="6" sm="3">
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">Status</MudText>
-                            <div Class="mt-1">@PoStatusChip(_detail.Status)</div>
-                        </MudItem>
-                        <MudItem xs="6" sm="3">
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">Mode of Procurement</MudText>
-                            <MudText Typo="Typo.body2">@_detail.ModeOfProcurement.ToString().Replace("_", " ")</MudText>
-                        </MudItem>
-                        <MudItem xs="6" sm="3">
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">Total Amount</MudText>
-                            <MudText Typo="Typo.body2" Style="font-weight: 600;">₱@_detail.TotalAmount.ToString("N2")</MudText>
-                        </MudItem>
-                    </MudGrid>
-                    <MudDivider Class="my-3" />
-                    <MudGrid Spacing="2">
-                        <MudItem xs="6" sm="3">
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">Supplier</MudText>
-                            <MudText Typo="Typo.body2">@_detail.SupplierName</MudText>
-                            <MudText Typo="Typo.caption">@_detail.SupplierAddress</MudText>
-                        </MudItem>
-                        <MudItem xs="6" sm="3">
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">Place of Delivery</MudText>
-                            <MudText Typo="Typo.body2">@_detail.PlaceOfDelivery</MudText>
-                        </MudItem>
-                        <MudItem xs="6" sm="3">
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">Delivery Term</MudText>
-                            <MudText Typo="Typo.body2">@_detail.DeliveryTerm</MudText>
-                        </MudItem>
-                        <MudItem xs="6" sm="3">
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">Payment Term</MudText>
-                            <MudText Typo="Typo.body2">@_detail.PaymentTerm</MudText>
-                        </MudItem>
-                    </MudGrid>
-                    <MudDivider Class="my-3" />
-                    <MudText Typo="Typo.subtitle2" Style="margin-bottom: 8px;">Line Items</MudText>
-                    <MudSimpleTable Dense="true" Hover="true" Striped="true">
-                        <thead>
-                            <tr>
-                                <th style="width:40px">#</th>
-                                <th style="width:100px">Stock No.</th>
-                                <th>Description</th>
-                                <th style="width:70px">Unit</th>
-                                <th style="text-align:right; width:70px">Qty</th>
-                                <th style="text-align:right; width:100px">Unit Cost</th>
-                                <th style="text-align:right; width:100px">Amount</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var li in _detail.LineItems)
-                            {
-                                <tr>
-                                    <td>@li.ItemNo</td>
-                                    <td><MudText Typo="Typo.caption">@(li.StockNumber ?? "—")</MudText></td>
-                                    <td><MudText Typo="Typo.body2">@li.Description</MudText></td>
-                                    <td>@li.Unit</td>
-                                    <td style="text-align:right">@li.Quantity.ToString("N2")</td>
-                                    <td style="text-align:right">₱@li.UnitCost.ToString("N2")</td>
-                                    <td style="text-align:right"><b>₱@li.Amount.ToString("N2")</b></td>
-                                </tr>
-                            }
-                        </tbody>
-                        <tfoot>
-                            <tr>
-                                <td colspan="6" style="text-align:right"><b>Total:</b></td>
-                                <td style="text-align:right"><b style="font-size:1.1em">₱@_detail.TotalAmount.ToString("N2")</b></td>
-                            </tr>
-                        </tfoot>
-                    </MudSimpleTable>
-                    @if (!string.IsNullOrWhiteSpace(_detail.TotalAmountInWords))
-                    {
-                        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2" Style="font-style:italic;">
-                            <strong>Total in words:</strong> @_detail.TotalAmountInWords
-                        </MudText>
-                    }
-
-                    <MudDivider Class="my-3" />
-                    <MudGrid Spacing="2">
-                        <MudItem xs="12" md="6">
-                            <MudText Typo="Typo.subtitle2">Funds Available (Accountant)</MudText>
-                            <MudText Typo="Typo.body2">
-                                @(string.IsNullOrWhiteSpace(_detail.FundsAvailableCertifiedByName)
-                                    ? "— not yet certified —"
-                                    : $"{_detail.FundsAvailableCertifiedByName.ToUpperInvariant()}{(_detail.FundsAvailableCertifiedOnUtc is null ? "" : $" • {_detail.FundsAvailableCertifiedOnUtc.Value.ToLocalTime():MM/dd/yyyy}")}")
-                            </MudText>
-                        </MudItem>
-                        <MudItem xs="12" md="6">
-                            <MudText Typo="Typo.subtitle2">Approved By (Authorized Official)</MudText>
-                            <MudText Typo="Typo.body2">
-                                @(string.IsNullOrWhiteSpace(_detail.IssuedByName)
-                                    ? "— not yet approved —"
-                                    : $"{_detail.IssuedByName.ToUpperInvariant()}{(_detail.IssuedOnUtc is null ? "" : $" • {_detail.IssuedOnUtc.Value.ToLocalTime():MM/dd/yyyy}")}")
-                            </MudText>
-                        </MudItem>
-                        <MudItem xs="6" md="3">
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">ORS/BURS No.</MudText>
-                            <MudText Typo="Typo.body2">@(_detail.OursBursNumber ?? "—")</MudText>
-                        </MudItem>
-                        <MudItem xs="6" md="3">
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">ORS/BURS Date</MudText>
-                            <MudText Typo="Typo.body2">@(_detail.OursBursDate?.ToString("MM/dd/yyyy") ?? "—")</MudText>
-                        </MudItem>
-                    </MudGrid>
-                </MudCardContent>
-            </MudCard>
-        }
     </MudItem>
 </MudGrid>
 
@@ -354,7 +231,6 @@
     public Guid? CanvassId { get; set; }
 
     private List<PurchaseOrderSummaryDto> _items = [];
-    private PurchaseOrderDto? _detail;
     private bool _loaded;
     private string _keyword = string.Empty;
     private DateTime? _fromDate;
@@ -607,7 +483,17 @@
 
     private async Task ViewDetailsAsync(Guid id)
     {
-        _detail = await Client.GetAsync(id);
+        PurchaseOrderDto? po;
+        try { po = await Client.GetAsync(id); }
+        catch (Exception ex) { Snackbar.Add($"Unable to load PO details: {ex.Message}", Severity.Error); return; }
+        if (po is null) { Snackbar.Add("PO not found.", Severity.Warning); return; }
+
+        var parameters = new DialogParameters<PurchaseOrderDetailsDialog>
+        {
+            { x => x.PurchaseOrder, po }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true, CloseButton = true };
+        await DialogService.ShowAsync<PurchaseOrderDetailsDialog>($"PO Details - {po.PoNumber}", parameters, options);
     }
 
     private async Task DownloadFastReportPdfAsync(Guid id)

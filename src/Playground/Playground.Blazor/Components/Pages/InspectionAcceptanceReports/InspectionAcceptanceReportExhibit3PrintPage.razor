@@ -440,7 +440,7 @@ else
 
     private async Task PrintReport() => await JS.InvokeVoidAsync("print");
 
-    private void BackToAcceptance() => Navigation.NavigateTo($"/procurement/inspection-acceptance-reports/{Id}/accept");
+    private void BackToAcceptance() => Navigation.NavigateTo("/procurement/inspection-acceptance-reports");
 
     private async Task DownloadFastReportPdfAsync()
     {
