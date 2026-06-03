@@ -30,7 +30,11 @@
       "Read(//d/VB/AMIS102/src/Playground/Migrations.PostgreSQL/ProcurementAcquisition/**)",
       "Read(//d/d/VB/AMIS102/src/Playground/**)",
       "Read(//d/d/VB/AMIS102/src/Playground/Playground.Blazor/**)",
-      "Bash(awk '$1 > 1')"
+      "Bash(awk '$1 > 1')",
+      "Bash(awk '/public partial class ProductDto/{f=1} f&&/JsonPropertyName/{print} f&&/^    \\\\}/{exit}' src/Playground/Playground.Blazor/ApiClient/Generated.cs)",
+      "Bash(grep -vi \"Generated.cs\\\\|/bin/\\\\|/obj/\\\\|ProcurementAcquisition\")",
+      "Bash(grep -vi \"/bin/\\\\|/obj/\\\\|ProcurementAcquisition\\\\|Generated.cs\")",
+      "Bash(grep -v \"/bin/\\\\|/obj/\")"
     ]
   }
 }

@@ -3,8 +3,10 @@
 @using AMIS.Modules.MasterData.Contracts.v1.CapitalizationThresholds
 @using AMIS.Framework.Shared.Persistence
 @using AMIS.Playground.Blazor.ApiClient
+@using AMIS.Playground.Blazor.Components.Pages.Expendable
 @inject IPurchaseRequestClient Client
 @inject IArCatalogClient CatalogClient
+@inject IProductsClient ProductsClient
 @inject ICapitalizationThresholdState ThresholdState
 @inject ILookupClient LookupClient
 @inject IMaster_dataClient MasterDataClient
@@ -34,13 +36,22 @@
                                      ErrorText="Department is required."
                                      Dense="true" Margin="Margin.Dense" />
                 </MudItem>
-                <MudItem xs="12" sm="6" md="4">
-                    <MudTextField @bind-Value="_form.ResponsibilityCenterCode" Label="Responsibility Center Code" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+                <MudItem xs="12" sm="6" md="2">
+                    <MudTextField @bind-Value="_form.ResponsibilityCenterCode" Label="Resp. Center Code" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
                 </MudItem>
-                <MudItem xs="12" sm="12" md="4">
+                <MudItem xs="12" sm="6" md="3">
                     <MudSelect Value="_form.PrType" ValueChanged="OnPrTypeChanged" Label="PR Type" Variant="Variant.Outlined" T="PrType" Dense="true" Margin="Margin.Dense">
                         <MudSelectItem Value="PrType.Planned">Planned</MudSelectItem>
                         <MudSelectItem Value="PrType.Unplanned">Unplanned</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudSelect Value="_form.Category" ValueChanged="OnCategoryChanged" Label="Category" Variant="Variant.Outlined"
+                               T="ProcurementCategory" Dense="true" Margin="Margin.Dense"
+                               Disabled="@(_editing is not null)"
+                               HelperText="@(_editing is not null ? "Category is fixed after creation" : "Asset = PPE/SE; Supplies = expendable")">
+                        <MudSelectItem Value="ProcurementCategory.Asset">Asset (PPE/SE)</MudSelectItem>
+                        <MudSelectItem Value="ProcurementCategory.Supply">Supplies (Expendable)</MudSelectItem>
                     </MudSelect>
                 </MudItem>
             </MudGrid>
@@ -86,32 +97,62 @@
                 <MudText Typo="Typo.subtitle2" Class="mb-2">Add New Line Item</MudText>
                 <MudGrid Spacing="1">
                     <MudItem xs="12" sm="12" md="6">
-                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-                            <MudAutocomplete T="ArCatalogItemDto"
-                                             Value="_newLineItem.SelectedCatalog"
-                                             ValueChanged="@(c => OnNewCatalogSelected(c))"
-                                             Text="@_newLineItem.ItemDescription"
-                                             TextChanged="@(t => OnNewDescriptionChanged(t))"
-                                             SearchFunc="SearchCatalogAsync"
-                                             ToStringFunc="@(c => c?.Description ?? string.Empty)"
-                                             Label="Description *"
-                                             Variant="Variant.Outlined"
-                                             Dense="true"
-                                             Margin="Margin.Dense"
-                                             CoerceValue="false"
-                                             CoerceText="false"
-                                             ResetValueOnEmptyText="false"
-                                             MinCharacters="0"
-                                             Clearable="true"
-                                             HelperText="Pick a catalog item, or use the + button to create one."
-                                             Class="flex-grow-1" />
-                            <MudTooltip Text="Create a new catalog item from this description">
-                                <MudIconButton Icon="@Icons.Material.Filled.AddCircleOutline"
-                                               Color="Color.Primary"
-                                               Size="Size.Small"
-                                               OnClick="@(async () => await OpenCreateCatalogForNewItemAsync())" />
-                            </MudTooltip>
-                        </MudStack>
+                        @if (_form.Category == ProcurementCategory.Asset)
+                        {
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                <MudAutocomplete T="ArCatalogItemDto"
+                                                 Value="_newLineItem.SelectedCatalog"
+                                                 ValueChanged="@(c => OnNewCatalogSelected(c))"
+                                                 Text="@_newLineItem.ItemDescription"
+                                                 TextChanged="@(t => OnNewDescriptionChanged(t))"
+                                                 SearchFunc="SearchCatalogAsync"
+                                                 ToStringFunc="@(c => c?.Description ?? string.Empty)"
+                                                 Label="Description *"
+                                                 Variant="Variant.Outlined"
+                                                 Dense="true"
+                                                 Margin="Margin.Dense"
+                                                 CoerceValue="false"
+                                                 CoerceText="false"
+                                                 ResetValueOnEmptyText="false"
+                                                 MinCharacters="0"
+                                                 Clearable="true"
+                                                 HelperText="Pick a catalog item, or use the + button to create one."
+                                                 Class="flex-grow-1" />
+                                <MudTooltip Text="Create a new catalog item from this description">
+                                    <MudIconButton Icon="@Icons.Material.Filled.AddCircleOutline"
+                                                   Color="Color.Primary"
+                                                   Size="Size.Small"
+                                                   OnClick="@(async () => await OpenCreateCatalogForNewItemAsync())" />
+                                </MudTooltip>
+                            </MudStack>
+                        }
+                        else
+                        {
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                <MudAutocomplete T="ProductDto"
+                                                 Value="_newLineItem.SelectedProduct"
+                                                 ValueChanged="@(p => OnNewProductSelected(p))"
+                                                 SearchFunc="SearchProductsAsync"
+                                                 ToStringFunc="@(p => p is null ? string.Empty : (string.IsNullOrWhiteSpace(p.StockNo) ? p.Name : $"{p.StockNo} — {p.Name}"))"
+                                                 Label="Product (Stock No.) *"
+                                                 Variant="Variant.Outlined"
+                                                 Dense="true"
+                                                 Margin="Margin.Dense"
+                                                 CoerceValue="false"
+                                                 CoerceText="false"
+                                                 ResetValueOnEmptyText="false"
+                                                 MinCharacters="0"
+                                                 Clearable="true"
+                                                 HelperText="Pick an existing expendable product, or use the + button to create one."
+                                                 Class="flex-grow-1" />
+                                <MudTooltip Text="Create a new expendable product">
+                                    <MudIconButton Icon="@Icons.Material.Filled.AddCircleOutline"
+                                                   Color="Color.Primary"
+                                                   Size="Size.Small"
+                                                   OnClick="@(async () => await OpenCreateProductForNewItemAsync())" />
+                                </MudTooltip>
+                            </MudStack>
+                        }
                     </MudItem>
                     <MudItem xs="12" sm="6" md="1">
                         <MudNumericField @bind-Value="_newLineItem.Quantity" Label="Qty" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Min="0.01m" />
@@ -182,6 +223,12 @@
                                         {
                                             <span> · UACS @context.SelectedCatalog.UacsObjectCode</span>
                                         }
+                                    </div>
+                                }
+                                else if (!string.IsNullOrWhiteSpace(context.StockNumber))
+                                {
+                                    <div style="font-size: 0.75rem; color: #999; margin-top: 2px;">
+                                        Stock No. @context.StockNumber
                                     </div>
                                 }
                                 @{
@@ -308,7 +355,7 @@
             var lineItems = _form.LineItems
                 .Select(li => new CreatePurchaseRequestLineItemRequest(
                     li.Quantity, li.UnitOfIssue, li.ItemDescription, li.EstimatedUnitCost,
-                    li.SelectedCatalog?.Id, li.SelectedCatalog?.UacsObjectCode))
+                    li.SelectedCatalog?.Id, li.SelectedCatalog?.UacsObjectCode, li.StockNumber))
                 .ToList();
 
             if (_editing is null)
@@ -316,7 +363,7 @@
                 await Client.CreateAsync(new CreatePurchaseRequestCommand(
                     _form.Department!.Id, _form.ResponsibilityCenterCode, _form.Purpose, _form.PrType, _form.Justification,
                     _form.SaiNumber, ToDateOnly(_form.SaiDateNullable),
-                    _form.AlobsNumber, ToDateOnly(_form.AlobsDateNullable), lineItems));
+                    _form.AlobsNumber, ToDateOnly(_form.AlobsDateNullable), lineItems, _form.Category));
                 Snackbar.Add("Purchase request created.", Severity.Success);
             }
             else
@@ -324,7 +371,7 @@
                 await Client.UpdateAsync(_editing.Id, new UpdatePurchaseRequestCommand(
                     _editing.Id, _form.Department!.Id, _form.ResponsibilityCenterCode, _form.Purpose, _form.PrType, _form.Justification,
                     _form.SaiNumber, ToDateOnly(_form.SaiDateNullable),
-                    _form.AlobsNumber, ToDateOnly(_form.AlobsDateNullable), lineItems));
+                    _form.AlobsNumber, ToDateOnly(_form.AlobsDateNullable), lineItems, _form.Category));
                 Snackbar.Add("Purchase request updated.", Severity.Success);
             }
             Dialog.Close(DialogResult.Ok(true));
@@ -355,6 +402,7 @@
             ResponsibilityCenterCode = pr.ResponsibilityCenterCode,
             Purpose = pr.Purpose,
             PrType = pr.PrType,
+            Category = pr.Category,
             Justification = pr.Justification,
             SaiNumber = pr.SaiNumber,
             SaiDateNullable = pr.SaiDate?.ToDateTime(TimeOnly.MinValue),
@@ -365,7 +413,8 @@
                 Quantity = li.Quantity,
                 UnitOfIssue = li.UnitOfIssue,
                 ItemDescription = li.ItemDescription,
-                EstimatedUnitCost = li.EstimatedUnitCost
+                EstimatedUnitCost = li.EstimatedUnitCost,
+                StockNumber = li.StockNumber
             }).ToList()
         };
 
@@ -404,8 +453,62 @@
             _form.Justification = null;
     }
 
+    private void OnCategoryChanged(ProcurementCategory value)
+    {
+        if (_form.Category == value) return;
+        _form.Category = value;
+        // Asset lines carry a catalog item; Supply lines carry a product StockNo. The two line shapes are
+        // not interchangeable, so reset the line list and the in-progress new line when the category flips.
+        _form.LineItems.Clear();
+        _newLineItem = new LineItemRow();
+    }
+
+    private async Task<IEnumerable<ProductDto>> SearchProductsAsync(string value, CancellationToken ct)
+    {
+        try
+        {
+            var page = await ProductsClient.SearchAsync(new SearchProductsQuery
+            {
+                Keyword = value,
+                Status = "Active",
+                PageNumber = 1,
+                PageSize = 30
+            }, ct);
+            return page?.Items ?? [];
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    private void OnNewProductSelected(ProductDto? p)
+    {
+        _newLineItem.SelectedProduct = p;
+        if (p is not null)
+        {
+            _newLineItem.StockNumber = p.StockNo;
+            _newLineItem.ItemDescription = string.IsNullOrWhiteSpace(p.Name) ? p.Description : p.Name;
+            if (!string.IsNullOrWhiteSpace(p.UnitOfMeasure)) _newLineItem.UnitOfIssue = p.UnitOfMeasure;
+            if (_newLineItem.EstimatedUnitCost <= 0 && p.UnitPrice > 0) _newLineItem.EstimatedUnitCost = (decimal)p.UnitPrice;
+        }
+    }
+
+    private async Task OpenCreateProductForNewItemAsync()
+    {
+        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseButton = true };
+        var dialog = await DialogService.ShowAsync<ProductFormDialog>("Create Product", options);
+        var result = await dialog.Result;
+        if (result is null || result.Canceled || result.Data is not ProductDto created)
+            return;
+
+        OnNewProductSelected(created);
+    }
+
     private bool CanAddLineItem() =>
-        _newLineItem.SelectedCatalog is not null &&
+        (_form.Category == ProcurementCategory.Asset
+            ? _newLineItem.SelectedCatalog is not null
+            : _newLineItem.SelectedProduct is not null && !string.IsNullOrWhiteSpace(_newLineItem.StockNumber)) &&
         !string.IsNullOrWhiteSpace(_newLineItem.ItemDescription) &&
         !string.IsNullOrWhiteSpace(_newLineItem.UnitOfIssue) &&
         _newLineItem.Quantity > 0 &&
@@ -413,9 +516,18 @@
 
     private void AddLineItem()
     {
-        if (string.IsNullOrWhiteSpace(_newLineItem.ItemDescription) || _newLineItem.SelectedCatalog is null)
+        var isSupply = _form.Category == ProcurementCategory.Supply;
+
+        if (string.IsNullOrWhiteSpace(_newLineItem.ItemDescription) ||
+            (!isSupply && _newLineItem.SelectedCatalog is null))
         {
             Snackbar.Add("Please fill in description and select a catalog item.", Severity.Warning);
+            return;
+        }
+
+        if (isSupply && (_newLineItem.SelectedProduct is null || string.IsNullOrWhiteSpace(_newLineItem.StockNumber)))
+        {
+            Snackbar.Add("Please select an existing expendable product (or create one with the + button).", Severity.Warning);
             return;
         }
 
@@ -443,7 +555,9 @@
             UnitOfIssue = _newLineItem.UnitOfIssue,
             ItemDescription = _newLineItem.ItemDescription,
             EstimatedUnitCost = _newLineItem.EstimatedUnitCost,
-            SelectedCatalog = _newLineItem.SelectedCatalog
+            SelectedCatalog = isSupply ? null : _newLineItem.SelectedCatalog,
+            SelectedProduct = isSupply ? _newLineItem.SelectedProduct : null,
+            StockNumber = isSupply ? _newLineItem.StockNumber : null
         });
 
         _newLineItem = new LineItemRow();
@@ -503,7 +617,9 @@
             !string.IsNullOrWhiteSpace(li.UnitOfIssue) &&
             li.Quantity > 0 &&
             li.EstimatedUnitCost > 0 &&
-            li.SelectedCatalog is not null);
+            (_form.Category == ProcurementCategory.Asset
+                ? li.SelectedCatalog is not null
+                : !string.IsNullOrWhiteSpace(li.StockNumber)));
 
     private static DateOnly? ToDateOnly(DateTime? d) => d.HasValue ? DateOnly.FromDateTime(d.Value) : null;
 
@@ -513,6 +629,7 @@
         public string? ResponsibilityCenterCode { get; set; }
         public string Purpose { get; set; } = string.Empty;
         public PrType PrType { get; set; } = PrType.Planned;
+        public ProcurementCategory Category { get; set; } = ProcurementCategory.Asset;
         public string? Justification { get; set; }
         public string? SaiNumber { get; set; }
         public DateTime? SaiDateNullable { get; set; }
@@ -527,6 +644,8 @@
         public string UnitOfIssue { get; set; } = "pc";
         public string ItemDescription { get; set; } = string.Empty;
         public decimal EstimatedUnitCost { get; set; }
-        public ArCatalogItemDto? SelectedCatalog { get; set; }
+        public ArCatalogItemDto? SelectedCatalog { get; set; }      // Asset lines
+        public ProductDto? SelectedProduct { get; set; }            // Supply lines
+        public string? StockNumber { get; set; }                    // Supply lines (product StockNo)
     }
 }

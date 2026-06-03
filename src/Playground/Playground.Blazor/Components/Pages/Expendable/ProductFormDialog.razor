@@ -405,8 +405,11 @@
                     VariantName = _form.VariantName
                 };
 
-                await ExpendableClient.ProductsPostAsync(createCmd);
+                var created = await ExpendableClient.ProductsPostAsync(createCmd);
                 Snackbar.Add("Product created successfully", Severity.Success);
+                // Return the created product so callers (e.g. the Supply PR form) can auto-select it.
+                Dialog.Close(DialogResult.Ok(created));
+                return;
             }
 
             Dialog.Close(DialogResult.Ok(true));
