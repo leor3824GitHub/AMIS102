@@ -21,12 +21,14 @@
             <MudPaper Outlined="true" Class="pa-2">
                 <MudText Typo="Typo.caption" Class="mb-1">Procurement Category *</MudText>
                 <MudRadioGroup T="ProcurementCategory" Value="_form.Category" ValueChanged="OnCategoryChanged">
-                    <MudRadio Value="ProcurementCategory.Asset" Color="Color.Primary" Size="Size.Small" Dense="true">
-                        Asset — fixed asset / semi-expendable (PPE → AssetRegister)
-                    </MudRadio>
-                    <MudRadio Value="ProcurementCategory.Supply" Color="Color.Primary" Size="Size.Small" Dense="true">
-                        Supply — consumable supplies (Expendable inventory)
-                    </MudRadio>
+                    <MudStack Row="false" Spacing="0">
+                        <MudRadio Value="ProcurementCategory.Asset" Color="Color.Primary" Size="Size.Small" Dense="true">
+                            Asset — fixed asset / semi-expendable
+                        </MudRadio>
+                        <MudRadio Value="ProcurementCategory.Supply" Color="Color.Primary" Size="Size.Small" Dense="true">
+                            Supply — consumable supplies
+                        </MudRadio>
+                    </MudStack>
                 </MudRadioGroup>
             </MudPaper>
 
@@ -97,7 +99,7 @@
             <!-- New Line Item Form -->
             <MudPaper Outlined="true" Class="pa-3">
                 <MudText Typo="Typo.subtitle2" Class="mb-2">Add New Line Item</MudText>
-                <MudGrid Spacing="1">
+                <MudGrid Spacing="1" AlignItems="AlignItems.Center">
                     <MudItem xs="12" sm="12" md="6">
                         @if (_form.Category == ProcurementCategory.Supply)
                         {
@@ -117,7 +119,6 @@
                                              ResetValueOnEmptyText="false"
                                              MinCharacters="0"
                                              Clearable="true"
-                                             HelperText="Pick an Expendable product — matched by Stock No when stock is received."
                                              Class="flex-grow-1">
                                 <ItemTemplate Context="product">
                                     <MudText Typo="Typo.body2">@product.StockNo — @product.Name</MudText>
@@ -143,7 +144,6 @@
                                                  ResetValueOnEmptyText="false"
                                                  MinCharacters="0"
                                                  Clearable="true"
-                                                 HelperText="Pick a catalog item, or use the + button to create one."
                                                  Class="flex-grow-1" />
                                 <MudTooltip Text="Create a new catalog item from this description">
                                     <MudIconButton Icon="@Icons.Material.Filled.AddCircleOutline"
@@ -165,10 +165,16 @@
                     </MudItem>
                     <MudItem xs="12" sm="6" md="2" Class="d-flex align-center">
                         <MudButton StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Filled" Color="Color.Primary"
-                                   OnClick="AddLineItem" Size="Size.Small" FullWidth="true"
+                                   OnClick="AddLineItem" FullWidth="true"
+                                   Style="height:40px;"
                                    Disabled="@(!CanAddLineItem())">Add Item</MudButton>
                     </MudItem>
                 </MudGrid>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary mt-1">
+                    @(_form.Category == ProcurementCategory.Supply
+                        ? "Pick an Expendable product — matched by Stock No when stock is received."
+                        : "Pick a catalog item, or use the + button to create one.")
+                </MudText>
                 @if (_form.Category == ProcurementCategory.Supply && _newLineItem.SelectedProduct is not null)
                 {
                     <MudStack Row="true" Spacing="1" Class="mt-2">
@@ -330,8 +336,23 @@
     private Task OnDepartmentChanged(DepartmentReferenceDto? department)
     {
         _form.Department = department;
+
+        // Auto-fill RCC from the selected department. Only overwrite when the field is empty
+        // or still matches the previously selected department's RCC, so a manual edit is preserved.
+        if (department is not null && !string.IsNullOrWhiteSpace(department.ResponsibilityCenterCode))
+        {
+            if (string.IsNullOrWhiteSpace(_form.ResponsibilityCenterCode) ||
+                _form.ResponsibilityCenterCode == _lastAutoFilledRcc)
+            {
+                _form.ResponsibilityCenterCode = department.ResponsibilityCenterCode;
+                _lastAutoFilledRcc = department.ResponsibilityCenterCode;
+            }
+        }
+
         return Task.CompletedTask;
     }
+
+    private string? _lastAutoFilledRcc;
 
     private static string FormatDepartment(DepartmentReferenceDto? department)
     {

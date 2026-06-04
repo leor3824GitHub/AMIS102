@@ -65,12 +65,24 @@ namespace AMIS.Playground.Blazor.ApiClient
     {
         [System.Text.Json.Serialization.JsonPropertyName("officeCode")]
         public string? OfficeCode { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("responsibilityCenterCode")]
+        public string? ResponsibilityCenterCode { get; set; }
     }
 
     public partial class CreateDepartmentCommand
     {
         [System.Text.Json.Serialization.JsonPropertyName("officeCode")]
         public string? OfficeCode { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("responsibilityCenterCode")]
+        public string? ResponsibilityCenterCode { get; set; }
+    }
+
+    public partial class UpdateDepartmentCommand
+    {
+        [System.Text.Json.Serialization.JsonPropertyName("responsibilityCenterCode")]
+        public string? ResponsibilityCenterCode { get; set; }
     }
 
     public partial class OfficeReferenceDto

@@ -190,6 +190,10 @@ namespace AMIS.Playground.Migrations.PostgreSQL.MasterData
                         .HasMaxLength(8)
                         .HasColumnType("character varying(8)");
 
+                    b.Property<string>("ResponsibilityCenterCode")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
                     b.Property<byte[]>("Version")
                         .IsConcurrencyToken()
                         .IsRequired()

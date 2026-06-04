@@ -15,42 +15,6 @@ namespace AMIS.Playground.Migrations.PostgreSQL.ProcurementAcquisition
                 name: "procurement");
 
             migrationBuilder.CreateTable(
-                name: "AssetIARs",
-                schema: "procurement",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    IarNumber = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
-                    IarDate = table.Column<DateOnly>(type: "date", nullable: false),
-                    PurchaseOrderId = table.Column<Guid>(type: "uuid", nullable: false),
-                    SupplierId = table.Column<Guid>(type: "uuid", nullable: false),
-                    SupplierName = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
-                    InspectedById = table.Column<Guid>(type: "uuid", nullable: false),
-                    ReceivedById = table.Column<Guid>(type: "uuid", nullable: false),
-                    DeliveryReceiptNo = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
-                    DeliveryDate = table.Column<DateOnly>(type: "date", nullable: true),
-                    Status = table.Column<int>(type: "integer", nullable: false),
-                    Remarks = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
-                    SubmittedForInspectionOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    InspectedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    AcceptedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    CancelledOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    CreatedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    CreatedBy = table.Column<string>(type: "text", nullable: true),
-                    LastModifiedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    LastModifiedBy = table.Column<string>(type: "text", nullable: true),
-                    DeletedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    DeletedBy = table.Column<string>(type: "text", nullable: true),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
-                    LineItems = table.Column<string>(type: "jsonb", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_AssetIARs", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "CanvassRequests",
                 schema: "procurement",
                 columns: table => new
@@ -62,14 +26,16 @@ namespace AMIS.Playground.Migrations.PostgreSQL.ProcurementAcquisition
                     ReturnDeadline = table.Column<DateOnly>(type: "date", nullable: false),
                     Status = table.Column<int>(type: "integer", nullable: false),
                     AwardedSupplierId = table.Column<Guid>(type: "uuid", nullable: true),
-                    Version = table.Column<byte[]>(type: "bytea", nullable: false),
                     CreatedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     CreatedBy = table.Column<string>(type: "text", nullable: true),
                     LastModifiedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     LastModifiedBy = table.Column<string>(type: "text", nullable: true),
                     DeletedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     DeletedBy = table.Column<string>(type: "text", nullable: true),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false)
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                    xmin = table.Column<uint>(type: "xid", rowVersion: true, nullable: false),
+                    AwardSignatories = table.Column<string>(type: "jsonb", nullable: true),
+                    LineItems = table.Column<string>(type: "jsonb", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -90,6 +56,64 @@ namespace AMIS.Playground.Migrations.PostgreSQL.ProcurementAcquisition
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_IarNumberSequences", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "InspectionAcceptanceReports",
+                schema: "procurement",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    IarNumber = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    IarDate = table.Column<DateOnly>(type: "date", nullable: false),
+                    PurchaseOrderId = table.Column<Guid>(type: "uuid", nullable: false),
+                    SupplierId = table.Column<Guid>(type: "uuid", nullable: false),
+                    SupplierName = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    InspectedById = table.Column<Guid>(type: "uuid", nullable: false),
+                    ReceivedById = table.Column<Guid>(type: "uuid", nullable: false),
+                    DeliveryReceiptNo = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
+                    DeliveryDate = table.Column<DateOnly>(type: "date", nullable: true),
+                    Status = table.Column<int>(type: "integer", nullable: false),
+                    Category = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
+                    Remarks = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
+                    SubmittedForInspectionOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    InspectedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    AcceptedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    CancelledOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    AcceptedById = table.Column<Guid>(type: "uuid", nullable: true),
+                    AcceptedByName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    AcceptedByDesignation = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    CreatedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    LastModifiedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    LastModifiedBy = table.Column<string>(type: "text", nullable: true),
+                    DeletedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    DeletedBy = table.Column<string>(type: "text", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
+                    xmin = table.Column<uint>(type: "xid", rowVersion: true, nullable: false),
+                    LineItems = table.Column<string>(type: "jsonb", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_InspectionAcceptanceReports", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "PoNumberSequences",
+                schema: "procurement",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    Year = table.Column<int>(type: "integer", nullable: false),
+                    Month = table.Column<int>(type: "integer", nullable: false),
+                    LastSerial = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
+                    xmin = table.Column<uint>(type: "xid", rowVersion: true, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PoNumberSequences", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -130,9 +154,18 @@ namespace AMIS.Playground.Migrations.PostgreSQL.ProcurementAcquisition
                     PaymentTerm = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
                     FundCluster = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
                     OursBursNumber = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    OursBursDate = table.Column<DateOnly>(type: "date", nullable: true),
                     Status = table.Column<int>(type: "integer", nullable: false),
                     CancellationReason = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
-                    Version = table.Column<byte[]>(type: "bytea", nullable: false),
+                    Category = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
+                    FundsAvailableCertifiedById = table.Column<Guid>(type: "uuid", nullable: true),
+                    FundsAvailableCertifiedByName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    FundsAvailableCertifiedByDesignation = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    FundsAvailableCertifiedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    IssuedById = table.Column<Guid>(type: "uuid", nullable: true),
+                    IssuedByName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    IssuedByDesignation = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    IssuedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     CreatedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     CreatedBy = table.Column<string>(type: "text", nullable: true),
                     LastModifiedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
@@ -140,6 +173,7 @@ namespace AMIS.Playground.Migrations.PostgreSQL.ProcurementAcquisition
                     DeletedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     DeletedBy = table.Column<string>(type: "text", nullable: true),
                     IsDeleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                    xmin = table.Column<uint>(type: "xid", rowVersion: true, nullable: false),
                     LineItems = table.Column<string>(type: "jsonb", nullable: true)
                 },
                 constraints: table =>
@@ -164,13 +198,26 @@ namespace AMIS.Playground.Migrations.PostgreSQL.ProcurementAcquisition
                     ResponsibilityCenterCode = table.Column<string>(type: "character varying(160)", maxLength: 160, nullable: true),
                     Purpose = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
                     PrType = table.Column<int>(type: "integer", nullable: false),
+                    Category = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
                     Justification = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
                     Status = table.Column<int>(type: "integer", nullable: false),
+                    RequestedById = table.Column<Guid>(type: "uuid", nullable: true),
                     RequestedByName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    RequestedByDesignation = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    FundsAvailableCertifiedById = table.Column<Guid>(type: "uuid", nullable: true),
+                    FundsAvailableCertifiedByName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    FundsAvailableCertifiedByDesignation = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    FundsAvailableCertifiedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     ApprovedByName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    ApprovedByDesignation = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    ApprovedById = table.Column<Guid>(type: "uuid", nullable: true),
+                    ApprovedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    ReturnedReason = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
+                    ReturnedById = table.Column<Guid>(type: "uuid", nullable: true),
+                    ReturnedByName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    ReturnedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     RejectionReason = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
                     CancellationReason = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
-                    Version = table.Column<byte[]>(type: "bytea", nullable: false),
                     CreatedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     CreatedBy = table.Column<string>(type: "text", nullable: true),
                     LastModifiedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
@@ -178,11 +225,58 @@ namespace AMIS.Playground.Migrations.PostgreSQL.ProcurementAcquisition
                     DeletedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     DeletedBy = table.Column<string>(type: "text", nullable: true),
                     IsDeleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                    xmin = table.Column<uint>(type: "xid", rowVersion: true, nullable: false),
                     LineItems = table.Column<string>(type: "jsonb", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_PurchaseRequests", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "RivNumberSequences",
+                schema: "procurement",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    Year = table.Column<int>(type: "integer", nullable: false),
+                    LastSerial = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
+                    xmin = table.Column<uint>(type: "xid", rowVersion: true, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RivNumberSequences", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SignedDocuments",
+                schema: "procurement",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    DocumentType = table.Column<int>(type: "integer", nullable: false),
+                    DocumentId = table.Column<Guid>(type: "uuid", nullable: false),
+                    StorageKey = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: false),
+                    Sha256 = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    FileName = table.Column<string>(type: "character varying(260)", maxLength: 260, nullable: false),
+                    ContentType = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
+                    FileSizeBytes = table.Column<long>(type: "bigint", nullable: false),
+                    UploadedById = table.Column<Guid>(type: "uuid", nullable: true),
+                    UploadedByName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    UploadedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    CreatedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    LastModifiedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    LastModifiedBy = table.Column<string>(type: "text", nullable: true),
+                    DeletedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    DeletedBy = table.Column<string>(type: "text", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SignedDocuments", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -222,31 +316,6 @@ namespace AMIS.Playground.Migrations.PostgreSQL.ProcurementAcquisition
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_AssetIARs_CreatedOnUtc",
-                schema: "procurement",
-                table: "AssetIARs",
-                column: "CreatedOnUtc");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_AssetIARs_TenantId_IarNumber",
-                schema: "procurement",
-                table: "AssetIARs",
-                columns: new[] { "TenantId", "IarNumber" },
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_AssetIARs_TenantId_PurchaseOrderId",
-                schema: "procurement",
-                table: "AssetIARs",
-                columns: new[] { "TenantId", "PurchaseOrderId" });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_AssetIARs_TenantId_Status",
-                schema: "procurement",
-                table: "AssetIARs",
-                columns: new[] { "TenantId", "Status" });
-
-            migrationBuilder.CreateIndex(
                 name: "IX_CanvassQuotations_CanvassRequestId",
                 schema: "procurement",
                 table: "CanvassQuotations",
@@ -282,6 +351,38 @@ namespace AMIS.Playground.Migrations.PostgreSQL.ProcurementAcquisition
                 schema: "procurement",
                 table: "IarNumberSequences",
                 columns: new[] { "TenantId", "Year" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_InspectionAcceptanceReports_CreatedOnUtc",
+                schema: "procurement",
+                table: "InspectionAcceptanceReports",
+                column: "CreatedOnUtc");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_InspectionAcceptanceReports_TenantId_IarNumber",
+                schema: "procurement",
+                table: "InspectionAcceptanceReports",
+                columns: new[] { "TenantId", "IarNumber" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_InspectionAcceptanceReports_TenantId_PurchaseOrderId",
+                schema: "procurement",
+                table: "InspectionAcceptanceReports",
+                columns: new[] { "TenantId", "PurchaseOrderId" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_InspectionAcceptanceReports_TenantId_Status",
+                schema: "procurement",
+                table: "InspectionAcceptanceReports",
+                columns: new[] { "TenantId", "Status" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PoNumberSequences_TenantId_Year_Month",
+                schema: "procurement",
+                table: "PoNumberSequences",
+                columns: new[] { "TenantId", "Year", "Month" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -328,21 +429,39 @@ namespace AMIS.Playground.Migrations.PostgreSQL.ProcurementAcquisition
                 table: "PurchaseRequests",
                 columns: new[] { "TenantId", "PrNumber" },
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_RivNumberSequences_TenantId_Year",
+                schema: "procurement",
+                table: "RivNumberSequences",
+                columns: new[] { "TenantId", "Year" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SignedDocuments_TenantId_DocumentType_DocumentId",
+                schema: "procurement",
+                table: "SignedDocuments",
+                columns: new[] { "TenantId", "DocumentType", "DocumentId" },
+                unique: true);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "AssetIARs",
-                schema: "procurement");
-
-            migrationBuilder.DropTable(
                 name: "CanvassQuotations",
                 schema: "procurement");
 
             migrationBuilder.DropTable(
                 name: "IarNumberSequences",
+                schema: "procurement");
+
+            migrationBuilder.DropTable(
+                name: "InspectionAcceptanceReports",
+                schema: "procurement");
+
+            migrationBuilder.DropTable(
+                name: "PoNumberSequences",
                 schema: "procurement");
 
             migrationBuilder.DropTable(
@@ -355,6 +474,14 @@ namespace AMIS.Playground.Migrations.PostgreSQL.ProcurementAcquisition
 
             migrationBuilder.DropTable(
                 name: "PurchaseRequests",
+                schema: "procurement");
+
+            migrationBuilder.DropTable(
+                name: "RivNumberSequences",
+                schema: "procurement");
+
+            migrationBuilder.DropTable(
+                name: "SignedDocuments",
                 schema: "procurement");
 
             migrationBuilder.DropTable(

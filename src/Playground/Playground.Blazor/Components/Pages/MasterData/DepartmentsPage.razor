@@ -36,6 +36,8 @@
                                       Placeholder="Department description" Lines="2" />
                         <MudTextField @bind-Value="_form.FundCluster" Label="Fund Cluster"
                                       Placeholder="e.g. GENERAL OPERATING FUND" MaxLength="100" />
+                        <MudTextField @bind-Value="_form.ResponsibilityCenterCode" Label="Responsibility Center Code (RCC)"
+                                      Placeholder="e.g. 07 001 0300000" MaxLength="50" />
                         <MudTextField @bind-Value="_form.OfficeCode" Label="Owner Office Code"
                                       Placeholder="e.g. 100, NDO (leave blank for shared)" MaxLength="8"
                                       Disabled="@(EditingDepartment != null)"
@@ -74,6 +76,7 @@
                                 <tr>
                                     <th style="cursor:pointer" @onclick='() => SetSort("Code")'>Code @SortIcon("Code")</th>
                                     <th style="cursor:pointer" @onclick='() => SetSort("Name")'>Name @SortIcon("Name")</th>
+                                    <th>RCC</th>
                                     <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
@@ -84,9 +87,10 @@
                                     <tr>
                                         <td>@department.Code</td>
                                         <td>@department.Name</td>
+                                        <td>@(string.IsNullOrWhiteSpace(department.ResponsibilityCenterCode) ? "-" : department.ResponsibilityCenterCode)</td>
                                         <td><MudChip T="string" Size="Size.Small" Color="@(department.IsActive ? Color.Success : Color.Default)">@(department.IsActive ? "Active" : "Inactive")</MudChip></td>
                                         <td>
-                                            @if (IsOwnedByMe(department.OfficeCode))
+                                            @if (CanEdit(department.OfficeCode))
                                             {
                                                 <MudStack Row="true" Spacing="1">
                                                     <MudTooltip Text="Edit department">
@@ -101,7 +105,7 @@
                                             }
                                             else
                                             {
-                                                <MudTooltip Text="@(string.IsNullOrWhiteSpace(department.OfficeCode) ? "Shared record � read only" : "Owned by another office � read only")">
+                                                <MudTooltip Text="Owned by another office � read only">
                                                     <MudIconButton Icon="@Icons.Material.Filled.Lock" Size="Size.Small" Color="Color.Default" Disabled="true" />
                                                 </MudTooltip>
                                             }
@@ -148,6 +152,7 @@
         public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
         public string? FundCluster { get; set; }
+        public string? ResponsibilityCenterCode { get; set; }
         public bool IsActive { get; set; } = true;
         public string? OfficeCode { get; set; }
     }
@@ -268,6 +273,7 @@
                     Name = _form.Name,
                     Description = _form.Description,
                     FundCluster = _form.FundCluster,
+                    ResponsibilityCenterCode = string.IsNullOrWhiteSpace(_form.ResponsibilityCenterCode) ? null : _form.ResponsibilityCenterCode.Trim(),
                     IsActive = _form.IsActive
                 };
 
@@ -295,6 +301,7 @@
                     Name = _form.Name,
                     Description = _form.Description,
                     FundCluster = _form.FundCluster,
+                    ResponsibilityCenterCode = string.IsNullOrWhiteSpace(_form.ResponsibilityCenterCode) ? null : _form.ResponsibilityCenterCode.Trim(),
                     IsActive = _form.IsActive,
                     OfficeCode = string.IsNullOrWhiteSpace(_form.OfficeCode) ? null : _form.OfficeCode.Trim()
                 };
@@ -320,6 +327,7 @@
             Name = department.Name,
             Description = department.Description,
             FundCluster = department.FundCluster ?? string.Empty,
+            ResponsibilityCenterCode = department.ResponsibilityCenterCode ?? string.Empty,
             IsActive = department.IsActive,
             OfficeCode = department.OfficeCode
         };
@@ -364,6 +372,11 @@
     private bool IsOwnedByMe(string? officeCode) =>
         !string.IsNullOrWhiteSpace(_myOfficeCode) &&
         string.Equals(officeCode, _myOfficeCode, StringComparison.OrdinalIgnoreCase);
+
+    // Editable when the record is shared (blank OfficeCode) or owned by my office.
+    // Records owned by another office stay locked.
+    private bool CanEdit(string? officeCode) =>
+        string.IsNullOrWhiteSpace(officeCode) || IsOwnedByMe(officeCode);
 
     private void ApplyLocalFilters()
     {

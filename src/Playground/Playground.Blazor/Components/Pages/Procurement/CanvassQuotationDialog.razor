@@ -16,11 +16,13 @@
                              Clearable="true"
                              CoerceText="true"
                              CoerceValue="true"
-                             ResetValueOnEmptyText="true" />
-            <MudTextField @bind-Value="Form.SupplierAddress" Label="Supplier Address" Variant="Variant.Outlined" Required="true" />
-            <MudTextField @bind-Value="Form.TinNumber" Label="TIN (optional)" Variant="Variant.Outlined" />
-            <MudDatePicker @bind-Date="Form.QuotationDateNullable" Label="Quotation Date" Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" Required="true" />
-            <MudTextField @bind-Value="Form.DeliveryTerms" Label="Delivery Terms" Variant="Variant.Outlined" />
+                             ResetValueOnEmptyText="true"
+                             Dense="true"
+                             Margin="Margin.Dense" />
+            <MudTextField @bind-Value="Form.SupplierAddress" Label="Supplier Address" Variant="Variant.Outlined" Required="true" Dense="true" Margin="Margin.Dense" />
+            <MudTextField @bind-Value="Form.TinNumber" Label="TIN (optional)" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudDatePicker @bind-Date="Form.QuotationDateNullable" Label="Quotation Date" Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" Required="true" Dense="true" Margin="Margin.Dense" />
+            <MudTextField @bind-Value="Form.DeliveryTerms" Label="Delivery Terms" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
 
             <MudText Typo="Typo.subtitle2" Class="mt-1">Quoted Items (from Purchase Request)</MudText>
             @if (_loadingLineItems)

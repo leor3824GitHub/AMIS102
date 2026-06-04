@@ -262,6 +262,7 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                     UacsObjectCode = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: true),
                     EstimatedUsefulLifeYears = table.Column<int>(type: "integer", nullable: false),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    Status = table.Column<int>(type: "integer", nullable: false),
                     CreatedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     CreatedBy = table.Column<string>(type: "text", nullable: true),
                     LastModifiedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
@@ -307,6 +308,36 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ReceivingReports", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ReturnedPropertyReceipts",
+                schema: "asset_register",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    ReceiptNo = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    ReceiptType = table.Column<int>(type: "integer", nullable: false),
+                    Date = table.Column<DateOnly>(type: "date", nullable: false),
+                    AccountabilityId = table.Column<Guid>(type: "uuid", nullable: false),
+                    AccountabilityDocumentNo = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    ReturnedBy_EmployeeId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ReturnedBy_PrintedName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    ReturnedBy_Designation = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    ReceivedBy_EmployeeId = table.Column<Guid>(type: "uuid", nullable: true),
+                    ReceivedBy_PrintedName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    ReceivedBy_Designation = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    Remarks = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
+                    CreatedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    LastModifiedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    LastModifiedBy = table.Column<string>(type: "text", nullable: true),
+                    xmin = table.Column<uint>(type: "xid", rowVersion: true, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ReturnedPropertyReceipts", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -557,7 +588,12 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                     UnitCost = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
                     SerialNo = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     Brand = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
-                    Model = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true)
+                    Model = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    UacsObjectCode = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
+                    SourceAgencyName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    SourcePropertyNo = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
+                    SourceDocumentRef = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    OriginalAcquisitionDate = table.Column<DateOnly>(type: "date", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -567,6 +603,41 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                         column: x => x.ReportId,
                         principalSchema: "asset_register",
                         principalTable: "ReceivingReports",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ReturnedPropertyReceiptItems",
+                schema: "asset_register",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    ReceiptId = table.Column<Guid>(type: "uuid", nullable: false),
+                    AccountabilityLineId = table.Column<Guid>(type: "uuid", nullable: false),
+                    AssetRegistryId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ItemNo = table.Column<int>(type: "integer", nullable: false),
+                    Snapshot_PropertyNo = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
+                    Snapshot_Description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    Snapshot_AssetType = table.Column<int>(type: "integer", nullable: false),
+                    Snapshot_UnitCost = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
+                    Snapshot_Unit = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    Snapshot_EstimatedUsefulLifeYears = table.Column<int>(type: "integer", nullable: false),
+                    Snapshot_AcquisitionDate = table.Column<DateOnly>(type: "date", nullable: false),
+                    Snapshot_UacsObjectCode = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: true),
+                    Snapshot_SerialNo = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    Snapshot_Brand = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    Snapshot_Model = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ReturnedPropertyReceiptItems", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ReturnedPropertyReceiptItems_ReturnedPropertyReceipts_Recei~",
+                        column: x => x.ReceiptId,
+                        principalSchema: "asset_register",
+                        principalTable: "ReturnedPropertyReceipts",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -760,6 +831,12 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                 columns: new[] { "TenantId", "Status" });
 
             migrationBuilder.CreateIndex(
+                name: "IX_PropertyItemCatalog_Status",
+                schema: "asset_register",
+                table: "PropertyItemCatalog",
+                column: "Status");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_PropertyItemCatalog_TenantId_Code",
                 schema: "asset_register",
                 table: "PropertyItemCatalog",
@@ -789,6 +866,43 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                 schema: "asset_register",
                 table: "ReceivingReports",
                 columns: new[] { "TenantId", "ReportNo" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ReturnedPropertyReceiptItems_AccountabilityLineId",
+                schema: "asset_register",
+                table: "ReturnedPropertyReceiptItems",
+                column: "AccountabilityLineId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ReturnedPropertyReceiptItems_AssetRegistryId",
+                schema: "asset_register",
+                table: "ReturnedPropertyReceiptItems",
+                column: "AssetRegistryId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ReturnedPropertyReceiptItems_ReceiptId",
+                schema: "asset_register",
+                table: "ReturnedPropertyReceiptItems",
+                column: "ReceiptId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ReturnedPropertyReceipts_TenantId_AccountabilityId",
+                schema: "asset_register",
+                table: "ReturnedPropertyReceipts",
+                columns: new[] { "TenantId", "AccountabilityId" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ReturnedPropertyReceipts_TenantId_Date",
+                schema: "asset_register",
+                table: "ReturnedPropertyReceipts",
+                columns: new[] { "TenantId", "Date" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ReturnedPropertyReceipts_TenantId_ReceiptNo",
+                schema: "asset_register",
+                table: "ReturnedPropertyReceipts",
+                columns: new[] { "TenantId", "ReceiptNo" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -861,6 +975,10 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                 schema: "asset_register");
 
             migrationBuilder.DropTable(
+                name: "ReturnedPropertyReceiptItems",
+                schema: "asset_register");
+
+            migrationBuilder.DropTable(
                 name: "UnserviceablePropertyItems",
                 schema: "asset_register");
 
@@ -882,6 +1000,10 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
 
             migrationBuilder.DropTable(
                 name: "ReceivingReports",
+                schema: "asset_register");
+
+            migrationBuilder.DropTable(
+                name: "ReturnedPropertyReceipts",
                 schema: "asset_register");
 
             migrationBuilder.DropTable(

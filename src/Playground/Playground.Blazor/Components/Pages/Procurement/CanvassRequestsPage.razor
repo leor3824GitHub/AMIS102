@@ -38,9 +38,11 @@
                                          Required="true"
                                          Clearable="true"
                                          CoerceValue="true"
-                                         ResetValueOnEmptyText="true" />
+                                         ResetValueOnEmptyText="true"
+                                         Dense="true"
+                                         Margin="Margin.Dense" />
                         <MudDatePicker @bind-Date="_returnDeadlineNullable" Label="Return Deadline"
-                                       Variant="Variant.Outlined" Required="true" DateFormat="MM/dd/yyyy" />
+                                       Variant="Variant.Outlined" Required="true" DateFormat="MM/dd/yyyy" Dense="true" Margin="Margin.Dense" />
                         <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
                                    OnClick="CreateAsync" Disabled="@(_busy || _selectedItemNos.Count == 0)">
                             @if (_busy) { <MudProgressCircular Size="Size.Small" Class="mr-1" Indeterminate="true" /> }

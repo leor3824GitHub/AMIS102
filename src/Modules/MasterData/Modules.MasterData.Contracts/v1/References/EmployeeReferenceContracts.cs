@@ -33,11 +33,11 @@ public sealed record UpdateOfficeCommand(Guid Id, string Code, string Name, stri
 
 public sealed record DeleteOfficeCommand(Guid Id) : ICommand<Unit>;
 
-public sealed record DepartmentReferenceDto(Guid Id, string Code, string Name, string? Description, bool IsActive, string? OfficeCode = null);
+public sealed record DepartmentReferenceDto(Guid Id, string Code, string Name, string? Description, bool IsActive, string? OfficeCode = null, string? ResponsibilityCenterCode = null);
 
-public sealed record CreateDepartmentCommand(string Code, string Name, string? Description, string? FundCluster = null, bool IsActive = true, string? OfficeCode = null) : ICommand<DepartmentReferenceDto>;
+public sealed record CreateDepartmentCommand(string Code, string Name, string? Description, string? FundCluster = null, bool IsActive = true, string? OfficeCode = null, string? ResponsibilityCenterCode = null) : ICommand<DepartmentReferenceDto>;
 
-public sealed record UpdateDepartmentCommand(Guid Id, string Code, string Name, string? Description, string? FundCluster, bool IsActive) : ICommand<DepartmentReferenceDto>;
+public sealed record UpdateDepartmentCommand(Guid Id, string Code, string Name, string? Description, string? FundCluster, bool IsActive, string? ResponsibilityCenterCode = null) : ICommand<DepartmentReferenceDto>;
 
 public sealed record DeleteDepartmentCommand(Guid Id) : ICommand<Unit>;
 

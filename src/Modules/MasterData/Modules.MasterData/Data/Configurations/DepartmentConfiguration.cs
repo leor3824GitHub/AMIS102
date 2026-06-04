@@ -15,6 +15,7 @@ public sealed class DepartmentConfiguration : IEntityTypeConfiguration<Departmen
         builder.Property(x => x.Name).HasMaxLength(160).IsRequired();
         builder.Property(x => x.Description).HasMaxLength(400);
         builder.Property(x => x.FundCluster).HasMaxLength(100);
+        builder.Property(x => x.ResponsibilityCenterCode).HasMaxLength(50);
         builder.Property(x => x.OfficeCode).HasMaxLength(8);
         builder.Property(x => x.Version).IsConcurrencyToken();
 

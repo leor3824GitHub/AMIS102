@@ -17,5 +17,8 @@ public sealed class CreateDepartmentCommandValidator : AbstractValidator<CreateD
 
         RuleFor(x => x.Description)
             .MaximumLength(400).WithMessage("Description must not exceed 400 characters");
+
+        RuleFor(x => x.ResponsibilityCenterCode)
+            .MaximumLength(50).WithMessage("Responsibility Center Code must not exceed 50 characters");
     }
 }

@@ -199,12 +199,12 @@ internal sealed class MasterDataDbInitializer(
         {
             var departments = new[]
             {
-                Department.Create("AGS", "Administrative & General Services","Administrative & General Services", "380"),
-                Department.Create("FI", "Finance","Finance Department", "385"),
-                Department.Create("QA", "Quality Assurance","Quality Assurance Department", "190"),
-                Department.Create("BSM", "Buffer Stock Management","Buffer Stock Management Department", "180"),
-                Department.Create("FA", "Facility Management","Facility Management Department", "170"),
-                Department.Create("COA", "Commission on Audit","Commission on Audit ", "391"),
+                Department.Create("AGS", "Administrative & General Services", "Administrative & General Services", fundCluster: null, responsibilityCenterCode: "380"),
+                Department.Create("FI", "Finance", "Finance Department", fundCluster: null, responsibilityCenterCode: "385"),
+                Department.Create("QA", "Quality Assurance", "Quality Assurance Department", fundCluster: null, responsibilityCenterCode: "190"),
+                Department.Create("BSM", "Buffer Stock Management", "Buffer Stock Management Department", fundCluster: null, responsibilityCenterCode: "180"),
+                Department.Create("FA", "Facility Management", "Facility Management Department", fundCluster: null, responsibilityCenterCode: "170"),
+                Department.Create("COA", "Commission on Audit", "Commission on Audit ", fundCluster: null, responsibilityCenterCode: "391"),
             }; 
             await context.Departments.AddRangeAsync(departments, cancellationToken).ConfigureAwait(false);
         }
@@ -249,33 +249,33 @@ internal sealed class MasterDataDbInitializer(
             var uoms = new[]
             {
                 // Count
-                UnitOfMeasure.Create("UOM-PCS",  "Piece",        "Individual countable item"),
-                UnitOfMeasure.Create("UOM-PAK",  "Pack",         "Bundled group of items sold together"),
-                UnitOfMeasure.Create("UOM-BOX",  "Box",          "Standard box or carton"),
-                UnitOfMeasure.Create("UOM-CTN",  "Carton",       "Larger corrugated carton"),
-                UnitOfMeasure.Create("UOM-PAL",  "Pallet",       "Full pallet load"),
-                UnitOfMeasure.Create("UOM-RIM",  "Ream",         "500 sheets of paper"),
-                UnitOfMeasure.Create("UOM-SET",  "Set",          "Matched set of items"),
-                UnitOfMeasure.Create("UOM-PAIR", "Pair",         "Two matching items"),
+                UnitOfMeasure.Create("PCS",  "Piece",        "Individual countable item"),
+                UnitOfMeasure.Create("PAK",  "Pack",         "Bundled group of items sold together"),
+                UnitOfMeasure.Create("BOX",  "Box",          "Standard box or carton"),
+                UnitOfMeasure.Create("CTN",  "Carton",       "Larger corrugated carton"),
+                UnitOfMeasure.Create("PAL",  "Pallet",       "Full pallet load"),
+                UnitOfMeasure.Create("RIM",  "Ream",         "500 sheets of paper"),
+                UnitOfMeasure.Create("SET",  "Set",          "Matched set of items"),
+                UnitOfMeasure.Create("PAIR", "Pair",         "Two matching items"),
                 // Weight
-                UnitOfMeasure.Create("UOM-KG",   "Kilogram",     "SI unit of mass � 1 000 g"),
-                UnitOfMeasure.Create("UOM-G",    "Gram",         "SI unit of mass"),
-                UnitOfMeasure.Create("UOM-MG",   "Milligram",    "One-thousandth of a gram"),
-                UnitOfMeasure.Create("UOM-LB",   "Pound",        "Imperial unit of mass � 453.6 g"),
+                UnitOfMeasure.Create("KG",   "Kilogram",     "SI unit of mass � 1 000 g"),
+                UnitOfMeasure.Create("G",    "Gram",         "SI unit of mass"),
+                UnitOfMeasure.Create("MG",   "Milligram",    "One-thousandth of a gram"),
+                UnitOfMeasure.Create("LB",   "Pound",        "Imperial unit of mass � 453.6 g"),
                 // Volume
-                UnitOfMeasure.Create("UOM-L",    "Liter",        "SI unit of volume"),
-                UnitOfMeasure.Create("UOM-ML",   "Milliliter",   "One-thousandth of a liter"),
-                UnitOfMeasure.Create("UOM-GAL",  "Gallon",       "US liquid gallon � 3.785 L"),
+                UnitOfMeasure.Create("L",    "Liter",        "SI unit of volume"),
+                UnitOfMeasure.Create("ML",   "Milliliter",   "One-thousandth of a liter"),
+                UnitOfMeasure.Create("GAL",  "Gallon",       "US liquid gallon � 3.785 L"),
                 // Length / Area
-                UnitOfMeasure.Create("UOM-M",    "Meter",        "SI unit of length"),
-                UnitOfMeasure.Create("UOM-CM",   "Centimeter",   "One-hundredth of a meter"),
-                UnitOfMeasure.Create("UOM-MM",   "Millimeter",   "One-thousandth of a meter"),
-                UnitOfMeasure.Create("UOM-FT",   "Foot",         "Imperial unit of length � 30.48 cm"),
-                UnitOfMeasure.Create("UOM-SQM",  "Square Meter", "Area measurement"),
+                UnitOfMeasure.Create("M",    "Meter",        "SI unit of length"),
+                UnitOfMeasure.Create("CM",   "Centimeter",   "One-hundredth of a meter"),
+                UnitOfMeasure.Create("MM",   "Millimeter",   "One-thousandth of a meter"),
+                UnitOfMeasure.Create("FT",   "Foot",         "Imperial unit of length � 30.48 cm"),
+                UnitOfMeasure.Create("SQM",  "Square Meter", "Area measurement"),
                 // Time / Service
-                UnitOfMeasure.Create("UOM-HR",   "Hour",         "Unit of time for labor or service billing"),
-                UnitOfMeasure.Create("UOM-DAY",  "Day",          "Calendar day for rental or service billing"),
-                UnitOfMeasure.Create("UOM-MONTH","Month",        "Calendar month for subscription or lease billing"),
+                UnitOfMeasure.Create("HR",   "Hour",         "Unit of time for labor or service billing"),
+                UnitOfMeasure.Create("DAY",  "Day",          "Calendar day for rental or service billing"),
+                UnitOfMeasure.Create("MONTH","Month",        "Calendar month for subscription or lease billing"),
             };
             await context.UnitOfMeasures.AddRangeAsync(uoms, cancellationToken).ConfigureAwait(false);
         }

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace AMIS.Playground.Migrations.PostgreSQL.Expendable
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class Expendable_Initial : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -167,7 +167,8 @@ namespace AMIS.Playground.Migrations.PostgreSQL.Expendable
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    SKU = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    StockNo = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    Article = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     Name = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
                     Description = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: false),
                     UnitPrice = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
@@ -199,108 +200,6 @@ namespace AMIS.Playground.Migrations.PostgreSQL.Expendable
                         principalTable: "Products",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "PurchaseInspection",
-                schema: "expendable",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    PurchaseId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ProductId = table.Column<Guid>(type: "uuid", nullable: false),
-                    QuantityReceivedForInspection = table.Column<int>(type: "integer", nullable: false),
-                    QuantityAccepted = table.Column<int>(type: "integer", nullable: false),
-                    QuantityRejected = table.Column<int>(type: "integer", nullable: false),
-                    InspectedBy = table.Column<Guid>(type: "uuid", nullable: false),
-                    InspectionDate = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    Notes = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
-                    RejectionReason = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
-                    Status = table.Column<int>(type: "integer", nullable: false),
-                    WarehouseLocationId = table.Column<Guid>(type: "uuid", nullable: false),
-                    CreatedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    CreatedBy = table.Column<string>(type: "text", nullable: true),
-                    LastModifiedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    LastModifiedBy = table.Column<string>(type: "text", nullable: true),
-                    DeletedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    DeletedBy = table.Column<string>(type: "text", nullable: true),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
-                    Defects = table.Column<string>(type: "jsonb", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_PurchaseInspection", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Purchases",
-                schema: "expendable",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    PurchaseOrderNumber = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    SupplierId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    SupplierName = table.Column<string>(type: "text", nullable: false),
-                    WarehouseLocationId = table.Column<Guid>(type: "uuid", nullable: false),
-                    WarehouseLocationName = table.Column<string>(type: "text", nullable: false),
-                    OrderDate = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    ExpectedDeliveryDate = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    DeliveryDate = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    ReceiptDate = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    Status = table.Column<int>(type: "integer", nullable: false),
-                    TotalAmount = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
-                    ReceivingNotes = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
-                    Version = table.Column<byte[]>(type: "bytea", nullable: false),
-                    CreatedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    CreatedBy = table.Column<string>(type: "text", nullable: true),
-                    LastModifiedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    LastModifiedBy = table.Column<string>(type: "text", nullable: true),
-                    DeletedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    DeletedBy = table.Column<string>(type: "text", nullable: true),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
-                    LineItems = table.Column<string>(type: "jsonb", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Purchases", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "RejectedInventory",
-                schema: "expendable",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    PurchaseId = table.Column<Guid>(type: "uuid", nullable: false),
-                    PurchaseInspectionId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ProductId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ProductCode = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    ProductName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    WarehouseLocationId = table.Column<Guid>(type: "uuid", nullable: false),
-                    WarehouseLocationName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    QuantityRejected = table.Column<int>(type: "integer", nullable: false),
-                    UnitPrice = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
-                    RejectionReason = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
-                    Notes = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
-                    RejectionDate = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    Status = table.Column<int>(type: "integer", nullable: false),
-                    DispositionDate = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    DispositionNotes = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
-                    Version = table.Column<byte[]>(type: "bytea", nullable: false),
-                    CreatedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    CreatedBy = table.Column<string>(type: "text", nullable: true),
-                    LastModifiedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    LastModifiedBy = table.Column<string>(type: "text", nullable: true),
-                    DeletedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    DeletedBy = table.Column<string>(type: "text", nullable: true),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_RejectedInventory", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -438,72 +337,17 @@ namespace AMIS.Playground.Migrations.PostgreSQL.Expendable
                 column: "ParentProductId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Products_TenantId_SKU",
-                schema: "expendable",
-                table: "Products",
-                columns: new[] { "TenantId", "SKU" },
-                unique: true);
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Products_TenantId_Status",
                 schema: "expendable",
                 table: "Products",
                 columns: new[] { "TenantId", "Status" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_PurchaseInspection_TenantId_PurchaseId",
+                name: "IX_Products_TenantId_StockNo",
                 schema: "expendable",
-                table: "PurchaseInspection",
-                columns: new[] { "TenantId", "PurchaseId" });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_PurchaseInspection_TenantId_Status",
-                schema: "expendable",
-                table: "PurchaseInspection",
-                columns: new[] { "TenantId", "Status" });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Purchases_TenantId_PurchaseOrderNumber",
-                schema: "expendable",
-                table: "Purchases",
-                columns: new[] { "TenantId", "PurchaseOrderNumber" },
+                table: "Products",
+                columns: new[] { "TenantId", "StockNo" },
                 unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Purchases_TenantId_Status",
-                schema: "expendable",
-                table: "Purchases",
-                columns: new[] { "TenantId", "Status" });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Purchases_TenantId_SupplierId",
-                schema: "expendable",
-                table: "Purchases",
-                columns: new[] { "TenantId", "SupplierId" });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_RejectedInventory_TenantId_PurchaseId",
-                schema: "expendable",
-                table: "RejectedInventory",
-                columns: new[] { "TenantId", "PurchaseId" });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_RejectedInventory_TenantId_PurchaseInspectionId",
-                schema: "expendable",
-                table: "RejectedInventory",
-                columns: new[] { "TenantId", "PurchaseInspectionId" });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_RejectedInventory_TenantId_Status",
-                schema: "expendable",
-                table: "RejectedInventory",
-                columns: new[] { "TenantId", "Status" });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_RejectedInventory_TenantId_WarehouseLocationId",
-                schema: "expendable",
-                table: "RejectedInventory",
-                columns: new[] { "TenantId", "WarehouseLocationId" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_SupplyRequests_TenantId_DepartmentId",
@@ -563,18 +407,6 @@ namespace AMIS.Playground.Migrations.PostgreSQL.Expendable
                 schema: "expendable");
 
             migrationBuilder.DropTable(
-                name: "PurchaseInspection",
-                schema: "expendable");
-
-            migrationBuilder.DropTable(
-                name: "Purchases",
-                schema: "expendable");
-
-            migrationBuilder.DropTable(
-                name: "RejectedInventory",
-                schema: "expendable");
-
-            migrationBuilder.DropTable(
                 name: "SupplyRequests",
                 schema: "expendable");
 
@@ -584,4 +416,3 @@ namespace AMIS.Playground.Migrations.PostgreSQL.Expendable
         }
     }
 }
-

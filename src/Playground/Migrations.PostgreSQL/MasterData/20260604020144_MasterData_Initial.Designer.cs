@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AMIS.Playground.Migrations.PostgreSQL.MasterData
 {
     [DbContext(typeof(MasterDataDbContext))]
-    [Migration("20260524110122_MasterData_Initial")]
+    [Migration("20260604020144_MasterData_Initial")]
     partial class MasterData_Initial
     {
         /// <inheritdoc />
@@ -192,6 +192,10 @@ namespace AMIS.Playground.Migrations.PostgreSQL.MasterData
                     b.Property<string>("OfficeCode")
                         .HasMaxLength(8)
                         .HasColumnType("character varying(8)");
+
+                    b.Property<string>("ResponsibilityCenterCode")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<byte[]>("Version")
                         .IsConcurrencyToken()
@@ -465,6 +469,17 @@ namespace AMIS.Playground.Migrations.PostgreSQL.MasterData
                         .HasMaxLength(8)
                         .HasColumnType("character varying(8)");
 
+                    b.Property<string>("ApprovingOfficialDesignation")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid?>("ApprovingOfficialId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ApprovingOfficialName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.Property<string>("AssistantRegionalManagerDesignation")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
@@ -494,17 +509,6 @@ namespace AMIS.Playground.Migrations.PostgreSQL.MasterData
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<string>("RegionalManagerDesignation")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<Guid?>("RegionalManagerId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("RegionalManagerName")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 

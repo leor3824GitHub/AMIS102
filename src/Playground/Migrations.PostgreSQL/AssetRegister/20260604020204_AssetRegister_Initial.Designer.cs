@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
 {
     [DbContext(typeof(AssetRegisterDbContext))]
-    [Migration("20260523225919_Phase35_AddAdHocSourceFieldsToReceivingReportItem")]
-    partial class Phase35_AddAdHocSourceFieldsToReceivingReportItem
+    [Migration("20260604020204_AssetRegister_Initial")]
+    partial class AssetRegister_Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -1081,6 +1081,108 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                     b.HasAnnotation("Finbuckle:MultiTenant", true);
                 });
 
+            modelBuilder.Entity("AMIS.Modules.AssetRegister.Domain.ReturnedProperty.ReturnedPropertyReceipt", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AccountabilityDocumentNo")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid>("AccountabilityId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("LastModifiedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ReceiptNo")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<int>("ReceiptType")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Remarks")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "AccountabilityId");
+
+                    b.HasIndex("TenantId", "Date");
+
+                    b.HasIndex("TenantId", "ReceiptNo")
+                        .IsUnique();
+
+                    b.ToTable("ReturnedPropertyReceipts", "asset_register");
+
+                    b.HasAnnotation("Finbuckle:MultiTenant", true);
+                });
+
+            modelBuilder.Entity("AMIS.Modules.AssetRegister.Domain.ReturnedProperty.ReturnedPropertyReceiptItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AccountabilityLineId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AssetRegistryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("ItemNo")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("ReceiptId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountabilityLineId");
+
+                    b.HasIndex("AssetRegistryId");
+
+                    b.HasIndex("ReceiptId");
+
+                    b.ToTable("ReturnedPropertyReceiptItems", "asset_register");
+
+                    b.HasAnnotation("Finbuckle:MultiTenant", true);
+                });
+
             modelBuilder.Entity("AMIS.Modules.AssetRegister.Domain.Unserviceable.UnserviceablePropertyItem", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1973,6 +2075,150 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("AMIS.Modules.AssetRegister.Domain.ReturnedProperty.ReturnedPropertyReceipt", b =>
+                {
+                    b.OwnsOne("AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects.EmployeeRef", "ReceivedBy", b1 =>
+                        {
+                            b1.Property<Guid>("ReturnedPropertyReceiptId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Designation")
+                                .HasMaxLength(200)
+                                .HasColumnType("character varying(200)")
+                                .HasColumnName("ReceivedBy_Designation");
+
+                            b1.Property<Guid>("EmployeeId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("ReceivedBy_EmployeeId");
+
+                            b1.Property<string>("PrintedName")
+                                .IsRequired()
+                                .HasMaxLength(200)
+                                .HasColumnType("character varying(200)")
+                                .HasColumnName("ReceivedBy_PrintedName");
+
+                            b1.HasKey("ReturnedPropertyReceiptId");
+
+                            b1.ToTable("ReturnedPropertyReceipts", "asset_register");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ReturnedPropertyReceiptId");
+                        });
+
+                    b.OwnsOne("AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects.EmployeeRef", "ReturnedBy", b1 =>
+                        {
+                            b1.Property<Guid>("ReturnedPropertyReceiptId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Designation")
+                                .HasMaxLength(200)
+                                .HasColumnType("character varying(200)")
+                                .HasColumnName("ReturnedBy_Designation");
+
+                            b1.Property<Guid>("EmployeeId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("ReturnedBy_EmployeeId");
+
+                            b1.Property<string>("PrintedName")
+                                .IsRequired()
+                                .HasMaxLength(200)
+                                .HasColumnType("character varying(200)")
+                                .HasColumnName("ReturnedBy_PrintedName");
+
+                            b1.HasKey("ReturnedPropertyReceiptId");
+
+                            b1.ToTable("ReturnedPropertyReceipts", "asset_register");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ReturnedPropertyReceiptId");
+                        });
+
+                    b.Navigation("ReceivedBy");
+
+                    b.Navigation("ReturnedBy")
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("AMIS.Modules.AssetRegister.Domain.ReturnedProperty.ReturnedPropertyReceiptItem", b =>
+                {
+                    b.HasOne("AMIS.Modules.AssetRegister.Domain.ReturnedProperty.ReturnedPropertyReceipt", null)
+                        .WithMany("Items")
+                        .HasForeignKey("ReceiptId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.OwnsOne("AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects.AssetSnapshot", "Snapshot", b1 =>
+                        {
+                            b1.Property<Guid>("ReturnedPropertyReceiptItemId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<DateOnly>("AcquisitionDate")
+                                .HasColumnType("date")
+                                .HasColumnName("Snapshot_AcquisitionDate");
+
+                            b1.Property<int>("AssetType")
+                                .HasColumnType("integer")
+                                .HasColumnName("Snapshot_AssetType");
+
+                            b1.Property<string>("Brand")
+                                .HasMaxLength(200)
+                                .HasColumnType("character varying(200)")
+                                .HasColumnName("Snapshot_Brand");
+
+                            b1.Property<string>("Description")
+                                .IsRequired()
+                                .HasMaxLength(500)
+                                .HasColumnType("character varying(500)")
+                                .HasColumnName("Snapshot_Description");
+
+                            b1.Property<int>("EstimatedUsefulLifeYears")
+                                .HasColumnType("integer")
+                                .HasColumnName("Snapshot_EstimatedUsefulLifeYears");
+
+                            b1.Property<string>("Model")
+                                .HasMaxLength(200)
+                                .HasColumnType("character varying(200)")
+                                .HasColumnName("Snapshot_Model");
+
+                            b1.Property<string>("PropertyNo")
+                                .IsRequired()
+                                .HasMaxLength(32)
+                                .HasColumnType("character varying(32)")
+                                .HasColumnName("Snapshot_PropertyNo");
+
+                            b1.Property<string>("SerialNo")
+                                .HasMaxLength(200)
+                                .HasColumnType("character varying(200)")
+                                .HasColumnName("Snapshot_SerialNo");
+
+                            b1.Property<string>("UacsObjectCode")
+                                .HasMaxLength(32)
+                                .HasColumnType("character varying(32)")
+                                .HasColumnName("Snapshot_UacsObjectCode");
+
+                            b1.Property<string>("Unit")
+                                .IsRequired()
+                                .HasMaxLength(64)
+                                .HasColumnType("character varying(64)")
+                                .HasColumnName("Snapshot_Unit");
+
+                            b1.Property<decimal>("UnitCost")
+                                .HasPrecision(18, 2)
+                                .HasColumnType("numeric(18,2)")
+                                .HasColumnName("Snapshot_UnitCost");
+
+                            b1.HasKey("ReturnedPropertyReceiptItemId");
+
+                            b1.ToTable("ReturnedPropertyReceiptItems", "asset_register");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ReturnedPropertyReceiptItemId");
+                        });
+
+                    b.Navigation("Snapshot")
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("AMIS.Modules.AssetRegister.Domain.Unserviceable.UnserviceablePropertyItem", b =>
                 {
                     b.HasOne("AMIS.Modules.AssetRegister.Domain.Unserviceable.UnserviceablePropertyReport", null)
@@ -2198,6 +2444,11 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                 });
 
             modelBuilder.Entity("AMIS.Modules.AssetRegister.Domain.Receiving.ReceivingReport", b =>
+                {
+                    b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("AMIS.Modules.AssetRegister.Domain.ReturnedProperty.ReturnedPropertyReceipt", b =>
                 {
                     b.Navigation("Items");
                 });

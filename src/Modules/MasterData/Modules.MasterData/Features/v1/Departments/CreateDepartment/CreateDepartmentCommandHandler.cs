@@ -33,12 +33,12 @@ public sealed class CreateDepartmentCommandHandler : ICommandHandler<CreateDepar
             ]);
         }
 
-        var department = Department.Create(command.Code, command.Name, command.Description, command.FundCluster, command.OfficeCode);
+        var department = Department.Create(command.Code, command.Name, command.Description, command.FundCluster, command.ResponsibilityCenterCode, command.OfficeCode);
         department.CreatedBy = _currentUser.GetUserId().ToString();
 
         _dbContext.Departments.Add(department);
         await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-        return new DepartmentReferenceDto(department.Id, department.Code, department.Name, department.Description, department.IsActive, department.OfficeCode);
+        return new DepartmentReferenceDto(department.Id, department.Code, department.Name, department.Description, department.IsActive, department.OfficeCode, department.ResponsibilityCenterCode);
     }
 }

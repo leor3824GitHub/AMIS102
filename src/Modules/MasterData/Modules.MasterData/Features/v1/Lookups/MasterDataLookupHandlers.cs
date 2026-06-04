@@ -159,7 +159,7 @@ public sealed class ListDepartmentReferencesQueryHandler(MasterDataDbContext dbC
         departmentsQuery = departmentsQuery.OrderBy(x => x.Name).ThenBy(x => x.Code);
 
         return await departmentsQuery
-            .Select(x => new DepartmentReferenceDto(x.Id, x.Code, x.Name, x.Description, x.IsActive, x.OfficeCode))
+            .Select(x => new DepartmentReferenceDto(x.Id, x.Code, x.Name, x.Description, x.IsActive, x.OfficeCode, x.ResponsibilityCenterCode))
             .ToPagedResponseAsync(query, cancellationToken)
             .ConfigureAwait(false);
     }
@@ -172,7 +172,7 @@ public sealed class GetDepartmentReferenceByIdQueryHandler(MasterDataDbContext d
     {
         return await dbContext.Departments.AsNoTracking()
             .Where(x => x.Id == query.Id)
-            .Select(x => new DepartmentReferenceDto(x.Id, x.Code, x.Name, x.Description, x.IsActive, x.OfficeCode))
+            .Select(x => new DepartmentReferenceDto(x.Id, x.Code, x.Name, x.Description, x.IsActive, x.OfficeCode, x.ResponsibilityCenterCode))
             .FirstOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false);
     }

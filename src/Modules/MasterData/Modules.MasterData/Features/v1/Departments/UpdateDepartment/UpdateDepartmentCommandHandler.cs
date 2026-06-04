@@ -37,11 +37,11 @@ public sealed class UpdateDepartmentCommandHandler : ICommandHandler<UpdateDepar
             ]);
         }
 
-        department.Update(command.Code, command.Name, command.Description, command.FundCluster, command.IsActive);
+        department.Update(command.Code, command.Name, command.Description, command.FundCluster, command.ResponsibilityCenterCode, command.IsActive);
         department.LastModifiedBy = _currentUser.GetUserId().ToString();
 
         await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-        return new DepartmentReferenceDto(department.Id, department.Code, department.Name, department.Description, department.IsActive, department.OfficeCode);
+        return new DepartmentReferenceDto(department.Id, department.Code, department.Name, department.Description, department.IsActive, department.OfficeCode, department.ResponsibilityCenterCode);
     }
 }
