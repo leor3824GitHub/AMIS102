@@ -1,0 +1,71 @@
+@using AMIS.Modules.ProcurementAcquisition.Contracts.v1.Canvass
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">Awarded Lines — @SupplierName</MudText>
+    </TitleContent>
+    <DialogContent>
+        @if (_lines.Count == 0)
+        {
+            <MudAlert Severity="Severity.Info" Dense="true">No lines awarded to this supplier.</MudAlert>
+        }
+        else
+        {
+            <MudSimpleTable Dense="true" Bordered="true" Striped="true">
+                <thead>
+                    <tr>
+                        <th style="width:40px">#</th>
+                        <th>Description</th>
+                        <th style="text-align:right">Qty</th>
+                        <th style="width:60px">Unit</th>
+                        <th style="text-align:right">Unit Price</th>
+                        <th style="text-align:right">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var line in _lines)
+                    {
+                        var unitPrice = line.AwardedUnitPrice ?? 0m;
+                        <tr>
+                            <td>@line.PrItemNo</td>
+                            <td>@line.Description</td>
+                            <td style="text-align:right">@line.Quantity.ToString("N2")</td>
+                            <td>@line.Unit</td>
+                            <td style="text-align:right">₱@unitPrice.ToString("N2")</td>
+                            <td style="text-align:right">₱@((line.Quantity * unitPrice).ToString("N2"))</td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="5" style="text-align:right"><b>Total</b></td>
+                        <td style="text-align:right"><b>₱@_grandTotal.ToString("N2")</b></td>
+                    </tr>
+                </tfoot>
+            </MudSimpleTable>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Close">Close</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance Dialog { get; set; } = default!;
+
+    [Parameter] public string SupplierName { get; set; } = "";
+
+    /// <summary>The line items of the canvass awarded to this supplier.</summary>
+    [Parameter] public IReadOnlyList<CanvassLineItemDto> Lines { get; set; } = [];
+
+    private List<CanvassLineItemDto> _lines = [];
+    private decimal _grandTotal;
+
+    protected override void OnInitialized()
+    {
+        _lines = Lines.OrderBy(l => l.PrItemNo).ToList();
+        _grandTotal = _lines.Sum(l => l.Quantity * (l.AwardedUnitPrice ?? 0m));
+    }
+
+    private void Close() => Dialog.Close();
+}

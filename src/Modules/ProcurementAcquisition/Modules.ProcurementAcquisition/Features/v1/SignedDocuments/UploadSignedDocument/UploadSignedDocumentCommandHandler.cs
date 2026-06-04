@@ -127,6 +127,21 @@ public sealed class UploadSignedDocumentCommandHandler(
                         Enumerable.Empty<string>(), HttpStatusCode.BadRequest);
                 break;
 
+            case ProcurementDocumentType.RequestForQuotation:
+                // The RFQ is the supplier's own wet-signed quotation document — it exists the moment the
+                // quotation is recorded, so it may be attached at any non-cancelled canvass stage (unlike the
+                // Abstract of Canvass, which summarises all quotations and is only signed once awarded).
+                var quotation = await dbContext.CanvassQuotations.AsNoTracking()
+                    .FirstOrDefaultAsync(x => x.Id == id, ct).ConfigureAwait(false)
+                    ?? throw new NotFoundException($"Canvass quotation '{id}' not found.");
+                var parentCanvass = await dbContext.CanvassRequests.AsNoTracking()
+                    .FirstOrDefaultAsync(x => x.Id == quotation.CanvassRequestId, ct).ConfigureAwait(false)
+                    ?? throw new NotFoundException($"Canvass request '{quotation.CanvassRequestId}' not found.");
+                if (parentCanvass.Status == CanvassRequestStatus.Cancelled)
+                    throw new CustomException("A signed RFQ cannot be uploaded for a cancelled canvass.",
+                        Enumerable.Empty<string>(), HttpStatusCode.BadRequest);
+                break;
+
             default:
                 throw new CustomException($"Unsupported document type '{type}'.",
                     Enumerable.Empty<string>(), HttpStatusCode.BadRequest);

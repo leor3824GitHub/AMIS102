@@ -324,6 +324,8 @@
     [CascadingParameter] private IMudDialogInstance Dialog { get; set; } = default!;
     [Parameter] public PurchaseOrderDto? PurchaseOrder { get; set; }
     [Parameter] public Guid? PrefilledCanvassId { get; set; }
+    // When set, prefill only THIS supplier's won lines (one PO per winning supplier). Null = first awarded supplier.
+    [Parameter] public Guid? PrefilledSupplierId { get; set; }
 
     private PurchaseOrderDto? _editing;
     private PoForm _form = new();
@@ -364,10 +366,13 @@
                 return;
             }
 
-            var awarded = canvass.Quotations.FirstOrDefault(q => q.IsAwarded);
+            // One PO per winning supplier: prefill the requested supplier (or the first awarded one).
+            var awarded = PrefilledSupplierId is { } supplierId
+                ? canvass.Quotations.FirstOrDefault(q => q.SupplierId == supplierId && q.IsAwarded)
+                : canvass.Quotations.FirstOrDefault(q => q.IsAwarded);
             if (awarded is null)
             {
-                Snackbar.Add("No awarded quotation found on this canvass.", Severity.Warning);
+                Snackbar.Add("No awarded quotation found for this supplier on the canvass.", Severity.Warning);
                 return;
             }
 
@@ -409,17 +414,30 @@
                 IsActive = true
             };
 
-            _form = new PoForm
+            // The lines this supplier actually WON on the canvass (split award), at the awarded unit price — not
+            // every line they quoted. Falls back to the quotation's quoted lines for legacy canvasses that predate
+            // per-line award tracking.
+            var wonLines = canvass.LineItems
+                .Where(li => li.AwardedSupplierId == awarded.SupplierId && li.AwardedUnitPrice is not null)
+                .OrderBy(li => li.PrItemNo)
+                .Select(li =>
+                {
+                    prLineByDescription.TryGetValue(NormalizeItem(li.Description), out var prLine);
+                    return new PoLineItemRow
+                    {
+                        StockNumber = null,
+                        Unit = li.Unit,
+                        Description = li.Description,
+                        Quantity = li.Quantity,
+                        UnitCost = li.AwardedUnitPrice ?? li.EstimatedUnitCost,
+                        CatalogItemId = prLine?.CatalogItemId
+                    };
+                })
+                .ToList();
+
+            if (wonLines.Count == 0)
             {
-                CanvassRequestId = canvass.Id.ToString(),
-                SupplierName = awarded.SupplierName,
-                SupplierAddress = awarded.SupplierAddress,
-                SupplierTin = awarded.TinNumber,
-                ModeOfProcurement = ModeOfProcurement.SmallValueProcurement,
-                PlaceOfDelivery = string.Empty,
-                DeliveryTerm = awarded.DeliveryTerms ?? "30 days",
-                PaymentTerm = "30 days",
-                LineItems = awarded.LineItems
+                wonLines = awarded.LineItems
                     .Select(li =>
                     {
                         prLineByDescription.TryGetValue(NormalizeItem(li.Description), out var prLine);
@@ -433,7 +451,20 @@
                             CatalogItemId = prLine?.CatalogItemId
                         };
                     })
-                    .ToList()
+                    .ToList();
+            }
+
+            _form = new PoForm
+            {
+                CanvassRequestId = canvass.Id.ToString(),
+                SupplierName = awarded.SupplierName,
+                SupplierAddress = awarded.SupplierAddress,
+                SupplierTin = awarded.TinNumber,
+                ModeOfProcurement = ModeOfProcurement.SmallValueProcurement,
+                PlaceOfDelivery = string.Empty,
+                DeliveryTerm = awarded.DeliveryTerms ?? "30 days",
+                PaymentTerm = "30 days",
+                LineItems = wonLines
             };
 
             if (_form.LineItems.Count == 0)

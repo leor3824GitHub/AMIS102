@@ -1,4 +1,5 @@
 @page "/tenants/settings"
+@implements IDisposable
 @using AMIS.Playground.Blazor.ApiClient
 @using AMIS.Playground.Blazor.Services
 @using AMIS.Framework.Blazor.UI.Components.Page
@@ -164,11 +165,33 @@ else
     private int? _apiRateLimitPerMinute;
 
     private bool _saving;
+    private bool _loaded;
 
     private bool _canView => UserProfileState.Permissions.Contains(MultitenancyConstants.Permissions.ViewSettings);
     private bool _canUpdate => UserProfileState.Permissions.Contains(MultitenancyConstants.Permissions.UpdateSettings);
 
     protected override async Task OnInitializedAsync()
+    {
+        UserProfileState.OnProfileChanged += OnProfileChanged;
+        await LoadSettingsAsync();
+    }
+
+    // Permissions load asynchronously in PlaygroundLayout after first render. On a hard refresh the page
+    // first renders with an empty permission set, so the initial load short-circuits on !_canView; re-run
+    // it (and re-render) once permissions arrive.
+    private void OnProfileChanged() => InvokeAsync(ReloadOnPermissionsAsync);
+
+    private async Task ReloadOnPermissionsAsync()
+    {
+        if (_loaded || !_canView)
+        {
+            return;
+        }
+        await LoadSettingsAsync();
+        StateHasChanged();
+    }
+
+    private async Task LoadSettingsAsync()
     {
         if (!_canView)
         {
@@ -184,12 +207,15 @@ else
             _maxUsersPerTenant = settings.Quota.MaxUsersPerTenant;
             _storageLimitMb = settings.Quota.StorageLimitMb;
             _apiRateLimitPerMinute = settings.Quota.ApiRateLimitPerMinute;
+            _loaded = true;
         }
         catch (Exception)
         {
             Snackbar.Add("Could not load platform settings.", Severity.Error);
         }
     }
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
 
     private async Task SaveAsync()
     {

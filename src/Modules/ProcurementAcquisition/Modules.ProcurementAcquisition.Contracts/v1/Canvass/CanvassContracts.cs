@@ -38,7 +38,10 @@ public sealed record CanvassQuotationDto(
     DateOnly QuotationDate,
     string? DeliveryTerms,
     bool IsAwarded,
-    IReadOnlyList<CanvassQuotationLineItemDto> LineItems);
+    IReadOnlyList<CanvassQuotationLineItemDto> LineItems,
+    // True when this supplier's wet-signed RFQ has been uploaded. Populated by the canvass detail query;
+    // freshly added/updated quotations default to false (no signed copy attached yet).
+    bool HasSignedRfq = false);
 
 /// <summary>A Purchase Request line item covered by a canvass (snapshot taken at canvass creation).
 /// The <c>Awarded*</c> fields carry the per-line split-award winner; null until the canvass is awarded.</summary>
@@ -117,7 +120,12 @@ public sealed record CanvassRequestSummaryDto(
     bool HasPurchaseOrder = false,
     string? PurchaseOrderNumber = null,
     bool HasSignedCopy = false,
-    int PurchaseOrderCount = 0);
+    int PurchaseOrderCount = 0,
+    // Lines awarded on THIS canvass, and lines this canvass carries that are still awardable (not yet awarded by
+    // this or any sibling canvass). Drive the award button: it stays visible while RemainingAwardableLineCount > 0,
+    // so a partially-awarded canvass can keep awarding its remaining lines.
+    int AwardedLineCount = 0,
+    int RemainingAwardableLineCount = 0);
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Commands

@@ -138,23 +138,43 @@
       <TextObject Name="DSup1" Left="333" Top="0" Width="80" Height="22"
         Text="[LineItemsDS.Sup1Price]" HorzAlign="Right" VertAlign="Center"
         Font="Times New Roman, 8pt"
-        Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1">
+        <Highlight>
+          <Condition Expression="[LineItemsDS.Sup1Won]" ApplyFill="true" Fill.Color="Yellow" ApplyFont="true" Font="Times New Roman, 8pt, style=Bold" />
+        </Highlight>
+      </TextObject>
       <TextObject Name="DSup2" Left="413" Top="0" Width="80" Height="22"
         Text="[LineItemsDS.Sup2Price]" HorzAlign="Right" VertAlign="Center"
         Font="Times New Roman, 8pt"
-        Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1">
+        <Highlight>
+          <Condition Expression="[LineItemsDS.Sup2Won]" ApplyFill="true" Fill.Color="Yellow" ApplyFont="true" Font="Times New Roman, 8pt, style=Bold" />
+        </Highlight>
+      </TextObject>
       <TextObject Name="DSup3" Left="493" Top="0" Width="80" Height="22"
         Text="[LineItemsDS.Sup3Price]" HorzAlign="Right" VertAlign="Center"
         Font="Times New Roman, 8pt"
-        Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1">
+        <Highlight>
+          <Condition Expression="[LineItemsDS.Sup3Won]" ApplyFill="true" Fill.Color="Yellow" ApplyFont="true" Font="Times New Roman, 8pt, style=Bold" />
+        </Highlight>
+      </TextObject>
       <TextObject Name="DSup4" Left="573" Top="0" Width="80" Height="22"
         Text="[LineItemsDS.Sup4Price]" HorzAlign="Right" VertAlign="Center"
         Font="Times New Roman, 8pt"
-        Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1">
+        <Highlight>
+          <Condition Expression="[LineItemsDS.Sup4Won]" ApplyFill="true" Fill.Color="Yellow" ApplyFont="true" Font="Times New Roman, 8pt, style=Bold" />
+        </Highlight>
+      </TextObject>
       <TextObject Name="DSup5" Left="653" Top="0" Width="80" Height="22"
         Text="[LineItemsDS.Sup5Price]" HorzAlign="Right" VertAlign="Center"
         Font="Times New Roman, 8pt"
-        Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1" />
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,2,1">
+        <Highlight>
+          <Condition Expression="[LineItemsDS.Sup5Won]" ApplyFill="true" Fill.Color="Yellow" ApplyFont="true" Font="Times New Roman, 8pt, style=Bold" />
+        </Highlight>
+      </TextObject>
 
     </DataBand>
 

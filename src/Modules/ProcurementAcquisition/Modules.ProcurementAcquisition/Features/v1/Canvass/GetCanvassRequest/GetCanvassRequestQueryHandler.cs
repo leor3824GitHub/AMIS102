@@ -1,5 +1,6 @@
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.Canvass;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders;
+using AMIS.Modules.ProcurementAcquisition.Contracts.v1.SignedDocuments;
 using AMIS.Modules.ProcurementAcquisition.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
@@ -39,6 +40,16 @@ public sealed class GetCanvassRequestQueryHandler(ProcurementDbContext dbContext
             .GroupBy(q => q.SupplierId)
             .ToDictionary(g => g.Key, g => g.First().SupplierName);
 
+        // Which quotations already have a wet-signed RFQ uploaded (keyed by quotation Id).
+        var quotationIds = canvass.Quotations.Select(q => q.Id).ToList();
+        var signedRfqQuotationIds = (await dbContext.SignedDocuments
+            .AsNoTracking()
+            .Where(sd => sd.DocumentType == ProcurementDocumentType.RequestForQuotation && quotationIds.Contains(sd.DocumentId))
+            .Select(sd => sd.DocumentId)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false))
+            .ToHashSet();
+
         return new CanvassRequestDto(
             canvass.Id,
             canvass.RivNumber,
@@ -58,7 +69,8 @@ public sealed class GetCanvassRequestQueryHandler(ProcurementDbContext dbContext
                 q.DeliveryTerms,
                 q.IsAwarded,
                 q.LineItems.Select(li => new CanvassQuotationLineItemDto(
-                    li.ItemNo, li.PrItemNo, li.Description, li.Unit, li.Quantity, li.UnitPrice, li.Total)).ToList()
+                    li.ItemNo, li.PrItemNo, li.Description, li.Unit, li.Quantity, li.UnitPrice, li.Total)).ToList(),
+                signedRfqQuotationIds.Contains(q.Id)
             )).ToList(),
             canvass.CreatedOnUtc,
             canvass.CreatedBy,

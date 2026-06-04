@@ -21,7 +21,7 @@
             @if (_rows.All(r => r.IsLocked))
             {
                 <MudAlert Severity="Severity.Info" Dense="true" Class="mb-2">
-                    Every line on this canvass has already been awarded on another canvass. Nothing left to award here.
+                    Every line on this canvass is already awarded (here or on another canvass). Nothing left to award.
                 </MudAlert>
             }
             <MudSimpleTable Dense="true" Bordered="true" Striped="true">
@@ -59,7 +59,7 @@
                                 @if (row.IsLocked)
                                 {
                                     <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                        awarded on @row.LockedRivNumber@(row.LockedSupplierName is null ? "" : $" → {row.LockedSupplierName}")
+                                        awarded on @(row.LockedHere ? "this canvass" : row.LockedRivNumber)@(row.LockedSupplierName is null ? "" : $" → {row.LockedSupplierName}")
                                     </MudText>
                                 }
                             </td>
@@ -141,15 +141,20 @@
 
             lockedByPrItemNo.TryGetValue(line.PrItemNo, out var locked);
 
+            // A line is locked if THIS canvass already awarded it (partial award accumulating over several rounds)
+            // or a sibling canvass won it. Either way it can't be (re-)awarded here.
+            var awardedHere = line.AwardedQuotationId is not null;
+
             var row = new LineRow
             {
                 PrItemNo = line.PrItemNo,
                 Description = line.Description,
                 Quantity = line.Quantity,
                 Candidates = candidates,
-                IsLocked = locked is not null,
-                LockedRivNumber = locked?.RivNumber,
-                LockedSupplierName = locked?.AwardedSupplierName,
+                IsLocked = awardedHere || locked is not null,
+                LockedRivNumber = awardedHere ? Canvass.RivNumber : locked?.RivNumber,
+                LockedSupplierName = awardedHere ? line.AwardedSupplierName : locked?.AwardedSupplierName,
+                LockedHere = awardedHere,
                 // Lowest quote pre-selected, but the line is awarded only when explicitly ticked.
                 SelectedQuotationId = candidates.FirstOrDefault()?.QuotationId ?? Guid.Empty,
                 IsSelected = false
@@ -177,6 +182,7 @@
         public decimal Quantity { get; set; }
         public List<Candidate> Candidates { get; set; } = [];
         public bool IsLocked { get; set; }
+        public bool LockedHere { get; set; }
         public string? LockedRivNumber { get; set; }
         public string? LockedSupplierName { get; set; }
         public bool IsSelected { get; set; }
