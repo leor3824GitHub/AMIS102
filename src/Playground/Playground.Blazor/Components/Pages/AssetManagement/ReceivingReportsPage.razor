@@ -83,7 +83,7 @@
                 <MudCardHeader>
                     <CardHeaderContent>
                         <MudStack Row="true" AlignItems="AlignItems.Center">
-                            <MudText Typo="Typo.h6">Edit SMRR � @_editForm.ReportNo</MudText>
+                            <MudText Typo="Typo.h6">Edit SMRR — @_editForm.ReportNo</MudText>
                             <MudSpacer />
                             <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="@(() => _editId = null)" />
                         </MudStack>
@@ -144,7 +144,7 @@
                 <MudCardHeader>
                     <CardHeaderContent>
                         <MudStack Row="true" AlignItems="AlignItems.Center">
-                            <MudText Typo="Typo.h6">@_detail.ReportNo � @_detail.Date.ToString("MMMM dd, yyyy")</MudText>
+                            <MudText Typo="Typo.h6">@_detail.ReportNo — @_detail.Date.ToString("MMMM dd, yyyy")</MudText>
                             <MudSpacer />
                             <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="@(() => _detail = null)" />
                         </MudStack>
@@ -201,19 +201,19 @@
                                         <MudText Typo="Typo.body2">@item.Description</MudText>
                                         <MudText Typo="Typo.caption" Color="Color.Secondary">@item.AssetType</MudText>
                                     </td>
-                                    <td>@(item.Description ?? "�")</td>
-                                    <td>@(item.Reference ?? "�")</td>
+                                    <td>@(item.Description ?? "—")</td>
+                                    <td>@(item.Reference ?? "—")</td>
                                     <td>@item.AcquisitionDate.ToString("MM/dd/yyyy")</td>
                                     <td>@item.Quantity</td>
-                                    <td>?@item.UnitCost.ToString("N2")</td>
-                                    <td><b>?@item.Amount.ToString("N2")</b></td>
+                                    <td>₱@item.UnitCost.ToString("N2")</td>
+                                    <td><b>₱@item.Amount.ToString("N2")</b></td>
                                 </tr>
                             }
                         </tbody>
                         <tfoot>
                             <tr>
                                 <td colspan="8" style="text-align:right"><b>Total:</b></td>
-                                <td><b>?@_detail.Items.Sum(x => x.Amount).ToString("N2")</b></td>
+                                <td><b>₱@_detail.Items.Sum(x => x.Amount).ToString("N2")</b></td>
                             </tr>
                         </tfoot>
                     </MudSimpleTable>
@@ -284,7 +284,7 @@
                                 <MudAutocomplete T="TangibleItemSummaryDto"
                                                  @bind-Value="_draft.SelectedItem"
                                                  SearchFunc="SearchTangibleItems"
-                                                 ToStringFunc="@(x => x is null ? "" : $"{x.PropertyNo} � {x.ItemName}")"
+                                                 ToStringFunc="@(x => x is null ? "" : $"{x.PropertyNo} — {x.ItemName}")"
                                                  Label="Tangible Item" Variant="Variant.Outlined"
                                                  Dense="true" Margin="Margin.Dense" Size="Size.Small"
                                                  Clearable="true" CoerceValue="true"
@@ -322,8 +322,8 @@
                                                 <MudText Typo="Typo.caption" Color="Color.Secondary">@li.SelectedItem.ItemCode</MudText>
                                             </td>
                                             <td>@li.SelectedItem.Quantity</td>
-                                            <td>?@li.SelectedItem.UnitCost.ToString("N2")</td>
-                                            <td><b>?@((li.SelectedItem.Quantity * li.SelectedItem.UnitCost).ToString("N2"))</b></td>
+                                            <td>₱@li.SelectedItem.UnitCost.ToString("N2")</td>
+                                            <td><b>₱@((li.SelectedItem.Quantity * li.SelectedItem.UnitCost).ToString("N2"))</b></td>
                                             <td>
                                                 <MudIconButton Icon="@Icons.Material.Filled.DeleteOutline" Size="Size.Small"
                                                                Color="Color.Error" OnClick="@(() => RemoveLineItem(i - 1))" />
@@ -334,7 +334,7 @@
                                 <tfoot>
                                     <tr>
                                         <td colspan="5" style="text-align:right"><b>Total:</b></td>
-                                        <td><b>?@(_form.Items.Sum(x => x.SelectedItem!.Quantity * x.SelectedItem.UnitCost).ToString("N2"))</b></td>
+                                        <td><b>₱@(_form.Items.Sum(x => x.SelectedItem!.Quantity * x.SelectedItem.UnitCost).ToString("N2"))</b></td>
                                         <td></td>
                                     </tr>
                                 </tfoot>

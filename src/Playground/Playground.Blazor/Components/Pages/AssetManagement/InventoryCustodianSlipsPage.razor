@@ -21,8 +21,8 @@
                     <MudDatePicker @bind-Date="_form.DateNullable" Label="Date" Variant="Variant.Outlined"
                                    DateFormat="MM/dd/yyyy" Required="true" />
                     <MudSelect @bind-Value="_form.Category" Label="Category" Variant="Variant.Outlined" T="AssetCategory" Required="true">
-                        <MudSelectItem Value="AssetCategory.LowValuedSemi">Low-Valued Semi-Expendable (= ?5,000)</MudSelectItem>
-                        <MudSelectItem Value="AssetCategory.HighValuedSemi">High-Valued Semi-Expendable (&gt; ?5,000)</MudSelectItem>
+                        <MudSelectItem Value="AssetCategory.LowValuedSemi">Low-Valued Semi-Expendable (</MudSelectItem>
+                        <MudSelectItem Value="AssetCategory.HighValuedSemi">High-Valued Semi-Expendable (&gt; </MudSelectItem>
                     </MudSelect>
                     <MudTextField @bind-Value="_form.FundCluster" Label="Fund Cluster" Variant="Variant.Outlined" MaxLength="50" />
 
@@ -69,7 +69,7 @@
                                 @if (li.LookedUpItem is not null)
                                 {
                                     <MudText Typo="Typo.caption" Color="@(li.LookedUpItem.IsIssued ? Color.Error : Color.Success)">
-                                        @li.LookedUpItem.ItemName | ?@li.LookedUpItem.UnitCost.ToString("N2")
+                                        @li.LookedUpItem.ItemName | â‚±@li.LookedUpItem.UnitCost.ToString("N2")
                                         @(li.LookedUpItem.IsIssued ? " — Already Issued" : " — Available")
                                     </MudText>
                                 }
@@ -210,7 +210,7 @@
                                         <MudText Typo="Typo.caption" Color="Color.Secondary">@item.ItemCode</MudText>
                                     </td>
                                     <td>@(item.Description ?? "-")</td>
-                                    <td>?@item.UnitCost.ToString("N2")</td>
+                                    <td>â‚±@item.UnitCost.ToString("N2")</td>
                                     <td>@(item.EstimatedUsefulLifeYears.HasValue ? $"{item.EstimatedUsefulLifeYears} yr(s)" : "-")</td>
                                 </tr>
                             }
@@ -218,7 +218,7 @@
                         <tfoot>
                             <tr>
                                 <td colspan="4" style="text-align:right"><b>Total Cost:</b></td>
-                                <td colspan="2"><b>?@_detail.Items.Sum(x => x.UnitCost).ToString("N2")</b></td>
+                                <td colspan="2"><b>â‚±@_detail.Items.Sum(x => x.UnitCost).ToString("N2")</b></td>
                             </tr>
                         </tfoot>
                     </MudSimpleTable>

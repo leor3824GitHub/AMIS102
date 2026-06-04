@@ -136,7 +136,7 @@
                 {
                     var name = g.First().WarehouseLocationName;
                     var display = string.IsNullOrWhiteSpace(name)
-                        ? $"Warehouse {g.Key.ToString()[..8]}�"
+                        ? $"Warehouse {g.Key.ToString()[..8]}…"
                         : name;
                     return new WarehouseOption(g.Key, display);
                 })

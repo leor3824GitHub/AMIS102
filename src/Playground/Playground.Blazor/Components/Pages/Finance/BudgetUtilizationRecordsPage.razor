@@ -122,7 +122,7 @@
                                     <td>@item.BurDate.ToString("MM/dd/yyyy")</td>
                                     <td><MudText Typo="Typo.caption">@item.PurchaseOrderNumber</MudText></td>
                                     <td><MudText Typo="Typo.caption">@item.AllotmentClass</MudText></td>
-                                    <td style="text-align:right">?@item.Amount.ToString("N2")</td>
+                                    <td style="text-align:right">₱@item.Amount.ToString("N2")</td>
                                     <td>@BurStatusChip(item.Status)</td>
                                     <td>
                                         <MudStack Row="true" Spacing="0">
@@ -220,7 +220,7 @@
                         <MudItem xs="12">
                             <MudDivider />
                             <MudStack Row="true" JustifyContent="JustifyContent.FlexEnd" Class="mt-2">
-                                <MudText Typo="Typo.h6">Amount: <b>?@_detail.Amount.ToString("N2")</b></MudText>
+                                <MudText Typo="Typo.h6">Amount: <b>₱@_detail.Amount.ToString("N2")</b></MudText>
                             </MudStack>
                         </MudItem>
                     </MudGrid>

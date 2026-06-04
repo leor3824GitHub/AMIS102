@@ -105,7 +105,7 @@
                                             }
                                             else
                                             {
-                                                <MudTooltip Text="Owned by another office � read only">
+                                                <MudTooltip Text="Owned by another office — read only">
                                                     <MudIconButton Icon="@Icons.Material.Filled.Lock" Size="Size.Small" Color="Color.Default" Disabled="true" />
                                                 </MudTooltip>
                                             }
@@ -412,7 +412,7 @@
     private string SortIcon(string field)
     {
         if (_sortField != field) return string.Empty;
-        return _sortAscending ? "?" : "?";
+        return _sortAscending ? "▲" : "▼";
     }
 }
 

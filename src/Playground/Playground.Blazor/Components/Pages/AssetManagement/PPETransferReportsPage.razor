@@ -26,9 +26,9 @@
                                Label="Transfer Type" Variant="Variant.Outlined"
                                Dense="true" Margin="Margin.Dense" Size="Size.Small" T="PPEIssuanceType?" Style="max-width:170px">
                         <MudSelectItem Value="@((PPEIssuanceType?)null)">All Types</MudSelectItem>
-                        <MudSelectItem Value="@((PPEIssuanceType?)PPEIssuanceType.TransferCO)">Transfer � CO</MudSelectItem>
-                        <MudSelectItem Value="@((PPEIssuanceType?)PPEIssuanceType.TransferRO)">Transfer � RO</MudSelectItem>
-                        <MudSelectItem Value="@((PPEIssuanceType?)PPEIssuanceType.TransferPO)">Transfer � PO</MudSelectItem>
+                        <MudSelectItem Value="@((PPEIssuanceType?)PPEIssuanceType.TransferCO)">Transfer → CO</MudSelectItem>
+                        <MudSelectItem Value="@((PPEIssuanceType?)PPEIssuanceType.TransferRO)">Transfer → RO</MudSelectItem>
+                        <MudSelectItem Value="@((PPEIssuanceType?)PPEIssuanceType.TransferPO)">Transfer → PO</MudSelectItem>
                         <MudSelectItem Value="@((PPEIssuanceType?)PPEIssuanceType.Donation)">Donation</MudSelectItem>
                         <MudSelectItem Value="@((PPEIssuanceType?)PPEIssuanceType.Sale)">Sale</MudSelectItem>
                         <MudSelectItem Value="@((PPEIssuanceType?)PPEIssuanceType.Dumping)">Dumping</MudSelectItem>
@@ -61,7 +61,7 @@
                                         <MudChip T="string" Size="Size.Small" Color="Color.Info" Label="true">@FormatIssuanceType(s.IssuanceType)</MudChip>
                                     </MudStack>
                                     <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                        @s.Date.ToString("MMM dd, yyyy") � @s.ItemCount item(s)
+                                        @s.Date.ToString("MMM dd, yyyy") — @s.ItemCount item(s)
                                     </MudText>
                                 </MudStack>
                             </MudListItem>
@@ -142,15 +142,15 @@
                                         title="@item.Description">@item.Description</td>
                                     <td>@item.DateAcquired.ToString("MM/dd/yyyy")</td>
                                     <td style="text-align:right">@item.Amount.ToString("N2")</td>
-                                    <td><MudText Typo="Typo.caption">@(item.Condition ?? "�")</MudText></td>
-                                    <td><MudText Typo="Typo.caption">@(item.ReasonForTransfer ?? "�")</MudText></td>
+                                    <td><MudText Typo="Typo.caption">@(item.Condition ?? "—")</MudText></td>
+                                    <td><MudText Typo="Typo.caption">@(item.ReasonForTransfer ?? "—")</MudText></td>
                                 </tr>
                             }
                         </tbody>
                         <tfoot>
                             <tr>
                                 <td colspan="4" style="text-align:right"><b>Total:</b></td>
-                                <td style="text-align:right"><b>?@_ptr.Items.Sum(x => x.Amount).ToString("N2")</b></td>
+                                <td style="text-align:right"><b>₱@_ptr.Items.Sum(x => x.Amount).ToString("N2")</b></td>
                                 <td colspan="2"></td>
                             </tr>
                         </tfoot>
@@ -205,9 +205,9 @@
 
     private static string FormatIssuanceType(string t) => t switch
     {
-        "TransferCO" => "Transfer � CO",
-        "TransferRO" => "Transfer � RO",
-        "TransferPO" => "Transfer � PO",
+        "TransferCO" => "Transfer → CO",
+        "TransferRO" => "Transfer → RO",
+        "TransferPO" => "Transfer → PO",
         _ => t
     };
 }

@@ -73,7 +73,7 @@ else
                         </MudTd>
                         <MudTd DataLabel="Date">@req.RequestDate.ToLocalTime().ToString("MMM d, yyyy")</MudTd>
                         <MudTd DataLabel="Needed By">
-                            @(req.NeededByDate.HasValue ? req.NeededByDate.Value.ToLocalTime().ToString("MMM d, yyyy") : "�")
+                            @(req.NeededByDate.HasValue ? req.NeededByDate.Value.ToLocalTime().ToString("MMM d, yyyy") : "—")
                         </MudTd>
                         <MudTd DataLabel="Status">
                             <MudChip T="string" Size="Size.Small" Color="@GetStatusColor(req.Status)"
@@ -144,7 +144,7 @@ else
                                                     }
                                                     else
                                                     {
-                                                        <MudText Typo="Typo.body2" Color="Color.Default">�</MudText>
+                                                        <MudText Typo="Typo.body2" Color="Color.Default">—</MudText>
                                                     }
                                                 </MudTd>
                                                 <MudTd DataLabel="Fulfilled">
@@ -155,10 +155,10 @@ else
                                                     }
                                                     else
                                                     {
-                                                        <MudText Typo="Typo.body2" Color="Color.Default">�</MudText>
+                                                        <MudText Typo="Typo.body2" Color="Color.Default">—</MudText>
                                                     }
                                                 </MudTd>
-                                                <MudTd DataLabel="Notes">@(item.Notes ?? "�")</MudTd>
+                                                <MudTd DataLabel="Notes">@(item.Notes ?? "—")</MudTd>
                                             </RowTemplate>
                                         </MudTable>
                                     </div>
@@ -219,7 +219,7 @@ else
                             @issuance.FulfilledOnUtc.ToLocalTime().ToString("MMM d, yyyy HH:mm")
                         </MudTd>
                         <MudTd DataLabel="Items">@issuance.Items.Count item(s)</MudTd>
-                        <MudTd DataLabel="Total Value">?@issuance.TotalValue.ToString("N2")</MudTd>
+                        <MudTd DataLabel="Total Value">₱@issuance.TotalValue.ToString("N2")</MudTd>
                         <MudTd>
                             <MudIconButton Icon="@(_expandedHistory.Contains(issuance.RequestId) ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)"
                                            Size="Size.Small"
@@ -244,8 +244,8 @@ else
                                             <MudTd DataLabel="Product">@item.ProductName</MudTd>
                                             <MudTd DataLabel="Code"><code>@item.ProductCode</code></MudTd>
                                             <MudTd DataLabel="Qty">@item.QuantityIssued</MudTd>
-                                            <MudTd DataLabel="Avg Cost">?@item.UnitPrice.ToString("N4")</MudTd>
-                                            <MudTd DataLabel="Total">?@item.TotalValue.ToString("N2")</MudTd>
+                                            <MudTd DataLabel="Avg Cost">₱@item.UnitPrice.ToString("N4")</MudTd>
+                                            <MudTd DataLabel="Total">₱@item.TotalValue.ToString("N2")</MudTd>
                                         </RowTemplate>
                                     </MudTable>
                                 </td>
@@ -270,7 +270,7 @@ else
         <MudPaper Class="pa-4" Elevation="24" Style="width: min(680px, 95vw); max-height: 90vh; overflow-y: auto;">
             <MudText Typo="Typo.h6" Class="mb-3">
                 <MudIcon Icon="@Icons.Material.Filled.EditNote" Color="Color.Primary" Class="mr-2" />
-                Edit Draft � @_editDialog.RequestNumber
+                Edit Draft — @_editDialog.RequestNumber
             </MudText>
 
             <!-- Current Items -->
@@ -292,7 +292,7 @@ else
                     <RowTemplate Context="item">
                         <MudTd DataLabel="Product">@GetProductName(item.ProductId)</MudTd>
                         <MudTd DataLabel="Qty" Style="text-align:center;">@item.RequestedQuantity</MudTd>
-                        <MudTd DataLabel="Notes">@(item.Notes ?? "�")</MudTd>
+                        <MudTd DataLabel="Notes">@(item.Notes ?? "—")</MudTd>
                         <MudTd>
                             <MudTooltip Text="Remove item from draft">
                                 <MudIconButton Icon="@Icons.Material.Filled.DeleteOutline" Color="Color.Error"
@@ -312,7 +312,7 @@ else
                 <MudItem xs="12" sm="6">
                     <MudSelect T="Guid" @bind-Value="_addProductId" Label="Product" Variant="Variant.Outlined"
                                Dense="true" AnchorOrigin="Origin.BottomCenter">
-                        <MudSelectItem Value="Guid.Empty">Select product�</MudSelectItem>
+                        <MudSelectItem Value="Guid.Empty">Select product…</MudSelectItem>
                         @foreach (var p in _availableProducts)
                         {
                             <MudSelectItem Value="@p.Id">@p.Name</MudSelectItem>
@@ -364,7 +364,7 @@ else
         <MudPaper Class="pa-4" Elevation="24" Style="width: min(480px, 95vw);">
             <MudText Typo="Typo.h6" Class="mb-3">
                 <MudIcon Icon="@Icons.Material.Filled.Cancel" Color="Color.Error" Class="mr-2" />
-                Cancel Request � @_cancelDialog.RequestNumber
+                Cancel Request — @_cancelDialog.RequestNumber
             </MudText>
             <MudAlert Severity="Severity.Warning" Dense="true" Class="mb-3">
                 @if (_cancelDialog.Status == "Approved")
@@ -442,7 +442,7 @@ else
         }
         catch (ApiException ex) when (ex.StatusCode == 404)
         {
-            // No employee profile linked � not an error, just show the info message
+            // No employee profile linked — not an error, just show the info message
         }
         catch (Exception ex)
         {
@@ -670,11 +670,11 @@ else
             var product = await ExpendableClient.ProductsGetAsync(productId);
             if (product != null) _productNames[productId] = product.Name;
         }
-        catch { _productNames[productId] = productId.ToString()[..8] + "�"; }
+        catch { _productNames[productId] = productId.ToString()[..8] + "…"; }
     }
 
     private string GetProductName(Guid productId) =>
-        _productNames.TryGetValue(productId, out var name) ? name : productId.ToString()[..8] + "�";
+        _productNames.TryGetValue(productId, out var name) ? name : productId.ToString()[..8] + "…";
 
     // ===== CANCEL =====
 

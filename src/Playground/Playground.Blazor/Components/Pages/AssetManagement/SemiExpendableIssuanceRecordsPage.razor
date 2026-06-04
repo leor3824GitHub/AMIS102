@@ -73,7 +73,7 @@
                                 @if (li.SelectedProperty is not null)
                                 {
                                     <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                        @li.SelectedProperty.ItemCode | ?@li.SelectedProperty.UnitCost.ToString("N2") | @li.SelectedProperty.Status
+                                        @li.SelectedProperty.ItemCode | ₱@li.SelectedProperty.UnitCost.ToString("N2") | @li.SelectedProperty.Status
                                     </MudText>
                                 }
                                 <MudTextField @bind-Value="li.Description" Label="Description (override)" Variant="Variant.Outlined"
@@ -217,14 +217,14 @@
                                     <td><b>@item.PropertyNo</b></td>
                                     <td>@(item.Description ?? "-")</td>
                                     <td><MudChip T="string" Size="Size.Small" Color="Color.Default">@item.CategoryAtTimeOfIssuance</MudChip></td>
-                                    <td>?@item.UnitCost.ToString("N2")</td>
+                                    <td>₱@item.UnitCost.ToString("N2")</td>
                                 </tr>
                             }
                         </tbody>
                         <tfoot>
                             <tr>
                                 <td colspan="4" style="text-align:right"><b>Total:</b></td>
-                                <td><b>?@_detail.Items.Sum(x => x.UnitCost).ToString("N2")</b></td>
+                                <td><b>₱@_detail.Items.Sum(x => x.UnitCost).ToString("N2")</b></td>
                             </tr>
                         </tfoot>
                     </MudSimpleTable>

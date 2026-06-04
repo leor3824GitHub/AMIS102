@@ -93,7 +93,7 @@
             <MudTd DataLabel="Department">@GetDepartmentDisplay(issuance.DepartmentId)</MudTd>
             <MudTd DataLabel="Fulfilled On">@issuance.FulfilledOnUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</MudTd>
             <MudTd DataLabel="Items">@issuance.Items.Count</MudTd>
-            <MudTd DataLabel="Total Value">?@issuance.TotalValue.ToString("N2")</MudTd>
+            <MudTd DataLabel="Total Value">₱@issuance.TotalValue.ToString("N2")</MudTd>
             <MudTd>
                 <MudIconButton Icon="@Icons.Material.Filled.ExpandMore" Size="Size.Small"
                                OnClick="@(() => ToggleExpand(issuance.RequestId))" />
@@ -117,8 +117,8 @@
                                 <MudTd DataLabel="Product">@item.ProductName</MudTd>
                                 <MudTd DataLabel="Code">@item.ProductCode</MudTd>
                                 <MudTd DataLabel="Qty">@item.QuantityIssued</MudTd>
-                                <MudTd DataLabel="Avg Cost">?@item.UnitPrice.ToString("N4")</MudTd>
-                                <MudTd DataLabel="Total">?@item.TotalValue.ToString("N2")</MudTd>
+                                <MudTd DataLabel="Avg Cost">₱@item.UnitPrice.ToString("N4")</MudTd>
+                                <MudTd DataLabel="Total">₱@item.TotalValue.ToString("N2")</MudTd>
                             </RowTemplate>
                         </MudTable>
                     </td>

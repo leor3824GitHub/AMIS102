@@ -97,7 +97,7 @@
                                             }
                                             else
                                             {
-                                                <MudTooltip Text="@(string.IsNullOrWhiteSpace(category.OfficeCode) ? "Shared record � read only" : "Owned by another office � read only")">
+                                                <MudTooltip Text="@(string.IsNullOrWhiteSpace(category.OfficeCode) ? "Shared record — read only" : "Owned by another office — read only")">
                                                     <MudIconButton Icon="@Icons.Material.Filled.Lock" Size="Size.Small" Color="Color.Default" Disabled="true" />
                                                 </MudTooltip>
                                             }
@@ -409,7 +409,7 @@
     private string SortIcon(string field)
     {
         if (_sortField != field) return string.Empty;
-        return _sortAscending ? "?" : "?";
+        return _sortAscending ? "▲" : "▼";
     }
 }
 

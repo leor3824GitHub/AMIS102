@@ -60,7 +60,7 @@
                     <MudAutocomplete T="PurchaseOrderSummaryDto"
                                      @bind-Value="_form.SelectedPurchaseOrder"
                                      SearchFunc="SearchPurchaseOrdersAsync"
-                                     ToStringFunc="@(x => x is null ? "" : $"{x.PoNumber} � {x.SupplierName}")"
+                                     ToStringFunc="@(x => x is null ? "" : $"{x.PoNumber} — {x.SupplierName}")"
                                      Label="Purchase Order (optional)"
                                      Variant="Variant.Outlined"
                                      Clearable="true"

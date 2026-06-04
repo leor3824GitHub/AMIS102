@@ -115,7 +115,7 @@
                                     <td>@item.DvDate.ToString("MM/dd/yyyy")</td>
                                     <td><MudText Typo="Typo.caption">@item.PurchaseOrderNumber</MudText></td>
                                     <td>@item.Payee</td>
-                                    <td style="text-align:right">?@item.Amount.ToString("N2")</td>
+                                    <td style="text-align:right">₱@item.Amount.ToString("N2")</td>
                                     <td>@DvStatusChip(item.Status)</td>
                                     <td>
                                         <MudStack Row="true" Spacing="0">
@@ -225,7 +225,7 @@
                         <MudItem xs="12">
                             <MudDivider />
                             <MudStack Row="true" JustifyContent="JustifyContent.FlexEnd" Class="mt-2">
-                                <MudText Typo="Typo.h6">Total Amount: <b>?@_detail.Amount.ToString("N2")</b></MudText>
+                                <MudText Typo="Typo.h6">Total Amount: <b>₱@_detail.Amount.ToString("N2")</b></MudText>
                             </MudStack>
                         </MudItem>
                     </MudGrid>

@@ -73,7 +73,7 @@
                                 @if (li.SelectedPPEItem is not null)
                                 {
                                     <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                        Status: @li.SelectedPPEItem.Status | ?@li.SelectedPPEItem.UnitCost.ToString("N2")
+                                        Status: @li.SelectedPPEItem.Status | ₱@li.SelectedPPEItem.UnitCost.ToString("N2")
                                     </MudText>
                                 }
                                 <MudTextField @bind-Value="li.SourceDocumentRef" Label="Source Doc Ref (PAR/PTR No.)"
@@ -182,15 +182,15 @@
                                     <td>@item.Description</td>
                                     <td>@(item.SourceDocumentRef ?? "-")</td>
                                     <td>@item.Quantity</td>
-                                    <td>?@item.UnitCost.ToString("N2")</td>
-                                    <td><b>?@item.TotalCost.ToString("N2")</b></td>
+                                    <td>₱@item.UnitCost.ToString("N2")</td>
+                                    <td><b>₱@item.TotalCost.ToString("N2")</b></td>
                                 </tr>
                             }
                         </tbody>
                         <tfoot>
                             <tr>
                                 <td colspan="6" style="text-align:right"><b>Total:</b></td>
-                                <td><b>?@_detail.Items.Sum(x => x.TotalCost).ToString("N2")</b></td>
+                                <td><b>₱@_detail.Items.Sum(x => x.TotalCost).ToString("N2")</b></td>
                             </tr>
                         </tfoot>
                     </MudSimpleTable>

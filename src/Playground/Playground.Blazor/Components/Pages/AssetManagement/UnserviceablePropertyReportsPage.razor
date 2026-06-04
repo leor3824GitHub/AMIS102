@@ -70,13 +70,13 @@
                                                  Value="li.SelectedProperty"
                                                  ValueChanged="@(v => li.SelectedProperty = v)"
                                                  SearchFunc="SearchEligibleProperties"
-                                                 ToStringFunc="@(x => x is null ? "" : $"{x.PropertyNo} � {x.ItemName} ({x.Status})")"
+                                                 ToStringFunc="@(x => x is null ? "" : $"{x.PropertyNo} — {x.ItemName} ({x.Status})")"
                                                  Label="Property (OnHand/Returned/LostStolenDamaged)" Variant="Variant.Outlined" Dense="true"
                                                  Required="true" Clearable="true" CoerceValue="true" ResetValueOnEmptyText="true" />
                                 @if (li.SelectedProperty is not null)
                                 {
                                     <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                        ?@li.SelectedProperty.UnitCost.ToString("N2") | @li.SelectedProperty.Status
+                                        ₱@li.SelectedProperty.UnitCost.ToString("N2") | @li.SelectedProperty.Status
                                     </MudText>
                                 }
                                 <MudTextField @bind-Value="li.ConditionRemarks" Label="Condition Remarks" Variant="Variant.Outlined"
@@ -175,7 +175,7 @@
                 <MudCardHeader>
                     <CardHeaderContent>
                         <MudStack Row="true" AlignItems="AlignItems.Center">
-                            <MudText Typo="Typo.h6">@_detail.ReportNo � @_detail.Date.ToString("MMMM dd, yyyy")</MudText>
+                            <MudText Typo="Typo.h6">@_detail.ReportNo — @_detail.Date.ToString("MMMM dd, yyyy")</MudText>
                             <MudSpacer />
                             <MudChip T="string" Size="Size.Small" Color="Color.Error">@_detail.DisposalMethod</MudChip>
                             <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="@(() => _detail = null)" />
@@ -215,7 +215,7 @@
                                     <td><b>@item.PropertyNo</b></td>
                                     <td>@(item.Description ?? "-")</td>
                                     <td><MudChip T="string" Size="Size.Small" Color="Color.Default">@item.CategoryAtTimeOfReport</MudChip></td>
-                                    <td>?@item.UnitCost.ToString("N2")</td>
+                                    <td>₱@item.UnitCost.ToString("N2")</td>
                                     <td><MudText Typo="Typo.caption">@(item.ConditionRemarks ?? "-")</MudText></td>
                                 </tr>
                             }
@@ -223,7 +223,7 @@
                         <tfoot>
                             <tr>
                                 <td colspan="4" style="text-align:right"><b>Total:</b></td>
-                                <td><b>?@_detail.Items.Sum(x => x.UnitCost).ToString("N2")</b></td>
+                                <td><b>₱@_detail.Items.Sum(x => x.UnitCost).ToString("N2")</b></td>
                                 <td></td>
                             </tr>
                         </tfoot>
@@ -302,7 +302,7 @@
         return results.Take(20);
     }
 
-    private static string ShortGuid(Guid id) => $"{id:D}"[..8] + "�";
+    private static string ShortGuid(Guid id) => $"{id:D}"[..8] + "…";
 
     private static string FormatEmployee(EmployeeReferenceDto? e) =>
         e is null ? "" : $"{e.FirstName} {e.LastName} ({e.EmployeeNumber})";

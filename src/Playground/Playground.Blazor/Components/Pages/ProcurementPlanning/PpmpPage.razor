@@ -33,7 +33,7 @@
                                  Variant="Variant.Outlined" SearchFunc="SearchDescriptions" ResetValueOnEmptyText="false"
                                  CoerceText="true" CoerceValue="true" Required="true"
                                  Dense="true" Margin="Margin.Dense" Size="Size.Small"
-                                 HelperText="Start typing � previous descriptions will appear"
+                                 HelperText="Start typing — previous descriptions will appear"
                                  Placeholder="Describe the procurement item or objective" />
             </MudItem>
 
@@ -180,7 +180,7 @@
                                 </td>
                                 <td>v@(row.VersionNumber)</td>
                                 <td>@StatusChip(row.Status)</td>
-                                <td>? @row.TotalEstimatedBudget.ToString("N2")</td>
+                                <td>₱@row.TotalEstimatedBudget.ToString("N2")</td>
                                 <td @onclick:stopPropagation="true">
                                     @if (row.Status is PpmpStatus.Draft or PpmpStatus.Returned)
                                     {
@@ -247,7 +247,7 @@
                                 <MudChip T="Guid" Value="v.Id" Size="Size.Small"
                                          Color="@(v.IsCurrentVersion ? Color.Primary : Color.Default)"
                                          OnClick="@(() => LoadVersionAsync(v.Id))">
-                                    v@(v.VersionNumber) � @v.Status
+                                    v@(v.VersionNumber) — @v.Status
                                 </MudChip>
                             }
                         </MudChipSet>
@@ -311,7 +311,7 @@
             @if (_editing is not null && _editing.Status == PpmpStatus.Returned)
             {
                 <MudAlert Severity="Severity.Error" Dense="true" Class="mb-3" Icon="@Icons.Material.Filled.Undo">
-                    <strong>Returned for revision</strong> � please address the feedback and resubmit.
+                    <strong>Returned for revision</strong> — please address the feedback and resubmit.
                     @if (!string.IsNullOrWhiteSpace(_editing.ReturnReason))
                     {
                         <div Class="mt-1"><em>"@_editing.ReturnReason"</em></div>
@@ -443,7 +443,7 @@
                                             }
                                         </td>
                                         <td style="vertical-align:middle; text-align:right; font-weight:600">
-                                            ? @item.EstimatedBudget.ToString("N2")
+                                            ₱@item.EstimatedBudget.ToString("N2")
                                         </td>
                                         @if (!_isReadOnly)
                                         {
@@ -465,7 +465,7 @@
                         <MudText Typo="Typo.subtitle2">Total Estimated Budget</MudText>
                         <MudSpacer />
                         <MudText Typo="Typo.subtitle2" Color="Color.Primary">
-                            ? @_form.Items.Sum(i => i.EstimatedBudget).ToString("N2")
+                            ₱@_form.Items.Sum(i => i.EstimatedBudget).ToString("N2")
                         </MudText>
                     </MudStack>
                 }

@@ -63,7 +63,7 @@
                                                 <MudText Typo="Typo.caption">� @item.ItemCount items</MudText>
                                                 <MudSpacer />
                                                 <MudText Typo="Typo.caption" Style="font-weight:600; color:var(--mud-palette-primary)">
-                                                    ? @item.TotalEstimatedBudget.ToString("N0")
+                                                    ₱@item.TotalEstimatedBudget.ToString("N0")
                                                 </MudText>
                                             </MudStack>
                                         </MudStack>
@@ -132,7 +132,7 @@
                                                 <MudText Typo="Typo.caption">� @item.ItemCount items</MudText>
                                                 <MudSpacer />
                                                 <MudText Typo="Typo.caption" Style="font-weight:600; color:var(--mud-palette-success)">
-                                                    ? @item.TotalEstimatedBudget.ToString("N0")
+                                                    ₱@item.TotalEstimatedBudget.ToString("N0")
                                                 </MudText>
                                             </MudStack>
                                         </MudStack>
@@ -205,7 +205,7 @@
                         <MudItem xs="6" sm="3">
                             <MudText Typo="Typo.caption" Color="Color.Secondary">Total Budget</MudText>
                             <MudText Typo="Typo.body2" Color="Color.Primary" Style="font-weight:700">
-                                ? @_detail.TotalEstimatedBudget.ToString("N2")
+                                ₱@_detail.TotalEstimatedBudget.ToString("N2")
                             </MudText>
                         </MudItem>
                         @if (_detail.ConsolidatedOn.HasValue)
@@ -226,7 +226,7 @@
                             <MudPaper Elevation="0" Class="pa-2"
                                       Style="border:1px solid var(--mud-palette-lines-default); border-radius:4px; min-width:140px">
                                 <MudText Typo="Typo.caption" Color="Color.Secondary">@tg.Key</MudText>
-                                <MudText Typo="Typo.body2" Style="font-weight:600">? @tg.Sum(i => i.EstimatedBudget).ToString("N2")</MudText>
+                                <MudText Typo="Typo.body2" Style="font-weight:600">₱@tg.Sum(i => i.EstimatedBudget).ToString("N2")</MudText>
                                 <MudText Typo="Typo.caption" Color="Color.Secondary">@tg.Count() items</MudText>
                             </MudPaper>
                         }
@@ -257,7 +257,7 @@
                                     <MudSpacer />
                                     <MudText Typo="Typo.caption"
                                              Style="font-weight:600; color:var(--mud-palette-primary)">
-                                        ? @officeGroup.Sum(i => i.EstimatedBudget).ToString("N2")
+                                        ₱@officeGroup.Sum(i => i.EstimatedBudget).ToString("N2")
                                     </MudText>
                                 </MudStack>
                             </div>
@@ -296,7 +296,7 @@
                                                 <td style="font-family:monospace">@item.Unit</td>
                                                 <td><MudText Typo="Typo.caption">@item.ModeOfProcurement</MudText></td>
                                                 <td style="text-align:right; font-weight:600">
-                                                    ? @item.EstimatedBudget.ToString("N2")
+                                                    ₱@item.EstimatedBudget.ToString("N2")
                                                 </td>
                                             </tr>
                                         }
@@ -313,7 +313,7 @@
                         <MudText Typo="Typo.subtitle2">Grand Total</MudText>
                         <MudSpacer />
                         <MudText Typo="Typo.subtitle1" Color="Color.Primary" Style="font-weight:700">
-                            ? @_detail.TotalEstimatedBudget.ToString("N2")
+                            ₱@_detail.TotalEstimatedBudget.ToString("N2")
                         </MudText>
                     </MudStack>
                 </MudCardContent>
@@ -341,7 +341,7 @@
                         <MudSpacer />
                         <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mr-2">
                             @_detail.Items.Count item@(_detail.Items.Count != 1 ? "s" : "") �
-                            ? @_detail.TotalEstimatedBudget.ToString("N2") total
+                            ₱@_detail.TotalEstimatedBudget.ToString("N2") total
                         </MudText>
                     </MudCardActions>
                 }

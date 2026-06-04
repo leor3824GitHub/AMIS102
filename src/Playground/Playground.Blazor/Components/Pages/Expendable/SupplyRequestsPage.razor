@@ -14,7 +14,7 @@
 @inject IFastReportSetupPreferences FastReportSetupPrefs
 @inject IUserProfileState UserProfileState
 
-<AMISPageHeader Title="Supply Requests" Description="Supply officer � approve, fulfill, and track employee supply requests" />
+<AMISPageHeader Title="Supply Requests" Description="Supply officer — approve, fulfill, and track employee supply requests" />
 
 <div class="mt-4">
     <MudTabs Elevation="1" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-4"
@@ -55,8 +55,8 @@
             </MudTable>
         </MudTabPanel>
 
-        <!-- ===== APPROVED � AWAITING ISSUE ===== -->
-        <MudTabPanel Text="Approved � Awaiting Issue" Icon="@Icons.Material.Filled.Inventory" BadgeData="@_approvedCount" BadgeColor="Color.Info">
+        <!-- ===== APPROVED — AWAITING ISSUE ===== -->
+        <MudTabPanel Text="Approved — Awaiting Issue" Icon="@Icons.Material.Filled.Inventory" BadgeData="@_approvedCount" BadgeColor="Color.Info">
             <MudTable @ref="_approvedTable" T="SupplyRequestDto"
                       ServerData="@(async (s, ct) => await LoadRequests(s, ct, "Approved"))"
                       Dense="true" Hover="true" Striped="true">
@@ -170,7 +170,7 @@
         <MudPaper Class="pa-4" Elevation="24" Style="width: min(900px, 95vw); max-height: 90vh; overflow: auto;">
             <MudText Typo="Typo.h6" Class="mb-3">
                 <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Class="mr-2" />
-                Approve Request � @_approveDialog.RequestNumber
+                Approve Request — @_approveDialog.RequestNumber
             </MudText>
 
             <MudStack Spacing="3">
@@ -238,7 +238,7 @@
         <MudPaper Class="pa-4" Elevation="24" Style="width: min(560px, 95vw);">
             <MudText Typo="Typo.h6" Class="mb-3">
                 <MudIcon Icon="@Icons.Material.Filled.Cancel" Color="Color.Error" Class="mr-2" />
-                Reject Request � @_rejectDialog.RequestNumber
+                Reject Request — @_rejectDialog.RequestNumber
             </MudText>
             <MudTextField @bind-Value="_rejectReason" Label="Reason for Rejection" Lines="3"
                           Placeholder="Enter reason..." Variant="Variant.Outlined" />
@@ -261,7 +261,7 @@
         <MudPaper Class="pa-4" Elevation="24" Style="width: min(560px, 95vw);">
             <MudText Typo="Typo.h6" Class="mb-3">
                 <MudIcon Icon="@Icons.Material.Filled.LocalShipping" Color="Color.Primary" Class="mr-2" />
-                Issue Supplies � @_fulfillDialog.RequestNumber
+                Issue Supplies — @_fulfillDialog.RequestNumber
             </MudText>
             <MudStack Spacing="2">
                 <MudAlert Severity="Severity.Info" Dense="true">
@@ -401,7 +401,7 @@
                 {
                     var name = g.First().WarehouseLocationName;
                     var display = string.IsNullOrWhiteSpace(name)
-                        ? $"Warehouse {g.Key.ToString()[..8]}�"
+                        ? $"Warehouse {g.Key.ToString()[..8]}…"
                         : name;
                     return new WarehouseOption(g.Key, display);
                 })
@@ -425,24 +425,24 @@
             var product = await ExpendableClient.ProductsGetAsync(productId);
             if (product != null) _productNames[productId] = product.Name;
         }
-        catch { _productNames[productId] = productId.ToString()[..8] + "�"; }
+        catch { _productNames[productId] = productId.ToString()[..8] + "…"; }
     }
 
     private string GetProductName(Guid productId) =>
-        _productNames.TryGetValue(productId, out var name) ? name : productId.ToString()[..8] + "�";
+        _productNames.TryGetValue(productId, out var name) ? name : productId.ToString()[..8] + "…";
 
     private string GetEmployeeName(string employeeId)
     {
         if (string.IsNullOrWhiteSpace(employeeId) || !Guid.TryParse(employeeId, out var id))
             return employeeId ?? "Unknown";
-        return _employeeNames.TryGetValue(id, out var name) ? name : id.ToString()[..8] + "�";
+        return _employeeNames.TryGetValue(id, out var name) ? name : id.ToString()[..8] + "…";
     }
 
     private string GetDepartmentName(string departmentId)
     {
         if (string.IsNullOrWhiteSpace(departmentId) || !Guid.TryParse(departmentId, out var id))
             return departmentId ?? "Unknown";
-        return _departmentNames.TryGetValue(id, out var name) ? name : id.ToString()[..8] + "�";
+        return _departmentNames.TryGetValue(id, out var name) ? name : id.ToString()[..8] + "…";
     }
 
     // ===== APPROVE =====
@@ -487,7 +487,7 @@
                 WarehouseLocationId = warehouseId
             };
             await SupplyRequestsClient.ApproveAsync(_approveDialog.Id, command);
-            Snackbar.Add($"Request {_approveDialog.RequestNumber} approved � stock reserved.", Severity.Success);
+            Snackbar.Add($"Request {_approveDialog.RequestNumber} approved — stock reserved.", Severity.Success);
             _showApproveDialog = false;
             await ReloadAllTables();
         }
@@ -540,7 +540,7 @@
         _isActioning = true;
         try
         {
-            // WarehouseLocationId stored at approval � pass null so server uses stored value
+            // WarehouseLocationId stored at approval — pass null so server uses stored value
             await SupplyRequestsClient.FulfillAsync(_fulfillDialog.Id);
             Snackbar.Add($"Supplies issued for {_fulfillDialog.RequestNumber}.", Severity.Success);
             _showFulfillDialog = false;

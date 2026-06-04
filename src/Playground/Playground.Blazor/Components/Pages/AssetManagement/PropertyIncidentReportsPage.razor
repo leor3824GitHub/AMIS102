@@ -65,13 +65,13 @@
                                              Value="row.SelectedProperty"
                                              ValueChanged="@(v => row.SelectedProperty = v)"
                                              SearchFunc="SearchProperties"
-                                             ToStringFunc="@(x => x is null ? "" : $"{x.PropertyNo} � {x.ItemName} ({x.Status})")"
+                                             ToStringFunc="@(x => x is null ? "" : $"{x.PropertyNo} — {x.ItemName} ({x.Status})")"
                                              Label="Property" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small"
                                              Required="true" Clearable="true" CoerceValue="true" ResetValueOnEmptyText="true" />
                             @if (row.SelectedProperty is not null)
                             {
                                 <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">
-                                    ?@row.SelectedProperty.UnitCost.ToString("N2") | @row.SelectedProperty.Status
+                                    ₱@row.SelectedProperty.UnitCost.ToString("N2") | @row.SelectedProperty.Status
                                 </MudText>
                             }
                         </MudPaper>
@@ -166,7 +166,7 @@
                 <MudCardHeader>
                     <CardHeaderContent>
                         <MudStack Row="true" AlignItems="AlignItems.Center">
-                            <MudText Typo="Typo.h6">@_detail.ReportNo � @_detail.Date.ToString("MMMM dd, yyyy")</MudText>
+                            <MudText Typo="Typo.h6">@_detail.ReportNo — @_detail.Date.ToString("MMMM dd, yyyy")</MudText>
                             <MudSpacer />
                             <MudChip T="string" Size="Size.Small" Color="@IncidentTypeColor(_detail.IncidentType)">@_detail.IncidentType</MudChip>
                             <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="@(() => _detail = null)" />
@@ -203,14 +203,14 @@
                                     <td><b>@item.PropertyNo</b></td>
                                     <td>@(item.Description ?? "-")</td>
                                     <td><MudChip T="string" Size="Size.Small" Color="Color.Default">@item.CategoryAtTimeOfReport</MudChip></td>
-                                    <td>?@item.UnitCost.ToString("N2")</td>
+                                    <td>₱@item.UnitCost.ToString("N2")</td>
                                 </tr>
                             }
                         </tbody>
                         <tfoot>
                             <tr>
                                 <td colspan="4" style="text-align:right"><b>Total Cost:</b></td>
-                                <td><b>?@_detail.Items.Sum(x => x.UnitCost).ToString("N2")</b></td>
+                                <td><b>₱@_detail.Items.Sum(x => x.UnitCost).ToString("N2")</b></td>
                             </tr>
                         </tfoot>
                     </MudSimpleTable>
@@ -272,7 +272,7 @@
 
     private async Task<IEnumerable<SemiExpendablePropertySummaryDto>> SearchProperties(string? value, CancellationToken ct)
     {
-        // Show all non-disposed properties � backend validates eligible statuses
+        // Show all non-disposed properties — backend validates eligible statuses
         var response = await PropertyClient.SearchAsync(value, page: 1, pageSize: 20, ct: ct);
         return response.Items;
     }

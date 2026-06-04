@@ -22,7 +22,7 @@
                     <MudAutocomplete T="PropertyItemCatalogSummaryDto"
                                      @bind-Value="_form.SelectedItem"
                                      SearchFunc="SearchItems"
-                                     ToStringFunc="@(x => x is null ? "" : $"{x.Code} � {x.Name}")"
+                                     ToStringFunc="@(x => x is null ? "" : $"{x.Code} — {x.Name}")"
                                      Label="Category Code" Variant="Variant.Outlined"
                                      Required="true" Clearable="true"
                                      ResetValueOnEmptyText="true" CoerceValue="true"
