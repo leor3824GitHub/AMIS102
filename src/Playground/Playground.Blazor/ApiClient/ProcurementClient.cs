@@ -184,6 +184,7 @@ internal interface ICanvassRequestClient
     Task<PagedResponse<CanvassRequestSummaryDto>> SearchAsync(string? keyword = null, CanvassRequestStatus? status = null, int page = 1, int pageSize = 20, DateOnly? fromDate = null, DateOnly? toDate = null, CancellationToken ct = default);
     Task<CanvassRequestDto?> GetAsync(Guid id, CancellationToken ct = default);
     Task<IReadOnlyList<CanvassablePrLineDto>> GetCanvassablePrLinesAsync(Guid purchaseRequestId, CancellationToken ct = default);
+    Task<IReadOnlyList<AwardedPrLineDto>> GetAwardedPrLinesAsync(Guid purchaseRequestId, CancellationToken ct = default);
     Task<byte[]> GetFastReportPdfAsync(Guid id, string? pageWidth = null, string? orientation = null, int? minRows = null, CancellationToken ct = default);
     Task<byte[]> GetRfqFastReportPdfAsync(Guid id, string? pageWidth = null, string? orientation = null, int? minRows = null, CancellationToken ct = default);
     Task<CanvassRequestDto> CreateAsync(CreateCanvassRequestCommand command, CancellationToken ct = default);
@@ -214,6 +215,13 @@ internal sealed class CanvassRequestClient(HttpClient http) : ICanvassRequestCli
     {
         var result = await http.GetFromJsonAsync<List<CanvassablePrLineDto>>(
             $"{Base}/pr/{purchaseRequestId}/canvassable-lines", ProcurementJson.Options, ct).ConfigureAwait(false);
+        return result ?? [];
+    }
+
+    public async Task<IReadOnlyList<AwardedPrLineDto>> GetAwardedPrLinesAsync(Guid purchaseRequestId, CancellationToken ct = default)
+    {
+        var result = await http.GetFromJsonAsync<List<AwardedPrLineDto>>(
+            $"{Base}/pr/{purchaseRequestId}/awarded-lines", ProcurementJson.Options, ct).ConfigureAwait(false);
         return result ?? [];
     }
 

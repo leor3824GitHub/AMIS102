@@ -92,16 +92,40 @@ public sealed class CanvassRequestDomainTests
     }
 
     [Fact]
-    public void AwardLines_PartialAward_Throws()
+    public void AwardLines_PartialAward_AwardsSelectedAndLeavesRest()
     {
         var canvass = CreateCanvass(itemNos: [1, 2]);
+        var supplier = Guid.NewGuid();
 
-        Should.Throw<InvalidOperationException>(() =>
-            canvass.AwardLines(Awards((1, Guid.NewGuid(), Guid.NewGuid(), 100m))));
+        // Award only line 1 — line 2 is left for another canvass (multi-canvass-per-PR workflow).
+        canvass.AwardLines(Awards((1, Guid.NewGuid(), supplier, 100m)));
+
+        canvass.Status.ShouldBe(CanvassRequestStatus.Awarded);
+        canvass.LineItems.Single(l => l.PrItemNo == 1).AwardedSupplierId.ShouldBe(supplier);
+        canvass.LineItems.Single(l => l.PrItemNo == 2).AwardedSupplierId.ShouldBeNull();
+        // Only one line awarded so far → it is the single aggregate supplier.
+        canvass.AwardedSupplierId.ShouldBe(supplier);
     }
 
     [Fact]
-    public void AwardLines_WhenAlreadyAwarded_Throws()
+    public void AwardLines_IncrementalAward_AccumulatesAcrossCalls()
+    {
+        var canvass = CreateCanvass(itemNos: [1, 2]);
+        var supplierA = Guid.NewGuid();
+        var supplierB = Guid.NewGuid();
+
+        canvass.AwardLines(Awards((1, Guid.NewGuid(), supplierA, 120m)));
+        // A later call awards the remaining line without disturbing the first award.
+        canvass.AwardLines(Awards((2, Guid.NewGuid(), supplierB, 80m)));
+
+        canvass.LineItems.Single(l => l.PrItemNo == 1).AwardedSupplierId.ShouldBe(supplierA);
+        canvass.LineItems.Single(l => l.PrItemNo == 2).AwardedSupplierId.ShouldBe(supplierB);
+        // Two different suppliers now → no single aggregate supplier.
+        canvass.AwardedSupplierId.ShouldBeNull();
+    }
+
+    [Fact]
+    public void AwardLines_WhenLineAlreadyAwardedOnThisCanvass_Throws()
     {
         var canvass = CreateCanvass(itemNos: [1]);
         canvass.AwardLines(Awards((1, Guid.NewGuid(), Guid.NewGuid(), 100m)));

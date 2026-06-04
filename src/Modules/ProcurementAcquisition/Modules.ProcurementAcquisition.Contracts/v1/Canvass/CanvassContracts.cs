@@ -72,6 +72,15 @@ public sealed record CanvassablePrLineDto(
     bool IsCovered,
     string? CoveringRivNumber);
 
+/// <summary>A PR line already awarded on one of the PR's canvasses. Used by the award dialog to grey out (lock)
+/// lines that a sibling canvass has already won, enforcing one canvass per awarded line.</summary>
+public sealed record AwardedPrLineDto(
+    int PrItemNo,
+    Guid CanvassRequestId,
+    string RivNumber,
+    Guid? AwardedSupplierId,
+    string? AwardedSupplierName);
+
 /// <summary>One ROPC committee signatory frozen at award time (Abstract of Canvass faithful reprint).</summary>
 public sealed record CanvassAwardSignatoryDto(int SortOrder, string Name, string Role);
 
@@ -165,6 +174,10 @@ public sealed record GetCanvassRequestQuery(Guid Id) : IQuery<CanvassRequestDto?
 
 /// <summary>Returns every line of a PR with its current canvass-coverage status (for the canvass create form).</summary>
 public sealed record GetCanvassablePrLinesQuery(Guid PurchaseRequestId) : IQuery<IReadOnlyList<CanvassablePrLineDto>>;
+
+/// <summary>Returns every PR line already awarded across the PR's non-cancelled canvasses (for greying out
+/// lines already won by a sibling canvass on the award dialog).</summary>
+public sealed record GetAwardedPrLinesQuery(Guid PurchaseRequestId) : IQuery<IReadOnlyList<AwardedPrLineDto>>;
 
 public sealed class SearchCanvassRequestsQuery : IQuery<PagedResponse<CanvassRequestSummaryDto>>
 {

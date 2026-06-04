@@ -601,7 +601,16 @@
         var detail = await Client.GetAsync(canvassId);
         if (detail is null || detail.Quotations.Count == 0) { Snackbar.Add("No quotations to award.", Severity.Warning); return; }
 
-        var parameters = new DialogParameters<CanvassAwardDialog> { { x => x.Canvass, detail } };
+        // Lines already awarded on a sibling canvass of the same PR — locked (greyed) in the award dialog.
+        var awardedElsewhere = (await Client.GetAwardedPrLinesAsync(detail.PurchaseRequestId))
+            .Where(a => a.CanvassRequestId != canvassId)
+            .ToList();
+
+        var parameters = new DialogParameters<CanvassAwardDialog>
+        {
+            { x => x.Canvass, detail },
+            { x => x.AwardedElsewhere, awardedElsewhere }
+        };
         var dialog = await DialogService.ShowAsync<CanvassAwardDialog>("Award Canvass", parameters,
             new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true });
         var result = await dialog.Result;
