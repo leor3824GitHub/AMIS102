@@ -1,4 +1,5 @@
 using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders;
 using Mediator;
 
 namespace AMIS.Modules.ProcurementAcquisition.Contracts.v1.Canvass;
@@ -21,6 +22,7 @@ public enum CanvassRequestStatus
 
 public sealed record CanvassQuotationLineItemDto(
     int ItemNo,
+    int PrItemNo,
     string Description,
     string Unit,
     decimal Quantity,
@@ -38,14 +40,27 @@ public sealed record CanvassQuotationDto(
     bool IsAwarded,
     IReadOnlyList<CanvassQuotationLineItemDto> LineItems);
 
-/// <summary>A Purchase Request line item covered by a canvass (snapshot taken at canvass creation).</summary>
+/// <summary>A Purchase Request line item covered by a canvass (snapshot taken at canvass creation).
+/// The <c>Awarded*</c> fields carry the per-line split-award winner; null until the canvass is awarded.</summary>
 public sealed record CanvassLineItemDto(
     int PrItemNo,
     string Description,
     string Unit,
     decimal Quantity,
     decimal EstimatedUnitCost,
-    decimal EstimatedTotalCost);
+    decimal EstimatedTotalCost,
+    Guid? AwardedQuotationId = null,
+    Guid? AwardedSupplierId = null,
+    string? AwardedSupplierName = null,
+    decimal? AwardedUnitPrice = null);
+
+/// <summary>A purchase order spawned from a canvass — one per winning supplier under split award.</summary>
+public sealed record CanvassPurchaseOrderRefDto(
+    Guid PurchaseOrderId,
+    string PoNumber,
+    Guid SupplierId,
+    string SupplierName,
+    PurchaseOrderStatus Status);
 
 /// <summary>A Purchase Request line with its current canvass-coverage status, used to populate the canvass create form.</summary>
 public sealed record CanvassablePrLineDto(
@@ -75,7 +90,10 @@ public sealed record CanvassRequestDto(
     IReadOnlyList<CanvassLineItemDto> LineItems,
     bool HasPurchaseOrder = false,
     string? PurchaseOrderNumber = null,
-    IReadOnlyList<CanvassAwardSignatoryDto>? AwardSignatories = null);
+    IReadOnlyList<CanvassAwardSignatoryDto>? AwardSignatories = null,
+    // Every PO spawned from this canvass. Under split award there is one per winning supplier;
+    // HasPurchaseOrder / PurchaseOrderNumber remain populated from the first for back-compat.
+    IReadOnlyList<CanvassPurchaseOrderRefDto>? PurchaseOrders = null);
 
 public sealed record CanvassRequestSummaryDto(
     Guid Id,
@@ -89,7 +107,8 @@ public sealed record CanvassRequestSummaryDto(
     DateTimeOffset CreatedOnUtc,
     bool HasPurchaseOrder = false,
     string? PurchaseOrderNumber = null,
-    bool HasSignedCopy = false);
+    bool HasSignedCopy = false,
+    int PurchaseOrderCount = 0);
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Commands
@@ -125,9 +144,18 @@ public sealed record UpdateQuotationCommand(
     string? DeliveryTerms,
     IReadOnlyList<AddQuotationLineItemRequest> LineItems) : ICommand<CanvassQuotationDto>;
 
+/// <summary>One line of a split award: the covered PR line and the quotation chosen to win it.</summary>
+public sealed record CanvassLineAwardRequest(
+    int PrItemNo,
+    Guid QuotationId);
+
+/// <summary>
+/// Awards a canvass line-by-line. Every covered line must appear exactly once; different lines may go to
+/// different suppliers, which is what lets the canvass fan out into one purchase order per winning supplier.
+/// </summary>
 public sealed record AwardCanvassCommand(
     Guid CanvassRequestId,
-    Guid AwardedQuotationId) : ICommand<CanvassRequestDto>;
+    IReadOnlyList<CanvassLineAwardRequest> LineAwards) : ICommand<CanvassRequestDto>;
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Queries

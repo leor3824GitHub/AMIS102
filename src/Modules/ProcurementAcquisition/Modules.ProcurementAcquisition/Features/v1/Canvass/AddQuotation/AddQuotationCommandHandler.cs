@@ -30,13 +30,14 @@ public sealed class AddQuotationCommandHandler(
         if (command.LineItems.Count == 0)
             throw new InvalidOperationException("A quotation must include at least one line item.");
 
-        // Quoted items must be within this canvass's covered scope (partial quotes allowed).
-        var coveredDescriptions = canvass.LineItems
-            .Select(li => li.Description.Trim().ToLowerInvariant())
-            .ToHashSet();
+        // Map each covered PR line by normalized description so quoted lines can be stamped with their PrItemNo
+        // (the partition key used by award / Abstract / PO generation). A canvass covering two lines with the
+        // same normalized description is ambiguous — reject rather than guess which PR line a quote answers.
+        var prItemNoByDescription = CanvassQuotationLineResolver.BuildPrItemNoLookup(canvass);
 
+        // Quoted items must be within this canvass's covered scope (partial quotes allowed).
         var outOfScope = command.LineItems
-            .Where(li => !coveredDescriptions.Contains((li.Description ?? string.Empty).Trim().ToLowerInvariant()))
+            .Where(li => !prItemNoByDescription.ContainsKey((li.Description ?? string.Empty).Trim().ToLowerInvariant()))
             .Select(li => li.Description)
             .ToList();
         if (outOfScope.Count > 0)
@@ -44,7 +45,8 @@ public sealed class AddQuotationCommandHandler(
                 $"The following quoted item(s) are not part of this canvass: {string.Join(", ", outOfScope)}.");
 
         var lineItems = command.LineItems.Select(li =>
-            (li.Description, li.Unit, li.Quantity, li.UnitPrice));
+            (prItemNoByDescription[(li.Description ?? string.Empty).Trim().ToLowerInvariant()],
+             li.Description ?? string.Empty, li.Unit, li.Quantity, li.UnitPrice));
 
         var quotation = CanvassQuotation.Create(
             tenantId,
@@ -72,7 +74,7 @@ public sealed class AddQuotationCommandHandler(
             quotation.DeliveryTerms,
             quotation.IsAwarded,
             quotation.LineItems.Select(li => new CanvassQuotationLineItemDto(
-                li.ItemNo, li.Description, li.Unit, li.Quantity, li.UnitPrice, li.Total)).ToList());
+                li.ItemNo, li.PrItemNo, li.Description, li.Unit, li.Quantity, li.UnitPrice, li.Total)).ToList());
     }
 
     private string GetRequiredTenantId() =>

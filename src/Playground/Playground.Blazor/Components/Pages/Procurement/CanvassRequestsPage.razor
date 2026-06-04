@@ -2,11 +2,13 @@
 @using AMIS.Playground.Blazor.Components.Pages.Procurement
 @using AMIS.Modules.ProcurementAcquisition.Contracts.Permissions
 @using AMIS.Modules.ProcurementAcquisition.Contracts.v1.Canvass
+@using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders
 @using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests
 @using AMIS.Modules.ProcurementAcquisition.Contracts.v1.SignedDocuments
 @using AMIS.Framework.Shared.Persistence
 @using AMIS.Playground.Blazor.ApiClient
 @inject ICanvassRequestClient Client
+@inject IPurchaseOrderClient PoClient
 @inject IPurchaseRequestClient PurchaseRequestClient
 @inject IMaster_dataClient MasterDataClient
 @inject ISnackbar Snackbar
@@ -235,19 +237,14 @@
                                                                    OnClick="@(async () => await AwardAsync(item.Id))" />
                                                 </MudTooltip>
                                             }
-                                            @if (item.Status == CanvassRequestStatus.Awarded && _canCreatePo && !item.HasPurchaseOrder)
+                                            @if (item.Status == CanvassRequestStatus.Awarded && _canCreatePo)
                                             {
-                                                <MudTooltip Text="Create Purchase Order from awarded quotation">
+                                                <MudTooltip Text="@(item.HasPurchaseOrder
+                                                    ? $"{item.PurchaseOrderCount} PO(s) generated — click to generate any remaining suppliers"
+                                                    : "Generate one purchase order per winning supplier")">
                                                     <MudIconButton Icon="@Icons.Material.Filled.ShoppingCart" Size="Size.Small"
-                                                                   Color="Color.Primary"
-                                                                   OnClick="@(() => GoToPurchaseOrder(item.Id))" />
-                                                </MudTooltip>
-                                            }
-                                            else if (item.HasPurchaseOrder)
-                                            {
-                                                <MudTooltip Text="@($"Purchase Order already created: {item.PurchaseOrderNumber}")">
-                                                    <MudIconButton Icon="@Icons.Material.Filled.ShoppingCart" Size="Size.Small"
-                                                                   Color="Color.Default" Disabled="true" />
+                                                                   Color="@(item.HasPurchaseOrder ? Color.Success : Color.Primary)"
+                                                                   OnClick="@(async () => await GeneratePurchaseOrdersAsync(item.Id))" />
                                                 </MudTooltip>
                                             }
                                             @if (item.Status == CanvassRequestStatus.Awarded && (item.HasSignedCopy ? _canViewSignedCopy : _canUploadSignedCopy))
@@ -338,32 +335,14 @@
                                                                     <td style="text-align:right">₱@q.LineItems.Sum(li => li.Total).ToString("N2")</td>
                                                                     <td>@(q.DeliveryTerms ?? "—")</td>
                                                                     <td>
-                                                                        @if (q.IsAwarded)
-                                                                        {
-                                                                            <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
-                                                                                <MudChip T="string" Size="Size.Small" Color="Color.Success" Icon="@Icons.Material.Filled.Star">Awarded</MudChip>
-                                                                                @if (_selectedDetail.HasPurchaseOrder)
-                                                                                {
-                                                                                    <MudChip T="string" Size="Size.Small" Color="Color.Info" Icon="@Icons.Material.Filled.ShoppingCart">
-                                                                                        PO @_selectedDetail.PurchaseOrderNumber
-                                                                                    </MudChip>
-                                                                                }
-                                                                                else if (_canCreatePo)
-                                                                                {
-                                                                                    <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary"
-                                                                                               StartIcon="@Icons.Material.Filled.ShoppingCart"
-                                                                                               OnClick="@(() => GoToPurchaseOrder(_selectedDetail.Id))">
-                                                                                        Create PO
-                                                                                    </MudButton>
-                                                                                }
-                                                                            </MudStack>
+                                                                        @{
+                                                                            var wonCount = _selectedDetail.LineItems.Count(li => li.AwardedQuotationId == q.Id);
                                                                         }
-                                                                        else if (_selectedDetail.Status == CanvassRequestStatus.Open && _canAward)
+                                                                        @if (q.IsAwarded || wonCount > 0)
                                                                         {
-                                                                            <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Success"
-                                                                                       OnClick="@(async () => await AwardToQuotation(_selectedDetail.Id, q.Id))">
-                                                                                Award
-                                                                            </MudButton>
+                                                                            <MudChip T="string" Size="Size.Small" Color="Color.Success" Icon="@Icons.Material.Filled.Star">
+                                                                                Won @wonCount line(s)
+                                                                            </MudChip>
                                                                         }
                                                                     </td>
                                                                 </tr>
@@ -621,19 +600,18 @@
     {
         var detail = await Client.GetAsync(canvassId);
         if (detail is null || detail.Quotations.Count == 0) { Snackbar.Add("No quotations to award.", Severity.Warning); return; }
-        // Award to the lowest-priced quotation
-        var lowest = detail.Quotations.OrderBy(q => q.LineItems.Sum(li => li.Total)).First();
-        await AwardToQuotation(canvassId, lowest.Id);
-    }
 
-    private async Task AwardToQuotation(Guid canvassId, Guid quotationId)
-    {
-        var ok = await DialogService.ShowMessageBox("Award Canvass", "Award this canvass to the selected supplier?", "Award", cancelText: "Cancel");
-        if (ok is not true) return;
+        var parameters = new DialogParameters<CanvassAwardDialog> { { x => x.Canvass, detail } };
+        var dialog = await DialogService.ShowAsync<CanvassAwardDialog>("Award Canvass", parameters,
+            new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true });
+        var result = await dialog.Result;
+        if (result is null || result.Canceled || result.Data is not IReadOnlyList<CanvassLineAwardRequest> lineAwards)
+            return;
+
         _busy = true;
         try
         {
-            await Client.AwardAsync(canvassId, quotationId);
+            await Client.AwardAsync(canvassId, lineAwards);
             Snackbar.Add("Canvass awarded.", Severity.Success);
             if (_selected?.Id == canvassId) await SelectCanvass(canvassId);
             await LoadAsync();
@@ -642,8 +620,28 @@
         finally { _busy = false; }
     }
 
-    private void GoToPurchaseOrder(Guid canvassId) =>
-        Nav.NavigateTo($"/procurement/purchase-orders?canvassId={canvassId}");
+    private async Task GeneratePurchaseOrdersAsync(Guid canvassId)
+    {
+        var parameters = new DialogParameters<GeneratePurchaseOrdersDialog> { { x => x.CanvassRequestId, canvassId } };
+        var dialog = await DialogService.ShowAsync<GeneratePurchaseOrdersDialog>("Generate Purchase Orders", parameters,
+            new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true });
+        var result = await dialog.Result;
+        if (result is null || result.Canceled || result.Data is not CreatePurchaseOrdersFromCanvassCommand command)
+            return;
+
+        _busy = true;
+        try
+        {
+            var pos = await PoClient.CreateFromCanvassAsync(command);
+            Snackbar.Add(pos.Count == 0
+                ? "All winning suppliers already have purchase orders."
+                : $"Generated {pos.Count} purchase order(s).", Severity.Success);
+            if (_selected?.Id == canvassId) await SelectCanvass(canvassId);
+            await LoadAsync();
+        }
+        catch (Exception ex) { Snackbar.Add($"PO generation failed: {ex.Message}", Severity.Error); }
+        finally { _busy = false; }
+    }
 
     private async Task DownloadFastReportPdfAsync(Guid id)
     {

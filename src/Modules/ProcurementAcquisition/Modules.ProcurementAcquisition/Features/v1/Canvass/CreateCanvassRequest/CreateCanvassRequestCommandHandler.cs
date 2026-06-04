@@ -115,6 +115,11 @@ public sealed class CreateCanvassRequestCommandHandler(
 
     internal static CanvassRequestDto MapToDto(CanvassRequest canvass, string prNumber)
     {
+        // Per-line awarded supplier names come from the canvass's own quotations (frozen suppliers).
+        var supplierNameById = canvass.Quotations
+            .GroupBy(q => q.SupplierId)
+            .ToDictionary(g => g.Key, g => g.First().SupplierName);
+
         return new CanvassRequestDto(
             canvass.Id,
             canvass.RivNumber,
@@ -134,12 +139,15 @@ public sealed class CreateCanvassRequestCommandHandler(
                 q.DeliveryTerms,
                 q.IsAwarded,
                 q.LineItems.Select(li => new CanvassQuotationLineItemDto(
-                    li.ItemNo, li.Description, li.Unit, li.Quantity, li.UnitPrice, li.Total)).ToList()
+                    li.ItemNo, li.PrItemNo, li.Description, li.Unit, li.Quantity, li.UnitPrice, li.Total)).ToList()
             )).ToList(),
             canvass.CreatedOnUtc,
             canvass.CreatedBy,
             canvass.LineItems.Select(li => new CanvassLineItemDto(
-                li.PrItemNo, li.Description, li.Unit, li.Quantity, li.EstimatedUnitCost, li.EstimatedTotalCost)).ToList(),
+                li.PrItemNo, li.Description, li.Unit, li.Quantity, li.EstimatedUnitCost, li.EstimatedTotalCost,
+                li.AwardedQuotationId, li.AwardedSupplierId,
+                li.AwardedSupplierId is { } sid && supplierNameById.TryGetValue(sid, out var name) ? name : null,
+                li.AwardedUnitPrice)).ToList(),
             AwardSignatories: canvass.AwardSignatories
                 .Select(s => new CanvassAwardSignatoryDto(s.SortOrder, s.Name, s.Role)).ToList());
     }

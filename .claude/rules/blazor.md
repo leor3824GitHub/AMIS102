@@ -300,3 +300,30 @@ Canonical reference: [DepartmentIssuanceReportPage.razor](../../src/Playground/P
 All API clients (`IMaster_dataClient`, `ILookupClient`, etc.) are registered **Transient** in `ApiClientRegistration.cs`. They are stateless and resolved fresh per injection point. Do not cache them manually — inject and use directly.
 
 **Details:** See `src/Playground/Playground.Blazor/Services/Api/ApiClientRegistration.cs`
+
+---
+
+## Unicode / Encoding in `.razor` Files
+
+`.razor` files contain non-ASCII glyphs in UI text: `₱` (peso, U+20B1), `—` em-dash, `…` ellipsis, `→` arrow, `≤`/`≥`, `≈`, `§`, `▲`/`▼` sort indicators, and Filipino names (`ñ`). **These files MUST be saved as UTF-8.**
+
+### The recurring bug
+
+Saving a `.razor` file in a non-UTF-8 codepage (ANSI/Windows-1252) silently corrupts every non-ASCII glyph by **one of two mechanisms**:
+
+- Downgraded to `?` (ASCII 0x3F) — e.g. `₱@item.Amount` becomes `?@item.Amount`, rendering "?12.25" instead of "₱12.25".
+- Replaced with `�` (U+FFFD, bytes `EF BF BD`) — e.g. `Code — Name` becomes `Code � Name`.
+
+Note: a Razor `? @expr` / `?@expr` in **markup** is always a literal `?` + expression — real C# ternaries never put `@` after `?` — so those are reliably peso corruption, not code.
+
+### Rules
+
+| ⚠️ Rule | Why |
+| --- | --- |
+| Editor must save `.razor`/`.cs` as **UTF-8** (`"files.encoding": "utf8"` in VS Code) | Otherwise the next save re-corrupts every `₱`, `—`, `→`, `ñ`, etc. |
+| Detect corruption before committing: `Grep "�\|\?@\|\? @\|AdornmentText=\"\?\""` | Any hit means a glyph was lost |
+| Never "fix" these with a blind global `?`→`₱` replace | `?` is also ternaries, nullables, query strings, and real question marks — context-match instead (peso = `?@`/`? @`/`AdornmentText="?"`/`"?"+money`/`?5,000`) |
+| `�` (U+FFFD) is unrecoverable — the original glyph is **lost** and must be inferred from context | separators→`—`, truncation `[..N]+`→`…`, units→`≈`, names→`ñ`, directional (Transfer/ICS/PAR)→`→` |
+| When bulk-fixing via script, use a byte-safe Latin1 round-trip (`ISO-8859-1` decode → replace → encode) | Preserves encoding/BOM exactly; plain text I/O can re-encode and strip BOM. **Verify quotes survived** (`grep -o '"' \| wc -l`) — a buggy refactor script once stripped every `"` from `PPEIssuanceReportsPage.razor` and committed it unbuildable |
+
+The PDF generators and domain `.cs` (e.g. `EmployeeIssuancePdfDocument.cs`, `AssetCategory.cs`) were saved correctly as UTF-8 and use `₱`/`≤`/`≈` directly — keep them that way.

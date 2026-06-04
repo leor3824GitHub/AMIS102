@@ -5,6 +5,12 @@ namespace AMIS.Modules.ProcurementAcquisition.Domain.Canvass;
 public sealed class CanvassQuotationLineItem
 {
     public int ItemNo { get; private set; }
+
+    /// <summary>The covered PR line this quotation line answers, resolved from the description at entry time.
+    /// Lets the award, Abstract of Canvass, and PO generation key off the PR line rather than fragile
+    /// description matching. <c>0</c> only for legacy rows created before split-award.</summary>
+    public int PrItemNo { get; private set; }
+
     public string Description { get; private set; } = default!;
     public string Unit { get; private set; } = default!;
     public decimal Quantity { get; private set; }
@@ -13,11 +19,12 @@ public sealed class CanvassQuotationLineItem
 
     private CanvassQuotationLineItem() { }
 
-    public static CanvassQuotationLineItem Create(int itemNo, string description, string unit, decimal quantity, decimal unitPrice)
+    public static CanvassQuotationLineItem Create(int itemNo, int prItemNo, string description, string unit, decimal quantity, decimal unitPrice)
     {
         return new CanvassQuotationLineItem
         {
             ItemNo = itemNo,
+            PrItemNo = prItemNo,
             Description = description,
             Unit = unit,
             Quantity = quantity,
@@ -61,7 +68,7 @@ public sealed class CanvassQuotation : AggregateRoot<Guid>, IHasTenant, IAuditab
         string? tinNumber,
         DateOnly quotationDate,
         string? deliveryTerms,
-        IEnumerable<(string Description, string Unit, decimal Quantity, decimal UnitPrice)> lineItems)
+        IEnumerable<(int PrItemNo, string Description, string Unit, decimal Quantity, decimal UnitPrice)> lineItems)
     {
         var quotation = new CanvassQuotation
         {
@@ -79,9 +86,9 @@ public sealed class CanvassQuotation : AggregateRoot<Guid>, IHasTenant, IAuditab
         };
 
         var itemNo = 1;
-        foreach (var (desc, unit, qty, price) in lineItems)
+        foreach (var (prItemNo, desc, unit, qty, price) in lineItems)
         {
-            quotation._lineItems.Add(CanvassQuotationLineItem.Create(itemNo++, desc, unit, qty, price));
+            quotation._lineItems.Add(CanvassQuotationLineItem.Create(itemNo++, prItemNo, desc, unit, qty, price));
         }
 
         return quotation;
@@ -93,7 +100,7 @@ public sealed class CanvassQuotation : AggregateRoot<Guid>, IHasTenant, IAuditab
         string? tinNumber,
         DateOnly quotationDate,
         string? deliveryTerms,
-        IEnumerable<(string Description, string Unit, decimal Quantity, decimal UnitPrice)> lineItems)
+        IEnumerable<(int PrItemNo, string Description, string Unit, decimal Quantity, decimal UnitPrice)> lineItems)
     {
         SupplierName = supplierName;
         SupplierAddress = supplierAddress;
@@ -104,9 +111,9 @@ public sealed class CanvassQuotation : AggregateRoot<Guid>, IHasTenant, IAuditab
 
         _lineItems.Clear();
         var itemNo = 1;
-        foreach (var (desc, unit, qty, price) in lineItems)
+        foreach (var (prItemNo, desc, unit, qty, price) in lineItems)
         {
-            _lineItems.Add(CanvassQuotationLineItem.Create(itemNo++, desc, unit, qty, price));
+            _lineItems.Add(CanvassQuotationLineItem.Create(itemNo++, prItemNo, desc, unit, qty, price));
         }
     }
 

@@ -1,0 +1,84 @@
+@using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">Generate Purchase Orders</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudText Typo="Typo.body2" Class="mb-3">
+            One purchase order will be created per winning supplier from this awarded canvass.
+            These terms apply to every generated PO.
+        </MudText>
+        <MudGrid Spacing="2">
+            <MudItem xs="12" sm="6">
+                <MudSelect T="ModeOfProcurement" Label="Mode of Procurement" Dense="true" Margin="Margin.Dense"
+                           Variant="Variant.Outlined" @bind-Value="_mode">
+                    @foreach (var m in Enum.GetValues<ModeOfProcurement>())
+                    {
+                        <MudSelectItem T="ModeOfProcurement" Value="@m">@m.ToString()</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="_placeOfDelivery" Label="Place of Delivery" Dense="true"
+                              Margin="Margin.Dense" Variant="Variant.Outlined" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudDatePicker @bind-Date="_dateOfDelivery" Label="Date of Delivery" Margin="Margin.Dense"
+                               Variant="Variant.Outlined" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="_deliveryTerm" Label="Delivery Term" Dense="true"
+                              Margin="Margin.Dense" Variant="Variant.Outlined" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="_paymentTerm" Label="Payment Term" Dense="true"
+                              Margin="Margin.Dense" Variant="Variant.Outlined" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="_fundCluster" Label="Fund Cluster (optional)" Dense="true"
+                              Margin="Margin.Dense" Variant="Variant.Outlined" />
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" Disabled="@(!CanGenerate)" OnClick="Submit">
+            Generate POs
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance Dialog { get; set; } = default!;
+    [Parameter] public Guid CanvassRequestId { get; set; }
+
+    private ModeOfProcurement _mode = ModeOfProcurement.SmallValueProcurement;
+    private string _placeOfDelivery = "";
+    private DateTime? _dateOfDelivery;
+    private string _deliveryTerm = "";
+    private string _paymentTerm = "";
+    private string _fundCluster = "";
+
+    private bool CanGenerate =>
+        !string.IsNullOrWhiteSpace(_placeOfDelivery)
+        && !string.IsNullOrWhiteSpace(_deliveryTerm)
+        && !string.IsNullOrWhiteSpace(_paymentTerm);
+
+    private void Submit()
+    {
+        var command = new CreatePurchaseOrdersFromCanvassCommand(
+            CanvassRequestId,
+            _mode,
+            _placeOfDelivery.Trim(),
+            _dateOfDelivery is { } d ? DateOnly.FromDateTime(d) : null,
+            _deliveryTerm.Trim(),
+            _paymentTerm.Trim(),
+            string.IsNullOrWhiteSpace(_fundCluster) ? null : _fundCluster.Trim(),
+            null);
+
+        Dialog.Close(DialogResult.Ok(command));
+    }
+
+    private void Cancel() => Dialog.Cancel();
+}

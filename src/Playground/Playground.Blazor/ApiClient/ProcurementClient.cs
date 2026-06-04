@@ -188,7 +188,7 @@ internal interface ICanvassRequestClient
     Task<byte[]> GetRfqFastReportPdfAsync(Guid id, string? pageWidth = null, string? orientation = null, int? minRows = null, CancellationToken ct = default);
     Task<CanvassRequestDto> CreateAsync(CreateCanvassRequestCommand command, CancellationToken ct = default);
     Task<CanvassQuotationDto> AddQuotationAsync(Guid canvassRequestId, AddQuotationCommand command, CancellationToken ct = default);
-    Task<CanvassRequestDto> AwardAsync(Guid canvassRequestId, Guid awardedQuotationId, CancellationToken ct = default);
+    Task<CanvassRequestDto> AwardAsync(Guid canvassRequestId, IReadOnlyList<CanvassLineAwardRequest> lineAwards, CancellationToken ct = default);
 }
 
 internal sealed class CanvassRequestClient(HttpClient http) : ICanvassRequestClient
@@ -277,9 +277,9 @@ internal sealed class CanvassRequestClient(HttpClient http) : ICanvassRequestCli
         return (await r.Content.ReadFromJsonAsync<CanvassQuotationDto>(ProcurementJson.Options, ct))!;
     }
 
-    public async Task<CanvassRequestDto> AwardAsync(Guid canvassRequestId, Guid awardedQuotationId, CancellationToken ct = default)
+    public async Task<CanvassRequestDto> AwardAsync(Guid canvassRequestId, IReadOnlyList<CanvassLineAwardRequest> lineAwards, CancellationToken ct = default)
     {
-        using var r = await http.PostAsJsonAsync($"{Base}/{canvassRequestId}/award", new AwardCanvassCommand(canvassRequestId, awardedQuotationId), ProcurementJson.Options, ct);
+        using var r = await http.PostAsJsonAsync($"{Base}/{canvassRequestId}/award", new AwardCanvassCommand(canvassRequestId, lineAwards), ProcurementJson.Options, ct);
         r.EnsureSuccessStatusCode();
         return (await r.Content.ReadFromJsonAsync<CanvassRequestDto>(ProcurementJson.Options, ct))!;
     }
@@ -293,6 +293,7 @@ internal interface IPurchaseOrderClient
     Task<PurchaseOrderDto?> GetAsync(Guid id, CancellationToken ct = default);
     Task<byte[]> GetFastReportPdfAsync(Guid id, string? pageWidth = null, string? orientation = null, int? minRows = null, CancellationToken ct = default);
     Task<PurchaseOrderDto> CreateAsync(PurchaseOrderContracts.CreatePurchaseOrderCommand command, CancellationToken ct = default);
+    Task<IReadOnlyList<PurchaseOrderDto>> CreateFromCanvassAsync(CreatePurchaseOrdersFromCanvassCommand command, CancellationToken ct = default);
     Task<PurchaseOrderDto> UpdateAsync(Guid id, UpdatePurchaseOrderCommand command, CancellationToken ct = default);
     Task<PurchaseOrderDto> SubmitAsync(Guid id, CancellationToken ct = default);
     Task<PurchaseOrderDto> CertifyFundsAvailableAsync(Guid id, CertifyPurchaseOrderFundsAvailableCommand command, CancellationToken ct = default);
@@ -356,6 +357,20 @@ internal sealed class PurchaseOrderClient(HttpClient http) : IPurchaseOrderClien
 
         r.EnsureSuccessStatusCode();
         return (await r.Content.ReadFromJsonAsync<PurchaseOrderDto>(ProcurementJson.Options, ct))!;
+    }
+
+    public async Task<IReadOnlyList<PurchaseOrderDto>> CreateFromCanvassAsync(CreatePurchaseOrdersFromCanvassCommand command, CancellationToken ct = default)
+    {
+        using var r = await http.PostAsJsonAsync($"{Base}/from-canvass", command, ProcurementJson.Options, ct);
+
+        if (r.StatusCode == HttpStatusCode.Conflict)
+        {
+            var detail = await ReadProblemDetailAsync(r, ct);
+            throw new DuplicatePurchaseOrderException(detail ?? "Purchase orders could not be generated from this canvass.");
+        }
+
+        r.EnsureSuccessStatusCode();
+        return (await r.Content.ReadFromJsonAsync<IReadOnlyList<PurchaseOrderDto>>(ProcurementJson.Options, ct))!;
     }
 
     private static async Task<string?> ReadProblemDetailAsync(HttpResponseMessage response, CancellationToken ct)

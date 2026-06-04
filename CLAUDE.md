@@ -92,6 +92,7 @@ Modules/{Module}/Features/v1/{Feature}/
 | Use `IOrganizationProfileState` for agency/officer data in reports   | Scoped session state — zero HTTP calls per page   |
 | Never fetch org profile per-page with `IOrganizationProfileClient`   | Already loaded by `PlaygroundLayout` at session start |
 | Gate every action button with `UserProfileState.Permissions.Contains(...)` | Mirror the endpoint's `.RequirePermission()` so users don't see buttons they can't use |
+| Save `.razor`/`.cs` as **UTF-8** — never ANSI                         | Non-ASCII glyphs (`₱ — … → ≤ ñ`) corrupt to `?`/`�` on a non-UTF-8 save |
 
 Details: See `.claude/rules/blazor.md`
 

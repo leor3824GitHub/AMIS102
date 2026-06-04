@@ -123,6 +123,22 @@ public sealed record CreatePurchaseOrderCommand(
     IReadOnlyList<PurchaseOrderLineItemRequest> LineItems,
     bool AllowDuplicate = false) : ICommand<PurchaseOrderDto>;
 
+/// <summary>
+/// Generates one purchase order per winning supplier from a fully-awarded canvass (split award). Supplier
+/// headers and line items (with awarded unit prices) are derived from the canvass; the caller supplies only
+/// the shared PO terms applied to every generated PO. Idempotent — suppliers that already have a non-cancelled
+/// PO for the canvass are skipped.
+/// </summary>
+public sealed record CreatePurchaseOrdersFromCanvassCommand(
+    Guid CanvassRequestId,
+    ModeOfProcurement ModeOfProcurement,
+    string PlaceOfDelivery,
+    DateOnly? DateOfDelivery,
+    string DeliveryTerm,
+    string PaymentTerm,
+    string? FundCluster,
+    string? OursBursNumber) : ICommand<IReadOnlyList<PurchaseOrderDto>>;
+
 public sealed record UpdatePurchaseOrderCommand(
     Guid Id,
     Guid SupplierId,

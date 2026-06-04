@@ -1,0 +1,133 @@
+@using AMIS.Modules.ProcurementAcquisition.Contracts.v1.Canvass
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">Award Canvass @Canvass.RivNumber</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudText Typo="Typo.body2" Class="mb-3">
+            Choose the winning supplier for each line. The lowest quoted price is pre-selected; different lines
+            may go to different suppliers, and one purchase order is generated per winning supplier.
+        </MudText>
+
+        @if (_rows.Count == 0)
+        {
+            <MudAlert Severity="Severity.Warning" Dense="true">
+                No quotations cover these lines yet. Add quotations before awarding.
+            </MudAlert>
+        }
+        else
+        {
+            <MudSimpleTable Dense="true" Bordered="true" Striped="true">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Description</th>
+                        <th style="text-align:right">Qty</th>
+                        <th>Awarded To</th>
+                        <th style="text-align:right">Unit Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in _rows)
+                    {
+                        <tr>
+                            <td>@row.PrItemNo</td>
+                            <td>@row.Description</td>
+                            <td style="text-align:right">@row.Quantity.ToString("N0")</td>
+                            <td>
+                                @if (row.Candidates.Count == 0)
+                                {
+                                    <MudText Color="Color.Error" Typo="Typo.caption">No quote for this line</MudText>
+                                }
+                                else
+                                {
+                                    <MudSelect T="Guid" Dense="true" Margin="Margin.Dense" Variant="Variant.Outlined"
+                                               Value="@row.SelectedQuotationId"
+                                               ValueChanged="@(v => row.SelectedQuotationId = v)">
+                                        @foreach (var c in row.Candidates)
+                                        {
+                                            <MudSelectItem T="Guid" Value="@c.QuotationId">
+                                                @c.SupplierName — @c.UnitPrice.ToString("N2")
+                                            </MudSelectItem>
+                                        }
+                                    </MudSelect>
+                                }
+                            </td>
+                            <td style="text-align:right">@row.SelectedUnitPrice.ToString("N2")</td>
+                        </tr>
+                    }
+                </tbody>
+            </MudSimpleTable>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled"
+                   Disabled="@(!CanAward)" OnClick="Submit">Award</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance Dialog { get; set; } = default!;
+    [Parameter] public CanvassRequestDto Canvass { get; set; } = default!;
+
+    private readonly List<LineRow> _rows = [];
+
+    // Every covered line must have a candidate selected before the canvass can be awarded (no partial award).
+    private bool CanAward => _rows.Count > 0 && _rows.All(r => r.Candidates.Count > 0);
+
+    protected override void OnInitialized()
+    {
+        foreach (var line in Canvass.LineItems.OrderBy(l => l.PrItemNo))
+        {
+            var candidates = Canvass.Quotations
+                .Select(q => new Candidate(
+                    q.Id,
+                    q.SupplierName,
+                    q.LineItems.FirstOrDefault(li => li.PrItemNo == line.PrItemNo)?.UnitPrice))
+                .Where(c => c.RawUnitPrice is not null)
+                .Select(c => new Candidate(c.QuotationId, c.SupplierName, c.RawUnitPrice))
+                .OrderBy(c => c.RawUnitPrice)
+                .ToList();
+
+            var row = new LineRow
+            {
+                PrItemNo = line.PrItemNo,
+                Description = line.Description,
+                Quantity = line.Quantity,
+                Candidates = candidates,
+                SelectedQuotationId = candidates.FirstOrDefault()?.QuotationId ?? Guid.Empty
+            };
+            _rows.Add(row);
+        }
+    }
+
+    private void Submit()
+    {
+        var awards = _rows
+            .Where(r => r.Candidates.Count > 0 && r.SelectedQuotationId != Guid.Empty)
+            .Select(r => new CanvassLineAwardRequest(r.PrItemNo, r.SelectedQuotationId))
+            .ToList();
+
+        Dialog.Close(DialogResult.Ok<IReadOnlyList<CanvassLineAwardRequest>>(awards));
+    }
+
+    private void Cancel() => Dialog.Cancel();
+
+    private sealed class LineRow
+    {
+        public int PrItemNo { get; set; }
+        public string Description { get; set; } = "";
+        public decimal Quantity { get; set; }
+        public List<Candidate> Candidates { get; set; } = [];
+        public Guid SelectedQuotationId { get; set; }
+        public decimal SelectedUnitPrice =>
+            Candidates.FirstOrDefault(c => c.QuotationId == SelectedQuotationId)?.UnitPrice ?? 0m;
+    }
+
+    private sealed record Candidate(Guid QuotationId, string SupplierName, decimal? RawUnitPrice)
+    {
+        public decimal UnitPrice => RawUnitPrice ?? 0m;
+    }
+}

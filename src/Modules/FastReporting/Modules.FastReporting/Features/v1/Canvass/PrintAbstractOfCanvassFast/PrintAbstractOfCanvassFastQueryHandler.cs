@@ -82,7 +82,7 @@ public sealed class PrintAbstractOfCanvassFastQueryHandler(IMediator mediator)
                 ChairRole:        CommitteeRole(committee, 6))
         };
 
-        var lineItemsTable = BuildLineItemsTable(quotations, query.MinRows);
+        var lineItemsTable = BuildLineItemsTable(canvass.LineItems, quotations, query.MinRows);
 
         return await FastReportService.GenerateAsync(
             Assembly,
@@ -135,9 +135,13 @@ public sealed class PrintAbstractOfCanvassFastQueryHandler(IMediator mediator)
     private static string CommitteeRole(IReadOnlyDictionary<int, CanvassAwardSignatoryDto> committee, int order) =>
         committee.TryGetValue(order, out var s) ? s.Role ?? string.Empty : string.Empty;
 
-    // Build the cross-supplier price table. For each unique item description across
-    // all quotations, emit one row with qty/unit/description and up to 5 supplier prices.
-    private static DataTable BuildLineItemsTable(IReadOnlyList<CanvassQuotationDto> quotations, int minRows)
+    // Build the cross-supplier price table. One row per covered PR line (keyed by PrItemNo), with up to 5
+    // supplier prices. The split-award winner for a line is flagged with a leading marker on that supplier's
+    // price so the Abstract shows, per line, which supplier was awarded it.
+    private static DataTable BuildLineItemsTable(
+        IReadOnlyList<CanvassLineItemDto> lineItems,
+        IReadOnlyList<CanvassQuotationDto> quotations,
+        int minRows)
     {
         var nf = CultureInfo.InvariantCulture;
         var table = new DataTable("LineItemsDS") { Locale = CultureInfo.InvariantCulture };
@@ -150,30 +154,12 @@ public sealed class PrintAbstractOfCanvassFastQueryHandler(IMediator mediator)
         table.Columns.Add("Sup4Price", typeof(string));
         table.Columns.Add("Sup5Price", typeof(string));
 
-        // Preserve the item order from the first quotation, then append items that
-        // only appear in later quotations. Match by normalized description.
-        var items = new List<(string Key, decimal Qty, string Unit, string Description)>();
-        var keyIndex = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-
-        foreach (var q in quotations)
-        {
-            foreach (var li in q.LineItems.OrderBy(x => x.ItemNo))
-            {
-                var key = NormalizeKey(li.Description);
-                if (key.Length == 0 || keyIndex.ContainsKey(key))
-                    continue;
-
-                keyIndex[key] = items.Count;
-                items.Add((key, li.Quantity, li.Unit, li.Description));
-            }
-        }
-
-        foreach (var (key, qty, unit, desc) in items)
+        foreach (var line in lineItems.OrderBy(x => x.PrItemNo))
         {
             var row = table.NewRow();
-            row["Quantity"] = qty.ToString("N0", nf);
-            row["Unit"] = unit;
-            row["Description"] = desc;
+            row["Quantity"] = line.Quantity.ToString("N0", nf);
+            row["Unit"] = line.Unit;
+            row["Description"] = line.Description;
 
             for (var i = 0; i < MaxSupplierColumns; i++)
             {
@@ -181,8 +167,16 @@ public sealed class PrintAbstractOfCanvassFastQueryHandler(IMediator mediator)
                 if (i < quotations.Count)
                 {
                     var match = quotations[i].LineItems
-                        .FirstOrDefault(li => string.Equals(NormalizeKey(li.Description), key, StringComparison.OrdinalIgnoreCase));
-                    row[col] = match is null ? string.Empty : match.UnitPrice.ToString("N2", nf);
+                        .FirstOrDefault(li => li.PrItemNo == line.PrItemNo);
+                    if (match is null)
+                    {
+                        row[col] = string.Empty;
+                    }
+                    else
+                    {
+                        var awarded = line.AwardedSupplierId is { } sid && quotations[i].SupplierId == sid;
+                        row[col] = (awarded ? "* " : string.Empty) + match.UnitPrice.ToString("N2", nf);
+                    }
                 }
                 else
                 {
@@ -237,9 +231,6 @@ public sealed class PrintAbstractOfCanvassFastQueryHandler(IMediator mediator)
             }
         }
     }
-
-    private static string NormalizeKey(string? value) =>
-        string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim().ToLowerInvariant();
 }
 
 internal sealed record AocFastHeader(

@@ -29,6 +29,7 @@ public sealed class CanvassQuotationConfiguration : IEntityTypeConfiguration<Can
         {
             b.ToJson();
             b.Property(li => li.ItemNo).IsRequired();
+            b.Property(li => li.PrItemNo).IsRequired();
             b.Property(li => li.Description).HasMaxLength(500).IsRequired();
             b.Property(li => li.Unit).HasMaxLength(64).IsRequired();
             b.Property(li => li.Quantity).HasPrecision(18, 4).IsRequired();

@@ -97,13 +97,14 @@ public sealed class CreatePurchaseOrderCommandHandler(
 
     private async Task EnsureNoDuplicateAsync(CreatePurchaseOrderCommand command, CancellationToken ct)
     {
-        // A canvass (RIV) can be awarded only once, so it must map to a single active PO.
-        // Reject outright if a non-cancelled PO already references this canvass.
+        // Under split award a canvass (RIV) can fan out into one PO per winning supplier, so the uniqueness
+        // is per (canvass, supplier) — reject only if THIS supplier already has a non-cancelled PO for the canvass.
         if (command.CanvassRequestId.HasValue)
         {
             var existingFromCanvass = await dbContext.PurchaseOrders
                 .AsNoTracking()
                 .Where(p => p.CanvassRequestId == command.CanvassRequestId.Value
+                            && p.SupplierId == command.SupplierId
                             && p.Status != PurchaseOrderStatus.Cancelled)
                 .Select(p => new { p.PoNumber, p.Status })
                 .FirstOrDefaultAsync(ct)
@@ -111,7 +112,7 @@ public sealed class CreatePurchaseOrderCommandHandler(
 
             if (existingFromCanvass is not null)
             {
-                var canvassMessage = $"A purchase order has already been created from this canvass (RIV). "
+                var canvassMessage = $"A purchase order has already been created from this canvass (RIV) for this supplier. "
                               + $"Existing PO: {existingFromCanvass.PoNumber} ({existingFromCanvass.Status}).";
                 throw new CustomException(canvassMessage, Enumerable.Empty<string>(), HttpStatusCode.Conflict);
             }

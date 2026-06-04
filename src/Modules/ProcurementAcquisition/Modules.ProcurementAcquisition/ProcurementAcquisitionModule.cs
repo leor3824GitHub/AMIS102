@@ -22,6 +22,7 @@ using AMIS.Modules.ProcurementAcquisition.Features.v1.Canvass.GetCanvassRequest;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.Canvass.SearchCanvassRequests;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.Canvass.GetCanvassablePrLines;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.CreatePurchaseOrder;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.CreatePurchaseOrdersFromCanvass;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.UpdatePurchaseOrder;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.SubmitPurchaseOrder;
 using PoCertifyFundsAvailable = AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.CertifyFundsAvailable;
@@ -150,6 +151,7 @@ public class ProcurementAcquisitionModule : IModule
 
         // Purchase Orders
         CreatePurchaseOrderEndpoint.Map(purchaseOrdersGroup);
+        CreatePurchaseOrdersFromCanvassEndpoint.Map(purchaseOrdersGroup);
         UpdatePurchaseOrderEndpoint.Map(purchaseOrdersGroup);
         SubmitPurchaseOrderEndpoint.Map(purchaseOrdersGroup);
         PoCertifyFundsAvailable.CertifyPurchaseOrderFundsAvailableEndpoint.Map(purchaseOrdersGroup);

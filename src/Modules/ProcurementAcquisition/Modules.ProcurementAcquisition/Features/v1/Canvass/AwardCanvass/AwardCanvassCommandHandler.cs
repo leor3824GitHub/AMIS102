@@ -23,21 +23,29 @@ public sealed class AwardCanvassCommandHandler(
             .ConfigureAwait(false)
             ?? throw new AMIS.Framework.Core.Exceptions.NotFoundException($"Canvass request '{command.CanvassRequestId}' not found.");
 
-        var awardedQuotation = canvass.Quotations.FirstOrDefault(q => q.Id == command.AwardedQuotationId)
-            ?? throw new AMIS.Framework.Core.Exceptions.NotFoundException($"Quotation '{command.AwardedQuotationId}' not found in canvass request.");
-
-        // Clear previous award flags
-        foreach (var q in canvass.Quotations)
+        // Resolve each line award to its winning quotation line: the supplier and the awarded unit price come
+        // from the quotation's line covering that PR item. Validates the quotation belongs to this canvass and
+        // actually quoted the line — guarding against a UI that selects a supplier who skipped it.
+        var awardsByPrItemNo = new Dictionary<int, (Guid QuotationId, Guid SupplierId, decimal UnitPrice)>();
+        foreach (var award in command.LineAwards)
         {
-            q.ClearAwarded();
+            var quotation = canvass.Quotations.FirstOrDefault(q => q.Id == award.QuotationId)
+                ?? throw new AMIS.Framework.Core.Exceptions.NotFoundException(
+                    $"Quotation '{award.QuotationId}' not found in canvass request.");
+
+            var quotedLine = quotation.LineItems.FirstOrDefault(li => li.PrItemNo == award.PrItemNo)
+                ?? throw new InvalidOperationException(
+                    $"Supplier '{quotation.SupplierName}' did not quote line {award.PrItemNo}; it cannot be awarded that line.");
+
+            if (!awardsByPrItemNo.TryAdd(award.PrItemNo, (quotation.Id, quotation.SupplierId, quotedLine.UnitPrice)))
+                throw new InvalidOperationException($"Line {award.PrItemNo} was awarded more than once.");
         }
 
         // Freeze the ROPC committee that signed at award time so the Abstract of Canvass reprints
         // faithfully — even if the configured ReportSignatories table or org officers change later.
         var committee = await ResolveCommitteeAsync(cancellationToken).ConfigureAwait(false);
 
-        awardedQuotation.MarkAwarded();
-        canvass.Award(awardedQuotation.SupplierId, committee);
+        canvass.AwardLines(awardsByPrItemNo, committee);
         canvass.LastModifiedBy = currentUser.GetUserId().ToString();
 
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);

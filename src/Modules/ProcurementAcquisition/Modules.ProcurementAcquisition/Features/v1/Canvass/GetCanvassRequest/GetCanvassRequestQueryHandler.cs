@@ -24,12 +24,20 @@ public sealed class GetCanvassRequestQueryHandler(ProcurementDbContext dbContext
             .FirstOrDefaultAsync(x => x.Id == canvass.PurchaseRequestId, cancellationToken)
             .ConfigureAwait(false);
 
-        var linkedPoNumber = await dbContext.PurchaseOrders
+        // Every non-cancelled PO spawned from this canvass — under split award there is one per winning supplier.
+        var purchaseOrders = await dbContext.PurchaseOrders
             .AsNoTracking()
             .Where(p => p.CanvassRequestId == canvass.Id && p.Status != PurchaseOrderStatus.Cancelled)
-            .Select(p => p.PoNumber)
-            .FirstOrDefaultAsync(cancellationToken)
+            .OrderBy(p => p.PoNumber)
+            .Select(p => new CanvassPurchaseOrderRefDto(p.Id, p.PoNumber, p.SupplierId, p.SupplierName, p.Status))
+            .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
+
+        var linkedPoNumber = purchaseOrders.FirstOrDefault()?.PoNumber;
+
+        var supplierNameById = canvass.Quotations
+            .GroupBy(q => q.SupplierId)
+            .ToDictionary(g => g.Key, g => g.First().SupplierName);
 
         return new CanvassRequestDto(
             canvass.Id,
@@ -50,16 +58,20 @@ public sealed class GetCanvassRequestQueryHandler(ProcurementDbContext dbContext
                 q.DeliveryTerms,
                 q.IsAwarded,
                 q.LineItems.Select(li => new CanvassQuotationLineItemDto(
-                    li.ItemNo, li.Description, li.Unit, li.Quantity, li.UnitPrice, li.Total)).ToList()
+                    li.ItemNo, li.PrItemNo, li.Description, li.Unit, li.Quantity, li.UnitPrice, li.Total)).ToList()
             )).ToList(),
             canvass.CreatedOnUtc,
             canvass.CreatedBy,
             canvass.LineItems.Select(li => new CanvassLineItemDto(
-                li.PrItemNo, li.Description, li.Unit, li.Quantity, li.EstimatedUnitCost, li.EstimatedTotalCost)).ToList(),
+                li.PrItemNo, li.Description, li.Unit, li.Quantity, li.EstimatedUnitCost, li.EstimatedTotalCost,
+                li.AwardedQuotationId, li.AwardedSupplierId,
+                li.AwardedSupplierId is { } sid && supplierNameById.TryGetValue(sid, out var name) ? name : null,
+                li.AwardedUnitPrice)).ToList(),
             linkedPoNumber is not null,
             linkedPoNumber,
             canvass.AwardSignatories
-                .Select(s => new CanvassAwardSignatoryDto(s.SortOrder, s.Name, s.Role)).ToList());
+                .Select(s => new CanvassAwardSignatoryDto(s.SortOrder, s.Name, s.Role)).ToList(),
+            purchaseOrders);
     }
 }
 

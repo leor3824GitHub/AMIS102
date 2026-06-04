@@ -17,8 +17,25 @@ public sealed class UpdateQuotationCommandHandler(
             .ConfigureAwait(false)
             ?? throw new AMIS.Framework.Core.Exceptions.NotFoundException($"Canvass quotation '{command.QuotationId}' not found.");
 
+        // Reload the covered lines so revised quote lines are re-stamped with their PrItemNo (see resolver).
+        var canvass = await dbContext.CanvassRequests
+            .FirstOrDefaultAsync(x => x.Id == quotation.CanvassRequestId, cancellationToken)
+            .ConfigureAwait(false)
+            ?? throw new AMIS.Framework.Core.Exceptions.NotFoundException($"Canvass request '{quotation.CanvassRequestId}' not found.");
+
+        var prItemNoByDescription = CanvassQuotationLineResolver.BuildPrItemNoLookup(canvass);
+
+        var outOfScope = command.LineItems
+            .Where(li => !prItemNoByDescription.ContainsKey((li.Description ?? string.Empty).Trim().ToLowerInvariant()))
+            .Select(li => li.Description)
+            .ToList();
+        if (outOfScope.Count > 0)
+            throw new InvalidOperationException(
+                $"The following quoted item(s) are not part of this canvass: {string.Join(", ", outOfScope)}.");
+
         var lineItems = command.LineItems.Select(li =>
-            (li.Description, li.Unit, li.Quantity, li.UnitPrice));
+            (prItemNoByDescription[(li.Description ?? string.Empty).Trim().ToLowerInvariant()],
+             li.Description ?? string.Empty, li.Unit, li.Quantity, li.UnitPrice));
 
         quotation.Update(
             command.SupplierName,
@@ -42,7 +59,7 @@ public sealed class UpdateQuotationCommandHandler(
             quotation.DeliveryTerms,
             quotation.IsAwarded,
             quotation.LineItems.Select(li => new CanvassQuotationLineItemDto(
-                li.ItemNo, li.Description, li.Unit, li.Quantity, li.UnitPrice, li.Total)).ToList());
+                li.ItemNo, li.PrItemNo, li.Description, li.Unit, li.Quantity, li.UnitPrice, li.Total)).ToList());
     }
 }
 
