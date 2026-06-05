@@ -1,16 +1,21 @@
 @page "/finance/disbursement-vouchers"
+@implements IDisposable
 @using AMIS.Modules.Finance.Contracts.v1.DisbursementVouchers
+@using AMIS.Modules.Finance.Contracts.Permissions
 @using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders
 @using AMIS.Playground.Blazor.ApiClient
 @inject IDisbursementVoucherClient Client
 @inject IPurchaseOrderClient PurchaseOrderClient
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
+@inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="Disbursement Vouchers" Description="Create and manage disbursement vouchers (DV)" />
 
 <MudGrid Spacing="3">
     <!-- Form Panel -->
+    @if (_canCreate)
+    {
     <MudItem xs="12" md="4">
         <MudCard Elevation="1">
             <MudCardContent>
@@ -63,6 +68,7 @@
             </MudCardContent>
         </MudCard>
     </MudItem>
+    }
 
     <!-- List Panel -->
     <MudItem xs="12" md="8">
@@ -121,23 +127,29 @@
                                         <MudStack Row="true" Spacing="0">
                                             @if (item.Status == DisbursementVoucherStatus.Draft)
                                             {
-                                                <MudTooltip Text="Edit">
-                                                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary"
-                                                                   OnClick="@(async () => await BeginEditAsync(item.Id))" />
-                                                </MudTooltip>
-                                                <MudTooltip Text="Submit for Approval">
-                                                    <MudIconButton Icon="@Icons.Material.Filled.TaskAlt" Size="Size.Small" Color="Color.Info"
-                                                                   OnClick="@(async () => await ApproveAsync(item.Id))" />
-                                                </MudTooltip>
+                                                @if (_canCreate)
+                                                {
+                                                    <MudTooltip Text="Edit">
+                                                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary"
+                                                                       OnClick="@(async () => await BeginEditAsync(item.Id))" />
+                                                    </MudTooltip>
+                                                }
+                                                @if (_canApprove)
+                                                {
+                                                    <MudTooltip Text="Submit for Approval">
+                                                        <MudIconButton Icon="@Icons.Material.Filled.TaskAlt" Size="Size.Small" Color="Color.Info"
+                                                                       OnClick="@(async () => await ApproveAsync(item.Id))" />
+                                                    </MudTooltip>
+                                                }
                                             }
-                                            @if (item.Status == DisbursementVoucherStatus.Approved)
+                                            @if (item.Status == DisbursementVoucherStatus.Approved && _canPay)
                                             {
                                                 <MudTooltip Text="Mark as Paid">
                                                     <MudIconButton Icon="@Icons.Material.Filled.Payments" Size="Size.Small" Color="Color.Success"
                                                                    OnClick="@(async () => await PayAsync(item.Id))" />
                                                 </MudTooltip>
                                             }
-                                            @if (item.Status == DisbursementVoucherStatus.Draft || item.Status == DisbursementVoucherStatus.ForApproval)
+                                            @if ((item.Status == DisbursementVoucherStatus.Draft || item.Status == DisbursementVoucherStatus.ForApproval) && _canCancel)
                                             {
                                                 <MudTooltip Text="Cancel">
                                                     <MudIconButton Icon="@Icons.Material.Filled.Cancel" Size="Size.Small" Color="Color.Error"
@@ -172,7 +184,7 @@
             <MudCard Elevation="1" Class="mt-3">
                 <MudCardContent>
                     <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3">
-                        <MudText Typo="Typo.h6" Class="flex-grow-1">@_detail.DvNumber — Details</MudText>
+                        <MudText Typo="Typo.h6" Class="flex-grow-1">@_detail.DvNumber ï¿½ Details</MudText>
                         <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="@(() => _detail = null)" />
                     </MudStack>
                     <MudGrid Spacing="2">
@@ -247,7 +259,20 @@
 
     private static readonly string[] _statusFilters = ["All", "Draft", "ForApproval", "Approved", "Paid", "Returned", "Cancelled"];
 
-    protected override async Task OnInitializedAsync() => await LoadAsync();
+    private bool _canCreate => UserProfileState.Permissions.Contains(FinancePermissions.DisbursementVouchers.Create);
+    private bool _canApprove => UserProfileState.Permissions.Contains(FinancePermissions.DisbursementVouchers.Approve);
+    private bool _canPay => UserProfileState.Permissions.Contains(FinancePermissions.DisbursementVouchers.Pay);
+    private bool _canCancel => UserProfileState.Permissions.Contains(FinancePermissions.DisbursementVouchers.Cancel);
+
+    protected override async Task OnInitializedAsync()
+    {
+        UserProfileState.OnProfileChanged += OnProfileChanged;
+        await LoadAsync();
+    }
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
 
     private async Task<IEnumerable<PurchaseOrderSummaryDto>> SearchPurchaseOrders(string value, CancellationToken ct)
     {
@@ -282,7 +307,7 @@
         if (po is null) return string.Empty;
         return string.IsNullOrWhiteSpace(po.SupplierName)
             ? po.PoNumber
-            : $"{po.PoNumber} — {po.SupplierName}";
+            : $"{po.PoNumber} ï¿½ {po.SupplierName}";
     }
 
     private async Task LoadAsync()

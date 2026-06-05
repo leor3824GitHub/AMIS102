@@ -183,23 +183,29 @@
                                             }
                                         </td>
                                         <td>
-                                            @if (line.InspectionResult == LineInspectionResult.Passed && _canAssignActions && !_isSupply)
+                                            @if (line.InspectionResult == LineInspectionResult.Passed && !_isSupply && (_canAssignActions || _canExpandActions))
                                             {
                                                 <MudStack Row="true" Spacing="1">
-                                                    <MudButton Variant="Variant.Outlined"
-                                                               Size="Size.Small"
-                                                               Color="Color.Primary"
-                                                               Disabled="@(!CanAssignPropertyNo(line))"
-                                                               OnClick="@(() => AssignPropertyNoAsync(line.ItemNo))">
-                                                        Assign
-                                                    </MudButton>
-                                                    <MudButton Variant="Variant.Outlined"
-                                                               Size="Size.Small"
-                                                               Color="Color.Secondary"
-                                                               Disabled="@(!CanExpandLine(line))"
-                                                               OnClick="@(() => ExpandLineAsync(line.ItemNo))">
-                                                        Expand Qty
-                                                    </MudButton>
+                                                    @if (_canAssignActions)
+                                                    {
+                                                        <MudButton Variant="Variant.Outlined"
+                                                                   Size="Size.Small"
+                                                                   Color="Color.Primary"
+                                                                   Disabled="@(!CanAssignPropertyNo(line))"
+                                                                   OnClick="@(() => AssignPropertyNoAsync(line.ItemNo))">
+                                                            Assign
+                                                        </MudButton>
+                                                    }
+                                                    @if (_canExpandActions)
+                                                    {
+                                                        <MudButton Variant="Variant.Outlined"
+                                                                   Size="Size.Small"
+                                                                   Color="Color.Secondary"
+                                                                   Disabled="@(!CanExpandLine(line))"
+                                                                   OnClick="@(() => ExpandLineAsync(line.ItemNo))">
+                                                            Expand Qty
+                                                        </MudButton>
+                                                    }
                                                 </MudStack>
                                             }
                                         </td>
@@ -305,7 +311,9 @@
 
     private bool _canAcceptPermission => UserProfileState.Permissions.Contains(ProcurementPermissions.InspectionAcceptanceReports.Accept);
     private bool _canAssignPropertyNoPermission => UserProfileState.Permissions.Contains(ProcurementPermissions.InspectionAcceptanceReports.AssignPropertyNo);
+    private bool _canExpandLinePermission => UserProfileState.Permissions.Contains(ProcurementPermissions.InspectionAcceptanceReports.ExpandLine);
     private bool _canAssignActions => _iar is not null && _iar.Status == InspectionAcceptanceReportStatus.Inspected && _canAssignPropertyNoPermission;
+    private bool _canExpandActions => _iar is not null && _iar.Status == InspectionAcceptanceReportStatus.Inspected && _canExpandLinePermission;
     private bool _canAcceptActions => _iar is not null && _iar.Status == InspectionAcceptanceReportStatus.Inspected && _canAcceptPermission;
 
     protected override async Task OnInitializedAsync()
@@ -374,7 +382,7 @@
         => _canAssignActions && line.InspectionResult == LineInspectionResult.Passed;
 
     private bool CanExpandLine(InspectionAcceptanceReportLineItemDto line)
-        => _canAssignActions && line.InspectionResult == LineInspectionResult.Passed && line.Quantity > 1m;
+        => _canExpandActions && line.InspectionResult == LineInspectionResult.Passed && line.Quantity > 1m;
 
     private bool CanAccept()
     {

@@ -1,13 +1,18 @@
 @page "/asset-register/pperr-series"
+@implements IDisposable
 @using AMIS.Playground.Blazor.ApiClient
+@using AMIS.Modules.AssetRegister.Contracts.Permissions
 @inject IArReceivingReportClient Client
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
+@inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="PPERR Form Series"
                Description="Manage pre-printed, pre-numbered PPERR accountable form batches. Only one series may be active at a time." />
 
 <MudGrid Spacing="3">
+    @if (_canCreate)
+    {
     <MudItem xs="12">
         <MudCard Elevation="1">
             <MudCardHeader>
@@ -56,6 +61,7 @@
             </MudCardContent>
         </MudCard>
     </MudItem>
+    }
 
     <MudItem xs="12">
         <MudCard Elevation="1">
@@ -107,26 +113,29 @@
                                     </td>
                                     <td>
                                         <div class="d-flex gap-1 flex-wrap">
-                                            @if (!s.IsActive && !s.IsExhausted)
+                                            @if (!s.IsActive && !s.IsExhausted && _canCreate)
                                             {
                                                 <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Success"
                                                            OnClick="@(() => ActivateAsync(s.Id))" Disabled="_busy">
                                                     Set Active
                                                 </MudButton>
                                             }
-                                            else if (s.IsActive)
+                                            else if (s.IsActive && _canCreate)
                                             {
                                                 <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Default"
                                                            OnClick="@(() => DeactivateAsync(s.Id))" Disabled="_busy">
                                                     Deactivate
                                                 </MudButton>
                                             }
-                                            @if (s.IsUnused)
+                                            @if (s.IsUnused && _canCreate)
                                             {
                                                 <MudIconButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary"
                                                                Icon="@Icons.Material.Outlined.Edit"
                                                                OnClick="@(() => BeginEdit(s))" Disabled="_busy"
                                                                title="Edit" />
+                                            }
+                                            @if (s.IsUnused && _canDelete)
+                                            {
                                                 <MudIconButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Error"
                                                                Icon="@Icons.Material.Outlined.Delete"
                                                                OnClick="@(() => DeleteAsync(s))" Disabled="_busy"
@@ -158,7 +167,18 @@
     private int TotalPages => (int)Math.Ceiling(_totalCount / (double)PageSize);
     private List<ArPPERRFormSeriesDto> _items = [];
 
-    protected override async Task OnInitializedAsync() => await LoadAsync();
+    private bool _canCreate => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Receiving.Create);
+    private bool _canDelete => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Receiving.Delete);
+
+    protected override async Task OnInitializedAsync()
+    {
+        UserProfileState.OnProfileChanged += OnProfileChanged;
+        await LoadAsync();
+    }
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
 
     private async Task LoadAsync()
     {

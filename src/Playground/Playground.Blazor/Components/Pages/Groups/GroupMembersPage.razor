@@ -1,12 +1,15 @@
 @page "/groups/{GroupId:guid}/members"
+@implements IDisposable
 @using AMIS.Playground.Blazor.ApiClient
 @using AMIS.Framework.Blazor.UI.Components.Dialogs
+@using AMIS.Framework.Shared.Identity
 @inherits ComponentBase
 @inject IIdentityClient IdentityClient
 @inject IGroupsClient GroupsClient
 @inject NavigationManager Navigation
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
+@inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="@($"Group Members - {_group?.Name ?? "Loading..."}")"
                Description="@(_group?.Description ?? "Manage group membership")">
@@ -17,12 +20,15 @@
                    OnClick="@(() => Navigation.NavigateTo("/groups"))">
             Back to Groups
         </MudButton>
-        <MudButton Variant="Variant.Filled"
-                   Color="Color.Primary"
-                   StartIcon="@Icons.Material.Filled.PersonAdd"
-                   OnClick="ShowAddMembers">
-            Add Members
-        </MudButton>
+        @if (_canManageMembers)
+        {
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.PersonAdd"
+                       OnClick="ShowAddMembers">
+                Add Members
+            </MudButton>
+        }
     </ActionContent>
 </AMISPageHeader>
 
@@ -126,13 +132,16 @@
             </TemplateColumn>
             <TemplateColumn Title="Actions" Sortable="false" HeaderClass="text-right" CellClass="text-right">
                 <CellTemplate>
-                    <MudTooltip Text="Remove from group">
-                        <MudIconButton Icon="@Icons.Material.Filled.PersonRemove"
-                                       Size="Size.Small"
-                                       Color="Color.Error"
-                                       OnClick="@(() => RemoveMember(context.Item))"
-                                       Disabled="_busyUserId == context.Item.UserId" />
-                    </MudTooltip>
+                    @if (_canManageMembers)
+                    {
+                        <MudTooltip Text="Remove from group">
+                            <MudIconButton Icon="@Icons.Material.Filled.PersonRemove"
+                                           Size="Size.Small"
+                                           Color="Color.Error"
+                                           OnClick="@(() => RemoveMember(context.Item))"
+                                           Disabled="_busyUserId == context.Item.UserId" />
+                        </MudTooltip>
+                    }
                 </CellTemplate>
             </TemplateColumn>
         </Columns>
@@ -144,12 +153,15 @@
                 <MudIcon Icon="@Icons.Material.Filled.GroupOff" Size="Size.Large" Color="Color.Default" />
                 <MudText Typo="Typo.h6">No members in this group</MudText>
                 <MudText Typo="Typo.body2" Class="text-muted">Add members to get started.</MudText>
-                <MudButton Variant="Variant.Filled"
-                           Color="Color.Primary"
-                           StartIcon="@Icons.Material.Filled.PersonAdd"
-                           OnClick="ShowAddMembers">
-                    Add Members
-                </MudButton>
+                @if (_canManageMembers)
+                {
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.PersonAdd"
+                               OnClick="ShowAddMembers">
+                        Add Members
+                    </MudButton>
+                }
             </MudStack>
         </NoRecordsContent>
     </MudDataGrid>
@@ -190,11 +202,18 @@
     private readonly int _pageSize = 10;
     private readonly int[] _pageSizeOptions = { 5, 10, 25, 50 };
 
+    private bool _canManageMembers => UserProfileState.Permissions.Contains(IdentityPermissionConstants.Groups.ManageMembers);
+
     protected override async Task OnInitializedAsync()
     {
+        UserProfileState.OnProfileChanged += OnProfileChanged;
         await LoadGroup();
         await LoadMembers();
     }
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
 
     private async Task LoadGroup()
     {

@@ -1,135 +1,176 @@
 @page "/asset-register"
+@using AMIS.Modules.AssetRegister.Contracts.Permissions
+@inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="Asset Register" Description="Unified COA 2022-004 registry for asset accountability, issuance, physical counts, incidents, and unserviceable disposal." />
 
 <MudGrid Spacing="3">
-    <MudItem xs="12" md="6" lg="4">
-        <MudCard Elevation="1">
-            <MudCardHeader>
-                <CardHeaderAvatar>
-                    <MudIcon Icon="@Icons.Material.Outlined.Inventory2" Color="Color.Primary" />
-                </CardHeaderAvatar>
-                <CardHeaderContent>
-                    <MudText Typo="Typo.h6">Asset Registry</MudText>
-                    <MudText Typo="Typo.caption" Color="Color.Secondary">All registered properties</MudText>
-                </CardHeaderContent>
-            </MudCardHeader>
-            <MudCardActions>
-                <MudButton Variant="Variant.Text" Color="Color.Primary" Href="/asset-register/assets">Open</MudButton>
-            </MudCardActions>
-        </MudCard>
-    </MudItem>
-    <MudItem xs="12" md="6" lg="4">
-        <MudCard Elevation="1">
-            <MudCardHeader>
-                <CardHeaderAvatar>
-                    <MudIcon Icon="@Icons.Material.Outlined.AssignmentInd" Color="Color.Secondary" />
-                </CardHeaderAvatar>
-                <CardHeaderContent>
-                    <MudText Typo="Typo.h6">ICS / PAR</MudText>
-                    <MudText Typo="Typo.caption" Color="Color.Secondary">Property accountability documents</MudText>
-                </CardHeaderContent>
-            </MudCardHeader>
-            <MudCardActions>
-                <MudButton Variant="Variant.Text" Color="Color.Primary" Href="/asset-register/accountability">Open</MudButton>
-            </MudCardActions>
-        </MudCard>
-    </MudItem>
-    <MudItem xs="12" md="6" lg="4">
-        <MudCard Elevation="1">
-            <MudCardHeader>
-                <CardHeaderAvatar>
-                    <MudIcon Icon="@Icons.Material.Outlined.LibraryBooks" Color="Color.Info" />
-                </CardHeaderAvatar>
-                <CardHeaderContent>
-                    <MudText Typo="Typo.h6">Property Catalog</MudText>
-                    <MudText Typo="Typo.caption" Color="Color.Secondary">Item master / price list</MudText>
-                </CardHeaderContent>
-            </MudCardHeader>
-            <MudCardActions>
-                <MudButton Variant="Variant.Text" Color="Color.Primary" Href="/asset-register/catalog">Open</MudButton>
-            </MudCardActions>
-        </MudCard>
-    </MudItem>
-    <MudItem xs="12" md="6" lg="4">
-        <MudCard Elevation="1">
-            <MudCardHeader>
-                <CardHeaderAvatar>
-                    <MudIcon Icon="@Icons.Material.Outlined.FactCheck" Color="Color.Success" />
-                </CardHeaderAvatar>
-                <CardHeaderContent>
-                    <MudText Typo="Typo.h6">Physical Count</MudText>
-                    <MudText Typo="Typo.caption" Color="Color.Secondary">RPCSEMEX / RPCPPE sessions</MudText>
-                </CardHeaderContent>
-            </MudCardHeader>
-            <MudCardActions>
-                <MudButton Variant="Variant.Text" Color="Color.Primary" Href="/asset-register/physical-count">Open</MudButton>
-            </MudCardActions>
-        </MudCard>
-    </MudItem>
-    <MudItem xs="12" md="6" lg="4">
-        <MudCard Elevation="1">
-            <MudCardHeader>
-                <CardHeaderAvatar>
-                    <MudIcon Icon="@Icons.Material.Outlined.ReportProblem" Color="Color.Warning" />
-                </CardHeaderAvatar>
-                <CardHeaderContent>
-                    <MudText Typo="Typo.h6">Incident Reports</MudText>
-                    <MudText Typo="Typo.caption" Color="Color.Secondary">Loss / damage — RLSDDSP</MudText>
-                </CardHeaderContent>
-            </MudCardHeader>
-            <MudCardActions>
-                <MudButton Variant="Variant.Text" Color="Color.Primary" Href="/asset-register/incidents">Open</MudButton>
-            </MudCardActions>
-        </MudCard>
-    </MudItem>
-    <MudItem xs="12" md="6" lg="4">
-        <MudCard Elevation="1">
-            <MudCardHeader>
-                <CardHeaderAvatar>
-                    <MudIcon Icon="@Icons.Material.Outlined.Receipt" Color="Color.Tertiary" />
-                </CardHeaderAvatar>
-                <CardHeaderContent>
-                    <MudText Typo="Typo.h6">Issuance Reports</MudText>
-                    <MudText Typo="Typo.caption" Color="Color.Secondary">SMIR / PPEIR</MudText>
-                </CardHeaderContent>
-            </MudCardHeader>
-            <MudCardActions>
-                <MudButton Variant="Variant.Text" Color="Color.Primary" Href="/asset-register/issuance">Open</MudButton>
-            </MudCardActions>
-        </MudCard>
-    </MudItem>
-    <MudItem xs="12" md="6" lg="4">
-        <MudCard Elevation="1">
-            <MudCardHeader>
-                <CardHeaderAvatar>
-                    <MudIcon Icon="@Icons.Material.Outlined.DeleteSweep" Color="Color.Error" />
-                </CardHeaderAvatar>
-                <CardHeaderContent>
-                    <MudText Typo="Typo.h6">Unserviceable Reports</MudText>
-                    <MudText Typo="Typo.caption" Color="Color.Secondary">IIRUSP / IIRUP</MudText>
-                </CardHeaderContent>
-            </MudCardHeader>
-            <MudCardActions>
-                <MudButton Variant="Variant.Text" Color="Color.Primary" Href="/asset-register/unserviceable">Open</MudButton>
-            </MudCardActions>
-        </MudCard>
-    </MudItem>
-    <MudItem xs="12" md="6" lg="4">
-        <MudCard Elevation="1">
-            <MudCardHeader>
-                <CardHeaderAvatar>
-                    <MudIcon Icon="@Icons.Material.Outlined.Assessment" Color="Color.Dark" />
-                </CardHeaderAvatar>
-                <CardHeaderContent>
-                    <MudText Typo="Typo.h6">Reports Workspace</MudText>
-                    <MudText Typo="Typo.caption" Color="Color.Secondary">RegSPI, ICS/PAR, physical count, issuance, incidents, unserviceable</MudText>
-                </CardHeaderContent>
-            </MudCardHeader>
-            <MudCardActions>
-                <MudButton Variant="Variant.Text" Color="Color.Primary" Href="/asset-register/reports">Open</MudButton>
-            </MudCardActions>
-        </MudCard>
-    </MudItem>
+    @if (_canViewAssets)
+    {
+        <MudItem xs="12" md="6" lg="4">
+            <MudCard Elevation="1">
+                <MudCardHeader>
+                    <CardHeaderAvatar>
+                        <MudIcon Icon="@Icons.Material.Outlined.Inventory2" Color="Color.Primary" />
+                    </CardHeaderAvatar>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">Asset Registry</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">All registered properties</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardActions>
+                    <MudButton Variant="Variant.Text" Color="Color.Primary" Href="/asset-register/assets">Open</MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+    }
+    @if (_canViewAccountability)
+    {
+        <MudItem xs="12" md="6" lg="4">
+            <MudCard Elevation="1">
+                <MudCardHeader>
+                    <CardHeaderAvatar>
+                        <MudIcon Icon="@Icons.Material.Outlined.AssignmentInd" Color="Color.Secondary" />
+                    </CardHeaderAvatar>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">ICS / PAR</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Property accountability documents</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardActions>
+                    <MudButton Variant="Variant.Text" Color="Color.Primary" Href="/asset-register/accountability">Open</MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+    }
+    @if (_canViewCatalog)
+    {
+        <MudItem xs="12" md="6" lg="4">
+            <MudCard Elevation="1">
+                <MudCardHeader>
+                    <CardHeaderAvatar>
+                        <MudIcon Icon="@Icons.Material.Outlined.LibraryBooks" Color="Color.Info" />
+                    </CardHeaderAvatar>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">Property Catalog</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Item master / price list</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardActions>
+                    <MudButton Variant="Variant.Text" Color="Color.Primary" Href="/asset-register/catalog">Open</MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+    }
+    @if (_canViewCount)
+    {
+        <MudItem xs="12" md="6" lg="4">
+            <MudCard Elevation="1">
+                <MudCardHeader>
+                    <CardHeaderAvatar>
+                        <MudIcon Icon="@Icons.Material.Outlined.FactCheck" Color="Color.Success" />
+                    </CardHeaderAvatar>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">Physical Count</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">RPCSEMEX / RPCPPE sessions</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardActions>
+                    <MudButton Variant="Variant.Text" Color="Color.Primary" Href="/asset-register/physical-count">Open</MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+    }
+    @if (_canViewIncident)
+    {
+        <MudItem xs="12" md="6" lg="4">
+            <MudCard Elevation="1">
+                <MudCardHeader>
+                    <CardHeaderAvatar>
+                        <MudIcon Icon="@Icons.Material.Outlined.ReportProblem" Color="Color.Warning" />
+                    </CardHeaderAvatar>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">Incident Reports</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Loss / damage — RLSDDSP</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardActions>
+                    <MudButton Variant="Variant.Text" Color="Color.Primary" Href="/asset-register/incidents">Open</MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+    }
+    @if (_canViewIssuance)
+    {
+        <MudItem xs="12" md="6" lg="4">
+            <MudCard Elevation="1">
+                <MudCardHeader>
+                    <CardHeaderAvatar>
+                        <MudIcon Icon="@Icons.Material.Outlined.Receipt" Color="Color.Tertiary" />
+                    </CardHeaderAvatar>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">Issuance Reports</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">SMIR / PPEIR</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardActions>
+                    <MudButton Variant="Variant.Text" Color="Color.Primary" Href="/asset-register/issuance">Open</MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+    }
+    @if (_canViewUnserviceable)
+    {
+        <MudItem xs="12" md="6" lg="4">
+            <MudCard Elevation="1">
+                <MudCardHeader>
+                    <CardHeaderAvatar>
+                        <MudIcon Icon="@Icons.Material.Outlined.DeleteSweep" Color="Color.Error" />
+                    </CardHeaderAvatar>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">Unserviceable Reports</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">IIRUSP / IIRUP</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardActions>
+                    <MudButton Variant="Variant.Text" Color="Color.Primary" Href="/asset-register/unserviceable">Open</MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+    }
+    @if (_canViewReports)
+    {
+        <MudItem xs="12" md="6" lg="4">
+            <MudCard Elevation="1">
+                <MudCardHeader>
+                    <CardHeaderAvatar>
+                        <MudIcon Icon="@Icons.Material.Outlined.Assessment" Color="Color.Dark" />
+                    </CardHeaderAvatar>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">Reports Workspace</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">RegSPI, ICS/PAR, physical count, issuance, incidents, unserviceable</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardActions>
+                    <MudButton Variant="Variant.Text" Color="Color.Primary" Href="/asset-register/reports">Open</MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+    }
 </MudGrid>
+
+@code {
+    // Each hub card links into a sub-area; show it only if the user holds that area's View permission,
+    // mirroring the .RequirePermission(...View) on every underlying list/report endpoint.
+    private bool _canViewAssets => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Assets.View);
+    private bool _canViewAccountability => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Accountability.View);
+    private bool _canViewCatalog => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Catalog.View);
+    private bool _canViewCount => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Count.View);
+    private bool _canViewIncident => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Incident.View);
+    private bool _canViewIssuance => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Issuance.View);
+    private bool _canViewUnserviceable => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Unserviceable.View);
+
+    // The reports workspace self-gates each report button, so show the card if the user can view any report area.
+    private bool _canViewReports => _canViewAccountability || _canViewCount || _canViewIssuance || _canViewIncident || _canViewUnserviceable;
+}
 

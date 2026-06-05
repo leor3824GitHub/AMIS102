@@ -1,10 +1,13 @@
 @page "/asset-register/unserviceable"
+@implements IDisposable
 @using AMIS.Playground.Blazor.ApiClient
+@using AMIS.Modules.AssetRegister.Contracts.Permissions
 @using UnserviceableReportType = AMIS.Modules.AssetRegister.Contracts.v1.UnserviceableReportType
 @using UnserviceableReportStatus = AMIS.Modules.AssetRegister.Contracts.v1.UnserviceableReportStatus
 @using DisposalMethod = AMIS.Modules.AssetRegister.Contracts.v1.DisposalMethod
 @inject IArUnserviceableReportClient Client
 @inject ISnackbar Snackbar
+@inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="Unserviceable Property Reports (IIRUSP / IIRUP)"
                Description="Report, inspect, and dispose of unserviceable property per COA 2022-004 Annex A.10." />
@@ -47,10 +50,13 @@
                         </MudButton>
                     </MudItem>
                     <MudItem xs="12" md="2">
+                        @if (_canFile)
+                        {
                         <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Success" FullWidth="true"
                                    StartIcon="@Icons.Material.Outlined.Add" OnClick="@(() => _showCreateForm = !_showCreateForm)">
                             New Report
                         </MudButton>
+                        }
                     </MudItem>
                 </MudGrid>
             </MudCardContent>
@@ -231,7 +237,7 @@
                     </MudTable>
 
                     <!-- Add item (Draft only) -->
-                    @if (_selected.Status == UnserviceableReportStatus.Draft)
+                    @if (_selected.Status == UnserviceableReportStatus.Draft && _canFile)
                     {
                         <MudDivider Class="my-3" />
                         <MudText Typo="Typo.subtitle2" Class="mb-2">Add Asset Item</MudText>
@@ -248,7 +254,7 @@
                     }
 
                     <!-- Submit (Draft → Submitted) -->
-                    @if (_selected.Status == UnserviceableReportStatus.Draft && _selected.Items.Count > 0)
+                    @if (_selected.Status == UnserviceableReportStatus.Draft && _selected.Items.Count > 0 && _canFile)
                     {
                         <MudDivider Class="my-3" />
                         <MudText Typo="Typo.subtitle2" Class="mb-2">Submit for Approval</MudText>
@@ -304,7 +310,17 @@
         public string? AccountableOfficerDesignation { get; set; }
     }
 
-    protected override async Task OnInitializedAsync() => await LoadAsync();
+    private bool _canFile => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Unserviceable.File);
+
+    protected override async Task OnInitializedAsync()
+    {
+        UserProfileState.OnProfileChanged += OnProfileChanged;
+        await LoadAsync();
+    }
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
 
     private async Task LoadAsync()
     {

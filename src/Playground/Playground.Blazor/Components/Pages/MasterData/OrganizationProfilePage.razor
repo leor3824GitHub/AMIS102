@@ -1,11 +1,14 @@
 @page "/master-data/organization-profile"
+@implements IDisposable
 @using AMIS.Modules.MasterData.Contracts.v1.OrganizationProfile
+@using AMIS.Modules.MasterData.Contracts.Permissions
 @using AMIS.Playground.Blazor.ApiClient
 @using MudBlazor
 @inject IOrganizationProfileClient OrgProfileClient
 @inject ILookupClient LookupClient
 @inject IOrganizationProfileState OrgProfileState
 @inject ISnackbar Snackbar
+@inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="Organization Profile"
                Description="Agency information printed on official government reports" />
@@ -141,19 +144,22 @@
             </MudStack>
         </MudPaper>
 
-        <MudPaper Elevation="0" Class="pa-0 mt-3">
-            <MudButton Variant="Variant.Filled"
-                       Color="Color.Primary"
-                       OnClick="SaveAsync"
-                       Disabled="_busy || string.IsNullOrWhiteSpace(_form.Name)"
-                       FullWidth="true">
-                @if (_busy)
-                {
-                    <MudProgressCircular Size="Size.Small" Class="mr-2" />
-                }
-                Save
-            </MudButton>
-        </MudPaper>
+        @if (_canManage)
+        {
+            <MudPaper Elevation="0" Class="pa-0 mt-3">
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           OnClick="SaveAsync"
+                           Disabled="_busy || string.IsNullOrWhiteSpace(_form.Name)"
+                           FullWidth="true">
+                    @if (_busy)
+                    {
+                        <MudProgressCircular Size="Size.Small" Class="mr-2" />
+                    }
+                    Save
+                </MudButton>
+            </MudPaper>
+        }
     </MudItem>
 
     @if (!string.IsNullOrWhiteSpace(_form.Name))
@@ -222,8 +228,15 @@
     private bool _busy;
     private Dictionary<string, OfficeReferenceDto> _officesByName = new(StringComparer.OrdinalIgnoreCase);
 
+    private bool _canManage => UserProfileState.Permissions.Contains(MasterDataPermissions.OrganizationProfile.Manage);
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
+
     protected override async Task OnInitializedAsync()
     {
+        UserProfileState.OnProfileChanged += OnProfileChanged;
         try
         {
             var existing = await OrgProfileClient.GetAsync();

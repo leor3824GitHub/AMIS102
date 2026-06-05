@@ -1,11 +1,14 @@
 @page "/master-data/departments"
+@implements IDisposable
 @using AMIS.Framework.Blazor.UI.Components.Cards
 @using AMIS.Playground.Blazor.ApiClient
+@using AMIS.Modules.MasterData.Contracts.Permissions
 @inherits ComponentBase
 @inject ISnackbar Snackbar
 @inject IMaster_dataClient MasterDataClient
 @inject ILookupClient LookupClient
 @inject IOrganizationProfileClient OrgProfileClient
+@inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="Departments" Description="Manage departments">
     <ActionContent>
@@ -23,6 +26,8 @@
 <div class="mt-4">
     <MudGrid Spacing="2">
         <!-- Create/Edit Form -->
+        @if (_canCreate || _canUpdate)
+        {
         <MudItem xs="12" sm="6" md="4" Style="min-height: 100%;">
             <MudCard Class="AMIS-card">
                 <MudCardContent>
@@ -59,6 +64,7 @@
                 </MudCardContent>
             </MudCard>
         </MudItem>
+        }
 
         <!-- Departments List -->
         <MudItem xs="12" sm="6" md="8">
@@ -90,17 +96,23 @@
                                         <td>@(string.IsNullOrWhiteSpace(department.ResponsibilityCenterCode) ? "-" : department.ResponsibilityCenterCode)</td>
                                         <td><MudChip T="string" Size="Size.Small" Color="@(department.IsActive ? Color.Success : Color.Default)">@(department.IsActive ? "Active" : "Inactive")</MudChip></td>
                                         <td>
-                                            @if (CanEdit(department.OfficeCode))
+                                            @if (CanEdit(department.OfficeCode) && (_canUpdate || _canDelete))
                                             {
                                                 <MudStack Row="true" Spacing="1">
-                                                    <MudTooltip Text="Edit department">
-                                                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
-                                                                       Color="Color.Primary" OnClick="@(() => EditDepartment(department))" />
-                                                    </MudTooltip>
-                                                    <MudTooltip Text="Delete department">
-                                                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
-                                                                       Color="Color.Error" OnClick="@(() => DeleteDepartment(department.Id))" />
-                                                    </MudTooltip>
+                                                    @if (_canUpdate)
+                                                    {
+                                                        <MudTooltip Text="Edit department">
+                                                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                                                           Color="Color.Primary" OnClick="@(() => EditDepartment(department))" />
+                                                        </MudTooltip>
+                                                    }
+                                                    @if (_canDelete)
+                                                    {
+                                                        <MudTooltip Text="Delete department">
+                                                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                                                           Color="Color.Error" OnClick="@(() => DeleteDepartment(department.Id))" />
+                                                        </MudTooltip>
+                                                    }
                                                 </MudStack>
                                             }
                                             else
@@ -146,6 +158,10 @@
     private int _pageIndex = 1;
     private const int PageSize = 10;
 
+    private bool _canCreate => UserProfileState.Permissions.Contains(MasterDataPermissions.Departments.Create);
+    private bool _canUpdate => UserProfileState.Permissions.Contains(MasterDataPermissions.Departments.Update);
+    private bool _canDelete => UserProfileState.Permissions.Contains(MasterDataPermissions.Departments.Delete);
+
     public class DepartmentForm
     {
         public string Code { get; set; } = string.Empty;
@@ -161,10 +177,15 @@
     {
         if (_initialized) return;
         _initialized = true;
+        UserProfileState.OnProfileChanged += OnProfileChanged;
         var profile = await OrgProfileClient.GetAsync();
         _myOfficeCode = profile?.AnnexECode;
         await LoadDepartments();
     }
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
 
     private async Task LoadDepartments()
     {

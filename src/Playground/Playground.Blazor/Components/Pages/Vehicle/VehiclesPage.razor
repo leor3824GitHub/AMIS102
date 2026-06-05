@@ -1,10 +1,13 @@
 @page "/vehicle/vehicles"
+@implements IDisposable
 @using AMIS.Playground.Blazor.ApiClient
 @using AMIS.Modules.Vehicle.Contracts.v1.Vehicles
+@using AMIS.Modules.Vehicle.Contracts.Permissions
 @using static AMIS.Modules.Vehicle.Contracts.v1.Vehicles.VehicleStatusValues
 @inject IVehicleClient VehicleClient
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation
+@inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="Vehicles" Description="Manage vehicle records and lifecycle">
     <ActionContent>
@@ -40,6 +43,8 @@
     </MudStack>
 
     <MudGrid Spacing="2">
+        @if (_canCreate)
+        {
         <MudItem xs="12" md="4">
             <MudCard Class="AMIS-card">
                 <MudCardContent>
@@ -74,6 +79,7 @@
                 </MudCardContent>
             </MudCard>
         </MudItem>
+        }
 
         <MudItem xs="12" md="8">
             <MudCard Class="AMIS-card">
@@ -106,7 +112,7 @@
                                             <MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Primary"
                                                            Size="Size.Small" OnClick="@(() => GoDetail(context.Id))" />
                                         </MudTooltip>
-                                        @if (context.Status == Active)
+                                        @if (context.Status == Active && _canUpdate)
                                         {
                                             <MudTooltip Text="Retire vehicle">
                                                 <MudIconButton Icon="@Icons.Material.Filled.RemoveCircle" Color="Color.Warning"
@@ -117,17 +123,20 @@
                                                                Size="Size.Small" OnClick="@(() => Decommission(context.Id))" />
                                             </MudTooltip>
                                         }
-                                        else if (context.Status is Retired or Decommissioned)
+                                        else if ((context.Status is Retired or Decommissioned) && _canUpdate)
                                         {
                                             <MudTooltip Text="Reactivate vehicle">
                                                 <MudIconButton Icon="@Icons.Material.Filled.RestartAlt" Color="Color.Success"
                                                                Size="Size.Small" OnClick="@(() => Reactivate(context.Id))" />
                                             </MudTooltip>
                                         }
-                                        <MudTooltip Text="Delete vehicle">
-                                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error"
-                                                           Size="Size.Small" OnClick="@(() => Delete(context.Id))" />
-                                        </MudTooltip>
+                                        @if (_canDelete)
+                                        {
+                                            <MudTooltip Text="Delete vehicle">
+                                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error"
+                                                               Size="Size.Small" OnClick="@(() => Delete(context.Id))" />
+                                            </MudTooltip>
+                                        }
                                     </MudStack>
                                 </MudTd>
                             </RowTemplate>
@@ -146,7 +155,19 @@
 
     private CreateVehicleModel _create = new();
 
-    protected override async Task OnInitializedAsync() => await LoadVehicles();
+    private bool _canCreate => UserProfileState.Permissions.Contains(VehiclePermissions.Vehicles.Create);
+    private bool _canUpdate => UserProfileState.Permissions.Contains(VehiclePermissions.Vehicles.Update);
+    private bool _canDelete => UserProfileState.Permissions.Contains(VehiclePermissions.Vehicles.Delete);
+
+    protected override async Task OnInitializedAsync()
+    {
+        UserProfileState.OnProfileChanged += OnProfileChanged;
+        await LoadVehicles();
+    }
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
 
     private async Task LoadVehicles()
     {

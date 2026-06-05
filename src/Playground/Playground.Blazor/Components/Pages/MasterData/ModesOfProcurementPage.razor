@@ -1,9 +1,12 @@
 @page "/master-data/modes-of-procurement"
+@implements IDisposable
 @using AMIS.Modules.MasterData.Contracts.v1.ModesOfProcurement
+@using AMIS.Modules.MasterData.Contracts.Permissions
 @using AMIS.Framework.Blazor.UI.Components.Cards
 @using AMIS.Playground.Blazor.ApiClient
 @inject IModeOfProcurementClient ModeClient
 @inject ISnackbar Snackbar
+@inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="Modes of Procurement" Description="Manage procurement modes used across planning and purchasing">
     <ActionContent>
@@ -20,6 +23,8 @@
 
 <div class="mt-4">
     <MudGrid Spacing="2">
+        @if (_canCreate || _canUpdate)
+        {
         <MudItem xs="12" sm="5" md="4">
             <MudCard Class="AMIS-card">
                 <MudCardContent>
@@ -47,6 +52,7 @@
                 </MudCardContent>
             </MudCard>
         </MudItem>
+        }
 
         <MudItem xs="12" sm="7" md="8">
             <MudCard Class="AMIS-card">
@@ -84,14 +90,20 @@
                                         </td>
                                         <td>
                                             <MudStack Row="true" Spacing="1">
-                                                <MudTooltip Text="Edit mode">
-                                                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
-                                                                   Color="Color.Primary" OnClick="@(() => EditMode(mode))" />
-                                                </MudTooltip>
-                                                <MudTooltip Text="Delete mode">
-                                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
-                                                                   Color="Color.Error" OnClick="@(() => DeleteAsync(mode.Id))" />
-                                                </MudTooltip>
+                                                @if (_canUpdate)
+                                                {
+                                                    <MudTooltip Text="Edit mode">
+                                                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                                                       Color="Color.Primary" OnClick="@(() => EditMode(mode))" />
+                                                    </MudTooltip>
+                                                }
+                                                @if (_canDelete)
+                                                {
+                                                    <MudTooltip Text="Delete mode">
+                                                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                                                       Color="Color.Error" OnClick="@(() => DeleteAsync(mode.Id))" />
+                                                    </MudTooltip>
+                                                }
                                             </MudStack>
                                         </td>
                                     </tr>
@@ -135,10 +147,19 @@
     private bool _sortAscending = true;
     private int _pageIndex = 1;
 
+    private bool _canCreate => UserProfileState.Permissions.Contains(MasterDataPermissions.ModesOfProcurement.Create);
+    private bool _canUpdate => UserProfileState.Permissions.Contains(MasterDataPermissions.ModesOfProcurement.Update);
+    private bool _canDelete => UserProfileState.Permissions.Contains(MasterDataPermissions.ModesOfProcurement.Delete);
+
     protected override async Task OnInitializedAsync()
     {
+        UserProfileState.OnProfileChanged += OnProfileChanged;
         await LoadAsync();
     }
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
 
     private async Task LoadAsync(string? keyword = null)
     {

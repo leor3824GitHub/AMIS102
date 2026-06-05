@@ -26,12 +26,10 @@ public class AssetRegisterModule : IModule
         new("View Assets",     "View",     "AssetRegister.Assets", IsBasic: true),
         new("Register Assets", "Register", "AssetRegister.Assets"),
         new("Update Assets",   "Update",   "AssetRegister.Assets"),
-        new("Retire Assets",   "Retire",   "AssetRegister.Assets"),
 
-        new("View Accountability",     "View",     "AssetRegister.Accountability", IsBasic: true),
-        new("Issue Accountability",    "Issue",    "AssetRegister.Accountability"),
-        new("Transfer Accountability", "Transfer", "AssetRegister.Accountability"),
-        new("Return Accountability",   "Return",   "AssetRegister.Accountability"),
+        new("View Accountability",   "View",   "AssetRegister.Accountability", IsBasic: true),
+        new("Issue Accountability",  "Issue",  "AssetRegister.Accountability"),
+        new("Return Accountability", "Return", "AssetRegister.Accountability"),
 
         new("View Issuance Reports", "View", "AssetRegister.Issuance", IsBasic: true),
         new("Post Issuance Reports", "Post", "AssetRegister.Issuance"),

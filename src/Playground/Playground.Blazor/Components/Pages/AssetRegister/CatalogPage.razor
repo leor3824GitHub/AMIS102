@@ -1,13 +1,18 @@
 @page "/asset-register/catalog"
+@implements IDisposable
 @using AMIS.Playground.Blazor.ApiClient
+@using AMIS.Modules.AssetRegister.Contracts.Permissions
 @inject IArCatalogClient Client
 @inject ISnackbar Snackbar
+@inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="Property Item Catalog (Asset Register)"
                Description="Manage the local SKU catalog used to mint property numbers and default asset attributes." />
 
 <MudGrid Spacing="3">
     <!-- Create / Edit Form -->
+    @if (_canCreate || _canUpdate)
+    {
     <MudItem xs="12" md="4">
         <MudCard Elevation="1">
             <MudCardContent>
@@ -47,6 +52,7 @@
             </MudCardContent>
         </MudCard>
     </MudItem>
+    }
 
     <!-- List -->
     <MudItem xs="12" md="8">
@@ -99,13 +105,19 @@
                             </MudTd>
                             <MudTd>
                                 <MudStack Row="true" Spacing="0">
-                                    <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small"
-                                                   Color="Color.Primary" OnClick="@(() => EditItem(context))" />
-                                    <MudIconButton Icon="@(context.IsActive ? Icons.Material.Outlined.ToggleOff : Icons.Material.Outlined.ToggleOn)"
-                                                   Size="Size.Small" Color="@(context.IsActive ? Color.Warning : Color.Success)"
-                                                   OnClick="@(() => ToggleActivationAsync(context))" />
-                                    <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small"
-                                                   Color="Color.Error" OnClick="@(() => DeleteAsync(context))" />
+                                    @if (_canUpdate)
+                                    {
+                                        <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small"
+                                                       Color="Color.Primary" OnClick="@(() => EditItem(context))" />
+                                        <MudIconButton Icon="@(context.IsActive ? Icons.Material.Outlined.ToggleOff : Icons.Material.Outlined.ToggleOn)"
+                                                       Size="Size.Small" Color="@(context.IsActive ? Color.Warning : Color.Success)"
+                                                       OnClick="@(() => ToggleActivationAsync(context))" />
+                                    }
+                                    @if (_canDelete)
+                                    {
+                                        <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small"
+                                                       Color="Color.Error" OnClick="@(() => DeleteAsync(context))" />
+                                    }
                                 </MudStack>
                             </MudTd>
                         </RowTemplate>
@@ -143,6 +155,10 @@
 
     private CatalogFormModel _form = new();
 
+    private bool _canCreate => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Catalog.Create);
+    private bool _canUpdate => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Catalog.Update);
+    private bool _canDelete => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Catalog.Delete);
+
     private sealed class CatalogFormModel
     {
         public string Code { get; set; } = "";
@@ -154,7 +170,15 @@
         public int EstimatedUsefulLifeYears { get; set; } = 10;
     }
 
-    protected override async Task OnInitializedAsync() => await LoadAsync();
+    protected override async Task OnInitializedAsync()
+    {
+        UserProfileState.OnProfileChanged += OnProfileChanged;
+        await LoadAsync();
+    }
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
 
     private async Task LoadAsync()
     {

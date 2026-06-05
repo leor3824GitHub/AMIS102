@@ -1,7 +1,9 @@
 @page "/sessions"
+@implements IDisposable
 @using AMIS.Playground.Blazor.ApiClient
 @using AMIS.Framework.Blazor.UI.Components.Dialogs
 @using AMIS.Framework.Blazor.UI.Components.Cards
+@using AMIS.Framework.Shared.Identity
 @inherits ComponentBase
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Components.Authorization
@@ -11,17 +13,21 @@
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="Active Sessions"
                Description="Manage your active sessions and connected devices">
     <ActionContent>
-        <MudButton Variant="Variant.Filled"
-                   Color="Color.Warning"
-                   StartIcon="@Icons.Material.Filled.Logout"
-                   OnClick="RevokeAllSessions"
-                   Disabled="_loading || !_sessions.Any()">
-            Logout All Other Devices
-        </MudButton>
+        @if (_canRevokeAll)
+        {
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Warning"
+                       StartIcon="@Icons.Material.Filled.Logout"
+                       OnClick="RevokeAllSessions"
+                       Disabled="_loading || !_sessions.Any()">
+                Logout All Other Devices
+            </MudButton>
+        }
     </ActionContent>
 </AMISPageHeader>
 
@@ -143,7 +149,7 @@
             </TemplateColumn>
             <TemplateColumn Title="Actions" Sortable="false" HeaderClass="text-right" CellClass="text-right">
                 <CellTemplate>
-                    @if (!context.Item.IsCurrentSession)
+                    @if (!context.Item.IsCurrentSession && _canRevoke)
                     {
                         <MudTooltip Text="Revoke this session">
                             <MudIconButton Icon="@Icons.Material.Filled.Logout"
@@ -212,10 +218,18 @@
         public int Tablet { get; set; }
     }
 
+    private bool _canRevoke => UserProfileState.Permissions.Contains(IdentityPermissionConstants.Sessions.Revoke);
+    private bool _canRevokeAll => UserProfileState.Permissions.Contains(IdentityPermissionConstants.Sessions.RevokeAll);
+
     protected override async Task OnInitializedAsync()
     {
+        UserProfileState.OnProfileChanged += OnProfileChanged;
         await LoadSessions();
     }
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
 
     private async Task LoadSessions()
     {

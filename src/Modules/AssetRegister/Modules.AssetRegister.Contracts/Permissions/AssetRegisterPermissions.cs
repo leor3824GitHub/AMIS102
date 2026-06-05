@@ -7,14 +7,12 @@ public static class AssetRegisterPermissions
         public const string View     = "Permissions.AssetRegister.Assets.View";
         public const string Register = "Permissions.AssetRegister.Assets.Register";
         public const string Update   = "Permissions.AssetRegister.Assets.Update";
-        public const string Retire   = "Permissions.AssetRegister.Assets.Retire";
     }
 
     public static class Accountability
     {
         public const string View     = "Permissions.AssetRegister.Accountability.View";
         public const string Issue    = "Permissions.AssetRegister.Accountability.Issue";
-        public const string Transfer = "Permissions.AssetRegister.Accountability.Transfer";
         public const string Return   = "Permissions.AssetRegister.Accountability.Return";
     }
 

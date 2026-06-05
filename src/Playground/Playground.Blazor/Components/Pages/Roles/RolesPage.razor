@@ -1,12 +1,15 @@
 @page "/roles"
+@implements IDisposable
 @using AMIS.Playground.Blazor.ApiClient
 @using AMIS.Framework.Blazor.UI.Components.Dialogs
 @using AMIS.Framework.Blazor.UI.Components.Cards
+@using AMIS.Framework.Shared.Identity
 @inherits ComponentBase
 @inject IIdentityClient IdentityClient
 @inject NavigationManager Navigation
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
+@inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="Roles"
                Description="Manage roles and their permissions">
@@ -14,24 +17,30 @@
         @if (_selectedRoles.Any())
         {
             <MudButtonGroup Variant="Variant.Outlined" Color="Color.Default" Size="Size.Small" Class="mr-2">
-                <MudButton StartIcon="@Icons.Material.Filled.Delete"
-                           Color="Color.Error"
-                           OnClick="BulkDelete"
-                           Disabled="_bulkBusy">
-                    Delete (@_selectedRoles.Count)
-                </MudButton>
+                @if (_canDelete)
+                {
+                    <MudButton StartIcon="@Icons.Material.Filled.Delete"
+                               Color="Color.Error"
+                               OnClick="BulkDelete"
+                               Disabled="_bulkBusy">
+                        Delete (@_selectedRoles.Count)
+                    </MudButton>
+                }
                 <MudButton StartIcon="@Icons.Material.Filled.Clear"
                            OnClick="ClearSelection">
                     Clear
                 </MudButton>
             </MudButtonGroup>
         }
-        <MudButton Variant="Variant.Filled"
-                   Color="Color.Primary"
-                   StartIcon="@Icons.Material.Filled.Add"
-                   OnClick="ShowCreate">
-            New Role
-        </MudButton>
+        @if (_canCreate)
+        {
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Add"
+                       OnClick="ShowCreate">
+                New Role
+            </MudButton>
+        }
     </ActionContent>
 </AMISPageHeader>
 
@@ -154,26 +163,32 @@
             <TemplateColumn Title="Actions" Sortable="false" HeaderClass="text-right" CellClass="text-right">
                 <CellTemplate>
                     <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="0">
-                        <MudTooltip Text="Manage Permissions">
-                            <MudIconButton Icon="@Icons.Material.Filled.Key"
-                                           Size="Size.Small"
-                                           Color="Color.Primary"
-                                           OnClick="@(() => GoToPermissions(context.Item.Id))" />
-                        </MudTooltip>
-                        <MudTooltip Text="@(IsProtectedRole(context.Item.Name) ? "Protected roles cannot be edited" : "Edit Role")">
-                            <MudIconButton Icon="@Icons.Material.Filled.Edit"
-                                           Size="Size.Small"
-                                           Color="Color.Info"
-                                           OnClick="@(() => EditRole(context.Item))"
-                                           Disabled="@IsProtectedRole(context.Item.Name)" />
-                        </MudTooltip>
-                        <MudTooltip Text="@(IsProtectedRole(context.Item.Name) ? "Protected roles cannot be deleted" : "Delete Role")">
-                            <MudIconButton Icon="@Icons.Material.Filled.Delete"
-                                           Size="Size.Small"
-                                           Color="Color.Error"
-                                           OnClick="@(() => DeleteRole(context.Item))"
-                                           Disabled="@(IsProtectedRole(context.Item.Name) || _busyRoleId == context.Item.Id)" />
-                        </MudTooltip>
+                        @if (_canUpdate)
+                        {
+                            <MudTooltip Text="Manage Permissions">
+                                <MudIconButton Icon="@Icons.Material.Filled.Key"
+                                               Size="Size.Small"
+                                               Color="Color.Primary"
+                                               OnClick="@(() => GoToPermissions(context.Item.Id))" />
+                            </MudTooltip>
+                            <MudTooltip Text="@(IsProtectedRole(context.Item.Name) ? "Protected roles cannot be edited" : "Edit Role")">
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                               Size="Size.Small"
+                                               Color="Color.Info"
+                                               OnClick="@(() => EditRole(context.Item))"
+                                               Disabled="@IsProtectedRole(context.Item.Name)" />
+                            </MudTooltip>
+                        }
+                        @if (_canDelete)
+                        {
+                            <MudTooltip Text="@(IsProtectedRole(context.Item.Name) ? "Protected roles cannot be deleted" : "Delete Role")">
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                               Size="Size.Small"
+                                               Color="Color.Error"
+                                               OnClick="@(() => DeleteRole(context.Item))"
+                                               Disabled="@(IsProtectedRole(context.Item.Name) || _busyRoleId == context.Item.Id)" />
+                            </MudTooltip>
+                        }
                     </MudStack>
                 </CellTemplate>
             </TemplateColumn>
@@ -242,10 +257,19 @@
         public string? Search { get; set; }
     }
 
+    private bool _canCreate => UserProfileState.Permissions.Contains(IdentityPermissionConstants.Roles.Create);
+    private bool _canUpdate => UserProfileState.Permissions.Contains(IdentityPermissionConstants.Roles.Update);
+    private bool _canDelete => UserProfileState.Permissions.Contains(IdentityPermissionConstants.Roles.Delete);
+
     protected override async Task OnInitializedAsync()
     {
+        UserProfileState.OnProfileChanged += OnProfileChanged;
         await LoadData();
     }
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
 
     private async Task LoadData()
     {

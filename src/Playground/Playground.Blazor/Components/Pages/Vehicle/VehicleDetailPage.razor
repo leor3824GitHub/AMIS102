@@ -1,14 +1,17 @@
 @page "/vehicle/vehicles/{Id:guid}"
+@implements IDisposable
 @using AMIS.Framework.Shared.Persistence
 @using AMIS.Modules.Vehicle.Contracts.v1.Maintenance
 @using AMIS.Modules.Vehicle.Contracts.v1.Repairs
 @using AMIS.Modules.Vehicle.Contracts.v1.Vehicles
+@using AMIS.Modules.Vehicle.Contracts.Permissions
 @using static AMIS.Modules.Vehicle.Contracts.v1.Vehicles.VehicleStatusValues
 @using AMIS.Playground.Blazor.ApiClient
 @inject IVehicleClient VehicleClient
 @inject ILookupClient LookupClient
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation
+@inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="Vehicle Details" Description="View and update a specific vehicle" />
 
@@ -69,16 +72,19 @@ else
                         <MudText Typo="Typo.caption" Class="mt-2">Acquisition Cost</MudText>
                         <MudText Typo="Typo.body2">@(_vehicle.AcquisitionCost?.ToString("N2") ?? "-")</MudText>
                         <MudStack Row="true" Spacing="1">
-                            @if (_vehicle.Status == Active)
+                            @if (_vehicle.Status == Active && _canUpdate)
                             {
                                 <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Warning" OnClick="Retire">Retire</MudButton>
                                 <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Error" OnClick="Decommission">Decommission</MudButton>
                             }
-                            else if (_vehicle.Status is Retired or Decommissioned)
+                            else if ((_vehicle.Status is Retired or Decommissioned) && _canUpdate)
                             {
                                 <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Success" OnClick="Reactivate">Reactivate</MudButton>
                             }
-                            <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Error" OnClick="Delete">Delete</MudButton>
+                            @if (_canDelete)
+                            {
+                                <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Error" OnClick="Delete">Delete</MudButton>
+                            }
                         </MudStack>
                     </MudCardContent>
                 </MudCard>
@@ -86,6 +92,8 @@ else
 
             <MudItem xs="12" md="8">
                 <MudTabs Rounded="true" PanelClass="pa-4">
+                    @if (_canUpdate)
+                    {
                     <MudTabPanel Text="Update Vehicle">
                         <MudStack Spacing="2">
                             <MudGrid>
@@ -145,6 +153,7 @@ else
                         <MudNumericField @bind-Value="_newOdometer" Label="New Odometer" Min="0" />
                         <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-2" OnClick="UpdateOdometer">Update Odometer</MudButton>
                     </MudTabPanel>
+                    }
 
                     <MudTabPanel Text="Recent Records">
                         <MudText Typo="Typo.subtitle2" Class="mb-2">Repairs</MudText>
@@ -217,6 +226,15 @@ else
     private List<RepairRecordDto> _repairs = [];
     private List<MaintenanceScheduleDto> _schedules = [];
     private List<MaintenanceLogDto> _logs = [];
+
+    private bool _canUpdate => UserProfileState.Permissions.Contains(VehiclePermissions.Vehicles.Update);
+    private bool _canDelete => UserProfileState.Permissions.Contains(VehiclePermissions.Vehicles.Delete);
+
+    protected override void OnInitialized() => UserProfileState.OnProfileChanged += OnProfileChanged;
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
 
     protected override async Task OnParametersSetAsync() => await Load();
 

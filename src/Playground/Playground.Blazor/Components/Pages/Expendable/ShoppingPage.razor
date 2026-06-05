@@ -1,8 +1,10 @@
 @page "/expendable/shopping"
+@implements IDisposable
 @using System.Timers
 @using MudBlazor
 @using AMIS.Playground.Blazor.ApiClient
 @using AMIS.Playground.Blazor.Services
+@using AMIS.Modules.Expendable.Contracts.Permissions
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Security.Claims
 @inject IProductsClient _productsClient
@@ -14,6 +16,7 @@
 @inject NavigationManager _navigationManager
 @inject MasterDataService MasterDataService
 @inject ISnackbar _snackbar
+@inject IUserProfileState UserProfileState
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="py-8">
     <MudGrid>
@@ -109,13 +112,16 @@
                                                OnClick="@(() => OpenProductDetails(product))">
                                         Details
                                     </MudButton>
-                                    <MudButton Variant="Variant.Filled"
-                                               Color="Color.Primary"
-                                               Size="Size.Small"
-                                               OnClick="@(() => QuickAddToCart(product))"
-                                               Class="ml-auto">
-                                        Add
-                                    </MudButton>
+                                    @if (_canEditCart)
+                                    {
+                                        <MudButton Variant="Variant.Filled"
+                                                   Color="Color.Primary"
+                                                   Size="Size.Small"
+                                                   OnClick="@(() => QuickAddToCart(product))"
+                                                   Class="ml-auto">
+                                            Add
+                                        </MudButton>
+                                    }
                                 </MudCardActions>
                             </MudCard>
                         </MudItem>
@@ -173,11 +179,14 @@
         </DialogContent>
         <DialogActions>
             <MudButton OnClick="@(() => _showProductDetailsDialog = false)">Close</MudButton>
-            <MudButton Color="Color.Primary"
-                       Variant="Variant.Filled"
-                       OnClick="@(() => OpenAddToCartDialog(_selectedProduct))">
-                Add to Basket
-            </MudButton>
+            @if (_canEditCart)
+            {
+                <MudButton Color="Color.Primary"
+                           Variant="Variant.Filled"
+                           OnClick="@(() => OpenAddToCartDialog(_selectedProduct))">
+                    Add to Basket
+                </MudButton>
+            }
         </DialogActions>
     </MudDialog>
 
@@ -211,11 +220,14 @@
         </DialogContent>
         <DialogActions>
             <MudButton OnClick="@(() => _showAddToCartDialog = false)">Cancel</MudButton>
-            <MudButton Color="Color.Primary"
-                       Variant="Variant.Filled"
-                       OnClick="AddToCart">
-                Add to Basket
-            </MudButton>
+            @if (_canEditCart)
+            {
+                <MudButton Color="Color.Primary"
+                           Variant="Variant.Filled"
+                           OnClick="AddToCart">
+                    Add to Basket
+                </MudButton>
+            }
         </DialogActions>
     </MudDialog>
 </MudContainer>
@@ -240,6 +252,12 @@
     private string _stockFilter = "All"; // "All", "InStock", "OutOfStock"
 
     private string _currentEmployeeId = string.Empty;
+
+    private bool _canEditCart => UserProfileState.Permissions.Contains(ExpendablePermissions.ShoppingCarts.Edit);
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
 
     private int GetProductBalance(ProductDto product)
     {
@@ -294,6 +312,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        UserProfileState.OnProfileChanged += OnProfileChanged;
         _isLoading = true; // Start loading state
         await LoadCategories(); // MUST call this to see chips!
         await ResolveCurrentEmployeeContext();

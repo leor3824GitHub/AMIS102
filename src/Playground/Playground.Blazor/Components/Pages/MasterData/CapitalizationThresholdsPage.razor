@@ -1,11 +1,14 @@
 @page "/master-data/capitalization-thresholds"
+@implements IDisposable
 @using AMIS.Modules.MasterData.Contracts.v1.CapitalizationThresholds
+@using AMIS.Modules.MasterData.Contracts.Permissions
 @using AMIS.Playground.Blazor.ApiClient
 @using MudBlazor
 @inject ICapitalizationThresholdClient Client
 @inject ICapitalizationThresholdState ThresholdState
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
+@inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="Capitalization Thresholds"
                Description="COA circular-based thresholds that determine item classification: Expendable, Semi-Expendable, or PPE" />
@@ -65,6 +68,8 @@ else if (_loaded)
 
 <MudGrid Spacing="3">
     <!-- Form -->
+    @if (_canManage)
+    {
     <MudItem xs="12" md="4">
         <MudCard Elevation="1">
             <MudCardContent>
@@ -143,6 +148,7 @@ else if (_loaded)
             </MudCardContent>
         </MudCard>
     </MudItem>
+    }
 
     <!-- Table -->
     <MudItem xs="12" md="8">
@@ -197,13 +203,16 @@ else if (_loaded)
                                     </td>
                                     <td>
                                         <MudStack Row="true" Spacing="0">
-                                            <MudTooltip Text="Edit">
-                                                <MudIconButton Icon="@Icons.Material.Filled.Edit"
-                                                               Size="Size.Small"
-                                                               Color="Color.Primary"
-                                                               OnClick="@(() => BeginEdit(t))" />
-                                            </MudTooltip>
-                                            @if (!t.IsActive)
+                                            @if (_canManage)
+                                            {
+                                                <MudTooltip Text="Edit">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                                                   Size="Size.Small"
+                                                                   Color="Color.Primary"
+                                                                   OnClick="@(() => BeginEdit(t))" />
+                                                </MudTooltip>
+                                            }
+                                            @if (!t.IsActive && _canManage)
                                             {
                                                 <MudTooltip Text="Set as Active">
                                                     <MudIconButton Icon="@Icons.Material.Filled.TaskAlt"
@@ -240,7 +249,17 @@ else if (_loaded)
         _form.SemiExpendableLowValueThreshold < _form.CapitalizationAmount &&
         _form.EffectivityDateNullable.HasValue;
 
-    protected override async Task OnInitializedAsync() => await LoadAsync();
+    private bool _canManage => UserProfileState.Permissions.Contains(MasterDataPermissions.CapitalizationThresholds.Manage);
+
+    protected override async Task OnInitializedAsync()
+    {
+        UserProfileState.OnProfileChanged += OnProfileChanged;
+        await LoadAsync();
+    }
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
 
     private async Task LoadAsync()
     {

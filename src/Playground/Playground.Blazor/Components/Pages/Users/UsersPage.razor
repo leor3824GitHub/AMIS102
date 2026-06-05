@@ -1,10 +1,12 @@
 @page "/users"
+@implements IDisposable
 @using AMIS.Playground.Blazor.ApiClient
 @using AMIS.Framework.Blazor.UI.Components.Dialogs
 @using AMIS.Framework.Blazor.UI.Components.Cards
 @inherits ComponentBase
 @using System.Security.Claims
 @using AMIS.Framework.Shared.Constants
+@using AMIS.Framework.Shared.Identity
 @using Microsoft.AspNetCore.Components.Authorization
 @inject IIdentityClient IdentityClient
 @inject IUsersClient UsersClient
@@ -12,6 +14,7 @@
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="Users"
                Description="Manage user accounts and permissions">
@@ -19,36 +22,45 @@
         @if (_selectedUsers.Any())
         {
             <MudButtonGroup Variant="Variant.Outlined" Color="Color.Default" Size="Size.Small" Class="mr-2">
-                <MudButton StartIcon="@Icons.Material.Filled.CheckCircle"
-                           Color="Color.Success"
-                           OnClick="BulkActivate"
-                           Disabled="_bulkBusy">
-                    Activate (@_selectedUsers.Count)
-                </MudButton>
-                <MudButton StartIcon="@Icons.Material.Filled.Cancel"
-                           Color="Color.Warning"
-                           OnClick="BulkDeactivate"
-                           Disabled="_bulkBusy">
-                    Deactivate
-                </MudButton>
-                <MudButton StartIcon="@Icons.Material.Filled.Delete"
-                           Color="Color.Error"
-                           OnClick="BulkDelete"
-                           Disabled="_bulkBusy">
-                    Delete
-                </MudButton>
+                @if (_canUpdate)
+                {
+                    <MudButton StartIcon="@Icons.Material.Filled.CheckCircle"
+                               Color="Color.Success"
+                               OnClick="BulkActivate"
+                               Disabled="_bulkBusy">
+                        Activate (@_selectedUsers.Count)
+                    </MudButton>
+                    <MudButton StartIcon="@Icons.Material.Filled.Cancel"
+                               Color="Color.Warning"
+                               OnClick="BulkDeactivate"
+                               Disabled="_bulkBusy">
+                        Deactivate
+                    </MudButton>
+                }
+                @if (_canDelete)
+                {
+                    <MudButton StartIcon="@Icons.Material.Filled.Delete"
+                               Color="Color.Error"
+                               OnClick="BulkDelete"
+                               Disabled="_bulkBusy">
+                        Delete
+                    </MudButton>
+                }
                 <MudButton StartIcon="@Icons.Material.Filled.Clear"
                            OnClick="ClearSelection">
                     Clear
                 </MudButton>
             </MudButtonGroup>
         }
-        <MudButton Variant="Variant.Filled"
-                   Color="Color.Primary"
-                   StartIcon="@Icons.Material.Filled.Add"
-                   OnClick="ShowCreate">
-            New User
-        </MudButton>
+        @if (_canCreate)
+        {
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Add"
+                       OnClick="ShowCreate">
+                New User
+            </MudButton>
+        }
     </ActionContent>
 </AMISPageHeader>
 
@@ -237,26 +249,35 @@
                                            Color="Color.Primary"
                                            OnClick="@(() => GoToDetail(context.Item.Id))" />
                         </MudTooltip>
-                        <MudTooltip Text="Manage Roles">
-                            <MudIconButton Icon="@Icons.Material.Filled.AdminPanelSettings"
-                                           Size="Size.Small"
-                                           Color="Color.Info"
-                                           OnClick="@(() => GoToRoles(context.Item.Id))" />
-                        </MudTooltip>
-                        <MudTooltip Text="@GetToggleTooltip(context.Item)">
-                            <MudIconButton Icon="@(context.Item.IsActive ? Icons.Material.Filled.PersonOff : Icons.Material.Filled.PersonAdd)"
-                                           Size="Size.Small"
-                                           Color="@(context.Item.IsActive ? Color.Warning : Color.Success)"
-                                           OnClick="@(() => ToggleStatus(context.Item))"
-                                           Disabled="@IsToggleDisabled(context.Item)" />
-                        </MudTooltip>
-                        <MudTooltip Text="Delete User">
-                            <MudIconButton Icon="@Icons.Material.Filled.Delete"
-                                           Size="Size.Small"
-                                           Color="Color.Error"
-                                           OnClick="@(() => DeleteUser(context.Item))"
-                                           Disabled="_busyUserId == context.Item.Id" />
-                        </MudTooltip>
+                        @if (_canManageRoles)
+                        {
+                            <MudTooltip Text="Manage Roles">
+                                <MudIconButton Icon="@Icons.Material.Filled.AdminPanelSettings"
+                                               Size="Size.Small"
+                                               Color="Color.Info"
+                                               OnClick="@(() => GoToRoles(context.Item.Id))" />
+                            </MudTooltip>
+                        }
+                        @if (_canUpdate)
+                        {
+                            <MudTooltip Text="@GetToggleTooltip(context.Item)">
+                                <MudIconButton Icon="@(context.Item.IsActive ? Icons.Material.Filled.PersonOff : Icons.Material.Filled.PersonAdd)"
+                                               Size="Size.Small"
+                                               Color="@(context.Item.IsActive ? Color.Warning : Color.Success)"
+                                               OnClick="@(() => ToggleStatus(context.Item))"
+                                               Disabled="@IsToggleDisabled(context.Item)" />
+                            </MudTooltip>
+                        }
+                        @if (_canDelete)
+                        {
+                            <MudTooltip Text="Delete User">
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                               Size="Size.Small"
+                                               Color="Color.Error"
+                                               OnClick="@(() => DeleteUser(context.Item))"
+                                               Disabled="_busyUserId == context.Item.Id" />
+                            </MudTooltip>
+                        }
                     </MudStack>
                 </CellTemplate>
             </TemplateColumn>
@@ -327,11 +348,21 @@
         public bool? EmailConfirmed { get; set; }
     }
 
+    private bool _canCreate => UserProfileState.Permissions.Contains(IdentityPermissionConstants.Users.Create);
+    private bool _canUpdate => UserProfileState.Permissions.Contains(IdentityPermissionConstants.Users.Update);
+    private bool _canDelete => UserProfileState.Permissions.Contains(IdentityPermissionConstants.Users.Delete);
+    private bool _canManageRoles => UserProfileState.Permissions.Contains(IdentityPermissionConstants.Users.ManageRoles);
+
     protected override async Task OnInitializedAsync()
     {
+        UserProfileState.OnProfileChanged += OnProfileChanged;
         await ResolveCurrentUser();
         await LoadData();
     }
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
 
     private async Task LoadData()
     {

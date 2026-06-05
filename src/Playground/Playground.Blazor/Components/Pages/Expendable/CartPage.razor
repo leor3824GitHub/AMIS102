@@ -1,6 +1,8 @@
 @page "/expendable/cart"
+@implements IDisposable
 @using MudBlazor
 @using AMIS.Playground.Blazor.ApiClient
+@using AMIS.Modules.Expendable.Contracts.Permissions
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Security.Claims
 @inject IEmployeeClient _employeeClient
@@ -13,6 +15,7 @@
 @inject AuthenticationStateProvider _authenticationStateProvider
 @inject NavigationManager _navigationManager
 @inject ISnackbar _snackbar
+@inject IUserProfileState UserProfileState
 
 <PageTitle>Shopping Basket</PageTitle>
 
@@ -132,22 +135,28 @@
                                             <MudNumericField T="int" Value="context.Quantity"
                                                             ValueChanged="@((v) => UpdateQuantity(context.ProductId, v))"
                                                             Variant="Variant.Outlined" Margin="Margin.Dense" Min="1"
-                                                            Disabled="_isUpdating" />
+                                                            Disabled="@(_isUpdating || !_canEditCart)" />
                                         </div>
                                     </MudTd>
                                     <MudTd DataLabel="Subtotal" Style="text-align:right;">$@context.LineTotal.ToString("F2")</MudTd>
                                     <MudTd DataLabel="Actions" Style="text-align:center;">
-                                        <MudTooltip Text="Remove item from basket">
-                                            <MudIconButton Icon="@Icons.Material.Filled.DeleteOutline" Color="Color.Error" Size="Size.Small" AriaLabel="delete"
-                                                           OnClick="@(() => RemoveItem(context.ProductId))" />
-                                        </MudTooltip>
+                                        @if (_canEditCart)
+                                        {
+                                            <MudTooltip Text="Remove item from basket">
+                                                <MudIconButton Icon="@Icons.Material.Filled.DeleteOutline" Color="Color.Error" Size="Size.Small" AriaLabel="delete"
+                                                               OnClick="@(() => RemoveItem(context.ProductId))" />
+                                            </MudTooltip>
+                                        }
                                     </MudTd>
                                 </RowTemplate>
                             </MudTable>
                         </div>
                     </MudCardContent>
                     <MudCardActions>
-                        <MudButton StartIcon="@Icons.Material.Filled.ClearAll" Color="Color.Error" OnClick="@ClearCartConfirm" Disabled="_isUpdating">Clear Basket</MudButton>
+                        @if (_canClearCart)
+                        {
+                            <MudButton StartIcon="@Icons.Material.Filled.ClearAll" Color="Color.Error" OnClick="@ClearCartConfirm" Disabled="_isUpdating">Clear Basket</MudButton>
+                        }
                     </MudCardActions>
                 </MudCard>
             </MudItem>
@@ -175,12 +184,15 @@
                                 <MudTextField @bind-Value="_businessJustification" Label="Justification" Lines="3" Variant="Variant.Outlined" Placeholder="Purpose of request" />
                                 <MudDatePicker @bind-Date="_neededByDate" Label="Needed By" Editable="true" Placeholder="Select Date" />
 
-                                <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Large" Class="mt-2 py-3"
-                                           FullWidth="true" StartIcon="@Icons.Material.Filled.Send"
-                                           Disabled="@(_selectedDepartmentId == Guid.Empty || _isUpdating)"
-                                           OnClick="CheckoutAsync">
-                                    Submit Request
-                                </MudButton>
+                                @if (_canCreateRequest)
+                                {
+                                    <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Large" Class="mt-2 py-3"
+                                               FullWidth="true" StartIcon="@Icons.Material.Filled.Send"
+                                               Disabled="@(_selectedDepartmentId == Guid.Empty || _isUpdating)"
+                                               OnClick="CheckoutAsync">
+                                        Submit Request
+                                    </MudButton>
+                                }
                             </MudStack>
                         </MudCardContent>
                     </MudCard>
@@ -217,6 +229,10 @@
     // Popover state
     private Guid? _popoverProductId;
     private bool _popoverOpen => _popoverProductId.HasValue;
+
+    private bool _canEditCart => UserProfileState.Permissions.Contains(ExpendablePermissions.ShoppingCarts.Edit);
+    private bool _canClearCart => UserProfileState.Permissions.Contains(ExpendablePermissions.ShoppingCarts.Clear);
+    private bool _canCreateRequest => UserProfileState.Permissions.Contains(ExpendablePermissions.SupplyRequests.Create);
     
     private List<BreadcrumbItem> _breadcrumbs = new()
     {
@@ -226,6 +242,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        UserProfileState.OnProfileChanged += OnProfileChanged;
         _loading = true;
         try {
             await Task.WhenAll(ResolveCurrentEmployeeContext(), LoadProducts(), LoadDepartments());
@@ -235,6 +252,10 @@
             _loading = false;
         }
     }
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
 
     private async Task ResolveCurrentEmployeeContext()
     {

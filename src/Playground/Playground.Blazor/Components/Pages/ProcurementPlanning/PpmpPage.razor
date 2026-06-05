@@ -1,5 +1,7 @@
 @page "/procurement-planning/ppmps"
+@implements IDisposable
 @using AMIS.Modules.ProcurementPlanning.Contracts.v1.Ppmps
+@using AMIS.Modules.ProcurementPlanning.Contracts.Permissions
 @using AMIS.Framework.Shared.Persistence
 @using AMIS.Playground.Blazor.ApiClient
 @using AMIS.Playground.Blazor.Components.Shared
@@ -12,6 +14,7 @@
 @inject AuthenticationStateProvider AuthStateProvider
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
+@inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="Project Procurement Management Plan (PPMP)"
                Description="Manage per-section procurement plans for the fiscal year" />
@@ -187,14 +190,14 @@
                                         <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary"
                                                        OnClick="@(() => SelectPpmpAsync(row.Id))" />
                                     }
-                                    @if (row.Status is PpmpStatus.Draft or PpmpStatus.Returned)
+                                    @if ((row.Status is PpmpStatus.Draft or PpmpStatus.Returned) && _canSubmit)
                                     {
                                         <MudTooltip Text="Submit for Approval">
                                             <MudIconButton Icon="@Icons.Material.Filled.Send" Size="Size.Small" Color="Color.Info"
                                                            OnClick="@(() => QuickSubmitAsync(row))" />
                                         </MudTooltip>
                                     }
-                                    @if (row.Status == PpmpStatus.Submitted)
+                                    @if (row.Status == PpmpStatus.Submitted && _canSubmit)
                                     {
                                         <MudTooltip Text="Recall (return to Draft)">
                                             <MudIconButton Icon="@Icons.Material.Filled.Undo" Size="Size.Small"
@@ -256,14 +259,14 @@
                     <MudSpacer />
 
                     <!-- Workflow actions -->
-                    @if (_editing is not null && _editing.Status is PpmpStatus.Draft or PpmpStatus.Returned)
+                    @if (_editing is not null && _editing.Status is PpmpStatus.Draft or PpmpStatus.Returned && _canSubmit)
                     {
                         <MudButton Variant="Variant.Filled" Color="Color.Info" StartIcon="@Icons.Material.Filled.Send"
                                    OnClick="SubmitAsync" Disabled="_busy" Size="Size.Small">
                             Submit for Approval
                         </MudButton>
                     }
-                    @if (_editing is not null && _editing.Status == PpmpStatus.Submitted)
+                    @if (_editing is not null && _editing.Status == PpmpStatus.Submitted && _canSubmit)
                     {
                         <MudButton Variant="Variant.Outlined" Color="Color.Warning" StartIcon="@Icons.Material.Filled.Undo"
                                    OnClick="RecallAsync" Disabled="_busy" Size="Size.Small">
@@ -271,7 +274,7 @@
                         </MudButton>
                     }
                     @if (_editing is not null && _editing.Phase == PpmpPhase.Indicative && _editing.Status ==
-                                                            PpmpStatus.Approved)
+                                                            PpmpStatus.Approved && _canPromote)
                     {
                         <MudButton Variant="Variant.Outlined" Color="Color.Primary"
                                    StartIcon="@Icons.Material.Filled.MoveUp" OnClick="PromoteToFinalAsync" Disabled="_busy"
@@ -280,7 +283,7 @@
                         </MudButton>
                     }
                     @if (_editing is not null && _editing.Phase is PpmpPhase.Final or PpmpPhase.Updated
-                                                                 && _editing.Status is PpmpStatus.Approved or PpmpStatus.Consolidated)
+                                                                 && _editing.Status is PpmpStatus.Approved or PpmpStatus.Consolidated && _canCreateUpdate)
                     {
                         <MudButton Variant="Variant.Outlined" Color="Color.Warning" StartIcon="@Icons.Material.Filled.Edit"
                                    OnClick="ShowCreateUpdateDialogAsync" Disabled="_busy" Size="Size.Small">
@@ -289,7 +292,7 @@
                     }
 
                     <!-- Edit actions -->
-                    @if (!_isReadOnly)
+                    @if (!_isReadOnly && _canEdit)
                     {
                         <MudDivider Vertical="true" FlexItem="true" Class="mx-1" />
                         <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save"
@@ -538,10 +541,22 @@
     }
 
     // -- Lifecycle ----------------------------------------------------
+    private bool _canCreate => UserProfileState.Permissions.Contains(ProcurementPlanningPermissions.Ppmps.Create);
+    private bool _canUpdate => UserProfileState.Permissions.Contains(ProcurementPlanningPermissions.Ppmps.Update);
+    private bool _canEdit => _canCreate || _canUpdate;
+    private bool _canSubmit => UserProfileState.Permissions.Contains(ProcurementPlanningPermissions.Ppmps.Submit);
+    private bool _canPromote => UserProfileState.Permissions.Contains(ProcurementPlanningPermissions.Ppmps.PromoteToFinal);
+    private bool _canCreateUpdate => UserProfileState.Permissions.Contains(ProcurementPlanningPermissions.Ppmps.CreateUpdate);
+
     protected override async Task OnInitializedAsync()
     {
+        UserProfileState.OnProfileChanged += OnProfileChanged;
         await Task.WhenAll(LoadDefaultsAsync(), LoadUnitsAsync(), LoadModesOfProcurementAsync(), LoadAsync());
     }
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
 
     private async Task LoadModesOfProcurementAsync()
     {

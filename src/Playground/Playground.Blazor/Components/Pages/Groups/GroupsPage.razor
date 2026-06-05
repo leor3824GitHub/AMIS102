@@ -1,12 +1,15 @@
 @page "/groups"
+@implements IDisposable
 @using AMIS.Playground.Blazor.ApiClient
 @using AMIS.Framework.Blazor.UI.Components.Dialogs
 @using AMIS.Framework.Blazor.UI.Components.Cards
+@using AMIS.Framework.Shared.Identity
 @inherits ComponentBase
 @inject IIdentityClient IdentityClient
 @inject NavigationManager Navigation
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
+@inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="Groups"
                Description="Manage user groups and role assignments">
@@ -14,24 +17,30 @@
         @if (_selectedGroups.Any())
         {
             <MudButtonGroup Variant="Variant.Outlined" Color="Color.Default" Size="Size.Small" Class="mr-2">
-                <MudButton StartIcon="@Icons.Material.Filled.Delete"
-                           Color="Color.Error"
-                           OnClick="BulkDelete"
-                           Disabled="_bulkBusy">
-                    Delete (@_selectedGroups.Count)
-                </MudButton>
+                @if (_canDelete)
+                {
+                    <MudButton StartIcon="@Icons.Material.Filled.Delete"
+                               Color="Color.Error"
+                               OnClick="BulkDelete"
+                               Disabled="_bulkBusy">
+                        Delete (@_selectedGroups.Count)
+                    </MudButton>
+                }
                 <MudButton StartIcon="@Icons.Material.Filled.Clear"
                            OnClick="ClearSelection">
                     Clear
                 </MudButton>
             </MudButtonGroup>
         }
-        <MudButton Variant="Variant.Filled"
-                   Color="Color.Primary"
-                   StartIcon="@Icons.Material.Filled.Add"
-                   OnClick="ShowCreate">
-            New Group
-        </MudButton>
+        @if (_canCreate)
+        {
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Add"
+                       OnClick="ShowCreate">
+                New Group
+            </MudButton>
+        }
     </ActionContent>
 </AMISPageHeader>
 
@@ -195,26 +204,35 @@
             <TemplateColumn Title="Actions" Sortable="false" HeaderClass="text-right" CellClass="text-right">
                 <CellTemplate>
                     <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="0">
-                        <MudTooltip Text="Manage Members">
-                            <MudIconButton Icon="@Icons.Material.Filled.PeopleAlt"
-                                           Size="Size.Small"
-                                           Color="Color.Primary"
-                                           OnClick="@(() => GoToMembers(context.Item.Id))" />
-                        </MudTooltip>
-                        <MudTooltip Text="@(context.Item.IsSystemGroup ? "System groups cannot be edited" : "Edit Group")">
-                            <MudIconButton Icon="@Icons.Material.Filled.Edit"
-                                           Size="Size.Small"
-                                           Color="Color.Info"
-                                           OnClick="@(() => EditGroup(context.Item))"
-                                           Disabled="@context.Item.IsSystemGroup" />
-                        </MudTooltip>
-                        <MudTooltip Text="@(context.Item.IsSystemGroup ? "System groups cannot be deleted" : "Delete Group")">
-                            <MudIconButton Icon="@Icons.Material.Filled.Delete"
-                                           Size="Size.Small"
-                                           Color="Color.Error"
-                                           OnClick="@(() => DeleteGroup(context.Item))"
-                                           Disabled="@(context.Item.IsSystemGroup || _busyGroupId == context.Item.Id)" />
-                        </MudTooltip>
+                        @if (_canManageMembers)
+                        {
+                            <MudTooltip Text="Manage Members">
+                                <MudIconButton Icon="@Icons.Material.Filled.PeopleAlt"
+                                               Size="Size.Small"
+                                               Color="Color.Primary"
+                                               OnClick="@(() => GoToMembers(context.Item.Id))" />
+                            </MudTooltip>
+                        }
+                        @if (_canUpdate)
+                        {
+                            <MudTooltip Text="@(context.Item.IsSystemGroup ? "System groups cannot be edited" : "Edit Group")">
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                               Size="Size.Small"
+                                               Color="Color.Info"
+                                               OnClick="@(() => EditGroup(context.Item))"
+                                               Disabled="@context.Item.IsSystemGroup" />
+                            </MudTooltip>
+                        }
+                        @if (_canDelete)
+                        {
+                            <MudTooltip Text="@(context.Item.IsSystemGroup ? "System groups cannot be deleted" : "Delete Group")">
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                               Size="Size.Small"
+                                               Color="Color.Error"
+                                               OnClick="@(() => DeleteGroup(context.Item))"
+                                               Disabled="@(context.Item.IsSystemGroup || _busyGroupId == context.Item.Id)" />
+                            </MudTooltip>
+                        }
                     </MudStack>
                 </CellTemplate>
             </TemplateColumn>
@@ -271,10 +289,20 @@
         public string? Search { get; set; }
     }
 
+    private bool _canCreate => UserProfileState.Permissions.Contains(IdentityPermissionConstants.Groups.Create);
+    private bool _canUpdate => UserProfileState.Permissions.Contains(IdentityPermissionConstants.Groups.Update);
+    private bool _canDelete => UserProfileState.Permissions.Contains(IdentityPermissionConstants.Groups.Delete);
+    private bool _canManageMembers => UserProfileState.Permissions.Contains(IdentityPermissionConstants.Groups.ManageMembers);
+
     protected override async Task OnInitializedAsync()
     {
+        UserProfileState.OnProfileChanged += OnProfileChanged;
         await LoadData();
     }
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
 
     private async Task LoadData()
     {

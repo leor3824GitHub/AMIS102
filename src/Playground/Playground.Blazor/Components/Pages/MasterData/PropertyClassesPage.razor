@@ -1,8 +1,11 @@
 @page "/master-data/property-classes"
+@implements IDisposable
 @using AMIS.Modules.MasterData.Contracts.v1.PropertyClasses
+@using AMIS.Modules.MasterData.Contracts.Permissions
 @using AMIS.Playground.Blazor.ApiClient
 @inject IPropertyClassClient Client
 @inject ISnackbar Snackbar
+@inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="Property Classification & Category Library"
                Description="Property classification & category codes used in property code generation" />
@@ -15,12 +18,15 @@
             <MudCardContent>
                 <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-3">
                     <MudText Typo="Typo.h6">Classifications</MudText>
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary"
-                               StartIcon="@Icons.Material.Outlined.Add"
-                               OnClick="OpenAddClassDialog"
-                               Disabled="_busy">
-                        Add Classification
-                    </MudButton>
+                    @if (_canCreate)
+                    {
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                                   StartIcon="@Icons.Material.Outlined.Add"
+                                   OnClick="OpenAddClassDialog"
+                                   Disabled="_busy">
+                            Add Classification
+                        </MudButton>
+                    }
                 </MudStack>
 
                 <MudText Typo="Typo.subtitle1" Class="mb-2">
@@ -52,11 +58,14 @@
                                          Color="@(cls.IsActive ? Color.Success : Color.Default)">
                                     @(cls.IsActive ? "Active" : "Off")
                                 </MudChip>
-                                <span @onclick:stopPropagation="true">
-                                    <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small"
-                                                   Color="Color.Secondary"
-                                                   OnClick="@(() => OpenEditClassDialog(cls))" />
-                                </span>
+                                @if (_canUpdate)
+                                {
+                                    <span @onclick:stopPropagation="true">
+                                        <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small"
+                                                       Color="Color.Secondary"
+                                                       OnClick="@(() => OpenEditClassDialog(cls))" />
+                                    </span>
+                                }
                             </MudStack>
                         </MudListItem>
                     }
@@ -89,13 +98,15 @@
                     </MudStack>
 
                     <!-- Add item form -->
+                    @if (_canCreate || _canUpdate)
+                    {
                     <MudExpansionPanels Class="mb-3">
                         <MudExpansionPanel Text="@(_editingItem is not null ? $"Edit Item: {_editingItem.ItemCode}" : "Add Category Code")"
                                            @bind-IsExpanded="_itemFormExpanded">
                             <MudStack Spacing="2">
                                 <MudTextField @bind-Value="_itemForm.ItemCode"
-                                              Label="Category Code (1–2 chars)" Placeholder="e.g. 01"
-                                              HelperText="1–2 char sub-category code (e.g. 01, FM, WE)" CharacterCounter="true" MaxLength="2" />
+                                              Label="Category Code (1ï¿½2 chars)" Placeholder="e.g. 01"
+                                              HelperText="1ï¿½2 char sub-category code (e.g. 01, FM, WE)" CharacterCounter="true" MaxLength="2" />
                                 <MudTextField @bind-Value="_itemForm.Name"
                                               Label="Name" Placeholder="e.g. Computer and Accessories" />
                                 <!-- <MudTextField @bind-Value="_itemForm.Description" Label="Description" Lines="2" /> -->
@@ -113,6 +124,7 @@
                             </MudStack>
                         </MudExpansionPanel>
                     </MudExpansionPanels>
+                    }
 
                     <!-- Items table -->
                     @if (_selectedClass.Items.Count == 0)
@@ -149,9 +161,12 @@
                                             </MudChip>
                                         </td>
                                         <td>
-                                            <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small"
-                                                           Color="Color.Primary"
-                                                           OnClick="@(() => EditItem(item))" />
+                                            @if (_canUpdate)
+                                            {
+                                                <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small"
+                                                               Color="Color.Primary"
+                                                               OnClick="@(() => EditItem(item))" />
+                                            }
                                         </td>
                                     </tr>
                                 }
@@ -177,8 +192,8 @@
     </TitleContent>
     <DialogContent>
         <MudStack Spacing="2" Class="pt-2">
-            <MudTextField @bind-Value="_classForm.Code" Label="Code (2–4 chars)" Placeholder="e.g. OE"
-                          HelperText="@(_editingClass is not null ? "Code cannot be changed after creation." : "2–4 char classification code (PPRCLSCD)")"
+            <MudTextField @bind-Value="_classForm.Code" Label="Code (2ï¿½4 chars)" Placeholder="e.g. OE"
+                          HelperText="@(_editingClass is not null ? "Code cannot be changed after creation." : "2ï¿½4 char classification code (PPRCLSCD)")"
                           Variant="Variant.Outlined"
                           CharacterCounter="true" MaxLength="4"
                           Required="true" RequiredError="Code is required"
@@ -252,6 +267,9 @@
     private ClassForm _classForm = new();
     private ItemForm _itemForm = new();
 
+    private bool _canCreate => UserProfileState.Permissions.Contains(MasterDataPermissions.PropertyClasses.Create);
+    private bool _canUpdate => UserProfileState.Permissions.Contains(MasterDataPermissions.PropertyClasses.Update);
+
     private sealed class ClassForm
     {
         public string Code { get; set; } = string.Empty;
@@ -268,7 +286,15 @@
         public bool IsActive { get; set; } = true;
     }
 
-    protected override async Task OnInitializedAsync() => await LoadTreeAsync();
+    protected override async Task OnInitializedAsync()
+    {
+        UserProfileState.OnProfileChanged += OnProfileChanged;
+        await LoadTreeAsync();
+    }
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
 
     private async Task LoadTreeAsync()
     {

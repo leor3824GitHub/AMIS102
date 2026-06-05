@@ -1,5 +1,7 @@
 @page "/asset-register/returned-property"
+@implements IDisposable
 @using AMIS.Playground.Blazor.ApiClient
+@using AMIS.Modules.AssetRegister.Contracts.Permissions
 @using ReturnedPropertyReceiptType = AMIS.Modules.AssetRegister.Contracts.v1.ReturnedPropertyReceiptType
 @using AccountabilityType = AMIS.Modules.AssetRegister.Contracts.v1.AccountabilityType
 @using AccountabilityStatus = AMIS.Modules.AssetRegister.Contracts.v1.AccountabilityStatus
@@ -7,12 +9,15 @@
 @inject IArReturnedPropertyClient Client
 @inject IArAccountabilityClient AccountabilityClient
 @inject ISnackbar Snackbar
+@inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="Returned Property Receipts (RRSP / RRP)"
                Description="Record property returned by an end-user from an ICS or PAR. Marks each returned asset back to Available." />
 
 <MudGrid Spacing="3">
     <!-- Create Form -->
+    @if (_canCreate)
+    {
     <MudItem xs="12" md="5">
         <MudCard Elevation="1">
             <MudCardContent>
@@ -76,6 +81,7 @@
             </MudCardContent>
         </MudCard>
     </MudItem>
+    }
 
     <!-- List Panel -->
     <MudItem xs="12" md="7">
@@ -245,7 +251,17 @@
 
     private ReturnForm _form = new();
 
-    protected override async Task OnInitializedAsync() => await LoadAsync();
+    private bool _canCreate => UserProfileState.Permissions.Contains(AssetRegisterPermissions.ReturnedProperty.Create);
+
+    protected override async Task OnInitializedAsync()
+    {
+        UserProfileState.OnProfileChanged += OnProfileChanged;
+        await LoadAsync();
+    }
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
 
     private async Task LoadAsync()
     {

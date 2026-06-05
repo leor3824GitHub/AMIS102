@@ -1,11 +1,14 @@
 @page "/master-data/positions"
+@implements IDisposable
 @using AMIS.Framework.Blazor.UI.Components.Cards
 @using AMIS.Playground.Blazor.ApiClient
+@using AMIS.Modules.MasterData.Contracts.Permissions
 @inherits ComponentBase
 @inject ISnackbar Snackbar
 @inject IMaster_dataClient MasterDataClient
 @inject ILookupClient LookupClient
 @inject IOrganizationProfileClient OrgProfileClient
+@inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="Positions" Description="Manage positions">
     <ActionContent>
@@ -23,6 +26,8 @@
 <div class="mt-4">
     <MudGrid Spacing="2">
         <!-- Create/Edit Form -->
+        @if (_canCreate || _canUpdate)
+        {
         <MudItem xs="12" sm="6" md="4" Style="min-height: 100%;">
             <MudCard Class="AMIS-card">
                 <MudCardContent>
@@ -55,6 +60,7 @@
                 </MudCardContent>
             </MudCard>
         </MudItem>
+        }
 
         <!-- Positions List -->
         <MudItem xs="12" sm="6" md="8">
@@ -84,17 +90,23 @@
                                         <td>@position.Name</td>
                                         <td><MudChip T="string" Size="Size.Small" Color="@(position.IsActive ? Color.Success : Color.Default)">@(position.IsActive ? "Active" : "Inactive")</MudChip></td>
                                         <td>
-                                            @if (IsOwnedByMe(position.OfficeCode))
+                                            @if (IsOwnedByMe(position.OfficeCode) && (_canUpdate || _canDelete))
                                             {
                                                 <MudStack Row="true" Spacing="1">
-                                                    <MudTooltip Text="Edit position">
-                                                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
-                                                                       Color="Color.Primary" OnClick="@(() => EditPosition(position))" />
-                                                    </MudTooltip>
-                                                    <MudTooltip Text="Delete position">
-                                                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
-                                                                       Color="Color.Error" OnClick="@(() => DeletePosition(position.Id))" />
-                                                    </MudTooltip>
+                                                    @if (_canUpdate)
+                                                    {
+                                                        <MudTooltip Text="Edit position">
+                                                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                                                           Color="Color.Primary" OnClick="@(() => EditPosition(position))" />
+                                                        </MudTooltip>
+                                                    }
+                                                    @if (_canDelete)
+                                                    {
+                                                        <MudTooltip Text="Delete position">
+                                                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                                                           Color="Color.Error" OnClick="@(() => DeletePosition(position.Id))" />
+                                                        </MudTooltip>
+                                                    }
                                                 </MudStack>
                                             }
                                             else
@@ -140,6 +152,10 @@
     private int _pageIndex = 1;
     private const int PageSize = 10;
 
+    private bool _canCreate => UserProfileState.Permissions.Contains(MasterDataPermissions.Positions.Create);
+    private bool _canUpdate => UserProfileState.Permissions.Contains(MasterDataPermissions.Positions.Update);
+    private bool _canDelete => UserProfileState.Permissions.Contains(MasterDataPermissions.Positions.Delete);
+
     public class PositionForm
     {
         public string Code { get; set; } = string.Empty;
@@ -153,10 +169,15 @@
     {
         if (_initialized) return;
         _initialized = true;
+        UserProfileState.OnProfileChanged += OnProfileChanged;
         var profile = await OrgProfileClient.GetAsync();
         _myOfficeCode = profile?.AnnexECode;
         await LoadPositions();
     }
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
 
     private async Task LoadPositions()
     {
