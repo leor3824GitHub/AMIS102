@@ -252,7 +252,7 @@
         _error = null;
         try
         {
-            var result = await Client.SearchAsync(_keyword, _typeFilter, _statusFilter, _page, PageSize);
+            var result = await Client.SearchAsync(_keyword, _typeFilter, _statusFilter, page: _page, pageSize: PageSize);
             _items = result.Items;
             _totalCount = result.TotalCount;
             _totalPages = result.TotalPages > 0 ? result.TotalPages : 1;

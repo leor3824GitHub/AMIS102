@@ -20,9 +20,14 @@ internal sealed class ReturnedPropertyReceiptConfiguration : IEntityTypeConfigur
             .HasColumnType("xid")
             .ValueGeneratedOnAddOrUpdate()
             .IsConcurrencyToken();
-        builder.Property(x => x.ReceiptNo).IsRequired().HasMaxLength(64);
+        // Null while Pending; assigned on acceptance. Postgres treats NULLs as distinct, so the unique
+        // index still guards against duplicate assigned numbers without blocking multiple pending requests.
+        builder.Property(x => x.ReceiptNo).HasMaxLength(64);
+        builder.Property(x => x.Status).HasConversion<int>();
         builder.Property(x => x.AccountabilityDocumentNo).IsRequired().HasMaxLength(64);
         builder.Property(x => x.Remarks).HasMaxLength(1000);
+        builder.Property(x => x.RejectionReason).HasMaxLength(1000);
+        builder.Property(x => x.CancellationReason).HasMaxLength(1000);
 
         builder.OwnsOne(x => x.ReturnedBy, n => n.ConfigureEmployeeRef("ReturnedBy"));
         builder.OwnsOne(x => x.ReceivedBy, n => n.ConfigureEmployeeRef("ReceivedBy"));
@@ -35,6 +40,7 @@ internal sealed class ReturnedPropertyReceiptConfiguration : IEntityTypeConfigur
         builder.Navigation(x => x.Items).AutoInclude(false);
 
         builder.HasIndex(x => new { x.TenantId, x.ReceiptNo }).IsUnique();
+        builder.HasIndex(x => new { x.TenantId, x.Status });
         builder.HasIndex(x => new { x.TenantId, x.Date });
         builder.HasIndex(x => new { x.TenantId, x.AccountabilityId });
     }

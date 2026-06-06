@@ -64,5 +64,6 @@ public static class AssetRegisterPermissions
     {
         public const string View   = "Permissions.AssetRegister.ReturnedProperty.View";
         public const string Create = "Permissions.AssetRegister.ReturnedProperty.Create";
+        public const string Accept = "Permissions.AssetRegister.ReturnedProperty.Accept";
     }
 }

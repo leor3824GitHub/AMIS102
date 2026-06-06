@@ -20,8 +20,43 @@ internal static class ReturnedPropertyEndpoints
             return TypedResults.Created($"api/v1/asset-register/returned-property/{result.Id}", result);
         })
             .WithModuleName<CreateReturnedPropertyReceiptCommand>()
-            .WithSummary("Create a Receipt for Returned Property (RRSP / RRP)")
+            .WithSummary("Request a return of property (RRSP / RRP) — creates a Pending request")
             .RequirePermission(AssetRegisterPermissions.ReturnedProperty.Create);
+
+        group.MapPost("/{id:guid}/accept", async (Guid id, AcceptReturnedPropertyReceiptCommand body, IMediator mediator, CancellationToken ct) =>
+        {
+            var result = await mediator.Send(body with { Id = id }, ct);
+            return TypedResults.Ok(result);
+        })
+            .WithModuleName<AcceptReturnedPropertyReceiptCommand>()
+            .WithSummary("Custodian accepts a pending return — returns assets to Available and assigns the receipt number")
+            .RequirePermission(AssetRegisterPermissions.ReturnedProperty.Accept);
+
+        group.MapPost("/{id:guid}/reject", async (Guid id, RejectReturnedPropertyReceiptCommand body, IMediator mediator, CancellationToken ct) =>
+        {
+            var result = await mediator.Send(body with { Id = id }, ct);
+            return TypedResults.Ok(result);
+        })
+            .WithModuleName<RejectReturnedPropertyReceiptCommand>()
+            .WithSummary("Custodian rejects a pending return request")
+            .RequirePermission(AssetRegisterPermissions.ReturnedProperty.Accept);
+
+        group.MapPost("/{id:guid}/cancel", async (Guid id, CancelReturnedPropertyReceiptCommand body, IMediator mediator, CancellationToken ct) =>
+        {
+            var result = await mediator.Send(body with { Id = id }, ct);
+            return TypedResults.Ok(result);
+        })
+            .WithModuleName<CancelReturnedPropertyReceiptCommand>()
+            .WithSummary("Requester withdraws their pending return request")
+            .RequirePermission(AssetRegisterPermissions.ReturnedProperty.Create);
+
+        group.MapGet("/status-counts", async (
+            [AsParameters] GetReturnedPropertyStatusCountsQuery query,
+            IMediator mediator, CancellationToken ct) =>
+            TypedResults.Ok(await mediator.Send(query, ct)))
+            .WithModuleName<GetReturnedPropertyStatusCountsQuery>()
+            .WithSummary("Status counts for returned-property requests (for filter tabs)")
+            .RequirePermission(AssetRegisterPermissions.ReturnedProperty.View);
 
         group.MapGet("/{id:guid}", async (Guid id, IMediator mediator, CancellationToken ct) =>
         {

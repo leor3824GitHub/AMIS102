@@ -8,7 +8,6 @@ public sealed class CreateReturnedPropertyReceiptCommandValidator
 {
     public CreateReturnedPropertyReceiptCommandValidator()
     {
-        RuleFor(x => x.ReceiptNo).NotEmpty().MaximumLength(64);
         RuleFor(x => x.Date).NotEqual(default(DateOnly));
         RuleFor(x => x.AccountabilityId).NotEqual(Guid.Empty);
         RuleFor(x => x.AccountabilityLineIds).NotEmpty()
@@ -18,10 +17,40 @@ public sealed class CreateReturnedPropertyReceiptCommandValidator
             .When(x => x.ReturnedBy is not null);
         RuleFor(x => x.ReturnedBy.Designation).MaximumLength(200)
             .When(x => x.ReturnedBy is not null);
-        RuleFor(x => x.ReceivedBy!.PrintedName).NotEmpty().MaximumLength(200)
-            .When(x => x.ReceivedBy is not null);
-        RuleFor(x => x.ReceivedBy!.Designation).MaximumLength(200)
-            .When(x => x.ReceivedBy is not null);
         RuleFor(x => x.Remarks).MaximumLength(1000);
+    }
+}
+
+public sealed class AcceptReturnedPropertyReceiptCommandValidator
+    : AbstractValidator<AcceptReturnedPropertyReceiptCommand>
+{
+    public AcceptReturnedPropertyReceiptCommandValidator()
+    {
+        RuleFor(x => x.Id).NotEqual(Guid.Empty);
+        RuleFor(x => x.ReceivedBy).NotNull();
+        RuleFor(x => x.ReceivedBy.PrintedName).NotEmpty().MaximumLength(200)
+            .When(x => x.ReceivedBy is not null);
+        RuleFor(x => x.ReceivedBy.Designation).MaximumLength(200)
+            .When(x => x.ReceivedBy is not null);
+    }
+}
+
+public sealed class RejectReturnedPropertyReceiptCommandValidator
+    : AbstractValidator<RejectReturnedPropertyReceiptCommand>
+{
+    public RejectReturnedPropertyReceiptCommandValidator()
+    {
+        RuleFor(x => x.Id).NotEqual(Guid.Empty);
+        RuleFor(x => x.Reason).NotEmpty().MaximumLength(1000);
+    }
+}
+
+public sealed class CancelReturnedPropertyReceiptCommandValidator
+    : AbstractValidator<CancelReturnedPropertyReceiptCommand>
+{
+    public CancelReturnedPropertyReceiptCommandValidator()
+    {
+        RuleFor(x => x.Id).NotEqual(Guid.Empty);
+        RuleFor(x => x.Reason).MaximumLength(1000);
     }
 }

@@ -319,7 +319,7 @@ internal sealed record RenewAccountabilityRequest(DateOnly NewIssuedOn, DateOnly
 
 internal interface IArAccountabilityClient
 {
-    Task<ArPagedResponse<ArAccountabilitySummaryDto>> SearchAsync(string? keyword = null, AccountabilityType? type = null, AccountabilityStatus? status = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
+    Task<ArPagedResponse<ArAccountabilitySummaryDto>> SearchAsync(string? keyword = null, AccountabilityType? type = null, AccountabilityStatus? status = null, Guid? receivedByEmployeeId = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
     Task<ArAccountabilityDto?> GetAsync(Guid id, CancellationToken ct = default);
     Task<ArAccountabilityDto> IssueAsync(IssueAccountabilityRequest request, CancellationToken ct = default);
     Task<ArAccountabilityDto> ReturnLinesAsync(Guid id, ReturnAccountabilityLinesRequest request, CancellationToken ct = default);
@@ -331,13 +331,14 @@ internal sealed class ArAccountabilityClient(HttpClient http) : IArAccountabilit
 {
     private const string Base = "api/v1/asset-register/accountability";
 
-    public async Task<ArPagedResponse<ArAccountabilitySummaryDto>> SearchAsync(string? keyword = null, AccountabilityType? type = null, AccountabilityStatus? status = null, int page = 1, int pageSize = 20, CancellationToken ct = default)
+    public async Task<ArPagedResponse<ArAccountabilitySummaryDto>> SearchAsync(string? keyword = null, AccountabilityType? type = null, AccountabilityStatus? status = null, Guid? receivedByEmployeeId = null, int page = 1, int pageSize = 20, CancellationToken ct = default)
     {
         var url = ArUrlBuilder.Build(Base, new()
         {
             ["keyword"] = keyword,
             ["type"] = type?.ToString(),
             ["status"] = status?.ToString(),
+            ["receivedByEmployeeId"] = receivedByEmployeeId?.ToString(),
             ["pageNumber"] = page.ToString(CultureInfo.InvariantCulture),
             ["pageSize"] = pageSize.ToString(CultureInfo.InvariantCulture),
         });
@@ -1154,50 +1155,72 @@ internal sealed record ArReturnedPropertyReceiptItemDto(
 
 internal sealed record ArReturnedPropertyReceiptDto(
     Guid Id,
-    string ReceiptNo,
+    string? ReceiptNo,
     ArContracts.ReturnedPropertyReceiptType ReceiptType,
+    ArContracts.ReturnedPropertyReceiptStatus Status,
     DateOnly Date,
     Guid AccountabilityId,
     string AccountabilityDocumentNo,
     ArEmployeeRefDto ReturnedBy,
     ArEmployeeRefDto? ReceivedBy,
     string? Remarks,
+    string? RejectionReason,
+    string? CancellationReason,
     IReadOnlyCollection<ArReturnedPropertyReceiptItemDto> Items);
 
 internal sealed record ArReturnedPropertyReceiptSummaryDto(
     Guid Id,
-    string ReceiptNo,
+    string? ReceiptNo,
     ArContracts.ReturnedPropertyReceiptType ReceiptType,
+    ArContracts.ReturnedPropertyReceiptStatus Status,
     DateOnly Date,
     string AccountabilityDocumentNo,
     int ItemCount,
     decimal TotalUnitCost);
 
+internal sealed record ArReturnedPropertyStatusCountDto(
+    ArContracts.ReturnedPropertyReceiptStatus Status,
+    int Count);
+
 internal sealed record CreateReturnedPropertyReceiptRequest(
-    string ReceiptNo,
     ArContracts.ReturnedPropertyReceiptType ReceiptType,
     DateOnly Date,
     Guid AccountabilityId,
     IReadOnlyList<Guid> AccountabilityLineIds,
     ArEmployeeRefDto ReturnedBy,
-    ArEmployeeRefDto? ReceivedBy,
     string? Remarks);
+
+internal sealed record AcceptReturnedPropertyReceiptRequest(ArEmployeeRefDto ReceivedBy);
+internal sealed record RejectReturnedPropertyReceiptRequest(string Reason);
+internal sealed record CancelReturnedPropertyReceiptRequest(string? Reason);
 
 internal interface IArReturnedPropertyClient
 {
     Task<ArPagedResponse<ArReturnedPropertyReceiptSummaryDto>> SearchAsync(
         string? keyword = null,
         ArContracts.ReturnedPropertyReceiptType? receiptType = null,
+        ArContracts.ReturnedPropertyReceiptStatus? status = null,
+        Guid? returnedByEmployeeId = null,
         DateOnly? fromDate = null,
         DateOnly? toDate = null,
         int page = 1,
         int pageSize = 15,
         CancellationToken ct = default);
 
+    Task<IReadOnlyList<ArReturnedPropertyStatusCountDto>> GetStatusCountsAsync(
+        Guid? returnedByEmployeeId = null,
+        DateOnly? fromDate = null,
+        DateOnly? toDate = null,
+        CancellationToken ct = default);
+
     Task<ArReturnedPropertyReceiptDto?> GetAsync(Guid id, CancellationToken ct = default);
 
     Task<ArReturnedPropertyReceiptDto> CreateAsync(
         CreateReturnedPropertyReceiptRequest request, CancellationToken ct = default);
+
+    Task<ArReturnedPropertyReceiptDto> AcceptAsync(Guid id, ArEmployeeRefDto receivedBy, CancellationToken ct = default);
+    Task<ArReturnedPropertyReceiptDto> RejectAsync(Guid id, string reason, CancellationToken ct = default);
+    Task<ArReturnedPropertyReceiptDto> CancelAsync(Guid id, string? reason, CancellationToken ct = default);
 }
 
 internal sealed class ArReturnedPropertyClient(HttpClient http) : IArReturnedPropertyClient
@@ -1207,6 +1230,8 @@ internal sealed class ArReturnedPropertyClient(HttpClient http) : IArReturnedPro
     public async Task<ArPagedResponse<ArReturnedPropertyReceiptSummaryDto>> SearchAsync(
         string? keyword = null,
         ArContracts.ReturnedPropertyReceiptType? receiptType = null,
+        ArContracts.ReturnedPropertyReceiptStatus? status = null,
+        Guid? returnedByEmployeeId = null,
         DateOnly? fromDate = null,
         DateOnly? toDate = null,
         int page = 1,
@@ -1217,6 +1242,8 @@ internal sealed class ArReturnedPropertyClient(HttpClient http) : IArReturnedPro
         {
             ["keyword"]     = keyword,
             ["receiptType"] = receiptType?.ToString(),
+            ["status"]      = status?.ToString(),
+            ["returnedByEmployeeId"] = returnedByEmployeeId?.ToString(),
             ["fromDate"]    = fromDate?.ToString("o", System.Globalization.CultureInfo.InvariantCulture),
             ["toDate"]      = toDate?.ToString("o", System.Globalization.CultureInfo.InvariantCulture),
             ["pageNumber"]  = page.ToString(System.Globalization.CultureInfo.InvariantCulture),
@@ -1226,6 +1253,22 @@ internal sealed class ArReturnedPropertyClient(HttpClient http) : IArReturnedPro
         return result ?? new ArPagedResponse<ArReturnedPropertyReceiptSummaryDto>([], page, pageSize, 0, 0);
     }
 
+    public async Task<IReadOnlyList<ArReturnedPropertyStatusCountDto>> GetStatusCountsAsync(
+        Guid? returnedByEmployeeId = null,
+        DateOnly? fromDate = null,
+        DateOnly? toDate = null,
+        CancellationToken ct = default)
+    {
+        var url = ArUrlBuilder.Build($"{Base}/status-counts", new()
+        {
+            ["returnedByEmployeeId"] = returnedByEmployeeId?.ToString(),
+            ["fromDate"] = fromDate?.ToString("o", System.Globalization.CultureInfo.InvariantCulture),
+            ["toDate"]   = toDate?.ToString("o", System.Globalization.CultureInfo.InvariantCulture),
+        });
+        var result = await http.GetFromJsonAsync<List<ArReturnedPropertyStatusCountDto>>(url, ArJsonOptions.Default, ct);
+        return result ?? [];
+    }
+
     public Task<ArReturnedPropertyReceiptDto?> GetAsync(Guid id, CancellationToken ct = default) =>
         http.GetFromJsonAsync<ArReturnedPropertyReceiptDto>($"{Base}/{id}", ArJsonOptions.Default, ct);
 
@@ -1233,6 +1276,27 @@ internal sealed class ArReturnedPropertyClient(HttpClient http) : IArReturnedPro
         CreateReturnedPropertyReceiptRequest request, CancellationToken ct = default)
     {
         var resp = await http.PostAsJsonAsync(Base, request, ArJsonOptions.Default, ct);
+        resp.EnsureSuccessStatusCode();
+        return (await resp.Content.ReadFromJsonAsync<ArReturnedPropertyReceiptDto>(ArJsonOptions.Default, cancellationToken: ct))!;
+    }
+
+    public async Task<ArReturnedPropertyReceiptDto> AcceptAsync(Guid id, ArEmployeeRefDto receivedBy, CancellationToken ct = default)
+    {
+        var resp = await http.PostAsJsonAsync($"{Base}/{id}/accept", new AcceptReturnedPropertyReceiptRequest(receivedBy), ArJsonOptions.Default, ct);
+        resp.EnsureSuccessStatusCode();
+        return (await resp.Content.ReadFromJsonAsync<ArReturnedPropertyReceiptDto>(ArJsonOptions.Default, cancellationToken: ct))!;
+    }
+
+    public async Task<ArReturnedPropertyReceiptDto> RejectAsync(Guid id, string reason, CancellationToken ct = default)
+    {
+        var resp = await http.PostAsJsonAsync($"{Base}/{id}/reject", new RejectReturnedPropertyReceiptRequest(reason), ArJsonOptions.Default, ct);
+        resp.EnsureSuccessStatusCode();
+        return (await resp.Content.ReadFromJsonAsync<ArReturnedPropertyReceiptDto>(ArJsonOptions.Default, cancellationToken: ct))!;
+    }
+
+    public async Task<ArReturnedPropertyReceiptDto> CancelAsync(Guid id, string? reason, CancellationToken ct = default)
+    {
+        var resp = await http.PostAsJsonAsync($"{Base}/{id}/cancel", new CancelReturnedPropertyReceiptRequest(reason), ArJsonOptions.Default, ct);
         resp.EnsureSuccessStatusCode();
         return (await resp.Content.ReadFromJsonAsync<ArReturnedPropertyReceiptDto>(ArJsonOptions.Default, cancellationToken: ct))!;
     }

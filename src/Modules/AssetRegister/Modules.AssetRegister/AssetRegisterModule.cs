@@ -59,6 +59,7 @@ public class AssetRegisterModule : IModule
 
         new("View Returned Property Receipts",   "View",   "AssetRegister.ReturnedProperty", IsBasic: true),
         new("Create Returned Property Receipts", "Create", "AssetRegister.ReturnedProperty"),
+        new("Accept Returned Property Receipts", "Accept", "AssetRegister.ReturnedProperty"),
     ];
 
     public void ConfigureServices(IHostApplicationBuilder builder)
