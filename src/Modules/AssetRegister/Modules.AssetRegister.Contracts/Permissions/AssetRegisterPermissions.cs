@@ -16,6 +16,20 @@ public static class AssetRegisterPermissions
         public const string Return   = "Permissions.AssetRegister.Accountability.Return";
     }
 
+    /// <summary>
+    /// Employee self-service permissions. These scope a user to <em>their own</em> ICS/PAR
+    /// (records where they are the <c>ReceivedBy</c> accountable person) and never grant the
+    /// officer-wide <see cref="Accountability"/> view. Bundle these into the "Employee" role.
+    /// </summary>
+    public static class MyAccountability
+    {
+        public const string View           = "Permissions.AssetRegister.MyAccountability.View";
+        public const string Acknowledge    = "Permissions.AssetRegister.MyAccountability.Acknowledge";
+        public const string Return         = "Permissions.AssetRegister.MyAccountability.Return";
+        public const string ReportIncident = "Permissions.AssetRegister.MyAccountability.ReportIncident";
+        public const string ConfirmCount   = "Permissions.AssetRegister.MyAccountability.ConfirmCount";
+    }
+
     public static class Issuance
     {
         public const string View = "Permissions.AssetRegister.Issuance.View";

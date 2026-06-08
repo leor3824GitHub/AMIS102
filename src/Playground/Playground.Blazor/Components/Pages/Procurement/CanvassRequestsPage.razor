@@ -10,8 +10,6 @@
 @using AMIS.Playground.Blazor.ApiClient
 @inject ICanvassRequestClient Client
 @inject IPurchaseOrderClient PoClient
-@inject IPurchaseRequestClient PurchaseRequestClient
-@inject IMaster_dataClient MasterDataClient
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 @inject NavigationManager Nav
@@ -21,165 +19,52 @@
 
 <AMISPageHeader Title="Canvass Requests (RIV)" Description="Request for Issuance of Voucher • manage supplier quotations and award" />
 
-<MudGrid Spacing="3">
-    <!-- Create Form -->
-    <MudItem xs="12" md="4">
-        @if (_canCreate)
-        {
-            <MudCard Elevation="1">
-                <MudCardContent>
-                    <MudText Typo="Typo.h6" Class="mb-3">New Canvass Request</MudText>
-                    <MudStack Spacing="2">
-                        <MudAutocomplete T="PurchaseRequestSummaryDto"
-                                         Value="_selectedPurchaseRequest"
-                                         ValueChanged="OnPurchaseRequestChanged"
-                                         SearchFunc="SearchPurchaseRequests"
-                                         ToStringFunc="FormatPurchaseRequest"
-                                         Label="Purchase Request"
-                                         Variant="Variant.Outlined"
-                                         Placeholder="Search PR number or purpose..."
-                                         Required="true"
-                                         Clearable="true"
-                                         CoerceValue="true"
-                                         ResetValueOnEmptyText="true"
-                                         Dense="true"
-                                         Margin="Margin.Dense" />
-                        <MudDatePicker @bind-Date="_returnDeadlineNullable" Label="Return Deadline"
-                                       Variant="Variant.Outlined" Required="true" DateFormat="MM/dd/yyyy" Dense="true" Margin="Margin.Dense" />
-                        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
-                                   OnClick="CreateAsync" Disabled="@(_busy || _selectedItemNos.Count == 0)">
-                            @if (_busy) { <MudProgressCircular Size="Size.Small" Class="mr-1" Indeterminate="true" /> }
-                            Create Canvass Request (@_selectedItemNos.Count item@(_selectedItemNos.Count == 1 ? "" : "s"))
-                        </MudButton>
-                    </MudStack>
-                </MudCardContent>
-            </MudCard>
-        }
-
-        @if (_selectedPurchaseRequestDetail is not null)
-        {
-            <MudCard Elevation="1" Class="mt-3">
-                <MudCardHeader>
-                    <CardHeaderContent>
-                        <MudText Typo="Typo.h6">PR Details Preview</MudText>
-                    </CardHeaderContent>
-                </MudCardHeader>
-                <MudCardContent>
-                    <MudStack Spacing="2">
-                        <div>
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">Purpose</MudText>
-                            <MudText Typo="Typo.body2">@_selectedPurchaseRequestDetail.Purpose</MudText>
-                        </div>
-                        <MudDivider />
-                        <MudGrid Spacing="1">
-                            <MudItem xs="12" sm="6">
-                                <div>
-                                    <MudText Typo="Typo.caption" Color="Color.Secondary">PR Type</MudText>
-                                    <MudChip T="string" Size="Size.Small"
-                                             Color="@(_selectedPurchaseRequestDetail.PrType == PrType.Unplanned ? Color.Warning : Color.Info)">
-                                        @_selectedPurchaseRequestDetail.PrType
-                                    </MudChip>
-                                </div>
-                            </MudItem>
-                            <MudItem xs="12" sm="6">
-                                <div>
-                                    <MudText Typo="Typo.caption" Color="Color.Secondary">Total</MudText>
-                                    <MudText Typo="Typo.body2"><b>₱@_selectedPurchaseRequestDetail.LineItems.Sum(x => x.EstimatedTotalCost).ToString("N2")</b></MudText>
-                                </div>
-                            </MudItem>
-                        </MudGrid>
-                        <MudDivider />
-                        <div>
-                            <MudText Typo="Typo.subtitle2" Class="mb-2">Select Items to Canvass (@_selectedItemNos.Count selected)</MudText>
-                            @if (_canvassableLines.Count == 0)
-                            {
-                                <MudText Typo="Typo.body2" Color="Color.Secondary">No line items.</MudText>
-                            }
-                            else
-                            {
-                                @if (!_hasUncoveredLines)
-                                {
-                                    <MudAlert Severity="Severity.Info" Dense="true" Class="mb-2">
-                                        All items on this PR are already covered by a canvass.
-                                    </MudAlert>
-                                }
-                                <MudSimpleTable Dense="true" Hover="true" Striped="true" Style="overflow-x: auto;">
-                                    <thead>
-                                        <tr>
-                                            <th style="width:40px"></th>
-                                            <th style="width:40px">#</th>
-                                            <th>Description</th>
-                                            <th style="width:80px;text-align:right">Qty</th>
-                                            <th style="width:60px">Unit</th>
-                                            <th style="width:90px;text-align:right">Unit Cost</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach (var line in _canvassableLines)
-                                        {
-                                            var no = line.ItemNo;
-                                            <tr style="@(line.IsCovered ? "opacity:0.55" : "")">
-                                                <td>
-                                                    @if (line.IsCovered)
-                                                    {
-                                                        <MudTooltip Text="@($"Already on {line.CoveringRivNumber}")">
-                                                            <MudIcon Icon="@Icons.Material.Filled.Lock" Size="Size.Small" Color="Color.Secondary" />
-                                                        </MudTooltip>
-                                                    }
-                                                    else
-                                                    {
-                                                        <MudCheckBox T="bool" Dense="true"
-                                                                     Value="_selectedItemNos.Contains(no)"
-                                                                     ValueChanged="@((bool v) => ToggleItem(no, v))" />
-                                                    }
-                                                </td>
-                                                <td>@no</td>
-                                                <td>
-                                                    @line.Description
-                                                    @if (line.IsCovered)
-                                                    {
-                                                        <MudText Typo="Typo.caption" Color="Color.Secondary">on @line.CoveringRivNumber</MudText>
-                                                    }
-                                                </td>
-                                                <td style="text-align:right">@line.Quantity.ToString("N2")</td>
-                                                <td>@line.Unit</td>
-                                                <td style="text-align:right">@line.EstimatedUnitCost.ToString("N2")</td>
-                                            </tr>
-                                        }
-                                    </tbody>
-                                </MudSimpleTable>
-                            }
-                        </div>
-                    </MudStack>
-                </MudCardContent>
-            </MudCard>
-        }
-
-    </MudItem>
-
-    <!-- List Panel -->
-    <MudItem xs="12" md="8">
-        <MudCard Elevation="1">
+<!-- List Panel -->
+<MudCard Elevation="1">
             <MudCardContent>
+                <!-- Header: title + primary action -->
                 <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
                     <MudText Typo="Typo.h6" Class="flex-grow-1">Canvass Requests</MudText>
-                    <MudTextField @bind-Value="_keyword" Label="Search" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense"
-                                  Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
-                                  Style="max-width:220px" DebounceInterval="400"
-                                  OnDebounceIntervalElapsed="@(async () => await LoadAsync())" />
-                    <MudDatePicker Label="From" Date="_fromDate" DateChanged="OnFromDateChanged"
-                                   Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Clearable="true"
-                                   Style="max-width:150px" />
-                    <MudDatePicker Label="To" Date="_toDate" DateChanged="OnToDateChanged"
-                                   Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Clearable="true"
-                                   Style="max-width:150px" />
+                    @if (_canCreate)
+                    {
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
+                                   StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateDialog">
+                            New Canvass Request
+                        </MudButton>
+                    }
                 </MudStack>
 
+                <!-- Filter toolbar: search + date range -->
+                <MudPaper Elevation="0" Outlined="true" Class="pa-2 mb-3 rounded-lg">
+                    <MudGrid Spacing="2" AlignItems="AlignItems.Center">
+                        <MudItem xs="12" sm="6" md="6">
+                            <MudTextField @bind-Value="_keyword" Placeholder="Search RIV # or PR #…" Label="Search"
+                                          Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense"
+                                          Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
+                                          DebounceInterval="400"
+                                          OnDebounceIntervalElapsed="@(async () => await LoadAsync())"
+                                          Clearable="true" OnClearButtonClick="OnClearKeyword" />
+                        </MudItem>
+                        <MudItem xs="6" sm="3" md="3">
+                            <MudDatePicker Label="From" Date="_fromDate" DateChanged="OnFromDateChanged"
+                                           Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Clearable="true"
+                                           PickerVariant="PickerVariant.Inline" />
+                        </MudItem>
+                        <MudItem xs="6" sm="3" md="3">
+                            <MudDatePicker Label="To" Date="_toDate" DateChanged="OnToDateChanged"
+                                           Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Clearable="true"
+                                           PickerVariant="PickerVariant.Inline" />
+                        </MudItem>
+                    </MudGrid>
+                </MudPaper>
+
+                <!-- Status filter chips -->
                 <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap" Class="mb-3">
                     @foreach (var s in _statusFilters)
                     {
                         <MudChip T="string" Size="Size.Small"
                                  Color="@(_statusFilter == s ? Color.Primary : Color.Default)"
+                                 Variant="@(_statusFilter == s ? Variant.Filled : Variant.Outlined)"
                                  OnClick="@(() => SetStatusFilter(s))">@s</MudChip>
                     }
                 </MudStack>
@@ -418,9 +303,7 @@
                     }
                 }
             </MudCardContent>
-        </MudCard>
-    </MudItem>
-</MudGrid>
+</MudCard>
 
 @code {
     private bool _canCreate => UserProfileState.Permissions.Contains(ProcurementPermissions.CanvassRequests.Create);
@@ -465,11 +348,6 @@
 
     private List<CanvassRequestSummaryDto> _items = [];
     private CanvassRequestDto? _selected, _selectedDetail;
-    private PurchaseRequestSummaryDto? _selectedPurchaseRequest;
-    private PurchaseRequestDto? _selectedPurchaseRequestDetail;
-    private List<CanvassablePrLineDto> _canvassableLines = [];
-    private readonly HashSet<int> _selectedItemNos = [];
-    private DateTime? _returnDeadlineNullable;
     private bool _busy, _loaded;
     private string _keyword = string.Empty;
     private DateTime? _fromDate;
@@ -491,78 +369,16 @@
 
     public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
 
-    private async Task<IEnumerable<PurchaseRequestSummaryDto>> SearchPurchaseRequests(string value, CancellationToken token)
+    private async Task OpenCreateDialog()
     {
-        try
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<CanvassRequestFormDialog>("New Canvass Request", options);
+        var result = await dialog.Result;
+        if (result is { Canceled: false })
         {
-            var result = await PurchaseRequestClient.SearchAsync(
-                keyword: string.IsNullOrWhiteSpace(value) ? null : value,
-                status: PurchaseRequestStatus.Approved,
-                page: 1,
-                pageSize: 20,
-                excludeFullyCanvassed: true,
-                ct: token);
-
-            return result.Items ?? Enumerable.Empty<PurchaseRequestSummaryDto>();
+            _page = 1;
+            await LoadAsync();
         }
-        catch
-        {
-            return Enumerable.Empty<PurchaseRequestSummaryDto>();
-        }
-    }
-
-    private async Task OnPurchaseRequestChanged(PurchaseRequestSummaryDto? request)
-    {
-        _selectedPurchaseRequest = request;
-        _selectedPurchaseRequestDetail = null;
-        _canvassableLines = [];
-        _selectedItemNos.Clear();
-
-        if (request is not null)
-        {
-            try
-            {
-                _selectedPurchaseRequestDetail = await PurchaseRequestClient.GetAsync(request.Id);
-            }
-            catch
-            {
-                _selectedPurchaseRequestDetail = null;
-            }
-
-            try
-            {
-                _canvassableLines = (await Client.GetCanvassablePrLinesAsync(request.Id)).ToList();
-                // Pre-select all lines that are still available for canvassing.
-                foreach (var line in _canvassableLines.Where(l => !l.IsCovered))
-                {
-                    _selectedItemNos.Add(line.ItemNo);
-                }
-            }
-            catch
-            {
-                _canvassableLines = [];
-            }
-        }
-    }
-
-    private bool _hasUncoveredLines => _canvassableLines.Any(l => !l.IsCovered);
-
-    private void ToggleItem(int itemNo, bool selected)
-    {
-        if (selected) _selectedItemNos.Add(itemNo);
-        else _selectedItemNos.Remove(itemNo);
-    }
-
-    private static string FormatPurchaseRequest(PurchaseRequestSummaryDto? request)
-    {
-        if (request is null)
-        {
-            return string.Empty;
-        }
-
-        return string.IsNullOrWhiteSpace(request.Purpose)
-            ? request.PrNumber
-            : $"{request.PrNumber} - {request.Purpose}";
     }
 
     private async Task OpenQuotationDialog()
@@ -606,48 +422,14 @@
 
     private async Task SetStatusFilter(string s) { _statusFilter = s; _page = 1; await LoadAsync(); }
 
+    private async Task OnClearKeyword() { _keyword = string.Empty; _page = 1; await LoadAsync(); }
+
     private async Task OnFromDateChanged(DateTime? date) { _fromDate = date; _page = 1; await LoadAsync(); }
 
     private async Task OnToDateChanged(DateTime? date) { _toDate = date; _page = 1; await LoadAsync(); }
 
     private static DateOnly? ToDateOnly(DateTime? value) =>
         value is null ? null : DateOnly.FromDateTime(value.Value);
-
-    private async Task CreateAsync()
-    {
-        if (_selectedPurchaseRequest is null || !_returnDeadlineNullable.HasValue)
-        {
-            Snackbar.Add("Select a purchase request and return deadline.", Severity.Warning);
-            return;
-        }
-        if (_selectedItemNos.Count == 0)
-        {
-            Snackbar.Add("Select at least one line item to canvass.", Severity.Warning);
-            return;
-        }
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var selectedDeadline = DateOnly.FromDateTime(_returnDeadlineNullable.Value);
-        if (selectedDeadline <= today)
-        {
-            Snackbar.Add("Return deadline must be a future date.", Severity.Warning);
-            return;
-        }
-        _busy = true;
-        try
-        {
-            await Client.CreateAsync(new CreateCanvassRequestCommand(
-                _selectedPurchaseRequest.Id, selectedDeadline, _selectedItemNos.OrderBy(n => n).ToList()));
-            Snackbar.Add("Canvass request created.", Severity.Success);
-            _selectedPurchaseRequest = null;
-            _selectedPurchaseRequestDetail = null;
-            _canvassableLines = [];
-            _selectedItemNos.Clear();
-            _returnDeadlineNullable = null;
-            await LoadAsync();
-        }
-        catch (Exception ex) { Snackbar.Add($"Failed: {ex.Message}", Severity.Error); }
-        finally { _busy = false; }
-    }
 
     private async Task SelectCanvass(Guid id)
     {

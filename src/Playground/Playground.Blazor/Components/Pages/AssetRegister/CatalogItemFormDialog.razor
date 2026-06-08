@@ -1,0 +1,120 @@
+@using AMIS.Playground.Blazor.ApiClient
+@inject IArCatalogClient Client
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="2" Style="min-width:360px;">
+            <MudTextField @bind-Value="_form.Code" Label="Code" Variant="Variant.Outlined"
+                          MaxLength="50" Disabled="IsEditing" Required="true"
+                          Dense="true" Margin="Margin.Dense"
+                          Placeholder="e.g. AIT-CMP-001" />
+            <MudTextField @bind-Value="_form.Description" Label="Description" Variant="Variant.Outlined"
+                          MaxLength="200" Required="true" Dense="true" Margin="Margin.Dense" />
+            <MudTextField @bind-Value="_form.DefaultPropertyClass" Label="Default Property Class" Variant="Variant.Outlined"
+                          MaxLength="50" Required="true" Dense="true" Margin="Margin.Dense" />
+            <MudTextField @bind-Value="_form.DefaultCategoryCode" Label="Default Category Code" Variant="Variant.Outlined"
+                          MaxLength="50" Required="true" Dense="true" Margin="Margin.Dense" />
+            <MudTextField @bind-Value="_form.DefaultUnit" Label="Default Unit" Variant="Variant.Outlined"
+                          MaxLength="50" Required="true" Dense="true" Margin="Margin.Dense"
+                          Placeholder="e.g. piece, set" />
+            <MudTextField @bind-Value="_form.UacsObjectCode" Label="UACS Object Code (optional)" Variant="Variant.Outlined"
+                          MaxLength="50" Dense="true" Margin="Margin.Dense" />
+            <MudNumericField @bind-Value="_form.EstimatedUsefulLifeYears" Label="Estimated Useful Life (years)"
+                             Variant="Variant.Outlined" Min="1" Max="50" T="int" Required="true"
+                             Dense="true" Margin="Margin.Dense" />
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" Disabled="_busy">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync" Disabled="_busy">
+            @if (_busy) { <MudProgressCircular Size="Size.Small" Class="mr-1" Indeterminate="true" /> }
+            @(IsEditing ? "Update" : "Create")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    // When EditingId is set the dialog is in edit mode; the remaining parameters seed the form.
+    [Parameter] public Guid? EditingId { get; set; }
+    [Parameter] public string? Code { get; set; }
+    [Parameter] public string? Description { get; set; }
+    [Parameter] public string? DefaultPropertyClass { get; set; }
+    [Parameter] public string? DefaultCategoryCode { get; set; }
+    [Parameter] public string? DefaultUnit { get; set; }
+    [Parameter] public string? UacsObjectCode { get; set; }
+    [Parameter] public int? EstimatedUsefulLifeYears { get; set; }
+
+    private bool IsEditing => EditingId is not null;
+
+    private bool _busy;
+    private readonly CatalogFormModel _form = new();
+
+    protected override void OnInitialized()
+    {
+        if (IsEditing)
+        {
+            _form.Code = Code ?? "";
+            _form.Description = Description ?? "";
+            _form.DefaultPropertyClass = DefaultPropertyClass ?? "";
+            _form.DefaultCategoryCode = DefaultCategoryCode ?? "";
+            _form.DefaultUnit = DefaultUnit ?? "piece";
+            _form.UacsObjectCode = UacsObjectCode;
+            _form.EstimatedUsefulLifeYears = EstimatedUsefulLifeYears ?? 10;
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_form.Code) || string.IsNullOrWhiteSpace(_form.Description))
+        {
+            Snackbar.Add("Code and Description are required.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            if (EditingId is null)
+            {
+                await Client.CreateAsync(new CreateArCatalogItemRequest(
+                    _form.Code, _form.Description, _form.DefaultPropertyClass,
+                    _form.DefaultCategoryCode, _form.DefaultUnit,
+                    _form.UacsObjectCode, _form.EstimatedUsefulLifeYears));
+                Snackbar.Add("Catalog item created.", Severity.Success);
+            }
+            else
+            {
+                await Client.UpdateAsync(EditingId.Value, new UpdateArCatalogItemRequest(
+                    _form.Description, _form.DefaultPropertyClass, _form.DefaultCategoryCode,
+                    _form.DefaultUnit, _form.UacsObjectCode, _form.EstimatedUsefulLifeYears));
+                Snackbar.Add("Catalog item updated.", Severity.Success);
+            }
+
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private sealed class CatalogFormModel
+    {
+        public string Code { get; set; } = "";
+        public string Description { get; set; } = "";
+        public string DefaultPropertyClass { get; set; } = "";
+        public string DefaultCategoryCode { get; set; } = "";
+        public string DefaultUnit { get; set; } = "piece";
+        public string? UacsObjectCode { get; set; }
+        public int EstimatedUsefulLifeYears { get; set; } = 10;
+    }
+}

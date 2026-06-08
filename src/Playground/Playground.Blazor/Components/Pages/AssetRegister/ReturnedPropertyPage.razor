@@ -5,11 +5,7 @@
 @using AMIS.Modules.AssetRegister.Contracts.Permissions
 @using ReturnedPropertyReceiptType = AMIS.Modules.AssetRegister.Contracts.v1.ReturnedPropertyReceiptType
 @using ReturnedPropertyReceiptStatus = AMIS.Modules.AssetRegister.Contracts.v1.ReturnedPropertyReceiptStatus
-@using AccountabilityType = AMIS.Modules.AssetRegister.Contracts.v1.AccountabilityType
-@using AccountabilityStatus = AMIS.Modules.AssetRegister.Contracts.v1.AccountabilityStatus
-@using AccountabilityLineStatus = AMIS.Modules.AssetRegister.Contracts.v1.AccountabilityLineStatus
 @inject IArReturnedPropertyClient Client
-@inject IArAccountabilityClient AccountabilityClient
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
 @inject IUserProfileState UserProfileState
@@ -18,69 +14,8 @@
                Description="End-users request the return of property assigned to them; the property custodian receives and accepts it. Accepting marks each asset back to Available." />
 
 <MudGrid Spacing="3">
-    <!-- Request Form -->
-    @if (_canCreate)
-    {
-    <MudItem xs="12" md="4">
-        <MudCard Elevation="1">
-            <MudCardContent>
-                <MudText Typo="Typo.h6" Class="mb-3">Request a Return</MudText>
-                <MudStack Spacing="2">
-
-                    <MudSelect Value="_form.ReceiptType" T="ReturnedPropertyReceiptType" Label="Receipt Type"
-                               Variant="Variant.Outlined" Required="true"
-                               ValueChanged="@((ReturnedPropertyReceiptType v) => { _form.ReceiptType = v; _form.SelectedAccountability = null; _accountability = null; _selectedLineIds.Clear(); })">
-                        <MudSelectItem T="ReturnedPropertyReceiptType" Value="ReturnedPropertyReceiptType.RRSP">RRSP — Semi-Expendable (ICS)</MudSelectItem>
-                        <MudSelectItem T="ReturnedPropertyReceiptType" Value="ReturnedPropertyReceiptType.RRP">RRP — Fixed Assets (PAR)</MudSelectItem>
-                    </MudSelect>
-
-                    <MudDatePicker @bind-Date="_form.DateNullable" Label="Date" Variant="Variant.Outlined"
-                                   DateFormat="MM/dd/yyyy" Required="true" />
-
-                    <MudAutocomplete T="ArAccountabilitySummaryDto"
-                                     Value="_form.SelectedAccountability"
-                                     SearchFunc="SearchAccountabilityAsync"
-                                     ToStringFunc="@(x => x is null ? "" : x.DocumentNo)"
-                                     Label="@(_form.ReceiptType == ReturnedPropertyReceiptType.RRSP ? "My ICS to Return Against" : "My PAR to Return Against")"
-                                     Variant="Variant.Outlined"
-                                     Required="true" Clearable="true" ResetValueOnEmptyText="true" CoerceValue="true"
-                                     ValueChanged="OnAccountabilitySelected" />
-
-                    @if (_accountability is not null)
-                    {
-                        <MudAlert Severity="Severity.Info" Dense="true">
-                            Select items to return from <b>@_accountability.DocumentNo</b>
-                            (@_accountability.Lines.Count(l => l.LineStatus == AccountabilityLineStatus.Active) active item(s)).
-                        </MudAlert>
-
-                        <MudText Typo="Typo.subtitle2">Items to Return</MudText>
-                        @foreach (var line in _accountability.Lines.Where(l => l.LineStatus == AccountabilityLineStatus.Active))
-                        {
-                            <MudCheckBox @bind-Value="_selectedLineIds[line.Id]"
-                                         Label="@($"{line.Snapshot.PropertyNo} — {line.Snapshot.Description} (₱{line.Snapshot.UnitCost:N2})")"
-                                         Color="Color.Primary" Dense="true" />
-                        }
-                    }
-
-                    <MudTextField Value="@ReturnedByDisplay" Label="Returned By" Variant="Variant.Outlined"
-                                  ReadOnly="true" HelperText="Auto-assigned to the currently logged-in user" />
-
-                    <MudTextField @bind-Value="_form.Remarks" Label="Remarks" Variant="Variant.Outlined"
-                                  Lines="2" MaxLength="1000" />
-
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
-                               StartIcon="@Icons.Material.Filled.Send"
-                               OnClick="RequestAsync" Disabled="_busy">
-                        Request Return
-                    </MudButton>
-                </MudStack>
-            </MudCardContent>
-        </MudCard>
-    </MudItem>
-    }
-
     <!-- List Panel -->
-    <MudItem xs="12" md="@(_canCreate ? 8 : 12)">
+    <MudItem xs="12">
         <MudCard Elevation="1">
             <MudCardContent>
                 <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3" Spacing="2">
@@ -89,6 +24,13 @@
                                   Dense="true" Margin="Margin.Dense"
                                   Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
                                   DebounceInterval="350" OnDebounceIntervalElapsed="@(() => LoadAsync())" Style="max-width:220px" />
+                    @if (_canCreate)
+                    {
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
+                                   StartIcon="@Icons.Material.Filled.Add" OnClick="OpenRequestDialog">
+                            Request a Return
+                        </MudButton>
+                    }
                 </MudStack>
 
                 <!-- Status Filter Tabs -->
@@ -280,11 +222,8 @@
 @code {
     private List<ArReturnedPropertyReceiptSummaryDto> _records = [];
     private ArReturnedPropertyReceiptDto? _detail;
-    private ArAccountabilityDto? _accountability;
-    private Dictionary<Guid, bool> _selectedLineIds = [];
     private string? _keyword;
     private bool _loading;
-    private bool _busy;
     private int _activeTabIndex;
     private int _page = 1;
     private int _totalCount;
@@ -292,15 +231,8 @@
     private int TotalPages => Math.Max(1, (int)Math.Ceiling(_totalCount / (double)PageSize));
     private readonly Dictionary<int, int> _statusCounts = [];
 
-    private ReturnForm _form = new();
-
     private bool _canCreate => UserProfileState.Permissions.Contains(AssetRegisterPermissions.ReturnedProperty.Create);
     private bool _canAccept => UserProfileState.Permissions.Contains(AssetRegisterPermissions.ReturnedProperty.Accept);
-
-    private string ReturnedByDisplay =>
-        string.IsNullOrWhiteSpace(UserProfileState.EmployeePositionName)
-            ? UserProfileState.EmployeeFullName
-            : $"{UserProfileState.EmployeeFullName} — {UserProfileState.EmployeePositionName}";
 
     protected override async Task OnInitializedAsync()
     {
@@ -375,88 +307,17 @@
         catch (Exception ex) { Snackbar.Add($"Load failed: {ex.Message}", Severity.Error); }
     }
 
-    private async Task<IEnumerable<ArAccountabilitySummaryDto>> SearchAccountabilityAsync(string? value, CancellationToken ct)
+    private async Task OpenRequestDialog()
     {
-        var expectedType = _form.ReceiptType == ReturnedPropertyReceiptType.RRSP
-            ? AccountabilityType.SE_ICS
-            : AccountabilityType.PPE_PAR;
-        var scopeEmployeeId = UserProfileState.EmployeeId == Guid.Empty ? (Guid?)null : UserProfileState.EmployeeId;
-        var response = await AccountabilityClient.SearchAsync(
-            keyword: value, type: expectedType, status: AccountabilityStatus.Active,
-            receivedByEmployeeId: scopeEmployeeId, page: 1, pageSize: 20, ct: ct);
-        return response.Items;
-    }
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<ReturnedPropertyFormDialog>("Request a Return", options);
+        var result = await dialog.Result;
+        if (result is null || result.Canceled) return;
 
-    private async Task OnAccountabilitySelected(ArAccountabilitySummaryDto? selected)
-    {
-        _form.SelectedAccountability = selected;
-        _accountability = null;
-        _selectedLineIds.Clear();
+        if (result.Data is ArReturnedPropertyReceiptDto created)
+            _detail = created;
 
-        if (selected is null) return;
-
-        try
-        {
-            _accountability = await AccountabilityClient.GetAsync(selected.Id);
-            if (_accountability is not null)
-            {
-                _selectedLineIds = _accountability.Lines
-                    .Where(l => l.LineStatus == AccountabilityLineStatus.Active)
-                    .ToDictionary(l => l.Id, _ => true);
-            }
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Could not load accountability detail: {ex.Message}", Severity.Error);
-        }
-    }
-
-    private async Task RequestAsync()
-    {
-        if (_form.DateNullable is null || _form.SelectedAccountability is null)
-        {
-            Snackbar.Add("Date and Accountability are required.", Severity.Warning);
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(UserProfileState.EmployeeFullName))
-        {
-            Snackbar.Add("Your account is not linked to an employee record, so \"Returned By\" cannot be set. Contact an administrator.", Severity.Warning);
-            return;
-        }
-
-        var lineIds = _selectedLineIds.Where(kv => kv.Value).Select(kv => kv.Key).ToList();
-        if (lineIds.Count == 0)
-        {
-            Snackbar.Add("Select at least one item to return.", Severity.Warning);
-            return;
-        }
-
-        _busy = true;
-        try
-        {
-            var returnedBy = new ArEmployeeRefDto(
-                UserProfileState.EmployeeId,
-                UserProfileState.EmployeeFullName.Trim(),
-                string.IsNullOrWhiteSpace(UserProfileState.EmployeePositionName) ? null : UserProfileState.EmployeePositionName.Trim());
-
-            var result = await Client.CreateAsync(new CreateReturnedPropertyReceiptRequest(
-                _form.ReceiptType,
-                DateOnly.FromDateTime(_form.DateNullable!.Value),
-                _form.SelectedAccountability.Id,
-                lineIds,
-                returnedBy,
-                _form.Remarks?.Trim()));
-
-            Snackbar.Add($"Return request submitted ({result.Items.Count} item(s)). Awaiting custodian acceptance.", Severity.Success);
-            _form = new ReturnForm();
-            _accountability = null;
-            _selectedLineIds.Clear();
-            _detail = result;
-            await RefreshAsync();
-        }
-        catch (Exception ex) { Snackbar.Add($"Request failed: {ex.Message}", Severity.Error); }
-        finally { _busy = false; }
+        await RefreshAsync();
     }
 
     private async Task AcceptAsync(Guid id)
@@ -543,12 +404,4 @@
         __builder.AddAttribute(4, "ChildContent", (RenderFragment)(b => b.AddContent(0, status.ToString())));
         __builder.CloseComponent();
     };
-
-    private sealed class ReturnForm
-    {
-        public ReturnedPropertyReceiptType ReceiptType { get; set; } = ReturnedPropertyReceiptType.RRSP;
-        public DateTime? DateNullable { get; set; } = DateTime.Today;
-        public ArAccountabilitySummaryDto? SelectedAccountability { get; set; }
-        public string? Remarks { get; set; }
-    }
 }

@@ -119,3 +119,16 @@ public sealed record SearchAccountabilitiesQuery(
     int PageNumber = 1,
     int PageSize = 10) : IQuery<PagedResponse<PropertyAccountabilitySummaryDto>>;
 
+// ── Employee self-service ("My Accountability") ──────────────────────────────
+// These carry NO employee id — the server resolves the accountable person from the
+// authenticated identity, so a user can only ever see their own ICS/PAR.
+
+public sealed record GetMyAccountabilitiesQuery(
+    string? Keyword = null,
+    AccountabilityType? Type = null,
+    AccountabilityStatus? Status = null,
+    int PageNumber = 1,
+    int PageSize = 10) : IQuery<PagedResponse<PropertyAccountabilitySummaryDto>>;
+
+public sealed record GetMyAccountabilityDetailQuery(Guid Id) : IQuery<PropertyAccountabilityDto?>;
+

@@ -1,8 +1,11 @@
 @using AMIS.Framework.Shared.Constants
 @using AMIS.Framework.Shared.Multitenancy
+@using AMIS.Modules.AssetRegister.Contracts.Permissions
 @using Microsoft.AspNetCore.Components.Authorization
+@implements IDisposable
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IUserProfileState UserProfileState
 
 <nav class="AMIS-nav">
     <MudNavMenu Class="pa-2" Rounded="true" Margin="Margin.Dense" Color="Color.Primary">
@@ -10,6 +13,16 @@
         <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.Home">
             Home
         </MudNavLink>
+
+        <!-- My Workspace (employee self-service) -->
+        @if (_canViewMyAccountability)
+        {
+            <MudNavGroup Title="My Accountability" Icon="@Icons.Material.Outlined.AssignmentInd" @bind-Expanded="_myAccountabilityExpanded">
+                <MudNavLink Href="/asset-register/my-accountability" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Inventory2">
+                    My ICS / PAR
+                </MudNavLink>
+            </MudNavGroup>
+        }
 
         <!-- Administration Section -->
         <MudNavGroup Title="Administration" Icon="@Icons.Material.Outlined.AdminPanelSettings" @bind-Expanded="_administrationExpanded">
@@ -317,7 +330,11 @@
 
 @code {
     private bool _isRootTenantAdmin;
+    private bool _myAccountabilityExpanded;
     private bool _administrationExpanded;
+
+    private bool _canViewMyAccountability =>
+        UserProfileState.Permissions.Contains(AssetRegisterPermissions.MyAccountability.View);
     private bool _expendableExpanded;
     private bool _vehicleExpanded;
     private bool _masterDataExpanded;
@@ -331,7 +348,9 @@
 
     protected override async Task OnInitializedAsync()
     {
+        UserProfileState.OnProfileChanged += OnProfileChanged;
         var uri = Navigation.Uri;
+        _myAccountabilityExpanded = uri.Contains("/asset-register/my-accountability", StringComparison.OrdinalIgnoreCase);
         _administrationExpanded = uri.Contains("/users", StringComparison.OrdinalIgnoreCase)
                                || uri.Contains("/roles", StringComparison.OrdinalIgnoreCase)
                                || uri.Contains("/groups", StringComparison.OrdinalIgnoreCase)
@@ -386,5 +405,9 @@
             _isRootTenantAdmin = false;
         }
     }
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
 }
 
