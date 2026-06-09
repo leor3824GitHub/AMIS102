@@ -46,17 +46,17 @@
                 <!-- Details -->
                 <MudItem xs="12" md="7">
                     <MudText Typo="Typo.h5" Class="mb-1">@_product.Name</MudText>
-                    <MudText Typo="Typo.caption" Color="Color.Default">Stock No.: @_product.StockNo</MudText>
 
-                    <MudPaper Elevation="0" Class="pa-3 my-3" Style="background-color: var(--mud-palette-background-grey);">
-                        <div class="d-flex align-center">
-                            <MudRating ReadOnly="true" SelectedValue="@RoundedAverage" />
-                            <MudText Typo="Typo.h6" Class="ml-2">@_ratingAverage.ToString("0.0")</MudText>
-                            <MudText Typo="Typo.body2" Color="Color.Default" Class="ml-2">
-                                (@_ratingCount @(_ratingCount == 1 ? "rating" : "ratings"))
-                            </MudText>
-                        </div>
-                    </MudPaper>
+                    <!-- Rating (compact, inline under the title) -->
+                    <div class="d-flex align-center mb-2">
+                        <MudText Typo="Typo.subtitle1" Color="Color.Primary" Class="mr-2">@_ratingAverage.ToString("0.0")</MudText>
+                        <MudRating ReadOnly="true" SelectedValue="@RoundedAverage" Size="Size.Small" />
+                        <MudText Typo="Typo.body2" Color="Color.Default" Class="ml-3">
+                            @_ratingCount @(_ratingCount == 1 ? "Rating" : "Ratings")
+                        </MudText>
+                    </div>
+
+                    <MudText Typo="Typo.caption" Color="Color.Default" Class="d-block mb-3">Stock No.: @_product.StockNo</MudText>
 
                     @if (!string.IsNullOrWhiteSpace(_product.Description))
                     {
