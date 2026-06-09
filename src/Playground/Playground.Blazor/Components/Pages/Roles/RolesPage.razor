@@ -26,12 +26,12 @@
                 </MudButton>
             </MudButtonGroup>
         }
-        <MudButton Variant="Variant.Filled"
-                   Color="Color.Primary"
-                   StartIcon="@Icons.Material.Filled.Add"
-                   OnClick="ShowCreate">
+        <AMISButton Variant="Variant.Filled"
+                    Color="Color.Primary"
+                    StartIcon="@Icons.Material.Filled.Add"
+                    OnClick="ShowCreate">
             New Role
-        </MudButton>
+        </AMISButton>
     </ActionContent>
 </AMISPageHeader>
 
@@ -83,21 +83,21 @@
                               OnDebounceIntervalElapsed="@((string _) => RefreshData())" />
             </MudItem>
             <MudItem xs="12" sm="6" Class="d-flex align-center justify-end">
-                <MudButton Size="Size.Small"
-                           StartIcon="@Icons.Material.Filled.FilterAltOff"
-                           Color="Color.Default"
-                           Variant="Variant.Text"
-                           OnClick="ClearFilters">
+                <AMISButton Size="Size.Small"
+                            StartIcon="@Icons.Material.Filled.FilterAltOff"
+                            Color="Color.Default"
+                            Variant="Variant.Text"
+                            OnClick="ClearFilters">
                     Clear Filters
-                </MudButton>
-                <MudButton Size="Size.Small"
-                           StartIcon="@Icons.Material.Filled.Refresh"
-                           Color="Color.Primary"
-                           Variant="Variant.Filled"
-                           OnClick="LoadData"
-                           Class="ml-2">
+                </AMISButton>
+                <AMISButton Size="Size.Small"
+                            StartIcon="@Icons.Material.Filled.Refresh"
+                            Color="Color.Primary"
+                            Variant="Variant.Filled"
+                            OnClick="LoadData"
+                            Class="ml-2">
                     Refresh
-                </MudButton>
+                </AMISButton>
             </MudItem>
         </MudGrid>
     </MudExpansionPanel>

@@ -225,10 +225,11 @@ All filter bars, form rows, and action button groups share a **40px compact base
 | ⚠️ Rule | Why |
 | --- | --- |
 | Prefer `AMISTextField`, `AMISSelect`, `AMISAutocomplete` from `BuildingBlocks/Blazor.UI` | Wrappers enforce `Dense="true" + Margin="Margin.Dense" + InputSize="Size.Small"` — no per-page sizing drift |
+| Prefer `AMISButton` / `AMISIconButton` from `BuildingBlocks/Blazor.UI` over raw `MudButton`/`MudIconButton` | Single source of truth for button styling (`.AMIS-btn`) + sizing. `AMISButton` defaults to `Size.Medium`; `AMISIconButton` defaults to `Size.Small` |
 | If using raw Mud inputs, set `Dense="true"` + `Margin="Margin.Dense"` | Drops a 56px Outlined input to the 40px compact baseline |
-| Use `Size="Size.Small"` on every filter-row input and action button | Drops a 48px default MudButton to 40px — matches the input baseline |
+| **Two-tier button sizing.** Standalone primary CTAs (e.g. page-header "New X") stay `Size.Medium` (48px). Buttons sharing a row with compact inputs use `Size="Size.Small"` (40px) | A header CTA sits alone, so 48px is correct and prominent; an inline action button must match the 40px input baseline next to it |
 | Every control in the same `MudGrid`/`MudStack` row must share the same density | `AlignItems.Center` only looks right when all heights are equal |
-| Action buttons paired with inputs in the same row → all must be Size.Small | The most common misalignment is a default-size input + default-size button (56 vs 48px) |
+| Action buttons paired with inputs in the same row → all must be `Size.Small` | The most common misalignment is a default-size input + default-size button (56 vs 48px) |
 | If a single button must stay at default size (e.g. primary CTA), drop it to its own row | Don't try to mix heights in one row — split rows instead |
 
 ### Filter + Action Bar — Canonical Pattern

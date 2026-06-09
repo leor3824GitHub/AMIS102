@@ -34,7 +34,8 @@
       "Bash(awk '/public partial class ProductDto/{f=1} f&&/JsonPropertyName/{print} f&&/^    \\\\}/{exit}' src/Playground/Playground.Blazor/ApiClient/Generated.cs)",
       "Bash(grep -vi \"Generated.cs\\\\|/bin/\\\\|/obj/\\\\|ProcurementAcquisition\")",
       "Bash(grep -vi \"/bin/\\\\|/obj/\\\\|ProcurementAcquisition\\\\|Generated.cs\")",
-      "Bash(grep -v \"/bin/\\\\|/obj/\")"
+      "Bash(grep -v \"/bin/\\\\|/obj/\")",
+      "PowerShell(dotnet build src/BuildingBlocks/Blazor.UI/Blazor.UI.csproj --nologo 2>&1)"
     ]
   }
 }

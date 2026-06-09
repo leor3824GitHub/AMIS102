@@ -90,7 +90,7 @@ internal static class SimpleBffAuth
                 await httpContext.SignInAsync("Cookies", principal, new AuthenticationProperties
                 {
                     IsPersistent = true,
-                    ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7)
+                    ExpiresUtc = DateTimeOffset.UtcNow.AddHours(8)
                 });
 
                 logger.LogInformation("Login successful for {Email}", email);

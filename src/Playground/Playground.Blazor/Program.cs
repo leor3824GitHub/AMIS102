@@ -36,7 +36,7 @@ builder.Services.AddAuthentication("Cookies")
     {
         options.LoginPath = "/login";
         options.LogoutPath = "/auth/logout";
-        options.ExpireTimeSpan = TimeSpan.FromDays(7);
+        options.ExpireTimeSpan = TimeSpan.FromHours(8);
         options.SlidingExpiration = true;
 
         // Security: Explicit cookie security settings

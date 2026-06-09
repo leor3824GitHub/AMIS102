@@ -86,8 +86,9 @@ Modules/{Module}/Features/v1/{Feature}/
 | ⚠️ Rule                                                               | Why                                               |
 | --------------------------------------------------------------------- | ------------------------------------------------- |
 | Prefer `AMISTextField`, `AMISSelect`, `AMISAutocomplete`              | Enforces compact defaults consistently            |
+| Prefer `AMISButton` / `AMISIconButton` over raw `MudButton`/`MudIconButton` | Single source of truth for button styling + size (`AMISButton`→Medium, `AMISIconButton`→Small) |
 | If using raw Mud inputs, set `Dense="true"` + `Margin="Margin.Dense"` | Keeps filter/form rows aligned and compact        |
-| Use `Size="Size.Small"` for filter-row inputs and action buttons      | Establishes the 40px compact baseline             |
+| Two-tier buttons: standalone CTAs stay `Size.Medium` (48px); inline filter-row buttons use `Size.Small` (40px) | A header CTA is alone (48px is right); inline buttons must match the 40px input baseline |
 | Avoid mixing default and compact controls in one row                  | Prevents visible height mismatch and misalignment |
 | Use `IOrganizationProfileState` for agency/officer data in reports   | Scoped session state — zero HTTP calls per page   |
 | Never fetch org profile per-page with `IOrganizationProfileClient`   | Already loaded by `PlaygroundLayout` at session start |
