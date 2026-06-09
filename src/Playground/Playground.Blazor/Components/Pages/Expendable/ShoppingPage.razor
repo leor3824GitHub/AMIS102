@@ -5,6 +5,7 @@
 @using AMIS.Playground.Blazor.ApiClient
 @using AMIS.Playground.Blazor.Services
 @using AMIS.Modules.Expendable.Contracts.Permissions
+@using AMIS.Playground.Blazor.Components.Pages.Expendable.Shared
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Security.Claims
 @inject IProductsClient _productsClient
@@ -12,6 +13,7 @@
 @inject IEmployeesClient _employeesClient
 @inject ICartClient _cartClient
 @inject IInventoryClient _inventoryClient
+@inject IProductRatingsClient _productRatingsClient
 @inject AuthenticationStateProvider _authenticationStateProvider
 @inject NavigationManager _navigationManager
 @inject MasterDataService MasterDataService
@@ -72,58 +74,17 @@
         @if (_products != null && _products.Any())
         {
             <MudItem xs="12">
-                <MudGrid Spacing="3">
+                <MudGrid Spacing="2">
                     @foreach (var product in _products)
                     {
-                        <MudItem xs="12" sm="6" md="4" lg="3">
-                            <MudCard Class="h-100 d-flex flex-column" Style="transition: all 0.3s ease; cursor: pointer;">
-                                <MudCardMedia Image="@(product.ImageUrl ?? "/images/placeholder.png")"
-                                              Height="250" />
-                                <MudCardContent Class="flex-grow-1">
-                                    <MudGrid>
-                                        <MudItem xs="12" sm="7">
-                                            <MudText Typo="Typo.body2" Class="mb-1">
-                                                <strong>@product.Name</strong>
-                                            </MudText>
-                                            <MudText Typo="Typo.caption" Color="Color.Default">
-                                                Stock No.: @product.StockNo
-                                            </MudText>
-                                        </MudItem>
-                                        <MudItem xs="12" sm="5" Class="text-sm-right">
-                                            <MudText Typo="Typo.h6" Color="Color.Primary" Class="mb-0">
-                                                @($"${GetDisplayedPrice(product):F2}")
-                                            </MudText>
-                                            @{var bal = GetProductBalance(product);}
-                                            @if (bal <= 0)
-                                            {
-                                                <MudChip T="string" Size="Size.Small" Color="Color.Error" Class="pa-0 mt-1">Out of Stock</MudChip>
-                                            }
-                                            else
-                                            {
-                                                <MudText Typo="Typo.caption" Color="Color.Secondary">Balance: @bal</MudText>
-                                            }
-                                        </MudItem>
-                                    </MudGrid>
-                                </MudCardContent>
-                                <MudCardActions>
-                                    <MudButton Variant="Variant.Text"
-                                               Color="Color.Primary"
-                                               Size="Size.Small"
-                                               OnClick="@(() => OpenProductDetails(product))">
-                                        Details
-                                    </MudButton>
-                                    @if (_canEditCart)
-                                    {
-                                        <MudButton Variant="Variant.Filled"
-                                                   Color="Color.Primary"
-                                                   Size="Size.Small"
-                                                   OnClick="@(() => QuickAddToCart(product))"
-                                                   Class="ml-auto">
-                                            Add
-                                        </MudButton>
-                                    }
-                                </MudCardActions>
-                            </MudCard>
+                        <MudItem xs="6" sm="4" md="3" lg="2">
+                            <AMISProductCard Product="product"
+                                             AverageRating="GetAverageRating(product)"
+                                             RatingCount="GetRatingCount(product)"
+                                             Balance="GetProductBalance(product)"
+                                             CanAdd="_canEditCart"
+                                             OnDetails="@(() => OpenProductDetails(product))"
+                                             OnAdd="@(() => QuickAddToCart(product))" />
                         </MudItem>
                     }
                 </MudGrid>
@@ -142,94 +103,6 @@
             </MudItem>
         }
     </MudGrid>
-
-    <!-- Product Details Modal -->
-    <MudDialog @bind-IsOpen="_showProductDetailsDialog">
-        <TitleContent>
-            <MudText Typo="Typo.h6">@_selectedProduct?.Name</MudText>
-        </TitleContent>
-        <DialogContent>
-            @if (_selectedProduct != null)
-            {
-                <MudGrid>
-                    <MudItem xs="12" sm="6">
-                        <MudImage Src="@(_selectedProduct.ImageUrl ?? "/images/placeholder.png")"
-                                  Alt="@_selectedProduct.Name"
-                                  Style="width: 100%; border-radius: 8px;" />
-                    </MudItem>
-                    <MudItem xs="12" sm="6">
-                        <MudText Typo="Typo.caption" Color="Color.Default">Stock No.: @_selectedProduct.StockNo</MudText>
-                        <MudText Typo="Typo.h5" Class="my-3">@($"${GetDisplayedPrice(_selectedProduct):F2}")</MudText>
-                        <MudText Typo="Typo.body2" Class="mb-4">@_selectedProduct.Description</MudText>
-                        
-                        <MudStack>
-                            <MudField Label="Unit of Measure">
-                                <MudText>@_selectedProduct.UnitOfMeasure</MudText>
-                            </MudField>
-                            <MudField Label="Status">
-                                <MudChip T="string" Size="Size.Small"
-                                         Color="@(_selectedProduct.Status == "Active" ? Color.Success : Color.Error)">
-                                    @_selectedProduct.Status
-                                </MudChip>
-                            </MudField>
-                        </MudStack>
-                    </MudItem>
-                </MudGrid>
-            }
-        </DialogContent>
-        <DialogActions>
-            <MudButton OnClick="@(() => _showProductDetailsDialog = false)">Close</MudButton>
-            @if (_canEditCart)
-            {
-                <MudButton Color="Color.Primary"
-                           Variant="Variant.Filled"
-                           OnClick="@(() => OpenAddToCartDialog(_selectedProduct))">
-                    Add to Basket
-                </MudButton>
-            }
-        </DialogActions>
-    </MudDialog>
-
-    <!-- Add to Cart Dialog -->
-    <MudDialog @bind-IsOpen="_showAddToCartDialog">
-        <TitleContent>
-            <MudText Typo="Typo.h6">Add to Basket</MudText>
-        </TitleContent>
-        <DialogContent>
-            @if (_selectedProductForCart != null)
-            {
-                <MudGrid>
-                    <MudItem xs="12" sm="4">
-                        <MudImage Src="@(_selectedProductForCart.ImageUrl ?? "/images/placeholder.png")"
-                                  Alt="@_selectedProductForCart.Name"
-                                  Style="width: 100%; border-radius: 4px;" />
-                    </MudItem>
-                    <MudItem xs="12" sm="8">
-                        <MudText Typo="Typo.body2"><strong>@_selectedProductForCart.Name</strong></MudText>
-                        <MudText Typo="Typo.caption" Color="Color.Default">Price: @($"${GetDisplayedPrice(_selectedProductForCart):F2}")</MudText>
-                        <MudNumericField @bind-Value="_cartQuantity"
-                                        Label="Quantity"
-                                        Min="1"
-                                        Class="my-3" />
-                        <MudText Typo="Typo.h6">
-                            Subtotal: @($"${(GetDisplayedPrice(_selectedProductForCart) * _cartQuantity):F2}")
-                        </MudText>
-                    </MudItem>
-                </MudGrid>
-            }
-        </DialogContent>
-        <DialogActions>
-            <MudButton OnClick="@(() => _showAddToCartDialog = false)">Cancel</MudButton>
-            @if (_canEditCart)
-            {
-                <MudButton Color="Color.Primary"
-                           Variant="Variant.Filled"
-                           OnClick="AddToCart">
-                    Add to Basket
-                </MudButton>
-            }
-        </DialogActions>
-    </MudDialog>
 </MudContainer>
 
 @code {
@@ -239,13 +112,7 @@
     private int _cartItemCount = 0;
     private Dictionary<Guid, int> _productBalances = new();
     private Dictionary<Guid, decimal> _productAveragePrices = new();
-
-    private bool _showProductDetailsDialog = false;
-    private ProductDto? _selectedProduct;
-
-    private bool _showAddToCartDialog = false;
-    private ProductDto? _selectedProductForCart;
-    private int _cartQuantity = 1;
+    private Dictionary<Guid, AMIS.Modules.Expendable.Contracts.v1.Products.ProductRatingSummaryDto> _productRatings = new();
 
     private List<CategoryDto> _categories = new();
     private string _selectedCategory = "All"; // holds either "All" or Category.Id.ToString()
@@ -262,6 +129,16 @@
     private int GetProductBalance(ProductDto product)
     {
         return _productBalances.TryGetValue(product.Id, out var balance) ? balance : 0;
+    }
+
+    private double GetAverageRating(ProductDto product)
+    {
+        return _productRatings.TryGetValue(product.Id, out var summary) ? summary.AverageRating : 0d;
+    }
+
+    private int GetRatingCount(ProductDto product)
+    {
+        return _productRatings.TryGetValue(product.Id, out var summary) ? summary.RatingCount : 0;
     }
 
     private decimal GetDisplayedPrice(ProductDto? product)
@@ -318,6 +195,7 @@
         await ResolveCurrentEmployeeContext();
         await GetOrCreateCart();
         await LoadProductBalancesAsync();
+        await LoadProductRatingsAsync();
         await LoadProducts();
         _isLoading = false;
     }
@@ -447,6 +325,20 @@
         }
     }
 
+    private async Task LoadProductRatingsAsync()
+    {
+        try
+        {
+            var summaries = await _productRatingsClient.GetSummariesAsync();
+            _productRatings = summaries.ToDictionary(s => s.ProductId);
+        }
+        catch (Exception)
+        {
+            // Ratings are non-critical; show empty stars if the call fails.
+            _productRatings.Clear();
+        }
+    }
+
     private async Task GetOrCreateCart()
     {
         try
@@ -482,19 +374,7 @@
     {
         if (product != null)
         {
-            _selectedProduct = product;
-            _showProductDetailsDialog = true;
-        }
-    }
-
-    private void OpenAddToCartDialog(ProductDto? product)
-    {
-        if (product != null)
-        {
-            _selectedProductForCart = product;
-            _cartQuantity = 1;
-            _showProductDetailsDialog = false;
-            _showAddToCartDialog = true;
+            _navigationManager.NavigateTo($"/expendable/shopping/product/{product.Id}");
         }
     }
 
@@ -523,30 +403,5 @@
         }
     }
 
-    private async Task AddToCart()
-    {
-        if (_selectedProductForCart == null || !_currentCartId.HasValue)
-            return;
-
-        try
-        {
-            var command = new AddToCartCommand
-            {
-                CartId = _currentCartId.Value,
-                ProductId = _selectedProductForCart.Id,
-                Quantity = _cartQuantity,
-                UnitPrice = (double)GetDisplayedPrice(_selectedProductForCart)
-            };
-
-            await _cartClient.ItemsPostAsync(_currentCartId.Value, command);
-            await GetOrCreateCart();
-            _snackbar.Add("Item added to basket!", Severity.Success);
-            _showAddToCartDialog = false;
-        }
-        catch (Exception ex)
-        {
-            _snackbar.Add($"Error adding to basket: {ex.Message}", Severity.Error);
-        }
-    }
 }
 

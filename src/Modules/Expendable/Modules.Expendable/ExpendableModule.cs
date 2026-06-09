@@ -21,6 +21,10 @@ using AMIS.Modules.Expendable.Features.v1.Products.GetProductCatalogCards;
 using AMIS.Modules.Expendable.Features.v1.Products.ListActiveProducts;
 using AMIS.Modules.Expendable.Features.v1.Products.SearchProducts;
 using AMIS.Modules.Expendable.Features.v1.Products.GetProductArticles;
+using AMIS.Modules.Expendable.Features.v1.Products.RateProduct;
+using AMIS.Modules.Expendable.Features.v1.Products.GetProductRatingSummaries;
+using AMIS.Modules.Expendable.Features.v1.Products.GetProductRatingSummary;
+using AMIS.Modules.Expendable.Features.v1.Products.GetMyProductRating;
 using AMIS.Modules.Expendable.Features.v1.Requests.CreateSupplyRequest;
 using AMIS.Modules.Expendable.Features.v1.Requests.SubmitSupplyRequest;
 using AMIS.Modules.Expendable.Features.v1.Requests.ApproveSupplyRequest;
@@ -73,6 +77,7 @@ public class ExpendableModule : IModule
         new("Deactivate Expendable Products", "Deactivate", "Expendable.Products"),
         new("Discontinue Expendable Products", "Discontinue", "Expendable.Products"),
         new("Mark Expendable Products Out Of Stock", "MarkOutOfStock", "Expendable.Products"),
+        new("Rate Expendable Products", "Rate", "Expendable.Products", IsBasic: true),
 
         new("View Expendable Supply Requests", "View", "Expendable.SupplyRequests", IsBasic: true),
         new("Create Expendable Supply Requests", "Create", "Expendable.SupplyRequests"),
@@ -154,6 +159,10 @@ public class ExpendableModule : IModule
         ListActiveProductsEndpoint.Map(productsGroup);
         SearchProductsEndpoint.Map(productsGroup);
         GetProductArticlesEndpoint.Map(productsGroup);
+        RateProductEndpoint.Map(productsGroup);
+        GetProductRatingSummariesEndpoint.Map(productsGroup);
+        GetProductRatingSummaryEndpoint.Map(productsGroup);
+        GetMyProductRatingEndpoint.Map(productsGroup);
 
         // Purchase orders + receiving/inspection now live in ProcurementAcquisition. Expendable consumes
         // accepted Supply IAR lines into ProductInventory via SupplyIARAcceptedEvent (no PO endpoints here).

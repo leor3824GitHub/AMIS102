@@ -92,6 +92,10 @@ internal static class ApiClientRegistration
         services.AddTransient<IProductsClient>(sp =>
             new ProductsClient(ResolveClient(sp)));
 
+        // Product ratings (manual client; pending NSwag regeneration)
+        services.AddTransient<IProductRatingsClient>(sp =>
+            new ProductRatingsClient(ResolveClient(sp)));
+
         services.AddTransient<ISupply_requestsClient>(sp =>
             new Supply_requestsClient(ResolveClient(sp)));
 

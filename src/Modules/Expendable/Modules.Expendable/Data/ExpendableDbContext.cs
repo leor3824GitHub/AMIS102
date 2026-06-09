@@ -24,6 +24,7 @@ public class ExpendableDbContext : BaseDbContext
 
     // Product Management
     public DbSet<Product> Products => Set<Product>();
+    public DbSet<ProductRating> ProductRatings => Set<ProductRating>();
 
     // Supply Requests
     public DbSet<SupplyRequest> SupplyRequests => Set<SupplyRequest>();

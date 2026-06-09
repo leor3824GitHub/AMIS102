@@ -17,6 +17,7 @@ public static class ExpendablePermissions
         public const string Deactivate = "Permissions.Expendable.Products.Deactivate";
         public const string Discontinue = "Permissions.Expendable.Products.Discontinue";
         public const string MarkOutOfStock = "Permissions.Expendable.Products.MarkOutOfStock";
+        public const string Rate = "Permissions.Expendable.Products.Rate";
     }
 
     // Purchase orders + receiving moved to ProcurementAcquisition; Expendable no longer owns PO permissions.
