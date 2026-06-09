@@ -1,0 +1,119 @@
+@using MudBlazor
+@* Reusable list-page filter toolbar: debounced keyword search + optional From/To date range.
+   Enforces the 40px compact baseline (Dense + Margin.Dense) so every control on the row aligns.
+   KeywordChanged is raised only when the search is "committed" — on debounce-elapsed and on clear —
+   so the parent just sets its field, resets the page, and reloads. *@
+<MudPaper Elevation="0" Outlined="true" Class="@CombinedClass">
+    <MudGrid Spacing="2" AlignItems="AlignItems.Center">
+        <MudItem xs="12" sm="@SearchSm" md="@SearchMd">
+            <MudTextField T="string" Value="_keyword" ValueChanged="OnKeywordValueChanged"
+                          Label="@SearchLabel" Placeholder="@SearchPlaceholder"
+                          Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense"
+                          Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
+                          DebounceInterval="@DebounceInterval"
+                          OnDebounceIntervalElapsed="OnDebounceElapsed"
+                          Clearable="true" OnClearButtonClick="OnClear" />
+        </MudItem>
+
+        @if (ShowDateRange)
+        {
+            <MudItem xs="6" sm="3" md="3">
+                <MudDatePicker Label="@FromLabel" Date="FromDate" DateChanged="OnFromChanged"
+                               Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Clearable="true"
+                               PickerVariant="PickerVariant.Inline" />
+            </MudItem>
+            <MudItem xs="6" sm="3" md="3">
+                <MudDatePicker Label="@ToLabel" Date="ToDate" DateChanged="OnToChanged"
+                               Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Clearable="true"
+                               PickerVariant="PickerVariant.Inline" />
+            </MudItem>
+        }
+
+        @if (Extra is not null)
+        {
+            @Extra
+        }
+    </MudGrid>
+</MudPaper>
+
+@code {
+    private string _keyword = string.Empty;
+    private string? _lastKeyword;
+
+    /// <summary>Current search keyword. Two-way capable via <see cref="KeywordChanged"/>.</summary>
+    [Parameter] public string? Keyword { get; set; }
+
+    /// <summary>Raised when the search is committed — on debounce-elapsed and on clear.</summary>
+    [Parameter] public EventCallback<string?> KeywordChanged { get; set; }
+
+    [Parameter] public string SearchLabel { get; set; } = "Search";
+    [Parameter] public string SearchPlaceholder { get; set; } = "Search…";
+
+    /// <summary>Debounce window in ms before the search is committed. Default 400.</summary>
+    [Parameter] public double DebounceInterval { get; set; } = 400;
+
+    /// <summary>Show the From/To date range pickers. Default true.</summary>
+    [Parameter] public bool ShowDateRange { get; set; } = true;
+
+    [Parameter] public string FromLabel { get; set; } = "From";
+    [Parameter] public string ToLabel { get; set; } = "To";
+
+    [Parameter] public DateTime? FromDate { get; set; }
+    [Parameter] public EventCallback<DateTime?> FromDateChanged { get; set; }
+
+    [Parameter] public DateTime? ToDate { get; set; }
+    [Parameter] public EventCallback<DateTime?> ToDateChanged { get; set; }
+
+    /// <summary>Optional extra filter controls appended to the grid (wrap each in its own MudItem).</summary>
+    [Parameter] public RenderFragment? Extra { get; set; }
+
+    /// <summary>Column span (sm) for the search field. Narrow it to make room for Extra controls.</summary>
+    [Parameter] public int SearchSm { get; set; } = 6;
+
+    /// <summary>Column span (md) for the search field.</summary>
+    [Parameter] public int SearchMd { get; set; } = 6;
+
+    /// <summary>Additional CSS classes appended to the toolbar paper.</summary>
+    [Parameter] public string? Class { get; set; }
+
+    private string CombinedClass =>
+        string.IsNullOrWhiteSpace(Class) ? "pa-2 mb-3 rounded-lg" : $"pa-2 mb-3 rounded-lg {Class}";
+
+    protected override void OnParametersSet()
+    {
+        // Only adopt the parent's value when it actually changes externally — otherwise an
+        // unrelated parent re-render mid-typing would clobber the in-progress keystrokes.
+        if (Keyword != _lastKeyword)
+        {
+            _lastKeyword = Keyword;
+            _keyword = Keyword ?? string.Empty;
+        }
+    }
+
+    // Track keystrokes locally; commit to the parent only on debounce/clear.
+    private void OnKeywordValueChanged(string value) => _keyword = value;
+
+    private Task OnDebounceElapsed(string value)
+    {
+        _keyword = value;
+        return KeywordChanged.InvokeAsync(_keyword);
+    }
+
+    private Task OnClear()
+    {
+        _keyword = string.Empty;
+        return KeywordChanged.InvokeAsync(_keyword);
+    }
+
+    private Task OnFromChanged(DateTime? date)
+    {
+        FromDate = date;
+        return FromDateChanged.InvokeAsync(date);
+    }
+
+    private Task OnToChanged(DateTime? date)
+    {
+        ToDate = date;
+        return ToDateChanged.InvokeAsync(date);
+    }
+}

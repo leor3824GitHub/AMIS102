@@ -32,24 +32,15 @@
                 </MudButton>
             </MudButtonGroup>
         }
-<<<<<<< HEAD
-        <AMISButton Variant="Variant.Filled"
-                    Color="Color.Primary"
-                    StartIcon="@Icons.Material.Filled.Add"
-                    OnClick="ShowCreate">
-            New Role
-        </AMISButton>
-=======
         @if (_canCreate)
         {
-            <MudButton Variant="Variant.Filled"
-                       Color="Color.Primary"
-                       StartIcon="@Icons.Material.Filled.Add"
-                       OnClick="ShowCreate">
+            <AMISButton Variant="Variant.Filled"
+                        Color="Color.Primary"
+                        StartIcon="@Icons.Material.Filled.Add"
+                        OnClick="ShowCreate">
                 New Role
-            </MudButton>
+            </AMISButton>
         }
->>>>>>> 8c094c60229f0d093ef222f10eb786a6e6e78ea7
     </ActionContent>
 </AMISPageHeader>
 

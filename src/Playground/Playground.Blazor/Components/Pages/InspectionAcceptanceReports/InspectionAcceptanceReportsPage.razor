@@ -16,54 +16,51 @@
 <AMISPageHeader Title="Inspection &amp; Acceptance Reports"
                 Description="Track IARs from Draft to Inspection and Acceptance." />
 
-<MudCard Elevation="1" Class="mb-3">
-    <MudCardContent>
-        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
-            <MudTextField @bind-Value="_keyword" Label="Search IAR No / Supplier" Variant="Variant.Outlined"
-                          Dense="true" Margin="Margin.Dense"
-                          Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
-                          DebounceInterval="350" OnDebounceIntervalElapsed="@(() => LoadAsync())"
-                          Style="max-width:320px" />
-            <MudDatePicker Label="From" Date="_fromDate" DateChanged="OnFromDateChanged"
-                           Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Clearable="true"
-                           Style="max-width:150px" />
-            <MudDatePicker Label="To" Date="_toDate" DateChanged="OnToDateChanged"
-                           Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Clearable="true"
-                           Style="max-width:150px" />
-            <MudSpacer />
-            @if (_canCreate)
-            {
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
-                           StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateDialog">
-                    New IAR
-                </MudButton>
-            }
-        </MudStack>
-    </MudCardContent>
-</MudCard>
+<MudGrid Spacing="3">
+    <!-- List Panel - Full Width -->
+    <MudItem xs="12">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                <!-- Header: title + primary action -->
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
+                    <MudText Typo="Typo.h6" Class="flex-grow-1">Inspection &amp; Acceptance Reports</MudText>
+                    @if (_canCreate)
+                    {
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
+                                   StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateDialog">
+                            NEW IAR
+                        </MudButton>
+                    }
+                </MudStack>
 
-<MudTabs Elevation="0" Rounded="true" PanelClass="pa-0" Class="mb-3" ActivePanelIndex="_activeTab" ActivePanelIndexChanged="OnTabChanged">
-    <MudTabPanel Text="All" />
-    <MudTabPanel Text="Draft" />
-    <MudTabPanel Text="Pending Inspection" />
-    <MudTabPanel Text="Inspected" />
-    <MudTabPanel Text="Accepted" />
-    <MudTabPanel Text="Cancelled" />
-</MudTabs>
+                <!-- Filter toolbar: search + date range -->
+                <AMISFilterBar Keyword="@_keyword" KeywordChanged="OnKeywordChanged"
+                               SearchPlaceholder="Search for IAR"
+                               DebounceInterval="350"
+                               FromDate="_fromDate" FromDateChanged="OnFromDateChanged"
+                               ToDate="_toDate" ToDateChanged="OnToDateChanged" />
 
-<MudCard Elevation="1">
-    <MudCardContent>
-        @if (_loading)
-        {
-            <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
-        }
-        else if (_items.Count == 0)
-        {
-            <MudAlert Severity="Severity.Info">No IARs found.</MudAlert>
-        }
-        else
-        {
-            <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                <!-- Status Filter Tabs -->
+                <MudTabs Elevation="0" Rounded="true" PanelClass="pa-0" Class="mb-3" ActivePanelIndex="_activeTab" ActivePanelIndexChanged="OnTabChanged">
+                    <MudTabPanel Text="All" />
+                    <MudTabPanel Text="Draft" />
+                    <MudTabPanel Text="Pending Inspection" />
+                    <MudTabPanel Text="Inspected" />
+                    <MudTabPanel Text="Accepted" />
+                    <MudTabPanel Text="Cancelled" />
+                </MudTabs>
+
+                @if (_loading)
+                {
+                    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+                }
+                else if (_items.Count == 0)
+                {
+                    <MudAlert Severity="Severity.Info">No IARs found.</MudAlert>
+                }
+                else
+                {
+                    <MudSimpleTable Dense="true" Hover="true" Striped="true">
                 <thead>
                     <tr>
                         <th>IAR No.</th>
@@ -236,9 +233,11 @@
                 <MudPagination Count="@TotalPages" Selected="_page" ShowFirstButton="true" ShowLastButton="true"
                                SelectedChanged="@(async p => { _page = p; await LoadAsync(); })" />
             </MudStack>
-        }
-    </MudCardContent>
-</MudCard>
+                }
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+</MudGrid>
 
 @code {
     private List<InspectionAcceptanceReportSummaryDto> _items = [];
@@ -286,6 +285,13 @@
             5 => InspectionAcceptanceReportStatus.Cancelled,
             _ => null
         };
+        _page = 1;
+        await LoadAsync();
+    }
+
+    private async Task OnKeywordChanged(string? keyword)
+    {
+        _keyword = keyword;
         _page = 1;
         await LoadAsync();
     }

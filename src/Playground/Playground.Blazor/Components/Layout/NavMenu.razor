@@ -1,6 +1,5 @@
 @using AMIS.Framework.Shared.Constants
 @using AMIS.Framework.Shared.Multitenancy
-@using AMIS.Modules.AssetRegister.Contracts.Permissions
 @using Microsoft.AspNetCore.Components.Authorization
 @implements IDisposable
 @inject NavigationManager Navigation
@@ -13,16 +12,6 @@
         <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.Home">
             Home
         </MudNavLink>
-
-        <!-- My Workspace (employee self-service) -->
-        @if (_canViewMyAccountability)
-        {
-            <MudNavGroup Title="My Accountability" Icon="@Icons.Material.Outlined.AssignmentInd" @bind-Expanded="_myAccountabilityExpanded">
-                <MudNavLink Href="/asset-register/my-accountability" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Inventory2">
-                    My ICS / PAR
-                </MudNavLink>
-            </MudNavGroup>
-        }
 
         <!-- Administration Section -->
         <MudNavGroup Title="Administration" Icon="@Icons.Material.Outlined.AdminPanelSettings" @bind-Expanded="_administrationExpanded">
@@ -82,8 +71,8 @@
         </MudNavGroup>
 
         <MudNavGroup Title="Asset Register" Icon="@Icons.Material.Outlined.FolderSpecial" @bind-Expanded="_assetRegisterExpanded">
-            <MudNavLink Href="/asset-register" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.Home">
-                Overview
+            <MudNavLink Href="/asset-register/my-accountability" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.AssignmentInd">
+                My Accountability
             </MudNavLink>
             <MudNavLink Href="/asset-register/receiving/ppe" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.MoveToInbox">
                 Receiving — PPE (PPERR)
@@ -330,11 +319,7 @@
 
 @code {
     private bool _isRootTenantAdmin;
-    private bool _myAccountabilityExpanded;
     private bool _administrationExpanded;
-
-    private bool _canViewMyAccountability =>
-        UserProfileState.Permissions.Contains(AssetRegisterPermissions.MyAccountability.View);
     private bool _expendableExpanded;
     private bool _vehicleExpanded;
     private bool _masterDataExpanded;
@@ -350,7 +335,6 @@
     {
         UserProfileState.OnProfileChanged += OnProfileChanged;
         var uri = Navigation.Uri;
-        _myAccountabilityExpanded = uri.Contains("/asset-register/my-accountability", StringComparison.OrdinalIgnoreCase);
         _administrationExpanded = uri.Contains("/users", StringComparison.OrdinalIgnoreCase)
                                || uri.Contains("/roles", StringComparison.OrdinalIgnoreCase)
                                || uri.Contains("/groups", StringComparison.OrdinalIgnoreCase)
