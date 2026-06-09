@@ -7,15 +7,27 @@ public static class AssetRegisterPermissions
         public const string View     = "Permissions.AssetRegister.Assets.View";
         public const string Register = "Permissions.AssetRegister.Assets.Register";
         public const string Update   = "Permissions.AssetRegister.Assets.Update";
-        public const string Retire   = "Permissions.AssetRegister.Assets.Retire";
     }
 
     public static class Accountability
     {
         public const string View     = "Permissions.AssetRegister.Accountability.View";
         public const string Issue    = "Permissions.AssetRegister.Accountability.Issue";
-        public const string Transfer = "Permissions.AssetRegister.Accountability.Transfer";
         public const string Return   = "Permissions.AssetRegister.Accountability.Return";
+    }
+
+    /// <summary>
+    /// Employee self-service permissions. These scope a user to <em>their own</em> ICS/PAR
+    /// (records where they are the <c>ReceivedBy</c> accountable person) and never grant the
+    /// officer-wide <see cref="Accountability"/> view. Bundle these into the "Employee" role.
+    /// </summary>
+    public static class MyAccountability
+    {
+        public const string View           = "Permissions.AssetRegister.MyAccountability.View";
+        public const string Acknowledge    = "Permissions.AssetRegister.MyAccountability.Acknowledge";
+        public const string Return         = "Permissions.AssetRegister.MyAccountability.Return";
+        public const string ReportIncident = "Permissions.AssetRegister.MyAccountability.ReportIncident";
+        public const string ConfirmCount   = "Permissions.AssetRegister.MyAccountability.ConfirmCount";
     }
 
     public static class Issuance
@@ -66,5 +78,6 @@ public static class AssetRegisterPermissions
     {
         public const string View   = "Permissions.AssetRegister.ReturnedProperty.View";
         public const string Create = "Permissions.AssetRegister.ReturnedProperty.Create";
+        public const string Accept = "Permissions.AssetRegister.ReturnedProperty.Accept";
     }
 }

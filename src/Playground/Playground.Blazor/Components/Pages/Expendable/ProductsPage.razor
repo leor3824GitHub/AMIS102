@@ -1,6 +1,8 @@
 @page "/expendable/products"
+@implements IDisposable
 @using AMIS.Framework.Blazor.UI.Components.Cards
 @using AMIS.Playground.Blazor.ApiClient
+@using AMIS.Modules.Expendable.Contracts.Permissions
 @inherits ComponentBase
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
@@ -8,6 +10,7 @@
 @inject IProductsClient ProductsClient
 @inject IMaster_dataClient MasterDataClient
 @inject ILookupClient LookupClient
+@inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="Products" Description="Manage product catalog">
     <ActionContent>
@@ -18,10 +21,13 @@
             <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" OnClick="ReloadTable">
                 Search
             </MudButton>
-            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary"
-                       StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateDialog">
-                New Product
-            </MudButton>
+            @if (_canCreate)
+            {
+                <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateDialog">
+                    New Product
+                </MudButton>
+            }
         </MudStack>
     </ActionContent>
 </AMISPageHeader>
@@ -117,38 +123,59 @@
                         <MudStack Row="true" Spacing="1">
                             @if (context.Status == "Active")
                             {
-                                <MudIconButton Icon="@Icons.Material.Filled.PauseCircle"
-                                               Size="Size.Small" Color="Color.Warning"
-                                               Title="Deactivate"
-                                               OnClick="@(() => ChangeStatus(context, "deactivate"))" />
-                                <MudIconButton Icon="@Icons.Material.Filled.Inventory2"
-                                               Size="Size.Small" Color="Color.Info"
-                                               Title="Mark Out Of Stock"
-                                               OnClick="@(() => ChangeStatus(context, "out-of-stock"))" />
-                                <MudIconButton Icon="@Icons.Material.Filled.Block"
-                                               Size="Size.Small" Color="Color.Error"
-                                               Title="Discontinue"
-                                               OnClick="@(() => ChangeStatus(context, "discontinue"))" />
+                                @if (_canDeactivate)
+                                {
+                                    <MudIconButton Icon="@Icons.Material.Filled.PauseCircle"
+                                                   Size="Size.Small" Color="Color.Warning"
+                                                   Title="Deactivate"
+                                                   OnClick="@(() => ChangeStatus(context, "deactivate"))" />
+                                }
+                                @if (_canMarkOutOfStock)
+                                {
+                                    <MudIconButton Icon="@Icons.Material.Filled.Inventory2"
+                                                   Size="Size.Small" Color="Color.Info"
+                                                   Title="Mark Out Of Stock"
+                                                   OnClick="@(() => ChangeStatus(context, "out-of-stock"))" />
+                                }
+                                @if (_canDiscontinue)
+                                {
+                                    <MudIconButton Icon="@Icons.Material.Filled.Block"
+                                                   Size="Size.Small" Color="Color.Error"
+                                                   Title="Discontinue"
+                                                   OnClick="@(() => ChangeStatus(context, "discontinue"))" />
+                                }
                             }
                             else if (context.Status is "Inactive" or "OutOfStock")
                             {
-                                <MudIconButton Icon="@Icons.Material.Filled.PlayCircle"
-                                               Size="Size.Small" Color="Color.Success"
-                                               Title="Activate"
-                                               OnClick="@(() => ChangeStatus(context, "activate"))" />
-                                <MudIconButton Icon="@Icons.Material.Filled.Block"
-                                               Size="Size.Small" Color="Color.Error"
-                                               Title="Discontinue"
-                                               OnClick="@(() => ChangeStatus(context, "discontinue"))" />
+                                @if (_canActivate)
+                                {
+                                    <MudIconButton Icon="@Icons.Material.Filled.PlayCircle"
+                                                   Size="Size.Small" Color="Color.Success"
+                                                   Title="Activate"
+                                                   OnClick="@(() => ChangeStatus(context, "activate"))" />
+                                }
+                                @if (_canDiscontinue)
+                                {
+                                    <MudIconButton Icon="@Icons.Material.Filled.Block"
+                                                   Size="Size.Small" Color="Color.Error"
+                                                   Title="Discontinue"
+                                                   OnClick="@(() => ChangeStatus(context, "discontinue"))" />
+                                }
                             }
-                            <MudTooltip Text="Edit product">
-                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
-                                               Color="Color.Primary" OnClick="@(async () => await OpenEditDialog(context))" />
-                            </MudTooltip>
-                            <MudTooltip Text="Delete product">
-                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
-                                               Color="Color.Error" OnClick="@(() => DeleteProduct(context.Id))" />
-                            </MudTooltip>
+                            @if (_canUpdate)
+                            {
+                                <MudTooltip Text="Edit product">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                                   Color="Color.Primary" OnClick="@(async () => await OpenEditDialog(context))" />
+                                </MudTooltip>
+                            }
+                            @if (_canDelete)
+                            {
+                                <MudTooltip Text="Delete product">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                                   Color="Color.Error" OnClick="@(() => DeleteProduct(context.Id))" />
+                                </MudTooltip>
+                            }
                         </MudStack>
                     </MudTd>
                 </RowTemplate>
@@ -179,16 +206,29 @@
     private string? _supplierFilter = null;
     private Guid? _parentProductFilter = null;
 
+    private bool _canCreate => UserProfileState.Permissions.Contains(ExpendablePermissions.Products.Create);
+    private bool _canUpdate => UserProfileState.Permissions.Contains(ExpendablePermissions.Products.Update);
+    private bool _canDelete => UserProfileState.Permissions.Contains(ExpendablePermissions.Products.Delete);
+    private bool _canActivate => UserProfileState.Permissions.Contains(ExpendablePermissions.Products.Activate);
+    private bool _canDeactivate => UserProfileState.Permissions.Contains(ExpendablePermissions.Products.Deactivate);
+    private bool _canDiscontinue => UserProfileState.Permissions.Contains(ExpendablePermissions.Products.Discontinue);
+    private bool _canMarkOutOfStock => UserProfileState.Permissions.Contains(ExpendablePermissions.Products.MarkOutOfStock);
+
     protected override async Task OnInitializedAsync()
     {
         if (_initialized) return;
         _initialized = true;
+        UserProfileState.OnProfileChanged += OnProfileChanged;
 
         await Task.WhenAll(
             LoadCategories(),
             LoadSuppliers(),
             LoadParentProducts());
     }
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
 
     private async Task<TableData<ProductDto>> LoadServerData(TableState state, CancellationToken cancellationToken)
     {

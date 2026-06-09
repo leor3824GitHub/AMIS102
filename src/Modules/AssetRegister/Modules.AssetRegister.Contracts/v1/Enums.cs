@@ -159,3 +159,15 @@ public enum ReturnedPropertyReceiptType
     RRP = 1
 }
 
+public enum ReturnedPropertyReceiptStatus
+{
+    /// <summary>Return requested by the end-user; awaiting the property custodian to receive/accept.</summary>
+    Pending = 0,
+    /// <summary>Custodian accepted the return — assets flipped back to Available and the official receipt number assigned.</summary>
+    Accepted = 1,
+    /// <summary>Custodian rejected the return request. No asset state changed.</summary>
+    Rejected = 2,
+    /// <summary>Requester withdrew the pending request before the custodian acted.</summary>
+    Cancelled = 3
+}
+

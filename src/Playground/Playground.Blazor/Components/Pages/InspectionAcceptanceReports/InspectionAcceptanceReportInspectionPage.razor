@@ -1,4 +1,5 @@
 @page "/procurement/inspection-acceptance-reports/{Id:guid}/inspect"
+@implements IDisposable
 @using AMIS.Playground.Blazor.ApiClient
 @using AMIS.Modules.ProcurementAcquisition.Contracts.Permissions
 @using AMIS.Modules.ProcurementAcquisition.Contracts.v1.InspectionAcceptanceReports
@@ -314,8 +315,15 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        UserProfileState.OnProfileChanged += OnProfileChanged;
         await LoadAsync();
     }
+
+    // Permissions load asynchronously in PlaygroundLayout after first render; re-render when they arrive
+    // so permission-gated controls appear on a hard refresh without requiring a user interaction.
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
 
     private async Task LoadAsync()
     {

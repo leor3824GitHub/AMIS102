@@ -153,44 +153,50 @@ public sealed class CanvassRequest : AggregateRoot<Guid>, IHasTenant, IAuditable
     }
 
     /// <summary>
-    /// Awards every covered line to its winning quotation. Each PR line may go to a different supplier, so the
-    /// aggregate <see cref="AwardedSupplierId"/> is set only when a single supplier swept every line (otherwise
-    /// null — the per-line winners on <see cref="CanvassRequestLineItem"/> are authoritative). The status guard
-    /// (Open/Evaluated only) makes awarding one-shot, which also prevents re-award after POs are generated.
+    /// Awards a <i>subset</i> of this canvass's covered lines to their winning quotations (partial award). Lines
+    /// not in <paramref name="awardsByPrItemNo"/> are left untouched — they may be awarded later on this canvass or,
+    /// in the multi-canvass-per-PR workflow, on a sibling canvass. Awards accumulate across calls; an already-awarded
+    /// line cannot be re-awarded here. Each PR line may go to a different supplier, so the aggregate
+    /// <see cref="AwardedSupplierId"/> reflects a single supplier only when every line awarded <i>so far</i> shares one
+    /// (otherwise null — the per-line winners on <see cref="CanvassRequestLineItem"/> are authoritative). The
+    /// cross-canvass "one canvass per awarded line" invariant is enforced by the command handler, which alone can see
+    /// the PR's sibling canvasses.
     /// </summary>
-    /// <param name="awardsByPrItemNo">For each covered PR line, the winning quotation, its supplier, and the awarded unit price.</param>
+    /// <param name="awardsByPrItemNo">The lines to award now: winning quotation, its supplier, and the awarded unit price.</param>
     /// <param name="signatories">ROPC committee frozen onto the canvass for the Abstract of Canvass.</param>
     public void AwardLines(
         IReadOnlyDictionary<int, (Guid QuotationId, Guid SupplierId, decimal UnitPrice)> awardsByPrItemNo,
         IEnumerable<CanvassAwardSignatory>? signatories = null)
     {
-        if (Status != CanvassRequestStatus.Open && Status != CanvassRequestStatus.Evaluated)
-            throw new InvalidOperationException("Cannot award a canvass that is not Open or Evaluated.");
+        if (Status == CanvassRequestStatus.Cancelled)
+            throw new InvalidOperationException("Cannot award a cancelled canvass.");
 
         if (awardsByPrItemNo is null || awardsByPrItemNo.Count == 0)
             throw new InvalidOperationException("At least one line award is required.");
 
-        // Every covered line must be awarded — no partial awards (confirmed business rule).
-        var missing = _lineItems.Select(li => li.PrItemNo).Where(no => !awardsByPrItemNo.ContainsKey(no)).ToList();
-        if (missing.Count > 0)
-            throw new InvalidOperationException(
-                $"Every covered line must be awarded before the canvass can be awarded. Unawarded line(s): {string.Join(", ", missing)}.");
-
         // Reject awards that reference a line this canvass does not cover.
-        var covered = _lineItems.Select(li => li.PrItemNo).ToHashSet();
-        var extra = awardsByPrItemNo.Keys.Where(no => !covered.Contains(no)).ToList();
+        var lineByPrItemNo = _lineItems.ToDictionary(li => li.PrItemNo);
+        var extra = awardsByPrItemNo.Keys.Where(no => !lineByPrItemNo.ContainsKey(no)).ToList();
         if (extra.Count > 0)
             throw new InvalidOperationException(
                 $"Award(s) reference line(s) not covered by this canvass: {string.Join(", ", extra)}.");
 
-        foreach (var li in _lineItems)
-        {
-            var award = awardsByPrItemNo[li.PrItemNo];
-            li.AwardTo(award.QuotationId, award.SupplierId, award.UnitPrice);
-        }
+        // Partial awards accumulate; a line already awarded on this canvass is not re-awarded.
+        var alreadyAwarded = awardsByPrItemNo.Keys
+            .Where(no => lineByPrItemNo[no].AwardedQuotationId is not null)
+            .ToList();
+        if (alreadyAwarded.Count > 0)
+            throw new InvalidOperationException(
+                $"Line(s) already awarded on this canvass: {string.Join(", ", alreadyAwarded)}.");
 
-        // Mark each quotation that won at least one line.
-        var winningQuotationIds = awardsByPrItemNo.Values.Select(a => a.QuotationId).ToHashSet();
+        foreach (var (prItemNo, award) in awardsByPrItemNo)
+            lineByPrItemNo[prItemNo].AwardTo(award.QuotationId, award.SupplierId, award.UnitPrice);
+
+        // Recompute award flags from ALL lines awarded so far (this call plus any earlier partial awards).
+        var winningQuotationIds = _lineItems
+            .Where(li => li.AwardedQuotationId is not null)
+            .Select(li => li.AwardedQuotationId!.Value)
+            .ToHashSet();
         foreach (var q in Quotations)
         {
             if (winningQuotationIds.Contains(q.Id))
@@ -199,16 +205,22 @@ public sealed class CanvassRequest : AggregateRoot<Guid>, IHasTenant, IAuditable
                 q.ClearAwarded();
         }
 
-        // Aggregate convenience: a single supplier only when it swept every line; otherwise null.
-        var distinctSuppliers = awardsByPrItemNo.Values.Select(a => a.SupplierId).Distinct().ToList();
+        // Aggregate convenience: a single supplier only when every awarded line so far shares one; otherwise null.
+        var distinctSuppliers = _lineItems
+            .Where(li => li.AwardedSupplierId is not null)
+            .Select(li => li.AwardedSupplierId!.Value)
+            .Distinct()
+            .ToList();
         AwardedSupplierId = distinctSuppliers.Count == 1 ? distinctSuppliers[0] : null;
 
         Status = CanvassRequestStatus.Awarded;
 
-        // Freeze the committee that signed at award time so the Abstract of Canvass reprints faithfully.
-        _awardSignatories.Clear();
+        // Freeze (or refresh) the committee that signed at award time so the Abstract of Canvass reprints faithfully.
         if (signatories is not null)
+        {
+            _awardSignatories.Clear();
             _awardSignatories.AddRange(signatories);
+        }
 
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
     }

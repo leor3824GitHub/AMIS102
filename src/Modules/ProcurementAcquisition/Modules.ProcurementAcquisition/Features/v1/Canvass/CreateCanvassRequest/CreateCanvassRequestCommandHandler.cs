@@ -37,27 +37,9 @@ public sealed class CreateCanvassRequestCommandHandler(
                 $"Item No(s) {string.Join(", ", unknown)} do not exist on purchase request {pr.PrNumber}.",
                 Enumerable.Empty<string>(), HttpStatusCode.BadRequest);
 
-        // Partition check: a PR line may belong to at most one non-cancelled canvass.
-        var activeCanvasses = await dbContext.CanvassRequests
-            .AsNoTracking()
-            .Where(x => x.PurchaseRequestId == command.PurchaseRequestId
-                        && x.Status != CanvassRequestStatus.Cancelled)
-            .ToListAsync(cancellationToken)
-            .ConfigureAwait(false);
-
-        var coveredBy = new Dictionary<int, string>();
-        foreach (var c in activeCanvasses)
-            foreach (var no in c.CoveredItemNos)
-                coveredBy.TryAdd(no, c.RivNumber);
-
-        var conflicts = requestedItemNos
-            .Where(coveredBy.ContainsKey)
-            .Select(no => $"Item {no} (already on {coveredBy[no]})")
-            .ToList();
-        if (conflicts.Count > 0)
-            throw new CustomException(
-                $"The following line item(s) are already covered by another canvass: {string.Join("; ", conflicts)}.",
-                Enumerable.Empty<string>(), HttpStatusCode.Conflict);
+        // A PR may have several canvasses covering identical lines (one RIV per supplier group). Coverage no longer
+        // partitions the PR's lines at creation — the "one canvass per awarded line" invariant is instead enforced
+        // at award time. So no create-time conflict check: the same line may be canvassed on multiple canvasses.
 
         // Line items are stable across number-allocation retries, so build them once, before the loop.
         var lineItems = requestedItemNos

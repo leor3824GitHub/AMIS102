@@ -41,6 +41,30 @@ public sealed class AwardCanvassCommandHandler(
                 throw new InvalidOperationException($"Line {award.PrItemNo} was awarded more than once.");
         }
 
+        // Cross-canvass invariant: a PR line may be awarded by only ONE of the PR's canvasses. Sibling canvasses
+        // carry identical lines, so a line already awarded elsewhere must stay locked here (the award dialog greys
+        // it out; this guards against a stale dialog or a direct API call). Awarded lines live in a JSON column, so
+        // the sibling canvasses are evaluated in memory — there are only a handful per PR.
+        var siblingCanvasses = await dbContext.CanvassRequests
+            .AsNoTracking()
+            .Where(x => x.PurchaseRequestId == canvass.PurchaseRequestId
+                        && x.Id != canvass.Id
+                        && x.Status != CanvassRequestStatus.Cancelled)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        var awardedElsewhere = siblingCanvasses
+            .SelectMany(x => x.LineItems)
+            .Where(li => li.AwardedQuotationId is not null)
+            .Select(li => li.PrItemNo)
+            .ToHashSet();
+
+        var conflicts = awardsByPrItemNo.Keys.Where(awardedElsewhere.Contains).OrderBy(no => no).ToList();
+        if (conflicts.Count > 0)
+            throw new AMIS.Framework.Core.Exceptions.CustomException(
+                $"Line(s) {string.Join(", ", conflicts)} are already awarded on another canvass for this purchase request.",
+                Enumerable.Empty<string>(), System.Net.HttpStatusCode.Conflict);
+
         // Freeze the ROPC committee that signed at award time so the Abstract of Canvass reprints
         // faithfully — even if the configured ReportSignatories table or org officers change later.
         var committee = await ResolveCommitteeAsync(cancellationToken).ConfigureAwait(false);

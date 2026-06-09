@@ -1,10 +1,13 @@
 @page "/asset-register/physical-count"
+@implements IDisposable
 @using AMIS.Playground.Blazor.ApiClient
+@using AMIS.Modules.AssetRegister.Contracts.Permissions
 @using PhysicalCountStatus = AMIS.Modules.AssetRegister.Contracts.v1.PhysicalCountStatus
 @using PhysicalCountScope = AMIS.Modules.AssetRegister.Contracts.v1.PhysicalCountScope
 @using PhysicalCountCondition = AMIS.Modules.AssetRegister.Contracts.v1.PhysicalCountCondition
 @inject IArPhysicalCountClient Client
 @inject ISnackbar Snackbar
+@inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="Physical Count Sessions (RPCSEMEX / RPCPPE)"
                Description="Manage physical count sessions per COA 2022-004. Produces RPCSEMEX (SE) and RPCPPE (PPE) reports." />
@@ -45,12 +48,15 @@
                             Search
                         </MudButton>
                     </MudItem>
+                    @if (_canCreate)
+                    {
                     <MudItem xs="12" md="2">
                         <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Success" FullWidth="true"
                                    StartIcon="@Icons.Material.Outlined.PlayCircle" OnClick="@(() => _showStartForm = true)">
                             Start Session
                         </MudButton>
                     </MudItem>
+                    }
                 </MudGrid>
             </MudCardContent>
         </MudCard>
@@ -241,7 +247,7 @@
                     }
 
                     <!-- Close session (only if Ongoing) -->
-                    @if (_selected.Status == PhysicalCountStatus.Ongoing)
+                    @if (_selected.Status == PhysicalCountStatus.Ongoing && _canClose)
                     {
                         <MudDivider Class="my-3" />
                         <MudText Typo="Typo.subtitle2" Class="mb-2">Close Session</MudText>
@@ -303,7 +309,18 @@
         public DateTime? ClosedOnNullable { get; set; }
     }
 
-    protected override async Task OnInitializedAsync() => await LoadAsync();
+    private bool _canCreate => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Count.Create);
+    private bool _canClose => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Count.Close);
+
+    protected override async Task OnInitializedAsync()
+    {
+        UserProfileState.OnProfileChanged += OnProfileChanged;
+        await LoadAsync();
+    }
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
 
     private async Task LoadAsync()
     {

@@ -1,4 +1,6 @@
+using System.Globalization;
 using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.AssetRegister.Contracts.v1;
 using AMIS.Modules.AssetRegister.Contracts.v1.ReturnedProperty;
 using AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
 using AMIS.Modules.AssetRegister.Data;
@@ -16,31 +18,25 @@ public sealed class CreateReturnedPropertyReceiptCommandHandler(AssetRegisterDbC
     {
         ArgumentNullException.ThrowIfNull(cmd);
 
-        // 1. Uniqueness check.
-        var exists = await db.ReturnedPropertyReceipts
-            .AnyAsync(r => r.ReceiptNo == cmd.ReceiptNo, ct).ConfigureAwait(false);
-        if (exists)
-            throw new InvalidOperationException($"Receipt number '{cmd.ReceiptNo}' already exists.");
-
-        // 2. Load accountability with lines.
+        // 1. Load accountability with lines.
         var accountability = await db.PropertyAccountabilities
             .Include(a => a.Lines)
             .FirstOrDefaultAsync(a => a.Id == cmd.AccountabilityId, ct).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Accountability '{cmd.AccountabilityId}' not found.");
 
-        if (accountability.Status != Contracts.v1.AccountabilityStatus.Active)
+        if (accountability.Status != AccountabilityStatus.Active)
             throw new InvalidOperationException(
-                $"Accountability '{accountability.DocumentNo}' is {accountability.Status}. Only Active accountabilities can have returns recorded.");
+                $"Accountability '{accountability.DocumentNo}' is {accountability.Status}. Only Active accountabilities can have returns requested.");
 
         // Validate receipt type matches accountability type.
-        var expectedType = cmd.ReceiptType == Contracts.v1.ReturnedPropertyReceiptType.RRSP
-            ? Contracts.v1.AccountabilityType.SE_ICS
-            : Contracts.v1.AccountabilityType.PPE_PAR;
+        var expectedType = cmd.ReceiptType == ReturnedPropertyReceiptType.RRSP
+            ? AccountabilityType.SE_ICS
+            : AccountabilityType.PPE_PAR;
         if (accountability.AccountabilityType != expectedType)
             throw new InvalidOperationException(
                 $"Receipt type {cmd.ReceiptType} requires a {expectedType} accountability, but '{accountability.DocumentNo}' is {accountability.AccountabilityType}.");
 
-        // 3. Resolve selected lines.
+        // 2. Resolve selected lines.
         var selectedLineIds = cmd.AccountabilityLineIds.ToHashSet();
         var selectedLines = accountability.Lines
             .Where(l => selectedLineIds.Contains(l.Id))
@@ -51,32 +47,39 @@ public sealed class CreateReturnedPropertyReceiptCommandHandler(AssetRegisterDbC
             throw new InvalidOperationException(
                 $"Unknown accountability line IDs: {string.Join(", ", unknownIds)}.");
 
-        var notActive = selectedLines.Where(l => l.LineStatus != Contracts.v1.AccountabilityLineStatus.Active).ToList();
+        var notActive = selectedLines.Where(l => l.LineStatus != AccountabilityLineStatus.Active).ToList();
         if (notActive.Count > 0)
             throw new InvalidOperationException(
                 $"Lines are not in Active status: {string.Join(", ", notActive.Select(l => l.Id))}.");
 
-        // 4. Load assets.
+        // 3. Guard: a line cannot have two outstanding (Pending) return requests at once.
+        var alreadyPending = await db.ReturnedPropertyReceipts
+            .Where(r => r.Status == ReturnedPropertyReceiptStatus.Pending)
+            .SelectMany(r => r.Items)
+            .Where(i => selectedLineIds.Contains(i.AccountabilityLineId))
+            .Select(i => i.AccountabilityLineId)
+            .ToListAsync(ct).ConfigureAwait(false);
+        if (alreadyPending.Count > 0)
+            throw new InvalidOperationException(
+                "One or more selected items already have a pending return request. Resolve it before requesting again.");
+
+        // 4. Load assets for snapshots.
         var assetIds = selectedLines.Select(l => l.AssetRegistryId).ToList();
         var assets = await db.AssetRegistries
             .Where(a => assetIds.Contains(a.Id))
             .ToDictionaryAsync(a => a.Id, ct).ConfigureAwait(false);
 
-        // 5. Build employee refs.
+        // 5. Create the pending request — NO asset/accountability mutation yet.
         var tenantId = db.TenantInfo?.Identifier ?? string.Empty;
         var returnedBy = EmployeeRef.Create(cmd.ReturnedBy.EmployeeId, cmd.ReturnedBy.PrintedName, cmd.ReturnedBy.Designation);
-        EmployeeRef? receivedBy = cmd.ReceivedBy is null ? null
-            : EmployeeRef.Create(cmd.ReceivedBy.EmployeeId, cmd.ReceivedBy.PrintedName, cmd.ReceivedBy.Designation);
 
-        // 6. Create receipt.
         var receipt = ReturnedPropertyReceipt.Create(
-            tenantId, cmd.ReceiptNo, cmd.ReceiptType, cmd.Date,
+            tenantId, cmd.ReceiptType, cmd.Date,
             cmd.AccountabilityId, accountability.DocumentNo,
-            returnedBy, receivedBy, cmd.Remarks);
+            returnedBy, cmd.Remarks);
 
         db.ReturnedPropertyReceipts.Add(receipt);
 
-        // 7. Process each line: add item, mark asset returned.
         for (var i = 0; i < selectedLines.Count; i++)
         {
             var line = selectedLines[i];
@@ -84,19 +87,125 @@ public sealed class CreateReturnedPropertyReceiptCommandHandler(AssetRegisterDbC
                 throw new KeyNotFoundException($"Asset '{line.AssetRegistryId}' not found in registry.");
 
             receipt.AddItem(line.Id, asset.Id, i + 1, asset.Snapshot());
-            asset.ReturnToAvailable();
         }
-
-        // 8. Mark lines returned on the accountability and check for full return.
-        accountability.ReturnLines(
-            selectedLines.Select(l => (l.Id, (int?)null)),
-            cmd.Date,
-            Contracts.v1.AssetCondition.InGoodCondition);
 
         await db.SaveChangesAsync(ct).ConfigureAwait(false);
 
-        // Reload items for mapping.
         await db.Entry(receipt).Collection(r => r.Items).LoadAsync(ct).ConfigureAwait(false);
+        return ReturnedPropertyMapper.ToDto(receipt);
+    }
+}
+
+public sealed class AcceptReturnedPropertyReceiptCommandHandler(AssetRegisterDbContext db)
+    : ICommandHandler<AcceptReturnedPropertyReceiptCommand, ReturnedPropertyReceiptDto>
+{
+    public async ValueTask<ReturnedPropertyReceiptDto> Handle(
+        AcceptReturnedPropertyReceiptCommand cmd, CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(cmd);
+
+        var receipt = await db.ReturnedPropertyReceipts
+            .Include(r => r.Items)
+            .FirstOrDefaultAsync(r => r.Id == cmd.Id, ct).ConfigureAwait(false)
+            ?? throw new KeyNotFoundException($"Return request '{cmd.Id}' not found.");
+
+        if (receipt.Status != ReturnedPropertyReceiptStatus.Pending)
+            throw new InvalidOperationException(
+                $"Return request is {receipt.Status}. Only Pending requests can be accepted.");
+
+        // Load the accountability with lines so we can flip assets back to Available now.
+        var accountability = await db.PropertyAccountabilities
+            .Include(a => a.Lines)
+            .FirstOrDefaultAsync(a => a.Id == receipt.AccountabilityId, ct).ConfigureAwait(false)
+            ?? throw new KeyNotFoundException($"Accountability '{receipt.AccountabilityId}' not found.");
+
+        var lineIds = receipt.Items.Select(i => i.AccountabilityLineId).ToHashSet();
+        var lines = accountability.Lines.Where(l => lineIds.Contains(l.Id)).ToList();
+
+        var notActive = lines.Where(l => l.LineStatus != AccountabilityLineStatus.Active).ToList();
+        if (notActive.Count > 0)
+            throw new InvalidOperationException(
+                "One or more items are no longer Active on the accountability (they may have been returned through another document). Reject this request and raise a new one.");
+
+        // Flip assets back to Available.
+        var assetIds = lines.Select(l => l.AssetRegistryId).ToList();
+        var assets = await db.AssetRegistries
+            .Where(a => assetIds.Contains(a.Id))
+            .ToDictionaryAsync(a => a.Id, ct).ConfigureAwait(false);
+        foreach (var line in lines)
+        {
+            if (assets.TryGetValue(line.AssetRegistryId, out var asset))
+                asset.ReturnToAvailable();
+        }
+
+        // Close the accountability lines (and the accountability if fully returned).
+        accountability.ReturnLines(
+            lines.Select(l => (l.Id, (int?)null)),
+            receipt.Date,
+            AssetCondition.InGoodCondition);
+
+        // Assign the official receipt number and capture the receiver.
+        var receiptNo = await GenerateReceiptNoAsync(receipt.ReceiptType, receipt.Date.Year, ct).ConfigureAwait(false);
+        var receivedBy = EmployeeRef.Create(cmd.ReceivedBy.EmployeeId, cmd.ReceivedBy.PrintedName, cmd.ReceivedBy.Designation);
+        receipt.Accept(receiptNo, receivedBy);
+
+        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        return ReturnedPropertyMapper.ToDto(receipt);
+    }
+
+    private async Task<string> GenerateReceiptNoAsync(ReturnedPropertyReceiptType type, int year, CancellationToken ct)
+    {
+        var prefix = type == ReturnedPropertyReceiptType.RRSP ? "RRSP" : "RRP";
+        var seqPrefix = $"{prefix}-{year.ToString(CultureInfo.InvariantCulture)}-";
+
+        var existing = await db.ReturnedPropertyReceipts
+            .Where(r => r.ReceiptNo != null && r.ReceiptNo.StartsWith(seqPrefix))
+            .Select(r => r.ReceiptNo!)
+            .ToListAsync(ct).ConfigureAwait(false);
+
+        var maxSeq = existing
+            .Select(n => int.TryParse(n[seqPrefix.Length..], NumberStyles.Integer, CultureInfo.InvariantCulture, out var v) ? v : 0)
+            .DefaultIfEmpty(0)
+            .Max();
+
+        return $"{seqPrefix}{(maxSeq + 1).ToString("D5", CultureInfo.InvariantCulture)}";
+    }
+}
+
+public sealed class RejectReturnedPropertyReceiptCommandHandler(AssetRegisterDbContext db)
+    : ICommandHandler<RejectReturnedPropertyReceiptCommand, ReturnedPropertyReceiptDto>
+{
+    public async ValueTask<ReturnedPropertyReceiptDto> Handle(
+        RejectReturnedPropertyReceiptCommand cmd, CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(cmd);
+
+        var receipt = await db.ReturnedPropertyReceipts
+            .Include(r => r.Items)
+            .FirstOrDefaultAsync(r => r.Id == cmd.Id, ct).ConfigureAwait(false)
+            ?? throw new KeyNotFoundException($"Return request '{cmd.Id}' not found.");
+
+        receipt.Reject(cmd.Reason);
+        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        return ReturnedPropertyMapper.ToDto(receipt);
+    }
+}
+
+public sealed class CancelReturnedPropertyReceiptCommandHandler(AssetRegisterDbContext db)
+    : ICommandHandler<CancelReturnedPropertyReceiptCommand, ReturnedPropertyReceiptDto>
+{
+    public async ValueTask<ReturnedPropertyReceiptDto> Handle(
+        CancelReturnedPropertyReceiptCommand cmd, CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(cmd);
+
+        var receipt = await db.ReturnedPropertyReceipts
+            .Include(r => r.Items)
+            .FirstOrDefaultAsync(r => r.Id == cmd.Id, ct).ConfigureAwait(false)
+            ?? throw new KeyNotFoundException($"Return request '{cmd.Id}' not found.");
+
+        receipt.Cancel(cmd.Reason);
+        await db.SaveChangesAsync(ct).ConfigureAwait(false);
         return ReturnedPropertyMapper.ToDto(receipt);
     }
 }
@@ -130,11 +239,14 @@ public sealed class SearchReturnedPropertyReceiptsQueryHandler(AssetRegisterDbCo
         if (!string.IsNullOrWhiteSpace(query.Keyword))
         {
             var k = query.Keyword.ToLowerInvariant();
-            q = q.Where(r => r.ReceiptNo.ToLower().Contains(k)
+            q = q.Where(r => (r.ReceiptNo != null && r.ReceiptNo.ToLower().Contains(k))
                            || r.AccountabilityDocumentNo.ToLower().Contains(k));
         }
 
         if (query.ReceiptType.HasValue) q = q.Where(r => r.ReceiptType == query.ReceiptType.Value);
+        if (query.Status.HasValue)      q = q.Where(r => r.Status == query.Status.Value);
+        if (query.ReturnedByEmployeeId.HasValue && query.ReturnedByEmployeeId.Value != Guid.Empty)
+            q = q.Where(r => r.ReturnedBy.EmployeeId == query.ReturnedByEmployeeId.Value);
         if (query.FromDate.HasValue)    q = q.Where(r => r.Date >= query.FromDate.Value);
         if (query.ToDate.HasValue)      q = q.Where(r => r.Date <= query.ToDate.Value);
 
@@ -149,6 +261,7 @@ public sealed class SearchReturnedPropertyReceiptsQueryHandler(AssetRegisterDbCo
                 r.Id,
                 r.ReceiptNo,
                 r.ReceiptType,
+                r.Status,
                 r.Date,
                 r.AccountabilityDocumentNo,
                 r.Items.Count,
@@ -163,5 +276,25 @@ public sealed class SearchReturnedPropertyReceiptsQueryHandler(AssetRegisterDbCo
             TotalCount = total,
             TotalPages = (int)Math.Ceiling(total / (double)pageSize)
         };
+    }
+}
+
+public sealed class GetReturnedPropertyStatusCountsQueryHandler(AssetRegisterDbContext db)
+    : IQueryHandler<GetReturnedPropertyStatusCountsQuery, IReadOnlyList<ReturnedPropertyStatusCountDto>>
+{
+    public async ValueTask<IReadOnlyList<ReturnedPropertyStatusCountDto>> Handle(
+        GetReturnedPropertyStatusCountsQuery query, CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        var q = db.ReturnedPropertyReceipts.AsNoTracking().AsQueryable();
+
+        if (query.ReturnedByEmployeeId.HasValue && query.ReturnedByEmployeeId.Value != Guid.Empty)
+            q = q.Where(r => r.ReturnedBy.EmployeeId == query.ReturnedByEmployeeId.Value);
+        if (query.FromDate.HasValue) q = q.Where(r => r.Date >= query.FromDate.Value);
+        if (query.ToDate.HasValue)   q = q.Where(r => r.Date <= query.ToDate.Value);
+
+        return await q.GroupBy(r => r.Status)
+            .Select(g => new ReturnedPropertyStatusCountDto(g.Key, g.Count()))
+            .ToListAsync(ct).ConfigureAwait(false);
     }
 }

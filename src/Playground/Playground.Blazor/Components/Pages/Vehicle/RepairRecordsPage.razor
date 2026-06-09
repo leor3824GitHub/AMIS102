@@ -1,8 +1,11 @@
 @page "/vehicle/repairs"
+@implements IDisposable
 @using AMIS.Modules.Vehicle.Contracts.v1.Repairs
 @using AMIS.Modules.Vehicle.Contracts.v1.Vehicles
+@using AMIS.Modules.Vehicle.Contracts.Permissions
 @inject IVehicleClient VehicleClient
 @inject ISnackbar Snackbar
+@inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="Repair Records" Description="Track repair jobs and status" />
 
@@ -16,6 +19,8 @@
     </MudStack>
 
     <MudGrid Spacing="2">
+        @if (_canCreate)
+        {
         <MudItem xs="12" md="4">
             <MudCard Class="AMIS-card">
                 <MudCardContent>
@@ -35,6 +40,7 @@
                 </MudCardContent>
             </MudCard>
         </MudItem>
+        }
 
         <MudItem xs="12" md="8">
             <MudCard Class="AMIS-card">
@@ -71,27 +77,30 @@
                             <MudTd>@context.Cost.ToString("N2")</MudTd>
                             <MudTd>
                                 <MudStack Row="true" Spacing="1">
-                                    @if (context.Status == "Pending")
+                                    @if (context.Status == "Pending" && _canUpdate)
                                     {
                                         <MudTooltip Text="Start repair">
                                             <MudIconButton Icon="@Icons.Material.Filled.PlayArrow" Color="Color.Info" Size="Size.Small" OnClick="@(() => Start(context.Id))" />
                                         </MudTooltip>
                                     }
-                                    @if (context.Status == "InProgress")
+                                    @if (context.Status == "InProgress" && _canUpdate)
                                     {
                                         <MudTooltip Text="Complete repair">
                                             <MudIconButton Icon="@Icons.Material.Filled.Done" Color="Color.Success" Size="Size.Small" OnClick="@(() => Complete(context.Id))" />
                                         </MudTooltip>
                                     }
-                                    @if (context.Status != "Completed" && context.Status != "Cancelled")
+                                    @if (context.Status != "Completed" && context.Status != "Cancelled" && _canUpdate)
                                     {
                                         <MudTooltip Text="Cancel repair">
                                             <MudIconButton Icon="@Icons.Material.Filled.Cancel" Color="Color.Warning" Size="Size.Small" OnClick="@(() => Cancel(context.Id))" />
                                         </MudTooltip>
                                     }
-                                    <MudTooltip Text="Delete repair">
-                                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => Delete(context.Id))" />
-                                    </MudTooltip>
+                                    @if (_canDelete)
+                                    {
+                                        <MudTooltip Text="Delete repair">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => Delete(context.Id))" />
+                                        </MudTooltip>
+                                    }
                                 </MudStack>
                             </MudTd>
                         </RowTemplate>
@@ -109,11 +118,20 @@
     private RepairQueryModel _query = new();
     private CreateRepairModel _create = new();
 
+    private bool _canCreate => UserProfileState.Permissions.Contains(VehiclePermissions.Repairs.Create);
+    private bool _canUpdate => UserProfileState.Permissions.Contains(VehiclePermissions.Repairs.Update);
+    private bool _canDelete => UserProfileState.Permissions.Contains(VehiclePermissions.Repairs.Delete);
+
     protected override async Task OnInitializedAsync()
     {
+        UserProfileState.OnProfileChanged += OnProfileChanged;
         await LoadVehicles();
         await Load();
     }
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
 
     private async Task LoadVehicles()
     {

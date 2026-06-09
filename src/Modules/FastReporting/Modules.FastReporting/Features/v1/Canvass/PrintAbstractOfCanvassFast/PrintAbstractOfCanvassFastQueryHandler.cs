@@ -136,8 +136,9 @@ public sealed class PrintAbstractOfCanvassFastQueryHandler(IMediator mediator)
         committee.TryGetValue(order, out var s) ? s.Role ?? string.Empty : string.Empty;
 
     // Build the cross-supplier price table. One row per covered PR line (keyed by PrItemNo), with up to 5
-    // supplier prices. The split-award winner for a line is flagged with a leading marker on that supplier's
-    // price so the Abstract shows, per line, which supplier was awarded it.
+    // supplier prices. The split-award winner for a line is flagged via a parallel SupNWon boolean column;
+    // the template highlights that supplier's price cell yellow so the Abstract shows, per line, which
+    // supplier was awarded it.
     private static DataTable BuildLineItemsTable(
         IReadOnlyList<CanvassLineItemDto> lineItems,
         IReadOnlyList<CanvassQuotationDto> quotations,
@@ -153,6 +154,12 @@ public sealed class PrintAbstractOfCanvassFastQueryHandler(IMediator mediator)
         table.Columns.Add("Sup3Price", typeof(string));
         table.Columns.Add("Sup4Price", typeof(string));
         table.Columns.Add("Sup5Price", typeof(string));
+        // Parallel "won" flags — drive the yellow cell highlight in the template.
+        table.Columns.Add("Sup1Won", typeof(bool));
+        table.Columns.Add("Sup2Won", typeof(bool));
+        table.Columns.Add("Sup3Won", typeof(bool));
+        table.Columns.Add("Sup4Won", typeof(bool));
+        table.Columns.Add("Sup5Won", typeof(bool));
 
         foreach (var line in lineItems.OrderBy(x => x.PrItemNo))
         {
@@ -163,24 +170,27 @@ public sealed class PrintAbstractOfCanvassFastQueryHandler(IMediator mediator)
 
             for (var i = 0; i < MaxSupplierColumns; i++)
             {
-                var col = $"Sup{i + 1}Price";
+                var priceCol = $"Sup{i + 1}Price";
+                var wonCol = $"Sup{i + 1}Won";
                 if (i < quotations.Count)
                 {
                     var match = quotations[i].LineItems
                         .FirstOrDefault(li => li.PrItemNo == line.PrItemNo);
                     if (match is null)
                     {
-                        row[col] = string.Empty;
+                        row[priceCol] = string.Empty;
+                        row[wonCol] = false;
                     }
                     else
                     {
-                        var awarded = line.AwardedSupplierId is { } sid && quotations[i].SupplierId == sid;
-                        row[col] = (awarded ? "* " : string.Empty) + match.UnitPrice.ToString("N2", nf);
+                        row[priceCol] = match.UnitPrice.ToString("N2", nf);
+                        row[wonCol] = line.AwardedSupplierId is { } sid && quotations[i].SupplierId == sid;
                     }
                 }
                 else
                 {
-                    row[col] = string.Empty;
+                    row[priceCol] = string.Empty;
+                    row[wonCol] = false;
                 }
             }
 
@@ -192,7 +202,8 @@ public sealed class PrintAbstractOfCanvassFastQueryHandler(IMediator mediator)
         while (table.Rows.Count < padTo)
         {
             table.Rows.Add(string.Empty, string.Empty, string.Empty,
-                string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
+                string.Empty, string.Empty, string.Empty, string.Empty, string.Empty,
+                false, false, false, false, false);
         }
 
         return table;

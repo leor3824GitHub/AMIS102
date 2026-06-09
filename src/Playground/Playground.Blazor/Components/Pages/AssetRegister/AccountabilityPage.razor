@@ -1,8 +1,11 @@
 @page "/asset-register/accountability"
+@implements IDisposable
 @using AMIS.Modules.AssetRegister.Contracts.v1
+@using AMIS.Modules.AssetRegister.Contracts.Permissions
 @using AMIS.Playground.Blazor.ApiClient
 @inject IArAccountabilityClient Client
 @inject ISnackbar Snackbar
+@inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="Property Accountability (ICS / PAR)"
                Description="Unified accountability tracking for Semi-Expendable (ICS) and PPE (PAR) per COA 2022-004." />
@@ -191,7 +194,7 @@
                     </MudTable>
 
                     <!-- Cancel action (only for Active) -->
-                    @if (_selected.Status == AccountabilityStatus.Active)
+                    @if (_selected.Status == AccountabilityStatus.Active && _canCancel)
                     {
                         <MudDivider Class="my-3" />
                         <MudText Typo="Typo.subtitle2" Class="mb-2">Cancel Accountability</MudText>
@@ -227,8 +230,11 @@
     [SupplyParameterFromQuery(Name = "id")]
     public Guid? QueryId { get; set; }
 
+    private bool _canCancel => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Accountability.Issue);
+
     protected override async Task OnInitializedAsync()
     {
+        UserProfileState.OnProfileChanged += OnProfileChanged;
         await LoadAsync();
         if (QueryId.HasValue)
         {
@@ -236,13 +242,17 @@
         }
     }
 
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
+
     private async Task LoadAsync()
     {
         _busy = true;
         _error = null;
         try
         {
-            var result = await Client.SearchAsync(_keyword, _typeFilter, _statusFilter, _page, PageSize);
+            var result = await Client.SearchAsync(_keyword, _typeFilter, _statusFilter, page: _page, pageSize: PageSize);
             _items = result.Items;
             _totalCount = result.TotalCount;
             _totalPages = result.TotalPages > 0 ? result.TotalPages : 1;

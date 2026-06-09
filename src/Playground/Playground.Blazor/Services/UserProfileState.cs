@@ -76,7 +76,11 @@ internal sealed class UserProfileState : IUserProfileState
         EmployeePositionName = positionName;
     }
 
-    public void SetPermissions(IReadOnlySet<string> permissions) => Permissions = permissions;
+    public void SetPermissions(IReadOnlySet<string> permissions)
+    {
+        Permissions = permissions;
+        OnProfileChanged?.Invoke();
+    }
 
     public void Clear()
     {

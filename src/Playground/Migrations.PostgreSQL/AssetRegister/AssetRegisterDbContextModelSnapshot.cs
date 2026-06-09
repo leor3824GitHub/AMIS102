@@ -1084,6 +1084,9 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<DateTimeOffset?>("AcceptedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("AccountabilityDocumentNo")
                         .IsRequired()
                         .HasMaxLength(64)
@@ -1091,6 +1094,10 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
 
                     b.Property<Guid>("AccountabilityId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("CancellationReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
 
                     b.Property<string>("CreatedBy")
                         .HasColumnType("text");
@@ -1108,16 +1115,25 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("ReceiptNo")
-                        .IsRequired()
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
 
                     b.Property<int>("ReceiptType")
                         .HasColumnType("integer");
 
+                    b.Property<string>("RejectionReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
                     b.Property<string>("Remarks")
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTimeOffset?>("ResolvedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
 
                     b.Property<string>("TenantId")
                         .IsRequired()
@@ -1138,6 +1154,8 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
 
                     b.HasIndex("TenantId", "ReceiptNo")
                         .IsUnique();
+
+                    b.HasIndex("TenantId", "Status");
 
                     b.ToTable("ReturnedPropertyReceipts", "asset_register");
 

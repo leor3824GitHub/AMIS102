@@ -1,55 +1,18 @@
 @page "/asset-register/catalog"
+@implements IDisposable
 @using AMIS.Playground.Blazor.ApiClient
+@using AMIS.Modules.AssetRegister.Contracts.Permissions
 @inject IArCatalogClient Client
 @inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="Property Item Catalog (Asset Register)"
                Description="Manage the local SKU catalog used to mint property numbers and default asset attributes." />
 
 <MudGrid Spacing="3">
-    <!-- Create / Edit Form -->
-    <MudItem xs="12" md="4">
-        <MudCard Elevation="1">
-            <MudCardContent>
-                <MudText Typo="Typo.h6" Class="mb-3">
-                    @(_editing is null ? "New Catalog Item" : $"Edit: {_editing.Code}")
-                </MudText>
-                <MudStack Spacing="2">
-                    <MudTextField @bind-Value="_form.Code" Label="Code" Variant="Variant.Outlined"
-                                  MaxLength="50" Disabled="_editing is not null" Required="true"
-                                  Placeholder="e.g. AIT-CMP-001" />
-                    <MudTextField @bind-Value="_form.Description" Label="Description" Variant="Variant.Outlined"
-                                  MaxLength="200" Required="true" />
-                    <MudTextField @bind-Value="_form.DefaultPropertyClass" Label="Default Property Class" Variant="Variant.Outlined"
-                                  MaxLength="50" Required="true" />
-                    <MudTextField @bind-Value="_form.DefaultCategoryCode" Label="Default Category Code" Variant="Variant.Outlined"
-                                  MaxLength="50" Required="true" />
-                    <MudTextField @bind-Value="_form.DefaultUnit" Label="Default Unit" Variant="Variant.Outlined"
-                                  MaxLength="50" Required="true" Placeholder="e.g. piece, set" />
-                    <MudTextField @bind-Value="_form.UacsObjectCode" Label="UACS Object Code (optional)" Variant="Variant.Outlined"
-                                  MaxLength="50" />
-                    <MudNumericField @bind-Value="_form.EstimatedUsefulLifeYears" Label="Estimated Useful Life (years)"
-                                     Variant="Variant.Outlined" Min="1" Max="50" T="int" Required="true" />
-                    <MudStack Row="true" Spacing="1" Class="mt-2">
-                        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
-                                   OnClick="SaveAsync" Disabled="_busy">
-                            @(_editing is null ? "Create" : "Update")
-                        </MudButton>
-                        @if (_editing is not null)
-                        {
-                            <MudButton Variant="Variant.Outlined" Color="Color.Default"
-                                       OnClick="ClearForm" Disabled="_busy">
-                                Cancel
-                            </MudButton>
-                        }
-                    </MudStack>
-                </MudStack>
-            </MudCardContent>
-        </MudCard>
-    </MudItem>
-
     <!-- List -->
-    <MudItem xs="12" md="8">
+    <MudItem xs="12">
         <MudCard Elevation="1">
             <MudCardContent>
                 <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
@@ -64,6 +27,12 @@
                     </MudSelect>
                     <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary"
                                OnClick="LoadAsync" Disabled="_busy">Search</MudButton>
+                    @if (_canCreate)
+                    {
+                        <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary"
+                                   StartIcon="@Icons.Material.Filled.Add"
+                                   OnClick="OpenCreateDialog" Disabled="_busy">New Catalog Item</MudButton>
+                    }
                 </MudStack>
 
                 @if (_busy)
@@ -99,13 +68,19 @@
                             </MudTd>
                             <MudTd>
                                 <MudStack Row="true" Spacing="0">
-                                    <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small"
-                                                   Color="Color.Primary" OnClick="@(() => EditItem(context))" />
-                                    <MudIconButton Icon="@(context.IsActive ? Icons.Material.Outlined.ToggleOff : Icons.Material.Outlined.ToggleOn)"
-                                                   Size="Size.Small" Color="@(context.IsActive ? Color.Warning : Color.Success)"
-                                                   OnClick="@(() => ToggleActivationAsync(context))" />
-                                    <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small"
-                                                   Color="Color.Error" OnClick="@(() => DeleteAsync(context))" />
+                                    @if (_canUpdate)
+                                    {
+                                        <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small"
+                                                       Color="Color.Primary" OnClick="@(() => EditItem(context))" />
+                                        <MudIconButton Icon="@(context.IsActive ? Icons.Material.Outlined.ToggleOff : Icons.Material.Outlined.ToggleOn)"
+                                                       Size="Size.Small" Color="@(context.IsActive ? Color.Warning : Color.Success)"
+                                                       OnClick="@(() => ToggleActivationAsync(context))" />
+                                    }
+                                    @if (_canDelete)
+                                    {
+                                        <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small"
+                                                       Color="Color.Error" OnClick="@(() => DeleteAsync(context))" />
+                                    }
                                 </MudStack>
                             </MudTd>
                         </RowTemplate>
@@ -139,22 +114,20 @@
     private int _totalCount;
     private const int PageSize = 15;
     private IReadOnlyList<ArCatalogItemDto> _items = [];
-    private ArCatalogItemDto? _editing;
 
-    private CatalogFormModel _form = new();
+    private bool _canCreate => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Catalog.Create);
+    private bool _canUpdate => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Catalog.Update);
+    private bool _canDelete => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Catalog.Delete);
 
-    private sealed class CatalogFormModel
+    protected override async Task OnInitializedAsync()
     {
-        public string Code { get; set; } = "";
-        public string Description { get; set; } = "";
-        public string DefaultPropertyClass { get; set; } = "";
-        public string DefaultCategoryCode { get; set; } = "";
-        public string DefaultUnit { get; set; } = "piece";
-        public string? UacsObjectCode { get; set; }
-        public int EstimatedUsefulLifeYears { get; set; } = 10;
+        UserProfileState.OnProfileChanged += OnProfileChanged;
+        await LoadAsync();
     }
 
-    protected override async Task OnInitializedAsync() => await LoadAsync();
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
 
     private async Task LoadAsync()
     {
@@ -177,62 +150,32 @@
         }
     }
 
-    private async Task SaveAsync()
+    private Task OpenCreateDialog() => OpenFormDialog(null);
+
+    private Task EditItem(ArCatalogItemDto item) => OpenFormDialog(item);
+
+    private async Task OpenFormDialog(ArCatalogItemDto? editing)
     {
-        if (string.IsNullOrWhiteSpace(_form.Code) || string.IsNullOrWhiteSpace(_form.Description))
+        var parameters = new DialogParameters<CatalogItemFormDialog>
         {
-            Snackbar.Add("Code and Description are required.", Severity.Warning);
-            return;
-        }
+            { x => x.EditingId, editing?.Id },
+            { x => x.Code, editing?.Code },
+            { x => x.Description, editing?.Description },
+            { x => x.DefaultPropertyClass, editing?.DefaultPropertyClass },
+            { x => x.DefaultCategoryCode, editing?.DefaultCategoryCode },
+            { x => x.DefaultUnit, editing?.DefaultUnit },
+            { x => x.UacsObjectCode, editing?.UacsObjectCode },
+            { x => x.EstimatedUsefulLifeYears, editing?.EstimatedUsefulLifeYears }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true };
+        var title = editing is null ? "New Catalog Item" : $"Edit: {editing.Code}";
 
-        _busy = true;
-        try
+        var dialog = await DialogService.ShowAsync<CatalogItemFormDialog>(title, parameters, options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
         {
-            if (_editing is null)
-            {
-                await Client.CreateAsync(new CreateArCatalogItemRequest(
-                    _form.Code, _form.Description, _form.DefaultPropertyClass,
-                    _form.DefaultCategoryCode, _form.DefaultUnit,
-                    _form.UacsObjectCode, _form.EstimatedUsefulLifeYears));
-                Snackbar.Add("Catalog item created.", Severity.Success);
-            }
-            else
-            {
-                await Client.UpdateAsync(_editing.Id, new UpdateArCatalogItemRequest(
-                    _form.Description, _form.DefaultPropertyClass, _form.DefaultCategoryCode,
-                    _form.DefaultUnit, _form.UacsObjectCode, _form.EstimatedUsefulLifeYears));
-                Snackbar.Add("Catalog item updated.", Severity.Success);
-            }
-
-            ClearForm();
             await LoadAsync();
         }
-        catch (Exception ex)
-        {
-            Snackbar.Add(ex.Message, Severity.Error);
-        }
-        finally
-        {
-            _busy = false;
-        }
-    }
-
-    private void EditItem(ArCatalogItemDto item)
-    {
-        _editing = item;
-        _form.Code = item.Code;
-        _form.Description = item.Description;
-        _form.DefaultPropertyClass = item.DefaultPropertyClass;
-        _form.DefaultCategoryCode = item.DefaultCategoryCode;
-        _form.DefaultUnit = item.DefaultUnit;
-        _form.UacsObjectCode = item.UacsObjectCode;
-        _form.EstimatedUsefulLifeYears = item.EstimatedUsefulLifeYears;
-    }
-
-    private void ClearForm()
-    {
-        _editing = null;
-        _form = new();
     }
 
     private async Task ToggleActivationAsync(ArCatalogItemDto item)

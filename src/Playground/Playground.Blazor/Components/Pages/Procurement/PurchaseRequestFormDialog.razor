@@ -556,6 +556,16 @@
             return;
         }
 
+        // Adding the same item again just bumps the existing line's quantity — no duplicate rows.
+        var existing = FindExistingLine();
+        if (existing is not null)
+        {
+            existing.Quantity += _newLineItem.Quantity;
+            _newLineItem = new LineItemRow();
+            Snackbar.Add("Item already in the list — quantity merged.", Severity.Success);
+            return;
+        }
+
         _form.LineItems.Add(new LineItemRow
         {
             Quantity = _newLineItem.Quantity,
@@ -569,6 +579,31 @@
 
         _newLineItem = new LineItemRow();
         Snackbar.Add("Item added.", Severity.Success);
+    }
+
+    // Finds a line already on the list that represents the same item as the one being added: by Stock No for
+    // Supply, by catalog Id for Asset, falling back to a case-insensitive description match when neither is set.
+    private LineItemRow? FindExistingLine()
+    {
+        if (_form.Category == ProcurementCategory.Supply)
+        {
+            var stockNo = _newLineItem.SelectedProduct?.StockNo ?? _newLineItem.StockNumber;
+            if (!string.IsNullOrWhiteSpace(stockNo))
+                return _form.LineItems.FirstOrDefault(li =>
+                    string.Equals(li.StockNumber, stockNo, StringComparison.OrdinalIgnoreCase));
+
+            return _form.LineItems.FirstOrDefault(li =>
+                string.IsNullOrWhiteSpace(li.StockNumber) &&
+                string.Equals(li.ItemDescription?.Trim(), _newLineItem.ItemDescription?.Trim(), StringComparison.OrdinalIgnoreCase));
+        }
+
+        var catalogId = _newLineItem.SelectedCatalog?.Id;
+        if (catalogId is { } id && id != Guid.Empty)
+            return _form.LineItems.FirstOrDefault(li => li.SelectedCatalog?.Id == id);
+
+        return _form.LineItems.FirstOrDefault(li =>
+            li.SelectedCatalog is null &&
+            string.Equals(li.ItemDescription?.Trim(), _newLineItem.ItemDescription?.Trim(), StringComparison.OrdinalIgnoreCase));
     }
 
     private async Task<IEnumerable<ProductDto>> SearchProductsAsync(string value, CancellationToken ct)

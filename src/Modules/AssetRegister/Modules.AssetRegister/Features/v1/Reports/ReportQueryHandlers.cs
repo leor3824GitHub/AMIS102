@@ -180,15 +180,21 @@ public sealed class GetRegSpiReportQueryHandler(AssetRegisterDbContext db)
 
         var asOfDate = query.AsOfDate ?? DateOnly.FromDateTime(DateTime.UtcNow);
 
-        var accountabilities = await db.PropertyAccountabilities
+        // Filter by custodian in the database — a RegSPI is almost always pulled for one custodian, so
+        // materializing the whole active register and filtering in memory would over-fetch dramatically.
+        var accountabilitiesQuery = db.PropertyAccountabilities
             .AsNoTracking()
             .Include(a => a.Lines)
-            .Where(a => a.IssuedOn <= asOfDate)
+            .Where(a => a.IssuedOn <= asOfDate);
+
+        if (query.CustodianId is not null)
+            accountabilitiesQuery = accountabilitiesQuery.Where(a => a.ReceivedBy.EmployeeId == query.CustodianId);
+
+        var accountabilities = await accountabilitiesQuery
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
         var rows = accountabilities
-            .Where(a => query.CustodianId is null || a.ReceivedBy.EmployeeId == query.CustodianId)
             .SelectMany(a => a.Lines
                 .Where(l => l.LineStatus == AccountabilityLineStatus.Active)
                 .Where(l => query.AssetType is null || l.Snapshot.AssetType == query.AssetType)

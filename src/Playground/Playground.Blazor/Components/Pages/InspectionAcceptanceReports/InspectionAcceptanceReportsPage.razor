@@ -1,4 +1,5 @@
 @page "/procurement/inspection-acceptance-reports"
+@implements IDisposable
 @using AMIS.Playground.Blazor.ApiClient
 @using AMIS.Playground.Blazor.Components.Pages.Procurement
 @using AMIS.Modules.ProcurementAcquisition.Contracts.Permissions
@@ -200,7 +201,7 @@
                                     @if (iar.Status == InspectionAcceptanceReportStatus.Accepted && (iar.HasSignedCopy ? _canViewSignedCopy : _canUploadSignedCopy))
                                     {
                                         <MudTooltip Text="@(iar.HasSignedCopy ? "Signed copy uploaded — click to view" : "Upload signed copy")">
-                                            <MudIconButton Icon="@Icons.Material.Filled.Verified" Size="Size.Small"
+                                            <MudIconButton Icon="@Icons.Material.Filled.Draw" Size="Size.Small"
                                                            Color="@(iar.HasSignedCopy ? Color.Success : Color.Secondary)"
                                                            OnClick="@(() => OpenSignedCopyAsync(iar.Id, iar.IarNumber))" />
                                         </MudTooltip>
@@ -263,8 +264,15 @@
 
     protected override async Task OnInitializedAsync()
     {
+        UserProfileState.OnProfileChanged += OnProfileChanged;
         await LoadAsync();
     }
+
+    // Permissions load asynchronously in PlaygroundLayout after first render; re-render when they arrive
+    // so permission-gated controls appear on a hard refresh without requiring a user interaction.
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
 
     private async Task OnTabChanged(int tab)
     {

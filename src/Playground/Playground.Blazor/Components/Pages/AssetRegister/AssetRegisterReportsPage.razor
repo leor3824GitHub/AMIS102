@@ -14,7 +14,9 @@
 @using IncidentItemResolution = AMIS.Modules.AssetRegister.Contracts.v1.IncidentItemResolution
 @using UnserviceableReportType = AMIS.Modules.AssetRegister.Contracts.v1.UnserviceableReportType
 @using UnserviceableReportStatus = AMIS.Modules.AssetRegister.Contracts.v1.UnserviceableReportStatus
+@using AMIS.Modules.AssetRegister.Contracts.Permissions
 @inject IAssetRegisterReportsClient ReportsClient
+@inject IUserProfileState UserProfileState
 
 <MudText Typo="Typo.h4" GutterBottom="true">Asset Register Reports</MudText>
 <MudText Typo="Typo.body2" Class="mb-4">
@@ -40,60 +42,78 @@
     <MudItem xs="12" md="6">
         <MudTextField Label="Custodian Id (optional, RegSPI)" @bind-Value="_custodianId" Variant="Variant.Outlined" FullWidth="true" />
     </MudItem>
-    <MudItem xs="12" sm="6" md="4">
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" OnClick="RenderRegSpiAsync" Disabled="_isLoadingRegSpi">
-            @if (_isLoadingRegSpi)
-            {
-                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
-            }
-            Render RegSPI
-        </MudButton>
-    </MudItem>
-    <MudItem xs="12" sm="6" md="4">
-        <MudButton Variant="Variant.Filled" Color="Color.Info" FullWidth="true" OnClick="RenderPhysicalCountAsync" Disabled="_isLoadingPhysicalCount">
-            @if (_isLoadingPhysicalCount)
-            {
-                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
-            }
-            Render RPCSEMEX / RPCPPE
-        </MudButton>
-    </MudItem>
-    <MudItem xs="12" sm="6" md="4">
-        <MudButton Variant="Variant.Filled" Color="Color.Tertiary" FullWidth="true" OnClick="RenderIssuanceAsync" Disabled="_isLoadingIssuance">
-            @if (_isLoadingIssuance)
-            {
-                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
-            }
-            Render RSPI / PPEIR
-        </MudButton>
-    </MudItem>
-    <MudItem xs="12" sm="6" md="4">
-        <MudButton Variant="Variant.Filled" Color="Color.Secondary" FullWidth="true" OnClick="RenderAccountabilityAsync" Disabled="_isLoadingAccountability">
-            @if (_isLoadingAccountability)
-            {
-                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
-            }
-            Render ICS / PAR
-        </MudButton>
-    </MudItem>
-    <MudItem xs="12" sm="6" md="4">
-        <MudButton Variant="Variant.Filled" Color="Color.Warning" FullWidth="true" OnClick="RenderIncidentAsync" Disabled="_isLoadingIncident">
-            @if (_isLoadingIncident)
-            {
-                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
-            }
-            Render RLSDDSP
-        </MudButton>
-    </MudItem>
-    <MudItem xs="12" sm="6" md="4">
-        <MudButton Variant="Variant.Filled" Color="Color.Error" FullWidth="true" OnClick="RenderUnserviceableAsync" Disabled="_isLoadingUnserviceable">
-            @if (_isLoadingUnserviceable)
-            {
-                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
-            }
-            Render IIRUSP / IIRUP
-        </MudButton>
-    </MudItem>
+    @if (_canViewAccountability)
+    {
+        <MudItem xs="12" sm="6" md="4">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" OnClick="RenderRegSpiAsync" Disabled="_isLoadingRegSpi">
+                @if (_isLoadingRegSpi)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                }
+                Render RegSPI
+            </MudButton>
+        </MudItem>
+    }
+    @if (_canViewCount)
+    {
+        <MudItem xs="12" sm="6" md="4">
+            <MudButton Variant="Variant.Filled" Color="Color.Info" FullWidth="true" OnClick="RenderPhysicalCountAsync" Disabled="_isLoadingPhysicalCount">
+                @if (_isLoadingPhysicalCount)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                }
+                Render RPCSEMEX / RPCPPE
+            </MudButton>
+        </MudItem>
+    }
+    @if (_canViewIssuance)
+    {
+        <MudItem xs="12" sm="6" md="4">
+            <MudButton Variant="Variant.Filled" Color="Color.Tertiary" FullWidth="true" OnClick="RenderIssuanceAsync" Disabled="_isLoadingIssuance">
+                @if (_isLoadingIssuance)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                }
+                Render RSPI / PPEIR
+            </MudButton>
+        </MudItem>
+    }
+    @if (_canViewAccountability)
+    {
+        <MudItem xs="12" sm="6" md="4">
+            <MudButton Variant="Variant.Filled" Color="Color.Secondary" FullWidth="true" OnClick="RenderAccountabilityAsync" Disabled="_isLoadingAccountability">
+                @if (_isLoadingAccountability)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                }
+                Render ICS / PAR
+            </MudButton>
+        </MudItem>
+    }
+    @if (_canViewIncident)
+    {
+        <MudItem xs="12" sm="6" md="4">
+            <MudButton Variant="Variant.Filled" Color="Color.Warning" FullWidth="true" OnClick="RenderIncidentAsync" Disabled="_isLoadingIncident">
+                @if (_isLoadingIncident)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                }
+                Render RLSDDSP
+            </MudButton>
+        </MudItem>
+    }
+    @if (_canViewUnserviceable)
+    {
+        <MudItem xs="12" sm="6" md="4">
+            <MudButton Variant="Variant.Filled" Color="Color.Error" FullWidth="true" OnClick="RenderUnserviceableAsync" Disabled="_isLoadingUnserviceable">
+                @if (_isLoadingUnserviceable)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                }
+                Render IIRUSP / IIRUP
+            </MudButton>
+        </MudItem>
+    }
 </MudGrid>
 
 <MudAlert Severity="Severity.Info" Dense="true" Class="mt-4">
@@ -418,6 +438,14 @@
 </MudGrid>
 
 @code {
+    // Mirror each report endpoint's .RequirePermission(...) so a user never sees a button the API would reject.
+    // RegSPI and ICS/PAR both render off accountabilities, so both gate on Accountability.View.
+    private bool _canViewAccountability => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Accountability.View);
+    private bool _canViewCount => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Count.View);
+    private bool _canViewIssuance => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Issuance.View);
+    private bool _canViewIncident => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Incident.View);
+    private bool _canViewUnserviceable => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Unserviceable.View);
+
     private string _accountabilityId = string.Empty;
     private string _issuanceReportId = string.Empty;
     private string _sessionId = string.Empty;

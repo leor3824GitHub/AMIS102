@@ -1,99 +1,47 @@
 @page "/asset-register/returned-property"
+@implements IDisposable
 @using AMIS.Playground.Blazor.ApiClient
+@using AMIS.Playground.Blazor.Components.Shared
+@using AMIS.Modules.AssetRegister.Contracts.Permissions
 @using ReturnedPropertyReceiptType = AMIS.Modules.AssetRegister.Contracts.v1.ReturnedPropertyReceiptType
-@using AccountabilityType = AMIS.Modules.AssetRegister.Contracts.v1.AccountabilityType
-@using AccountabilityStatus = AMIS.Modules.AssetRegister.Contracts.v1.AccountabilityStatus
-@using AccountabilityLineStatus = AMIS.Modules.AssetRegister.Contracts.v1.AccountabilityLineStatus
+@using ReturnedPropertyReceiptStatus = AMIS.Modules.AssetRegister.Contracts.v1.ReturnedPropertyReceiptStatus
 @inject IArReturnedPropertyClient Client
-@inject IArAccountabilityClient AccountabilityClient
+@inject IDialogService DialogService
 @inject ISnackbar Snackbar
+@inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="Returned Property Receipts (RRSP / RRP)"
-               Description="Record property returned by an end-user from an ICS or PAR. Marks each returned asset back to Available." />
+               Description="End-users request the return of property assigned to them; the property custodian receives and accepts it. Accepting marks each asset back to Available." />
 
 <MudGrid Spacing="3">
-    <!-- Create Form -->
-    <MudItem xs="12" md="5">
-        <MudCard Elevation="1">
-            <MudCardContent>
-                <MudText Typo="Typo.h6" Class="mb-3">New Return Receipt</MudText>
-                <MudStack Spacing="2">
-
-                    <MudSelect Value="_form.ReceiptType" T="ReturnedPropertyReceiptType" Label="Receipt Type"
-                               Variant="Variant.Outlined" Required="true"
-                               ValueChanged="@((ReturnedPropertyReceiptType v) => { _form.ReceiptType = v; _form.SelectedAccountability = null; _accountability = null; _selectedLineIds.Clear(); })">
-                        <MudSelectItem T="ReturnedPropertyReceiptType" Value="ReturnedPropertyReceiptType.RRSP">RRSP — Semi-Expendable (ICS)</MudSelectItem>
-                        <MudSelectItem T="ReturnedPropertyReceiptType" Value="ReturnedPropertyReceiptType.RRP">RRP — Fixed Assets (PAR)</MudSelectItem>
-                    </MudSelect>
-
-                    <MudTextField @bind-Value="_form.ReceiptNo" Label="Receipt No." Variant="Variant.Outlined"
-                                  Required="true" MaxLength="64"
-                                  Placeholder="@(_form.ReceiptType == ReturnedPropertyReceiptType.RRSP ? "e.g. RRSP-2026-00001" : "e.g. RRP-2026-00001")" />
-
-                    <MudDatePicker @bind-Date="_form.DateNullable" Label="Date" Variant="Variant.Outlined"
-                                   DateFormat="MM/dd/yyyy" Required="true" />
-
-                    <MudAutocomplete T="ArAccountabilitySummaryDto"
-                                     Value="_form.SelectedAccountability"
-                                     SearchFunc="SearchAccountabilityAsync"
-                                     ToStringFunc="@(x => x is null ? "" : x.DocumentNo)"
-                                     Label="@(_form.ReceiptType == ReturnedPropertyReceiptType.RRSP ? "ICS to Return Against" : "PAR to Return Against")"
-                                     Variant="Variant.Outlined"
-                                     Required="true" Clearable="true" ResetValueOnEmptyText="true" CoerceValue="true"
-                                     ValueChanged="OnAccountabilitySelected" />
-
-                    @if (_accountability is not null)
-                    {
-                        <MudAlert Severity="Severity.Info" Dense="true">
-                            Select lines to return from <b>@_accountability.DocumentNo</b>
-                            (@_accountability.Lines.Count(l => l.LineStatus == AccountabilityLineStatus.Active) active line(s)).
-                        </MudAlert>
-
-                        <MudText Typo="Typo.subtitle2">Lines to Return</MudText>
-                        @foreach (var line in _accountability.Lines.Where(l => l.LineStatus == AccountabilityLineStatus.Active))
-                        {
-                            <MudCheckBox @bind-Value="_selectedLineIds[line.Id]"
-                                         Label="@($"{line.Snapshot.PropertyNo} — {line.Snapshot.Description} (₱{line.Snapshot.UnitCost:N2})")"
-                                         Color="Color.Primary" Dense="true" />
-                        }
-                    }
-
-                    <MudTextField @bind-Value="_form.ReturnedByName" Label="Returned By (Name)" Variant="Variant.Outlined"
-                                  Required="true" MaxLength="200" />
-                    <MudTextField @bind-Value="_form.ReturnedByDesignation" Label="Returned By (Designation)" Variant="Variant.Outlined" MaxLength="200" />
-
-                    <MudTextField @bind-Value="_form.ReceivedByName" Label="Received By (Supply Officer)" Variant="Variant.Outlined" MaxLength="200" />
-                    <MudTextField @bind-Value="_form.ReceivedByDesignation" Label="Received By (Designation)" Variant="Variant.Outlined" MaxLength="200" />
-
-                    <MudTextField @bind-Value="_form.Remarks" Label="Remarks" Variant="Variant.Outlined"
-                                  Lines="2" MaxLength="1000" />
-
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
-                               OnClick="CreateAsync" Disabled="_busy">
-                        Create @(_form.ReceiptType == ReturnedPropertyReceiptType.RRSP ? "RRSP" : "RRP")
-                    </MudButton>
-                </MudStack>
-            </MudCardContent>
-        </MudCard>
-    </MudItem>
-
     <!-- List Panel -->
-    <MudItem xs="12" md="7">
+    <MudItem xs="12">
         <MudCard Elevation="1">
             <MudCardContent>
                 <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3" Spacing="2">
                     <MudText Typo="Typo.h6" Class="flex-grow-1">Return Receipts</MudText>
-                    <MudSelect Value="_typeFilter" T="ReturnedPropertyReceiptType?" Label="Type" Variant="Variant.Outlined"
-                               Size="Size.Small" Style="max-width:140px" Clearable="true"
-                               ValueChanged="@(async (ReturnedPropertyReceiptType? v) => { _typeFilter = v; _page = 1; await LoadAsync(); })">
-                        <MudSelectItem T="ReturnedPropertyReceiptType?" Value="@((ReturnedPropertyReceiptType?)null)">All</MudSelectItem>
-                        <MudSelectItem T="ReturnedPropertyReceiptType?" Value="@((ReturnedPropertyReceiptType?)ReturnedPropertyReceiptType.RRSP)">RRSP (SE)</MudSelectItem>
-                        <MudSelectItem T="ReturnedPropertyReceiptType?" Value="@((ReturnedPropertyReceiptType?)ReturnedPropertyReceiptType.RRP)">RRP (FA)</MudSelectItem>
-                    </MudSelect>
                     <MudTextField @bind-Value="_keyword" Label="Search" Variant="Variant.Outlined" Size="Size.Small"
+                                  Dense="true" Margin="Margin.Dense"
                                   Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
-                                  DebounceInterval="350" OnDebounceIntervalElapsed="@(() => LoadAsync())" Style="max-width:200px" />
+                                  DebounceInterval="350" OnDebounceIntervalElapsed="@(() => LoadAsync())" Style="max-width:220px" />
+                    @if (_canCreate)
+                    {
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
+                                   StartIcon="@Icons.Material.Filled.Add" OnClick="OpenRequestDialog">
+                            Request a Return
+                        </MudButton>
+                    }
                 </MudStack>
+
+                <!-- Status Filter Tabs -->
+                <MudTabs Elevation="0" Rounded="true" PanelClass="pa-0" Class="mb-3"
+                         ActivePanelIndex="_activeTabIndex" ActivePanelIndexChanged="OnTabChanged">
+                    <MudTabPanel Text="@GetTabLabel(0, "All")" />
+                    <MudTabPanel Text="@GetTabLabel(1, "Pending")" />
+                    <MudTabPanel Text="@GetTabLabel(2, "Accepted")" />
+                    <MudTabPanel Text="@GetTabLabel(3, "Rejected")" />
+                    <MudTabPanel Text="@GetTabLabel(4, "Cancelled")" />
+                </MudTabs>
 
                 @if (_loading)
                 {
@@ -113,14 +61,15 @@
                                 <th>Date</th>
                                 <th>Accountability</th>
                                 <th>Items</th>
-                                <th></th>
+                                <th>Status</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach (var r in _records)
                             {
                                 <tr>
-                                    <td><b>@r.ReceiptNo</b></td>
+                                    <td><b>@(string.IsNullOrWhiteSpace(r.ReceiptNo) ? "—" : r.ReceiptNo)</b></td>
                                     <td>
                                         <MudChip T="string" Size="Size.Small"
                                                  Color="@(r.ReceiptType == ReturnedPropertyReceiptType.RRSP ? Color.Info : Color.Secondary)"
@@ -135,9 +84,35 @@
                                             @r.ItemCount item(s)
                                         </MudChip>
                                     </td>
+                                    <td>@StatusChip(r.Status)</td>
                                     <td>
-                                        <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small"
-                                                       Color="Color.Primary" OnClick="@(() => ViewAsync(r.Id))" />
+                                        <MudStack Row="true" Spacing="0">
+                                            <MudTooltip Text="View Details">
+                                                <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small"
+                                                               Color="Color.Default" OnClick="@(() => ViewAsync(r.Id))" />
+                                            </MudTooltip>
+                                            @if (r.Status == ReturnedPropertyReceiptStatus.Pending)
+                                            {
+                                                @if (_canAccept)
+                                                {
+                                                    <MudTooltip Text="Receive / Accept">
+                                                        <MudIconButton Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small"
+                                                                       Color="Color.Success" OnClick="@(() => AcceptAsync(r.Id))" />
+                                                    </MudTooltip>
+                                                    <MudTooltip Text="Reject">
+                                                        <MudIconButton Icon="@Icons.Material.Filled.Cancel" Size="Size.Small"
+                                                                       Color="Color.Error" OnClick="@(() => RejectAsync(r.Id))" />
+                                                    </MudTooltip>
+                                                }
+                                                @if (_canCreate)
+                                                {
+                                                    <MudTooltip Text="Withdraw Request">
+                                                        <MudIconButton Icon="@Icons.Material.Filled.Undo" Size="Size.Small"
+                                                                       Color="Color.Warning" OnClick="@(() => CancelAsync(r.Id))" />
+                                                    </MudTooltip>
+                                                }
+                                            }
+                                        </MudStack>
                                     </td>
                                 </tr>
                             }
@@ -161,12 +136,13 @@
                 <MudCardHeader>
                     <CardHeaderContent>
                         <MudStack Row="true" AlignItems="AlignItems.Center">
-                            <MudText Typo="Typo.h6">@_detail.ReceiptNo</MudText>
+                            <MudText Typo="Typo.h6">@(string.IsNullOrWhiteSpace(_detail.ReceiptNo) ? "(Pending — no number yet)" : _detail.ReceiptNo)</MudText>
                             <MudChip T="string" Size="Size.Small"
                                      Color="@(_detail.ReceiptType == ReturnedPropertyReceiptType.RRSP ? Color.Info : Color.Secondary)"
                                      Variant="Variant.Outlined">
                                 @_detail.ReceiptType
                             </MudChip>
+                            @StatusChip(_detail.Status)
                             <MudText Typo="Typo.body2" Color="Color.Secondary">@_detail.Date.ToString("MMMM dd, yyyy")</MudText>
                             <MudSpacer />
                             <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="@(() => _detail = null)" />
@@ -186,8 +162,22 @@
                         @if (_detail.ReceivedBy is not null)
                         {
                             <MudItem xs="6">
-                                <MudText Typo="Typo.caption">Received By</MudText>
+                                <MudText Typo="Typo.caption">Received By (Custodian)</MudText>
                                 <MudText Typo="Typo.body2">@_detail.ReceivedBy.PrintedName@(!string.IsNullOrWhiteSpace(_detail.ReceivedBy.Designation) ? $" — {_detail.ReceivedBy.Designation}" : "")</MudText>
+                            </MudItem>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(_detail.RejectionReason))
+                        {
+                            <MudItem xs="12">
+                                <MudText Typo="Typo.caption" Color="Color.Error">Rejection Reason</MudText>
+                                <MudText Typo="Typo.body2">@_detail.RejectionReason</MudText>
+                            </MudItem>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(_detail.CancellationReason))
+                        {
+                            <MudItem xs="12">
+                                <MudText Typo="Typo.caption" Color="Color.Warning">Cancellation Reason</MudText>
+                                <MudText Typo="Typo.body2">@_detail.CancellationReason</MudText>
                             </MudItem>
                         }
                         @if (!string.IsNullOrWhiteSpace(_detail.Remarks))
@@ -232,27 +222,53 @@
 @code {
     private List<ArReturnedPropertyReceiptSummaryDto> _records = [];
     private ArReturnedPropertyReceiptDto? _detail;
-    private ArAccountabilityDto? _accountability;
-    private Dictionary<Guid, bool> _selectedLineIds = [];
-    private ReturnedPropertyReceiptType? _typeFilter;
     private string? _keyword;
     private bool _loading;
-    private bool _busy;
+    private int _activeTabIndex;
     private int _page = 1;
     private int _totalCount;
     private const int PageSize = 15;
     private int TotalPages => Math.Max(1, (int)Math.Ceiling(_totalCount / (double)PageSize));
+    private readonly Dictionary<int, int> _statusCounts = [];
 
-    private ReturnForm _form = new();
+    private bool _canCreate => UserProfileState.Permissions.Contains(AssetRegisterPermissions.ReturnedProperty.Create);
+    private bool _canAccept => UserProfileState.Permissions.Contains(AssetRegisterPermissions.ReturnedProperty.Accept);
 
-    protected override async Task OnInitializedAsync() => await LoadAsync();
+    protected override async Task OnInitializedAsync()
+    {
+        UserProfileState.OnProfileChanged += OnProfileChanged;
+        await LoadStatusCountsAsync();
+        await LoadAsync();
+    }
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
+
+    private static ReturnedPropertyReceiptStatus? GetStatusFromTabIndex(int index) =>
+        index switch
+        {
+            1 => ReturnedPropertyReceiptStatus.Pending,
+            2 => ReturnedPropertyReceiptStatus.Accepted,
+            3 => ReturnedPropertyReceiptStatus.Rejected,
+            4 => ReturnedPropertyReceiptStatus.Cancelled,
+            _ => null
+        };
+
+    private async Task OnTabChanged(int index)
+    {
+        _activeTabIndex = index;
+        _page = 1;
+        await LoadAsync();
+    }
 
     private async Task LoadAsync()
     {
         _loading = true;
         try
         {
-            var response = await Client.SearchAsync(_keyword, _typeFilter, page: _page, pageSize: PageSize);
+            var status = GetStatusFromTabIndex(_activeTabIndex);
+            var response = await Client.SearchAsync(_keyword, receiptType: null, status: status, page: _page, pageSize: PageSize);
             _records = [.. response.Items];
             _totalCount = response.TotalCount;
         }
@@ -260,101 +276,132 @@
         finally { _loading = false; }
     }
 
+    private async Task LoadStatusCountsAsync()
+    {
+        try
+        {
+            _statusCounts.Clear();
+            var counts = await Client.GetStatusCountsAsync();
+            var byStatus = counts.ToDictionary(c => c.Status, c => c.Count);
+            _statusCounts[1] = byStatus.GetValueOrDefault(ReturnedPropertyReceiptStatus.Pending);
+            _statusCounts[2] = byStatus.GetValueOrDefault(ReturnedPropertyReceiptStatus.Accepted);
+            _statusCounts[3] = byStatus.GetValueOrDefault(ReturnedPropertyReceiptStatus.Rejected);
+            _statusCounts[4] = byStatus.GetValueOrDefault(ReturnedPropertyReceiptStatus.Cancelled);
+            _statusCounts[0] = byStatus.Values.Sum();
+        }
+        catch { _statusCounts.Clear(); }
+    }
+
+    private async Task RefreshAsync()
+    {
+        await LoadStatusCountsAsync();
+        await LoadAsync();
+    }
+
+    private string GetTabLabel(int tabIndex, string label) =>
+        _statusCounts.TryGetValue(tabIndex, out var count) && count > 0 ? $"{label} ({count})" : label;
+
     private async Task ViewAsync(Guid id)
     {
         try { _detail = await Client.GetAsync(id); }
         catch (Exception ex) { Snackbar.Add($"Load failed: {ex.Message}", Severity.Error); }
     }
 
-    private async Task<IEnumerable<ArAccountabilitySummaryDto>> SearchAccountabilityAsync(string? value, CancellationToken ct)
+    private async Task OpenRequestDialog()
     {
-        var expectedType = _form.ReceiptType == ReturnedPropertyReceiptType.RRSP
-            ? AccountabilityType.SE_ICS
-            : AccountabilityType.PPE_PAR;
-        var response = await AccountabilityClient.SearchAsync(
-            keyword: value, type: expectedType, status: AccountabilityStatus.Active, page: 1, pageSize: 20, ct: ct);
-        return response.Items;
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<ReturnedPropertyFormDialog>("Request a Return", options);
+        var result = await dialog.Result;
+        if (result is null || result.Canceled) return;
+
+        if (result.Data is ArReturnedPropertyReceiptDto created)
+            _detail = created;
+
+        await RefreshAsync();
     }
 
-    private async Task OnAccountabilitySelected(ArAccountabilitySummaryDto? selected)
+    private async Task AcceptAsync(Guid id)
     {
-        _form.SelectedAccountability = selected;
-        _accountability = null;
-        _selectedLineIds.Clear();
-
-        if (selected is null) return;
-
-        try
+        if (string.IsNullOrWhiteSpace(UserProfileState.EmployeeFullName))
         {
-            _accountability = await AccountabilityClient.GetAsync(selected.Id);
-            if (_accountability is not null)
-            {
-                _selectedLineIds = _accountability.Lines
-                    .Where(l => l.LineStatus == AccountabilityLineStatus.Active)
-                    .ToDictionary(l => l.Id, _ => true);
-            }
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Could not load accountability detail: {ex.Message}", Severity.Error);
-        }
-    }
-
-    private async Task CreateAsync()
-    {
-        if (string.IsNullOrWhiteSpace(_form.ReceiptNo) || _form.DateNullable is null ||
-            _form.SelectedAccountability is null || string.IsNullOrWhiteSpace(_form.ReturnedByName))
-        {
-            Snackbar.Add("Receipt No., Date, Accountability, and Returned By are required.", Severity.Warning);
+            Snackbar.Add("Your account is not linked to an employee record, so you cannot be recorded as the receiver.", Severity.Warning);
             return;
         }
 
-        var lineIds = _selectedLineIds.Where(kv => kv.Value).Select(kv => kv.Key).ToList();
-        if (lineIds.Count == 0)
-        {
-            Snackbar.Add("Select at least one line to return.", Severity.Warning);
-            return;
-        }
+        var ok = await DialogService.ShowMessageBox(
+            "Accept Return",
+            "Receive and accept this return? The items will be marked back to Available and an official receipt number assigned.",
+            yesText: "Accept", cancelText: "Cancel");
+        if (ok is not true) return;
 
-        _busy = true;
+        var receivedBy = new ArEmployeeRefDto(
+            UserProfileState.EmployeeId,
+            UserProfileState.EmployeeFullName.Trim(),
+            string.IsNullOrWhiteSpace(UserProfileState.EmployeePositionName) ? null : UserProfileState.EmployeePositionName.Trim());
+
         try
         {
-            var returnedBy = new ArEmployeeRefDto(Guid.Empty, _form.ReturnedByName.Trim(), _form.ReturnedByDesignation?.Trim());
-            ArEmployeeRefDto? receivedBy = string.IsNullOrWhiteSpace(_form.ReceivedByName)
-                ? null
-                : new ArEmployeeRefDto(Guid.Empty, _form.ReceivedByName.Trim(), _form.ReceivedByDesignation?.Trim());
-
-            var result = await Client.CreateAsync(new CreateReturnedPropertyReceiptRequest(
-                _form.ReceiptNo.Trim(),
-                _form.ReceiptType,
-                DateOnly.FromDateTime(_form.DateNullable!.Value),
-                _form.SelectedAccountability.Id,
-                lineIds,
-                returnedBy,
-                receivedBy,
-                _form.Remarks?.Trim()));
-
-            Snackbar.Add($"{result.ReceiptNo} created. {result.Items.Count} item(s) returned.", Severity.Success);
-            _form = new ReturnForm();
-            _accountability = null;
-            _selectedLineIds.Clear();
+            var result = await Client.AcceptAsync(id, receivedBy);
+            Snackbar.Add($"{result.ReceiptNo} accepted.", Severity.Success);
             _detail = result;
-            await LoadAsync();
+            await RefreshAsync();
         }
-        catch (Exception ex) { Snackbar.Add($"Create failed: {ex.Message}", Severity.Error); }
-        finally { _busy = false; }
+        catch (Exception ex) { Snackbar.Add($"Accept failed: {ex.Message}", Severity.Error); }
     }
 
-    private sealed class ReturnForm
+    private async Task RejectAsync(Guid id)
     {
-        public ReturnedPropertyReceiptType ReceiptType { get; set; } = ReturnedPropertyReceiptType.RRSP;
-        public string ReceiptNo { get; set; } = string.Empty;
-        public DateTime? DateNullable { get; set; } = DateTime.Today;
-        public ArAccountabilitySummaryDto? SelectedAccountability { get; set; }
-        public string ReturnedByName { get; set; } = string.Empty;
-        public string? ReturnedByDesignation { get; set; }
-        public string? ReceivedByName { get; set; }
-        public string? ReceivedByDesignation { get; set; }
-        public string? Remarks { get; set; }
+        var parameters = new DialogParameters<ReasonInputDialog>
+        {
+            { x => x.Title, "Reject Return Request" },
+            { x => x.Label, "Rejection Reason" },
+            { x => x.ConfirmText, "Reject" }
+        };
+        var dialog = await DialogService.ShowAsync<ReasonInputDialog>("Reject Return", parameters);
+        var result = await dialog.Result;
+        if (result is null || result.Canceled || result.Data is not string reason || string.IsNullOrWhiteSpace(reason))
+            return;
+
+        try
+        {
+            await Client.RejectAsync(id, reason);
+            Snackbar.Add("Return request rejected.", Severity.Info);
+            await RefreshAsync();
+        }
+        catch (Exception ex) { Snackbar.Add($"Reject failed: {ex.Message}", Severity.Error); }
     }
+
+    private async Task CancelAsync(Guid id)
+    {
+        var ok = await DialogService.ShowMessageBox(
+            "Withdraw Request", "Withdraw this pending return request?",
+            yesText: "Yes, Withdraw", cancelText: "No");
+        if (ok is not true) return;
+
+        try
+        {
+            await Client.CancelAsync(id, null);
+            Snackbar.Add("Return request withdrawn.", Severity.Info);
+            await RefreshAsync();
+        }
+        catch (Exception ex) { Snackbar.Add($"Withdraw failed: {ex.Message}", Severity.Error); }
+    }
+
+    private static RenderFragment StatusChip(ReturnedPropertyReceiptStatus status) => __builder =>
+    {
+        var (color, icon) = status switch
+        {
+            ReturnedPropertyReceiptStatus.Pending   => (Color.Info, Icons.Material.Filled.HourglassBottom),
+            ReturnedPropertyReceiptStatus.Accepted  => (Color.Success, Icons.Material.Filled.CheckCircle),
+            ReturnedPropertyReceiptStatus.Rejected  => (Color.Error, Icons.Material.Filled.Cancel),
+            ReturnedPropertyReceiptStatus.Cancelled => (Color.Warning, Icons.Material.Filled.Block),
+            _ => (Color.Default, Icons.Material.Filled.Help)
+        };
+        __builder.OpenComponent<MudChip<string>>(0);
+        __builder.AddAttribute(1, "Size", Size.Small);
+        __builder.AddAttribute(2, "Color", color);
+        __builder.AddAttribute(3, "Icon", icon);
+        __builder.AddAttribute(4, "ChildContent", (RenderFragment)(b => b.AddContent(0, status.ToString())));
+        __builder.CloseComponent();
+    };
 }

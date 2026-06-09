@@ -1,9 +1,11 @@
 @page "/users/{Id:guid}"
+@implements IDisposable
 @using AMIS.Playground.Blazor.ApiClient
 @using AMIS.Framework.Blazor.UI.Components.Dialogs
 @inherits ComponentBase
 @using System.Security.Claims
 @using AMIS.Framework.Shared.Constants
+@using AMIS.Framework.Shared.Identity
 @using Microsoft.AspNetCore.Components.Authorization
 @inject IIdentityClient IdentityClient
 @inject IUsersClient UsersClient
@@ -11,6 +13,7 @@
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="User Details"
                Description="@(_user != null ? $"{_user.FirstName} {_user.LastName}" : "Loading...")">
@@ -280,7 +283,7 @@ else
                                                           Margin="Margin.Dense"
                                                           FullWidth="true" />
                                             <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
-                                                       OnClick="ConfirmEmail" Disabled="_busy">
+                                                       OnClick="ConfirmEmail" Disabled="@(_busy || !_canUpdate)">
                                                 Confirm Email
                                             </MudButton>
                                         </MudStack>
@@ -309,7 +312,7 @@ else
                                                       Margin="Margin.Dense"
                                                       FullWidth="true" />
                                         <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
-                                                   OnClick="ResetPassword" Disabled="_busy">
+                                                   OnClick="ResetPassword" Disabled="@(_busy || !_canUpdate)">
                                             Reset Password
                                         </MudButton>
                                     </MudStack>
@@ -354,15 +357,18 @@ else
                                         @(_user.IsActive ? "User will lose access to the system" : "Restore user access")
                                     </MudText>
                                 </MudStack>
-                                <MudTooltip Text="@ToggleTooltip">
-                                    <MudButton Variant="Variant.Outlined"
-                                               Color="@(_user.IsActive ? Color.Warning : Color.Success)"
-                                               Size="Size.Small"
-                                               OnClick="ToggleStatus"
-                                               Disabled="@IsToggleDisabled">
-                                        @(_user.IsActive ? "Deactivate" : "Activate")
-                                    </MudButton>
-                                </MudTooltip>
+                                @if (_canUpdate)
+                                {
+                                    <MudTooltip Text="@ToggleTooltip">
+                                        <MudButton Variant="Variant.Outlined"
+                                                   Color="@(_user.IsActive ? Color.Warning : Color.Success)"
+                                                   Size="Size.Small"
+                                                   OnClick="ToggleStatus"
+                                                   Disabled="@IsToggleDisabled">
+                                            @(_user.IsActive ? "Deactivate" : "Activate")
+                                        </MudButton>
+                                    </MudTooltip>
+                                }
                             </MudStack>
 
                             <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="danger-item pa-3">
@@ -370,10 +376,13 @@ else
                                     <MudText Typo="Typo.subtitle2" Class="fw-600">Delete Account</MudText>
                                     <MudText Typo="Typo.caption" Class="text-muted">Permanently remove this user</MudText>
                                 </MudStack>
-                                <MudButton Variant="Variant.Outlined" Color="Color.Error" Size="Size.Small"
-                                           OnClick="DeleteUser" Disabled="_busy">
-                                    Delete
-                                </MudButton>
+                                @if (_canDelete)
+                                {
+                                    <MudButton Variant="Variant.Outlined" Color="Color.Error" Size="Size.Small"
+                                               OnClick="DeleteUser" Disabled="_busy">
+                                        Delete
+                                    </MudButton>
+                                }
                             </MudStack>
                         </MudStack>
                     </MudPaper>
@@ -397,6 +406,15 @@ else
     private const string TenantContext = "root";
     private string? _currentUserId;
     private bool _targetIsAdmin;
+
+    private bool _canUpdate => UserProfileState.Permissions.Contains(IdentityPermissionConstants.Users.Update);
+    private bool _canDelete => UserProfileState.Permissions.Contains(IdentityPermissionConstants.Users.Delete);
+
+    protected override void OnInitialized() => UserProfileState.OnProfileChanged += OnProfileChanged;
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
 
     protected override async Task OnParametersSetAsync()
     {

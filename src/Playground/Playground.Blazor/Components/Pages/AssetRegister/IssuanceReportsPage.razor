@@ -1,6 +1,8 @@
 @page "/asset-register/issuance"
+@implements IDisposable
 @using AMIS.Playground.Blazor.ApiClient
 @using AMIS.Playground.Blazor.Components.Pages.Procurement
+@using AMIS.Modules.AssetRegister.Contracts.Permissions
 @using IssuanceReportType = AMIS.Modules.AssetRegister.Contracts.v1.IssuanceReportType
 @using IssuanceReportStatus = AMIS.Modules.AssetRegister.Contracts.v1.IssuanceReportStatus
 @inject IArIssuanceReportClient Client
@@ -8,6 +10,7 @@
 @inject IDialogService DialogService
 @inject IFastReportSetupPreferences FastReportSetupPrefs
 @inject IJSRuntime JS
+@inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="Property Issuance Reports (SMIR / PPEIR)"
                Description="Manage Semi-Expendable Issuance Records (SMIR) and PPE Issuance Reports (PPEIR) per COA 2022-004." />
@@ -47,10 +50,13 @@
                         </MudButton>
                     </MudItem>
                     <MudItem xs="12" md="2">
+                        @if (_canPost)
+                        {
                         <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Success" FullWidth="true"
                                    StartIcon="@Icons.Material.Outlined.Add" OnClick="@(() => _showCreateForm = !_showCreateForm)">
                             New Draft
                         </MudButton>
+                        }
                     </MudItem>
                 </MudGrid>
             </MudCardContent>
@@ -294,7 +300,7 @@
                     </MudTable>
 
                     <!-- Post action (Draft only) -->
-                    @if (_selected.Status == IssuanceReportStatus.Draft)
+                    @if (_selected.Status == IssuanceReportStatus.Draft && _canPost)
                     {
                         <MudDivider Class="my-3" />
                         <MudText Typo="Typo.subtitle2" Class="mb-2">Post Report</MudText>
@@ -360,7 +366,17 @@
         public DateTime? PostedOnNullable { get; set; }
     }
 
-    protected override async Task OnInitializedAsync() => await LoadAsync();
+    private bool _canPost => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Issuance.Post);
+
+    protected override async Task OnInitializedAsync()
+    {
+        UserProfileState.OnProfileChanged += OnProfileChanged;
+        await LoadAsync();
+    }
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
 
     private async Task LoadAsync()
     {

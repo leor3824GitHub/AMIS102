@@ -2,8 +2,10 @@
 @implements IDisposable
 @using AMIS.Modules.Vehicle.Contracts.v1.Maintenance
 @using AMIS.Modules.Vehicle.Contracts.v1.Vehicles
+@using AMIS.Modules.Vehicle.Contracts.Permissions
 @inject IVehicleClient VehicleClient
 @inject ISnackbar Snackbar
+@inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="Maintenance Schedules" Description="Plan and manage recurring maintenance" />
 
@@ -16,6 +18,8 @@
     </MudStack>
 
     <MudGrid Spacing="2">
+        @if (_canCreate)
+        {
         <MudItem xs="12" md="4">
             <MudCard Class="AMIS-card">
                 <MudCardContent>
@@ -35,6 +39,7 @@
                 </MudCardContent>
             </MudCard>
         </MudItem>
+        }
 
         <MudItem xs="12" md="8">
             <MudCard Class="AMIS-card">
@@ -81,17 +86,20 @@
                             <MudTd><MudChip T="string" Size="Size.Small" Color="@(context.IsActive ? Color.Success : Color.Default)">@(context.IsActive ? "Active" : "Inactive")</MudChip></MudTd>
                             <MudTd>
                                 <MudStack Row="true" Spacing="1">
-                                    @if (context.IsActive)
+                                    @if (context.IsActive && _canUpdate)
                                     {
                                         <MudTooltip Text="Deactivate schedule">
                                             <MudIconButton Icon="@Icons.Material.Filled.PauseCircle" Color="Color.Warning" Size="Size.Small"
                                                            OnClick="@(() => Deactivate(context.Id))" Disabled="_busy" />
                                         </MudTooltip>
                                     }
-                                    <MudTooltip Text="Delete schedule">
-                                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
-                                                       OnClick="@(() => Delete(context.Id))" Disabled="_busy" />
-                                    </MudTooltip>
+                                    @if (_canDelete)
+                                    {
+                                        <MudTooltip Text="Delete schedule">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
+                                                           OnClick="@(() => Delete(context.Id))" Disabled="_busy" />
+                                        </MudTooltip>
+                                    }
                                 </MudStack>
                             </MudTd>
                         </RowTemplate>
@@ -117,11 +125,18 @@
     private bool _disposed;
     private bool _busy;
 
+    private bool _canCreate => UserProfileState.Permissions.Contains(VehiclePermissions.Maintenance.Create);
+    private bool _canUpdate => UserProfileState.Permissions.Contains(VehiclePermissions.Maintenance.Update);
+    private bool _canDelete => UserProfileState.Permissions.Contains(VehiclePermissions.Maintenance.Delete);
+
     protected override async Task OnInitializedAsync()
     {
+        UserProfileState.OnProfileChanged += OnProfileChanged;
         await LoadVehicles();
         await Load();
     }
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
 
     private async Task LoadVehicles()
     {
@@ -282,6 +297,7 @@
 
     public void Dispose()
     {
+        UserProfileState.OnProfileChanged -= OnProfileChanged;
         _disposed = true;
         _cts.Cancel();
         _cts.Dispose();

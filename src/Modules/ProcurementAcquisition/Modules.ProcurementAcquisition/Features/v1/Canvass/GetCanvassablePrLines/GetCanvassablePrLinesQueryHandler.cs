@@ -16,19 +16,9 @@ public sealed class GetCanvassablePrLinesQueryHandler(ProcurementDbContext dbCon
             .ConfigureAwait(false)
             ?? throw new AMIS.Framework.Core.Exceptions.NotFoundException($"Purchase request '{query.PurchaseRequestId}' not found.");
 
-        // A PR line is "covered" when it belongs to a non-cancelled canvass for this PR.
-        var activeCanvasses = await dbContext.CanvassRequests
-            .AsNoTracking()
-            .Where(x => x.PurchaseRequestId == query.PurchaseRequestId
-                        && x.Status != CanvassRequestStatus.Cancelled)
-            .ToListAsync(cancellationToken)
-            .ConfigureAwait(false);
-
-        var coveredBy = new Dictionary<int, string>();
-        foreach (var c in activeCanvasses)
-            foreach (var no in c.CoveredItemNos)
-                coveredBy.TryAdd(no, c.RivNumber);
-
+        // A PR may have several canvasses covering identical lines. Coverage no longer locks a line at creation
+        // (the "one canvass per awarded line" invariant is enforced at award time), so every PR line stays
+        // selectable on every canvass. IsCovered is always false here, kept on the DTO for back-compat.
         return pr.LineItems
             .OrderBy(li => li.ItemNo)
             .Select(li => new CanvassablePrLineDto(
@@ -37,8 +27,8 @@ public sealed class GetCanvassablePrLinesQueryHandler(ProcurementDbContext dbCon
                 li.UnitOfIssue,
                 li.Quantity,
                 li.EstimatedUnitCost,
-                coveredBy.ContainsKey(li.ItemNo),
-                coveredBy.GetValueOrDefault(li.ItemNo)))
+                IsCovered: false,
+                CoveringRivNumber: null))
             .ToList();
     }
 }

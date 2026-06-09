@@ -6,8 +6,8 @@
     </TitleContent>
     <DialogContent>
         <MudText Typo="Typo.body2" Class="mb-3">
-            Choose the winning supplier for each line. The lowest quoted price is pre-selected; different lines
-            may go to different suppliers, and one purchase order is generated per winning supplier.
+            Tick the line items this canvass should win, then choose the winning supplier for each. You can award a
+            subset now and leave the rest for another canvass. Lines already awarded on another canvass are locked.
         </MudText>
 
         @if (_rows.Count == 0)
@@ -18,9 +18,16 @@
         }
         else
         {
+            @if (_rows.All(r => r.IsLocked))
+            {
+                <MudAlert Severity="Severity.Info" Dense="true" Class="mb-2">
+                    Every line on this canvass is already awarded (here or on another canvass). Nothing left to award.
+                </MudAlert>
+            }
             <MudSimpleTable Dense="true" Bordered="true" Striped="true">
                 <thead>
                     <tr>
+                        <th style="width:40px">Award</th>
                         <th>#</th>
                         <th>Description</th>
                         <th style="text-align:right">Qty</th>
@@ -31,18 +38,45 @@
                 <tbody>
                     @foreach (var row in _rows)
                     {
-                        <tr>
+                        <tr style="@(row.IsLocked ? "opacity:0.55" : "")">
+                            <td>
+                                @if (row.IsLocked)
+                                {
+                                    <MudTooltip Text="@($"Awarded on {row.LockedRivNumber}")">
+                                        <MudIcon Icon="@Icons.Material.Filled.Lock" Size="Size.Small" Color="Color.Secondary" />
+                                    </MudTooltip>
+                                }
+                                else if (row.Candidates.Count > 0)
+                                {
+                                    <MudCheckBox T="bool" Dense="true"
+                                                 Value="row.IsSelected"
+                                                 ValueChanged="@((bool v) => row.IsSelected = v)" />
+                                }
+                            </td>
                             <td>@row.PrItemNo</td>
-                            <td>@row.Description</td>
+                            <td>
+                                @row.Description
+                                @if (row.IsLocked)
+                                {
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                        awarded on @(row.LockedHere ? "this canvass" : row.LockedRivNumber)@(row.LockedSupplierName is null ? "" : $" → {row.LockedSupplierName}")
+                                    </MudText>
+                                }
+                            </td>
                             <td style="text-align:right">@row.Quantity.ToString("N0")</td>
                             <td>
-                                @if (row.Candidates.Count == 0)
+                                @if (row.IsLocked)
+                                {
+                                    <MudText Color="Color.Secondary" Typo="Typo.caption">Locked</MudText>
+                                }
+                                else if (row.Candidates.Count == 0)
                                 {
                                     <MudText Color="Color.Error" Typo="Typo.caption">No quote for this line</MudText>
                                 }
                                 else
                                 {
                                     <MudSelect T="Guid" Dense="true" Margin="Margin.Dense" Variant="Variant.Outlined"
+                                               Disabled="@(!row.IsSelected)"
                                                Value="@row.SelectedQuotationId"
                                                ValueChanged="@(v => row.SelectedQuotationId = v)">
                                         @foreach (var c in row.Candidates)
@@ -54,7 +88,12 @@
                                     </MudSelect>
                                 }
                             </td>
-                            <td style="text-align:right">@row.SelectedUnitPrice.ToString("N2")</td>
+                            <td style="text-align:right">
+                                @if (!row.IsLocked && row.IsSelected)
+                                {
+                                    @row.SelectedUnitPrice.ToString("N2")
+                                }
+                            </td>
                         </tr>
                     }
                 </tbody>
@@ -64,7 +103,7 @@
     <DialogActions>
         <MudButton OnClick="Cancel">Cancel</MudButton>
         <MudButton Color="Color.Primary" Variant="Variant.Filled"
-                   Disabled="@(!CanAward)" OnClick="Submit">Award</MudButton>
+                   Disabled="@(!CanAward)" OnClick="Submit">Award @SelectedCount Line(s)</MudButton>
     </DialogActions>
 </MudDialog>
 
@@ -72,13 +111,22 @@
     [CascadingParameter] private IMudDialogInstance Dialog { get; set; } = default!;
     [Parameter] public CanvassRequestDto Canvass { get; set; } = default!;
 
+    /// <summary>PR lines already awarded on a sibling canvass — rendered locked (greyed) here.</summary>
+    [Parameter] public IReadOnlyList<AwardedPrLineDto> AwardedElsewhere { get; set; } = [];
+
     private readonly List<LineRow> _rows = [];
 
-    // Every covered line must have a candidate selected before the canvass can be awarded (no partial award).
-    private bool CanAward => _rows.Count > 0 && _rows.All(r => r.Candidates.Count > 0);
+    private int SelectedCount => _rows.Count(r => r is { IsLocked: false, IsSelected: true });
+
+    // At least one selectable line ticked, and every ticked line has a chosen supplier.
+    private bool CanAward => _rows.Any(r => r is { IsLocked: false, IsSelected: true })
+        && _rows.Where(r => r is { IsLocked: false, IsSelected: true })
+                .All(r => r.SelectedQuotationId != Guid.Empty);
 
     protected override void OnInitialized()
     {
+        var lockedByPrItemNo = AwardedElsewhere.ToDictionary(a => a.PrItemNo);
+
         foreach (var line in Canvass.LineItems.OrderBy(l => l.PrItemNo))
         {
             var candidates = Canvass.Quotations
@@ -91,13 +139,25 @@
                 .OrderBy(c => c.RawUnitPrice)
                 .ToList();
 
+            lockedByPrItemNo.TryGetValue(line.PrItemNo, out var locked);
+
+            // A line is locked if THIS canvass already awarded it (partial award accumulating over several rounds)
+            // or a sibling canvass won it. Either way it can't be (re-)awarded here.
+            var awardedHere = line.AwardedQuotationId is not null;
+
             var row = new LineRow
             {
                 PrItemNo = line.PrItemNo,
                 Description = line.Description,
                 Quantity = line.Quantity,
                 Candidates = candidates,
-                SelectedQuotationId = candidates.FirstOrDefault()?.QuotationId ?? Guid.Empty
+                IsLocked = awardedHere || locked is not null,
+                LockedRivNumber = awardedHere ? Canvass.RivNumber : locked?.RivNumber,
+                LockedSupplierName = awardedHere ? line.AwardedSupplierName : locked?.AwardedSupplierName,
+                LockedHere = awardedHere,
+                // Lowest quote pre-selected, but the line is awarded only when explicitly ticked.
+                SelectedQuotationId = candidates.FirstOrDefault()?.QuotationId ?? Guid.Empty,
+                IsSelected = false
             };
             _rows.Add(row);
         }
@@ -106,7 +166,7 @@
     private void Submit()
     {
         var awards = _rows
-            .Where(r => r.Candidates.Count > 0 && r.SelectedQuotationId != Guid.Empty)
+            .Where(r => r is { IsLocked: false, IsSelected: true } && r.SelectedQuotationId != Guid.Empty)
             .Select(r => new CanvassLineAwardRequest(r.PrItemNo, r.SelectedQuotationId))
             .ToList();
 
@@ -121,6 +181,11 @@
         public string Description { get; set; } = "";
         public decimal Quantity { get; set; }
         public List<Candidate> Candidates { get; set; } = [];
+        public bool IsLocked { get; set; }
+        public bool LockedHere { get; set; }
+        public string? LockedRivNumber { get; set; }
+        public string? LockedSupplierName { get; set; }
+        public bool IsSelected { get; set; }
         public Guid SelectedQuotationId { get; set; }
         public decimal SelectedUnitPrice =>
             Candidates.FirstOrDefault(c => c.QuotationId == SelectedQuotationId)?.UnitPrice ?? 0m;

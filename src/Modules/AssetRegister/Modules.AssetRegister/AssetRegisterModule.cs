@@ -26,12 +26,17 @@ public class AssetRegisterModule : IModule
         new("View Assets",     "View",     "AssetRegister.Assets", IsBasic: true),
         new("Register Assets", "Register", "AssetRegister.Assets"),
         new("Update Assets",   "Update",   "AssetRegister.Assets"),
-        new("Retire Assets",   "Retire",   "AssetRegister.Assets"),
 
-        new("View Accountability",     "View",     "AssetRegister.Accountability", IsBasic: true),
-        new("Issue Accountability",    "Issue",    "AssetRegister.Accountability"),
-        new("Transfer Accountability", "Transfer", "AssetRegister.Accountability"),
-        new("Return Accountability",   "Return",   "AssetRegister.Accountability"),
+        new("View Accountability",   "View",   "AssetRegister.Accountability", IsBasic: true),
+        new("Issue Accountability",  "Issue",  "AssetRegister.Accountability"),
+        new("Return Accountability", "Return", "AssetRegister.Accountability"),
+
+        // Employee self-service (My Accountability) — scoped to the user's own ICS/PAR.
+        new("View My Accountability",           "View",           "AssetRegister.MyAccountability", IsBasic: true),
+        new("Acknowledge My Accountability",    "Acknowledge",    "AssetRegister.MyAccountability"),
+        new("Return My Accountability",         "Return",         "AssetRegister.MyAccountability"),
+        new("Report My Accountability Incident","ReportIncident", "AssetRegister.MyAccountability"),
+        new("Confirm My Accountability Count",  "ConfirmCount",   "AssetRegister.MyAccountability"),
 
         new("View Issuance Reports", "View", "AssetRegister.Issuance", IsBasic: true),
         new("Post Issuance Reports", "Post", "AssetRegister.Issuance"),
@@ -61,6 +66,7 @@ public class AssetRegisterModule : IModule
 
         new("View Returned Property Receipts",   "View",   "AssetRegister.ReturnedProperty", IsBasic: true),
         new("Create Returned Property Receipts", "Create", "AssetRegister.ReturnedProperty"),
+        new("Accept Returned Property Receipts", "Accept", "AssetRegister.ReturnedProperty"),
     ];
 
     public void ConfigureServices(IHostApplicationBuilder builder)
@@ -150,6 +156,9 @@ public class AssetRegisterModule : IModule
         Features.v1.Accountability.CancelAccountability.CancelAccountabilityEndpoint.Map(accountability);
         Features.v1.Accountability.GetAccountability.GetAccountabilityEndpoint.Map(accountability);
         Features.v1.Accountability.SearchAccountabilities.SearchAccountabilitiesEndpoint.Map(accountability);
+        // Employee self-service (My Accountability) — server-scoped to the current employee.
+        Features.v1.Accountability.GetMyAccountabilities.GetMyAccountabilitiesEndpoint.Map(accountability);
+        Features.v1.Accountability.GetMyAccountabilityDetail.GetMyAccountabilityDetailEndpoint.Map(accountability);
 
         // Issuance reports (RSPI / PPEIR) — Phase 4
         var issuance = moduleGroup.MapGroup("/issuance");

@@ -1,0 +1,176 @@
+@using AMIS.Playground.Blazor.ApiClient
+@using ReturnedPropertyReceiptType = AMIS.Modules.AssetRegister.Contracts.v1.ReturnedPropertyReceiptType
+@using AccountabilityType = AMIS.Modules.AssetRegister.Contracts.v1.AccountabilityType
+@using AccountabilityStatus = AMIS.Modules.AssetRegister.Contracts.v1.AccountabilityStatus
+@using AccountabilityLineStatus = AMIS.Modules.AssetRegister.Contracts.v1.AccountabilityLineStatus
+@inject IArReturnedPropertyClient Client
+@inject IArAccountabilityClient AccountabilityClient
+@inject ISnackbar Snackbar
+@inject IUserProfileState UserProfileState
+
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="2">
+
+            <MudSelect Value="_form.ReceiptType" T="ReturnedPropertyReceiptType" Label="Receipt Type"
+                       Variant="Variant.Outlined" Required="true" Dense="true" Margin="Margin.Dense"
+                       ValueChanged="@((ReturnedPropertyReceiptType v) => { _form.ReceiptType = v; _form.SelectedAccountability = null; _accountability = null; _selectedLineIds.Clear(); })">
+                <MudSelectItem T="ReturnedPropertyReceiptType" Value="ReturnedPropertyReceiptType.RRSP">RRSP — Semi-Expendable (ICS)</MudSelectItem>
+                <MudSelectItem T="ReturnedPropertyReceiptType" Value="ReturnedPropertyReceiptType.RRP">RRP — Fixed Assets (PAR)</MudSelectItem>
+            </MudSelect>
+
+            <MudDatePicker @bind-Date="_form.DateNullable" Label="Date" Variant="Variant.Outlined"
+                           DateFormat="MM/dd/yyyy" Required="true" Dense="true" Margin="Margin.Dense" />
+
+            <MudAutocomplete T="ArAccountabilitySummaryDto"
+                             Value="_form.SelectedAccountability"
+                             SearchFunc="SearchAccountabilityAsync"
+                             ToStringFunc="@(x => x is null ? "" : x.DocumentNo)"
+                             Label="@(_form.ReceiptType == ReturnedPropertyReceiptType.RRSP ? "My ICS to Return Against" : "My PAR to Return Against")"
+                             Variant="Variant.Outlined"
+                             Required="true" Clearable="true" ResetValueOnEmptyText="true" CoerceValue="true"
+                             Dense="true" Margin="Margin.Dense"
+                             ValueChanged="OnAccountabilitySelected" />
+
+            @if (_accountability is not null)
+            {
+                <MudAlert Severity="Severity.Info" Dense="true">
+                    Select items to return from <b>@_accountability.DocumentNo</b>
+                    (@_accountability.Lines.Count(l => l.LineStatus == AccountabilityLineStatus.Active) active item(s)).
+                </MudAlert>
+
+                <MudText Typo="Typo.subtitle2">Items to Return</MudText>
+                @foreach (var line in _accountability.Lines.Where(l => l.LineStatus == AccountabilityLineStatus.Active))
+                {
+                    <MudCheckBox @bind-Value="_selectedLineIds[line.Id]"
+                                 Label="@($"{line.Snapshot.PropertyNo} — {line.Snapshot.Description} (₱{line.Snapshot.UnitCost:N2})")"
+                                 Color="Color.Primary" Dense="true" />
+                }
+            }
+
+            <MudTextField Value="@ReturnedByDisplay" Label="Returned By" Variant="Variant.Outlined"
+                          ReadOnly="true" HelperText="Auto-assigned to the currently logged-in user"
+                          Dense="true" Margin="Margin.Dense" />
+
+            <MudTextField @bind-Value="_form.Remarks" Label="Remarks" Variant="Variant.Outlined"
+                          Lines="2" MaxLength="1000" Dense="true" Margin="Margin.Dense" />
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" Disabled="_busy">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.Send"
+                   OnClick="RequestAsync" Disabled="_busy">
+            @if (_busy) { <MudProgressCircular Size="Size.Small" Class="mr-1" Indeterminate="true" /> }
+            Request Return
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    private ArAccountabilityDto? _accountability;
+    private Dictionary<Guid, bool> _selectedLineIds = [];
+    private bool _busy;
+
+    private ReturnForm _form = new();
+
+    private string ReturnedByDisplay =>
+        string.IsNullOrWhiteSpace(UserProfileState.EmployeePositionName)
+            ? UserProfileState.EmployeeFullName
+            : $"{UserProfileState.EmployeeFullName} — {UserProfileState.EmployeePositionName}";
+
+    private async Task<IEnumerable<ArAccountabilitySummaryDto>> SearchAccountabilityAsync(string? value, CancellationToken ct)
+    {
+        var expectedType = _form.ReceiptType == ReturnedPropertyReceiptType.RRSP
+            ? AccountabilityType.SE_ICS
+            : AccountabilityType.PPE_PAR;
+        var scopeEmployeeId = UserProfileState.EmployeeId == Guid.Empty ? (Guid?)null : UserProfileState.EmployeeId;
+        var response = await AccountabilityClient.SearchAsync(
+            keyword: value, type: expectedType, status: AccountabilityStatus.Active,
+            receivedByEmployeeId: scopeEmployeeId, page: 1, pageSize: 20, ct: ct);
+        return response.Items;
+    }
+
+    private async Task OnAccountabilitySelected(ArAccountabilitySummaryDto? selected)
+    {
+        _form.SelectedAccountability = selected;
+        _accountability = null;
+        _selectedLineIds.Clear();
+
+        if (selected is null) return;
+
+        try
+        {
+            _accountability = await AccountabilityClient.GetAsync(selected.Id);
+            if (_accountability is not null)
+            {
+                _selectedLineIds = _accountability.Lines
+                    .Where(l => l.LineStatus == AccountabilityLineStatus.Active)
+                    .ToDictionary(l => l.Id, _ => true);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Could not load accountability detail: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task RequestAsync()
+    {
+        if (_form.DateNullable is null || _form.SelectedAccountability is null)
+        {
+            Snackbar.Add("Date and Accountability are required.", Severity.Warning);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(UserProfileState.EmployeeFullName))
+        {
+            Snackbar.Add("Your account is not linked to an employee record, so \"Returned By\" cannot be set. Contact an administrator.", Severity.Warning);
+            return;
+        }
+
+        var lineIds = _selectedLineIds.Where(kv => kv.Value).Select(kv => kv.Key).ToList();
+        if (lineIds.Count == 0)
+        {
+            Snackbar.Add("Select at least one item to return.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            var returnedBy = new ArEmployeeRefDto(
+                UserProfileState.EmployeeId,
+                UserProfileState.EmployeeFullName.Trim(),
+                string.IsNullOrWhiteSpace(UserProfileState.EmployeePositionName) ? null : UserProfileState.EmployeePositionName.Trim());
+
+            var result = await Client.CreateAsync(new CreateReturnedPropertyReceiptRequest(
+                _form.ReceiptType,
+                DateOnly.FromDateTime(_form.DateNullable!.Value),
+                _form.SelectedAccountability.Id,
+                lineIds,
+                returnedBy,
+                _form.Remarks?.Trim()));
+
+            Snackbar.Add($"Return request submitted ({result.Items.Count} item(s)). Awaiting custodian acceptance.", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(result));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Request failed: {ex.Message}", Severity.Error);
+        }
+        finally { _busy = false; }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private sealed class ReturnForm
+    {
+        public ReturnedPropertyReceiptType ReceiptType { get; set; } = ReturnedPropertyReceiptType.RRSP;
+        public DateTime? DateNullable { get; set; } = DateTime.Today;
+        public ArAccountabilitySummaryDto? SelectedAccountability { get; set; }
+        public string? Remarks { get; set; }
+    }
+}

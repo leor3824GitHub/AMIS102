@@ -1,12 +1,15 @@
 @page "/masterdata/suppliers"
+@implements IDisposable
 @using AMIS.Framework.Blazor.UI.Components.Cards
 @using AMIS.Playground.Blazor.ApiClient
 @using AMIS.Playground.Blazor.Services
+@using AMIS.Modules.MasterData.Contracts.Permissions
 @inherits ComponentBase
 @inject ISnackbar Snackbar
 @inject MasterDataService MasterDataService
 @inject ILookupClient LookupClient
 @inject IOrganizationProfileClient OrgProfileClient
+@inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="Suppliers" Description="Manage supplier information">
     <ActionContent>
@@ -24,6 +27,8 @@
 <div class="mt-4">
     <MudGrid Spacing="2">
         <!-- Create/Edit Form -->
+        @if (_canCreate || _canUpdate)
+        {
         <MudItem xs="12" md="4">
             <MudCard Class="AMIS-card">
                 <MudCardContent>
@@ -61,6 +66,7 @@
                 </MudCardContent>
             </MudCard>
         </MudItem>
+        }
 
         <!-- Suppliers List -->
         <MudItem xs="12" md="8">
@@ -100,17 +106,23 @@
                                         <td>@(supplier.Phone ?? "-")</td>
                                         <td><MudChip T="string" Size="Size.Small" Color="@(supplier.IsActive ? Color.Success : Color.Error)">@(supplier.IsActive ? "Active" : "Inactive")</MudChip></td>
                                         <td>
-                                            @if (IsOwnedByMe(supplier.OfficeCode))
+                                            @if (IsOwnedByMe(supplier.OfficeCode) && (_canUpdate || _canDelete))
                                             {
                                                 <MudStack Row="true" Spacing="1">
-                                                    <MudTooltip Text="Edit supplier">
-                                                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
-                                                                       Color="Color.Primary" OnClick="@(() => EditSupplier(supplier))" />
-                                                    </MudTooltip>
-                                                    <MudTooltip Text="Delete supplier">
-                                                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
-                                                                       Color="Color.Error" OnClick="@(() => DeleteSupplier(supplier.Id))" />
-                                                    </MudTooltip>
+                                                    @if (_canUpdate)
+                                                    {
+                                                        <MudTooltip Text="Edit supplier">
+                                                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                                                           Color="Color.Primary" OnClick="@(() => EditSupplier(supplier))" />
+                                                        </MudTooltip>
+                                                    }
+                                                    @if (_canDelete)
+                                                    {
+                                                        <MudTooltip Text="Delete supplier">
+                                                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                                                           Color="Color.Error" OnClick="@(() => DeleteSupplier(supplier.Id))" />
+                                                        </MudTooltip>
+                                                    }
                                                 </MudStack>
                                             }
                                             else
@@ -156,6 +168,10 @@
     private int _pageIndex = 1;
     private const int PageSize = 10;
 
+    private bool _canCreate => UserProfileState.Permissions.Contains(MasterDataPermissions.Suppliers.Create);
+    private bool _canUpdate => UserProfileState.Permissions.Contains(MasterDataPermissions.Suppliers.Update);
+    private bool _canDelete => UserProfileState.Permissions.Contains(MasterDataPermissions.Suppliers.Delete);
+
     public class SupplierForm
     {
         public string Code { get; set; } = string.Empty;
@@ -175,10 +191,15 @@
     {
         if (_initialized) return;
         _initialized = true;
+        UserProfileState.OnProfileChanged += OnProfileChanged;
         var profile = await OrgProfileClient.GetAsync();
         _myOfficeCode = profile?.AnnexECode;
         await LoadSuppliers();
     }
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
 
     private async Task LoadSuppliers()
     {

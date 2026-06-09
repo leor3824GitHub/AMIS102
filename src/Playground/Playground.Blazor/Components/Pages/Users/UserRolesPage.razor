@@ -1,12 +1,15 @@
 @page "/users/{Id:guid}/roles"
+@implements IDisposable
 @using AMIS.Playground.Blazor.ApiClient
 @using AMIS.Framework.Blazor.UI.Components.Dialogs
+@using AMIS.Framework.Shared.Identity
 @inherits ComponentBase
 @inject IIdentityClient IdentityClient
 @inject IUsersClient UsersClient
 @inject NavigationManager Navigation
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
+@inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="Manage User Roles"
                Description="Assign or remove roles for this user">
@@ -136,7 +139,7 @@ else
                                Color="Color.Primary"
                                StartIcon="@Icons.Material.Filled.Save"
                                OnClick="SaveRoles"
-                               Disabled="@(!HasChanges || _saving)">
+                               Disabled="@(!HasChanges || _saving || !_canManageRoles)">
                         @if (_saving)
                         {
                             <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
@@ -239,10 +242,17 @@ else
 
     private bool HasChanges => !_originalRoleIds.SetEquals(_currentRoleIds);
 
+    private bool _canManageRoles => UserProfileState.Permissions.Contains(IdentityPermissionConstants.Users.ManageRoles);
+
     protected override async Task OnInitializedAsync()
     {
+        UserProfileState.OnProfileChanged += OnProfileChanged;
         await LoadData();
     }
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
 
     private async Task LoadData()
     {

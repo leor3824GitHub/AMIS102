@@ -1,6 +1,8 @@
 @page "/finance/budget-utilization-records"
+@implements IDisposable
 @using AMIS.Modules.Finance.Contracts.v1.BudgetUtilizationRecords
 @using AMIS.Modules.Finance.Contracts.v1.DisbursementVouchers
+@using AMIS.Modules.Finance.Contracts.Permissions
 @using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders
 @using AMIS.Playground.Blazor.ApiClient
 @inject IBudgetUtilizationRecordClient Client
@@ -8,11 +10,14 @@
 @inject IPurchaseOrderClient PurchaseOrderClient
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
+@inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="Budget Utilization Records" Description="Create and manage budget utilization records (BUR)" />
 
 <MudGrid Spacing="3">
     <!-- Form Panel -->
+    @if (_canCreate)
+    {
     <MudItem xs="12" md="4">
         <MudCard Elevation="1">
             <MudCardContent>
@@ -70,6 +75,7 @@
             </MudCardContent>
         </MudCard>
     </MudItem>
+    }
 
     <!-- List Panel -->
     <MudItem xs="12" md="8">
@@ -126,14 +132,14 @@
                                     <td>@BurStatusChip(item.Status)</td>
                                     <td>
                                         <MudStack Row="true" Spacing="0">
-                                            @if (item.Status == BudgetUtilizationRecordStatus.Draft)
+                                            @if (item.Status == BudgetUtilizationRecordStatus.Draft && _canObligate)
                                             {
                                                 <MudTooltip Text="Obligate">
                                                     <MudIconButton Icon="@Icons.Material.Filled.AccountBalance" Size="Size.Small" Color="Color.Info"
                                                                    OnClick="@(async () => await ObligateAsync(item.Id))" />
                                                 </MudTooltip>
                                             }
-                                            @if (item.Status == BudgetUtilizationRecordStatus.Draft || item.Status == BudgetUtilizationRecordStatus.Obligated)
+                                            @if ((item.Status == BudgetUtilizationRecordStatus.Draft || item.Status == BudgetUtilizationRecordStatus.Obligated) && _canCancel)
                                             {
                                                 <MudTooltip Text="Cancel">
                                                     <MudIconButton Icon="@Icons.Material.Filled.Cancel" Size="Size.Small" Color="Color.Error"
@@ -168,7 +174,7 @@
             <MudCard Elevation="1" Class="mt-3">
                 <MudCardContent>
                     <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3">
-                        <MudText Typo="Typo.h6" Class="flex-grow-1">@_detail.BurNumber — Details</MudText>
+                        <MudText Typo="Typo.h6" Class="flex-grow-1">@_detail.BurNumber ï¿½ Details</MudText>
                         <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="@(() => _detail = null)" />
                     </MudStack>
                     <MudGrid Spacing="2">
@@ -243,7 +249,19 @@
 
     private static readonly string[] _statusFilters = ["All", "Draft", "Obligated", "Utilized", "Cancelled"];
 
-    protected override async Task OnInitializedAsync() => await LoadAsync();
+    private bool _canCreate => UserProfileState.Permissions.Contains(FinancePermissions.BudgetUtilizationRecords.Create);
+    private bool _canObligate => UserProfileState.Permissions.Contains(FinancePermissions.BudgetUtilizationRecords.Obligate);
+    private bool _canCancel => UserProfileState.Permissions.Contains(FinancePermissions.BudgetUtilizationRecords.Cancel);
+
+    protected override async Task OnInitializedAsync()
+    {
+        UserProfileState.OnProfileChanged += OnProfileChanged;
+        await LoadAsync();
+    }
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
 
     private async Task<IEnumerable<PurchaseOrderSummaryDto>> SearchPurchaseOrders(string value, CancellationToken ct)
     {
@@ -300,13 +318,13 @@
         if (po is null) return string.Empty;
         return string.IsNullOrWhiteSpace(po.SupplierName)
             ? po.PoNumber
-            : $"{po.PoNumber} — {po.SupplierName}";
+            : $"{po.PoNumber} ï¿½ {po.SupplierName}";
     }
 
     private static string FormatDv(DisbursementVoucherListItemDto? dv)
     {
         if (dv is null) return string.Empty;
-        return $"{dv.DvNumber} — {dv.Payee}";
+        return $"{dv.DvNumber} ï¿½ {dv.Payee}";
     }
 
     private async Task LoadAsync()

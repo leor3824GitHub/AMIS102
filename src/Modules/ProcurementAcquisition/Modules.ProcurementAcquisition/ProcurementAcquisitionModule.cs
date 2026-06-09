@@ -21,6 +21,7 @@ using AMIS.Modules.ProcurementAcquisition.Features.v1.Canvass.AwardCanvass;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.Canvass.GetCanvassRequest;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.Canvass.SearchCanvassRequests;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.Canvass.GetCanvassablePrLines;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.Canvass.GetAwardedPrLines;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.CreatePurchaseOrder;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.CreatePurchaseOrdersFromCanvass;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.UpdatePurchaseOrder;
@@ -148,6 +149,7 @@ public class ProcurementAcquisitionModule : IModule
         GetCanvassRequestEndpoint.Map(canvassRequestsGroup);
         SearchCanvassRequestsEndpoint.Map(canvassRequestsGroup);
         GetCanvassablePrLinesEndpoint.Map(canvassRequestsGroup);
+        GetAwardedPrLinesEndpoint.Map(canvassRequestsGroup);
 
         // Purchase Orders
         CreatePurchaseOrderEndpoint.Map(purchaseOrdersGroup);

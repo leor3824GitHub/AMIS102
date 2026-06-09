@@ -1,4 +1,5 @@
 @page "/expendable/requests"
+@implements IDisposable
 @using AMIS.Framework.Blazor.UI.Components.Cards
 @using AMIS.Playground.Blazor.ApiClient
 @using AMIS.Playground.Blazor.Components.Pages.Procurement
@@ -41,12 +42,18 @@
                     <MudTd>@context.Items.Count item(s)</MudTd>
                     <MudTd>
                         <MudStack Row="true" Spacing="1">
-                            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Success"
-                                       StartIcon="@Icons.Material.Filled.CheckCircle"
-                                       OnClick="@(() => OpenApproveDialog(context))">Approve</MudButton>
-                            <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Error"
-                                       StartIcon="@Icons.Material.Filled.Cancel"
-                                       OnClick="@(() => OpenRejectDialog(context))">Reject</MudButton>
+                            @if (_canApprove)
+                            {
+                                <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Success"
+                                           StartIcon="@Icons.Material.Filled.CheckCircle"
+                                           OnClick="@(() => OpenApproveDialog(context))">Approve</MudButton>
+                            }
+                            @if (_canReject)
+                            {
+                                <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Error"
+                                           StartIcon="@Icons.Material.Filled.Cancel"
+                                           OnClick="@(() => OpenRejectDialog(context))">Reject</MudButton>
+                            }
                         </MudStack>
                     </MudTd>
                 </RowTemplate>
@@ -75,9 +82,12 @@
                     <MudTd>@context.RequestDate.ToString("MMM d, yyyy")</MudTd>
                     <MudTd>@context.Items.Count item(s)</MudTd>
                     <MudTd>
-                        <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary"
-                                   StartIcon="@Icons.Material.Filled.LocalShipping"
-                                   OnClick="@(() => OpenFulfillDialog(context))">Issue</MudButton>
+                        @if (_canFulfill)
+                        {
+                            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary"
+                                       StartIcon="@Icons.Material.Filled.LocalShipping"
+                                       OnClick="@(() => OpenFulfillDialog(context))">Issue</MudButton>
+                        }
                     </MudTd>
                 </RowTemplate>
                 <NoRecordsContent><MudText Class="my-4">No approved requests awaiting issuance.</MudText></NoRecordsContent>
@@ -328,11 +338,21 @@
 
     private const string RisFastReportKey = "expendable-ris";
     private bool _canPrintRis => UserProfileState.Permissions.Contains(ExpendablePermissions.SupplyRequests.View);
+    private bool _canApprove => UserProfileState.Permissions.Contains(ExpendablePermissions.SupplyRequests.Approve);
+    private bool _canReject => UserProfileState.Permissions.Contains(ExpendablePermissions.SupplyRequests.Reject);
+    private bool _canFulfill => UserProfileState.Permissions.Contains(ExpendablePermissions.SupplyRequests.Fulfill);
 
     protected override async Task OnInitializedAsync()
     {
+        UserProfileState.OnProfileChanged += OnProfileChanged;
         await Task.WhenAll(LoadWarehouses(), LoadEmployees(), LoadDepartments());
     }
+
+    // Permissions load asynchronously in PlaygroundLayout after first render; re-render when they arrive
+    // so permission-gated controls appear on a hard refresh without requiring a user interaction.
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
 
     private async Task LoadEmployees()
     {

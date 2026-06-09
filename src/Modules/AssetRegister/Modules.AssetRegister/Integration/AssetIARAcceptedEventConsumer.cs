@@ -24,6 +24,11 @@ internal sealed class AssetIARAcceptedEventConsumer(
     IMediator mediator,
     ILogger<AssetIARAcceptedEventConsumer> logger) : IIntegrationEventHandler<AssetIARAcceptedEvent>
 {
+    // Fund cluster used only when the source PO carried none (legacy/incomplete data). "01" is the
+    // Regular Agency Fund — the overwhelming default — but a real cluster from the event always wins
+    // so multi-fund agencies book each asset against the fund its PO was charged to.
+    private const string DefaultFundCluster = "01";
+
     // Used to classify materialized assets when no active CapitalizationThreshold master data row exists
     // (PPE vs SE at Php 50,000 §4.2; high- vs low-value SE at Php 5,000 §4.8 — COA Circular 2022-004).
     private static readonly CapitalizationThresholdDto FallbackThreshold = new(
@@ -35,6 +40,7 @@ internal sealed class AssetIARAcceptedEventConsumer(
     {
         ArgumentNullException.ThrowIfNull(@event);
         var tenantId = @event.TenantId ?? db.TenantInfo?.Identifier ?? string.Empty;
+        var fundCluster = string.IsNullOrWhiteSpace(@event.FundCluster) ? DefaultFundCluster : @event.FundCluster;
 
         var ids = @event.AcceptedItems
             .Where(li => li.CatalogItemId is not null && li.CatalogItemId != Guid.Empty)
@@ -142,7 +148,7 @@ internal sealed class AssetIARAcceptedEventConsumer(
                 serialNo: line.SerialNo,
                 brand: line.Brand,
                 model: line.Model,
-                fundCluster: "01",
+                fundCluster: fundCluster,
                 acquisitionDate: DateOnly.FromDateTime(@event.OccurredOnUtc),
                 unitCost: line.UnitCost,
                 sourceIARId: @event.IARId,
@@ -153,7 +159,26 @@ internal sealed class AssetIARAcceptedEventConsumer(
         }
 
         if (materialized > 0)
-            await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        {
+            try
+            {
+                await db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateException ex)
+            {
+                // The AnyAsync(PropertyNo) guard above and this Add are not one atomic operation, so a
+                // concurrent redelivery of the same IAR can pass the check on two workers at once; the
+                // PropertyNo unique index then rejects the loser at SaveChanges. That is the idempotent
+                // outcome we want (the unit is already registered), so swallow it rather than surfacing a
+                // 500 / poisoning the message — the winning worker has persisted the row.
+                logger.LogInformation(
+                    ex,
+                    "[{Tenant}] AssetRegister IAR {IARId}: concurrent redelivery lost the PropertyNo race; " +
+                    "treating as already registered (idempotent).",
+                    tenantId, @event.IARId);
+                return;
+            }
+        }
 
         logger.LogInformation(
             "[{Tenant}] AssetRegister processed IAR {IARId}: materialized={Materialized} alreadyPresent={AlreadyPresent} skipped={Skipped} of {LineCount} lines.",

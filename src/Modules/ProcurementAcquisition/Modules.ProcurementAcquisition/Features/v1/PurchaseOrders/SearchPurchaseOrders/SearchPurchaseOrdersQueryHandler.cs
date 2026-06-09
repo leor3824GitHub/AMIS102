@@ -1,4 +1,5 @@
 using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.ProcurementAcquisition.Contracts.v1.InspectionAcceptanceReports;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.SignedDocuments;
 using AMIS.Modules.ProcurementAcquisition.Data;
@@ -37,6 +38,15 @@ public sealed class SearchPurchaseOrdersQueryHandler(ProcurementDbContext dbCont
 
         if (query.ToDate.HasValue)
             q = q.Where(x => x.PoDate <= query.ToDate.Value);
+
+        if (query.ExcludeWithIar == true)
+        {
+            // Drop POs that already have a non-cancelled IAR — once an IAR is created for a PO it is no longer
+            // "open" for a new IAR. IARs are a regular table, so this translates to a SQL NOT EXISTS.
+            q = q.Where(x => !dbContext.InspectionAcceptanceReports
+                .Any(iar => iar.PurchaseOrderId == x.Id
+                            && iar.Status != InspectionAcceptanceReportStatus.Cancelled));
+        }
 
         var totalCount = await q.CountAsync(cancellationToken).ConfigureAwait(false);
 

@@ -1,6 +1,8 @@
 @page "/asset-register/receiving/ppe"
+@implements IDisposable
 @using AMIS.Playground.Blazor.ApiClient
 @using AMIS.Playground.Blazor.Components.Pages.Procurement
+@using AMIS.Modules.AssetRegister.Contracts.Permissions
 @using ReceivingDocumentKind = AMIS.Modules.AssetRegister.Contracts.v1.ReceivingDocumentKind
 @using ReceiptType = AMIS.Modules.AssetRegister.Contracts.v1.ReceiptType
 @inject IArReceivingReportClient Client
@@ -8,6 +10,7 @@
 @inject IDialogService DialogService
 @inject IFastReportSetupPreferences FastReportSetupPrefs
 @inject IJSRuntime JS
+@inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="PPE Receiving Reports (PPERR)"
                Description="Record receipt of Property, Plant & Equipment. Each line materializes one or more AssetRegistry rows with auto-generated property numbers." />
@@ -39,12 +42,15 @@
                             Search
                         </MudButton>
                     </MudItem>
-                    <MudItem xs="12" md="2">
-                        <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Success" FullWidth="true"
-                                   StartIcon="@Icons.Material.Outlined.Add" OnClick="@(() => _showCreateForm = !_showCreateForm)">
-                            New PPERR
-                        </MudButton>
-                    </MudItem>
+                    @if (_canCreate)
+                    {
+                        <MudItem xs="12" md="2">
+                            <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Success" FullWidth="true"
+                                       StartIcon="@Icons.Material.Outlined.Add" OnClick="@(() => _showCreateForm = !_showCreateForm)">
+                                New PPERR
+                            </MudButton>
+                        </MudItem>
+                    }
                 </MudGrid>
             </MudCardContent>
         </MudCard>
@@ -119,8 +125,11 @@
                                                 Fast Report – Page Setup…
                                             </MudMenuItem>
                                         </MudMenu>
-                                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
-                                                       Color="Color.Error" OnClick="@(() => DeleteAsync(r.Id, r.ReportNo))" />
+                                        @if (_canDelete)
+                                        {
+                                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                                           Color="Color.Error" OnClick="@(() => DeleteAsync(r.Id, r.ReportNo))" />
+                                        }
                                     </td>
                                 </tr>
                             }
@@ -147,7 +156,18 @@
 
     private List<ArReceivingReportSummaryDto> _items = [];
 
-    protected override async Task OnInitializedAsync() => await LoadAsync();
+    private bool _canCreate => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Receiving.Create);
+    private bool _canDelete => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Receiving.Delete);
+
+    protected override async Task OnInitializedAsync()
+    {
+        UserProfileState.OnProfileChanged += OnProfileChanged;
+        await LoadAsync();
+    }
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
 
     private async Task LoadAsync()
     {

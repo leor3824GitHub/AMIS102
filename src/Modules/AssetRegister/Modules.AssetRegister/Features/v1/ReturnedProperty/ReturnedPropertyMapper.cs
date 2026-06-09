@@ -12,15 +12,17 @@ internal static class ReturnedPropertyMapper
             AccountabilityMapper.ToDto(i.Snapshot));
 
     public static ReturnedPropertyReceiptDto ToDto(ReturnedPropertyReceipt r) =>
-        new(r.Id, r.ReceiptNo, r.ReceiptType, r.Date,
+        new(r.Id, r.ReceiptNo, r.ReceiptType, r.Status, r.Date,
             r.AccountabilityId, r.AccountabilityDocumentNo,
             AccountabilityMapper.ToDto(r.ReturnedBy),
             r.ReceivedBy is null ? null : AccountabilityMapper.ToDto(r.ReceivedBy),
             r.Remarks,
+            r.RejectionReason,
+            r.CancellationReason,
             r.Items.OrderBy(i => i.ItemNo).Select(ToDto).ToList());
 
     public static ReturnedPropertyReceiptSummaryDto ToSummaryDto(ReturnedPropertyReceipt r) =>
-        new(r.Id, r.ReceiptNo, r.ReceiptType, r.Date,
+        new(r.Id, r.ReceiptNo, r.ReceiptType, r.Status, r.Date,
             r.AccountabilityDocumentNo,
             r.Items.Count,
             r.Items.Sum(i => i.Snapshot.UnitCost));

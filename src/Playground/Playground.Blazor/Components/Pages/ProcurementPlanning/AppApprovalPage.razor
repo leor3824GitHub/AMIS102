@@ -1,10 +1,13 @@
 @page "/procurement-planning/app-approvals"
+@implements IDisposable
 @using AMIS.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans
+@using AMIS.Modules.ProcurementPlanning.Contracts.Permissions
 @using AMIS.Playground.Blazor.ApiClient
 @using AMIS.Playground.Blazor.Components.Shared
 @inject IAppClient AppClient
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
+@inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="APP Approval Queue"
                Description="Review and approve published Annual Procurement Plans" />
@@ -60,7 +63,7 @@
                                                 <MudChip T="string" Size="Size.Small" Color="Color.Default" Label="true"
                                                          Style="font-size:10px">@item.Phase</MudChip>
                                                 <MudText Typo="Typo.caption">FY @item.FiscalYear</MudText>
-                                                <MudText Typo="Typo.caption">· @item.ItemCount items</MudText>
+                                                <MudText Typo="Typo.caption">ï¿½ @item.ItemCount items</MudText>
                                                 <MudSpacer />
                                                 <MudText Typo="Typo.caption" Style="font-weight:600; color:var(--mud-palette-primary)">
                                                     â‚±@item.TotalEstimatedBudget.ToString("N0")
@@ -129,7 +132,7 @@
                                                 <MudChip T="string" Size="Size.Small" Color="Color.Default" Label="true"
                                                          Style="font-size:10px">@item.Phase</MudChip>
                                                 <MudText Typo="Typo.caption">FY @item.FiscalYear</MudText>
-                                                <MudText Typo="Typo.caption">· @item.ItemCount items</MudText>
+                                                <MudText Typo="Typo.caption">ï¿½ @item.ItemCount items</MudText>
                                                 <MudSpacer />
                                                 <MudText Typo="Typo.caption" Style="font-weight:600; color:var(--mud-palette-success)">
                                                     â‚±@item.TotalEstimatedBudget.ToString("N0")
@@ -174,7 +177,7 @@
                             <MudStack Spacing="0">
                                 <MudText Typo="Typo.h6" Style="font-weight:700">@_detail.AppNumber</MudText>
                                 <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                    Published for approval · v@(_detail.VersionNumber) · @_detail.Phase
+                                    Published for approval ï¿½ v@(_detail.VersionNumber) ï¿½ @_detail.Phase
                                 </MudText>
                             </MudStack>
                             <MudSpacer />
@@ -251,8 +254,8 @@
                                         @officeGroup.Key
                                     </MudText>
                                     <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                        · @officeGroup.First().EndUserUnit
-                                        · @officeGroup.Count() items
+                                        ï¿½ @officeGroup.First().EndUserUnit
+                                        ï¿½ @officeGroup.Count() items
                                     </MudText>
                                     <MudSpacer />
                                     <MudText Typo="Typo.caption"
@@ -320,27 +323,33 @@
 
                 <MudDivider />
 
-                <!-- Action bar — only for Published APPs -->
+                <!-- Action bar ï¿½ only for Published APPs -->
                 @if (_detail.Status == AppStatus.Published)
                 {
                     <MudCardActions Class="pa-3">
-                        <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Large"
-                                   StartIcon="@Icons.Material.Filled.CheckCircle"
-                                   OnClick="ConfirmApproveAsync" Disabled="_busy">
-                            @if (_busy)
-                            {
-                                <MudProgressCircular Size="Size.Small" Class="mr-1" Indeterminate="true" />
-                            }
-                            Approve
-                        </MudButton>
-                        <MudButton Variant="Variant.Outlined" Color="Color.Error" Size="Size.Large"
-                                   StartIcon="@Icons.Material.Filled.Undo"
-                                   OnClick="ConfirmReturnAsync" Disabled="_busy" Class="ml-2">
-                            Return for Revision
-                        </MudButton>
+                        @if (_canApprove)
+                        {
+                            <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Large"
+                                       StartIcon="@Icons.Material.Filled.CheckCircle"
+                                       OnClick="ConfirmApproveAsync" Disabled="_busy">
+                                @if (_busy)
+                                {
+                                    <MudProgressCircular Size="Size.Small" Class="mr-1" Indeterminate="true" />
+                                }
+                                Approve
+                            </MudButton>
+                        }
+                        @if (_canReturn)
+                        {
+                            <MudButton Variant="Variant.Outlined" Color="Color.Error" Size="Size.Large"
+                                       StartIcon="@Icons.Material.Filled.Undo"
+                                       OnClick="ConfirmReturnAsync" Disabled="_busy" Class="ml-2">
+                                Return for Revision
+                            </MudButton>
+                        }
                         <MudSpacer />
                         <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mr-2">
-                            @_detail.Items.Count item@(_detail.Items.Count != 1 ? "s" : "") ·
+                            @_detail.Items.Count item@(_detail.Items.Count != 1 ? "s" : "") ï¿½
                             â‚±@_detail.TotalEstimatedBudget.ToString("N2") total
                         </MudText>
                     </MudCardActions>
@@ -361,10 +370,18 @@
     private int _activeTab;
     private string? _approvedKeyword;
 
+    private bool _canApprove => UserProfileState.Permissions.Contains(ProcurementPlanningPermissions.AnnualProcurementPlans.Approve);
+    private bool _canReturn => UserProfileState.Permissions.Contains(ProcurementPlanningPermissions.AnnualProcurementPlans.Return);
+
     protected override async Task OnInitializedAsync()
     {
+        UserProfileState.OnProfileChanged += OnProfileChanged;
         await Task.WhenAll(LoadQueueAsync(), LoadApprovedAsync());
     }
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
 
     private async Task LoadQueueAsync()
     {

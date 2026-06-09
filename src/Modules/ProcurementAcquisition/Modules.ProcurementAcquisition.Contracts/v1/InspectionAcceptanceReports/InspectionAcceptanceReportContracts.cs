@@ -231,6 +231,7 @@ public sealed record AssetIARAcceptedEvent(
     string SupplierName,
     IReadOnlyList<AssetIARAcceptedEventItem> AcceptedItems,
     string? TenantId,
+    string? FundCluster = null,
     string CorrelationId = "") : IIntegrationEvent
 {
     public Guid Id { get; } = Guid.NewGuid();

@@ -1,10 +1,13 @@
 @page "/asset-register/incidents"
+@implements IDisposable
 @using AMIS.Playground.Blazor.ApiClient
+@using AMIS.Modules.AssetRegister.Contracts.Permissions
 @using PropertyIncidentType = AMIS.Modules.AssetRegister.Contracts.v1.PropertyIncidentType
 @using PropertyIncidentStatus = AMIS.Modules.AssetRegister.Contracts.v1.PropertyIncidentStatus
 @using IncidentItemResolution = AMIS.Modules.AssetRegister.Contracts.v1.IncidentItemResolution
 @inject IArIncidentReportClient Client
 @inject ISnackbar Snackbar
+@inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="Property Incident Reports (RLSDDSP)"
                Description="File and track loss/damage incidents per COA 2022-004. Notarization required before resolution." />
@@ -204,7 +207,7 @@
                     </MudTable>
 
                     <!-- Police notify (Filed and not yet notified) -->
-                    @if (_selected.Status == PropertyIncidentStatus.Filed && !_selected.PoliceNotified)
+                    @if (_selected.Status == PropertyIncidentStatus.Filed && !_selected.PoliceNotified && _canResolve)
                     {
                         <MudDivider Class="my-3" />
                         <MudText Typo="Typo.subtitle2" Class="mb-2">Notify Police</MudText>
@@ -228,7 +231,7 @@
                     }
 
                     <!-- Close (only if resolved but not yet closed) -->
-                    @if (_selected.Status == PropertyIncidentStatus.Resolved)
+                    @if (_selected.Status == PropertyIncidentStatus.Resolved && _canResolve)
                     {
                         <MudDivider Class="my-3" />
                         <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="CloseReportAsync" Disabled="_busy">
@@ -259,7 +262,17 @@
     private DateTime? _policeNotifiedOn;
     private string? _policeBlotterRef;
 
-    protected override async Task OnInitializedAsync() => await LoadAsync();
+    private bool _canResolve => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Incident.Resolve);
+
+    protected override async Task OnInitializedAsync()
+    {
+        UserProfileState.OnProfileChanged += OnProfileChanged;
+        await LoadAsync();
+    }
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
 
     private async Task LoadAsync()
     {

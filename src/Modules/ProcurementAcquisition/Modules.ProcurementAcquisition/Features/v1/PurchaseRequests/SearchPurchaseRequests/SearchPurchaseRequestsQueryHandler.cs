@@ -38,14 +38,41 @@ public sealed class SearchPurchaseRequestsQueryHandler(ProcurementDbContext dbCo
 
         if (query.ExcludeFullyCanvassed == true)
         {
-            // Hide a PR only when every one of its lines is covered by a non-cancelled canvass.
-            // Non-cancelled canvasses are guaranteed disjoint (partition invariant enforced on create),
-            // so the count of covered lines == the sum of their line-item counts. A PR is eligible
-            // while its line count still exceeds the covered count (i.e. at least one line uncovered).
-            q = q.Where(x => x.LineItems.Count >
-                dbContext.CanvassRequests
-                    .Where(c => c.PurchaseRequestId == x.Id && c.Status != CanvassRequestStatus.Cancelled)
-                    .Sum(c => c.LineItems.Count));
+            // A PR may now be canvassed several times over (identical lines per canvass), so coverage no longer
+            // disqualifies it — only full AWARD does. Hide a PR from the canvass picker once every one of its lines
+            // has been awarded by some non-cancelled canvass. Awarded lines live in a JSON column (not translatable
+            // for a cross-row predicate count), so the award tally is computed in memory over the already-filtered
+            // (Approved + keyword) candidate set, which is small.
+            var candidates = await q
+                .Select(x => new { x.Id, LineCount = x.LineItems.Count })
+                .ToListAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            var candidateIds = candidates.Select(c => c.Id).ToList();
+
+            var siblingCanvasses = await dbContext.CanvassRequests
+                .AsNoTracking()
+                .Where(c => candidateIds.Contains(c.PurchaseRequestId) && c.Status != CanvassRequestStatus.Cancelled)
+                .ToListAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            var awardedLineCountByPr = siblingCanvasses
+                .GroupBy(c => c.PurchaseRequestId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.SelectMany(c => c.LineItems)
+                          .Where(li => li.AwardedQuotationId is not null)
+                          .Select(li => li.PrItemNo)
+                          .Distinct()
+                          .Count());
+
+            var fullyAwardedPrIds = candidates
+                .Where(c => awardedLineCountByPr.TryGetValue(c.Id, out var awarded) && awarded >= c.LineCount)
+                .Select(c => c.Id)
+                .ToHashSet();
+
+            if (fullyAwardedPrIds.Count > 0)
+                q = q.Where(x => !fullyAwardedPrIds.Contains(x.Id));
         }
 
         var totalCount = await q.CountAsync(cancellationToken).ConfigureAwait(false);

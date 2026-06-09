@@ -72,6 +72,41 @@ public sealed class SearchCanvassRequestsQueryHandler(ProcurementDbContext dbCon
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
+        // Awarded-line tallies drive the award button. Awarded lines live in a JSON column (no cross-row predicate
+        // translation), so compute in memory over the page's PRs and their (few) non-cancelled sibling canvasses.
+        // A line is awardable on a canvass only while no canvass of the same PR has awarded it yet.
+        var pagePrIds = items.Select(i => i.PurchaseRequestId).Distinct().ToList();
+
+        var relatedCanvasses = await dbContext.CanvassRequests
+            .AsNoTracking()
+            .Where(c => pagePrIds.Contains(c.PurchaseRequestId))
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        var awardedItemNosByPr = relatedCanvasses
+            .Where(c => c.Status != CanvassRequestStatus.Cancelled)
+            .GroupBy(c => c.PurchaseRequestId)
+            .ToDictionary(
+                g => g.Key,
+                g => g.SelectMany(c => c.LineItems)
+                      .Where(li => li.AwardedQuotationId is not null)
+                      .Select(li => li.PrItemNo)
+                      .ToHashSet());
+
+        var canvassById = relatedCanvasses.ToDictionary(c => c.Id);
+
+        items = items.Select(dto =>
+        {
+            if (!canvassById.TryGetValue(dto.Id, out var canvass))
+                return dto;
+
+            var awardedHere = canvass.LineItems.Count(li => li.AwardedQuotationId is not null);
+            var awardedAnywhere = awardedItemNosByPr.GetValueOrDefault(dto.PurchaseRequestId) ?? [];
+            var remaining = canvass.LineItems.Count(li => !awardedAnywhere.Contains(li.PrItemNo));
+
+            return dto with { AwardedLineCount = awardedHere, RemainingAwardableLineCount = remaining };
+        }).ToList();
+
         return new PagedResponse<CanvassRequestSummaryDto>
         {
             Items = items,

@@ -1,12 +1,15 @@
 @page "/procurement-planning/apps"
+@implements IDisposable
 @using AMIS.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans
 @using AMIS.Modules.ProcurementPlanning.Contracts.v1.Ppmps
+@using AMIS.Modules.ProcurementPlanning.Contracts.Permissions
 @using AMIS.Framework.Shared.Persistence
 @using AMIS.Playground.Blazor.ApiClient
 @using AMIS.Playground.Blazor.Components.Shared
 @inject IAppClient AppClient
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
+@inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="Annual Procurement Plan (APP)"
                Description="Consolidate approved PPMPs and manage the annual procurement plan" />
@@ -98,16 +101,22 @@
                                 <td @onclick:stopPropagation="true">
                                     @if (row.Status == AppStatus.Draft)
                                     {
-                                        <MudTooltip Text="Publish">
-                                            <MudIconButton Icon="@Icons.Material.Filled.Publish" Size="Size.Small"
-                                                           Color="Color.Primary" OnClick="@(() => QuickPublishAsync(row))" Disabled="_busy" />
-                                        </MudTooltip>
-                                        <MudTooltip Text="Delete">
-                                            <MudIconButton Icon="@Icons.Material.Filled.DeleteOutline" Size="Size.Small"
-                                                           Color="Color.Error" OnClick="@(() => DeleteFromListAsync(row))" Disabled="_busy" />
-                                        </MudTooltip>
+                                        @if (_canPublish)
+                                        {
+                                            <MudTooltip Text="Publish">
+                                                <MudIconButton Icon="@Icons.Material.Filled.Publish" Size="Size.Small"
+                                                               Color="Color.Primary" OnClick="@(() => QuickPublishAsync(row))" Disabled="_busy" />
+                                            </MudTooltip>
+                                        }
+                                        @if (_canDelete)
+                                        {
+                                            <MudTooltip Text="Delete">
+                                                <MudIconButton Icon="@Icons.Material.Filled.DeleteOutline" Size="Size.Small"
+                                                               Color="Color.Error" OnClick="@(() => DeleteFromListAsync(row))" Disabled="_busy" />
+                                            </MudTooltip>
+                                        }
                                     }
-                                    @if (row.Status == AppStatus.Published)
+                                    @if (row.Status == AppStatus.Published && _canPublish)
                                     {
                                         <MudTooltip Text="Recall (return to Draft)">
                                             <MudIconButton Icon="@Icons.Material.Filled.Undo" Size="Size.Small"
@@ -172,35 +181,38 @@
 
                     @if (_editing is null)
                     {
-                        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save"
-                                   OnClick="CreateAppAsync" Disabled="_busy" Size="Size.Small">
-                            @if (_busy)
-                            {
-                                <MudProgressCircular Size="Size.Small" Class="mr-1" Indeterminate="true" />
-                            }
-                            Create APP
-                        </MudButton>
+                        @if (_canCreate)
+                        {
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save"
+                                       OnClick="CreateAppAsync" Disabled="_busy" Size="Size.Small">
+                                @if (_busy)
+                                {
+                                    <MudProgressCircular Size="Size.Small" Class="mr-1" Indeterminate="true" />
+                                }
+                                Create APP
+                            </MudButton>
+                        }
                         <MudButton Variant="Variant.Text" OnClick="ClearForm" Disabled="_busy" Size="Size.Small">
                             Cancel
                         </MudButton>
                     }
                     else
                     {
-                        @if ((_editing.Status is AppStatus.Draft or AppStatus.Returned) && _editing.Items.Count > 0)
+                        @if ((_editing.Status is AppStatus.Draft or AppStatus.Returned) && _editing.Items.Count > 0 && _canPublish)
                         {
                             <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Publish"
                                        OnClick="PublishAsync" Disabled="_busy" Size="Size.Small">
                                 Publish
                             </MudButton>
                         }
-                        @if (_editing.Status == AppStatus.Published)
+                        @if (_editing.Status == AppStatus.Published && _canPublish)
                         {
                             <MudButton Variant="Variant.Outlined" Color="Color.Warning" StartIcon="@Icons.Material.Filled.Undo"
                                        OnClick="RecallAsync" Disabled="_busy" Size="Size.Small">
                                 Recall
                             </MudButton>
                         }
-                        @if (_editing.Phase == AppPhase.Indicative && _editing.Status == AppStatus.Approved)
+                        @if (_editing.Phase == AppPhase.Indicative && _editing.Status == AppStatus.Approved && _canPromote)
                         {
                             <MudButton Variant="Variant.Outlined" Color="Color.Primary"
                                        StartIcon="@Icons.Material.Filled.MoveUp" OnClick="PromoteToFinalAsync" Disabled="_busy"
@@ -208,14 +220,14 @@
                                 Promote to Final
                             </MudButton>
                         }
-                        @if (_editing.Phase is AppPhase.Final or AppPhase.Updated && _editing.Status == AppStatus.Approved)
+                        @if (_editing.Phase is AppPhase.Final or AppPhase.Updated && _editing.Status == AppStatus.Approved && _canCreateUpdate)
                         {
                             <MudButton Variant="Variant.Outlined" Color="Color.Warning" StartIcon="@Icons.Material.Filled.Edit"
                                        OnClick="ShowCreateUpdateDialogAsync" Disabled="_busy" Size="Size.Small">
                                 Create Update
                             </MudButton>
                         }
-                        @if (_editing.Status == AppStatus.Draft)
+                        @if (_editing.Status == AppStatus.Draft && _canDelete)
                         {
                             <MudButton Variant="Variant.Outlined" Color="Color.Error"
                                        StartIcon="@Icons.Material.Filled.DeleteOutline" OnClick="DeleteAsync" Disabled="_busy"
@@ -413,15 +425,18 @@
                                                                                 p.TotalEstimatedBudget).ToString("N2") to add
                                             </MudText>
                                             <MudSpacer />
-                                            <MudButton Variant="Variant.Filled" Color="Color.Primary"
-                                                       StartIcon="@Icons.Material.Filled.LibraryAddCheck" OnClick="ConsolidateAsync"
-                                                       Disabled="@(_busy || _selectedPpmpIds.Count == 0)" Size="Size.Small">
-                                                @if (_busy)
-                                                {
-                                                    <MudProgressCircular Size="Size.Small" Class="mr-1" Indeterminate="true" />
-                                                }
-                                                Consolidate @(_selectedPpmpIds.Count > 0 ? $"({_selectedPpmpIds.Count})" : "")
-                                            </MudButton>
+                                            @if (_canConsolidate)
+                                            {
+                                                <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                                                           StartIcon="@Icons.Material.Filled.LibraryAddCheck" OnClick="ConsolidateAsync"
+                                                           Disabled="@(_busy || _selectedPpmpIds.Count == 0)" Size="Size.Small">
+                                                    @if (_busy)
+                                                    {
+                                                        <MudProgressCircular Size="Size.Small" Class="mr-1" Indeterminate="true" />
+                                                    }
+                                                    Consolidate @(_selectedPpmpIds.Count > 0 ? $"({_selectedPpmpIds.Count})" : "")
+                                                </MudButton>
+                                            }
                                         </MudStack>
                                     }
                                 </MudExpansionPanel>
@@ -578,7 +593,22 @@
 
     private readonly int[] _fiscalYears = Enumerable.Range(DateTime.Now.Year - 2, 5).ToArray();
 
-    protected override async Task OnInitializedAsync() => await LoadAsync();
+    private bool _canCreate => UserProfileState.Permissions.Contains(ProcurementPlanningPermissions.AnnualProcurementPlans.Create);
+    private bool _canDelete => UserProfileState.Permissions.Contains(ProcurementPlanningPermissions.AnnualProcurementPlans.Delete);
+    private bool _canPublish => UserProfileState.Permissions.Contains(ProcurementPlanningPermissions.AnnualProcurementPlans.Publish);
+    private bool _canPromote => UserProfileState.Permissions.Contains(ProcurementPlanningPermissions.AnnualProcurementPlans.PromoteToFinal);
+    private bool _canCreateUpdate => UserProfileState.Permissions.Contains(ProcurementPlanningPermissions.AnnualProcurementPlans.CreateUpdate);
+    private bool _canConsolidate => UserProfileState.Permissions.Contains(ProcurementPlanningPermissions.AnnualProcurementPlans.Consolidate);
+
+    protected override async Task OnInitializedAsync()
+    {
+        UserProfileState.OnProfileChanged += OnProfileChanged;
+        await LoadAsync();
+    }
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
 
     // -- Load list ----------------------------------------------------
     private async Task LoadAsync()

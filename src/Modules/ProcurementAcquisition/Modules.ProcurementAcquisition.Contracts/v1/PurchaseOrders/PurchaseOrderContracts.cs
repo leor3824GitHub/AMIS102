@@ -188,6 +188,9 @@ public sealed class SearchPurchaseOrdersQuery : IQuery<PagedResponse<PurchaseOrd
     public ModeOfProcurement? ModeOfProcurement { get; set; }
     public DateOnly? FromDate { get; set; }
     public DateOnly? ToDate { get; set; }
+    /// <summary>When true, excludes POs that already have a non-cancelled Inspection &amp; Acceptance Report
+    /// (used by the IAR draft picker so a PO drops off once an IAR is created for it).</summary>
+    public bool? ExcludeWithIar { get; set; }
     public int PageNumber { get; set; } = 1;
     public int PageSize { get; set; } = 10;
 }

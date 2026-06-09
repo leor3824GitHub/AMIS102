@@ -1,6 +1,8 @@
 @page "/master-data/employees"
+@implements IDisposable
 @using AMIS.Framework.Blazor.UI.Components.Cards
 @using AMIS.Playground.Blazor.ApiClient
+@using AMIS.Modules.MasterData.Contracts.Permissions
 @inherits ComponentBase
 @inject ISnackbar Snackbar
 @inject IMaster_dataClient MasterDataClient
@@ -8,6 +10,7 @@
 @inject IIdentityClient IdentityClient
 @inject IUsersClient UsersClient
 @inject IOrganizationProfileClient OrgProfileClient
+@inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="Employees" Description="Manage employee profiles">
     <ActionContent>
@@ -25,6 +28,8 @@
 <div class="mt-4">
     <MudGrid Spacing="2">
         <!-- Create/Edit Form -->
+        @if (_canCreate || _canUpdate)
+        {
         <MudItem xs="12" sm="6" md="4" Style="min-height: 100%;">
             <MudCard Class="AMIS-card">
                 <MudCardContent>
@@ -79,6 +84,7 @@
                 </MudCardContent>
             </MudCard>
         </MudItem>
+        }
 
         <!-- Employees List -->
         <MudItem xs="12" sm="6" md="8">
@@ -136,17 +142,23 @@
                                                                                         ? "Active" : "Inactive")</MudChip>
                                             </td>
                                             <td>
-                                                @if (IsOwnedByMe(employee.OfficeCode))
+                                                @if (IsOwnedByMe(employee.OfficeCode) && (_canUpdate || _canDelete))
                                                 {
                                                     <MudStack Row="true" Spacing="1">
-                                                        <MudTooltip Text="Edit employee">
-                                                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
-                                                                           Color="Color.Primary" OnClick="@(() => EditEmployee(employee))" />
-                                                        </MudTooltip>
-                                                        <MudTooltip Text="Delete employee">
-                                                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
-                                                                           Color="Color.Error" OnClick="@(() => DeleteEmployee(employee.Id))" />
-                                                        </MudTooltip>
+                                                        @if (_canUpdate)
+                                                        {
+                                                            <MudTooltip Text="Edit employee">
+                                                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                                                               Color="Color.Primary" OnClick="@(() => EditEmployee(employee))" />
+                                                            </MudTooltip>
+                                                        }
+                                                        @if (_canDelete)
+                                                        {
+                                                            <MudTooltip Text="Delete employee">
+                                                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                                                               Color="Color.Error" OnClick="@(() => DeleteEmployee(employee.Id))" />
+                                                            </MudTooltip>
+                                                        }
                                                     </MudStack>
                                                 }
                                                 else
@@ -195,6 +207,10 @@
     private string? _myOfficeCode;
     private int _pageIndex = 1;
     private const int PageSize = 10;
+
+    private bool _canCreate => UserProfileState.Permissions.Contains(MasterDataPermissions.Employees.Create);
+    private bool _canUpdate => UserProfileState.Permissions.Contains(MasterDataPermissions.Employees.Update);
+    private bool _canDelete => UserProfileState.Permissions.Contains(MasterDataPermissions.Employees.Delete);
 
     public class EmployeeForm
     {
@@ -263,10 +279,15 @@
         return _positions.Where(x => x.Name.Contains(value, StringComparison.InvariantCultureIgnoreCase));
     }
 
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
+
     protected override async Task OnInitializedAsync()
     {
         if (_initialized) return;
         _initialized = true;
+        UserProfileState.OnProfileChanged += OnProfileChanged;
 
         var profileTask = OrgProfileClient.GetAsync();
         await Task.WhenAll(

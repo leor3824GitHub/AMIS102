@@ -1,13 +1,18 @@
 @page "/vehicle/maintenance/logs"
+@implements IDisposable
 @using AMIS.Modules.Vehicle.Contracts.v1.Maintenance
 @using AMIS.Modules.Vehicle.Contracts.v1.Vehicles
+@using AMIS.Modules.Vehicle.Contracts.Permissions
 @inject IVehicleClient VehicleClient
 @inject ISnackbar Snackbar
+@inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="Maintenance Logs" Description="Record completed maintenance activities" />
 
 <div class="mt-4">
     <MudGrid Spacing="2">
+        @if (_canCreate)
+        {
         <MudItem xs="12" md="4">
             <MudCard Class="AMIS-card">
                 <MudCardContent>
@@ -29,6 +34,7 @@
                 </MudCardContent>
             </MudCard>
         </MudItem>
+        }
 
         <MudItem xs="12" md="8">
             <MudCard Class="AMIS-card">
@@ -68,8 +74,11 @@
                             <MudTd>@(string.IsNullOrWhiteSpace(context.PerformedBy) ? "-" : context.PerformedBy)</MudTd>
                             <MudTd>@(context.Cost?.ToString("N2") ?? "-")</MudTd>
                             <MudTd>
-                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
-                                               OnClick="@(() => Delete(context.Id))" />
+                                @if (_canDelete)
+                                {
+                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
+                                                   OnClick="@(() => Delete(context.Id))" />
+                                }
                             </MudTd>
                         </RowTemplate>
                     </MudTable>
@@ -85,11 +94,19 @@
     private LogQueryModel _query = new();
     private CreateLogModel _create = new();
 
+    private bool _canCreate => UserProfileState.Permissions.Contains(VehiclePermissions.Maintenance.Create);
+    private bool _canDelete => UserProfileState.Permissions.Contains(VehiclePermissions.Maintenance.Delete);
+
     protected override async Task OnInitializedAsync()
     {
+        UserProfileState.OnProfileChanged += OnProfileChanged;
         await LoadVehicles();
         await Load();
     }
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
 
     private async Task LoadVehicles()
     {

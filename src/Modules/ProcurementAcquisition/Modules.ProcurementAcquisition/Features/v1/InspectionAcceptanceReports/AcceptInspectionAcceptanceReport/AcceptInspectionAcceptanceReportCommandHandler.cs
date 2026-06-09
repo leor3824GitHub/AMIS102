@@ -117,7 +117,8 @@ public sealed class AcceptInspectionAcceptanceReportCommandHandler(
                         li.Description, li.TechnicalSpecifications, li.Brand, li.Model,
                         li.SerialNo, li.PropertyClassHint, li.Unit, li.Quantity, li.UnitCost,
                         li.StockPropertyNo, li.CatalogItemId, li.UacsObjectCode)).ToList(),
-                TenantId: tenantId);
+                TenantId: tenantId,
+                FundCluster: po?.FundCluster);
 
             await eventBus.PublishAsync(assetEvent, cancellationToken).ConfigureAwait(false);
         }

@@ -301,8 +301,8 @@
         try
         {
             var keyword = string.IsNullOrWhiteSpace(value) ? null : value;
-            var issued = await PoClient.SearchAsync(keyword, status: PurchaseOrderStatus.Issued, page: 1, pageSize: 20, ct: cancellationToken);
-            var partiallyDelivered = await PoClient.SearchAsync(keyword, status: PurchaseOrderStatus.PartiallyDelivered, page: 1, pageSize: 20, ct: cancellationToken);
+            var issued = await PoClient.SearchAsync(keyword, status: PurchaseOrderStatus.Issued, page: 1, pageSize: 20, excludeWithIar: true, ct: cancellationToken);
+            var partiallyDelivered = await PoClient.SearchAsync(keyword, status: PurchaseOrderStatus.PartiallyDelivered, page: 1, pageSize: 20, excludeWithIar: true, ct: cancellationToken);
 
             return issued.Items
                 .Concat(partiallyDelivered.Items)

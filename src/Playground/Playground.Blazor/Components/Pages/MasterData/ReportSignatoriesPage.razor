@@ -1,17 +1,22 @@
 @page "/master-data/report-signatories"
+@implements IDisposable
 @using AMIS.Modules.MasterData.Contracts.v1.ReportSignatories
+@using AMIS.Modules.MasterData.Contracts.Permissions
 @using AMIS.Playground.Blazor.ApiClient
 @using MudBlazor
 @inject IReportSignatoryClient SignatoryClient
 @inject ILookupClient LookupClient
 @inject ISnackbar Snackbar
 @inject IDialogService MudDialog
+@inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="Report Signatories" Description="Configure signature blocks for printed government reports" />
 
 <MudGrid Spacing="3" Class="mt-2">
 
     <!-- Form -->
+    @if (_canCreate || _canUpdate)
+    {
     <MudItem xs="12" md="4">
         <MudPaper Elevation="1" Class="pa-4">
             <MudText Typo="Typo.h6" Class="mb-3">@(_editing is null ? "Add Signatory" : "Edit Signatory")</MudText>
@@ -64,6 +69,7 @@
             </MudStack>
         </MudPaper>
     </MudItem>
+    }
 
     <!-- Table -->
     <MudItem xs="12" md="8">
@@ -114,14 +120,20 @@
                                 </td>
                                 <td>
                                     <MudStack Row="true" Spacing="0">
-                                        <MudTooltip Text="Edit signatory">
-                                            <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small"
-                                                           OnClick="() => StartEdit(s)" Disabled="_busy" />
-                                        </MudTooltip>
-                                        <MudTooltip Text="Delete signatory">
-                                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
-                                                           Color="Color.Error" OnClick="() => ConfirmDeleteAsync(s)" Disabled="_busy" />
-                                        </MudTooltip>
+                                        @if (_canUpdate)
+                                        {
+                                            <MudTooltip Text="Edit signatory">
+                                                <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small"
+                                                               OnClick="() => StartEdit(s)" Disabled="_busy" />
+                                            </MudTooltip>
+                                        }
+                                        @if (_canDelete)
+                                        {
+                                            <MudTooltip Text="Delete signatory">
+                                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                                               Color="Color.Error" OnClick="() => ConfirmDeleteAsync(s)" Disabled="_busy" />
+                                            </MudTooltip>
+                                        }
                                     </MudStack>
                                 </td>
                             </tr>
@@ -157,12 +169,24 @@
 
     private FormModel _form = new();
 
+    private bool _canCreate => UserProfileState.Permissions.Contains(MasterDataPermissions.ReportSignatories.Create);
+    private bool _canUpdate => UserProfileState.Permissions.Contains(MasterDataPermissions.ReportSignatories.Update);
+    private bool _canDelete => UserProfileState.Permissions.Contains(MasterDataPermissions.ReportSignatories.Delete);
+
     private IEnumerable<ReportSignatoryDto> FilteredSignatories =>
         string.IsNullOrEmpty(_filter)
             ? _signatories.OrderBy(s => s.ReportType).ThenBy(s => s.SortOrder)
             : _signatories.Where(s => s.ReportType == _filter).OrderBy(s => s.SortOrder);
 
-    protected override async Task OnInitializedAsync() => await LoadAsync();
+    protected override async Task OnInitializedAsync()
+    {
+        UserProfileState.OnProfileChanged += OnProfileChanged;
+        await LoadAsync();
+    }
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
 
     private async Task LoadAsync()
     {
