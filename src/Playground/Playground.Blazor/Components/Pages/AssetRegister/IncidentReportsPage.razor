@@ -18,39 +18,24 @@
         <MudCard Elevation="1">
             <MudCardContent>
                 <MudGrid Spacing="2" AlignItems="AlignItems.Center">
-                    <MudItem xs="12" md="4">
+                    <MudItem xs="12" md="9">
                         <MudTextField @bind-Value="_keyword" Label="Incident No. / Keyword" Variant="Variant.Outlined"
                                       Dense="true" Margin="Margin.Dense"
                                       Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Outlined.Search"
                                       OnKeyDown="OnSearchKeyDown" Immediate="false" />
                     </MudItem>
-                    <MudItem xs="6" md="2">
-                        <MudSelect @bind-Value="_typeFilter" Label="Incident Type" Variant="Variant.Outlined" T="PropertyIncidentType?" Clearable="true"
-                                   Dense="true" Margin="Margin.Dense">
-                            <MudSelectItem Value="@((PropertyIncidentType?)null)">All</MudSelectItem>
-                            <MudSelectItem Value="@((PropertyIncidentType?)PropertyIncidentType.Lost)">Lost</MudSelectItem>
-                            <MudSelectItem Value="@((PropertyIncidentType?)PropertyIncidentType.Stolen)">Stolen</MudSelectItem>
-                            <MudSelectItem Value="@((PropertyIncidentType?)PropertyIncidentType.Damaged)">Damaged</MudSelectItem>
-                            <MudSelectItem Value="@((PropertyIncidentType?)PropertyIncidentType.Destroyed)">Destroyed</MudSelectItem>
-                        </MudSelect>
-                    </MudItem>
-                    <MudItem xs="6" md="2">
-                        <MudSelect @bind-Value="_statusFilter" Label="Status" Variant="Variant.Outlined" T="PropertyIncidentStatus?" Clearable="true"
-                                   Dense="true" Margin="Margin.Dense">
-                            <MudSelectItem Value="@((PropertyIncidentStatus?)null)">All</MudSelectItem>
-                            <MudSelectItem Value="@((PropertyIncidentStatus?)PropertyIncidentStatus.Filed)">Filed</MudSelectItem>
-                            <MudSelectItem Value="@((PropertyIncidentStatus?)PropertyIncidentStatus.UnderInvestigation)">Under Investigation</MudSelectItem>
-                            <MudSelectItem Value="@((PropertyIncidentStatus?)PropertyIncidentStatus.Resolved)">Resolved</MudSelectItem>
-                            <MudSelectItem Value="@((PropertyIncidentStatus?)PropertyIncidentStatus.Closed)">Closed</MudSelectItem>
-                        </MudSelect>
-                    </MudItem>
-                    <MudItem xs="12" md="2">
+                    <MudItem xs="12" md="3">
                         <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
                                    StartIcon="@Icons.Material.Outlined.Search" OnClick="LoadAsync" Disabled="_busy">
                             Search
                         </MudButton>
                     </MudItem>
                 </MudGrid>
+
+                <AMISEnumChips TEnum="PropertyIncidentType" Value="_typeFilter" ValueChanged="OnTypeChanged"
+                               Label="Incident Type" Class="mt-3" />
+                <AMISEnumChips TEnum="PropertyIncidentStatus" Value="_statusFilter" ValueChanged="OnStatusChanged"
+                               Label="Status" />
             </MudCardContent>
         </MudCard>
     </MudItem>
@@ -366,6 +351,9 @@
 
     private async Task PrevPage() { _page--; await LoadAsync(); }
     private async Task NextPage() { _page++; await LoadAsync(); }
+    private async Task OnTypeChanged(PropertyIncidentType? value) { _typeFilter = value; _page = 1; await LoadAsync(); }
+    private async Task OnStatusChanged(PropertyIncidentStatus? value) { _statusFilter = value; _page = 1; await LoadAsync(); }
+
     private async Task OnSearchKeyDown(KeyboardEventArgs e)
     {
         if (e.Key == "Enter") { _page = 1; await LoadAsync(); }

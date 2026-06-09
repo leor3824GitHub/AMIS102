@@ -21,35 +21,19 @@
         <MudCard Elevation="1">
             <MudCardContent>
                 <MudGrid Spacing="2" AlignItems="AlignItems.Center">
-                    <MudItem xs="12" md="4">
+                    <MudItem xs="12" md="6">
                         <MudTextField @bind-Value="_keyword" Label="Report No. / Keyword" Variant="Variant.Outlined"
                                       Dense="true" Margin="Margin.Dense"
                                       Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Outlined.Search"
                                       OnKeyDown="OnSearchKeyDown" Immediate="false" />
                     </MudItem>
-                    <MudItem xs="6" md="2">
-                        <MudSelect @bind-Value="_typeFilter" Label="Report Type" Variant="Variant.Outlined" T="IssuanceReportType?" Clearable="true"
-                                   Dense="true" Margin="Margin.Dense">
-                            <MudSelectItem T="IssuanceReportType?" Value="@((IssuanceReportType?)null)">All</MudSelectItem>
-                            <MudSelectItem T="IssuanceReportType?" Value="@((IssuanceReportType?)IssuanceReportType.SMIR)">SMIR (SE)</MudSelectItem>
-                            <MudSelectItem T="IssuanceReportType?" Value="@((IssuanceReportType?)IssuanceReportType.PPEIR)">PPEIR</MudSelectItem>
-                        </MudSelect>
-                    </MudItem>
-                    <MudItem xs="6" md="2">
-                        <MudSelect @bind-Value="_statusFilter" Label="Status" Variant="Variant.Outlined" T="IssuanceReportStatus?" Clearable="true"
-                                   Dense="true" Margin="Margin.Dense">
-                            <MudSelectItem T="IssuanceReportStatus?" Value="@((IssuanceReportStatus?)null)">All</MudSelectItem>
-                            <MudSelectItem T="IssuanceReportStatus?" Value="@((IssuanceReportStatus?)IssuanceReportStatus.Draft)">Draft</MudSelectItem>
-                            <MudSelectItem T="IssuanceReportStatus?" Value="@((IssuanceReportStatus?)IssuanceReportStatus.Posted)">Posted</MudSelectItem>
-                        </MudSelect>
-                    </MudItem>
-                    <MudItem xs="12" md="2">
+                    <MudItem xs="12" md="3">
                         <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
                                    StartIcon="@Icons.Material.Outlined.Search" OnClick="LoadAsync" Disabled="_busy">
                             Search
                         </MudButton>
                     </MudItem>
-                    <MudItem xs="12" md="2">
+                    <MudItem xs="12" md="3">
                         @if (_canPost)
                         {
                         <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Success" FullWidth="true"
@@ -59,6 +43,11 @@
                         }
                     </MudItem>
                 </MudGrid>
+
+                <AMISEnumChips TEnum="IssuanceReportType" Value="_typeFilter" ValueChanged="OnTypeChanged"
+                               Label="Report Type" Class="mt-3" />
+                <AMISEnumChips TEnum="IssuanceReportStatus" Value="_statusFilter" ValueChanged="OnStatusChanged"
+                               Label="Status" />
             </MudCardContent>
         </MudCard>
     </MudItem>
@@ -504,6 +493,9 @@
 
     private async Task PrevPage() { _page--; await LoadAsync(); }
     private async Task NextPage() { _page++; await LoadAsync(); }
+    private async Task OnTypeChanged(IssuanceReportType? value) { _typeFilter = value; _page = 1; await LoadAsync(); }
+    private async Task OnStatusChanged(IssuanceReportStatus? value) { _statusFilter = value; _page = 1; await LoadAsync(); }
+
     private async Task OnSearchKeyDown(KeyboardEventArgs e)
     {
         if (e.Key == "Enter") { _page = 1; await LoadAsync(); }

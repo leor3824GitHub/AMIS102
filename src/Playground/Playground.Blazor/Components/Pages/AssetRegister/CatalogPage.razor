@@ -19,12 +19,6 @@
                     <MudTextField @bind-Value="_keyword" Label="Search" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense"
                                   Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Outlined.Search"
                                   OnKeyDown="OnSearchKeyDown" Style="flex:1;" />
-                    <MudSelect @bind-Value="_activeFilter" Label="Active" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense"
-                               T="bool?" Clearable="true" Style="width:120px;">
-                        <MudSelectItem Value="@((bool?)null)">All</MudSelectItem>
-                        <MudSelectItem Value="@((bool?)true)">Active</MudSelectItem>
-                        <MudSelectItem Value="@((bool?)false)">Inactive</MudSelectItem>
-                    </MudSelect>
                     <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary"
                                OnClick="LoadAsync" Disabled="_busy">Search</MudButton>
                     @if (_canCreate)
@@ -33,6 +27,22 @@
                                    StartIcon="@Icons.Material.Filled.Add"
                                    OnClick="OpenCreateDialog" Disabled="_busy">New Catalog Item</MudButton>
                     }
+                </MudStack>
+
+                <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center" Class="mb-3">
+                    <MudText Typo="Typo.caption" Class="text-muted me-1">Active</MudText>
+                    <MudChip T="string" Size="Size.Small"
+                             Color="@(_activeFilter is null ? Color.Primary : Color.Default)"
+                             Variant="@(_activeFilter is null ? Variant.Filled : Variant.Outlined)"
+                             OnClick="@(() => OnActiveChanged(null))" Clickable="true">All</MudChip>
+                    <MudChip T="string" Size="Size.Small"
+                             Color="@(_activeFilter == true ? Color.Primary : Color.Default)"
+                             Variant="@(_activeFilter == true ? Variant.Filled : Variant.Outlined)"
+                             OnClick="@(() => OnActiveChanged(true))" Clickable="true">Active</MudChip>
+                    <MudChip T="string" Size="Size.Small"
+                             Color="@(_activeFilter == false ? Color.Primary : Color.Default)"
+                             Variant="@(_activeFilter == false ? Variant.Filled : Variant.Outlined)"
+                             OnClick="@(() => OnActiveChanged(false))" Clickable="true">Inactive</MudChip>
                 </MudStack>
 
                 @if (_busy)
@@ -222,5 +232,7 @@
     {
         if (e.Key == "Enter") { _page = 1; await LoadAsync(); }
     }
+
+    private async Task OnActiveChanged(bool? value) { _activeFilter = value; _page = 1; await LoadAsync(); }
 }
 

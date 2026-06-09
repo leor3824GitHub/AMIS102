@@ -1,0 +1,63 @@
+@using System.Collections.Generic
+@typeparam TEnum where TEnum : struct, Enum
+@* Clickable chip-row filter for a nullable enum: an "All" chip plus one chip per enum value.
+   Selecting a chip raises ValueChanged immediately (instant filter, like the procurement status chips).
+   Pass LabelFunc to override the text for values whose display name differs from the enum name. *@
+<MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center" Class="@CombinedClass">
+    @if (!string.IsNullOrWhiteSpace(Label))
+    {
+        <MudText Typo="Typo.caption" Class="text-muted me-1">@Label</MudText>
+    }
+    <MudChip T="string" Size="Size.Small"
+             Color="@(Value is null ? Color.Primary : Color.Default)"
+             Variant="@(Value is null ? Variant.Filled : Variant.Outlined)"
+             OnClick="@(() => SelectAsync(null))"
+             Clickable="true">@AllLabel</MudChip>
+    @foreach (var v in _values)
+    {
+        var selected = Value is not null && EqualityComparer<TEnum>.Default.Equals(Value.Value, v);
+        <MudChip T="string" Size="Size.Small"
+                 Color="@(selected ? Color.Primary : Color.Default)"
+                 Variant="@(selected ? Variant.Filled : Variant.Outlined)"
+                 OnClick="@(() => SelectAsync(v))"
+                 Clickable="true">@LabelFor(v)</MudChip>
+    }
+</MudStack>
+
+@code {
+    private TEnum[] _values = [];
+
+    /// <summary>Currently selected value; null means "All".</summary>
+    [Parameter] public TEnum? Value { get; set; }
+
+    /// <summary>Raised when a chip is clicked. null = "All".</summary>
+    [Parameter] public EventCallback<TEnum?> ValueChanged { get; set; }
+
+    /// <summary>Optional leading caption (e.g. "Status", "Type").</summary>
+    [Parameter] public string? Label { get; set; }
+
+    /// <summary>Text for the clear/"All" chip. Default "All".</summary>
+    [Parameter] public string AllLabel { get; set; } = "All";
+
+    /// <summary>Optional display-text override per value (e.g. "IIRUSP (SE)"). Defaults to the enum name.</summary>
+    [Parameter] public Func<TEnum, string>? LabelFunc { get; set; }
+
+    /// <summary>Subset/order of values to show. Defaults to all declared enum values.</summary>
+    [Parameter] public IEnumerable<TEnum>? Values { get; set; }
+
+    /// <summary>Additional CSS classes appended to the chip row.</summary>
+    [Parameter] public string? Class { get; set; }
+
+    protected override void OnParametersSet() =>
+        _values = (Values ?? Enum.GetValues<TEnum>()).ToArray();
+
+    private string CombinedClass => string.IsNullOrWhiteSpace(Class) ? "mb-3" : $"mb-3 {Class}";
+
+    private string LabelFor(TEnum value) => LabelFunc?.Invoke(value) ?? value.ToString();
+
+    private Task SelectAsync(TEnum? value)
+    {
+        Value = value;
+        return ValueChanged.InvokeAsync(value);
+    }
+}

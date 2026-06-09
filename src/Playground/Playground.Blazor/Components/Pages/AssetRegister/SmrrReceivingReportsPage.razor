@@ -20,23 +20,13 @@
         <MudCard Elevation="1">
             <MudCardContent>
                 <MudGrid Spacing="2" AlignItems="AlignItems.Center">
-                    <MudItem xs="12" md="4">
+                    <MudItem xs="12" md="6">
                         <MudTextField @bind-Value="_keyword" Label="Report No. / Received From" Variant="Variant.Outlined"
                                       Dense="true" Margin="Margin.Dense"
                                       Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Outlined.Search"
                                       OnKeyDown="OnSearchKeyDown" Immediate="false" />
                     </MudItem>
-                    <MudItem xs="6" md="2">
-                        <MudSelect @bind-Value="_receiptTypeFilter" Label="Type" Variant="Variant.Outlined" T="ReceiptType?" Clearable="true"
-                                   Dense="true" Margin="Margin.Dense">
-                            <MudSelectItem T="ReceiptType?" Value="@((ReceiptType?)null)">All</MudSelectItem>
-                            <MudSelectItem T="ReceiptType?" Value="@((ReceiptType?)ReceiptType.Purchase)">Purchase</MudSelectItem>
-                            <MudSelectItem T="ReceiptType?" Value="@((ReceiptType?)ReceiptType.Transfer)">Transfer</MudSelectItem>
-                            <MudSelectItem T="ReceiptType?" Value="@((ReceiptType?)ReceiptType.Donation)">Donation</MudSelectItem>
-                            <MudSelectItem T="ReceiptType?" Value="@((ReceiptType?)ReceiptType.Other)">Other</MudSelectItem>
-                        </MudSelect>
-                    </MudItem>
-                    <MudItem xs="12" md="2">
+                    <MudItem xs="12" md="3">
                         <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
                                    StartIcon="@Icons.Material.Outlined.Search" OnClick="LoadAsync" Disabled="_busy">
                             Search
@@ -44,7 +34,7 @@
                     </MudItem>
                     @if (_canCreate)
                     {
-                        <MudItem xs="12" md="2">
+                        <MudItem xs="12" md="3">
                             <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Success" FullWidth="true"
                                        StartIcon="@Icons.Material.Outlined.Add" OnClick="@(() => _showCreateForm = !_showCreateForm)">
                                 New SMRR
@@ -52,6 +42,9 @@
                         </MudItem>
                     }
                 </MudGrid>
+
+                <AMISEnumChips TEnum="ReceiptType" Value="_receiptTypeFilter" ValueChanged="OnReceiptTypeChanged"
+                               Label="Type" Class="mt-3" />
             </MudCardContent>
         </MudCard>
     </MudItem>
@@ -186,6 +179,8 @@
     {
         if (e.Key == "Enter") await LoadAsync();
     }
+
+    private async Task OnReceiptTypeChanged(ReceiptType? value) { _receiptTypeFilter = value; _page = 1; await LoadAsync(); }
 
     private async Task OnCreatedAsync(ArReceivingReportDto created)
     {
