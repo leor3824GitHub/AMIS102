@@ -9,6 +9,7 @@ using AMIS.Modules.Identity.Data;
 using AMIS.Modules.Identity.Domain;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.Logging;
 using System.Collections.ObjectModel;
 using System.Text;
 
@@ -21,21 +22,20 @@ internal sealed class UserPasswordService(
     IMailService mailService,
     IMultiTenantContextAccessor<AppTenantInfo> multiTenantContextAccessor,
     IPasswordHistoryService passwordHistoryService,
-    IPasswordExpiryService passwordExpiryService) : IUserPasswordService
+    IPasswordExpiryService passwordExpiryService,
+    ILogger<UserPasswordService> logger) : IUserPasswordService
 {
     public async Task ForgotPasswordAsync(string email, string origin, CancellationToken cancellationToken)
     {
         EnsureValidTenant();
 
+        // Always respond identically whether or not the account exists — a 404 here
+        // is a user-enumeration oracle.
         var user = await userManager.FindByEmailAsync(email);
-        if (user == null)
+        if (user == null || string.IsNullOrWhiteSpace(user.Email))
         {
-            throw new NotFoundException("user not found");
-        }
-
-        if (string.IsNullOrWhiteSpace(user.Email))
-        {
-            throw new InvalidOperationException("user email cannot be null or empty");
+            logger.LogInformation("Password reset requested for unknown email; no mail sent");
+            return;
         }
 
         var token = await userManager.GeneratePasswordResetTokenAsync(user);
@@ -57,7 +57,9 @@ internal sealed class UserPasswordService(
         var user = await userManager.FindByEmailAsync(email);
         if (user == null)
         {
-            throw new NotFoundException("user not found");
+            // Same error shape as an invalid token so the response doesn't reveal
+            // whether the email is registered.
+            throw new CustomException("error resetting password", new List<string> { "Invalid token." });
         }
 
         token = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(token));

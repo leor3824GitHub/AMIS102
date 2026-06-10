@@ -31,15 +31,22 @@ public sealed class SecurityHeadersMiddleware(RequestDelegate next, IOptions<Sec
         headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
         headers["X-XSS-Protection"] = "0";
 
+        if (context.Request.IsHttps && !headers.ContainsKey("Strict-Transport-Security"))
+        {
+            headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains";
+        }
+
         if (!headers.ContainsKey("Content-Security-Policy"))
         {
             var scriptSources = string.Join(' ', _options.ScriptSources ?? []);
             var styleSources = string.Join(' ', _options.StyleSources ?? []);
 
+            // Script origins must be allow-listed explicitly via ScriptSources — a bare
+            // "https:" source would permit scripts from any HTTPS host.
             var csp =
                 "default-src 'self'; " +
                 "img-src 'self' data: https:; " +
-                $"script-src 'self' https: {scriptSources}; " +
+                $"script-src 'self' {scriptSources}; " +
                 $"style-src 'self' {(_options.AllowInlineStyles ? "'unsafe-inline' " : string.Empty)}{styleSources}; " +
                 "object-src 'none'; " +
                 "frame-ancestors 'none'; " +

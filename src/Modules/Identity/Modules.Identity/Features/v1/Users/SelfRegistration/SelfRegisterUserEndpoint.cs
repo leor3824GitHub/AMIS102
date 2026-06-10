@@ -1,5 +1,3 @@
-using AMIS.Framework.Shared.Identity;
-using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Framework.Shared.Multitenancy;
 using AMIS.Modules.Identity.Contracts.v1.Users.RegisterUser;
 using Mediator;
@@ -26,7 +24,6 @@ public static class SelfRegisterUserEndpoint
         })
         .WithName("SelfRegisterUser")
         .WithSummary("Self register user")
-        .RequirePermission(IdentityPermissionConstants.Users.Create)
         .WithDescription("Allow a user to self-register.")
         .AllowAnonymous();
     }

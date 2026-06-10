@@ -443,6 +443,9 @@ internal sealed class TemplateRenderer : ITemplateRenderer
         var migrationsAssembly = $"{options.Name}.Migrations";
         var projectNameLower = _templateParser.NormalizeProjectName(options.Name, NameContext.LowerCase);
 
+        // Per-project random dev key; the "dev-only-" prefix is rejected by the Production startup guard.
+        var devSigningKey = $"dev-only-signing-key-{Guid.NewGuid():N}";
+
         return $$"""
             {
               "OpenTelemetryOptions": {
@@ -553,7 +556,7 @@ internal sealed class TemplateRenderer : ITemplateRenderer
               "JwtOptions": {
                 "Issuer": "{{projectNameLower}}.local",
                 "Audience": "{{projectNameLower}}.clients",
-                "SigningKey": "replace-with-256-bit-secret-min-32-chars",
+                "SigningKey": "{{devSigningKey}}",
                 "AccessTokenMinutes": 2,
                 "RefreshTokenDays": 7
               },

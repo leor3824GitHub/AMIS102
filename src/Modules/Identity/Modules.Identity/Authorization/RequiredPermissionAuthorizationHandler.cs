@@ -30,10 +30,21 @@ public sealed class RequiredPermissionAuthorizationHandler(IUserService userServ
         }
 
         var cancellationToken = httpContext?.RequestAborted ?? CancellationToken.None;
-        if (context.User?.GetUserId() is { } userId && await userService.HasPermissionAsync(userId, requiredPermissions.First(), cancellationToken).ConfigureAwait(false))
+        if (context.User?.GetUserId() is not { } userId)
         {
-            context.Succeed(requirement);
+            return;
         }
+
+        // The user must hold every permission the endpoint declares, not just the first.
+        foreach (var permission in requiredPermissions)
+        {
+            if (!await userService.HasPermissionAsync(userId, permission, cancellationToken).ConfigureAwait(false))
+            {
+                return;
+            }
+        }
+
+        context.Succeed(requirement);
     }
 }
 

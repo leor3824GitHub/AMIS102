@@ -47,6 +47,14 @@ if (builder.Environment.IsProduction())
     Require(config, "DatabaseOptions:ConnectionString");
     Require(config, "CachingOptions:Redis");
     Require(config, "JwtOptions:SigningKey");
+
+    var signingKey = config["JwtOptions:SigningKey"];
+    if (string.Equals(signingKey, AMIS.Modules.Identity.Authorization.Jwt.JwtOptions.PlaceholderSigningKey, StringComparison.Ordinal) ||
+        signingKey!.StartsWith("dev-only-", StringComparison.OrdinalIgnoreCase))
+    {
+        throw new InvalidOperationException(
+            "JwtOptions:SigningKey is a placeholder/dev key. Production requires a real 256-bit secret from a secret store.");
+    }
 }
 
 builder.Services.AddMediator(o =>

@@ -15,17 +15,20 @@ namespace AMIS.Modules.Identity.Services;
 public sealed class IdentityService : IIdentityService
 {
     private readonly UserManager<AmisUser> _userManager;
+    private readonly SignInManager<AmisUser> _signInManager;
     private readonly ILogger<IdentityService> _logger;
     private readonly IMultiTenantContextAccessor<AppTenantInfo>? _multiTenantContextAccessor;
     private readonly IGroupRoleService _groupRoleService;
 
     public IdentityService(
         UserManager<AmisUser> userManager,
+        SignInManager<AmisUser> signInManager,
         IMultiTenantContextAccessor<AppTenantInfo>? multiTenantContextAccessor,
         ILogger<IdentityService> logger,
         IGroupRoleService groupRoleService)
     {
         _userManager = userManager;
+        _signInManager = signInManager;
         _multiTenantContextAccessor = multiTenantContextAccessor;
         _logger = logger;
         _groupRoleService = groupRoleService;
@@ -132,8 +135,22 @@ public sealed class IdentityService : IIdentityService
     private async Task<AmisUser> FindAndValidateUserByCredentialsAsync(string email, string password)
     {
         var user = await _userManager.FindByEmailAsync(email.Trim().Normalize());
-        if (user is null || !await _userManager.CheckPasswordAsync(user, password))
+        if (user is null)
         {
+            // Burn a hash so missing and existing accounts take comparable time (timing-based enumeration).
+            new PasswordHasher<AmisUser>().HashPassword(new AmisUser(), password);
+            throw new UnauthorizedException();
+        }
+
+        // lockoutOnFailure increments AccessFailedCount and enforces the configured lockout policy.
+        var signInResult = await _signInManager.CheckPasswordSignInAsync(user, password, lockoutOnFailure: true);
+        if (!signInResult.Succeeded)
+        {
+            if (signInResult.IsLockedOut)
+            {
+                _logger.LogWarning("Login blocked: account {UserId} is locked out", user.Id);
+            }
+
             throw new UnauthorizedException();
         }
 

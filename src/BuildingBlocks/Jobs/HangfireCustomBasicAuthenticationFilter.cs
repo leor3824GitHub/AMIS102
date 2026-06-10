@@ -57,7 +57,7 @@ public class HangfireCustomBasicAuthenticationFilter : IDashboardAuthorizationFi
             return true;
         }
 
-        _logger.LogInformation("auth tokens [{UserName}] [{Password}] do not match configuration", tokens.Username, tokens.Password);
+        _logger.LogInformation("auth tokens for user [{UserName}] do not match configuration", tokens.Username);
 
         SetChallengeResponse(httpContext);
         return false;
@@ -101,17 +101,23 @@ public class BasicAuthenticationTokens
 
     public bool AreInvalid()
     {
-        return ContainsTwoTokens() && ValidTokenValue(Username) && ValidTokenValue(Password);
+        return !ContainsTwoTokens() || string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(Password);
     }
 
     public bool CredentialsMatch(string user, string pass)
     {
-        return Username.Equals(user, StringComparison.Ordinal) && Password.Equals(pass, StringComparison.Ordinal);
+        // Both comparisons always run, in fixed time, so the check takes the same
+        // time regardless of where the mismatch occurs.
+        var userMatches = FixedTimeEquals(Username, user);
+        var passMatches = FixedTimeEquals(Password, pass);
+        return userMatches && passMatches;
     }
 
-    private static bool ValidTokenValue(string token)
+    private static bool FixedTimeEquals(string left, string right)
     {
-        return string.IsNullOrWhiteSpace(token);
+        var leftBytes = System.Text.Encoding.UTF8.GetBytes(left ?? string.Empty);
+        var rightBytes = System.Text.Encoding.UTF8.GetBytes(right ?? string.Empty);
+        return System.Security.Cryptography.CryptographicOperations.FixedTimeEquals(leftBytes, rightBytes);
     }
 
     private bool ContainsTwoTokens()

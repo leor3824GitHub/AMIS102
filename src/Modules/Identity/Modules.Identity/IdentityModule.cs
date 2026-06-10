@@ -33,6 +33,7 @@ using AMIS.Modules.Identity.Features.v1.Users.GetUserRoles;
 using AMIS.Modules.Identity.Features.v1.Users.GetUsers;
 using AMIS.Modules.Identity.Features.v1.Users.RegisterUser;
 using AMIS.Modules.Identity.Features.v1.Users.SearchUsers;
+using AMIS.Modules.Identity.Features.v1.Users.ForgotPassword;
 using AMIS.Modules.Identity.Features.v1.Users.ResetPassword;
 using AMIS.Modules.Identity.Features.v1.Users.ToggleUserStatus;
 using AMIS.Modules.Identity.Features.v1.Users.UpdateUser;
@@ -124,11 +125,14 @@ public class IdentityModule : IModule
         services.AddIdentity<AmisUser, AmisRole>(options =>
         {
             options.Password.RequiredLength = IdentityModuleConstants.PasswordLength;
-            options.Password.RequireDigit = false;
-            options.Password.RequireLowercase = false;
-            options.Password.RequireNonAlphanumeric = false;
-            options.Password.RequireUppercase = false;
+            options.Password.RequireDigit = true;
+            options.Password.RequireLowercase = true;
+            options.Password.RequireNonAlphanumeric = true;
+            options.Password.RequireUppercase = true;
             options.User.RequireUniqueEmail = true;
+            options.Lockout.AllowedForNewUsers = true;
+            options.Lockout.MaxFailedAccessAttempts = 5;
+            options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
         })
            .AddEntityFrameworkStores<IdentityDbContext>()
            .AddDefaultTokenProviders();
@@ -210,8 +214,9 @@ public class IdentityModule : IModule
         group.MapGetUsersListEndpoint();
         group.MapSearchUsersEndpoint();
         group.MapRegisterUserEndpoint();
-        group.MapResetPasswordEndpoint();
-        group.MapSelfRegisterUserEndpoint();
+        group.MapForgotPasswordEndpoint().RequireRateLimiting("auth");
+        group.MapResetPasswordEndpoint().RequireRateLimiting("auth");
+        group.MapSelfRegisterUserEndpoint().RequireRateLimiting("auth");
         group.MapToggleUserStatusEndpoint();
         group.MapUpdateUserEndpoint();
 
