@@ -446,7 +446,8 @@ internal sealed record StartPhysicalCountRequest(
     DateOnly AsAt,
     DateOnly StartedOn,
     IReadOnlyList<ArEmployeeRefDto> ConductedBy,
-    string? Remarks = null);
+    string? Remarks = null,
+    string? OfficeOrderNo = null);
 
 internal sealed record ArRecordPhysicalCountEntryRequest(
     Guid AssetRegistryId,

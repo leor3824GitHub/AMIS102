@@ -2,6 +2,10 @@ namespace Playground.Maui.Services;
 
 public sealed class ApiClientOptions
 {
+    // Preferences key for the last-used tenant. Not a secret — tokens stay in secure storage;
+    // the tenant id only scopes the `tenant` header and pre-fills the login form.
+    public const string TenantPreferenceKey = "tenant_id";
+
     public string BaseUrl { get; set; } = string.Empty;
     public string TenantId { get; set; } = "root";
 

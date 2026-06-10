@@ -89,19 +89,3 @@ internal sealed class UnserviceableReportNumberGenerator(AssetRegisterDbContext 
     }
 }
 
-/// <summary>
-/// Default placeholder CRC calculator: returns acquisition cost. A real implementation
-/// would apply COA 2022-004 §4.19 indices; lifted to a dedicated service later.
-/// </summary>
-internal sealed class CurrentReplacementCostCalculator(AssetRegisterDbContext db) : ICurrentReplacementCostCalculator
-{
-    public async Task<decimal> ComputeAsync(Guid assetRegistryId, DateOnly asOf, CancellationToken ct)
-    {
-        _ = asOf;
-        var asset = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.FirstOrDefaultAsync(
-                db.AssetRegistries, a => a.Id == assetRegistryId, ct).ConfigureAwait(false)
-            ?? throw new InvalidOperationException($"AssetRegistry '{assetRegistryId}' not found.");
-        return asset.UnitCost;
-    }
-}
-

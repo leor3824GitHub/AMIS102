@@ -1,4 +1,5 @@
 using AMIS.Modules.AssetRegister.Contracts.v1;
+using AMIS.Modules.AssetRegister.Domain.Assets;
 
 namespace AMIS.Modules.AssetRegister.Domain.Services;
 
@@ -43,10 +44,11 @@ public interface IReceivingReportNumberGenerator
 
 /// <summary>
 /// Computes current replacement cost per COA 2022-004 §4.19 for incident-report
-/// snapshotting.
+/// snapshotting. Takes the already-loaded subject so callers that hold the entity
+/// (e.g. incident filing) don't trigger a redundant re-fetch.
 /// </summary>
 public interface ICurrentReplacementCostCalculator
 {
-    Task<decimal> ComputeAsync(Guid assetRegistryId, DateOnly asOf, CancellationToken ct);
+    Task<decimal> ComputeAsync(AssetRegistry subject, DateOnly asOf, CancellationToken ct);
 }
 

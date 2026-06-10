@@ -11,11 +11,11 @@ public sealed partial class LoginViewModel(
     ApiClientOptions apiOptions) : ObservableObject
 {
 #if DEBUG
-    [ObservableProperty] private string _tenant = "root";
+    [ObservableProperty] private string _tenant = Preferences.Default.Get(ApiClientOptions.TenantPreferenceKey, "root");
     [ObservableProperty] private string _email = "admin@root.com";
     [ObservableProperty] private string _password = "123Pa$$word!";
 #else
-    [ObservableProperty] private string _tenant = "root";
+    [ObservableProperty] private string _tenant = Preferences.Default.Get(ApiClientOptions.TenantPreferenceKey, "root");
     [ObservableProperty] private string _email = "";
     [ObservableProperty] private string _password = "";
 #endif
@@ -48,6 +48,9 @@ public sealed partial class LoginViewModel(
 
             var employee = await apiClient.GetMyEmployeeAsync(ct);
             authState.SetEmployee(new EmployeeInfo(employee.EmployeeId, employee.FullName, employee.Department, employee.Position));
+
+            // Persist only after a successful login so a typo never poisons the next session resume.
+            Preferences.Default.Set(ApiClientOptions.TenantPreferenceKey, apiOptions.TenantId);
 
             Application.Current!.MainPage = new AppShell();
         }

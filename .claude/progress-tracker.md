@@ -7,13 +7,16 @@
 
 ## Current Phase
 
-**Phase: MAUI Client — Planning & AI Guide Setup**
+**Phase: AssetRegister module hardening + cross-client polish**
+
+> Last reconciled against the codebase: 2026-06-10. The MAUI client and AssetRegister module
+> are both substantially built — see status table below.
 
 ---
 
 ## Current Goal
 
-Scaffold `Playground.Maui` — the .NET MAUI mobile/desktop client (Android · iOS · Windows) that consumes the existing REST API, providing login, profile, ICS/PAR inventory view, and QR/barcode asset lookup.
+Harden the `AssetRegister` bounded context (valuation, reconciliation, print parity) and finish polish items across the Blazor and MAUI clients.
 
 ---
 
@@ -34,15 +37,15 @@ Scaffold `Playground.Maui` — the .NET MAUI mobile/desktop client (Android · i
 | Backend — Core Modules (Identity, Multitenancy, Auditing) | ✅ Complete                     |
 | Backend — MasterData Module                               | ✅ Complete                     |
 | Backend — Expendable Module                               | ✅ Complete                     |
-| Backend — AssetManagement Module                          | 🟡 Enhancement in progress      |
-| Backend — AssetRegister Module (new bounded context)      | 🟡 Phases 1–4 complete          |
+| Backend — AssetManagement Module                          | 🟡 Print-parity signoff pending |
+| Backend — AssetRegister Module (new bounded context)      | ✅ Phases 1–7 landed (slices for Catalog, Assets, Accountability, Issuance, Receiving, Counting incl. freeze, Incidents, Unserviceable, ReturnedProperty, Reports; IAR consumer materializes assets; catalog seeding; 18 Blazor pages) |
 | Backend — AssetProcurement Module                         | ✅ Complete                     |
 | Backend — Vehicle Module                                  | ✅ Complete                     |
 | Backend — Finance Module                                  | ✅ Complete                     |
 | Backend — ProcurementPlanning Module                      | ✅ Complete                     |
 | Backend — ProcurementAcquisition Module                   | ✅ Complete                     |
 | Client — Playground.Blazor                                | ✅ Complete (all modules wired) |
-| Client — Playground.Maui                                  | 🔲 Not started                  |
+| Client — Playground.Maui                                  | ✅ Phases 1–11 built (login, shell, profile, inventory, scan, asset detail, platform manifests) + PhysicalCount feature (5 pages, OCR, offline sync) |
 | AI Guides (.claude/ rules, skills, agents)                | ✅ Complete                     |
 
 ---
@@ -241,84 +244,46 @@ Scaffold `Playground.Maui` — the .NET MAUI mobile/desktop client (Android · i
 
 ### Client: Playground.Maui
 
-> Implementation plan: `MAUI-IMPLEMENTATION-PLAN.md`
+> Implementation plan: `MAUI-IMPLEMENTATION-PLAN.md` — **all 11 phases are built** (verified against the codebase 2026-06-10):
+> backend endpoints (`employees/me`, `tangible-inventory-items/by-property-no`), project setup, auth infrastructure
+> (token storage, authenticated handler, SQLite cache), login, shell navigation, profile, inventory (ICS/PAR + details),
+> scan (ZXing + manual entry), asset detail, and platform manifests.
+> **Beyond the plan:** a full PhysicalCount feature was added — session list, walkthrough, scan, mark-entry,
+> found-at-station pages, `OcrService`, `PropertyNumberExtractor`, and `PhysicalCountSyncService` for offline sync.
 
-- [ ] **Phase 1** — Backend: `GET /api/v1/master-data/employees/me`
-  - `GetMyEmployeeQuery.cs`
-  - `GetMyEmployeeHandler.cs`
-  - `GetMyEmployeeEndpoint.cs`
+- [ ] On-device validation pass on a physical low-end Android device (per `.claude/rules/maui.md` performance rule)
 
-- [ ] **Phase 2** — Backend: `GET /api/v1/asset-management/tangible-inventory-items/by-property-no/{propertyNo}`
-  - `GetTangibleInventoryItemByPropertyNoQuery.cs`
-  - `GetTangibleInventoryItemByPropertyNoHandler.cs`
-  - `GetTangibleInventoryItemByPropertyNoEndpoint.cs`
+### Backend: AssetRegister
 
-- [ ] **Phase 3** — MAUI Project Setup
-  - `Playground.Maui.csproj` (Android · iOS · Windows)
-  - Add to `AMIS.Framework.slnx`
-  - NuGet: CommunityToolkit.Maui, CommunityToolkit.Mvvm, ZXing.Net.MAUI, sqlite-net-pcl
-  - `appsettings.json` (Api:BaseUrl, Api:TenantId)
-  - `MauiProgram.cs`
+> The archived plan/progress docs in `_ARCHIVED_DOCUMENTATION/` are out of date. Verified state 2026-06-10:
+> Phases 1–7 all landed — ~50 vertical slices (Catalog, Assets, Accountability, Issuance, Receiving,
+> Counting incl. freeze workflow, Incidents, Unserviceable, ReturnedProperty, Reports), the
+> `AssetIARAcceptedEventConsumer` fully materializes assets (catalog-id–based, idempotent), catalog seeding
+> runs per tenant, permissions are registered, and 18 Blazor pages exist under `Components/Pages/AssetRegister/`.
 
-- [ ] **Phase 4** — Auth Infrastructure
-  - `ApiClientOptions.cs`
-  - `ITokenStorageService.cs` / `TokenStorageService.cs`
-  - `AuthStateService.cs`
-  - `AuthenticatedHttpHandler.cs`
-  - `ICacheService.cs` / `CacheService.cs`
-  - `Data/LocalDb.cs` + SQLite model classes
-
-- [ ] **Phase 5** — Login Screen
-  - `Features/Auth/LoginPage.xaml` + `.cs`
-  - `Features/Auth/LoginViewModel.cs`
-  - Startup token check in `App.xaml.cs`
-
-- [ ] **Phase 6** — AppShell Navigation
-  - `AppShell.xaml` + `.cs` (tabs: Inventory | Scan | Profile)
-  - Route registration (ICSDetailPage, PARDetailPage, AssetDetailPage)
-
-- [ ] **Phase 7** — Profile Screen
-  - `Features/Profile/ProfilePage.xaml` + `.cs`
-  - `Features/Profile/ProfileViewModel.cs`
-
-- [ ] **Phase 8** — Inventory Screen (ICS + PAR)
-  - `Features/Inventory/InventoryPage.xaml` + `.cs`
-  - `Features/Inventory/InventoryViewModel.cs`
-  - `Features/Inventory/ICSDetailPage.xaml` + `.cs`
-  - `Features/Inventory/ICSDetailViewModel.cs`
-  - `Features/Inventory/PARDetailPage.xaml` + `.cs`
-  - `Features/Inventory/PARDetailViewModel.cs`
-
-- [ ] **Phase 9** — Scan Screen
-  - `Features/Scan/ScanPage.xaml` + `.cs`
-  - `Features/Scan/ScanViewModel.cs`
-  - Camera (ZXing.Net.MAUI) + manual PropertyNo entry
-
-- [ ] **Phase 10** — Asset Detail Screen
-  - `Features/Asset/AssetDetailPage.xaml` + `.cs`
-  - `Features/Asset/AssetDetailViewModel.cs`
-
-- [ ] **Phase 11** — Polish
-  - Platform manifests (camera + internet permissions)
-  - Loading overlays, empty states, error toasts
-  - Windows: camera fallback to manual entry
+- [x] Real Current Replacement Cost calculator (COA 2022-004 §4.19): latest similar-acquisition price via `ReplacementCostPolicy` + dedicated `CurrentReplacementCostCalculator` service (replaced the acquisition-cost placeholder; 6 policy unit tests added) — 2026-06-10
+- [x] Fixed ambiguous `CustomException` ctor call in `CountFreezeGuard` that broke the module build — 2026-06-10
+- [x] **2nd pass:** `ICurrentReplacementCostCalculator.ComputeAsync` now takes the already-loaded `AssetRegistry` (aligns with `ICountFreezeGuard`), dropping a redundant per-item PK re-fetch in `FileIncidentReport` — 2026-06-10
+- [x] **2nd pass:** Closed freeze-guard consistency gap — `FileIncidentReport` now calls `EnsureMovementAllowedAsync` before flipping assets to UnderInvestigation/accountability lines to Lost (every other asset-mutating handler already did). User-approved behavior: filing an RLSDDSP is blocked while a covering count is frozen — 2026-06-10
 
 ---
 
 ## Next Up
 
-1. Implement `GET /api/v1/master-data/employees/me` (Phase 1)
-2. Implement `GET /api/v1/asset-management/tangible-inventory-items/by-property-no/{propertyNo}` (Phase 2)
-3. Create `Playground.Maui.csproj` and add to solution (Phase 3)
+1. AssetManagement: final visual print-layout parity signoff (ICS/PAR/SMIR/PPEIR templates)
+2. MAUI: validation pass on a physical low-end Android device (requires hardware — cannot be automated)
+3. Blazor sizing Phase 3: ~40 pages still below 50% Dense coverage — see worklist in `MUDBLAZOR-SIZING-STANDARDIZATION-PLAN.md` "Status Reconciliation" section (reconciled 2026-06-10; VehiclesPage create form migrated same day)
+4. ~~Fix `AMISSelect` two-way binding~~ — ✅ Fixed 2026-06-10 (user-approved BuildingBlocks change): now propagates via `OnMudValueChanged`, same pattern as `AMISAutocomplete`. Wrapper adoption is unblocked for Phase 3 migrations.
+5. Set the real production API host in `Playground.Maui/appsettings.Production.json` before first release
 
 ---
 
-## Open Questions
+## Open Questions — RESOLVED 2026-06-10 (user decisions)
 
-- Should the MAUI app support multiple tenants (tenant switcher), or always default to `root`?
-- Should ICS/PAR detail pages be cached offline (currently planned as online-only)?
-- Should the app support push notifications for ICS expiry warnings?
-- Which environment configs are needed — dev / staging / prod (`appsettings.{env}.json`)?
+- **Multi-tenant:** Tenant picker at login. Already existed on `LoginPage`; tenant is now also persisted via `Preferences` (`ApiClientOptions.TenantPreferenceKey`) so a session resumed from stored tokens sends the right `tenant` header, and the login form pre-fills the last-used tenant.
+- **ICS/PAR detail offline caching:** Keep online-only (per `.claude/rules/maui.md` cache table).
+- **Push notifications for ICS expiry:** Not now; revisit on demand signal (server-side expiry job already exists).
+- **Environment configs:** Dev + Prod. `appsettings.json` = dev defaults; `appsettings.Production.json` overlays in Release builds (BaseUrl placeholder `https://amis-api.example.gov.ph` — set the real host before first release). Environment variables still override both.
 
 ---
 
@@ -342,7 +307,8 @@ Scaffold `Playground.Maui` — the .NET MAUI mobile/desktop client (Android · i
 
 - All backend modules are complete and deployed to `Playground.Api`.
 - `Playground.Blazor` is the working web client; all modules are wired and tested there.
-- `Playground.Maui` does NOT exist yet — start from Phase 1 (two new backend endpoints) + Phase 3 (project scaffold) in parallel.
+- `Playground.Maui` is fully scaffolded and feature-complete per the plan (plus PhysicalCount); treat `MAUI-IMPLEMENTATION-PLAN.md` checklists as historical.
+- `_ARCHIVED_DOCUMENTATION/ASSET-REGISTER-MODULE-PROGRESS.md` is stale and self-contradictory; trust this file and the code.
 - The `.claude/` AI guides have been fully updated for MAUI: `rules/maui.md`, `skills/maui-feature/SKILL.md`, `agents/maui-reviewer.md`, plus updates to `code-reviewer.md`, `architecture-guard.md`, `CLAUDE.md`, and `architecture.md`.
 - Use `/maui-feature` skill when adding any new MAUI screen.
 - Use `maui-reviewer` agent after any MAUI code changes.

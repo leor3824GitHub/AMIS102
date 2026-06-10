@@ -28,14 +28,22 @@ public static class MauiProgram
                 fonts.AddFont("Inter-Bold.ttf", "InterBold");
             });
 
-        // Configuration: embedded appsettings.json, then environment variables
+        // Configuration: embedded appsettings.json (dev defaults), appsettings.Production.json
+        // overlay in Release builds, then environment variables
         // (environment variables override so Aspire can inject Api__BaseUrl at launch time)
         var assembly = typeof(MauiProgram).Assembly;
         using var stream = assembly.GetManifestResourceStream("Playground.Maui.appsettings.json");
         if (stream is not null)
         {
-            var config = new ConfigurationBuilder()
-                .AddJsonStream(stream)
+            var configBuilder = new ConfigurationBuilder().AddJsonStream(stream);
+#if !DEBUG
+            using var productionStream = assembly.GetManifestResourceStream("Playground.Maui.appsettings.Production.json");
+            if (productionStream is not null)
+            {
+                configBuilder.AddJsonStream(productionStream);
+            }
+#endif
+            var config = configBuilder
                 .AddEnvironmentVariables()
                 .Build();
             builder.Configuration.AddConfiguration(config);
@@ -65,6 +73,10 @@ public static class MauiProgram
                 apiOptions.BaseUrl = uriBuilder.Uri.ToString().TrimEnd('/');
             }
         }
+
+        // Restore the last-used tenant: App.OnStart resumes a session from stored tokens without
+        // showing the login page, so the tenant header must match the tenant the tokens were issued under.
+        apiOptions.TenantId = Preferences.Default.Get(ApiClientOptions.TenantPreferenceKey, apiOptions.TenantId);
 
         // Services
         builder.Services.AddSingleton(apiOptions);

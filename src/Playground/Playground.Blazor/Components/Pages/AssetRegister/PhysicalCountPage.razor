@@ -76,8 +76,13 @@
                                        DateFormat="MM/dd/yyyy" Required="true" />
                         <MudDatePicker @bind-Date="_startForm.StartedOnNullable" Label="Started On" Variant="Variant.Outlined"
                                        DateFormat="MM/dd/yyyy" Required="true" />
+                        <MudTextField @bind-Value="_startForm.OfficeOrderNo" Label="Office Order No. (optional)" Variant="Variant.Outlined"
+                                      MaxLength="100" Placeholder="Required later to freeze the ledger" />
                         <MudTextField @bind-Value="_startForm.Remarks" Label="Remarks (optional)" Variant="Variant.Outlined"
                                       Lines="2" MaxLength="500" />
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                            Conducted by: @UserProfileState.EmployeeFullName
+                        </MudText>
                         <AMISButton Variant="Variant.Filled" Color="Color.Success" FullWidth="true"
                                     OnClick="StartSessionAsync" Disabled="_busy">
                             Start Session
@@ -286,6 +291,7 @@
         public string FundCluster { get; set; } = "";
         public DateTime? AsAtNullable { get; set; }
         public DateTime? StartedOnNullable { get; set; }
+        public string? OfficeOrderNo { get; set; }
         public string? Remarks { get; set; }
     }
 
@@ -356,17 +362,30 @@
             return;
         }
 
+        if (UserProfileState.EmployeeId == Guid.Empty)
+        {
+            Snackbar.Add("Your account is not linked to an employee record. Ask an administrator to link it before starting a count.", Severity.Warning);
+            return;
+        }
+
         _busy = true;
         try
         {
+            // The signed-in user conducts the count; the API requires at least one conductor with a real EmployeeId.
+            var conductedBy = new[]
+            {
+                new ArEmployeeRefDto(UserProfileState.EmployeeId, UserProfileState.EmployeeFullName, UserProfileState.EmployeePositionName)
+            };
+
             var req = new StartPhysicalCountRequest(
                 _startForm.Code.Trim(),
                 _startForm.Scope,
                 _startForm.FundCluster,
                 DateOnly.FromDateTime(_startForm.AsAtNullable.Value),
                 DateOnly.FromDateTime(_startForm.StartedOnNullable.Value),
-                [],
-                _startForm.Remarks);
+                conductedBy,
+                _startForm.Remarks,
+                string.IsNullOrWhiteSpace(_startForm.OfficeOrderNo) ? null : _startForm.OfficeOrderNo.Trim());
 
             await Client.StartAsync(req);
             Snackbar.Add("Physical count session started.", Severity.Success);

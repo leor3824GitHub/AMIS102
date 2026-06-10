@@ -1,8 +1,31 @@
 # MudBlazor Sizing Standardization Plan
 
 **Date:** May 14, 2026  
-**Status:** Planning Phase  
+**Status:** Phases 1–2 complete · Phase 3 in progress (reconciled against code 2026-06-10)  
 **Priority:** Medium (UX consistency & maintainability)  
+
+---
+
+## Status Reconciliation (2026-06-10)
+
+Verified against the codebase — the checklists below this section are historical; trust this table:
+
+| Item | Status |
+| --- | --- |
+| Phase 1.1 — CSS sizing tokens in `AMIS-theme.css` | ✅ Done (`--amis-control-height-*`, `.amis-control-compact`) |
+| Phase 1.2 — `InputSize` parameter on AMISTextField/AMISSelect/AMISAutocomplete | ✅ Done |
+| Phase 1.3 — Documentation | ✅ Done (`.claude/rules/blazor.md` "Compact UI Controls" section + CLAUDE.md) |
+| Beyond plan — `AMISButton` (60 usages), `AMISIconButton` (44), `AMISFilterBar` (4), `AMISEnumChips` (16) | ✅ Done (commits 7389857, 8992edb, 412d4d0) |
+| Phase 2 — VehiclesPage | ✅ Done (filter row earlier; create form compacted 2026-06-10) |
+| Phase 2 — Audits.razor | ✅ Done (9/14 inputs Dense; remainder are non-row contexts) |
+| Phase 2 — PhysicalCountWalkthroughPage | ✅ Done |
+| Phase 2 — AssetManagementReportsPage | ✅ Done |
+| Phase 3 — Remaining pages | 🟡 ~40 pages still <50% Dense coverage (see scan note below). Input wrappers (AMISTextField/Select/Autocomplete) have **0 page usages** — pages use direct `Dense="true" Margin="Margin.Dense"` attributes instead, which is an accepted pattern per `.claude/rules/blazor.md` |
+| Phase 4 — Validation & docs | 🟡 Docs done; per-page smoke tests pending as Phase 3 proceeds |
+
+**Known issue (wrapper adoption blocker):** ~~`AMISSelect` declares a `ValueChanged` parameter but never invokes it~~ — **Fixed 2026-06-10** (user-approved BuildingBlocks change): `AMISSelect` now forwards value changes through `OnMudValueChanged`, mirroring `AMISAutocomplete`. `@bind-Value` through all three input wrappers works; Phase 3 migrations may use wrappers freely.
+
+**Phase 3 worklist (scan 2026-06-10, pages with <50% Dense coverage on inputs):** ProfileSettings (13/0), OrganizationProfilePage (13/1), VehicleDetailPage (16/3), MaintenanceLogsPage (14/6), SemiExpendableIssuanceRecordsPage (12/4), SuppliersPage (11/2), DisbursementVouchersPage (11/1), UnserviceableReportsPage (11/4), BudgetUtilizationRecordsPage (10/1), FuelOdometerPage (10/3), MaintenanceSchedulesPage (10/4), RepairRecordsPage (10/4), PhysicalCountPage (10/4), and ~27 more smaller pages. Forms-only pages may legitimately stay default density per Pattern B in `.claude/rules/blazor.md`.
 
 ---
 

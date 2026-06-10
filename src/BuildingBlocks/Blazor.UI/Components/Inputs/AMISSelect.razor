@@ -2,7 +2,8 @@
 @inherits AMISComponentBase
 @* Compact sizing contract: Dense + Margin.Dense are enforced. InputSize defaults to Size.Small but can be overridden. *@
 <MudSelect T="TValue"
-           @bind-Value="Value"
+           Value="Value"
+           ValueChanged="@OnMudValueChanged"
            Label="@Label"
            Required="@Required"
            Disabled="@Disabled"
@@ -30,4 +31,14 @@
     [Parameter] public Size InputSize { get; set; } = Size.Small;
     [Parameter] public RenderFragment? ChildContent { get; set; }
     [Parameter(CaptureUnmatchedValues = true)] public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private async Task OnMudValueChanged(TValue? newValue)
+    {
+        // Prevent unnecessary updates if value hasn't changed
+        if (EqualityComparer<TValue?>.Default.Equals(Value, newValue))
+            return;
+
+        Value = newValue;
+        await ValueChanged.InvokeAsync(Value);
+    }
 }

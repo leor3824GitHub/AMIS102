@@ -37,7 +37,7 @@ internal sealed class CountFreezeGuard(AssetRegisterDbContext db) : ICountFreeze
                     $"Asset movements are blocked: physical count session '{blocking.Code}' has frozen " +
                     $"fund cluster '{blocking.FundCluster}' ({blocking.Scope}). " +
                     $"Asset '{asset.PropertyNo.Value}' cannot be moved until the count is closed.",
-                    null,
+                    (IEnumerable<string>?)null,
                     HttpStatusCode.Conflict);
             }
         }

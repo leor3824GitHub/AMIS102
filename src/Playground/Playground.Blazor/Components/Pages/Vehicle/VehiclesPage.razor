@@ -50,30 +50,30 @@
                 <MudCardContent>
                     <MudText Typo="Typo.h6" Class="mb-3">Create Vehicle</MudText>
                     <MudStack Spacing="2">
-                        <MudTextField @bind-Value="_create.PlateNumber" Label="Plate Number" Required="true" />
-                        <MudTextField @bind-Value="_create.Make" Label="Make" Required="true" />
-                        <MudTextField @bind-Value="_create.Model" Label="Model" Required="true" />
-                        <MudNumericField @bind-Value="_create.Year" Label="Year" Min="1900" Max="2100" Required="true" />
-                        <MudSelect T="string" @bind-Value="_create.Type" Label="Type" Required="true">
+                        <MudTextField @bind-Value="_create.PlateNumber" Label="Plate Number" Required="true" Dense="true" Margin="Margin.Dense" />
+                        <MudTextField @bind-Value="_create.Make" Label="Make" Required="true" Dense="true" Margin="Margin.Dense" />
+                        <MudTextField @bind-Value="_create.Model" Label="Model" Required="true" Dense="true" Margin="Margin.Dense" />
+                        <MudNumericField @bind-Value="_create.Year" Label="Year" Min="1900" Max="2100" Required="true" Dense="true" Margin="Margin.Dense" />
+                        <MudSelect T="string" @bind-Value="_create.Type" Label="Type" Required="true" Dense="true" Margin="Margin.Dense">
                             @foreach (var vehicleType in VehicleTypes)
                             {
                                 <MudSelectItem Value="@vehicleType">@vehicleType</MudSelectItem>
                             }
                         </MudSelect>
-                        <MudNumericField @bind-Value="_create.Odometer" Label="Initial Odometer" Min="0" />
-                        
+                        <MudNumericField @bind-Value="_create.Odometer" Label="Initial Odometer" Min="0" Dense="true" Margin="Margin.Dense" />
+
                         <MudDivider Class="my-2" />
                         <MudText Typo="Typo.caption" Class="font-weight-bold">Technical Specifications</MudText>
-                        
-                        <MudTextField @bind-Value="_create.MotorNumber" Label="Motor Number" />
-                        <MudTextField @bind-Value="_create.ChassisNumber" Label="Chassis Number" />
-                        <MudNumericField @bind-Value="_create.NumberOfCylinders" Label="No. of Cylinders" Min="1" />
-                        <MudNumericField @bind-Value="_create.EngineDisplacementCC" Label="Engine Displacement (CC)" Min="0" />
-                        <MudTextField @bind-Value="_create.FuelType" Label="Fuel Type" Placeholder="e.g., Diesel, Gasoline, Hybrid" />
-                        <MudTextField @bind-Value="_create.VehicleUse" Label="Vehicle Use" Placeholder="e.g., GOV'T-UV, GOV'T-MPV" />
-                        <MudNumericField @bind-Value="_create.AcquisitionCost" Label="Acquisition Cost" Min="0" Format="F2" />
-                        
-                        <MudTextField @bind-Value="_create.Notes" Label="Notes" Lines="2" />
+
+                        <MudTextField @bind-Value="_create.MotorNumber" Label="Motor Number" Dense="true" Margin="Margin.Dense" />
+                        <MudTextField @bind-Value="_create.ChassisNumber" Label="Chassis Number" Dense="true" Margin="Margin.Dense" />
+                        <MudNumericField @bind-Value="_create.NumberOfCylinders" Label="No. of Cylinders" Min="1" Dense="true" Margin="Margin.Dense" />
+                        <MudNumericField @bind-Value="_create.EngineDisplacementCC" Label="Engine Displacement (CC)" Min="0" Dense="true" Margin="Margin.Dense" />
+                        <MudTextField @bind-Value="_create.FuelType" Label="Fuel Type" Placeholder="e.g., Diesel, Gasoline, Hybrid" Dense="true" Margin="Margin.Dense" />
+                        <MudTextField @bind-Value="_create.VehicleUse" Label="Vehicle Use" Placeholder="e.g., GOV'T-UV, GOV'T-MPV" Dense="true" Margin="Margin.Dense" />
+                        <MudNumericField @bind-Value="_create.AcquisitionCost" Label="Acquisition Cost" Min="0" Format="F2" Dense="true" Margin="Margin.Dense" />
+
+                        <MudTextField @bind-Value="_create.Notes" Label="Notes" Lines="2" Dense="true" Margin="Margin.Dense" />
                         <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CreateVehicle" Disabled="_busy">Create</MudButton>
                     </MudStack>
                 </MudCardContent>

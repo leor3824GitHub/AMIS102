@@ -11,7 +11,8 @@ namespace AMIS.Modules.AssetRegister.Features.v1.Incidents.FileIncidentReport;
 public sealed class FileIncidentReportCommandHandler(
     AssetRegisterDbContext db,
     IIncidentNumberGenerator numbers,
-    ICurrentReplacementCostCalculator crc)
+    ICurrentReplacementCostCalculator crc,
+    ICountFreezeGuard freezeGuard)
     : ICommandHandler<FileIncidentReportCommand, PropertyIncidentReportDto>
 {
     public async ValueTask<PropertyIncidentReportDto> Handle(FileIncidentReportCommand cmd, CancellationToken ct)
@@ -25,6 +26,8 @@ public sealed class FileIncidentReportCommandHandler(
         if (missing.Count > 0)
             throw new KeyNotFoundException($"Assets not found: {string.Join(", ", missing)}");
 
+        await freezeGuard.EnsureMovementAllowedAsync(assets, ct).ConfigureAwait(false);
+
         var assetById = assets.ToDictionary(a => a.Id);
 
         var incidentNo = await numbers.NextAsync(cmd.IncidentDate, ct).ConfigureAwait(false);
@@ -35,7 +38,7 @@ public sealed class FileIncidentReportCommandHandler(
         foreach (var item in cmd.Items)
         {
             var asset = assetById[item.AssetRegistryId];
-            var crcValue = await crc.ComputeAsync(asset.Id, cmd.IncidentDate, ct).ConfigureAwait(false);
+            var crcValue = await crc.ComputeAsync(asset, cmd.IncidentDate, ct).ConfigureAwait(false);
             domainItems.Add((asset.Id, asset.Snapshot(), asset.UnitCost, crcValue, item.AccountabilityLineId));
         }
 
