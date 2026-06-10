@@ -20,6 +20,9 @@ public interface IProductRatingsClient
 
     /// <summary>The current user's rating for a product, or null if not yet rated.</summary>
     Task<MyProductRatingDto?> GetMyRatingAsync(Guid productId, CancellationToken ct = default);
+
+    /// <summary>The individual raters (name + value) for a product, newest first.</summary>
+    Task<List<ProductRaterDto>> GetRatersAsync(Guid productId, CancellationToken ct = default);
 }
 
 public sealed class ProductRatingsClient(HttpClient http) : IProductRatingsClient
@@ -43,4 +46,8 @@ public sealed class ProductRatingsClient(HttpClient http) : IProductRatingsClien
 
     public async Task<MyProductRatingDto?> GetMyRatingAsync(Guid productId, CancellationToken ct = default) =>
         await http.GetFromJsonAsync<MyProductRatingDto?>($"{Base}/{productId}/ratings/mine", ct);
+
+    public async Task<List<ProductRaterDto>> GetRatersAsync(Guid productId, CancellationToken ct = default) =>
+        await http.GetFromJsonAsync<List<ProductRaterDto>>($"{Base}/{productId}/ratings/raters", ct)
+            ?? new List<ProductRaterDto>();
 }

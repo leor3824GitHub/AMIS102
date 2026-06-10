@@ -2,6 +2,7 @@
 @using MudBlazor
 @using AMIS.Playground.Blazor.ApiClient
 @using AMIS.Modules.Expendable.Contracts.Permissions
+@using ProductRaterDto = AMIS.Modules.Expendable.Contracts.v1.Products.ProductRaterDto
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Security.Claims
 @inject IExpendableClient _expendableClient
@@ -51,9 +52,17 @@
                     <div class="d-flex align-center mb-2">
                         <MudText Typo="Typo.subtitle1" Color="Color.Primary" Class="mr-2">@_ratingAverage.ToString("0.0")</MudText>
                         <MudRating ReadOnly="true" SelectedValue="@RoundedAverage" Size="Size.Small" />
-                        <MudText Typo="Typo.body2" Color="Color.Default" Class="ml-3">
-                            @_ratingCount @(_ratingCount == 1 ? "Rating" : "Ratings")
-                        </MudText>
+                        @if (_ratingCount > 0)
+                        {
+                            <MudLink Typo="Typo.body2" Color="Color.Primary" Class="ml-3" Style="cursor:pointer;"
+                                     OnClick="OpenRatersAsync">
+                                @_ratingCount @(_ratingCount == 1 ? "Rating" : "Ratings")
+                            </MudLink>
+                        }
+                        else
+                        {
+                            <MudText Typo="Typo.body2" Color="Color.Default" Class="ml-3">No ratings yet</MudText>
+                        }
                     </div>
 
                     <MudText Typo="Typo.caption" Color="Color.Default" Class="d-block mb-3">Stock No.: @_product.StockNo</MudText>
@@ -148,6 +157,44 @@
     }
 </MudContainer>
 
+<MudDialog @bind-Visible="_showRaters" Options="_ratersDialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Who rated @_product?.Name</MudText>
+    </TitleContent>
+    <DialogContent>
+        @if (_isLoadingRaters)
+        {
+            <div class="d-flex justify-center py-6">
+                <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Small" />
+            </div>
+        }
+        else if (_raters.Count == 0)
+        {
+            <MudText Typo="Typo.body2" Color="Color.Default">No ratings yet.</MudText>
+        }
+        else
+        {
+            <MudList T="ProductRaterDto" Dense="true">
+                @foreach (var rater in _raters)
+                {
+                    <MudListItem T="ProductRaterDto">
+                        <div class="d-flex align-center justify-space-between" style="gap:16px;">
+                            <div>
+                                <MudText Typo="Typo.body2">@rater.RaterName</MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Default">@rater.RatedOnUtc.LocalDateTime.ToString("g")</MudText>
+                            </div>
+                            <MudRating ReadOnly="true" SelectedValue="@rater.Value" Size="Size.Small" />
+                        </div>
+                    </MudListItem>
+                }
+            </MudList>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => _showRaters = false)">Close</MudButton>
+    </DialogActions>
+</MudDialog>
+
 @code {
     [Parameter] public Guid ProductId { get; set; }
 
@@ -165,6 +212,11 @@
     private int _ratingCount;
     private int _myRating;
     private bool _isRatingSubmitting;
+
+    private List<ProductRaterDto> _raters = new();
+    private bool _showRaters;
+    private bool _isLoadingRaters;
+    private static readonly DialogOptions _ratersDialogOptions = new() { MaxWidth = MaxWidth.ExtraSmall, FullWidth = true };
 
     private const string PlaceholderImage = "/images/placeholder.png";
 
@@ -253,6 +305,25 @@
         catch (Exception)
         {
             // Ratings are non-critical; leave defaults if the call fails.
+        }
+    }
+
+    private async Task OpenRatersAsync()
+    {
+        _showRaters = true;
+        _isLoadingRaters = true;
+        try
+        {
+            _raters = await _productRatingsClient.GetRatersAsync(ProductId);
+        }
+        catch (Exception ex)
+        {
+            _snackbar.Add($"Could not load raters: {ex.Message}", Severity.Error);
+            _raters = new();
+        }
+        finally
+        {
+            _isLoadingRaters = false;
         }
     }
 

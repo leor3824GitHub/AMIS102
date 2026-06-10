@@ -25,6 +25,7 @@ using AMIS.Modules.Expendable.Features.v1.Products.RateProduct;
 using AMIS.Modules.Expendable.Features.v1.Products.GetProductRatingSummaries;
 using AMIS.Modules.Expendable.Features.v1.Products.GetProductRatingSummary;
 using AMIS.Modules.Expendable.Features.v1.Products.GetMyProductRating;
+using AMIS.Modules.Expendable.Features.v1.Products.GetProductRaters;
 using AMIS.Modules.Expendable.Features.v1.Requests.CreateSupplyRequest;
 using AMIS.Modules.Expendable.Features.v1.Requests.SubmitSupplyRequest;
 using AMIS.Modules.Expendable.Features.v1.Requests.ApproveSupplyRequest;
@@ -163,6 +164,7 @@ public class ExpendableModule : IModule
         GetProductRatingSummariesEndpoint.Map(productsGroup);
         GetProductRatingSummaryEndpoint.Map(productsGroup);
         GetMyProductRatingEndpoint.Map(productsGroup);
+        GetProductRatersEndpoint.Map(productsGroup);
 
         // Purchase orders + receiving/inspection now live in ProcurementAcquisition. Expendable consumes
         // accepted Supply IAR lines into ProductInventory via SupplyIARAcceptedEvent (no PO endpoints here).

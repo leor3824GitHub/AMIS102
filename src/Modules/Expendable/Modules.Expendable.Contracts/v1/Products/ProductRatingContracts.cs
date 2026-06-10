@@ -13,6 +13,13 @@ public record MyProductRatingDto(
     Guid ProductId,
     int Value);
 
+/// <summary>A single rater's star rating for a product, with the rater's display name.</summary>
+public record ProductRaterDto(
+    string RaterUserId,
+    string RaterName,
+    int Value,
+    DateTimeOffset RatedOnUtc);
+
 /// <summary>Create or update the current user's rating (1-5) for a product.</summary>
 public record RateProductCommand(
     Guid ProductId,
@@ -26,3 +33,6 @@ public record GetProductRatingSummaryQuery(Guid ProductId) : IQuery<ProductRatin
 
 /// <summary>The current user's rating for a single product, or null if not yet rated.</summary>
 public record GetMyProductRatingQuery(Guid ProductId) : IQuery<MyProductRatingDto?>;
+
+/// <summary>The individual raters (name + value) for a single product, newest first.</summary>
+public record GetProductRatersQuery(Guid ProductId) : IQuery<List<ProductRaterDto>>;

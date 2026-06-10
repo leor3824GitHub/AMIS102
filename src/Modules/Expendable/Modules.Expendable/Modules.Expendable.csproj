@@ -29,6 +29,8 @@
 		<ProjectReference Include="..\..\..\BuildingBlocks\Web\Web.csproj" />
 		<ProjectReference Include="..\Modules.Expendable.Contracts\Modules.Expendable.Contracts.csproj" />
 		<ProjectReference Include="..\..\MasterData\Modules.MasterData.Contracts\Modules.MasterData.Contracts.csproj" />
+		<!-- Resolves rater identity user ids to display names (IUserService) for the "who rated" view. -->
+		<ProjectReference Include="..\..\Identity\Modules.Identity.Contracts\Modules.Identity.Contracts.csproj" />
 		<!-- Consumes ProcurementAcquisition's SupplyIARAcceptedEvent to land accepted supply stock into
 		     ProductInventory. Contracts-only reference (mirrors AssetRegister); no cycle. -->
 		<ProjectReference Include="..\..\ProcurementAcquisition\Modules.ProcurementAcquisition.Contracts\Modules.ProcurementAcquisition.Contracts.csproj" />
