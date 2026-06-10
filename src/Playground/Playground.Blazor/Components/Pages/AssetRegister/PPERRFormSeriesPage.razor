@@ -38,23 +38,23 @@
                     <MudItem xs="12" md="4" Class="d-flex gap-2">
                         @if (_editingId is null)
                         {
-                            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
-                                       StartIcon="@Icons.Material.Outlined.Add"
-                                       OnClick="CreateAsync" Disabled="_busy">
+                            <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                                        StartIcon="@Icons.Material.Outlined.Add"
+                                        OnClick="CreateAsync" Disabled="_busy">
                                 Add Series
-                            </MudButton>
+                            </AMISButton>
                         }
                         else
                         {
-                            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary"
-                                       StartIcon="@Icons.Material.Outlined.Save"
-                                       OnClick="SaveEditAsync" Disabled="_busy">
+                            <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary"
+                                        StartIcon="@Icons.Material.Outlined.Save"
+                                        OnClick="SaveEditAsync" Disabled="_busy">
                                 Save
-                            </MudButton>
-                            <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Default"
-                                       OnClick="CancelEdit" Disabled="_busy">
+                            </AMISButton>
+                            <AMISButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Default"
+                                        OnClick="CancelEdit" Disabled="_busy">
                                 Cancel
-                            </MudButton>
+                            </AMISButton>
                         }
                     </MudItem>
                 </MudGrid>
@@ -115,31 +115,31 @@
                                         <div class="d-flex gap-1 flex-wrap">
                                             @if (!s.IsActive && !s.IsExhausted && _canCreate)
                                             {
-                                                <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Success"
-                                                           OnClick="@(() => ActivateAsync(s.Id))" Disabled="_busy">
+                                                <AMISButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Success"
+                                                            OnClick="@(() => ActivateAsync(s.Id))" Disabled="_busy">
                                                     Set Active
-                                                </MudButton>
+                                                </AMISButton>
                                             }
                                             else if (s.IsActive && _canCreate)
                                             {
-                                                <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Default"
-                                                           OnClick="@(() => DeactivateAsync(s.Id))" Disabled="_busy">
+                                                <AMISButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Default"
+                                                            OnClick="@(() => DeactivateAsync(s.Id))" Disabled="_busy">
                                                     Deactivate
-                                                </MudButton>
+                                                </AMISButton>
                                             }
                                             @if (s.IsUnused && _canCreate)
                                             {
-                                                <MudIconButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary"
-                                                               Icon="@Icons.Material.Outlined.Edit"
-                                                               OnClick="@(() => BeginEdit(s))" Disabled="_busy"
-                                                               title="Edit" />
+                                                <AMISIconButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary"
+                                                                Icon="@Icons.Material.Outlined.Edit"
+                                                                OnClick="@(() => BeginEdit(s))" Disabled="_busy"
+                                                                Title="Edit" />
                                             }
                                             @if (s.IsUnused && _canDelete)
                                             {
-                                                <MudIconButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Error"
-                                                               Icon="@Icons.Material.Outlined.Delete"
-                                                               OnClick="@(() => DeleteAsync(s))" Disabled="_busy"
-                                                               title="Delete" />
+                                                <AMISIconButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Error"
+                                                                Icon="@Icons.Material.Outlined.Delete"
+                                                                OnClick="@(() => DeleteAsync(s))" Disabled="_busy"
+                                                                Title="Delete" />
                                             }
                                         </div>
                                     </td>

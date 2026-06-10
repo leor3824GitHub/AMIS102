@@ -27,18 +27,18 @@
                                       OnKeyDown="OnSearchKeyDown" Immediate="false" />
                     </MudItem>
                     <MudItem xs="12" md="3">
-                        <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
-                                   StartIcon="@Icons.Material.Outlined.Search" OnClick="LoadAsync" Disabled="_busy">
+                        <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                                    StartIcon="@Icons.Material.Outlined.Search" OnClick="LoadAsync" Disabled="_busy">
                             Search
-                        </MudButton>
+                        </AMISButton>
                     </MudItem>
                     @if (_canCreate)
                     {
                         <MudItem xs="12" md="3">
-                            <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Success" FullWidth="true"
-                                       StartIcon="@Icons.Material.Outlined.Add" OnClick="@(() => _showCreateForm = !_showCreateForm)">
+                            <AMISButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Success" FullWidth="true"
+                                        StartIcon="@Icons.Material.Outlined.Add" OnClick="@(() => _showCreateForm = !_showCreateForm)">
                                 New PPERR
-                            </MudButton>
+                            </AMISButton>
                         </MudItem>
                     }
                 </MudGrid>
@@ -95,8 +95,8 @@
                                     <td><MudChip T="string" Size="Size.Small" Color="Color.Info">@r.ItemCount lines</MudChip></td>
                                     <td class="text-right">@r.TotalAmount.ToString("N2")</td>
                                     <td>
-                                        <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small"
-                                                       Color="Color.Primary" OnClick="@(() => ViewAsync(r.Id))" />
+                                        <AMISIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small"
+                                                        Color="Color.Primary" OnClick="@(() => ViewAsync(r.Id))" />
                                         <MudMenu Icon="@Icons.Material.Filled.Print"
                                                  Color="Color.Secondary"
                                                  Size="Size.Small"
@@ -120,8 +120,8 @@
                                         </MudMenu>
                                         @if (_canDelete)
                                         {
-                                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
-                                                           Color="Color.Error" OnClick="@(() => DeleteAsync(r.Id, r.ReportNo))" />
+                                            <AMISIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                                            Color="Color.Error" OnClick="@(() => DeleteAsync(r.Id, r.ReportNo))" />
                                         }
                                     </td>
                                 </tr>

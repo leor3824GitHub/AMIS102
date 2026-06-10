@@ -124,7 +124,7 @@
                 <MudCardHeader>
                     <CardHeaderContent>
                         <MudStack Row="true" AlignItems="AlignItems.Center">
-                            <MudText Typo="Typo.h6">@_detail.RRSPNo — @_detail.Date.ToString("MMMM dd, yyyy")</MudText>
+                            <MudText Typo="Typo.h6">@_detail.RRSPNo ï¿½ @_detail.Date.ToString("MMMM dd, yyyy")</MudText>
                             <MudSpacer />
                             <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="@(() => _detail = null)" />
                         </MudStack>
@@ -161,14 +161,14 @@
                                     <td><b>@item.PropertyNo</b></td>
                                     <td>@(item.Description ?? "-")</td>
                                     <td><MudChip T="string" Size="Size.Small" Color="Color.Default">@item.CategoryAtTimeOfReturn</MudChip></td>
-                                    <td>â‚±@item.UnitCost.ToString("N2")</td>
+                                    <td>@Money.Symbol@item.UnitCost.ToString("N2")</td>
                                 </tr>
                             }
                         </tbody>
                         <tfoot>
                             <tr>
                                 <td colspan="4" style="text-align:right"><b>Total:</b></td>
-                                <td><b>â‚±@_detail.Items.Sum(x => x.UnitCost).ToString("N2")</b></td>
+                                <td><b>@Money.Symbol@_detail.Items.Sum(x => x.UnitCost).ToString("N2")</b></td>
                             </tr>
                         </tfoot>
                     </MudSimpleTable>
@@ -260,7 +260,7 @@
         finally { _busy = false; }
     }
 
-    private static string ShortGuid(Guid id) => $"{id:D}"[..8] + "…";
+    private static string ShortGuid(Guid id) => $"{id:D}"[..8] + "ï¿½";
 
     private sealed class RrspForm
     {

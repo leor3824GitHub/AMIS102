@@ -36,10 +36,10 @@ else
                                           OnKeyDown="OnSearchKeyDown" Immediate="false" />
                         </MudItem>
                         <MudItem xs="12" md="3">
-                            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
-                                       StartIcon="@Icons.Material.Outlined.Search" OnClick="SearchAsync" Disabled="_busy">
+                            <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                                        StartIcon="@Icons.Material.Outlined.Search" OnClick="SearchAsync" Disabled="_busy">
                                 Search
-                            </MudButton>
+                            </AMISButton>
                         </MudItem>
                     </MudGrid>
 
@@ -105,10 +105,10 @@ else
                                 Page @_page of @_totalPages (@_totalCount total)
                             </MudText>
                             <MudStack Row="true" Spacing="1">
-                                <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft" Size="Size.Small"
-                                               Disabled="_page <= 1 || _busy" OnClick="PrevPage" />
-                                <MudIconButton Icon="@Icons.Material.Filled.ChevronRight" Size="Size.Small"
-                                               Disabled="_page >= _totalPages || _busy" OnClick="NextPage" />
+                                <AMISIconButton Icon="@Icons.Material.Filled.ChevronLeft" Size="Size.Small"
+                                                Disabled="_page <= 1 || _busy" OnClick="PrevPage" />
+                                <AMISIconButton Icon="@Icons.Material.Filled.ChevronRight" Size="Size.Small"
+                                                Disabled="_page >= _totalPages || _busy" OnClick="NextPage" />
                             </MudStack>
                         </MudStack>
                     }
@@ -133,8 +133,8 @@ else
                             </MudStack>
                         </CardHeaderContent>
                         <CardHeaderActions>
-                            <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small"
-                                           OnClick="@(() => _selected = null)" />
+                            <AMISIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small"
+                                            OnClick="@(() => _selected = null)" />
                         </CardHeaderActions>
                     </MudCardHeader>
                     <MudCardContent>
@@ -177,7 +177,7 @@ else
                                 <MudTh>Unit</MudTh>
                                 <MudTh Style="text-align:right">Issued</MudTh>
                                 <MudTh Style="text-align:right">Returned</MudTh>
-                                <MudTh Style="text-align:right">Unit Cost (₱)</MudTh>
+                                <MudTh Style="text-align:right">Unit Cost (@Money.Symbol)</MudTh>
                                 <MudTh>Status</MudTh>
                                 <MudTh>Returned On</MudTh>
                             </HeaderContent>

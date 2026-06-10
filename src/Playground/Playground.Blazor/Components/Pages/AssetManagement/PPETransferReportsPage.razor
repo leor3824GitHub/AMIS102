@@ -127,7 +127,7 @@
                                 <th>Property No.</th>
                                 <th>Description</th>
                                 <th>Date Acquired</th>
-                                <th style="text-align:right">Amount (?)</th>
+                                <th style="text-align:right">Amount (@Money.Symbol)</th>
                                 <th>Condition</th>
                                 <th>Reason</th>
                             </tr>
@@ -150,7 +150,7 @@
                         <tfoot>
                             <tr>
                                 <td colspan="4" style="text-align:right"><b>Total:</b></td>
-                                <td style="text-align:right"><b>₱@_ptr.Items.Sum(x => x.Amount).ToString("N2")</b></td>
+                                <td style="text-align:right"><b>@Money.Symbol@_ptr.Items.Sum(x => x.Amount).ToString("N2")</b></td>
                                 <td colspan="2"></td>
                             </tr>
                         </tfoot>

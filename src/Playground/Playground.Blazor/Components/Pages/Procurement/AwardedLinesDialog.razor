@@ -31,15 +31,15 @@
                             <td>@line.Description</td>
                             <td style="text-align:right">@line.Quantity.ToString("N2")</td>
                             <td>@line.Unit</td>
-                            <td style="text-align:right">₱@unitPrice.ToString("N2")</td>
-                            <td style="text-align:right">₱@((line.Quantity * unitPrice).ToString("N2"))</td>
+                            <td style="text-align:right">@Money.Symbol@unitPrice.ToString("N2")</td>
+                            <td style="text-align:right">@Money.Symbol@((line.Quantity * unitPrice).ToString("N2"))</td>
                         </tr>
                     }
                 </tbody>
                 <tfoot>
                     <tr>
                         <td colspan="5" style="text-align:right"><b>Total</b></td>
-                        <td style="text-align:right"><b>₱@_grandTotal.ToString("N2")</b></td>
+                        <td style="text-align:right"><b>@Money.Symbol@_grandTotal.ToString("N2")</b></td>
                     </tr>
                 </tfoot>
             </MudSimpleTable>

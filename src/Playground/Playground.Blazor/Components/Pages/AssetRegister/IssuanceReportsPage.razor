@@ -28,18 +28,18 @@
                                       OnKeyDown="OnSearchKeyDown" Immediate="false" />
                     </MudItem>
                     <MudItem xs="12" md="3">
-                        <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
-                                   StartIcon="@Icons.Material.Outlined.Search" OnClick="LoadAsync" Disabled="_busy">
+                        <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                                    StartIcon="@Icons.Material.Outlined.Search" OnClick="LoadAsync" Disabled="_busy">
                             Search
-                        </MudButton>
+                        </AMISButton>
                     </MudItem>
                     <MudItem xs="12" md="3">
                         @if (_canPost)
                         {
-                        <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Success" FullWidth="true"
-                                   StartIcon="@Icons.Material.Outlined.Add" OnClick="@(() => _showCreateForm = !_showCreateForm)">
+                        <AMISButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Success" FullWidth="true"
+                                    StartIcon="@Icons.Material.Outlined.Add" OnClick="@(() => _showCreateForm = !_showCreateForm)">
                             New Draft
-                        </MudButton>
+                        </AMISButton>
                         }
                     </MudItem>
                 </MudGrid>
@@ -60,8 +60,8 @@
                 <MudCardHeader>
                     <CardHeaderContent><MudText Typo="Typo.h6">Create Issuance Report Draft</MudText></CardHeaderContent>
                     <CardHeaderActions>
-                        <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small"
-                                       OnClick="@(() => _showCreateForm = false)" />
+                        <AMISIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small"
+                                        OnClick="@(() => _showCreateForm = false)" />
                     </CardHeaderActions>
                 </MudCardHeader>
                 <MudCardContent>
@@ -80,10 +80,10 @@
                                       MaxLength="100" Required="true" />
                         <MudTextField @bind-Value="_createForm.PreparedByDesignation" Label="Prepared By (Designation)" Variant="Variant.Outlined"
                                       MaxLength="100" />
-                        <MudButton Variant="Variant.Filled" Color="Color.Success" FullWidth="true"
-                                   OnClick="CreateDraftAsync" Disabled="_busy">
+                        <AMISButton Variant="Variant.Filled" Color="Color.Success" FullWidth="true"
+                                    OnClick="CreateDraftAsync" Disabled="_busy">
                             Create Draft
-                        </MudButton>
+                        </AMISButton>
                     </MudStack>
                 </MudCardContent>
             </MudCard>
@@ -112,7 +112,7 @@
                             <MudTh>Status</MudTh>
                             <MudTh>Period</MudTh>
                             <MudTh Style="text-align:right">Lines</MudTh>
-                            <MudTh Style="text-align:right">Total Amount (?)</MudTh>
+                            <MudTh Style="text-align:right">Total Amount (@Money.Symbol)</MudTh>
                             <MudTh Style="text-align:center">Actions</MudTh>
                         </HeaderContent>
                         <RowTemplate>
@@ -189,10 +189,10 @@
                     <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mt-3">
                         <MudText Typo="Typo.caption">Page @_page of @_totalPages (@_totalCount total)</MudText>
                         <MudStack Row="true" Spacing="1">
-                            <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft" Size="Size.Small"
-                                           Disabled="_page <= 1 || _busy" OnClick="PrevPage" />
-                            <MudIconButton Icon="@Icons.Material.Filled.ChevronRight" Size="Size.Small"
-                                           Disabled="_page >= _totalPages || _busy" OnClick="NextPage" />
+                            <AMISIconButton Icon="@Icons.Material.Filled.ChevronLeft" Size="Size.Small"
+                                            Disabled="_page <= 1 || _busy" OnClick="PrevPage" />
+                            <AMISIconButton Icon="@Icons.Material.Filled.ChevronRight" Size="Size.Small"
+                                            Disabled="_page >= _totalPages || _busy" OnClick="NextPage" />
                         </MudStack>
                     </MudStack>
                 }
@@ -222,8 +222,8 @@
                                 <MudIconButton Icon="@Icons.Material.Outlined.Preview" Size="Size.Small"
                                                Href="@($"/asset-register/reports?issuanceReportId={_selected.Id}")" />
                             </MudTooltip>
-                            <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small"
-                                           OnClick="@(() => _selected = null)" />
+                            <AMISIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small"
+                                            OnClick="@(() => _selected = null)" />
                         </MudStack>
                     </CardHeaderActions>
                 </MudCardHeader>
@@ -261,8 +261,8 @@
                             <MudTh>Description</MudTh>
                             <MudTh>Unit</MudTh>
                             <MudTh Style="text-align:right">Qty</MudTh>
-                            <MudTh Style="text-align:right">Unit Cost (?)</MudTh>
-                            <MudTh Style="text-align:right">Amount (?)</MudTh>
+                            <MudTh Style="text-align:right">Unit Cost (@Money.Symbol)</MudTh>
+                            <MudTh Style="text-align:right">Amount (@Money.Symbol)</MudTh>
                             <MudTh>RC Code</MudTh>
                             @if (_selected.Status == IssuanceReportStatus.Draft)
                             {
@@ -280,9 +280,9 @@
                             @if (_selected.Status == IssuanceReportStatus.Draft)
                             {
                                 <MudTd>
-                                    <MudIconButton Icon="@Icons.Material.Outlined.Remove" Size="Size.Small"
-                                                   Color="Color.Error"
-                                                   OnClick="@(() => RemoveLineAsync(context.Id))" />
+                                    <AMISIconButton Icon="@Icons.Material.Outlined.Remove" Size="Size.Small"
+                                                    Color="Color.Error"
+                                                    OnClick="@(() => RemoveLineAsync(context.Id))" />
                                 </MudTd>
                             }
                         </RowTemplate>
@@ -307,10 +307,10 @@
                                 <MudDatePicker @bind-Date="_postForm.PostedOnNullable" Label="Posted On" Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" Required="true" />
                             </MudItem>
                             <MudItem xs="6" md="1" Class="d-flex align-end">
-                                <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
-                                           OnClick="PostReportAsync" Disabled="_busy">
+                                <AMISButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                                            OnClick="PostReportAsync" Disabled="_busy">
                                     Post
-                                </MudButton>
+                                </AMISButton>
                             </MudItem>
                         </MudGrid>
                     }

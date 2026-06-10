@@ -46,7 +46,7 @@
                                      Max="9999"
                                      T="int" />
                     <MudNumericField @bind-Value="_form.UnitCost"
-                                     Label="Unit Cost (?)"
+                                     Label="@($"Unit Cost ({Money.Symbol})")"
                                      Variant="Variant.Outlined"
                                      Required="true"
                                      Min="0.01m"

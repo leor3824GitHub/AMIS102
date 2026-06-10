@@ -45,73 +45,73 @@
     @if (_canViewAccountability)
     {
         <MudItem xs="12" sm="6" md="4">
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" OnClick="RenderRegSpiAsync" Disabled="_isLoadingRegSpi">
+            <AMISButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" OnClick="RenderRegSpiAsync" Disabled="_isLoadingRegSpi">
                 @if (_isLoadingRegSpi)
                 {
                     <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
                 }
                 Render RegSPI
-            </MudButton>
+            </AMISButton>
         </MudItem>
     }
     @if (_canViewCount)
     {
         <MudItem xs="12" sm="6" md="4">
-            <MudButton Variant="Variant.Filled" Color="Color.Info" FullWidth="true" OnClick="RenderPhysicalCountAsync" Disabled="_isLoadingPhysicalCount">
+            <AMISButton Variant="Variant.Filled" Color="Color.Info" FullWidth="true" OnClick="RenderPhysicalCountAsync" Disabled="_isLoadingPhysicalCount">
                 @if (_isLoadingPhysicalCount)
                 {
                     <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
                 }
                 Render RPCSEMEX / RPCPPE
-            </MudButton>
+            </AMISButton>
         </MudItem>
     }
     @if (_canViewIssuance)
     {
         <MudItem xs="12" sm="6" md="4">
-            <MudButton Variant="Variant.Filled" Color="Color.Tertiary" FullWidth="true" OnClick="RenderIssuanceAsync" Disabled="_isLoadingIssuance">
+            <AMISButton Variant="Variant.Filled" Color="Color.Tertiary" FullWidth="true" OnClick="RenderIssuanceAsync" Disabled="_isLoadingIssuance">
                 @if (_isLoadingIssuance)
                 {
                     <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
                 }
                 Render RSPI / PPEIR
-            </MudButton>
+            </AMISButton>
         </MudItem>
     }
     @if (_canViewAccountability)
     {
         <MudItem xs="12" sm="6" md="4">
-            <MudButton Variant="Variant.Filled" Color="Color.Secondary" FullWidth="true" OnClick="RenderAccountabilityAsync" Disabled="_isLoadingAccountability">
+            <AMISButton Variant="Variant.Filled" Color="Color.Secondary" FullWidth="true" OnClick="RenderAccountabilityAsync" Disabled="_isLoadingAccountability">
                 @if (_isLoadingAccountability)
                 {
                     <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
                 }
                 Render ICS / PAR
-            </MudButton>
+            </AMISButton>
         </MudItem>
     }
     @if (_canViewIncident)
     {
         <MudItem xs="12" sm="6" md="4">
-            <MudButton Variant="Variant.Filled" Color="Color.Warning" FullWidth="true" OnClick="RenderIncidentAsync" Disabled="_isLoadingIncident">
+            <AMISButton Variant="Variant.Filled" Color="Color.Warning" FullWidth="true" OnClick="RenderIncidentAsync" Disabled="_isLoadingIncident">
                 @if (_isLoadingIncident)
                 {
                     <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
                 }
                 Render RLSDDSP
-            </MudButton>
+            </AMISButton>
         </MudItem>
     }
     @if (_canViewUnserviceable)
     {
         <MudItem xs="12" sm="6" md="4">
-            <MudButton Variant="Variant.Filled" Color="Color.Error" FullWidth="true" OnClick="RenderUnserviceableAsync" Disabled="_isLoadingUnserviceable">
+            <AMISButton Variant="Variant.Filled" Color="Color.Error" FullWidth="true" OnClick="RenderUnserviceableAsync" Disabled="_isLoadingUnserviceable">
                 @if (_isLoadingUnserviceable)
                 {
                     <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
                 }
                 Render IIRUSP / IIRUP
-            </MudButton>
+            </AMISButton>
         </MudItem>
     }
 </MudGrid>

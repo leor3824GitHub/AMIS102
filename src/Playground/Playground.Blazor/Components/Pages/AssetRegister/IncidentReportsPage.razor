@@ -25,10 +25,10 @@
                                       OnKeyDown="OnSearchKeyDown" Immediate="false" />
                     </MudItem>
                     <MudItem xs="12" md="3">
-                        <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
-                                   StartIcon="@Icons.Material.Outlined.Search" OnClick="LoadAsync" Disabled="_busy">
+                        <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                                    StartIcon="@Icons.Material.Outlined.Search" OnClick="LoadAsync" Disabled="_busy">
                             Search
-                        </MudButton>
+                        </AMISButton>
                     </MudItem>
                 </MudGrid>
 
@@ -90,10 +90,10 @@
                     <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mt-3">
                         <MudText Typo="Typo.caption">Page @_page of @_totalPages (@_totalCount total)</MudText>
                         <MudStack Row="true" Spacing="1">
-                            <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft" Size="Size.Small"
-                                           Disabled="_page <= 1 || _busy" OnClick="PrevPage" />
-                            <MudIconButton Icon="@Icons.Material.Filled.ChevronRight" Size="Size.Small"
-                                           Disabled="_page >= _totalPages || _busy" OnClick="NextPage" />
+                            <AMISIconButton Icon="@Icons.Material.Filled.ChevronLeft" Size="Size.Small"
+                                            Disabled="_page <= 1 || _busy" OnClick="PrevPage" />
+                            <AMISIconButton Icon="@Icons.Material.Filled.ChevronRight" Size="Size.Small"
+                                            Disabled="_page >= _totalPages || _busy" OnClick="NextPage" />
                         </MudStack>
                     </MudStack>
                 }
@@ -116,8 +116,8 @@
                         </MudStack>
                     </CardHeaderContent>
                     <CardHeaderActions>
-                        <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small"
-                                       OnClick="@(() => _selected = null)" />
+                        <AMISIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small"
+                                        OnClick="@(() => _selected = null)" />
                     </CardHeaderActions>
                 </MudCardHeader>
                 <MudCardContent>
@@ -165,7 +165,7 @@
                         @if (_selected.AmountSettled.HasValue)
                         {
                             <MudItem xs="6" md="3">
-                                <MudText Typo="Typo.caption" Color="Color.Secondary">Amount Settled (?)</MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">Amount Settled (@Money.Symbol)</MudText>
                                 <MudText Typo="Typo.body2">@_selected.AmountSettled.Value.ToString("N2")</MudText>
                             </MudItem>
                         }
@@ -176,8 +176,8 @@
                         <HeaderContent>
                             <MudTh>Property No.</MudTh>
                             <MudTh>Description</MudTh>
-                            <MudTh Style="text-align:right">Acq. Cost (?)</MudTh>
-                            <MudTh Style="text-align:right">CRC (?)</MudTh>
+                            <MudTh Style="text-align:right">Acq. Cost (@Money.Symbol)</MudTh>
+                            <MudTh Style="text-align:right">CRC (@Money.Symbol)</MudTh>
                             <MudTh>Resolution</MudTh>
                             <MudTh>Resolved On</MudTh>
                         </HeaderContent>
@@ -207,10 +207,10 @@
                                 <MudTextField @bind-Value="_policeBlotterRef" Label="Blotter Ref" Variant="Variant.Outlined" MaxLength="100" Required="true" />
                             </MudItem>
                             <MudItem xs="12" md="2" Class="d-flex align-end">
-                                <MudButton Variant="Variant.Filled" Color="Color.Info" FullWidth="true"
-                                           OnClick="NotifyPoliceAsync" Disabled="_busy">
+                                <AMISButton Variant="Variant.Filled" Color="Color.Info" FullWidth="true"
+                                            OnClick="NotifyPoliceAsync" Disabled="_busy">
                                     Notify Police
-                                </MudButton>
+                                </AMISButton>
                             </MudItem>
                         </MudGrid>
                     }
@@ -219,9 +219,9 @@
                     @if (_selected.Status == PropertyIncidentStatus.Resolved && _canResolve)
                     {
                         <MudDivider Class="my-3" />
-                        <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="CloseReportAsync" Disabled="_busy">
+                        <AMISButton Variant="Variant.Outlined" Color="Color.Error" OnClick="CloseReportAsync" Disabled="_busy">
                             Close Incident Report
-                        </MudButton>
+                        </AMISButton>
                     }
                 </MudCardContent>
             </MudCard>

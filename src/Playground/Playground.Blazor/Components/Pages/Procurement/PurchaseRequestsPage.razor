@@ -100,7 +100,7 @@
                                             @item.PrType
                                         </MudChip>
                                     </td>
-                                    <td style="text-align:right">₱@item.TotalEstimatedCost.ToString("N2")</td>
+                                    <td style="text-align:right">@Money.Symbol@item.TotalEstimatedCost.ToString("N2")</td>
                                     <td>
                                         @StatusChip(item.Status)
                                     </td>

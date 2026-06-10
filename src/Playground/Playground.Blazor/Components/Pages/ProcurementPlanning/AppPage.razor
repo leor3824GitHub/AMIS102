@@ -96,7 +96,7 @@
                                 <td>@StatusChip(row.Status)</td>
                                 <td style="text-align:right">@row.ItemCount</td>
                                 <td style="text-align:right; font-weight:600">
-                                    ₱@row.TotalEstimatedBudget.ToString("N2")
+                                    @Money.Symbol@row.TotalEstimatedBudget.ToString("N2")
                                 </td>
                                 <td @onclick:stopPropagation="true">
                                     @if (row.Status == AppStatus.Draft)
@@ -320,7 +320,7 @@
                             <MudItem xs="6" sm="3">
                                 <MudText Typo="Typo.caption" Color="Color.Secondary">Total Budget</MudText>
                                 <MudText Typo="Typo.body2" Color="Color.Primary" Style="font-weight:700">
-                                    ₱@_editing.TotalEstimatedBudget.ToString("N2")
+                                    @Money.Symbol@_editing.TotalEstimatedBudget.ToString("N2")
                                 </MudText>
                             </MudItem>
                             @if (_editing.ConsolidatedOn.HasValue)
@@ -376,7 +376,7 @@
                                                     <th>Office</th>
                                                     <th>End-User / Section</th>
                                                     <th style="text-align:right">Items</th>
-                                                    <th style="text-align:right">Budget (?)</th>
+                                                    <th style="text-align:right">Budget (@Money.Symbol)</th>
                                                     <th style="width:110px"></th>
                                                 </tr>
                                             </thead>
@@ -401,7 +401,7 @@
                                                         <td>@ppmp.EndUserUnit</td>
                                                         <td style="text-align:right">@ppmp.ItemCount</td>
                                                         <td style="text-align:right; font-weight:600">
-                                                            ₱@ppmp.TotalEstimatedBudget.ToString("N2")
+                                                            @Money.Symbol@ppmp.TotalEstimatedBudget.ToString("N2")
                                                         </td>
                                                         <td>
                                                             @if (isConsolidated)
@@ -421,7 +421,7 @@
                                         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
                                             <MudText Typo="Typo.caption">
                                                 @_selectedPpmpIds.Count of @selectablePpmps.Count available selected —
-                                                ₱@selectablePpmps.Where(p => _selectedPpmpIds.Contains(p.Id)).Sum(p =>
+                                                @Money.Symbol@selectablePpmps.Where(p => _selectedPpmpIds.Contains(p.Id)).Sum(p =>
                                                                                 p.TotalEstimatedBudget).ToString("N2") to add
                                             </MudText>
                                             <MudSpacer />
@@ -471,7 +471,7 @@
                                             </MudText>
                                             <MudSpacer />
                                             <MudText Typo="Typo.caption" Style="font-weight:600; color:var(--mud-palette-primary)">
-                                                ₱@officeGroup.Sum(i => i.EstimatedBudget).ToString("N2")
+                                                @Money.Symbol@officeGroup.Sum(i => i.EstimatedBudget).ToString("N2")
                                             </MudText>
                                         </MudStack>
                                     </div>
@@ -487,7 +487,7 @@
                                                     <th style="text-align:right">Qty</th>
                                                     <th>Unit</th>
                                                     <th style="width:120px">Schedule</th>
-                                                    <th style="text-align:right; width:130px">Budget (?)</th>
+                                                    <th style="text-align:right; width:130px">Budget (@Money.Symbol)</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -519,7 +519,7 @@
                                                             </MudText>
                                                         </td>
                                                         <td style="text-align:right; font-weight:600">
-                                                            ₱@item.EstimatedBudget.ToString("N2")
+                                                            @Money.Symbol@item.EstimatedBudget.ToString("N2")
                                                         </td>
                                                     </tr>
                                                 }
@@ -545,7 +545,7 @@
                                         <MudText Typo="Typo.caption" Color="Color.Secondary">(@typeGroup.Count() items)</MudText>
                                         <MudSpacer />
                                         <MudText Typo="Typo.body2" Style="font-weight:600">
-                                            ₱@typeGroup.Sum(i => i.EstimatedBudget).ToString("N2")
+                                            @Money.Symbol@typeGroup.Sum(i => i.EstimatedBudget).ToString("N2")
                                         </MudText>
                                     </MudStack>
                                 }
@@ -554,7 +554,7 @@
                                     <MudText Typo="Typo.subtitle1" Style="font-weight:700">Grand Total</MudText>
                                     <MudSpacer />
                                     <MudText Typo="Typo.subtitle1" Color="Color.Primary" Style="font-weight:700">
-                                        ₱@_editing.TotalEstimatedBudget.ToString("N2")
+                                        @Money.Symbol@_editing.TotalEstimatedBudget.ToString("N2")
                                     </MudText>
                                 </MudStack>
                             </MudStack>

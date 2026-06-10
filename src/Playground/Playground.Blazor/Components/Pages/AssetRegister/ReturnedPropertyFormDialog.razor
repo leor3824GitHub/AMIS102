@@ -43,7 +43,7 @@
                 @foreach (var line in _accountability.Lines.Where(l => l.LineStatus == AccountabilityLineStatus.Active))
                 {
                     <MudCheckBox @bind-Value="_selectedLineIds[line.Id]"
-                                 Label="@($"{line.Snapshot.PropertyNo} — {line.Snapshot.Description} (₱{line.Snapshot.UnitCost:N2})")"
+                                 Label="@($"{line.Snapshot.PropertyNo} — {line.Snapshot.Description} ({Money.Symbol}{line.Snapshot.UnitCost:N2})")"
                                  Color="Color.Primary" Dense="true" />
                 }
             }
@@ -57,13 +57,13 @@
         </MudStack>
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="Cancel" Disabled="_busy">Cancel</MudButton>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary"
-                   StartIcon="@Icons.Material.Filled.Send"
-                   OnClick="RequestAsync" Disabled="_busy">
+        <AMISButton Variant="Variant.Text" Color="Color.Default" OnClick="Cancel" Disabled="_busy">Cancel</AMISButton>
+        <AMISButton Variant="Variant.Filled" Color="Color.Primary"
+                    StartIcon="@Icons.Material.Filled.Send"
+                    OnClick="RequestAsync" Disabled="_busy">
             @if (_busy) { <MudProgressCircular Size="Size.Small" Class="mr-1" Indeterminate="true" /> }
             Request Return
-        </MudButton>
+        </AMISButton>
     </DialogActions>
 </MudDialog>
 

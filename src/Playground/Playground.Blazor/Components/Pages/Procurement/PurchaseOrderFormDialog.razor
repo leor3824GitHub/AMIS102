@@ -304,7 +304,7 @@
                         <MudStack Row="true" AlignItems="AlignItems.Center">
                             <MudText Typo="Typo.h6" Style="margin-bottom: 0;">Total Amount:</MudText>
                             <MudSpacer />
-                            <MudText Typo="Typo.h6" Style="margin-bottom: 0;"><strong>₱@_form.LineItems.Sum(li => li.Quantity * li.UnitCost).ToString("N2")</strong></MudText>
+                            <MudText Typo="Typo.h6" Style="margin-bottom: 0;"><strong>@Money.Symbol@_form.LineItems.Sum(li => li.Quantity * li.UnitCost).ToString("N2")</strong></MudText>
                         </MudStack>
                     </MudPaper>
                 }
@@ -860,7 +860,7 @@
                     StockNumber = _newLineItem.StockNumber,
                     CatalogItemId = _newLineItem.CatalogItemId
                 };
-                Snackbar.Add($"Item updated (₱{lineTotal:N2}).", Severity.Success);
+                Snackbar.Add($"Item updated ({Money.Symbol}{lineTotal:N2}).", Severity.Success);
             }
             _editingLineItemIndex = null;
         }
@@ -876,7 +876,7 @@
                 StockNumber = _newLineItem.StockNumber,
                 CatalogItemId = _newLineItem.CatalogItemId
             });
-            Snackbar.Add($"Item added (₱{lineTotal:N2}).", Severity.Success);
+            Snackbar.Add($"Item added ({Money.Symbol}{lineTotal:N2}).", Severity.Success);
         }
 
         _newLineItem = new PoLineItemRow();

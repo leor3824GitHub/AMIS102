@@ -120,7 +120,7 @@ else
                 </MudChip>
                 <MudSpacer />
                 <MudText Typo="Typo.caption" Color="Color.Secondary">
-                    @(_iar.LineItems.Count) total line(s) · ₱@_iar.TotalAmount.ToString("N2")
+                    @(_iar.LineItems.Count) total line(s) · @Money.Symbol@_iar.TotalAmount.ToString("N2")
                 </MudText>
             </MudStack>
             @if (_iar.LineItems.Count > 0)

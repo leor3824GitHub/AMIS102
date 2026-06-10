@@ -103,7 +103,7 @@
                                     <td>@item.PoDate.ToString("MM/dd/yyyy")</td>
                                     <td>@item.SupplierName</td>
                                     <td><MudText Typo="Typo.caption">@item.ModeOfProcurement.ToString().Replace("_"," ")</MudText></td>
-                                    <td style="text-align:right">₱@item.TotalAmount.ToString("N2")</td>
+                                    <td style="text-align:right">@Money.Symbol@item.TotalAmount.ToString("N2")</td>
                                     <td>@PoStatusChip(item.Status)</td>
                                     <td>
                                         <MudStack Row="true" Spacing="0">

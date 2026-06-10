@@ -70,7 +70,7 @@
             </MudItem>
 
             <MudItem xs="12" sm="4">
-                <MudNumericField @bind-Value="_itemForm.EstimatedBudget" Label="Estimated Budget (?)"
+                <MudNumericField @bind-Value="_itemForm.EstimatedBudget" Label="@($"Estimated Budget ({Money.Symbol})")"
                                  Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" Min="0m" Format="N2" />
             </MudItem>
 
@@ -183,7 +183,7 @@
                                 </td>
                                 <td>v@(row.VersionNumber)</td>
                                 <td>@StatusChip(row.Status)</td>
-                                <td>₱@row.TotalEstimatedBudget.ToString("N2")</td>
+                                <td>@Money.Symbol@row.TotalEstimatedBudget.ToString("N2")</td>
                                 <td @onclick:stopPropagation="true">
                                     @if (row.Status is PpmpStatus.Draft or PpmpStatus.Returned)
                                     {
@@ -398,7 +398,7 @@
                                     <th style="width:70px">Unit</th>
                                     <th style="min-width:130px">Mode of Procurement</th>
                                     <th style="width:55px; text-align:center">Pre-Proc</th>
-                                    <th style="width:130px; text-align:right">Est. Budget (?)</th>
+                                    <th style="width:130px; text-align:right">Est. Budget (@Money.Symbol)</th>
                                     @if (!_isReadOnly)
                                     {
                                         <th style="width:80px; text-align:center">Actions</th>
@@ -446,7 +446,7 @@
                                             }
                                         </td>
                                         <td style="vertical-align:middle; text-align:right; font-weight:600">
-                                            ₱@item.EstimatedBudget.ToString("N2")
+                                            @Money.Symbol@item.EstimatedBudget.ToString("N2")
                                         </td>
                                         @if (!_isReadOnly)
                                         {
@@ -468,7 +468,7 @@
                         <MudText Typo="Typo.subtitle2">Total Estimated Budget</MudText>
                         <MudSpacer />
                         <MudText Typo="Typo.subtitle2" Color="Color.Primary">
-                            ₱@_form.Items.Sum(i => i.EstimatedBudget).ToString("N2")
+                            @Money.Symbol@_form.Items.Sum(i => i.EstimatedBudget).ToString("N2")
                         </MudText>
                     </MudStack>
                 }

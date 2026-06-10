@@ -26,11 +26,11 @@
         </MudStack>
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="Cancel" Disabled="_busy">Cancel</MudButton>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync" Disabled="_busy">
+        <AMISButton Variant="Variant.Text" Color="Color.Default" OnClick="Cancel" Disabled="_busy">Cancel</AMISButton>
+        <AMISButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync" Disabled="_busy">
             @if (_busy) { <MudProgressCircular Size="Size.Small" Class="mr-1" Indeterminate="true" /> }
             @(IsEditing ? "Update" : "Create")
-        </MudButton>
+        </AMISButton>
     </DialogActions>
 </MudDialog>
 

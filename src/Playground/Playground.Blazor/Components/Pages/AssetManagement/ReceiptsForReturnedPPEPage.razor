@@ -67,13 +67,13 @@
                                                  Value="li.SelectedPPEItem"
                                                  ValueChanged="@(v => li.SelectedPPEItem = v)"
                                                  SearchFunc="SearchIssuedPPEItems"
-                                                 ToStringFunc="@(x => x is null ? "" : $"{x.PropertyCode} � {x.Description[..Math.Min(40, x.Description.Length)]}")"
+                                                 ToStringFunc="@(x => x is null ? "" : $"{x.PropertyCode} � {x.Description[..Math.Min(40, x.Description.Length)]}")"
                                                  Label="PPE Item" Variant="Variant.Outlined" Dense="true"
                                                  Required="true" Clearable="true" CoerceValue="true" ResetValueOnEmptyText="true" />
                                 @if (li.SelectedPPEItem is not null)
                                 {
                                     <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                        Status: @li.SelectedPPEItem.Status | ₱@li.SelectedPPEItem.UnitCost.ToString("N2")
+                                        Status: @li.SelectedPPEItem.Status | @Money.Symbol@li.SelectedPPEItem.UnitCost.ToString("N2")
                                     </MudText>
                                 }
                                 <MudTextField @bind-Value="li.SourceDocumentRef" Label="Source Doc Ref (PAR/PTR No.)"
@@ -149,7 +149,7 @@
                 <MudCardHeader>
                     <CardHeaderContent>
                         <MudStack Row="true" AlignItems="AlignItems.Center">
-                            <MudText Typo="Typo.h6">@_detail.RRPNo � @_detail.Date.ToString("MMMM dd, yyyy")</MudText>
+                            <MudText Typo="Typo.h6">@_detail.RRPNo � @_detail.Date.ToString("MMMM dd, yyyy")</MudText>
                             <MudChip T="string" Size="Size.Small" Color="@(_detail.ReturnCategory == "Serviceable" ? Color.Success : Color.Error)">
                                 @_detail.ReturnCategory
                             </MudChip>
@@ -182,15 +182,15 @@
                                     <td>@item.Description</td>
                                     <td>@(item.SourceDocumentRef ?? "-")</td>
                                     <td>@item.Quantity</td>
-                                    <td>₱@item.UnitCost.ToString("N2")</td>
-                                    <td><b>₱@item.TotalCost.ToString("N2")</b></td>
+                                    <td>@Money.Symbol@item.UnitCost.ToString("N2")</td>
+                                    <td><b>@Money.Symbol@item.TotalCost.ToString("N2")</b></td>
                                 </tr>
                             }
                         </tbody>
                         <tfoot>
                             <tr>
                                 <td colspan="6" style="text-align:right"><b>Total:</b></td>
-                                <td><b>₱@_detail.Items.Sum(x => x.TotalCost).ToString("N2")</b></td>
+                                <td><b>@Money.Symbol@_detail.Items.Sum(x => x.TotalCost).ToString("N2")</b></td>
                             </tr>
                         </tfoot>
                     </MudSimpleTable>

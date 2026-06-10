@@ -31,7 +31,7 @@
                     <MudDatePicker @bind-Date="_form.AcquisitionDateNullable" Label="Acquisition Date"
                                    Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" Required="true" />
                     <MudNumericField Value="_form.UnitCost" ValueChanged="OnUnitCostChanged"
-                                     Label="Unit Cost (?)" Variant="Variant.Outlined" T="decimal"
+                                     Label="@($"Unit Cost ({Money.Symbol})")" Variant="Variant.Outlined" T="decimal"
                                      Required="true" Min="0.01m" Max="49999.99m" Format="N2" />
                     <MudSelect @bind-Value="_form.Category" Label="Property Class" Variant="Variant.Outlined">
                         <MudSelectItem Value="AssetCategory.LowValuedSemi">Low-Valued Semi-Expendable</MudSelectItem>

@@ -88,7 +88,7 @@
                                                 <td><MudText Typo="Typo.caption">@e.DocumentNo</MudText></td>
                                                 <td style="text-align:right">@(e.QuantityIn > 0 ? e.QuantityIn.ToString() : "-")</td>
                                                 <td style="text-align:right">@(e.QuantityOut > 0 ? e.QuantityOut.ToString() : "-")</td>
-                                                <td style="text-align:right">₱@e.UnitCost.ToString("N2")</td>
+                                                <td style="text-align:right">@Money.Symbol@e.UnitCost.ToString("N2")</td>
                                                 <td style="text-align:right"><b>@e.RunningBalance</b></td>
                                                 <td><MudText Typo="Typo.caption">@(e.Remarks ?? "-")</MudText></td>
                                             </tr>
@@ -188,9 +188,9 @@
 
                             <MudStack Row="true" Spacing="1" Class="mb-2" AlignItems="AlignItems.Center">
                                 <MudChip T="string" Size="Size.Small" Color="Color.Success">Displayed Lines: @FilteredRegSPILineCount</MudChip>
-                                <MudChip T="string" Size="Size.Small" Color="Color.Secondary">Displayed Total: ₱@FilteredRegSPIAmountTotal.ToString("N2")</MudChip>
-                                <MudChip T="string" Size="Size.Small" Color="Color.Info">API Page Total: ₱@_regspi.Result.PageAmountTotal.ToString("N2")</MudChip>
-                                <MudChip T="string" Size="Size.Small" Color="Color.Dark">Overall: ₱@_regspi.Result.OverallAmountTotal.ToString("N2")</MudChip>
+                                <MudChip T="string" Size="Size.Small" Color="Color.Secondary">Displayed Total: @Money.Symbol@FilteredRegSPIAmountTotal.ToString("N2")</MudChip>
+                                <MudChip T="string" Size="Size.Small" Color="Color.Info">API Page Total: @Money.Symbol@_regspi.Result.PageAmountTotal.ToString("N2")</MudChip>
+                                <MudChip T="string" Size="Size.Small" Color="Color.Dark">Overall: @Money.Symbol@_regspi.Result.OverallAmountTotal.ToString("N2")</MudChip>
                             </MudStack>
 
                             @if (GetFilteredRegSPIItems().Count == 0)
@@ -222,7 +222,7 @@
                                                     <td>@(string.IsNullOrWhiteSpace(s.FundCluster) ? "-" : s.FundCluster)</td>
                                                     <td><MudChip T="string" Size="Size.Small" Color="@ICSStatusColor(s.ICSStatus)">@s.ICSStatus</MudChip></td>
                                                     <td style="text-align:right">@s.LineCount</td>
-                                                    <td style="text-align:right">₱@s.AmountTotal.ToString("N2")</td>
+                                                    <td style="text-align:right">@Money.Symbol@s.AmountTotal.ToString("N2")</td>
                                                 </tr>
                                             }
                                         </tbody>
@@ -264,7 +264,7 @@
                                                         <MudText Typo="Typo.caption" Color="Color.Secondary">@(string.Join(" | ", new[] { e.IssuedFromEmployeePositionName, e.IssuedFromEmployeeOfficeName }.Where(x => !string.IsNullOrWhiteSpace(x))))</MudText>
                                                     }
                                                 </td>
-                                                <td style="text-align:right">₱@e.UnitCost.ToString("N2")</td>
+                                                <td style="text-align:right">@Money.Symbol@e.UnitCost.ToString("N2")</td>
                                                 <td><MudChip T="string" Size="Size.Small" Color="@ICSStatusColor(e.ICSStatus)">@e.ICSStatus</MudChip></td>
                                                 <td>@(e.ExpiresOn?.ToString("MM/dd/yyyy") ?? "-")</td>
                                             </tr>
@@ -364,9 +364,9 @@
 
                             <MudStack Row="true" Spacing="1" Class="mb-2" AlignItems="AlignItems.Center">
                                 <MudChip T="string" Size="Size.Small" Color="Color.Success">Displayed Lines: @FilteredRSPILineCount</MudChip>
-                                <MudChip T="string" Size="Size.Small" Color="Color.Secondary">Displayed Total: ₱@FilteredRSPIAmountTotal.ToString("N2")</MudChip>
-                                <MudChip T="string" Size="Size.Small" Color="Color.Info">API Page Total: ₱@_rspi.Result.PageAmountTotal.ToString("N2")</MudChip>
-                                <MudChip T="string" Size="Size.Small" Color="Color.Dark">Overall: ₱@_rspi.Result.OverallAmountTotal.ToString("N2")</MudChip>
+                                <MudChip T="string" Size="Size.Small" Color="Color.Secondary">Displayed Total: @Money.Symbol@FilteredRSPIAmountTotal.ToString("N2")</MudChip>
+                                <MudChip T="string" Size="Size.Small" Color="Color.Info">API Page Total: @Money.Symbol@_rspi.Result.PageAmountTotal.ToString("N2")</MudChip>
+                                <MudChip T="string" Size="Size.Small" Color="Color.Dark">Overall: @Money.Symbol@_rspi.Result.OverallAmountTotal.ToString("N2")</MudChip>
                             </MudStack>
 
                             @if (GetFilteredRSPIItems().Count == 0)
@@ -398,7 +398,7 @@
                                                     <td>@(string.IsNullOrWhiteSpace(s.FundCluster) ? "-" : s.FundCluster)</td>
                                                     <td><MudChip T="string" Size="Size.Small" Color="@ICSStatusColor(s.ICSStatus)">@s.ICSStatus</MudChip></td>
                                                     <td style="text-align:right">@s.LineCount</td>
-                                                    <td style="text-align:right">₱@s.AmountTotal.ToString("N2")</td>
+                                                    <td style="text-align:right">@Money.Symbol@s.AmountTotal.ToString("N2")</td>
                                                 </tr>
                                             }
                                         </tbody>
@@ -449,7 +449,7 @@
                                                 </td>
                                                 <td><MudChip T="string" Size="Size.Small" Color="Color.Default">@e.AssetType</MudChip></td>
                                                 <td><MudChip T="string" Size="Size.Small" Color="@SEValueClassColor(e.ICSNo, e.AssetType)">@GetSEValueClass(e.ICSNo, e.AssetType)</MudChip></td>
-                                                <td style="text-align:right">₱@e.UnitCost.ToString("N2")</td>
+                                                <td style="text-align:right">@Money.Symbol@e.UnitCost.ToString("N2")</td>
                                                 <td><MudChip T="string" Size="Size.Small" Color="@ICSStatusColor(e.ICSStatus)">@e.ICSStatus</MudChip></td>
                                             </tr>
                                         }
@@ -534,7 +534,7 @@
                                     <MudText Typo="Typo.caption" Color="Color.Secondary">
                                         @_history.Result.ItemCode
                                         @if (!string.IsNullOrWhiteSpace(_history.Result.SerialNo)) { <text> | S/N: @_history.Result.SerialNo</text> }
-                                        | @_history.Result.Category | ₱@_history.Result.UnitCost.ToString("N2")
+                                        | @_history.Result.Category | @Money.Symbol@_history.Result.UnitCost.ToString("N2")
                                     </MudText>
                                     <MudChip T="string" Size="Size.Small" Color="@PropertyStatusColor(_history.Result.CurrentStatus)" Class="mt-1">
                                         @_history.Result.CurrentStatus

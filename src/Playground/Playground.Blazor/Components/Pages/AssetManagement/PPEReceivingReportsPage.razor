@@ -127,15 +127,15 @@
                                     <td>@item.Description</td>
                                     <td>@item.AcquisitionDate.ToString("MM/dd/yyyy")</td>
                                     <td>@item.Quantity</td>
-                                    <td>₱@item.UnitCost.ToString("N2")</td>
-                                    <td><b>₱@item.Amount.ToString("N2")</b></td>
+                                    <td>@Money.Symbol@item.UnitCost.ToString("N2")</td>
+                                    <td><b>@Money.Symbol@item.Amount.ToString("N2")</b></td>
                                 </tr>
                             }
                         </tbody>
                         <tfoot>
                             <tr>
                                 <td colspan="6" style="text-align:right"><b>Total:</b></td>
-                                <td><b>₱@_detail.Items.Sum(x => x.Amount).ToString("N2")</b></td>
+                                <td><b>@Money.Symbol@_detail.Items.Sum(x => x.Amount).ToString("N2")</b></td>
                             </tr>
                         </tfoot>
                     </MudSimpleTable>
@@ -323,8 +323,8 @@
                                                 <MudText Typo="Typo.caption" Color="Color.Secondary">@li.SelectedItem.PropertyClass / @li.SelectedItem.CategoryCode</MudText>
                                             </td>
                                             <td>@li.SelectedItem.Quantity</td>
-                                            <td>₱@li.SelectedItem.UnitCost.ToString("N2")</td>
-                                            <td><b>₱@((li.SelectedItem.Quantity * li.SelectedItem.UnitCost).ToString("N2"))</b></td>
+                                            <td>@Money.Symbol@li.SelectedItem.UnitCost.ToString("N2")</td>
+                                            <td><b>@Money.Symbol@((li.SelectedItem.Quantity * li.SelectedItem.UnitCost).ToString("N2"))</b></td>
                                             <td>
                                                 <MudIconButton Icon="@Icons.Material.Filled.DeleteOutline" Size="Size.Small"
                                                                Color="Color.Error" OnClick="@(() => RemoveItem(i - 1))" />
@@ -335,7 +335,7 @@
                                 <tfoot>
                                     <tr>
                                         <td colspan="4" style="text-align:right"><b>Total:</b></td>
-                                        <td><b>₱@(_form.Items.Sum(x => x.SelectedItem!.Quantity * x.SelectedItem.UnitCost).ToString("N2"))</b></td>
+                                        <td><b>@Money.Symbol@(_form.Items.Sum(x => x.SelectedItem!.Quantity * x.SelectedItem.UnitCost).ToString("N2"))</b></td>
                                         <td colspan="2"></td>
                                     </tr>
                                 </tfoot>

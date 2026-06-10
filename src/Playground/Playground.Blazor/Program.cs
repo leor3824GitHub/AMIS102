@@ -1,7 +1,9 @@
+using System.Globalization;
 using AMIS.Framework.Blazor.UI;
 using AMIS.Framework.Blazor.UI.Theme;
 using AMIS.Playground.Blazor;
 using AMIS.Playground.Blazor.ApiClient;
+using AMIS.Playground.Blazor.Common;
 using AMIS.Playground.Blazor.Components;
 using AMIS.Playground.Blazor.Services;
 using AMIS.Playground.Blazor.Services.AssetRegister;
@@ -11,6 +13,21 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server.Circuits;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Currency/number/date formatting flows from a single configured culture (default en-PH → ₱).
+// Change "Localization:Culture" in appsettings.json to switch the app's currency everywhere.
+var appCulture = builder.Configuration["Localization:Culture"] ?? "en-PH";
+Money.Configure(appCulture);
+try
+{
+    var ci = CultureInfo.GetCultureInfo(appCulture);
+    CultureInfo.DefaultThreadCurrentCulture = ci;
+    CultureInfo.DefaultThreadCurrentUICulture = ci;
+}
+catch (CultureNotFoundException)
+{
+    // Fall back to runtime default culture if the configured name is invalid.
+}
 
 // Configure HTTP/3 support (only override in production, respect launchSettings in dev)
 if (!builder.Environment.IsDevelopment())

@@ -89,7 +89,7 @@
                             @if (li.SelectedPPEItem is not null)
                             {
                                 <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">
-                                    @li.SelectedPPEItem.PropertyNumber | ₱@li.SelectedPPEItem.UnitCost.ToString("N2") | @li.SelectedPPEItem.Status
+                                    @li.SelectedPPEItem.PropertyNumber | @Money.Symbol@li.SelectedPPEItem.UnitCost.ToString("N2") | @li.SelectedPPEItem.Status
                                 </MudText>
                             }
                         </MudPaper>
@@ -203,9 +203,9 @@
                                     <td><b>@item.PropertyCode</b></td>
                                     <td>@(item.SerialNumber ?? "-")</td>
                                     <td>@(item.PPESpecification.Length > 30 ? item.PPESpecification[..30] + "…" : item.PPESpecification)</td>
-                                    <td>₱@item.AcquisitionCost.ToString("N2")</td>
-                                    <td>@if (item.AccumulatedDepreciation.HasValue) { <text>₱@item.AccumulatedDepreciation.Value.ToString("N2")</text> } else { <MudText Typo="Typo.caption" Color="Color.Warning">Pending</MudText> }</td>
-                                    <td>@(item.BookValue.HasValue ? "₱" + item.BookValue.Value.ToString("N2") : "-")</td>
+                                    <td>@Money.Symbol@item.AcquisitionCost.ToString("N2")</td>
+                                    <td>@if (item.AccumulatedDepreciation.HasValue) { <text>@Money.Symbol@item.AccumulatedDepreciation.Value.ToString("N2")</text> } else { <MudText Typo="Typo.caption" Color="Color.Warning">Pending</MudText> }</td>
+                                    <td>@(item.BookValue.HasValue ? Money.Symbol + item.BookValue.Value.ToString("N2") : "-")</td>
                                 </tr>
                             }
                         </tbody>
@@ -230,11 +230,11 @@
                         <MudText Typo="Typo.caption" Color="Color.Secondary">@row.PropertyCode</MudText>
                         <MudGrid Spacing="1">
                             <MudItem xs="6">
-                                <MudNumericField @bind-Value="row.AccumulatedDepreciation" Label="Acc. Depreciation (?)"
+                                <MudNumericField @bind-Value="row.AccumulatedDepreciation" Label="@($"Acc. Depreciation ({Money.Symbol})")"
                                                  Variant="Variant.Outlined" Dense="true" Min="0m" Format="N2" />
                             </MudItem>
                             <MudItem xs="6">
-                                <MudNumericField @bind-Value="row.BookValue" Label="Book Value (?)"
+                                <MudNumericField @bind-Value="row.BookValue" Label="@($"Book Value ({Money.Symbol})")"
                                                  Variant="Variant.Outlined" Dense="true" Min="0m" Format="N2" />
                             </MudItem>
                         </MudGrid>

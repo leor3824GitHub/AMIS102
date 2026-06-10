@@ -71,7 +71,7 @@
                             @if (row.SelectedProperty is not null)
                             {
                                 <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">
-                                    ₱@row.SelectedProperty.UnitCost.ToString("N2") | @row.SelectedProperty.Status
+                                    @Money.Symbol@row.SelectedProperty.UnitCost.ToString("N2") | @row.SelectedProperty.Status
                                 </MudText>
                             }
                         </MudPaper>
@@ -203,14 +203,14 @@
                                     <td><b>@item.PropertyNo</b></td>
                                     <td>@(item.Description ?? "-")</td>
                                     <td><MudChip T="string" Size="Size.Small" Color="Color.Default">@item.CategoryAtTimeOfReport</MudChip></td>
-                                    <td>₱@item.UnitCost.ToString("N2")</td>
+                                    <td>@Money.Symbol@item.UnitCost.ToString("N2")</td>
                                 </tr>
                             }
                         </tbody>
                         <tfoot>
                             <tr>
                                 <td colspan="4" style="text-align:right"><b>Total Cost:</b></td>
-                                <td><b>₱@_detail.Items.Sum(x => x.UnitCost).ToString("N2")</b></td>
+                                <td><b>@Money.Symbol@_detail.Items.Sum(x => x.UnitCost).ToString("N2")</b></td>
                             </tr>
                         </tfoot>
                     </MudSimpleTable>

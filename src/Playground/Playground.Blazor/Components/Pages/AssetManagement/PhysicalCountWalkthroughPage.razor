@@ -135,7 +135,7 @@ else
                         </td>
                         <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
                             title="@entry.Description">@entry.Description</td>
-                        <td>₱@entry.UnitCost.ToString("N2")</td>
+                        <td>@Money.Symbol@entry.UnitCost.ToString("N2")</td>
                         <td>
                             @if (entry.Result is not null)
                             {
@@ -208,7 +208,7 @@ else
             <MudStack Spacing="2">
                 <MudTextField @bind-Value="_fasPropertyNumber" Label="Property Number" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" MaxLength="64" />
                 <MudTextField @bind-Value="_fasDescription" Label="Description" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" MaxLength="500" Lines="2" />
-                <MudNumericField @bind-Value="_fasUnitCost" Label="Unit Cost (₱)" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" Min="0m" T="decimal" />
+                <MudNumericField @bind-Value="_fasUnitCost" Label="@($"Unit Cost ({Money.Symbol})")" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" Min="0m" T="decimal" />
                 <MudSelect @bind-Value="_fasCondition" Label="Condition" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" T="string">
                     <MudSelectItem Value="@("Good")">Good</MudSelectItem>
                     <MudSelectItem Value="@("NeedsRepair")">Needs Repair</MudSelectItem>
@@ -303,9 +303,9 @@ else
                                 <td><b>@item.PropertyNumber</b></td>
                                 <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="@item.Description">@item.Description</td>
                                 <td>@item.DateAcquired.ToString("MM/dd/yyyy")</td>
-                                <td>₱@item.UnitCost.ToString("N2")</td>
-                                <td>@(item.AccumulatedDepreciation.HasValue ? $"₱{item.AccumulatedDepreciation.Value:N2}" : "—")</td>
-                                <td>@(item.BookValue.HasValue ? $"₱{item.BookValue.Value:N2}" : "—")</td>
+                                <td>@Money.Symbol@item.UnitCost.ToString("N2")</td>
+                                <td>@(item.AccumulatedDepreciation.HasValue ? $"{Money.Symbol}{item.AccumulatedDepreciation.Value:N2}" : "—")</td>
+                                <td>@(item.BookValue.HasValue ? $"{Money.Symbol}{item.BookValue.Value:N2}" : "—")</td>
                                 <td>@item.QuantityPerCard</td>
                                 <td>@item.QuantityOnHand</td>
                                 <td>@(item.Shortage > 0 ? item.Shortage.ToString() : "—")</td>
@@ -318,9 +318,9 @@ else
                     <tfoot>
                         <tr>
                             <td colspan="4" style="text-align:right"><b>Totals:</b></td>
-                            <td><b>₱@_rpcppe.Summary.TotalUnitCost.ToString("N2")</b></td>
-                            <td><b>@(_rpcppe.Summary.TotalAccumulatedDepreciation.HasValue ? $"₱{_rpcppe.Summary.TotalAccumulatedDepreciation.Value:N2}" : "—")</b></td>
-                            <td><b>@(_rpcppe.Summary.TotalBookValue.HasValue ? $"₱{_rpcppe.Summary.TotalBookValue.Value:N2}" : "—")</b></td>
+                            <td><b>@Money.Symbol@_rpcppe.Summary.TotalUnitCost.ToString("N2")</b></td>
+                            <td><b>@(_rpcppe.Summary.TotalAccumulatedDepreciation.HasValue ? $"{Money.Symbol}{_rpcppe.Summary.TotalAccumulatedDepreciation.Value:N2}" : "—")</b></td>
+                            <td><b>@(_rpcppe.Summary.TotalBookValue.HasValue ? $"{Money.Symbol}{_rpcppe.Summary.TotalBookValue.Value:N2}" : "—")</b></td>
                             <td></td><td></td>
                             <td><b>@_rpcppe.Summary.TotalShortage</b></td>
                             <td><b>@_rpcppe.Summary.TotalOverage</b></td>
@@ -386,7 +386,7 @@ else
                                 <td><b>@item.PropertyNumber</b></td>
                                 <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="@item.Description">@item.Description</td>
                                 <td>@item.DateAcquired.ToString("MM/dd/yyyy")</td>
-                                <td>₱@item.UnitCost.ToString("N2")</td>
+                                <td>@Money.Symbol@item.UnitCost.ToString("N2")</td>
                                 <td>@item.QuantityPerCard</td>
                                 <td>@item.QuantityOnHand</td>
                                 <td>@(item.Shortage > 0 ? item.Shortage.ToString() : "—")</td>
@@ -399,7 +399,7 @@ else
                     <tfoot>
                         <tr>
                             <td colspan="4" style="text-align:right"><b>Totals:</b></td>
-                            <td><b>₱@_rpcsemex.Summary.TotalUnitCost.ToString("N2")</b></td>
+                            <td><b>@Money.Symbol@_rpcsemex.Summary.TotalUnitCost.ToString("N2")</b></td>
                             <td></td><td></td>
                             <td><b>@_rpcsemex.Summary.TotalShortage</b></td>
                             <td><b>@_rpcsemex.Summary.TotalOverage</b></td>

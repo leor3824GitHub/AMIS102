@@ -42,7 +42,7 @@
                     <MudItem xs="12" sm="6">
                         <div>
                             <MudText Typo="Typo.caption" Color="Color.Secondary">Total</MudText>
-                            <MudText Typo="Typo.body2"><b>₱@_selectedPurchaseRequestDetail.LineItems.Sum(x => x.EstimatedTotalCost).ToString("N2")</b></MudText>
+                            <MudText Typo="Typo.body2"><b>@Money.Symbol@_selectedPurchaseRequestDetail.LineItems.Sum(x => x.EstimatedTotalCost).ToString("N2")</b></MudText>
                         </div>
                     </MudItem>
                 </MudGrid>

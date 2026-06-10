@@ -17,7 +17,7 @@
             </MudItem>
             <MudItem xs="6" sm="3">
                 <MudText Typo="Typo.caption" Color="Color.Secondary">Total Amount</MudText>
-                <MudText Typo="Typo.body2" Style="font-weight: 600;">₱@PurchaseOrder.TotalAmount.ToString("N2")</MudText>
+                <MudText Typo="Typo.body2" Style="font-weight: 600;">@Money.Symbol@PurchaseOrder.TotalAmount.ToString("N2")</MudText>
             </MudItem>
         </MudGrid>
         <MudDivider Class="my-3" />
@@ -63,15 +63,15 @@
                         <td><MudText Typo="Typo.body2">@li.Description</MudText></td>
                         <td>@li.Unit</td>
                         <td style="text-align:right">@li.Quantity.ToString("N2")</td>
-                        <td style="text-align:right">₱@li.UnitCost.ToString("N2")</td>
-                        <td style="text-align:right"><b>₱@li.Amount.ToString("N2")</b></td>
+                        <td style="text-align:right">@Money.Symbol@li.UnitCost.ToString("N2")</td>
+                        <td style="text-align:right"><b>@Money.Symbol@li.Amount.ToString("N2")</b></td>
                     </tr>
                 }
             </tbody>
             <tfoot>
                 <tr>
                     <td colspan="6" style="text-align:right"><b>Total:</b></td>
-                    <td style="text-align:right"><b style="font-size:1.1em">₱@PurchaseOrder.TotalAmount.ToString("N2")</b></td>
+                    <td style="text-align:right"><b style="font-size:1.1em">@Money.Symbol@PurchaseOrder.TotalAmount.ToString("N2")</b></td>
                 </tr>
             </tfoot>
         </MudSimpleTable>

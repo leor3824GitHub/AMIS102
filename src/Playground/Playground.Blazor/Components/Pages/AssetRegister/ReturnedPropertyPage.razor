@@ -26,10 +26,10 @@
                                   DebounceInterval="350" OnDebounceIntervalElapsed="@(() => LoadAsync())" Style="max-width:220px" />
                     @if (_canCreate)
                     {
-                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
-                                   StartIcon="@Icons.Material.Filled.Add" OnClick="OpenRequestDialog">
+                        <AMISButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
+                                    StartIcon="@Icons.Material.Filled.Add" OnClick="OpenRequestDialog">
                             Request a Return
-                        </MudButton>
+                        </AMISButton>
                     }
                 </MudStack>
 
@@ -88,27 +88,27 @@
                                     <td>
                                         <MudStack Row="true" Spacing="0">
                                             <MudTooltip Text="View Details">
-                                                <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small"
-                                                               Color="Color.Default" OnClick="@(() => ViewAsync(r.Id))" />
+                                                <AMISIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small"
+                                                                Color="Color.Default" OnClick="@(() => ViewAsync(r.Id))" />
                                             </MudTooltip>
                                             @if (r.Status == ReturnedPropertyReceiptStatus.Pending)
                                             {
                                                 @if (_canAccept)
                                                 {
                                                     <MudTooltip Text="Receive / Accept">
-                                                        <MudIconButton Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small"
-                                                                       Color="Color.Success" OnClick="@(() => AcceptAsync(r.Id))" />
+                                                        <AMISIconButton Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small"
+                                                                        Color="Color.Success" OnClick="@(() => AcceptAsync(r.Id))" />
                                                     </MudTooltip>
                                                     <MudTooltip Text="Reject">
-                                                        <MudIconButton Icon="@Icons.Material.Filled.Cancel" Size="Size.Small"
-                                                                       Color="Color.Error" OnClick="@(() => RejectAsync(r.Id))" />
+                                                        <AMISIconButton Icon="@Icons.Material.Filled.Cancel" Size="Size.Small"
+                                                                        Color="Color.Error" OnClick="@(() => RejectAsync(r.Id))" />
                                                     </MudTooltip>
                                                 }
                                                 @if (_canCreate)
                                                 {
                                                     <MudTooltip Text="Withdraw Request">
-                                                        <MudIconButton Icon="@Icons.Material.Filled.Undo" Size="Size.Small"
-                                                                       Color="Color.Warning" OnClick="@(() => CancelAsync(r.Id))" />
+                                                        <AMISIconButton Icon="@Icons.Material.Filled.Undo" Size="Size.Small"
+                                                                        Color="Color.Warning" OnClick="@(() => CancelAsync(r.Id))" />
                                                     </MudTooltip>
                                                 }
                                             }
@@ -145,7 +145,7 @@
                             @StatusChip(_detail.Status)
                             <MudText Typo="Typo.body2" Color="Color.Secondary">@_detail.Date.ToString("MMMM dd, yyyy")</MudText>
                             <MudSpacer />
-                            <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="@(() => _detail = null)" />
+                            <AMISIconButton Icon="@Icons.Material.Filled.Close" OnClick="@(() => _detail = null)" />
                         </MudStack>
                     </CardHeaderContent>
                 </MudCardHeader>
@@ -202,14 +202,14 @@
                                     <td><b>@item.Snapshot.PropertyNo</b></td>
                                     <td>@item.Snapshot.Description</td>
                                     <td><MudChip T="string" Size="Size.Small" Color="Color.Default">@item.Snapshot.AssetType</MudChip></td>
-                                    <td style="text-align:right">₱@item.Snapshot.UnitCost.ToString("N2")</td>
+                                    <td style="text-align:right">@Money.Symbol@item.Snapshot.UnitCost.ToString("N2")</td>
                                 </tr>
                             }
                         </tbody>
                         <tfoot>
                             <tr>
                                 <td colspan="4" style="text-align:right"><b>Total:</b></td>
-                                <td style="text-align:right"><b>₱@_detail.Items.Sum(x => x.Snapshot.UnitCost).ToString("N2")</b></td>
+                                <td style="text-align:right"><b>@Money.Symbol@_detail.Items.Sum(x => x.Snapshot.UnitCost).ToString("N2")</b></td>
                             </tr>
                         </tfoot>
                     </MudSimpleTable>

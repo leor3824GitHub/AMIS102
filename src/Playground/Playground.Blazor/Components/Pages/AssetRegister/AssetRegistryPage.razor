@@ -26,10 +26,10 @@
                                       OnKeyDown="OnSearchKeyDown" Immediate="false" />
                     </MudItem>
                     <MudItem xs="12" md="3">
-                        <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
-                                   StartIcon="@Icons.Material.Outlined.Search" OnClick="LoadAsync" Disabled="_busy">
+                        <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                                    StartIcon="@Icons.Material.Outlined.Search" OnClick="LoadAsync" Disabled="_busy">
                             Search
-                        </MudButton>
+                        </AMISButton>
                     </MudItem>
                 </MudGrid>
 
@@ -62,7 +62,7 @@
                             <MudTh>Type</MudTh>
                             <MudTh>Description</MudTh>
                             <MudTh>Acquisition Date</MudTh>
-                            <MudTh Style="text-align:right">Unit Cost (?)</MudTh>
+                            <MudTh Style="text-align:right">Unit Cost (@Money.Symbol)</MudTh>
                             <MudTh>Lifecycle</MudTh>
                             <MudTh>Condition</MudTh>
                         </HeaderContent>
@@ -99,10 +99,10 @@
                             Page @_page of @_totalPages (@_totalCount total records)
                         </MudText>
                         <MudStack Row="true" Spacing="1">
-                            <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft" Size="Size.Small"
-                                           Disabled="_page <= 1 || _busy" OnClick="PrevPage" />
-                            <MudIconButton Icon="@Icons.Material.Filled.ChevronRight" Size="Size.Small"
-                                           Disabled="_page >= _totalPages || _busy" OnClick="NextPage" />
+                            <AMISIconButton Icon="@Icons.Material.Filled.ChevronLeft" Size="Size.Small"
+                                            Disabled="_page <= 1 || _busy" OnClick="PrevPage" />
+                            <AMISIconButton Icon="@Icons.Material.Filled.ChevronRight" Size="Size.Small"
+                                            Disabled="_page >= _totalPages || _busy" OnClick="NextPage" />
                         </MudStack>
                     </MudStack>
                 }
@@ -120,8 +120,8 @@
                         <MudText Typo="Typo.h6">@_selected.PropertyNo — Detail</MudText>
                     </CardHeaderContent>
                     <CardHeaderActions>
-                        <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small"
-                                       OnClick="@(() => _selected = null)" />
+                        <AMISIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small"
+                                        OnClick="@(() => _selected = null)" />
                     </CardHeaderActions>
                 </MudCardHeader>
                 <MudCardContent>
@@ -147,15 +147,15 @@
                             <MudText Typo="Typo.body2">@(_selected.UacsObjectCode ?? "—")</MudText>
                         </MudItem>
                         <MudItem xs="6" md="2">
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">Unit Cost (?)</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Unit Cost (@Money.Symbol)</MudText>
                             <MudText Typo="Typo.body2">@_selected.UnitCost.ToString("N2")</MudText>
                         </MudItem>
                         <MudItem xs="6" md="2">
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">Carrying Amount (?)</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Carrying Amount (@Money.Symbol)</MudText>
                             <MudText Typo="Typo.body2">@_selected.CarryingAmount.ToString("N2")</MudText>
                         </MudItem>
                         <MudItem xs="6" md="2">
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">Accum. Depreciation (?)</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Accum. Depreciation (@Money.Symbol)</MudText>
                             <MudText Typo="Typo.body2">@_selected.AccumulatedDepreciation.ToString("N2")</MudText>
                         </MudItem>
                         <MudItem xs="6" md="2">
@@ -215,10 +215,10 @@
                             <MudSelectItem Value="AssetCondition.NeedingRepair">Needing Repair</MudSelectItem>
                             <MudSelectItem Value="AssetCondition.Unserviceable">Unserviceable</MudSelectItem>
                         </MudSelect>
-                        <MudButton Variant="Variant.Outlined" Color="Color.Primary"
-                                   OnClick="UpdateConditionAsync" Disabled="_busy">
+                        <AMISButton Variant="Variant.Outlined" Color="Color.Primary"
+                                    OnClick="UpdateConditionAsync" Disabled="_busy">
                             Save Condition
-                        </MudButton>
+                        </AMISButton>
                     </MudStack>
                     }
                 </MudCardContent>

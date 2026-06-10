@@ -184,8 +184,8 @@
                                 <MudSpacer />
                                 @if (_adhocLines.Count > 1)
                                 {
-                                    <MudIconButton Icon="@Icons.Material.Filled.Remove" Size="Size.Small" Color="Color.Error"
-                                                   OnClick="@(() => _adhocLines.RemoveAt(idx))" />
+                                    <AMISIconButton Icon="@Icons.Material.Filled.Remove" Size="Size.Small" Color="Color.Error"
+                                                    OnClick="@(() => _adhocLines.RemoveAt(idx))" />
                                 }
                             </MudStack>
                             <MudGrid Spacing="1">
@@ -208,9 +208,9 @@
                                                          Clearable="true"
                                                          Class="flex-grow-1" />
                                         <MudTooltip Text="Create a new catalog item from this description">
-                                            <MudIconButton Icon="@Icons.Material.Filled.AddCircleOutline"
-                                                           Color="Color.Primary" Size="Size.Small"
-                                                           OnClick="@(async () => await OpenAdhocCreateCatalogAsync(idx))" />
+                                            <AMISIconButton Icon="@Icons.Material.Filled.AddCircleOutline"
+                                                            Color="Color.Primary" Size="Size.Small"
+                                                            OnClick="@(async () => await OpenAdhocCreateCatalogAsync(idx))" />
                                         </MudTooltip>
                                     </MudStack>
                                     @if (line.SelectedCatalog is not null)
@@ -286,17 +286,17 @@
                     </MudItem>
                 }
                 <MudItem xs="12">
-                    <MudButton StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Text" Size="Size.Small"
-                               OnClick="AddAdhocLine" Color="Color.Primary">Add Item</MudButton>
+                    <AMISButton StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Text" Size="Size.Small"
+                            OnClick="AddAdhocLine" Color="Color.Primary">Add Item</AMISButton>
                 </MudItem>
             }
 
             <MudItem xs="12" Class="d-flex justify-end">
-                <MudButton OnClick="OnCancel" Variant="Variant.Text" Class="mr-2">Cancel</MudButton>
-                <MudButton OnClick="SaveAsync" Variant="Variant.Filled" Color="Color.Success"
-                           Disabled="_busy" StartIcon="@Icons.Material.Outlined.Save">
+                <AMISButton OnClick="OnCancel" Variant="Variant.Text" Color="Color.Default" Class="mr-2">Cancel</AMISButton>
+                <AMISButton OnClick="SaveAsync" Variant="Variant.Filled" Color="Color.Success"
+                            Disabled="_busy" StartIcon="@Icons.Material.Outlined.Save">
                     @(_busy ? "Saving..." : "Save")
-                </MudButton>
+                </AMISButton>
             </MudItem>
         </MudGrid>
     </MudCardContent>
@@ -360,9 +360,9 @@
         return DocumentKind switch
         {
             ReceivingDocumentKind.PPERR when !threshold.IsCapitalAsset(unitCost) =>
-                $"Below capitalization cutoff (₱{cap:N2}) — should be SMRR.",
+                $"Below capitalization cutoff ({Money.Symbol}{cap:N2}) — should be SMRR.",
             ReceivingDocumentKind.SMRR when threshold.IsCapitalAsset(unitCost) =>
-                $"At/above capitalization cutoff (₱{cap:N2}) — should be PPERR.",
+                $"At/above capitalization cutoff ({Money.Symbol}{cap:N2}) — should be PPERR.",
             _ => string.Empty
         };
     }

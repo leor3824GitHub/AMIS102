@@ -54,10 +54,10 @@
                         <tr>
                             <td><b>@item.PropertyCode</b></td>
                             <td>@item.PropertyNumber</td>
-                            <td>@(item.Description.Length > 50 ? item.Description[..50] + "…" : item.Description)</td>
-                            <td>@(item.SerialNumber ?? "—")</td>
+                            <td>@(item.Description.Length > 50 ? item.Description[..50] + "ï¿½" : item.Description)</td>
+                            <td>@(item.SerialNumber ?? "ï¿½")</td>
                             <td>@item.DateAcquired.ToString("MM/dd/yyyy")</td>
-                            <td>â‚±@item.UnitCost.ToString("N2")</td>
+                            <td>@Money.Symbol@item.UnitCost.ToString("N2")</td>
                             <td>@StatusChip(item.Status)</td>
                             <td><MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small"
                                                Color="Color.Primary" OnClick="@(() => ViewAsync(item.Id))" /></td>
@@ -81,7 +81,7 @@
         <MudCardHeader>
             <CardHeaderContent>
                 <MudStack Row="true" AlignItems="AlignItems.Center">
-                    <MudText Typo="Typo.h6">@_detail.PropertyCode — @_detail.PropertyNumber</MudText>
+                    <MudText Typo="Typo.h6">@_detail.PropertyCode ï¿½ @_detail.PropertyNumber</MudText>
                     <MudSpacer />
                     <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="@(() => _detail = null)" />
                 </MudStack>
@@ -95,7 +95,7 @@
                     <MudItem xs="6"><MudText Typo="Typo.caption">Serial No.</MudText><MudText>@_detail.SerialNumber</MudText></MudItem>
                 }
                 <MudItem xs="6"><MudText Typo="Typo.caption">Date Acquired</MudText><MudText>@_detail.DateAcquired.ToString("MMMM dd, yyyy")</MudText></MudItem>
-                <MudItem xs="6"><MudText Typo="Typo.caption">Unit Cost</MudText><MudText><b>â‚±@_detail.UnitCost.ToString("N2")</b></MudText></MudItem>
+                <MudItem xs="6"><MudText Typo="Typo.caption">Unit Cost</MudText><MudText><b>@Money.Symbol@_detail.UnitCost.ToString("N2")</b></MudText></MudItem>
                 <MudItem xs="6"><MudText Typo="Typo.caption">Est. Useful Life</MudText><MudText>@_detail.EstimatedUsefulLifeYears year(s)</MudText></MudItem>
                 <MudItem xs="6"><MudText Typo="Typo.caption">Status</MudText>
                     @StatusChip(_detail.Status)

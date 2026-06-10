@@ -218,7 +218,7 @@
                                                                         </MudStack>
                                                                     </td>
                                                                     <td>@q.QuotationDate.ToString("MM/dd/yyyy")</td>
-                                                                    <td style="text-align:right">₱@q.LineItems.Sum(li => li.Total).ToString("N2")</td>
+                                                                    <td style="text-align:right">@Money.Symbol@q.LineItems.Sum(li => li.Total).ToString("N2")</td>
                                                                     <td>@(q.DeliveryTerms ?? "—")</td>
                                                                     <td>
                                                                         @{

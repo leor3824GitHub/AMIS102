@@ -19,13 +19,13 @@
                     <MudTextField @bind-Value="_keyword" Label="Search" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense"
                                   Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Outlined.Search"
                                   OnKeyDown="OnSearchKeyDown" Style="flex:1;" />
-                    <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary"
-                               OnClick="LoadAsync" Disabled="_busy">Search</MudButton>
+                    <AMISButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary"
+                                OnClick="LoadAsync" Disabled="_busy">Search</AMISButton>
                     @if (_canCreate)
                     {
-                        <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary"
-                                   StartIcon="@Icons.Material.Filled.Add"
-                                   OnClick="OpenCreateDialog" Disabled="_busy">New Catalog Item</MudButton>
+                        <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary"
+                                    StartIcon="@Icons.Material.Filled.Add"
+                                    OnClick="OpenCreateDialog" Disabled="_busy">New Catalog Item</AMISButton>
                     }
                 </MudStack>
 
@@ -80,16 +80,16 @@
                                 <MudStack Row="true" Spacing="0">
                                     @if (_canUpdate)
                                     {
-                                        <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small"
-                                                       Color="Color.Primary" OnClick="@(() => EditItem(context))" />
-                                        <MudIconButton Icon="@(context.IsActive ? Icons.Material.Outlined.ToggleOff : Icons.Material.Outlined.ToggleOn)"
-                                                       Size="Size.Small" Color="@(context.IsActive ? Color.Warning : Color.Success)"
-                                                       OnClick="@(() => ToggleActivationAsync(context))" />
+                                        <AMISIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small"
+                                                        Color="Color.Primary" OnClick="@(() => EditItem(context))" />
+                                        <AMISIconButton Icon="@(context.IsActive ? Icons.Material.Outlined.ToggleOff : Icons.Material.Outlined.ToggleOn)"
+                                                        Size="Size.Small" Color="@(context.IsActive ? Color.Warning : Color.Success)"
+                                                        OnClick="@(() => ToggleActivationAsync(context))" />
                                     }
                                     @if (_canDelete)
                                     {
-                                        <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small"
-                                                       Color="Color.Error" OnClick="@(() => DeleteAsync(context))" />
+                                        <AMISIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small"
+                                                        Color="Color.Error" OnClick="@(() => DeleteAsync(context))" />
                                     }
                                 </MudStack>
                             </MudTd>
@@ -102,10 +102,10 @@
                     <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mt-3">
                         <MudText Typo="Typo.caption">Page @_page of @_totalPages (@_totalCount total)</MudText>
                         <MudStack Row="true" Spacing="1">
-                            <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft" Size="Size.Small"
-                                           Disabled="_page <= 1 || _busy" OnClick="PrevPage" />
-                            <MudIconButton Icon="@Icons.Material.Filled.ChevronRight" Size="Size.Small"
-                                           Disabled="_page >= _totalPages || _busy" OnClick="NextPage" />
+                            <AMISIconButton Icon="@Icons.Material.Filled.ChevronLeft" Size="Size.Small"
+                                            Disabled="_page <= 1 || _busy" OnClick="PrevPage" />
+                            <AMISIconButton Icon="@Icons.Material.Filled.ChevronRight" Size="Size.Small"
+                                            Disabled="_page >= _totalPages || _busy" OnClick="NextPage" />
                         </MudStack>
                     </MudStack>
                 }
