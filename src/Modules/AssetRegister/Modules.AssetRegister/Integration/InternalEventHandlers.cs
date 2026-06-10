@@ -143,6 +143,38 @@ public sealed class PhysicalCountSessionClosedEventHandler(ILogger<PhysicalCount
 }
 
 /// <summary>
+/// Logs ledger freeze activation for a physical count session. Internal operation only — no integration event.
+/// </summary>
+public sealed class PhysicalCountFrozenEventHandler(ILogger<PhysicalCountFrozenEventHandler> logger)
+    : INotificationHandler<PhysicalCountFrozenEvent>
+{
+    public ValueTask Handle(PhysicalCountFrozenEvent @event, CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(@event);
+        logger.LogInformation(
+            "[{Tenant}] Ledger freeze activated for count session {SessionId} (fund cluster {FundCluster}, scope {Scope}).",
+            @event.TenantId, @event.SessionId, @event.FundCluster, @event.Scope);
+        return ValueTask.CompletedTask;
+    }
+}
+
+/// <summary>
+/// Logs a recount request on a physical count entry. Internal operation only — no integration event.
+/// </summary>
+public sealed class PhysicalCountRecountRequestedEventHandler(ILogger<PhysicalCountRecountRequestedEventHandler> logger)
+    : INotificationHandler<PhysicalCountRecountRequestedEvent>
+{
+    public ValueTask Handle(PhysicalCountRecountRequestedEvent @event, CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(@event);
+        logger.LogInformation(
+            "[{Tenant}] Recount requested for entry {EntryId} on count session {SessionId}.",
+            @event.TenantId, @event.EntryId, @event.SessionId);
+        return ValueTask.CompletedTask;
+    }
+}
+
+/// <summary>
 /// Logs asset transferred out via issuance report. Internal transfer tracking only — no integration event.
 /// The IssuanceReportPosted integration event already notifies other modules of the transfer.
 /// </summary>

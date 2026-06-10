@@ -73,9 +73,14 @@ public enum PhysicalCountScope
 
 public enum PhysicalCountStatus
 {
+    /// <summary>Ledger frozen (FrozenOnUtc set on new sessions); count recording in progress.</summary>
     Ongoing = 0,
+    /// <summary>Variance review; recount-flagged entries may be re-recorded; ledger still frozen.</summary>
     Reconciled = 1,
-    Closed = 2
+    /// <summary>Signed off; freeze lifted.</summary>
+    Closed = 2,
+    /// <summary>Created with metadata (Office Order No.); recording not yet allowed, ledger not frozen.</summary>
+    Draft = 3
 }
 
 public enum PhysicalCountCondition

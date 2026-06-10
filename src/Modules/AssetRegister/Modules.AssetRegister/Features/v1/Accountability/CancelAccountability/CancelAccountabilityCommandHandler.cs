@@ -1,11 +1,12 @@
 using AMIS.Modules.AssetRegister.Contracts.v1.Accountability;
 using AMIS.Modules.AssetRegister.Data;
+using AMIS.Modules.AssetRegister.Domain.Services;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
 namespace AMIS.Modules.AssetRegister.Features.v1.Accountability.CancelAccountability;
 
-public sealed class CancelAccountabilityCommandHandler(AssetRegisterDbContext db)
+public sealed class CancelAccountabilityCommandHandler(AssetRegisterDbContext db, ICountFreezeGuard freezeGuard)
     : ICommandHandler<CancelAccountabilityCommand, PropertyAccountabilityDto>
 {
     public async ValueTask<PropertyAccountabilityDto> Handle(CancelAccountabilityCommand cmd, CancellationToken ct)
@@ -21,6 +22,7 @@ public sealed class CancelAccountabilityCommandHandler(AssetRegisterDbContext db
         // Free the assets so they're back to Available.
         var assetIds = accountability.Lines.Select(l => l.AssetRegistryId).ToList();
         var assets = await db.AssetRegistries.Where(a => assetIds.Contains(a.Id)).ToListAsync(ct).ConfigureAwait(false);
+        await freezeGuard.EnsureMovementAllowedAsync(assets, ct).ConfigureAwait(false);
         foreach (var asset in assets)
         {
             if (asset.LifecycleState == Contracts.v1.LifecycleState.Assigned)

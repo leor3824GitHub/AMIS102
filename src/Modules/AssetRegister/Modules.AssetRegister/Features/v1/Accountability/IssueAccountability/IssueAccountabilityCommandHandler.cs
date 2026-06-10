@@ -12,7 +12,8 @@ namespace AMIS.Modules.AssetRegister.Features.v1.Accountability.IssueAccountabil
 
 public sealed class IssueAccountabilityCommandHandler(
     AssetRegisterDbContext db,
-    IAccountabilityNumberGenerator numberGenerator)
+    IAccountabilityNumberGenerator numberGenerator,
+    ICountFreezeGuard freezeGuard)
     : ICommandHandler<IssueAccountabilityCommand, PropertyAccountabilityDto>
 {
     public async ValueTask<PropertyAccountabilityDto> Handle(IssueAccountabilityCommand cmd, CancellationToken ct)
@@ -27,6 +28,8 @@ public sealed class IssueAccountabilityCommandHandler(
         var missing = assetIds.Except(assets.Select(a => a.Id)).ToList();
         if (missing.Count > 0)
             throw new KeyNotFoundException($"Assets not found: {string.Join(", ", missing)}");
+
+        await freezeGuard.EnsureMovementAllowedAsync(assets, ct).ConfigureAwait(false);
 
         var assetById = assets.ToDictionary(a => a.Id);
 

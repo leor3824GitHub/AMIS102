@@ -96,7 +96,9 @@ public sealed class CreateReturnedPropertyReceiptCommandHandler(AssetRegisterDbC
     }
 }
 
-public sealed class AcceptReturnedPropertyReceiptCommandHandler(AssetRegisterDbContext db)
+public sealed class AcceptReturnedPropertyReceiptCommandHandler(
+    AssetRegisterDbContext db,
+    Domain.Services.ICountFreezeGuard freezeGuard)
     : ICommandHandler<AcceptReturnedPropertyReceiptCommand, ReturnedPropertyReceiptDto>
 {
     public async ValueTask<ReturnedPropertyReceiptDto> Handle(
@@ -132,6 +134,7 @@ public sealed class AcceptReturnedPropertyReceiptCommandHandler(AssetRegisterDbC
         var assets = await db.AssetRegistries
             .Where(a => assetIds.Contains(a.Id))
             .ToDictionaryAsync(a => a.Id, ct).ConfigureAwait(false);
+        await freezeGuard.EnsureMovementAllowedAsync(assets.Values.ToList(), ct).ConfigureAwait(false);
         foreach (var line in lines)
         {
             if (assets.TryGetValue(line.AssetRegistryId, out var asset))

@@ -10,7 +10,8 @@ namespace AMIS.Modules.AssetRegister.Features.v1.Accountability.RenewAccountabil
 
 public sealed class RenewAccountabilityCommandHandler(
     AssetRegisterDbContext db,
-    IAccountabilityNumberGenerator numbers)
+    IAccountabilityNumberGenerator numbers,
+    ICountFreezeGuard freezeGuard)
     : ICommandHandler<RenewAccountabilityCommand, PropertyAccountabilityDto>
 {
     public async ValueTask<PropertyAccountabilityDto> Handle(RenewAccountabilityCommand cmd, CancellationToken ct)
@@ -39,6 +40,7 @@ public sealed class RenewAccountabilityCommandHandler(
         // Re-point each asset's CurrentAccountabilityId to the successor.
         var assetIds = successor.Lines.Select(l => l.AssetRegistryId).ToList();
         var assets = await db.AssetRegistries.Where(a => assetIds.Contains(a.Id)).ToListAsync(ct).ConfigureAwait(false);
+        await freezeGuard.EnsureMovementAllowedAsync(assets, ct).ConfigureAwait(false);
         foreach (var asset in assets)
         {
             asset.Transfer(

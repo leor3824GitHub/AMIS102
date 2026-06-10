@@ -1,12 +1,13 @@
 using AMIS.Modules.AssetRegister.Contracts.v1.Issuance;
 using AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
 using AMIS.Modules.AssetRegister.Data;
+using AMIS.Modules.AssetRegister.Domain.Services;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
 namespace AMIS.Modules.AssetRegister.Features.v1.Issuance.PostIssuanceReport;
 
-public sealed class PostIssuanceReportCommandHandler(AssetRegisterDbContext db)
+public sealed class PostIssuanceReportCommandHandler(AssetRegisterDbContext db, ICountFreezeGuard freezeGuard)
     : ICommandHandler<PostIssuanceReportCommand, PropertyIssuanceReportDto>
 {
     public async ValueTask<PropertyIssuanceReportDto> Handle(PostIssuanceReportCommand cmd, CancellationToken ct)
@@ -25,6 +26,7 @@ public sealed class PostIssuanceReportCommandHandler(AssetRegisterDbContext db)
         var assets = await db.AssetRegistries
             .Where(a => assetIds.Contains(a.Id))
             .ToListAsync(ct).ConfigureAwait(false);
+        await freezeGuard.EnsureMovementAllowedAsync(assets, ct).ConfigureAwait(false);
         foreach (var asset in assets)
             asset.MarkTransferredOut(report.Id, report.ReportNo, report.ReportType);
 

@@ -107,6 +107,19 @@ public sealed record PhysicalCountSessionClosedEvent(
     string? TenantId,
     string? CorrelationId = null) : AssetRegisterDomainEvent(TenantId, CorrelationId);
 
+public sealed record PhysicalCountFrozenEvent(
+    Guid SessionId,
+    string FundCluster,
+    PhysicalCountScope Scope,
+    string? TenantId,
+    string? CorrelationId = null) : AssetRegisterDomainEvent(TenantId, CorrelationId);
+
+public sealed record PhysicalCountRecountRequestedEvent(
+    Guid SessionId,
+    Guid EntryId,
+    string? TenantId,
+    string? CorrelationId = null) : AssetRegisterDomainEvent(TenantId, CorrelationId);
+
 public sealed record IncidentReportFiledEvent(
     Guid IncidentReportId,
     string IncidentNo,

@@ -11,10 +11,12 @@ internal static class CountingMapper
             e.Snapshot is null ? null : AccountabilityMapper.ToDto(e.Snapshot),
             e.SnapshotArticle, e.SnapshotUnit, e.SnapshotUnitCost, e.Condition,
             e.ScannedOnUtc, e.PhotoPath, e.ScannedByEmployeeId, e.LocationId, e.Remarks,
-            e.ProposedPropertyClass, e.ProposedCategoryCode, e.ProposedAcquisitionDate, e.ProposedUnitCost);
+            e.ProposedPropertyClass, e.ProposedCategoryCode, e.ProposedAcquisitionDate, e.ProposedUnitCost,
+            e.NeedsRecount, e.RecountReason);
 
     public static PhysicalCountSessionDto ToDto(PhysicalCountSession s) =>
         new(s.Id, s.Code, s.Scope, s.Status, s.FundCluster, s.StartedOn, s.ClosedOn, s.AsAt, s.Remarks,
+            s.OfficeOrderNo, s.FrozenOnUtc,
             s.ConductedBy.Select(AccountabilityMapper.ToDto).ToList(),
             s.ApprovedBy is null ? null : AccountabilityMapper.ToDto(s.ApprovedBy),
             s.WitnessedBy is null ? null : AccountabilityMapper.ToDto(s.WitnessedBy),

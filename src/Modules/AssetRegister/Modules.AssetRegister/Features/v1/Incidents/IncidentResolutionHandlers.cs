@@ -1,5 +1,6 @@
 using AMIS.Modules.AssetRegister.Contracts.v1.Incidents;
 using AMIS.Modules.AssetRegister.Data;
+using AMIS.Modules.AssetRegister.Domain.Services;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
@@ -27,7 +28,7 @@ public sealed class RecordIncidentRecoveryCommandHandler(AssetRegisterDbContext 
     }
 }
 
-public sealed class RecordIncidentSettlementCommandHandler(AssetRegisterDbContext db)
+public sealed class RecordIncidentSettlementCommandHandler(AssetRegisterDbContext db, ICountFreezeGuard freezeGuard)
     : ICommandHandler<RecordIncidentSettlementCommand, PropertyIncidentReportDto>
 {
     public async ValueTask<PropertyIncidentReportDto> Handle(RecordIncidentSettlementCommand cmd, CancellationToken ct)
@@ -42,6 +43,7 @@ public sealed class RecordIncidentSettlementCommandHandler(AssetRegisterDbContex
 
         var asset = await db.AssetRegistries.FirstOrDefaultAsync(a => a.Id == item.AssetRegistryId, ct).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Asset '{item.AssetRegistryId}' not found.");
+        await freezeGuard.EnsureMovementAllowedAsync([asset], ct).ConfigureAwait(false);
         asset.Dispose(report.Id, Contracts.v1.DisposalMethod.Other);
 
         await db.SaveChangesAsync(ct).ConfigureAwait(false);
@@ -49,7 +51,7 @@ public sealed class RecordIncidentSettlementCommandHandler(AssetRegisterDbContex
     }
 }
 
-public sealed class GrantIncidentReliefCommandHandler(AssetRegisterDbContext db)
+public sealed class GrantIncidentReliefCommandHandler(AssetRegisterDbContext db, ICountFreezeGuard freezeGuard)
     : ICommandHandler<GrantIncidentReliefCommand, PropertyIncidentReportDto>
 {
     public async ValueTask<PropertyIncidentReportDto> Handle(GrantIncidentReliefCommand cmd, CancellationToken ct)
@@ -64,6 +66,7 @@ public sealed class GrantIncidentReliefCommandHandler(AssetRegisterDbContext db)
 
         var asset = await db.AssetRegistries.FirstOrDefaultAsync(a => a.Id == item.AssetRegistryId, ct).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Asset '{item.AssetRegistryId}' not found.");
+        await freezeGuard.EnsureMovementAllowedAsync([asset], ct).ConfigureAwait(false);
         asset.Dispose(report.Id, Contracts.v1.DisposalMethod.Other);
 
         await db.SaveChangesAsync(ct).ConfigureAwait(false);
@@ -71,7 +74,7 @@ public sealed class GrantIncidentReliefCommandHandler(AssetRegisterDbContext db)
     }
 }
 
-public sealed class DerecognizeIncidentItemCommandHandler(AssetRegisterDbContext db)
+public sealed class DerecognizeIncidentItemCommandHandler(AssetRegisterDbContext db, ICountFreezeGuard freezeGuard)
     : ICommandHandler<DerecognizeIncidentItemCommand, PropertyIncidentReportDto>
 {
     public async ValueTask<PropertyIncidentReportDto> Handle(DerecognizeIncidentItemCommand cmd, CancellationToken ct)
@@ -86,6 +89,7 @@ public sealed class DerecognizeIncidentItemCommandHandler(AssetRegisterDbContext
 
         var asset = await db.AssetRegistries.FirstOrDefaultAsync(a => a.Id == item.AssetRegistryId, ct).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Asset '{item.AssetRegistryId}' not found.");
+        await freezeGuard.EnsureMovementAllowedAsync([asset], ct).ConfigureAwait(false);
         asset.Dispose(report.Id, Contracts.v1.DisposalMethod.Other);
 
         await db.SaveChangesAsync(ct).ConfigureAwait(false);

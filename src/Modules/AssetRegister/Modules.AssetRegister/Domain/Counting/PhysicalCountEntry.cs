@@ -27,6 +27,11 @@ public sealed class PhysicalCountEntry : IHasTenant
     public DateOnly? ProposedAcquisitionDate { get; private set; }
     public decimal? ProposedUnitCost { get; private set; }
 
+    // Recount flow — set during reconciliation, cleared when the entry is re-recorded.
+    public bool NeedsRecount { get; private set; }
+    public string? RecountReason { get; private set; }
+    public DateTimeOffset? RecountRequestedOnUtc { get; private set; }
+
     private PhysicalCountEntry() { }
 
     internal static PhysicalCountEntry CreateForKnownAsset(
@@ -106,6 +111,38 @@ public sealed class PhysicalCountEntry : IHasTenant
         if (Condition != PhysicalCountCondition.FoundAtStation)
             throw new InvalidOperationException("Only FoundAtStation entries get a reconciled asset id.");
         AssetRegistryId = assetRegistryId;
+    }
+
+    internal void MarkForRecount(string? reason)
+    {
+        if (NeedsRecount)
+            throw new InvalidOperationException("Entry is already flagged for recount.");
+        if (AssetRegistryId is null)
+            throw new InvalidOperationException("Only entries linked to a registry asset can be recounted.");
+        NeedsRecount = true;
+        RecountReason = reason;
+        RecountRequestedOnUtc = DateTimeOffset.UtcNow;
+    }
+
+    internal void ApplyRecount(
+        PhysicalCountCondition condition,
+        Guid locationId,
+        DateTimeOffset? scannedOnUtc,
+        Guid? scannedByEmployeeId,
+        string? photoPath,
+        string? remarks)
+    {
+        if (!NeedsRecount)
+            throw new InvalidOperationException("Entry is not flagged for recount.");
+        if (condition is PhysicalCountCondition.FoundAtStation)
+            throw new InvalidOperationException("A recount cannot set FoundAtStation on a registry-linked entry.");
+        Condition = condition;
+        LocationId = locationId;
+        ScannedOnUtc = scannedOnUtc;
+        ScannedByEmployeeId = scannedByEmployeeId;
+        PhotoPath = photoPath;
+        Remarks = remarks;
+        NeedsRecount = false;
     }
 }
 

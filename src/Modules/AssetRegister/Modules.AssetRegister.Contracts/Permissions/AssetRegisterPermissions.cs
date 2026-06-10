@@ -40,6 +40,7 @@ public static class AssetRegisterPermissions
     {
         public const string View   = "Permissions.AssetRegister.Count.View";
         public const string Create = "Permissions.AssetRegister.Count.Create";
+        public const string Freeze = "Permissions.AssetRegister.Count.Freeze";
         public const string Record = "Permissions.AssetRegister.Count.Record";
         public const string Submit = "Permissions.AssetRegister.Count.Submit";
         public const string Close  = "Permissions.AssetRegister.Count.Close";

@@ -26,7 +26,8 @@ public sealed class StartPhysicalCountCommandHandler(
             .Select(e => EmployeeRef.Create(e.EmployeeId, e.PrintedName, e.Designation));
 
         var session = PhysicalCountSession.Start(
-            tenantId, code, cmd.Scope, cmd.FundCluster, cmd.AsAt, cmd.StartedOn, conductedBy, cmd.Remarks);
+            tenantId, code, cmd.Scope, cmd.FundCluster, cmd.AsAt, cmd.StartedOn, conductedBy, cmd.Remarks,
+            cmd.OfficeOrderNo);
 
         db.PhysicalCountSessions.Add(session);
         await db.SaveChangesAsync(ct).ConfigureAwait(false);

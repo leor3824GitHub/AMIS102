@@ -24,6 +24,7 @@ internal sealed class PhysicalCountSessionConfiguration : IEntityTypeConfigurati
         builder.Property(x => x.Code).IsRequired().HasMaxLength(64);
         builder.Property(x => x.FundCluster).IsRequired().HasMaxLength(64);
         builder.Property(x => x.Remarks).HasMaxLength(2000);
+        builder.Property(x => x.OfficeOrderNo).HasMaxLength(100);
 
         builder.OwnsOne(x => x.ApprovedBy, n => n.ConfigureEmployeeRef("ApprovedBy"));
         builder.OwnsOne(x => x.WitnessedBy, n => n.ConfigureEmployeeRef("WitnessedBy"));
@@ -48,6 +49,8 @@ internal sealed class PhysicalCountSessionConfiguration : IEntityTypeConfigurati
 
         builder.HasIndex(x => new { x.TenantId, x.Code }).IsUnique();
         builder.HasIndex(x => new { x.TenantId, x.Status });
+        // Freeze-guard lookup: active frozen sessions by fund cluster.
+        builder.HasIndex(x => new { x.TenantId, x.Status, x.FundCluster });
     }
 }
 
@@ -69,6 +72,7 @@ internal sealed class PhysicalCountEntryConfiguration : IEntityTypeConfiguration
         builder.Property(x => x.ProposedPropertyClass).HasMaxLength(64);
         builder.Property(x => x.ProposedCategoryCode).HasMaxLength(64);
         builder.Property(x => x.ProposedUnitCost).HasPrecision(18, 2);
+        builder.Property(x => x.RecountReason).HasMaxLength(500);
 
         builder.OwnsOne(x => x.Snapshot, n => n.ConfigureSnapshot());
 

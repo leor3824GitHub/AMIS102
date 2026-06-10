@@ -49,7 +49,7 @@ public sealed class AddUnserviceableReportItemCommandHandler(AssetRegisterDbCont
     }
 }
 
-public sealed class SubmitUnserviceableReportCommandHandler(AssetRegisterDbContext db)
+public sealed class SubmitUnserviceableReportCommandHandler(AssetRegisterDbContext db, ICountFreezeGuard freezeGuard)
     : ICommandHandler<SubmitUnserviceableReportCommand, UnserviceablePropertyReportDto>
 {
     public async ValueTask<UnserviceablePropertyReportDto> Handle(
@@ -66,6 +66,7 @@ public sealed class SubmitUnserviceableReportCommandHandler(AssetRegisterDbConte
         // Mirror lifecycle: each asset → Unserviceable.
         var assetIds = report.Items.Select(i => i.AssetRegistryId).ToList();
         var assets = await db.AssetRegistries.Where(a => assetIds.Contains(a.Id)).ToListAsync(ct).ConfigureAwait(false);
+        await freezeGuard.EnsureMovementAllowedAsync(assets, ct).ConfigureAwait(false);
         foreach (var asset in assets)
             asset.MarkUnserviceable(report.Id);
 
@@ -97,7 +98,7 @@ public sealed class RecordUnserviceableInspectionCommandHandler(AssetRegisterDbC
     }
 }
 
-public sealed class RecordUnserviceableDisposalCommandHandler(AssetRegisterDbContext db)
+public sealed class RecordUnserviceableDisposalCommandHandler(AssetRegisterDbContext db, ICountFreezeGuard freezeGuard)
     : ICommandHandler<RecordUnserviceableDisposalCommand, UnserviceablePropertyReportDto>
 {
     public async ValueTask<UnserviceablePropertyReportDto> Handle(
@@ -111,10 +112,16 @@ public sealed class RecordUnserviceableDisposalCommandHandler(AssetRegisterDbCon
         report.RecordDisposal(cmd.Records.Select(r => (r.ItemId, r.DisposalRecordedOn, r.SaleORNo, r.SaleAmount)));
 
         // Mirror lifecycle: each disposed item's asset → Disposed.
-        foreach (var item in report.Items.Where(i => i.DisposalRecordedOn.HasValue))
+        var disposedItems = report.Items.Where(i => i.DisposalRecordedOn.HasValue).ToList();
+        var disposedAssetIds = disposedItems.Select(i => i.AssetRegistryId).ToList();
+        var disposedAssets = await db.AssetRegistries
+            .Where(a => disposedAssetIds.Contains(a.Id))
+            .ToDictionaryAsync(a => a.Id, ct).ConfigureAwait(false);
+        await freezeGuard.EnsureMovementAllowedAsync(disposedAssets.Values.ToList(), ct).ConfigureAwait(false);
+        foreach (var item in disposedItems)
         {
-            var asset = await db.AssetRegistries.FirstOrDefaultAsync(a => a.Id == item.AssetRegistryId, ct).ConfigureAwait(false);
-            if (asset is not null && asset.LifecycleState != Contracts.v1.LifecycleState.Disposed)
+            if (disposedAssets.TryGetValue(item.AssetRegistryId, out var asset)
+                && asset.LifecycleState != Contracts.v1.LifecycleState.Disposed)
                 asset.Dispose(report.Id, item.DisposalMethod ?? Contracts.v1.DisposalMethod.Other);
         }
 

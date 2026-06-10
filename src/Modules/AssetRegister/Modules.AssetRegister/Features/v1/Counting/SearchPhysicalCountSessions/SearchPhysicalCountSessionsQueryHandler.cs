@@ -32,7 +32,8 @@ public sealed class SearchPhysicalCountSessionsQueryHandler(AssetRegisterDbConte
         var items = await q.OrderByDescending(s => s.AsAt)
             .Skip((pageNumber - 1) * pageSize).Take(pageSize)
             .Select(s => new PhysicalCountSessionSummaryDto(
-                s.Id, s.Code, s.Scope, s.Status, s.AsAt, s.StartedOn, s.ClosedOn, s.Entries.Count))
+                s.Id, s.Code, s.Scope, s.Status, s.AsAt, s.StartedOn, s.ClosedOn, s.Entries.Count,
+                s.OfficeOrderNo, s.FrozenOnUtc))
             .ToListAsync(ct).ConfigureAwait(false);
 
         return new PagedResponse<PhysicalCountSessionSummaryDto>

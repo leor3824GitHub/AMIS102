@@ -43,6 +43,7 @@ public class AssetRegisterModule : IModule
 
         new("View Physical Count",   "View",   "AssetRegister.Count", IsBasic: true),
         new("Create Physical Count", "Create", "AssetRegister.Count"),
+        new("Freeze Physical Count", "Freeze", "AssetRegister.Count"),
         new("Record Physical Count", "Record", "AssetRegister.Count"),
         new("Submit Physical Count", "Submit", "AssetRegister.Count"),
         new("Close Physical Count",  "Close",  "AssetRegister.Count"),
@@ -91,6 +92,9 @@ public class AssetRegisterModule : IModule
         services.AddScoped<IReceivingReportNumberGenerator, ReceivingReportNumberGenerator>();
         services.AddScoped<ICurrentReplacementCostCalculator, CurrentReplacementCostCalculator>();
 
+        // Physical-count ledger freeze: blocks covered asset movements while a count is active.
+        services.AddScoped<ICountFreezeGuard, CountFreezeGuard>();
+
         // Inbound integration consumer (Phase 3f) — materializes accepted IAR lines.
         services.AddScoped<IIntegrationEventHandler<AssetIARAcceptedEvent>, AssetIARAcceptedEventConsumer>();
 
@@ -115,6 +119,8 @@ public class AssetRegisterModule : IModule
         services.AddScoped<INotificationHandler<AssetUnserviceableEvent>, AssetUnserviceableEventHandler>();
         services.AddScoped<INotificationHandler<AccountabilityCancelledEvent>, AccountabilityCancelledEventHandler>();
         services.AddScoped<INotificationHandler<PhysicalCountSessionClosedEvent>, PhysicalCountSessionClosedEventHandler>();
+        services.AddScoped<INotificationHandler<PhysicalCountFrozenEvent>, PhysicalCountFrozenEventHandler>();
+        services.AddScoped<INotificationHandler<PhysicalCountRecountRequestedEvent>, PhysicalCountRecountRequestedEventHandler>();
     }
 
     public void MapEndpoints(IEndpointRouteBuilder endpoints)
@@ -172,6 +178,7 @@ public class AssetRegisterModule : IModule
         // Physical count sessions — Phase 4
         var count = moduleGroup.MapGroup("/count");
         Features.v1.Counting.StartPhysicalCount.StartPhysicalCountEndpoint.Map(count);
+        Features.v1.Counting.FreezePhysicalCount.FreezePhysicalCountEndpoint.Map(count);
         Features.v1.Counting.RecordPhysicalCountEntry.RecordPhysicalCountEntryEndpoint.Map(count);
         Features.v1.Counting.AddFoundAtStationEntry.AddFoundAtStationEntryEndpoint.Map(count);
         Features.v1.Counting.MarkPhysicalCountMissing.MarkPhysicalCountMissingEndpoint.Map(count);
