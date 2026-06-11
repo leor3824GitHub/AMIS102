@@ -18,7 +18,8 @@ public sealed class AddFoundAtStationEntryCommandHandler(AssetRegisterDbContext 
 
         session.AddFoundAtStationEntry(cmd.Article, cmd.Unit, cmd.UnitCost, cmd.LocationId,
             cmd.ProposedPropertyClass, cmd.ProposedCategoryCode, cmd.ProposedAcquisitionDate,
-            cmd.ProposedUnitCost, cmd.ScannedByEmployeeId, cmd.Remarks);
+            cmd.ProposedUnitCost, cmd.ProposedPropertyNo, cmd.ProposedCatalogItemId,
+            cmd.ScannedByEmployeeId, cmd.Remarks);
 
         await db.SaveChangesAsync(ct).ConfigureAwait(false);
         return CountingMapper.ToDto(session);

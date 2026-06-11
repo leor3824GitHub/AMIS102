@@ -149,6 +149,8 @@ public sealed class PhysicalCountSession : AggregateRoot<Guid>, IHasTenant, IAud
         string? proposedCategoryCode,
         DateOnly? proposedAcquisitionDate,
         decimal? proposedUnitCost,
+        string? proposedPropertyNo,
+        Guid? proposedCatalogItemId,
         Guid? scannedByEmployeeId,
         string? remarks)
     {
@@ -156,7 +158,7 @@ public sealed class PhysicalCountSession : AggregateRoot<Guid>, IHasTenant, IAud
         _entries.Add(PhysicalCountEntry.CreateFoundAtStation(
             TenantId, Id, article, unit, unitCost, locationId,
             proposedPropertyClass, proposedCategoryCode, proposedAcquisitionDate, proposedUnitCost,
-            scannedByEmployeeId, remarks));
+            proposedPropertyNo, proposedCatalogItemId, scannedByEmployeeId, remarks));
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
     }
 

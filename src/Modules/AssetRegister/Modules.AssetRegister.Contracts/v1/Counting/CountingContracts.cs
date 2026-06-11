@@ -23,7 +23,9 @@ public sealed record PhysicalCountEntryDto(
     DateOnly? ProposedAcquisitionDate,
     decimal? ProposedUnitCost,
     bool NeedsRecount,
-    string? RecountReason);
+    string? RecountReason,
+    string? ProposedPropertyNo = null,
+    Guid? ProposedCatalogItemId = null);
 
 public sealed record PhysicalCountSessionDto(
     Guid Id,
@@ -142,7 +144,10 @@ public sealed record AddFoundAtStationEntryCommand(
     DateOnly? ProposedAcquisitionDate,
     decimal? ProposedUnitCost,
     Guid? ScannedByEmployeeId,
-    string? Remarks) : ICommand<PhysicalCountSessionDto>;
+    string? Remarks,
+    // Operator-assigned identity that lets close auto-materialize the item into the registry.
+    string? ProposedPropertyNo = null,
+    Guid? ProposedCatalogItemId = null) : ICommand<PhysicalCountSessionDto>;
 
 public sealed record MarkPhysicalCountMissingCommand(
     Guid SessionId,

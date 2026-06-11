@@ -21,11 +21,17 @@ public sealed class PhysicalCountEntry : IHasTenant
     public Guid LocationId { get; private set; }
     public string? Remarks { get; private set; }
 
-    // FoundAtStation-only proposed metadata, used at reconciliation.
+    // FoundAtStation-only proposed metadata, used at reconciliation/close materialization.
     public string? ProposedPropertyClass { get; private set; }
     public string? ProposedCategoryCode { get; private set; }
     public DateOnly? ProposedAcquisitionDate { get; private set; }
     public decimal? ProposedUnitCost { get; private set; }
+
+    /// <summary>Operator-assigned property number for a FoundAtStation item; required to materialize it into the registry at close.</summary>
+    public string? ProposedPropertyNo { get; private set; }
+
+    /// <summary>Catalog item the FoundAtStation row maps to; supplies UACS code, useful life and default class/unit at materialization.</summary>
+    public Guid? ProposedCatalogItemId { get; private set; }
 
     // Recount flow — set during reconciliation, cleared when the entry is re-recorded.
     public bool NeedsRecount { get; private set; }
@@ -83,6 +89,8 @@ public sealed class PhysicalCountEntry : IHasTenant
         string? proposedCategoryCode,
         DateOnly? proposedAcquisitionDate,
         decimal? proposedUnitCost,
+        string? proposedPropertyNo,
+        Guid? proposedCatalogItemId,
         Guid? scannedByEmployeeId,
         string? remarks) =>
         new()
@@ -101,6 +109,8 @@ public sealed class PhysicalCountEntry : IHasTenant
             ProposedCategoryCode = proposedCategoryCode,
             ProposedAcquisitionDate = proposedAcquisitionDate,
             ProposedUnitCost = proposedUnitCost,
+            ProposedPropertyNo = proposedPropertyNo,
+            ProposedCatalogItemId = proposedCatalogItemId,
             ScannedOnUtc = DateTimeOffset.UtcNow,
             ScannedByEmployeeId = scannedByEmployeeId,
             Remarks = remarks

@@ -265,6 +265,7 @@ Harden the `AssetRegister` bounded context (valuation, reconciliation, print par
 - [x] Fixed ambiguous `CustomException` ctor call in `CountFreezeGuard` that broke the module build — 2026-06-10
 - [x] **2nd pass:** `ICurrentReplacementCostCalculator.ComputeAsync` now takes the already-loaded `AssetRegistry` (aligns with `ICountFreezeGuard`), dropping a redundant per-item PK re-fetch in `FileIncidentReport` — 2026-06-10
 - [x] **2nd pass:** Closed freeze-guard consistency gap — `FileIncidentReport` now calls `EnsureMovementAllowedAsync` before flipping assets to UnderInvestigation/accountability lines to Lost (every other asset-mutating handler already did). User-approved behavior: filing an RLSDDSP is blocked while a covering count is frozen — 2026-06-10
+- [ ] **"Balance = found" count true-up (IN PROGRESS)** — see `ASSET-REGISTER-PHYSICAL-COUNT-IMPLEMENTATION.md` for the full guide (COA 2020-006 mapping, done/pending, refinement backlog). Landed: `MarkMissingFromCount`, idempotent `MarkUnderInvestigation`, found-at-station `ProposedPropertyNo`/`ProposedCatalogItemId` through entry/session/handler/contracts/mapper. Pending: ClosePhysicalCount auto-materialize + not-found flagging, EF config + migration, validators, unit tests, Blazor/MAUI capture UI — 2026-06-11
 
 ---
 

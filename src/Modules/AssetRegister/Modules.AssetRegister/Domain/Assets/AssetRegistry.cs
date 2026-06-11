@@ -153,12 +153,32 @@ public sealed class AssetRegistry : AggregateRoot<Guid>, IHasTenant, IAuditableE
     public void MarkUnderInvestigation(Guid incidentReportId)
     {
         EnsureNotDisposed();
-        if (LifecycleState is not (LifecycleState.Assigned or LifecycleState.Available))
+        // UnderInvestigation is allowed so a formal RLSDDSP can be filed against an asset that a
+        // physical count already flagged missing (see MarkMissingFromCount) — the call is then
+        // idempotent on state but still links the incident.
+        if (LifecycleState is not (LifecycleState.Assigned or LifecycleState.Available or LifecycleState.UnderInvestigation))
             throw new InvalidOperationException($"Cannot open an incident from state '{LifecycleState}'.");
 
         LifecycleState = LifecycleState.UnderInvestigation;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
         AddDomainEvent(new AssetLostEvent(Id, incidentReportId, TenantId));
+    }
+
+    /// <summary>
+    /// Drops a not-found asset out of the active inventory balance at physical-count close: an
+    /// asset still on the books (Available/Assigned) that the committee recorded Missing or never
+    /// counted moves to UnderInvestigation, routing it into the RLSDDSP / relief-of-accountability
+    /// process. No-op for assets already outside the active balance (disposed/unserviceable/
+    /// transferred/under investigation), so re-running close is safe.
+    /// </summary>
+    public void MarkMissingFromCount(Guid physicalCountSessionId)
+    {
+        if (LifecycleState is not (LifecycleState.Available or LifecycleState.Assigned))
+            return;
+
+        LifecycleState = LifecycleState.UnderInvestigation;
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        AddDomainEvent(new AssetReportedMissingFromCountEvent(Id, physicalCountSessionId, TenantId));
     }
 
     public void RecordFoundAtStation(Guid sessionId, Guid entryId)
