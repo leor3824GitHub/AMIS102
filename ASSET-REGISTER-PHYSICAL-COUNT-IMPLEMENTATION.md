@@ -1,7 +1,7 @@
 # AssetRegister — Physical Count "Balance = Found" Implementation Guide
 
-> **Status:** Close-handler true-up landed (§4.1) with shared classifier + in-scope query + unit tests.
-> Clients (§4.5) pending; migration already covered by `20260610113721_PhysicalCountFreeze`.
+> **Status:** Backend complete. Migration `20260611120000_PhysicalCountFoundAtStationIdentity` adds `ProposedPropertyNo`/`ProposedCatalogItemId` columns (apply before running).
+> Blazor (Annex B/C print, FAS dialog with catalog autocomplete) complete. MAUI Phase 1b (record-as-you-go + catalog picker) complete.
 > **Last updated:** 2026-06-11
 > **Module:** `src/Modules/AssetRegister`
 > **Legal basis:** COA Circular No. 2020-006 (Jan 31, 2020) — physical count of PPE, recognition of

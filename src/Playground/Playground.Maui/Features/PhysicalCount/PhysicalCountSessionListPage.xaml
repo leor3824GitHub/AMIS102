@@ -70,9 +70,9 @@
                                            FontFamily="InterSemiBold" FontSize="11" />
                                 </Border>
 
-                                <!-- StationOffice + Scope -->
+                                <!-- FundCluster + Scope -->
                                 <Label Grid.Row="1" Grid.Column="0"
-                                       Text="{Binding StationOffice}"
+                                       Text="{Binding FundCluster}"
                                        FontSize="13"
                                        TextColor="{StaticResource Gray500}" />
                                 <Label Grid.Row="1" Grid.Column="1"

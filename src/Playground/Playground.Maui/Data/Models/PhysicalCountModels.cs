@@ -17,6 +17,7 @@ public sealed class PendingCountEntry
     public string? Remarks { get; set; }
     public bool IsScanned { get; set; }
     public bool IsFoundAtStation { get; set; }
+    public string? ProposedCatalogItemId { get; set; } // set for FoundAtStation entries when operator picked a catalog item
     public decimal UnitCost { get; set; }
     public string SyncStatus { get; set; } = "Pending"; // "Pending" | "Failed"
     public DateTimeOffset CreatedAt { get; set; }

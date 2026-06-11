@@ -83,6 +83,15 @@ public sealed class ApiClient(HttpClient httpClient) : IApiClient
             CurrentLocationId: a.CurrentLocationId);
     }
 
+    public async Task<List<CatalogItemDto>> SearchCatalogItemsAsync(string keyword, CancellationToken ct = default)
+    {
+        var url = $"api/v1/asset-register/catalog?isActive=true&pageNumber=1&pageSize=20";
+        if (!string.IsNullOrWhiteSpace(keyword))
+            url += $"&keyword={Uri.EscapeDataString(keyword)}";
+        var result = await httpClient.GetFromJsonAsync<ArPaged<ArCatalogItem>>(url, ct);
+        return result?.Items?.Select(c => new CatalogItemDto(c.Id, c.Code, c.Description, c.DefaultUnit)).ToList() ?? [];
+    }
+
     // Locations master data — still served by the AssetManagement module (reference) during migration.
     public async Task<List<LocationDto>> GetLocationsAsync(CancellationToken ct = default)
     {
@@ -143,6 +152,7 @@ public sealed class ApiClient(HttpClient httpClient) : IApiClient
             request.UnitCost,
             request.LocationId,
             ProposedPropertyNo = request.PropertyNumber,
+            ProposedCatalogItemId = request.ProposedCatalogItemId,
             request.Remarks
         };
         var response = await httpClient.PostAsJsonAsync(
@@ -177,6 +187,8 @@ public sealed class ApiClient(HttpClient httpClient) : IApiClient
     // ── Local mirrors of AssetRegister JSON shapes (MAUI must not reference Modules.*).
     //    Enums are deserialized as strings to avoid pulling in module contracts. ──
     private sealed record ArPaged<T>(List<T>? Items, int TotalCount);
+
+    private sealed record ArCatalogItem(Guid Id, string Code, string Description, string DefaultUnit);
 
     private sealed record ArAccountabilitySummary(
         Guid Id, string DocumentNo, string AccountabilityType, string Status,

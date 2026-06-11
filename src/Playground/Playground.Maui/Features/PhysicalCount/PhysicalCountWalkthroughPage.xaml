@@ -20,7 +20,7 @@
                 <RoundRectangle CornerRadius="0" />
             </Border.StrokeShape>
             <VerticalStackLayout Spacing="2">
-                <Label Text="{Binding StationOffice}"
+                <Label Text="{Binding FundCluster}"
                        FontAttributes="Bold" FontSize="15" />
                 <Label FontSize="12" TextColor="{StaticResource Gray400}">
                     <Label.Text>

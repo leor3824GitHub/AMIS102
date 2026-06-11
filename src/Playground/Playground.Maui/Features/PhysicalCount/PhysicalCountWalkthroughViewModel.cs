@@ -16,7 +16,7 @@ public sealed partial class PhysicalCountWalkthroughViewModel : ObservableObject
 
     [ObservableProperty] private string _sessionId = "";
     [ObservableProperty] private string _sessionNo = "";
-    [ObservableProperty] private string _stationOffice = "";
+    [ObservableProperty] private string _fundCluster = "";
     [ObservableProperty] private string _scope = "";
     [ObservableProperty] private string _status = "";
     [ObservableProperty] private bool _isLoading;
@@ -82,7 +82,7 @@ public sealed partial class PhysicalCountWalkthroughViewModel : ObservableObject
         {
             var detail = await _apiClient.GetPhysicalCountSessionByIdAsync(Guid.Parse(SessionId), ct);
             SessionNo = detail.SessionNo;
-            StationOffice = detail.StationOffice;
+            FundCluster = detail.FundCluster;
             Scope = detail.Scope;
             Status = detail.Status;
             _allEntries = detail.Entries;
@@ -91,8 +91,17 @@ public sealed partial class PhysicalCountWalkthroughViewModel : ObservableObject
 
             if (Locations.Count == 0)
             {
-                var locs = await _apiClient.GetLocationsAsync(ct);
-                Locations = new ObservableCollection<LocationDto>(locs);
+                try
+                {
+                    var locs = await _apiClient.GetLocationsAsync(ct);
+                    Locations = new ObservableCollection<LocationDto>(locs);
+                }
+                catch (OperationCanceledException) { throw; }
+                catch
+                {
+                    // Non-fatal: locations didn't load. Picker will be empty;
+                    // user will see "Select where you are counting" error on first scan.
+                }
             }
 
             PendingSyncCount = await _syncService.GetPendingCountAsync();
@@ -209,9 +218,9 @@ public sealed partial class PhysicalCountWalkthroughViewModel : ObservableObject
                 $"&LocationId={locationId}" +
                 $"&IsScanned=true");
         }
-        catch (HttpRequestException)
+        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
         {
-            // Not in the registry → found at station.
+            // Definitively not in the registry → capture as found at station.
             var route = $"{nameof(PhysicalCountFoundAtStationPage)}" +
                         $"?SessionId={SessionId}" +
                         $"&PropertyNo={Uri.EscapeDataString(propertyNo)}" +
@@ -221,6 +230,10 @@ public sealed partial class PhysicalCountWalkthroughViewModel : ObservableObject
             if (unitCost.HasValue)
                 route += $"&UnitCost={unitCost.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
             await Shell.Current.GoToAsync(route);
+        }
+        catch (HttpRequestException)
+        {
+            ErrorMessage = "Could not check the registry. Verify your connection and try again.";
         }
     }
 

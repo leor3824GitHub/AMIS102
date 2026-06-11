@@ -82,6 +82,7 @@ public sealed class PhysicalCountSyncService : IPhysicalCountSyncService
             Unit = request.Unit,
             UnitCost = request.UnitCost,
             IsFoundAtStation = true,
+            ProposedCatalogItemId = request.ProposedCatalogItemId?.ToString(),
             Remarks = request.Remarks,
             SyncStatus = "Pending",
             CreatedAt = DateTimeOffset.UtcNow,
@@ -122,7 +123,8 @@ public sealed class PhysicalCountSyncService : IPhysicalCountSyncService
                                 entry.Unit,
                                 entry.UnitCost,
                                 Guid.Parse(entry.LocationId),
-                                entry.Remarks),
+                                entry.Remarks,
+                                Guid.TryParse(entry.ProposedCatalogItemId, out var catId) ? catId : null),
                             ct);
                     }
                     else

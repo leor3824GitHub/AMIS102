@@ -4,6 +4,8 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
 
     <converters:IsNotNullConverter xmlns:converters="clr-namespace:Playground.Maui.Converters" x:Key="IsNotNullConverter" />
+    <converters:IsNullConverter xmlns:converters="clr-namespace:Playground.Maui.Converters" x:Key="IsNullConverter" />
+    <converters:IsNotZeroConverter xmlns:converters="clr-namespace:Playground.Maui.Converters" x:Key="IsNotZeroConverter" />
     <converters:InvertedBoolConverter xmlns:converters="clr-namespace:Playground.Maui.Converters" x:Key="InvertedBoolConverter" />
 
     <Style TargetType="ActivityIndicator">

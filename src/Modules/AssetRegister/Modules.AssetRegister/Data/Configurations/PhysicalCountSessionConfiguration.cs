@@ -72,6 +72,7 @@ internal sealed class PhysicalCountEntryConfiguration : IEntityTypeConfiguration
         builder.Property(x => x.ProposedPropertyClass).HasMaxLength(64);
         builder.Property(x => x.ProposedCategoryCode).HasMaxLength(64);
         builder.Property(x => x.ProposedUnitCost).HasPrecision(18, 2);
+        builder.Property(x => x.ProposedPropertyNo).HasMaxLength(64);
         builder.Property(x => x.RecountReason).HasMaxLength(500);
 
         builder.OwnsOne(x => x.Snapshot, n => n.ConfigureSnapshot());

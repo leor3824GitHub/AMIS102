@@ -74,7 +74,7 @@ public sealed record PhysicalCountSessionSummaryDto(
     Guid Id,
     string SessionNo,
     DateOnly CountDate,
-    string StationOffice,
+    string FundCluster,
     string Scope,
     string Status,
     int TotalEntries,
@@ -87,7 +87,7 @@ public sealed record PhysicalCountSessionDetailDto(
     Guid Id,
     string SessionNo,
     DateOnly CountDate,
-    string StationOffice,
+    string FundCluster,
     string Scope,
     string Status,
     List<PhysicalCountEntryDto> Entries);
@@ -117,13 +117,16 @@ public sealed record RecordCountEntryRequest(
     string? Remarks,
     bool IsScanned);
 
+public sealed record CatalogItemDto(Guid Id, string Code, string Description, string DefaultUnit);
+
 public sealed record AddFoundAtStationRequest(
     string PropertyNumber,
     string Description,
     string Unit,
     decimal UnitCost,
     Guid LocationId,
-    string? Remarks);
+    string? Remarks,
+    Guid? ProposedCatalogItemId = null);
 
 public sealed record AddFoundAtStationResult(
     Guid EntryId,
@@ -146,6 +149,7 @@ public interface IApiClient
     Task<PARDetailDto> GetPARByIdAsync(Guid id, CancellationToken ct = default);
     Task<TangibleInventoryItemDetailDto> GetItemByPropertyNoAsync(string propertyNo, CancellationToken ct = default);
 
+    Task<List<CatalogItemDto>> SearchCatalogItemsAsync(string keyword, CancellationToken ct = default);
     Task<List<LocationDto>> GetLocationsAsync(CancellationToken ct = default);
     Task<List<PhysicalCountSessionSummaryDto>> GetPhysicalCountSessionsAsync(CancellationToken ct = default);
     Task<PhysicalCountSessionDetailDto> GetPhysicalCountSessionByIdAsync(Guid sessionId, CancellationToken ct = default);
