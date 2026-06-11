@@ -60,6 +60,12 @@ public sealed partial class PhysicalCountFoundAtStationViewModel : ObservableObj
             return;
         }
 
+        if (string.IsNullOrWhiteSpace(PropertyNo))
+        {
+            ErrorMessage = "Property No. is required. Scan the sticker or type it manually.";
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(Description))
         {
             ErrorMessage = "Description is required.";

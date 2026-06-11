@@ -20,12 +20,22 @@
                    FontSize="13"
                    Margin="20,0,20,12" />
 
-            <!-- Property number header card -->
+            <!-- Property number header card — always editable so a damaged/missing sticker
+                 can be keyed manually (scan pre-fills it, manual entry overrides). -->
             <Border Style="{StaticResource CardBorderStyle}" Margin="16,0" Padding="20">
                 <VerticalStackLayout Spacing="6">
-                    <Label Text="PROPERTY NO." Style="{StaticResource FieldLabelStyle}" />
-                    <Label Text="{Binding PropertyNo}"
-                           FontFamily="InterBold" FontSize="18" />
+                    <Label FontSize="11" FontAttributes="Bold" CharacterSpacing="0.8"
+                           TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray300}}">
+                        <Label.FormattedText>
+                            <FormattedString>
+                                <Span Text="PROPERTY NO." />
+                                <Span Text=" *" TextColor="{StaticResource Danger}" />
+                            </FormattedString>
+                        </Label.FormattedText>
+                    </Label>
+                    <Entry Text="{Binding PropertyNo}"
+                           FontFamily="InterBold" FontSize="18"
+                           Placeholder="Scan or type the property number" />
                     <Label Text="This asset is not on the pre-generated checklist."
                            Style="{StaticResource CaptionStyle}"
                            Margin="0,2,0,0" />
