@@ -28,6 +28,10 @@ public sealed partial class PhysicalCountWalkthroughViewModel : ObservableObject
     [ObservableProperty] private string _searchText = "";
     [ObservableProperty] private string _selectedFilter = "All";
 
+    // "Counting at" location — required to record (AssetRegister stores where each item was counted).
+    [ObservableProperty] private ObservableCollection<LocationDto> _locations = [];
+    [ObservableProperty] private LocationDto? _selectedLocation;
+
     [ObservableProperty] private ObservableCollection<PhysicalCountEntryDto> _filteredEntries = [];
 
     // Progress counters
@@ -84,6 +88,12 @@ public sealed partial class PhysicalCountWalkthroughViewModel : ObservableObject
             _allEntries = detail.Entries;
             UpdateCounts();
             ApplyFilter();
+
+            if (Locations.Count == 0)
+            {
+                var locs = await _apiClient.GetLocationsAsync(ct);
+                Locations = new ObservableCollection<LocationDto>(locs);
+            }
 
             PendingSyncCount = await _syncService.GetPendingCountAsync();
             SyncBanner = PendingSyncCount > 0
@@ -173,53 +183,45 @@ public sealed partial class PhysicalCountWalkthroughViewModel : ObservableObject
         }
     }
 
-    [RelayCommand]
-    private async Task OpenEntryAsync(PhysicalCountEntryDto entry) =>
-        await NavigateToMarkEntryAsync(entry, isScanned: false);
-
+    // Resolve a scanned/typed property number against the asset registry, then either record the
+    // found asset (known to the registry) or capture it as a found-at-station item (unknown).
     private async Task ProcessPropertyNoAsync(string propertyNo, string? description = null, decimal? unitCost = null)
     {
-        var entry = _allEntries.FirstOrDefault(e =>
-            string.Equals(e.PropertyNumber, propertyNo, StringComparison.OrdinalIgnoreCase));
-
-        if (entry is not null)
+        if (SelectedLocation is null)
         {
-            await NavigateToMarkEntryAsync(entry, isScanned: true);
+            ErrorMessage = "Select where you are counting (location) before recording.";
             return;
         }
 
-        var route = $"{nameof(PhysicalCountFoundAtStationPage)}" +
-                    $"?SessionId={SessionId}" +
-                    $"&PropertyNo={Uri.EscapeDataString(propertyNo)}";
-
-        if (!string.IsNullOrWhiteSpace(description))
-            route += $"&Desc={Uri.EscapeDataString(description)}";
-
-        if (unitCost.HasValue)
-            route += $"&UnitCost={unitCost.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
-
-        await Shell.Current.GoToAsync(route);
-    }
-
-    private async Task NavigateToMarkEntryAsync(PhysicalCountEntryDto entry, bool isScanned) =>
-        await Shell.Current.GoToAsync(
-            $"{nameof(PhysicalCountMarkEntryPage)}" +
-            $"?SessionId={SessionId}" +
-            $"&EntryId={entry.Id}" +
-            $"&PropertyNo={Uri.EscapeDataString(entry.PropertyNumber)}" +
-            $"&Desc={Uri.EscapeDataString(entry.Description)}" +
-            $"&IsScanned={isScanned}");
-
-    // Updates in-memory entry after marking so the list reflects changes immediately
-    public void UpdateLocalEntry(Guid entryId, string result, string? condition)
-    {
-        var existing = _allEntries.FirstOrDefault(e => e.Id == entryId);
-        if (existing is null) return;
-        var updated = existing with { Result = result, Condition = condition };
-        var idx = _allEntries.IndexOf(existing);
-        _allEntries[idx] = updated;
-        UpdateCounts();
-        ApplyFilter();
+        var locationId = SelectedLocation.Id;
+        try
+        {
+            var asset = await _apiClient.GetItemByPropertyNoAsync(propertyNo);
+            // Known asset — record it (condition picked on the next screen).
+            await Shell.Current.GoToAsync(
+                $"{nameof(PhysicalCountMarkEntryPage)}" +
+                $"?SessionId={SessionId}" +
+                $"&AssetRegistryId={asset.Id}" +
+                $"&PropertyNo={Uri.EscapeDataString(asset.PropertyNo)}" +
+                $"&Desc={Uri.EscapeDataString(asset.ItemName)}" +
+                $"&Unit={Uri.EscapeDataString(asset.Unit)}" +
+                $"&UnitCost={asset.UnitCost.ToString(System.Globalization.CultureInfo.InvariantCulture)}" +
+                $"&LocationId={locationId}" +
+                $"&IsScanned=true");
+        }
+        catch (HttpRequestException)
+        {
+            // Not in the registry → found at station.
+            var route = $"{nameof(PhysicalCountFoundAtStationPage)}" +
+                        $"?SessionId={SessionId}" +
+                        $"&PropertyNo={Uri.EscapeDataString(propertyNo)}" +
+                        $"&LocationId={locationId}";
+            if (!string.IsNullOrWhiteSpace(description))
+                route += $"&Desc={Uri.EscapeDataString(description)}";
+            if (unitCost.HasValue)
+                route += $"&UnitCost={unitCost.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+            await Shell.Current.GoToAsync(route);
+        }
     }
 
     private void ApplyFilter()

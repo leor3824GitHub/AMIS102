@@ -8,12 +8,14 @@ namespace Playground.Maui.Features.PhysicalCount;
 [QueryProperty(nameof(PropertyNo), "PropertyNo")]
 [QueryProperty(nameof(Desc), "Desc")]
 [QueryProperty(nameof(UnitCost), "UnitCost")]
+[QueryProperty(nameof(LocationIdParam), "LocationId")]
 public sealed partial class PhysicalCountFoundAtStationViewModel : ObservableObject
 {
     private readonly IPhysicalCountSyncService _syncService;
 
     [ObservableProperty] private string _sessionId = "";
     [ObservableProperty] private string _propertyNo = "";
+    [ObservableProperty] private string _locationIdParam = "";
 
     // Form fields
     [ObservableProperty] private string _description = "";
@@ -37,16 +39,10 @@ public sealed partial class PhysicalCountFoundAtStationViewModel : ObservableObj
             }
         }
     }
-    [ObservableProperty] private int _selectedConditionIndex;
     [ObservableProperty] private string _remarks = "";
 
     [ObservableProperty] private bool _isLoading;
     [ObservableProperty] private string? _errorMessage;
-
-    public string[] Conditions => ["Good", "Needs Repair", "Unserviceable", "Obsolete", "No Longer Needed"];
-
-    private static readonly string[] ConditionApiValues =
-        ["Good", "NeedsRepair", "Unserviceable", "Obsolete", "NoLongerNeeded"];
 
     public PhysicalCountFoundAtStationViewModel(IPhysicalCountSyncService syncService) =>
         _syncService = syncService;
@@ -78,6 +74,12 @@ public sealed partial class PhysicalCountFoundAtStationViewModel : ObservableObj
             return;
         }
 
+        if (!Guid.TryParse(LocationIdParam, out var locationId) || locationId == Guid.Empty)
+        {
+            ErrorMessage = "A counting location is required. Select it on the previous screen.";
+            return;
+        }
+
         IsLoading = true;
         ErrorMessage = null;
         try
@@ -86,8 +88,9 @@ public sealed partial class PhysicalCountFoundAtStationViewModel : ObservableObj
             var request = new AddFoundAtStationRequest(
                 propertyNo,
                 Description.Trim(),
+                "unit",
                 unitCost,
-                ConditionApiValues[SelectedConditionIndex],
+                locationId,
                 string.IsNullOrWhiteSpace(Remarks) ? null : Remarks.Trim());
 
             var synced = await _syncService.AddFoundAtStationAsync(sessionId, request, ct);

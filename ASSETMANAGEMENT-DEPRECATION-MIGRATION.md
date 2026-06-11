@@ -33,12 +33,26 @@ ViewModels/pages stay untouched where the semantics match.
   string-enum mirrors — MAUI can't reference `Modules.*`) into the unchanged MAUI DTOs. `IApiClient`,
   ViewModels and pages unchanged.
 
-- **Phase 1b — MAUI physical-count → AssetRegister. 🔲 PENDING (semantic redesign).**
-  AssetRegister counting has no pre-generated checklist: you *record* an entry per found asset
-  (`POST /count/{id}/entries` with AssetRegistryId + condition + locationId) on a **Frozen** session;
-  missing items are derived (uncounted) at reconcile. The MAUI walkthrough (Found/NotFound/Pending
-  checklist, mark-by-entryId, offline `PendingCountEntry`) must be reworked to record-as-you-go, plus a
-  location source and frozen-session handling. Larger; distinct sub-phase.
+- **Phase 1b — MAUI physical-count → AssetRegister. ✅ DONE (2026-06-11) — ⚠️ needs device testing.**
+  Reworked the MAUI counting feature from AssetManagement's checklist model to AssetRegister's
+  record-as-you-go model:
+  - `ApiClient`/`IApiClient`: the 4 physical-count methods now hit `…/asset-register/count/*`; responses
+    map into the unchanged MAUI display DTOs (session list + walkthrough list render as-is). Added
+    `GetLocationsAsync` (AM locations served as reference). `RecordPhysicalCountEntryAsync` drops `entryId`
+    and posts `{AssetRegistryId, Article, Unit, UnitCost, Condition, LocationId, ScannedOnUtc, Remarks}`;
+    found-at-station posts `{Article, Unit, UnitCost, LocationId, ProposedPropertyNo, Remarks}`.
+  - Walkthrough: added a **"Counting at" location picker** (records store where each item was counted);
+    scanning/typing a PropertyNo now resolves it against the asset registry → records the found asset
+    (condition on the next screen) or, if unknown, routes to found-at-station. Recorded entries are
+    read-only (tap is a no-op; the list reloads after each record).
+  - Mark-entry: records by AssetRegistryId + condition (`InGoodCondition`/`NeedingRepair`/`Unserviceable`)
+    + location; dropped the Found/NotFound/Pending Result picker and the Quantity field.
+  - Found-at-station: carries the selected location; dropped the condition picker (AssetRegister recognizes
+    found items as Available at close).
+  - Offline: `PendingCountEntry` + `PhysicalCountSyncService` reworked to the AssetRegister record shape.
+  - **Limitation:** locations come from the (deprecated) AssetManagement locations endpoint as shared
+    reference data; a frozen (Ongoing) session is required to record. Builds clean on Windows; the mobile
+    UX (scan → record, offline queue/flush, location picker) must be validated on a device/emulator.
 
 - **Phase 2 — Blazor navigation → AssetRegister. ✅ DONE (2026-06-11).**
   AssetRegister already has full-parity Blazor pages (`Components/Pages/AssetRegister/*`:

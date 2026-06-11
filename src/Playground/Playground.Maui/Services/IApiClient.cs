@@ -64,7 +64,9 @@ public sealed record TangibleInventoryItemDetailDto(
     bool IsIssued,
     string? LinkedDocumentType,
     string? LinkedDocumentNo,
-    Guid? LinkedDocumentId);
+    Guid? LinkedDocumentId,
+    string Unit = "unit",
+    Guid? CurrentLocationId = null);
 
 // ── Physical Count ────────────────────────────────────────────────────────────
 
@@ -102,26 +104,34 @@ public sealed record PhysicalCountEntryDto(
     string? Remarks,
     bool IsScanned);
 
-// Enums are serialized as strings (JsonStringEnumConverter is configured globally)
+// Enums are serialized as strings (JsonStringEnumConverter is configured globally).
+// AssetRegister records a found asset by AssetRegistryId + condition at a location
+// (record-as-you-go; there is no pre-generated checklist to mark).
 public sealed record RecordCountEntryRequest(
-    string Result,
-    string? Condition,
-    int QuantityOnHand,
+    Guid AssetRegistryId,
+    string Article,
+    string Unit,
+    decimal UnitCost,
+    string Condition,
+    Guid LocationId,
     string? Remarks,
-    bool IsScanned,
-    string? PhotoPath = null);
+    bool IsScanned);
 
 public sealed record AddFoundAtStationRequest(
     string PropertyNumber,
     string Description,
+    string Unit,
     decimal UnitCost,
-    string Condition,
-    string? Remarks,
-    string? PhotoPath = null);
+    Guid LocationId,
+    string? Remarks);
 
 public sealed record AddFoundAtStationResult(
     Guid EntryId,
     string PropertyNumber);
+
+// Location reference for the "counting at" picker (shared master data; currently served by the
+// AssetManagement locations endpoint, which remains available as reference during migration).
+public sealed record LocationDto(Guid Id, string Code, string Name);
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -136,8 +146,9 @@ public interface IApiClient
     Task<PARDetailDto> GetPARByIdAsync(Guid id, CancellationToken ct = default);
     Task<TangibleInventoryItemDetailDto> GetItemByPropertyNoAsync(string propertyNo, CancellationToken ct = default);
 
+    Task<List<LocationDto>> GetLocationsAsync(CancellationToken ct = default);
     Task<List<PhysicalCountSessionSummaryDto>> GetPhysicalCountSessionsAsync(CancellationToken ct = default);
     Task<PhysicalCountSessionDetailDto> GetPhysicalCountSessionByIdAsync(Guid sessionId, CancellationToken ct = default);
-    Task RecordPhysicalCountEntryAsync(Guid sessionId, Guid entryId, RecordCountEntryRequest request, CancellationToken ct = default);
+    Task RecordPhysicalCountEntryAsync(Guid sessionId, RecordCountEntryRequest request, CancellationToken ct = default);
     Task<AddFoundAtStationResult> AddFoundAtStationEntryAsync(Guid sessionId, AddFoundAtStationRequest request, CancellationToken ct = default);
 }

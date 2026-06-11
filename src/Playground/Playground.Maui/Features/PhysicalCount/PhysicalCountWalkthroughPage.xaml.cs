@@ -34,12 +34,7 @@ public partial class PhysicalCountWalkthroughPage : ContentPage
             MainThread.BeginInvokeOnMainThread(() => _ = _vm.FlushPendingAsync());
     }
 
-    private void OnEntrySelected(object sender, SelectionChangedEventArgs e)
-    {
-        if (e.CurrentSelection.FirstOrDefault() is PhysicalCountEntryDto entry)
-        {
-            ((CollectionView)sender).SelectedItem = null;
-            _ = _vm.OpenEntryCommand.ExecuteAsync(entry);
-        }
-    }
+    // Recorded entries are read-only here; counting is record-as-you-go via scan / manual entry.
+    private static void OnEntrySelected(object sender, SelectionChangedEventArgs e) =>
+        ((CollectionView)sender).SelectedItem = null;
 }

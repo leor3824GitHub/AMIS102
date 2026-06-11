@@ -6,7 +6,7 @@ namespace Playground.Maui.Services;
 public interface IPhysicalCountSyncService
 {
     /// <summary>Attempts to send to API; if offline or failed, queues in SQLite. Returns true if synced live.</summary>
-    Task<bool> RecordEntryAsync(Guid sessionId, Guid entryId, RecordCountEntryRequest request, CancellationToken ct = default);
+    Task<bool> RecordEntryAsync(Guid sessionId, RecordCountEntryRequest request, CancellationToken ct = default);
 
     /// <summary>Attempts to send to API; if offline or failed, queues in SQLite. Returns true if synced live.</summary>
     Task<bool> AddFoundAtStationAsync(Guid sessionId, AddFoundAtStationRequest request, CancellationToken ct = default);
@@ -27,13 +27,13 @@ public sealed class PhysicalCountSyncService : IPhysicalCountSyncService
         _apiClient = apiClient;
     }
 
-    public async Task<bool> RecordEntryAsync(Guid sessionId, Guid entryId, RecordCountEntryRequest request, CancellationToken ct = default)
+    public async Task<bool> RecordEntryAsync(Guid sessionId, RecordCountEntryRequest request, CancellationToken ct = default)
     {
         if (Connectivity.Current.NetworkAccess == NetworkAccess.Internet)
         {
             try
             {
-                await _apiClient.RecordPhysicalCountEntryAsync(sessionId, entryId, request, ct);
+                await _apiClient.RecordPhysicalCountEntryAsync(sessionId, request, ct);
                 return true;
             }
             catch (OperationCanceledException) { throw; }
@@ -44,11 +44,12 @@ public sealed class PhysicalCountSyncService : IPhysicalCountSyncService
         await db.InsertAsync(new PendingCountEntry
         {
             SessionId = sessionId.ToString(),
-            EntryId = entryId.ToString(),
-            PropertyNumber = "",
-            Result = request.Result,
+            AssetRegistryId = request.AssetRegistryId.ToString(),
+            LocationId = request.LocationId.ToString(),
+            Article = request.Article,
+            Unit = request.Unit,
+            UnitCost = request.UnitCost,
             Condition = request.Condition,
-            QuantityOnHand = request.QuantityOnHand,
             Remarks = request.Remarks,
             IsScanned = request.IsScanned,
             IsFoundAtStation = false,
@@ -76,12 +77,11 @@ public sealed class PhysicalCountSyncService : IPhysicalCountSyncService
         {
             SessionId = sessionId.ToString(),
             PropertyNumber = request.PropertyNumber,
-            Result = "FoundAtStation",
-            Condition = request.Condition,
-            QuantityOnHand = 1,
-            IsFoundAtStation = true,
-            Description = request.Description,
+            LocationId = request.LocationId.ToString(),
+            Article = request.Description,
+            Unit = request.Unit,
             UnitCost = request.UnitCost,
+            IsFoundAtStation = true,
             Remarks = request.Remarks,
             SyncStatus = "Pending",
             CreatedAt = DateTimeOffset.UtcNow,
@@ -118,9 +118,10 @@ public sealed class PhysicalCountSyncService : IPhysicalCountSyncService
                             Guid.Parse(entry.SessionId),
                             new AddFoundAtStationRequest(
                                 entry.PropertyNumber,
-                                entry.Description ?? "",
+                                entry.Article,
+                                entry.Unit,
                                 entry.UnitCost,
-                                entry.Condition ?? "Good",
+                                Guid.Parse(entry.LocationId),
                                 entry.Remarks),
                             ct);
                     }
@@ -128,11 +129,13 @@ public sealed class PhysicalCountSyncService : IPhysicalCountSyncService
                     {
                         await _apiClient.RecordPhysicalCountEntryAsync(
                             Guid.Parse(entry.SessionId),
-                            Guid.Parse(entry.EntryId!),
                             new RecordCountEntryRequest(
-                                entry.Result,
-                                entry.Condition,
-                                entry.QuantityOnHand,
+                                Guid.Parse(entry.AssetRegistryId!),
+                                entry.Article,
+                                entry.Unit,
+                                entry.UnitCost,
+                                entry.Condition ?? "InGoodCondition",
+                                Guid.Parse(entry.LocationId),
                                 entry.Remarks,
                                 entry.IsScanned),
                             ct);
