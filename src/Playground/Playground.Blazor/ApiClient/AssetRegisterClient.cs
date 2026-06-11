@@ -25,6 +25,35 @@ file static class ArJsonOptions
     };
 }
 
+// Surfaces the server's ProblemDetails message (e.g. a 409 from the close-handler true-up)
+// instead of the opaque "Response status code does not indicate success" of EnsureSuccessStatusCode.
+file static class ArErrorReader
+{
+    internal static async Task<string> ExtractAsync(HttpResponseMessage resp, CancellationToken ct)
+    {
+        try
+        {
+            var body = await resp.Content.ReadAsStringAsync(ct);
+            if (!string.IsNullOrWhiteSpace(body))
+            {
+                using var doc = JsonDocument.Parse(body);
+                if (doc.RootElement.ValueKind == JsonValueKind.Object)
+                {
+                    if (doc.RootElement.TryGetProperty("detail", out var detail) && detail.ValueKind == JsonValueKind.String)
+                        return detail.GetString()!;
+                    if (doc.RootElement.TryGetProperty("title", out var title) && title.ValueKind == JsonValueKind.String)
+                        return title.GetString()!;
+                    if (doc.RootElement.TryGetProperty("message", out var msg) && msg.ValueKind == JsonValueKind.String)
+                        return msg.GetString()!;
+                }
+            }
+        }
+        catch (JsonException) { /* fall through to status text */ }
+        catch (OperationCanceledException) { throw; }
+        return $"Request failed ({(int)resp.StatusCode} {resp.ReasonPhrase}).";
+    }
+}
+
 // ── Shared DTOs ────────────────────────────────────────────────────────────
 
 public sealed record ArPagedResponse<T>(
@@ -407,7 +436,9 @@ internal sealed record ArPhysicalCountSummaryDto(
     DateOnly AsAt,
     DateOnly StartedOn,
     DateOnly? ClosedOn,
-    int EntryCount);
+    int EntryCount,
+    string? OfficeOrderNo = null,
+    DateTimeOffset? FrozenOnUtc = null);
 
 internal sealed record ArPhysicalCountEntryDto(
     Guid Id,
@@ -422,7 +453,15 @@ internal sealed record ArPhysicalCountEntryDto(
     string? PhotoPath,
     Guid? ScannedByEmployeeId,
     Guid LocationId,
-    string? Remarks);
+    string? Remarks,
+    string? ProposedPropertyClass = null,
+    string? ProposedCategoryCode = null,
+    DateOnly? ProposedAcquisitionDate = null,
+    decimal? ProposedUnitCost = null,
+    bool NeedsRecount = false,
+    string? RecountReason = null,
+    string? ProposedPropertyNo = null,
+    Guid? ProposedCatalogItemId = null);
 
 internal sealed record ArPhysicalCountSessionDto(
     Guid Id,
@@ -437,7 +476,45 @@ internal sealed record ArPhysicalCountSessionDto(
     IReadOnlyCollection<ArEmployeeRefDto> ConductedBy,
     ArEmployeeRefDto? ApprovedBy,
     ArEmployeeRefDto? WitnessedBy,
-    IReadOnlyCollection<ArPhysicalCountEntryDto> Entries);
+    IReadOnlyCollection<ArPhysicalCountEntryDto> Entries,
+    string? OfficeOrderNo = null,
+    DateTimeOffset? FrozenOnUtc = null);
+
+// ── Reconciliation read model ──────────────────────────────────────────────
+
+internal enum ArReconciliationRowStatus { Matched = 0, Shortage = 1, Overage = 2, Uncounted = 3 }
+
+internal sealed record ArReconciliationRowDto(
+    Guid? EntryId,
+    Guid? AssetRegistryId,
+    string? PropertyNo,
+    string Article,
+    string Unit,
+    decimal UnitCost,
+    int BookQty,
+    int CountedQty,
+    ArReconciliationRowStatus RowStatus,
+    PhysicalCountCondition? Condition,
+    bool NeedsRecount,
+    string? RecountReason,
+    Guid? LocationId,
+    string? Remarks);
+
+internal sealed record ArReconciliationReportDto(
+    Guid SessionId,
+    string Code,
+    PhysicalCountStatus Status,
+    string FundCluster,
+    PhysicalCountScope Scope,
+    string? OfficeOrderNo,
+    DateTimeOffset? FrozenOnUtc,
+    IReadOnlyList<ArReconciliationRowDto> Rows,
+    int MatchedCount,
+    int ShortageCount,
+    int OverageCount,
+    int UncountedCount,
+    decimal ShortageValue,
+    decimal OverageValue);
 
 internal sealed record StartPhysicalCountRequest(
     string Code,
@@ -461,14 +538,46 @@ internal sealed record ArRecordPhysicalCountEntryRequest(
 internal sealed record ClosePhysicalCountRequest(
     ArEmployeeRefDto ApprovedBy,
     ArEmployeeRefDto? WitnessedBy,
-    DateOnly ClosedOn);
+    DateOnly ClosedOn,
+    string? Station = null);
+
+internal sealed record ArFreezePhysicalCountRequest(string OfficeOrderNo);
+
+internal sealed record ArAddFoundAtStationRequest(
+    Guid SessionId,
+    string Article,
+    string Unit,
+    decimal UnitCost,
+    Guid LocationId,
+    string? ProposedPropertyClass = null,
+    string? ProposedCategoryCode = null,
+    DateOnly? ProposedAcquisitionDate = null,
+    decimal? ProposedUnitCost = null,
+    Guid? ScannedByEmployeeId = null,
+    string? Remarks = null,
+    string? ProposedPropertyNo = null,
+    Guid? ProposedCatalogItemId = null);
+
+internal sealed record ArMarkMissingRequest(
+    Guid SessionId,
+    Guid AssetRegistryId,
+    Guid LocationId,
+    string? Remarks = null);
+
+internal sealed record ArRequestRecountRequest(string? Reason);
 
 internal interface IArPhysicalCountClient
 {
     Task<ArPagedResponse<ArPhysicalCountSummaryDto>> SearchAsync(string? keyword = null, PhysicalCountStatus? status = null, PhysicalCountScope? scope = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
     Task<ArPhysicalCountSessionDto?> GetAsync(Guid id, CancellationToken ct = default);
     Task<ArPhysicalCountSessionDto> StartAsync(StartPhysicalCountRequest request, CancellationToken ct = default);
+    Task<ArPhysicalCountSessionDto> FreezeAsync(Guid sessionId, string officeOrderNo, CancellationToken ct = default);
     Task<ArPhysicalCountSessionDto> RecordEntryAsync(Guid sessionId, ArRecordPhysicalCountEntryRequest request, CancellationToken ct = default);
+    Task<ArPhysicalCountSessionDto> AddFoundAtStationAsync(Guid sessionId, ArAddFoundAtStationRequest request, CancellationToken ct = default);
+    Task<ArPhysicalCountSessionDto> MarkMissingAsync(Guid sessionId, ArMarkMissingRequest request, CancellationToken ct = default);
+    Task<ArPhysicalCountSessionDto> ReconcileAsync(Guid sessionId, CancellationToken ct = default);
+    Task<ArPhysicalCountSessionDto> RequestRecountAsync(Guid sessionId, Guid entryId, string? reason, CancellationToken ct = default);
+    Task<ArReconciliationReportDto?> GetReconciliationAsync(Guid sessionId, CancellationToken ct = default);
     Task<ArPhysicalCountSessionDto> CloseAsync(Guid sessionId, ClosePhysicalCountRequest request, CancellationToken ct = default);
 }
 
@@ -500,17 +609,55 @@ internal sealed class ArPhysicalCountClient(HttpClient http) : IArPhysicalCountC
         return (await resp.Content.ReadFromJsonAsync<ArPhysicalCountSessionDto>(ArJsonOptions.Default, cancellationToken: ct))!;
     }
 
+    public async Task<ArPhysicalCountSessionDto> FreezeAsync(Guid sessionId, string officeOrderNo, CancellationToken ct = default)
+    {
+        var resp = await http.PostAsJsonAsync($"{Base}/{sessionId}/freeze", new ArFreezePhysicalCountRequest(officeOrderNo), ArJsonOptions.Default, ct);
+        return await ReadSessionAsync(resp, ct);
+    }
+
     public async Task<ArPhysicalCountSessionDto> RecordEntryAsync(Guid sessionId, ArRecordPhysicalCountEntryRequest request, CancellationToken ct = default)
     {
         var resp = await http.PostAsJsonAsync($"{Base}/{sessionId}/entries", request, ArJsonOptions.Default, ct);
-        resp.EnsureSuccessStatusCode();
-        return (await resp.Content.ReadFromJsonAsync<ArPhysicalCountSessionDto>(ArJsonOptions.Default, cancellationToken: ct))!;
+        return await ReadSessionAsync(resp, ct);
     }
+
+    public async Task<ArPhysicalCountSessionDto> AddFoundAtStationAsync(Guid sessionId, ArAddFoundAtStationRequest request, CancellationToken ct = default)
+    {
+        var resp = await http.PostAsJsonAsync($"{Base}/{sessionId}/found-at-station", request, ArJsonOptions.Default, ct);
+        return await ReadSessionAsync(resp, ct);
+    }
+
+    public async Task<ArPhysicalCountSessionDto> MarkMissingAsync(Guid sessionId, ArMarkMissingRequest request, CancellationToken ct = default)
+    {
+        var resp = await http.PostAsJsonAsync($"{Base}/{sessionId}/missing", request, ArJsonOptions.Default, ct);
+        return await ReadSessionAsync(resp, ct);
+    }
+
+    public async Task<ArPhysicalCountSessionDto> ReconcileAsync(Guid sessionId, CancellationToken ct = default)
+    {
+        var resp = await http.PostAsJsonAsync($"{Base}/{sessionId}/reconcile", new { }, ct);
+        return await ReadSessionAsync(resp, ct);
+    }
+
+    public async Task<ArPhysicalCountSessionDto> RequestRecountAsync(Guid sessionId, Guid entryId, string? reason, CancellationToken ct = default)
+    {
+        var resp = await http.PostAsJsonAsync($"{Base}/{sessionId}/entries/{entryId}/recount", new ArRequestRecountRequest(reason), ArJsonOptions.Default, ct);
+        return await ReadSessionAsync(resp, ct);
+    }
+
+    public Task<ArReconciliationReportDto?> GetReconciliationAsync(Guid sessionId, CancellationToken ct = default) =>
+        http.GetFromJsonAsync<ArReconciliationReportDto>($"{Base}/{sessionId}/reconciliation", ArJsonOptions.Default, ct);
 
     public async Task<ArPhysicalCountSessionDto> CloseAsync(Guid sessionId, ClosePhysicalCountRequest request, CancellationToken ct = default)
     {
         var resp = await http.PostAsJsonAsync($"{Base}/{sessionId}/close", request, ArJsonOptions.Default, ct);
-        resp.EnsureSuccessStatusCode();
+        return await ReadSessionAsync(resp, ct);
+    }
+
+    private static async Task<ArPhysicalCountSessionDto> ReadSessionAsync(HttpResponseMessage resp, CancellationToken ct)
+    {
+        if (!resp.IsSuccessStatusCode)
+            throw new InvalidOperationException(await ArErrorReader.ExtractAsync(resp, ct));
         return (await resp.Content.ReadFromJsonAsync<ArPhysicalCountSessionDto>(ArJsonOptions.Default, cancellationToken: ct))!;
     }
 }

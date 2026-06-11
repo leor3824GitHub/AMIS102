@@ -6,6 +6,8 @@
 @using PhysicalCountScope = AMIS.Modules.AssetRegister.Contracts.v1.PhysicalCountScope
 @using PhysicalCountCondition = AMIS.Modules.AssetRegister.Contracts.v1.PhysicalCountCondition
 @inject IArPhysicalCountClient Client
+@inject IArCatalogClient CatalogClient
+@inject ILocationLookupClient LocationClient
 @inject ISnackbar Snackbar
 @inject IUserProfileState UserProfileState
 
@@ -189,6 +191,17 @@
                             <MudText Typo="Typo.caption" Color="Color.Secondary">Conducted By</MudText>
                             <MudText Typo="Typo.body2">@string.Join(", ", _selected.ConductedBy.Select(c => c.PrintedName))</MudText>
                         </MudItem>
+                        <MudItem xs="6" md="3">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Office Order No.</MudText>
+                            <MudText Typo="Typo.body2">@(_selected.OfficeOrderNo ?? "—")</MudText>
+                        </MudItem>
+                        @if (_selected.FrozenOnUtc is not null)
+                        {
+                            <MudItem xs="6" md="3">
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">Ledger Frozen</MudText>
+                                <MudText Typo="Typo.body2">@_selected.FrozenOnUtc.Value.LocalDateTime.ToString("yyyy-MM-dd HH:mm")</MudText>
+                            </MudItem>
+                        }
                         @if (_selected.ApprovedBy is not null)
                         {
                             <MudItem xs="6" md="3">
@@ -209,7 +222,7 @@
                     <MudText Typo="Typo.subtitle2" Class="mb-2">
                         Count Entries (@_selected.Entries.Count)
                         <MudLink Href="@($"/asset-register/reports?sessionId={_selected.Id}")" Class="ml-2" Typo="Typo.caption">
-                            View Full Report ?
+                            View Full Report →
                         </MudLink>
                     </MudText>
 
@@ -238,25 +251,184 @@
                         </MudText>
                     }
 
-                    <!-- Close session (only if Ongoing) -->
-                    @if (_selected.Status == PhysicalCountStatus.Ongoing && _canClose)
+                    <!-- Draft → Freeze the ledger -->
+                    @if (_selected.Status == PhysicalCountStatus.Draft && _canFreeze)
                     {
                         <MudDivider Class="my-3" />
-                        <MudText Typo="Typo.subtitle2" Class="mb-2">Close Session</MudText>
+                        <MudText Typo="Typo.subtitle2" Class="mb-2">Activate Ledger Freeze</MudText>
+                        <MudAlert Severity="Severity.Info" Dense="true" Class="mb-2">
+                            Freezing locks all covered asset movements (issue / transfer / return / disposal) for fund
+                            cluster <strong>@_selected.FundCluster</strong> (@FormatScope(_selected.Scope)) until the count is closed.
+                        </MudAlert>
+                        <MudGrid Spacing="2" AlignItems="AlignItems.Center">
+                            <MudItem xs="12" md="6">
+                                <MudTextField @bind-Value="_freezeOfficeOrderNo" Label="Office Order No." Variant="Variant.Outlined"
+                                              Dense="true" Margin="Margin.Dense" MaxLength="100" Required="true"
+                                              Placeholder="@(_selected.OfficeOrderNo ?? "e.g. OO-2026-014")" />
+                            </MudItem>
+                            <MudItem xs="12" md="3">
+                                <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Error" FullWidth="true"
+                                            StartIcon="@Icons.Material.Outlined.AcUnit" OnClick="FreezeAsync" Disabled="_busy">
+                                    Freeze Ledger
+                                </AMISButton>
+                            </MudItem>
+                        </MudGrid>
+                    }
+
+                    <!-- Ongoing → add found-at-station + move to reconciliation -->
+                    @if (_selected.Status == PhysicalCountStatus.Ongoing && _canRecord)
+                    {
+                        <MudDivider Class="my-3" />
+                        <MudExpansionPanels Elevation="0" Class="mb-2">
+                            <MudExpansionPanel Text="Add Found-at-Station Item">
+                                <MudGrid Spacing="2">
+                                    <MudItem xs="12" md="6">
+                                        <MudAutocomplete T="ArCatalogItemDto" Label="Catalog Item" Variant="Variant.Outlined"
+                                                         Dense="true" Margin="Margin.Dense" Required="true"
+                                                         Value="_fasCatalog" ValueChanged="OnFasCatalogSelected"
+                                                         SearchFunc="SearchCatalogAsync"
+                                                         ToStringFunc="@(c => c is null ? string.Empty : $"{c.Code} — {c.Description}")"
+                                                         ResetValueOnEmptyText="true" CoerceText="true" />
+                                    </MudItem>
+                                    <MudItem xs="12" md="6">
+                                        <MudAutocomplete T="LocationLookupDto" Label="Location" Variant="Variant.Outlined"
+                                                         Dense="true" Margin="Margin.Dense" Required="true"
+                                                         @bind-Value="_fasLocation"
+                                                         SearchFunc="SearchLocationsAsync"
+                                                         ToStringFunc="@(l => l is null ? string.Empty : $"{l.Code} — {l.Name}")"
+                                                         ResetValueOnEmptyText="true" CoerceText="true" />
+                                    </MudItem>
+                                    <MudItem xs="12" md="6">
+                                        <MudTextField @bind-Value="_fasForm.PropertyNo" Label="Assigned Property No." Variant="Variant.Outlined"
+                                                      Dense="true" Margin="Margin.Dense" MaxLength="64" Required="true" />
+                                    </MudItem>
+                                    <MudItem xs="12" md="6">
+                                        <MudTextField @bind-Value="_fasForm.Article" Label="Article / Description" Variant="Variant.Outlined"
+                                                      Dense="true" Margin="Margin.Dense" MaxLength="256" Required="true" />
+                                    </MudItem>
+                                    <MudItem xs="6" md="3">
+                                        <MudTextField @bind-Value="_fasForm.Unit" Label="Unit" Variant="Variant.Outlined"
+                                                      Dense="true" Margin="Margin.Dense" MaxLength="50" Required="true" />
+                                    </MudItem>
+                                    <MudItem xs="6" md="3">
+                                        <MudNumericField @bind-Value="_fasForm.UnitCost" Label="Appraised Unit Cost" Variant="Variant.Outlined"
+                                                         Dense="true" Margin="Margin.Dense" Min="0" T="decimal" />
+                                    </MudItem>
+                                    <MudItem xs="6" md="3">
+                                        <MudDatePicker @bind-Date="_fasForm.AcquisitionDateNullable" Label="Acquisition Date (optional)"
+                                                       Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" />
+                                    </MudItem>
+                                    <MudItem xs="6" md="3" Class="d-flex align-end">
+                                        <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                                                    StartIcon="@Icons.Material.Outlined.AddLocationAlt" OnClick="AddFoundAtStationAsync" Disabled="_busy">
+                                            Add Item
+                                        </AMISButton>
+                                    </MudItem>
+                                </MudGrid>
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary mt-1">
+                                    Property No. + catalog item are required so the item is recognized into the registry at close.
+                                </MudText>
+                            </MudExpansionPanel>
+                        </MudExpansionPanels>
+
+                        @if (_canSubmit)
+                        {
+                            <AMISButton Variant="Variant.Filled" Color="Color.Warning"
+                                        StartIcon="@Icons.Material.Outlined.FactCheck" OnClick="ReconcileAsync" Disabled="_busy">
+                                Move to Reconciliation
+                            </AMISButton>
+                        }
+                    }
+
+                    <!-- Reconciliation variance panel (Ongoing or Reconciling) -->
+                    @if (_selected.Status is PhysicalCountStatus.Ongoing or PhysicalCountStatus.Reconciled && _canView)
+                    {
+                        <MudDivider Class="my-3" />
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-2">
+                            <MudText Typo="Typo.subtitle2">Reconciliation (Book vs Counted)</MudText>
+                            <AMISButton Size="Size.Small" Variant="Variant.Text" Color="Color.Primary"
+                                        StartIcon="@Icons.Material.Outlined.Refresh" OnClick="LoadReconciliationAsync" Disabled="_busy">
+                                Compute Variances
+                            </AMISButton>
+                        </MudStack>
+                        @if (_recon is not null)
+                        {
+                            <MudStack Row="true" Spacing="2" Class="mb-2" Wrap="Wrap.Wrap">
+                                <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Outlined">Matched: @_recon.MatchedCount</MudChip>
+                                <MudChip T="string" Size="Size.Small" Color="Color.Error" Variant="Variant.Outlined">Shortages: @_recon.ShortageCount</MudChip>
+                                <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Outlined">Overages: @_recon.OverageCount</MudChip>
+                                <MudChip T="string" Size="Size.Small" Color="Color.Default" Variant="Variant.Outlined">Uncounted: @_recon.UncountedCount</MudChip>
+                            </MudStack>
+                            <MudTable Items="_recon.Rows" Dense="true" Striped="true" FixedHeader="true" Height="320px" T="ArReconciliationRowDto">
+                                <HeaderContent>
+                                    <MudTh>Property No.</MudTh>
+                                    <MudTh>Article</MudTh>
+                                    <MudTh Style="text-align:right">Book</MudTh>
+                                    <MudTh Style="text-align:right">Counted</MudTh>
+                                    <MudTh>Status</MudTh>
+                                    <MudTh>Action</MudTh>
+                                </HeaderContent>
+                                <RowTemplate>
+                                    <MudTd>@(context.PropertyNo ?? "—")</MudTd>
+                                    <MudTd>@context.Article</MudTd>
+                                    <MudTd Style="text-align:right">@context.BookQty</MudTd>
+                                    <MudTd Style="text-align:right">@context.CountedQty</MudTd>
+                                    <MudTd>
+                                        <MudChip T="string" Size="Size.Small" Variant="Variant.Filled" Color="@RowStatusColor(context.RowStatus)">
+                                            @RowStatusLabel(context.RowStatus)
+                                        </MudChip>
+                                        @if (context.NeedsRecount)
+                                        {
+                                            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Secondary" Class="ml-1">Recount</MudChip>
+                                        }
+                                    </MudTd>
+                                    <MudTd>
+                                        @if (_selected.Status == PhysicalCountStatus.Ongoing
+                                             && context.RowStatus == ArReconciliationRowStatus.Uncounted
+                                             && context.AssetRegistryId is not null && context.LocationId is not null && _canRecord)
+                                        {
+                                            <AMISButton Size="Size.Small" Variant="Variant.Text" Color="Color.Error"
+                                                        OnClick="@(() => MarkMissingAsync(context))" Disabled="_busy">Mark Missing</AMISButton>
+                                        }
+                                        else if (_selected.Status == PhysicalCountStatus.Reconciled
+                                                 && context.EntryId is not null && !context.NeedsRecount && _canSubmit)
+                                        {
+                                            <AMISButton Size="Size.Small" Variant="Variant.Text" Color="Color.Warning"
+                                                        OnClick="@(() => TriggerRecountAsync(context))" Disabled="_busy">Trigger Recount</AMISButton>
+                                        }
+                                    </MudTd>
+                                </RowTemplate>
+                            </MudTable>
+                        }
+                    }
+
+                    <!-- Reconciling → Close / sign off -->
+                    @if (_selected.Status == PhysicalCountStatus.Reconciled && _canClose)
+                    {
+                        <MudDivider Class="my-3" />
+                        <MudText Typo="Typo.subtitle2" Class="mb-2">Finalize &amp; Sign Off</MudText>
+                        <MudAlert Severity="Severity.Info" Dense="true" Class="mb-2">
+                            Closing recognizes found-at-station items into the registry, drops missing &amp; uncounted
+                            assets to investigation, and lifts the freeze. Found-at-station items must have an assigned
+                            Property No. and catalog item, or close is rejected.
+                        </MudAlert>
                         <MudGrid Spacing="2">
                             <MudItem xs="12" md="4">
-                                <MudTextField @bind-Value="_closeForm.ApprovedByName" Label="Approved By (Name)" Variant="Variant.Outlined" MaxLength="100" Required="true" />
+                                <MudTextField @bind-Value="_closeForm.ApprovedByName" Label="Approved By (Name)" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" MaxLength="100" Required="true" />
                             </MudItem>
                             <MudItem xs="12" md="4">
-                                <MudTextField @bind-Value="_closeForm.ApprovedByDesignation" Label="Designation" Variant="Variant.Outlined" MaxLength="100" />
+                                <MudTextField @bind-Value="_closeForm.ApprovedByDesignation" Label="Designation" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" MaxLength="100" />
+                            </MudItem>
+                            <MudItem xs="12" md="4">
+                                <MudTextField @bind-Value="_closeForm.Station" Label="Station / Office (optional)" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" MaxLength="200" />
                             </MudItem>
                             <MudItem xs="12" md="4">
                                 <MudDatePicker @bind-Date="_closeForm.ClosedOnNullable" Label="Closed On" Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" Required="true" />
                             </MudItem>
                             <MudItem xs="12" md="3" Class="d-flex align-end">
-                                <AMISButton Variant="Variant.Filled" Color="Color.Warning" FullWidth="true"
+                                <AMISButton Variant="Variant.Filled" Color="Color.Success" FullWidth="true"
                                             OnClick="CloseSessionAsync" Disabled="_busy">
-                                    Close Session
+                                    Finalize &amp; Sign Off
                                 </AMISButton>
                             </MudItem>
                         </MudGrid>
@@ -299,11 +471,32 @@
     {
         public string ApprovedByName { get; set; } = "";
         public string? ApprovedByDesignation { get; set; }
+        public string? Station { get; set; }
         public DateTime? ClosedOnNullable { get; set; }
     }
 
+    private string? _freezeOfficeOrderNo;
+    private ArReconciliationReportDto? _recon;
+
+    private FoundAtStationFormModel _fasForm = new();
+    private ArCatalogItemDto? _fasCatalog;
+    private LocationLookupDto? _fasLocation;
+
+    private sealed class FoundAtStationFormModel
+    {
+        public string PropertyNo { get; set; } = "";
+        public string Article { get; set; } = "";
+        public string Unit { get; set; } = "pc";
+        public decimal UnitCost { get; set; }
+        public DateTime? AcquisitionDateNullable { get; set; }
+    }
+
     private bool _canCreate => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Count.Create);
-    private bool _canClose => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Count.Close);
+    private bool _canFreeze => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Count.Freeze);
+    private bool _canView   => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Count.View);
+    private bool _canRecord => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Count.Record);
+    private bool _canSubmit => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Count.Submit);
+    private bool _canClose  => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Count.Close);
 
     protected override async Task OnInitializedAsync()
     {
@@ -343,6 +536,10 @@
         {
             _selected = await Client.GetAsync(args.Item.Id);
             _closeForm = new();
+            _recon = null;
+            _freezeOfficeOrderNo = _selected?.OfficeOrderNo;
+            if (_selected is not null && _selected.Status is PhysicalCountStatus.Ongoing or PhysicalCountStatus.Reconciled && _canView)
+                await LoadReconciliationAsync();
         }
         catch (Exception ex)
         {
@@ -416,9 +613,10 @@
         try
         {
             var approvedBy = new ArEmployeeRefDto(Guid.Empty, _closeForm.ApprovedByName.Trim(), _closeForm.ApprovedByDesignation);
-            var req = new ClosePhysicalCountRequest(approvedBy, null, DateOnly.FromDateTime(_closeForm.ClosedOnNullable.Value));
+            var req = new ClosePhysicalCountRequest(approvedBy, null, DateOnly.FromDateTime(_closeForm.ClosedOnNullable.Value),
+                string.IsNullOrWhiteSpace(_closeForm.Station) ? null : _closeForm.Station.Trim());
             _selected = await Client.CloseAsync(_selected.Id, req);
-            Snackbar.Add("Session closed.", Severity.Success);
+            Snackbar.Add("Session signed off. Found-at-station items recognized; missing & uncounted assets routed to investigation.", Severity.Success);
             await LoadAsync();
         }
         catch (Exception ex)
@@ -430,6 +628,153 @@
             _busy = false;
         }
     }
+
+    private async Task FreezeAsync()
+    {
+        if (_selected is null) return;
+        if (string.IsNullOrWhiteSpace(_freezeOfficeOrderNo))
+        {
+            Snackbar.Add("An Office Order No. is required to freeze the ledger.", Severity.Warning);
+            return;
+        }
+        _busy = true;
+        try
+        {
+            _selected = await Client.FreezeAsync(_selected.Id, _freezeOfficeOrderNo.Trim());
+            Snackbar.Add("Ledger frozen. Covered asset movements are now blocked.", Severity.Success);
+            await LoadAsync();
+        }
+        catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    private async Task<IEnumerable<ArCatalogItemDto>> SearchCatalogAsync(string? value, CancellationToken ct)
+    {
+        var result = await CatalogClient.SearchAsync(value, isActive: true, page: 1, pageSize: 20, ct);
+        return result.Items;
+    }
+
+    private void OnFasCatalogSelected(ArCatalogItemDto? catalog)
+    {
+        _fasCatalog = catalog;
+        // Pre-fill article/unit from the catalog default to reduce typing; operator can override.
+        if (catalog is not null)
+        {
+            if (string.IsNullOrWhiteSpace(_fasForm.Article)) _fasForm.Article = catalog.Description;
+            if (string.IsNullOrWhiteSpace(_fasForm.Unit) || _fasForm.Unit == "pc") _fasForm.Unit = catalog.DefaultUnit;
+        }
+    }
+
+    private async Task<IEnumerable<LocationLookupDto>> SearchLocationsAsync(string? value, CancellationToken ct) =>
+        await LocationClient.SearchAsync(value, pageSize: 20, ct);
+
+    private async Task AddFoundAtStationAsync()
+    {
+        if (_selected is null) return;
+        if (_fasCatalog is null || _fasLocation is null
+            || string.IsNullOrWhiteSpace(_fasForm.PropertyNo) || string.IsNullOrWhiteSpace(_fasForm.Article)
+            || string.IsNullOrWhiteSpace(_fasForm.Unit))
+        {
+            Snackbar.Add("Catalog item, location, Property No., article and unit are required.", Severity.Warning);
+            return;
+        }
+        if (_fasForm.UnitCost <= 0)
+        {
+            Snackbar.Add("An appraised unit cost greater than zero is required.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            var req = new ArAddFoundAtStationRequest(
+                _selected.Id,
+                _fasForm.Article.Trim(),
+                _fasForm.Unit.Trim(),
+                _fasForm.UnitCost,
+                _fasLocation.Id,
+                ProposedUnitCost: _fasForm.UnitCost,
+                ProposedAcquisitionDate: _fasForm.AcquisitionDateNullable is { } d ? DateOnly.FromDateTime(d) : null,
+                ProposedPropertyNo: _fasForm.PropertyNo.Trim().ToUpperInvariant(),
+                ProposedCatalogItemId: _fasCatalog.Id);
+            _selected = await Client.AddFoundAtStationAsync(_selected.Id, req);
+            await LoadReconciliationAsync();
+            Snackbar.Add($"Found-at-station item '{_fasForm.Article}' added.", Severity.Success);
+            _fasForm = new();
+            _fasCatalog = null;
+            _fasLocation = null;
+        }
+        catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    private async Task ReconcileAsync()
+    {
+        if (_selected is null) return;
+        _busy = true;
+        try
+        {
+            _selected = await Client.ReconcileAsync(_selected.Id);
+            await LoadReconciliationAsync();
+            Snackbar.Add("Session moved to reconciliation.", Severity.Success);
+        }
+        catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    private async Task LoadReconciliationAsync()
+    {
+        if (_selected is null) return;
+        try { _recon = await Client.GetReconciliationAsync(_selected.Id); }
+        catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
+    }
+
+    private async Task MarkMissingAsync(ArReconciliationRowDto row)
+    {
+        if (_selected is null || row.AssetRegistryId is null || row.LocationId is null) return;
+        _busy = true;
+        try
+        {
+            _selected = await Client.MarkMissingAsync(_selected.Id,
+                new ArMarkMissingRequest(_selected.Id, row.AssetRegistryId.Value, row.LocationId.Value));
+            await LoadReconciliationAsync();
+            Snackbar.Add($"'{row.Article}' marked missing.", Severity.Success);
+        }
+        catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    private async Task TriggerRecountAsync(ArReconciliationRowDto row)
+    {
+        if (_selected is null || row.EntryId is null) return;
+        _busy = true;
+        try
+        {
+            _selected = await Client.RequestRecountAsync(_selected.Id, row.EntryId.Value, null);
+            await LoadReconciliationAsync();
+            Snackbar.Add($"'{row.Article}' flagged for recount.", Severity.Info);
+        }
+        catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    private static Color RowStatusColor(ArReconciliationRowStatus s) => s switch
+    {
+        ArReconciliationRowStatus.Matched => Color.Success,
+        ArReconciliationRowStatus.Shortage => Color.Error,
+        ArReconciliationRowStatus.Overage => Color.Warning,
+        ArReconciliationRowStatus.Uncounted => Color.Default,
+        _ => Color.Default
+    };
+
+    private static string RowStatusLabel(ArReconciliationRowStatus s) => s switch
+    {
+        ArReconciliationRowStatus.Matched => "Matched",
+        ArReconciliationRowStatus.Shortage => "Shortage",
+        ArReconciliationRowStatus.Overage => "Overage",
+        ArReconciliationRowStatus.Uncounted => "Uncounted",
+        _ => s.ToString()
+    };
 
     private async Task PrevPage() { _page--; await LoadAsync(); }
     private async Task NextPage() { _page++; await LoadAsync(); }
@@ -450,13 +795,15 @@
     };
     private static string FormatCountStatus(PhysicalCountStatus v) => v switch
     {
-        PhysicalCountStatus.Ongoing => "Ongoing",
-        PhysicalCountStatus.Reconciled => "Reconciled",
+        PhysicalCountStatus.Draft => "Draft",
+        PhysicalCountStatus.Ongoing => "Frozen / Counting",
+        PhysicalCountStatus.Reconciled => "Reconciling",
         PhysicalCountStatus.Closed => "Closed",
         _ => v.ToString()
     };
     private static Color CountStatusColor(PhysicalCountStatus v) => v switch
     {
+        PhysicalCountStatus.Draft => Color.Default,
         PhysicalCountStatus.Ongoing => Color.Info,
         PhysicalCountStatus.Reconciled => Color.Warning,
         PhysicalCountStatus.Closed => Color.Success,

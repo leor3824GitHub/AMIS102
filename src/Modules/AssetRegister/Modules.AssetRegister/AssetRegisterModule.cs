@@ -182,9 +182,11 @@ public class AssetRegisterModule : IModule
         Features.v1.Counting.RecordPhysicalCountEntry.RecordPhysicalCountEntryEndpoint.Map(count);
         Features.v1.Counting.AddFoundAtStationEntry.AddFoundAtStationEntryEndpoint.Map(count);
         Features.v1.Counting.MarkPhysicalCountMissing.MarkPhysicalCountMissingEndpoint.Map(count);
+        Features.v1.Counting.RequestPhysicalCountRecount.RequestPhysicalCountRecountEndpoint.Map(count);
         Features.v1.Counting.ReconcilePhysicalCount.ReconcilePhysicalCountEndpoint.Map(count);
         Features.v1.Counting.ClosePhysicalCount.ClosePhysicalCountEndpoint.Map(count);
         Features.v1.Counting.GetPhysicalCountSession.GetPhysicalCountSessionEndpoint.Map(count);
+        Features.v1.Counting.GetReconciliationReport.GetReconciliationReportEndpoint.Map(count);
         Features.v1.Counting.SearchPhysicalCountSessions.SearchPhysicalCountSessionsEndpoint.Map(count);
 
         // Property incident reports (RLSDDSP) — Phase 4

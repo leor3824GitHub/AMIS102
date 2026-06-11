@@ -1,6 +1,7 @@
 # AssetRegister — Physical Count "Balance = Found" Implementation Guide
 
-> **Status:** In progress — domain layer landed, close-handler true-up + migration + tests pending.
+> **Status:** Close-handler true-up landed (§4.1) with shared classifier + in-scope query + unit tests.
+> Clients (§4.5) pending; migration already covered by `20260610113721_PhysicalCountFreeze`.
 > **Last updated:** 2026-06-11
 > **Module:** `src/Modules/AssetRegister`
 > **Legal basis:** COA Circular No. 2020-006 (Jan 31, 2020) — physical count of PPE, recognition of
@@ -70,9 +71,25 @@ UnderInvestigation
 
 ---
 
+## 3.3 Close-handler true-up + reconciliation (landed 2026-06-11)
+
+| Change | File |
+|---|---|
+| Close handler materializes found-at-station entries (PropertyNo + catalog → `AssetRegistry.Register` → `AttachReconciledAssetToEntry`), then flags Missing + Uncounted → `MarkMissingFromCount`, in one transaction; 409 lists entries missing PropertyNo/catalog/value | `Features/v1/Counting/ClosePhysicalCount/ClosePhysicalCountCommandHandler.cs` |
+| Shared PPE/SE classifier extracted to a single source of truth; IAR consumer refactored to use it | `Data/Services/AssetClassificationPolicy.cs`, `Integration/AssetIARAcceptedEventConsumer.cs` |
+| Shared in-scope query (`InCountScope`) used by both reconciliation report and close-handler uncounted flagging, so they never diverge | `Features/v1/Counting/CountScopeQuery.cs`, `Features/v1/Counting/GetReconciliationReport/GetReconciliationReportQueryHandler.cs` |
+| `GetReconciliationReport` (variance: Matched/Shortage/Overage/Uncounted) + `RequestPhysicalCountRecount` slices mapped | `Features/v1/Counting/GetReconciliationReport/*`, `Features/v1/Counting/RequestPhysicalCountRecount/*` |
+| Validator: `ProposedPropertyNo` ≤64, `ProposedUnitCost` > 0 when present | `Features/v1/Counting/AddFoundAtStationEntry/AddFoundAtStationEntryCommandValidator.cs` |
+| 8 unit tests (`MarkMissingFromCount` transitions/no-ops, `MarkUnderInvestigation` from UnderInvestigation, Close FoundAtStation invariant, AddFoundAtStation round-trip) — 38 passing total | `Tests/AssetRegister.Tests/Domain/PhysicalCountCloseTests.cs` |
+
+> Note: §4.2 migration was **not** newly created — `20260610113721_PhysicalCountFreeze` already adds
+> `OfficeOrderNo`, `FrozenOnUtc`, recount fields, `ProposedPropertyNo`, `ProposedCatalogItemId`.
+
+---
+
 ## 4. To be implemented 🔲
 
-### 4.1 Close-handler true-up (core of "balance = found")
+### 4.1 Close-handler true-up (core of "balance = found") — ✅ DONE (see §3.3)
 
 `Features/v1/Counting/ClosePhysicalCount/ClosePhysicalCountCommandHandler.cs` — extend to, **in order**:
 
@@ -106,9 +123,25 @@ Also update `PhysicalCountSession.Close` guard: the "FoundAtStation entry has no
 
 ### 4.5 Clients (after backend lands)
 
-- **Blazor** `Components/Pages/AssetRegister/PhysicalCountPage` (+ `AssetRegisterClient`): found-at-station dialog gains PropertyNo input + catalog autocomplete; close flow surfaces the new 409s.
-- **MAUI** PhysicalCount feature (found-at-station page): same two fields; PropertyNo normalized `.Trim().ToUpperInvariant()`; manual entry always visible.
+**Blazor — landed 2026-06-11:**
+- `AssetRegisterClient.cs` (`IArPhysicalCountClient`): added `FreezeAsync`, `AddFoundAtStationAsync`, `MarkMissingAsync`,
+  `ReconcileAsync`, `RequestRecountAsync`, `GetReconciliationAsync`; new DTO fields (OfficeOrderNo/FrozenOnUtc,
+  recount + proposed-identity); reconciliation DTOs; `Station` on close; a ProblemDetails-aware error reader so the
+  close-handler 409s surface their message.
+- `PhysicalCountPage.razor`: full lifecycle Draft→Freeze→Ongoing→Reconcile→Reconciling→Close (fixed prior bug where
+  Close showed in Ongoing); reconciliation variance panel (Matched/Shortage/Overage/Uncounted + per-row table) with
+  Trigger Recount and Mark Missing; Office Order / Frozen display; Station on close; Draft-aware labels.
+
+- **Found-at-station capture form (Blazor) — landed 2026-06-11:** new `LocationLookupClient` (`ILocationLookupClient`,
+  read-only over `api/v1/asset-management/locations`) registered in `ApiClientRegistration`; `PhysicalCountPage`
+  Ongoing block gained an "Add Found-at-Station Item" panel with catalog autocomplete + location autocomplete +
+  PropertyNo (`.Trim().ToUpperInvariant()`) + article/unit/appraised cost, posting via `AddFoundAtStationAsync`.
+  Requires the user to hold AssetManagement `Locations.View`.
+
+**Still pending:**
+- **MAUI** PhysicalCount found-at-station page: PropertyNo + catalog fields; `.Trim().ToUpperInvariant()`.
 - Regenerate NSwag client if used for these endpoints.
+- RPCPPE / Annex B / Annex C print-parity (§5#5).
 
 ---
 

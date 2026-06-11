@@ -47,16 +47,8 @@ public sealed class GetReconciliationReportQueryHandler(AssetRegisterDbContext d
             .Select(e => e.AssetRegistryId!.Value)
             .ToHashSet();
 
-        var uncountedQ = db.AssetRegistries.AsNoTracking()
-            .Where(a => a.FundCluster == session.FundCluster
-                        && (a.LifecycleState == LifecycleState.Available
-                            || a.LifecycleState == LifecycleState.Assigned));
-        if (session.Scope == PhysicalCountScope.PPEOnly)
-            uncountedQ = uncountedQ.Where(a => a.AssetType == AssetType.PPE);
-        else if (session.Scope == PhysicalCountScope.SEOnly)
-            uncountedQ = uncountedQ.Where(a => a.AssetType == AssetType.SE);
-
-        var uncounted = await uncountedQ
+        var uncounted = await db.AssetRegistries.AsNoTracking()
+            .InCountScope(session.FundCluster, session.Scope)
             .Where(a => !countedAssetIds.Contains(a.Id))
             .OrderBy(a => a.PropertyNo.Value)
             .Select(a => new { a.Id, PropertyNo = a.PropertyNo.Value, a.Description, a.Unit, a.UnitCost, a.CurrentLocationId })

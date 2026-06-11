@@ -12,6 +12,14 @@ public sealed class AddFoundAtStationEntryCommandValidator : AbstractValidator<A
         RuleFor(x => x.Unit).NotEmpty().MaximumLength(50).WithMessage("Unit must be provided and not exceed 50 characters.");
         RuleFor(x => x.UnitCost).GreaterThanOrEqualTo(0).WithMessage("Unit cost must be non-negative.");
         RuleFor(x => x.LocationId).NotEmpty().WithMessage("Location ID is required.");
+
+        // Operator-assigned identity for close-time materialization (optional at capture, required at close).
+        RuleFor(x => x.ProposedPropertyNo)
+            .MaximumLength(64).WithMessage("Proposed Property No. must be 64 characters or fewer.")
+            .When(x => !string.IsNullOrWhiteSpace(x.ProposedPropertyNo));
+        RuleFor(x => x.ProposedUnitCost)
+            .GreaterThan(0).WithMessage("Proposed unit cost must be greater than zero when provided.")
+            .When(x => x.ProposedUnitCost.HasValue);
     }
 }
 
