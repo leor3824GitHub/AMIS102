@@ -51,8 +51,12 @@ ViewModels/pages stay untouched where the semantics match.
 - **Phase 3 — Reports.** Move/replace AssetManagement QuestPDF (RegSPI/RSPI) + RPCPPE/RPCSEMEX/ICF onto
   AssetRegister data (Annex B/C already done).
 
-- **Phase 4 — Deprecate.** Mark `AssetManagementModule` + contracts `[Obsolete]`; keep registered/served
-  as reference. Later: remove from `Program.cs` module pipeline once nothing consumes it.
+- **Phase 4 — Deprecate (marker). ✅ DONE (2026-06-11) / hard-obsolete DEFERRED.**
+  `AssetManagementModule` carries a `DEPRECATED` XML-doc marker (replaced by AssetRegister; kept served as
+  reference; no new features). A hard `[Obsolete]` was intentionally **not** applied yet: the repo requires
+  0 warnings and AssetManagement is still consumed by its own pages, the MAUI physical-count flow, and the
+  RPCPPE/RegSPI/RSPI reports — so `[Obsolete]` would emit CS0618 storms. Apply `[Obsolete]` + remove from
+  `Program.cs` only after Phases 1b and 3 land and the AssetManagement Blazor pages are dropped from build.
 
 ## Verification per phase
 

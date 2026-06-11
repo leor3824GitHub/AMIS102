@@ -81,6 +81,20 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 namespace AMIS.Modules.AssetManagement;
 
+/// <summary>
+/// ⚠️ DEPRECATED — fully replaced by the <c>AssetRegister</c> module.
+/// <para>
+/// This module is kept registered and served as a <b>reference only</b>: its endpoints still respond
+/// and its data remains queryable, but no first-class client consumes it. The primary Blazor navigation
+/// and the MAUI ICS/PAR/asset-lookup flows point at AssetRegister instead. New work must target
+/// AssetRegister; do not add features here.
+/// </para>
+/// <para>
+/// A hard <c>[Obsolete]</c> marker and removal from the host module pipeline are deferred until the
+/// remaining consumers are migrated (MAUI physical-count, RPCPPE/RegSPI/RSPI reports). See
+/// <c>ASSETMANAGEMENT-DEPRECATION-MIGRATION.md</c>.
+/// </para>
+/// </summary>
 public class AssetManagementModule : IModule
 {
     private static readonly IReadOnlyList<AmisPermission> RegisteredPermissions =
