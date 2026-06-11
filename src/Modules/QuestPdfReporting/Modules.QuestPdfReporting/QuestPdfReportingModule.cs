@@ -38,5 +38,6 @@ public sealed class QuestPdfReportingModule : IModule
         moduleGroup.MapExpendableQuestPdfReports();
         moduleGroup.MapVehicleQuestPdfReports();
         moduleGroup.MapAssetManagementQuestPdfReports();
+        moduleGroup.MapAssetRegisterQuestPdfReports();
     }
 }

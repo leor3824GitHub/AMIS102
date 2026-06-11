@@ -138,10 +138,25 @@ Also update `PhysicalCountSession.Close` guard: the "FoundAtStation entry has no
   PropertyNo (`.Trim().ToUpperInvariant()`) + article/unit/appraised cost, posting via `AddFoundAtStationAsync`.
   Requires the user to hold AssetManagement `Locations.View`.
 
+**MAUI — landed 2026-06-11:** `PhysicalCountFoundAtStationPage` PropertyNo changed from a read-only label to an
+editable `Entry` (manual-entry fallback for damaged/missing stickers, per MAUI rules); VM validates PropertyNo is
+non-empty before save (already normalized `.Trim().ToUpperInvariant()`). Note: MAUI counting targets the
+**AssetManagement** physical-count API, not AssetRegister.Counting — the catalog-item / proposed-identity
+materialization is an AssetRegister concept and does not apply to MAUI's current backend (rewiring out of scope).
+
+**Annex B / Annex C print-parity — landed 2026-06-11 (QuestPDF):**
+- `Modules.QuestPdfReporting` now references `Modules.AssetRegister.Contracts`; new slice
+  `Features/v1/AssetRegister/PrintCountAnnexes/` (`PrintCountAnnexesQuery` + handler + `CountAnnexPdfDocument`)
+  consumes `GetReconciliationReportQuery`: Annex B = Overage rows (Found at Station), Annex C = Shortage + Uncounted
+  rows (Non-Existing/Missing). Endpoints `…/asset-register/physical-count/{id}/annex-b|c/pdf`
+  (`QuestPdfReporting_PrintCountAnnexB`/`C`, perm `AssetRegister.Count.View`), mapped via new
+  `Endpoints/AssetRegisterEndpoints.cs`. Blazor reconciliation panel gained **Annex B / Annex C** download buttons
+  (`GetCountAnnexPdfAsync`, data-URL open).
+
 **Still pending:**
-- **MAUI** PhysicalCount found-at-station page: PropertyNo + catalog fields; `.Trim().ToUpperInvariant()`.
+- Full RPCPPE (Appendix 73) print-parity — the main count report itself (Annexes B/C done; RPCPPE form still uses the
+  AssetManagement reports path).
 - Regenerate NSwag client if used for these endpoints.
-- RPCPPE / Annex B / Annex C print-parity (§5#5).
 
 ---
 

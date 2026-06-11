@@ -10,6 +10,7 @@
 @inject ILocationLookupClient LocationClient
 @inject ISnackbar Snackbar
 @inject IUserProfileState UserProfileState
+@inject IJSRuntime JS
 
 <AMISPageHeader Title="Physical Count Sessions (RPCSEMEX / RPCPPE)"
                Description="Manage physical count sessions per COA 2022-004. Produces RPCSEMEX (SE) and RPCPPE (PPE) reports." />
@@ -346,10 +347,20 @@
                         <MudDivider Class="my-3" />
                         <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-2">
                             <MudText Typo="Typo.subtitle2">Reconciliation (Book vs Counted)</MudText>
-                            <AMISButton Size="Size.Small" Variant="Variant.Text" Color="Color.Primary"
-                                        StartIcon="@Icons.Material.Outlined.Refresh" OnClick="LoadReconciliationAsync" Disabled="_busy">
-                                Compute Variances
-                            </AMISButton>
+                            <MudStack Row="true" Spacing="1">
+                                <AMISButton Size="Size.Small" Variant="Variant.Text" Color="Color.Primary"
+                                            StartIcon="@Icons.Material.Outlined.Refresh" OnClick="LoadReconciliationAsync" Disabled="_busy">
+                                    Compute Variances
+                                </AMISButton>
+                                <AMISButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Error"
+                                            StartIcon="@Icons.Material.Outlined.PictureAsPdf" OnClick="@(() => DownloadAnnexAsync("b"))" Disabled="_busy">
+                                    Annex B
+                                </AMISButton>
+                                <AMISButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Error"
+                                            StartIcon="@Icons.Material.Outlined.PictureAsPdf" OnClick="@(() => DownloadAnnexAsync("c"))" Disabled="_busy">
+                                    Annex C
+                                </AMISButton>
+                            </MudStack>
                         </MudStack>
                         @if (_recon is not null)
                         {
@@ -755,6 +766,21 @@
             Snackbar.Add($"'{row.Article}' flagged for recount.", Severity.Info);
         }
         catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    private async Task DownloadAnnexAsync(string annexKind)
+    {
+        if (_selected is null) return;
+        _busy = true;
+        try
+        {
+            var bytes = await Client.GetCountAnnexPdfAsync(_selected.Id, annexKind);
+            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
+            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            Snackbar.Add($"Annex {annexKind.ToUpperInvariant()} ready.", Severity.Success);
+        }
+        catch (Exception ex) { Snackbar.Add($"PDF generation failed: {ex.Message}", Severity.Error); }
         finally { _busy = false; }
     }
 
