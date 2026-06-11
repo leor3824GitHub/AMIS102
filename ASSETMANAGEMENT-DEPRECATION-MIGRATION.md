@@ -40,10 +40,13 @@ ViewModels/pages stay untouched where the semantics match.
   checklist, mark-by-entryId, offline `PendingCountEntry`) must be reworked to record-as-you-go, plus a
   location source and frozen-session handling. Larger; distinct sub-phase.
 
-- **Phase 2 — Blazor pages (~18) → AssetRegister.** Re-point each `Components/Pages/AssetManagement/*`
-  page/client to the AssetRegister equivalent (accountability, assets, issuance, incidents,
-  unserviceable, receiving, returned-property, catalog, counting). Some already have AssetRegister
-  twins under `Components/Pages/AssetRegister/*`.
+- **Phase 2 — Blazor navigation → AssetRegister. ✅ DONE (2026-06-11).**
+  AssetRegister already has full-parity Blazor pages (`Components/Pages/AssetRegister/*`:
+  MyAccountability, Accountability=ICS/PAR, AssetRegistry, Catalog, PPE/SMRR Receiving + PPERR series,
+  PhysicalCount, Incidents, Issuance, ReturnedProperty, Unserviceable, Reports). Retired the parallel
+  "Asset Management" `MudNavGroup` from `Components/Layout/NavMenu.razor` (+ its unused expand-state
+  fields) so users consume only AssetRegister. The AssetManagement pages/routes remain reachable by
+  direct URL for reference. No page rebuild was needed — parity already existed.
 
 - **Phase 3 — Reports.** Move/replace AssetManagement QuestPDF (RegSPI/RSPI) + RPCPPE/RPCSEMEX/ICF onto
   AssetRegister data (Annex B/C already done).
