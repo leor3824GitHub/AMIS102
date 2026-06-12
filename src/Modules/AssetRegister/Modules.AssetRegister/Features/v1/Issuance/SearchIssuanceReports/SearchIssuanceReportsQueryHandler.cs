@@ -21,18 +21,19 @@ public sealed class SearchIssuanceReportsQueryHandler(AssetRegisterDbContext db)
             q = q.Where(r => r.ReportNo.ToLower().Contains(k));
         }
         if (query.ReportType.HasValue) q = q.Where(r => r.ReportType == query.ReportType.Value);
-        if (query.Status.HasValue) q = q.Where(r => r.Status == query.Status.Value);
-        if (query.FromDate.HasValue) q = q.Where(r => r.PeriodFromDate >= query.FromDate.Value);
-        if (query.ToDate.HasValue) q = q.Where(r => r.PeriodToDate <= query.ToDate.Value);
+        if (query.Nature.HasValue) q = q.Where(r => r.Nature == query.Nature.Value);
+        if (query.FromDate.HasValue) q = q.Where(r => r.Date >= query.FromDate.Value);
+        if (query.ToDate.HasValue) q = q.Where(r => r.Date <= query.ToDate.Value);
 
         var pageNumber = query.PageNumber <= 0 ? 1 : query.PageNumber;
         var pageSize = query.PageSize <= 0 ? 10 : query.PageSize;
 
         var total = await q.LongCountAsync(ct).ConfigureAwait(false);
-        var items = await q.OrderByDescending(r => r.PeriodFromDate)
+        var items = await q.OrderByDescending(r => r.Date)
+            .ThenByDescending(r => r.CreatedOnUtc)
             .Skip((pageNumber - 1) * pageSize).Take(pageSize)
             .Select(r => new PropertyIssuanceReportSummaryDto(
-                r.Id, r.ReportNo, r.ReportType, r.Status, r.PeriodFromDate, r.PeriodToDate,
+                r.Id, r.ReportNo, r.ReportType, r.Nature, r.Date,
                 r.Lines.Count, r.Lines.Sum(l => l.SnapshotAmount)))
             .ToListAsync(ct).ConfigureAwait(false);
 
@@ -46,4 +47,3 @@ public sealed class SearchIssuanceReportsQueryHandler(AssetRegisterDbContext db)
         };
     }
 }
-

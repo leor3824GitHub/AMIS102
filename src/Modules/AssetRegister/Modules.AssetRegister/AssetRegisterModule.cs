@@ -38,8 +38,9 @@ public class AssetRegisterModule : IModule
         new("Report My Accountability Incident","ReportIncident", "AssetRegister.MyAccountability"),
         new("Confirm My Accountability Count",  "ConfirmCount",   "AssetRegister.MyAccountability"),
 
-        new("View Issuance Reports", "View", "AssetRegister.Issuance", IsBasic: true),
-        new("Post Issuance Reports", "Post", "AssetRegister.Issuance"),
+        new("View Issuance Reports",   "View",   "AssetRegister.Issuance", IsBasic: true),
+        new("Create Issuance Reports", "Create", "AssetRegister.Issuance"),
+        new("Update Issuance Reports", "Update", "AssetRegister.Issuance"),
 
         new("View Physical Count",   "View",   "AssetRegister.Count", IsBasic: true),
         new("Create Physical Count", "Create", "AssetRegister.Count"),
@@ -166,12 +167,10 @@ public class AssetRegisterModule : IModule
         Features.v1.Accountability.GetMyAccountabilities.GetMyAccountabilitiesEndpoint.Map(accountability);
         Features.v1.Accountability.GetMyAccountabilityDetail.GetMyAccountabilityDetailEndpoint.Map(accountability);
 
-        // Issuance reports (RSPI / PPEIR) — Phase 4
+        // Issuance reports (SMIR / PPEIR) — atomic transfer document
         var issuance = moduleGroup.MapGroup("/issuance");
-        Features.v1.Issuance.CreateIssuanceReportDraft.CreateIssuanceReportDraftEndpoint.Map(issuance);
-        Features.v1.Issuance.AddIssuanceReportLines.AddIssuanceReportLinesEndpoint.Map(issuance);
-        Features.v1.Issuance.RemoveIssuanceReportLine.RemoveIssuanceReportLineEndpoint.Map(issuance);
-        Features.v1.Issuance.PostIssuanceReport.PostIssuanceReportEndpoint.Map(issuance);
+        Features.v1.Issuance.CreateIssuanceReport.CreateIssuanceReportEndpoint.Map(issuance);
+        Features.v1.Issuance.UpdateIssuanceReportDepreciation.UpdateIssuanceReportDepreciationEndpoint.Map(issuance);
         Features.v1.Issuance.GetIssuanceReport.GetIssuanceReportEndpoint.Map(issuance);
         Features.v1.Issuance.SearchIssuanceReports.SearchIssuanceReportsEndpoint.Map(issuance);
 

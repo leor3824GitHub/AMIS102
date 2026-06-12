@@ -7,59 +7,67 @@ namespace AMIS.Modules.AssetRegister.Contracts.v1.Issuance;
 public sealed record PropertyIssuanceReportLineDto(
     Guid Id,
     Guid ReportId,
-    Guid AccountabilityId,
-    Guid AccountabilityLineId,
     Guid AssetRegistryId,
+    int ItemNo,
     AssetSnapshotDto Snapshot,
-    string? SnapshotResponsibilityCenterCode,
-    int SnapshotQuantityIssued,
     decimal SnapshotUnitCost,
-    decimal SnapshotAmount);
+    decimal SnapshotAmount,
+    decimal? AccumulatedDepreciation,
+    decimal? BookValue);
 
 public sealed record PropertyIssuanceReportDto(
     Guid Id,
     string ReportNo,
     IssuanceReportType ReportType,
     string FundCluster,
-    DateOnly PeriodFromDate,
-    DateOnly PeriodToDate,
-    IssuanceReportStatus Status,
-    EmployeeRefDto PreparedBy,
-    EmployeeRefDto? CertifiedBy,
-    EmployeeRefDto? PostedBy,
-    DateOnly? PostedOn,
+    DateOnly Date,
+    IssuanceNature Nature,
+    EmployeeRefDto IssuedBy,
+    EmployeeRefDto ApprovedBy,
+    EmployeeRefDto IssuedTo,
+    string IssuedToOfficeAddress,
+    EmployeeRefDto ReceivedBy,
+    DateOnly? DateReceived,
+    string? DriverName,
+    string? BillOfLadingNo,
+    string? Remarks,
     IReadOnlyCollection<PropertyIssuanceReportLineDto> Lines);
 
 public sealed record PropertyIssuanceReportSummaryDto(
     Guid Id,
     string ReportNo,
     IssuanceReportType ReportType,
-    IssuanceReportStatus Status,
-    DateOnly PeriodFromDate,
-    DateOnly PeriodToDate,
+    IssuanceNature Nature,
+    DateOnly Date,
     int LineCount,
     decimal TotalAmount);
 
 // ── Commands ───────────────────────────────────────────────────────────────
 
-public sealed record CreateIssuanceReportDraftCommand(
+public sealed record CreateIssuanceReportCommand(
     IssuanceReportType ReportType,
+    DateOnly Date,
     string FundCluster,
-    DateOnly PeriodFromDate,
-    DateOnly PeriodToDate,
-    EmployeeRefDto PreparedBy) : ICommand<PropertyIssuanceReportDto>;
+    IssuanceNature Nature,
+    EmployeeRefDto IssuedBy,
+    EmployeeRefDto ApprovedBy,
+    EmployeeRefDto IssuedTo,
+    string IssuedToOfficeAddress,
+    EmployeeRefDto ReceivedBy,
+    DateOnly? DateReceived,
+    string? DriverName,
+    string? BillOfLadingNo,
+    string? Remarks,
+    IReadOnlyList<Guid> AssetRegistryIds) : ICommand<PropertyIssuanceReportDto>;
 
-public sealed record AddIssuanceReportLinesCommand(
+public sealed record LineDepreciationDto(
+    Guid LineId,
+    decimal AccumulatedDepreciation,
+    decimal BookValue);
+
+public sealed record UpdateIssuanceReportDepreciationCommand(
     Guid ReportId,
-    IReadOnlyList<Guid> AccountabilityLineIds) : ICommand<PropertyIssuanceReportDto>;
-
-public sealed record RemoveIssuanceReportLineCommand(Guid ReportId, Guid LineId) : ICommand<PropertyIssuanceReportDto>;
-
-public sealed record PostIssuanceReportCommand(
-    Guid ReportId,
-    EmployeeRefDto CertifiedBy,
-    EmployeeRefDto PostedBy,
-    DateOnly PostedOn) : ICommand<PropertyIssuanceReportDto>;
+    IReadOnlyList<LineDepreciationDto> Lines) : ICommand<PropertyIssuanceReportDto>;
 
 // ── Queries ────────────────────────────────────────────────────────────────
 
@@ -68,9 +76,8 @@ public sealed record GetIssuanceReportQuery(Guid Id) : IQuery<PropertyIssuanceRe
 public sealed record SearchIssuanceReportsQuery(
     string? Keyword = null,
     IssuanceReportType? ReportType = null,
-    IssuanceReportStatus? Status = null,
+    IssuanceNature? Nature = null,
     DateOnly? FromDate = null,
     DateOnly? ToDate = null,
     int PageNumber = 1,
     int PageSize = 10) : IQuery<PagedResponse<PropertyIssuanceReportSummaryDto>>;
-

@@ -1,4 +1,4 @@
-﻿using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Framework.Shared.Persistence;
 using AMIS.Modules.AssetRegister.Contracts.v1;
 using AMIS.Modules.AssetRegister.Contracts.v1.Issuance;
@@ -23,7 +23,7 @@ public static class SearchIssuanceReportsEndpoint
         IMediator mediator,
         string? keyword = null,
         IssuanceReportType? reportType = null,
-        IssuanceReportStatus? status = null,
+        IssuanceNature? nature = null,
         DateOnly? fromDate = null,
         DateOnly? toDate = null,
         int pageNumber = 1,
@@ -31,8 +31,7 @@ public static class SearchIssuanceReportsEndpoint
         CancellationToken ct = default)
     {
         var result = await mediator.Send(new SearchIssuanceReportsQuery(
-            keyword, reportType, status, fromDate, toDate, pageNumber, pageSize), ct);
+            keyword, reportType, nature, fromDate, toDate, pageNumber, pageSize), ct);
         return TypedResults.Ok(result);
     }
 }
-

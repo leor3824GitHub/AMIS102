@@ -1,212 +1,167 @@
 @page "/asset-management/item-catalog"
+@implements IDisposable
 @using AMIS.Playground.Blazor.ApiClient
+@using AMIS.Modules.AssetManagement.Contracts.Permissions
 @inject IPropertyItemCatalogClient Client
 @inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject IUserProfileState UserProfileState
 
-<AMISPageHeader Title="Property Item Catalog" Description="Unified item catalog for all property types (semi-expendable and PPE). Capitalization threshold determines classification at receipt." />
+<AMISPageHeader Title="Property Item Catalog"
+               Description="Unified item catalog for all property types (semi-expendable and PPE). Capitalization threshold determines classification at receipt." />
 
-<MudGrid Spacing="3">
-    <!-- Form Panel -->
-    <MudItem xs="12" md="4">
-        <MudCard Elevation="1">
-            <MudCardContent>
-                <MudText Typo="Typo.h6" Class="mb-3">@(_editing is null ? "New Item" : $"Edit: {_editing.Code}")</MudText>
-                <MudForm @ref="_mudForm" @bind-IsValid="_formValid">
-                    <MudStack Spacing="2">
-                        <MudTextField @bind-Value="_formModel.Code" Label="Item Code" Variant="Variant.Outlined"
-                                      Required="true" RequiredError="Item Code is required."
-                                      MaxLength="50" Disabled="_editing is not null" />
-                        <MudTextField @bind-Value="_formModel.Name" Label="Item Name" Variant="Variant.Outlined"
-                                      Required="true" RequiredError="Item Name is required."
-                                      MaxLength="200" />
-                        <MudTextField @bind-Value="_formModel.Description" Label="Description" Variant="Variant.Outlined"
-                                      Lines="2" MaxLength="500" />
-                        <MudTextField @bind-Value="_formModel.UACSObjectCode" Label="UACS Object Code" Variant="Variant.Outlined"
-                                      MaxLength="50" />
-                        <MudTextField @bind-Value="_formModel.UnitOfMeasure" Label="Unit of Measure" Variant="Variant.Outlined"
-                                      Required="true" RequiredError="Unit of Measure is required."
-                                      MaxLength="50" Placeholder="e.g., pc, set, unit" />
-                        <MudNumericField @bind-Value="_formModel.EstimatedUsefulLifeYears" Label="Estimated Useful Life (years)"
-                                         Variant="Variant.Outlined" Min="1" Max="50" />
-                        @if (_editing is not null)
-                        {
-                            <MudCheckBox @bind-Value="_formModel.IsActive" Label="Active" T="bool" />
-                        }
-                        <MudStack Row="true" Spacing="1" Class="mt-2">
-                            <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
-                                       OnClick="SaveAsync" Disabled="_busy">
-                                @(_editing is null ? "Create" : "Update")
-                            </MudButton>
-                            @if (_editing is not null)
-                            {
-                                <MudButton Variant="Variant.Outlined" Color="Color.Default" OnClick="CancelEdit">Cancel</MudButton>
-                            }
-                        </MudStack>
-                    </MudStack>
-                </MudForm>
-            </MudCardContent>
-        </MudCard>
-    </MudItem>
+<MudCard Elevation="1">
+    <MudCardContent>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
+            <MudTextField @bind-Value="_keyword" Label="Search" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense"
+                          Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Outlined.Search"
+                          OnKeyDown="OnSearchKeyDown" Style="flex:1;" />
+            <AMISButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary"
+                        OnClick="LoadAsync" Disabled="_loading">Search</AMISButton>
+            <MudSelect Value="_activeFilter" Label="Status" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense"
+                       T="bool?" Style="max-width:120px" ValueChanged="@(v => { _activeFilter = v; _ = LoadAsync(); })">
+                <MudSelectItem T="bool?" Value="null">All</MudSelectItem>
+                <MudSelectItem T="bool?" Value="true">Active</MudSelectItem>
+                <MudSelectItem T="bool?" Value="false">Inactive</MudSelectItem>
+            </MudSelect>
+            @if (_canCreate)
+            {
+                <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary"
+                            StartIcon="@Icons.Material.Filled.Add"
+                            OnClick="OpenCreateDialog" Disabled="_loading">New Catalog Item</AMISButton>
+            }
+        </MudStack>
 
-    <!-- List Panel -->
-    <MudItem xs="12" md="8">
-        <MudCard Elevation="1">
-            <MudCardContent>
-                <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3" Spacing="2">
-                    <MudText Typo="Typo.h6" Class="flex-grow-1">Item Catalog</MudText>
-                    <MudTextField @bind-Value="_keyword" Label="Search" Variant="Variant.Outlined" Size="Size.Small"
-                                  Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
-                                  DebounceInterval="350" OnDebounceIntervalElapsed="@(() => LoadAsync())" Style="max-width:240px" />
-                    <MudSelect Value="_activeFilter" Label="Status" Variant="Variant.Outlined" Size="Size.Small"
-                               T="bool?" Style="max-width:120px" ValueChanged="@(v => { _activeFilter = v; _ = LoadAsync(); })">
-                        <MudSelectItem T="bool?" Value="null">All</MudSelectItem>
-                        <MudSelectItem T="bool?" Value="true">Active</MudSelectItem>
-                        <MudSelectItem T="bool?" Value="false">Inactive</MudSelectItem>
-                    </MudSelect>
-                </MudStack>
+        @if (_loading)
+        {
+            <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+        }
+        else if (!string.IsNullOrEmpty(_error))
+        {
+            <MudAlert Severity="Severity.Error" Dense="true">@_error</MudAlert>
+        }
+        else
+        {
+            <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Name</th>
+                        <th>UOM</th>
+                        <th>Useful Life</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in _items)
+                    {
+                        <tr>
+                            <td><strong>@item.Code</strong></td>
+                            <td>@item.Name</td>
+                            <td>@item.UnitOfMeasure</td>
+                            <td>@(item.EstimatedUsefulLifeYears.HasValue ? $"{item.EstimatedUsefulLifeYears} yr(s)" : "-")</td>
+                            <td>
+                                <MudChip T="string" Size="Size.Small"
+                                         Color="@(item.IsActive ? Color.Success : Color.Default)"
+                                         Variant="Variant.Filled">
+                                    @(item.IsActive ? "Active" : "Inactive")
+                                </MudChip>
+                            </td>
+                            <td>
+                                @if (_canUpdate)
+                                {
+                                    <AMISIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small"
+                                                    Color="Color.Primary" OnClick="@(() => OpenEditDialog(item))" />
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </MudSimpleTable>
 
-                @if (_loading)
-                {
-                    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
-                }
-                else if (_items.Count == 0)
-                {
-                    <MudAlert Severity="Severity.Info">No items found. Create one using the form.</MudAlert>
-                }
-                else
-                {
-                    <MudSimpleTable Dense="true" Hover="true" Striped="true">
-                        <thead>
-                            <tr>
-                                <th>Code</th>
-                                <th>Name</th>
-                                <th>UOM</th>
-                                <th>Useful Life</th>
-                                <th>Status</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var item in _items)
-                            {
-                                <tr>
-                                    <td><MudText Typo="Typo.body2"><b>@item.Code</b></MudText></td>
-                                    <td>@item.Name</td>
-                                    <td>@item.UnitOfMeasure</td>
-                                    <td>@(item.EstimatedUsefulLifeYears.HasValue ? $"{item.EstimatedUsefulLifeYears} yr(s)" : "-")</td>
-                                    <td>
-                                        <MudChip T="string" Size="Size.Small"
-                                                 Color="@(item.IsActive ? Color.Success : Color.Default)">
-                                            @(item.IsActive ? "Active" : "Inactive")
-                                        </MudChip>
-                                    </td>
-                                    <td>
-                                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
-                                                       Color="Color.Primary" OnClick="@(() => BeginEdit(item.Id))" />
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </MudSimpleTable>
-
-                    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-2" Spacing="1">
-                        <MudText Typo="Typo.caption">@_totalCount items total</MudText>
-                        <MudSpacer />
-                        <MudPagination Count="@TotalPages" Selected="_page" ShowFirstButton="true" ShowLastButton="true"
-                                       SelectedChanged="@(async p => { _page = p; await LoadAsync(); })" />
-                    </MudStack>
-                }
-            </MudCardContent>
-        </MudCard>
-    </MudItem>
-</MudGrid>
+            <MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-2" Spacing="1">
+                <MudText Typo="Typo.caption">@_totalCount items total</MudText>
+                <MudSpacer />
+                <MudPagination Count="@TotalPages" Selected="_page" ShowFirstButton="true" ShowLastButton="true"
+                               SelectedChanged="@(async p => { _page = p; await LoadAsync(); })" />
+            </MudStack>
+        }
+    </MudCardContent>
+</MudCard>
 
 @code {
-    private MudForm _mudForm = default!;
-    private bool _formValid;
     private List<PropertyItemCatalogSummary> _items = [];
-    private PropertyItemCatalogDetails? _editing;
-    private ItemForm _formModel = new();
     private string? _keyword;
     private bool? _activeFilter = true;
     private bool _loading;
-    private bool _busy;
+    private string? _error;
     private int _page = 1;
     private int _totalCount;
     private const int PageSize = 15;
     private int TotalPages => Math.Max(1, (int)Math.Ceiling(_totalCount / (double)PageSize));
 
-    protected override async Task OnInitializedAsync() => await LoadAsync();
+    private bool _canCreate => UserProfileState.Permissions.Contains(AssetManagementPermissions.SemiExpendableItems.Create);
+    private bool _canUpdate => UserProfileState.Permissions.Contains(AssetManagementPermissions.SemiExpendableItems.Update);
+
+    protected override async Task OnInitializedAsync()
+    {
+        UserProfileState.OnProfileChanged += OnProfileChanged;
+        await LoadAsync();
+    }
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
 
     private async Task LoadAsync()
     {
         _loading = true;
+        _error = null;
         try
         {
             var response = await Client.SearchForUiAsync(_keyword, _activeFilter, _page, PageSize);
             _items = [.. response.Items];
             _totalCount = response.TotalCount;
         }
-        catch (Exception ex) { Snackbar.Add($"Load failed: {ex.Message}", Severity.Error); }
-        finally { _loading = false; }
-    }
-
-    private async Task BeginEdit(Guid id)
-    {
-        var item = await Client.GetForUiAsync(id);
-        if (item is null) { Snackbar.Add("Item not found.", Severity.Error); return; }
-        _editing = item;
-        _formModel = new ItemForm
+        catch (Exception ex)
         {
-            Code = item.Code,
-            Name = item.Name,
-            Description = item.Description,
-            UACSObjectCode = item.UACSObjectCode,
-            UnitOfMeasure = item.UnitOfMeasure,
-            EstimatedUsefulLifeYears = item.EstimatedUsefulLifeYears,
-            IsActive = item.IsActive
-        };
-    }
-
-    private async Task SaveAsync()
-    {
-        await _mudForm.Validate();
-        if (!_formValid) return;
-        _busy = true;
-        try
-        {
-            if (_editing is null)
-            {
-                await Client.CreateForUiAsync(new CreatePropertyItemCatalogRequest(
-                    _formModel.Code, _formModel.Name, _formModel.Description,
-                    _formModel.UACSObjectCode, _formModel.UnitOfMeasure, _formModel.EstimatedUsefulLifeYears));
-                Snackbar.Add("Item created.", Severity.Success);
-            }
-            else
-            {
-                await Client.UpdateForUiAsync(_editing.Id, new UpdatePropertyItemCatalogRequest(
-                    _formModel.Code, _formModel.Name, _formModel.Description,
-                    _formModel.UACSObjectCode, _formModel.UnitOfMeasure, _formModel.EstimatedUsefulLifeYears, _formModel.IsActive));
-                Snackbar.Add("Item updated.", Severity.Success);
-            }
-            CancelEdit();
-            await LoadAsync();
+            _error = ex.Message;
         }
-        catch (Exception ex) { Snackbar.Add($"Save failed: {ex.Message}", Severity.Error); }
-        finally { _busy = false; }
+        finally
+        {
+            _loading = false;
+        }
     }
 
-    private void CancelEdit() { _editing = null; _formModel = new(); _mudForm?.ResetAsync(); }
+    private Task OpenCreateDialog() => OpenFormDialog(null);
 
-    private sealed class ItemForm
+    private Task OpenEditDialog(PropertyItemCatalogSummary item) => OpenFormDialog(item);
+
+    private async Task OpenFormDialog(PropertyItemCatalogSummary? editing)
     {
-        public string Code { get; set; } = string.Empty;
-        public string Name { get; set; } = string.Empty;
-        public string? Description { get; set; }
-        public string? UACSObjectCode { get; set; }
-        public string UnitOfMeasure { get; set; } = string.Empty;
-        public int? EstimatedUsefulLifeYears { get; set; }
-        public bool IsActive { get; set; } = true;
+        var parameters = new DialogParameters<PropertyItemCatalogFormDialog>
+        {
+            { x => x.EditingId, editing?.Id },
+            { x => x.Code, editing?.Code },
+            { x => x.Name, editing?.Name },
+            { x => x.Description, editing?.Description },
+            { x => x.UACSObjectCode, editing?.UACSObjectCode },
+            { x => x.UnitOfMeasure, editing?.UnitOfMeasure },
+            { x => x.EstimatedUsefulLifeYears, editing?.EstimatedUsefulLifeYears },
+            { x => x.IsActive, editing?.IsActive ?? true }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true };
+        var title = editing is null ? "New Catalog Item" : $"Edit: {editing.Code}";
+
+        var dialog = await DialogService.ShowAsync<PropertyItemCatalogFormDialog>(title, parameters, options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
+            await LoadAsync();
+    }
+
+    private async Task OnSearchKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") { _page = 1; await LoadAsync(); }
     }
 }
-

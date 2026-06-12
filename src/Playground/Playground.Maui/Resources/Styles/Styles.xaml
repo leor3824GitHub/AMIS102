@@ -149,4 +149,57 @@
         <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray300}}" />
     </Style>
 
+    <!-- ── Found-at-Station capture (tablet master-detail) ── -->
+
+    <!-- Prominent live-search box -->
+    <Style x:Key="SearchEntryStyle" TargetType="Entry">
+        <Setter Property="FontSize" Value="17" />
+        <Setter Property="FontFamily" Value="InterRegular" />
+        <Setter Property="MinimumHeightRequest" Value="52" />
+        <Setter Property="ReturnType" Value="Search" />
+        <Setter Property="ClearButtonVisibility" Value="WhileEditing" />
+    </Style>
+
+    <!-- Tappable catalog result row — generous touch target for tablet -->
+    <Style x:Key="ResultCardStyle" TargetType="Border">
+        <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" />
+        <Setter Property="StrokeThickness" Value="1" />
+        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray950}}" />
+        <Setter Property="Padding" Value="14,12" />
+        <Setter Property="MinimumHeightRequest" Value="64" />
+        <Setter Property="StrokeShape">
+            <Setter.Value>
+                <RoundRectangle CornerRadius="10" />
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Code badge chip on a result row -->
+    <Style x:Key="CodeBadgeStyle" TargetType="Border">
+        <Setter Property="Stroke" Value="Transparent" />
+        <Setter Property="BackgroundColor" Value="{StaticResource PrimaryLight}" />
+        <Setter Property="Padding" Value="8,3" />
+        <Setter Property="HorizontalOptions" Value="Start" />
+        <Setter Property="StrokeShape">
+            <Setter.Value>
+                <RoundRectangle CornerRadius="6" />
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Pinned primary / secondary actions -->
+    <Style x:Key="PrimaryActionButtonStyle" TargetType="Button">
+        <Setter Property="MinimumHeightRequest" Value="52" />
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="FontFamily" Value="InterSemiBold" />
+    </Style>
+
+    <Style x:Key="SecondaryActionButtonStyle" TargetType="Button">
+        <Setter Property="MinimumHeightRequest" Value="52" />
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="FontFamily" Value="InterSemiBold" />
+        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}" />
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource White}}" />
+    </Style>
+
 </ResourceDictionary>

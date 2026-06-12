@@ -1,27 +1,26 @@
-﻿using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.AssetRegister.Contracts.v1.Issuance;
+using AMIS.Modules.AssetRegister.Contracts.Permissions;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using AMIS.Modules.AssetRegister.Contracts.Permissions;
 
-namespace AMIS.Modules.AssetRegister.Features.v1.Issuance.CreateIssuanceReportDraft;
+namespace AMIS.Modules.AssetRegister.Features.v1.Issuance.CreateIssuanceReport;
 
-public static class CreateIssuanceReportDraftEndpoint
+public static class CreateIssuanceReportEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapPost("/", Handle)
-            .WithModuleName<CreateIssuanceReportDraftCommand>()
-            .WithSummary("Create a draft issuance report (RSPI/PPEIR)")
+            .WithModuleName<CreateIssuanceReportCommand>()
+            .WithSummary("Create a property issuance report (SMIR or PPEIR) — atomic transfer document")
             .Produces<PropertyIssuanceReportDto>(StatusCodes.Status201Created)
-            .RequirePermission(AssetRegisterPermissions.Issuance.Post);
+            .RequirePermission(AssetRegisterPermissions.Issuance.Create);
 
     private static async Task<IResult> Handle(
-        CreateIssuanceReportDraftCommand cmd, IMediator mediator, CancellationToken ct)
+        CreateIssuanceReportCommand cmd, IMediator mediator, CancellationToken ct)
     {
         var result = await mediator.Send(cmd, ct);
         return TypedResults.Created($"/api/v1/asset-register/issuance/{result.Id}", result);
     }
 }
-

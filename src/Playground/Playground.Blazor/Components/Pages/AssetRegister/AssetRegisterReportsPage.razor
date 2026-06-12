@@ -6,7 +6,6 @@
 @using AssetType = AMIS.Modules.AssetRegister.Contracts.v1.AssetType
 @using DisposalMethod = AMIS.Modules.AssetRegister.Contracts.v1.DisposalMethod
 @using IssuanceReportType = AMIS.Modules.AssetRegister.Contracts.v1.IssuanceReportType
-@using IssuanceReportStatus = AMIS.Modules.AssetRegister.Contracts.v1.IssuanceReportStatus
 @using PhysicalCountStatus = AMIS.Modules.AssetRegister.Contracts.v1.PhysicalCountStatus
 @using PhysicalCountCondition = AMIS.Modules.AssetRegister.Contracts.v1.PhysicalCountCondition
 @using PropertyIncidentType = AMIS.Modules.AssetRegister.Contracts.v1.PropertyIncidentType
@@ -304,31 +303,29 @@
                 {
                     <MudGrid Class="mb-3">
                         <MudItem xs="12" md="4"><MudText Typo="Typo.body2"><strong>Report No:</strong> @_issuanceReport.ReportNo</MudText></MudItem>
-                        <MudItem xs="12" md="4"><MudText Typo="Typo.body2"><strong>Status:</strong> @FormatIssuanceStatus(_issuanceReport.Status)</MudText></MudItem>
                         <MudItem xs="12" md="4"><MudText Typo="Typo.body2"><strong>Type:</strong> @FormatIssuanceType(_issuanceReport.ReportType)</MudText></MudItem>
-                        <MudItem xs="12" md="4"><MudText Typo="Typo.body2"><strong>Period:</strong> @_issuanceReport.PeriodFromDate.ToString("yyyy-MM-dd") to @_issuanceReport.PeriodToDate.ToString("yyyy-MM-dd")</MudText></MudItem>
-                        <MudItem xs="12" md="4"><MudText Typo="Typo.body2"><strong>Prepared By:</strong> @_issuanceReport.PreparedByName</MudText></MudItem>
+                        <MudItem xs="12" md="4"><MudText Typo="Typo.body2"><strong>Date:</strong> @_issuanceReport.Date.ToString("yyyy-MM-dd")</MudText></MudItem>
+                        <MudItem xs="12" md="4"><MudText Typo="Typo.body2"><strong>Issued By:</strong> @_issuanceReport.IssuedByName</MudText></MudItem>
+                        <MudItem xs="12" md="4"><MudText Typo="Typo.body2"><strong>Issued To:</strong> @_issuanceReport.IssuedToName</MudText></MudItem>
                         <MudItem xs="12" md="4"><MudText Typo="Typo.body2"><strong>Total Amount:</strong> @_issuanceReport.TotalAmount.ToString("N2")</MudText></MudItem>
                     </MudGrid>
 
                     <MudTable Items="_issuanceReport.Lines" Dense="true" Hover="true" Striped="true">
                         <HeaderContent>
+                            <MudTh>#</MudTh>
                             <MudTh>Property No</MudTh>
                             <MudTh>Description</MudTh>
                             <MudTh>Unit</MudTh>
-                            <MudTh>Qty</MudTh>
                             <MudTh>Unit Cost</MudTh>
                             <MudTh>Amount</MudTh>
-                            <MudTh>RC Code</MudTh>
                         </HeaderContent>
                         <RowTemplate>
+                            <MudTd>@context.ItemNo</MudTd>
                             <MudTd>@context.PropertyNo</MudTd>
                             <MudTd>@context.Description</MudTd>
                             <MudTd>@context.Unit</MudTd>
-                            <MudTd>@context.QuantityIssued</MudTd>
                             <MudTd>@context.UnitCost.ToString("N2")</MudTd>
                             <MudTd>@context.Amount.ToString("N2")</MudTd>
-                            <MudTd>@context.ResponsibilityCenterCode</MudTd>
                         </RowTemplate>
                     </MudTable>
                 }
@@ -691,13 +688,6 @@
         PhysicalCountCondition.Unserviceable => "Unserviceable",
         PhysicalCountCondition.Missing => "Missing",
         PhysicalCountCondition.FoundAtStation => "Found at Station",
-        _ => v.ToString()
-    };
-
-    private static string FormatIssuanceStatus(IssuanceReportStatus v) => v switch
-    {
-        IssuanceReportStatus.Draft => "Draft",
-        IssuanceReportStatus.Posted => "Posted",
         _ => v.ToString()
     };
 

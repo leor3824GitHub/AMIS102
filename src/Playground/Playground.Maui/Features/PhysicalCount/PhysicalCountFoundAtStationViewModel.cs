@@ -24,11 +24,14 @@ public sealed partial class PhysicalCountFoundAtStationViewModel : ObservableObj
     [ObservableProperty] private string _unitCostText = "";
     [ObservableProperty] private string _remarks = "";
 
-    // Catalog search
+    // Catalog search — live/incremental (debounced); matches catalog Code or Description server-side.
     [ObservableProperty] private string _catalogSearchText = "";
     [ObservableProperty] private ObservableCollection<CatalogItemDto> _catalogResults = [];
     [ObservableProperty] private CatalogItemDto? _selectedCatalogItem;
     [ObservableProperty] private bool _isCatalogSearching;
+    [ObservableProperty] private bool _showNoResults;
+
+    private CancellationTokenSource? _searchCts;
 
     // Pre-fill hooks: navigation params arrive after construction; mirror them into form fields.
     public string Desc
@@ -58,23 +61,44 @@ public sealed partial class PhysicalCountFoundAtStationViewModel : ObservableObj
         _apiClient = apiClient;
     }
 
+    // Live search: each keystroke restarts a short debounce, then queries. The newest keystroke
+    // cancels the previous in-flight request so results never arrive out of order.
+    partial void OnCatalogSearchTextChanged(string value) => _ = SearchCatalogAsync(value);
+
+    // Bound to the keyboard Return key for users who prefer to submit explicitly.
     [RelayCommand]
-    private async Task SearchCatalogAsync(CancellationToken ct = default)
+    private Task SearchCatalogReturn() => SearchCatalogAsync(CatalogSearchText);
+
+    private async Task SearchCatalogAsync(string keyword)
     {
-        if (string.IsNullOrWhiteSpace(CatalogSearchText)) return;
-        IsCatalogSearching = true;
+        _searchCts?.Cancel();
+        var cts = new CancellationTokenSource();
+        _searchCts = cts;
+
+        var term = keyword?.Trim() ?? "";
+        if (term.Length == 0)
+        {
+            CatalogResults = [];
+            ShowNoResults = false;
+            IsCatalogSearching = false;
+            return;
+        }
+
         try
         {
-            var results = await _apiClient.SearchCatalogItemsAsync(CatalogSearchText.Trim(), ct);
+            await Task.Delay(350, cts.Token);
+            IsCatalogSearching = true;
+            ShowNoResults = false;
+            var results = await _apiClient.SearchCatalogItemsAsync(term, cts.Token);
+            if (cts.Token.IsCancellationRequested) return;
+
             CatalogResults = new ObservableCollection<CatalogItemDto>(results);
-            if (results.Count == 0)
-                ErrorMessage = "No catalog items matched. Try a different keyword.";
-            else
-                ErrorMessage = null;
+            ShowNoResults = results.Count == 0;
+            ErrorMessage = null;
         }
         catch (OperationCanceledException) { }
         catch { ErrorMessage = "Could not search catalog. Check your connection."; }
-        finally { IsCatalogSearching = false; }
+        finally { if (_searchCts == cts) IsCatalogSearching = false; }
     }
 
     [RelayCommand]
@@ -82,7 +106,15 @@ public sealed partial class PhysicalCountFoundAtStationViewModel : ObservableObj
     {
         SelectedCatalogItem = item;
         CatalogResults = [];
+        ShowNoResults = false;
         ErrorMessage = null;
+
+        if (item is not null)
+        {
+            // Reduce typing: adopt the catalog description when the operator hasn't entered one.
+            if (string.IsNullOrWhiteSpace(Description))
+                Description = item.Description;
+        }
     }
 
     [RelayCommand]

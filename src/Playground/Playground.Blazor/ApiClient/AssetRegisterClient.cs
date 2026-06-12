@@ -169,8 +169,15 @@ internal sealed class AssetRegistryClient(HttpClient http) : IAssetRegistryClien
     public Task<AssetRegistryDto?> GetAsync(Guid id, CancellationToken ct = default) =>
         http.GetFromJsonAsync<AssetRegistryDto>($"{Base}/{id}", ArJsonOptions.Default, ct);
 
-    public Task<AssetRegistryDto?> GetByPropertyNoAsync(string propertyNo, CancellationToken ct = default) =>
-        http.GetFromJsonAsync<AssetRegistryDto>($"{Base}/by-property-no/{Uri.EscapeDataString(propertyNo)}", ArJsonOptions.Default, ct);
+    public async Task<AssetRegistryDto?> GetByPropertyNoAsync(string propertyNo, CancellationToken ct = default)
+    {
+        // The endpoint returns 404 when the property number isn't in the registry — honor the
+        // nullable contract (a found-at-station candidate) instead of throwing.
+        var resp = await http.GetAsync($"{Base}/by-property-no/{Uri.EscapeDataString(propertyNo)}", ct);
+        if (resp.StatusCode == System.Net.HttpStatusCode.NotFound) return null;
+        resp.EnsureSuccessStatusCode();
+        return await resp.Content.ReadFromJsonAsync<AssetRegistryDto>(ArJsonOptions.Default, ct);
+    }
 
     public async Task<AssetRegistryDto> RegisterAsync(RegisterAssetRequest request, CancellationToken ct = default)
     {
@@ -619,7 +626,19 @@ internal sealed class ArPhysicalCountClient(HttpClient http) : IArPhysicalCountC
 
     public async Task<ArPhysicalCountSessionDto> RecordEntryAsync(Guid sessionId, ArRecordPhysicalCountEntryRequest request, CancellationToken ct = default)
     {
-        var resp = await http.PostAsJsonAsync($"{Base}/{sessionId}/entries", request, ArJsonOptions.Default, ct);
+        // The command carries SessionId and the endpoint rejects a route/body mismatch, so merge it in.
+        var body = new
+        {
+            SessionId = sessionId,
+            request.AssetRegistryId,
+            request.Article,
+            request.Unit,
+            request.UnitCost,
+            request.Condition,
+            request.LocationId,
+            request.Remarks
+        };
+        var resp = await http.PostAsJsonAsync($"{Base}/{sessionId}/entries", body, ArJsonOptions.Default, ct);
         return await ReadSessionAsync(resp, ct);
     }
 
@@ -794,60 +813,61 @@ internal sealed record ArIssuanceReportSummaryDto(
     Guid Id,
     string ReportNo,
     IssuanceReportType ReportType,
-    IssuanceReportStatus Status,
-    DateOnly PeriodFromDate,
-    DateOnly PeriodToDate,
+    IssuanceNature Nature,
+    DateOnly Date,
     int LineCount,
     decimal TotalAmount);
 
 internal sealed record ArIssuanceReportLineDto(
     Guid Id,
     Guid ReportId,
-    Guid AccountabilityId,
-    Guid AccountabilityLineId,
     Guid AssetRegistryId,
+    int ItemNo,
     ArAssetSnapshotDto Snapshot,
-    string? SnapshotResponsibilityCenterCode,
-    int SnapshotQuantityIssued,
     decimal SnapshotUnitCost,
-    decimal SnapshotAmount);
+    decimal SnapshotAmount,
+    decimal? AccumulatedDepreciation,
+    decimal? BookValue);
 
 internal sealed record ArIssuanceReportDto(
     Guid Id,
     string ReportNo,
     IssuanceReportType ReportType,
     string FundCluster,
-    DateOnly PeriodFromDate,
-    DateOnly PeriodToDate,
-    IssuanceReportStatus Status,
-    ArEmployeeRefDto PreparedBy,
-    ArEmployeeRefDto? CertifiedBy,
-    ArEmployeeRefDto? PostedBy,
-    DateOnly? PostedOn,
+    DateOnly Date,
+    IssuanceNature Nature,
+    ArEmployeeRefDto IssuedBy,
+    ArEmployeeRefDto ApprovedBy,
+    ArEmployeeRefDto IssuedTo,
+    string IssuedToOfficeAddress,
+    ArEmployeeRefDto ReceivedBy,
+    DateOnly? DateReceived,
+    string? DriverName,
+    string? BillOfLadingNo,
+    string? Remarks,
     IReadOnlyCollection<ArIssuanceReportLineDto> Lines);
 
-internal sealed record CreateIssuanceReportDraftRequest(
+internal sealed record CreateIssuanceReportRequest(
     IssuanceReportType ReportType,
+    DateOnly Date,
     string FundCluster,
-    DateOnly PeriodFromDate,
-    DateOnly PeriodToDate,
-    ArEmployeeRefDto PreparedBy);
-
-internal sealed record AddIssuanceReportLinesRequest(IReadOnlyList<Guid> AccountabilityLineIds);
-
-internal sealed record PostIssuanceReportRequest(
-    ArEmployeeRefDto CertifiedBy,
-    ArEmployeeRefDto PostedBy,
-    DateOnly PostedOn);
+    IssuanceNature Nature,
+    ArEmployeeRefDto IssuedBy,
+    ArEmployeeRefDto ApprovedBy,
+    ArEmployeeRefDto IssuedTo,
+    string IssuedToOfficeAddress,
+    ArEmployeeRefDto ReceivedBy,
+    DateOnly? DateReceived,
+    string? DriverName,
+    string? BillOfLadingNo,
+    string? Remarks,
+    IReadOnlyList<Guid> AssetRegistryIds);
 
 internal interface IArIssuanceReportClient
 {
-    Task<ArPagedResponse<ArIssuanceReportSummaryDto>> SearchAsync(string? keyword = null, IssuanceReportType? reportType = null, IssuanceReportStatus? status = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
+    Task<ArPagedResponse<ArIssuanceReportSummaryDto>> SearchAsync(string? keyword = null, IssuanceReportType? reportType = null, IssuanceNature? nature = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
     Task<ArIssuanceReportDto?> GetAsync(Guid id, CancellationToken ct = default);
-    Task<ArIssuanceReportDto> CreateDraftAsync(CreateIssuanceReportDraftRequest request, CancellationToken ct = default);
-    Task<ArIssuanceReportDto> AddLinesAsync(Guid id, IReadOnlyList<Guid> accountabilityLineIds, CancellationToken ct = default);
-    Task<ArIssuanceReportDto> PostAsync(Guid id, PostIssuanceReportRequest request, CancellationToken ct = default);
-    Task<ArIssuanceReportDto> RemoveLineAsync(Guid id, Guid lineId, CancellationToken ct = default);
+    Task<ArIssuanceReportDto> CreateAsync(CreateIssuanceReportRequest request, CancellationToken ct = default);
     Task<byte[]> GetFastReportPdfAsync(Guid id, string? pageWidth = null, string? orientation = null, int? minRows = null, bool? dataOnly = null, double? offsetX = null, double? offsetY = null, CancellationToken ct = default);
     Task<byte[]> GetSmirFastReportPdfAsync(Guid id, string? pageWidth = null, string? orientation = null, int? minRows = null, CancellationToken ct = default);
 }
@@ -856,13 +876,13 @@ internal sealed class ArIssuanceReportClient(HttpClient http) : IArIssuanceRepor
 {
     private const string Base = "api/v1/asset-register/issuance";
 
-    public async Task<ArPagedResponse<ArIssuanceReportSummaryDto>> SearchAsync(string? keyword = null, IssuanceReportType? reportType = null, IssuanceReportStatus? status = null, int page = 1, int pageSize = 20, CancellationToken ct = default)
+    public async Task<ArPagedResponse<ArIssuanceReportSummaryDto>> SearchAsync(string? keyword = null, IssuanceReportType? reportType = null, IssuanceNature? nature = null, int page = 1, int pageSize = 20, CancellationToken ct = default)
     {
         var url = ArUrlBuilder.Build(Base, new()
         {
             ["keyword"] = keyword,
             ["reportType"] = reportType?.ToString(),
-            ["status"] = status?.ToString(),
+            ["nature"] = nature?.ToString(),
             ["pageNumber"] = page.ToString(CultureInfo.InvariantCulture),
             ["pageSize"] = pageSize.ToString(CultureInfo.InvariantCulture),
         });
@@ -873,30 +893,9 @@ internal sealed class ArIssuanceReportClient(HttpClient http) : IArIssuanceRepor
     public Task<ArIssuanceReportDto?> GetAsync(Guid id, CancellationToken ct = default) =>
         http.GetFromJsonAsync<ArIssuanceReportDto>($"{Base}/{id}", ArJsonOptions.Default, ct);
 
-    public async Task<ArIssuanceReportDto> CreateDraftAsync(CreateIssuanceReportDraftRequest request, CancellationToken ct = default)
+    public async Task<ArIssuanceReportDto> CreateAsync(CreateIssuanceReportRequest request, CancellationToken ct = default)
     {
         var resp = await http.PostAsJsonAsync(Base, request, ArJsonOptions.Default, ct);
-        resp.EnsureSuccessStatusCode();
-        return (await resp.Content.ReadFromJsonAsync<ArIssuanceReportDto>(ArJsonOptions.Default, cancellationToken: ct))!;
-    }
-
-    public async Task<ArIssuanceReportDto> AddLinesAsync(Guid id, IReadOnlyList<Guid> accountabilityLineIds, CancellationToken ct = default)
-    {
-        var resp = await http.PostAsJsonAsync($"{Base}/{id}/lines", new AddIssuanceReportLinesRequest(accountabilityLineIds), ArJsonOptions.Default, ct);
-        resp.EnsureSuccessStatusCode();
-        return (await resp.Content.ReadFromJsonAsync<ArIssuanceReportDto>(ArJsonOptions.Default, cancellationToken: ct))!;
-    }
-
-    public async Task<ArIssuanceReportDto> PostAsync(Guid id, PostIssuanceReportRequest request, CancellationToken ct = default)
-    {
-        var resp = await http.PostAsJsonAsync($"{Base}/{id}/post", request, ArJsonOptions.Default, ct);
-        resp.EnsureSuccessStatusCode();
-        return (await resp.Content.ReadFromJsonAsync<ArIssuanceReportDto>(ArJsonOptions.Default, cancellationToken: ct))!;
-    }
-
-    public async Task<ArIssuanceReportDto> RemoveLineAsync(Guid id, Guid lineId, CancellationToken ct = default)
-    {
-        var resp = await http.DeleteAsync($"{Base}/{id}/lines/{lineId}", ct);
         resp.EnsureSuccessStatusCode();
         return (await resp.Content.ReadFromJsonAsync<ArIssuanceReportDto>(ArJsonOptions.Default, cancellationToken: ct))!;
     }

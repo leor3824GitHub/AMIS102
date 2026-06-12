@@ -5,6 +5,12 @@ using AMIS.Modules.AssetRegister.Domain.Events;
 
 namespace AMIS.Modules.AssetRegister.Domain.Issuance;
 
+/// <summary>
+/// Property issuance / transfer document — unified across semi-expendable (SMIR) and
+/// PPE (PPEIR). Created atomically: the act of creating the report transfers the listed
+/// assets out of this office. Only <see cref="Contracts.v1.LifecycleState.Available"/>
+/// assets may be issued; assets with an active ICS/PAR must be returned first.
+/// </summary>
 public sealed class PropertyIssuanceReport : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 {
     public string TenantId { get; private set; } = default!;
@@ -12,14 +18,26 @@ public sealed class PropertyIssuanceReport : AggregateRoot<Guid>, IHasTenant, IA
     public string ReportNo { get; private set; } = default!;
     public IssuanceReportType ReportType { get; private set; }
     public string FundCluster { get; private set; } = default!;
-    public DateOnly PeriodFromDate { get; private set; }
-    public DateOnly PeriodToDate { get; private set; }
-    public IssuanceReportStatus Status { get; private set; }
+    public DateOnly Date { get; private set; }
+    public IssuanceNature Nature { get; private set; }
 
-    public EmployeeRef PreparedBy { get; private set; } = default!;
-    public EmployeeRef? CertifiedBy { get; private set; }
-    public EmployeeRef? PostedBy { get; private set; }
-    public DateOnly? PostedOn { get; private set; }
+    /// <summary>Releasing officer of this office (internal).</summary>
+    public EmployeeRef IssuedBy { get; private set; } = default!;
+
+    /// <summary>Approving authority (internal).</summary>
+    public EmployeeRef ApprovedBy { get; private set; } = default!;
+
+    /// <summary>Accountable officer of the receiving party (may be external).</summary>
+    public EmployeeRef IssuedTo { get; private set; } = default!;
+    public string IssuedToOfficeAddress { get; private set; } = default!;
+
+    /// <summary>Person who physically received and signed (may be external).</summary>
+    public EmployeeRef ReceivedBy { get; private set; } = default!;
+    public DateOnly? DateReceived { get; private set; }
+
+    public string? DriverName { get; private set; }
+    public string? BillOfLadingNo { get; private set; }
+    public string? Remarks { get; private set; }
 
     private readonly List<PropertyIssuanceReportLine> _lines = [];
     public IReadOnlyCollection<PropertyIssuanceReportLine> Lines => _lines.AsReadOnly();
@@ -31,18 +49,29 @@ public sealed class PropertyIssuanceReport : AggregateRoot<Guid>, IHasTenant, IA
 
     private PropertyIssuanceReport() { }
 
-    public static PropertyIssuanceReport CreateDraft(
+    public static PropertyIssuanceReport Create(
         string tenantId,
         string reportNo,
         IssuanceReportType reportType,
         string fundCluster,
-        DateOnly periodFromDate,
-        DateOnly periodToDate,
-        EmployeeRef preparedBy)
+        DateOnly date,
+        IssuanceNature nature,
+        EmployeeRef issuedBy,
+        EmployeeRef approvedBy,
+        EmployeeRef issuedTo,
+        string issuedToOfficeAddress,
+        EmployeeRef receivedBy,
+        DateOnly? dateReceived,
+        string? driverName,
+        string? billOfLadingNo,
+        string? remarks)
     {
-        ArgumentNullException.ThrowIfNull(preparedBy);
-        if (periodFromDate > periodToDate)
-            throw new InvalidOperationException("PeriodFromDate must not be after PeriodToDate.");
+        ArgumentNullException.ThrowIfNull(issuedBy);
+        ArgumentNullException.ThrowIfNull(approvedBy);
+        ArgumentNullException.ThrowIfNull(issuedTo);
+        ArgumentNullException.ThrowIfNull(receivedBy);
+        if (string.IsNullOrWhiteSpace(issuedToOfficeAddress))
+            throw new InvalidOperationException("IssuedToOfficeAddress is required.");
 
         return new PropertyIssuanceReport
         {
@@ -51,65 +80,57 @@ public sealed class PropertyIssuanceReport : AggregateRoot<Guid>, IHasTenant, IA
             ReportNo = reportNo,
             ReportType = reportType,
             FundCluster = fundCluster,
-            PeriodFromDate = periodFromDate,
-            PeriodToDate = periodToDate,
-            Status = IssuanceReportStatus.Draft,
-            PreparedBy = preparedBy,
+            Date = date,
+            Nature = nature,
+            IssuedBy = issuedBy,
+            ApprovedBy = approvedBy,
+            IssuedTo = issuedTo,
+            IssuedToOfficeAddress = issuedToOfficeAddress,
+            ReceivedBy = receivedBy,
+            DateReceived = dateReceived,
+            DriverName = driverName,
+            BillOfLadingNo = billOfLadingNo,
+            Remarks = remarks,
             CreatedOnUtc = DateTimeOffset.UtcNow
         };
     }
 
-    public void AddLine(
-        Guid accountabilityId,
-        Guid accountabilityLineId,
-        Guid assetRegistryId,
-        AssetSnapshot snapshot,
-        string? responsibilityCenterCode,
-        decimal unitCost)
+    /// <summary>
+    /// Adds a snapshotted line for an asset being transferred. Enforces that the asset's
+    /// type matches the report type (SMIR↔SE, PPEIR↔PPE).
+    /// </summary>
+    public PropertyIssuanceReportLine AddLine(Guid assetRegistryId, AssetSnapshot snapshot, decimal unitCost)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
-        EnsureDraft();
-        _lines.Add(PropertyIssuanceReportLine.Create(
-            TenantId, Id, accountabilityId, accountabilityLineId, assetRegistryId,
-            snapshot, responsibilityCenterCode, unitCost));
-        LastModifiedOnUtc = DateTimeOffset.UtcNow;
-    }
-
-    public void RemoveLine(Guid lineId)
-    {
-        EnsureDraft();
-        var line = _lines.FirstOrDefault(l => l.Id == lineId)
-            ?? throw new InvalidOperationException($"Line '{lineId}' not found on this report.");
-        _lines.Remove(line);
-        LastModifiedOnUtc = DateTimeOffset.UtcNow;
-    }
-
-    public void Post(EmployeeRef certifiedBy, EmployeeRef postedBy, DateOnly postedOn)
-    {
-        ArgumentNullException.ThrowIfNull(certifiedBy);
-        ArgumentNullException.ThrowIfNull(postedBy);
-        EnsureDraft();
-
-        if (_lines.Count == 0)
-            throw new InvalidOperationException("Issuance report must include at least one line before posting.");
 
         var expectedAssetType = ReportType == IssuanceReportType.SMIR ? AssetType.SE : AssetType.PPE;
-        if (_lines.Any(l => l.Snapshot.AssetType != expectedAssetType))
+        if (snapshot.AssetType != expectedAssetType)
             throw new InvalidOperationException(
-                $"Report type {ReportType} requires all lines to be {expectedAssetType}.");
+                $"Report type {ReportType} requires all lines to be {expectedAssetType}. " +
+                $"Asset {snapshot.PropertyNo} is {snapshot.AssetType}.");
 
-        CertifiedBy = certifiedBy;
-        PostedBy = postedBy;
-        PostedOn = postedOn;
-        Status = IssuanceReportStatus.Posted;
+        var line = PropertyIssuanceReportLine.Create(
+            TenantId, Id, assetRegistryId, _lines.Count + 1, snapshot, unitCost);
+        _lines.Add(line);
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
-        AddDomainEvent(new IssuanceReportPostedEvent(Id, ReportNo, ReportType, TenantId));
+        return line;
     }
 
-    private void EnsureDraft()
+    /// <summary>Raises the issued/posted integration event. Call once after all lines are added.</summary>
+    public void MarkIssued() =>
+        AddDomainEvent(new IssuanceReportPostedEvent(Id, ReportNo, ReportType, TenantId));
+
+    /// <summary>
+    /// Fills accounting depreciation / book value for a PPE line. Only valid on PPEIR reports.
+    /// </summary>
+    public void SetLineDepreciation(Guid lineId, decimal accumulatedDepreciation, decimal bookValue)
     {
-        if (Status != IssuanceReportStatus.Draft)
-            throw new InvalidOperationException("Only Draft issuance reports may be modified. Posted reports are immutable.");
+        if (ReportType != IssuanceReportType.PPEIR)
+            throw new InvalidOperationException("Depreciation may only be recorded on PPEIR reports.");
+
+        var line = _lines.FirstOrDefault(l => l.Id == lineId)
+            ?? throw new InvalidOperationException($"Line '{lineId}' not found on this report.");
+        line.SetDepreciation(accumulatedDepreciation, bookValue);
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;
     }
 }
-

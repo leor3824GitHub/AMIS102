@@ -50,8 +50,7 @@ public static class AssetRegisterIntegrationEvents
         Guid ReportId,
         string ReportNo,
         IssuanceReportType ReportType,
-        DateOnly PeriodFromDate,
-        DateOnly PeriodToDate,
+        DateOnly Date,
         string? TenantId,
         string CorrelationId = "") : IIntegrationEvent
     {

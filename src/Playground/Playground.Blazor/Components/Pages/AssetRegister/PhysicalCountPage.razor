@@ -5,8 +5,10 @@
 @using PhysicalCountStatus = AMIS.Modules.AssetRegister.Contracts.v1.PhysicalCountStatus
 @using PhysicalCountScope = AMIS.Modules.AssetRegister.Contracts.v1.PhysicalCountScope
 @using PhysicalCountCondition = AMIS.Modules.AssetRegister.Contracts.v1.PhysicalCountCondition
+@using AssetCondition = AMIS.Modules.AssetRegister.Contracts.v1.AssetCondition
 @inject IArPhysicalCountClient Client
 @inject IArCatalogClient CatalogClient
+@inject IAssetRegistryClient AssetClient
 @inject ILocationLookupClient LocationClient
 @inject ISnackbar Snackbar
 @inject IUserProfileState UserProfileState
@@ -276,10 +278,79 @@
                         </MudGrid>
                     }
 
-                    <!-- Ongoing → add found-at-station + move to reconciliation -->
+                    <!-- Ongoing → record counted assets / add found-at-station + move to reconciliation -->
                     @if (_selected.Status == PhysicalCountStatus.Ongoing && _canRecord)
                     {
                         <MudDivider Class="my-3" />
+
+                        <!-- Record a known registry asset by Property No. -->
+                        <MudExpansionPanels Elevation="0" Class="mb-2">
+                            <MudExpansionPanel Text="Record Counted Asset (by Property No.)" Expanded="true">
+                                <MudGrid Spacing="2" AlignItems="AlignItems.Center">
+                                    <MudItem xs="12" sm="8">
+                                        <MudTextField @bind-Value="_recordPropertyNo" Label="Property No." Variant="Variant.Outlined"
+                                                      Dense="true" Margin="Margin.Dense" MaxLength="64" Immediate="true"
+                                                      Placeholder="Scan or type, then Look Up"
+                                                      Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Outlined.Search"
+                                                      OnAdornmentClick="LookupAssetAsync" OnKeyUp="OnRecordPropertyKeyUp" />
+                                    </MudItem>
+                                    <MudItem xs="12" sm="4">
+                                        <AMISButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary" FullWidth="true"
+                                                    StartIcon="@Icons.Material.Outlined.Search" OnClick="LookupAssetAsync" Disabled="_busy">
+                                            Look Up
+                                        </AMISButton>
+                                    </MudItem>
+                                </MudGrid>
+
+                                @if (_recordLookupTried && _recordedAsset is null)
+                                {
+                                    <MudAlert Severity="Severity.Info" Dense="true" Class="mt-2">
+                                        <strong>@_recordPropertyNo</strong> is not in the registry. Add it as a Found-at-Station item below.
+                                    </MudAlert>
+                                }
+                                @if (_recordedAsset is not null)
+                                {
+                                    <MudPaper Outlined="true" Class="pa-3 mt-2">
+                                        <MudGrid Spacing="2" AlignItems="AlignItems.Center">
+                                            <MudItem xs="12" md="5">
+                                                <MudText Typo="Typo.subtitle2">@_recordedAsset.PropertyNo</MudText>
+                                                <MudText Typo="Typo.body2">@_recordedAsset.Description</MudText>
+                                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                                    @_recordedAsset.Unit &nbsp;·&nbsp; @Money.Symbol@_recordedAsset.UnitCost.ToString("N2")
+                                                </MudText>
+                                            </MudItem>
+                                            <MudItem xs="12" sm="6" md="3">
+                                                <MudSelect T="PhysicalCountCondition" @bind-Value="_recordCondition" Label="Condition"
+                                                           Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense">
+                                                    <MudSelectItem Value="PhysicalCountCondition.InGoodCondition">Good</MudSelectItem>
+                                                    <MudSelectItem Value="PhysicalCountCondition.NeedingRepair">Needs Repair</MudSelectItem>
+                                                    <MudSelectItem Value="PhysicalCountCondition.Unserviceable">Unserviceable</MudSelectItem>
+                                                </MudSelect>
+                                            </MudItem>
+                                            <MudItem xs="12" sm="6" md="4">
+                                                <MudAutocomplete T="LocationLookupDto" Label="Location" Variant="Variant.Outlined"
+                                                                 Dense="true" Margin="Margin.Dense"
+                                                                 @bind-Value="_recordLocation"
+                                                                 SearchFunc="SearchLocationsAsync"
+                                                                 ToStringFunc="@(l => l is null ? string.Empty : $"{l.Code} — {l.Name}")"
+                                                                 ResetValueOnEmptyText="true" CoerceText="true"
+                                                                 HelperText="Defaults to the asset's current location" />
+                                            </MudItem>
+                                            <MudItem xs="12" Class="d-flex justify-end">
+                                                <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary"
+                                                            StartIcon="@Icons.Material.Outlined.FactCheck" OnClick="RecordCountedAsync" Disabled="_busy">
+                                                    Record as Counted
+                                                </AMISButton>
+                                            </MudItem>
+                                        </MudGrid>
+                                    </MudPaper>
+                                }
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary mt-1">
+                                    Look up an asset already in the registry and record its counted condition. Items not found are captured as Found-at-Station below.
+                                </MudText>
+                            </MudExpansionPanel>
+                        </MudExpansionPanels>
+
                         <MudExpansionPanels Elevation="0" Class="mb-2">
                             <MudExpansionPanel Text="Add Found-at-Station Item">
                                 <MudGrid Spacing="2">
@@ -492,6 +563,13 @@
     private FoundAtStationFormModel _fasForm = new();
     private ArCatalogItemDto? _fasCatalog;
     private LocationLookupDto? _fasLocation;
+
+    // Record-counted-asset (by Property No.) panel
+    private string _recordPropertyNo = "";
+    private AssetRegistryDto? _recordedAsset;
+    private bool _recordLookupTried;
+    private PhysicalCountCondition _recordCondition = PhysicalCountCondition.InGoodCondition;
+    private LocationLookupDto? _recordLocation;
 
     private sealed class FoundAtStationFormModel
     {
@@ -718,6 +796,74 @@
         catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
         finally { _busy = false; }
     }
+
+    private async Task OnRecordPropertyKeyUp(KeyboardEventArgs e)
+    {
+        if (e.Key is "Enter" or "NumpadEnter") await LookupAssetAsync();
+    }
+
+    private async Task LookupAssetAsync()
+    {
+        var pno = _recordPropertyNo.Trim().ToUpperInvariant();
+        if (string.IsNullOrWhiteSpace(pno)) { Snackbar.Add("Enter a property number to look up.", Severity.Warning); return; }
+
+        _busy = true;
+        _recordLookupTried = false;
+        _recordedAsset = null;
+        try
+        {
+            _recordPropertyNo = pno;
+            _recordedAsset = await AssetClient.GetByPropertyNoAsync(pno);
+            _recordLookupTried = true;
+            if (_recordedAsset is not null)
+            {
+                _recordCondition = MapAssetConditionToCount(_recordedAsset.CurrentCondition);
+                _recordLocation = null; // falls back to the asset's current location on record
+            }
+        }
+        catch (Exception ex) { Snackbar.Add($"Lookup failed: {ex.Message}", Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    private async Task RecordCountedAsync()
+    {
+        if (_selected is null || _recordedAsset is null) return;
+
+        var locationId = _recordLocation?.Id ?? _recordedAsset.CurrentLocationId ?? Guid.Empty;
+        if (locationId == Guid.Empty)
+        {
+            Snackbar.Add("Select a location — this asset has no current location on record.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            var req = new ArRecordPhysicalCountEntryRequest(
+                _recordedAsset.Id,
+                _recordedAsset.Description,
+                _recordedAsset.Unit,
+                _recordedAsset.UnitCost,
+                _recordCondition,
+                locationId);
+            _selected = await Client.RecordEntryAsync(_selected.Id, req);
+            await LoadReconciliationAsync();
+            Snackbar.Add($"Recorded '{_recordedAsset.PropertyNo}' as counted.", Severity.Success);
+            _recordPropertyNo = "";
+            _recordedAsset = null;
+            _recordLookupTried = false;
+            _recordLocation = null;
+        }
+        catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    private static PhysicalCountCondition MapAssetConditionToCount(AssetCondition c) => c switch
+    {
+        AssetCondition.NeedingRepair => PhysicalCountCondition.NeedingRepair,
+        AssetCondition.Unserviceable => PhysicalCountCondition.Unserviceable,
+        _ => PhysicalCountCondition.InGoodCondition
+    };
 
     private async Task ReconcileAsync()
     {

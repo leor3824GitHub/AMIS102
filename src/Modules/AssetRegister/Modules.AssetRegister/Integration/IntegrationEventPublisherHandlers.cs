@@ -59,8 +59,8 @@ public sealed class IssuanceReportPostedIntegrationPublisher(
         if (report is null) return;
 
         await bus.PublishAsync(new AssetRegisterIntegrationEvents.IssuanceReportPosted(
-            report.Id, report.ReportNo, report.ReportType, report.PeriodFromDate,
-            report.PeriodToDate, @event.TenantId, @event.CorrelationId ?? string.Empty), ct).ConfigureAwait(false);
+            report.Id, report.ReportNo, report.ReportType, report.Date,
+            @event.TenantId, @event.CorrelationId ?? string.Empty), ct).ConfigureAwait(false);
     }
 }
 

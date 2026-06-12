@@ -32,8 +32,9 @@ public static class AssetRegisterPermissions
 
     public static class Issuance
     {
-        public const string View = "Permissions.AssetRegister.Issuance.View";
-        public const string Post = "Permissions.AssetRegister.Issuance.Post";
+        public const string View   = "Permissions.AssetRegister.Issuance.View";
+        public const string Create = "Permissions.AssetRegister.Issuance.Create";
+        public const string Update = "Permissions.AssetRegister.Issuance.Update";
     }
 
     public static class Count

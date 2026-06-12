@@ -25,7 +25,7 @@ public sealed class PrintPPEIssuanceReportFastQueryHandler(IMediator mediator)
         var org = await mediator.Send(new GetOrganizationProfileQuery(), ct).ConfigureAwait(false);
 
         var nf = CultureInfo.InvariantCulture;
-        var dateText = (ir.PostedOn ?? ir.PeriodToDate).ToString("MM/dd/yyyy", nf);
+        var dateText = ir.Date.ToString("MM/dd/yyyy", nf);
 
         var headerData = new List<IrFastHeader>
         {
@@ -35,12 +35,12 @@ public sealed class PrintPPEIssuanceReportFastQueryHandler(IMediator mediator)
                 IrNo:                  ir.ReportNo,
                 Date:                  dateText,
                 FundCluster:           ir.FundCluster,
-                IssuedToName:          (ir.PostedBy?.PrintedName ?? string.Empty).ToUpperInvariant(),
-                IssuedToDesignation:   ir.PostedBy?.Designation ?? string.Empty,
-                IssuedByName:          ir.PreparedBy.PrintedName.ToUpperInvariant(),
-                IssuedByDesignation:   ir.PreparedBy.Designation ?? string.Empty,
-                ApprovedByName:        (ir.CertifiedBy?.PrintedName ?? string.Empty).ToUpperInvariant(),
-                ApprovedByDesignation: ir.CertifiedBy?.Designation ?? string.Empty)
+                IssuedToName:          ir.IssuedTo.PrintedName.ToUpperInvariant(),
+                IssuedToDesignation:   ir.IssuedTo.Designation ?? string.Empty,
+                IssuedByName:          ir.IssuedBy.PrintedName.ToUpperInvariant(),
+                IssuedByDesignation:   ir.IssuedBy.Designation ?? string.Empty,
+                ApprovedByName:        ir.ApprovedBy.PrintedName.ToUpperInvariant(),
+                ApprovedByDesignation: ir.ApprovedBy.Designation ?? string.Empty)
         };
 
         var lineItemsTable = BuildLineItemsTable(ir, query.MinRows);
@@ -87,7 +87,7 @@ public sealed class PrintPPEIssuanceReportFastQueryHandler(IMediator mediator)
         table.Columns.Add("AccumDepreciation",   typeof(string));
         table.Columns.Add("BookValue",           typeof(string));
 
-        foreach (var line in ir.Lines.OrderBy(l => l.Snapshot.AcquisitionDate))
+        foreach (var line in ir.Lines.OrderBy(l => l.ItemNo))
         {
             table.Rows.Add(
                 line.Snapshot.PropertyNo,
@@ -95,8 +95,8 @@ public sealed class PrintPPEIssuanceReportFastQueryHandler(IMediator mediator)
                 line.Snapshot.Description,
                 line.Snapshot.AcquisitionDate.ToString("MM/dd/yyyy", nf),
                 line.SnapshotUnitCost.ToString("N2", nf),
-                string.Empty,
-                line.SnapshotAmount.ToString("N2", nf));
+                line.AccumulatedDepreciation?.ToString("N2", nf) ?? string.Empty,
+                line.BookValue?.ToString("N2", nf) ?? line.SnapshotAmount.ToString("N2", nf));
         }
 
         var padTo = Math.Max(minRows, table.Rows.Count);

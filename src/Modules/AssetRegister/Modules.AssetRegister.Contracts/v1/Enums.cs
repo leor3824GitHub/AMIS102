@@ -58,10 +58,21 @@ public enum IssuanceReportType
     PPEIR = 1
 }
 
-public enum IssuanceReportStatus
+/// <summary>
+/// Nature of a property issuance/transfer, per the PPEIR/SMIR form field
+/// "Transfer to C.O. / R.O. / P.O. / Donation / Dumping / Destruction / Sale / Others".
+/// Unified across semi-expendable (SMIR) and PPE (PPEIR).
+/// </summary>
+public enum IssuanceNature
 {
-    Draft = 0,
-    Posted = 1
+    TransferCO  = 0,
+    TransferRO  = 1,
+    TransferPO  = 2,
+    Donation    = 3,
+    Dumping     = 4,
+    Destruction = 5,
+    Sale        = 6,
+    Others      = 7,
 }
 
 public enum PhysicalCountScope

@@ -47,15 +47,17 @@ public sealed class GetReconciliationReportQueryHandler(AssetRegisterDbContext d
             .Select(e => e.AssetRegistryId!.Value)
             .ToHashSet();
 
+        // PropertyNo is a value-converted VO (PropertyNumber ↔ string); EF can order/project the
+        // converted property itself but not reach into its .Value, so read .Value client-side.
         var uncounted = await db.AssetRegistries.AsNoTracking()
             .InCountScope(session.FundCluster, session.Scope)
             .Where(a => !countedAssetIds.Contains(a.Id))
-            .OrderBy(a => a.PropertyNo.Value)
-            .Select(a => new { a.Id, PropertyNo = a.PropertyNo.Value, a.Description, a.Unit, a.UnitCost, a.CurrentLocationId })
+            .OrderBy(a => a.PropertyNo)
+            .Select(a => new { a.Id, a.PropertyNo, a.Description, a.Unit, a.UnitCost, a.CurrentLocationId })
             .ToListAsync(ct).ConfigureAwait(false);
 
         rows.AddRange(uncounted.Select(a => new ReconciliationRowDto(
-            null, a.Id, a.PropertyNo, a.Description, a.Unit, a.UnitCost,
+            null, a.Id, a.PropertyNo.Value, a.Description, a.Unit, a.UnitCost,
             1, 0, ReconciliationRowStatus.Uncounted, null,
             false, null, a.CurrentLocationId, null)));
 

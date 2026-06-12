@@ -81,38 +81,44 @@ public sealed class GetIssuanceReportDocumentQueryHandler(AssetRegisterDbContext
         }
 
         var lines = report.Lines
+            .OrderBy(l => l.ItemNo)
             .Select(l => new IssuanceReportLineDocumentDto(
                 l.Id,
-                l.AccountabilityId,
-                l.AccountabilityLineId,
                 l.AssetRegistryId,
+                l.ItemNo,
                 l.Snapshot.PropertyNo,
                 l.Snapshot.Description,
                 l.Snapshot.Unit,
-                l.SnapshotResponsibilityCenterCode,
-                l.SnapshotQuantityIssued,
                 l.SnapshotUnitCost,
-                l.SnapshotAmount))
+                l.SnapshotAmount,
+                l.AccumulatedDepreciation,
+                l.BookValue))
             .ToList();
 
         return new IssuanceReportDocumentDto(
             report.Id,
             report.ReportNo,
             report.ReportType,
-            report.Status,
+            report.Nature,
             report.FundCluster,
-            report.PeriodFromDate,
-            report.PeriodToDate,
-            report.PreparedBy.EmployeeId,
-            report.PreparedBy.PrintedName,
-            report.PreparedBy.Designation,
-            report.CertifiedBy?.EmployeeId,
-            report.CertifiedBy?.PrintedName,
-            report.CertifiedBy?.Designation,
-            report.PostedBy?.EmployeeId,
-            report.PostedBy?.PrintedName,
-            report.PostedBy?.Designation,
-            report.PostedOn,
+            report.Date,
+            report.IssuedBy.EmployeeId,
+            report.IssuedBy.PrintedName,
+            report.IssuedBy.Designation,
+            report.ApprovedBy.EmployeeId,
+            report.ApprovedBy.PrintedName,
+            report.ApprovedBy.Designation,
+            report.IssuedTo.EmployeeId,
+            report.IssuedTo.PrintedName,
+            report.IssuedTo.Designation,
+            report.IssuedToOfficeAddress,
+            report.ReceivedBy.EmployeeId,
+            report.ReceivedBy.PrintedName,
+            report.ReceivedBy.Designation,
+            report.DateReceived,
+            report.DriverName,
+            report.BillOfLadingNo,
+            report.Remarks,
             lines,
             lines.Sum(l => l.Amount));
     }

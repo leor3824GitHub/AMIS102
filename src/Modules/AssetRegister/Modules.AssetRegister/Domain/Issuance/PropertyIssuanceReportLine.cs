@@ -8,39 +8,42 @@ public sealed class PropertyIssuanceReportLine : IHasTenant
     public Guid Id { get; private set; }
     public string TenantId { get; private set; } = default!;
     public Guid ReportId { get; private set; }
-    public Guid AccountabilityId { get; private set; }
-    public Guid AccountabilityLineId { get; private set; }
     public Guid AssetRegistryId { get; private set; }
+    public int ItemNo { get; private set; }
     public AssetSnapshot Snapshot { get; private set; } = default!;
-    public string? SnapshotResponsibilityCenterCode { get; private set; }
-    public int SnapshotQuantityIssued { get; private set; }
     public decimal SnapshotUnitCost { get; private set; }
     public decimal SnapshotAmount { get; private set; }
+
+    /// <summary>Null until Accounting fills via UpdateIssuanceReportDepreciation (PPEIR only).</summary>
+    public decimal? AccumulatedDepreciation { get; private set; }
+
+    /// <summary>Null until Accounting fills via UpdateIssuanceReportDepreciation (PPEIR only).</summary>
+    public decimal? BookValue { get; private set; }
 
     private PropertyIssuanceReportLine() { }
 
     internal static PropertyIssuanceReportLine Create(
         string tenantId,
         Guid reportId,
-        Guid accountabilityId,
-        Guid accountabilityLineId,
         Guid assetRegistryId,
+        int itemNo,
         AssetSnapshot snapshot,
-        string? responsibilityCenterCode,
         decimal unitCost) =>
         new()
         {
             Id = Guid.NewGuid(),
             TenantId = tenantId,
             ReportId = reportId,
-            AccountabilityId = accountabilityId,
-            AccountabilityLineId = accountabilityLineId,
             AssetRegistryId = assetRegistryId,
+            ItemNo = itemNo,
             Snapshot = snapshot,
-            SnapshotResponsibilityCenterCode = responsibilityCenterCode,
-            SnapshotQuantityIssued = 1,
             SnapshotUnitCost = unitCost,
             SnapshotAmount = unitCost
         };
-}
 
+    public void SetDepreciation(decimal accumulatedDepreciation, decimal bookValue)
+    {
+        AccumulatedDepreciation = accumulatedDepreciation;
+        BookValue = bookValue;
+    }
+}

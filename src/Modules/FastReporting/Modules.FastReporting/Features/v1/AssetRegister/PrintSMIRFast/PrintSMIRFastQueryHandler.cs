@@ -1,6 +1,7 @@
 using System.Data;
 using System.Globalization;
 using System.Reflection;
+using AMIS.Modules.AssetRegister.Contracts.v1;
 using AMIS.Modules.AssetRegister.Contracts.v1.Issuance;
 using AMIS.Modules.FastReporting.Contracts.v1.Reports;
 using AMIS.Modules.FastReporting.Services;
@@ -24,7 +25,17 @@ public sealed class PrintSMIRFastQueryHandler(IMediator mediator)
         var org = await mediator.Send(new GetOrganizationProfileQuery(), ct).ConfigureAwait(false);
 
         var nf = CultureInfo.InvariantCulture;
-        var dateText = (ir.PostedOn ?? ir.PeriodToDate).ToString("MM/dd/yyyy", nf);
+        var dateText = ir.Date.ToString("MM/dd/yyyy", nf);
+
+        var (saleCheck, transferCheck, donationCheck, otherCheck) = ir.Nature switch
+        {
+            IssuanceNature.Sale        => ("✓", string.Empty, string.Empty, string.Empty),
+            IssuanceNature.TransferCO  => (string.Empty, "✓", string.Empty, string.Empty),
+            IssuanceNature.TransferRO  => (string.Empty, "✓", string.Empty, string.Empty),
+            IssuanceNature.TransferPO  => (string.Empty, "✓", string.Empty, string.Empty),
+            IssuanceNature.Donation    => (string.Empty, string.Empty, "✓", string.Empty),
+            _                          => (string.Empty, string.Empty, string.Empty, "✓")
+        };
 
         var headerData = new List<SmirFastHeader>
         {
@@ -33,18 +44,18 @@ public sealed class PrintSMIRFastQueryHandler(IMediator mediator)
                 OrgAddress:            org?.Address ?? string.Empty,
                 SmirNo:                ir.ReportNo,
                 FundCluster:           ir.FundCluster,
-                IssuedToName:          (ir.PostedBy?.PrintedName ?? string.Empty).ToUpperInvariant(),
-                Address:               ir.PostedBy?.Designation ?? string.Empty,
-                SaleCheck:             string.Empty,
-                TransferCheck:         string.Empty,
-                DonationCheck:         string.Empty,
-                OtherCheck:            string.Empty,
+                IssuedToName:          ir.IssuedTo.PrintedName.ToUpperInvariant(),
+                Address:               ir.IssuedToOfficeAddress,
+                SaleCheck:             saleCheck,
+                TransferCheck:         transferCheck,
+                DonationCheck:         donationCheck,
+                OtherCheck:            otherCheck,
                 Date:                  dateText,
-                IssuedByName:          ir.PreparedBy.PrintedName.ToUpperInvariant(),
-                IssuedByDesignation:   ir.PreparedBy.Designation ?? string.Empty,
-                ApprovedByName:        (ir.CertifiedBy?.PrintedName ?? string.Empty).ToUpperInvariant(),
-                ApprovedByDesignation: ir.CertifiedBy?.Designation ?? string.Empty,
-                ReceivedByName:        (ir.PostedBy?.PrintedName ?? string.Empty).ToUpperInvariant())
+                IssuedByName:          ir.IssuedBy.PrintedName.ToUpperInvariant(),
+                IssuedByDesignation:   ir.IssuedBy.Designation ?? string.Empty,
+                ApprovedByName:        ir.ApprovedBy.PrintedName.ToUpperInvariant(),
+                ApprovedByDesignation: ir.ApprovedBy.Designation ?? string.Empty,
+                ReceivedByName:        ir.ReceivedBy.PrintedName.ToUpperInvariant())
         };
 
         var lineItemsTable = BuildLineItemsTable(ir, query.MinRows);
@@ -79,13 +90,13 @@ public sealed class PrintSMIRFastQueryHandler(IMediator mediator)
         table.Columns.Add("UnitCost",        typeof(string));
         table.Columns.Add("Amount",          typeof(string));
 
-        foreach (var line in ir.Lines.OrderBy(l => l.Snapshot.AcquisitionDate))
+        foreach (var line in ir.Lines.OrderBy(l => l.ItemNo))
         {
             table.Rows.Add(
                 line.Snapshot.PropertyNo,
                 line.Snapshot.Description,
                 line.Snapshot.AcquisitionDate.ToString("MM/dd/yyyy", nf),
-                line.SnapshotQuantityIssued.ToString("N0", nf),
+                "1",
                 line.SnapshotUnitCost.ToString("N2", nf),
                 line.SnapshotAmount.ToString("N2", nf));
         }
