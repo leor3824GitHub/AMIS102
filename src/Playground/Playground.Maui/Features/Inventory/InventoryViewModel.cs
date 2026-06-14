@@ -15,9 +15,6 @@ public sealed partial class InventoryViewModel(
     [ObservableProperty] private string? _errorMessage;
 
     [RelayCommand]
-    private static Task GoHomeAsync() => Shell.Current.GoToAsync("//HomePage");
-
-    [RelayCommand]
     public async Task LoadAsync(CancellationToken ct = default)
     {
         if (authState.Employee is null) return;

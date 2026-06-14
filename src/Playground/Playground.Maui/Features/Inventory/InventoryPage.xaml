@@ -8,12 +8,6 @@
              Title="My Inventory"
              BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource OffBlack}}">
 
-    <ContentPage.ToolbarItems>
-        <ToolbarItem Text="Home"
-                     IconImageSource="home.png"
-                     Command="{Binding GoHomeCommand}" />
-    </ContentPage.ToolbarItems>
-
     <Grid RowDefinitions="Auto,*">
 
         <!-- Error banner -->
