@@ -9,86 +9,33 @@
 @inject IMaster_dataClient MasterDataClient
 @inject ILookupClient LookupClient
 @inject IIdentityClient IdentityClient
-@inject IUsersClient UsersClient
 @inject IOrganizationProfileClient OrgProfileClient
 @inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="Employees" Description="Manage employee profiles">
     <ActionContent>
-        <MudStack Row="true" Spacing="2" Style="width: 100%; max-width: 400px;">
+        <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Style="width: 100%; max-width: 560px;">
             <MudTextField @bind-Value="_searchKeyword" Label="Search" Placeholder="Search employees..."
                           DebounceInterval="300" OnDebounceIntervalElapsed="@(async () => await SearchEmployees())"
                           Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
-            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" OnClick="SearchEmployees">
+            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" OnClick="SearchEmployees" Disabled="_isLoading">
                 Search
             </MudButton>
+            @if (_canCreate)
+            {
+                <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Secondary"
+                           StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateDialog">
+                    New
+                </MudButton>
+            }
         </MudStack>
     </ActionContent>
 </AMISPageHeader>
 
 <div class="mt-4">
     <MudGrid Spacing="2">
-        <!-- Create/Edit Form -->
-        @if (_canCreate || _canUpdate)
-        {
-        <MudItem xs="12" sm="6" md="4" Style="min-height: 100%;">
-            <MudCard Class="AMIS-card">
-                <MudCardContent>
-                    <MudText Typo="Typo.h6" Class="mb-3">@(EditingEmployee != null ? "Edit Employee" : "Create Employee")</MudText>
-                    <MudStack Spacing="3">
-                        <MudTextField @bind-Value="_form.EmployeeNumber" Label="Employee Number"
-                                      Placeholder="Employee ID" Required="true" />
-                        <MudTextField @bind-Value="_form.FirstName" Label="First Name" Placeholder="First name"
-                                      Required="true" />
-                        <MudTextField @bind-Value="_form.LastName" Label="Last Name" Placeholder="Last name"
-                                      Required="true" />
-                        <MudTextField @bind-Value="_form.WorkEmail" Label="Work Email" InputType="InputType.Email"
-                                      Placeholder="work@example.com" />
-                        
-                        <!-- Office Autocomplete -->
-                        <MudAutocomplete T="OfficeReferenceDto" Label="Office" @bind-Value="_form.Office"
-                                         SearchFunc="@SearchOffices" ToStringFunc="@(o => o?.Name)" ResetValueOnEmptyText="true"
-                                         CoerceText="true" CoerceValue="true" Required="true" Placeholder="Search office..."
-                                         Clearable="true" />
-
-                        <!-- Department Autocomplete -->
-                        <MudAutocomplete T="DepartmentReferenceDto" Label="Department" @bind-Value="_form.Department"
-                                         SearchFunc="@SearchDepartments" ToStringFunc="@(d => d?.Name)" ResetValueOnEmptyText="true"
-                                         CoerceText="true" CoerceValue="true" Required="true" Placeholder="Search department..."
-                                         Clearable="true" />
-
-                        <!-- Position Autocomplete -->
-                        <MudAutocomplete T="PositionReferenceDto" Label="Position" @bind-Value="_form.Position"
-                                         SearchFunc="@SearchPositions" ToStringFunc="@(p => p?.Name)" ResetValueOnEmptyText="true"
-                                         CoerceText="true" CoerceValue="true" Required="true" Placeholder="Search position..."
-                                         Clearable="true" />
-
-                        <MudAutocomplete T="UserDto" Label="Linked Login Account" @bind-Value="_form.IdentityUser"
-                                         SearchFunc="@SearchIdentityUsers"
-                                         ToStringFunc="@(u => u == null ? string.Empty : $"{u.FirstName} {u.LastName} ({u.Email})")"
-                                         CoerceValue="true" Clearable="true" Placeholder="Search by name or email..."
-                                         HelperText="@(_form.IdentityUser != null ? $"Linked: {_form.IdentityUser.FirstName} {_form.IdentityUser.LastName}" : "No account linked")" />
-                        
-                        <MudCheckBox @bind-Value="_form.IsActive" Label="Active" />
-
-                        <MudStack Row="true" Spacing="2" Class="mt-4">
-                            <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
-                                       OnClick="SaveEmployee" Disabled="_isLoading">
-                                @(EditingEmployee != null ? "Update" : "Create")
-                            </MudButton>
-                            <MudButton Variant="Variant.Outlined" Color="Color.Default" FullWidth="true"
-                                       OnClick="ResetForm">
-                                Clear
-                            </MudButton>
-                        </MudStack>
-                    </MudStack>
-                </MudCardContent>
-            </MudCard>
-        </MudItem>
-        }
-
         <!-- Employees List -->
-        <MudItem xs="12" sm="6" md="8">
+        <MudItem xs="12">
             <MudCard Class="AMIS-card">
                 <MudCardContent>
                     <MudStack Row="true" Spacing="1" Class="mb-3" AlignItems="AlignItems.Center">
@@ -150,7 +97,7 @@
                                                         {
                                                             <MudTooltip Text="Edit employee">
                                                                 <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
-                                                                               Color="Color.Primary" OnClick="@(() => EditEmployee(employee))" />
+                                                                               Color="Color.Primary" OnClick="@(() => OpenEditDialog(employee))" />
                                                             </MudTooltip>
                                                         }
                                                         @if (_canDelete)
@@ -190,8 +137,6 @@
     </div>
 
 @code {
-    private EmployeeForm _form = new();
-    private EmployeeReferenceDto? EditingEmployee { get; set; }
     private List<EmployeeReferenceDto> _employees = new();
     private List<EmployeeReferenceDto> _allEmployees = new();
     private readonly Dictionary<string, string> _linkedAccountDisplays = [];
@@ -212,73 +157,6 @@
     private bool _canCreate => UserProfileState.Permissions.Contains(MasterDataPermissions.Employees.Create);
     private bool _canUpdate => UserProfileState.Permissions.Contains(MasterDataPermissions.Employees.Update);
     private bool _canDelete => UserProfileState.Permissions.Contains(MasterDataPermissions.Employees.Delete);
-
-    public class EmployeeForm
-    {
-        public string EmployeeNumber { get; set; } = string.Empty;
-        public string FirstName { get; set; } = string.Empty;
-        public string LastName { get; set; } = string.Empty;
-        public string? WorkEmail { get; set; }
-        public UserDto? IdentityUser { get; set; }
-        
-        // Derived from IdentityUser for API submission
-        public string? IdentityUserId => IdentityUser?.Id.ToString();
-        
-        // These hold the object references for the Autocomplete
-        public OfficeReferenceDto? Office { get; set; }
-        public DepartmentReferenceDto? Department { get; set; }
-        public PositionReferenceDto? Position { get; set; }
-        
-        public bool IsActive { get; set; } = true;
-    }
-
-    private async Task<IEnumerable<UserDto>> SearchIdentityUsers(string value, CancellationToken token)
-    {
-        try
-        {
-            var result = await UsersClient.SearchAsync(
-                search: string.IsNullOrWhiteSpace(value) ? null : value,
-                pageSize: 20,
-                cancellationToken: token);
-
-            var items = result?.Items ?? Enumerable.Empty<UserDto>();
-
-            // Build the set of user IDs already linked to another employee.
-            // Exclude the current employee's own linked ID so it stays selectable while editing.
-            var currentLinkedId = EditingEmployee?.IdentityUserId;
-            var alreadyLinked = _allEmployees
-                .Where(e => !string.IsNullOrWhiteSpace(e.IdentityUserId)
-                            && e.IdentityUserId != currentLinkedId)
-                .Select(e => e.IdentityUserId!)
-                .ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-            return items.Where(u => !alreadyLinked.Contains(u.Id.ToString()));
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"User search failed: {ex.Message}", Severity.Warning);
-            return Enumerable.Empty<UserDto>();
-        }
-    }
-
-    // Search Functions for Autocompletes
-    private async Task<IEnumerable<OfficeReferenceDto>> SearchOffices(string value, CancellationToken token)
-    {
-        if (string.IsNullOrEmpty(value)) return _offices;
-        return _offices.Where(x => x.Name.Contains(value, StringComparison.InvariantCultureIgnoreCase));
-    }
-
-    private async Task<IEnumerable<DepartmentReferenceDto>> SearchDepartments(string value, CancellationToken token)
-    {
-        if (string.IsNullOrEmpty(value)) return _departments;
-        return _departments.Where(x => x.Name.Contains(value, StringComparison.InvariantCultureIgnoreCase));
-    }
-
-    private async Task<IEnumerable<PositionReferenceDto>> SearchPositions(string value, CancellationToken token)
-    {
-        if (string.IsNullOrEmpty(value)) return _positions;
-        return _positions.Where(x => x.Name.Contains(value, StringComparison.InvariantCultureIgnoreCase));
-    }
 
     private void OnProfileChanged() => InvokeAsync(StateHasChanged);
 
@@ -461,91 +339,43 @@
         return _sortAscending ? "▲" : "▼";
     }
 
-    private async Task SaveEmployee()
+    private async Task OpenCreateDialog()
     {
-        if (string.IsNullOrWhiteSpace(_form.EmployeeNumber) ||
-            _form.Office == null ||
-            _form.Department == null ||
-            _form.Position == null)
-        {
-            Snackbar.Add("Please fill in all required fields", Severity.Warning);
-            return;
-        }
+        if (!_canCreate) return;
 
-        try
+        var parameters = new DialogParameters
         {
-            if (EditingEmployee != null)
-            {
-                var updateCmd = new UpdateEmployeeCommand
-                {
-                    Id = EditingEmployee.Id,
-                    EmployeeNumber = _form.EmployeeNumber,
-                    FirstName = _form.FirstName,
-                    LastName = _form.LastName,
-                    WorkEmail = _form.WorkEmail,
-                    IdentityUserId = string.IsNullOrWhiteSpace(_form.IdentityUserId) ? null : _form.IdentityUserId.Trim(),
-                    OfficeId = _form.Office.Id,
-                    DepartmentId = _form.Department.Id,
-                    PositionId = _form.Position.Id,
-                    IsActive = _form.IsActive
-                };
-                await MasterDataClient.EmployeesPutAsync(EditingEmployee.Id, updateCmd);
-                Snackbar.Add("Employee updated", Severity.Success);
-            }
-            else
-            {
-                var createCmd = new CreateEmployeeCommand
-                {
-                    EmployeeNumber = _form.EmployeeNumber,
-                    FirstName = _form.FirstName,
-                    LastName = _form.LastName,
-                    WorkEmail = _form.WorkEmail,
-                    IdentityUserId = string.IsNullOrWhiteSpace(_form.IdentityUserId) ? null : _form.IdentityUserId.Trim(),
-                    OfficeId = _form.Office.Id,
-                    DepartmentId = _form.Department.Id,
-                    PositionId = _form.Position.Id,
-                    IsActive = _form.IsActive
-                };
-                await MasterDataClient.EmployeesPostAsync(createCmd);
-                Snackbar.Add("Employee created", Severity.Success);
-            }
-
-            await LoadEmployees();
-            ResetForm();
-        }
-        catch (Exception ex) { Snackbar.Add($"Error: {ex.Message}", Severity.Error); }
-    }
-
-    private async Task EditEmployee(EmployeeReferenceDto employee)
-    {
-        EditingEmployee = employee;
-        UserDto? linkedUser = null;
-        if (!string.IsNullOrWhiteSpace(employee.IdentityUserId) && Guid.TryParse(employee.IdentityUserId, out var identityGuid))
-        {
-            try { linkedUser = await IdentityClient.UsersGetAsync(identityGuid); }
-            catch (Exception ex) { Snackbar.Add($"Could not load linked account: {ex.Message}", Severity.Warning); }
-        }
-        _form = new EmployeeForm
-        {
-            EmployeeNumber = employee.EmployeeNumber,
-            FirstName = employee.FirstName,
-            LastName = employee.LastName,
-            WorkEmail = employee.WorkEmail,
-            IdentityUser = linkedUser,
-            IsActive = employee.IsActive,
-            // Find the object in the list so the autocomplete shows the name
-            Office = _offices.FirstOrDefault(o => o.Id == employee.OfficeId),
-            Department = _departments.FirstOrDefault(d => d.Id == employee.DepartmentId),
-            Position = _positions.FirstOrDefault(p => p.Id == employee.PositionId)
+            ["Offices"] = _offices,
+            ["Departments"] = _departments,
+            ["Positions"] = _positions,
+            ["AllEmployees"] = _allEmployees
         };
-        StateHasChanged();
+        var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true, MaxWidth = MaxWidth.Small };
+        var dialog = await DialogService.ShowAsync<EmployeeFormDialog>("Create Employee", parameters, options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
+        {
+            await LoadEmployees();
+        }
     }
 
-    private void ResetForm()
+    private async Task OpenEditDialog(EmployeeReferenceDto employee)
     {
-        _form = new EmployeeForm();
-        EditingEmployee = null;
-        StateHasChanged();
+        var parameters = new DialogParameters
+        {
+            ["Existing"] = employee,
+            ["Offices"] = _offices,
+            ["Departments"] = _departments,
+            ["Positions"] = _positions,
+            ["AllEmployees"] = _allEmployees
+        };
+        var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true, MaxWidth = MaxWidth.Small };
+        var dialog = await DialogService.ShowAsync<EmployeeFormDialog>($"Edit {employee.FirstName} {employee.LastName}", parameters, options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
+        {
+            await LoadEmployees();
+        }
     }
 
     private async Task DeleteEmployee(Guid id)

@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using Playground.Maui.Services;
+using System.Reflection;
 
 namespace Playground.Maui.Features.Profile;
 
@@ -14,6 +15,25 @@ public sealed partial class ProfileViewModel(
     [ObservableProperty] private string? _position;
     [ObservableProperty] private string _initials = "?";
     [ObservableProperty] private bool _isLoading;
+
+    // Live build version, read from the AssemblyInformationalVersion the build stamps in
+    // (e.g. "1.0.0+build.142" -> "Version 1.0.0 (build 142)").
+    public string AppVersion { get; } = BuildVersionString();
+
+    private static string BuildVersionString()
+    {
+        var info = typeof(ProfileViewModel).Assembly
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+
+        if (string.IsNullOrWhiteSpace(info))
+            return "Version 1.0";
+
+        const string marker = "+build.";
+        var idx = info.IndexOf(marker, StringComparison.Ordinal);
+        return idx >= 0
+            ? $"Version {info[..idx]} (build {info[(idx + marker.Length)..]})"
+            : $"Version {info}";
+    }
 
     public async Task LoadAsync(CancellationToken ct = default)
     {

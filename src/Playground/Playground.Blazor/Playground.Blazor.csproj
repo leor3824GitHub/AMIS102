@@ -46,5 +46,8 @@
     <!-- Analyzer suppressions (PRD-0019): Mud analyzer attribute warnings and demo/sample warnings -->
     <NoWarn>$(NoWarn);MUD0002;S3260;S2933;S3459;S3923;S108;S1144;S4487;CA1031;CA5394;CA1812</NoWarn>
   </PropertyGroup>
+
+  <!-- Live auto-incrementing build number (see ..\BuildVersioning.targets) -->
+  <Import Project="..\BuildVersioning.targets" />
 </Project>
 

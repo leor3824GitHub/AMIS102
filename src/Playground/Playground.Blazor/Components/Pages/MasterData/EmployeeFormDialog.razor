@@ -1,0 +1,214 @@
+@using AMIS.Playground.Blazor.ApiClient
+@inject ISnackbar Snackbar
+@inject IMaster_dataClient MasterDataClient
+@inject IIdentityClient IdentityClient
+@inject IUsersClient UsersClient
+
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="3">
+            <MudTextField @bind-Value="_form.EmployeeNumber" Label="Employee Number" Placeholder="Employee ID"
+                          Required="true" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudTextField @bind-Value="_form.FirstName" Label="First Name" Placeholder="First name"
+                          Required="true" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudTextField @bind-Value="_form.LastName" Label="Last Name" Placeholder="Last name"
+                          Required="true" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudTextField @bind-Value="_form.WorkEmail" Label="Work Email" InputType="InputType.Email"
+                          Placeholder="work@example.com" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+
+            <MudAutocomplete T="OfficeReferenceDto" Label="Office" @bind-Value="_form.Office"
+                             SearchFunc="@SearchOffices" ToStringFunc="@(o => o?.Name)" ResetValueOnEmptyText="true"
+                             CoerceText="true" CoerceValue="true" Required="true" Placeholder="Search office..."
+                             Clearable="true" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+
+            <MudAutocomplete T="DepartmentReferenceDto" Label="Department" @bind-Value="_form.Department"
+                             SearchFunc="@SearchDepartments" ToStringFunc="@(d => d?.Name)" ResetValueOnEmptyText="true"
+                             CoerceText="true" CoerceValue="true" Required="true" Placeholder="Search department..."
+                             Clearable="true" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+
+            <MudAutocomplete T="PositionReferenceDto" Label="Position" @bind-Value="_form.Position"
+                             SearchFunc="@SearchPositions" ToStringFunc="@(p => p?.Name)" ResetValueOnEmptyText="true"
+                             CoerceText="true" CoerceValue="true" Required="true" Placeholder="Search position..."
+                             Clearable="true" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+
+            <MudAutocomplete T="UserDto" Label="Linked Login Account" @bind-Value="_form.IdentityUser"
+                             SearchFunc="@SearchIdentityUsers"
+                             ToStringFunc="@(u => u == null ? string.Empty : $"{u.FirstName} {u.LastName} ({u.Email})")"
+                             CoerceValue="true" Clearable="true" Placeholder="Search by name or email..."
+                             HelperText="@(_form.IdentityUser != null ? $"Linked: {_form.IdentityUser.FirstName} {_form.IdentityUser.LastName}" : "No account linked")"
+                             Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+
+            <MudCheckBox @bind-Value="_form.IsActive" Label="Active" />
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveEmployee" Disabled="_isLoading">
+            @(_isEdit ? "Update" : "Create")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance Dialog { get; set; } = default!;
+    [Parameter] public EmployeeReferenceDto? Existing { get; set; }
+    [Parameter] public List<OfficeReferenceDto> Offices { get; set; } = new();
+    [Parameter] public List<DepartmentReferenceDto> Departments { get; set; } = new();
+    [Parameter] public List<PositionReferenceDto> Positions { get; set; } = new();
+    [Parameter] public List<EmployeeReferenceDto> AllEmployees { get; set; } = new();
+
+    private EmployeeForm _form = new();
+    private bool _isLoading = false;
+
+    private bool _isEdit => Existing != null;
+
+    public class EmployeeForm
+    {
+        public string EmployeeNumber { get; set; } = string.Empty;
+        public string FirstName { get; set; } = string.Empty;
+        public string LastName { get; set; } = string.Empty;
+        public string? WorkEmail { get; set; }
+        public UserDto? IdentityUser { get; set; }
+        public string? IdentityUserId => IdentityUser?.Id.ToString();
+        public OfficeReferenceDto? Office { get; set; }
+        public DepartmentReferenceDto? Department { get; set; }
+        public PositionReferenceDto? Position { get; set; }
+        public bool IsActive { get; set; } = true;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Existing != null)
+        {
+            UserDto? linkedUser = null;
+            if (!string.IsNullOrWhiteSpace(Existing.IdentityUserId) && Guid.TryParse(Existing.IdentityUserId, out var identityGuid))
+            {
+                try { linkedUser = await IdentityClient.UsersGetAsync(identityGuid); }
+                catch (Exception ex) { Snackbar.Add($"Could not load linked account: {ex.Message}", Severity.Warning); }
+            }
+
+            _form = new EmployeeForm
+            {
+                EmployeeNumber = Existing.EmployeeNumber,
+                FirstName = Existing.FirstName,
+                LastName = Existing.LastName,
+                WorkEmail = Existing.WorkEmail,
+                IdentityUser = linkedUser,
+                IsActive = Existing.IsActive,
+                Office = Offices.FirstOrDefault(o => o.Id == Existing.OfficeId),
+                Department = Departments.FirstOrDefault(d => d.Id == Existing.DepartmentId),
+                Position = Positions.FirstOrDefault(p => p.Id == Existing.PositionId)
+            };
+        }
+    }
+
+    private async Task<IEnumerable<OfficeReferenceDto>> SearchOffices(string value, CancellationToken token)
+    {
+        if (string.IsNullOrEmpty(value)) return Offices;
+        return Offices.Where(x => x.Name.Contains(value, StringComparison.InvariantCultureIgnoreCase));
+    }
+
+    private async Task<IEnumerable<DepartmentReferenceDto>> SearchDepartments(string value, CancellationToken token)
+    {
+        if (string.IsNullOrEmpty(value)) return Departments;
+        return Departments.Where(x => x.Name.Contains(value, StringComparison.InvariantCultureIgnoreCase));
+    }
+
+    private async Task<IEnumerable<PositionReferenceDto>> SearchPositions(string value, CancellationToken token)
+    {
+        if (string.IsNullOrEmpty(value)) return Positions;
+        return Positions.Where(x => x.Name.Contains(value, StringComparison.InvariantCultureIgnoreCase));
+    }
+
+    private async Task<IEnumerable<UserDto>> SearchIdentityUsers(string value, CancellationToken token)
+    {
+        try
+        {
+            var result = await UsersClient.SearchAsync(
+                search: string.IsNullOrWhiteSpace(value) ? null : value,
+                pageSize: 20,
+                cancellationToken: token);
+
+            var items = result?.Items ?? Enumerable.Empty<UserDto>();
+
+            // Exclude users already linked to another employee (keep the current one selectable while editing).
+            var currentLinkedId = Existing?.IdentityUserId;
+            var alreadyLinked = AllEmployees
+                .Where(e => !string.IsNullOrWhiteSpace(e.IdentityUserId)
+                            && e.IdentityUserId != currentLinkedId)
+                .Select(e => e.IdentityUserId!)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            return items.Where(u => !alreadyLinked.Contains(u.Id.ToString()));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"User search failed: {ex.Message}", Severity.Warning);
+            return Enumerable.Empty<UserDto>();
+        }
+    }
+
+    private async Task SaveEmployee()
+    {
+        if (string.IsNullOrWhiteSpace(_form.EmployeeNumber) ||
+            _form.Office == null ||
+            _form.Department == null ||
+            _form.Position == null)
+        {
+            Snackbar.Add("Please fill in all required fields", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            _isLoading = true;
+            if (Existing != null)
+            {
+                var updateCmd = new UpdateEmployeeCommand
+                {
+                    Id = Existing.Id,
+                    EmployeeNumber = _form.EmployeeNumber,
+                    FirstName = _form.FirstName,
+                    LastName = _form.LastName,
+                    WorkEmail = _form.WorkEmail,
+                    IdentityUserId = string.IsNullOrWhiteSpace(_form.IdentityUserId) ? null : _form.IdentityUserId.Trim(),
+                    OfficeId = _form.Office.Id,
+                    DepartmentId = _form.Department.Id,
+                    PositionId = _form.Position.Id,
+                    IsActive = _form.IsActive
+                };
+                await MasterDataClient.EmployeesPutAsync(Existing.Id, updateCmd);
+                Snackbar.Add("Employee updated", Severity.Success);
+            }
+            else
+            {
+                var createCmd = new CreateEmployeeCommand
+                {
+                    EmployeeNumber = _form.EmployeeNumber,
+                    FirstName = _form.FirstName,
+                    LastName = _form.LastName,
+                    WorkEmail = _form.WorkEmail,
+                    IdentityUserId = string.IsNullOrWhiteSpace(_form.IdentityUserId) ? null : _form.IdentityUserId.Trim(),
+                    OfficeId = _form.Office.Id,
+                    DepartmentId = _form.Department.Id,
+                    PositionId = _form.Position.Id,
+                    IsActive = _form.IsActive
+                };
+                await MasterDataClient.EmployeesPostAsync(createCmd);
+                Snackbar.Add("Employee created", Severity.Success);
+            }
+
+            Dialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private void Cancel() => Dialog.Cancel();
+}

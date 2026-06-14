@@ -205,7 +205,7 @@
                    HorizontalOptions="Center"
                    HorizontalTextAlignment="Center"
                    Margin="24,28,24,8" />
-            <Label Text="Version 1.0"
+            <Label Text="{Binding AppVersion}"
                    FontSize="{StaticResource VersionFontSize}"
                    TextColor="{StaticResource Gray300}"
                    HorizontalOptions="Center"

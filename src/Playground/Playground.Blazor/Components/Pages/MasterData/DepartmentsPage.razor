@@ -13,62 +13,28 @@
 
 <AMISPageHeader Title="Departments" Description="Manage departments">
     <ActionContent>
-        <MudStack Row="true" Spacing="2" Style="width: 100%; max-width: 400px;">
+        <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Style="width: 100%; max-width: 560px;">
             <MudTextField @bind-Value="_searchKeyword" Label="Search" Placeholder="Search departments..."
                           DebounceInterval="300" OnDebounceIntervalElapsed="@(async () => await SearchDepartments())"
                           Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
-            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" OnClick="SearchDepartments">
+            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" OnClick="SearchDepartments" Disabled="_isLoading">
                 Search
             </MudButton>
+            @if (_canCreate)
+            {
+                <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Secondary"
+                           StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateDialog">
+                    New
+                </MudButton>
+            }
         </MudStack>
     </ActionContent>
 </AMISPageHeader>
 
 <div class="mt-4">
     <MudGrid Spacing="2">
-        <!-- Create/Edit Form -->
-        @if (_canCreate || _canUpdate)
-        {
-        <MudItem xs="12" sm="6" md="4" Style="min-height: 100%;">
-            <MudCard Class="AMIS-card">
-                <MudCardContent>
-                    <MudText Typo="Typo.h6" Class="mb-3">@(EditingDepartment != null ? "Edit Department" : "Create Department")</MudText>
-                    <MudStack Spacing="3">
-                        <MudTextField @bind-Value="_form.Code" Label="Code" Placeholder="Department code"
-                                      Required="true" />
-                        <MudTextField @bind-Value="_form.Name" Label="Name" Placeholder="Department name"
-                                      Required="true" />
-                        <MudTextField @bind-Value="_form.Description" Label="Description"
-                                      Placeholder="Department description" Lines="2" />
-                        <MudTextField @bind-Value="_form.FundCluster" Label="Fund Cluster"
-                                      Placeholder="e.g. GENERAL OPERATING FUND" MaxLength="100" />
-                        <MudTextField @bind-Value="_form.ResponsibilityCenterCode" Label="Responsibility Center Code (RCC)"
-                                      Placeholder="e.g. 07 001 0300000" MaxLength="50" />
-                        <MudTextField @bind-Value="_form.OfficeCode" Label="Owner Office Code"
-                                      Placeholder="e.g. 100, NDO (leave blank for shared)" MaxLength="8"
-                                      Disabled="@(EditingDepartment != null)"
-                                      HelperText="@(EditingDepartment != null ? "Cannot be changed after creation" : string.Empty)" />
-                        <MudCheckBox @bind-Value="_form.IsActive"
-                                     Label="Active" />
-
-                        <MudStack Row="true" Spacing="2" Class="mt-4">
-                            <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
-                                       OnClick="SaveDepartment" Disabled="_isLoading">
-                                @(EditingDepartment != null ? "Update" : "Create")
-                            </MudButton>
-                            <MudButton Variant="Variant.Outlined" Color="Color.Default" FullWidth="true"
-                                       OnClick="ResetForm">
-                                Clear
-                            </MudButton>
-                        </MudStack>
-                    </MudStack>
-                </MudCardContent>
-            </MudCard>
-        </MudItem>
-        }
-
         <!-- Departments List -->
-        <MudItem xs="12" sm="6" md="8">
+        <MudItem xs="12">
             <MudCard Class="AMIS-card">
                 <MudCardContent>
                     <MudStack Row="true" Spacing="1" Class="mb-3" AlignItems="AlignItems.Center">
@@ -104,7 +70,7 @@
                                                     {
                                                         <MudTooltip Text="Edit department">
                                                             <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
-                                                                           Color="Color.Primary" OnClick="@(() => EditDepartment(department))" />
+                                                                           Color="Color.Primary" OnClick="@(() => OpenEditDialog(department))" />
                                                         </MudTooltip>
                                                     }
                                                     @if (_canDelete)
@@ -144,8 +110,6 @@
 </div>
 
 @code {
-    private DepartmentForm _form = new();
-    private AMIS.Playground.Blazor.ApiClient.DepartmentReferenceDto? EditingDepartment { get; set; }
     private List<AMIS.Playground.Blazor.ApiClient.DepartmentReferenceDto> _departments = new();
     private List<AMIS.Playground.Blazor.ApiClient.DepartmentReferenceDto> _allDepartments = new();
     private bool _initialized = false;
@@ -162,17 +126,6 @@
     private bool _canCreate => UserProfileState.Permissions.Contains(MasterDataPermissions.Departments.Create);
     private bool _canUpdate => UserProfileState.Permissions.Contains(MasterDataPermissions.Departments.Update);
     private bool _canDelete => UserProfileState.Permissions.Contains(MasterDataPermissions.Departments.Delete);
-
-    public class DepartmentForm
-    {
-        public string Code { get; set; } = string.Empty;
-        public string Name { get; set; } = string.Empty;
-        public string? Description { get; set; }
-        public string? FundCluster { get; set; }
-        public string? ResponsibilityCenterCode { get; set; }
-        public bool IsActive { get; set; } = true;
-        public string? OfficeCode { get; set; }
-    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -276,90 +229,29 @@
         }
     }
 
-    private async Task SaveDepartment()
+    private async Task OpenCreateDialog()
     {
-        if (string.IsNullOrWhiteSpace(_form.Code) || string.IsNullOrWhiteSpace(_form.Name))
+        if (!_canCreate) return;
+
+        var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true, MaxWidth = MaxWidth.Small };
+        var dialog = await DialogService.ShowAsync<DepartmentFormDialog>("Create Department", options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
         {
-            Snackbar.Add("Code and Name are required", Severity.Warning);
-            return;
-        }
-
-        try
-        {
-            if (EditingDepartment != null)
-            {
-                var updateCmd = new UpdateDepartmentCommand
-                {
-                    Id = EditingDepartment.Id,
-                    Code = _form.Code,
-                    Name = _form.Name,
-                    Description = _form.Description,
-                    FundCluster = _form.FundCluster,
-                    ResponsibilityCenterCode = string.IsNullOrWhiteSpace(_form.ResponsibilityCenterCode) ? null : _form.ResponsibilityCenterCode.Trim(),
-                    IsActive = _form.IsActive
-                };
-
-                var updatedDepartment = await MasterDataClient.DepartmentsPutAsync(EditingDepartment.Id, updateCmd);
-                
-                // Update the local department with new values
-                if (updatedDepartment != null)
-                {
-                    EditingDepartment = updatedDepartment;
-                    var departmentIndex = _departments.FindIndex(d => d.Id == updatedDepartment.Id);
-                    if (departmentIndex >= 0)
-                    {
-                        _departments[departmentIndex] = updatedDepartment;
-                    }
-                    StateHasChanged();
-                }
-                
-                Snackbar.Add("Department updated successfully", Severity.Success);
-            }
-            else
-            {
-                var createCmd = new CreateDepartmentCommand
-                {
-                    Code = _form.Code,
-                    Name = _form.Name,
-                    Description = _form.Description,
-                    FundCluster = _form.FundCluster,
-                    ResponsibilityCenterCode = string.IsNullOrWhiteSpace(_form.ResponsibilityCenterCode) ? null : _form.ResponsibilityCenterCode.Trim(),
-                    IsActive = _form.IsActive,
-                    OfficeCode = string.IsNullOrWhiteSpace(_form.OfficeCode) ? null : _form.OfficeCode.Trim()
-                };
-                await MasterDataClient.DepartmentsPostAsync(createCmd);
-                Snackbar.Add("Department created successfully", Severity.Success);
-            }
-
             await LoadDepartments();
-            ResetForm();
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Failed to save department: {ex.Message}", Severity.Error);
         }
     }
 
-    private async Task EditDepartment(AMIS.Playground.Blazor.ApiClient.DepartmentReferenceDto department)
+    private async Task OpenEditDialog(AMIS.Playground.Blazor.ApiClient.DepartmentReferenceDto department)
     {
-        EditingDepartment = department;
-        _form = new DepartmentForm
+        var parameters = new DialogParameters { ["Existing"] = department };
+        var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true, MaxWidth = MaxWidth.Small };
+        var dialog = await DialogService.ShowAsync<DepartmentFormDialog>($"Edit {department.Name}", parameters, options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
         {
-            Code = department.Code,
-            Name = department.Name,
-            Description = department.Description,
-            FundCluster = department.FundCluster ?? string.Empty,
-            ResponsibilityCenterCode = department.ResponsibilityCenterCode ?? string.Empty,
-            IsActive = department.IsActive,
-            OfficeCode = department.OfficeCode
-        };
-        await InvokeAsync(StateHasChanged);
-    }
-
-    private void ResetForm()
-    {
-        _form = new();
-        EditingDepartment = null;
+            await LoadDepartments();
+        }
     }
 
     private async Task DeleteDepartment(Guid id)

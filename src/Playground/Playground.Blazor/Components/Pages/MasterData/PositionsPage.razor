@@ -13,58 +13,28 @@
 
 <AMISPageHeader Title="Positions" Description="Manage positions">
     <ActionContent>
-        <MudStack Row="true" Spacing="2" Style="width: 100%; max-width: 400px;">
+        <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Style="width: 100%; max-width: 560px;">
             <MudTextField @bind-Value="_searchKeyword" Label="Search" Placeholder="Search positions..."
                           DebounceInterval="300" OnDebounceIntervalElapsed="@(async () => await SearchPositions())"
                           Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
-            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" OnClick="SearchPositions">
+            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" OnClick="SearchPositions" Disabled="_isLoading">
                 Search
             </MudButton>
+            @if (_canCreate)
+            {
+                <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Secondary"
+                           StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateDialog">
+                    New
+                </MudButton>
+            }
         </MudStack>
     </ActionContent>
 </AMISPageHeader>
 
 <div class="mt-4">
     <MudGrid Spacing="2">
-        <!-- Create/Edit Form -->
-        @if (_canCreate || _canUpdate)
-        {
-        <MudItem xs="12" sm="6" md="4" Style="min-height: 100%;">
-            <MudCard Class="AMIS-card">
-                <MudCardContent>
-                    <MudText Typo="Typo.h6" Class="mb-3">@(EditingPosition != null ? "Edit Position" : "Create Position")</MudText>
-                    <MudStack Spacing="3">
-                        <MudTextField @bind-Value="_form.Code" Label="Code" Placeholder="Position code"
-                                      Required="true" />
-                        <MudTextField @bind-Value="_form.Name" Label="Name" Placeholder="Position name"
-                                      Required="true" />
-                        <MudTextField @bind-Value="_form.Description" Label="Description"
-                                      Placeholder="Position description" Lines="2" />
-                        <MudTextField @bind-Value="_form.OfficeCode" Label="Owner Office Code"
-                                      Placeholder="e.g. 100, NDO (leave blank for shared)" MaxLength="8"
-                                      Disabled="@(EditingPosition != null)"
-                                      HelperText="@(EditingPosition != null ? "Cannot be changed after creation" : string.Empty)" />
-                        <MudCheckBox @bind-Value="_form.IsActive"
-                                     Label="Active" />
-
-                        <MudStack Row="true" Spacing="2" Class="mt-4">
-                            <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
-                                       OnClick="SavePosition" Disabled="_isLoading">
-                                @(EditingPosition != null ? "Update" : "Create")
-                            </MudButton>
-                            <MudButton Variant="Variant.Outlined" Color="Color.Default" FullWidth="true"
-                                       OnClick="ResetForm">
-                                Clear
-                            </MudButton>
-                        </MudStack>
-                    </MudStack>
-                </MudCardContent>
-            </MudCard>
-        </MudItem>
-        }
-
         <!-- Positions List -->
-        <MudItem xs="12" sm="6" md="8">
+        <MudItem xs="12">
             <MudCard Class="AMIS-card">
                 <MudCardContent>
                     <MudStack Row="true" Spacing="1" Class="mb-3" AlignItems="AlignItems.Center">
@@ -98,7 +68,7 @@
                                                     {
                                                         <MudTooltip Text="Edit position">
                                                             <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
-                                                                           Color="Color.Primary" OnClick="@(() => EditPosition(position))" />
+                                                                           Color="Color.Primary" OnClick="@(() => OpenEditDialog(position))" />
                                                         </MudTooltip>
                                                     }
                                                     @if (_canDelete)
@@ -138,8 +108,6 @@
 </div>
 
 @code {
-    private PositionForm _form = new();
-    private AMIS.Playground.Blazor.ApiClient.PositionReferenceDto? EditingPosition { get; set; }
     private List<AMIS.Playground.Blazor.ApiClient.PositionReferenceDto> _positions = new();
     private List<AMIS.Playground.Blazor.ApiClient.PositionReferenceDto> _allPositions = new();
     private bool _initialized = false;
@@ -156,15 +124,6 @@
     private bool _canCreate => UserProfileState.Permissions.Contains(MasterDataPermissions.Positions.Create);
     private bool _canUpdate => UserProfileState.Permissions.Contains(MasterDataPermissions.Positions.Update);
     private bool _canDelete => UserProfileState.Permissions.Contains(MasterDataPermissions.Positions.Delete);
-
-    public class PositionForm
-    {
-        public string Code { get; set; } = string.Empty;
-        public string Name { get; set; } = string.Empty;
-        public string? Description { get; set; }
-        public bool IsActive { get; set; } = true;
-        public string? OfficeCode { get; set; }
-    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -268,85 +227,29 @@
         }
     }
 
-    private async Task SavePosition()
+    private async Task OpenCreateDialog()
     {
-        if (string.IsNullOrWhiteSpace(_form.Code) || string.IsNullOrWhiteSpace(_form.Name))
+        if (!_canCreate) return;
+
+        var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true, MaxWidth = MaxWidth.Small };
+        var dialog = await DialogService.ShowAsync<PositionFormDialog>("Create Position", options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
         {
-            Snackbar.Add("Code and Name are required", Severity.Warning);
-            return;
-        }
-
-        try
-        {
-            if (EditingPosition != null)
-            {
-
-                var updateCmd = new UpdatePositionCommand
-                {
-                    Id = EditingPosition.Id,
-                    Code = _form.Code,
-                    Name = _form.Name,
-                    Description = _form.Description,
-                    IsActive = _form.IsActive
-                };
-
-                var updatedPosition = await MasterDataClient.PositionsPutAsync(EditingPosition.Id, updateCmd);
-                
-                // Update the local position with new values
-                if (updatedPosition != null)
-                {
-                    EditingPosition = updatedPosition;
-                    var positionIndex = _positions.FindIndex(p => p.Id == updatedPosition.Id);
-                    if (positionIndex >= 0)
-                    {
-                        _positions[positionIndex] = updatedPosition;
-                    }
-                    StateHasChanged();
-                }
-                
-                Snackbar.Add("Position updated successfully", Severity.Success);
-            }
-            else
-            {
-                var createCmd = new CreatePositionCommand
-                {
-                    Code = _form.Code,
-                    Name = _form.Name,
-                    Description = _form.Description,
-                    IsActive = _form.IsActive,
-                    OfficeCode = string.IsNullOrWhiteSpace(_form.OfficeCode) ? null : _form.OfficeCode.Trim()
-                };
-                await MasterDataClient.PositionsPostAsync(createCmd);
-                Snackbar.Add("Position created successfully", Severity.Success);
-            }
-
             await LoadPositions();
-            ResetForm();
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Failed to save position: {ex.Message}", Severity.Error);
         }
     }
 
-    private async Task EditPosition(AMIS.Playground.Blazor.ApiClient.PositionReferenceDto position)
+    private async Task OpenEditDialog(AMIS.Playground.Blazor.ApiClient.PositionReferenceDto position)
     {
-        EditingPosition = position;
-        _form = new PositionForm
+        var parameters = new DialogParameters { ["Existing"] = position };
+        var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true, MaxWidth = MaxWidth.Small };
+        var dialog = await DialogService.ShowAsync<PositionFormDialog>($"Edit {position.Name}", parameters, options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
         {
-            Code = position.Code,
-            Name = position.Name,
-            Description = position.Description,
-            IsActive = position.IsActive,
-            OfficeCode = position.OfficeCode
-        };
-        await InvokeAsync(StateHasChanged);
-    }
-
-    private void ResetForm()
-    {
-        _form = new();
-        EditingPosition = null;
+            await LoadPositions();
+        }
     }
 
     private async Task DeletePosition(Guid id)

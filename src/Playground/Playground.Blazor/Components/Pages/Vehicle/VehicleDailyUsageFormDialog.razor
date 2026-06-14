@@ -1,0 +1,210 @@
+@using AMIS.Modules.Vehicle.Contracts.v1.Vehicles
+@inject IVehicleClient VehicleClient
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="2">
+            <MudText Typo="Typo.subtitle2">@($"{Vehicle.PlateNumber} - {Vehicle.Make} {Vehicle.Model}")</MudText>
+
+            <MudDatePicker Label="Date" Date="_entryDate" DateChanged="OnDateChanged" Variant="Variant.Outlined"
+                           Dense="true" Margin="Margin.Dense" DateFormat="yyyy-MM-dd" />
+            <MudNumericField T="int" Label="Odometer Start" @bind-Value="_odometerStart"
+                             Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Min="0" Disabled="_isOdometerStartLocked"
+                             HelperText="@(_isOdometerStartLocked ? "Carried forward from last record." : null)" />
+            <MudNumericField T="int" Label="Odometer End" @bind-Value="_odometerEnd"
+                             Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Min="0" Immediate="true"
+                             Error="@HasOdometerValidationError" ErrorText="@OdometerValidationMessage"
+                             HelperText="Must be = Odometer Start." />
+            <MudNumericField T="decimal" Label="Fuel (Liters)" @bind-Value="_fuelLiters"
+                             Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Min="0" Step="0.001m" />
+            <MudNumericField T="decimal" Label="Fuel Cost (&#8369;)" @bind-Value="_fuelCost"
+                             Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Min="0" Step="0.01m" />
+            <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+                <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">Distance (auto): @ComputedDistanceKm.ToString("N0") km</MudChip>
+                <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined">km/L (auto): @ComputedKmPerLiter.ToString("N2")</MudChip>
+            </MudStack>
+            <MudTextField Label="Destination" @bind-Value="_destination" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudTextField Label="Remarks" @bind-Value="_remarks" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Lines="2" />
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Save"
+                   Disabled="_busy || HasOdometerValidationError">
+            @(_existsForCurrentDate ? "Update Daily Record" : "Save Daily Record")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance Dialog { get; set; } = default!;
+    [Parameter] public VehicleDto Vehicle { get; set; } = default!;
+
+    private bool _busy;
+    private DateTime? _entryDate = DateTime.Today;
+    private int _odometerStart;
+    private int _odometerEnd;
+    private bool _isOdometerStartLocked;
+    private decimal _fuelLiters;
+    private decimal _fuelCost;
+    private string? _destination;
+    private string? _remarks;
+    private bool _existsForCurrentDate;
+
+    private bool HasOdometerValidationError => _odometerEnd < _odometerStart;
+    private int ComputedDistanceKm => Math.Max(0, _odometerEnd - _odometerStart);
+    private decimal ComputedKmPerLiter => _fuelLiters > 0 ? Math.Round(ComputedDistanceKm / _fuelLiters, 4) : 0m;
+    private string OdometerValidationMessage => "End reading cannot be less than start reading.";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await SyncOdometerStartAsync();
+        await RefreshExistsForCurrentDateAsync();
+    }
+
+    private async Task OnDateChanged(DateTime? date)
+    {
+        _entryDate = date;
+        await RefreshExistsForCurrentDateAsync();
+    }
+
+    private async Task SyncOdometerStartAsync()
+    {
+        var latestResult = await VehicleClient.SearchVehicleDailyUsageAsync(new SearchVehicleDailyUsageQuery
+        {
+            VehicleId = Vehicle.Id,
+            PageNumber = 1,
+            PageSize = 1
+        });
+
+        var latest = latestResult.Items?.FirstOrDefault();
+        if (latest is null)
+        {
+            _isOdometerStartLocked = false;
+            return;
+        }
+
+        // Carry forward from latest Odometer End + 1 for the selected vehicle.
+        _isOdometerStartLocked = true;
+        _odometerStart = latest.OdometerEnd + 1;
+        _entryDate = latest.Date.ToDateTime(TimeOnly.MinValue).AddDays(1);
+
+        if (_odometerEnd < _odometerStart)
+        {
+            _odometerEnd = _odometerStart;
+        }
+    }
+
+    private async Task RefreshExistsForCurrentDateAsync()
+    {
+        _existsForCurrentDate = await GetExistingForDateAsync() is not null;
+    }
+
+    private async Task<VehicleDailyUsageDto?> GetExistingForDateAsync()
+    {
+        if (!_entryDate.HasValue)
+        {
+            return null;
+        }
+
+        var entryDate = DateOnly.FromDateTime(_entryDate.Value.Date);
+        var result = await VehicleClient.SearchVehicleDailyUsageAsync(new SearchVehicleDailyUsageQuery
+        {
+            VehicleId = Vehicle.Id,
+            DateFrom = entryDate,
+            DateTo = entryDate,
+            PageNumber = 1,
+            PageSize = 1
+        });
+
+        return result.Items?.FirstOrDefault();
+    }
+
+    private async Task Save()
+    {
+        if (!_entryDate.HasValue)
+        {
+            return;
+        }
+
+        if (HasOdometerValidationError)
+        {
+            Snackbar.Add(OdometerValidationMessage, Severity.Warning);
+            return;
+        }
+
+        var entryDate = DateOnly.FromDateTime(_entryDate.Value.Date);
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        var existingForDate = await GetExistingForDateAsync();
+
+        if (existingForDate is not null && entryDate != today)
+        {
+            Snackbar.Add("A record already exists for this date. Only today's record can be edited.", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            _busy = true;
+
+            if (existingForDate is not null)
+            {
+                var update = new UpdateVehicleDailyUsageCommand(
+                    existingForDate.Id,
+                    entryDate,
+                    _odometerStart,
+                    _odometerEnd,
+                    _fuelLiters,
+                    _fuelCost,
+                    string.IsNullOrWhiteSpace(_destination) ? null : _destination.Trim(),
+                    string.IsNullOrWhiteSpace(_remarks) ? null : _remarks.Trim());
+
+                await VehicleClient.UpdateVehicleDailyUsageAsync(existingForDate.Id, update);
+                Snackbar.Add("Today's daily usage record updated.", Severity.Success);
+            }
+            else
+            {
+                var create = new CreateVehicleDailyUsageCommand(
+                    Vehicle.Id,
+                    entryDate,
+                    _odometerStart,
+                    _odometerEnd,
+                    _fuelLiters,
+                    _fuelCost,
+                    string.IsNullOrWhiteSpace(_destination) ? null : _destination.Trim(),
+                    string.IsNullOrWhiteSpace(_remarks) ? null : _remarks.Trim());
+
+                await VehicleClient.CreateVehicleDailyUsageAsync(create);
+                Snackbar.Add("Daily usage record saved.", Severity.Success);
+            }
+
+            Dialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(GetFriendlySaveErrorMessage(ex, existingForDate is not null), Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private string GetFriendlySaveErrorMessage(Exception ex, bool recordExists)
+    {
+        if (HasOdometerValidationError)
+        {
+            return "Odometer End cannot be less than Odometer Start.";
+        }
+
+        if (recordExists)
+        {
+            return "A record already exists for this date. Choose another date, or update today's record only.";
+        }
+
+        return $"Failed to save record: {ex.Message}";
+    }
+
+    private void Cancel() => Dialog.Cancel();
+}

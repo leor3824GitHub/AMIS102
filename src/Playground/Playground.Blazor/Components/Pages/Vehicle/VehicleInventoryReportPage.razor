@@ -1,13 +1,9 @@
 @page "/vehicle/reports/inventory"
 @using AMIS.Modules.Vehicle.Contracts.v1.Vehicles
-@using AMIS.Modules.MasterData.Contracts.v1.ReportSignatories
 @using AMIS.Playground.Blazor.ApiClient
-@using System.Globalization
 @using System.Text
 @inherits ComponentBase
 @inject IVehicleClient VehicleClient
-@inject IReportSignatoryClient SignatoryClient
-@inject IOrganizationProfileState OrgProfileState
 @inject ISnackbar Snackbar
 @inject IJSRuntime JS
 @inject IDialogService DialogService
@@ -163,121 +159,7 @@
     }
 </div>
 
-@if (_items.Count > 0)
-{
-    <div class="vir-page" id="print-area">
-
-        <!-- Header -->
-        @{
-            var _org = OrgProfileState.Profile;
-        }
-        <div class="vir-title-block">
-            <div>@(_org?.Name ?? "")</div>
-            @if (!string.IsNullOrWhiteSpace(_org?.Address))
-            {
-                <div>@_org.Address</div>
-            }
-            <div class="vir-report-title">INVENTORY OF MOTOR VEHICLES</div>
-            <div class="vir-asof">as of @_asOfDate?.ToString("MMMM d, yyyy", CultureInfo.InvariantCulture)</div>
-        </div>
-
-        <!-- Table -->
-        <table class="vir-table">
-            <thead>
-                <tr>
-                    <th rowspan="3" style="width:32px">QTY</th>
-                    <th rowspan="3">DESCRIPTION</th>
-                    <th rowspan="3" style="width:60px">PLATE<br/>NUMBER</th>
-                    <th colspan="3" class="spec-group" style="background:#dde4f0">SPECIFICATION</th>
-                    <th colspan="3" class="acq-group" style="background:#d8f0d8">ACQUISITION</th>
-                    <th rowspan="3" style="width:80px">RUNNING<br/>CONDITION</th>
-                    <th rowspan="3" style="width:100px">ACCOUNTABLE<br/>OFFICER</th>
-                </tr>
-                <tr>
-                    <th rowspan="2" style="width:70px;background:#dde4f0">VEHICLE TYPE<br/>/ USE</th>
-                    <th rowspan="2" style="width:36px;background:#dde4f0">NO.<br/>CYL</th>
-                    <th rowspan="2" style="width:60px;background:#dde4f0">ENGINE<br/>DISPLACEMENT</th>
-                    <th rowspan="2" style="width:54px;background:#d8f0d8">FUEL<br/>TYPE</th>
-                    <th rowspan="2" style="width:40px;background:#d8f0d8">YEAR</th>
-                    <th rowspan="2" style="width:90px;background:#d8f0d8">COST</th>
-                </tr>
-                <tr></tr>
-            </thead>
-            <tbody>
-                @foreach (var item in _items)
-                {
-                    <tr>
-                        <td class="ctr">@item.Qty</td>
-                        <td class="desc">
-                            <strong>@item.Description.ToUpperInvariant()</strong>
-                            @if (!string.IsNullOrWhiteSpace(item.MotorNumber))
-                            {
-                                <br />@($"MOTOR NO. {item.MotorNumber}")
-                            }
-                            @if (!string.IsNullOrWhiteSpace(item.ChassisNumber))
-                            {
-                                <br />@($"CHASSIS NO. {item.ChassisNumber}")
-                            }
-                            @if (!string.IsNullOrWhiteSpace(item.VehicleClassification))
-                            {
-                                <br />@item.VehicleClassification.ToUpperInvariant()
-                            }
-                        </td>
-                        <td class="ctr">@item.PlateNumber</td>
-                        <td class="ctr">@(item.VehicleUse ?? "—")</td>
-                        <td class="ctr">@(item.NumberOfCylinders?.ToString() ?? "—")</td>
-                        <td class="ctr">@(item.EngineDisplacementCC?.ToString() ?? "—")</td>
-                        <td class="ctr">@(item.FuelType?.ToUpperInvariant() ?? "—")</td>
-                        <td class="ctr">@item.Year</td>
-                        <td class="num">@(item.AcquisitionCost.HasValue ? item.AcquisitionCost.Value.ToString("N2") : "—")</td>
-                        <td class="ctr" style="font-size:10px">@item.RunningCondition</td>
-                        <td class="desc">
-                            @if (!string.IsNullOrWhiteSpace(item.AccountableOfficer))
-                            {
-                                <strong>@item.AccountableOfficer.ToUpperInvariant()</strong>
-                                @if (!string.IsNullOrWhiteSpace(item.AccountableOfficerTitle))
-                                {
-                                    <br />@item.AccountableOfficerTitle
-                                }
-                            }
-                            else
-                            {
-                                <span style="color:#999">—</span>
-                            }
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-
-        <!-- Signature Block -->
-        <div class="vir-signature-section">
-            @if (_signatories.Count > 0)
-            {
-                <div class="vir-signature-grid">
-                    @foreach (var sig in _signatories.Where(s => s.IsActive).OrderBy(s => s.SortOrder))
-                    {
-                        <div>
-                            <div class="vir-signer-label">@sig.Label</div>
-                            <div style="margin-top:24px">
-                                <div class="vir-signer-name">@sig.Name.ToUpperInvariant()</div>
-                                <div class="vir-signer-title">@sig.Title</div>
-                            </div>
-                        </div>
-                    }
-                </div>
-            }
-            else
-            {
-                <div class="no-print" style="color:orange;font-size:11px;margin-top:8px">
-                    No signatories configured. Go to Master Data &rarr; Report Signatories to set them up.
-                </div>
-            }
-        </div>
-
-    </div>
-}
-else if (!_loading)
+@if (!_loading && _items.Count == 0)
 {
     <MudText Typo="Typo.body2" Class="mt-4 ml-2 no-print" Color="Color.Secondary">
         No vehicles found. Click Generate to load the report.
@@ -287,7 +169,6 @@ else if (!_loading)
 @code {
     private bool _loading;
     private List<MotorVehicleInventoryItemDto> _items = [];
-    private List<ReportSignatoryDto> _signatories = [];
     private DateTime? _asOfDate = DateTime.Today;
     private string? _statusFilter;
     private const string ReportKey = "quest-vehicle-inventory";
@@ -304,15 +185,6 @@ else if (!_loading)
         try
         {
             _items = await VehicleClient.GetMotorVehicleInventoryAsync(_statusFilter);
-
-            try
-            {
-                _signatories = await SignatoryClient.GetReportSignatoriesAsync("VehicleInventory");
-            }
-            catch
-            {
-                Snackbar.Add("Could not load report signatories.", Severity.Warning);
-            }
         }
         catch (Exception ex)
         {

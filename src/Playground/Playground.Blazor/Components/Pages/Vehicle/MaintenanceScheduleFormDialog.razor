@@ -1,0 +1,104 @@
+@using AMIS.Modules.Vehicle.Contracts.v1.Maintenance
+@using AMIS.Modules.Vehicle.Contracts.v1.Vehicles
+@inject IVehicleClient VehicleClient
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="2">
+            <MudAutocomplete T="VehicleDto" @bind-Value="_form.SelectedVehicle" Label="Vehicle *"
+                             SearchFunc="@SearchVehicles" ToStringFunc="@(v => v == null ? null : $"{v.PlateNumber} - {v.Make} {v.Model} ({v.Year})")"
+                             Required="true" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudTextField @bind-Value="_form.MaintenanceType" Label="Maintenance Type" Required="true"
+                          Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudTextField @bind-Value="_form.Description" Label="Description"
+                          Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudNumericField @bind-Value="_form.IntervalDays" Label="Interval Days" Min="0"
+                             Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudNumericField @bind-Value="_form.IntervalMileage" Label="Interval Mileage" Min="0"
+                             Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudDatePicker @bind-Date="_form.InitialDueDate" Label="Initial Due Date"
+                           Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudNumericField @bind-Value="_form.InitialDueMileage" Label="Initial Due Mileage" Min="0"
+                             Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Create" Disabled="_isLoading">Create</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance Dialog { get; set; } = default!;
+
+    private ScheduleForm _form = new();
+    private bool _isLoading;
+
+    public sealed class ScheduleForm
+    {
+        public VehicleDto? SelectedVehicle { get; set; }
+        public string MaintenanceType { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public int? IntervalDays { get; set; }
+        public int? IntervalMileage { get; set; }
+        public DateTime? InitialDueDate { get; set; }
+        public int? InitialDueMileage { get; set; }
+    }
+
+    private async Task<IEnumerable<VehicleDto>> SearchVehicles(string value, CancellationToken ct)
+    {
+        try
+        {
+            var result = await VehicleClient.SearchVehiclesAsync(new SearchVehiclesQuery
+            {
+                Keyword = string.IsNullOrWhiteSpace(value) ? null : value,
+                PageNumber = 1,
+                PageSize = 20
+            }, ct);
+
+            return result.Items ?? [];
+        }
+        catch (OperationCanceledException)
+        {
+            return [];
+        }
+    }
+
+    private async Task Create()
+    {
+        if (_form.SelectedVehicle is null || string.IsNullOrWhiteSpace(_form.MaintenanceType))
+        {
+            Snackbar.Add("Vehicle and maintenance type are required.", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            _isLoading = true;
+            await VehicleClient.CreateMaintenanceScheduleAsync(new CreateMaintenanceScheduleRequest(
+                _form.SelectedVehicle.Id,
+                _form.MaintenanceType,
+                _form.Description,
+                _form.IntervalDays,
+                _form.IntervalMileage,
+                ToDateOnly(_form.InitialDueDate),
+                _form.InitialDueMileage));
+
+            Snackbar.Add("Schedule created.", Severity.Success);
+            Dialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Create failed: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private static DateOnly? ToDateOnly(DateTime? date) => date.HasValue ? DateOnly.FromDateTime(date.Value) : null;
+
+    private void Cancel() => Dialog.Cancel();
+}

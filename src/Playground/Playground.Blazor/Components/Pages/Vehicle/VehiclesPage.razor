@@ -30,6 +30,11 @@
                 Search
             </MudButton>
             <MudButton Variant="Variant.Outlined" Color="Color.Default" Size="Size.Small" OnClick="ClearFilters" Disabled="_busy">Clear</MudButton>
+            @if (_canCreate)
+            {
+                <MudButton Variant="Variant.Filled" Color="Color.Secondary" Size="Size.Small"
+                           StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateDialog">New</MudButton>
+            }
         </MudStack>
     </ActionContent>
 </AMISPageHeader>
@@ -44,45 +49,7 @@
     </MudStack>
 
     <MudGrid Spacing="2">
-        @if (_canCreate)
-        {
-        <MudItem xs="12" md="4">
-            <MudCard Class="AMIS-card">
-                <MudCardContent>
-                    <MudText Typo="Typo.h6" Class="mb-3">Create Vehicle</MudText>
-                    <MudStack Spacing="2">
-                        <MudTextField @bind-Value="_create.PlateNumber" Label="Plate Number" Required="true" Dense="true" Margin="Margin.Dense" />
-                        <MudTextField @bind-Value="_create.Make" Label="Make" Required="true" Dense="true" Margin="Margin.Dense" />
-                        <MudTextField @bind-Value="_create.Model" Label="Model" Required="true" Dense="true" Margin="Margin.Dense" />
-                        <MudNumericField @bind-Value="_create.Year" Label="Year" Min="1900" Max="2100" Required="true" Dense="true" Margin="Margin.Dense" />
-                        <MudSelect T="string" @bind-Value="_create.Type" Label="Type" Required="true" Dense="true" Margin="Margin.Dense">
-                            @foreach (var vehicleType in VehicleTypes)
-                            {
-                                <MudSelectItem Value="@vehicleType">@vehicleType</MudSelectItem>
-                            }
-                        </MudSelect>
-                        <MudNumericField @bind-Value="_create.Odometer" Label="Initial Odometer" Min="0" Dense="true" Margin="Margin.Dense" />
-
-                        <MudDivider Class="my-2" />
-                        <MudText Typo="Typo.caption" Class="font-weight-bold">Technical Specifications</MudText>
-
-                        <MudTextField @bind-Value="_create.MotorNumber" Label="Motor Number" Dense="true" Margin="Margin.Dense" />
-                        <MudTextField @bind-Value="_create.ChassisNumber" Label="Chassis Number" Dense="true" Margin="Margin.Dense" />
-                        <MudNumericField @bind-Value="_create.NumberOfCylinders" Label="No. of Cylinders" Min="1" Dense="true" Margin="Margin.Dense" />
-                        <MudNumericField @bind-Value="_create.EngineDisplacementCC" Label="Engine Displacement (CC)" Min="0" Dense="true" Margin="Margin.Dense" />
-                        <MudTextField @bind-Value="_create.FuelType" Label="Fuel Type" Placeholder="e.g., Diesel, Gasoline, Hybrid" Dense="true" Margin="Margin.Dense" />
-                        <MudTextField @bind-Value="_create.VehicleUse" Label="Vehicle Use" Placeholder="e.g., GOV'T-UV, GOV'T-MPV" Dense="true" Margin="Margin.Dense" />
-                        <MudNumericField @bind-Value="_create.AcquisitionCost" Label="Acquisition Cost" Min="0" Format="F2" Dense="true" Margin="Margin.Dense" />
-
-                        <MudTextField @bind-Value="_create.Notes" Label="Notes" Lines="2" Dense="true" Margin="Margin.Dense" />
-                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CreateVehicle" Disabled="_busy">Create</MudButton>
-                    </MudStack>
-                </MudCardContent>
-            </MudCard>
-        </MudItem>
-        }
-
-        <MudItem xs="12" md="8">
+        <MudItem xs="12">
             <MudCard Class="AMIS-card">
                 <MudCardContent>
                     <MudText Typo="Typo.h6" Class="mb-2">Vehicle List</MudText>
@@ -154,8 +121,6 @@
     private readonly List<VehicleDto> _vehicles = [];
     private bool _busy;
 
-    private CreateVehicleModel _create = new();
-
     private bool _canCreate => UserProfileState.Permissions.Contains(VehiclePermissions.Vehicles.Create);
     private bool _canUpdate => UserProfileState.Permissions.Contains(VehiclePermissions.Vehicles.Update);
     private bool _canDelete => UserProfileState.Permissions.Contains(VehiclePermissions.Vehicles.Delete);
@@ -190,59 +155,16 @@
         }
     }
 
-    private async Task CreateVehicle()
+    private async Task OpenCreateDialog()
     {
-        if (string.IsNullOrWhiteSpace(_create.PlateNumber) || string.IsNullOrWhiteSpace(_create.Make) || string.IsNullOrWhiteSpace(_create.Model) || string.IsNullOrWhiteSpace(_create.Type))
-        {
-            Snackbar.Add("Plate number, make, model, and type are required.", Severity.Warning);
-            return;
-        }
+        if (!_canCreate) return;
 
-        try
+        var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true, MaxWidth = MaxWidth.Small };
+        var dialog = await DialogService.ShowAsync<VehicleFormDialog>("Create Vehicle", options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
         {
-            _busy = true;
-            await VehicleClient.CreateVehicleAsync(new CreateVehicleCommand(
-                _create.PlateNumber,
-                _create.Make,
-                _create.Model,
-                _create.Year,
-                _create.Type,
-                _create.Odometer,
-                _create.Notes,
-                _create.MotorNumber,
-                _create.ChassisNumber,
-                _create.NumberOfCylinders,
-                _create.EngineDisplacementCC,
-                _create.FuelType,
-                _create.VehicleUse,
-                _create.AcquisitionCost));
-
-            Snackbar.Add("Vehicle created.", Severity.Success);
-            _create = new();
             await LoadVehicles();
-        }
-        catch (ApiException apiEx) when (apiEx.StatusCode == StatusCodes.Status400BadRequest)
-        {
-            var validationMessages = ExtractValidationMessages(apiEx.Response);
-            if (validationMessages.Count > 0)
-            {
-                foreach (var message in validationMessages)
-                {
-                    Snackbar.Add(message, Severity.Warning);
-                }
-            }
-            else
-            {
-                Snackbar.Add("Vehicle creation failed validation. Please check your inputs and try again.", Severity.Warning);
-            }
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Create failed: {ex.Message}", Severity.Error);
-        }
-        finally
-        {
-            _busy = false;
         }
     }
 
@@ -340,66 +262,5 @@
         _ => status
     };
 
-    private static readonly string[] VehicleTypes = ["Other", "Sedan", "SUV", "Van", "Truck", "Motorcycle", "Bus", "PickUp", "MPV", "Hatchback", "Crossover", "Wagon", "Minibus"];
-
-    private static List<string> ExtractValidationMessages(string? response)
-    {
-        if (string.IsNullOrWhiteSpace(response))
-        {
-            return [];
-        }
-
-        try
-        {
-            using var json = System.Text.Json.JsonDocument.Parse(response);
-            if (!json.RootElement.TryGetProperty("errors", out var errorsElement) ||
-                errorsElement.ValueKind != System.Text.Json.JsonValueKind.Object)
-            {
-                return [];
-            }
-
-            var messages = new List<string>();
-            foreach (var property in errorsElement.EnumerateObject())
-            {
-                if (property.Value.ValueKind != System.Text.Json.JsonValueKind.Array)
-                {
-                    continue;
-                }
-
-                foreach (var errorItem in property.Value.EnumerateArray())
-                {
-                    var message = errorItem.GetString();
-                    if (!string.IsNullOrWhiteSpace(message))
-                    {
-                        messages.Add(message);
-                    }
-                }
-            }
-
-            return messages;
-        }
-        catch
-        {
-            return [];
-        }
-    }
-
-    private sealed class CreateVehicleModel
-    {
-        public string PlateNumber { get; set; } = string.Empty;
-        public string Make { get; set; } = string.Empty;
-        public string Model { get; set; } = string.Empty;
-        public int Year { get; set; } = DateTime.UtcNow.Year;
-        public string Type { get; set; } = "Sedan";
-        public int Odometer { get; set; }
-        public string? Notes { get; set; }
-        public string? MotorNumber { get; set; }
-        public string? ChassisNumber { get; set; }
-        public int? NumberOfCylinders { get; set; }
-        public int? EngineDisplacementCC { get; set; }
-        public string? FuelType { get; set; }
-        public string? VehicleUse { get; set; }
-        public decimal? AcquisitionCost { get; set; }
-    }
 }
 

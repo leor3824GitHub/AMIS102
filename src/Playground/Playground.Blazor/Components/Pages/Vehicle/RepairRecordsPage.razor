@@ -20,30 +20,7 @@
     </MudStack>
 
     <MudGrid Spacing="2">
-        @if (_canCreate)
-        {
-        <MudItem xs="12" md="4">
-            <MudCard Class="AMIS-card">
-                <MudCardContent>
-                    <MudText Typo="Typo.h6" Class="mb-2">Create Repair</MudText>
-                    <MudStack Spacing="2">
-                        <MudAutocomplete T="VehicleDto" @bind-Value="_create.SelectedVehicle" Label="Vehicle *"
-                                         SearchFunc="@SearchVehicles" ToStringFunc="@(v => v == null ? null : $"{v.PlateNumber} - {v.Make} {v.Model} ({v.Year})")"
-                                         Required="true" />
-                        <MudDatePicker @bind-Date="_create.RepairDate" Label="Repair Date" />
-                        <MudTextField @bind-Value="_create.Description" Label="Description" Required="true" />
-                        <MudNumericField @bind-Value="_create.Cost" Label="Cost" Min="0" />
-                        <MudTextField @bind-Value="_create.VendorName" Label="Vendor" />
-                        <MudTextField @bind-Value="_create.PartsUsed" Label="Parts Used" />
-                        <MudTextField @bind-Value="_create.Notes" Label="Notes" Lines="2" />
-                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Create">Create</MudButton>
-                    </MudStack>
-                </MudCardContent>
-            </MudCard>
-        </MudItem>
-        }
-
-        <MudItem xs="12" md="8">
+        <MudItem xs="12">
             <MudCard Class="AMIS-card">
                 <MudCardContent>
                     <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Class="mb-2">
@@ -61,6 +38,11 @@
                         </MudSelect>
                         <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" OnClick="Load">Search</MudButton>
                         <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Default" OnClick="ClearFilters">Clear</MudButton>
+                        @if (_canCreate)
+                        {
+                            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Secondary"
+                                       StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateDialog">New</MudButton>
+                        }
                     </MudStack>
 
                     <MudTable Items="_repairs" Dense="true" Hover="true" Striped="true">
@@ -114,10 +96,8 @@
 
 @code {
     private readonly List<RepairRecordDto> _repairs = [];
-    private List<VehicleDto> _vehicles = [];
 
     private RepairQueryModel _query = new();
-    private CreateRepairModel _create = new();
 
     private bool _canCreate => UserProfileState.Permissions.Contains(VehiclePermissions.Repairs.Create);
     private bool _canUpdate => UserProfileState.Permissions.Contains(VehiclePermissions.Repairs.Update);
@@ -126,45 +106,12 @@
     protected override async Task OnInitializedAsync()
     {
         UserProfileState.OnProfileChanged += OnProfileChanged;
-        await LoadVehicles();
         await Load();
     }
 
     private void OnProfileChanged() => InvokeAsync(StateHasChanged);
 
     public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
-
-    private async Task LoadVehicles()
-    {
-        try
-        {
-            var result = await VehicleClient.SearchVehiclesAsync(new SearchVehiclesQuery
-            {
-                PageNumber = 1,
-                PageSize = 1000
-            });
-
-            _vehicles.Clear();
-            _vehicles.AddRange(result.Items ?? []);
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Failed to load vehicles: {ex.Message}", Severity.Error);
-        }
-    }
-
-    private async Task<IEnumerable<VehicleDto>> SearchVehicles(string value, CancellationToken ct)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-            return _vehicles;
-
-        var searchValue = value.ToLowerInvariant();
-        return _vehicles.Where(v =>
-            v.PlateNumber.Contains(searchValue, StringComparison.OrdinalIgnoreCase) ||
-            v.Make.Contains(searchValue, StringComparison.OrdinalIgnoreCase) ||
-            v.Model.Contains(searchValue, StringComparison.OrdinalIgnoreCase) ||
-            v.Year.ToString().Contains(searchValue)).ToList();
-    }
 
     private async Task Load()
     {
@@ -188,33 +135,16 @@
         }
     }
 
-    private async Task Create()
+    private async Task OpenCreateDialog()
     {
-        if (_create.SelectedVehicle is null || string.IsNullOrWhiteSpace(_create.Description))
-        {
-            Snackbar.Add("Vehicle and description are required.", Severity.Warning);
-            return;
-        }
+        if (!_canCreate) return;
 
-        try
+        var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true, MaxWidth = MaxWidth.Small };
+        var dialog = await DialogService.ShowAsync<RepairFormDialog>("Create Repair", options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
         {
-            await VehicleClient.CreateRepairAsync(new CreateRepairRecordCommand(
-                _create.SelectedVehicle.Id,
-                new DateTimeOffset(_create.RepairDate ?? DateTime.Today),
-                _create.Description,
-                _create.Cost,
-                _create.VendorName,
-                null,
-                _create.PartsUsed,
-                _create.Notes));
-
-            Snackbar.Add("Repair record created.", Severity.Success);
-            _create = new();
             await Load();
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Create failed: {ex.Message}", Severity.Error);
         }
     }
 
@@ -274,17 +204,6 @@
         public string? VehicleIdText { get; set; }
         public string? Status { get; set; }
         public string? Keyword { get; set; }
-    }
-
-    private sealed class CreateRepairModel
-    {
-        public VehicleDto? SelectedVehicle { get; set; }
-        public DateTime? RepairDate { get; set; } = DateTime.Today;
-        public string Description { get; set; } = string.Empty;
-        public decimal Cost { get; set; }
-        public string? VendorName { get; set; }
-        public string? PartsUsed { get; set; }
-        public string? Notes { get; set; }
     }
 }
 

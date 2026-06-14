@@ -71,4 +71,7 @@
     <PackageReference Include="Xamarin.AndroidX.SavedState.SavedState.Ktx" />
   </ItemGroup>
 
+  <!-- Live auto-incrementing build number (see ..\BuildVersioning.targets) -->
+  <Import Project="..\BuildVersioning.targets" />
+
 </Project>

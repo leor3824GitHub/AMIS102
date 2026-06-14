@@ -6,6 +6,7 @@
 @using AMIS.Playground.Blazor.ApiClient
 @inject IVehicleClient VehicleClient
 @inject ISnackbar Snackbar
+@inject IDialogService DialogService
 @inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="Fuel & Odometer Monitoring"
@@ -30,70 +31,34 @@
                     }
 
                     <MudGrid Spacing="2">
-                        @if (_canRecord)
-                        {
-                        <MudItem xs="12" md="4">
+                        <MudItem xs="12">
                             <MudCard Class="AMIS-card">
                                 <MudCardContent>
-                                    <MudText Typo="Typo.h6" Class="mb-3">Record Daily Usage</MudText>
-                                    <MudStack Spacing="2">
+                                    <MudStack Row="true" Spacing="2" Class="mb-3" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
                                         <MudAutocomplete T="VehicleDto" Label="Vehicle" Value="_selectedVehicle"
                                                          ValueChanged="OnVehicleChanged" SearchFunc="SearchVehicles"
                                                          ToStringFunc="@(v => v is null ? string.Empty : $"{v.PlateNumber} - {v.Make} {v.Model}")"
-                                                         Variant="Variant.Outlined" Clearable="true" />
+                                                         Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Clearable="true" />
+                                        <MudDatePicker Label="From" @bind-Date="_fromDate" Variant="Variant.Outlined"
+                                                       Dense="true" Margin="Margin.Dense" DateFormat="yyyy-MM-dd" />
+                                        <MudDatePicker Label="To" @bind-Date="_toDate" Variant="Variant.Outlined"
+                                                       Dense="true" Margin="Margin.Dense" DateFormat="yyyy-MM-dd" />
+                                        <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" OnClick="LoadData"
+                                                   Disabled="_busy || _selectedVehicle is null">Refresh</MudButton>
+                                        @if (_canRecord)
+                                        {
+                                            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Secondary"
+                                                       StartIcon="@Icons.Material.Filled.Add" OnClick="OpenRecordDialog"
+                                                       Disabled="_busy || _selectedVehicle is null">Record</MudButton>
+                                        }
+                                    </MudStack>
 
-                                        <MudDatePicker Label="Date" @bind-Date="_entryDate" Variant="Variant.Outlined"
-                                                       DateFormat="yyyy-MM-dd" />
-                                        <MudNumericField T="int" Label="Odometer Start" @bind-Value="_odometerStart"
-                                                         Variant="Variant.Outlined" Min="0" Disabled="_isOdometerStartLocked"
-                                                         HelperText="@(_isOdometerStartLocked ? "Carried forward from last record." : null)" />
-                                        <MudNumericField T="int" Label="Odometer End" @bind-Value="_odometerEnd"
-                                                         Variant="Variant.Outlined" Min="0" Immediate="true" Error="@HasOdometerValidationError"
-                                                         ErrorText="@OdometerValidationMessage" HelperText="Must be = Odometer Start." />
-                                        <MudNumericField T="decimal" Label="Fuel (Liters)" @bind-Value="_fuelLiters"
-                                                         Variant="Variant.Outlined" Min="0" Step="0.001m" />
-                                        <MudNumericField T="decimal" Label="Fuel Cost (&#8369;)" @bind-Value="_fuelCost"
-                                                         Variant="Variant.Outlined" Min="0" Step="0.01m" />
-                                        <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
-                                            <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">Distance (auto):
-                                                @ComputedDistanceKm.ToString("N0") km</MudChip>
-                                                <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined">km/L (auto):
-                                                    @ComputedKmPerLiter.ToString("N2")</MudChip>
-                                                </MudStack>
-                                                <MudTextField Label="Destination" @bind-Value="_destination" Variant="Variant.Outlined" />
-                                                <MudTextField Label="Remarks" @bind-Value="_remarks" Variant="Variant.Outlined" Lines="2" />
-
-                                                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveDailyUsage"
-                                                           Disabled="_busy || _selectedVehicle is null || HasOdometerValidationError" FullWidth="true">
-                                                    @(IsEditingTodayRecord() ? "Update Daily Record" : "Save Daily Record")
-                                                </MudButton>
-                                            </MudStack>
-                                        </MudCardContent>
-                                    </MudCard>
-                                </MudItem>
-                                }
-
-                                <MudItem xs="12" md="8">
-                                    <MudCard Class="AMIS-card">
-                                        <MudCardContent>
-                                            <MudStack Row="true" Spacing="2" Class="mb-3" AlignItems="AlignItems.Center">
-                                                <MudDatePicker Label="From" @bind-Date="_fromDate" Variant="Variant.Outlined"
-                                                               Dense="true" Margin="Margin.Dense"
-                                                               DateFormat="yyyy-MM-dd" />
-                                                <MudDatePicker Label="To" @bind-Date="_toDate" Variant="Variant.Outlined"
-                                                               Dense="true" Margin="Margin.Dense"
-                                                               DateFormat="yyyy-MM-dd" />
-                                                <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" OnClick="LoadData"
-                                                           Disabled="_busy || _selectedVehicle is null">Refresh</MudButton>
-                                            </MudStack>
-
-                                            @if (_selectedVehicle is null)
-                                            {
-                                                <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">Select a vehicle on the left to view
-                                                    usage records.</MudAlert>
-                                                }
-                    else
-                                                {
+                                    @if (_selectedVehicle is null)
+                                    {
+                                        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">Select a vehicle above to view usage records.</MudAlert>
+                                    }
+                                    else
+                                    {
                                                     <MudTable T="VehicleDailyUsageDto" Items="_rows" Dense="true" Hover="true" Striped="true"
                                                               Loading="_busy">
                                                         <HeaderContent>
@@ -144,26 +109,12 @@
 @code {
     private bool _busy;
     private VehicleDto? _selectedVehicle;
-    private DateTime? _entryDate = DateTime.Today;
-    private int _odometerStart;
-    private int _odometerEnd;
-    private bool _isOdometerStartLocked;
-    private decimal _fuelLiters;
-    private decimal _fuelCost;
-    private string? _destination;
-    private string? _remarks;
 
     private DateTime? _fromDate = DateTime.Today.AddDays(-30);
     private DateTime? _toDate = DateTime.Today;
 
     private readonly List<VehicleDailyUsageDto> _rows = [];
     private VehicleDailyUsageSummaryDto _summary = new(0, 0, 0m, 0m, 0m, 0m, 0m);
-
-    private bool HasOdometerValidationError => _odometerEnd < _odometerStart;
-    private int ComputedDistanceKm => Math.Max(0, _odometerEnd - _odometerStart);
-    private decimal ComputedKmPerLiter => _fuelLiters > 0 ? Math.Round(ComputedDistanceKm / _fuelLiters, 4) : 0m;
-
-    private string OdometerValidationMessage => "End reading cannot be less than start reading.";
 
     private bool _canCreate => UserProfileState.Permissions.Contains(VehiclePermissions.FuelOdometer.Create);
     private bool _canUpdate => UserProfileState.Permissions.Contains(VehiclePermissions.FuelOdometer.Update);
@@ -210,71 +161,18 @@
         return LoadData();
     }
 
-    private async Task SaveDailyUsage()
+    private async Task OpenRecordDialog()
     {
-        if (_selectedVehicle is null || !_entryDate.HasValue)
+        if (!_canRecord || _selectedVehicle is null)
             return;
 
-        var entryDate = DateOnly.FromDateTime(_entryDate.Value.Date);
-        var today = DateOnly.FromDateTime(DateTime.Today);
-        var existingForDate = _rows.FirstOrDefault(x => x.Date == entryDate);
-
-        try
+        var parameters = new DialogParameters { ["Vehicle"] = _selectedVehicle };
+        var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true, MaxWidth = MaxWidth.Small };
+        var dialog = await DialogService.ShowAsync<VehicleDailyUsageFormDialog>("Record Daily Usage", parameters, options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
         {
-            if (HasOdometerValidationError)
-            {
-                Snackbar.Add(OdometerValidationMessage, Severity.Warning);
-                return;
-            }
-
-            if (existingForDate is not null && entryDate != today)
-            {
-                Snackbar.Add("A record already exists for this date. Only today's record can be edited.", Severity.Warning);
-                return;
-            }
-
-            _busy = true;
-
-            if (existingForDate is not null)
-            {
-                var update = new UpdateVehicleDailyUsageCommand(
-                    existingForDate.Id,
-                    entryDate,
-                    _odometerStart,
-                    _odometerEnd,
-                    _fuelLiters,
-                    _fuelCost,
-                    string.IsNullOrWhiteSpace(_destination) ? null : _destination.Trim(),
-                    string.IsNullOrWhiteSpace(_remarks) ? null : _remarks.Trim());
-
-                await VehicleClient.UpdateVehicleDailyUsageAsync(existingForDate.Id, update);
-                Snackbar.Add("Today's daily usage record updated.", Severity.Success);
-            }
-            else
-            {
-                var create = new CreateVehicleDailyUsageCommand(
-                    _selectedVehicle.Id,
-                    entryDate,
-                    _odometerStart,
-                    _odometerEnd,
-                    _fuelLiters,
-                    _fuelCost,
-                    string.IsNullOrWhiteSpace(_destination) ? null : _destination.Trim(),
-                    string.IsNullOrWhiteSpace(_remarks) ? null : _remarks.Trim());
-
-                await VehicleClient.CreateVehicleDailyUsageAsync(create);
-                Snackbar.Add("Daily usage record saved.", Severity.Success);
-            }
-
             await LoadData();
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add(GetFriendlySaveErrorMessage(ex), Severity.Error);
-        }
-        finally
-        {
-            _busy = false;
         }
     }
 
@@ -310,8 +208,6 @@
                 DateTo = query.DateTo
             };
             _summary = await VehicleClient.GetVehicleDailyUsageSummaryAsync(summaryQuery);
-
-            await SyncOdometerStartAsync();
         }
         catch (Exception ex)
         {
@@ -324,73 +220,10 @@
         }
     }
 
-    private async Task SyncOdometerStartAsync()
-    {
-        if (_selectedVehicle is null)
-        {
-            _isOdometerStartLocked = false;
-            return;
-        }
-
-        var latestResult = await VehicleClient.SearchVehicleDailyUsageAsync(new SearchVehicleDailyUsageQuery
-        {
-            VehicleId = _selectedVehicle.Id,
-            PageNumber = 1,
-            PageSize = 1
-        });
-
-        var latest = latestResult.Items?.FirstOrDefault();
-        if (latest is null)
-        {
-            _isOdometerStartLocked = false;
-            return;
-        }
-
-        // Carry forward from latest Odometer End + 1 for the selected vehicle.
-        var nextStart = latest.OdometerEnd + 1;
-        _isOdometerStartLocked = true;
-        _odometerStart = nextStart;
-        _entryDate = latest.Date.ToDateTime(TimeOnly.MinValue).AddDays(1);
-
-        if (_odometerEnd < _odometerStart)
-        {
-            _odometerEnd = _odometerStart;
-        }
-    }
-
-    private bool IsEditingTodayRecord()
-    {
-        if (!_entryDate.HasValue)
-            return false;
-
-        var selectedDate = DateOnly.FromDateTime(_entryDate.Value.Date);
-        var today = DateOnly.FromDateTime(DateTime.Today);
-
-        return selectedDate == today && _rows.Any(x => x.Date == selectedDate);
-    }
-
-    private string GetFriendlySaveErrorMessage(Exception ex)
-    {
-        if (HasOdometerValidationError)
-            return "Odometer End cannot be less than Odometer Start.";
-
-        if (_entryDate.HasValue)
-        {
-            var selectedDate = DateOnly.FromDateTime(_entryDate.Value.Date);
-            if (_rows.Any(x => x.Date == selectedDate))
-                return "A record already exists for this date. Choose another date, or update today's record only.";
-        }
-
-        return $"Failed to save record: {ex.Message}";
-    }
-
     private void ResetViewForNoVehicle()
     {
         _rows.Clear();
         _summary = new VehicleDailyUsageSummaryDto(0, 0, 0m, 0m, 0m, 0m, 0m);
-        _isOdometerStartLocked = false;
-        _odometerStart = 0;
-        _odometerEnd = 0;
     }
 }
 

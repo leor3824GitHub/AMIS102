@@ -14,63 +14,28 @@
 
 <AMISPageHeader Title="Suppliers" Description="Manage supplier information">
     <ActionContent>
-        <MudStack Row="true" Spacing="2" Style="width: 100%; max-width: 400px;">
+        <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Style="width: 100%; max-width: 560px;">
             <MudTextField @bind-Value="_searchKeyword" Label="Search" Placeholder="Search suppliers..."
                           DebounceInterval="300" OnDebounceIntervalElapsed="@(async () => await SearchSuppliers())"
                           Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
-            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" OnClick="SearchSuppliers">
+            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" OnClick="SearchSuppliers" Disabled="_isLoading">
                 Search
             </MudButton>
+            @if (_canCreate)
+            {
+                <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Secondary"
+                           StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateDialog">
+                    New
+                </MudButton>
+            }
         </MudStack>
     </ActionContent>
 </AMISPageHeader>
 
 <div class="mt-4">
     <MudGrid Spacing="2">
-        <!-- Create/Edit Form -->
-        @if (_canCreate || _canUpdate)
-        {
-        <MudItem xs="12" md="4">
-            <MudCard Class="AMIS-card">
-                <MudCardContent>
-                    <MudText Typo="Typo.h6" Class="mb-3">@(EditingSupplier != null ? "Edit Supplier" : "Add Supplier")</MudText>
-                    <MudStack Spacing="3">
-                        <MudTextField @bind-Value="_form.Code" Label="Supplier Code" Placeholder="Unique code" Required="true" />
-                        <MudTextField @bind-Value="_form.Name" Label="Supplier Name" Placeholder="Company name" Required="true" />
-                        <MudTextField @bind-Value="_form.TinNo" Label="TIN No." Placeholder="Tax identification number" />
-                        <MudSelect @bind-Value="_form.BusinessTaxType" Label="Business Tax Type" Required="true">
-                            <MudSelectItem Value='@("VAT")'>VAT</MudSelectItem>
-                            <MudSelectItem Value='@("NON-VAT")'>NON-VAT</MudSelectItem>
-                        </MudSelect>
-                        <MudTextField @bind-Value="_form.Description" Label="Description" Placeholder="Supplier description" Lines="2" />
-                        <MudTextField @bind-Value="_form.ContactPerson" Label="Contact Person" Placeholder="Name of contact" />
-                        <MudTextField @bind-Value="_form.Email" Label="Email" Placeholder="contact@example.com" />
-                        <MudTextField @bind-Value="_form.Phone" Label="Phone" Placeholder="+1234567890" />
-                        <MudTextField @bind-Value="_form.Address" Label="Address" Placeholder="Street address" Lines="2" />
-                        <MudTextField @bind-Value="_form.OfficeCode" Label="Owner Office Code"
-                                      Placeholder="e.g. 100, NDO (leave blank for shared)" MaxLength="8"
-                                      Disabled="@(EditingSupplier != null)"
-                                      HelperText="@(EditingSupplier != null ? "Cannot be changed after creation" : string.Empty)" />
-                        <MudCheckBox @bind-Value="_form.IsActive" Label="Active" T="bool" />
-
-                        <MudStack Row="true" Spacing="2" Class="mt-4">
-                            <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
-                                       OnClick="SaveSupplier" Disabled="_isLoading">
-                                @(EditingSupplier != null ? "Update" : "Create")
-                            </MudButton>
-                            <MudButton Variant="Variant.Outlined" Color="Color.Default" FullWidth="true"
-                                       OnClick="ResetForm">
-                                Clear
-                            </MudButton>
-                        </MudStack>
-                    </MudStack>
-                </MudCardContent>
-            </MudCard>
-        </MudItem>
-        }
-
         <!-- Suppliers List -->
-        <MudItem xs="12" md="8">
+        <MudItem xs="12">
             <MudCard Class="AMIS-card">
                 <MudCardContent>
                     <MudStack Row="true" Spacing="1" Class="mb-3" AlignItems="AlignItems.Center">
@@ -114,7 +79,7 @@
                                                     {
                                                         <MudTooltip Text="Edit supplier">
                                                             <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
-                                                                           Color="Color.Primary" OnClick="@(() => EditSupplier(supplier))" />
+                                                                           Color="Color.Primary" OnClick="@(() => OpenEditDialog(supplier))" />
                                                         </MudTooltip>
                                                     }
                                                     @if (_canDelete)
@@ -154,8 +119,6 @@
 </div>
 
 @code {
-    private SupplierForm _form = new();
-    private SupplierDto? EditingSupplier;
     private List<SupplierDto> _suppliers = new();
     private List<SupplierDto> _allSuppliers = new();
     private bool _initialized = false;
@@ -172,21 +135,6 @@
     private bool _canCreate => UserProfileState.Permissions.Contains(MasterDataPermissions.Suppliers.Create);
     private bool _canUpdate => UserProfileState.Permissions.Contains(MasterDataPermissions.Suppliers.Update);
     private bool _canDelete => UserProfileState.Permissions.Contains(MasterDataPermissions.Suppliers.Delete);
-
-    public class SupplierForm
-    {
-        public string Code { get; set; } = string.Empty;
-        public string Name { get; set; } = string.Empty;
-        public string? TinNo { get; set; }
-        public string BusinessTaxType { get; set; } = "NON-VAT";
-        public string? Description { get; set; }
-        public string? ContactPerson { get; set; }
-        public string? Email { get; set; }
-        public string? Phone { get; set; }
-        public string? Address { get; set; }
-        public bool IsActive { get; set; } = true;
-        public string? OfficeCode { get; set; }
-    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -251,88 +199,29 @@
         }
     }
 
-    private async Task SaveSupplier()
+    private async Task OpenCreateDialog()
     {
-        if (string.IsNullOrWhiteSpace(_form.Code) || string.IsNullOrWhiteSpace(_form.Name))
+        if (!_canCreate) return;
+
+        var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true, MaxWidth = MaxWidth.Small };
+        var dialog = await DialogService.ShowAsync<SupplierFormDialog>("Create Supplier", options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
         {
-            Snackbar.Add("Code and Name are required", Severity.Warning);
-            return;
-        }
-
-        try
-        {
-            if (EditingSupplier != null)
-            {
-                var updateCmd = new UpdateSupplierCommand
-                {
-                    Id = EditingSupplier.Id,
-                    Code = _form.Code,
-                    Name = _form.Name,
-                    TinNo = _form.TinNo,
-                    BusinessTaxType = _form.BusinessTaxType,
-                    Description = _form.Description,
-                    ContactPerson = _form.ContactPerson,
-                    Email = _form.Email,
-                    Phone = _form.Phone,
-                    Address = _form.Address,
-                    IsActive = _form.IsActive
-                };
-
-                await MasterDataService.UpdateSupplierAsync(EditingSupplier.Id, updateCmd);
-                Snackbar.Add("Supplier updated successfully", Severity.Success);
-            }
-            else
-            {
-                var createCmd = new CreateSupplierCommand
-                {
-                    Code = _form.Code,
-                    Name = _form.Name,
-                    TinNo = _form.TinNo,
-                    BusinessTaxType = _form.BusinessTaxType,
-                    Description = _form.Description,
-                    ContactPerson = _form.ContactPerson,
-                    Email = _form.Email,
-                    Phone = _form.Phone,
-                    Address = _form.Address,
-                    OfficeCode = string.IsNullOrWhiteSpace(_form.OfficeCode) ? null : _form.OfficeCode.Trim()
-                };
-
-                await MasterDataService.CreateSupplierAsync(createCmd);
-                Snackbar.Add("Supplier created successfully", Severity.Success);
-            }
-
             await LoadSuppliers();
-            ResetForm();
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Failed to save supplier: {ex.Message}", Severity.Error);
         }
     }
 
-    private void EditSupplier(SupplierDto supplier)
+    private async Task OpenEditDialog(SupplierDto supplier)
     {
-        EditingSupplier = supplier;
-        _form = new SupplierForm
+        var parameters = new DialogParameters { ["Existing"] = supplier };
+        var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true, MaxWidth = MaxWidth.Small };
+        var dialog = await DialogService.ShowAsync<SupplierFormDialog>($"Edit {supplier.Name}", parameters, options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
         {
-            Code = supplier.Code,
-            Name = supplier.Name,
-            TinNo = supplier.TinNo,
-            BusinessTaxType = supplier.BusinessTaxType,
-            Description = supplier.Description,
-            ContactPerson = supplier.ContactPerson,
-            Email = supplier.Email,
-            Phone = supplier.Phone,
-            Address = supplier.Address,
-            IsActive = supplier.IsActive,
-            OfficeCode = supplier.OfficeCode
-        };
-    }
-
-    private void ResetForm()
-    {
-        _form = new();
-        EditingSupplier = null;
+            await LoadSuppliers();
+        }
     }
 
     private async Task DeleteSupplier(Guid id)

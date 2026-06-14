@@ -11,51 +11,27 @@
 
 <AMISPageHeader Title="Modes of Procurement" Description="Manage procurement modes used across planning and purchasing">
     <ActionContent>
-        <MudStack Row="true" Spacing="2" Style="width: 100%; max-width: 400px;">
+        <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Style="width: 100%; max-width: 560px;">
             <MudTextField @bind-Value="_searchKeyword" Label="Search" Placeholder="Search modes..."
                           DebounceInterval="300" OnDebounceIntervalElapsed="@(async () => await SearchAsync())"
                           Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
             <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" OnClick="SearchAsync">
                 Search
             </MudButton>
+            @if (_canCreate)
+            {
+                <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Secondary"
+                           StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateDialog">
+                    New
+                </MudButton>
+            }
         </MudStack>
     </ActionContent>
 </AMISPageHeader>
 
 <div class="mt-4">
     <MudGrid Spacing="2">
-        @if (_canCreate || _canUpdate)
-        {
-        <MudItem xs="12" sm="5" md="4">
-            <MudCard Class="AMIS-card">
-                <MudCardContent>
-                    <MudText Typo="Typo.h6" Class="mb-3">@(EditingMode is null ? "Create Mode" : "Edit Mode")</MudText>
-                    <MudStack Spacing="3">
-                        <MudTextField @bind-Value="_form.Name" Label="Name" Placeholder="e.g. Public Bidding" Required="true" />
-                        <MudTextField @bind-Value="_form.Description" Label="Description" Placeholder="Optional description" Lines="3" />
-
-                        @if (EditingMode is not null)
-                        {
-                            <MudCheckBox @bind-Value="_form.IsActive" Label="Active" />
-                        }
-
-                        <MudStack Row="true" Spacing="2" Class="mt-2">
-                            <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
-                                       OnClick="SaveAsync" Disabled="_isLoading">
-                                @(EditingMode is null ? "Create" : "Update")
-                            </MudButton>
-                            <MudButton Variant="Variant.Outlined" Color="Color.Default" FullWidth="true"
-                                       OnClick="ResetForm">
-                                Clear
-                            </MudButton>
-                        </MudStack>
-                    </MudStack>
-                </MudCardContent>
-            </MudCard>
-        </MudItem>
-        }
-
-        <MudItem xs="12" sm="7" md="8">
+        <MudItem xs="12">
             <MudCard Class="AMIS-card">
                 <MudCardContent>
                     <MudStack Row="true" Spacing="1" Class="mb-3" AlignItems="AlignItems.Center">
@@ -95,7 +71,7 @@
                                                 {
                                                     <MudTooltip Text="Edit mode">
                                                         <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
-                                                                       Color="Color.Primary" OnClick="@(() => EditMode(mode))" />
+                                                                       Color="Color.Primary" OnClick="@(() => OpenEditDialog(mode))" />
                                                     </MudTooltip>
                                                 }
                                                 @if (_canDelete)
@@ -129,16 +105,7 @@
 </div>
 
 @code {
-    private sealed class ModeForm
-    {
-        public string Name { get; set; } = string.Empty;
-        public string? Description { get; set; }
-        public bool IsActive { get; set; } = true;
-    }
-
     private const int PageSize = 10;
-    private ModeForm _form = new();
-    private ModeOfProcurementDto? EditingMode { get; set; }
     private List<ModeOfProcurementDto> _modes = [];
     private List<ModeOfProcurementDto> _allModes = [];
     private bool _isLoading;
@@ -188,43 +155,28 @@
         await LoadAsync(_searchKeyword);
     }
 
-    private async Task SaveAsync()
+    private async Task OpenCreateDialog()
     {
-        if (string.IsNullOrWhiteSpace(_form.Name))
+        if (!_canCreate) return;
+
+        var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true, MaxWidth = MaxWidth.Small };
+        var dialog = await DialogService.ShowAsync<ModeOfProcurementFormDialog>("Create Mode", options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
         {
-            Snackbar.Add("Name is required.", Severity.Warning);
-            return;
-        }
-
-        try
-        {
-            _isLoading = true;
-
-            if (EditingMode is null)
-            {
-                await ModeClient.CreateAsync(new CreateModeOfProcurementCommand(_form.Name.Trim(), NullIfEmpty(_form.Description)));
-                Snackbar.Add("Mode created.", Severity.Success);
-            }
-            else
-            {
-                await ModeClient.UpdateAsync(new UpdateModeOfProcurementCommand(
-                    EditingMode.Id,
-                    _form.Name.Trim(),
-                    NullIfEmpty(_form.Description),
-                    _form.IsActive));
-                Snackbar.Add("Mode updated.", Severity.Success);
-            }
-
-            ResetForm();
             await LoadAsync(_searchKeyword);
         }
-        catch (Exception ex)
+    }
+
+    private async Task OpenEditDialog(ModeOfProcurementDto mode)
+    {
+        var parameters = new DialogParameters { ["Existing"] = mode };
+        var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true, MaxWidth = MaxWidth.Small };
+        var dialog = await DialogService.ShowAsync<ModeOfProcurementFormDialog>($"Edit {mode.Name}", parameters, options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
         {
-            Snackbar.Add($"Save failed: {ex.Message}", Severity.Error);
-        }
-        finally
-        {
-            _isLoading = false;
+            await LoadAsync(_searchKeyword);
         }
     }
 
@@ -238,12 +190,6 @@
             _isLoading = true;
             await ModeClient.DeleteAsync(id);
             Snackbar.Add("Mode deleted.", Severity.Success);
-
-            if (EditingMode?.Id == id)
-            {
-                ResetForm();
-            }
-
             await LoadAsync(_searchKeyword);
         }
         catch (Exception ex)
@@ -254,23 +200,6 @@
         {
             _isLoading = false;
         }
-    }
-
-    private void EditMode(ModeOfProcurementDto mode)
-    {
-        EditingMode = mode;
-        _form = new ModeForm
-        {
-            Name = mode.Name,
-            Description = mode.Description,
-            IsActive = mode.IsActive
-        };
-    }
-
-    private void ResetForm()
-    {
-        EditingMode = null;
-        _form = new ModeForm();
     }
 
     private void OnStatusFilterChanged(string value)
@@ -328,7 +257,4 @@
         if (_pageIndex > maxPage)
             _pageIndex = maxPage;
     }
-
-    private static string? NullIfEmpty(string? value) =>
-        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }

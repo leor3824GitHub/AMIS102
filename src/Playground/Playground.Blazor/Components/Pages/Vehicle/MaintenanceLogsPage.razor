@@ -12,32 +12,7 @@
 
 <div class="mt-4">
     <MudGrid Spacing="2">
-        @if (_canCreate)
-        {
-        <MudItem xs="12" md="4">
-            <MudCard Class="AMIS-card">
-                <MudCardContent>
-                    <MudText Typo="Typo.h6" Class="mb-2">Log Maintenance</MudText>
-                    <MudStack Spacing="2">
-                        <MudAutocomplete T="VehicleDto" @bind-Value="_create.SelectedVehicle" Label="Vehicle *"
-                                         SearchFunc="@SearchVehicles" ToStringFunc="@(v => v == null ? null : $"{v.PlateNumber} - {v.Make} {v.Model} ({v.Year})")"
-                                         Required="true" />
-                        <MudTextField @bind-Value="_create.ScheduleIdText" Label="Schedule Id (optional)" />
-                        <MudTextField @bind-Value="_create.MaintenanceType" Label="Type" Required="true" />
-                        <MudDatePicker @bind-Date="_create.PerformedDate" Label="Performed Date" />
-                        <MudNumericField @bind-Value="_create.OdometerAtService" Label="Odometer" Min="0" />
-                        <MudNumericField @bind-Value="_create.Cost" Label="Cost" Min="0" />
-                        <MudTextField @bind-Value="_create.PerformedBy" Label="Performed By" />
-                        <MudTextField @bind-Value="_create.Description" Label="Description" />
-                        <MudTextField @bind-Value="_create.Notes" Label="Notes" Lines="2" />
-                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Create">Log</MudButton>
-                    </MudStack>
-                </MudCardContent>
-            </MudCard>
-        </MudItem>
-        }
-
-        <MudItem xs="12" md="8">
+        <MudItem xs="12">
             <MudCard Class="AMIS-card">
                 <MudCardContent>
                     <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Class="mb-2">
@@ -55,6 +30,11 @@
                                        Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
                         <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" OnClick="Load" StartIcon="@Icons.Material.Filled.Search">Search</MudButton>
                         <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Default" OnClick="ClearFilters">Clear</MudButton>
+                        @if (_canCreate)
+                        {
+                            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Secondary"
+                                       StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateDialog">New</MudButton>
+                        }
                     </MudStack>
 
                     <MudTable Items="_items" Dense="true" Hover="true" Striped="true">
@@ -93,7 +73,6 @@
     private readonly List<MaintenanceLogDto> _items = [];
     private List<VehicleDto> _vehicles = [];
     private LogQueryModel _query = new();
-    private CreateLogModel _create = new();
 
     private bool _canCreate => UserProfileState.Permissions.Contains(VehiclePermissions.Maintenance.Create);
     private bool _canDelete => UserProfileState.Permissions.Contains(VehiclePermissions.Maintenance.Delete);
@@ -161,34 +140,16 @@
         }
     }
 
-    private async Task Create()
+    private async Task OpenCreateDialog()
     {
-        if (_create.SelectedVehicle is null || string.IsNullOrWhiteSpace(_create.MaintenanceType))
-        {
-            Snackbar.Add("Vehicle and type are required.", Severity.Warning);
-            return;
-        }
+        if (!_canCreate) return;
 
-        try
+        var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true, MaxWidth = MaxWidth.Small };
+        var dialog = await DialogService.ShowAsync<MaintenanceLogFormDialog>("Log Maintenance", options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
         {
-            await VehicleClient.LogMaintenanceCompletionAsync(new LogMaintenanceCompletionRequest(
-                _create.SelectedVehicle.Id,
-                ParseGuid(_create.ScheduleIdText),
-                _create.MaintenanceType,
-                ToDateOnly(_create.PerformedDate) ?? DateOnly.FromDateTime(DateTime.Today),
-                _create.OdometerAtService,
-                _create.Description,
-                _create.Cost,
-                _create.PerformedBy,
-                _create.Notes));
-
-            Snackbar.Add("Maintenance log created.", Severity.Success);
-            _create = new();
             await Load();
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Create failed: {ex.Message}", Severity.Error);
         }
     }
 
@@ -224,19 +185,6 @@
         public string? MaintenanceType { get; set; }
         public DateTime? FromDate { get; set; }
         public DateTime? ToDate { get; set; }
-    }
-
-    private sealed class CreateLogModel
-    {
-        public VehicleDto? SelectedVehicle { get; set; }
-        public string? ScheduleIdText { get; set; }
-        public string MaintenanceType { get; set; } = string.Empty;
-        public DateTime? PerformedDate { get; set; } = DateTime.Today;
-        public int? OdometerAtService { get; set; }
-        public decimal? Cost { get; set; }
-        public string? PerformedBy { get; set; }
-        public string? Description { get; set; }
-        public string? Notes { get; set; }
     }
 }
 

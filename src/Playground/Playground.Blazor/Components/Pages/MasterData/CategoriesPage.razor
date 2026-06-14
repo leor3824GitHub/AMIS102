@@ -13,54 +13,28 @@
 
 <AMISPageHeader Title="Categories" Description="Manage product categories">
     <ActionContent>
-        <MudStack Row="true" Spacing="2" Style="width: 100%; max-width: 400px;">
+        <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Style="width: 100%; max-width: 560px;">
             <MudTextField @bind-Value="_searchKeyword" Label="Search" Placeholder="Search categories..."
                           DebounceInterval="300" OnDebounceIntervalElapsed="@(async () => await SearchCategories())"
                           Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
-            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" OnClick="SearchCategories">
+            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" OnClick="SearchCategories" Disabled="_isLoading">
                 Search
             </MudButton>
+            @if (_canCreate)
+            {
+                <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Secondary"
+                           StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateDialog">
+                    New
+                </MudButton>
+            }
         </MudStack>
     </ActionContent>
 </AMISPageHeader>
 
 <div class="mt-4">
     <MudGrid Spacing="2">
-        <!-- Create/Edit Form -->
-        @if (_canCreate || _canUpdate)
-        {
-        <MudItem xs="12" md="4">
-            <MudCard Class="AMIS-card">
-                <MudCardContent>
-                    <MudText Typo="Typo.h6" Class="mb-3">@(EditingCategory != null ? "Edit Category" : "Add Category")</MudText>
-                    <MudStack Spacing="3">
-                        <MudTextField @bind-Value="_form.Code" Label="Category Code" Placeholder="Unique code" Required="true" />
-                        <MudTextField @bind-Value="_form.Name" Label="Category Name" Placeholder="Category name" Required="true" />
-                        <MudTextField @bind-Value="_form.Description" Label="Description" Placeholder="Category description" Lines="3" />
-                        <MudTextField @bind-Value="_form.OfficeCode" Label="Owner Office Code"
-                                      Placeholder="e.g. 100, NDO (leave blank for shared)" MaxLength="8"
-                                      Disabled="@(EditingCategory != null)"
-                                      HelperText="@(EditingCategory != null ? "Cannot be changed after creation" : string.Empty)" />
-                        <MudCheckBox @bind-Value="_form.IsActive" Label="Active" T="bool" />
-
-                        <MudStack Row="true" Spacing="2" Class="mt-4">
-                            <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
-                                       OnClick="SaveCategory" Disabled="_isLoading">
-                                @(EditingCategory != null ? "Update" : "Create")
-                            </MudButton>
-                            <MudButton Variant="Variant.Outlined" Color="Color.Default" FullWidth="true"
-                                       OnClick="ResetForm">
-                                Clear
-                            </MudButton>
-                        </MudStack>
-                    </MudStack>
-                </MudCardContent>
-            </MudCard>
-        </MudItem>
-        }
-
         <!-- Categories List -->
-        <MudItem xs="12" md="8">
+        <MudItem xs="12">
             <MudCard Class="AMIS-card">
                 <MudCardContent>
                     <MudStack Row="true" Spacing="1" Class="mb-3" AlignItems="AlignItems.Center">
@@ -96,7 +70,7 @@
                                                     {
                                                         <MudTooltip Text="Edit category">
                                                             <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
-                                                                           Color="Color.Primary" OnClick="@(() => EditCategory(category))" />
+                                                                           Color="Color.Primary" OnClick="@(() => OpenEditDialog(category))" />
                                                         </MudTooltip>
                                                     }
                                                     @if (_canDelete)
@@ -136,8 +110,6 @@
 </div>
 
 @code {
-    private CategoryForm _form = new();
-    private CategoryDto? EditingCategory;
     private List<CategoryDto> _categories = new();
     private List<CategoryDto> _allCategories = new();
     private bool _initialized = false;
@@ -154,15 +126,6 @@
     private bool _canCreate => UserProfileState.Permissions.Contains(MasterDataPermissions.Categories.Create);
     private bool _canUpdate => UserProfileState.Permissions.Contains(MasterDataPermissions.Categories.Update);
     private bool _canDelete => UserProfileState.Permissions.Contains(MasterDataPermissions.Categories.Delete);
-
-    public class CategoryForm
-    {
-        public string Code { get; set; } = string.Empty;
-        public string Name { get; set; } = string.Empty;
-        public string? Description { get; set; }
-        public bool IsActive { get; set; } = true;
-        public string? OfficeCode { get; set; }
-    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -227,141 +190,29 @@
         }
     }
 
-    private async Task SaveCategory()
+    private async Task OpenCreateDialog()
     {
-        var normalizedCode = _form.Code?.Trim() ?? string.Empty;
-        var normalizedName = _form.Name?.Trim() ?? string.Empty;
+        if (!_canCreate) return;
 
-        if (string.IsNullOrWhiteSpace(normalizedCode) || string.IsNullOrWhiteSpace(normalizedName))
+        var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true, MaxWidth = MaxWidth.Small };
+        var dialog = await DialogService.ShowAsync<CategoryFormDialog>("Create Category", options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
         {
-            Snackbar.Add("Code and Name are required", Severity.Warning);
-            return;
-        }
-
-        var duplicateCodeExists = _categories.Any(c =>
-            !string.IsNullOrWhiteSpace(c.Code) &&
-            string.Equals(c.Code.Trim(), normalizedCode, StringComparison.OrdinalIgnoreCase) &&
-            (EditingCategory is null || c.Id != EditingCategory.Id));
-
-        if (duplicateCodeExists)
-        {
-            Snackbar.Add("A category with this code already exists.", Severity.Warning);
-            return;
-        }
-
-        try
-        {
-            if (EditingCategory != null)
-            {
-                var updateCmd = new UpdateCategoryCommand
-                {
-                    Id = EditingCategory.Id,
-                    Code = normalizedCode,
-                    Name = normalizedName,
-                    Description = _form.Description,
-                    IsActive = _form.IsActive
-                };
-
-                await MasterDataService.UpdateCategoryAsync(EditingCategory.Id, updateCmd);
-                Snackbar.Add("Category updated successfully", Severity.Success);
-            }
-            else
-            {
-                var createCmd = new CreateCategoryCommand
-                {
-                    Code = normalizedCode,
-                    Name = normalizedName,
-                    Description = _form.Description,
-                    OfficeCode = string.IsNullOrWhiteSpace(_form.OfficeCode) ? null : _form.OfficeCode.Trim()
-                };
-
-                await MasterDataService.CreateCategoryAsync(createCmd);
-                Snackbar.Add("Category created successfully", Severity.Success);
-            }
-
             await LoadCategories();
-            ResetForm();
-        }
-        catch (ApiException apiEx) when (apiEx.StatusCode == StatusCodes.Status400BadRequest)
-        {
-            var validationMessages = ExtractValidationMessages(apiEx.Response);
-            if (validationMessages.Count > 0)
-            {
-                foreach (var message in validationMessages)
-                {
-                    Snackbar.Add(message, Severity.Warning);
-                }
-            }
-            else
-            {
-                Snackbar.Add("Validation failed. Please check your inputs and try again.", Severity.Warning);
-            }
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Failed to save category: {ex.Message}", Severity.Error);
         }
     }
 
-    private static List<string> ExtractValidationMessages(string? response)
+    private async Task OpenEditDialog(CategoryDto category)
     {
-        if (string.IsNullOrWhiteSpace(response))
+        var parameters = new DialogParameters { ["Existing"] = category };
+        var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true, MaxWidth = MaxWidth.Small };
+        var dialog = await DialogService.ShowAsync<CategoryFormDialog>($"Edit {category.Name}", parameters, options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
         {
-            return new List<string>();
+            await LoadCategories();
         }
-
-        try
-        {
-            using var json = System.Text.Json.JsonDocument.Parse(response);
-            if (!json.RootElement.TryGetProperty("errors", out var errorsElement) ||
-                errorsElement.ValueKind != System.Text.Json.JsonValueKind.Object)
-            {
-                return new List<string>();
-            }
-
-            var messages = new List<string>();
-            foreach (var property in errorsElement.EnumerateObject())
-            {
-                if (property.Value.ValueKind != System.Text.Json.JsonValueKind.Array)
-                {
-                    continue;
-                }
-
-                foreach (var errorItem in property.Value.EnumerateArray())
-                {
-                    var message = errorItem.GetString();
-                    if (!string.IsNullOrWhiteSpace(message))
-                    {
-                        messages.Add(message);
-                    }
-                }
-            }
-
-            return messages;
-        }
-        catch
-        {
-            return new List<string>();
-        }
-    }
-
-    private void EditCategory(CategoryDto category)
-    {
-        EditingCategory = category;
-        _form = new CategoryForm
-        {
-            Code = category.Code,
-            Name = category.Name,
-            Description = category.Description,
-            IsActive = category.IsActive,
-            OfficeCode = category.OfficeCode
-        };
-    }
-
-    private void ResetForm()
-    {
-        _form = new();
-        EditingCategory = null;
     }
 
     private async Task DeleteCategory(Guid id)

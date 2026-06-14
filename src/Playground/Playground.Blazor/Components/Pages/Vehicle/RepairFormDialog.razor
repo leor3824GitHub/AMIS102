@@ -1,0 +1,103 @@
+@using AMIS.Modules.Vehicle.Contracts.v1.Repairs
+@using AMIS.Modules.Vehicle.Contracts.v1.Vehicles
+@inject IVehicleClient VehicleClient
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="2">
+            <MudAutocomplete T="VehicleDto" @bind-Value="_form.SelectedVehicle" Label="Vehicle *"
+                             SearchFunc="@SearchVehicles" ToStringFunc="@(v => v == null ? null : $"{v.PlateNumber} - {v.Make} {v.Model} ({v.Year})")"
+                             Required="true" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudDatePicker @bind-Date="_form.RepairDate" Label="Repair Date"
+                           Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudTextField @bind-Value="_form.Description" Label="Description" Required="true"
+                          Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudNumericField @bind-Value="_form.Cost" Label="Cost" Min="0"
+                             Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudTextField @bind-Value="_form.VendorName" Label="Vendor"
+                          Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudTextField @bind-Value="_form.PartsUsed" Label="Parts Used"
+                          Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudTextField @bind-Value="_form.Notes" Label="Notes" Lines="2"
+                          Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Create" Disabled="_isLoading">Create</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance Dialog { get; set; } = default!;
+
+    private RepairForm _form = new();
+    private bool _isLoading;
+
+    public sealed class RepairForm
+    {
+        public VehicleDto? SelectedVehicle { get; set; }
+        public DateTime? RepairDate { get; set; } = DateTime.Today;
+        public string Description { get; set; } = string.Empty;
+        public decimal Cost { get; set; }
+        public string? VendorName { get; set; }
+        public string? PartsUsed { get; set; }
+        public string? Notes { get; set; }
+    }
+
+    private async Task<IEnumerable<VehicleDto>> SearchVehicles(string value, CancellationToken ct)
+    {
+        try
+        {
+            var result = await VehicleClient.SearchVehiclesAsync(new SearchVehiclesQuery
+            {
+                Keyword = string.IsNullOrWhiteSpace(value) ? null : value,
+                PageNumber = 1,
+                PageSize = 20
+            }, ct);
+
+            return result.Items ?? [];
+        }
+        catch (OperationCanceledException)
+        {
+            return [];
+        }
+    }
+
+    private async Task Create()
+    {
+        if (_form.SelectedVehicle is null || string.IsNullOrWhiteSpace(_form.Description))
+        {
+            Snackbar.Add("Vehicle and description are required.", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            _isLoading = true;
+            await VehicleClient.CreateRepairAsync(new CreateRepairRecordCommand(
+                _form.SelectedVehicle.Id,
+                new DateTimeOffset(_form.RepairDate ?? DateTime.Today),
+                _form.Description,
+                _form.Cost,
+                _form.VendorName,
+                null,
+                _form.PartsUsed,
+                _form.Notes));
+
+            Snackbar.Add("Repair record created.", Severity.Success);
+            Dialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Create failed: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private void Cancel() => Dialog.Cancel();
+}

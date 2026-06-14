@@ -5,74 +5,26 @@
 @using AMIS.Playground.Blazor.ApiClient
 @using MudBlazor
 @inject IReportSignatoryClient SignatoryClient
-@inject ILookupClient LookupClient
 @inject ISnackbar Snackbar
 @inject IDialogService MudDialog
 @inject IUserProfileState UserProfileState
 
-<AMISPageHeader Title="Report Signatories" Description="Configure signature blocks for printed government reports" />
+<AMISPageHeader Title="Report Signatories" Description="Configure signature blocks for printed government reports">
+    <ActionContent>
+        @if (_canCreate)
+        {
+            <MudButton Size="Size.Medium" Variant="Variant.Filled" Color="Color.Secondary"
+                       StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateDialog">
+                New Signatory
+            </MudButton>
+        }
+    </ActionContent>
+</AMISPageHeader>
 
 <MudGrid Spacing="3" Class="mt-2">
 
-    <!-- Form -->
-    @if (_canCreate || _canUpdate)
-    {
-    <MudItem xs="12" md="4">
-        <MudPaper Elevation="1" Class="pa-4">
-            <MudText Typo="Typo.h6" Class="mb-3">@(_editing is null ? "Add Signatory" : "Edit Signatory")</MudText>
-            <MudStack Spacing="3">
-                <MudSelect T="string" @bind-Value="_form.ReportType" Label="Report Type" Variant="Variant.Outlined" Required="true">
-                    <MudSelectItem Value="@("VehicleInventory")">Vehicle Inventory</MudSelectItem>
-                    <MudSelectItem Value="@("PhysicalCount")">Physical Count</MudSelectItem>
-                    <MudSelectItem Value="@("DepartmentIssuance")">Department Issuance</MudSelectItem>
-                    <MudSelectItem Value="@("StockCard")">Stock Card</MudSelectItem>
-                    <MudSelectItem Value="@("EmployeeIssuance")">Employee Issuance</MudSelectItem>
-                    <MudSelectItem Value="@("AbstractOfCanvass")">Abstract of Canvass</MudSelectItem>
-                </MudSelect>
-                <MudNumericField T="int" @bind-Value="_form.SortOrder" Label="Sort Order" Variant="Variant.Outlined"
-                                 Min="1" Required="true" HelperText="Determines left-to-right column position" />
-                <MudTextField @bind-Value="_form.Label" Label="Label" Variant="Variant.Outlined" Required="true"
-                              Placeholder="e.g. PREPARED BY:" HelperText="Header shown above the name (max 80 chars)" 
-                              CharacterCounter="true" MaxLength="80" />
-                <MudAutocomplete T="string"
-                                 Value="_form.Name"
-                                 ValueChanged="OnNameChanged"
-                                 Label="Name"
-                                 Variant="Variant.Outlined"
-                                 Required="true"
-                                 Placeholder="e.g. ROEL D. CAPERIG"
-                                 MaxLength="160"
-                                 CoerceText="true"
-                                 CoerceValue="true"
-                                 SearchFunc="SearchEmployeeNames"
-                                 ResetValueOnEmptyText="false"
-                                 MinCharacters="1" />
-                <MudTextField @bind-Value="_form.Title" Label="Title / Designation" Variant="Variant.Outlined" Required="true"
-                              Placeholder="e.g. Procurement Mngt. Officer IV" CharacterCounter="true" MaxLength="200" />
-                @if (_editing is not null)
-                {
-                    <MudCheckBox @bind-Value="_form.IsActive" Label="Active" />
-                }
-                <MudStack Row="true" Spacing="2" Class="mt-1">
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync" Disabled="_busy">
-                        @if (_busy)
-                        {
-                            <MudProgressCircular Size="Size.Small" Class="mr-2" />
-                        }
-                        @(_editing is null ? "Add" : "Save")
-                    </MudButton>
-                    @if (_editing is not null)
-                    {
-                        <MudButton Variant="Variant.Outlined" OnClick="CancelEdit" Disabled="_busy">Cancel</MudButton>
-                    }
-                </MudStack>
-            </MudStack>
-        </MudPaper>
-    </MudItem>
-    }
-
     <!-- Table -->
-    <MudItem xs="12" md="8">
+    <MudItem xs="12">
         <MudPaper Elevation="1" Class="pa-4">
             <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3">
                 <MudText Typo="Typo.h6" Style="flex:1">Configured Signatories</MudText>
@@ -124,7 +76,7 @@
                                         {
                                             <MudTooltip Text="Edit signatory">
                                                 <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small"
-                                                               OnClick="() => StartEdit(s)" Disabled="_busy" />
+                                                               OnClick="() => OpenEditDialog(s)" Disabled="_busy" />
                                             </MudTooltip>
                                         }
                                         @if (_canDelete)
@@ -154,20 +106,6 @@
     private bool _busy;
     private string? _filter;
     private List<ReportSignatoryDto> _signatories = [];
-    private ReportSignatoryDto? _editing;
-    private readonly Dictionary<string, string> _employeeNameToTitle = new(StringComparer.OrdinalIgnoreCase);
-
-    private sealed class FormModel
-    {
-        public string ReportType { get; set; } = "VehicleInventory";
-        public int SortOrder { get; set; } = 1;
-        public string Label { get; set; } = string.Empty;
-        public string Name { get; set; } = string.Empty;
-        public string Title { get; set; } = string.Empty;
-        public bool IsActive { get; set; } = true;
-    }
-
-    private FormModel _form = new();
 
     private bool _canCreate => UserProfileState.Permissions.Contains(MasterDataPermissions.ReportSignatories.Create);
     private bool _canUpdate => UserProfileState.Permissions.Contains(MasterDataPermissions.ReportSignatories.Update);
@@ -206,70 +144,34 @@
         }
     }
 
-    private async Task SaveAsync()
+    private async Task OpenCreateDialog()
     {
-        if (string.IsNullOrWhiteSpace(_form.Label) || string.IsNullOrWhiteSpace(_form.Name) || string.IsNullOrWhiteSpace(_form.Title))
-        {
-            Snackbar.Add("Label, Name, and Title are required.", Severity.Warning);
-            return;
-        }
+        if (!_canCreate) return;
 
-        if (_form.Label.Length > 80 || _form.Name.Length > 160 || _form.Title.Length > 200)
+        var parameters = new DialogParameters { ["AllSignatories"] = _signatories };
+        var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true, MaxWidth = MaxWidth.Small };
+        var dialog = await MudDialog.ShowAsync<ReportSignatoryFormDialog>("Add Signatory", parameters, options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
         {
-            Snackbar.Add("Field length exceeded. Check constraints.", Severity.Warning);
-            return;
-        }
-
-        _busy = true;
-        try
-        {
-            if (_editing is null)
-            {
-                var created = await SignatoryClient.CreateAsync(new CreateReportSignatoryCommand(
-                    _form.ReportType, _form.SortOrder, _form.Label, _form.Name, _form.Title));
-                _signatories.Add(created);
-                Snackbar.Add("Signatory added.", Severity.Success);
-            }
-            else
-            {
-                var updated = await SignatoryClient.UpdateAsync(_editing.Id, new UpdateReportSignatoryCommand(
-                    _editing.Id, _form.ReportType, _form.SortOrder, _form.Label, _form.Name, _form.Title, _form.IsActive));
-                var idx = _signatories.FindIndex(s => s.Id == updated.Id);
-                if (idx >= 0) _signatories[idx] = updated;
-                Snackbar.Add("Signatory updated.", Severity.Success);
-            }
-
-            CancelEdit();
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
-        }
-        finally
-        {
-            _busy = false;
+            await LoadAsync();
         }
     }
 
-    private void StartEdit(ReportSignatoryDto s)
+    private async Task OpenEditDialog(ReportSignatoryDto s)
     {
-        _editing = s;
-        _form = new FormModel
+        var parameters = new DialogParameters
         {
-            ReportType = s.ReportType,
-            SortOrder = s.SortOrder,
-            Label = s.Label,
-            Name = s.Name,
-            Title = s.Title,
-            IsActive = s.IsActive
+            ["Existing"] = s,
+            ["AllSignatories"] = _signatories
         };
-    }
-
-    private void CancelEdit()
-    {
-        _editing = null;
-        _form = new FormModel();
-        UpdateNextSortOrder();
+        var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true, MaxWidth = MaxWidth.Small };
+        var dialog = await MudDialog.ShowAsync<ReportSignatoryFormDialog>($"Edit {s.Name}", parameters, options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
+        {
+            await LoadAsync();
+        }
     }
 
     private async Task ConfirmDeleteAsync(ReportSignatoryDto s)
@@ -288,7 +190,6 @@
             await SignatoryClient.DeleteAsync(s.Id);
             _signatories.Remove(s);
             Snackbar.Add("Signatory deleted.", Severity.Success);
-            UpdateNextSortOrder();
         }
         catch (Exception ex)
         {
@@ -298,48 +199,6 @@
         {
             _busy = false;
         }
-    }
-
-    private async Task<IEnumerable<string>> SearchEmployeeNames(string value, CancellationToken ct)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-            return [];
-
-        var result = await LookupClient.EmployeesGetAsync(
-            keyword: value,
-            isActive: true,
-            pageNumber: 1,
-            pageSize: 20,
-            cancellationToken: ct);
-
-        var items = result.Items?.ToList() ?? [];
-        // Accumulate name->position across searches (do NOT clear): selecting an item
-        // re-triggers this search with the full "First Last" string, which the keyword
-        // search won't match — clearing here would wipe the entry before OnNameChanged
-        // can read it, leaving the designation blank.
-        foreach (var e in items)
-        {
-            var fullName = $"{e.FirstName} {e.LastName}";
-            _employeeNameToTitle[fullName] = e.PositionName ?? string.Empty;
-        }
-
-        return items.Select(e => $"{e.FirstName} {e.LastName}");
-    }
-
-    private void OnNameChanged(string? name)
-    {
-        _form.Name = name ?? string.Empty;
-        if (!string.IsNullOrEmpty(name) && _employeeNameToTitle.TryGetValue(name, out var title))
-        {
-            _form.Title = title;
-        }
-    }
-
-    private void UpdateNextSortOrder()
-    {
-        // Auto-set next sort order based on current report type
-        var forCurrentType = _signatories.Where(s => s.ReportType == _form.ReportType).ToList();
-        _form.SortOrder = (forCurrentType.Max(s => (int?)s.SortOrder) ?? 0) + 1;
     }
 
     private static string ReportLabel(string reportType) => reportType switch

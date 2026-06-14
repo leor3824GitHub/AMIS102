@@ -5,6 +5,7 @@
 @using AMIS.Playground.Blazor.ApiClient
 @inject IPropertyClassClient Client
 @inject ISnackbar Snackbar
+@inject IDialogService DialogService
 @inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="Property Classification & Category Library"
@@ -94,37 +95,16 @@
                                  Style="font-weight: 700; font-family: monospace; font-size: 1.1rem;">
                             @_selectedClass.Code
                         </MudChip>
-                        <MudText Typo="Typo.h6">@_selectedClass.Name</MudText>
+                        <MudText Typo="Typo.h6" Style="flex: 1;">@_selectedClass.Name</MudText>
+                        @if (_canCreate)
+                        {
+                            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Secondary"
+                                       StartIcon="@Icons.Material.Outlined.Add"
+                                       OnClick="@(() => OpenItemDialog(null))" Disabled="_busy">
+                                Add Category Code
+                            </MudButton>
+                        }
                     </MudStack>
-
-                    <!-- Add item form -->
-                    @if (_canCreate || _canUpdate)
-                    {
-                    <MudExpansionPanels Class="mb-3">
-                        <MudExpansionPanel Text="@(_editingItem is not null ? $"Edit Item: {_editingItem.ItemCode}" : "Add Category Code")"
-                                           @bind-IsExpanded="_itemFormExpanded">
-                            <MudStack Spacing="2">
-                                <MudTextField @bind-Value="_itemForm.ItemCode"
-                                              Label="Category Code (1�2 chars)" Placeholder="e.g. 01"
-                                              HelperText="1�2 char sub-category code (e.g. 01, FM, WE)" CharacterCounter="true" MaxLength="2" />
-                                <MudTextField @bind-Value="_itemForm.Name"
-                                              Label="Name" Placeholder="e.g. Computer and Accessories" />
-                                <!-- <MudTextField @bind-Value="_itemForm.Description" Label="Description" Lines="2" /> -->
-                                @if (_editingItem is not null)
-                                {
-                                    <MudCheckBox @bind-Value="_itemForm.IsActive" Label="Active" T="bool" />
-                                }
-                                <MudStack Row="true" Spacing="1">
-                                    <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
-                                               OnClick="SaveItemAsync" Disabled="_busy">
-                                        @(_editingItem is not null ? "Update" : "Add")
-                                    </MudButton>
-                                    <MudButton Variant="Variant.Outlined" OnClick="ClearItemForm">Clear</MudButton>
-                                </MudStack>
-                            </MudStack>
-                        </MudExpansionPanel>
-                    </MudExpansionPanels>
-                    }
 
                     <!-- Items table -->
                     @if (_selectedClass.Items.Count == 0)
@@ -165,7 +145,7 @@
                                             {
                                                 <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small"
                                                                Color="Color.Primary"
-                                                               OnClick="@(() => EditItem(item))" />
+                                                               OnClick="@(() => OpenItemDialog(item))" />
                                             }
                                         </td>
                                     </tr>
@@ -192,8 +172,8 @@
     </TitleContent>
     <DialogContent>
         <MudStack Spacing="2" Class="pt-2">
-            <MudTextField @bind-Value="_classForm.Code" Label="Code (2�4 chars)" Placeholder="e.g. OE"
-                          HelperText="@(_editingClass is not null ? "Code cannot be changed after creation." : "2�4 char classification code (PPRCLSCD)")"
+            <MudTextField @bind-Value="_classForm.Code" Label="Code (2–4 chars)" Placeholder="e.g. OE"
+                          HelperText="@(_editingClass is not null ? "Code cannot be changed after creation." : "2–4 char classification code (PPRCLSCD)")"
                           Variant="Variant.Outlined"
                           CharacterCounter="true" MaxLength="4"
                           Required="true" RequiredError="Code is required"
@@ -252,9 +232,7 @@
     private List<PropertyClassDto> _classes = [];
     private PropertyClassDto? _selectedClass;
     private PropertyClassDto? _editingClass;
-    private PropertyClassItemDto? _editingItem;
     private bool _busy;
-    private bool _itemFormExpanded;
     private bool _classDialogOpen;
     private readonly DialogOptions _classDialogOptions = new()
     {
@@ -265,7 +243,6 @@
     };
 
     private ClassForm _classForm = new();
-    private ItemForm _itemForm = new();
 
     private bool _canCreate => UserProfileState.Permissions.Contains(MasterDataPermissions.PropertyClasses.Create);
     private bool _canUpdate => UserProfileState.Permissions.Contains(MasterDataPermissions.PropertyClasses.Update);
@@ -273,14 +250,6 @@
     private sealed class ClassForm
     {
         public string Code { get; set; } = string.Empty;
-        public string Name { get; set; } = string.Empty;
-        public string? Description { get; set; }
-        public bool IsActive { get; set; } = true;
-    }
-
-    private sealed class ItemForm
-    {
-        public string ItemCode { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
         public bool IsActive { get; set; } = true;
@@ -323,7 +292,6 @@
     private void SelectClass(PropertyClassDto cls)
     {
         _selectedClass = cls;
-        ClearItemForm();
     }
 
     private void EditClass(PropertyClassDto cls)
@@ -370,24 +338,25 @@
         }
     }
 
-    private void EditItem(PropertyClassItemDto item)
+    private async Task OpenItemDialog(PropertyClassItemDto? item)
     {
-        _editingItem = item;
-        _itemForm = new ItemForm
-        {
-            ItemCode = item.ItemCode,
-            Name = item.Name,
-            Description = item.Description,
-            IsActive = item.IsActive
-        };
-        _itemFormExpanded = true;
-    }
+        if (_selectedClass is null) return;
+        if (item is null && !_canCreate) return;
+        if (item is not null && !_canUpdate) return;
 
-    private void ClearItemForm()
-    {
-        _editingItem = null;
-        _itemForm = new();
-        _itemFormExpanded = false;
+        var parameters = new DialogParameters
+        {
+            ["ClassId"] = _selectedClass.Id,
+            ["Existing"] = item
+        };
+        var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true, MaxWidth = MaxWidth.Small };
+        var title = item is not null ? $"Edit Item: {item.ItemCode}" : "Add Category Code";
+        var dialog = await DialogService.ShowAsync<PropertyClassItemFormDialog>(title, parameters, options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
+        {
+            await LoadTreeAsync();
+        }
     }
 
     private async Task SaveClassAsync()
@@ -434,51 +403,5 @@
         }
     }
 
-    private async Task SaveItemAsync()
-    {
-        if (_selectedClass is null) return;
-        if (string.IsNullOrWhiteSpace(_itemForm.ItemCode) || string.IsNullOrWhiteSpace(_itemForm.Name))
-        {
-            Snackbar.Add("Item Code and Name are required.", Severity.Warning);
-            return;
-        }
-
-        try
-        {
-            _busy = true;
-            if (_editingItem is not null)
-            {
-                var cmd = new UpdatePropertyClassItemCommand(
-                    _editingItem.Id,
-                    _itemForm.ItemCode.Trim().ToUpperInvariant(),
-                    _itemForm.Name.Trim(),
-                    _itemForm.Description,
-                    _itemForm.IsActive);
-                await Client.UpdateItemAsync(_editingItem.Id, cmd);
-                Snackbar.Add("Item updated.", Severity.Success);
-            }
-            else
-            {
-                var cmd = new CreatePropertyClassItemCommand(
-                    _selectedClass.Id,
-                    _itemForm.ItemCode.Trim().ToUpperInvariant(),
-                    _itemForm.Name.Trim(),
-                    _itemForm.Description);
-                await Client.CreateItemAsync(_selectedClass.Id, cmd);
-                Snackbar.Add("Item added.", Severity.Success);
-            }
-
-            ClearItemForm();
-            await LoadTreeAsync();
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Failed: {ex.Message}", Severity.Error);
-        }
-        finally
-        {
-            _busy = false;
-        }
-    }
 }
 

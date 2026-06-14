@@ -1,0 +1,119 @@
+@using AMIS.Playground.Blazor.ApiClient
+@inject ISnackbar Snackbar
+@inject IMaster_dataClient MasterDataClient
+
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="3">
+            <MudTextField @bind-Value="_form.Code" Label="Code" Placeholder="Position code"
+                          Required="true" Disabled="@(_isEdit)"
+                          HelperText="@(_isEdit ? "Code cannot be changed after creation" : null)"
+                          Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudTextField @bind-Value="_form.Name" Label="Name" Placeholder="Position name"
+                          Required="true" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudTextField @bind-Value="_form.Description" Label="Description"
+                          Placeholder="Position description" Lines="2"
+                          Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudTextField @bind-Value="_form.OfficeCode" Label="Owner Office Code"
+                          Placeholder="e.g. 100, NDO (leave blank for shared)" MaxLength="8"
+                          Disabled="@(_isEdit)"
+                          HelperText="@(_isEdit ? "Cannot be changed after creation" : null)"
+                          Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudCheckBox @bind-Value="_form.IsActive" Label="Active" />
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SavePosition" Disabled="_isLoading">
+            @(_isEdit ? "Update" : "Create")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance Dialog { get; set; } = default!;
+    [Parameter] public PositionReferenceDto? Existing { get; set; }
+
+    private PositionForm _form = new();
+    private bool _isLoading = false;
+
+    private bool _isEdit => Existing != null;
+
+    public class PositionForm
+    {
+        public string Code { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public bool IsActive { get; set; } = true;
+        public string? OfficeCode { get; set; }
+    }
+
+    protected override void OnInitialized()
+    {
+        if (Existing != null)
+        {
+            _form = new PositionForm
+            {
+                Code = Existing.Code,
+                Name = Existing.Name,
+                Description = Existing.Description,
+                IsActive = Existing.IsActive,
+                OfficeCode = Existing.OfficeCode
+            };
+        }
+    }
+
+    private async Task SavePosition()
+    {
+        if (string.IsNullOrWhiteSpace(_form.Code) || string.IsNullOrWhiteSpace(_form.Name))
+        {
+            Snackbar.Add("Code and Name are required", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            _isLoading = true;
+            if (Existing != null)
+            {
+                var updateCmd = new UpdatePositionCommand
+                {
+                    Id = Existing.Id,
+                    Code = _form.Code,
+                    Name = _form.Name,
+                    Description = _form.Description,
+                    IsActive = _form.IsActive
+                };
+
+                var updated = await MasterDataClient.PositionsPutAsync(Existing.Id, updateCmd);
+                Snackbar.Add("Position updated successfully", Severity.Success);
+                Dialog.Close(DialogResult.Ok(updated));
+            }
+            else
+            {
+                var createCmd = new CreatePositionCommand
+                {
+                    Code = _form.Code,
+                    Name = _form.Name,
+                    Description = _form.Description,
+                    IsActive = _form.IsActive,
+                    OfficeCode = string.IsNullOrWhiteSpace(_form.OfficeCode) ? null : _form.OfficeCode.Trim()
+                };
+
+                var created = await MasterDataClient.PositionsPostAsync(createCmd);
+                Snackbar.Add("Position created successfully", Severity.Success);
+                Dialog.Close(DialogResult.Ok(created));
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to save position: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private void Cancel() => Dialog.Cancel();
+}

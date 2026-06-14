@@ -1,0 +1,113 @@
+@using AMIS.Modules.Vehicle.Contracts.v1.Maintenance
+@using AMIS.Modules.Vehicle.Contracts.v1.Vehicles
+@inject IVehicleClient VehicleClient
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="2">
+            <MudAutocomplete T="VehicleDto" @bind-Value="_form.SelectedVehicle" Label="Vehicle *"
+                             SearchFunc="@SearchVehicles" ToStringFunc="@(v => v == null ? null : $"{v.PlateNumber} - {v.Make} {v.Model} ({v.Year})")"
+                             Required="true" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudTextField @bind-Value="_form.ScheduleIdText" Label="Schedule Id (optional)"
+                          Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudTextField @bind-Value="_form.MaintenanceType" Label="Type" Required="true"
+                          Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudDatePicker @bind-Date="_form.PerformedDate" Label="Performed Date"
+                           Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudNumericField @bind-Value="_form.OdometerAtService" Label="Odometer" Min="0"
+                             Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudNumericField @bind-Value="_form.Cost" Label="Cost" Min="0"
+                             Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudTextField @bind-Value="_form.PerformedBy" Label="Performed By"
+                          Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudTextField @bind-Value="_form.Description" Label="Description"
+                          Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudTextField @bind-Value="_form.Notes" Label="Notes" Lines="2"
+                          Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Create" Disabled="_isLoading">Log</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance Dialog { get; set; } = default!;
+
+    private LogForm _form = new();
+    private bool _isLoading;
+
+    public sealed class LogForm
+    {
+        public VehicleDto? SelectedVehicle { get; set; }
+        public string? ScheduleIdText { get; set; }
+        public string MaintenanceType { get; set; } = string.Empty;
+        public DateTime? PerformedDate { get; set; } = DateTime.Today;
+        public int? OdometerAtService { get; set; }
+        public decimal? Cost { get; set; }
+        public string? PerformedBy { get; set; }
+        public string? Description { get; set; }
+        public string? Notes { get; set; }
+    }
+
+    private async Task<IEnumerable<VehicleDto>> SearchVehicles(string value, CancellationToken ct)
+    {
+        try
+        {
+            var result = await VehicleClient.SearchVehiclesAsync(new SearchVehiclesQuery
+            {
+                Keyword = string.IsNullOrWhiteSpace(value) ? null : value,
+                PageNumber = 1,
+                PageSize = 20
+            }, ct);
+
+            return result.Items ?? [];
+        }
+        catch (OperationCanceledException)
+        {
+            return [];
+        }
+    }
+
+    private async Task Create()
+    {
+        if (_form.SelectedVehicle is null || string.IsNullOrWhiteSpace(_form.MaintenanceType))
+        {
+            Snackbar.Add("Vehicle and type are required.", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            _isLoading = true;
+            await VehicleClient.LogMaintenanceCompletionAsync(new LogMaintenanceCompletionRequest(
+                _form.SelectedVehicle.Id,
+                ParseGuid(_form.ScheduleIdText),
+                _form.MaintenanceType,
+                ToDateOnly(_form.PerformedDate) ?? DateOnly.FromDateTime(DateTime.Today),
+                _form.OdometerAtService,
+                _form.Description,
+                _form.Cost,
+                _form.PerformedBy,
+                _form.Notes));
+
+            Snackbar.Add("Maintenance log created.", Severity.Success);
+            Dialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Create failed: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private static Guid? ParseGuid(string? text) => Guid.TryParse(text, out var value) ? value : null;
+    private static DateOnly? ToDateOnly(DateTime? date) => date.HasValue ? DateOnly.FromDateTime(date.Value) : null;
+
+    private void Cancel() => Dialog.Cancel();
+}
