@@ -10,49 +10,57 @@
 @inject NavigationManager Navigation
 @inject IUserProfileState UserProfileState
 
-<AMISPageHeader Title="Vehicles" Description="Manage vehicle records and lifecycle">
-    <ActionContent>
-        <MudStack Row="true" Spacing="2" Style="width:100%; max-width: 700px;">
-            <MudTextField @bind-Value="_query.Keyword" Label="Search" Placeholder="Plate, make, model"
-                          Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small"
-                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" />
-            <MudSelect T="string" @bind-Value="_query.Status" Label="Status" Dense="true" Margin="Margin.Dense" Size="Size.Small" Clearable="true">
-                <MudSelectItem Value="@Active">Active</MudSelectItem>
-                <MudSelectItem Value="@UnderRepair">Under Repair</MudSelectItem>
-                <MudSelectItem Value="@Retired">Retired</MudSelectItem>
-                <MudSelectItem Value="@Decommissioned">Decommissioned</MudSelectItem>
-            </MudSelect>
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" OnClick="LoadVehicles" Disabled="_busy">
+<AMISPageHeader Title="Vehicles" Description="Manage vehicle records and lifecycle" />
+
+<MudGrid Spacing="3">
+    <!-- List Panel - Full Width -->
+    <MudItem xs="12">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                <!-- Header: title + primary action -->
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
+                    <MudText Typo="Typo.h6" Class="flex-grow-1">Vehicle List</MudText>
+                    @if (_canCreate)
+                    {
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.Add"
+                                   OnClick="OpenCreateDialog"
+                                   Title="Create a new vehicle">
+                            NEW VEHICLE
+                        </MudButton>
+                    }
+                </MudStack>
+
+                <!-- Filter toolbar: search + status (date range not applicable to vehicles) -->
+                <AMISFilterBar Keyword="@_query.Keyword" KeywordChanged="OnKeywordChanged"
+                               SearchPlaceholder="Plate, make, model"
+                               ShowDateRange="false"
+                               SearchSm="8" SearchMd="9">
+                    <Extra>
+                        <MudItem xs="12" sm="4" md="3">
+                            <MudSelect T="string" Value="_query.Status" ValueChanged="OnStatusChanged"
+                                       Label="Status" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Clearable="true">
+                                <MudSelectItem Value="@Active">Active</MudSelectItem>
+                                <MudSelectItem Value="@UnderRepair">Under Repair</MudSelectItem>
+                                <MudSelectItem Value="@Retired">Retired</MudSelectItem>
+                                <MudSelectItem Value="@Decommissioned">Decommissioned</MudSelectItem>
+                            </MudSelect>
+                        </MudItem>
+                    </Extra>
+                </AMISFilterBar>
+
+                <!-- Status summary chips -->
+                <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap" Class="mb-3">
+                    <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined">Total: @_vehicles.Count</MudChip>
+                    <MudChip T="string" Color="Color.Success" Variant="Variant.Outlined">Active: @_vehicles.Count(v => v.Status == Active)</MudChip>
+                    <MudChip T="string" Color="Color.Warning" Variant="Variant.Outlined">Under Repair: @_vehicles.Count(v => v.Status == UnderRepair)</MudChip>
+                    <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">Retired: @_vehicles.Count(v => v.Status == Retired)</MudChip>
+                    <MudChip T="string" Color="Color.Error" Variant="Variant.Outlined">Decommissioned: @_vehicles.Count(v => v.Status == Decommissioned)</MudChip>
+                </MudStack>
+
                 @if (_busy)
                 {
-                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                    <MudProgressLinear Indeterminate="true" Class="mb-2" />
                 }
-                Search
-            </MudButton>
-            <MudButton Variant="Variant.Outlined" Color="Color.Default" Size="Size.Small" OnClick="ClearFilters" Disabled="_busy">Clear</MudButton>
-            @if (_canCreate)
-            {
-                <MudButton Variant="Variant.Filled" Color="Color.Secondary" Size="Size.Small"
-                           StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateDialog">New</MudButton>
-            }
-        </MudStack>
-    </ActionContent>
-</AMISPageHeader>
-
-<div class="mt-4">
-    <MudStack Row="true" Spacing="1" Class="mb-3">
-        <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined">Total: @_vehicles.Count</MudChip>
-        <MudChip T="string" Color="Color.Success" Variant="Variant.Outlined">Active: @_vehicles.Count(v => v.Status == Active)</MudChip>
-        <MudChip T="string" Color="Color.Warning" Variant="Variant.Outlined">Under Repair: @_vehicles.Count(v => v.Status == UnderRepair)</MudChip>
-        <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">Retired: @_vehicles.Count(v => v.Status == Retired)</MudChip>
-        <MudChip T="string" Color="Color.Error" Variant="Variant.Outlined">Decommissioned: @_vehicles.Count(v => v.Status == Decommissioned)</MudChip>
-    </MudStack>
-
-    <MudGrid Spacing="2">
-        <MudItem xs="12">
-            <MudCard Class="AMIS-card">
-                <MudCardContent>
-                    <MudText Typo="Typo.h6" Class="mb-2">Vehicle List</MudText>
                     @if (_vehicles.Count == 0)
                     {
                         <MudAlert Severity="Severity.Info">No vehicles found.</MudAlert>
@@ -114,7 +122,6 @@
             </MudCard>
         </MudItem>
     </MudGrid>
-</div>
 
 @code {
     private readonly SearchVehiclesQuery _query = new() { PageNumber = 1, PageSize = 100 };
@@ -170,11 +177,18 @@
 
     private void GoDetail(Guid id) => Navigation.NavigateTo($"/vehicle/vehicles/{id}");
 
-    private void ClearFilters()
+    private async Task OnKeywordChanged(string? keyword)
     {
-        _query.Keyword = null;
-        _query.Status = null;
-        _query.Type = null;
+        _query.Keyword = keyword;
+        _query.PageNumber = 1;
+        await LoadVehicles();
+    }
+
+    private async Task OnStatusChanged(string? status)
+    {
+        _query.Status = status;
+        _query.PageNumber = 1;
+        await LoadVehicles();
     }
 
     private async Task Retire(Guid id)

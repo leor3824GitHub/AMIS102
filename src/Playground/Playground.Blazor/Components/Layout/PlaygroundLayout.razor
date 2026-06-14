@@ -393,7 +393,8 @@ else
                     UserProfileState.SetEmployeeProfile(
                         employee.Id,
                         $"{employee.FirstName} {employee.LastName}".Trim(),
-                        employee.PositionName ?? string.Empty);
+                        employee.PositionName ?? string.Empty,
+                        employee.DepartmentId);
             }
         }
         catch { /* silently skip; pages degrade gracefully when EmployeeId is Guid.Empty */ }

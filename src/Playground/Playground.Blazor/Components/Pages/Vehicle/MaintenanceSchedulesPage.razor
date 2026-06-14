@@ -10,38 +10,58 @@
 
 <AMISPageHeader Title="Maintenance Schedules" Description="Plan and manage recurring maintenance" />
 
-<div class="mt-4">
-    <MudStack Row="true" Spacing="1" Class="mb-3">
-        <MudChip T="string" Variant="Variant.Outlined" Color="Color.Primary">Total: @_items.Count</MudChip>
-        <MudChip T="string" Variant="Variant.Outlined" Color="Color.Success">Active: @_items.Count(s => s.IsActive)</MudChip>
-        <MudChip T="string" Variant="Variant.Outlined" Color="Color.Default">Inactive: @_items.Count(s => !s.IsActive)</MudChip>
-        <MudChip T="string" Variant="Variant.Outlined" Color="Color.Error">Overdue: @_items.Count(IsOverdue)</MudChip>
-    </MudStack>
+<MudGrid Spacing="3">
+    <!-- List Panel - Full Width -->
+    <MudItem xs="12">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                <!-- Header: title + primary action -->
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
+                    <MudText Typo="Typo.h6" Class="flex-grow-1">Maintenance Schedules</MudText>
+                    @if (_canCreate)
+                    {
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.Add"
+                                   OnClick="OpenCreateDialog" Disabled="_busy"
+                                   Title="Plan a recurring maintenance schedule">
+                            NEW SCHEDULE
+                        </MudButton>
+                    }
+                </MudStack>
 
-    <MudGrid Spacing="2">
-        <MudItem xs="12">
-            <MudCard Class="AMIS-card">
-                <MudCardContent>
-                    <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Class="mb-2">
-                        <MudAutocomplete T="VehicleDto" @bind-Value="_query.SelectedVehicle" Label="Vehicle"
-                                         Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense"
-                                         SearchFunc="@SearchVehicles" ToStringFunc="@(v => v == null ? null : $"{v.PlateNumber} - {v.Make} {v.Model} ({v.Year})")"
-                                         Clearable="true" />
-                        <MudTextField @bind-Value="_query.MaintenanceType" Label="Type"
-                                      Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
-                        <MudSelect T="bool?" @bind-Value="_query.IsActive" Label="Status"
-                                   Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Clearable="true">
-                            <MudSelectItem T="bool?" Value="@((bool?)true)">Active</MudSelectItem>
-                            <MudSelectItem T="bool?" Value="@((bool?)false)">Inactive</MudSelectItem>
-                        </MudSelect>
-                        <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" OnClick="Load" StartIcon="@Icons.Material.Filled.Search" Disabled="_busy">Search</MudButton>
-                        <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Default" OnClick="ClearFilters" Disabled="_busy">Clear</MudButton>
-                        @if (_canCreate)
-                        {
-                            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Secondary"
-                                       StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateDialog" Disabled="_busy">New</MudButton>
-                        }
-                    </MudStack>
+                <!-- Filter toolbar: type search + vehicle / status (date range not applicable) -->
+                <AMISFilterBar Keyword="@_query.MaintenanceType" KeywordChanged="OnTypeChanged"
+                               SearchLabel="Type" SearchPlaceholder="Search by type"
+                               ShowDateRange="false"
+                               SearchSm="6" SearchMd="4">
+                    <Extra>
+                        <MudItem xs="12" sm="6" md="4">
+                            <MudAutocomplete T="VehicleDto" Value="_query.SelectedVehicle" ValueChanged="OnVehicleChanged" Label="Vehicle"
+                                             Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense"
+                                             SearchFunc="@SearchVehicles" ToStringFunc="@(v => v == null ? null : $"{v.PlateNumber} - {v.Make} {v.Model} ({v.Year})")"
+                                             Clearable="true" />
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="4">
+                            <MudSelect T="bool?" Value="_query.IsActive" ValueChanged="OnStatusChanged" Label="Status"
+                                       Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Clearable="true">
+                                <MudSelectItem T="bool?" Value="@((bool?)true)">Active</MudSelectItem>
+                                <MudSelectItem T="bool?" Value="@((bool?)false)">Inactive</MudSelectItem>
+                            </MudSelect>
+                        </MudItem>
+                    </Extra>
+                </AMISFilterBar>
+
+                <!-- Status summary chips -->
+                <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap" Class="mb-3">
+                    <MudChip T="string" Variant="Variant.Outlined" Color="Color.Primary">Total: @_items.Count</MudChip>
+                    <MudChip T="string" Variant="Variant.Outlined" Color="Color.Success">Active: @_items.Count(s => s.IsActive)</MudChip>
+                    <MudChip T="string" Variant="Variant.Outlined" Color="Color.Default">Inactive: @_items.Count(s => !s.IsActive)</MudChip>
+                    <MudChip T="string" Variant="Variant.Outlined" Color="Color.Error">Overdue: @_items.Count(IsOverdue)</MudChip>
+                </MudStack>
+
+                @if (_busy)
+                {
+                    <MudProgressLinear Indeterminate="true" Class="mb-2" />
+                }
 
                     <MudTable Items="_items" Dense="true" Hover="true" Striped="true" RowClassFunc="@( (row, _) => IsOverdue(row) ? "overdue-row" : string.Empty)">
                         <HeaderContent>
@@ -91,7 +111,6 @@
             </MudCard>
         </MudItem>
     </MudGrid>
-</div>
 
 <style>
     .overdue-row {
@@ -243,9 +262,22 @@
 
     private static bool IsOverdue(MaintenanceScheduleDto schedule) => schedule.DueDate.HasValue && schedule.DueDate.Value < DateOnly.FromDateTime(DateTime.Today);
 
-    private void ClearFilters()
+    private async Task OnTypeChanged(string? value)
     {
-        _query = new();
+        _query.MaintenanceType = value;
+        await Load();
+    }
+
+    private async Task OnVehicleChanged(VehicleDto? vehicle)
+    {
+        _query.SelectedVehicle = vehicle;
+        await Load();
+    }
+
+    private async Task OnStatusChanged(bool? isActive)
+    {
+        _query.IsActive = isActive;
+        await Load();
     }
 
     public void Dispose()

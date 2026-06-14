@@ -417,11 +417,13 @@ internal interface IArAccountabilityClient
     Task<ArAccountabilityDto> ReturnLinesAsync(Guid id, ReturnAccountabilityLinesRequest request, CancellationToken ct = default);
     Task<ArAccountabilityDto> CancelAsync(Guid id, string reason, CancellationToken ct = default);
     Task<ArAccountabilityDto> RenewAsync(Guid id, DateOnly newIssuedOn, DateOnly? newExpiresOn, CancellationToken ct = default);
+    Task<byte[]> GetFastReportPdfAsync(Guid id, AccountabilityType type, string? pageWidth = null, string? orientation = null, int? minRows = null, CancellationToken ct = default);
 }
 
 internal sealed class ArAccountabilityClient(HttpClient http) : IArAccountabilityClient
 {
     private const string Base = "api/v1/asset-register/accountability";
+    private const string ReportBase = "api/v1/fast-reporting/asset-register/accountabilities";
 
     public async Task<ArPagedResponse<ArAccountabilitySummaryDto>> SearchAsync(string? keyword = null, AccountabilityType? type = null, AccountabilityStatus? status = null, Guid? receivedByEmployeeId = null, int page = 1, int pageSize = 20, CancellationToken ct = default)
     {
@@ -484,6 +486,19 @@ internal sealed class ArAccountabilityClient(HttpClient http) : IArAccountabilit
         var resp = await http.PostAsJsonAsync($"{Base}/{id}/renew", new RenewAccountabilityRequest(newIssuedOn, newExpiresOn), ArJsonOptions.Default, ct);
         resp.EnsureSuccessStatusCode();
         return (await resp.Content.ReadFromJsonAsync<ArAccountabilityDto>(ArJsonOptions.Default, cancellationToken: ct))!;
+    }
+
+    // ICS → /{id}/print ; PAR → /{id}/print-par. The COA form layout differs per type.
+    public Task<byte[]> GetFastReportPdfAsync(Guid id, AccountabilityType type, string? pageWidth = null, string? orientation = null, int? minRows = null, CancellationToken ct = default)
+    {
+        var segment = type == AccountabilityType.PPE_PAR ? "print-par" : "print";
+        var url = ArUrlBuilder.Build($"{ReportBase}/{id}/{segment}", new()
+        {
+            ["pageWidth"] = pageWidth,
+            ["orientation"] = orientation,
+            ["minRows"] = minRows?.ToString(CultureInfo.InvariantCulture),
+        });
+        return http.GetByteArrayAsync(url, ct);
     }
 }
 

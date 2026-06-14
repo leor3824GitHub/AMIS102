@@ -15,7 +15,7 @@ public static class CancelAccountabilityEndpoint
             .WithModuleName<CancelAccountabilityCommand>()
             .WithSummary("Cancel an Active accountability that has no returned/lost lines")
             .Produces<PropertyAccountabilityDto>()
-            .RequirePermission(AssetRegisterPermissions.Accountability.Issue);
+            .RequirePermission(AssetRegisterPermissions.Accountability.Cancel);
 
     private static async Task<IResult> Handle(
         Guid id, CancelAccountabilityCommand cmd, IMediator mediator, CancellationToken ct)

@@ -1,4 +1,5 @@
 using AMIS.Modules.FastReporting.Features.v1.AssetRegister.PrintAccountabilityICSFast;
+using AMIS.Modules.FastReporting.Features.v1.AssetRegister.PrintAccountabilityPARFast;
 using AMIS.Modules.FastReporting.Features.v1.AssetRegister.PrintPPEIssuanceReportFast;
 using AMIS.Modules.FastReporting.Features.v1.AssetRegister.PrintPPEReceivingReportFast;
 using AMIS.Modules.FastReporting.Features.v1.AssetRegister.PrintSMIRFast;
@@ -23,7 +24,7 @@ internal static class AssetRegisterEndpoints
         assetRegister.MapGroup("/issuance-reports").MapPPEIssuanceReportFastReports();
         assetRegister.MapGroup("/smir").MapSMIRFastReports();
         assetRegister.MapGroup("/smrr").MapSMRRFastReports();
-        assetRegister.MapGroup("/accountabilities").MapAccountabilityICSFastReports();
+        assetRegister.MapGroup("/accountabilities").MapAccountabilityFastReports();
 
         return moduleGroup;
     }
@@ -52,9 +53,10 @@ internal static class AssetRegisterEndpoints
         return group;
     }
 
-    private static IEndpointRouteBuilder MapAccountabilityICSFastReports(this IEndpointRouteBuilder group)
+    private static IEndpointRouteBuilder MapAccountabilityFastReports(this IEndpointRouteBuilder group)
     {
         PrintAccountabilityICSFastEndpoint.Map(group);
+        PrintAccountabilityPARFastEndpoint.Map(group);
         return group;
     }
 }

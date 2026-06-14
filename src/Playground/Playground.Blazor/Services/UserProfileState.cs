@@ -23,6 +23,9 @@ internal interface IUserProfileState
     /// <summary>Position/designation of the linked employee. Empty when not resolved.</summary>
     string EmployeePositionName { get; }
 
+    /// <summary>Department of the linked employee. Guid.Empty when not resolved. Used to default the requesting department on forms.</summary>
+    Guid EmployeeDepartmentId { get; }
+
     /// <summary>Permission strings granted to the current user. Empty set until loaded.</summary>
     IReadOnlySet<string> Permissions { get; }
 
@@ -36,7 +39,7 @@ internal interface IUserProfileState
     /// </summary>
     void UpdateProfile(string userName, string? userEmail, string? userRole, string? avatarUrl);
 
-    void SetEmployeeProfile(Guid employeeId, string fullName, string positionName);
+    void SetEmployeeProfile(Guid employeeId, string fullName, string positionName, Guid departmentId);
     void SetPermissions(IReadOnlySet<string> permissions);
 
     /// <summary>
@@ -56,6 +59,7 @@ internal sealed class UserProfileState : IUserProfileState
     public Guid EmployeeId { get; private set; }
     public string EmployeeFullName { get; private set; } = string.Empty;
     public string EmployeePositionName { get; private set; } = string.Empty;
+    public Guid EmployeeDepartmentId { get; private set; }
     public IReadOnlySet<string> Permissions { get; private set; } = new HashSet<string>();
 
     public event Action? OnProfileChanged;
@@ -69,11 +73,12 @@ internal sealed class UserProfileState : IUserProfileState
         OnProfileChanged?.Invoke();
     }
 
-    public void SetEmployeeProfile(Guid employeeId, string fullName, string positionName)
+    public void SetEmployeeProfile(Guid employeeId, string fullName, string positionName, Guid departmentId)
     {
         EmployeeId = employeeId;
         EmployeeFullName = fullName;
         EmployeePositionName = positionName;
+        EmployeeDepartmentId = departmentId;
     }
 
     public void SetPermissions(IReadOnlySet<string> permissions)
@@ -91,6 +96,7 @@ internal sealed class UserProfileState : IUserProfileState
         EmployeeId = Guid.Empty;
         EmployeeFullName = string.Empty;
         EmployeePositionName = string.Empty;
+        EmployeeDepartmentId = Guid.Empty;
         Permissions = new HashSet<string>();
         OnProfileChanged?.Invoke();
     }

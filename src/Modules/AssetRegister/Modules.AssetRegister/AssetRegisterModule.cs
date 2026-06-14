@@ -33,6 +33,7 @@ public class AssetRegisterModule : IModule
         new("View Accountability",   "View",   "AssetRegister.Accountability", IsBasic: true),
         new("Issue Accountability",  "Issue",  "AssetRegister.Accountability"),
         new("Return Accountability", "Return", "AssetRegister.Accountability"),
+        new("Cancel Accountability", "Cancel", "AssetRegister.Accountability"),
 
         // Employee self-service (My Accountability) — scoped to the user's own ICS/PAR.
         new("View My Accountability",           "View",           "AssetRegister.MyAccountability", IsBasic: true),

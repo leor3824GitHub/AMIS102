@@ -10,32 +10,44 @@
 
 <AMISPageHeader Title="Maintenance Logs" Description="Record completed maintenance activities" />
 
-<div class="mt-4">
-    <MudGrid Spacing="2">
-        <MudItem xs="12">
-            <MudCard Class="AMIS-card">
-                <MudCardContent>
-                    <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Class="mb-2">
-                        <MudAutocomplete T="VehicleDto" @bind-Value="_query.SelectedVehicle" Label="Vehicle"
-                                         Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense"
-                                         SearchFunc="@SearchVehicles" ToStringFunc="@(v => v == null ? null : $"{v.PlateNumber} - {v.Make} {v.Model} ({v.Year})")"
-                                         Clearable="true" />
-                        <MudTextField @bind-Value="_query.ScheduleIdText" Label="Schedule Id"
-                                      Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
-                        <MudTextField @bind-Value="_query.MaintenanceType" Label="Type"
-                                      Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
-                        <MudDatePicker @bind-Date="_query.FromDate" Label="From"
-                                       Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
-                        <MudDatePicker @bind-Date="_query.ToDate" Label="To"
-                                       Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
-                        <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" OnClick="Load" StartIcon="@Icons.Material.Filled.Search">Search</MudButton>
-                        <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Default" OnClick="ClearFilters">Clear</MudButton>
-                        @if (_canCreate)
-                        {
-                            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Secondary"
-                                       StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateDialog">New</MudButton>
-                        }
-                    </MudStack>
+<MudGrid Spacing="3">
+    <!-- List Panel - Full Width -->
+    <MudItem xs="12">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                <!-- Header: title + primary action -->
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
+                    <MudText Typo="Typo.h6" Class="flex-grow-1">Maintenance Logs</MudText>
+                    @if (_canCreate)
+                    {
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.Add"
+                                   OnClick="OpenCreateDialog"
+                                   Title="Record a maintenance activity">
+                            NEW LOG
+                        </MudButton>
+                    }
+                </MudStack>
+
+                <!-- Filter toolbar: type search + date range + vehicle / schedule -->
+                <AMISFilterBar Keyword="@_query.MaintenanceType" KeywordChanged="OnTypeChanged"
+                               SearchLabel="Type" SearchPlaceholder="Search by type"
+                               FromDate="_query.FromDate" FromDateChanged="OnFromChanged"
+                               ToDate="_query.ToDate" ToDateChanged="OnToChanged"
+                               SearchSm="6" SearchMd="3">
+                    <Extra>
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudAutocomplete T="VehicleDto" Value="_query.SelectedVehicle" ValueChanged="OnVehicleChanged" Label="Vehicle"
+                                             Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense"
+                                             SearchFunc="@SearchVehicles" ToStringFunc="@(v => v == null ? null : $"{v.PlateNumber} - {v.Make} {v.Model} ({v.Year})")"
+                                             Clearable="true" />
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudTextField T="string" Value="_query.ScheduleIdText" ValueChanged="OnScheduleIdChanged"
+                                          Label="Schedule Id" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense"
+                                          Immediate="true" DebounceInterval="400" Clearable="true" />
+                        </MudItem>
+                    </Extra>
+                </AMISFilterBar>
 
                     <MudTable Items="_items" Dense="true" Hover="true" Striped="true">
                         <HeaderContent>
@@ -67,7 +79,6 @@
             </MudCard>
         </MudItem>
     </MudGrid>
-</div>
 
 @code {
     private readonly List<MaintenanceLogDto> _items = [];
@@ -173,9 +184,34 @@
     private static Guid? ParseGuid(string? text) => Guid.TryParse(text, out var value) ? value : null;
     private static DateOnly? ToDateOnly(DateTime? date) => date.HasValue ? DateOnly.FromDateTime(date.Value) : null;
 
-    private void ClearFilters()
+    private async Task OnTypeChanged(string? value)
     {
-        _query = new();
+        _query.MaintenanceType = value;
+        await Load();
+    }
+
+    private async Task OnFromChanged(DateTime? date)
+    {
+        _query.FromDate = date;
+        await Load();
+    }
+
+    private async Task OnToChanged(DateTime? date)
+    {
+        _query.ToDate = date;
+        await Load();
+    }
+
+    private async Task OnVehicleChanged(VehicleDto? vehicle)
+    {
+        _query.SelectedVehicle = vehicle;
+        await Load();
+    }
+
+    private async Task OnScheduleIdChanged(string? value)
+    {
+        _query.ScheduleIdText = value;
+        await Load();
     }
 
     private sealed class LogQueryModel

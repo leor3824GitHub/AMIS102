@@ -296,6 +296,21 @@
 
         if (PurchaseRequest is not null)
             await BeginEdit(PurchaseRequest);
+        else
+            DefaultDepartmentFromCurrentEmployee();
+    }
+
+    // New PRs default to the requester's own department (and its RCC), since that is the requesting
+    // department in the vast majority of cases. The field stays editable so a central procurement
+    // officer can still file on behalf of another department.
+    private void DefaultDepartmentFromCurrentEmployee()
+    {
+        if (UserProfileState.EmployeeDepartmentId == Guid.Empty)
+            return;
+
+        var department = _departments.FirstOrDefault(d => d.Id == UserProfileState.EmployeeDepartmentId);
+        if (department is not null)
+            OnDepartmentChanged(department);
     }
 
     private (string Label, Color Color)? ClassifyByCost(decimal unitCost)
