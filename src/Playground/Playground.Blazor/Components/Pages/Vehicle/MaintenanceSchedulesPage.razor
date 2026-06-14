@@ -5,6 +5,7 @@
 @using AMIS.Modules.Vehicle.Contracts.Permissions
 @inject IVehicleClient VehicleClient
 @inject ISnackbar Snackbar
+@inject IDialogService DialogService
 @inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="Maintenance Schedules" Description="Plan and manage recurring maintenance" />
@@ -252,7 +253,13 @@
     }
 
     private async Task Deactivate(Guid id) => await Do(async () => await VehicleClient.DeactivateMaintenanceScheduleAsync(id), "Schedule deactivated.");
-    private async Task Delete(Guid id) => await Do(async () => await VehicleClient.DeleteMaintenanceScheduleAsync(id), "Schedule deleted.");
+    private async Task Delete(Guid id)
+    {
+        if (!await DialogService.ShowDeleteConfirmAsync("this maintenance schedule"))
+            return;
+
+        await Do(async () => await VehicleClient.DeleteMaintenanceScheduleAsync(id), "Schedule deleted.");
+    }
 
     private async Task Do(Func<Task> action, string success)
     {

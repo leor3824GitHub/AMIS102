@@ -1,4 +1,5 @@
 @using AMIS.Playground.Blazor.ApiClient
+@using AMIS.Modules.AssetRegister.Contracts.v1
 @inject IArCatalogClient Client
 @inject ISnackbar Snackbar
 
@@ -23,6 +24,19 @@
             <MudNumericField @bind-Value="_form.EstimatedUsefulLifeYears" Label="Estimated Useful Life (years)"
                              Variant="Variant.Outlined" Min="1" Max="50" T="int" Required="true"
                              Dense="true" Margin="Margin.Dense" />
+
+            <MudText Typo="Typo.subtitle2" Class="mt-2">Depreciation policy</MudText>
+            <MudText Typo="Typo.caption" Class="mb-1">
+                COA GAM defaults: straight-line, 5% residual value. Assets registered against this item
+                inherit these — individual assets can still be overridden.
+            </MudText>
+            <MudNumericField @bind-Value="_form.ResidualValuePercent" Label="Residual Value (%)"
+                             Variant="Variant.Outlined" Min="0" Max="100" T="decimal" Required="true"
+                             Dense="true" Margin="Margin.Dense" Adornment="Adornment.End" AdornmentText="%" />
+            <MudSelect @bind-Value="_form.DepreciationMethod" Label="Depreciation Method" T="DepreciationMethod"
+                       Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense">
+                <MudSelectItem Value="DepreciationMethod.StraightLine">Straight-line</MudSelectItem>
+            </MudSelect>
         </MudStack>
     </DialogContent>
     <DialogActions>
@@ -46,6 +60,8 @@
     [Parameter] public string? DefaultUnit { get; set; }
     [Parameter] public string? UacsObjectCode { get; set; }
     [Parameter] public int? EstimatedUsefulLifeYears { get; set; }
+    [Parameter] public decimal? ResidualValuePercent { get; set; }
+    [Parameter] public DepreciationMethod? Method { get; set; }
 
     private bool IsEditing => EditingId is not null;
 
@@ -63,6 +79,8 @@
             _form.DefaultUnit = DefaultUnit ?? "piece";
             _form.UacsObjectCode = UacsObjectCode;
             _form.EstimatedUsefulLifeYears = EstimatedUsefulLifeYears ?? 10;
+            _form.ResidualValuePercent = ResidualValuePercent ?? 5m;
+            _form.DepreciationMethod = Method ?? DepreciationMethod.StraightLine;
         }
     }
 
@@ -82,14 +100,16 @@
                 await Client.CreateAsync(new CreateArCatalogItemRequest(
                     _form.Code, _form.Description, _form.DefaultPropertyClass,
                     _form.DefaultCategoryCode, _form.DefaultUnit,
-                    _form.UacsObjectCode, _form.EstimatedUsefulLifeYears));
+                    _form.UacsObjectCode, _form.EstimatedUsefulLifeYears,
+                    _form.ResidualValuePercent, _form.DepreciationMethod));
                 Snackbar.Add("Catalog item created.", Severity.Success);
             }
             else
             {
                 await Client.UpdateAsync(EditingId.Value, new UpdateArCatalogItemRequest(
                     _form.Description, _form.DefaultPropertyClass, _form.DefaultCategoryCode,
-                    _form.DefaultUnit, _form.UacsObjectCode, _form.EstimatedUsefulLifeYears));
+                    _form.DefaultUnit, _form.UacsObjectCode, _form.EstimatedUsefulLifeYears,
+                    _form.ResidualValuePercent, _form.DepreciationMethod));
                 Snackbar.Add("Catalog item updated.", Severity.Success);
             }
 
@@ -116,5 +136,7 @@
         public string DefaultUnit { get; set; } = "piece";
         public string? UacsObjectCode { get; set; }
         public int EstimatedUsefulLifeYears { get; set; } = 10;
+        public decimal ResidualValuePercent { get; set; } = 5m;
+        public DepreciationMethod DepreciationMethod { get; set; } = DepreciationMethod.StraightLine;
     }
 }

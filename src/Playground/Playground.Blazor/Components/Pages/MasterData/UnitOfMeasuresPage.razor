@@ -5,6 +5,7 @@
 @using AMIS.Modules.MasterData.Contracts.Permissions
 @inherits ComponentBase
 @inject ISnackbar Snackbar
+@inject IDialogService DialogService
 @inject IMaster_dataClient MasterDataClient
 @inject ILookupClient LookupClient
 @inject IOrganizationProfileClient OrgProfileClient
@@ -350,6 +351,9 @@
 
     private async Task DeleteUnitOfMeasure(Guid id)
     {
+        if (!await DialogService.ShowDeleteConfirmAsync("this unit of measure"))
+            return;
+
         try
         {
             await MasterDataClient.UnitOfMeasuresDeleteAsync(id);

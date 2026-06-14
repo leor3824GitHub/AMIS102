@@ -10,6 +10,7 @@
 @inject IVehicleClient VehicleClient
 @inject ILookupClient LookupClient
 @inject ISnackbar Snackbar
+@inject IDialogService DialogService
 @inject NavigationManager Navigation
 @inject IUserProfileState UserProfileState
 
@@ -411,6 +412,8 @@ else
     private async Task Delete()
     {
         if (_vehicle is null) return;
+        if (!await DialogService.ShowDeleteConfirmAsync($"vehicle {_vehicle.PlateNumber}"))
+            return;
         await Do(async () => await VehicleClient.DeleteVehicleAsync(_vehicle.Id), "Vehicle deleted.", navigateBack: true);
     }
 

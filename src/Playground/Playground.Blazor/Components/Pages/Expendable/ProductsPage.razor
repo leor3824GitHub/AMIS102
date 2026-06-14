@@ -339,6 +339,9 @@
 
     private async Task DeleteProduct(Guid id)
     {
+        if (!await DialogService.ShowDeleteConfirmAsync("this product"))
+            return;
+
         try
         {
             await ExpendableClient.ProductsDeleteAsync(id);

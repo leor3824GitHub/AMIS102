@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Playground.Maui.Data;
 using Playground.Maui.Features.Asset;
 using Playground.Maui.Features.Auth;
+using Playground.Maui.Features.Home;
 using Playground.Maui.Features.Inventory;
 using Playground.Maui.Features.PhysicalCount;
 using Playground.Maui.Features.Profile;
@@ -101,6 +102,7 @@ public static class MauiProgram
         builder.Services.AddTransient<IPhysicalCountSyncService, PhysicalCountSyncService>();
 
         // ViewModels
+        builder.Services.AddTransient<HomeViewModel>();
         builder.Services.AddTransient<LoginViewModel>();
         builder.Services.AddTransient<ProfileViewModel>();
         builder.Services.AddTransient<InventoryViewModel>();
@@ -115,6 +117,7 @@ public static class MauiProgram
         builder.Services.AddTransient<PhysicalCountFoundAtStationViewModel>();
 
         // Pages
+        builder.Services.AddTransient<HomePage>();
         builder.Services.AddTransient<LoginPage>();
         builder.Services.AddTransient<ProfilePage>();
         builder.Services.AddTransient<InventoryPage>();

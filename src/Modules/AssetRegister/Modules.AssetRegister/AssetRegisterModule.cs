@@ -10,12 +10,15 @@ using AMIS.Modules.AssetRegister.Domain.Events;
 using AMIS.Modules.AssetRegister.Domain.Services;
 using AMIS.Modules.AssetRegister.Integration;
 using AMIS.Modules.AssetRegister.Provisioning;
+using Hangfire;
+using Hangfire.Common;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace AMIS.Modules.AssetRegister;
 
@@ -96,6 +99,10 @@ public class AssetRegisterModule : IModule
         // Physical-count ledger freeze: blocks covered asset movements while a count is active.
         services.AddScoped<ICountFreezeGuard, CountFreezeGuard>();
 
+        // PPE depreciation engine (COA GAM straight-line) + monthly recurring job.
+        services.AddScoped<DepreciationPostingService>();
+        services.AddScoped<DepreciationRecurringJob>();
+
         // Inbound integration consumer (Phase 3f) — materializes accepted IAR lines.
         services.AddScoped<IIntegrationEventHandler<AssetIARAcceptedEvent>, AssetIARAcceptedEventConsumer>();
 
@@ -151,6 +158,7 @@ public class AssetRegisterModule : IModule
         var assets = moduleGroup.MapGroup("/assets");
         Features.v1.Assets.RegisterAsset.RegisterAssetEndpoint.Map(assets);
         Features.v1.Assets.UpdateAssetCondition.UpdateAssetConditionEndpoint.Map(assets);
+        Features.v1.Assets.UpdateAssetDepreciation.UpdateAssetDepreciationEndpoint.Map(assets);
         Features.v1.Assets.GetAssetRegistry.GetAssetRegistryEndpoint.Map(assets);
         Features.v1.Assets.GetAssetByPropertyNo.GetAssetByPropertyNoEndpoint.Map(assets);
         Features.v1.Assets.SearchAssets.SearchAssetsEndpoint.Map(assets);
@@ -225,6 +233,40 @@ public class AssetRegisterModule : IModule
         // Report rendering endpoints (ICS/PAR, RSPI/PPEIR, RPCSEMEX/RPCPPE, RegSPI, RLSDDSP, IIRUSP/IIRUP) — Phase 5
         var reports = moduleGroup.MapGroup("/reports");
         Features.v1.Reports.ReportEndpoints.MapReportEndpoints(reports);
+        Features.v1.Reports.GetPropertyCard.GetPropertyCardEndpoint.Map(reports);
+
+        // PPE depreciation (COA GAM straight-line) — post monthly charges + PPE Ledger Card (PPELC)
+        var depreciation = moduleGroup.MapGroup("/depreciation");
+        Features.v1.Depreciation.RunDepreciation.RunDepreciationEndpoint.Map(depreciation);
+        Features.v1.Depreciation.GetPpeLedgerCard.GetPpeLedgerCardEndpoint.Map(depreciation);
+
+        RegisterRecurringJobs(endpoints);
+    }
+
+    private static void RegisterRecurringJobs(IEndpointRouteBuilder endpoints)
+    {
+        var jobManager = endpoints.ServiceProvider.GetService<IRecurringJobManager>();
+        var logger = endpoints.ServiceProvider.GetService<ILoggerFactory>()?.CreateLogger<AssetRegisterModule>();
+
+        if (jobManager is null)
+        {
+            return;
+        }
+
+        try
+        {
+            // Monthly: post COA straight-line depreciation for all PPE assets across every tenant.
+            jobManager.AddOrUpdate(
+                "asset-register-monthly-depreciation",
+                Job.FromExpression<DepreciationRecurringJob>(j => j.RunAsync(CancellationToken.None)),
+                Cron.Monthly(),
+                new RecurringJobOptions());
+        }
+        catch (Exception ex)
+        {
+            logger?.LogWarning(ex,
+                "Skipping AssetRegister Hangfire recurring job registration due to storage connectivity issue. API startup will continue.");
+        }
     }
 }
 

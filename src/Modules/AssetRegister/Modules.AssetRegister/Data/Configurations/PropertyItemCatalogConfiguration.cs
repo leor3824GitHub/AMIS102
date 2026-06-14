@@ -26,6 +26,8 @@ internal sealed class PropertyItemCatalogConfiguration : IEntityTypeConfiguratio
         builder.Property(x => x.DefaultCategoryCode).IsRequired().HasMaxLength(64);
         builder.Property(x => x.DefaultUnit).IsRequired().HasMaxLength(64);
         builder.Property(x => x.UacsObjectCode).HasMaxLength(32);
+        builder.Property(x => x.ResidualValuePercent).HasPrecision(5, 2);
+        builder.Property(x => x.DepreciationMethod).IsRequired();
         builder.Property(x => x.Status).IsRequired();
 
         builder.HasQueryFilter("SoftDelete", x => !x.IsDeleted);

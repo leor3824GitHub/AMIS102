@@ -200,6 +200,15 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                     b.Property<Guid?>("CurrentLocationId")
                         .HasColumnType("uuid");
 
+                    b.Property<DateOnly?>("DepreciatedThrough")
+                        .HasColumnType("date");
+
+                    b.Property<int>("DepreciationMethod")
+                        .HasColumnType("integer");
+
+                    b.Property<DateOnly>("DepreciationStartDate")
+                        .HasColumnType("date");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(500)
@@ -236,6 +245,10 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)")
                         .HasColumnName("PropertyNo");
+
+                    b.Property<decimal>("ResidualValue")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
 
                     b.Property<string>("SerialNo")
                         .HasMaxLength(200)
@@ -282,6 +295,48 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                         .IsUnique();
 
                     b.ToTable("AssetRegistries", "asset_register");
+
+                    b.HasAnnotation("Finbuckle:MultiTenant", true);
+                });
+
+            modelBuilder.Entity("AMIS.Modules.AssetRegister.Domain.Assets.DepreciationEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("AccumulatedDepreciationAfter")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<Guid>("AssetRegistryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("CarryingAmountAfter")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateOnly>("Period")
+                        .HasColumnType("date");
+
+                    b.Property<DateTimeOffset>("PostedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "AssetRegistryId", "Period")
+                        .IsUnique();
+
+                    b.ToTable("DepreciationEntries", "asset_register");
 
                     b.HasAnnotation("Finbuckle:MultiTenant", true);
                 });
@@ -365,6 +420,9 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                     b.Property<DateTimeOffset?>("DeletedOnUtc")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int>("DepreciationMethod")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(500)
@@ -384,6 +442,10 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
 
                     b.Property<DateTimeOffset?>("LastModifiedOnUtc")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("ResidualValuePercent")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("numeric(5,2)");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");

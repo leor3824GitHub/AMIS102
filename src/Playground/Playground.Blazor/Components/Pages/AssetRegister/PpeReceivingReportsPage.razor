@@ -210,10 +210,13 @@
 
     private async Task DeleteAsync(Guid id, string reportNo)
     {
-        var ok = await DialogService.ShowMessageBox(
-            "Delete?", $"Delete {reportNo}? This will also delete its lines.",
-            yesText: "Delete", cancelText: "Cancel");
-        if (ok != true) return;
+        var ok = await DialogService.ShowConfirmAsync(
+            "Delete Confirmation",
+            $"Delete {reportNo}? This will also delete its lines and cannot be undone.",
+            confirmText: "Delete", cancelText: "Cancel",
+            confirmColor: Color.Error,
+            icon: Icons.Material.Outlined.DeleteForever, iconColor: Color.Error);
+        if (!ok) return;
         try
         {
             await Client.DeleteAsync(id);

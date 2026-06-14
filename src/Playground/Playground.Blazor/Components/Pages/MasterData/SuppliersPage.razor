@@ -6,6 +6,7 @@
 @using AMIS.Modules.MasterData.Contracts.Permissions
 @inherits ComponentBase
 @inject ISnackbar Snackbar
+@inject IDialogService DialogService
 @inject MasterDataService MasterDataService
 @inject ILookupClient LookupClient
 @inject IOrganizationProfileClient OrgProfileClient
@@ -336,6 +337,9 @@
 
     private async Task DeleteSupplier(Guid id)
     {
+        if (!await DialogService.ShowDeleteConfirmAsync("this supplier"))
+            return;
+
         try
         {
             await MasterDataService.DeleteSupplierAsync(id);

@@ -11,6 +11,8 @@ using System.Text.Json.Serialization;
 // point of use below. Non-conflicting types come in via the namespace import.
 using AMIS.Modules.AssetRegister.Contracts.v1;
 using AMIS.Modules.AssetRegister.Contracts.v1.Catalog;
+using AMIS.Modules.AssetRegister.Contracts.v1.Depreciation;
+using AMIS.Modules.AssetRegister.Contracts.v1.Reports;
 using ArContracts = AMIS.Modules.AssetRegister.Contracts.v1;
 
 namespace AMIS.Playground.Blazor.ApiClient;
@@ -118,7 +120,9 @@ internal sealed record AssetRegistryDto(
     Guid? CurrentLocationId,
     Guid? CurrentAccountabilityId,
     Guid? SourceIARId,
-    Guid? SourcePurchaseOrderId);
+    Guid? SourcePurchaseOrderId,
+    decimal ResidualValue = 0m,
+    DepreciationMethod DepreciationMethod = DepreciationMethod.StraightLine);
 
 internal sealed record RegisterAssetRequest(
     Guid CatalogItemId,
@@ -146,6 +150,7 @@ internal interface IAssetRegistryClient
     Task<AssetRegistryDto?> GetByPropertyNoAsync(string propertyNo, CancellationToken ct = default);
     Task<AssetRegistryDto> RegisterAsync(RegisterAssetRequest request, CancellationToken ct = default);
     Task<AssetRegistryDto> UpdateConditionAsync(Guid id, ArContracts.AssetCondition condition, CancellationToken ct = default);
+    Task<AssetRegistryDto> UpdateDepreciationAsync(Guid id, decimal residualValue, int estimatedUsefulLifeYears, DepreciationMethod method, CancellationToken ct = default);
 }
 
 internal sealed class AssetRegistryClient(HttpClient http) : IAssetRegistryClient
@@ -192,6 +197,49 @@ internal sealed class AssetRegistryClient(HttpClient http) : IAssetRegistryClien
         resp.EnsureSuccessStatusCode();
         return (await resp.Content.ReadFromJsonAsync<AssetRegistryDto>(ArJsonOptions.Default, cancellationToken: ct))!;
     }
+
+    public async Task<AssetRegistryDto> UpdateDepreciationAsync(Guid id, decimal residualValue, int estimatedUsefulLifeYears, DepreciationMethod method, CancellationToken ct = default)
+    {
+        var body = new { AssetRegistryId = id, ResidualValue = residualValue, EstimatedUsefulLifeYears = estimatedUsefulLifeYears, DepreciationMethod = method };
+        var resp = await http.PostAsJsonAsync($"{Base}/{id}/depreciation", body, ArJsonOptions.Default, ct);
+        resp.EnsureSuccessStatusCode();
+        return (await resp.Content.ReadFromJsonAsync<AssetRegistryDto>(ArJsonOptions.Default, cancellationToken: ct))!;
+    }
+}
+
+// ── Depreciation (run + PPE Ledger Card + Property Card) ────────────────────
+
+internal interface IArDepreciationClient
+{
+    Task<RunDepreciationResultDto> RunAsync(DateOnly? asOfPeriod = null, CancellationToken ct = default);
+    Task<PpeLedgerCardDto?> GetLedgerCardAsync(string propertyNo, CancellationToken ct = default);
+    Task<PropertyCardDto?> GetPropertyCardAsync(string propertyNo, CancellationToken ct = default);
+}
+
+internal sealed class ArDepreciationClient(HttpClient http) : IArDepreciationClient
+{
+    public async Task<RunDepreciationResultDto> RunAsync(DateOnly? asOfPeriod = null, CancellationToken ct = default)
+    {
+        var resp = await http.PostAsJsonAsync("api/v1/asset-register/depreciation/run", new { AsOfPeriod = asOfPeriod }, ArJsonOptions.Default, ct);
+        resp.EnsureSuccessStatusCode();
+        return (await resp.Content.ReadFromJsonAsync<RunDepreciationResultDto>(ArJsonOptions.Default, cancellationToken: ct))!;
+    }
+
+    public async Task<PpeLedgerCardDto?> GetLedgerCardAsync(string propertyNo, CancellationToken ct = default)
+    {
+        var resp = await http.GetAsync($"api/v1/asset-register/depreciation/ledger-card/{Uri.EscapeDataString(propertyNo)}", ct);
+        if (resp.StatusCode == System.Net.HttpStatusCode.NotFound) return null;
+        resp.EnsureSuccessStatusCode();
+        return await resp.Content.ReadFromJsonAsync<PpeLedgerCardDto>(ArJsonOptions.Default, ct);
+    }
+
+    public async Task<PropertyCardDto?> GetPropertyCardAsync(string propertyNo, CancellationToken ct = default)
+    {
+        var resp = await http.GetAsync($"api/v1/asset-register/reports/property-card/{Uri.EscapeDataString(propertyNo)}", ct);
+        if (resp.StatusCode == System.Net.HttpStatusCode.NotFound) return null;
+        resp.EnsureSuccessStatusCode();
+        return await resp.Content.ReadFromJsonAsync<PropertyCardDto>(ArJsonOptions.Default, ct);
+    }
 }
 
 // ── Property Item Catalog ──────────────────────────────────────────────────
@@ -206,7 +254,9 @@ internal sealed record ArCatalogItemDto(
     string? UacsObjectCode,
     int EstimatedUsefulLifeYears,
     bool IsActive,
-    CatalogItemStatus Status = CatalogItemStatus.Ready);
+    CatalogItemStatus Status = CatalogItemStatus.Ready,
+    decimal ResidualValuePercent = 5m,
+    DepreciationMethod DepreciationMethod = DepreciationMethod.StraightLine);
 
 internal sealed record CreateArCatalogItemRequest(
     string Code,
@@ -215,7 +265,9 @@ internal sealed record CreateArCatalogItemRequest(
     string DefaultCategoryCode,
     string DefaultUnit,
     string? UacsObjectCode,
-    int EstimatedUsefulLifeYears);
+    int EstimatedUsefulLifeYears,
+    decimal ResidualValuePercent = 5m,
+    DepreciationMethod DepreciationMethod = DepreciationMethod.StraightLine);
 
 internal sealed record UpdateArCatalogItemRequest(
     string Description,
@@ -223,7 +275,9 @@ internal sealed record UpdateArCatalogItemRequest(
     string DefaultCategoryCode,
     string DefaultUnit,
     string? UacsObjectCode,
-    int EstimatedUsefulLifeYears);
+    int EstimatedUsefulLifeYears,
+    decimal ResidualValuePercent = 5m,
+    DepreciationMethod DepreciationMethod = DepreciationMethod.StraightLine);
 
 internal interface IArCatalogClient
 {

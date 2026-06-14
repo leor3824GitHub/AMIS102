@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
 {
     [DbContext(typeof(AssetRegisterDbContext))]
-    [Migration("20260604020204_AssetRegister_Initial")]
+    [Migration("20260613133150_AssetRegister_Initial")]
     partial class AssetRegister_Initial
     {
         /// <inheritdoc />
@@ -203,6 +203,15 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                     b.Property<Guid?>("CurrentLocationId")
                         .HasColumnType("uuid");
 
+                    b.Property<DateOnly?>("DepreciatedThrough")
+                        .HasColumnType("date");
+
+                    b.Property<int>("DepreciationMethod")
+                        .HasColumnType("integer");
+
+                    b.Property<DateOnly>("DepreciationStartDate")
+                        .HasColumnType("date");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(500)
@@ -239,6 +248,10 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)")
                         .HasColumnName("PropertyNo");
+
+                    b.Property<decimal>("ResidualValue")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
 
                     b.Property<string>("SerialNo")
                         .HasMaxLength(200)
@@ -285,6 +298,48 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                         .IsUnique();
 
                     b.ToTable("AssetRegistries", "asset_register");
+
+                    b.HasAnnotation("Finbuckle:MultiTenant", true);
+                });
+
+            modelBuilder.Entity("AMIS.Modules.AssetRegister.Domain.Assets.DepreciationEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("AccumulatedDepreciationAfter")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<Guid>("AssetRegistryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("CarryingAmountAfter")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateOnly>("Period")
+                        .HasColumnType("date");
+
+                    b.Property<DateTimeOffset>("PostedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "AssetRegistryId", "Period")
+                        .IsUnique();
+
+                    b.ToTable("DepreciationEntries", "asset_register");
 
                     b.HasAnnotation("Finbuckle:MultiTenant", true);
                 });
@@ -368,6 +423,9 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                     b.Property<DateTimeOffset?>("DeletedOnUtc")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int>("DepreciationMethod")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(500)
@@ -387,6 +445,10 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
 
                     b.Property<DateTimeOffset?>("LastModifiedOnUtc")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("ResidualValuePercent")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("numeric(5,2)");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
@@ -433,12 +495,18 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                     b.Property<Guid>("LocationId")
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("NeedsRecount")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("PhotoPath")
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
 
                     b.Property<DateOnly?>("ProposedAcquisitionDate")
                         .HasColumnType("date");
+
+                    b.Property<Guid?>("ProposedCatalogItemId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("ProposedCategoryCode")
                         .HasMaxLength(64)
@@ -448,9 +516,20 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
 
+                    b.Property<string>("ProposedPropertyNo")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
                     b.Property<decimal?>("ProposedUnitCost")
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("RecountReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTimeOffset?>("RecountRequestedOnUtc")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Remarks")
                         .HasMaxLength(1000)
@@ -518,6 +597,9 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                     b.Property<DateTimeOffset>("CreatedOnUtc")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<DateTimeOffset?>("FrozenOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("FundCluster")
                         .IsRequired()
                         .HasMaxLength(64)
@@ -528,6 +610,10 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
 
                     b.Property<DateTimeOffset?>("LastModifiedOnUtc")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("OfficeOrderNo")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("Remarks")
                         .HasMaxLength(2000)
@@ -559,6 +645,8 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                         .IsUnique();
 
                     b.HasIndex("TenantId", "Status");
+
+                    b.HasIndex("TenantId", "Status", "FundCluster");
 
                     b.ToTable("PhysicalCountSessions", "asset_register");
 
@@ -755,16 +843,35 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("BillOfLadingNo")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<string>("CreatedBy")
                         .HasColumnType("text");
 
                     b.Property<DateTimeOffset>("CreatedOnUtc")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly?>("DateReceived")
+                        .HasColumnType("date");
+
+                    b.Property<string>("DriverName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.Property<string>("FundCluster")
                         .IsRequired()
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
+
+                    b.Property<string>("IssuedToOfficeAddress")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<string>("LastModifiedBy")
                         .HasColumnType("text");
@@ -772,14 +879,12 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                     b.Property<DateTimeOffset?>("LastModifiedOnUtc")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateOnly>("PeriodFromDate")
-                        .HasColumnType("date");
+                    b.Property<int>("Nature")
+                        .HasColumnType("integer");
 
-                    b.Property<DateOnly>("PeriodToDate")
-                        .HasColumnType("date");
-
-                    b.Property<DateOnly?>("PostedOn")
-                        .HasColumnType("date");
+                    b.Property<string>("Remarks")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
 
                     b.Property<string>("ReportNo")
                         .IsRequired()
@@ -787,9 +892,6 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                         .HasColumnType("character varying(64)");
 
                     b.Property<int>("ReportType")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Status")
                         .HasColumnType("integer");
 
                     b.Property<string>("TenantId")
@@ -805,10 +907,10 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
 
                     b.HasKey("Id");
 
+                    b.HasIndex("TenantId", "Date");
+
                     b.HasIndex("TenantId", "ReportNo")
                         .IsUnique();
-
-                    b.HasIndex("TenantId", "Status");
 
                     b.ToTable("PropertyIssuanceReports", "asset_register");
 
@@ -821,14 +923,19 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("AccountabilityId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("AccountabilityLineId")
-                        .HasColumnType("uuid");
+                    b.Property<decimal?>("AccumulatedDepreciation")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
 
                     b.Property<Guid>("AssetRegistryId")
                         .HasColumnType("uuid");
+
+                    b.Property<decimal?>("BookValue")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<int>("ItemNo")
+                        .HasColumnType("integer");
 
                     b.Property<Guid>("ReportId")
                         .HasColumnType("uuid");
@@ -836,13 +943,6 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                     b.Property<decimal>("SnapshotAmount")
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)");
-
-                    b.Property<int>("SnapshotQuantityIssued")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("SnapshotResponsibilityCenterCode")
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
 
                     b.Property<decimal>("SnapshotUnitCost")
                         .HasPrecision(18, 2)
@@ -855,13 +955,9 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AccountabilityId");
-
-                    b.HasIndex("AccountabilityLineId");
-
                     b.HasIndex("AssetRegistryId");
 
-                    b.HasIndex("ReportId");
+                    b.HasIndex("ReportId", "ItemNo");
 
                     b.ToTable("PropertyIssuanceReportLines", "asset_register");
 
@@ -1087,6 +1183,9 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<DateTimeOffset?>("AcceptedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("AccountabilityDocumentNo")
                         .IsRequired()
                         .HasMaxLength(64)
@@ -1094,6 +1193,10 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
 
                     b.Property<Guid>("AccountabilityId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("CancellationReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
 
                     b.Property<string>("CreatedBy")
                         .HasColumnType("text");
@@ -1111,16 +1214,25 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("ReceiptNo")
-                        .IsRequired()
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
 
                     b.Property<int>("ReceiptType")
                         .HasColumnType("integer");
 
+                    b.Property<string>("RejectionReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
                     b.Property<string>("Remarks")
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTimeOffset?>("ResolvedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
 
                     b.Property<string>("TenantId")
                         .IsRequired()
@@ -1141,6 +1253,8 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
 
                     b.HasIndex("TenantId", "ReceiptNo")
                         .IsUnique();
+
+                    b.HasIndex("TenantId", "Status");
 
                     b.ToTable("ReturnedPropertyReceipts", "asset_register");
 
@@ -1830,7 +1944,7 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
 
             modelBuilder.Entity("AMIS.Modules.AssetRegister.Domain.Issuance.PropertyIssuanceReport", b =>
                 {
-                    b.OwnsOne("AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects.EmployeeRef", "CertifiedBy", b1 =>
+                    b.OwnsOne("AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects.EmployeeRef", "ApprovedBy", b1 =>
                         {
                             b1.Property<Guid>("PropertyIssuanceReportId")
                                 .HasColumnType("uuid");
@@ -1838,17 +1952,17 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                             b1.Property<string>("Designation")
                                 .HasMaxLength(200)
                                 .HasColumnType("character varying(200)")
-                                .HasColumnName("CertifiedBy_Designation");
+                                .HasColumnName("ApprovedBy_Designation");
 
                             b1.Property<Guid>("EmployeeId")
                                 .HasColumnType("uuid")
-                                .HasColumnName("CertifiedBy_EmployeeId");
+                                .HasColumnName("ApprovedBy_EmployeeId");
 
                             b1.Property<string>("PrintedName")
                                 .IsRequired()
                                 .HasMaxLength(200)
                                 .HasColumnType("character varying(200)")
-                                .HasColumnName("CertifiedBy_PrintedName");
+                                .HasColumnName("ApprovedBy_PrintedName");
 
                             b1.HasKey("PropertyIssuanceReportId");
 
@@ -1858,7 +1972,7 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                                 .HasForeignKey("PropertyIssuanceReportId");
                         });
 
-                    b.OwnsOne("AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects.EmployeeRef", "PostedBy", b1 =>
+                    b.OwnsOne("AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects.EmployeeRef", "IssuedBy", b1 =>
                         {
                             b1.Property<Guid>("PropertyIssuanceReportId")
                                 .HasColumnType("uuid");
@@ -1866,17 +1980,17 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                             b1.Property<string>("Designation")
                                 .HasMaxLength(200)
                                 .HasColumnType("character varying(200)")
-                                .HasColumnName("PostedBy_Designation");
+                                .HasColumnName("IssuedBy_Designation");
 
                             b1.Property<Guid>("EmployeeId")
                                 .HasColumnType("uuid")
-                                .HasColumnName("PostedBy_EmployeeId");
+                                .HasColumnName("IssuedBy_EmployeeId");
 
                             b1.Property<string>("PrintedName")
                                 .IsRequired()
                                 .HasMaxLength(200)
                                 .HasColumnType("character varying(200)")
-                                .HasColumnName("PostedBy_PrintedName");
+                                .HasColumnName("IssuedBy_PrintedName");
 
                             b1.HasKey("PropertyIssuanceReportId");
 
@@ -1886,7 +2000,7 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                                 .HasForeignKey("PropertyIssuanceReportId");
                         });
 
-                    b.OwnsOne("AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects.EmployeeRef", "PreparedBy", b1 =>
+                    b.OwnsOne("AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects.EmployeeRef", "IssuedTo", b1 =>
                         {
                             b1.Property<Guid>("PropertyIssuanceReportId")
                                 .HasColumnType("uuid");
@@ -1894,17 +2008,17 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                             b1.Property<string>("Designation")
                                 .HasMaxLength(200)
                                 .HasColumnType("character varying(200)")
-                                .HasColumnName("PreparedBy_Designation");
+                                .HasColumnName("IssuedTo_Designation");
 
                             b1.Property<Guid>("EmployeeId")
                                 .HasColumnType("uuid")
-                                .HasColumnName("PreparedBy_EmployeeId");
+                                .HasColumnName("IssuedTo_EmployeeId");
 
                             b1.Property<string>("PrintedName")
                                 .IsRequired()
                                 .HasMaxLength(200)
                                 .HasColumnType("character varying(200)")
-                                .HasColumnName("PreparedBy_PrintedName");
+                                .HasColumnName("IssuedTo_PrintedName");
 
                             b1.HasKey("PropertyIssuanceReportId");
 
@@ -1914,11 +2028,44 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                                 .HasForeignKey("PropertyIssuanceReportId");
                         });
 
-                    b.Navigation("CertifiedBy");
+                    b.OwnsOne("AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects.EmployeeRef", "ReceivedBy", b1 =>
+                        {
+                            b1.Property<Guid>("PropertyIssuanceReportId")
+                                .HasColumnType("uuid");
 
-                    b.Navigation("PostedBy");
+                            b1.Property<string>("Designation")
+                                .HasMaxLength(200)
+                                .HasColumnType("character varying(200)")
+                                .HasColumnName("ReceivedBy_Designation");
 
-                    b.Navigation("PreparedBy")
+                            b1.Property<Guid>("EmployeeId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("ReceivedBy_EmployeeId");
+
+                            b1.Property<string>("PrintedName")
+                                .IsRequired()
+                                .HasMaxLength(200)
+                                .HasColumnType("character varying(200)")
+                                .HasColumnName("ReceivedBy_PrintedName");
+
+                            b1.HasKey("PropertyIssuanceReportId");
+
+                            b1.ToTable("PropertyIssuanceReports", "asset_register");
+
+                            b1.WithOwner()
+                                .HasForeignKey("PropertyIssuanceReportId");
+                        });
+
+                    b.Navigation("ApprovedBy")
+                        .IsRequired();
+
+                    b.Navigation("IssuedBy")
+                        .IsRequired();
+
+                    b.Navigation("IssuedTo")
+                        .IsRequired();
+
+                    b.Navigation("ReceivedBy")
                         .IsRequired();
                 });
 

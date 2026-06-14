@@ -14,6 +14,15 @@ public sealed class PropertyItemCatalog : AggregateRoot<Guid>, IHasTenant, IAudi
     public string DefaultUnit { get; private set; } = default!;
     public string? UacsObjectCode { get; private set; }
     public int EstimatedUsefulLifeYears { get; private set; }
+
+    /// <summary>
+    /// Reusable depreciation policy for assets of this item type. COA GAM defaults the residual
+    /// value to 5% of cost; agencies may override per item type. Inherited by AssetRegistry at
+    /// registration (a single asset can still override its own values afterward).
+    /// </summary>
+    public decimal ResidualValuePercent { get; private set; } = 5m;
+    public DepreciationMethod DepreciationMethod { get; private set; } = DepreciationMethod.StraightLine;
+
     public bool IsActive { get; private set; }
 
     /// <summary>
@@ -40,10 +49,14 @@ public sealed class PropertyItemCatalog : AggregateRoot<Guid>, IHasTenant, IAudi
         string defaultCategoryCode,
         string defaultUnit,
         string? uacsObjectCode,
-        int estimatedUsefulLifeYears)
+        int estimatedUsefulLifeYears,
+        decimal residualValuePercent = 5m,
+        DepreciationMethod depreciationMethod = DepreciationMethod.StraightLine)
     {
         if (estimatedUsefulLifeYears <= 0)
             throw new InvalidOperationException("EstimatedUsefulLifeYears must be greater than zero.");
+        if (residualValuePercent is < 0m or > 100m)
+            throw new InvalidOperationException("ResidualValuePercent must be between 0 and 100.");
 
         return new PropertyItemCatalog
         {
@@ -56,6 +69,8 @@ public sealed class PropertyItemCatalog : AggregateRoot<Guid>, IHasTenant, IAudi
             DefaultUnit = defaultUnit,
             UacsObjectCode = uacsObjectCode,
             EstimatedUsefulLifeYears = estimatedUsefulLifeYears,
+            ResidualValuePercent = residualValuePercent,
+            DepreciationMethod = depreciationMethod,
             IsActive = true,
             Status = string.IsNullOrWhiteSpace(uacsObjectCode) ? CatalogItemStatus.Draft : CatalogItemStatus.Ready,
             CreatedOnUtc = DateTimeOffset.UtcNow
@@ -68,10 +83,14 @@ public sealed class PropertyItemCatalog : AggregateRoot<Guid>, IHasTenant, IAudi
         string defaultCategoryCode,
         string defaultUnit,
         string? uacsObjectCode,
-        int estimatedUsefulLifeYears)
+        int estimatedUsefulLifeYears,
+        decimal residualValuePercent = 5m,
+        DepreciationMethod depreciationMethod = DepreciationMethod.StraightLine)
     {
         if (estimatedUsefulLifeYears <= 0)
             throw new InvalidOperationException("EstimatedUsefulLifeYears must be greater than zero.");
+        if (residualValuePercent is < 0m or > 100m)
+            throw new InvalidOperationException("ResidualValuePercent must be between 0 and 100.");
 
         Description = description;
         DefaultPropertyClass = defaultPropertyClass;
@@ -79,6 +98,8 @@ public sealed class PropertyItemCatalog : AggregateRoot<Guid>, IHasTenant, IAudi
         DefaultUnit = defaultUnit;
         UacsObjectCode = uacsObjectCode;
         EstimatedUsefulLifeYears = estimatedUsefulLifeYears;
+        ResidualValuePercent = residualValuePercent;
+        DepreciationMethod = depreciationMethod;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
 
         // Promote Draft → Ready when admin adds UACS via Update. Never demote.

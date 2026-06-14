@@ -241,10 +241,13 @@
 
     private async Task DeleteAsync(ArPPERRFormSeriesDto s)
     {
-        var ok = await DialogService.ShowMessageBox(
-            "Delete?", $"Delete series '{s.Label}' (range {s.StartSerial}–{s.EndSerial})?",
-            yesText: "Delete", cancelText: "Cancel");
-        if (ok != true) return;
+        var ok = await DialogService.ShowConfirmAsync(
+            "Delete Confirmation",
+            $"Delete series '{s.Label}' (range {s.StartSerial}–{s.EndSerial})? This action cannot be undone.",
+            confirmText: "Delete", cancelText: "Cancel",
+            confirmColor: Color.Error,
+            icon: Icons.Material.Outlined.DeleteForever, iconColor: Color.Error);
+        if (!ok) return;
 
         _busy = true;
         try

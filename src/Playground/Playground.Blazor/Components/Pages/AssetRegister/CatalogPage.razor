@@ -61,6 +61,7 @@
                             <MudTh>Description</MudTh>
                             <MudTh>Unit</MudTh>
                             <MudTh Style="text-align:right">Life (yr)</MudTh>
+                            <MudTh Style="text-align:right">Residual %</MudTh>
                             <MudTh>Active</MudTh>
                             <MudTh>Actions</MudTh>
                         </HeaderContent>
@@ -69,6 +70,7 @@
                             <MudTd>@context.Description</MudTd>
                             <MudTd>@context.DefaultUnit</MudTd>
                             <MudTd Style="text-align:right">@context.EstimatedUsefulLifeYears</MudTd>
+                            <MudTd Style="text-align:right">@context.ResidualValuePercent.ToString("0.##")%</MudTd>
                             <MudTd>
                                 <MudChip T="string" Size="Size.Small"
                                          Color="@(context.IsActive ? Color.Success : Color.Default)"
@@ -175,7 +177,9 @@
             { x => x.DefaultCategoryCode, editing?.DefaultCategoryCode },
             { x => x.DefaultUnit, editing?.DefaultUnit },
             { x => x.UacsObjectCode, editing?.UacsObjectCode },
-            { x => x.EstimatedUsefulLifeYears, editing?.EstimatedUsefulLifeYears }
+            { x => x.EstimatedUsefulLifeYears, editing?.EstimatedUsefulLifeYears },
+            { x => x.ResidualValuePercent, editing?.ResidualValuePercent },
+            { x => x.Method, editing?.DepreciationMethod }
         };
         var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true };
         var title = editing is null ? "New Catalog Item" : $"Edit: {editing.Code}";
@@ -209,6 +213,9 @@
 
     private async Task DeleteAsync(ArCatalogItemDto item)
     {
+        if (!await DialogService.ShowDeleteConfirmAsync($"catalog item \"{item.Code}\""))
+            return;
+
         _busy = true;
         try
         {

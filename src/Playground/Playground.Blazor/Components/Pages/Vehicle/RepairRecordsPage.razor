@@ -5,6 +5,7 @@
 @using AMIS.Modules.Vehicle.Contracts.Permissions
 @inject IVehicleClient VehicleClient
 @inject ISnackbar Snackbar
+@inject IDialogService DialogService
 @inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="Repair Records" Description="Track repair jobs and status" />
@@ -219,7 +220,13 @@
 
     private async Task Start(Guid id) => await Do(async () => await VehicleClient.StartRepairAsync(id), "Repair started.");
     private async Task Cancel(Guid id) => await Do(async () => await VehicleClient.CancelRepairAsync(id), "Repair cancelled.");
-    private async Task Delete(Guid id) => await Do(async () => await VehicleClient.DeleteRepairAsync(id), "Repair deleted.");
+    private async Task Delete(Guid id)
+    {
+        if (!await DialogService.ShowDeleteConfirmAsync("this repair record"))
+            return;
+
+        await Do(async () => await VehicleClient.DeleteRepairAsync(id), "Repair deleted.");
+    }
 
     private async Task Complete(Guid id)
     {

@@ -14,6 +14,7 @@ public sealed class UpdatePropertyItemCatalogCommandValidator : AbstractValidato
         RuleFor(x => x.DefaultUnit).NotEmpty().MaximumLength(32);
         RuleFor(x => x.UacsObjectCode).MaximumLength(32);
         RuleFor(x => x.EstimatedUsefulLifeYears).GreaterThan(0).LessThanOrEqualTo(100);
+        RuleFor(x => x.ResidualValuePercent).InclusiveBetween(0m, 100m);
     }
 }
 

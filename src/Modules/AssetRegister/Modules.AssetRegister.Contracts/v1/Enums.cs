@@ -20,6 +20,15 @@ public enum AssetCondition
     Unserviceable = 2
 }
 
+/// <summary>
+/// Depreciation method for a PPE asset. COA GAM mandates straight-line for government;
+/// the enum leaves room for future methods without reshaping the model.
+/// </summary>
+public enum DepreciationMethod
+{
+    StraightLine = 0
+}
+
 public enum LifecycleState
 {
     Available = 0,
@@ -101,6 +110,29 @@ public enum PhysicalCountCondition
     Unserviceable = 2,
     Missing = 3,
     FoundAtStation = 4
+}
+
+/// <summary>A movement on an asset's Property Card (COA §6.3.1.a chronological log).</summary>
+public enum AssetMovementType
+{
+    Acquired = 0,
+    Issued = 1,
+    Returned = 2,
+    TransferredOut = 3,
+    Unserviceable = 4,
+    Disposed = 5,
+    Lost = 6,
+    Recovered = 7
+}
+
+/// <summary>The source document a Property Card movement was derived from.</summary>
+public enum MovementSource
+{
+    Receiving = 0,        // PPERR / SMRR
+    Accountability = 1,   // PAR / ICS
+    Issuance = 2,         // PPEIR / SMIR
+    Unserviceable = 3,    // IIRUP / IIRUSP
+    Incident = 4          // RLSDDSP
 }
 
 public enum PropertyIncidentType

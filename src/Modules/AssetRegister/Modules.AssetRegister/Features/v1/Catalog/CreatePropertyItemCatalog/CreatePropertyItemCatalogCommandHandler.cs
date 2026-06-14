@@ -33,7 +33,9 @@ public sealed class CreatePropertyItemCatalogCommandHandler(AssetRegisterDbConte
             cmd.DefaultCategoryCode,
             cmd.DefaultUnit,
             cmd.UacsObjectCode,
-            cmd.EstimatedUsefulLifeYears);
+            cmd.EstimatedUsefulLifeYears,
+            cmd.ResidualValuePercent,
+            cmd.DepreciationMethod);
 
         db.PropertyItemCatalogs.Add(entity);
         await db.SaveChangesAsync(ct).ConfigureAwait(false);
@@ -46,6 +48,7 @@ internal static class PropertyItemCatalogMapper
 {
     public static PropertyItemCatalogDto ToDto(PropertyItemCatalog x) =>
         new(x.Id, x.Code, x.Description, x.DefaultPropertyClass, x.DefaultCategoryCode,
-            x.DefaultUnit, x.UacsObjectCode, x.EstimatedUsefulLifeYears, x.IsActive, x.Status);
+            x.DefaultUnit, x.UacsObjectCode, x.EstimatedUsefulLifeYears, x.IsActive, x.Status,
+            x.ResidualValuePercent, x.DepreciationMethod);
 }
 

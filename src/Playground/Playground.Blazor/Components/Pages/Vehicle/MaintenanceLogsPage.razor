@@ -5,6 +5,7 @@
 @using AMIS.Modules.Vehicle.Contracts.Permissions
 @inject IVehicleClient VehicleClient
 @inject ISnackbar Snackbar
+@inject IDialogService DialogService
 @inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="Maintenance Logs" Description="Record completed maintenance activities" />
@@ -193,6 +194,9 @@
 
     private async Task Delete(Guid id)
     {
+        if (!await DialogService.ShowDeleteConfirmAsync("this maintenance log"))
+            return;
+
         try
         {
             await VehicleClient.DeleteMaintenanceLogAsync(id);

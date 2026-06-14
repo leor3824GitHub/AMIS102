@@ -7,11 +7,23 @@
 @using AssetCondition = AMIS.Modules.AssetRegister.Contracts.v1.AssetCondition
 @using LifecycleState = AMIS.Modules.AssetRegister.Contracts.v1.LifecycleState
 @inject IAssetRegistryClient Client
+@inject IArDepreciationClient DepreciationClient
+@inject IDialogService DialogService
 @inject ISnackbar Snackbar
 @inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="Asset Registry"
                Description="Master ledger of individual physical units — one row per asset (COA 2020-006, 2022-004)." />
+
+@if (_canUpdate)
+{
+    <MudStack Row="true" Justify="Justify.FlexEnd" Class="mb-2">
+        <AMISButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary"
+                    StartIcon="@Icons.Material.Outlined.Calculate" OnClick="RunDepreciationAsync" Disabled="_busy">
+            Run Depreciation
+        </AMISButton>
+    </MudStack>
+}
 
 <MudGrid Spacing="3">
     <!-- Search filters -->
@@ -204,6 +216,40 @@
                         }
                     </MudGrid>
 
+                    <!-- Depreciation: policy display, cards, per-asset override -->
+                    <MudDivider Class="my-3" />
+                    <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+                        <MudText Typo="Typo.subtitle2">Depreciation</MudText>
+                        @if (_selected.AssetType == AssetType.PPE)
+                        {
+                            <MudChip T="string" Size="Size.Small" Variant="Variant.Text">Residual: @Money.Symbol@_selected.ResidualValue.ToString("N2")</MudChip>
+                            <MudChip T="string" Size="Size.Small" Variant="Variant.Text">Method: @_selected.DepreciationMethod</MudChip>
+                        }
+                        else
+                        {
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Semi-expendable — not depreciated.</MudText>
+                        }
+                        <MudSpacer />
+                        @if (_canView)
+                        {
+                            <AMISButton Size="Size.Small" Variant="Variant.Text" StartIcon="@Icons.Material.Outlined.History"
+                                        OnClick="OpenPropertyCard">Property Card</AMISButton>
+                        }
+                        @if (_selected.AssetType == AssetType.PPE)
+                        {
+                            @if (_canView)
+                            {
+                                <AMISButton Size="Size.Small" Variant="Variant.Text" StartIcon="@Icons.Material.Outlined.TableChart"
+                                            OnClick="OpenLedgerCard">Ledger Card</AMISButton>
+                            }
+                            @if (_canUpdate)
+                            {
+                                <AMISButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary"
+                                            StartIcon="@Icons.Material.Outlined.Tune" OnClick="OpenOverrideAsync">Override</AMISButton>
+                            }
+                        }
+                    </MudStack>
+
                     <!-- Update condition inline -->
                     @if (_canUpdate)
                     {
@@ -242,6 +288,7 @@
     private AssetCondition _newCondition;
 
     private bool _canUpdate => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Assets.Update);
+    private bool _canView => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Assets.View);
 
     protected override async Task OnInitializedAsync()
     {
@@ -312,6 +359,62 @@
         finally
         {
             _busy = false;
+        }
+    }
+
+    private async Task RunDepreciationAsync()
+    {
+        _busy = true;
+        try
+        {
+            var result = await DepreciationClient.RunAsync();
+            Snackbar.Add($"Depreciation posted: {result.EntriesPosted} entries across {result.AssetsProcessed} asset(s) through {result.Period:yyyy-MM}.", Severity.Success);
+            if (_selected is not null) _selected = await Client.GetAsync(_selected.Id);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private Task OpenPropertyCard()
+    {
+        if (_selected is null) return Task.CompletedTask;
+        var parameters = new DialogParameters<PropertyCardDialog> { { x => x.PropertyNo, _selected.PropertyNo } };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true, CloseButton = true };
+        return DialogService.ShowAsync<PropertyCardDialog>($"Property Card — {_selected.PropertyNo}", parameters, options);
+    }
+
+    private Task OpenLedgerCard()
+    {
+        if (_selected is null) return Task.CompletedTask;
+        var parameters = new DialogParameters<PpeLedgerCardDialog> { { x => x.PropertyNo, _selected.PropertyNo } };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true, CloseButton = true };
+        return DialogService.ShowAsync<PpeLedgerCardDialog>($"PPE Ledger Card — {_selected.PropertyNo}", parameters, options);
+    }
+
+    private async Task OpenOverrideAsync()
+    {
+        if (_selected is null) return;
+        var parameters = new DialogParameters<AssetDepreciationDialog>
+        {
+            { x => x.AssetId, _selected.Id },
+            { x => x.PropertyNo, _selected.PropertyNo },
+            { x => x.UnitCost, _selected.UnitCost },
+            { x => x.ResidualValue, _selected.ResidualValue },
+            { x => x.EstimatedUsefulLifeYears, _selected.EstimatedUsefulLifeYears },
+            { x => x.Method, _selected.DepreciationMethod }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true };
+        var dialog = await DialogService.ShowAsync<AssetDepreciationDialog>($"Override Depreciation — {_selected.PropertyNo}", parameters, options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
+        {
+            _selected = await Client.GetAsync(_selected.Id);
         }
     }
 

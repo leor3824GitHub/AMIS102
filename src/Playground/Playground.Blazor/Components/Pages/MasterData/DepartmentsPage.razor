@@ -5,6 +5,7 @@
 @using AMIS.Modules.MasterData.Contracts.Permissions
 @inherits ComponentBase
 @inject ISnackbar Snackbar
+@inject IDialogService DialogService
 @inject IMaster_dataClient MasterDataClient
 @inject ILookupClient LookupClient
 @inject IOrganizationProfileClient OrgProfileClient
@@ -363,6 +364,9 @@
 
     private async Task DeleteDepartment(Guid id)
     {
+        if (!await DialogService.ShowDeleteConfirmAsync("this department"))
+            return;
+
         try
         {
             await MasterDataClient.DepartmentsDeleteAsync(id);

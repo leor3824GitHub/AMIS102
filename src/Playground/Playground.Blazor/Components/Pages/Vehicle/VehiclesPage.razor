@@ -6,6 +6,7 @@
 @using static AMIS.Modules.Vehicle.Contracts.v1.Vehicles.VehicleStatusValues
 @inject IVehicleClient VehicleClient
 @inject ISnackbar Snackbar
+@inject IDialogService DialogService
 @inject NavigationManager Navigation
 @inject IUserProfileState UserProfileState
 
@@ -271,6 +272,9 @@
 
     private async Task Delete(Guid id)
     {
+        if (!await DialogService.ShowDeleteConfirmAsync("this vehicle"))
+            return;
+
         await RunAction(async () => await VehicleClient.DeleteVehicleAsync(id), "Vehicle deleted.");
     }
 

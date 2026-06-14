@@ -31,6 +31,8 @@ internal static class AssetRegistryMapper
             x.CurrentLocationId,
             x.CurrentAccountabilityId,
             x.SourceIARId,
-            x.SourcePurchaseOrderId);
+            x.SourcePurchaseOrderId,
+            x.ResidualValue,
+            x.DepreciationMethod);
 }
 

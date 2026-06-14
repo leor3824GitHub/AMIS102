@@ -239,6 +239,8 @@ internal static class ApiClientRegistration
             new AssetRegistryClient(ResolveClient(sp)));
         services.AddTransient<IArCatalogClient>(sp =>
             new ArCatalogClient(ResolveClient(sp)));
+        services.AddTransient<IArDepreciationClient>(sp =>
+            new ArDepreciationClient(ResolveClient(sp)));
         services.AddTransient<IArAccountabilityClient>(sp =>
             new ArAccountabilityClient(ResolveClient(sp)));
         services.AddTransient<IArPhysicalCountClient>(sp =>

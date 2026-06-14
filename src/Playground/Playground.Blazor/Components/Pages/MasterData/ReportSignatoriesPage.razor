@@ -274,12 +274,7 @@
 
     private async Task ConfirmDeleteAsync(ReportSignatoryDto s)
     {
-        var result = await MudDialog.ShowMessageBox(
-            "Delete Signatory",
-            $"Are you sure you want to delete '{s.Name}'? This cannot be undone.",
-            yesText: "Delete", cancelText: "Cancel");
-
-        if (result ?? false)
+        if (await MudDialog.ShowDeleteConfirmAsync(s.Name ?? "this signatory"))
         {
             await DeleteAsync(s);
         }

@@ -42,8 +42,10 @@ internal sealed class AssetRegistryConfiguration : IEntityTypeConfiguration<Asse
         builder.Property(x => x.UnitCost).HasPrecision(18, 2);
         builder.Property(x => x.AccumulatedDepreciation).HasPrecision(18, 2);
         builder.Property(x => x.AccumulatedImpairmentLosses).HasPrecision(18, 2);
+        builder.Property(x => x.ResidualValue).HasPrecision(18, 2);
 
         builder.Ignore(x => x.CarryingAmount);
+        builder.Ignore(x => x.IsFullyDepreciated);
 
         builder.HasIndex(x => new { x.TenantId, PropertyNo = x.PropertyNo }).IsUnique();
         builder.HasIndex(x => new { x.TenantId, x.LifecycleState });

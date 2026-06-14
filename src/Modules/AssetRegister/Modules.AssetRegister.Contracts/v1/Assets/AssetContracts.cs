@@ -29,7 +29,9 @@ public sealed record AssetRegistryDto(
     Guid? CurrentLocationId,
     Guid? CurrentAccountabilityId,
     Guid? SourceIARId,
-    Guid? SourcePurchaseOrderId);
+    Guid? SourcePurchaseOrderId,
+    decimal ResidualValue = 0m,
+    DepreciationMethod DepreciationMethod = DepreciationMethod.StraightLine);
 
 public sealed record AssetRegistrySummaryDto(
     Guid Id,
@@ -66,6 +68,16 @@ public sealed record RegisterAssetCommand(
 public sealed record UpdateAssetConditionCommand(
     Guid AssetRegistryId,
     AssetCondition Condition) : ICommand<AssetRegistryDto>;
+
+/// <summary>
+/// Per-asset override of the catalog depreciation policy (the enterprise "very flexible" path).
+/// Applied prospectively — already-posted depreciation is untouched. PPE only.
+/// </summary>
+public sealed record UpdateAssetDepreciationCommand(
+    Guid AssetRegistryId,
+    decimal ResidualValue,
+    int EstimatedUsefulLifeYears,
+    DepreciationMethod DepreciationMethod = DepreciationMethod.StraightLine) : ICommand<AssetRegistryDto>;
 
 // ── Queries ────────────────────────────────────────────────────────────────
 

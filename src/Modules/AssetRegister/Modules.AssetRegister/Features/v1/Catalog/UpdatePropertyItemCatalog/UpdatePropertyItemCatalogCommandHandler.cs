@@ -22,7 +22,9 @@ public sealed class UpdatePropertyItemCatalogCommandHandler(AssetRegisterDbConte
             cmd.DefaultCategoryCode,
             cmd.DefaultUnit,
             cmd.UacsObjectCode,
-            cmd.EstimatedUsefulLifeYears);
+            cmd.EstimatedUsefulLifeYears,
+            cmd.ResidualValuePercent,
+            cmd.DepreciationMethod);
 
         await db.SaveChangesAsync(ct).ConfigureAwait(false);
         return PropertyItemCatalogMapper.ToDto(entity);

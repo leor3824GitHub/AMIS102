@@ -6,6 +6,7 @@
 @using AMIS.Playground.Blazor.ApiClient
 @inject IModeOfProcurementClient ModeClient
 @inject ISnackbar Snackbar
+@inject IDialogService DialogService
 @inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="Modes of Procurement" Description="Manage procurement modes used across planning and purchasing">
@@ -229,6 +230,9 @@
 
     private async Task DeleteAsync(Guid id)
     {
+        if (!await DialogService.ShowDeleteConfirmAsync("this mode of procurement"))
+            return;
+
         try
         {
             _isLoading = true;

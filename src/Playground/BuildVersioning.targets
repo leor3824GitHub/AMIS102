@@ -1,0 +1,58 @@
+<Project>
+
+  <!--
+    Live auto-incrementing build number.
+
+    On every real build, AutoIncrementBuildNumber reads <project>\build-number.txt,
+    adds 1, writes it back, and stamps the result into FileVersion / InformationalVersion
+    (and the native ApplicationVersion for MAUI). The running app reads it back via the
+    AssemblyInformationalVersion attribute.
+
+    The counter file is per-project and source-controlled, so the number is monotonic and
+    survives `clean`. Building all three MAUI TFMs bumps three times (one per build).
+    A fully up-to-date no-op build does not bump (the assembly isn't regenerated).
+
+    Imported by Playground.Maui.csproj and Playground.Blazor.csproj.
+  -->
+
+  <PropertyGroup>
+    <BuildNumberFile>$(MSBuildProjectDirectory)\build-number.txt</BuildNumberFile>
+    <!-- Marketing version. Override <BaseVersion> in the importing csproj to bump the major/minor. -->
+    <BaseVersion Condition="'$(BaseVersion)' == ''">1.0.0</BaseVersion>
+    <!-- Keep InformationalVersion clean — don't let the SDK append +<git-sha>. -->
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+  </PropertyGroup>
+
+  <Target Name="AutoIncrementBuildNumber"
+          BeforeTargets="GetAssemblyVersion"
+          Condition="'$(BuildNumberIncremented)' != 'true'">
+
+    <ReadLinesFromFile File="$(BuildNumberFile)" Condition="Exists('$(BuildNumberFile)')">
+      <Output TaskParameter="Lines" ItemName="_BuildNumberLines" />
+    </ReadLinesFromFile>
+
+    <PropertyGroup>
+      <_CurrentBuildNumber>@(_BuildNumberLines)</_CurrentBuildNumber>
+      <_CurrentBuildNumber Condition="'$(_CurrentBuildNumber)' == ''">0</_CurrentBuildNumber>
+      <BuildNumber>$([MSBuild]::Add($(_CurrentBuildNumber), 1))</BuildNumber>
+      <BuildNumberIncremented>true</BuildNumberIncremented>
+    </PropertyGroup>
+
+    <WriteLinesToFile File="$(BuildNumberFile)" Lines="$(BuildNumber)" Overwrite="true" />
+
+    <PropertyGroup>
+      <FileVersion>$(BaseVersion).$(BuildNumber)</FileVersion>
+      <InformationalVersion>$(BaseVersion)+build.$(BuildNumber)</InformationalVersion>
+    </PropertyGroup>
+
+    <!-- MAUI native package/manifest versioning (Android versionCode, Windows pkg, iOS bundle). -->
+    <PropertyGroup Condition="'$(UseMaui)' == 'true'">
+      <ApplicationDisplayVersion>$(BaseVersion)</ApplicationDisplayVersion>
+      <ApplicationVersion>$(BuildNumber)</ApplicationVersion>
+    </PropertyGroup>
+
+    <Message Importance="high"
+             Text="[BuildVersioning] $(MSBuildProjectName) build number -> $(BuildNumber)  (version $(InformationalVersion))" />
+  </Target>
+
+</Project>

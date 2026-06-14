@@ -834,11 +834,13 @@
     private async Task DeleteAsync()
     {
         if (_editing is null) return;
-        var confirmed = await DialogService.ShowMessageBox(
+        var confirmed = await DialogService.ShowConfirmAsync(
             "Delete APP",
             $"Delete {_editing.AppNumber}? This cannot be undone. Consolidated PPMPs will be returned to Approved.",
-            yesText: "Delete", cancelText: "Cancel");
-        if (confirmed != true) return;
+            confirmText: "Delete", cancelText: "Cancel",
+            confirmColor: Color.Error,
+            icon: Icons.Material.Outlined.DeleteForever, iconColor: Color.Error);
+        if (!confirmed) return;
         _busy = true;
         try
         {
@@ -853,11 +855,13 @@
 
     private async Task DeleteFromListAsync(AnnualProcurementPlanSummaryDto row)
     {
-        var confirmed = await DialogService.ShowMessageBox(
+        var confirmed = await DialogService.ShowConfirmAsync(
             "Delete APP",
-            $"Delete {row.AppNumber} (FY {row.FiscalYear})? Consolidated PPMPs will be returned to Approved.",
-            yesText: "Delete", cancelText: "Cancel");
-        if (confirmed != true) return;
+            $"Delete {row.AppNumber} (FY {row.FiscalYear})? This cannot be undone. Consolidated PPMPs will be returned to Approved.",
+            confirmText: "Delete", cancelText: "Cancel",
+            confirmColor: Color.Error,
+            icon: Icons.Material.Outlined.DeleteForever, iconColor: Color.Error);
+        if (!confirmed) return;
         _busy = true;
         try
         {

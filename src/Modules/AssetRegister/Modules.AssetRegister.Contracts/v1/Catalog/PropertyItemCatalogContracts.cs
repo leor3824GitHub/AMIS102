@@ -24,7 +24,9 @@ public sealed record PropertyItemCatalogDto(
     string? UacsObjectCode,
     int EstimatedUsefulLifeYears,
     bool IsActive,
-    CatalogItemStatus Status = CatalogItemStatus.Ready);
+    CatalogItemStatus Status = CatalogItemStatus.Ready,
+    decimal ResidualValuePercent = 5m,
+    DepreciationMethod DepreciationMethod = DepreciationMethod.StraightLine);
 
 // ── Commands ───────────────────────────────────────────────────────────────
 
@@ -35,7 +37,9 @@ public sealed record CreatePropertyItemCatalogCommand(
     string DefaultCategoryCode,
     string DefaultUnit,
     string? UacsObjectCode,
-    int EstimatedUsefulLifeYears) : ICommand<PropertyItemCatalogDto>;
+    int EstimatedUsefulLifeYears,
+    decimal ResidualValuePercent = 5m,
+    DepreciationMethod DepreciationMethod = DepreciationMethod.StraightLine) : ICommand<PropertyItemCatalogDto>;
 
 public sealed record UpdatePropertyItemCatalogCommand(
     Guid Id,
@@ -44,7 +48,9 @@ public sealed record UpdatePropertyItemCatalogCommand(
     string DefaultCategoryCode,
     string DefaultUnit,
     string? UacsObjectCode,
-    int EstimatedUsefulLifeYears) : ICommand<PropertyItemCatalogDto>;
+    int EstimatedUsefulLifeYears,
+    decimal ResidualValuePercent = 5m,
+    DepreciationMethod DepreciationMethod = DepreciationMethod.StraightLine) : ICommand<PropertyItemCatalogDto>;
 
 public sealed record DeletePropertyItemCatalogCommand(Guid Id) : ICommand;
 

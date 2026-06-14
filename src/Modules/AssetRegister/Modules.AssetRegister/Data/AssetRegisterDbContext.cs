@@ -23,6 +23,7 @@ public class AssetRegisterDbContext : BaseDbContext
     public DbSet<PropertyItemCatalog> PropertyItemCatalogs => Set<PropertyItemCatalog>();
     public DbSet<PropertyCodeCounter> PropertyCodeCounters => Set<PropertyCodeCounter>();
     public DbSet<AssetRegistry> AssetRegistries => Set<AssetRegistry>();
+    public DbSet<DepreciationEntry> DepreciationEntries => Set<DepreciationEntry>();
     public DbSet<PropertyAccountability> PropertyAccountabilities => Set<PropertyAccountability>();
     public DbSet<PropertyIssuanceReport> PropertyIssuanceReports => Set<PropertyIssuanceReport>();
     public DbSet<PhysicalCountSession> PhysicalCountSessions => Set<PhysicalCountSession>();
