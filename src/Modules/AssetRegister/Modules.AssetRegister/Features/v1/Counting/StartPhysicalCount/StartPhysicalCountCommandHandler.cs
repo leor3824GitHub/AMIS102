@@ -12,14 +12,14 @@ public sealed class StartPhysicalCountCommandHandler(
     AssetRegisterDbContext db, CounterAllocator allocator)
     : ICommandHandler<StartPhysicalCountCommand, PhysicalCountSessionDto>
 {
-    public async ValueTask<PhysicalCountSessionDto> Handle(StartPhysicalCountCommand cmd, CancellationToken ct)
+    public async ValueTask<PhysicalCountSessionDto> Handle(StartPhysicalCountCommand cmd, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(cmd);
         var tenantId = db.TenantInfo?.Identifier ?? string.Empty;
 
         // Auto-mint a session code (PCS-YYYY-NNNN) when caller passes blank.
         var code = string.IsNullOrWhiteSpace(cmd.Code)
-            ? $"PCS-{cmd.AsAt.Year:D4}-{(await allocator.NextSerialAsync(tenantId, cmd.AsAt.Year, 1, "PCS", ct).ConfigureAwait(false)).ToString("D4", CultureInfo.InvariantCulture)}"
+            ? $"PCS-{cmd.AsAt.Year:D4}-{(await allocator.NextSerialAsync(tenantId, cmd.AsAt.Year, 1, "PCS", cancellationToken).ConfigureAwait(false)).ToString("D4", CultureInfo.InvariantCulture)}"
             : cmd.Code;
 
         var conductedBy = cmd.ConductedBy
@@ -30,7 +30,7 @@ public sealed class StartPhysicalCountCommandHandler(
             cmd.OfficeOrderNo);
 
         db.PhysicalCountSessions.Add(session);
-        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return CountingMapper.ToDto(session);
     }
 }

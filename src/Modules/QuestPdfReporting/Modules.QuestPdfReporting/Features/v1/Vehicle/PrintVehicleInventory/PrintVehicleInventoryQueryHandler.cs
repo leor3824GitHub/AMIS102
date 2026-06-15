@@ -9,15 +9,15 @@ namespace AMIS.Modules.QuestPdfReporting.Features.v1.Vehicle.PrintVehicleInvento
 public sealed class PrintVehicleInventoryQueryHandler(IMediator mediator)
     : IQueryHandler<PrintVehicleInventoryQuery, byte[]>
 {
-    public async ValueTask<byte[]> Handle(PrintVehicleInventoryQuery query, CancellationToken ct)
+    public async ValueTask<byte[]> Handle(PrintVehicleInventoryQuery query, CancellationToken cancellationToken)
     {
         var inventory = await mediator.Send(
-            new GetMotorVehicleInventoryQuery { Status = query.Status }, ct).ConfigureAwait(false);
+            new GetMotorVehicleInventoryQuery { Status = query.Status }, cancellationToken).ConfigureAwait(false);
 
-        var org = await mediator.Send(new GetOrganizationProfileQuery(), ct).ConfigureAwait(false);
+        var org = await mediator.Send(new GetOrganizationProfileQuery(), cancellationToken).ConfigureAwait(false);
 
         var signatories = await mediator.Send(
-            new GetReportSignatoriesQuery("VehicleInventory"), ct).ConfigureAwait(false);
+            new GetReportSignatoriesQuery("VehicleInventory"), cancellationToken).ConfigureAwait(false);
 
         return new VehicleInventoryPdfDocument(
             inventory, org, signatories, query.AsOfDate, query.PaperSize, query.Orientation, (float)query.Margin).GeneratePdf();

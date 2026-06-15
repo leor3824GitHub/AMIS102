@@ -10,14 +10,14 @@ namespace AMIS.Modules.Vehicle.Features.v1.Vehicles.DeleteVehicle;
 public sealed class DeleteVehicleCommandHandler(VehicleDbContext db, ICurrentUser currentUser)
     : ICommandHandler<DeleteVehicleCommand, Unit>
 {
-    public async ValueTask<Unit> Handle(DeleteVehicleCommand cmd, CancellationToken ct)
+    public async ValueTask<Unit> Handle(DeleteVehicleCommand cmd, CancellationToken cancellationToken)
     {
-        var vehicle = await db.Vehicles.FirstOrDefaultAsync(v => v.Id == cmd.Id, ct).ConfigureAwait(false)
+        var vehicle = await db.Vehicles.FirstOrDefaultAsync(v => v.Id == cmd.Id, cancellationToken).ConfigureAwait(false)
             ?? throw new FluentValidation.ValidationException(
             [new ValidationFailure(nameof(cmd.Id), "Vehicle not found.")]);
 
         vehicle.SoftDelete(currentUser.GetUserId().ToString());
-        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return Unit.Value;
     }
 }

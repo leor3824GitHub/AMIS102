@@ -13,13 +13,13 @@ public sealed class PrintPurchaseRequestQueryHandler(IMediator mediator)
     private static readonly Assembly Assembly = typeof(PrintPurchaseRequestQueryHandler).Assembly;
     private const string ReportResource = "AMIS.Modules.RdlcReporting.Reports.PurchaseRequest.rdlc";
 
-    public async ValueTask<byte[]> Handle(PrintPurchaseRequestQuery query, CancellationToken ct)
+    public async ValueTask<byte[]> Handle(PrintPurchaseRequestQuery query, CancellationToken cancellationToken)
     {
-        var pr = await mediator.Send(new GetPurchaseRequestQuery(query.Id), ct).ConfigureAwait(false)
+        var pr = await mediator.Send(new GetPurchaseRequestQuery(query.Id), cancellationToken).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Purchase request '{query.Id}' not found.");
 
         var orgProfile = await mediator
-            .Send(new GetOrganizationProfileQuery(), ct)
+            .Send(new GetOrganizationProfileQuery(), cancellationToken)
             .ConfigureAwait(false);
 
         var headerData = new List<PrReportHeader>

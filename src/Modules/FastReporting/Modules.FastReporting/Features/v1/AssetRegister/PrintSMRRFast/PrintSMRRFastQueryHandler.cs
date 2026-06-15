@@ -17,12 +17,12 @@ public sealed class PrintSMRRFastQueryHandler(IMediator mediator)
     private static readonly Assembly Assembly = typeof(PrintSMRRFastQueryHandler).Assembly;
     private const string TemplateName = "SMRRFast";
 
-    public async ValueTask<ReportFileDto> Handle(PrintSMRRFastQuery query, CancellationToken ct)
+    public async ValueTask<ReportFileDto> Handle(PrintSMRRFastQuery query, CancellationToken cancellationToken)
     {
-        var rr = await mediator.Send(new GetReceivingReportQuery(query.Id), ct).ConfigureAwait(false)
+        var rr = await mediator.Send(new GetReceivingReportQuery(query.Id), cancellationToken).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Receiving Report '{query.Id}' not found.");
 
-        var org = await mediator.Send(new GetOrganizationProfileQuery(), ct).ConfigureAwait(false);
+        var org = await mediator.Send(new GetOrganizationProfileQuery(), cancellationToken).ConfigureAwait(false);
 
         var nf = CultureInfo.InvariantCulture;
 
@@ -63,7 +63,7 @@ public sealed class PrintSMRRFastQueryHandler(IMediator mediator)
                     dataBand.DataSource = report.GetDataSource("LineItemsDS");
             },
             fileName: $"SMRR-{rr.ReportNo}",
-            ct: ct).ConfigureAwait(false);
+            ct: cancellationToken).ConfigureAwait(false);
     }
 
     private static DataTable BuildLineItemsTable(ReceivingReportDto rr, int minRows)

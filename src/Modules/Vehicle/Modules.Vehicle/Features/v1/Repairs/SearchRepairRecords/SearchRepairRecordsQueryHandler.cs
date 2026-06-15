@@ -12,7 +12,7 @@ namespace AMIS.Modules.Vehicle.Features.v1.Repairs.SearchRepairRecords;
 public sealed class SearchRepairRecordsQueryHandler(VehicleDbContext db)
     : IQueryHandler<SearchRepairRecordsQuery, PagedResponse<RepairRecordDto>>
 {
-    public async ValueTask<PagedResponse<RepairRecordDto>> Handle(SearchRepairRecordsQuery query, CancellationToken ct)
+    public async ValueTask<PagedResponse<RepairRecordDto>> Handle(SearchRepairRecordsQuery query, CancellationToken cancellationToken)
     {
         var q = db.RepairRecords.AsNoTracking();
 
@@ -38,7 +38,7 @@ public sealed class SearchRepairRecordsQueryHandler(VehicleDbContext db)
 
         q = q.OrderByDescending(r => r.RepairDate);
 
-        return await q.Select(r => r.ToDto()).ToPagedResponseAsync(query, ct).ConfigureAwait(false);
+        return await q.Select(r => r.ToDto()).ToPagedResponseAsync(query, cancellationToken).ConfigureAwait(false);
     }
 }
 

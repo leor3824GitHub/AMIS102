@@ -10,14 +10,14 @@ namespace AMIS.Modules.Vehicle.Features.v1.Repairs.DeleteRepairRecord;
 public sealed class DeleteRepairRecordCommandHandler(VehicleDbContext db, ICurrentUser currentUser)
     : ICommandHandler<DeleteRepairRecordCommand, Unit>
 {
-    public async ValueTask<Unit> Handle(DeleteRepairRecordCommand cmd, CancellationToken ct)
+    public async ValueTask<Unit> Handle(DeleteRepairRecordCommand cmd, CancellationToken cancellationToken)
     {
-        var record = await db.RepairRecords.FirstOrDefaultAsync(r => r.Id == cmd.Id, ct).ConfigureAwait(false)
+        var record = await db.RepairRecords.FirstOrDefaultAsync(r => r.Id == cmd.Id, cancellationToken).ConfigureAwait(false)
             ?? throw new FluentValidation.ValidationException(
             [new ValidationFailure(nameof(cmd.Id), "Repair record not found.")]);
 
         record.SoftDelete(currentUser.GetUserId().ToString());
-        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return Unit.Value;
     }
 }

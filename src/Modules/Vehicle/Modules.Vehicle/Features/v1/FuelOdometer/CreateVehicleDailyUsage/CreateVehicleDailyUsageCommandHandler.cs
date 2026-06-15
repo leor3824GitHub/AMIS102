@@ -13,9 +13,9 @@ namespace AMIS.Modules.Vehicle.Features.v1.FuelOdometer.CreateVehicleDailyUsage;
 public sealed class CreateVehicleDailyUsageCommandHandler(VehicleDbContext db, ICurrentUser currentUser)
     : ICommandHandler<CreateVehicleDailyUsageCommand, VehicleDailyUsageDto>
 {
-    public async ValueTask<VehicleDailyUsageDto> Handle(CreateVehicleDailyUsageCommand cmd, CancellationToken ct)
+    public async ValueTask<VehicleDailyUsageDto> Handle(CreateVehicleDailyUsageCommand cmd, CancellationToken cancellationToken)
     {
-        var vehicle = await db.Vehicles.FirstOrDefaultAsync(v => v.Id == cmd.VehicleId, ct).ConfigureAwait(false)
+        var vehicle = await db.Vehicles.FirstOrDefaultAsync(v => v.Id == cmd.VehicleId, cancellationToken).ConfigureAwait(false)
             ?? throw new FluentValidation.ValidationException(
             [new ValidationFailure(nameof(cmd.VehicleId), "Vehicle not found.")]);
 
@@ -25,7 +25,7 @@ public sealed class CreateVehicleDailyUsageCommandHandler(VehicleDbContext db, I
 
         var exists = await db.VehicleDailyUsages
             .AsNoTracking()
-            .AnyAsync(x => x.VehicleId == cmd.VehicleId && x.Date == cmd.Date, ct)
+            .AnyAsync(x => x.VehicleId == cmd.VehicleId && x.Date == cmd.Date, cancellationToken)
             .ConfigureAwait(false);
 
         if (exists)
@@ -46,7 +46,7 @@ public sealed class CreateVehicleDailyUsageCommandHandler(VehicleDbContext db, I
         usage.SetCreatedBy(currentUser.GetUserId().ToString());
 
         db.VehicleDailyUsages.Add(usage);
-        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
         return usage.ToDto();
     }

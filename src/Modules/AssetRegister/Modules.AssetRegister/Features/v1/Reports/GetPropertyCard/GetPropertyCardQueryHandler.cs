@@ -15,7 +15,7 @@ namespace AMIS.Modules.AssetRegister.Features.v1.Reports.GetPropertyCard;
 public sealed class GetPropertyCardQueryHandler(AssetRegisterDbContext db)
     : IQueryHandler<GetPropertyCardQuery, PropertyCardDto?>
 {
-    public async ValueTask<PropertyCardDto?> Handle(GetPropertyCardQuery query, CancellationToken ct)
+    public async ValueTask<PropertyCardDto?> Handle(GetPropertyCardQuery query, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(query);
 
@@ -25,7 +25,7 @@ public sealed class GetPropertyCardQueryHandler(AssetRegisterDbContext db)
 
         var asset = await db.AssetRegistries
             .AsNoTracking()
-            .FirstOrDefaultAsync(a => a.PropertyNo == pn, ct).ConfigureAwait(false);
+            .FirstOrDefaultAsync(a => a.PropertyNo == pn, cancellationToken).ConfigureAwait(false);
         if (asset is null)
             return null;
 
@@ -37,7 +37,7 @@ public sealed class GetPropertyCardQueryHandler(AssetRegisterDbContext db)
         var receiving = await db.ReceivingReports
             .AsNoTracking().Include(r => r.Items)
             .Where(r => r.Items.Any(i => i.PropertyNo == propertyNo))
-            .ToListAsync(ct).ConfigureAwait(false);
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
         foreach (var r in receiving)
         {
             var item = r.Items.First(i => i.PropertyNo == propertyNo);
@@ -51,7 +51,7 @@ public sealed class GetPropertyCardQueryHandler(AssetRegisterDbContext db)
         var accountabilities = await db.PropertyAccountabilities
             .AsNoTracking().Include(a => a.Lines)
             .Where(a => a.Lines.Any(l => l.AssetRegistryId == assetId))
-            .ToListAsync(ct).ConfigureAwait(false);
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
         foreach (var a in accountabilities)
         {
             var line = a.Lines.First(l => l.AssetRegistryId == assetId);
@@ -71,7 +71,7 @@ public sealed class GetPropertyCardQueryHandler(AssetRegisterDbContext db)
         var issuances = await db.PropertyIssuanceReports
             .AsNoTracking().Include(r => r.Lines)
             .Where(r => r.Lines.Any(l => l.AssetRegistryId == assetId))
-            .ToListAsync(ct).ConfigureAwait(false);
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
         foreach (var r in issuances)
         {
             var line = r.Lines.First(l => l.AssetRegistryId == assetId);
@@ -85,7 +85,7 @@ public sealed class GetPropertyCardQueryHandler(AssetRegisterDbContext db)
         var unserviceables = await db.UnserviceablePropertyReports
             .AsNoTracking().Include(r => r.Items)
             .Where(r => r.Items.Any(i => i.AssetRegistryId == assetId))
-            .ToListAsync(ct).ConfigureAwait(false);
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
         foreach (var r in unserviceables)
         {
             var item = r.Items.First(i => i.AssetRegistryId == assetId);
@@ -104,7 +104,7 @@ public sealed class GetPropertyCardQueryHandler(AssetRegisterDbContext db)
         var incidents = await db.PropertyIncidentReports
             .AsNoTracking().Include(r => r.Items)
             .Where(r => r.Items.Any(i => i.AssetRegistryId == assetId))
-            .ToListAsync(ct).ConfigureAwait(false);
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
         foreach (var r in incidents)
         {
             var item = r.Items.First(i => i.AssetRegistryId == assetId);

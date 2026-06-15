@@ -18,16 +18,16 @@ public sealed class PrintAccountabilityPARFastQueryHandler(IMediator mediator)
 
     private const string TemplateName = "PropertyAcknowledgementReceiptFast";
 
-    public async ValueTask<ReportFileDto> Handle(PrintAccountabilityPARFastQuery query, CancellationToken ct)
+    public async ValueTask<ReportFileDto> Handle(PrintAccountabilityPARFastQuery query, CancellationToken cancellationToken)
     {
-        var accountability = await mediator.Send(new GetAccountabilityQuery(query.Id), ct).ConfigureAwait(false)
+        var accountability = await mediator.Send(new GetAccountabilityQuery(query.Id), cancellationToken).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Accountability document '{query.Id}' not found.");
 
         if (accountability.AccountabilityType != AccountabilityType.PPE_PAR)
             throw new InvalidOperationException(
                 $"Document '{accountability.DocumentNo}' is an ICS, not a PAR. Use the ICS print endpoint.");
 
-        var org = await mediator.Send(new GetOrganizationProfileQuery(), ct).ConfigureAwait(false);
+        var org = await mediator.Send(new GetOrganizationProfileQuery(), cancellationToken).ConfigureAwait(false);
 
         var nf = CultureInfo.InvariantCulture;
 
@@ -62,7 +62,7 @@ public sealed class PrintAccountabilityPARFastQueryHandler(IMediator mediator)
                     dataBand.DataSource = report.GetDataSource("LineItemsDS");
             },
             fileName: $"PAR-{accountability.DocumentNo}",
-            ct: ct).ConfigureAwait(false);
+            ct: cancellationToken).ConfigureAwait(false);
     }
 
     // DataTable uses same column names as PropertyAcknowledgementReceiptFast.frx.

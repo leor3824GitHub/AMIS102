@@ -17,12 +17,12 @@ public sealed class PrintPPEReceivingReportFastQueryHandler(IMediator mediator)
     private static readonly Assembly Assembly = typeof(PrintPPEReceivingReportFastQueryHandler).Assembly;
     private const string TemplateName = "PPEReceivingReportFast";
 
-    public async ValueTask<ReportFileDto> Handle(PrintPPEReceivingReportFastQuery query, CancellationToken ct)
+    public async ValueTask<ReportFileDto> Handle(PrintPPEReceivingReportFastQuery query, CancellationToken cancellationToken)
     {
-        var rr = await mediator.Send(new GetReceivingReportQuery(query.Id), ct).ConfigureAwait(false)
+        var rr = await mediator.Send(new GetReceivingReportQuery(query.Id), cancellationToken).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Receiving Report '{query.Id}' not found.");
 
-        var org = await mediator.Send(new GetOrganizationProfileQuery(), ct).ConfigureAwait(false);
+        var org = await mediator.Send(new GetOrganizationProfileQuery(), cancellationToken).ConfigureAwait(false);
 
         var nf = CultureInfo.InvariantCulture;
 
@@ -72,7 +72,7 @@ public sealed class PrintPPEReceivingReportFastQueryHandler(IMediator mediator)
                     dataBand.DataSource = report.GetDataSource("LineItemsDS");
             },
             fileName: $"PPERR-{rr.ReportNo}",
-            ct: ct).ConfigureAwait(false);
+            ct: cancellationToken).ConfigureAwait(false);
     }
 
     // DataTable (not List<record>) for line items — FastReport's TableDataSource iterates

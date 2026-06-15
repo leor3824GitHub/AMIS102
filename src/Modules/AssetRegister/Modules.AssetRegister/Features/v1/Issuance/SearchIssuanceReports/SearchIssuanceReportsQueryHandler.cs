@@ -10,7 +10,7 @@ public sealed class SearchIssuanceReportsQueryHandler(AssetRegisterDbContext db)
     : IQueryHandler<SearchIssuanceReportsQuery, PagedResponse<PropertyIssuanceReportSummaryDto>>
 {
     public async ValueTask<PagedResponse<PropertyIssuanceReportSummaryDto>> Handle(
-        SearchIssuanceReportsQuery query, CancellationToken ct)
+        SearchIssuanceReportsQuery query, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(query);
         var q = db.PropertyIssuanceReports.AsNoTracking().AsQueryable();
@@ -28,14 +28,14 @@ public sealed class SearchIssuanceReportsQueryHandler(AssetRegisterDbContext db)
         var pageNumber = query.PageNumber <= 0 ? 1 : query.PageNumber;
         var pageSize = query.PageSize <= 0 ? 10 : query.PageSize;
 
-        var total = await q.LongCountAsync(ct).ConfigureAwait(false);
+        var total = await q.LongCountAsync(cancellationToken).ConfigureAwait(false);
         var items = await q.OrderByDescending(r => r.Date)
             .ThenByDescending(r => r.CreatedOnUtc)
             .Skip((pageNumber - 1) * pageSize).Take(pageSize)
             .Select(r => new PropertyIssuanceReportSummaryDto(
                 r.Id, r.ReportNo, r.ReportType, r.Nature, r.Date,
                 r.Lines.Count, r.Lines.Sum(l => l.SnapshotAmount)))
-            .ToListAsync(ct).ConfigureAwait(false);
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
 
         return new PagedResponse<PropertyIssuanceReportSummaryDto>
         {

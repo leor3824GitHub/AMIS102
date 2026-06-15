@@ -17,12 +17,12 @@ public sealed class PrintPurchaseRequestFastQueryHandler(IMediator mediator)
     private const string LandscapeTemplate = "PurchaseRequestFast";
     private const string PortraitTemplate = "PurchaseRequestPortraitFast";
 
-    public async ValueTask<ReportFileDto> Handle(PrintPurchaseRequestFastQuery query, CancellationToken ct)
+    public async ValueTask<ReportFileDto> Handle(PrintPurchaseRequestFastQuery query, CancellationToken cancellationToken)
     {
-        var pr = await mediator.Send(new GetPurchaseRequestQuery(query.Id), ct).ConfigureAwait(false)
+        var pr = await mediator.Send(new GetPurchaseRequestQuery(query.Id), cancellationToken).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Purchase request '{query.Id}' not found.");
 
-        var org = await mediator.Send(new GetOrganizationProfileQuery(), ct).ConfigureAwait(false);
+        var org = await mediator.Send(new GetOrganizationProfileQuery(), cancellationToken).ConfigureAwait(false);
 
         // Designations are frozen onto the PR at the signing action (faithful reprint). Legacy PRs
         // signed before snapshots existed have null — fall back to blank (requester) or the static
@@ -85,7 +85,7 @@ public sealed class PrintPurchaseRequestFastQueryHandler(IMediator mediator)
                 PopulatePortraitStaticRows(report, lineItemsForPortrait);
             },
             fileName: $"PR-{pr.PrNumber}",
-            ct: ct).ConfigureAwait(false);
+            ct: cancellationToken).ConfigureAwait(false);
     }
 
     // Use a DataTable (not List<record>) for line items: BusinessObjectDataSource in

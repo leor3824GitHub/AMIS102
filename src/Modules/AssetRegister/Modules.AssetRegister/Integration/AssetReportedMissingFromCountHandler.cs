@@ -15,7 +15,7 @@ public sealed class AssetReportedMissingFromCountHandler(
     ILogger<AssetReportedMissingFromCountHandler> logger)
     : INotificationHandler<AssetReportedMissingFromCountEvent>
 {
-    public ValueTask Handle(AssetReportedMissingFromCountEvent @event, CancellationToken ct)
+    public ValueTask Handle(AssetReportedMissingFromCountEvent @event, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(@event);
         logger.LogWarning(

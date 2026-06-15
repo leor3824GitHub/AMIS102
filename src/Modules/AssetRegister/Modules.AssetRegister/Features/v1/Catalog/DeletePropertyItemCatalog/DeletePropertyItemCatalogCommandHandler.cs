@@ -8,14 +8,14 @@ namespace AMIS.Modules.AssetRegister.Features.v1.Catalog.DeletePropertyItemCatal
 public sealed class DeletePropertyItemCatalogCommandHandler(AssetRegisterDbContext db)
     : ICommandHandler<DeletePropertyItemCatalogCommand>
 {
-    public async ValueTask<Unit> Handle(DeletePropertyItemCatalogCommand cmd, CancellationToken ct)
+    public async ValueTask<Unit> Handle(DeletePropertyItemCatalogCommand cmd, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(cmd);
-        var entity = await db.PropertyItemCatalogs.FirstOrDefaultAsync(x => x.Id == cmd.Id, ct).ConfigureAwait(false)
+        var entity = await db.PropertyItemCatalogs.FirstOrDefaultAsync(x => x.Id == cmd.Id, cancellationToken).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"PropertyItemCatalog '{cmd.Id}' not found.");
 
         db.PropertyItemCatalogs.Remove(entity);
-        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return Unit.Value;
     }
 }

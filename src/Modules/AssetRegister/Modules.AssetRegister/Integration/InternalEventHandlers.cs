@@ -17,7 +17,7 @@ namespace AMIS.Modules.AssetRegister.Integration;
 public sealed class AssetReturnedEventHandler(ILogger<AssetReturnedEventHandler> logger)
     : INotificationHandler<AssetReturnedEvent>
 {
-    public ValueTask Handle(AssetReturnedEvent @event, CancellationToken ct)
+    public ValueTask Handle(AssetReturnedEvent @event, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(@event);
         logger.LogInformation(
@@ -33,7 +33,7 @@ public sealed class AssetReturnedEventHandler(ILogger<AssetReturnedEventHandler>
 public sealed class AssetTransferredEventHandler(ILogger<AssetTransferredEventHandler> logger)
     : INotificationHandler<AssetTransferredEvent>
 {
-    public ValueTask Handle(AssetTransferredEvent @event, CancellationToken ct)
+    public ValueTask Handle(AssetTransferredEvent @event, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(@event);
         logger.LogInformation(
@@ -49,7 +49,7 @@ public sealed class AssetTransferredEventHandler(ILogger<AssetTransferredEventHa
 public sealed class AssetFoundAtStationEventHandler(ILogger<AssetFoundAtStationEventHandler> logger)
     : INotificationHandler<AssetFoundAtStationEvent>
 {
-    public ValueTask Handle(AssetFoundAtStationEvent @event, CancellationToken ct)
+    public ValueTask Handle(AssetFoundAtStationEvent @event, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(@event);
         logger.LogInformation(
@@ -66,7 +66,7 @@ public sealed class AssetFoundAtStationEventHandler(ILogger<AssetFoundAtStationE
 public sealed class AssetLostEventHandler(ILogger<AssetLostEventHandler> logger)
     : INotificationHandler<AssetLostEvent>
 {
-    public ValueTask Handle(AssetLostEvent @event, CancellationToken ct)
+    public ValueTask Handle(AssetLostEvent @event, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(@event);
         logger.LogWarning(
@@ -83,7 +83,7 @@ public sealed class AssetLostEventHandler(ILogger<AssetLostEventHandler> logger)
 public sealed class AssetRecoveredEventHandler(ILogger<AssetRecoveredEventHandler> logger)
     : INotificationHandler<AssetRecoveredEvent>
 {
-    public ValueTask Handle(AssetRecoveredEvent @event, CancellationToken ct)
+    public ValueTask Handle(AssetRecoveredEvent @event, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(@event);
         logger.LogInformation(
@@ -100,7 +100,7 @@ public sealed class AssetRecoveredEventHandler(ILogger<AssetRecoveredEventHandle
 public sealed class AssetUnserviceableEventHandler(ILogger<AssetUnserviceableEventHandler> logger)
     : INotificationHandler<AssetUnserviceableEvent>
 {
-    public ValueTask Handle(AssetUnserviceableEvent @event, CancellationToken ct)
+    public ValueTask Handle(AssetUnserviceableEvent @event, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(@event);
         logger.LogInformation(
@@ -116,7 +116,7 @@ public sealed class AssetUnserviceableEventHandler(ILogger<AssetUnserviceableEve
 public sealed class AccountabilityCancelledEventHandler(ILogger<AccountabilityCancelledEventHandler> logger)
     : INotificationHandler<AccountabilityCancelledEvent>
 {
-    public ValueTask Handle(AccountabilityCancelledEvent @event, CancellationToken ct)
+    public ValueTask Handle(AccountabilityCancelledEvent @event, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(@event);
         logger.LogInformation(
@@ -132,7 +132,7 @@ public sealed class AccountabilityCancelledEventHandler(ILogger<AccountabilityCa
 public sealed class PhysicalCountSessionClosedEventHandler(ILogger<PhysicalCountSessionClosedEventHandler> logger)
     : INotificationHandler<PhysicalCountSessionClosedEvent>
 {
-    public ValueTask Handle(PhysicalCountSessionClosedEvent @event, CancellationToken ct)
+    public ValueTask Handle(PhysicalCountSessionClosedEvent @event, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(@event);
         logger.LogInformation(
@@ -148,7 +148,7 @@ public sealed class PhysicalCountSessionClosedEventHandler(ILogger<PhysicalCount
 public sealed class PhysicalCountFrozenEventHandler(ILogger<PhysicalCountFrozenEventHandler> logger)
     : INotificationHandler<PhysicalCountFrozenEvent>
 {
-    public ValueTask Handle(PhysicalCountFrozenEvent @event, CancellationToken ct)
+    public ValueTask Handle(PhysicalCountFrozenEvent @event, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(@event);
         logger.LogInformation(
@@ -164,7 +164,7 @@ public sealed class PhysicalCountFrozenEventHandler(ILogger<PhysicalCountFrozenE
 public sealed class PhysicalCountRecountRequestedEventHandler(ILogger<PhysicalCountRecountRequestedEventHandler> logger)
     : INotificationHandler<PhysicalCountRecountRequestedEvent>
 {
-    public ValueTask Handle(PhysicalCountRecountRequestedEvent @event, CancellationToken ct)
+    public ValueTask Handle(PhysicalCountRecountRequestedEvent @event, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(@event);
         logger.LogInformation(
@@ -181,7 +181,7 @@ public sealed class PhysicalCountRecountRequestedEventHandler(ILogger<PhysicalCo
 public sealed class AssetTransferredOutEventHandler(ILogger<AssetTransferredOutEventHandler> logger)
     : INotificationHandler<AssetTransferredOutEvent>
 {
-    public ValueTask Handle(AssetTransferredOutEvent @event, CancellationToken ct)
+    public ValueTask Handle(AssetTransferredOutEvent @event, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(@event);
         logger.LogInformation(

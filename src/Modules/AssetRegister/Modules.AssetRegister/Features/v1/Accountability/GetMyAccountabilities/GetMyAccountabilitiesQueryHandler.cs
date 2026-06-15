@@ -10,14 +10,14 @@ public sealed class GetMyAccountabilitiesQueryHandler(ICurrentUser currentUser, 
     : IQueryHandler<GetMyAccountabilitiesQuery, PagedResponse<PropertyAccountabilitySummaryDto>>
 {
     public async ValueTask<PagedResponse<PropertyAccountabilitySummaryDto>> Handle(
-        GetMyAccountabilitiesQuery query, CancellationToken ct)
+        GetMyAccountabilitiesQuery query, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(query);
 
         var pageNumber = query.PageNumber <= 0 ? 1 : query.PageNumber;
         var pageSize = query.PageSize <= 0 ? 10 : query.PageSize;
 
-        var employee = await CurrentEmployeeResolver.TryResolveAsync(currentUser, mediator, ct).ConfigureAwait(false);
+        var employee = await CurrentEmployeeResolver.TryResolveAsync(currentUser, mediator, cancellationToken).ConfigureAwait(false);
         if (employee is null)
         {
             return new PagedResponse<PropertyAccountabilitySummaryDto>
@@ -32,7 +32,7 @@ public sealed class GetMyAccountabilitiesQueryHandler(ICurrentUser currentUser, 
 
         // Reuse the officer search, scoped server-side to the resolved employee.
         return await mediator.Send(new SearchAccountabilitiesQuery(
-            query.Keyword, query.Type, query.Status, employee.Id, null, null, pageNumber, pageSize), ct)
+            query.Keyword, query.Type, query.Status, employee.Id, null, null, pageNumber, pageSize), cancellationToken)
             .ConfigureAwait(false);
     }
 }

@@ -19,11 +19,11 @@ public sealed class CreateReceivingReportCommandHandler(
     IMediator mediator)
     : ICommandHandler<CreateReceivingReportCommand, ReceivingReportDto>
 {
-    public async ValueTask<ReceivingReportDto> Handle(CreateReceivingReportCommand cmd, CancellationToken ct)
+    public async ValueTask<ReceivingReportDto> Handle(CreateReceivingReportCommand cmd, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(cmd);
 
-        await EnforceCapitalizationThresholdAsync(cmd, ct).ConfigureAwait(false);
+        await EnforceCapitalizationThresholdAsync(cmd, cancellationToken).ConfigureAwait(false);
 
         // Resolve catalog rows referenced by the request. As of Phase 3, every line MUST carry an explicit
         // CatalogItemId — the old fuzzy fallback (PropertyClassHint / substring / token overlap) is gone.
@@ -35,11 +35,11 @@ public sealed class CreateReceivingReportCommandHandler(
 
         var catalogsById = await db.PropertyItemCatalogs
             .Where(c => ids.Contains(c.Id))
-            .ToDictionaryAsync(c => c.Id, ct)
+            .ToDictionaryAsync(c => c.Id, cancellationToken)
             .ConfigureAwait(false);
 
         var tenantId = db.TenantInfo?.Identifier ?? string.Empty;
-        var reportNo = await reportNumbers.NextAsync(cmd.DocumentKind, cmd.Date, ct).ConfigureAwait(false);
+        var reportNo = await reportNumbers.NextAsync(cmd.DocumentKind, cmd.Date, cancellationToken).ConfigureAwait(false);
 
         var receivedBy = EmployeeRef.Create(cmd.ReceivedBy.EmployeeId, cmd.ReceivedBy.PrintedName, cmd.ReceivedBy.Designation);
         var notedBy = cmd.NotedBy is null
@@ -80,7 +80,7 @@ public sealed class CreateReceivingReportCommandHandler(
         }
 
         db.ReceivingReports.Add(report);
-        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
         return ReceivingMapper.ToDto(report);
     }
@@ -125,9 +125,9 @@ public sealed class CreateReceivingReportCommandHandler(
     }
 
     // No-op when no active threshold is configured — the master data is optional and back-compatible.
-    private async Task EnforceCapitalizationThresholdAsync(CreateReceivingReportCommand cmd, CancellationToken ct)
+    private async Task EnforceCapitalizationThresholdAsync(CreateReceivingReportCommand cmd, CancellationToken cancellationToken)
     {
-        var threshold = await mediator.Send(new GetActiveCapitalizationThresholdQuery(), ct).ConfigureAwait(false);
+        var threshold = await mediator.Send(new GetActiveCapitalizationThresholdQuery(), cancellationToken).ConfigureAwait(false);
         if (threshold is null)
             return;
 

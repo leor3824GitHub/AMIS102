@@ -11,9 +11,9 @@ namespace AMIS.Modules.Vehicle.Features.v1.Repairs.CancelRepair;
 public sealed class CancelRepairCommandHandler(VehicleDbContext db, ICurrentUser currentUser)
     : ICommandHandler<CancelRepairCommand, Unit>
 {
-    public async ValueTask<Unit> Handle(CancelRepairCommand cmd, CancellationToken ct)
+    public async ValueTask<Unit> Handle(CancelRepairCommand cmd, CancellationToken cancellationToken)
     {
-        var record = await db.RepairRecords.FirstOrDefaultAsync(r => r.Id == cmd.Id, ct).ConfigureAwait(false)
+        var record = await db.RepairRecords.FirstOrDefaultAsync(r => r.Id == cmd.Id, cancellationToken).ConfigureAwait(false)
             ?? throw new FluentValidation.ValidationException(
             [new ValidationFailure(nameof(cmd.Id), "Repair record not found.")]);
 
@@ -29,17 +29,17 @@ public sealed class CancelRepairCommandHandler(VehicleDbContext db, ICurrentUser
         if (wasInProgress)
         {
             var otherActiveRepairs = await db.RepairRecords
-                .AnyAsync(r => r.VehicleId == record.VehicleId && r.Id != record.Id && r.Status == RepairStatus.InProgress, ct)
+                .AnyAsync(r => r.VehicleId == record.VehicleId && r.Id != record.Id && r.Status == RepairStatus.InProgress, cancellationToken)
                 .ConfigureAwait(false);
 
             if (!otherActiveRepairs)
             {
-                var vehicle = await db.Vehicles.FirstOrDefaultAsync(v => v.Id == record.VehicleId, ct).ConfigureAwait(false);
+                var vehicle = await db.Vehicles.FirstOrDefaultAsync(v => v.Id == record.VehicleId, cancellationToken).ConfigureAwait(false);
                 vehicle?.Reactivate();
             }
         }
 
-        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return Unit.Value;
     }
 }

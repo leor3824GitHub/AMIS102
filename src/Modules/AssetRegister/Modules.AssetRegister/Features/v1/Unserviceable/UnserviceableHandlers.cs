@@ -13,11 +13,11 @@ public sealed class CreateUnserviceableReportDraftCommandHandler(
     : ICommandHandler<CreateUnserviceableReportDraftCommand, UnserviceablePropertyReportDto>
 {
     public async ValueTask<UnserviceablePropertyReportDto> Handle(
-        CreateUnserviceableReportDraftCommand cmd, CancellationToken ct)
+        CreateUnserviceableReportDraftCommand cmd, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(cmd);
         var tenantId = db.TenantInfo?.Identifier ?? string.Empty;
-        var reportNo = await numbers.NextAsync(cmd.ReportType, cmd.AsAt, ct).ConfigureAwait(false);
+        var reportNo = await numbers.NextAsync(cmd.ReportType, cmd.AsAt, cancellationToken).ConfigureAwait(false);
         var officer = EmployeeRef.Create(
             cmd.AccountableOfficer.EmployeeId, cmd.AccountableOfficer.PrintedName, cmd.AccountableOfficer.Designation);
 
@@ -25,7 +25,7 @@ public sealed class CreateUnserviceableReportDraftCommandHandler(
             tenantId, reportNo, cmd.ReportType, cmd.FundCluster, cmd.Station, cmd.AsAt, officer);
 
         db.UnserviceablePropertyReports.Add(report);
-        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return UnserviceableMapper.ToDto(report);
     }
 }
@@ -34,17 +34,17 @@ public sealed class AddUnserviceableReportItemCommandHandler(AssetRegisterDbCont
     : ICommandHandler<AddUnserviceableReportItemCommand, UnserviceablePropertyReportDto>
 {
     public async ValueTask<UnserviceablePropertyReportDto> Handle(
-        AddUnserviceableReportItemCommand cmd, CancellationToken ct)
+        AddUnserviceableReportItemCommand cmd, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(cmd);
         var report = await db.UnserviceablePropertyReports.Include(r => r.Items)
-            .FirstOrDefaultAsync(r => r.Id == cmd.ReportId, ct).ConfigureAwait(false)
+            .FirstOrDefaultAsync(r => r.Id == cmd.ReportId, cancellationToken).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Unserviceable report '{cmd.ReportId}' not found.");
-        var asset = await db.AssetRegistries.FirstOrDefaultAsync(a => a.Id == cmd.AssetRegistryId, ct).ConfigureAwait(false)
+        var asset = await db.AssetRegistries.FirstOrDefaultAsync(a => a.Id == cmd.AssetRegistryId, cancellationToken).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Asset '{cmd.AssetRegistryId}' not found.");
 
         report.AddItem(asset, cmd.Remarks);
-        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return UnserviceableMapper.ToDto(report);
     }
 }
@@ -53,11 +53,11 @@ public sealed class SubmitUnserviceableReportCommandHandler(AssetRegisterDbConte
     : ICommandHandler<SubmitUnserviceableReportCommand, UnserviceablePropertyReportDto>
 {
     public async ValueTask<UnserviceablePropertyReportDto> Handle(
-        SubmitUnserviceableReportCommand cmd, CancellationToken ct)
+        SubmitUnserviceableReportCommand cmd, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(cmd);
         var report = await db.UnserviceablePropertyReports.Include(r => r.Items)
-            .FirstOrDefaultAsync(r => r.Id == cmd.ReportId, ct).ConfigureAwait(false)
+            .FirstOrDefaultAsync(r => r.Id == cmd.ReportId, cancellationToken).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Unserviceable report '{cmd.ReportId}' not found.");
         var approvedBy = EmployeeRef.Create(cmd.ApprovedBy.EmployeeId, cmd.ApprovedBy.PrintedName, cmd.ApprovedBy.Designation);
 
@@ -65,12 +65,12 @@ public sealed class SubmitUnserviceableReportCommandHandler(AssetRegisterDbConte
 
         // Mirror lifecycle: each asset → Unserviceable.
         var assetIds = report.Items.Select(i => i.AssetRegistryId).ToList();
-        var assets = await db.AssetRegistries.Where(a => assetIds.Contains(a.Id)).ToListAsync(ct).ConfigureAwait(false);
-        await freezeGuard.EnsureMovementAllowedAsync(assets, ct).ConfigureAwait(false);
+        var assets = await db.AssetRegistries.Where(a => assetIds.Contains(a.Id)).ToListAsync(cancellationToken).ConfigureAwait(false);
+        await freezeGuard.EnsureMovementAllowedAsync(assets, cancellationToken).ConfigureAwait(false);
         foreach (var asset in assets)
             asset.MarkUnserviceable(report.Id);
 
-        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return UnserviceableMapper.ToDto(report);
     }
 }
@@ -79,11 +79,11 @@ public sealed class RecordUnserviceableInspectionCommandHandler(AssetRegisterDbC
     : ICommandHandler<RecordUnserviceableInspectionCommand, UnserviceablePropertyReportDto>
 {
     public async ValueTask<UnserviceablePropertyReportDto> Handle(
-        RecordUnserviceableInspectionCommand cmd, CancellationToken ct)
+        RecordUnserviceableInspectionCommand cmd, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(cmd);
         var report = await db.UnserviceablePropertyReports.Include(r => r.Items)
-            .FirstOrDefaultAsync(r => r.Id == cmd.ReportId, ct).ConfigureAwait(false)
+            .FirstOrDefaultAsync(r => r.Id == cmd.ReportId, cancellationToken).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Unserviceable report '{cmd.ReportId}' not found.");
 
         var inspectedBy = EmployeeRef.Create(cmd.InspectedBy.EmployeeId, cmd.InspectedBy.PrintedName, cmd.InspectedBy.Designation);
@@ -93,7 +93,7 @@ public sealed class RecordUnserviceableInspectionCommandHandler(AssetRegisterDbC
         report.RecordInspection(inspectedBy, cmd.InspectedOn, witnessedBy, cmd.WitnessedOn,
             cmd.Decisions.Select(d => (d.ItemId, d.Method, d.OtherSpecify, d.AppraisedValue)));
 
-        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return UnserviceableMapper.ToDto(report);
     }
 }
@@ -102,11 +102,11 @@ public sealed class RecordUnserviceableDisposalCommandHandler(AssetRegisterDbCon
     : ICommandHandler<RecordUnserviceableDisposalCommand, UnserviceablePropertyReportDto>
 {
     public async ValueTask<UnserviceablePropertyReportDto> Handle(
-        RecordUnserviceableDisposalCommand cmd, CancellationToken ct)
+        RecordUnserviceableDisposalCommand cmd, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(cmd);
         var report = await db.UnserviceablePropertyReports.Include(r => r.Items)
-            .FirstOrDefaultAsync(r => r.Id == cmd.ReportId, ct).ConfigureAwait(false)
+            .FirstOrDefaultAsync(r => r.Id == cmd.ReportId, cancellationToken).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Unserviceable report '{cmd.ReportId}' not found.");
 
         report.RecordDisposal(cmd.Records.Select(r => (r.ItemId, r.DisposalRecordedOn, r.SaleORNo, r.SaleAmount)));
@@ -116,8 +116,8 @@ public sealed class RecordUnserviceableDisposalCommandHandler(AssetRegisterDbCon
         var disposedAssetIds = disposedItems.Select(i => i.AssetRegistryId).ToList();
         var disposedAssets = await db.AssetRegistries
             .Where(a => disposedAssetIds.Contains(a.Id))
-            .ToDictionaryAsync(a => a.Id, ct).ConfigureAwait(false);
-        await freezeGuard.EnsureMovementAllowedAsync(disposedAssets.Values.ToList(), ct).ConfigureAwait(false);
+            .ToDictionaryAsync(a => a.Id, cancellationToken).ConfigureAwait(false);
+        await freezeGuard.EnsureMovementAllowedAsync(disposedAssets.Values.ToList(), cancellationToken).ConfigureAwait(false);
         foreach (var item in disposedItems)
         {
             if (disposedAssets.TryGetValue(item.AssetRegistryId, out var asset)
@@ -125,7 +125,7 @@ public sealed class RecordUnserviceableDisposalCommandHandler(AssetRegisterDbCon
                 asset.Dispose(report.Id, item.DisposalMethod ?? Contracts.v1.DisposalMethod.Other);
         }
 
-        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return UnserviceableMapper.ToDto(report);
     }
 }
@@ -134,14 +134,14 @@ public sealed class CloseUnserviceableReportCommandHandler(AssetRegisterDbContex
     : ICommandHandler<CloseUnserviceableReportCommand, UnserviceablePropertyReportDto>
 {
     public async ValueTask<UnserviceablePropertyReportDto> Handle(
-        CloseUnserviceableReportCommand cmd, CancellationToken ct)
+        CloseUnserviceableReportCommand cmd, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(cmd);
         var report = await db.UnserviceablePropertyReports.Include(r => r.Items)
-            .FirstOrDefaultAsync(r => r.Id == cmd.ReportId, ct).ConfigureAwait(false)
+            .FirstOrDefaultAsync(r => r.Id == cmd.ReportId, cancellationToken).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Unserviceable report '{cmd.ReportId}' not found.");
         report.Close();
-        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return UnserviceableMapper.ToDto(report);
     }
 }
@@ -150,13 +150,13 @@ public sealed class GetUnserviceableReportQueryHandler(AssetRegisterDbContext db
     : IQueryHandler<GetUnserviceableReportQuery, UnserviceablePropertyReportDto?>
 {
     public async ValueTask<UnserviceablePropertyReportDto?> Handle(
-        GetUnserviceableReportQuery query, CancellationToken ct)
+        GetUnserviceableReportQuery query, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(query);
         var report = await db.UnserviceablePropertyReports
             .AsNoTracking()
             .Include(r => r.Items)
-            .FirstOrDefaultAsync(r => r.Id == query.Id, ct).ConfigureAwait(false);
+            .FirstOrDefaultAsync(r => r.Id == query.Id, cancellationToken).ConfigureAwait(false);
         return report is null ? null : UnserviceableMapper.ToDto(report);
     }
 }
@@ -165,7 +165,7 @@ public sealed class SearchUnserviceableReportsQueryHandler(AssetRegisterDbContex
     : IQueryHandler<SearchUnserviceableReportsQuery, AMIS.Framework.Shared.Persistence.PagedResponse<UnserviceablePropertyReportSummaryDto>>
 {
     public async ValueTask<AMIS.Framework.Shared.Persistence.PagedResponse<UnserviceablePropertyReportSummaryDto>> Handle(
-        SearchUnserviceableReportsQuery query, CancellationToken ct)
+        SearchUnserviceableReportsQuery query, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(query);
         var q = db.UnserviceablePropertyReports.AsNoTracking().AsQueryable();
@@ -183,12 +183,12 @@ public sealed class SearchUnserviceableReportsQueryHandler(AssetRegisterDbContex
         var pageNumber = query.PageNumber <= 0 ? 1 : query.PageNumber;
         var pageSize = query.PageSize <= 0 ? 10 : query.PageSize;
 
-        var total = await q.LongCountAsync(ct).ConfigureAwait(false);
+        var total = await q.LongCountAsync(cancellationToken).ConfigureAwait(false);
         var items = await q.OrderByDescending(r => r.AsAt)
             .Skip((pageNumber - 1) * pageSize).Take(pageSize)
             .Select(r => new UnserviceablePropertyReportSummaryDto(
                 r.Id, r.ReportNo, r.ReportType, r.Status, r.AsAt, r.Items.Count))
-            .ToListAsync(ct).ConfigureAwait(false);
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
 
         return new AMIS.Framework.Shared.Persistence.PagedResponse<UnserviceablePropertyReportSummaryDto>
         {

@@ -8,14 +8,14 @@ namespace AMIS.Modules.AssetRegister.Features.v1.Receiving.UpdatePPERRFormSeries
 public sealed class UpdatePPERRFormSeriesCommandHandler(AssetRegisterDbContext db)
     : ICommandHandler<UpdatePPERRFormSeriesCommand, PPERRFormSeriesDto>
 {
-    public async ValueTask<PPERRFormSeriesDto> Handle(UpdatePPERRFormSeriesCommand cmd, CancellationToken ct)
+    public async ValueTask<PPERRFormSeriesDto> Handle(UpdatePPERRFormSeriesCommand cmd, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(cmd);
 
         var tenantId = db.TenantInfo?.Identifier ?? string.Empty;
 
         var series = await db.PPERRFormSeries
-            .FirstOrDefaultAsync(s => s.Id == cmd.Id && s.TenantId == tenantId, ct)
+            .FirstOrDefaultAsync(s => s.Id == cmd.Id && s.TenantId == tenantId, cancellationToken)
             .ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"PPERR Form Series '{cmd.Id}' not found.");
 
@@ -24,7 +24,7 @@ public sealed class UpdatePPERRFormSeriesCommandHandler(AssetRegisterDbContext d
                         s.Id != cmd.Id &&
                         s.StartSerial <= cmd.EndSerial &&
                         s.EndSerial >= cmd.StartSerial)
-            .AnyAsync(ct)
+            .AnyAsync(cancellationToken)
             .ConfigureAwait(false);
 
         if (overlapping)
@@ -32,7 +32,7 @@ public sealed class UpdatePPERRFormSeriesCommandHandler(AssetRegisterDbContext d
                 $"Serial range {cmd.StartSerial}–{cmd.EndSerial} overlaps with an existing series.");
 
         series.UpdateRange(cmd.Label, cmd.StartSerial, cmd.EndSerial);
-        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
         return PPERRFormSeriesMapper.ToDto(series);
     }

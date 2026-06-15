@@ -25,13 +25,13 @@ public sealed class PrintAbstractOfCanvassFastQueryHandler(IMediator mediator)
     private const float ContentRight = 733f;
     private const float SupplierAreaWidth = ContentRight - DescColRight; // 400
 
-    public async ValueTask<ReportFileDto> Handle(PrintAbstractOfCanvassFastQuery query, CancellationToken ct)
+    public async ValueTask<ReportFileDto> Handle(PrintAbstractOfCanvassFastQuery query, CancellationToken cancellationToken)
     {
-        var canvass = await mediator.Send(new GetCanvassRequestQuery(query.Id), ct).ConfigureAwait(false)
+        var canvass = await mediator.Send(new GetCanvassRequestQuery(query.Id), cancellationToken).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Canvass request '{query.Id}' not found.");
 
-        var pr = await mediator.Send(new GetPurchaseRequestQuery(canvass.PurchaseRequestId), ct).ConfigureAwait(false);
-        var org = await mediator.Send(new GetOrganizationProfileQuery(), ct).ConfigureAwait(false);
+        var pr = await mediator.Send(new GetPurchaseRequestQuery(canvass.PurchaseRequestId), cancellationToken).ConfigureAwait(false);
+        var org = await mediator.Send(new GetOrganizationProfileQuery(), cancellationToken).ConfigureAwait(false);
 
         // The ROPC committee is frozen at award time (faithful reprint). For canvasses NOT yet awarded —
         // the abstract is being printed for the committee to sign and recommend the award — and for
@@ -40,7 +40,7 @@ public sealed class PrintAbstractOfCanvassFastQueryHandler(IMediator mediator)
         IReadOnlyList<CanvassAwardSignatoryDto> committeeList = canvass.AwardSignatories is { Count: > 0 } snapshot
             ? snapshot
             : BuildLiveCommittee(
-                await mediator.Send(new GetReportSignatoriesQuery("AbstractOfCanvass"), ct).ConfigureAwait(false), org);
+                await mediator.Send(new GetReportSignatoriesQuery("AbstractOfCanvass"), cancellationToken).ConfigureAwait(false), org);
         var committee = committeeList.GroupBy(s => s.SortOrder).ToDictionary(g => g.Key, g => g.First());
 
         var nf = CultureInfo.InvariantCulture;
@@ -103,7 +103,7 @@ public sealed class PrintAbstractOfCanvassFastQueryHandler(IMediator mediator)
                     dataBand.DataSource = report.GetDataSource("LineItemsDS");
             },
             fileName: $"AOC-{canvass.RivNumber}",
-            ct: ct).ConfigureAwait(false);
+            ct: cancellationToken).ConfigureAwait(false);
     }
 
     // Live committee resolution for un-awarded / legacy canvasses (no frozen snapshot). MUST stay in sync

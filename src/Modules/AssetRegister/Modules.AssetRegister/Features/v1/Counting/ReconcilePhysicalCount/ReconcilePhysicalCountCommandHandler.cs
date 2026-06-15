@@ -12,12 +12,12 @@ public sealed class ReconcilePhysicalCountCommandHandler(
     ILogger<ReconcilePhysicalCountCommandHandler> logger)
     : ICommandHandler<ReconcilePhysicalCountCommand, PhysicalCountSessionDto>
 {
-    public async ValueTask<PhysicalCountSessionDto> Handle(ReconcilePhysicalCountCommand cmd, CancellationToken ct)
+    public async ValueTask<PhysicalCountSessionDto> Handle(ReconcilePhysicalCountCommand cmd, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(cmd);
         var session = await db.PhysicalCountSessions
             .Include(s => s.Entries)
-            .FirstOrDefaultAsync(s => s.Id == cmd.SessionId, ct).ConfigureAwait(false)
+            .FirstOrDefaultAsync(s => s.Id == cmd.SessionId, cancellationToken).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Physical count session '{cmd.SessionId}' not found.");
 
         var tenantId = db.TenantInfo?.Identifier ?? string.Empty;
@@ -37,7 +37,7 @@ public sealed class ReconcilePhysicalCountCommandHandler(
 
         // Domain reconcile raises AssetReportedMissingFromCountEvent — handled separately.
         session.Reconcile();
-        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return CountingMapper.ToDto(session);
     }
 }

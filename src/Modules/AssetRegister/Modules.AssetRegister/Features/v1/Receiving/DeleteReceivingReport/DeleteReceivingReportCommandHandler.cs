@@ -8,18 +8,18 @@ namespace AMIS.Modules.AssetRegister.Features.v1.Receiving.DeleteReceivingReport
 public sealed class DeleteReceivingReportCommandHandler(AssetRegisterDbContext db)
     : ICommandHandler<DeleteReceivingReportCommand, Unit>
 {
-    public async ValueTask<Unit> Handle(DeleteReceivingReportCommand cmd, CancellationToken ct)
+    public async ValueTask<Unit> Handle(DeleteReceivingReportCommand cmd, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(cmd);
 
         var report = await db.ReceivingReports
             .Include(r => r.Items)
-            .FirstOrDefaultAsync(r => r.Id == cmd.Id, ct)
+            .FirstOrDefaultAsync(r => r.Id == cmd.Id, cancellationToken)
             .ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"ReceivingReport '{cmd.Id}' not found.");
 
         db.ReceivingReports.Remove(report);
-        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return Unit.Value;
     }
 }

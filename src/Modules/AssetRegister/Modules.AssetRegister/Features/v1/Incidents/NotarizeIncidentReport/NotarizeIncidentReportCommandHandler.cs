@@ -8,14 +8,14 @@ namespace AMIS.Modules.AssetRegister.Features.v1.Incidents.NotarizeIncidentRepor
 public sealed class NotarizeIncidentReportCommandHandler(AssetRegisterDbContext db)
     : ICommandHandler<NotarizeIncidentReportCommand, PropertyIncidentReportDto>
 {
-    public async ValueTask<PropertyIncidentReportDto> Handle(NotarizeIncidentReportCommand cmd, CancellationToken ct)
+    public async ValueTask<PropertyIncidentReportDto> Handle(NotarizeIncidentReportCommand cmd, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(cmd);
         var report = await db.PropertyIncidentReports.Include(r => r.Items)
-            .FirstOrDefaultAsync(r => r.Id == cmd.IncidentReportId, ct).ConfigureAwait(false)
+            .FirstOrDefaultAsync(r => r.Id == cmd.IncidentReportId, cancellationToken).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Incident report '{cmd.IncidentReportId}' not found.");
         report.Notarize(cmd.NotarizedOn, cmd.DocNo, cmd.PageNo, cmd.BookNo, cmd.SeriesOf);
-        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return IncidentMapper.ToDto(report);
     }
 }

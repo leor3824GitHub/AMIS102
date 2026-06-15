@@ -9,15 +9,15 @@ namespace AMIS.Modules.QuestPdfReporting.Features.v1.AssetRegister.PrintPhysical
 public sealed class PrintPhysicalCountReportQueryHandler(IMediator mediator)
     : IQueryHandler<PrintPhysicalCountReportQuery, byte[]>
 {
-    public async ValueTask<byte[]> Handle(PrintPhysicalCountReportQuery query, CancellationToken ct)
+    public async ValueTask<byte[]> Handle(PrintPhysicalCountReportQuery query, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(query);
 
-        var report = await mediator.Send(new GetPhysicalCountReportQuery(query.SessionId, query.AssetType), ct).ConfigureAwait(false)
+        var report = await mediator.Send(new GetPhysicalCountReportQuery(query.SessionId, query.AssetType), cancellationToken).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Physical count session '{query.SessionId}' not found.");
 
-        var org = await mediator.Send(new GetOrganizationProfileQuery(), ct).ConfigureAwait(false);
-        var signatories = await mediator.Send(new GetReportSignatoriesQuery("PhysicalCount"), ct).ConfigureAwait(false);
+        var org = await mediator.Send(new GetOrganizationProfileQuery(), cancellationToken).ConfigureAwait(false);
+        var signatories = await mediator.Send(new GetReportSignatoriesQuery("PhysicalCount"), cancellationToken).ConfigureAwait(false);
 
         return new PhysicalCountReportPdfDocument(
             report, query.AssetType, org, signatories,

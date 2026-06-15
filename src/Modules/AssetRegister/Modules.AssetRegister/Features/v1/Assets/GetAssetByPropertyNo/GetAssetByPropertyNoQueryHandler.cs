@@ -9,7 +9,7 @@ namespace AMIS.Modules.AssetRegister.Features.v1.Assets.GetAssetByPropertyNo;
 public sealed class GetAssetByPropertyNoQueryHandler(AssetRegisterDbContext db)
     : IQueryHandler<GetAssetByPropertyNoQuery, AssetRegistryDto?>
 {
-    public async ValueTask<AssetRegistryDto?> Handle(GetAssetByPropertyNoQuery query, CancellationToken ct)
+    public async ValueTask<AssetRegistryDto?> Handle(GetAssetByPropertyNoQuery query, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(query);
         var normalized = query.PropertyNo?.Trim().ToUpperInvariant();
@@ -20,7 +20,7 @@ public sealed class GetAssetByPropertyNoQueryHandler(AssetRegisterDbContext db)
         // against the underlying column (configured via HasConversion).
         var asset = await db.AssetRegistries
             .AsNoTracking()
-            .FirstOrDefaultAsync(a => a.PropertyNo == pn, ct).ConfigureAwait(false);
+            .FirstOrDefaultAsync(a => a.PropertyNo == pn, cancellationToken).ConfigureAwait(false);
         return asset is null ? null : AssetRegistryMapper.ToDto(asset);
     }
 }

@@ -14,14 +14,14 @@ public sealed class CreateReturnedPropertyReceiptCommandHandler(AssetRegisterDbC
     : ICommandHandler<CreateReturnedPropertyReceiptCommand, ReturnedPropertyReceiptDto>
 {
     public async ValueTask<ReturnedPropertyReceiptDto> Handle(
-        CreateReturnedPropertyReceiptCommand cmd, CancellationToken ct)
+        CreateReturnedPropertyReceiptCommand cmd, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(cmd);
 
         // 1. Load accountability with lines.
         var accountability = await db.PropertyAccountabilities
             .Include(a => a.Lines)
-            .FirstOrDefaultAsync(a => a.Id == cmd.AccountabilityId, ct).ConfigureAwait(false)
+            .FirstOrDefaultAsync(a => a.Id == cmd.AccountabilityId, cancellationToken).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Accountability '{cmd.AccountabilityId}' not found.");
 
         if (accountability.Status != AccountabilityStatus.Active)
@@ -58,7 +58,7 @@ public sealed class CreateReturnedPropertyReceiptCommandHandler(AssetRegisterDbC
             .SelectMany(r => r.Items)
             .Where(i => selectedLineIds.Contains(i.AccountabilityLineId))
             .Select(i => i.AccountabilityLineId)
-            .ToListAsync(ct).ConfigureAwait(false);
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
         if (alreadyPending.Count > 0)
             throw new InvalidOperationException(
                 "One or more selected items already have a pending return request. Resolve it before requesting again.");
@@ -67,7 +67,7 @@ public sealed class CreateReturnedPropertyReceiptCommandHandler(AssetRegisterDbC
         var assetIds = selectedLines.Select(l => l.AssetRegistryId).ToList();
         var assets = await db.AssetRegistries
             .Where(a => assetIds.Contains(a.Id))
-            .ToDictionaryAsync(a => a.Id, ct).ConfigureAwait(false);
+            .ToDictionaryAsync(a => a.Id, cancellationToken).ConfigureAwait(false);
 
         // 5. Create the pending request — NO asset/accountability mutation yet.
         var tenantId = db.TenantInfo?.Identifier ?? string.Empty;
@@ -89,9 +89,9 @@ public sealed class CreateReturnedPropertyReceiptCommandHandler(AssetRegisterDbC
             receipt.AddItem(line.Id, asset.Id, i + 1, asset.Snapshot());
         }
 
-        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-        await db.Entry(receipt).Collection(r => r.Items).LoadAsync(ct).ConfigureAwait(false);
+        await db.Entry(receipt).Collection(r => r.Items).LoadAsync(cancellationToken).ConfigureAwait(false);
         return ReturnedPropertyMapper.ToDto(receipt);
     }
 }
@@ -102,13 +102,13 @@ public sealed class AcceptReturnedPropertyReceiptCommandHandler(
     : ICommandHandler<AcceptReturnedPropertyReceiptCommand, ReturnedPropertyReceiptDto>
 {
     public async ValueTask<ReturnedPropertyReceiptDto> Handle(
-        AcceptReturnedPropertyReceiptCommand cmd, CancellationToken ct)
+        AcceptReturnedPropertyReceiptCommand cmd, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(cmd);
 
         var receipt = await db.ReturnedPropertyReceipts
             .Include(r => r.Items)
-            .FirstOrDefaultAsync(r => r.Id == cmd.Id, ct).ConfigureAwait(false)
+            .FirstOrDefaultAsync(r => r.Id == cmd.Id, cancellationToken).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Return request '{cmd.Id}' not found.");
 
         if (receipt.Status != ReturnedPropertyReceiptStatus.Pending)
@@ -118,7 +118,7 @@ public sealed class AcceptReturnedPropertyReceiptCommandHandler(
         // Load the accountability with lines so we can flip assets back to Available now.
         var accountability = await db.PropertyAccountabilities
             .Include(a => a.Lines)
-            .FirstOrDefaultAsync(a => a.Id == receipt.AccountabilityId, ct).ConfigureAwait(false)
+            .FirstOrDefaultAsync(a => a.Id == receipt.AccountabilityId, cancellationToken).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Accountability '{receipt.AccountabilityId}' not found.");
 
         var lineIds = receipt.Items.Select(i => i.AccountabilityLineId).ToHashSet();
@@ -133,8 +133,8 @@ public sealed class AcceptReturnedPropertyReceiptCommandHandler(
         var assetIds = lines.Select(l => l.AssetRegistryId).ToList();
         var assets = await db.AssetRegistries
             .Where(a => assetIds.Contains(a.Id))
-            .ToDictionaryAsync(a => a.Id, ct).ConfigureAwait(false);
-        await freezeGuard.EnsureMovementAllowedAsync(assets.Values.ToList(), ct).ConfigureAwait(false);
+            .ToDictionaryAsync(a => a.Id, cancellationToken).ConfigureAwait(false);
+        await freezeGuard.EnsureMovementAllowedAsync(assets.Values.ToList(), cancellationToken).ConfigureAwait(false);
         foreach (var line in lines)
         {
             if (assets.TryGetValue(line.AssetRegistryId, out var asset))
@@ -148,15 +148,15 @@ public sealed class AcceptReturnedPropertyReceiptCommandHandler(
             AssetCondition.InGoodCondition);
 
         // Assign the official receipt number and capture the receiver.
-        var receiptNo = await GenerateReceiptNoAsync(receipt.ReceiptType, receipt.Date.Year, ct).ConfigureAwait(false);
+        var receiptNo = await GenerateReceiptNoAsync(receipt.ReceiptType, receipt.Date.Year, cancellationToken).ConfigureAwait(false);
         var receivedBy = EmployeeRef.Create(cmd.ReceivedBy.EmployeeId, cmd.ReceivedBy.PrintedName, cmd.ReceivedBy.Designation);
         receipt.Accept(receiptNo, receivedBy);
 
-        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return ReturnedPropertyMapper.ToDto(receipt);
     }
 
-    private async Task<string> GenerateReceiptNoAsync(ReturnedPropertyReceiptType type, int year, CancellationToken ct)
+    private async Task<string> GenerateReceiptNoAsync(ReturnedPropertyReceiptType type, int year, CancellationToken cancellationToken)
     {
         var prefix = type == ReturnedPropertyReceiptType.RRSP ? "RRSP" : "RRP";
         var seqPrefix = $"{prefix}-{year.ToString(CultureInfo.InvariantCulture)}-";
@@ -164,7 +164,7 @@ public sealed class AcceptReturnedPropertyReceiptCommandHandler(
         var existing = await db.ReturnedPropertyReceipts
             .Where(r => r.ReceiptNo != null && r.ReceiptNo.StartsWith(seqPrefix))
             .Select(r => r.ReceiptNo!)
-            .ToListAsync(ct).ConfigureAwait(false);
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
 
         var maxSeq = existing
             .Select(n => int.TryParse(n[seqPrefix.Length..], NumberStyles.Integer, CultureInfo.InvariantCulture, out var v) ? v : 0)
@@ -179,17 +179,17 @@ public sealed class RejectReturnedPropertyReceiptCommandHandler(AssetRegisterDbC
     : ICommandHandler<RejectReturnedPropertyReceiptCommand, ReturnedPropertyReceiptDto>
 {
     public async ValueTask<ReturnedPropertyReceiptDto> Handle(
-        RejectReturnedPropertyReceiptCommand cmd, CancellationToken ct)
+        RejectReturnedPropertyReceiptCommand cmd, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(cmd);
 
         var receipt = await db.ReturnedPropertyReceipts
             .Include(r => r.Items)
-            .FirstOrDefaultAsync(r => r.Id == cmd.Id, ct).ConfigureAwait(false)
+            .FirstOrDefaultAsync(r => r.Id == cmd.Id, cancellationToken).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Return request '{cmd.Id}' not found.");
 
         receipt.Reject(cmd.Reason);
-        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return ReturnedPropertyMapper.ToDto(receipt);
     }
 }
@@ -198,17 +198,17 @@ public sealed class CancelReturnedPropertyReceiptCommandHandler(AssetRegisterDbC
     : ICommandHandler<CancelReturnedPropertyReceiptCommand, ReturnedPropertyReceiptDto>
 {
     public async ValueTask<ReturnedPropertyReceiptDto> Handle(
-        CancelReturnedPropertyReceiptCommand cmd, CancellationToken ct)
+        CancelReturnedPropertyReceiptCommand cmd, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(cmd);
 
         var receipt = await db.ReturnedPropertyReceipts
             .Include(r => r.Items)
-            .FirstOrDefaultAsync(r => r.Id == cmd.Id, ct).ConfigureAwait(false)
+            .FirstOrDefaultAsync(r => r.Id == cmd.Id, cancellationToken).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Return request '{cmd.Id}' not found.");
 
         receipt.Cancel(cmd.Reason);
-        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return ReturnedPropertyMapper.ToDto(receipt);
     }
 }
@@ -217,13 +217,13 @@ public sealed class GetReturnedPropertyReceiptQueryHandler(AssetRegisterDbContex
     : IQueryHandler<GetReturnedPropertyReceiptQuery, ReturnedPropertyReceiptDto?>
 {
     public async ValueTask<ReturnedPropertyReceiptDto?> Handle(
-        GetReturnedPropertyReceiptQuery query, CancellationToken ct)
+        GetReturnedPropertyReceiptQuery query, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(query);
         var receipt = await db.ReturnedPropertyReceipts
             .AsNoTracking()
             .Include(r => r.Items)
-            .FirstOrDefaultAsync(r => r.Id == query.Id, ct).ConfigureAwait(false);
+            .FirstOrDefaultAsync(r => r.Id == query.Id, cancellationToken).ConfigureAwait(false);
         return receipt is null ? null : ReturnedPropertyMapper.ToDto(receipt);
     }
 }
@@ -232,7 +232,7 @@ public sealed class SearchReturnedPropertyReceiptsQueryHandler(AssetRegisterDbCo
     : IQueryHandler<SearchReturnedPropertyReceiptsQuery, PagedResponse<ReturnedPropertyReceiptSummaryDto>>
 {
     public async ValueTask<PagedResponse<ReturnedPropertyReceiptSummaryDto>> Handle(
-        SearchReturnedPropertyReceiptsQuery query, CancellationToken ct)
+        SearchReturnedPropertyReceiptsQuery query, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(query);
         var q = db.ReturnedPropertyReceipts
@@ -256,7 +256,7 @@ public sealed class SearchReturnedPropertyReceiptsQueryHandler(AssetRegisterDbCo
         var pageNumber = query.PageNumber <= 0 ? 1 : query.PageNumber;
         var pageSize   = query.PageSize   <= 0 ? 15 : query.PageSize;
 
-        var total = await q.LongCountAsync(ct).ConfigureAwait(false);
+        var total = await q.LongCountAsync(cancellationToken).ConfigureAwait(false);
         var items = await q.OrderByDescending(r => r.Date)
             .ThenByDescending(r => r.CreatedOnUtc)
             .Skip((pageNumber - 1) * pageSize).Take(pageSize)
@@ -269,7 +269,7 @@ public sealed class SearchReturnedPropertyReceiptsQueryHandler(AssetRegisterDbCo
                 r.AccountabilityDocumentNo,
                 r.Items.Count,
                 r.Items.Sum(i => i.Snapshot.UnitCost)))
-            .ToListAsync(ct).ConfigureAwait(false);
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
 
         return new PagedResponse<ReturnedPropertyReceiptSummaryDto>
         {
@@ -286,7 +286,7 @@ public sealed class GetReturnedPropertyStatusCountsQueryHandler(AssetRegisterDbC
     : IQueryHandler<GetReturnedPropertyStatusCountsQuery, IReadOnlyList<ReturnedPropertyStatusCountDto>>
 {
     public async ValueTask<IReadOnlyList<ReturnedPropertyStatusCountDto>> Handle(
-        GetReturnedPropertyStatusCountsQuery query, CancellationToken ct)
+        GetReturnedPropertyStatusCountsQuery query, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(query);
         var q = db.ReturnedPropertyReceipts.AsNoTracking().AsQueryable();
@@ -298,6 +298,6 @@ public sealed class GetReturnedPropertyStatusCountsQueryHandler(AssetRegisterDbC
 
         return await q.GroupBy(r => r.Status)
             .Select(g => new ReturnedPropertyStatusCountDto(g.Key, g.Count()))
-            .ToListAsync(ct).ConfigureAwait(false);
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
     }
 }

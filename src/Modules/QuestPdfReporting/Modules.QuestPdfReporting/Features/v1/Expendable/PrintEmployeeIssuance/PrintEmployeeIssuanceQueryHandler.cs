@@ -8,7 +8,7 @@ namespace AMIS.Modules.QuestPdfReporting.Features.v1.Expendable.PrintEmployeeIss
 public sealed class PrintEmployeeIssuanceQueryHandler(IMediator mediator)
     : IQueryHandler<PrintEmployeeIssuanceQuery, byte[]>
 {
-    public async ValueTask<byte[]> Handle(PrintEmployeeIssuanceQuery query, CancellationToken ct)
+    public async ValueTask<byte[]> Handle(PrintEmployeeIssuanceQuery query, CancellationToken cancellationToken)
     {
         var result = await mediator.Send(new GetEmployeeIssuanceHistoryQuery
         {
@@ -17,9 +17,9 @@ public sealed class PrintEmployeeIssuanceQueryHandler(IMediator mediator)
             To         = query.To,
             PageNumber = 1,
             PageSize   = 10000,
-        }, ct).ConfigureAwait(false);
+        }, cancellationToken).ConfigureAwait(false);
 
-        var org = await mediator.Send(new GetOrganizationProfileQuery(), ct).ConfigureAwait(false);
+        var org = await mediator.Send(new GetOrganizationProfileQuery(), cancellationToken).ConfigureAwait(false);
 
         var records = result.Items.ToList();
 

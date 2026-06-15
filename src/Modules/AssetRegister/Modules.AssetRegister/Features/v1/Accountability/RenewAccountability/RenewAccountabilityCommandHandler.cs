@@ -14,24 +14,24 @@ public sealed class RenewAccountabilityCommandHandler(
     ICountFreezeGuard freezeGuard)
     : ICommandHandler<RenewAccountabilityCommand, PropertyAccountabilityDto>
 {
-    public async ValueTask<PropertyAccountabilityDto> Handle(RenewAccountabilityCommand cmd, CancellationToken ct)
+    public async ValueTask<PropertyAccountabilityDto> Handle(RenewAccountabilityCommand cmd, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(cmd);
         var existing = await db.PropertyAccountabilities
             .Include(a => a.Lines)
-            .FirstOrDefaultAsync(a => a.Id == cmd.AccountabilityId, ct).ConfigureAwait(false)
+            .FirstOrDefaultAsync(a => a.Id == cmd.AccountabilityId, cancellationToken).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Accountability '{cmd.AccountabilityId}' not found.");
 
         string newDocumentNo;
         if (existing.AccountabilityType == AccountabilityType.SE_ICS)
         {
             var category = await InferIcsCategory(
-                existing.Lines.Select(l => l.AssetRegistryId).ToList(), db, ct).ConfigureAwait(false);
-            newDocumentNo = await numbers.NextIcsAsync(category, cmd.NewIssuedOn, ct).ConfigureAwait(false);
+                existing.Lines.Select(l => l.AssetRegistryId).ToList(), db, cancellationToken).ConfigureAwait(false);
+            newDocumentNo = await numbers.NextIcsAsync(category, cmd.NewIssuedOn, cancellationToken).ConfigureAwait(false);
         }
         else
         {
-            newDocumentNo = await numbers.NextParAsync(cmd.NewIssuedOn, ct).ConfigureAwait(false);
+            newDocumentNo = await numbers.NextParAsync(cmd.NewIssuedOn, cancellationToken).ConfigureAwait(false);
         }
 
         var successor = existing.Renew(newDocumentNo, cmd.NewIssuedOn, cmd.NewExpiresOn);
@@ -39,8 +39,8 @@ public sealed class RenewAccountabilityCommandHandler(
 
         // Re-point each asset's CurrentAccountabilityId to the successor.
         var assetIds = successor.Lines.Select(l => l.AssetRegistryId).ToList();
-        var assets = await db.AssetRegistries.Where(a => assetIds.Contains(a.Id)).ToListAsync(ct).ConfigureAwait(false);
-        await freezeGuard.EnsureMovementAllowedAsync(assets, ct).ConfigureAwait(false);
+        var assets = await db.AssetRegistries.Where(a => assetIds.Contains(a.Id)).ToListAsync(cancellationToken).ConfigureAwait(false);
+        await freezeGuard.EnsureMovementAllowedAsync(assets, cancellationToken).ConfigureAwait(false);
         foreach (var asset in assets)
         {
             asset.Transfer(
@@ -49,14 +49,14 @@ public sealed class RenewAccountabilityCommandHandler(
                 asset.CurrentLocationId ?? Guid.Empty);
         }
 
-        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return AccountabilityMapper.ToDto(successor);
     }
 
-    private static async Task<AssetCategory> InferIcsCategory(List<Guid> assetIds, AssetRegisterDbContext db, CancellationToken ct)
+    private static async Task<AssetCategory> InferIcsCategory(List<Guid> assetIds, AssetRegisterDbContext db, CancellationToken cancellationToken)
     {
         var hasHigh = await db.AssetRegistries
-            .AnyAsync(a => assetIds.Contains(a.Id) && a.Category == AssetCategory.HighValuedSemi, ct).ConfigureAwait(false);
+            .AnyAsync(a => assetIds.Contains(a.Id) && a.Category == AssetCategory.HighValuedSemi, cancellationToken).ConfigureAwait(false);
         return hasHigh ? AssetCategory.HighValuedSemi : AssetCategory.LowValuedSemi;
     }
 }

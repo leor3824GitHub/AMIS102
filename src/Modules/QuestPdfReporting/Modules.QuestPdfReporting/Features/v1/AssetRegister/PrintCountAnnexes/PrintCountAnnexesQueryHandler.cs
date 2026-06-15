@@ -9,15 +9,15 @@ namespace AMIS.Modules.QuestPdfReporting.Features.v1.AssetRegister.PrintCountAnn
 public sealed class PrintCountAnnexesQueryHandler(IMediator mediator)
     : IQueryHandler<PrintCountAnnexesQuery, byte[]>
 {
-    public async ValueTask<byte[]> Handle(PrintCountAnnexesQuery query, CancellationToken ct)
+    public async ValueTask<byte[]> Handle(PrintCountAnnexesQuery query, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(query);
 
-        var report = await mediator.Send(new GetReconciliationReportQuery(query.SessionId), ct).ConfigureAwait(false)
+        var report = await mediator.Send(new GetReconciliationReportQuery(query.SessionId), cancellationToken).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Physical count session '{query.SessionId}' not found.");
 
-        var org = await mediator.Send(new GetOrganizationProfileQuery(), ct).ConfigureAwait(false);
-        var signatories = await mediator.Send(new GetReportSignatoriesQuery("PhysicalCount"), ct).ConfigureAwait(false);
+        var org = await mediator.Send(new GetOrganizationProfileQuery(), cancellationToken).ConfigureAwait(false);
+        var signatories = await mediator.Send(new GetReportSignatoriesQuery("PhysicalCount"), cancellationToken).ConfigureAwait(false);
 
         return new CountAnnexPdfDocument(
             report, org, signatories, query.Annex,

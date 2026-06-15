@@ -8,14 +8,14 @@ namespace AMIS.Modules.AssetRegister.Features.v1.Receiving.DeletePPERRFormSeries
 public sealed class DeletePPERRFormSeriesCommandHandler(AssetRegisterDbContext db)
     : ICommandHandler<DeletePPERRFormSeriesCommand, Unit>
 {
-    public async ValueTask<Unit> Handle(DeletePPERRFormSeriesCommand cmd, CancellationToken ct)
+    public async ValueTask<Unit> Handle(DeletePPERRFormSeriesCommand cmd, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(cmd);
 
         var tenantId = db.TenantInfo?.Identifier ?? string.Empty;
 
         var series = await db.PPERRFormSeries
-            .FirstOrDefaultAsync(s => s.Id == cmd.Id && s.TenantId == tenantId, ct)
+            .FirstOrDefaultAsync(s => s.Id == cmd.Id && s.TenantId == tenantId, cancellationToken)
             .ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"PPERR Form Series '{cmd.Id}' not found.");
 
@@ -24,7 +24,7 @@ public sealed class DeletePPERRFormSeriesCommandHandler(AssetRegisterDbContext d
                 $"Series '{series.Label}' has already issued PPERR numbers and cannot be deleted.");
 
         db.PPERRFormSeries.Remove(series);
-        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return Unit.Value;
     }
 }

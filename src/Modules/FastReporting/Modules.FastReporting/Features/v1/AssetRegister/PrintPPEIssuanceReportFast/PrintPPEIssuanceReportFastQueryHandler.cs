@@ -17,12 +17,12 @@ public sealed class PrintPPEIssuanceReportFastQueryHandler(IMediator mediator)
     private static readonly Assembly Assembly = typeof(PrintPPEIssuanceReportFastQueryHandler).Assembly;
     private const string TemplateName = "PPEIssuanceReportFast";
 
-    public async ValueTask<ReportFileDto> Handle(PrintPPEIssuanceReportFastQuery query, CancellationToken ct)
+    public async ValueTask<ReportFileDto> Handle(PrintPPEIssuanceReportFastQuery query, CancellationToken cancellationToken)
     {
-        var ir = await mediator.Send(new GetIssuanceReportQuery(query.Id), ct).ConfigureAwait(false)
+        var ir = await mediator.Send(new GetIssuanceReportQuery(query.Id), cancellationToken).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Issuance Report '{query.Id}' not found.");
 
-        var org = await mediator.Send(new GetOrganizationProfileQuery(), ct).ConfigureAwait(false);
+        var org = await mediator.Send(new GetOrganizationProfileQuery(), cancellationToken).ConfigureAwait(false);
 
         var nf = CultureInfo.InvariantCulture;
         var dateText = ir.Date.ToString("MM/dd/yyyy", nf);
@@ -70,7 +70,7 @@ public sealed class PrintPPEIssuanceReportFastQueryHandler(IMediator mediator)
                     dataBand.DataSource = report.GetDataSource("LineItemsDS");
             },
             fileName: $"PPEIR-{ir.ReportNo}",
-            ct: ct).ConfigureAwait(false);
+            ct: cancellationToken).ConfigureAwait(false);
     }
 
     // DataTable (not List<record>) for line items — FastReport's TableDataSource iterates

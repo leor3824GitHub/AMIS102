@@ -12,9 +12,9 @@ namespace AMIS.Modules.Vehicle.Features.v1.Repairs.UpdateRepairRecord;
 public sealed class UpdateRepairRecordCommandHandler(VehicleDbContext db, ICurrentUser currentUser)
     : ICommandHandler<UpdateRepairRecordCommand, RepairRecordDto>
 {
-    public async ValueTask<RepairRecordDto> Handle(UpdateRepairRecordCommand cmd, CancellationToken ct)
+    public async ValueTask<RepairRecordDto> Handle(UpdateRepairRecordCommand cmd, CancellationToken cancellationToken)
     {
-        var record = await db.RepairRecords.FirstOrDefaultAsync(r => r.Id == cmd.Id, ct).ConfigureAwait(false)
+        var record = await db.RepairRecords.FirstOrDefaultAsync(r => r.Id == cmd.Id, cancellationToken).ConfigureAwait(false)
             ?? throw new FluentValidation.ValidationException(
             [new ValidationFailure(nameof(cmd.Id), "Repair record not found.")]);
 
@@ -25,7 +25,7 @@ public sealed class UpdateRepairRecordCommandHandler(VehicleDbContext db, ICurre
         record.UpdateDetails(cmd.RepairDate, cmd.Description, cmd.Cost,
             cmd.VendorName, cmd.VendorContact, cmd.PartsUsed, cmd.Notes);
         record.SetLastModifiedBy(currentUser.GetUserId().ToString());
-        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return record.ToDto();
     }
 }

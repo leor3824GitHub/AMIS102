@@ -9,7 +9,7 @@ namespace AMIS.Modules.AssetRegister.Features.v1.Depreciation.GetPpeLedgerCard;
 public sealed class GetPpeLedgerCardQueryHandler(AssetRegisterDbContext db)
     : IQueryHandler<GetPpeLedgerCardQuery, PpeLedgerCardDto?>
 {
-    public async ValueTask<PpeLedgerCardDto?> Handle(GetPpeLedgerCardQuery query, CancellationToken ct)
+    public async ValueTask<PpeLedgerCardDto?> Handle(GetPpeLedgerCardQuery query, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(query);
 
@@ -19,7 +19,7 @@ public sealed class GetPpeLedgerCardQueryHandler(AssetRegisterDbContext db)
 
         var asset = await db.AssetRegistries
             .AsNoTracking()
-            .FirstOrDefaultAsync(a => a.PropertyNo == pn, ct).ConfigureAwait(false);
+            .FirstOrDefaultAsync(a => a.PropertyNo == pn, cancellationToken).ConfigureAwait(false);
         if (asset is null)
             return null;
 
@@ -29,7 +29,7 @@ public sealed class GetPpeLedgerCardQueryHandler(AssetRegisterDbContext db)
             .OrderBy(e => e.Period)
             .Select(e => new DepreciationEntryDto(
                 e.Period, e.Amount, e.AccumulatedDepreciationAfter, e.CarryingAmountAfter, e.PostedOnUtc))
-            .ToListAsync(ct).ConfigureAwait(false);
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
 
         return new PpeLedgerCardDto(
             asset.Id,

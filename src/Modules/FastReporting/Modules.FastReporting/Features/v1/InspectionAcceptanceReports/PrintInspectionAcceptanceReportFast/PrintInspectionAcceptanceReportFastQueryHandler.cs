@@ -18,21 +18,21 @@ public sealed class PrintInspectionAcceptanceReportFastQueryHandler(IMediator me
     private static readonly Assembly Assembly = typeof(PrintInspectionAcceptanceReportFastQueryHandler).Assembly;
     private const string TemplateName = "InspectionAcceptanceReportFast";
 
-    public async ValueTask<ReportFileDto> Handle(PrintInspectionAcceptanceReportFastQuery query, CancellationToken ct)
+    public async ValueTask<ReportFileDto> Handle(PrintInspectionAcceptanceReportFastQuery query, CancellationToken cancellationToken)
     {
-        var iar = await mediator.Send(new GetInspectionAcceptanceReportQuery(query.Id), ct).ConfigureAwait(false)
+        var iar = await mediator.Send(new GetInspectionAcceptanceReportQuery(query.Id), cancellationToken).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Inspection and Acceptance Report '{query.Id}' not found.");
 
-        var org = await mediator.Send(new GetOrganizationProfileQuery(), ct).ConfigureAwait(false);
+        var org = await mediator.Send(new GetOrganizationProfileQuery(), cancellationToken).ConfigureAwait(false);
 
         // Pull PO → PR to populate Requisitioning Office/Dept and Responsibility Center Code.
         // Both are nullable: if anything fails to resolve, fall back to empty strings — the
         // boxes still render, just blank for manual fill.
-        var po = await mediator.Send(new GetPurchaseOrderQuery(iar.PurchaseOrderId), ct).ConfigureAwait(false);
+        var po = await mediator.Send(new GetPurchaseOrderQuery(iar.PurchaseOrderId), cancellationToken).ConfigureAwait(false);
         PurchaseRequestDto? pr = null;
         if (po is not null)
         {
-            pr = await mediator.Send(new GetPurchaseRequestQuery(po.PurchaseRequestId), ct).ConfigureAwait(false);
+            pr = await mediator.Send(new GetPurchaseRequestQuery(po.PurchaseRequestId), cancellationToken).ConfigureAwait(false);
         }
 
         var nf = CultureInfo.InvariantCulture;
@@ -85,7 +85,7 @@ public sealed class PrintInspectionAcceptanceReportFastQueryHandler(IMediator me
                     dataBand.DataSource = report.GetDataSource("LineItemsDS");
             },
             fileName: $"IAR-{iar.IarNumber}",
-            ct: ct).ConfigureAwait(false);
+            ct: cancellationToken).ConfigureAwait(false);
     }
 
     // DataTable (not List<record>) for line items — see note in PrintPurchaseRequestFastQueryHandler.

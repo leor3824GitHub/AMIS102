@@ -9,7 +9,7 @@ namespace AMIS.Modules.Vehicle.Features.v1.FuelOdometer.GetVehicleDailyUsageSumm
 public sealed class GetVehicleDailyUsageSummaryQueryHandler(VehicleDbContext db)
     : IQueryHandler<GetVehicleDailyUsageSummaryQuery, VehicleDailyUsageSummaryDto>
 {
-    public async ValueTask<VehicleDailyUsageSummaryDto> Handle(GetVehicleDailyUsageSummaryQuery query, CancellationToken ct)
+    public async ValueTask<VehicleDailyUsageSummaryDto> Handle(GetVehicleDailyUsageSummaryQuery query, CancellationToken cancellationToken)
     {
         var q = db.VehicleDailyUsages.AsNoTracking();
 
@@ -24,7 +24,7 @@ public sealed class GetVehicleDailyUsageSummaryQueryHandler(VehicleDbContext db)
 
         var records = await q
             .Select(x => new { x.Date, x.DistanceKm, x.FuelLiters, x.FuelCost })
-            .ToListAsync(ct)
+            .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
         var recordCount = records.Count;

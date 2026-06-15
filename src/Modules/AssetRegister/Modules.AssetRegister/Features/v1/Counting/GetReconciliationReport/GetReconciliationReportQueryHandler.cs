@@ -17,12 +17,12 @@ namespace AMIS.Modules.AssetRegister.Features.v1.Counting.GetReconciliationRepor
 public sealed class GetReconciliationReportQueryHandler(AssetRegisterDbContext db)
     : IQueryHandler<GetReconciliationReportQuery, ReconciliationReportDto?>
 {
-    public async ValueTask<ReconciliationReportDto?> Handle(GetReconciliationReportQuery query, CancellationToken ct)
+    public async ValueTask<ReconciliationReportDto?> Handle(GetReconciliationReportQuery query, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(query);
         var session = await db.PhysicalCountSessions.AsNoTracking()
             .Include(s => s.Entries)
-            .FirstOrDefaultAsync(s => s.Id == query.SessionId, ct).ConfigureAwait(false);
+            .FirstOrDefaultAsync(s => s.Id == query.SessionId, cancellationToken).ConfigureAwait(false);
         if (session is null) return null;
 
         var rows = new List<ReconciliationRowDto>();
@@ -54,7 +54,7 @@ public sealed class GetReconciliationReportQueryHandler(AssetRegisterDbContext d
             .Where(a => !countedAssetIds.Contains(a.Id))
             .OrderBy(a => a.PropertyNo)
             .Select(a => new { a.Id, a.PropertyNo, a.Description, a.Unit, a.UnitCost, a.CurrentLocationId })
-            .ToListAsync(ct).ConfigureAwait(false);
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
 
         rows.AddRange(uncounted.Select(a => new ReconciliationRowDto(
             null, a.Id, a.PropertyNo.Value, a.Description, a.Unit, a.UnitCost,

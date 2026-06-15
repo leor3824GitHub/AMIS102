@@ -8,14 +8,14 @@ namespace AMIS.Modules.QuestPdfReporting.Features.v1.AssetRegister.PrintProperty
 public sealed class PrintPropertyCardQueryHandler(IMediator mediator)
     : IQueryHandler<PrintPropertyCardQuery, byte[]>
 {
-    public async ValueTask<byte[]> Handle(PrintPropertyCardQuery query, CancellationToken ct)
+    public async ValueTask<byte[]> Handle(PrintPropertyCardQuery query, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(query);
 
-        var card = await mediator.Send(new GetPropertyCardQuery(query.PropertyNo), ct).ConfigureAwait(false)
+        var card = await mediator.Send(new GetPropertyCardQuery(query.PropertyNo), cancellationToken).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Asset '{query.PropertyNo}' not found.");
 
-        var org = await mediator.Send(new GetOrganizationProfileQuery(), ct).ConfigureAwait(false);
+        var org = await mediator.Send(new GetOrganizationProfileQuery(), cancellationToken).ConfigureAwait(false);
 
         return new PropertyCardPdfDocument(
             card, org, query.PaperSize, query.Orientation, (float)query.Margin).GeneratePdf();

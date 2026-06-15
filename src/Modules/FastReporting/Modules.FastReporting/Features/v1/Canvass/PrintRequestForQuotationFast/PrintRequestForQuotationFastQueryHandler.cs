@@ -16,12 +16,12 @@ public sealed class PrintRequestForQuotationFastQueryHandler(IMediator mediator)
     private static readonly Assembly Assembly = typeof(PrintRequestForQuotationFastQueryHandler).Assembly;
     private const string TemplateName = "RequestForQuotationFast";
 
-    public async ValueTask<ReportFileDto> Handle(PrintRequestForQuotationFastQuery query, CancellationToken ct)
+    public async ValueTask<ReportFileDto> Handle(PrintRequestForQuotationFastQuery query, CancellationToken cancellationToken)
     {
-        var canvass = await mediator.Send(new GetCanvassRequestQuery(query.Id), ct).ConfigureAwait(false)
+        var canvass = await mediator.Send(new GetCanvassRequestQuery(query.Id), cancellationToken).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Canvass request '{query.Id}' not found.");
 
-        var org = await mediator.Send(new GetOrganizationProfileQuery(), ct).ConfigureAwait(false);
+        var org = await mediator.Send(new GetOrganizationProfileQuery(), cancellationToken).ConfigureAwait(false);
 
         var nf = CultureInfo.InvariantCulture;
 
@@ -56,7 +56,7 @@ public sealed class PrintRequestForQuotationFastQueryHandler(IMediator mediator)
                     dataBand.DataSource = report.GetDataSource("LineItemsDS");
             },
             fileName: $"RFQ-{canvass.RivNumber}",
-            ct: ct).ConfigureAwait(false);
+            ct: cancellationToken).ConfigureAwait(false);
     }
 
     private static DataTable BuildLineItemsTable(

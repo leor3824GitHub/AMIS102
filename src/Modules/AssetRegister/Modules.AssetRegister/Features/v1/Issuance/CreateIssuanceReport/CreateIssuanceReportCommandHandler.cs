@@ -16,7 +16,7 @@ public sealed class CreateIssuanceReportCommandHandler(
     ICountFreezeGuard freezeGuard)
     : ICommandHandler<CreateIssuanceReportCommand, PropertyIssuanceReportDto>
 {
-    public async ValueTask<PropertyIssuanceReportDto> Handle(CreateIssuanceReportCommand cmd, CancellationToken ct)
+    public async ValueTask<PropertyIssuanceReportDto> Handle(CreateIssuanceReportCommand cmd, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(cmd);
 
@@ -26,7 +26,7 @@ public sealed class CreateIssuanceReportCommandHandler(
 
         var assets = await db.AssetRegistries
             .Where(a => distinctIds.Contains(a.Id))
-            .ToListAsync(ct).ConfigureAwait(false);
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
 
         if (assets.Count != distinctIds.Count)
         {
@@ -49,9 +49,9 @@ public sealed class CreateIssuanceReportCommandHandler(
                 $"They must be returned first: {string.Join(", ", notAvailable.Select(a => a.PropertyNo.Value))}",
                 [], System.Net.HttpStatusCode.UnprocessableEntity);
 
-        await freezeGuard.EnsureMovementAllowedAsync(assets, ct).ConfigureAwait(false);
+        await freezeGuard.EnsureMovementAllowedAsync(assets, cancellationToken).ConfigureAwait(false);
 
-        var reportNo = await numbers.NextAsync(cmd.ReportType, cmd.Date, ct).ConfigureAwait(false);
+        var reportNo = await numbers.NextAsync(cmd.ReportType, cmd.Date, cancellationToken).ConfigureAwait(false);
         var tenantId = db.TenantInfo?.Identifier ?? string.Empty;
 
         var issuedBy   = EmployeeRef.Create(cmd.IssuedBy.EmployeeId,   cmd.IssuedBy.PrintedName,   cmd.IssuedBy.Designation);
@@ -85,9 +85,9 @@ public sealed class CreateIssuanceReportCommandHandler(
         report.MarkIssued();
 
         db.PropertyIssuanceReports.Add(report);
-        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-        await db.Entry(report).Collection(r => r.Lines).LoadAsync(ct).ConfigureAwait(false);
+        await db.Entry(report).Collection(r => r.Lines).LoadAsync(cancellationToken).ConfigureAwait(false);
         return IssuanceMapper.ToDto(report);
     }
 }

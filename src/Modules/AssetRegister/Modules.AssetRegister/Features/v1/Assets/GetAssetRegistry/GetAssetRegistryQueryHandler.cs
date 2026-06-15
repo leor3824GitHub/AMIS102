@@ -8,12 +8,12 @@ namespace AMIS.Modules.AssetRegister.Features.v1.Assets.GetAssetRegistry;
 public sealed class GetAssetRegistryQueryHandler(AssetRegisterDbContext db)
     : IQueryHandler<GetAssetRegistryQuery, AssetRegistryDto?>
 {
-    public async ValueTask<AssetRegistryDto?> Handle(GetAssetRegistryQuery query, CancellationToken ct)
+    public async ValueTask<AssetRegistryDto?> Handle(GetAssetRegistryQuery query, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(query);
         var asset = await db.AssetRegistries
             .AsNoTracking()
-            .FirstOrDefaultAsync(a => a.Id == query.Id, ct).ConfigureAwait(false);
+            .FirstOrDefaultAsync(a => a.Id == query.Id, cancellationToken).ConfigureAwait(false);
         return asset is null ? null : AssetRegistryMapper.ToDto(asset);
     }
 }

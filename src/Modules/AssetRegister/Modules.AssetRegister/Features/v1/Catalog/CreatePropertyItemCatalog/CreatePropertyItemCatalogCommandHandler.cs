@@ -9,13 +9,13 @@ namespace AMIS.Modules.AssetRegister.Features.v1.Catalog.CreatePropertyItemCatal
 public sealed class CreatePropertyItemCatalogCommandHandler(AssetRegisterDbContext db)
     : ICommandHandler<CreatePropertyItemCatalogCommand, PropertyItemCatalogDto>
 {
-    public async ValueTask<PropertyItemCatalogDto> Handle(CreatePropertyItemCatalogCommand cmd, CancellationToken ct)
+    public async ValueTask<PropertyItemCatalogDto> Handle(CreatePropertyItemCatalogCommand cmd, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(cmd);
 
         var codeInUse = await db.PropertyItemCatalogs
             .IgnoreQueryFilters()
-            .AnyAsync(x => x.Code == cmd.Code, ct).ConfigureAwait(false);
+            .AnyAsync(x => x.Code == cmd.Code, cancellationToken).ConfigureAwait(false);
         if (codeInUse)
         {
             throw new FluentValidation.ValidationException(
@@ -38,7 +38,7 @@ public sealed class CreatePropertyItemCatalogCommandHandler(AssetRegisterDbConte
             cmd.DepreciationMethod);
 
         db.PropertyItemCatalogs.Add(entity);
-        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
         return PropertyItemCatalogMapper.ToDto(entity);
     }

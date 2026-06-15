@@ -10,7 +10,7 @@ public sealed class SearchIncidentReportsQueryHandler(AssetRegisterDbContext db)
     : IQueryHandler<SearchIncidentReportsQuery, PagedResponse<PropertyIncidentReportSummaryDto>>
 {
     public async ValueTask<PagedResponse<PropertyIncidentReportSummaryDto>> Handle(
-        SearchIncidentReportsQuery query, CancellationToken ct)
+        SearchIncidentReportsQuery query, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(query);
         var q = db.PropertyIncidentReports.AsNoTracking().AsQueryable();
@@ -28,12 +28,12 @@ public sealed class SearchIncidentReportsQueryHandler(AssetRegisterDbContext db)
         var pageNumber = query.PageNumber <= 0 ? 1 : query.PageNumber;
         var pageSize = query.PageSize <= 0 ? 10 : query.PageSize;
 
-        var total = await q.LongCountAsync(ct).ConfigureAwait(false);
+        var total = await q.LongCountAsync(cancellationToken).ConfigureAwait(false);
         var items = await q.OrderByDescending(r => r.IncidentDate)
             .Skip((pageNumber - 1) * pageSize).Take(pageSize)
             .Select(r => new PropertyIncidentReportSummaryDto(
                 r.Id, r.IncidentNo, r.IncidentType, r.Status, r.IncidentDate, r.Items.Count))
-            .ToListAsync(ct).ConfigureAwait(false);
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
 
         return new PagedResponse<PropertyIncidentReportSummaryDto>
         {

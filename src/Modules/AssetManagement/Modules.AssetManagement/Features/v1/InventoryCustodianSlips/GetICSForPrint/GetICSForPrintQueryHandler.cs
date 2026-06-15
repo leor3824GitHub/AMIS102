@@ -8,10 +8,10 @@ namespace AMIS.Modules.AssetManagement.Features.v1.InventoryCustodianSlips.GetIC
 public sealed class GetICSForPrintQueryHandler(AssetManagementDbContext dbContext)
     : IQueryHandler<GetICSForPrintQuery, ICSForPrintDto?>
 {
-    public async ValueTask<ICSForPrintDto?> Handle(GetICSForPrintQuery query, CancellationToken ct)
+    public async ValueTask<ICSForPrintDto?> Handle(GetICSForPrintQuery query, CancellationToken cancellationToken)
     {
         var ics = await dbContext.InventoryCustodianSlips
-            .FirstOrDefaultAsync(x => x.Id == query.Id, ct)
+            .FirstOrDefaultAsync(x => x.Id == query.Id, cancellationToken)
             .ConfigureAwait(false);
 
         if (ics is null)
@@ -30,7 +30,7 @@ public sealed class GetICSForPrintQueryHandler(AssetManagementDbContext dbContex
                 catalogItem.Name,
                 icsItem.UnitCost,
                 icsItem.EstimatedUsefulLifeYears))
-            .ToListAsync(ct)
+            .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
         return new ICSForPrintDto(

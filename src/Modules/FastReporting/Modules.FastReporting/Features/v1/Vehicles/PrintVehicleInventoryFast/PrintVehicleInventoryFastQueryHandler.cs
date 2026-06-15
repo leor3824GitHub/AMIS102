@@ -18,16 +18,16 @@ public sealed class PrintVehicleInventoryFastQueryHandler(IMediator mediator)
     private const string TemplateName = "VehicleInventoryFast";
     private const string ReportType = "VehicleInventory";
 
-    public async ValueTask<ReportFileDto> Handle(PrintVehicleInventoryFastQuery query, CancellationToken ct)
+    public async ValueTask<ReportFileDto> Handle(PrintVehicleInventoryFastQuery query, CancellationToken cancellationToken)
     {
         // MasterData queries share a DbContext — run sequentially, not concurrently.
         var inventory = await mediator.Send(
-            new GetMotorVehicleInventoryQuery { Status = query.Status }, ct).ConfigureAwait(false);
+            new GetMotorVehicleInventoryQuery { Status = query.Status }, cancellationToken).ConfigureAwait(false);
 
-        var org = await mediator.Send(new GetOrganizationProfileQuery(), ct).ConfigureAwait(false);
+        var org = await mediator.Send(new GetOrganizationProfileQuery(), cancellationToken).ConfigureAwait(false);
 
         var signatories = await mediator.Send(
-            new GetReportSignatoriesQuery(ReportType), ct).ConfigureAwait(false);
+            new GetReportSignatoriesQuery(ReportType), cancellationToken).ConfigureAwait(false);
 
         var nf = CultureInfo.InvariantCulture;
         var asOf = query.AsOfDate ?? DateTime.Today;
@@ -72,7 +72,7 @@ public sealed class PrintVehicleInventoryFastQueryHandler(IMediator mediator)
                     dataBand.DataSource = report.GetDataSource("LineItemsDS");
             },
             fileName: $"InventoryOfMotorVehicles-{asOf:yyyyMMdd}",
-            ct: ct).ConfigureAwait(false);
+            ct: cancellationToken).ConfigureAwait(false);
     }
 
     private static ReportSignatoryDto? SignatoryAt(IReadOnlyList<ReportSignatoryDto> list, int index) =>

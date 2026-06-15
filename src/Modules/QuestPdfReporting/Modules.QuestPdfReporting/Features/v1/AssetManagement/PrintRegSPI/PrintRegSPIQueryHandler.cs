@@ -11,7 +11,7 @@ namespace AMIS.Modules.QuestPdfReporting.Features.v1.AssetManagement.PrintRegSPI
 public sealed class PrintRegSPIQueryHandler(IMediator mediator)
     : IQueryHandler<PrintRegSPIQuery, byte[]>
 {
-    public async ValueTask<byte[]> Handle(PrintRegSPIQuery query, CancellationToken ct)
+    public async ValueTask<byte[]> Handle(PrintRegSPIQuery query, CancellationToken cancellationToken)
     {
         var report = await mediator.Send(
             new GetRegSPIQuery(
@@ -20,7 +20,7 @@ public sealed class PrintRegSPIQueryHandler(IMediator mediator)
                 query.Status,
                 query.PageNumber,
                 query.PageSize),
-            ct).ConfigureAwait(false);
+            cancellationToken).ConfigureAwait(false);
 
         var generatedAt = DateTimeOffset.UtcNow;
 

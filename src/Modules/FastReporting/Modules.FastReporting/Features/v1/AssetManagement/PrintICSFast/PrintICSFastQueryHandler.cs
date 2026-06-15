@@ -17,12 +17,12 @@ public sealed class PrintICSFastQueryHandler(IMediator mediator)
     private static readonly Assembly Assembly = typeof(PrintICSFastQueryHandler).Assembly;
     private const string TemplateName = "InventoryCustodianSlipFast";
 
-    public async ValueTask<ReportFileDto> Handle(PrintICSFastQuery query, CancellationToken ct)
+    public async ValueTask<ReportFileDto> Handle(PrintICSFastQuery query, CancellationToken cancellationToken)
     {
-        var ics = await mediator.Send(new GetICSForPrintQuery(query.Id), ct).ConfigureAwait(false)
+        var ics = await mediator.Send(new GetICSForPrintQuery(query.Id), cancellationToken).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Inventory Custodian Slip '{query.Id}' not found.");
 
-        var org = await mediator.Send(new GetOrganizationProfileQuery(), ct).ConfigureAwait(false);
+        var org = await mediator.Send(new GetOrganizationProfileQuery(), cancellationToken).ConfigureAwait(false);
 
         // Batch-fetch both employee references in one query.
         var employeeIds = new HashSet<Guid> { ics.ReceivedByEmployeeId };
@@ -30,7 +30,7 @@ public sealed class PrintICSFastQueryHandler(IMediator mediator)
             employeeIds.Add(ics.IssuedFromEmployeeId.Value);
 
         var employees = await mediator.Send(
-            new GetEmployeeReferencesByIdsQuery(employeeIds), ct).ConfigureAwait(false);
+            new GetEmployeeReferencesByIdsQuery(employeeIds), cancellationToken).ConfigureAwait(false);
 
         employees.TryGetValue(ics.ReceivedByEmployeeId, out var receivedBy);
         EmployeeReferenceDto? issuedFrom = null;
@@ -72,7 +72,7 @@ public sealed class PrintICSFastQueryHandler(IMediator mediator)
                     dataBand.DataSource = report.GetDataSource("LineItemsDS");
             },
             fileName: $"ICS-{ics.ICSNo}",
-            ct: ct).ConfigureAwait(false);
+            ct: cancellationToken).ConfigureAwait(false);
     }
 
     private static DataTable BuildLineItemsTable(ICSForPrintDto ics, int minRows)

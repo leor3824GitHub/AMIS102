@@ -9,7 +9,7 @@ namespace AMIS.Modules.AssetRegister.Features.v1.Receiving.CreatePPERRFormSeries
 public sealed class CreatePPERRFormSeriesCommandHandler(AssetRegisterDbContext db)
     : ICommandHandler<CreatePPERRFormSeriesCommand, PPERRFormSeriesDto>
 {
-    public async ValueTask<PPERRFormSeriesDto> Handle(CreatePPERRFormSeriesCommand cmd, CancellationToken ct)
+    public async ValueTask<PPERRFormSeriesDto> Handle(CreatePPERRFormSeriesCommand cmd, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(cmd);
 
@@ -19,7 +19,7 @@ public sealed class CreatePPERRFormSeriesCommandHandler(AssetRegisterDbContext d
             .Where(s => s.TenantId == tenantId &&
                         s.StartSerial <= cmd.EndSerial &&
                         s.EndSerial >= cmd.StartSerial)
-            .AnyAsync(ct)
+            .AnyAsync(cancellationToken)
             .ConfigureAwait(false);
 
         if (overlapping)
@@ -28,7 +28,7 @@ public sealed class CreatePPERRFormSeriesCommandHandler(AssetRegisterDbContext d
 
         var series = PPERRFormSeries.Create(tenantId, cmd.Label, cmd.StartSerial, cmd.EndSerial);
         db.PPERRFormSeries.Add(series);
-        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
         return PPERRFormSeriesMapper.ToDto(series);
     }

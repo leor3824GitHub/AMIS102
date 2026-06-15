@@ -10,7 +10,7 @@ public sealed class SearchPropertyItemCatalogsQueryHandler(AssetRegisterDbContex
     : IQueryHandler<SearchPropertyItemCatalogsQuery, PagedResponse<PropertyItemCatalogDto>>
 {
     public async ValueTask<PagedResponse<PropertyItemCatalogDto>> Handle(
-        SearchPropertyItemCatalogsQuery query, CancellationToken ct)
+        SearchPropertyItemCatalogsQuery query, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(query);
 
@@ -28,13 +28,13 @@ public sealed class SearchPropertyItemCatalogsQueryHandler(AssetRegisterDbContex
         var pageNumber = query.PageNumber <= 0 ? 1 : query.PageNumber;
         var pageSize = query.PageSize <= 0 ? 10 : query.PageSize;
 
-        var total = await q.LongCountAsync(ct).ConfigureAwait(false);
+        var total = await q.LongCountAsync(cancellationToken).ConfigureAwait(false);
         var items = await q.OrderBy(x => x.Code)
             .Skip((pageNumber - 1) * pageSize).Take(pageSize)
             .Select(x => new PropertyItemCatalogDto(
                 x.Id, x.Code, x.Description, x.DefaultPropertyClass, x.DefaultCategoryCode,
                 x.DefaultUnit, x.UacsObjectCode, x.EstimatedUsefulLifeYears, x.IsActive, x.Status))
-            .ToListAsync(ct).ConfigureAwait(false);
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
 
         return new PagedResponse<PropertyItemCatalogDto>
         {

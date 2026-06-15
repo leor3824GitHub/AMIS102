@@ -16,26 +16,26 @@ public sealed class IssueAccountabilityCommandHandler(
     ICountFreezeGuard freezeGuard)
     : ICommandHandler<IssueAccountabilityCommand, PropertyAccountabilityDto>
 {
-    public async ValueTask<PropertyAccountabilityDto> Handle(IssueAccountabilityCommand cmd, CancellationToken ct)
+    public async ValueTask<PropertyAccountabilityDto> Handle(IssueAccountabilityCommand cmd, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(cmd);
 
         var assetIds = cmd.Lines.Select(l => l.AssetRegistryId).ToList();
         var assets = await db.AssetRegistries
             .Where(a => assetIds.Contains(a.Id))
-            .ToListAsync(ct).ConfigureAwait(false);
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
 
         var missing = assetIds.Except(assets.Select(a => a.Id)).ToList();
         if (missing.Count > 0)
             throw new KeyNotFoundException($"Assets not found: {string.Join(", ", missing)}");
 
-        await freezeGuard.EnsureMovementAllowedAsync(assets, ct).ConfigureAwait(false);
+        await freezeGuard.EnsureMovementAllowedAsync(assets, cancellationToken).ConfigureAwait(false);
 
         var assetById = assets.ToDictionary(a => a.Id);
 
         var documentNo = cmd.AccountabilityType == AccountabilityType.SE_ICS
-            ? await numberGenerator.NextIcsAsync(InferIcsCategory(assets), cmd.IssuedOn, ct).ConfigureAwait(false)
-            : await numberGenerator.NextParAsync(cmd.IssuedOn, ct).ConfigureAwait(false);
+            ? await numberGenerator.NextIcsAsync(InferIcsCategory(assets), cmd.IssuedOn, cancellationToken).ConfigureAwait(false)
+            : await numberGenerator.NextParAsync(cmd.IssuedOn, cancellationToken).ConfigureAwait(false);
 
         var tenantId = db.TenantInfo?.Identifier ?? string.Empty;
         var issuedBy = EmployeeRef.Create(cmd.IssuedBy.EmployeeId, cmd.IssuedBy.PrintedName, cmd.IssuedBy.Designation);
@@ -68,7 +68,7 @@ public sealed class IssueAccountabilityCommandHandler(
         }
 
         db.PropertyAccountabilities.Add(accountability);
-        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
         return AccountabilityMapper.ToDto(accountability);
     }

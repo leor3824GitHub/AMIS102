@@ -15,22 +15,22 @@ public sealed class FileIncidentReportCommandHandler(
     ICountFreezeGuard freezeGuard)
     : ICommandHandler<FileIncidentReportCommand, PropertyIncidentReportDto>
 {
-    public async ValueTask<PropertyIncidentReportDto> Handle(FileIncidentReportCommand cmd, CancellationToken ct)
+    public async ValueTask<PropertyIncidentReportDto> Handle(FileIncidentReportCommand cmd, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(cmd);
         var tenantId = db.TenantInfo?.Identifier ?? string.Empty;
 
         var assetIds = cmd.Items.Select(i => i.AssetRegistryId).ToList();
-        var assets = await db.AssetRegistries.Where(a => assetIds.Contains(a.Id)).ToListAsync(ct).ConfigureAwait(false);
+        var assets = await db.AssetRegistries.Where(a => assetIds.Contains(a.Id)).ToListAsync(cancellationToken).ConfigureAwait(false);
         var missing = assetIds.Except(assets.Select(a => a.Id)).ToList();
         if (missing.Count > 0)
             throw new KeyNotFoundException($"Assets not found: {string.Join(", ", missing)}");
 
-        await freezeGuard.EnsureMovementAllowedAsync(assets, ct).ConfigureAwait(false);
+        await freezeGuard.EnsureMovementAllowedAsync(assets, cancellationToken).ConfigureAwait(false);
 
         var assetById = assets.ToDictionary(a => a.Id);
 
-        var incidentNo = await numbers.NextAsync(cmd.IncidentDate, ct).ConfigureAwait(false);
+        var incidentNo = await numbers.NextAsync(cmd.IncidentDate, cancellationToken).ConfigureAwait(false);
         var officer = EmployeeRef.Create(
             cmd.AccountableOfficer.EmployeeId, cmd.AccountableOfficer.PrintedName, cmd.AccountableOfficer.Designation);
 
@@ -38,7 +38,7 @@ public sealed class FileIncidentReportCommandHandler(
         foreach (var item in cmd.Items)
         {
             var asset = assetById[item.AssetRegistryId];
-            var crcValue = await crc.ComputeAsync(asset, cmd.IncidentDate, ct).ConfigureAwait(false);
+            var crcValue = await crc.ComputeAsync(asset, cmd.IncidentDate, cancellationToken).ConfigureAwait(false);
             domainItems.Add((asset.Id, asset.Snapshot(), asset.UnitCost, crcValue, item.AccountabilityLineId));
         }
 
@@ -61,7 +61,7 @@ public sealed class FileIncidentReportCommandHandler(
             var accountabilities = await db.PropertyAccountabilities
                 .Include(a => a.Lines)
                 .Where(a => a.Lines.Any(l => lineIds.Contains(l.Id)))
-                .ToListAsync(ct).ConfigureAwait(false);
+                .ToListAsync(cancellationToken).ConfigureAwait(false);
             foreach (var acc in accountabilities)
             {
                 foreach (var l in acc.Lines.Where(l => lineIds.Contains(l.Id)))
@@ -70,7 +70,7 @@ public sealed class FileIncidentReportCommandHandler(
         }
 
         db.PropertyIncidentReports.Add(report);
-        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return IncidentMapper.ToDto(report);
     }
 }

@@ -8,12 +8,12 @@ namespace AMIS.Modules.AssetRegister.Features.v1.Counting.AddFoundAtStationEntry
 public sealed class AddFoundAtStationEntryCommandHandler(AssetRegisterDbContext db)
     : ICommandHandler<AddFoundAtStationEntryCommand, PhysicalCountSessionDto>
 {
-    public async ValueTask<PhysicalCountSessionDto> Handle(AddFoundAtStationEntryCommand cmd, CancellationToken ct)
+    public async ValueTask<PhysicalCountSessionDto> Handle(AddFoundAtStationEntryCommand cmd, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(cmd);
         var session = await db.PhysicalCountSessions
             .Include(s => s.Entries)
-            .FirstOrDefaultAsync(s => s.Id == cmd.SessionId, ct).ConfigureAwait(false)
+            .FirstOrDefaultAsync(s => s.Id == cmd.SessionId, cancellationToken).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Physical count session '{cmd.SessionId}' not found.");
 
         session.AddFoundAtStationEntry(cmd.Article, cmd.Unit, cmd.UnitCost, cmd.LocationId,
@@ -21,7 +21,7 @@ public sealed class AddFoundAtStationEntryCommandHandler(AssetRegisterDbContext 
             cmd.ProposedUnitCost, cmd.ProposedPropertyNo, cmd.ProposedCatalogItemId,
             cmd.ScannedByEmployeeId, cmd.Remarks);
 
-        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return CountingMapper.ToDto(session);
     }
 }

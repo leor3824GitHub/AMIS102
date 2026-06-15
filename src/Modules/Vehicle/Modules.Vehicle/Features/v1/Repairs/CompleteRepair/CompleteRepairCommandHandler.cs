@@ -12,9 +12,9 @@ namespace AMIS.Modules.Vehicle.Features.v1.Repairs.CompleteRepair;
 public sealed class CompleteRepairCommandHandler(VehicleDbContext db, ICurrentUser currentUser)
     : ICommandHandler<CompleteRepairCommand, Unit>
 {
-    public async ValueTask<Unit> Handle(CompleteRepairCommand cmd, CancellationToken ct)
+    public async ValueTask<Unit> Handle(CompleteRepairCommand cmd, CancellationToken cancellationToken)
     {
-        var record = await db.RepairRecords.FirstOrDefaultAsync(r => r.Id == cmd.Id, ct).ConfigureAwait(false)
+        var record = await db.RepairRecords.FirstOrDefaultAsync(r => r.Id == cmd.Id, cancellationToken).ConfigureAwait(false)
             ?? throw new FluentValidation.ValidationException(
             [new ValidationFailure(nameof(cmd.Id), "Repair record not found.")]);
 
@@ -25,13 +25,13 @@ public sealed class CompleteRepairCommandHandler(VehicleDbContext db, ICurrentUs
         record.Complete(cmd.CompletedDate);
         record.SetLastModifiedBy(currentUser.GetUserId().ToString());
 
-        var vehicle = await db.Vehicles.FirstOrDefaultAsync(v => v.Id == record.VehicleId, ct).ConfigureAwait(false)
+        var vehicle = await db.Vehicles.FirstOrDefaultAsync(v => v.Id == record.VehicleId, cancellationToken).ConfigureAwait(false)
             ?? throw new FluentValidation.ValidationException(
             [new ValidationFailure(nameof(cmd.Id), "Vehicle not found for this repair record.")]);
 
         // Reactivate vehicle if no other in-progress repairs remain
         var otherActiveRepairs = await db.RepairRecords
-            .AnyAsync(r => r.VehicleId == record.VehicleId && r.Id != record.Id && r.Status == RepairStatus.InProgress, ct)
+            .AnyAsync(r => r.VehicleId == record.VehicleId && r.Id != record.Id && r.Status == RepairStatus.InProgress, cancellationToken)
             .ConfigureAwait(false);
 
         if (!otherActiveRepairs && vehicle.Status != VehicleStatus.Active)
@@ -46,7 +46,7 @@ public sealed class CompleteRepairCommandHandler(VehicleDbContext db, ICurrentUs
             }
         }
 
-        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return Unit.Value;
     }
 }

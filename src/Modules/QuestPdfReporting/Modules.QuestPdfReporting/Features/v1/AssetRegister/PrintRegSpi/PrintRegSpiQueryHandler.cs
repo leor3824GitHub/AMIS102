@@ -8,14 +8,14 @@ namespace AMIS.Modules.QuestPdfReporting.Features.v1.AssetRegister.PrintRegSpi;
 public sealed class PrintRegSpiQueryHandler(IMediator mediator)
     : IQueryHandler<PrintRegSpiQuery, byte[]>
 {
-    public async ValueTask<byte[]> Handle(PrintRegSpiQuery query, CancellationToken ct)
+    public async ValueTask<byte[]> Handle(PrintRegSpiQuery query, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(query);
 
         var report = await mediator.Send(
-            new GetRegSpiReportQuery(query.AsOfDate, query.AssetType, query.CustodianId), ct).ConfigureAwait(false);
+            new GetRegSpiReportQuery(query.AsOfDate, query.AssetType, query.CustodianId), cancellationToken).ConfigureAwait(false);
 
-        var org = await mediator.Send(new GetOrganizationProfileQuery(), ct).ConfigureAwait(false);
+        var org = await mediator.Send(new GetOrganizationProfileQuery(), cancellationToken).ConfigureAwait(false);
 
         return new RegSpiPdfDocument(
             report, org, query.PaperSize, query.Orientation, (float)query.Margin).GeneratePdf();

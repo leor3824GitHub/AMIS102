@@ -10,11 +10,11 @@ namespace AMIS.Modules.AssetRegister.Features.v1.Assets.RegisterAsset;
 public sealed class RegisterAssetCommandHandler(AssetRegisterDbContext db)
     : ICommandHandler<RegisterAssetCommand, AssetRegistryDto>
 {
-    public async ValueTask<AssetRegistryDto> Handle(RegisterAssetCommand cmd, CancellationToken ct)
+    public async ValueTask<AssetRegistryDto> Handle(RegisterAssetCommand cmd, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(cmd);
 
-        var catalog = await db.PropertyItemCatalogs.FirstOrDefaultAsync(c => c.Id == cmd.CatalogItemId, ct).ConfigureAwait(false)
+        var catalog = await db.PropertyItemCatalogs.FirstOrDefaultAsync(c => c.Id == cmd.CatalogItemId, cancellationToken).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"PropertyItemCatalog '{cmd.CatalogItemId}' not found.");
         if (!catalog.IsActive)
             throw new InvalidOperationException("Cannot register an asset against a deactivated catalog item.");
@@ -39,7 +39,7 @@ public sealed class RegisterAssetCommandHandler(AssetRegisterDbContext db)
             cmd.SourcePurchaseOrderId);
 
         db.AssetRegistries.Add(asset);
-        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
         return AssetRegistryMapper.ToDto(asset);
     }

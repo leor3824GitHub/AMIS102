@@ -8,14 +8,14 @@ namespace AMIS.Modules.QuestPdfReporting.Features.v1.AssetRegister.PrintAccounta
 public sealed class PrintAccountabilityQueryHandler(IMediator mediator)
     : IQueryHandler<PrintAccountabilityQuery, byte[]>
 {
-    public async ValueTask<byte[]> Handle(PrintAccountabilityQuery query, CancellationToken ct)
+    public async ValueTask<byte[]> Handle(PrintAccountabilityQuery query, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(query);
 
-        var report = await mediator.Send(new GetAccountabilityReportQuery(query.AccountabilityId), ct).ConfigureAwait(false)
+        var report = await mediator.Send(new GetAccountabilityReportQuery(query.AccountabilityId), cancellationToken).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Accountability '{query.AccountabilityId}' not found.");
 
-        var org = await mediator.Send(new GetOrganizationProfileQuery(), ct).ConfigureAwait(false);
+        var org = await mediator.Send(new GetOrganizationProfileQuery(), cancellationToken).ConfigureAwait(false);
 
         return new AccountabilityPdfDocument(
             report, org, query.PaperSize, query.Orientation, (float)query.Margin).GeneratePdf();

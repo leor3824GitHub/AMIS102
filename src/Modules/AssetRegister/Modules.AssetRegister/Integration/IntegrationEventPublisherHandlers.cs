@@ -13,85 +13,85 @@ namespace AMIS.Modules.AssetRegister.Integration;
 public sealed class AssetRegisteredIntegrationPublisher(
     IEventBus bus, AssetRegisterDbContext db) : INotificationHandler<AssetRegisteredEvent>
 {
-    public async ValueTask Handle(AssetRegisteredEvent @event, CancellationToken ct)
+    public async ValueTask Handle(AssetRegisteredEvent @event, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(@event);
         var asset = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.FirstOrDefaultAsync(
-            db.AssetRegistries, a => a.Id == @event.AssetRegistryId, ct).ConfigureAwait(false);
+            db.AssetRegistries, a => a.Id == @event.AssetRegistryId, cancellationToken).ConfigureAwait(false);
         if (asset is null) return;
 
         await bus.PublishAsync(new AssetRegisterIntegrationEvents.AssetRegistered(
             asset.Id, asset.PropertyNo.Value, asset.AssetType, asset.UnitCost,
-            asset.AcquisitionDate, @event.TenantId, @event.CorrelationId ?? string.Empty), ct).ConfigureAwait(false);
+            asset.AcquisitionDate, @event.TenantId, @event.CorrelationId ?? string.Empty), cancellationToken).ConfigureAwait(false);
     }
 }
 
 public sealed class AssetIssuedIntegrationPublisher(IEventBus bus) : INotificationHandler<AssetIssuedEvent>
 {
-    public ValueTask Handle(AssetIssuedEvent @event, CancellationToken ct)
+    public ValueTask Handle(AssetIssuedEvent @event, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(@event);
         return new ValueTask(bus.PublishAsync(new AssetRegisterIntegrationEvents.AssetIssued(
             @event.AssetRegistryId, @event.AccountabilityId, @event.CustodianId,
-            @event.TenantId, @event.CorrelationId ?? string.Empty), ct));
+            @event.TenantId, @event.CorrelationId ?? string.Empty), cancellationToken));
     }
 }
 
 public sealed class AssetDisposedIntegrationPublisher(IEventBus bus) : INotificationHandler<AssetDisposedEvent>
 {
-    public ValueTask Handle(AssetDisposedEvent @event, CancellationToken ct)
+    public ValueTask Handle(AssetDisposedEvent @event, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(@event);
         return new ValueTask(bus.PublishAsync(new AssetRegisterIntegrationEvents.AssetDisposed(
             @event.AssetRegistryId, @event.PropertyNo, @event.TenantId,
-            @event.CorrelationId ?? string.Empty), ct));
+            @event.CorrelationId ?? string.Empty), cancellationToken));
     }
 }
 
 public sealed class IssuanceReportPostedIntegrationPublisher(
     IEventBus bus, AssetRegisterDbContext db) : INotificationHandler<IssuanceReportPostedEvent>
 {
-    public async ValueTask Handle(IssuanceReportPostedEvent @event, CancellationToken ct)
+    public async ValueTask Handle(IssuanceReportPostedEvent @event, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(@event);
         var report = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.FirstOrDefaultAsync(
-            db.PropertyIssuanceReports, r => r.Id == @event.ReportId, ct).ConfigureAwait(false);
+            db.PropertyIssuanceReports, r => r.Id == @event.ReportId, cancellationToken).ConfigureAwait(false);
         if (report is null) return;
 
         await bus.PublishAsync(new AssetRegisterIntegrationEvents.IssuanceReportPosted(
             report.Id, report.ReportNo, report.ReportType, report.Date,
-            @event.TenantId, @event.CorrelationId ?? string.Empty), ct).ConfigureAwait(false);
+            @event.TenantId, @event.CorrelationId ?? string.Empty), cancellationToken).ConfigureAwait(false);
     }
 }
 
 public sealed class IncidentReportFiledIntegrationPublisher(
     IEventBus bus, AssetRegisterDbContext db) : INotificationHandler<IncidentReportFiledEvent>
 {
-    public async ValueTask Handle(IncidentReportFiledEvent @event, CancellationToken ct)
+    public async ValueTask Handle(IncidentReportFiledEvent @event, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(@event);
         var report = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.FirstOrDefaultAsync(
-            db.PropertyIncidentReports, r => r.Id == @event.IncidentReportId, ct).ConfigureAwait(false);
+            db.PropertyIncidentReports, r => r.Id == @event.IncidentReportId, cancellationToken).ConfigureAwait(false);
         if (report is null) return;
 
         await bus.PublishAsync(new AssetRegisterIntegrationEvents.IncidentReportFiled(
             report.Id, report.IncidentNo, report.IncidentType,
-            @event.TenantId, @event.CorrelationId ?? string.Empty), ct).ConfigureAwait(false);
+            @event.TenantId, @event.CorrelationId ?? string.Empty), cancellationToken).ConfigureAwait(false);
     }
 }
 
 public sealed class UnserviceableReportClosedIntegrationPublisher(
     IEventBus bus, AssetRegisterDbContext db) : INotificationHandler<UnserviceableReportSubmittedEvent>
 {
-    public async ValueTask Handle(UnserviceableReportSubmittedEvent @event, CancellationToken ct)
+    public async ValueTask Handle(UnserviceableReportSubmittedEvent @event, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(@event);
         var report = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.FirstOrDefaultAsync(
-            db.UnserviceablePropertyReports, r => r.Id == @event.ReportId, ct).ConfigureAwait(false);
+            db.UnserviceablePropertyReports, r => r.Id == @event.ReportId, cancellationToken).ConfigureAwait(false);
         if (report is null) return;
 
         await bus.PublishAsync(new AssetRegisterIntegrationEvents.UnserviceableReportClosed(
-            report.Id, report.ReportNo, report.ReportType, @event.TenantId, @event.CorrelationId ?? string.Empty), ct).ConfigureAwait(false);
+            report.Id, report.ReportNo, report.ReportType, @event.TenantId, @event.CorrelationId ?? string.Empty), cancellationToken).ConfigureAwait(false);
     }
 }
 

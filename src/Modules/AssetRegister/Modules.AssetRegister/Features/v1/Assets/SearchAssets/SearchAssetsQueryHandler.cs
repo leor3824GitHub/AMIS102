@@ -10,7 +10,7 @@ namespace AMIS.Modules.AssetRegister.Features.v1.Assets.SearchAssets;
 public sealed class SearchAssetsQueryHandler(AssetRegisterDbContext db)
     : IQueryHandler<SearchAssetsQuery, PagedResponse<AssetRegistrySummaryDto>>
 {
-    public async ValueTask<PagedResponse<AssetRegistrySummaryDto>> Handle(SearchAssetsQuery query, CancellationToken ct)
+    public async ValueTask<PagedResponse<AssetRegistrySummaryDto>> Handle(SearchAssetsQuery query, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(query);
 
@@ -33,11 +33,11 @@ public sealed class SearchAssetsQueryHandler(AssetRegisterDbContext db)
         var pageNumber = query.PageNumber <= 0 ? 1 : query.PageNumber;
         var pageSize = query.PageSize <= 0 ? 10 : query.PageSize;
 
-        var total = await q.LongCountAsync(ct).ConfigureAwait(false);
+        var total = await q.LongCountAsync(cancellationToken).ConfigureAwait(false);
         var page = await q
             .OrderByDescending(a => a.AcquisitionDate)
             .Skip((pageNumber - 1) * pageSize).Take(pageSize)
-            .ToListAsync(ct).ConfigureAwait(false);
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
 
         var items = page.ConvertAll(a => new AssetRegistrySummaryDto(
             a.Id, a.PropertyNo.Value, a.AssetType, a.Description, a.UnitCost,

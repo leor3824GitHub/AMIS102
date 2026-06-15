@@ -19,16 +19,16 @@ public sealed class PrintAccountabilityICSFastQueryHandler(IMediator mediator)
     // Reuses the same layout as the AssetManagement ICS — field names are identical.
     private const string TemplateName = "InventoryCustodianSlipFast";
 
-    public async ValueTask<ReportFileDto> Handle(PrintAccountabilityICSFastQuery query, CancellationToken ct)
+    public async ValueTask<ReportFileDto> Handle(PrintAccountabilityICSFastQuery query, CancellationToken cancellationToken)
     {
-        var accountability = await mediator.Send(new GetAccountabilityQuery(query.Id), ct).ConfigureAwait(false)
+        var accountability = await mediator.Send(new GetAccountabilityQuery(query.Id), cancellationToken).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Accountability document '{query.Id}' not found.");
 
         if (accountability.AccountabilityType != AccountabilityType.SE_ICS)
             throw new InvalidOperationException(
                 $"Document '{accountability.DocumentNo}' is a PAR, not an ICS. Use the PAR print endpoint.");
 
-        var org = await mediator.Send(new GetOrganizationProfileQuery(), ct).ConfigureAwait(false);
+        var org = await mediator.Send(new GetOrganizationProfileQuery(), cancellationToken).ConfigureAwait(false);
 
         var nf = CultureInfo.InvariantCulture;
 
@@ -65,7 +65,7 @@ public sealed class PrintAccountabilityICSFastQueryHandler(IMediator mediator)
                     dataBand.DataSource = report.GetDataSource("LineItemsDS");
             },
             fileName: $"ICS-{accountability.DocumentNo}",
-            ct: ct).ConfigureAwait(false);
+            ct: cancellationToken).ConfigureAwait(false);
     }
 
     // DataTable uses same column names as InventoryCustodianSlipFast.frx.

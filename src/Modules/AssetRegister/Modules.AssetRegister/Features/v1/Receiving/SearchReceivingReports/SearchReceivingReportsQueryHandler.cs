@@ -10,7 +10,7 @@ public sealed class SearchReceivingReportsQueryHandler(AssetRegisterDbContext db
     : IQueryHandler<SearchReceivingReportsQuery, PagedResponse<ReceivingReportSummaryDto>>
 {
     public async ValueTask<PagedResponse<ReceivingReportSummaryDto>> Handle(
-        SearchReceivingReportsQuery query, CancellationToken ct)
+        SearchReceivingReportsQuery query, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(query);
 
@@ -29,14 +29,14 @@ public sealed class SearchReceivingReportsQueryHandler(AssetRegisterDbContext db
         var pageNumber = query.PageNumber <= 0 ? 1 : query.PageNumber;
         var pageSize = query.PageSize <= 0 ? 10 : query.PageSize;
 
-        var total = await q.LongCountAsync(ct).ConfigureAwait(false);
+        var total = await q.LongCountAsync(cancellationToken).ConfigureAwait(false);
         var items = await q.OrderByDescending(r => r.Date).ThenByDescending(r => r.CreatedOnUtc)
             .Skip((pageNumber - 1) * pageSize).Take(pageSize)
             .Select(r => new ReceivingReportSummaryDto(
                 r.Id, r.DocumentKind, r.ReportNo, r.Date, r.ReceivedFrom, r.ReceiptType,
                 r.Items.Count,
                 r.Items.Sum(i => i.Quantity * i.UnitCost)))
-            .ToListAsync(ct).ConfigureAwait(false);
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
 
         return new PagedResponse<ReceivingReportSummaryDto>
         {

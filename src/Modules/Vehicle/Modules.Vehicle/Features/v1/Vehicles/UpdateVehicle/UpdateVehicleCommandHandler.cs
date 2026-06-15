@@ -12,16 +12,16 @@ namespace AMIS.Modules.Vehicle.Features.v1.Vehicles.UpdateVehicle;
 public sealed class UpdateVehicleCommandHandler(VehicleDbContext db, ICurrentUser currentUser)
     : ICommandHandler<UpdateVehicleCommand, VehicleDto>
 {
-    public async ValueTask<VehicleDto> Handle(UpdateVehicleCommand cmd, CancellationToken ct)
+    public async ValueTask<VehicleDto> Handle(UpdateVehicleCommand cmd, CancellationToken cancellationToken)
     {
-        var vehicle = await db.Vehicles.FirstOrDefaultAsync(v => v.Id == cmd.Id, ct).ConfigureAwait(false)
+        var vehicle = await db.Vehicles.FirstOrDefaultAsync(v => v.Id == cmd.Id, cancellationToken).ConfigureAwait(false)
             ?? throw new FluentValidation.ValidationException(
             [new ValidationFailure(nameof(cmd.Id), "Vehicle not found.")]);
 
         var tenantId = currentUser.GetTenant() ?? string.Empty;
         var plateConflict = await db.Vehicles
             .IgnoreQueryFilters()
-            .AnyAsync(v => v.TenantId == tenantId && v.PlateNumber == cmd.PlateNumber.ToUpperInvariant() && v.Id != cmd.Id, ct)
+            .AnyAsync(v => v.TenantId == tenantId && v.PlateNumber == cmd.PlateNumber.ToUpperInvariant() && v.Id != cmd.Id, cancellationToken)
             .ConfigureAwait(false);
 
         if (plateConflict)
@@ -34,7 +34,7 @@ public sealed class UpdateVehicleCommandHandler(VehicleDbContext db, ICurrentUse
             cmd.MotorNumber, cmd.ChassisNumber, cmd.NumberOfCylinders,
             cmd.EngineDisplacementCC, cmd.FuelType, cmd.VehicleUse, cmd.AcquisitionCost);
         vehicle.SetLastModifiedBy(currentUser.GetUserId().ToString());
-        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return vehicle.ToDto();
     }
 }

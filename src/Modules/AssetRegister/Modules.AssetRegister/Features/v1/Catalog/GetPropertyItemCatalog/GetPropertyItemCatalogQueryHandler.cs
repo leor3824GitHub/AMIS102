@@ -8,13 +8,13 @@ namespace AMIS.Modules.AssetRegister.Features.v1.Catalog.GetPropertyItemCatalog;
 public sealed class GetPropertyItemCatalogQueryHandler(AssetRegisterDbContext db)
     : IQueryHandler<GetPropertyItemCatalogQuery, PropertyItemCatalogDto?>
 {
-    public async ValueTask<PropertyItemCatalogDto?> Handle(GetPropertyItemCatalogQuery query, CancellationToken ct) =>
+    public async ValueTask<PropertyItemCatalogDto?> Handle(GetPropertyItemCatalogQuery query, CancellationToken cancellationToken) =>
         await db.PropertyItemCatalogs
             .AsNoTracking()
             .Where(x => x.Id == query.Id)
             .Select(x => new PropertyItemCatalogDto(
                 x.Id, x.Code, x.Description, x.DefaultPropertyClass, x.DefaultCategoryCode,
                 x.DefaultUnit, x.UacsObjectCode, x.EstimatedUsefulLifeYears, x.IsActive, x.Status))
-            .FirstOrDefaultAsync(ct).ConfigureAwait(false);
+            .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
 }
 

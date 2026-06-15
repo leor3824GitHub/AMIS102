@@ -26,19 +26,19 @@ namespace AMIS.Modules.AssetRegister.Features.v1.Counting.ClosePhysicalCount;
 public sealed class ClosePhysicalCountCommandHandler(AssetRegisterDbContext db, IMediator mediator)
     : ICommandHandler<ClosePhysicalCountCommand, PhysicalCountSessionDto>
 {
-    public async ValueTask<PhysicalCountSessionDto> Handle(ClosePhysicalCountCommand cmd, CancellationToken ct)
+    public async ValueTask<PhysicalCountSessionDto> Handle(ClosePhysicalCountCommand cmd, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(cmd);
         var session = await db.PhysicalCountSessions
             .Include(s => s.Entries)
-            .FirstOrDefaultAsync(s => s.Id == cmd.SessionId, ct).ConfigureAwait(false)
+            .FirstOrDefaultAsync(s => s.Id == cmd.SessionId, cancellationToken).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Physical count session '{cmd.SessionId}' not found.");
 
         var tenantId = db.TenantInfo?.Identifier ?? string.Empty;
 
         // 1. Recognize found-at-station items into the registry before sign-off so the Close
         //    invariant (no unmaterialized FoundAtStation entry) is satisfied by the system.
-        await MaterializeFoundAtStationAsync(session, tenantId, ct).ConfigureAwait(false);
+        await MaterializeFoundAtStationAsync(session, tenantId, cancellationToken).ConfigureAwait(false);
 
         // 2. Sign off. Domain enforces Reconciled status, materialization, and no pending recounts.
         var approvedBy = EmployeeRef.Create(cmd.ApprovedBy.EmployeeId, cmd.ApprovedBy.PrintedName, cmd.ApprovedBy.Designation);
@@ -47,16 +47,16 @@ public sealed class ClosePhysicalCountCommandHandler(AssetRegisterDbContext db, 
         session.Close(approvedBy, witnessedBy, cmd.ClosedOn);
 
         // 3. Mirror per-entry condition onto found-on-books assets.
-        await MirrorFoundConditionsAsync(session, ct).ConfigureAwait(false);
+        await MirrorFoundConditionsAsync(session, cancellationToken).ConfigureAwait(false);
 
         // 4. Drop not-found assets (recorded Missing + in-scope Uncounted) out of the active balance.
-        await FlagNotFoundAsync(session, ct).ConfigureAwait(false);
+        await FlagNotFoundAsync(session, cancellationToken).ConfigureAwait(false);
 
-        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return CountingMapper.ToDto(session);
     }
 
-    private async Task MaterializeFoundAtStationAsync(PhysicalCountSession session, string tenantId, CancellationToken ct)
+    private async Task MaterializeFoundAtStationAsync(PhysicalCountSession session, string tenantId, CancellationToken cancellationToken)
     {
         var pending = session.Entries
             .Where(e => e.Condition == PhysicalCountCondition.FoundAtStation && e.AssetRegistryId is null)
@@ -77,9 +77,9 @@ public sealed class ClosePhysicalCountCommandHandler(AssetRegisterDbContext db, 
         var catalogIds = pending.Select(e => e.ProposedCatalogItemId!.Value).Distinct().ToList();
         var catalogs = await db.PropertyItemCatalogs
             .Where(c => catalogIds.Contains(c.Id))
-            .ToDictionaryAsync(c => c.Id, ct).ConfigureAwait(false);
+            .ToDictionaryAsync(c => c.Id, cancellationToken).ConfigureAwait(false);
 
-        var threshold = await mediator.Send(new GetActiveCapitalizationThresholdQuery(), ct).ConfigureAwait(false)
+        var threshold = await mediator.Send(new GetActiveCapitalizationThresholdQuery(), cancellationToken).ConfigureAwait(false)
             ?? AssetClassificationPolicy.FallbackThreshold;
 
         foreach (var entry in pending)
@@ -116,7 +116,7 @@ public sealed class ClosePhysicalCountCommandHandler(AssetRegisterDbContext db, 
         }
     }
 
-    private async Task MirrorFoundConditionsAsync(PhysicalCountSession session, CancellationToken ct)
+    private async Task MirrorFoundConditionsAsync(PhysicalCountSession session, CancellationToken cancellationToken)
     {
         var foundEntries = session.Entries
             .Where(e => e.AssetRegistryId is not null
@@ -126,7 +126,7 @@ public sealed class ClosePhysicalCountCommandHandler(AssetRegisterDbContext db, 
         if (foundEntries.Count == 0) return;
 
         var assetIds = foundEntries.Select(e => e.AssetRegistryId!.Value).ToList();
-        var assets = await db.AssetRegistries.Where(a => assetIds.Contains(a.Id)).ToListAsync(ct).ConfigureAwait(false);
+        var assets = await db.AssetRegistries.Where(a => assetIds.Contains(a.Id)).ToListAsync(cancellationToken).ConfigureAwait(false);
         var byId = assets.ToDictionary(a => a.Id);
         foreach (var entry in foundEntries)
         {
@@ -142,7 +142,7 @@ public sealed class ClosePhysicalCountCommandHandler(AssetRegisterDbContext db, 
         }
     }
 
-    private async Task FlagNotFoundAsync(PhysicalCountSession session, CancellationToken ct)
+    private async Task FlagNotFoundAsync(PhysicalCountSession session, CancellationToken cancellationToken)
     {
         // Assets recorded as Missing on this session.
         var missingIds = session.Entries
@@ -161,12 +161,12 @@ public sealed class ClosePhysicalCountCommandHandler(AssetRegisterDbContext db, 
             .InCountScope(session.FundCluster, session.Scope)
             .Where(a => !countedIds.Contains(a.Id))
             .Select(a => a.Id)
-            .ToListAsync(ct).ConfigureAwait(false);
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
 
         var toFlag = missingIds.Concat(uncountedIds).Distinct().ToList();
         if (toFlag.Count == 0) return;
 
-        var assets = await db.AssetRegistries.Where(a => toFlag.Contains(a.Id)).ToListAsync(ct).ConfigureAwait(false);
+        var assets = await db.AssetRegistries.Where(a => toFlag.Contains(a.Id)).ToListAsync(cancellationToken).ConfigureAwait(false);
         foreach (var asset in assets)
             asset.MarkMissingFromCount(session.Id);
     }

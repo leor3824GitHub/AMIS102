@@ -8,12 +8,12 @@ namespace AMIS.Modules.AssetRegister.Features.v1.Receiving.GetActivePPERRFormSer
 public sealed class GetActivePPERRFormSeriesQueryHandler(AssetRegisterDbContext db)
     : IQueryHandler<GetActivePPERRFormSeriesQuery, PPERRFormSeriesDto?>
 {
-    public async ValueTask<PPERRFormSeriesDto?> Handle(GetActivePPERRFormSeriesQuery query, CancellationToken ct)
+    public async ValueTask<PPERRFormSeriesDto?> Handle(GetActivePPERRFormSeriesQuery query, CancellationToken cancellationToken)
     {
         var tenantId = db.TenantInfo?.Identifier ?? string.Empty;
         var series = await db.PPERRFormSeries
             .AsNoTracking()
-            .FirstOrDefaultAsync(s => s.TenantId == tenantId && s.IsActive, ct)
+            .FirstOrDefaultAsync(s => s.TenantId == tenantId && s.IsActive, cancellationToken)
             .ConfigureAwait(false);
         return series is null ? null : PPERRFormSeriesMapper.ToDto(series);
     }

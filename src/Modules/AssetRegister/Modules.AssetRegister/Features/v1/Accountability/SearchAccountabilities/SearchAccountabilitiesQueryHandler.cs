@@ -10,7 +10,7 @@ public sealed class SearchAccountabilitiesQueryHandler(AssetRegisterDbContext db
     : IQueryHandler<SearchAccountabilitiesQuery, PagedResponse<PropertyAccountabilitySummaryDto>>
 {
     public async ValueTask<PagedResponse<PropertyAccountabilitySummaryDto>> Handle(
-        SearchAccountabilitiesQuery query, CancellationToken ct)
+        SearchAccountabilitiesQuery query, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(query);
 
@@ -30,12 +30,12 @@ public sealed class SearchAccountabilitiesQueryHandler(AssetRegisterDbContext db
         var pageNumber = query.PageNumber <= 0 ? 1 : query.PageNumber;
         var pageSize = query.PageSize <= 0 ? 10 : query.PageSize;
 
-        var total = await q.LongCountAsync(ct).ConfigureAwait(false);
+        var total = await q.LongCountAsync(cancellationToken).ConfigureAwait(false);
         var items = await q.OrderByDescending(a => a.IssuedOn)
             .Skip((pageNumber - 1) * pageSize).Take(pageSize)
             .Select(a => new PropertyAccountabilitySummaryDto(
                 a.Id, a.DocumentNo, a.AccountabilityType, a.Status, a.IssuedOn, a.ExpiresOn, a.Lines.Count))
-            .ToListAsync(ct).ConfigureAwait(false);
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
 
         return new PagedResponse<PropertyAccountabilitySummaryDto>
         {

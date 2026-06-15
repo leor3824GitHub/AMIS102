@@ -7,10 +7,10 @@ namespace AMIS.Modules.AssetRegister.Features.v1.Depreciation.RunDepreciation;
 public sealed class RunDepreciationCommandHandler(DepreciationPostingService service)
     : ICommandHandler<RunDepreciationCommand, RunDepreciationResultDto>
 {
-    public async ValueTask<RunDepreciationResultDto> Handle(RunDepreciationCommand cmd, CancellationToken ct)
+    public async ValueTask<RunDepreciationResultDto> Handle(RunDepreciationCommand cmd, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(cmd);
         var period = cmd.AsOfPeriod ?? DateOnly.FromDateTime(DateTime.UtcNow.Date);
-        return await service.PostThroughAsync(period, ct).ConfigureAwait(false);
+        return await service.PostThroughAsync(period, cancellationToken).ConfigureAwait(false);
     }
 }

@@ -8,14 +8,14 @@ namespace AMIS.Modules.QuestPdfReporting.Features.v1.AssetRegister.PrintUnservic
 public sealed class PrintUnserviceableQueryHandler(IMediator mediator)
     : IQueryHandler<PrintUnserviceableQuery, byte[]>
 {
-    public async ValueTask<byte[]> Handle(PrintUnserviceableQuery query, CancellationToken ct)
+    public async ValueTask<byte[]> Handle(PrintUnserviceableQuery query, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(query);
 
-        var report = await mediator.Send(new GetUnserviceableReportDocumentQuery(query.ReportId), ct).ConfigureAwait(false)
+        var report = await mediator.Send(new GetUnserviceableReportDocumentQuery(query.ReportId), cancellationToken).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Unserviceable report '{query.ReportId}' not found.");
 
-        var org = await mediator.Send(new GetOrganizationProfileQuery(), ct).ConfigureAwait(false);
+        var org = await mediator.Send(new GetOrganizationProfileQuery(), cancellationToken).ConfigureAwait(false);
 
         return new UnserviceablePdfDocument(
             report, org, query.PaperSize, query.Orientation, (float)query.Margin).GeneratePdf();

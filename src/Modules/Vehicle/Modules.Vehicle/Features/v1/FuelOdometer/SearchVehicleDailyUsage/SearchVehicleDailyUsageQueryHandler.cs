@@ -11,7 +11,7 @@ namespace AMIS.Modules.Vehicle.Features.v1.FuelOdometer.SearchVehicleDailyUsage;
 public sealed class SearchVehicleDailyUsageQueryHandler(VehicleDbContext db)
     : IQueryHandler<SearchVehicleDailyUsageQuery, PagedResponse<VehicleDailyUsageDto>>
 {
-    public async ValueTask<PagedResponse<VehicleDailyUsageDto>> Handle(SearchVehicleDailyUsageQuery query, CancellationToken ct)
+    public async ValueTask<PagedResponse<VehicleDailyUsageDto>> Handle(SearchVehicleDailyUsageQuery query, CancellationToken cancellationToken)
     {
         var q = db.VehicleDailyUsages.AsNoTracking();
 
@@ -26,7 +26,7 @@ public sealed class SearchVehicleDailyUsageQueryHandler(VehicleDbContext db)
 
         q = q.OrderByDescending(x => x.Date).ThenByDescending(x => x.CreatedOnUtc);
 
-        return await q.Select(x => x.ToDto()).ToPagedResponseAsync(query, ct).ConfigureAwait(false);
+        return await q.Select(x => x.ToDto()).ToPagedResponseAsync(query, cancellationToken).ConfigureAwait(false);
     }
 }
 

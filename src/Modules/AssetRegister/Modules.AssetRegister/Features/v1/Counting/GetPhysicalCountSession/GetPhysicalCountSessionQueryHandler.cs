@@ -8,13 +8,13 @@ namespace AMIS.Modules.AssetRegister.Features.v1.Counting.GetPhysicalCountSessio
 public sealed class GetPhysicalCountSessionQueryHandler(AssetRegisterDbContext db)
     : IQueryHandler<GetPhysicalCountSessionQuery, PhysicalCountSessionDto?>
 {
-    public async ValueTask<PhysicalCountSessionDto?> Handle(GetPhysicalCountSessionQuery query, CancellationToken ct)
+    public async ValueTask<PhysicalCountSessionDto?> Handle(GetPhysicalCountSessionQuery query, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(query);
         var session = await db.PhysicalCountSessions
             .AsNoTracking()
             .Include(s => s.Entries)
-            .FirstOrDefaultAsync(s => s.Id == query.Id, ct).ConfigureAwait(false);
+            .FirstOrDefaultAsync(s => s.Id == query.Id, cancellationToken).ConfigureAwait(false);
         return session is null ? null : CountingMapper.ToDto(session);
     }
 }

@@ -16,12 +16,12 @@ public sealed class PrintPurchaseOrderFastQueryHandler(IMediator mediator)
     private static readonly Assembly Assembly = typeof(PrintPurchaseOrderFastQueryHandler).Assembly;
     private const string TemplateName = "PurchaseOrderFast";
 
-    public async ValueTask<ReportFileDto> Handle(PrintPurchaseOrderFastQuery query, CancellationToken ct)
+    public async ValueTask<ReportFileDto> Handle(PrintPurchaseOrderFastQuery query, CancellationToken cancellationToken)
     {
-        var po = await mediator.Send(new GetPurchaseOrderQuery(query.Id), ct).ConfigureAwait(false)
+        var po = await mediator.Send(new GetPurchaseOrderQuery(query.Id), cancellationToken).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Purchase order '{query.Id}' not found.");
 
-        var org = await mediator.Send(new GetOrganizationProfileQuery(), ct).ConfigureAwait(false);
+        var org = await mediator.Send(new GetOrganizationProfileQuery(), cancellationToken).ConfigureAwait(false);
 
         var nf = CultureInfo.InvariantCulture;
 
@@ -71,7 +71,7 @@ public sealed class PrintPurchaseOrderFastQueryHandler(IMediator mediator)
                     dataBand.DataSource = report.GetDataSource("LineItemsDS");
             },
             fileName: $"PO-{po.PoNumber}",
-            ct: ct).ConfigureAwait(false);
+            ct: cancellationToken).ConfigureAwait(false);
     }
 
     // DataTable (not List<record>) for line items — see note in PrintPurchaseRequestFastQueryHandler.

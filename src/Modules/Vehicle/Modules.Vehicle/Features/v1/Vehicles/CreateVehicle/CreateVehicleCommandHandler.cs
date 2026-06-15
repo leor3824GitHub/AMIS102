@@ -13,13 +13,13 @@ namespace AMIS.Modules.Vehicle.Features.v1.Vehicles.CreateVehicle;
 public sealed class CreateVehicleCommandHandler(VehicleDbContext db, ICurrentUser currentUser)
     : ICommandHandler<CreateVehicleCommand, VehicleDto>
 {
-    public async ValueTask<VehicleDto> Handle(CreateVehicleCommand cmd, CancellationToken ct)
+    public async ValueTask<VehicleDto> Handle(CreateVehicleCommand cmd, CancellationToken cancellationToken)
     {
         var tenantId = currentUser.GetTenant() ?? throw new InvalidOperationException("Tenant ID required");
 
         var plateExists = await db.Vehicles
             .IgnoreQueryFilters()
-            .AnyAsync(v => v.TenantId == tenantId && v.PlateNumber == cmd.PlateNumber.ToUpperInvariant(), ct)
+            .AnyAsync(v => v.TenantId == tenantId && v.PlateNumber == cmd.PlateNumber.ToUpperInvariant(), cancellationToken)
             .ConfigureAwait(false);
 
         if (plateExists)
@@ -35,7 +35,7 @@ public sealed class CreateVehicleCommandHandler(VehicleDbContext db, ICurrentUse
         vehicle.SetCreatedBy(currentUser.GetUserId().ToString());
 
         db.Vehicles.Add(vehicle);
-        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return vehicle.ToDto();
     }
 }

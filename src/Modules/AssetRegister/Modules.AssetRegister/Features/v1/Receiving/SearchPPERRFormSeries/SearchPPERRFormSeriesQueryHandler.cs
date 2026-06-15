@@ -9,7 +9,7 @@ namespace AMIS.Modules.AssetRegister.Features.v1.Receiving.SearchPPERRFormSeries
 public sealed class SearchPPERRFormSeriesQueryHandler(AssetRegisterDbContext db)
     : IQueryHandler<SearchPPERRFormSeriesQuery, PagedResponse<PPERRFormSeriesDto>>
 {
-    public async ValueTask<PagedResponse<PPERRFormSeriesDto>> Handle(SearchPPERRFormSeriesQuery query, CancellationToken ct)
+    public async ValueTask<PagedResponse<PPERRFormSeriesDto>> Handle(SearchPPERRFormSeriesQuery query, CancellationToken cancellationToken)
     {
         var tenantId = db.TenantInfo?.Identifier ?? string.Empty;
 
@@ -19,11 +19,11 @@ public sealed class SearchPPERRFormSeriesQueryHandler(AssetRegisterDbContext db)
             .OrderByDescending(s => s.IsActive)
             .ThenByDescending(s => s.StartSerial);
 
-        var total = await q.CountAsync(ct).ConfigureAwait(false);
+        var total = await q.CountAsync(cancellationToken).ConfigureAwait(false);
         var items = await q
             .Skip((query.PageNumber - 1) * query.PageSize)
             .Take(query.PageSize)
-            .ToListAsync(ct)
+            .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
         return new PagedResponse<PPERRFormSeriesDto>

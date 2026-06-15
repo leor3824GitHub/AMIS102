@@ -19,19 +19,19 @@ public sealed class PrintRISFastQueryHandler(IMediator mediator)
     private const string TemplateName = "RequisitionAndIssueSlipFast";
     private const string Check = "✓"; // ✓
 
-    public async ValueTask<ReportFileDto> Handle(PrintRISFastQuery query, CancellationToken ct)
+    public async ValueTask<ReportFileDto> Handle(PrintRISFastQuery query, CancellationToken cancellationToken)
     {
-        var ris = await mediator.Send(new GetSupplyRequestQuery(query.Id), ct).ConfigureAwait(false)
+        var ris = await mediator.Send(new GetSupplyRequestQuery(query.Id), cancellationToken).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Supply request '{query.Id}' not found.");
 
-        var org = await mediator.Send(new GetOrganizationProfileQuery(), ct).ConfigureAwait(false);
+        var org = await mediator.Send(new GetOrganizationProfileQuery(), cancellationToken).ConfigureAwait(false);
 
         // Signatories — EmployeeId / ApprovedBy are identity user id strings (see SupplyRequest handlers).
-        var requester = await ResolveEmployeeAsync(ris.EmployeeId, ct).ConfigureAwait(false);
-        var issuer = await ResolveEmployeeAsync(ris.ApprovedBy, ct).ConfigureAwait(false);
+        var requester = await ResolveEmployeeAsync(ris.EmployeeId, cancellationToken).ConfigureAwait(false);
+        var issuer = await ResolveEmployeeAsync(ris.ApprovedBy, cancellationToken).ConfigureAwait(false);
 
         // Office ← requester's office; Section ← request department (resolved by id when possible).
-        var section = await ResolveDepartmentNameAsync(ris.DepartmentId, ct).ConfigureAwait(false);
+        var section = await ResolveDepartmentNameAsync(ris.DepartmentId, cancellationToken).ConfigureAwait(false);
         var office = requester?.OfficeName ?? string.Empty;
 
         var nf = CultureInfo.InvariantCulture;
@@ -57,7 +57,7 @@ public sealed class PrintRISFastQueryHandler(IMediator mediator)
                 ReceivedByDesignation:    requester?.PositionName ?? string.Empty)
         };
 
-        var lineItemsTable = await BuildLineItemsTableAsync(ris, query.MinRows, ct).ConfigureAwait(false);
+        var lineItemsTable = await BuildLineItemsTableAsync(ris, query.MinRows, cancellationToken).ConfigureAwait(false);
 
         return await FastReportService.GenerateAsync(
             Assembly,
@@ -75,10 +75,10 @@ public sealed class PrintRISFastQueryHandler(IMediator mediator)
                     dataBand.DataSource = report.GetDataSource("LineItemsDS");
             },
             fileName: $"RIS-{ris.RequestNumber}",
-            ct: ct).ConfigureAwait(false);
+            ct: cancellationToken).ConfigureAwait(false);
     }
 
-    private async Task<DataTable> BuildLineItemsTableAsync(SupplyRequestDto ris, int minRows, CancellationToken ct)
+    private async Task<DataTable> BuildLineItemsTableAsync(SupplyRequestDto ris, int minRows, CancellationToken cancellationToken)
     {
         var table = new DataTable("LineItemsDS") { Locale = CultureInfo.InvariantCulture };
         table.Columns.Add("StockNo",        typeof(string));
@@ -92,7 +92,7 @@ public sealed class PrintRISFastQueryHandler(IMediator mediator)
 
         foreach (var item in ris.Items)
         {
-            var product = await mediator.Send(new GetProductQuery(item.ProductId), ct).ConfigureAwait(false);
+            var product = await mediator.Send(new GetProductQuery(item.ProductId), cancellationToken).ConfigureAwait(false);
 
             var issuedQty = item.FulfilledQuantity > 0 ? item.FulfilledQuantity : item.ApprovedQuantity;
             var available = item.RequestedQuantity > 0 && issuedQty >= item.RequestedQuantity;
@@ -118,16 +118,16 @@ public sealed class PrintRISFastQueryHandler(IMediator mediator)
         return table;
     }
 
-    private async Task<EmployeeReferenceDto?> ResolveEmployeeAsync(string? identityUserId, CancellationToken ct)
+    private async Task<EmployeeReferenceDto?> ResolveEmployeeAsync(string? identityUserId, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(identityUserId))
             return null;
 
         return await mediator.Send(
-            new GetEmployeeReferenceByIdentityUserIdQuery(identityUserId), ct).ConfigureAwait(false);
+            new GetEmployeeReferenceByIdentityUserIdQuery(identityUserId), cancellationToken).ConfigureAwait(false);
     }
 
-    private async Task<string> ResolveDepartmentNameAsync(string? departmentId, CancellationToken ct)
+    private async Task<string> ResolveDepartmentNameAsync(string? departmentId, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(departmentId))
             return string.Empty;
@@ -135,7 +135,7 @@ public sealed class PrintRISFastQueryHandler(IMediator mediator)
         if (!Guid.TryParse(departmentId, out var deptGuid))
             return departmentId;
 
-        var dept = await mediator.Send(new GetDepartmentReferenceByIdQuery(deptGuid), ct).ConfigureAwait(false);
+        var dept = await mediator.Send(new GetDepartmentReferenceByIdQuery(deptGuid), cancellationToken).ConfigureAwait(false);
         return dept?.Name ?? departmentId;
     }
 

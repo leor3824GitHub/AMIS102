@@ -11,9 +11,9 @@ namespace AMIS.Modules.Vehicle.Features.v1.Repairs.StartRepair;
 public sealed class StartRepairCommandHandler(VehicleDbContext db, ICurrentUser currentUser)
     : ICommandHandler<StartRepairCommand, Unit>
 {
-    public async ValueTask<Unit> Handle(StartRepairCommand cmd, CancellationToken ct)
+    public async ValueTask<Unit> Handle(StartRepairCommand cmd, CancellationToken cancellationToken)
     {
-        var record = await db.RepairRecords.FirstOrDefaultAsync(r => r.Id == cmd.Id, ct).ConfigureAwait(false)
+        var record = await db.RepairRecords.FirstOrDefaultAsync(r => r.Id == cmd.Id, cancellationToken).ConfigureAwait(false)
             ?? throw new FluentValidation.ValidationException(
             [new ValidationFailure(nameof(cmd.Id), "Repair record not found.")]);
 
@@ -25,7 +25,7 @@ public sealed class StartRepairCommandHandler(VehicleDbContext db, ICurrentUser 
         record.SetLastModifiedBy(currentUser.GetUserId().ToString());
 
         // Mark the vehicle as under repair
-        var vehicle = await db.Vehicles.FirstOrDefaultAsync(v => v.Id == record.VehicleId, ct).ConfigureAwait(false)
+        var vehicle = await db.Vehicles.FirstOrDefaultAsync(v => v.Id == record.VehicleId, cancellationToken).ConfigureAwait(false)
             ?? throw new FluentValidation.ValidationException(
             [new ValidationFailure(nameof(cmd.Id), "Vehicle not found for this repair record.")]);
 
@@ -38,7 +38,7 @@ public sealed class StartRepairCommandHandler(VehicleDbContext db, ICurrentUser 
             throw new FluentValidation.ValidationException([new ValidationFailure(nameof(cmd.Id), ex.Message)]);
         }
 
-        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return Unit.Value;
     }
 }

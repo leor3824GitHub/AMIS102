@@ -12,17 +12,17 @@ namespace AMIS.Modules.Vehicle.Features.v1.FuelOdometer.UpdateVehicleDailyUsage;
 public sealed class UpdateVehicleDailyUsageCommandHandler(VehicleDbContext db, ICurrentUser currentUser)
     : ICommandHandler<UpdateVehicleDailyUsageCommand, VehicleDailyUsageDto>
 {
-    public async ValueTask<VehicleDailyUsageDto> Handle(UpdateVehicleDailyUsageCommand cmd, CancellationToken ct)
+    public async ValueTask<VehicleDailyUsageDto> Handle(UpdateVehicleDailyUsageCommand cmd, CancellationToken cancellationToken)
     {
         var usage = await db.VehicleDailyUsages
-            .FirstOrDefaultAsync(x => x.Id == cmd.Id, ct)
+            .FirstOrDefaultAsync(x => x.Id == cmd.Id, cancellationToken)
             .ConfigureAwait(false)
             ?? throw new FluentValidation.ValidationException(
             [new ValidationFailure(nameof(cmd.Id), "Daily usage record not found.")]);
 
         var vehicle = await db.Vehicles
             .AsNoTracking()
-            .FirstOrDefaultAsync(v => v.Id == usage.VehicleId, ct)
+            .FirstOrDefaultAsync(v => v.Id == usage.VehicleId, cancellationToken)
             .ConfigureAwait(false)
             ?? throw new FluentValidation.ValidationException(
             [new ValidationFailure(nameof(cmd.Id), "Vehicle not found.")]);
@@ -33,7 +33,7 @@ public sealed class UpdateVehicleDailyUsageCommandHandler(VehicleDbContext db, I
 
         var duplicate = await db.VehicleDailyUsages
             .AsNoTracking()
-            .AnyAsync(x => x.VehicleId == usage.VehicleId && x.Date == cmd.Date && x.Id != cmd.Id, ct)
+            .AnyAsync(x => x.VehicleId == usage.VehicleId && x.Date == cmd.Date && x.Id != cmd.Id, cancellationToken)
             .ConfigureAwait(false);
 
         if (duplicate)
@@ -51,7 +51,7 @@ public sealed class UpdateVehicleDailyUsageCommandHandler(VehicleDbContext db, I
 
         usage.SetLastModifiedBy(currentUser.GetUserId().ToString());
 
-        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
         return usage.ToDto();
     }

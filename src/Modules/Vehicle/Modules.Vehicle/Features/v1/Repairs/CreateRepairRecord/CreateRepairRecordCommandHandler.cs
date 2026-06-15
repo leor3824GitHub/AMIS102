@@ -12,12 +12,12 @@ namespace AMIS.Modules.Vehicle.Features.v1.Repairs.CreateRepairRecord;
 public sealed class CreateRepairRecordCommandHandler(VehicleDbContext db, ICurrentUser currentUser)
     : ICommandHandler<CreateRepairRecordCommand, RepairRecordDto>
 {
-    public async ValueTask<RepairRecordDto> Handle(CreateRepairRecordCommand cmd, CancellationToken ct)
+    public async ValueTask<RepairRecordDto> Handle(CreateRepairRecordCommand cmd, CancellationToken cancellationToken)
     {
         var tenantId = currentUser.GetTenant() ?? throw new InvalidOperationException("Tenant ID required");
 
         var vehicleExists = await db.Vehicles
-            .AnyAsync(v => v.Id == cmd.VehicleId, ct)
+            .AnyAsync(v => v.Id == cmd.VehicleId, cancellationToken)
             .ConfigureAwait(false);
 
         if (!vehicleExists)
@@ -29,7 +29,7 @@ public sealed class CreateRepairRecordCommandHandler(VehicleDbContext db, ICurre
         record.SetCreatedBy(currentUser.GetUserId().ToString());
 
         db.RepairRecords.Add(record);
-        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return record.ToDto();
     }
 }

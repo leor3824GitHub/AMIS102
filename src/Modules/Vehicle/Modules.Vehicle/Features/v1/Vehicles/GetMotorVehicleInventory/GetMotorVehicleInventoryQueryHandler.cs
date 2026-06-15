@@ -10,7 +10,7 @@ public sealed class GetMotorVehicleInventoryQueryHandler(VehicleDbContext db)
     : IQueryHandler<GetMotorVehicleInventoryQuery, List<MotorVehicleInventoryItemDto>>
 {
     public async ValueTask<List<MotorVehicleInventoryItemDto>> Handle(
-        GetMotorVehicleInventoryQuery query, CancellationToken ct)
+        GetMotorVehicleInventoryQuery query, CancellationToken cancellationToken)
     {
         var q = db.Vehicles.AsNoTracking();
 
@@ -22,7 +22,7 @@ public sealed class GetMotorVehicleInventoryQueryHandler(VehicleDbContext db)
 
         var vehicles = await q
             .OrderBy(v => v.Make).ThenBy(v => v.Model)
-            .ToListAsync(ct);
+            .ToListAsync(cancellationToken);
 
         return vehicles.Select(v => new MotorVehicleInventoryItemDto(
             Qty: 1,

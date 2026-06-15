@@ -12,7 +12,7 @@ namespace AMIS.Modules.Vehicle.Features.v1.Vehicles.SearchVehicles;
 public sealed class SearchVehiclesQueryHandler(VehicleDbContext db)
     : IQueryHandler<SearchVehiclesQuery, PagedResponse<VehicleDto>>
 {
-    public async ValueTask<PagedResponse<VehicleDto>> Handle(SearchVehiclesQuery query, CancellationToken ct)
+    public async ValueTask<PagedResponse<VehicleDto>> Handle(SearchVehiclesQuery query, CancellationToken cancellationToken)
     {
         var q = db.Vehicles.AsNoTracking();
 
@@ -36,7 +36,7 @@ public sealed class SearchVehiclesQueryHandler(VehicleDbContext db)
 
         q = q.OrderBy(v => v.PlateNumber);
 
-        return await q.Select(v => v.ToDto()).ToPagedResponseAsync(query, ct).ConfigureAwait(false);
+        return await q.Select(v => v.ToDto()).ToPagedResponseAsync(query, cancellationToken).ConfigureAwait(false);
     }
 }
 

@@ -9,11 +9,11 @@ namespace AMIS.Modules.Vehicle.Features.v1.Repairs.GetRepairRecord;
 public sealed class GetRepairRecordQueryHandler(VehicleDbContext db)
     : IQueryHandler<GetRepairRecordQuery, RepairRecordDto?>
 {
-    public async ValueTask<RepairRecordDto?> Handle(GetRepairRecordQuery query, CancellationToken ct)
+    public async ValueTask<RepairRecordDto?> Handle(GetRepairRecordQuery query, CancellationToken cancellationToken)
     {
         var record = await db.RepairRecords
             .AsNoTracking()
-            .FirstOrDefaultAsync(r => r.Id == query.Id, ct)
+            .FirstOrDefaultAsync(r => r.Id == query.Id, cancellationToken)
             .ConfigureAwait(false);
         return record?.ToDto();
     }

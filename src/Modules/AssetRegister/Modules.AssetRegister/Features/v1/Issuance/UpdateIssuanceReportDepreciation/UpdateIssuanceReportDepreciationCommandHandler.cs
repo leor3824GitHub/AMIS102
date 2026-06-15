@@ -11,13 +11,13 @@ public sealed class UpdateIssuanceReportDepreciationCommandHandler(AssetRegister
     : ICommandHandler<UpdateIssuanceReportDepreciationCommand, PropertyIssuanceReportDto>
 {
     public async ValueTask<PropertyIssuanceReportDto> Handle(
-        UpdateIssuanceReportDepreciationCommand cmd, CancellationToken ct)
+        UpdateIssuanceReportDepreciationCommand cmd, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(cmd);
 
         var report = await db.PropertyIssuanceReports
             .Include(r => r.Lines)
-            .FirstOrDefaultAsync(r => r.Id == cmd.ReportId, ct).ConfigureAwait(false)
+            .FirstOrDefaultAsync(r => r.Id == cmd.ReportId, cancellationToken).ConfigureAwait(false)
             ?? throw new NotFoundException($"Issuance report '{cmd.ReportId}' not found.");
 
         if (report.ReportType != IssuanceReportType.PPEIR)
@@ -26,7 +26,7 @@ public sealed class UpdateIssuanceReportDepreciationCommandHandler(AssetRegister
         foreach (var entry in cmd.Lines)
             report.SetLineDepreciation(entry.LineId, entry.AccumulatedDepreciation, entry.BookValue);
 
-        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return IssuanceMapper.ToDto(report);
     }
 }

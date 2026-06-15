@@ -9,11 +9,11 @@ namespace AMIS.Modules.AssetRegister.Features.v1.Catalog.UpdatePropertyItemCatal
 public sealed class UpdatePropertyItemCatalogCommandHandler(AssetRegisterDbContext db)
     : ICommandHandler<UpdatePropertyItemCatalogCommand, PropertyItemCatalogDto>
 {
-    public async ValueTask<PropertyItemCatalogDto> Handle(UpdatePropertyItemCatalogCommand cmd, CancellationToken ct)
+    public async ValueTask<PropertyItemCatalogDto> Handle(UpdatePropertyItemCatalogCommand cmd, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(cmd);
 
-        var entity = await db.PropertyItemCatalogs.FirstOrDefaultAsync(x => x.Id == cmd.Id, ct).ConfigureAwait(false)
+        var entity = await db.PropertyItemCatalogs.FirstOrDefaultAsync(x => x.Id == cmd.Id, cancellationToken).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"PropertyItemCatalog '{cmd.Id}' not found.");
 
         entity.Update(
@@ -26,7 +26,7 @@ public sealed class UpdatePropertyItemCatalogCommandHandler(AssetRegisterDbConte
             cmd.ResidualValuePercent,
             cmd.DepreciationMethod);
 
-        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return PropertyItemCatalogMapper.ToDto(entity);
     }
 }

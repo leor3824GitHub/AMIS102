@@ -9,13 +9,13 @@ namespace AMIS.Modules.AssetRegister.Features.v1.Accountability.ReturnAccountabi
 public sealed class ReturnAccountabilityLinesCommandHandler(AssetRegisterDbContext db, ICountFreezeGuard freezeGuard)
     : ICommandHandler<ReturnAccountabilityLinesCommand, PropertyAccountabilityDto>
 {
-    public async ValueTask<PropertyAccountabilityDto> Handle(ReturnAccountabilityLinesCommand cmd, CancellationToken ct)
+    public async ValueTask<PropertyAccountabilityDto> Handle(ReturnAccountabilityLinesCommand cmd, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(cmd);
 
         var accountability = await db.PropertyAccountabilities
             .Include(a => a.Lines)
-            .FirstOrDefaultAsync(a => a.Id == cmd.AccountabilityId, ct).ConfigureAwait(false)
+            .FirstOrDefaultAsync(a => a.Id == cmd.AccountabilityId, cancellationToken).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Accountability '{cmd.AccountabilityId}' not found.");
 
         var inputLineIds = cmd.Lines.Select(l => l.LineId).ToHashSet();
@@ -32,12 +32,12 @@ public sealed class ReturnAccountabilityLinesCommandHandler(AssetRegisterDbConte
         var assetIds = accountability.Lines
             .Where(l => inputLineIds.Contains(l.Id))
             .Select(l => l.AssetRegistryId).ToList();
-        var assets = await db.AssetRegistries.Where(a => assetIds.Contains(a.Id)).ToListAsync(ct).ConfigureAwait(false);
-        await freezeGuard.EnsureMovementAllowedAsync(assets, ct).ConfigureAwait(false);
+        var assets = await db.AssetRegistries.Where(a => assetIds.Contains(a.Id)).ToListAsync(cancellationToken).ConfigureAwait(false);
+        await freezeGuard.EnsureMovementAllowedAsync(assets, cancellationToken).ConfigureAwait(false);
         foreach (var asset in assets)
             asset.ReturnToAvailable();
 
-        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return AccountabilityMapper.ToDto(accountability);
     }
 }

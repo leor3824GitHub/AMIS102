@@ -10,7 +10,7 @@ public sealed class SearchPhysicalCountSessionsQueryHandler(AssetRegisterDbConte
     : IQueryHandler<SearchPhysicalCountSessionsQuery, PagedResponse<PhysicalCountSessionSummaryDto>>
 {
     public async ValueTask<PagedResponse<PhysicalCountSessionSummaryDto>> Handle(
-        SearchPhysicalCountSessionsQuery query, CancellationToken ct)
+        SearchPhysicalCountSessionsQuery query, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(query);
         var q = db.PhysicalCountSessions.AsNoTracking().AsQueryable();
@@ -28,13 +28,13 @@ public sealed class SearchPhysicalCountSessionsQueryHandler(AssetRegisterDbConte
         var pageNumber = query.PageNumber <= 0 ? 1 : query.PageNumber;
         var pageSize = query.PageSize <= 0 ? 10 : query.PageSize;
 
-        var total = await q.LongCountAsync(ct).ConfigureAwait(false);
+        var total = await q.LongCountAsync(cancellationToken).ConfigureAwait(false);
         var items = await q.OrderByDescending(s => s.AsAt)
             .Skip((pageNumber - 1) * pageSize).Take(pageSize)
             .Select(s => new PhysicalCountSessionSummaryDto(
                 s.Id, s.Code, s.Scope, s.Status, s.AsAt, s.StartedOn, s.ClosedOn, s.Entries.Count,
                 s.OfficeOrderNo, s.FrozenOnUtc))
-            .ToListAsync(ct).ConfigureAwait(false);
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
 
         return new PagedResponse<PhysicalCountSessionSummaryDto>
         {
