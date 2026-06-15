@@ -1,0 +1,171 @@
+@page "/asset-register/locations"
+@using AMIS.Playground.Blazor.ApiClient
+@using AMIS.Modules.AssetManagement.Contracts.Permissions
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject ILocationClient LocationClient
+@inject IUserProfileState UserProfileState
+
+<AMISPageHeader Title="Locations" Description="Manage locations where assets are placed and kept">
+    <ActionContent>
+        <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Style="width: 100%; max-width: 560px;">
+            <MudTextField @bind-Value="_searchKeyword" Label="Search" Placeholder="Search locations..."
+                          DebounceInterval="300" OnDebounceIntervalElapsed="@(async () => await LoadAsync())"
+                          Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" OnClick="LoadAsync" Disabled="_isLoading">
+                Search
+            </MudButton>
+            @if (_canCreate)
+            {
+                <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Secondary"
+                           StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateDialog">
+                    New
+                </MudButton>
+            }
+        </MudStack>
+    </ActionContent>
+</AMISPageHeader>
+
+<div class="mt-4">
+    <MudCard Class="AMIS-card">
+        <MudCardContent>
+            <MudText Typo="Typo.h6" Class="mb-3">Locations List</MudText>
+
+            @if (_isLoading)
+            {
+                <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="my-2" />
+            }
+            else if (_locations.Count > 0)
+            {
+                <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Name</th>
+                            <th>Type</th>
+                            <th>Description</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var loc in _locations.Skip((_pageIndex - 1) * PageSize).Take(PageSize))
+                        {
+                            <tr>
+                                <td>
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Info" Label="true"
+                                             Style="font-family: monospace;">@loc.Code</MudChip>
+                                </td>
+                                <td>@loc.Name</td>
+                                <td><MudChip T="string" Size="Size.Small" Color="Color.Default" Label="true">@loc.Type</MudChip></td>
+                                <td>@loc.Description</td>
+                                <td>
+                                    @if (_canUpdate || _canDelete)
+                                    {
+                                        <MudStack Row="true" Spacing="1">
+                                            @if (_canUpdate)
+                                            {
+                                                <MudTooltip Text="Edit location">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                                                   Color="Color.Primary" OnClick="@(() => OpenEditDialog(loc))" />
+                                                </MudTooltip>
+                                            }
+                                            @if (_canDelete)
+                                            {
+                                                <MudTooltip Text="Delete location">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                                                   Color="Color.Error" OnClick="@(() => DeleteAsync(loc))" />
+                                                </MudTooltip>
+                                            }
+                                        </MudStack>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </MudSimpleTable>
+                @if (_locations.Count > PageSize)
+                {
+                    <MudPagination Class="mt-2" Count="@((int)Math.Ceiling(_locations.Count / (double)PageSize))"
+                                   @bind-Selected="_pageIndex" Color="Color.Primary" ShowFirstButton="true" ShowLastButton="true" />
+                }
+            }
+            else
+            {
+                <MudAlert Severity="Severity.Info">No locations yet. Create one to get started (e.g. "Supply Room").</MudAlert>
+            }
+        </MudCardContent>
+    </MudCard>
+</div>
+
+@code {
+    private List<LocationModel> _locations = new();
+    private bool _isLoading;
+    private string _searchKeyword = string.Empty;
+    private int _pageIndex = 1;
+    private const int PageSize = 10;
+
+    private bool _canCreate => UserProfileState.Permissions.Contains(AssetManagementPermissions.Locations.Create);
+    private bool _canUpdate => UserProfileState.Permissions.Contains(AssetManagementPermissions.Locations.Update);
+    private bool _canDelete => UserProfileState.Permissions.Contains(AssetManagementPermissions.Locations.Delete);
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        try
+        {
+            _isLoading = true;
+            var result = await LocationClient.ListAsync(
+                keyword: string.IsNullOrWhiteSpace(_searchKeyword) ? null : _searchKeyword,
+                pageSize: 200);
+            _locations = result.Items.ToList();
+            _pageIndex = 1;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load locations: {ex.Message}", Severity.Error);
+            _locations = new();
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task OpenCreateDialog()
+    {
+        if (!_canCreate) return;
+        var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true, MaxWidth = MaxWidth.Small };
+        var dialog = await DialogService.ShowAsync<LocationFormDialog>("Create Location", options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
+            await LoadAsync();
+    }
+
+    private async Task OpenEditDialog(LocationModel loc)
+    {
+        var parameters = new DialogParameters<LocationFormDialog> { { x => x.Existing, loc } };
+        var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true, MaxWidth = MaxWidth.Small };
+        var dialog = await DialogService.ShowAsync<LocationFormDialog>($"Edit {loc.Name}", parameters, options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
+            await LoadAsync();
+    }
+
+    private async Task DeleteAsync(LocationModel loc)
+    {
+        if (!await DialogService.ShowDeleteConfirmAsync($"location \"{loc.Name}\""))
+            return;
+
+        try
+        {
+            await LocationClient.DeleteAsync(loc.Id);
+            Snackbar.Add("Location deleted.", Severity.Success);
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to delete location: {ex.Message}", Severity.Error);
+        }
+    }
+}

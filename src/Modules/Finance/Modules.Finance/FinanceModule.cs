@@ -8,11 +8,13 @@ using AMIS.Modules.Finance.Features.v1.DisbursementVouchers.GetDisbursementVouch
 using AMIS.Modules.Finance.Features.v1.DisbursementVouchers.SearchDisbursementVouchers;
 using AMIS.Modules.Finance.Features.v1.DisbursementVouchers.ApproveDisbursementVoucher;
 using AMIS.Modules.Finance.Features.v1.DisbursementVouchers.PayDisbursementVoucher;
+using AMIS.Modules.Finance.Features.v1.DisbursementVouchers.ReturnDisbursementVoucher;
 using AMIS.Modules.Finance.Features.v1.DisbursementVouchers.CancelDisbursementVoucher;
 using AMIS.Modules.Finance.Features.v1.BudgetUtilizationRecords.CreateBudgetUtilizationRecord;
 using AMIS.Modules.Finance.Features.v1.BudgetUtilizationRecords.GetBudgetUtilizationRecordById;
 using AMIS.Modules.Finance.Features.v1.BudgetUtilizationRecords.SearchBudgetUtilizationRecords;
 using AMIS.Modules.Finance.Features.v1.BudgetUtilizationRecords.ObligateBudgetUtilizationRecord;
+using AMIS.Modules.Finance.Features.v1.BudgetUtilizationRecords.UtilizeBudgetUtilizationRecord;
 using AMIS.Modules.Finance.Features.v1.BudgetUtilizationRecords.CancelBudgetUtilizationRecord;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -72,6 +74,7 @@ public class FinanceModule : IModule
         SearchDisbursementVouchersEndpoint.Map(dvGroup);
         ApproveDisbursementVoucherEndpoint.Map(dvGroup);
         PayDisbursementVoucherEndpoint.Map(dvGroup);
+        ReturnDisbursementVoucherEndpoint.Map(dvGroup);
         CancelDisbursementVoucherEndpoint.Map(dvGroup);
 
         // Budget Utilization Records
@@ -79,6 +82,7 @@ public class FinanceModule : IModule
         GetBudgetUtilizationRecordByIdEndpoint.Map(burGroup);
         SearchBudgetUtilizationRecordsEndpoint.Map(burGroup);
         ObligateBudgetUtilizationRecordEndpoint.Map(burGroup);
+        UtilizeBudgetUtilizationRecordEndpoint.Map(burGroup);
         CancelBudgetUtilizationRecordEndpoint.Map(burGroup);
     }
 }

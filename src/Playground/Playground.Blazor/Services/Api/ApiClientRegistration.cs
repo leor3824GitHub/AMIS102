@@ -257,6 +257,8 @@ internal static class ApiClientRegistration
             new ArReturnedPropertyClient(ResolveClient(sp)));
         services.AddTransient<ILocationLookupClient>(sp =>
             new LocationLookupClient(ResolveClient(sp)));
+        services.AddTransient<ILocationClient>(sp =>
+            new LocationClient(ResolveClient(sp)));
 
         return services;
     }

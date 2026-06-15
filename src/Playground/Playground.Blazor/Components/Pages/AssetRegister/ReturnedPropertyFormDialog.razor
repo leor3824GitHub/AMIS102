@@ -86,9 +86,9 @@
                 }
             }
 
-            <MudTextField Value="@ReturnedByDisplay" Label="Returned By" Variant="Variant.Outlined"
-                          ReadOnly="true" HelperText="Auto-assigned to the currently logged-in user"
-                          Dense="true" Margin="Margin.Dense" />
+            <MudAlert Severity="Severity.Info" Dense="true">
+                Returned by: <b>@UserProfileState.EmployeeFullName</b>@(string.IsNullOrWhiteSpace(UserProfileState.EmployeePositionName) ? "" : $" — {UserProfileState.EmployeePositionName}") — captured automatically as the currently logged-in user.
+            </MudAlert>
 
             <MudTextField @bind-Value="_form.Remarks" Label="Remarks" Variant="Variant.Outlined"
                           Lines="2" MaxLength="1000" Dense="true" Margin="Margin.Dense" />
@@ -117,11 +117,6 @@
 
     private List<ArAccountabilityLineDto> ActiveLines =>
         _accountability?.Lines.Where(l => l.LineStatus == AccountabilityLineStatus.Active).ToList() ?? [];
-
-    private string ReturnedByDisplay =>
-        string.IsNullOrWhiteSpace(UserProfileState.EmployeePositionName)
-            ? UserProfileState.EmployeeFullName
-            : $"{UserProfileState.EmployeeFullName} — {UserProfileState.EmployeePositionName}";
 
     private async Task<IEnumerable<ArAccountabilitySummaryDto>> SearchAccountabilityAsync(string? value, CancellationToken ct)
     {
