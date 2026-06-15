@@ -16,6 +16,8 @@
 @using AMIS.Modules.AssetRegister.Contracts.Permissions
 @inject IAssetRegisterReportsClient ReportsClient
 @inject IUserProfileState UserProfileState
+@inject IJSRuntime JS
+@inject ISnackbar Snackbar
 
 <MudText Typo="Typo.h4" GutterBottom="true">Asset Register Reports</MudText>
 <MudText Typo="Typo.body2" Class="mb-4">
@@ -123,7 +125,14 @@
     <MudItem xs="12">
         <MudCard>
             <MudCardHeader>
-                <MudText Typo="Typo.h6">RegSPI Report Preview</MudText>
+                <CardHeaderContent><MudText Typo="Typo.h6">RegSPI Report Preview</MudText></CardHeaderContent>
+                <CardHeaderActions>
+                    @if (_canViewAccountability)
+                    {
+                        <AMISButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Error"
+                                    StartIcon="@Icons.Material.Filled.PictureAsPdf" OnClick="DownloadRegSpiPdfAsync" Disabled="_isDownloading">PDF</AMISButton>
+                    }
+                </CardHeaderActions>
             </MudCardHeader>
             <MudCardContent>
                 @if (!string.IsNullOrWhiteSpace(_regSpiError))
@@ -176,7 +185,14 @@
     <MudItem xs="12">
         <MudCard>
             <MudCardHeader>
-                <MudText Typo="Typo.h6">ICS / PAR Report Preview</MudText>
+                <CardHeaderContent><MudText Typo="Typo.h6">ICS / PAR Report Preview</MudText></CardHeaderContent>
+                <CardHeaderActions>
+                    @if (_canViewAccountability)
+                    {
+                        <AMISButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Error"
+                                    StartIcon="@Icons.Material.Filled.PictureAsPdf" OnClick="DownloadAccountabilityPdfAsync" Disabled="_isDownloading">PDF</AMISButton>
+                    }
+                </CardHeaderActions>
             </MudCardHeader>
             <MudCardContent>
                 @if (!string.IsNullOrWhiteSpace(_accountabilityError))
@@ -234,7 +250,18 @@
     <MudItem xs="12">
         <MudCard>
             <MudCardHeader>
-                <MudText Typo="Typo.h6">RPCSEMEX / RPCPPE Report Preview</MudText>
+                <CardHeaderContent><MudText Typo="Typo.h6">RPCSEMEX / RPCPPE Report Preview</MudText></CardHeaderContent>
+                <CardHeaderActions>
+                    @if (_canViewCount)
+                    {
+                        <MudStack Row="true" Spacing="1">
+                            <AMISButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Error"
+                                        StartIcon="@Icons.Material.Filled.PictureAsPdf" OnClick="@(() => DownloadPhysicalCountPdfAsync(true))" Disabled="_isDownloading">RPCPPE</AMISButton>
+                            <AMISButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Error"
+                                        StartIcon="@Icons.Material.Filled.PictureAsPdf" OnClick="@(() => DownloadPhysicalCountPdfAsync(false))" Disabled="_isDownloading">RPCSEMEX</AMISButton>
+                        </MudStack>
+                    }
+                </CardHeaderActions>
             </MudCardHeader>
             <MudCardContent>
                 @if (!string.IsNullOrWhiteSpace(_physicalCountError))
@@ -336,7 +363,14 @@
     <MudItem xs="12">
         <MudCard>
             <MudCardHeader>
-                <MudText Typo="Typo.h6">RLSDDSP Report Preview</MudText>
+                <CardHeaderContent><MudText Typo="Typo.h6">RLSDDSP Report Preview</MudText></CardHeaderContent>
+                <CardHeaderActions>
+                    @if (_canViewIncident)
+                    {
+                        <AMISButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Error"
+                                    StartIcon="@Icons.Material.Filled.PictureAsPdf" OnClick="DownloadIncidentPdfAsync" Disabled="_isDownloading">PDF</AMISButton>
+                    }
+                </CardHeaderActions>
             </MudCardHeader>
             <MudCardContent>
                 @if (!string.IsNullOrWhiteSpace(_incidentError))
@@ -386,7 +420,14 @@
     <MudItem xs="12">
         <MudCard>
             <MudCardHeader>
-                <MudText Typo="Typo.h6">IIRUSP / IIRUP Report Preview</MudText>
+                <CardHeaderContent><MudText Typo="Typo.h6">IIRUSP / IIRUP Report Preview</MudText></CardHeaderContent>
+                <CardHeaderActions>
+                    @if (_canViewUnserviceable)
+                    {
+                        <AMISButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Error"
+                                    StartIcon="@Icons.Material.Filled.PictureAsPdf" OnClick="DownloadUnserviceablePdfAsync" Disabled="_isDownloading">PDF</AMISButton>
+                    }
+                </CardHeaderActions>
             </MudCardHeader>
             <MudCardContent>
                 @if (!string.IsNullOrWhiteSpace(_unserviceableError))
@@ -432,6 +473,31 @@
             </MudCardContent>
         </MudCard>
     </MudItem>
+
+    @if (_canViewAssets)
+    {
+        <MudItem xs="12">
+            <MudCard>
+                <MudCardHeader>
+                    <CardHeaderContent><MudText Typo="Typo.h6">Property Card (SPC)</MudText></CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudGrid Spacing="2" AlignItems="AlignItems.Center">
+                        <MudItem xs="12" sm="8">
+                            <MudTextField Label="Property No." @bind-Value="_propertyNo" Variant="Variant.Outlined"
+                                          Dense="true" Margin="Margin.Dense" FullWidth="true" />
+                        </MudItem>
+                        <MudItem xs="12" sm="4">
+                            <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Error" FullWidth="true"
+                                        StartIcon="@Icons.Material.Filled.PictureAsPdf" OnClick="DownloadPropertyCardPdfAsync" Disabled="_isDownloading">
+                                Download Property Card PDF
+                            </AMISButton>
+                        </MudItem>
+                    </MudGrid>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    }
 </MudGrid>
 
 @code {
@@ -467,6 +533,87 @@
     private IssuanceReportDocumentDto? _issuanceReport;
     private IncidentReportDocumentDto? _incidentReport;
     private UnserviceableReportDocumentDto? _unserviceableReport;
+    private string _propertyNo = string.Empty;
+    private bool _isDownloading;
+
+    private bool _canViewAssets => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Assets.View);
+
+    // Fetch the PDF bytes and open them in a new browser tab via a data URL (no temp files server-side).
+    private async Task DownloadAsync(Func<Task<byte[]>> fetch, string label)
+    {
+        _isDownloading = true;
+        try
+        {
+            var bytes = await fetch();
+            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
+            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            Snackbar.Add($"{label} ready.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"{label} failed: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isDownloading = false;
+        }
+    }
+
+    private async Task DownloadPropertyCardPdfAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_propertyNo))
+        {
+            Snackbar.Add("Enter a Property No first.", Severity.Warning);
+            return;
+        }
+        await DownloadAsync(() => ReportsClient.GetPropertyCardPdfAsync(_propertyNo.Trim().ToUpperInvariant()), "Property Card PDF");
+    }
+
+    private Task DownloadRegSpiPdfAsync()
+    {
+        Guid? custodianId = Guid.TryParse(_custodianId, out var c) ? c : null;
+        return DownloadAsync(() => ReportsClient.GetRegSpiPdfAsync(DateOnly.FromDateTime(DateTime.Today), custodianId), "RegSPI PDF");
+    }
+
+    private Task DownloadPhysicalCountPdfAsync(bool ppe)
+    {
+        if (!Guid.TryParse(_sessionId, out var id))
+        {
+            Snackbar.Add("A valid Physical Count Session Id is required.", Severity.Warning);
+            return Task.CompletedTask;
+        }
+        return DownloadAsync(() => ReportsClient.GetPhysicalCountPdfAsync(id, ppe), ppe ? "RPCPPE PDF" : "RPCSEMEX PDF");
+    }
+
+    private Task DownloadAccountabilityPdfAsync()
+    {
+        if (!Guid.TryParse(_accountabilityId, out var id))
+        {
+            Snackbar.Add("A valid Accountability Id is required.", Severity.Warning);
+            return Task.CompletedTask;
+        }
+        return DownloadAsync(() => ReportsClient.GetAccountabilityPdfAsync(id), "ICS/PAR PDF");
+    }
+
+    private Task DownloadIncidentPdfAsync()
+    {
+        if (!Guid.TryParse(_incidentReportId, out var id))
+        {
+            Snackbar.Add("A valid Incident Report Id is required.", Severity.Warning);
+            return Task.CompletedTask;
+        }
+        return DownloadAsync(() => ReportsClient.GetIncidentPdfAsync(id), "RLSDDSP PDF");
+    }
+
+    private Task DownloadUnserviceablePdfAsync()
+    {
+        if (!Guid.TryParse(_unserviceableReportId, out var id))
+        {
+            Snackbar.Add("A valid Unserviceable Report Id is required.", Severity.Warning);
+            return Task.CompletedTask;
+        }
+        return DownloadAsync(() => ReportsClient.GetUnserviceablePdfAsync(id), "IIRUP/IIRUSP PDF");
+    }
 
     private async Task RenderRegSpiAsync()
     {
