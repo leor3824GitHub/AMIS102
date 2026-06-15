@@ -83,15 +83,16 @@
                                     @if (_canUpdate)
                                     {
                                         <AMISIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small"
-                                                        Color="Color.Primary" OnClick="@(() => EditItem(context))" />
+                                                        Color="Color.Primary" Title="Edit" OnClick="@(() => EditItem(context))" />
                                         <AMISIconButton Icon="@(context.IsActive ? Icons.Material.Outlined.ToggleOff : Icons.Material.Outlined.ToggleOn)"
                                                         Size="Size.Small" Color="@(context.IsActive ? Color.Warning : Color.Success)"
+                                                        Title="@(context.IsActive ? "Deactivate" : "Activate")"
                                                         OnClick="@(() => ToggleActivationAsync(context))" />
                                     }
                                     @if (_canDelete)
                                     {
                                         <AMISIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small"
-                                                        Color="Color.Error" OnClick="@(() => DeleteAsync(context))" />
+                                                        Color="Color.Error" Title="Delete" OnClick="@(() => DeleteAsync(context))" />
                                     }
                                 </MudStack>
                             </MudTd>
@@ -105,9 +106,9 @@
                         <MudText Typo="Typo.caption">Page @_page of @_totalPages (@_totalCount total)</MudText>
                         <MudStack Row="true" Spacing="1">
                             <AMISIconButton Icon="@Icons.Material.Filled.ChevronLeft" Size="Size.Small"
-                                            Disabled="_page <= 1 || _busy" OnClick="PrevPage" />
+                                            Title="Previous page" Disabled="_page <= 1 || _busy" OnClick="PrevPage" />
                             <AMISIconButton Icon="@Icons.Material.Filled.ChevronRight" Size="Size.Small"
-                                            Disabled="_page >= _totalPages || _busy" OnClick="NextPage" />
+                                            Title="Next page" Disabled="_page >= _totalPages || _busy" OnClick="NextPage" />
                         </MudStack>
                     </MudStack>
                 }

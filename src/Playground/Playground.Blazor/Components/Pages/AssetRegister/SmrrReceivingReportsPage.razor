@@ -96,7 +96,7 @@
                                     <td class="text-right">@r.TotalAmount.ToString("N2")</td>
                                     <td>
                                         <AMISIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small"
-                                                        Color="Color.Primary" OnClick="@(() => ViewAsync(r.Id))" />
+                                                        Color="Color.Primary" Title="View" OnClick="@(() => ViewAsync(r.Id))" />
                                         <MudMenu Icon="@Icons.Material.Filled.Print"
                                                  Color="Color.Secondary"
                                                  Size="Size.Small"
@@ -117,7 +117,7 @@
                                         @if (_canDelete)
                                         {
                                             <AMISIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
-                                                            Color="Color.Error" OnClick="@(() => DeleteAsync(r.Id, r.ReportNo))" />
+                                                            Color="Color.Error" Title="Delete" OnClick="@(() => DeleteAsync(r.Id, r.ReportNo))" />
                                         }
                                     </td>
                                 </tr>

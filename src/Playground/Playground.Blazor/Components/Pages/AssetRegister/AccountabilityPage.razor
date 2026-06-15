@@ -42,14 +42,9 @@
                         <MudTextField @bind-Value="_form.FundCluster" Label="Fund Cluster" Variant="Variant.Outlined"
                                       Required="true" MaxLength="64" Dense="true" Margin="Margin.Dense" />
 
-                        <MudAutocomplete T="EmployeeReferenceDto"
-                                         @bind-Value="_form.IssuedFrom"
-                                         SearchFunc="SearchEmployees"
-                                         ToStringFunc="FormatEmployee"
-                                         Label="Issued From (Supply Officer)" Variant="Variant.Outlined"
-                                         Clearable="true" ResetValueOnEmptyText="true" CoerceValue="true"
-                                         Dense="true" Margin="Margin.Dense"
-                                         HelperText="Defaults to you if left blank." />
+                        <MudAlert Severity="Severity.Info" Dense="true" Class="mt-1">
+                            Issued from: <b>@UserProfileState.EmployeeFullName</b>@(string.IsNullOrWhiteSpace(UserProfileState.EmployeePositionName) ? "" : $" — {UserProfileState.EmployeePositionName}") — captured automatically as the supply officer.
+                        </MudAlert>
 
                         <MudAutocomplete T="EmployeeReferenceDto"
                                          @bind-Value="_form.ReceivedBy"
@@ -485,10 +480,10 @@
             return;
         }
 
-        var issuedBy = ToRef(_form.IssuedFrom) ?? CurrentUserRef();
+        var issuedBy = CurrentUserRef();
         if (issuedBy is null)
         {
-            Snackbar.Add("Issued From (Supply Officer) is required, and your account is not linked to an employee record.", Severity.Warning);
+            Snackbar.Add("Your account is not linked to an employee record, so the supply officer cannot be captured. Please contact your administrator.", Severity.Warning);
             return;
         }
 
@@ -540,7 +535,6 @@
         _form.IssuedOnNullable = DateTime.Today;
         _form.ExpiresOnNullable = DateTime.Today.AddYears(1);
         _form.FundCluster = null;
-        _form.IssuedFrom = null;
         _form.ReceivedBy = null;
         _form.Items.Clear();
         _form.Items.Add(new IssueItemRow());
@@ -713,7 +707,6 @@
         public DateTime? IssuedOnNullable { get; set; } = DateTime.Today;
         public DateTime? ExpiresOnNullable { get; set; } = DateTime.Today.AddYears(1);
         public string? FundCluster { get; set; }
-        public EmployeeReferenceDto? IssuedFrom { get; set; }
         public EmployeeReferenceDto? ReceivedBy { get; set; }
         public List<IssueItemRow> Items { get; set; } = [];
     }

@@ -35,7 +35,9 @@
       "Bash(grep -vi \"Generated.cs\\\\|/bin/\\\\|/obj/\\\\|ProcurementAcquisition\")",
       "Bash(grep -vi \"/bin/\\\\|/obj/\\\\|ProcurementAcquisition\\\\|Generated.cs\")",
       "Bash(grep -v \"/bin/\\\\|/obj/\")",
-      "PowerShell(dotnet build src/BuildingBlocks/Blazor.UI/Blazor.UI.csproj --nologo 2>&1)"
+      "PowerShell(dotnet build src/BuildingBlocks/Blazor.UI/Blazor.UI.csproj --nologo 2>&1)",
+      "Bash(git stash *)",
+      "Bash(dotnet restore *)"
     ]
   }
 }
