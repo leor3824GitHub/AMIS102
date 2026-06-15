@@ -70,10 +70,6 @@
         Text="PROPERTY, PLANT AND EQUIPMENT RECEIVING REPORT"
         HorzAlign="Center" VertAlign="Center"
         Font="Times New Roman, 11pt, style=Bold" />
-      <!-- Underline below title -->
-      <TextObject Name="TitleUL" Left="60" Top="124" Width="621" Height="1.5"
-        Text="" Border.Lines="4" Border.Width="1" />
-
       <!-- ─── Info Section ─────────────────────────────────── -->
 
       <!-- RECEIVED FROM label – spans 2 rows (H=44, Y=134..178) -->
@@ -156,9 +152,9 @@
         Font="Times New Roman, 8pt, style=Bold"
         Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
       <TextObject Name="H_Desc" Left="100" Top="206" Width="260" Height="28"
-        Text="DESCRIPTION" HorzAlign="Center" VertAlign="Center"
+        Text="DESCRIPTION" HorzAlign="Left" VertAlign="Center"
         Font="Times New Roman, 8pt, style=Bold"
-        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" />
+        Border.Lines="15" Border.Width="0.5" Padding="4,1,4,1" />
       <TextObject Name="H_DateAcq" Left="360" Top="206" Width="111" Height="28"
         Text="DATE&#10;ACQUIRED" HorzAlign="Center" VertAlign="Center"
         Font="Times New Roman, 8pt, style=Bold"

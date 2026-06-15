@@ -1,12 +1,36 @@
 using AMIS.Framework.Persistence;
 using AMIS.Framework.Shared.Persistence;
 using AMIS.Modules.MasterData.Contracts.v1.References;
+using AMIS.Modules.MasterData.Contracts.v1.Suppliers;
 using AMIS.Modules.MasterData.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace AMIS.Modules.MasterData.Features.v1.Lookups;
+
+public sealed class ListSupplierReferencesQueryHandler(MasterDataDbContext dbContext)
+    : IQueryHandler<ListSupplierReferencesQuery, IReadOnlyList<SupplierReferenceDto>>
+{
+    public async ValueTask<IReadOnlyList<SupplierReferenceDto>> Handle(ListSupplierReferencesQuery query, CancellationToken cancellationToken)
+    {
+        var suppliers = dbContext.Suppliers.AsNoTracking().Where(x => x.IsActive);
+
+        if (!string.IsNullOrWhiteSpace(query.Keyword))
+        {
+            var pattern = $"%{query.Keyword}%";
+            suppliers = suppliers.Where(x =>
+                EF.Functions.ILike(x.Code, pattern) || EF.Functions.ILike(x.Name, pattern));
+        }
+
+        return await suppliers
+            .OrderBy(x => x.Name)
+            .Take(500)
+            .Select(x => new SupplierReferenceDto(x.Id, x.Code, x.Name, x.TinNo, x.Address))
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+    }
+}
 
 public sealed class GetEmployeeReferenceByIdQueryHandler(MasterDataDbContext dbContext)
     : IQueryHandler<GetEmployeeReferenceByIdQuery, EmployeeReferenceDto?>

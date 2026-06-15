@@ -4,111 +4,26 @@
 @using AMIS.Modules.AssetRegister.Contracts.Permissions
 @using AMIS.Playground.Blazor.ApiClient
 @inject IArAccountabilityClient Client
-@inject IAssetRegistryClient AssetClient
-@inject ILookupClient LookupClient
 @inject ISnackbar Snackbar
 @inject IUserProfileState UserProfileState
+@inject IDialogService DialogService
 @inject IJSRuntime JS
 
 <AMISPageHeader Title="Property Accountability (ICS / PAR)"
                Description="Unified accountability tracking for Semi-Expendable (ICS) and PPE (PAR) per COA 2022-004." />
 
-<MudGrid Spacing="3">
-    <!-- Create Form -->
-    @if (_canIssue)
-    {
-        <MudItem xs="12" md="5">
-            <MudCard Elevation="1">
-                <MudCardContent>
-                    <MudText Typo="Typo.h6" Class="mb-3">New ICS / PAR</MudText>
-                    <MudStack Spacing="2">
-                        <MudSelect Value="_form.Type" Label="Type" Variant="Variant.Outlined" T="AccountabilityType"
-                                   Required="true" Dense="true" Margin="Margin.Dense"
-                                   ValueChanged="OnTypeChangedForm">
-                            <MudSelectItem T="AccountabilityType" Value="AccountabilityType.SE_ICS">ICS — Semi-Expendable</MudSelectItem>
-                            <MudSelectItem T="AccountabilityType" Value="AccountabilityType.PPE_PAR">PAR — Property, Plant &amp; Equipment</MudSelectItem>
-                        </MudSelect>
+@if (_canIssue)
+{
+    <div class="d-flex justify-end mb-3">
+        <AMISButton Variant="Variant.Filled" Color="Color.Primary"
+                    StartIcon="@Icons.Material.Filled.Add" OnClick="OpenIssueDialogAsync">
+            New ICS / PAR
+        </AMISButton>
+    </div>
+}
 
-                        <MudDatePicker @bind-Date="_form.IssuedOnNullable" Label="Issued On" Variant="Variant.Outlined"
-                                       DateFormat="MM/dd/yyyy" Required="true" Dense="true" Margin="Margin.Dense" />
-
-                        @if (_form.Type == AccountabilityType.SE_ICS)
-                        {
-                            <MudDatePicker @bind-Date="_form.ExpiresOnNullable" Label="Expires On" Variant="Variant.Outlined"
-                                           DateFormat="MM/dd/yyyy" Required="true" Dense="true" Margin="Margin.Dense"
-                                           HelperText="ICS (SE) requires an expiry date per COA 2022-004." />
-                        }
-
-                        <MudTextField @bind-Value="_form.FundCluster" Label="Fund Cluster" Variant="Variant.Outlined"
-                                      Required="true" MaxLength="64" Dense="true" Margin="Margin.Dense" />
-
-                        <MudAlert Severity="Severity.Info" Dense="true" Class="mt-1">
-                            Issued from: <b>@UserProfileState.EmployeeFullName</b>@(string.IsNullOrWhiteSpace(UserProfileState.EmployeePositionName) ? "" : $" — {UserProfileState.EmployeePositionName}") — captured automatically as the supply officer.
-                        </MudAlert>
-
-                        <MudAutocomplete T="EmployeeReferenceDto"
-                                         @bind-Value="_form.ReceivedBy"
-                                         SearchFunc="SearchEmployees"
-                                         ToStringFunc="FormatEmployee"
-                                         Label="Received By (End-User)" Variant="Variant.Outlined"
-                                         Required="true" Clearable="true" ResetValueOnEmptyText="true" CoerceValue="true"
-                                         Dense="true" Margin="Margin.Dense" />
-
-                        <MudDivider Class="my-2" />
-                        <MudStack Row="true" AlignItems="AlignItems.Center">
-                            <MudText Typo="Typo.subtitle2" Class="flex-grow-1">Property Items to Issue</MudText>
-                            <AMISIconButton Icon="@Icons.Material.Filled.Add" Size="Size.Small" Color="Color.Primary"
-                                            OnClick="AddItem" />
-                        </MudStack>
-
-                        @for (var i = 0; i < _form.Items.Count; i++)
-                        {
-                            var idx = i;
-                            var li = _form.Items[idx];
-                            <MudPaper Outlined="true" Class="pa-2">
-                                <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-1">
-                                    <MudText Typo="Typo.caption" Color="Color.Secondary">Item @(idx + 1)</MudText>
-                                    <MudSpacer />
-                                    <AMISIconButton Icon="@Icons.Material.Filled.Remove" Size="Size.Small" Color="Color.Error"
-                                                    OnClick="@(() => RemoveItem(idx))" />
-                                </MudStack>
-                                <MudStack Spacing="1">
-                                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-                                        <MudTextField @bind-Value="li.PropertyNo" Label="Property No." Variant="Variant.Outlined"
-                                                      Dense="true" Margin="Margin.Dense" MaxLength="50"
-                                                      Placeholder="@(_form.Type == AccountabilityType.SE_ICS ? "e.g. SPLV-2026-01-0001" : "e.g. PPE-2026-01-0001")"
-                                                      Class="flex-grow-1"
-                                                      OnKeyDown="@(e => OnItemKeyDown(e, li))" />
-                                        <AMISIconButton Icon="@Icons.Material.Filled.Search" Size="Size.Small" Color="Color.Primary"
-                                                        OnClick="@(() => LookupAssetAsync(li))" />
-                                    </MudStack>
-                                    @if (li.Asset is not null)
-                                    {
-                                        <MudText Typo="Typo.caption" Color="Color.Success">
-                                            @li.Asset.Description | @Money.Symbol@li.Asset.UnitCost.ToString("N2") — Available
-                                        </MudText>
-                                    }
-                                    else if (!string.IsNullOrEmpty(li.LookupError))
-                                    {
-                                        <MudText Typo="Typo.caption" Color="Color.Error">@li.LookupError</MudText>
-                                    }
-                                </MudStack>
-                            </MudPaper>
-                        }
-
-                        <AMISButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
-                                    OnClick="IssueAsync" Disabled="_issuing">
-                            @if (_issuing) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" /> }
-                            @(_form.Type == AccountabilityType.SE_ICS ? "Create ICS" : "Create PAR")
-                        </AMISButton>
-                    </MudStack>
-                </MudCardContent>
-            </MudCard>
-        </MudItem>
-    }
-
-    <!-- Filters + Results + Detail -->
-    <MudItem xs="12" md="@(_canIssue ? 7 : 12)">
+<!-- Filters + Results + Detail -->
+<div>
         <MudCard Elevation="1">
             <MudCardContent>
                 <MudGrid Spacing="2" AlignItems="AlignItems.Center">
@@ -311,12 +226,10 @@
                 </MudCardContent>
             </MudCard>
         }
-    </MudItem>
-</MudGrid>
+</div>
 
 @code {
     private bool _busy;
-    private bool _issuing;
     private bool _printing;
     private string? _error;
     private string? _keyword;
@@ -332,8 +245,6 @@
     private DateTime? _renewIssuedOn = DateTime.Today;
     private DateTime? _renewExpiresOn = DateTime.Today.AddYears(1);
 
-    private readonly IssueForm _form = new();
-
     [SupplyParameterFromQuery(Name = "id")]
     public Guid? QueryId { get; set; }
 
@@ -343,7 +254,6 @@
     protected override async Task OnInitializedAsync()
     {
         UserProfileState.OnProfileChanged += OnProfileChanged;
-        _form.Items.Add(new IssueItemRow());
         await LoadAsync();
         if (QueryId.HasValue)
         {
@@ -378,201 +288,18 @@
 
     // ── Create ICS / PAR ─────────────────────────────────────────────────────
 
-    private void OnTypeChangedForm(AccountabilityType value)
+    private async Task OpenIssueDialogAsync()
     {
-        _form.Type = value;
-        // Re-validate any already looked-up assets against the new type.
-        foreach (var item in _form.Items)
-        {
-            item.Asset = null;
-            item.LookupError = null;
-        }
-    }
-
-    private void AddItem() => _form.Items.Add(new IssueItemRow());
-
-    private void RemoveItem(int idx)
-    {
-        if (_form.Items.Count > 1) _form.Items.RemoveAt(idx);
-    }
-
-    private async Task OnItemKeyDown(KeyboardEventArgs e, IssueItemRow row)
-    {
-        if (e.Key == "Enter") await LookupAssetAsync(row);
-    }
-
-    private async Task LookupAssetAsync(IssueItemRow row)
-    {
-        var propertyNo = row.PropertyNo?.Trim().ToUpperInvariant();
-        row.Asset = null;
-        row.LookupError = null;
-        if (string.IsNullOrWhiteSpace(propertyNo))
-        {
-            row.LookupError = "Enter a property number.";
+        var options = new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true, CloseButton = true };
+        var dialog = await DialogService.ShowAsync<IssueAccountabilityDialog>("New ICS / PAR", options);
+        var result = await dialog.Result;
+        if (result is null || result.Canceled || result.Data is not ArAccountabilityDto created)
             return;
-        }
 
-        try
-        {
-            var asset = await AssetClient.GetByPropertyNoAsync(propertyNo);
-            if (asset is null)
-            {
-                row.LookupError = "Property number not found.";
-                return;
-            }
-
-            var expectedType = _form.Type == AccountabilityType.SE_ICS
-                ? AMIS.Modules.AssetRegister.Contracts.v1.AssetType.SE
-                : AMIS.Modules.AssetRegister.Contracts.v1.AssetType.PPE;
-            if (asset.AssetType != expectedType)
-            {
-                row.LookupError = asset.AssetType == AMIS.Modules.AssetRegister.Contracts.v1.AssetType.SE
-                    ? "This is a Semi-Expendable asset — issue it via ICS, not PAR."
-                    : "This is a PPE asset — issue it via PAR, not ICS.";
-                return;
-            }
-
-            if (asset.LifecycleState != LifecycleState.Available)
-            {
-                row.LookupError = $"Asset is '{asset.LifecycleState}', not Available for issuance.";
-                return;
-            }
-
-            if (asset.CurrentLocationId is null)
-            {
-                row.LookupError = "Asset has no location on record; set its location before issuing.";
-                return;
-            }
-
-            row.Asset = asset;
-        }
-        catch (Exception ex)
-        {
-            row.LookupError = ex.Message;
-        }
+        _page = 1;
+        await LoadAsync();
+        _selected = created;
     }
-
-    private async Task IssueAsync()
-    {
-        if (_form.IssuedOnNullable is null)
-        {
-            Snackbar.Add("Issued On date is required.", Severity.Warning);
-            return;
-        }
-        if (_form.ReceivedBy is null)
-        {
-            Snackbar.Add("Received By (End-User) is required.", Severity.Warning);
-            return;
-        }
-        if (string.IsNullOrWhiteSpace(_form.FundCluster))
-        {
-            Snackbar.Add("Fund Cluster is required.", Severity.Warning);
-            return;
-        }
-        if (_form.Type == AccountabilityType.SE_ICS && _form.ExpiresOnNullable is null)
-        {
-            Snackbar.Add("ICS (Semi-Expendable) requires an expiry date.", Severity.Warning);
-            return;
-        }
-        if (_form.Items.Count == 0 || _form.Items.Any(i => i.Asset is null))
-        {
-            Snackbar.Add("All property items must be looked up and eligible for this document type.", Severity.Warning);
-            return;
-        }
-
-        var issuedBy = CurrentUserRef();
-        if (issuedBy is null)
-        {
-            Snackbar.Add("Your account is not linked to an employee record, so the supply officer cannot be captured. Please contact your administrator.", Severity.Warning);
-            return;
-        }
-
-        var receivedBy = ToRef(_form.ReceivedBy)!;
-        var issuedOn = DateOnly.FromDateTime(_form.IssuedOnNullable.Value);
-        DateOnly? expiresOn = _form.Type == AccountabilityType.SE_ICS
-            ? DateOnly.FromDateTime(_form.ExpiresOnNullable!.Value)
-            : null;
-
-        var lines = _form.Items
-            .Select((row, idx) => new IssueAccountabilityLineRequest(
-                row.Asset!.Id,
-                (idx + 1).ToString(),
-                row.Asset!.CurrentLocationId!.Value,
-                null))
-            .ToList();
-
-        _issuing = true;
-        try
-        {
-            var result = await Client.IssueAsync(new IssueAccountabilityRequest(
-                _form.Type,
-                _form.FundCluster!.Trim(),
-                issuedBy,
-                receivedBy,
-                issuedOn,
-                expiresOn,
-                lines));
-
-            Snackbar.Add($"{(_form.Type == AccountabilityType.SE_ICS ? "ICS" : "PAR")} {result.DocumentNo} created — {result.Lines.Count} item(s) issued.", Severity.Success);
-            ResetForm();
-            _page = 1;
-            await LoadAsync();
-            _selected = result;
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Create failed: {ex.Message}", Severity.Error);
-        }
-        finally
-        {
-            _issuing = false;
-        }
-    }
-
-    private void ResetForm()
-    {
-        _form.Type = AccountabilityType.SE_ICS;
-        _form.IssuedOnNullable = DateTime.Today;
-        _form.ExpiresOnNullable = DateTime.Today.AddYears(1);
-        _form.FundCluster = null;
-        _form.ReceivedBy = null;
-        _form.Items.Clear();
-        _form.Items.Add(new IssueItemRow());
-    }
-
-    private async Task<IEnumerable<EmployeeReferenceDto>> SearchEmployees(string? value, CancellationToken ct)
-    {
-        try
-        {
-            var result = await LookupClient.EmployeesGetAsync(
-                keyword: string.IsNullOrWhiteSpace(value) ? null : value,
-                isActive: true,
-                pageNumber: 1,
-                pageSize: 20,
-                cancellationToken: ct);
-            return result?.Items ?? [];
-        }
-        catch { return []; }
-    }
-
-    private static string FormatEmployee(EmployeeReferenceDto? e) =>
-        e is null ? "" : $"{e.FirstName} {e.LastName} ({e.EmployeeNumber})";
-
-    private static ArEmployeeRefDto? ToRef(EmployeeReferenceDto? e) =>
-        e is null
-            ? null
-            : new ArEmployeeRefDto(
-                e.Id,
-                $"{e.FirstName} {e.LastName}".Trim(),
-                string.IsNullOrWhiteSpace(e.PositionName) ? null : e.PositionName);
-
-    private ArEmployeeRefDto? CurrentUserRef() =>
-        UserProfileState.EmployeeId == Guid.Empty || string.IsNullOrWhiteSpace(UserProfileState.EmployeeFullName)
-            ? null
-            : new ArEmployeeRefDto(
-                UserProfileState.EmployeeId,
-                UserProfileState.EmployeeFullName.Trim(),
-                string.IsNullOrWhiteSpace(UserProfileState.EmployeePositionName) ? null : UserProfileState.EmployeePositionName.Trim());
 
     // ── Row actions ──────────────────────────────────────────────────────────
 
@@ -700,21 +427,4 @@
         AccountabilityLineStatus.Lost => "Lost",
         _ => v.ToString()
     };
-
-    private sealed class IssueForm
-    {
-        public AccountabilityType Type { get; set; } = AccountabilityType.SE_ICS;
-        public DateTime? IssuedOnNullable { get; set; } = DateTime.Today;
-        public DateTime? ExpiresOnNullable { get; set; } = DateTime.Today.AddYears(1);
-        public string? FundCluster { get; set; }
-        public EmployeeReferenceDto? ReceivedBy { get; set; }
-        public List<IssueItemRow> Items { get; set; } = [];
-    }
-
-    private sealed class IssueItemRow
-    {
-        public string? PropertyNo { get; set; }
-        public AssetRegistryDto? Asset { get; set; }
-        public string? LookupError { get; set; }
-    }
 }

@@ -1,4 +1,12 @@
+using Mediator;
+
 namespace AMIS.Modules.MasterData.Contracts.v1.Suppliers;
+
+/// <summary>Lightweight supplier projection for cross-module reads (e.g. procurement seeding / lookups).</summary>
+public sealed record SupplierReferenceDto(Guid Id, string Code, string Name, string? TinNo, string? Address);
+
+/// <summary>Resolves active suppliers for cross-module reference (matched by Code / Name). Returns up to a sensible cap.</summary>
+public sealed record ListSupplierReferencesQuery(string? Keyword = null) : IQuery<IReadOnlyList<SupplierReferenceDto>>;
 
 public record SupplierDto(
     Guid Id,

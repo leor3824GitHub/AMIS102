@@ -7,6 +7,7 @@
 @inject IArAccountabilityClient AccountabilityClient
 @inject ISnackbar Snackbar
 @inject IUserProfileState UserProfileState
+@inject IDialogService DialogService
 
 <MudDialog>
     <DialogContent>
@@ -14,7 +15,7 @@
 
             <MudSelect Value="_form.ReceiptType" T="ReturnedPropertyReceiptType" Label="Receipt Type"
                        Variant="Variant.Outlined" Required="true" Dense="true" Margin="Margin.Dense"
-                       ValueChanged="@((ReturnedPropertyReceiptType v) => { _form.ReceiptType = v; _form.SelectedAccountability = null; _accountability = null; _selectedLineIds.Clear(); })">
+                       ValueChanged="OnReceiptTypeChanged">
                 <MudSelectItem T="ReturnedPropertyReceiptType" Value="ReturnedPropertyReceiptType.RRSP">RRSP — Semi-Expendable (ICS)</MudSelectItem>
                 <MudSelectItem T="ReturnedPropertyReceiptType" Value="ReturnedPropertyReceiptType.RRP">RRP — Fixed Assets (PAR)</MudSelectItem>
             </MudSelect>
@@ -34,17 +35,54 @@
 
             @if (_accountability is not null)
             {
-                <MudAlert Severity="Severity.Info" Dense="true">
-                    Select items to return from <b>@_accountability.DocumentNo</b>
-                    (@_accountability.Lines.Count(l => l.LineStatus == AccountabilityLineStatus.Active) active item(s)).
-                </MudAlert>
+                <MudDivider Class="my-1" />
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                    <MudText Typo="Typo.subtitle2" Class="flex-grow-1">Items to Return</MudText>
+                    <AMISButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary"
+                                StartIcon="@Icons.Material.Filled.Search" OnClick="BrowseItemsAsync"
+                                Disabled="@(ActiveLines.Count == 0)">
+                        Browse Items
+                    </AMISButton>
+                    <AMISIconButton Icon="@Icons.Material.Filled.Add" Size="Size.Small" Color="Color.Primary"
+                                    OnClick="AddItem" Disabled="@(ActiveLines.Count == 0)" />
+                </MudStack>
 
-                <MudText Typo="Typo.subtitle2">Items to Return</MudText>
-                @foreach (var line in _accountability.Lines.Where(l => l.LineStatus == AccountabilityLineStatus.Active))
+                @if (ActiveLines.Count == 0)
                 {
-                    <MudCheckBox @bind-Value="_selectedLineIds[line.Id]"
-                                 Label="@($"{line.Snapshot.PropertyNo} — {line.Snapshot.Description} ({Money.Symbol}{line.Snapshot.UnitCost:N2})")"
-                                 Color="Color.Primary" Dense="true" />
+                    <MudAlert Severity="Severity.Warning" Dense="true">
+                        <b>@_accountability.DocumentNo</b> has no active items to return.
+                    </MudAlert>
+                }
+                else
+                {
+                    @for (var i = 0; i < _form.Items.Count; i++)
+                    {
+                        var idx = i;
+                        var li = _form.Items[idx];
+                        <MudPaper Outlined="true" Class="pa-3">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-1">
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">Item @(idx + 1)</MudText>
+                                <MudSpacer />
+                                <AMISIconButton Icon="@Icons.Material.Filled.Remove" Size="Size.Small" Color="Color.Error"
+                                                OnClick="@(() => RemoveItem(idx))" />
+                            </MudStack>
+                            <MudAutocomplete T="ArAccountabilityLineDto" Value="li.Selected"
+                                             SearchFunc="SearchReturnableLines"
+                                             ToStringFunc="FormatLine"
+                                             ValueChanged="@(v => OnLineSelected(li, v))"
+                                             Label="Property item" Variant="Variant.Outlined"
+                                             Dense="true" Margin="Margin.Dense" Clearable="true"
+                                             ResetValueOnEmptyText="true"
+                                             Placeholder="Search property no. / description">
+                                <ItemTemplate Context="line">
+                                    <MudStack Spacing="0">
+                                        <MudText Typo="Typo.body2"><strong>@line.Snapshot.PropertyNo</strong> — @line.Snapshot.Description</MudText>
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">@Money.Symbol@line.Snapshot.UnitCost.ToString("N2") · @line.Snapshot.Unit</MudText>
+                                    </MudStack>
+                                </ItemTemplate>
+                            </MudAutocomplete>
+                        </MudPaper>
+                    }
                 }
             }
 
@@ -71,10 +109,14 @@
     [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
 
     private ArAccountabilityDto? _accountability;
-    private Dictionary<Guid, bool> _selectedLineIds = [];
     private bool _busy;
 
     private ReturnForm _form = new();
+
+    protected override void OnInitialized() => _form.Items.Add(new ReturnItemRow());
+
+    private List<ArAccountabilityLineDto> ActiveLines =>
+        _accountability?.Lines.Where(l => l.LineStatus == AccountabilityLineStatus.Active).ToList() ?? [];
 
     private string ReturnedByDisplay =>
         string.IsNullOrWhiteSpace(UserProfileState.EmployeePositionName)
@@ -93,28 +135,104 @@
         return response.Items;
     }
 
+    private void OnReceiptTypeChanged(ReturnedPropertyReceiptType value)
+    {
+        _form.ReceiptType = value;
+        _form.SelectedAccountability = null;
+        _accountability = null;
+        ResetItems();
+    }
+
     private async Task OnAccountabilitySelected(ArAccountabilitySummaryDto? selected)
     {
         _form.SelectedAccountability = selected;
         _accountability = null;
-        _selectedLineIds.Clear();
+        ResetItems();
 
         if (selected is null) return;
 
         try
         {
             _accountability = await AccountabilityClient.GetAsync(selected.Id);
-            if (_accountability is not null)
-            {
-                _selectedLineIds = _accountability.Lines
-                    .Where(l => l.LineStatus == AccountabilityLineStatus.Active)
-                    .ToDictionary(l => l.Id, _ => true);
-            }
         }
         catch (Exception ex)
         {
             Snackbar.Add($"Could not load accountability detail: {ex.Message}", Severity.Error);
         }
+    }
+
+    private void ResetItems()
+    {
+        _form.Items.Clear();
+        _form.Items.Add(new ReturnItemRow());
+    }
+
+    private void AddItem() => _form.Items.Add(new ReturnItemRow());
+
+    private void RemoveItem(int idx)
+    {
+        if (_form.Items.Count > 1) _form.Items.RemoveAt(idx);
+        else _form.Items[0] = new ReturnItemRow();
+    }
+
+    private HashSet<Guid> SelectedLineIds() =>
+        _form.Items.Where(i => i.Selected is not null).Select(i => i.Selected!.Id).ToHashSet();
+
+    // Search the selected document's active lines in memory, hiding lines already on another row.
+    private Task<IEnumerable<ArAccountabilityLineDto>> SearchReturnableLines(string? value, CancellationToken ct)
+    {
+        var taken = SelectedLineIds();
+        IEnumerable<ArAccountabilityLineDto> candidates = ActiveLines.Where(l => !taken.Contains(l.Id));
+        if (!string.IsNullOrWhiteSpace(value))
+        {
+            candidates = candidates.Where(l =>
+                l.Snapshot.PropertyNo.Contains(value, StringComparison.OrdinalIgnoreCase)
+                || l.Snapshot.Description.Contains(value, StringComparison.OrdinalIgnoreCase));
+        }
+        return Task.FromResult(candidates);
+    }
+
+    private static string FormatLine(ArAccountabilityLineDto? l) =>
+        l is null ? "" : $"{l.Snapshot.PropertyNo} — {l.Snapshot.Description}";
+
+    private void OnLineSelected(ReturnItemRow row, ArAccountabilityLineDto? line)
+    {
+        row.Selected = line;
+        if (line is null) return;
+
+        // The search list already hides taken lines; this guards a duplicate slipping through.
+        if (_form.Items.Count(i => i.Selected?.Id == line.Id) > 1)
+        {
+            row.Selected = null;
+            Snackbar.Add("This item is already on another line.", Severity.Warning);
+        }
+    }
+
+    private async Task BrowseItemsAsync()
+    {
+        if (_accountability is null) return;
+
+        var parameters = new DialogParameters<ReturnableItemsPickerDialog>
+        {
+            { x => x.AccountabilityId, _accountability.Id },
+            { x => x.DocumentNo, _accountability.DocumentNo },
+            { x => x.ExcludeIds, (IReadOnlyCollection<Guid>)SelectedLineIds() }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseButton = true };
+        var dialog = await DialogService.ShowAsync<ReturnableItemsPickerDialog>("Items to Return", parameters, options);
+        var result = await dialog.Result;
+        if (result is null || result.Canceled || result.Data is not List<ArAccountabilityLineDto> picked || picked.Count == 0)
+            return;
+
+        // Drop placeholder empty rows, then add one row per picked line (skip any already present).
+        _form.Items.RemoveAll(i => i.Selected is null);
+        var existing = SelectedLineIds();
+        foreach (var line in picked)
+        {
+            if (existing.Add(line.Id))
+                _form.Items.Add(new ReturnItemRow { Selected = line });
+        }
+        if (_form.Items.Count == 0) _form.Items.Add(new ReturnItemRow());
     }
 
     private async Task RequestAsync()
@@ -131,7 +249,7 @@
             return;
         }
 
-        var lineIds = _selectedLineIds.Where(kv => kv.Value).Select(kv => kv.Key).ToList();
+        var lineIds = _form.Items.Where(i => i.Selected is not null).Select(i => i.Selected!.Id).Distinct().ToList();
         if (lineIds.Count == 0)
         {
             Snackbar.Add("Select at least one item to return.", Severity.Warning);
@@ -172,5 +290,11 @@
         public DateTime? DateNullable { get; set; } = DateTime.Today;
         public ArAccountabilitySummaryDto? SelectedAccountability { get; set; }
         public string? Remarks { get; set; }
+        public List<ReturnItemRow> Items { get; set; } = [];
+    }
+
+    private sealed class ReturnItemRow
+    {
+        public ArAccountabilityLineDto? Selected { get; set; }
     }
 }
