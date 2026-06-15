@@ -51,11 +51,11 @@
                                             <Border Grid.Row="0" Grid.Column="1"
                                                     Stroke="Transparent"
                                                     StrokeShape="RoundRectangle 10"
-                                                    BackgroundColor="{AppThemeBinding Light={StaticResource PrimaryLight}, Dark={StaticResource Tertiary}}"
+                                                    BackgroundColor="{AppThemeBinding Light={StaticResource TealLight}, Dark={StaticResource Tertiary}}"
                                                     Padding="8,3">
                                                 <Label Text="{Binding PARType}"
                                                        FontFamily="InterSemiBold" FontSize="11"
-                                                       TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+                                                       TextColor="{StaticResource Teal}" />
                                             </Border>
                                             <Label Grid.Row="1" Grid.Column="0"
                                                    Text="{Binding Date}"

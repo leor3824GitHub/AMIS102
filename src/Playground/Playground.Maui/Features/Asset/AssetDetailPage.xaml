@@ -21,25 +21,26 @@
                    IsVisible="{Binding ErrorMessage, Converter={StaticResource IsNotNullConverter}}" />
 
             <!-- Header card -->
-            <Border Style="{StaticResource CardBorderStyle}" Margin="16,16,16,0" Padding="20">
+            <Border Style="{StaticResource CardBorderStyle}" Background="{StaticResource HeaderGradient}"
+                    Margin="16,16,16,0" Padding="20">
                 <VerticalStackLayout Spacing="8">
                     <Label Text="{Binding PropertyNo}"
-                           Style="{StaticResource CaptionStyle}" />
+                           Style="{StaticResource CaptionStyle}" TextColor="{StaticResource Secondary}" />
                     <Label Text="{Binding Item.ItemName}"
-                           FontFamily="InterBold" FontSize="22" />
+                           FontFamily="InterBold" FontSize="22" TextColor="{StaticResource White}" />
                     <Label Text="{Binding Item.Description}"
                            FontSize="14"
-                           TextColor="{StaticResource Gray500}"
+                           TextColor="{StaticResource Secondary}"
                            IsVisible="{Binding Item.Description, Converter={StaticResource IsNotNullConverter}}" />
                     <Border Stroke="Transparent"
                             StrokeShape="RoundRectangle 10"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource PrimaryLight}, Dark={StaticResource Tertiary}}"
+                            BackgroundColor="{StaticResource OnGradientOverlay}"
                             Padding="10,4"
                             HorizontalOptions="Start"
                             IsVisible="{Binding Item.AssetType, Converter={StaticResource IsNotNullConverter}}">
                         <Label Text="{Binding Item.AssetType}"
                                FontFamily="InterSemiBold" FontSize="12"
-                               TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+                               TextColor="{StaticResource White}" />
                     </Border>
                 </VerticalStackLayout>
             </Border>

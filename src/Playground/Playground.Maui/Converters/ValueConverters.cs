@@ -37,3 +37,29 @@ public sealed class InvertedBoolConverter : IValueConverter
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>
         value is bool b && !b;
 }
+
+/// <summary>
+/// Maps a document kind ("ICS" / "PAR") to a chip color drawn from app resources.
+/// Pass ConverterParameter="bg" for the chip background, "text" for the label color.
+/// </summary>
+public sealed class KindToColorConverter : IValueConverter
+{
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        var kind = (value as string)?.Trim().ToUpperInvariant();
+        var wantBackground = string.Equals(parameter as string, "bg", StringComparison.OrdinalIgnoreCase);
+
+        var key = kind switch
+        {
+            "PAR" => wantBackground ? "TealLight" : "Teal",
+            _ => wantBackground ? "PrimaryLight" : "Primary",
+        };
+
+        return Application.Current?.Resources.TryGetValue(key, out var color) == true
+            ? color
+            : Colors.Transparent;
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+        throw new NotSupportedException();
+}

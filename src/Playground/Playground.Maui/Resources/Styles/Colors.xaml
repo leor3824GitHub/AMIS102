@@ -33,4 +33,33 @@
     <Color x:Key="PrimaryLight">#EDE9FB</Color>
     <Color x:Key="DangerLight">#FFEBEE</Color>
 
+    <!-- ── Accent palette (subtle chips / tinted icon boxes) ── -->
+    <Color x:Key="Info">#1E88E5</Color>
+    <Color x:Key="InfoLight">#E3F2FD</Color>
+    <Color x:Key="SuccessLight">#E8F5E9</Color>
+    <Color x:Key="WarningLight">#FFF3E0</Color>
+    <Color x:Key="Teal">#00897B</Color>
+    <Color x:Key="TealLight">#E0F2F1</Color>
+
+    <!-- Translucent white overlay for chips/avatars sitting on a gradient -->
+    <Color x:Key="OnGradientOverlay">#33FFFFFF</Color>
+
+    <!-- ── Reusable gradient brushes ── -->
+    <LinearGradientBrush x:Key="HeaderGradient" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#6A3DE8" Offset="0.0" />
+        <GradientStop Color="#512BD4" Offset="0.55" />
+        <GradientStop Color="#3A1C9E" Offset="1.0" />
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="AvatarGradient" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#7C4DFF" Offset="0.0" />
+        <GradientStop Color="#512BD4" Offset="1.0" />
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="TealGradient" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#26A69A" Offset="0.0" />
+        <GradientStop Color="#00897B" Offset="0.55" />
+        <GradientStop Color="#00695C" Offset="1.0" />
+    </LinearGradientBrush>
+
 </ResourceDictionary>

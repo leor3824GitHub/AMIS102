@@ -21,19 +21,20 @@
                    IsVisible="{Binding ErrorMessage, Converter={StaticResource IsNotNullConverter}}" />
 
             <!-- Header card -->
-            <Border Style="{StaticResource CardBorderStyle}" Margin="16,16,16,0" Padding="20">
+            <Border Style="{StaticResource CardBorderStyle}" Background="{StaticResource HeaderGradient}"
+                    Margin="16,16,16,0" Padding="20">
                 <VerticalStackLayout Spacing="8">
-                    <Label Text="ICS NO." Style="{StaticResource FieldLabelStyle}" />
+                    <Label Text="ICS NO." Style="{StaticResource FieldLabelStyle}" TextColor="{StaticResource Secondary}" />
                     <Label Text="{Binding Detail.ICSNo}"
-                           FontFamily="InterBold" FontSize="22" />
+                           FontFamily="InterBold" FontSize="22" TextColor="{StaticResource White}" />
                     <Border Stroke="Transparent"
                             StrokeShape="RoundRectangle 10"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource PrimaryLight}, Dark={StaticResource Tertiary}}"
+                            BackgroundColor="{StaticResource OnGradientOverlay}"
                             Padding="10,4"
                             HorizontalOptions="Start">
                         <Label Text="{Binding Detail.Status}"
                                FontFamily="InterSemiBold" FontSize="12"
-                               TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+                               TextColor="{StaticResource White}" />
                     </Border>
                 </VerticalStackLayout>
             </Border>

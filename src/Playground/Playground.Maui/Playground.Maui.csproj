@@ -15,7 +15,7 @@
     <IsPackable>false</IsPackable>
 
     <!-- Display name and versioning -->
-    <ApplicationTitle>AMIS Mobile</ApplicationTitle>
+    <ApplicationTitle>AMIS</ApplicationTitle>
     <ApplicationId>com.amis.mobile</ApplicationId>
     <ApplicationVersion>1</ApplicationVersion>
     <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>

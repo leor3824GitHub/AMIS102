@@ -19,21 +19,22 @@
 
                 <!-- ── Zone A: Greeting header ── -->
                 <Border Stroke="Transparent"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray950}}"
-                        Padding="20,48,20,24">
+                        Background="{StaticResource HeaderGradient}"
+                        Padding="20,48,20,28">
                     <Border.StrokeShape>
                         <RoundRectangle CornerRadius="0,0,28,28" />
                     </Border.StrokeShape>
                     <Border.Shadow>
-                        <Shadow Brush="Black" Offset="0,4" Radius="16" Opacity="0.06" />
+                        <Shadow Brush="{StaticResource Primary}" Offset="0,6" Radius="18" Opacity="0.25" />
                     </Border.Shadow>
 
                     <Grid ColumnDefinitions="*,Auto" VerticalOptions="Center">
                         <VerticalStackLayout Grid.Column="0" Spacing="2" VerticalOptions="Center">
-                            <Label Text="{Binding Greeting}" Style="{StaticResource SubtitleStyle}" />
-                            <Label Text="{Binding FirstName}" Style="{StaticResource DisplayStyle}" />
+                            <Label Text="{Binding Greeting}" Style="{StaticResource SubtitleStyle}" TextColor="{StaticResource Secondary}" />
+                            <Label Text="{Binding FirstName}" Style="{StaticResource DisplayStyle}" TextColor="{StaticResource White}" />
                             <Label Text="{Binding Department}"
                                    Style="{StaticResource CaptionStyle}"
+                                   TextColor="{StaticResource Secondary}"
                                    IsVisible="{Binding Department, Converter={StaticResource IsNotNullConverter}}" />
                         </VerticalStackLayout>
 
@@ -44,7 +45,8 @@
                             <Grid.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding GoToProfileCommand}" />
                             </Grid.GestureRecognizers>
-                            <Ellipse Fill="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                            <Ellipse Fill="{StaticResource White}"
+                                     Opacity="0.18"
                                      WidthRequest="{StaticResource AvatarSize}"
                                      HeightRequest="{StaticResource AvatarSize}" />
                             <Label Text="{Binding Initials}"
@@ -75,7 +77,8 @@
                             <TapGestureRecognizer Command="{Binding GoToInventoryCommand}" />
                         </Border.GestureRecognizers>
                         <VerticalStackLayout Spacing="2" HorizontalOptions="Center">
-                            <Label Text="{Binding IcsCount}" Style="{StaticResource DisplayStyle}" HorizontalOptions="Center" />
+                            <Label Text="{Binding IcsCount}" Style="{StaticResource DisplayStyle}" HorizontalOptions="Center"
+                                   TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
                             <Label Text="ICS" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
                         </VerticalStackLayout>
                     </Border>
@@ -85,14 +88,16 @@
                             <TapGestureRecognizer Command="{Binding GoToInventoryCommand}" />
                         </Border.GestureRecognizers>
                         <VerticalStackLayout Spacing="2" HorizontalOptions="Center">
-                            <Label Text="{Binding ParCount}" Style="{StaticResource DisplayStyle}" HorizontalOptions="Center" />
+                            <Label Text="{Binding ParCount}" Style="{StaticResource DisplayStyle}" HorizontalOptions="Center"
+                                   TextColor="{StaticResource Teal}" />
                             <Label Text="PAR" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
                         </VerticalStackLayout>
                     </Border>
 
                     <Border Grid.Column="2" Style="{StaticResource CardBorderStyle}" Padding="12,16">
                         <VerticalStackLayout Spacing="2" HorizontalOptions="Center">
-                            <Label Text="{Binding TotalItems}" Style="{StaticResource DisplayStyle}" HorizontalOptions="Center" />
+                            <Label Text="{Binding TotalItems}" Style="{StaticResource DisplayStyle}" HorizontalOptions="Center"
+                                   TextColor="{StaticResource Info}" />
                             <Label Text="Items" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
                         </VerticalStackLayout>
                     </Border>
@@ -131,7 +136,7 @@
                                 <TapGestureRecognizer Command="{Binding GoToCountCommand}" />
                             </Grid.GestureRecognizers>
                             <Border Grid.Column="0" StrokeShape="RoundRectangle 12" Stroke="Transparent"
-                                    BackgroundColor="{AppThemeBinding Light={StaticResource PrimaryLight}, Dark={StaticResource Tertiary}}"
+                                    BackgroundColor="{AppThemeBinding Light={StaticResource TealLight}, Dark={StaticResource Tertiary}}"
                                     WidthRequest="{StaticResource ActionIconBox}" HeightRequest="{StaticResource ActionIconBox}">
                                 <Image Source="scan.png" WidthRequest="22" HeightRequest="22"
                                        HorizontalOptions="Center" VerticalOptions="Center" />
@@ -151,7 +156,7 @@
                                 <TapGestureRecognizer Command="{Binding GoToInventoryCommand}" />
                             </Grid.GestureRecognizers>
                             <Border Grid.Column="0" StrokeShape="RoundRectangle 12" Stroke="Transparent"
-                                    BackgroundColor="{AppThemeBinding Light={StaticResource PrimaryLight}, Dark={StaticResource Tertiary}}"
+                                    BackgroundColor="{AppThemeBinding Light={StaticResource InfoLight}, Dark={StaticResource Tertiary}}"
                                     WidthRequest="{StaticResource ActionIconBox}" HeightRequest="{StaticResource ActionIconBox}">
                                 <Image Source="inventory.png" WidthRequest="22" HeightRequest="22"
                                        HorizontalOptions="Center" VerticalOptions="Center" />
@@ -220,10 +225,10 @@
                                     </Grid.GestureRecognizers>
                                     <Label Grid.Row="0" Grid.Column="0" Text="{Binding Number}" FontFamily="InterSemiBold" FontSize="15" />
                                     <Border Grid.Row="0" Grid.Column="1" Stroke="Transparent" StrokeShape="RoundRectangle 8"
-                                            BackgroundColor="{AppThemeBinding Light={StaticResource PrimaryLight}, Dark={StaticResource Tertiary}}"
+                                            BackgroundColor="{Binding Kind, Converter={StaticResource KindToColorConverter}, ConverterParameter=bg}"
                                             Padding="8,3" VerticalOptions="Center">
                                         <Label Text="{Binding Kind}" FontFamily="InterSemiBold" FontSize="10"
-                                               TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+                                               TextColor="{Binding Kind, Converter={StaticResource KindToColorConverter}, ConverterParameter=text}" />
                                     </Border>
                                     <Label Grid.Row="0" Grid.Column="2" Text="›" FontSize="20" TextColor="{StaticResource Gray300}" VerticalOptions="Center" />
                                     <Label Grid.Row="1" Grid.Column="0" Text="{Binding Subtitle}" Style="{StaticResource CaptionStyle}" />
