@@ -27,6 +27,10 @@
                         @FormatStatus(_selected.Status)
                     </MudChip>
                     <MudSpacer />
+                    <MudTooltip Text="Refresh — pull the latest status (e.g. if accepted on mobile)">
+                        <AMISIconButton Icon="@Icons.Material.Filled.Refresh" Size="Size.Small"
+                                        Color="Color.Default" OnClick="RefreshAsync" Disabled="_busy" />
+                    </MudTooltip>
                     <AMISButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Secondary"
                                 StartIcon="@Icons.Material.Filled.PictureAsPdf"
                                 OnClick="PrintAsync" Disabled="_printing">
@@ -176,6 +180,31 @@
         finally
         {
             _loading = false;
+        }
+    }
+
+    private async Task RefreshAsync()
+    {
+        _busy = true;
+        try
+        {
+            var previousStatus = _selected?.Status;
+            var fresh = await Client.GetAsync(Id);
+            if (fresh is null) { _error = "Document not found."; _selected = null; return; }
+            _selected = fresh;
+            ApplyRenewExpiryPolicy();
+            // If the status moved on (e.g. the custodian accepted on MAUI), tell the parent list to
+            // reload on close so its row reflects the new status instead of the stale one.
+            if (previousStatus is not null && previousStatus != fresh.Status)
+                _changed = true;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
         }
     }
 

@@ -3,6 +3,7 @@ using AMIS.Framework.Core.Exceptions;
 using AMIS.Modules.Auditing.Contracts;
 using AMIS.Modules.Identity.Contracts.Services;
 using AMIS.Modules.Identity.Contracts.v1.Tokens.RefreshToken;
+using AMIS.Modules.Identity.Services;
 using Mediator;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics.Metrics;
@@ -65,7 +66,7 @@ public sealed class RefreshTokenCommandHandler
         var (subject, claims) = validated.Value;
 
         // Check if the session associated with this refresh token is still valid
-        var refreshTokenHash = Sha256Short(request.RefreshToken);
+        var refreshTokenHash = RefreshTokenHasher.Hash(request.RefreshToken);
         var isSessionValid = await _sessionService.ValidateSessionAsync(refreshTokenHash, cancellationToken);
         if (!isSessionValid)
         {
@@ -107,11 +108,9 @@ public sealed class RefreshTokenCommandHandler
         // Issue new tokens
         var newToken = await _tokenService.IssueAsync(subject, claims, null, cancellationToken);
 
-        // Persist rotated refresh token for this user
-        await _identityService.StoreRefreshTokenAsync(subject, newToken.RefreshToken, newToken.RefreshTokenExpiresAt, cancellationToken);
-
-        // Update the session with the new refresh token hash
-        var newRefreshTokenHash = Sha256Short(newToken.RefreshToken);
+        // Rotate the refresh token on this session row. The session is the source of truth, so
+        // only the row that presented the old token is updated — other devices' sessions are untouched.
+        var newRefreshTokenHash = RefreshTokenHasher.Hash(newToken.RefreshToken);
         await _sessionService.UpdateSessionRefreshTokenAsync(
             refreshTokenHash,
             newRefreshTokenHash,

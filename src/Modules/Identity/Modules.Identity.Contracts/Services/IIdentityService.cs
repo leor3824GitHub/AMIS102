@@ -16,14 +16,9 @@ public interface IIdentityService
         ValidateCredentialsAsync(string email, string password, CancellationToken ct = default);
 
     /// <summary>
-    /// Validates a refresh token and returns its claims if valid.
+    /// Validates a refresh token against the active session store and returns its claims if valid.
     /// </summary>
     Task<(string Subject, IEnumerable<Claim> Claims)?>
         ValidateRefreshTokenAsync(string refreshToken, CancellationToken ct = default);
-
-    /// <summary>
-    /// Persists a hashed refresh token for the specified subject.
-    /// </summary>
-    Task StoreRefreshTokenAsync(string subject, string refreshToken, DateTime expiresAtUtc, CancellationToken ct = default);
 }
 

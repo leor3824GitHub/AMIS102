@@ -293,10 +293,29 @@ public sealed class SessionService : ISessionService
 
         if (session is null)
         {
-            return true; // No session tracking for this token (backwards compatibility)
+            // Sessions are authoritative for refresh tokens: no matching session means the token
+            // is not (or no longer) valid — e.g. it was rotated on another device or the DB was reset.
+            return false;
         }
 
         return !session.IsRevoked && session.ExpiresAt > DateTime.UtcNow;
+    }
+
+    public async Task<string?> GetActiveUserIdByRefreshTokenAsync(
+        string refreshTokenHash,
+        CancellationToken cancellationToken = default)
+    {
+        EnsureValidTenant();
+
+        var session = await _db.UserSessions
+            .AsNoTracking()
+            .FirstOrDefaultAsync(
+                s => s.RefreshTokenHash == refreshTokenHash
+                     && !s.IsRevoked
+                     && s.ExpiresAt > DateTime.UtcNow,
+                cancellationToken);
+
+        return session?.UserId;
     }
 
     public async Task<Guid?> GetSessionIdByRefreshTokenAsync(

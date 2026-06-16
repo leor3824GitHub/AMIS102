@@ -63,6 +63,15 @@ public interface ISessionService
         string refreshTokenHash,
         CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Returns the user id of the active (non-revoked, non-expired) session that owns the given
+    /// refresh token hash, or <c>null</c> if no such session exists. This is the authoritative
+    /// lookup for refresh-token validation — each device/login has its own session row.
+    /// </summary>
+    Task<string?> GetActiveUserIdByRefreshTokenAsync(
+        string refreshTokenHash,
+        CancellationToken cancellationToken = default);
+
     Task<Guid?> GetSessionIdByRefreshTokenAsync(
         string refreshTokenHash,
         CancellationToken cancellationToken = default);

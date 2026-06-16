@@ -130,7 +130,7 @@ public sealed class GenerateTokenCommandHandlerTests
         // Assert
         await _identityService.Received(1).ValidateCredentialsAsync(command.Email, command.Password, Arg.Any<CancellationToken>());
         await _tokenService.Received(1).IssueAsync(userId, claims, null, Arg.Any<CancellationToken>());
-        await _identityService.Received(1).StoreRefreshTokenAsync(userId, token.RefreshToken, token.RefreshTokenExpiresAt, Arg.Any<CancellationToken>());
+        await _sessionService.Received(1).CreateSessionAsync(userId, Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), token.RefreshTokenExpiresAt, Arg.Any<CancellationToken>());
         await _securityAudit.Received(1).LoginSucceededAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
         await _securityAudit.Received(1).TokenIssuedAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<DateTime>(), Arg.Any<CancellationToken>());
         await _outboxStore.Received(1).AddAsync(Arg.Any<TokenGeneratedIntegrationEvent>(), Arg.Any<CancellationToken>());
@@ -228,7 +228,7 @@ public sealed class GenerateTokenCommandHandlerTests
         // Assert
         await _identityService.Received(1).ValidateCredentialsAsync(command.Email, command.Password, cancellationToken);
         await _tokenService.Received(1).IssueAsync(userId, claims, null, cancellationToken);
-        await _identityService.Received(1).StoreRefreshTokenAsync(userId, token.RefreshToken, token.RefreshTokenExpiresAt, cancellationToken);
+        await _sessionService.Received(1).CreateSessionAsync(userId, Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), token.RefreshTokenExpiresAt, cancellationToken);
         await _outboxStore.Received(1).AddAsync(Arg.Any<TokenGeneratedIntegrationEvent>(), cancellationToken);
         await _eventBus.Received(1).PublishAsync(Arg.Any<UserLoggedInIntegrationEvent>(), cancellationToken);
     }
@@ -238,9 +238,10 @@ public sealed class GenerateTokenCommandHandlerTests
     #region Handle - Session Creation Exception Tests
 
     [Fact]
-    public async Task Handle_Should_ContinueSuccessfully_When_SessionCreationFails()
+    public async Task Handle_Should_Propagate_When_SessionCreationFails()
     {
-        // Arrange
+        // Arrange — the session row is now the source of truth for refresh-token validation,
+        // so a failed session creation must fail the login rather than be swallowed.
         var command = new GenerateTokenCommand("user@example.com", "password123");
         var userId = _fixture.Create<string>();
         var claims = new List<Claim> { new(ClaimTypes.NameIdentifier, userId) };
@@ -259,12 +260,9 @@ public sealed class GenerateTokenCommandHandlerTests
         _sessionService.CreateSessionAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<DateTime>(), Arg.Any<CancellationToken>())
             .ThrowsAsync(new InvalidOperationException("Database not available"));
 
-        // Act
-        var result = await _sut.Handle(command, CancellationToken.None);
-
-        // Assert
-        result.ShouldNotBeNull();
-        result.AccessToken.ShouldBe(token.AccessToken);
+        // Act & Assert
+        await Should.ThrowAsync<InvalidOperationException>(
+            async () => await _sut.Handle(command, CancellationToken.None));
     }
 
     #endregion

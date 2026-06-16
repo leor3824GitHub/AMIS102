@@ -5,7 +5,6 @@ using AMIS.Framework.Shared.Multitenancy;
 using AMIS.Modules.Identity.Contracts.Services;
 using AMIS.Modules.Identity.Domain;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -19,19 +18,22 @@ public sealed class IdentityService : IIdentityService
     private readonly ILogger<IdentityService> _logger;
     private readonly IMultiTenantContextAccessor<AppTenantInfo>? _multiTenantContextAccessor;
     private readonly IGroupRoleService _groupRoleService;
+    private readonly ISessionService _sessionService;
 
     public IdentityService(
         UserManager<AmisUser> userManager,
         SignInManager<AmisUser> signInManager,
         IMultiTenantContextAccessor<AppTenantInfo>? multiTenantContextAccessor,
         ILogger<IdentityService> logger,
-        IGroupRoleService groupRoleService)
+        IGroupRoleService groupRoleService,
+        ISessionService sessionService)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _multiTenantContextAccessor = multiTenantContextAccessor;
         _logger = logger;
         _groupRoleService = groupRoleService;
+        _sessionService = sessionService;
     }
 
     public async Task<(string Subject, IEnumerable<Claim> Claims)?>
@@ -69,15 +71,25 @@ public sealed class IdentityService : IIdentityService
             return null;
         }
 
-        var user = await FindUserByRefreshTokenAsync(refreshToken, tenant.Id, ct);
+        // Sessions are the source of truth: each device/login owns its own session row, so two
+        // platforms no longer clobber each other through a single user column.
+        var refreshTokenHash = RefreshTokenHasher.Hash(refreshToken);
+        var userId = await _sessionService.GetActiveUserIdByRefreshTokenAsync(refreshTokenHash, ct);
+        if (userId is null)
+        {
+            _logger.LogDebug("No active session found for the supplied refresh token in tenant {TenantId}", tenant.Id);
+            return null;
+        }
+
+        var user = await _userManager.FindByIdAsync(userId);
         if (user is null)
         {
+            _logger.LogDebug("Session {UserId} references a user that no longer exists in tenant {TenantId}", userId, tenant.Id);
             return null;
         }
 
         try
         {
-            ValidateRefreshTokenExpiry(user);
             ValidateUserStatus(user);
             ValidateTenantStatus(tenant);
         }
@@ -94,29 +106,6 @@ public sealed class IdentityService : IIdentityService
 
         var claims = await BuildUserClaimsAsync(user, tenant.Id, ct);
         return (user.Id, claims);
-    }
-
-    public async Task StoreRefreshTokenAsync(string subject, string refreshToken, DateTime expiresAtUtc, CancellationToken ct = default)
-    {
-        var tenant = GetValidatedTenant();
-        var user = await _userManager.FindByIdAsync(subject)
-            ?? throw new UnauthorizedException("user not found");
-
-        var hashedToken = HashToken(refreshToken);
-        user.RefreshToken = hashedToken;
-        user.RefreshTokenExpiryTime = expiresAtUtc;
-
-        _logger.LogDebug(
-            "Storing refresh token for user {UserId} in tenant {TenantId}. Token hash: {TokenHash}, Expires: {ExpiresAt}",
-            subject, tenant.Id, hashedToken[..Math.Min(8, hashedToken.Length)] + "...", expiresAtUtc);
-
-        var result = await _userManager.UpdateAsync(user);
-        if (!result.Succeeded)
-        {
-            _logger.LogError("Failed to persist refresh token for user {UserId}: {Errors}",
-                subject, string.Join(", ", result.Errors.Select(e => e.Description)));
-            throw new UnauthorizedException("could not persist refresh token");
-        }
     }
 
     private AppTenantInfo GetValidatedTenant()
@@ -155,37 +144,6 @@ public sealed class IdentityService : IIdentityService
         }
 
         return user;
-    }
-
-    private async Task<AmisUser?> FindUserByRefreshTokenAsync(string refreshToken, string tenantId, CancellationToken ct)
-    {
-        var hashedToken = HashToken(refreshToken);
-
-        _logger.LogDebug(
-            "Validating refresh token for tenant {TenantId}. Token hash: {TokenHash}",
-            tenantId, hashedToken[..Math.Min(8, hashedToken.Length)] + "...");
-
-        var user = await _userManager.Users
-            .FirstOrDefaultAsync(u => u.RefreshToken == hashedToken, ct);
-
-        if (user is null)
-        {
-            _logger.LogDebug("No user found with matching refresh token hash for tenant {TenantId}", tenantId);
-            return null;
-        }
-
-        return user;
-    }
-
-    private void ValidateRefreshTokenExpiry(AmisUser user)
-    {
-        if (user.RefreshTokenExpiryTime <= DateTime.UtcNow)
-        {
-            _logger.LogWarning(
-                "Refresh token expired for user {UserId}. Expired at: {ExpiryTime}, Current time: {CurrentTime}",
-                user.Id, user.RefreshTokenExpiryTime, DateTime.UtcNow);
-            throw new UnauthorizedException("refresh token is invalid or expired");
-        }
     }
 
     private static void ValidateUserStatus(AmisUser user)
@@ -246,13 +204,6 @@ public sealed class IdentityService : IIdentityService
 
         var allRoles = directRoles.Union(groupRoles).Distinct();
         claims.AddRange(allRoles.Select(r => new Claim(ClaimTypes.Role, r)));
-    }
-
-    private static string HashToken(string token)
-    {
-        var bytes = System.Text.Encoding.UTF8.GetBytes(token);
-        var hash = System.Security.Cryptography.SHA256.HashData(bytes);
-        return Convert.ToBase64String(hash);
     }
 }
 

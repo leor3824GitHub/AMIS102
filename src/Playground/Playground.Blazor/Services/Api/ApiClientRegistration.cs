@@ -40,6 +40,9 @@ internal static class ApiClientRegistration
         services.AddHttpClient("TokenClient", client =>
         {
             client.BaseAddress = apiUri;
+            // Identify the client UI platform on login/refresh. The AuthorizationHeaderHandler
+            // (which normally adds this) is intentionally not on this named client, so set it here.
+            client.DefaultRequestHeaders.Add("X-Client-Id", "blazor");
         })
         .ConfigurePrimaryHttpMessageHandler(() => CreateHandler(apiUri, environment));
 

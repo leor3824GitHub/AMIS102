@@ -3,6 +3,7 @@ using AMIS.Modules.Auditing.Contracts;
 using AMIS.Modules.Identity.Contracts.DTOs;
 using AMIS.Modules.Identity.Contracts.Services;
 using AMIS.Modules.Identity.Contracts.v1.Tokens.TokenGeneration;
+using AMIS.Modules.Identity.Services;
 using Mediator;
 using System.Security.Claims;
 using Finbuckle.MultiTenant.Abstractions;
@@ -92,27 +93,24 @@ public sealed class GenerateTokenCommandHandler
         // Issue token
         var token = await _tokenService.IssueAsync(subject, claims, /*extra*/ null, cancellationToken);
 
-        // Persist refresh token (hashed) for this user
-        await _identityService.StoreRefreshTokenAsync(subject, token.RefreshToken, token.RefreshTokenExpiresAt, cancellationToken);
+        // Record which client UI platform logged in (Blazor web, MAUI mobile/desktop, etc.).
+        _logger.LogInformation(
+            "User {Email} logged in from {ClientPlatform} (client id: {ClientId})",
+            request.Email,
+            DescribeClientPlatform(clientId),
+            clientId);
 
-        // Create user session for session management (non-blocking, fail gracefully)
-        try
-        {
-            var refreshTokenHash = Sha256Short(token.RefreshToken);
-            await _sessionService.CreateSessionAsync(
-                subject,
-                refreshTokenHash,
-                ip,
-                ua,
-                token.RefreshTokenExpiresAt,
-                cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            // Session creation is non-critical - don't fail the login
-            // This can happen if migrations haven't been applied yet
-            _logger.LogWarning(ex, "Failed to create user session for user {UserId}. Login will continue without session tracking.", subject);
-        }
+        // Create the user session. The session row is the source of truth for refresh-token
+        // validation (one row per device/login), so this must succeed for the issued refresh
+        // token to be usable. Each platform gets its own session and they never clobber each other.
+        var refreshTokenHash = RefreshTokenHasher.Hash(token.RefreshToken);
+        await _sessionService.CreateSessionAsync(
+            subject,
+            refreshTokenHash,
+            ip,
+            ua,
+            token.RefreshTokenExpiresAt,
+            cancellationToken);
 
         // 3) Audit token issuance with a fingerprint (never raw token)
         var fingerprint = Sha256Short(token.AccessToken);
@@ -187,6 +185,17 @@ public sealed class GenerateTokenCommandHandler
 
         return token;
     }
+
+    private static string DescribeClientPlatform(string? clientId) => clientId?.Trim().ToLowerInvariant() switch
+    {
+        "blazor" => "Blazor Web client",
+        "maui-android" => "MAUI Android app",
+        "maui-ios" => "MAUI iOS app",
+        "maui-windows" => "MAUI Windows app",
+        "maui" => "MAUI app",
+        "web" or null or "" => "Web client",
+        _ => $"Unknown client ({clientId})",
+    };
 
     private static string Sha256Short(string value)
     {
