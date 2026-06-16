@@ -22,34 +22,31 @@
     <MudItem xs="12">
         <MudCard Elevation="1">
             <MudCardContent>
-                <MudGrid Spacing="2" AlignItems="AlignItems.Center">
-                    <MudItem xs="12" md="6">
-                        <MudTextField @bind-Value="_keyword" Label="Session Code" Variant="Variant.Outlined"
-                                      Dense="true" Margin="Margin.Dense"
-                                      Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Outlined.Search"
-                                      OnKeyDown="OnSearchKeyDown" Immediate="false" />
-                    </MudItem>
-                    <MudItem xs="12" md="3">
-                        <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
-                                    StartIcon="@Icons.Material.Outlined.Search" OnClick="LoadAsync" Disabled="_busy">
-                            Search
-                        </AMISButton>
-                    </MudItem>
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                    <MudTextField @bind-Value="_keyword" Label="Session Code" Variant="Variant.Outlined"
+                                  Dense="true" Margin="Margin.Dense"
+                                  Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Outlined.Search"
+                                  OnKeyDown="OnSearchKeyDown" Immediate="false" Style="flex:1;" />
+                    <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary"
+                                StartIcon="@Icons.Material.Outlined.Search" OnClick="LoadAsync" Disabled="_busy">
+                        Search
+                    </AMISButton>
                     @if (_canCreate)
                     {
-                    <MudItem xs="12" md="3">
-                        <AMISButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Success" FullWidth="true"
+                        <AMISButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Success"
                                     StartIcon="@Icons.Material.Outlined.PlayCircle" OnClick="@(() => _showStartForm = true)">
                             Start Session
                         </AMISButton>
-                    </MudItem>
                     }
-                </MudGrid>
+                </MudStack>
 
-                <AMISEnumChips TEnum="PhysicalCountStatus" Value="_statusFilter" ValueChanged="OnStatusChanged"
-                               Label="Status" LabelFunc="FormatCountStatus" Class="mt-3" />
-                <AMISEnumChips TEnum="PhysicalCountScope" Value="_scopeFilter" ValueChanged="OnScopeChanged"
-                               Label="Scope" LabelFunc="FormatScope" />
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3" Class="mt-3 flex-wrap">
+                    <AMISEnumChips TEnum="PhysicalCountStatus" Value="_statusFilter" ValueChanged="OnStatusChanged"
+                                   Label="Status" LabelFunc="FormatCountStatus" />
+                    <MudDivider Vertical="true" FlexItem="true" />
+                    <AMISEnumChips TEnum="PhysicalCountScope" Value="_scopeFilter" ValueChanged="OnScopeChanged"
+                                   Label="Scope" LabelFunc="FormatScope" />
+                </MudStack>
             </MudCardContent>
         </MudCard>
     </MudItem>

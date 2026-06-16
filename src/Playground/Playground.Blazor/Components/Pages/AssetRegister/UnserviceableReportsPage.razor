@@ -17,29 +17,23 @@
     <MudItem xs="12">
         <MudCard Elevation="1">
             <MudCardContent>
-                <MudGrid Spacing="2" AlignItems="AlignItems.Center">
-                    <MudItem xs="12" md="6">
-                        <MudTextField @bind-Value="_keyword" Label="Report No. / Keyword" Variant="Variant.Outlined"
-                                      Dense="true" Margin="Margin.Dense"
-                                      Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Outlined.Search"
-                                      OnKeyDown="OnSearchKeyDown" Immediate="false" />
-                    </MudItem>
-                    <MudItem xs="12" md="3">
-                        <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
-                                    StartIcon="@Icons.Material.Outlined.Search" OnClick="LoadAsync" Disabled="_busy">
-                            Search
-                        </AMISButton>
-                    </MudItem>
-                    <MudItem xs="12" md="3">
-                        @if (_canFile)
-                        {
-                        <AMISButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Success" FullWidth="true"
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                    <MudTextField @bind-Value="_keyword" Label="Report No. / Keyword" Variant="Variant.Outlined"
+                                  Dense="true" Margin="Margin.Dense"
+                                  Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Outlined.Search"
+                                  OnKeyDown="OnSearchKeyDown" Immediate="false" Style="flex:1;" />
+                    <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary"
+                                StartIcon="@Icons.Material.Outlined.Search" OnClick="LoadAsync" Disabled="_busy">
+                        Search
+                    </AMISButton>
+                    @if (_canFile)
+                    {
+                        <AMISButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Success"
                                     StartIcon="@Icons.Material.Outlined.Add" OnClick="@(() => _showCreateForm = !_showCreateForm)">
                             New Report
                         </AMISButton>
-                        }
-                    </MudItem>
-                </MudGrid>
+                    }
+                </MudStack>
 
                 <AMISEnumChips TEnum="UnserviceableReportType" Value="_typeFilter" ValueChanged="OnTypeChanged"
                                Label="Report Type" Class="mt-3" />

@@ -119,11 +119,6 @@
                                StartIcon="@Icons.Material.Filled.Refresh" Disabled="_loading">
                         Generate
                     </MudButton>
-                    <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Secondary" OnClick="PrintReport"
-                               StartIcon="@Icons.Material.Filled.Print"
-                               Disabled="_loading || _items.Count == 0">
-                        Print
-                    </MudButton>
                     <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Default" OnClick="ExportCsvAsync"
                                StartIcon="@Icons.Material.Filled.Download"
                                Disabled="_loading || _items.Count == 0">
@@ -195,8 +190,6 @@
             _loading = false;
         }
     }
-
-    private async Task PrintReport() => await JS.InvokeVoidAsync("print");
 
     private async Task ExportCsvAsync()
     {

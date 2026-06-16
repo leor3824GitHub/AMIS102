@@ -17,20 +17,16 @@
     <MudItem xs="12">
         <MudCard Elevation="1">
             <MudCardContent>
-                <MudGrid Spacing="2" AlignItems="AlignItems.Center">
-                    <MudItem xs="12" md="9">
-                        <MudTextField @bind-Value="_keyword" Label="Incident No. / Keyword" Variant="Variant.Outlined"
-                                      Dense="true" Margin="Margin.Dense"
-                                      Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Outlined.Search"
-                                      OnKeyDown="OnSearchKeyDown" Immediate="false" />
-                    </MudItem>
-                    <MudItem xs="12" md="3">
-                        <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
-                                    StartIcon="@Icons.Material.Outlined.Search" OnClick="LoadAsync" Disabled="_busy">
-                            Search
-                        </AMISButton>
-                    </MudItem>
-                </MudGrid>
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                    <MudTextField @bind-Value="_keyword" Label="Incident No. / Keyword" Variant="Variant.Outlined"
+                                  Dense="true" Margin="Margin.Dense"
+                                  Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Outlined.Search"
+                                  OnKeyDown="OnSearchKeyDown" Immediate="false" Style="flex:1;" />
+                    <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary"
+                                StartIcon="@Icons.Material.Outlined.Search" OnClick="LoadAsync" Disabled="_busy">
+                        Search
+                    </AMISButton>
+                </MudStack>
 
                 <AMISEnumChips TEnum="PropertyIncidentType" Value="_typeFilter" ValueChanged="OnTypeChanged"
                                Label="Incident Type" Class="mt-3" />
