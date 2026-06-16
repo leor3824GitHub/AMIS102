@@ -21,16 +21,15 @@
                     </MudSelect>
                 </MudItem>
                 <MudItem xs="12" md="4">
-                    <MudDatePicker @bind-Date="_form.IssuedOnNullable" Label="Issued On" Variant="Variant.Outlined"
-                                   DateFormat="MM/dd/yyyy" Required="true" Dense="true" Margin="Margin.Dense" />
+                    <MudDatePicker Date="_form.IssuedOnNullable" DateChanged="OnIssuedOnChanged" Label="Issued On"
+                                   Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" Required="true"
+                                   Dense="true" Margin="Margin.Dense" />
                 </MudItem>
                 <MudItem xs="12" md="4">
-                    @if (_form.Type == AccountabilityType.SE_ICS)
-                    {
-                        <MudDatePicker @bind-Date="_form.ExpiresOnNullable" Label="Expires On" Variant="Variant.Outlined"
-                                       DateFormat="MM/dd/yyyy" Required="true" Dense="true" Margin="Margin.Dense"
-                                       HelperText="ICS (SE) requires an expiry date." />
-                    }
+                    <MudDatePicker @bind-Date="_form.ExpiresOnNullable" Label="Expires On" Variant="Variant.Outlined"
+                                   DateFormat="MM/dd/yyyy" Required="true" Dense="true" Margin="Margin.Dense"
+                                   ReadOnly="@(_form.Type == AccountabilityType.PPE_PAR)"
+                                   HelperText="@(_form.Type == AccountabilityType.SE_ICS ? "ICS (SE) requires an expiry date." : "Expires three (3) years after the issued date.")" />
                 </MudItem>
                 <MudItem xs="12" md="6">
                     <MudTextField @bind-Value="_form.FundCluster" Label="Fund Cluster" Variant="Variant.Outlined"
@@ -139,6 +138,7 @@
     private void OnTypeChangedForm(AccountabilityType value)
     {
         _form.Type = value;
+        ApplyExpiryPolicy();
         // Selected assets are type-specific; clear them when the document type changes.
         foreach (var item in _form.Items)
         {
@@ -147,6 +147,24 @@
             item.Location = null;
             item.LookupError = null;
         }
+    }
+
+    private void OnIssuedOnChanged(DateTime? date)
+    {
+        _form.IssuedOnNullable = date;
+        ApplyExpiryPolicy();
+    }
+
+    // PAR expiry is fixed at issued + 3 years (server-authoritative) — mirror it here so the
+    // read-only field always shows the value the server will store. ICS keeps a user-editable
+    // expiry, defaulted to 3 years out.
+    private void ApplyExpiryPolicy()
+    {
+        var basis = _form.IssuedOnNullable ?? DateTime.Today;
+        if (_form.Type == AccountabilityType.PPE_PAR)
+            _form.ExpiresOnNullable = basis.AddYears(3);
+        else if (_form.ExpiresOnNullable is null)
+            _form.ExpiresOnNullable = basis.AddYears(3);
     }
 
     private void AddItem() => _form.Items.Add(new IssueItemRow());
@@ -296,9 +314,9 @@
             Snackbar.Add("Fund Cluster is required.", Severity.Warning);
             return;
         }
-        if (_form.Type == AccountabilityType.SE_ICS && _form.ExpiresOnNullable is null)
+        if (_form.ExpiresOnNullable is null)
         {
-            Snackbar.Add("ICS (Semi-Expendable) requires an expiry date.", Severity.Warning);
+            Snackbar.Add("An expiry date is required.", Severity.Warning);
             return;
         }
         if (_form.Items.Count == 0 || _form.Items.Any(i => i.Asset is null))
@@ -321,9 +339,7 @@
 
         var receivedBy = ToRef(_form.ReceivedBy)!;
         var issuedOn = DateOnly.FromDateTime(_form.IssuedOnNullable.Value);
-        DateOnly? expiresOn = _form.Type == AccountabilityType.SE_ICS
-            ? DateOnly.FromDateTime(_form.ExpiresOnNullable!.Value)
-            : null;
+        DateOnly? expiresOn = DateOnly.FromDateTime(_form.ExpiresOnNullable!.Value);
 
         var lines = _form.Items
             .Select((row, idx) => new IssueAccountabilityLineRequest(
@@ -398,7 +414,7 @@
     {
         public AccountabilityType Type { get; set; } = AccountabilityType.SE_ICS;
         public DateTime? IssuedOnNullable { get; set; } = DateTime.Today;
-        public DateTime? ExpiresOnNullable { get; set; } = DateTime.Today.AddYears(1);
+        public DateTime? ExpiresOnNullable { get; set; } = DateTime.Today.AddYears(3);
         public string? FundCluster { get; set; }
         public EmployeeReferenceDto? ReceivedBy { get; set; }
         public List<IssueItemRow> Items { get; set; } = [];

@@ -9,6 +9,7 @@ using AMIS.Modules.AssetRegister.Domain.Catalog;
 using AMIS.Modules.AssetRegister.Domain.Counting;
 using AMIS.Modules.AssetRegister.Domain.Incidents;
 using AMIS.Modules.AssetRegister.Domain.Issuance;
+using AMIS.Modules.AssetRegister.Domain.Locations;
 using AMIS.Modules.AssetRegister.Domain.Receiving;
 using AMIS.Modules.AssetRegister.Domain.ReturnedProperty;
 using AMIS.Modules.AssetRegister.Domain.Unserviceable;
@@ -32,6 +33,7 @@ public class AssetRegisterDbContext : BaseDbContext
     public DbSet<ReceivingReport> ReceivingReports => Set<ReceivingReport>();
     public DbSet<PPERRFormSeries> PPERRFormSeries => Set<PPERRFormSeries>();
     public DbSet<ReturnedPropertyReceipt> ReturnedPropertyReceipts => Set<ReturnedPropertyReceipt>();
+    public DbSet<Location> Locations => Set<Location>();
 
     public AssetRegisterDbContext(
         IMultiTenantContextAccessor<AppTenantInfo> multiTenantContextAccessor,

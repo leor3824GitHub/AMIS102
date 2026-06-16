@@ -26,7 +26,18 @@ public partial class ProfilePage : ContentPage
 
     private async void OnLogoutClicked(object sender, EventArgs e)
     {
-        await _vm.LogoutAsync();
+        var pending = await _vm.GetPendingSyncCountAsync();
+
+        var entryNoun = pending == 1 ? "entry" : "entries";
+        var message = pending > 0
+            ? $"You have {pending} count {entryNoun} that haven't synced yet. " +
+              "Signing out will permanently discard them. Sign out anyway?"
+            : "You'll need to log in again, and cached inventory will be cleared. Sign out now?";
+
+        var confirmed = await DisplayAlert("Sign Out", message, "Sign Out", "Cancel");
+
+        if (confirmed)
+            await _vm.LogoutAsync();
     }
 
     private static ProfileViewModel ResolveViewModel() =>

@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using Playground.Maui.Data;
 using Playground.Maui.Services;
 using System.Reflection;
 
@@ -7,7 +8,9 @@ namespace Playground.Maui.Features.Profile;
 public sealed partial class ProfileViewModel(
     IApiClient apiClient,
     AuthStateService authState,
-    ITokenStorageService tokenStorage) : ObservableObject
+    ITokenStorageService tokenStorage,
+    IPhysicalCountSyncService syncService,
+    LocalDb localDb) : ObservableObject
 {
     [ObservableProperty] private string _fullName = "";
     [ObservableProperty] private string _email = "";
@@ -71,9 +74,16 @@ public sealed partial class ProfileViewModel(
         };
     }
 
+    /// <summary>
+    /// Number of unsynced count entries still queued locally. Used by the Sign Out
+    /// confirmation to warn the user before their cached data is wiped on logout.
+    /// </summary>
+    public Task<int> GetPendingSyncCountAsync() => syncService.GetPendingCountAsync();
+
     public async Task LogoutAsync()
     {
         await tokenStorage.ClearAsync();
+        await localDb.ClearAllAsync();
         authState.Clear();
         var loginPage = Application.Current!.Handler!.MauiContext!.Services
             .GetRequiredService<Auth.LoginPage>();

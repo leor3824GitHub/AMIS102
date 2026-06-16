@@ -192,16 +192,18 @@
                         </RowTemplate>
                     </MudTable>
 
-                    <!-- Renew action (Active ICS only — PAR does not expire) -->
-                    @if (_selected.Status == AccountabilityStatus.Active && _selected.AccountabilityType == AccountabilityType.SE_ICS && _canIssue)
+                    <!-- Renew action (Active only). ICS = user-set expiry; PAR = fixed 3-year renewal. -->
+                    @if (_selected.Status == AccountabilityStatus.Active && _canIssue)
                     {
                         <MudDivider Class="my-3" />
-                        <MudText Typo="Typo.subtitle2" Class="mb-2">Renew ICS</MudText>
+                        <MudText Typo="Typo.subtitle2" Class="mb-2">Renew @(_selected.AccountabilityType == AccountabilityType.SE_ICS ? "ICS" : "PAR")</MudText>
                         <MudStack Row="true" Spacing="2" AlignItems="AlignItems.End">
-                            <MudDatePicker @bind-Date="_renewIssuedOn" Label="New Issued On" Variant="Variant.Outlined"
-                                           DateFormat="MM/dd/yyyy" Dense="true" Margin="Margin.Dense" Style="flex:1;" />
+                            <MudDatePicker Date="_renewIssuedOn" DateChanged="OnRenewIssuedOnChanged" Label="New Issued On"
+                                           Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" Dense="true" Margin="Margin.Dense" Style="flex:1;" />
                             <MudDatePicker @bind-Date="_renewExpiresOn" Label="New Expires On" Variant="Variant.Outlined"
-                                           DateFormat="MM/dd/yyyy" Dense="true" Margin="Margin.Dense" Style="flex:1;" />
+                                           DateFormat="MM/dd/yyyy" Dense="true" Margin="Margin.Dense" Style="flex:1;"
+                                           ReadOnly="@(_selected.AccountabilityType == AccountabilityType.PPE_PAR)"
+                                           HelperText="@(_selected.AccountabilityType == AccountabilityType.PPE_PAR ? "Expires three (3) years after the issued date." : null)" />
                             <AMISButton Variant="Variant.Outlined" Color="Color.Primary"
                                         OnClick="RenewAsync" Disabled="_busy || _renewIssuedOn is null || _renewExpiresOn is null">
                                 Renew
@@ -243,7 +245,7 @@
     private ArAccountabilityDto? _selected;
     private string? _cancelReason;
     private DateTime? _renewIssuedOn = DateTime.Today;
-    private DateTime? _renewExpiresOn = DateTime.Today.AddYears(1);
+    private DateTime? _renewExpiresOn = DateTime.Today.AddYears(3);
 
     [SupplyParameterFromQuery(Name = "id")]
     public Guid? QueryId { get; set; }
@@ -311,7 +313,7 @@
             _selected = await Client.GetAsync(args.Item.Id);
             _cancelReason = null;
             _renewIssuedOn = DateTime.Today;
-            _renewExpiresOn = DateTime.Today.AddYears(1);
+            ApplyRenewExpiryPolicy();
         }
         catch (Exception ex)
         {
@@ -343,9 +345,27 @@
         }
     }
 
+    private void OnRenewIssuedOnChanged(DateTime? date)
+    {
+        _renewIssuedOn = date;
+        ApplyRenewExpiryPolicy();
+    }
+
+    // PAR renewal expiry is fixed at issued + 3 years (server-authoritative); mirror it in the
+    // read-only field. ICS renewal keeps a user-editable expiry, defaulted to 3 years out.
+    private void ApplyRenewExpiryPolicy()
+    {
+        var basis = _renewIssuedOn ?? DateTime.Today;
+        if (_selected?.AccountabilityType == AccountabilityType.PPE_PAR)
+            _renewExpiresOn = basis.AddYears(3);
+        else
+            _renewExpiresOn ??= basis.AddYears(3);
+    }
+
     private async Task RenewAsync()
     {
         if (_selected is null || _renewIssuedOn is null || _renewExpiresOn is null) return;
+        var label = _selected.AccountabilityType == AccountabilityType.SE_ICS ? "ICS" : "PAR";
         _busy = true;
         try
         {
@@ -354,7 +374,7 @@
                 DateOnly.FromDateTime(_renewIssuedOn.Value),
                 DateOnly.FromDateTime(_renewExpiresOn.Value));
             _selected = result;
-            Snackbar.Add($"ICS renewed as {result.DocumentNo}.", Severity.Success);
+            Snackbar.Add($"{label} renewed as {result.DocumentNo}.", Severity.Success);
             await LoadAsync();
         }
         catch (Exception ex)

@@ -23,6 +23,9 @@ public sealed class PropertyAccountability : AggregateRoot<Guid>, IHasTenant, IA
     public EmployeeRef IssuedBy { get; private set; } = default!;
     public EmployeeRef ReceivedBy { get; private set; } = default!;
 
+    /// <summary>COA renewal cadence for PAR (PPE) accountabilities — expires 3 years after issuance.</summary>
+    public const int ParRenewalYears = 3;
+
     private readonly List<PropertyAccountabilityLine> _lines = [];
     public IReadOnlyCollection<PropertyAccountabilityLine> Lines => _lines.AsReadOnly();
 
@@ -32,6 +35,17 @@ public sealed class PropertyAccountability : AggregateRoot<Guid>, IHasTenant, IA
     public string? LastModifiedBy { get; set; }
 
     private PropertyAccountability() { }
+
+    // Both ICS and PAR carry an expiry date. ICS uses the caller-supplied expiry; PAR is
+    // server-authoritative — always issued + 3 years, never user-set (COA renewal cadence).
+    private static DateOnly ResolveExpiry(AccountabilityType type, DateOnly issuedOn, DateOnly? requestedExpiresOn)
+    {
+        if (type == AccountabilityType.PPE_PAR)
+            return issuedOn.AddYears(ParRenewalYears);
+
+        return requestedExpiresOn
+            ?? throw new InvalidOperationException("ICS accountability requires an expiry date.");
+    }
 
     public static PropertyAccountability Issue(
         string tenantId,
@@ -66,15 +80,7 @@ public sealed class PropertyAccountability : AggregateRoot<Guid>, IHasTenant, IA
                     "Only Available assets may be issued.");
         }
 
-        if (type == AccountabilityType.SE_ICS)
-        {
-            if (expiresOn is null)
-                throw new InvalidOperationException("ICS accountability requires an ExpiresOn date.");
-        }
-        else if (expiresOn is not null)
-        {
-            throw new InvalidOperationException("PAR accountability does not carry an ExpiresOn date.");
-        }
+        var resolvedExpiresOn = ResolveExpiry(type, issuedOn, expiresOn);
 
         var accountability = new PropertyAccountability
         {
@@ -84,7 +90,7 @@ public sealed class PropertyAccountability : AggregateRoot<Guid>, IHasTenant, IA
             AccountabilityType = type,
             FundCluster = fundCluster,
             IssuedOn = issuedOn,
-            ExpiresOn = expiresOn,
+            ExpiresOn = resolvedExpiresOn,
             Status = AccountabilityStatus.Active,
             IssuedBy = issuedBy,
             ReceivedBy = receivedBy,
@@ -115,7 +121,7 @@ public sealed class PropertyAccountability : AggregateRoot<Guid>, IHasTenant, IA
             AccountabilityType = AccountabilityType,
             FundCluster = FundCluster,
             IssuedOn = newIssuedOn,
-            ExpiresOn = newExpiresOn,
+            ExpiresOn = ResolveExpiry(AccountabilityType, newIssuedOn, newExpiresOn),
             Status = AccountabilityStatus.Active,
             SupersedesAccountabilityId = Id,
             IssuedBy = IssuedBy,

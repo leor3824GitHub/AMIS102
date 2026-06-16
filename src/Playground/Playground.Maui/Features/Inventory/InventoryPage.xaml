@@ -44,6 +44,11 @@
                                 <DataTemplate x:DataType="svc:PARSummaryDto">
                                     <Border Style="{StaticResource CardBorderStyle}"
                                             Margin="16,4" Padding="16,14">
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:InventoryViewModel}}, Path=OpenParCommand}"
+                                                CommandParameter="{Binding .}" />
+                                        </Border.GestureRecognizers>
                                         <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" RowSpacing="4">
                                             <Label Grid.Row="0" Grid.Column="0"
                                                    Text="{Binding PARNo}"
@@ -74,6 +79,11 @@
                     <DataTemplate x:DataType="svc:ICSSummaryDto">
                         <Border Style="{StaticResource CardBorderStyle}"
                                 Margin="16,4" Padding="16,14">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:InventoryViewModel}}, Path=OpenIcsCommand}"
+                                    CommandParameter="{Binding .}" />
+                            </Border.GestureRecognizers>
                             <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" RowSpacing="4">
                                 <Label Grid.Row="0" Grid.Column="0"
                                        Text="{Binding ICSNo}"

@@ -4,6 +4,7 @@ using AMIS.Modules.AssetRegister.Contracts.v1;
 using AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
 using AMIS.Modules.AssetRegister.Domain.Assets;
 using AMIS.Modules.AssetRegister.Domain.Catalog;
+using AMIS.Modules.AssetRegister.Domain.Locations;
 using AMIS.Modules.AssetRegister.Domain.Receiving;
 using AMIS.Modules.MasterData.Contracts.v1.References;
 using AMIS.Modules.MasterData.Contracts.v1.Suppliers;
@@ -29,8 +30,46 @@ internal sealed class AssetRegisterDbInitializer(
 
     public async Task SeedAsync(CancellationToken cancellationToken)
     {
+        await SeedLocationsAsync(cancellationToken).ConfigureAwait(false);
         await SeedCatalogAsync(cancellationToken).ConfigureAwait(false);
         await SeedAcquisitionChainsAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private static readonly (string Code, string Name, LocationType Type, string Description)[] SeedLocations =
+    [
+        ("WH-MAIN",   "Main Warehouse",          LocationType.Warehouse,  "Central warehouse for incoming and stored property."),
+        ("SR-01",     "Supply Room 1",           LocationType.Storage,    "Primary supply room for semi-expendable items."),
+        ("OFF-GSD",   "General Services Office",  LocationType.Office,     "General Services Department office."),
+        ("OFF-ADMIN", "Administration Office",    LocationType.Office,     "Administrative offices and records."),
+        ("DEPT-IT",   "IT Department",           LocationType.Department, "Information technology equipment and staff."),
+        ("MOTORPOOL", "Motorpool",               LocationType.Other,      "Vehicle and heavy equipment staging area."),
+    ];
+
+    private async Task SeedLocationsAsync(CancellationToken cancellationToken)
+    {
+        if (bool.Parse(Environment.GetEnvironmentVariable("DISABLE_ASSETREGISTER_SEEDING") ?? "false"))
+            return;
+
+        var tenantId = context.TenantInfo?.Identifier ?? MultitenancyConstants.Root.Id;
+
+        var existingCodes = (await context.Locations
+            .IgnoreQueryFilters()
+            .Where(x => x.TenantId == tenantId)
+            .Select(x => x.Code)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var toAdd = SeedLocations
+            .Where(l => !existingCodes.Contains(l.Code))
+            .Select(l => Location.Create(tenantId, l.Code, l.Name, l.Type, parentLocationId: null, l.Description))
+            .ToList();
+
+        if (toAdd.Count == 0) return;
+
+        await context.Locations.AddRangeAsync(toAdd, cancellationToken).ConfigureAwait(false);
+        await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        logger.LogInformation("[{Tenant}] seeded asset register with {Count} new location(s)", tenantId, toAdd.Count);
     }
 
     private async Task SeedCatalogAsync(CancellationToken cancellationToken)

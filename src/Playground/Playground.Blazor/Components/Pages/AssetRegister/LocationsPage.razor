@@ -1,6 +1,6 @@
 @page "/asset-register/locations"
 @using AMIS.Playground.Blazor.ApiClient
-@using AMIS.Modules.AssetManagement.Contracts.Permissions
+@using AMIS.Modules.AssetRegister.Contracts.Permissions
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 @inject ILocationClient LocationClient
@@ -104,9 +104,9 @@
     private int _pageIndex = 1;
     private const int PageSize = 10;
 
-    private bool _canCreate => UserProfileState.Permissions.Contains(AssetManagementPermissions.Locations.Create);
-    private bool _canUpdate => UserProfileState.Permissions.Contains(AssetManagementPermissions.Locations.Update);
-    private bool _canDelete => UserProfileState.Permissions.Contains(AssetManagementPermissions.Locations.Delete);
+    private bool _canCreate => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Locations.Create);
+    private bool _canUpdate => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Locations.Update);
+    private bool _canDelete => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Locations.Delete);
 
     protected override async Task OnInitializedAsync() => await LoadAsync();
 

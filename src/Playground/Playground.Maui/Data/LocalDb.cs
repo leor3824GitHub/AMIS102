@@ -29,4 +29,15 @@ public sealed class LocalDb
             _lock.Release();
         }
     }
+
+    /// <summary>
+    /// Wipes all locally cached data. Called on logout so the next user starts clean.
+    /// Note: this also discards any unsynced <see cref="PendingCountEntry"/> rows — callers
+    /// should warn the user when pending entries exist before invoking this.
+    /// </summary>
+    public async Task ClearAllAsync()
+    {
+        var db = await GetConnectionAsync();
+        await db.DeleteAllAsync<PendingCountEntry>();
+    }
 }

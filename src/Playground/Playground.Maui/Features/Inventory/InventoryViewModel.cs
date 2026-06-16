@@ -39,4 +39,18 @@ public sealed partial class InventoryViewModel(
             IsLoading = false;
         }
     }
+
+    [RelayCommand]
+    private static async Task OpenIcsAsync(ICSSummaryDto? item)
+    {
+        if (item is null) return;
+        await Shell.Current.GoToAsync($"{nameof(ICSDetailPage)}?Id={item.Id}");
+    }
+
+    [RelayCommand]
+    private static async Task OpenParAsync(PARSummaryDto? item)
+    {
+        if (item is null) return;
+        await Shell.Current.GoToAsync($"{nameof(PARDetailPage)}?Id={item.Id}");
+    }
 }

@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:Playground.Maui.Features.Inventory"
+             xmlns:svc="clr-namespace:Playground.Maui.Services"
              x:DataType="vm:ICSDetailViewModel"
              x:Class="Playground.Maui.Features.Inventory.ICSDetailPage"
              Title="ICS Detail"
@@ -52,6 +53,44 @@
                     </VerticalStackLayout>
                 </Grid>
             </Border>
+
+            <!-- Items -->
+            <Grid ColumnDefinitions="*,Auto" Margin="20,20,20,10">
+                <Label Grid.Column="0" Text="ITEMS"
+                       Style="{StaticResource SectionHeaderStyle}"
+                       Margin="0" VerticalOptions="Center" />
+                <Label Grid.Column="1"
+                       Text="{Binding Detail.Items.Count, StringFormat='{0} items'}"
+                       Style="{StaticResource CaptionStyle}"
+                       VerticalOptions="Center" />
+            </Grid>
+
+            <VerticalStackLayout BindableLayout.ItemsSource="{Binding Detail.Items}"
+                                 Spacing="0" Margin="16,0,16,24">
+                <BindableLayout.EmptyView>
+                    <Label Text="No items on this ICS."
+                           Style="{StaticResource CaptionStyle}"
+                           Margin="4,8" />
+                </BindableLayout.EmptyView>
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="svc:ICSItemDto">
+                        <Border Style="{StaticResource CardBorderStyle}" Margin="0,4" Padding="16,12">
+                            <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" RowSpacing="4">
+                                <Label Grid.Row="0" Grid.Column="0"
+                                       Text="{Binding PropertyNo}"
+                                       FontFamily="InterSemiBold" FontSize="14" />
+                                <Label Grid.Row="0" Grid.Column="1"
+                                       Text="{Binding UnitCost, StringFormat='₱{0:N2}'}"
+                                       FontFamily="InterBold" FontSize="14" />
+                                <Label Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                                       Text="{Binding Description}"
+                                       Style="{StaticResource CaptionStyle}"
+                                       IsVisible="{Binding Description, Converter={StaticResource IsNotNullConverter}}" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
 
         </VerticalStackLayout>
     </ScrollView>

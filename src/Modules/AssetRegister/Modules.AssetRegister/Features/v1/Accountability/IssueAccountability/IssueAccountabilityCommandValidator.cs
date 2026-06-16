@@ -28,15 +28,17 @@ public sealed class IssueAccountabilityCommandValidator : AbstractValidator<Issu
             line.RuleFor(l => l.ChassisNumber).MaximumLength(64);
         });
 
-        // Form segregation: SE_ICS REQUIRES expiry; PPE_PAR FORBIDS it.
+        // ICS carries a user-supplied expiry; PAR expiry is derived server-side (issued + 3 years),
+        // so only the ICS-supplied value needs validating here.
         RuleFor(x => x).Custom((c, ctx) =>
         {
-            if (c.AccountabilityType == AccountabilityType.SE_ICS && c.ExpiresOn is null)
-                ctx.AddFailure(nameof(c.ExpiresOn), "ICS (SE) accountability requires an ExpiresOn date.");
-            if (c.AccountabilityType == AccountabilityType.PPE_PAR && c.ExpiresOn is not null)
-                ctx.AddFailure(nameof(c.ExpiresOn), "PAR (PPE) accountability does not carry an ExpiresOn date.");
-            if (c.ExpiresOn is { } eo && eo <= c.IssuedOn)
-                ctx.AddFailure(nameof(c.ExpiresOn), "ExpiresOn must be after IssuedOn.");
+            if (c.AccountabilityType != AccountabilityType.SE_ICS)
+                return;
+
+            if (c.ExpiresOn is null)
+                ctx.AddFailure(nameof(c.ExpiresOn), "ICS accountability requires an expiry date.");
+            else if (c.ExpiresOn <= c.IssuedOn)
+                ctx.AddFailure(nameof(c.ExpiresOn), "Expiry date must be after the issued date.");
         });
     }
 }

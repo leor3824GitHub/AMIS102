@@ -5,9 +5,9 @@ using System.Text.Json.Serialization;
 
 namespace AMIS.Playground.Blazor.ApiClient;
 
-// Full CRUD client over the AssetManagement locations endpoint
-// (api/v1/asset-management/locations). Backs the Blazor Locations management page.
-// Read access requires AssetManagement Locations.View; writes require Create/Update/Delete.
+// Full CRUD client over the AssetRegister locations endpoint
+// (api/v1/asset-register/locations). Backs the Blazor Locations management page.
+// Read access requires AssetRegister Locations.View; writes require Create/Update/Delete.
 // (ILocationLookupClient stays the lightweight read-only typeahead used by pickers.)
 public enum LocationKind
 {
@@ -49,7 +49,7 @@ public interface ILocationClient
 
 internal sealed class LocationClient(HttpClient http) : ILocationClient
 {
-    private const string Base = "api/v1/asset-management/locations";
+    private const string Base = "api/v1/asset-register/locations";
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
     {

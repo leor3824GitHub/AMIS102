@@ -83,4 +83,12 @@ public static class AssetRegisterPermissions
         public const string Create = "Permissions.AssetRegister.ReturnedProperty.Create";
         public const string Accept = "Permissions.AssetRegister.ReturnedProperty.Accept";
     }
+
+    public static class Locations
+    {
+        public const string View   = "Permissions.AssetRegister.Locations.View";
+        public const string Create = "Permissions.AssetRegister.Locations.Create";
+        public const string Update = "Permissions.AssetRegister.Locations.Update";
+        public const string Delete = "Permissions.AssetRegister.Locations.Delete";
+    }
 }

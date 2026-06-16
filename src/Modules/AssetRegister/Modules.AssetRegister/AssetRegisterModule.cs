@@ -73,6 +73,11 @@ public class AssetRegisterModule : IModule
         new("View Returned Property Receipts",   "View",   "AssetRegister.ReturnedProperty", IsBasic: true),
         new("Create Returned Property Receipts", "Create", "AssetRegister.ReturnedProperty"),
         new("Accept Returned Property Receipts", "Accept", "AssetRegister.ReturnedProperty"),
+
+        new("View Locations",   "View",   "AssetRegister.Locations", IsBasic: true),
+        new("Create Locations", "Create", "AssetRegister.Locations"),
+        new("Update Locations", "Update", "AssetRegister.Locations"),
+        new("Delete Locations", "Delete", "AssetRegister.Locations"),
     ];
 
     public void ConfigureServices(IHostApplicationBuilder builder)
@@ -230,6 +235,14 @@ public class AssetRegisterModule : IModule
         // Returned property receipts (RRSP / RRP)
         var returnedProperty = moduleGroup.MapGroup("/returned-property");
         Features.v1.ReturnedProperty.ReturnedPropertyEndpoints.MapReturnedPropertyEndpoints(returnedProperty);
+
+        // Locations (asset placement + accountability)
+        var locations = moduleGroup.MapGroup("/locations");
+        Features.v1.Locations.GetLocations.GetLocationsEndpoint.Map(locations);
+        Features.v1.Locations.GetLocationById.GetLocationByIdEndpoint.Map(locations);
+        Features.v1.Locations.CreateLocation.CreateLocationEndpoint.Map(locations);
+        Features.v1.Locations.UpdateLocation.UpdateLocationEndpoint.Map(locations);
+        Features.v1.Locations.DeleteLocation.DeleteLocationEndpoint.Map(locations);
 
         // Report rendering endpoints (ICS/PAR, RSPI/PPEIR, RPCSEMEX/RPCPPE, RegSPI, RLSDDSP, IIRUSP/IIRUP) — Phase 5
         var reports = moduleGroup.MapGroup("/reports");
