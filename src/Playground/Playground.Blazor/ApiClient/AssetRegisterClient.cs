@@ -1512,6 +1512,9 @@ internal interface IArReturnedPropertyClient
     Task<ArReturnedPropertyReceiptDto> AcceptAsync(Guid id, ArEmployeeRefDto receivedBy, CancellationToken ct = default);
     Task<ArReturnedPropertyReceiptDto> RejectAsync(Guid id, string reason, CancellationToken ct = default);
     Task<ArReturnedPropertyReceiptDto> CancelAsync(Guid id, string? reason, CancellationToken ct = default);
+
+    /// <summary>Generates the Receipt of Returned Property (RRP / RRSP) PDF — NFA Exhibit 6.</summary>
+    Task<byte[]> GetReceiptPdfAsync(Guid id, string? pageWidth = null, CancellationToken ct = default);
 }
 
 internal sealed class ArReturnedPropertyClient(HttpClient http) : IArReturnedPropertyClient
@@ -1599,6 +1602,14 @@ internal sealed class ArReturnedPropertyClient(HttpClient http) : IArReturnedPro
         var resp = await http.PostAsJsonAsync($"{Base}/{id}/cancel", new CancelReturnedPropertyReceiptRequest(reason), ArJsonOptions.Default, ct);
         resp.EnsureSuccessStatusCode();
         return (await resp.Content.ReadFromJsonAsync<ArReturnedPropertyReceiptDto>(ArJsonOptions.Default, cancellationToken: ct))!;
+    }
+
+    public Task<byte[]> GetReceiptPdfAsync(Guid id, string? pageWidth = null, CancellationToken ct = default)
+    {
+        var url = string.IsNullOrWhiteSpace(pageWidth)
+            ? $"api/v1/quest-pdf-reporting/asset-register/returned-property/{id}/pdf"
+            : $"api/v1/quest-pdf-reporting/asset-register/returned-property/{id}/pdf?pageWidth={pageWidth}";
+        return http.GetByteArrayAsync(url, ct);
     }
 }
 

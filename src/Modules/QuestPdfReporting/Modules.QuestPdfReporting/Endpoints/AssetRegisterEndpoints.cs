@@ -4,6 +4,7 @@ using AMIS.Modules.QuestPdfReporting.Features.v1.AssetRegister.PrintIncident;
 using AMIS.Modules.QuestPdfReporting.Features.v1.AssetRegister.PrintPhysicalCountReport;
 using AMIS.Modules.QuestPdfReporting.Features.v1.AssetRegister.PrintPropertyCard;
 using AMIS.Modules.QuestPdfReporting.Features.v1.AssetRegister.PrintRegSpi;
+using AMIS.Modules.QuestPdfReporting.Features.v1.AssetRegister.PrintReturnedProperty;
 using AMIS.Modules.QuestPdfReporting.Features.v1.AssetRegister.PrintUnserviceable;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
@@ -23,6 +24,7 @@ internal static class AssetRegisterEndpoints
         PrintUnserviceableEndpoint.Map(assetRegister);
         PrintIncidentEndpoint.Map(assetRegister);
         PrintPropertyCardEndpoint.Map(assetRegister);
+        PrintReturnedPropertyEndpoint.Map(assetRegister);
 
         return group;
     }

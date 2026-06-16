@@ -10,6 +10,7 @@
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
 @inject IUserProfileState UserProfileState
+@inject IJSRuntime JS
 
 <AMISPageHeader Title="Returned Property Receipts (RRSP / RRP)"
                Description="End-users request the return of property assigned to them; an inspector records each item's condition, then the property custodian receives and accepts it. Accepting marks each asset back to Available at its inspected condition." />
@@ -158,6 +159,12 @@
                             @StatusChip(_detail.Status)
                             <MudText Typo="Typo.body2" Color="Color.Secondary">@_detail.Date.ToString("MMMM dd, yyyy")</MudText>
                             <MudSpacer />
+                            <AMISButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Secondary"
+                                        StartIcon="@Icons.Material.Filled.PictureAsPdf"
+                                        OnClick="PrintAsync" Disabled="_printing">
+                                @if (_printing) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-1" /> }
+                                Print @(_detail.ReceiptType == ReturnedPropertyReceiptType.RRSP ? "RRSP" : "RRP")
+                            </AMISButton>
                             <AMISIconButton Icon="@Icons.Material.Filled.Close" OnClick="@(() => _detail = null)" />
                         </MudStack>
                     </CardHeaderContent>
@@ -337,6 +344,28 @@
     {
         try { _detail = await Client.GetAsync(id); }
         catch (Exception ex) { Snackbar.Add($"Load failed: {ex.Message}", Severity.Error); }
+    }
+
+    private bool _printing;
+
+    private async Task PrintAsync()
+    {
+        if (_detail is null) return;
+        _printing = true;
+        try
+        {
+            var bytes = await Client.GetReceiptPdfAsync(_detail.Id, pageWidth: "longbond");
+            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
+            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"PDF generation failed: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _printing = false;
+        }
     }
 
     private async Task OpenRequestDialog()
