@@ -95,6 +95,18 @@ public sealed record AccountabilityCancelledEvent(
     string? TenantId,
     string? CorrelationId = null) : AssetRegisterDomainEvent(TenantId, CorrelationId);
 
+/// <summary>
+/// Raised when the accountable employee accepts a pending ICS/PAR issuance
+/// (PendingAcceptance → Active). Lets other surfaces (web UI, MAUI) react to or
+/// reconcile the acceptance that may have happened on a different client.
+/// </summary>
+public sealed record AccountabilityAcceptedEvent(
+    Guid AccountabilityId,
+    Guid AcceptedByEmployeeId,
+    DateOnly AcceptedOn,
+    string? TenantId,
+    string? CorrelationId = null) : AssetRegisterDomainEvent(TenantId, CorrelationId);
+
 public sealed record IssuanceReportPostedEvent(
     Guid ReportId,
     string ReportNo,

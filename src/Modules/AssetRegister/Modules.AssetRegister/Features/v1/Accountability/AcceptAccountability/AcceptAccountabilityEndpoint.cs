@@ -15,6 +15,7 @@ public static class AcceptAccountabilityEndpoint
             .WithModuleName<AcceptAccountabilityCommand>()
             .WithSummary("Accept a pending ICS/PAR issued to me (PendingAcceptance → Active)")
             .Produces<PropertyAccountabilityDto>()
+            .Produces(StatusCodes.Status409Conflict)
             .RequirePermission(AssetRegisterPermissions.MyAccountability.Acknowledge);
 
     private static async Task<IResult> Handle(

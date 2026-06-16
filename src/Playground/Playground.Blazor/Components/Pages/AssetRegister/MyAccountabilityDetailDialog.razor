@@ -162,6 +162,14 @@
         catch (Exception ex)
         {
             Snackbar.Add(ex.Message, Severity.Error);
+            // Likely a cross-client race (already accepted on MAUI / another tab). Re-pull the
+            // current state so the Accept button drops and the parent list reflects the new status.
+            try
+            {
+                _selected = await Client.GetMineDetailAsync(Id);
+                _changed = true;
+            }
+            catch { /* keep the existing view if the refresh itself fails */ }
         }
         finally
         {

@@ -127,6 +127,7 @@ public sealed class PropertyAccountability : AggregateRoot<Guid>, IHasTenant, IA
         Status = AccountabilityStatus.Active;
         AcceptedOn = acceptedOn;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        AddDomainEvent(new AccountabilityAcceptedEvent(Id, ReceivedBy.EmployeeId, acceptedOn, TenantId));
     }
 
     /// <summary>Edit header fields while still awaiting acceptance. Type is immutable (it binds the

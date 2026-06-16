@@ -49,10 +49,10 @@
         Text="Appendix 59" HorzAlign="Right" VertAlign="Center"
         Font="Times New Roman, 8pt, style=Italic" />
 
-      <TextObject Name="EntityLblL" Left="0" Top="14" Width="64" Height="22"
+      <TextObject Name="EntityLblL" Left="0" Top="14" Width="74" Height="22"
         Text="Entity Name:" VertAlign="Center"
         Font="Times New Roman, 8pt" Padding="2,0,2,0" />
-      <TextObject Name="EntityValL" Left="64" Top="14" Width="330" Height="22"
+      <TextObject Name="EntityValL" Left="74" Top="14" Width="320" Height="22"
         Text="[IcsDS.EntityName]" VertAlign="Bottom"
         Font="Times New Roman, 8pt, style=Bold"
         Border.Lines="8" Border.Width="0.5" Padding="2,0,2,0" />
@@ -64,10 +64,10 @@
         Font="Times New Roman, 8pt, style=Bold"
         Border.Lines="8" Border.Width="0.5" Padding="2,0,2,0" />
 
-      <TextObject Name="FundClusterLblL" Left="0" Top="36" Width="64" Height="22"
+      <TextObject Name="FundClusterLblL" Left="0" Top="36" Width="74" Height="22"
         Text="Fund Cluster:" VertAlign="Center"
         Font="Times New Roman, 8pt" Padding="2,0,2,0" />
-      <TextObject Name="FundClusterValL" Left="64" Top="36" Width="200" Height="22"
+      <TextObject Name="FundClusterValL" Left="74" Top="36" Width="190" Height="22"
         Text="[IcsDS.FundCluster]" VertAlign="Bottom"
         Font="Times New Roman, 8pt"
         Border.Lines="8" Border.Width="0.5" Padding="2,0,2,0" />
@@ -114,10 +114,10 @@
         Text="Appendix 59" HorzAlign="Right" VertAlign="Center"
         Font="Times New Roman, 8pt, style=Italic" />
 
-      <TextObject Name="EntityLblR" Left="598" Top="14" Width="64" Height="22"
+      <TextObject Name="EntityLblR" Left="598" Top="14" Width="74" Height="22"
         Text="Entity Name:" VertAlign="Center"
         Font="Times New Roman, 8pt" Padding="2,0,2,0" />
-      <TextObject Name="EntityValR" Left="662" Top="14" Width="330" Height="22"
+      <TextObject Name="EntityValR" Left="672" Top="14" Width="320" Height="22"
         Text="[IcsDS.EntityName]" VertAlign="Bottom"
         Font="Times New Roman, 8pt, style=Bold"
         Border.Lines="8" Border.Width="0.5" Padding="2,0,2,0" />
@@ -129,10 +129,10 @@
         Font="Times New Roman, 8pt, style=Bold"
         Border.Lines="8" Border.Width="0.5" Padding="2,0,2,0" />
 
-      <TextObject Name="FundClusterLblR" Left="598" Top="36" Width="64" Height="22"
+      <TextObject Name="FundClusterLblR" Left="598" Top="36" Width="74" Height="22"
         Text="Fund Cluster:" VertAlign="Center"
         Font="Times New Roman, 8pt" Padding="2,0,2,0" />
-      <TextObject Name="FundClusterValR" Left="662" Top="36" Width="200" Height="22"
+      <TextObject Name="FundClusterValR" Left="672" Top="36" Width="190" Height="22"
         Text="[IcsDS.FundCluster]" VertAlign="Bottom"
         Font="Times New Roman, 8pt"
         Border.Lines="8" Border.Width="0.5" Padding="2,0,2,0" />

@@ -19,8 +19,11 @@ public static class PrintAccountabilityICSFastEndpoint
             .RequirePermission(AccountabilityView);
 
     // Query: ?pageWidth=longbond|a4|legal   (default longbond)
-    //        ?orientation=portrait|landscape (default portrait)
+    //        ?orientation=landscape|portrait (default landscape)
     //        ?minRows=1..40                  (default 15)
+    // The ICS template is a landscape "2-up" form: two identical copies side by
+    // side on one sheet, meant to be cut down the centre gutter. Landscape is the
+    // default so the two-copy layout fits; portrait would clip the right copy.
     private static async Task<IResult> PrintFast(
         Guid id,
         IMediator mediator,
@@ -30,9 +33,9 @@ public static class PrintAccountabilityICSFastEndpoint
         int? minRows = null)
     {
         var paperSize = (pageWidth ?? "longbond").ToLowerInvariant();
-        var orient = (orientation ?? "portrait").ToLowerInvariant() == "landscape"
-            ? "landscape"
-            : "portrait";
+        var orient = (orientation ?? "landscape").ToLowerInvariant() == "portrait"
+            ? "portrait"
+            : "landscape";
         var rows = Math.Clamp(minRows ?? 15, 1, 40);
 
         var dto = await mediator.Send(
