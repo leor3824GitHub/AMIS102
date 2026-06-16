@@ -8,9 +8,17 @@ namespace Playground.Maui.Features.Inventory;
 public sealed partial class ICSDetailViewModel(IApiClient apiClient) : ObservableObject
 {
     [ObservableProperty] private string _id = "";
-    [ObservableProperty] private ICSDetailDto? _detail;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanAccept))]
+    private ICSDetailDto? _detail;
+
     [ObservableProperty] private bool _isLoading;
     [ObservableProperty] private string? _errorMessage;
+
+    // The Accept action is offered only while the document awaits the accountable person's
+    // acknowledgement; once Active it's hidden.
+    public bool CanAccept => string.Equals(Detail?.Status, "PendingAcceptance", StringComparison.OrdinalIgnoreCase);
 
     partial void OnIdChanged(string value) => _ = LoadAsync();
 
@@ -27,6 +35,36 @@ public sealed partial class ICSDetailViewModel(IApiClient apiClient) : Observabl
         catch (HttpRequestException)
         {
             ErrorMessage = "Could not load ICS details. Check your connection.";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task AcceptAsync(CancellationToken ct = default)
+    {
+        if (!Guid.TryParse(Id, out var guid) || !CanAccept) return;
+
+        var confirmed = await Shell.Current.DisplayAlert(
+            "Accept ICS",
+            $"Accept accountability for {Detail?.ICSNo}? This confirms you have received the listed property.",
+            "Accept", "Cancel");
+        if (!confirmed) return;
+
+        IsLoading = true;
+        ErrorMessage = null;
+        try
+        {
+            await apiClient.AcceptAccountabilityAsync(guid, ct);
+            await Shell.Current.DisplayAlert("Accepted", "The ICS is now active.", "OK");
+            Detail = await apiClient.GetICSByIdAsync(guid, ct);
+        }
+        catch (OperationCanceledException) { }
+        catch (HttpRequestException)
+        {
+            ErrorMessage = "Could not accept the ICS. Check your connection and try again.";
         }
         finally
         {

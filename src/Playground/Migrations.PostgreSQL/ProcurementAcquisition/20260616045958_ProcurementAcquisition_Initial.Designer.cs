@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AMIS.Playground.Migrations.PostgreSQL.ProcurementAcquisition
 {
     [DbContext(typeof(ProcurementDbContext))]
-    [Migration("20260604020239_ProcurementAcquisition_Initial")]
+    [Migration("20260616045958_ProcurementAcquisition_Initial")]
     partial class ProcurementAcquisition_Initial
     {
         /// <inheritdoc />
@@ -861,6 +861,8 @@ namespace AMIS.Playground.Migrations.PostgreSQL.ProcurementAcquisition
 
                             b1.Property<int>("ItemNo");
 
+                            b1.Property<int>("PrItemNo");
+
                             b1.Property<decimal>("Quantity")
                                 .HasPrecision(18, 4);
 
@@ -923,6 +925,13 @@ namespace AMIS.Playground.Migrations.PostgreSQL.ProcurementAcquisition
 
                             b1.Property<int>("__synthesizedOrdinal")
                                 .ValueGeneratedOnAdd();
+
+                            b1.Property<Guid?>("AwardedQuotationId");
+
+                            b1.Property<Guid?>("AwardedSupplierId");
+
+                            b1.Property<decimal?>("AwardedUnitPrice")
+                                .HasPrecision(18, 4);
 
                             b1.Property<Guid?>("CatalogItemId");
 

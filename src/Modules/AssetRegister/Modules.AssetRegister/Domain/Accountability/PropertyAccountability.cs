@@ -17,6 +17,10 @@ public sealed class PropertyAccountability : AggregateRoot<Guid>, IHasTenant, IA
     public DateOnly? ExpiresOn { get; private set; }
     public AccountabilityStatus Status { get; private set; }
     public string? CancellationReason { get; private set; }
+
+    /// <summary>Date the receiving employee accepted the issuance, moving it from
+    /// PendingAcceptance to Active. Null while still pending.</summary>
+    public DateOnly? AcceptedOn { get; private set; }
     public Guid? SupersededByAccountabilityId { get; private set; }
     public Guid? SupersedesAccountabilityId { get; private set; }
 
@@ -91,7 +95,8 @@ public sealed class PropertyAccountability : AggregateRoot<Guid>, IHasTenant, IA
             FundCluster = fundCluster,
             IssuedOn = issuedOn,
             ExpiresOn = resolvedExpiresOn,
-            Status = AccountabilityStatus.Active,
+            // Issued documents await the accountable person's acceptance before they take force.
+            Status = AccountabilityStatus.PendingAcceptance,
             IssuedBy = issuedBy,
             ReceivedBy = receivedBy,
             CreatedOnUtc = DateTimeOffset.UtcNow
@@ -107,6 +112,78 @@ public sealed class PropertyAccountability : AggregateRoot<Guid>, IHasTenant, IA
 
         return accountability;
     }
+
+    private void EnsureDraft(string action)
+    {
+        if (Status != AccountabilityStatus.PendingAcceptance)
+            throw new InvalidOperationException(
+                $"Cannot {action} accountability '{DocumentNo}' because it is {Status}, not awaiting acceptance.");
+    }
+
+    /// <summary>The receiving employee accepts the issuance: PendingAcceptance → Active.</summary>
+    public void Accept(DateOnly acceptedOn)
+    {
+        EnsureDraft("accept");
+        Status = AccountabilityStatus.Active;
+        AcceptedOn = acceptedOn;
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;
+    }
+
+    /// <summary>Edit header fields while still awaiting acceptance. Type is immutable (it binds the
+    /// document-number series and the SE/PPE form). PAR expiry stays server-authoritative.</summary>
+    public void UpdateHeader(string fundCluster, EmployeeRef receivedBy, DateOnly issuedOn, DateOnly? expiresOn)
+    {
+        EnsureDraft("edit");
+        ArgumentNullException.ThrowIfNull(receivedBy);
+        FundCluster = fundCluster;
+        ReceivedBy = receivedBy;
+        IssuedOn = issuedOn;
+        ExpiresOn = ResolveExpiry(AccountabilityType, issuedOn, expiresOn);
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;
+    }
+
+    /// <summary>Adds a line while awaiting acceptance. Caller is responsible for reserving the asset
+    /// (<c>AssetRegistry.AssignTo</c>). Returns nothing; throws if the asset is ineligible.</summary>
+    public void AddLine(AssetRegistry asset, string itemNo, string? responsibilityCenterCode, VehicleAccountabilityProfile? vehicleProfile)
+    {
+        EnsureDraft("modify lines on");
+        ArgumentNullException.ThrowIfNull(asset);
+
+        var expectedAssetType = AccountabilityType == AccountabilityType.SE_ICS ? AssetType.SE : AssetType.PPE;
+        if (asset.AssetType != expectedAssetType)
+            throw new InvalidOperationException(
+                $"Asset '{asset.PropertyNo.Value}' is {asset.AssetType} but accountability is {AccountabilityType}. " +
+                "COA forbids mixing SE and PPE on the same accountability document.");
+        if (asset.LifecycleState != LifecycleState.Available)
+            throw new InvalidOperationException(
+                $"Asset '{asset.PropertyNo.Value}' is in state '{asset.LifecycleState}'. Only Available assets may be added.");
+        if (_lines.Any(l => l.AssetRegistryId == asset.Id))
+            throw new InvalidOperationException($"Asset '{asset.PropertyNo.Value}' is already on this accountability.");
+
+        _lines.Add(PropertyAccountabilityLine.Create(
+            TenantId, Id, asset.Id, asset.Snapshot(), itemNo, responsibilityCenterCode, vehicleProfile));
+        AddDomainEvent(new AssetIssuedEvent(asset.Id, Id, ReceivedBy.EmployeeId, TenantId));
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;
+    }
+
+    /// <summary>Removes a line while awaiting acceptance. Caller is responsible for releasing the asset
+    /// (<c>AssetRegistry.ReturnToAvailable</c>). Returns the freed asset id.</summary>
+    public Guid RemoveLine(Guid lineId)
+    {
+        EnsureDraft("modify lines on");
+        var line = _lines.FirstOrDefault(l => l.Id == lineId)
+            ?? throw new InvalidOperationException($"Accountability line '{lineId}' not found.");
+        if (_lines.Count == 1)
+            throw new InvalidOperationException(
+                "An accountability must keep at least one line — delete the document instead of removing the last line.");
+        _lines.Remove(line);
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        return line.AssetRegistryId;
+    }
+
+    /// <summary>Guards a hard delete: only a PendingAcceptance document may be deleted. Caller is
+    /// responsible for releasing all reserved assets and removing the aggregate.</summary>
+    public void EnsureDeletableDraft() => EnsureDraft("delete");
 
     public PropertyAccountability Renew(string newDocumentNo, DateOnly newIssuedOn, DateOnly? newExpiresOn)
     {

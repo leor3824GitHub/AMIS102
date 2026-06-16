@@ -66,12 +66,22 @@ public sealed class ApiClient(HttpClient httpClient) : IApiClient
         var a = await httpClient.GetFromJsonAsync<ArAccountabilityDetail>(
             $"api/v1/asset-register/accountability/mine/{id}", ct);
         return new PARDetailDto(
-            a!.Id, a.DocumentNo, a.IssuedOn.ToString("yyyy-MM-dd"), "PPE", a.FundCluster,
+            a!.Id, a.DocumentNo, a.IssuedOn.ToString("yyyy-MM-dd"), "PPE", a.Status, a.FundCluster,
             a.Lines.Select(l => new PARItemDto(
                 l.Id, l.Snapshot.PropertyNo, l.Snapshot.Description,
                 l.Snapshot.AssetType, l.Snapshot.Unit, l.Snapshot.UnitCost,
                 l.IssuedQty, l.Snapshot.EstimatedUsefulLifeYears,
                 l.Snapshot.AcquisitionDate.ToString("yyyy-MM-dd"))).ToList());
+    }
+
+    public async Task AcceptAccountabilityAsync(Guid id, CancellationToken ct = default)
+    {
+        // Body mirrors AcceptAccountabilityCommand(AccountabilityId, AcceptedOn). AcceptedOn is
+        // today's date; the server validates the route id matches the body id.
+        var body = new { AccountabilityId = id, AcceptedOn = DateOnly.FromDateTime(DateTime.Today) };
+        var response = await httpClient.PostAsJsonAsync(
+            $"api/v1/asset-register/accountability/mine/{id}/accept", body, ct);
+        response.EnsureSuccessStatusCode();
     }
 
     public async Task<TangibleInventoryItemDetailDto> GetItemByPropertyNoAsync(string propertyNo, CancellationToken ct = default)

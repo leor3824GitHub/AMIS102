@@ -124,6 +124,14 @@
                 </BindableLayout.ItemTemplate>
             </VerticalStackLayout>
 
+            <!-- Accept action — shown only while awaiting the accountable person's acknowledgement -->
+            <Button Text="Accept ICS"
+                    Style="{StaticResource PrimaryActionButtonStyle}"
+                    Command="{Binding AcceptCommand}"
+                    IsEnabled="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}"
+                    IsVisible="{Binding CanAccept}"
+                    Margin="16,0,16,24" />
+
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

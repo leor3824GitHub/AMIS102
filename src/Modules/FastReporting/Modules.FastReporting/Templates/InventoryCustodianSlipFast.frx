@@ -1,111 +1,175 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Report ScriptLanguage="CSharp" ReportInfo.Created="05/26/2026 00:00:00" ReportInfo.Modified="05/26/2026 00:00:00" ReportInfo.CreatorVersion="2025.1.0">
+<Report ScriptLanguage="CSharp" ReportInfo.Created="05/26/2026 00:00:00" ReportInfo.Modified="06/16/2026 00:00:00" ReportInfo.CreatorVersion="2025.1.0">
   <Dictionary />
   <!--
     Data sources registered at runtime via Report.RegisterData(...).
 
-    Layout: Long Bond (216 × 330 mm) portrait, 10 mm margins.
-    Content width = (216-20) × 3.7795 = 741 units
+    Layout: Long Bond (330.2 × 215.9 mm) LANDSCAPE, 10 mm margins.
+            TWO identical copies side by side ("2-up"). Cut down the centre
+            gutter to obtain two portrait-shaped ICS slips and maximise paper.
 
-    DataSources:
+    Content width  = (330.2-20) × 3.7795 = 1172 units
+    Content height = (215.9-20) × 3.7795 =  740 units
+
+    Each copy is 574 units wide; a 24-unit (≈6 mm) gutter separates them so
+    the sheet can be sliced straight down the middle.
+        Left  copy : x =   0 … 574
+        Right copy : x = 598 … 1172   (RIGHT offset = 598)
+
+    The single DataBand iterates LineItemsDS once and draws every row in BOTH
+    copies at the same vertical position, so the two halves stay aligned.
+
+    DataSources (unchanged — handlers need no edits):
       IcsDS       – single-row header / signatory record
       LineItemsDS – one row per ICS item (DataTable)
 
-    Column widths (total 741):
-      Quantity          :  55   x=0
-      Unit              :  55   x=55
-      Unit Cost         :  90   x=110
-      Total Cost        :  90   x=200
-      Description       : 250   x=290
-      Inventory Item No.:  96   x=540
-      Est. Useful Life  : 105   x=636  → 741
+    Per-copy column widths (total 574):
+      Quantity          :  43   x=0
+      Unit              :  43   x=43
+      Unit Cost         :  70   x=86
+      Total Cost        :  70   x=156
+      Description       : 193   x=226
+      Inventory Item No.:  75   x=419
+      Est. Useful Life  :  80   x=494  → 574
 
     Border.Lines bitmap: Left=1, Right=2, Top=4, Bottom=8, All=15
   -->
 
-  <ReportPage Name="Page1"
-    PaperWidth="216" PaperHeight="330"
+  <ReportPage Name="Page1" Landscape="true"
+    PaperWidth="330.2" PaperHeight="215.9"
     LeftMargin="10" TopMargin="10" RightMargin="10" BottomMargin="10">
 
     <!-- ═══════════════════════════════════════════════════════════
-         TITLE BAND  (appears once)
-         Height = 14 + 22 + 22 + 26 + 36 = 120
+         TITLE BAND  (appears once) — Height = 120
          ═══════════════════════════════════════════════════════════ -->
-    <ReportTitleBand Name="ReportTitle1" Width="741" Height="120">
+    <ReportTitleBand Name="ReportTitle1" Width="1172" Height="120">
 
-      <!-- Appendix tag -->
-      <TextObject Name="Appendix" Left="0" Top="0" Width="741" Height="14"
+      <!-- ───────────────────────── LEFT COPY ───────────────────────── -->
+      <TextObject Name="AppendixL" Left="0" Top="0" Width="574" Height="14"
         Text="Appendix 59" HorzAlign="Right" VertAlign="Center"
         Font="Times New Roman, 8pt, style=Italic" />
 
-      <!-- Entity Name row -->
-      <TextObject Name="EntityLbl" Left="0" Top="14" Width="80" Height="22"
+      <TextObject Name="EntityLblL" Left="0" Top="14" Width="64" Height="22"
         Text="Entity Name:" VertAlign="Center"
         Font="Times New Roman, 8pt" Padding="2,0,2,0" />
-      <TextObject Name="EntityVal" Left="80" Top="14" Width="480" Height="22"
+      <TextObject Name="EntityValL" Left="64" Top="14" Width="330" Height="22"
         Text="[IcsDS.EntityName]" VertAlign="Bottom"
-        Font="Times New Roman, 9pt, style=Bold"
+        Font="Times New Roman, 8pt, style=Bold"
         Border.Lines="8" Border.Width="0.5" Padding="2,0,2,0" />
-      <TextObject Name="IcsNoLbl" Left="560" Top="14" Width="60" Height="22"
+      <TextObject Name="IcsNoLblL" Left="398" Top="14" Width="56" Height="22"
         Text="ICS No.:" VertAlign="Center" HorzAlign="Right"
         Font="Times New Roman, 8pt" Padding="0,0,4,0" />
-      <TextObject Name="IcsNoVal" Left="620" Top="14" Width="121" Height="22"
+      <TextObject Name="IcsNoValL" Left="454" Top="14" Width="120" Height="22"
         Text="[IcsDS.ICSNo]" VertAlign="Bottom"
-        Font="Times New Roman, 9pt, style=Bold"
+        Font="Times New Roman, 8pt, style=Bold"
         Border.Lines="8" Border.Width="0.5" Padding="2,0,2,0" />
 
-      <!-- Fund Cluster row -->
-      <TextObject Name="FundClusterLbl" Left="0" Top="36" Width="80" Height="22"
+      <TextObject Name="FundClusterLblL" Left="0" Top="36" Width="64" Height="22"
         Text="Fund Cluster:" VertAlign="Center"
         Font="Times New Roman, 8pt" Padding="2,0,2,0" />
-      <TextObject Name="FundClusterVal" Left="80" Top="36" Width="250" Height="22"
+      <TextObject Name="FundClusterValL" Left="64" Top="36" Width="200" Height="22"
         Text="[IcsDS.FundCluster]" VertAlign="Bottom"
-        Font="Times New Roman, 9pt"
+        Font="Times New Roman, 8pt"
         Border.Lines="8" Border.Width="0.5" Padding="2,0,2,0" />
 
-      <!-- Title -->
-      <TextObject Name="Title" Left="0" Top="58" Width="741" Height="26"
+      <TextObject Name="TitleL" Left="0" Top="58" Width="574" Height="26"
         Text="INVENTORY CUSTODIAN SLIP" HorzAlign="Center" VertAlign="Center"
-        Font="Times New Roman, 14pt, style=Bold" />
+        Font="Times New Roman, 11pt, style=Bold" />
 
-      <!-- ── Column header row 1 (top=84, H=18) ───────────────── -->
-      <!-- Qty — spans both header rows (H=36) -->
-      <TextObject Name="HQty" Left="0" Top="84" Width="55" Height="36"
+      <TextObject Name="HQtyL" Left="0" Top="84" Width="43" Height="36"
         Text="Quanti&#10;ty" HorzAlign="Center" VertAlign="Center"
         Font="Times New Roman, 7pt, style=Bold,Italic"
         Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
-      <!-- Unit — spans both header rows (H=36) -->
-      <TextObject Name="HUnit" Left="55" Top="84" Width="55" Height="36"
+      <TextObject Name="HUnitL" Left="43" Top="84" Width="43" Height="36"
         Text="Unit" HorzAlign="Center" VertAlign="Center"
-        Font="Times New Roman, 8pt, style=Bold,Italic"
+        Font="Times New Roman, 7pt, style=Bold,Italic"
         Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
-      <!-- Amount (spanning Unit Cost + Total Cost) — top row only (H=18) -->
-      <TextObject Name="HAmount" Left="110" Top="84" Width="180" Height="18"
+      <TextObject Name="HAmountL" Left="86" Top="84" Width="140" Height="18"
         Text="Amount" HorzAlign="Center" VertAlign="Center"
-        Font="Times New Roman, 8pt, style=Bold,Italic"
+        Font="Times New Roman, 7pt, style=Bold,Italic"
         Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
-      <!-- Description — spans both header rows (H=36) -->
-      <TextObject Name="HDesc" Left="290" Top="84" Width="250" Height="36"
+      <TextObject Name="HDescL" Left="226" Top="84" Width="193" Height="36"
         Text="Description" HorzAlign="Center" VertAlign="Center"
-        Font="Times New Roman, 8pt, style=Bold,Italic"
+        Font="Times New Roman, 7pt, style=Bold,Italic"
         Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
-      <!-- Inventory Item No. — spans both header rows (H=36) -->
-      <TextObject Name="HInvItemNo" Left="540" Top="84" Width="96" Height="36"
+      <TextObject Name="HInvItemNoL" Left="419" Top="84" Width="75" Height="36"
         Text="Inventory&#10;Item No." HorzAlign="Center" VertAlign="Center"
         Font="Times New Roman, 7pt, style=Bold,Italic"
         Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
-      <!-- Estimated Useful Life — spans both header rows (H=36) -->
-      <TextObject Name="HEstLife" Left="636" Top="84" Width="105" Height="36"
+      <TextObject Name="HEstLifeL" Left="494" Top="84" Width="80" Height="36"
         Text="Estimated&#10;Useful Life" HorzAlign="Center" VertAlign="Center"
         Font="Times New Roman, 7pt, style=Bold,Italic"
         Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
-
-      <!-- ── Column header row 2 (top=102, H=18) — sub-cells under Amount ── -->
-      <TextObject Name="HUnitCost" Left="110" Top="102" Width="90" Height="18"
+      <TextObject Name="HUnitCostL" Left="86" Top="102" Width="70" Height="18"
         Text="Unit&#10;Cost" HorzAlign="Center" VertAlign="Center"
         Font="Times New Roman, 7pt, style=Bold,Italic"
         Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
-      <TextObject Name="HTotalCost" Left="200" Top="102" Width="90" Height="18"
+      <TextObject Name="HTotalCostL" Left="156" Top="102" Width="70" Height="18"
+        Text="Total&#10;Cost" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 7pt, style=Bold,Italic"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+
+      <!-- ───────────────────────── RIGHT COPY (x + 598) ───────────────────────── -->
+      <TextObject Name="AppendixR" Left="598" Top="0" Width="574" Height="14"
+        Text="Appendix 59" HorzAlign="Right" VertAlign="Center"
+        Font="Times New Roman, 8pt, style=Italic" />
+
+      <TextObject Name="EntityLblR" Left="598" Top="14" Width="64" Height="22"
+        Text="Entity Name:" VertAlign="Center"
+        Font="Times New Roman, 8pt" Padding="2,0,2,0" />
+      <TextObject Name="EntityValR" Left="662" Top="14" Width="330" Height="22"
+        Text="[IcsDS.EntityName]" VertAlign="Bottom"
+        Font="Times New Roman, 8pt, style=Bold"
+        Border.Lines="8" Border.Width="0.5" Padding="2,0,2,0" />
+      <TextObject Name="IcsNoLblR" Left="992" Top="14" Width="56" Height="22"
+        Text="ICS No.:" VertAlign="Center" HorzAlign="Right"
+        Font="Times New Roman, 8pt" Padding="0,0,4,0" />
+      <TextObject Name="IcsNoValR" Left="1048" Top="14" Width="120" Height="22"
+        Text="[IcsDS.ICSNo]" VertAlign="Bottom"
+        Font="Times New Roman, 8pt, style=Bold"
+        Border.Lines="8" Border.Width="0.5" Padding="2,0,2,0" />
+
+      <TextObject Name="FundClusterLblR" Left="598" Top="36" Width="64" Height="22"
+        Text="Fund Cluster:" VertAlign="Center"
+        Font="Times New Roman, 8pt" Padding="2,0,2,0" />
+      <TextObject Name="FundClusterValR" Left="662" Top="36" Width="200" Height="22"
+        Text="[IcsDS.FundCluster]" VertAlign="Bottom"
+        Font="Times New Roman, 8pt"
+        Border.Lines="8" Border.Width="0.5" Padding="2,0,2,0" />
+
+      <TextObject Name="TitleR" Left="598" Top="58" Width="574" Height="26"
+        Text="INVENTORY CUSTODIAN SLIP" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 11pt, style=Bold" />
+
+      <TextObject Name="HQtyR" Left="598" Top="84" Width="43" Height="36"
+        Text="Quanti&#10;ty" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 7pt, style=Bold,Italic"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="HUnitR" Left="641" Top="84" Width="43" Height="36"
+        Text="Unit" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 7pt, style=Bold,Italic"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="HAmountR" Left="684" Top="84" Width="140" Height="18"
+        Text="Amount" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 7pt, style=Bold,Italic"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="HDescR" Left="824" Top="84" Width="193" Height="36"
+        Text="Description" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 7pt, style=Bold,Italic"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="HInvItemNoR" Left="1017" Top="84" Width="75" Height="36"
+        Text="Inventory&#10;Item No." HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 7pt, style=Bold,Italic"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="HEstLifeR" Left="1092" Top="84" Width="80" Height="36"
+        Text="Estimated&#10;Useful Life" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 7pt, style=Bold,Italic"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="HUnitCostR" Left="684" Top="102" Width="70" Height="18"
+        Text="Unit&#10;Cost" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 7pt, style=Bold,Italic"
+        Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
+      <TextObject Name="HTotalCostR" Left="754" Top="102" Width="70" Height="18"
         Text="Total&#10;Cost" HorzAlign="Center" VertAlign="Center"
         Font="Times New Roman, 7pt, style=Bold,Italic"
         Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
@@ -113,130 +177,216 @@
     </ReportTitleBand>
 
     <!-- ═══════════════════════════════════════════════════════════
-         DATA BAND  (repeats once per line item, height = 18)
+         DATA BAND  (one LineItemsDS row → drawn in BOTH copies)
          ═══════════════════════════════════════════════════════════ -->
-    <DataBand Name="Data1" DataSource="LineItemsDS" Width="741" Height="18" CanGrow="true">
+    <DataBand Name="Data1" DataSource="LineItemsDS" Width="1172" Height="18" CanGrow="true">
 
-      <TextObject Name="DQty" Left="0" Top="0" Width="55" Height="18"
+      <!-- LEFT COPY -->
+      <TextObject Name="DQtyL" Left="0" Top="0" Width="43" Height="18"
         Text="[LineItemsDS.Quantity]" HorzAlign="Center" VertAlign="Center"
         Font="Times New Roman, 8pt"
-        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1"
-        GrowToBottom="true" />
-      <TextObject Name="DUnit" Left="55" Top="0" Width="55" Height="18"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" GrowToBottom="true" />
+      <TextObject Name="DUnitL" Left="43" Top="0" Width="43" Height="18"
         Text="[LineItemsDS.Unit]" HorzAlign="Center" VertAlign="Center"
         Font="Times New Roman, 8pt"
-        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1"
-        GrowToBottom="true" />
-      <TextObject Name="DUnitCost" Left="110" Top="0" Width="90" Height="18"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" GrowToBottom="true" />
+      <TextObject Name="DUnitCostL" Left="86" Top="0" Width="70" Height="18"
         Text="[LineItemsDS.UnitCost]" HorzAlign="Right" VertAlign="Center"
         Font="Times New Roman, 8pt"
-        Border.Lines="15" Border.Width="0.5" Padding="2,1,4,1"
-        GrowToBottom="true" />
-      <TextObject Name="DTotalCost" Left="200" Top="0" Width="90" Height="18"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,4,1" GrowToBottom="true" />
+      <TextObject Name="DTotalCostL" Left="156" Top="0" Width="70" Height="18"
         Text="[LineItemsDS.TotalCost]" HorzAlign="Right" VertAlign="Center"
         Font="Times New Roman, 8pt"
-        Border.Lines="15" Border.Width="0.5" Padding="2,1,4,1"
-        GrowToBottom="true" />
-      <TextObject Name="DDesc" Left="290" Top="0" Width="250" Height="18"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,4,1" GrowToBottom="true" />
+      <TextObject Name="DDescL" Left="226" Top="0" Width="193" Height="18"
         Text="[LineItemsDS.Description]" HorzAlign="Left" VertAlign="Center"
         Font="Times New Roman, 8pt"
         Border.Lines="15" Border.Width="0.5" Padding="4,1,2,1"
         CanGrow="true" GrowToBottom="true" WordWrap="true" />
-      <TextObject Name="DInvItemNo" Left="540" Top="0" Width="96" Height="18"
+      <TextObject Name="DInvItemNoL" Left="419" Top="0" Width="75" Height="18"
         Text="[LineItemsDS.InventoryItemNo]" HorzAlign="Center" VertAlign="Center"
         Font="Times New Roman, 8pt"
         Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1"
         CanGrow="true" GrowToBottom="true" WordWrap="true" />
-      <TextObject Name="DEstLife" Left="636" Top="0" Width="105" Height="18"
+      <TextObject Name="DEstLifeL" Left="494" Top="0" Width="80" Height="18"
         Text="[LineItemsDS.EstUsefulLife]" HorzAlign="Center" VertAlign="Center"
         Font="Times New Roman, 8pt"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" GrowToBottom="true" />
+
+      <!-- RIGHT COPY (x + 598) -->
+      <TextObject Name="DQtyR" Left="598" Top="0" Width="43" Height="18"
+        Text="[LineItemsDS.Quantity]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" GrowToBottom="true" />
+      <TextObject Name="DUnitR" Left="641" Top="0" Width="43" Height="18"
+        Text="[LineItemsDS.Unit]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" GrowToBottom="true" />
+      <TextObject Name="DUnitCostR" Left="684" Top="0" Width="70" Height="18"
+        Text="[LineItemsDS.UnitCost]" HorzAlign="Right" VertAlign="Center"
+        Font="Times New Roman, 8pt"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,4,1" GrowToBottom="true" />
+      <TextObject Name="DTotalCostR" Left="754" Top="0" Width="70" Height="18"
+        Text="[LineItemsDS.TotalCost]" HorzAlign="Right" VertAlign="Center"
+        Font="Times New Roman, 8pt"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,4,1" GrowToBottom="true" />
+      <TextObject Name="DDescR" Left="824" Top="0" Width="193" Height="18"
+        Text="[LineItemsDS.Description]" HorzAlign="Left" VertAlign="Center"
+        Font="Times New Roman, 8pt"
+        Border.Lines="15" Border.Width="0.5" Padding="4,1,2,1"
+        CanGrow="true" GrowToBottom="true" WordWrap="true" />
+      <TextObject Name="DInvItemNoR" Left="1017" Top="0" Width="75" Height="18"
+        Text="[LineItemsDS.InventoryItemNo]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt"
         Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1"
-        GrowToBottom="true" />
+        CanGrow="true" GrowToBottom="true" WordWrap="true" />
+      <TextObject Name="DEstLifeR" Left="1092" Top="0" Width="80" Height="18"
+        Text="[LineItemsDS.EstUsefulLife]" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 8pt"
+        Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" GrowToBottom="true" />
 
     </DataBand>
 
     <!-- ═══════════════════════════════════════════════════════════
-         SUMMARY BAND  (signature blocks — appears once at end)
-         Height = 22 + 44 + 18 + 14 + 18 + 14 + 18 + 14 = 162
+         SUMMARY BAND  (signature blocks — once per copy) — Height = 162
+         Per copy: left half x=0 w=279, right half x=295 w=279 (16 gap)
          ═══════════════════════════════════════════════════════════ -->
-    <ReportSummaryBand Name="ReportSummary1" Width="741" Height="162">
+    <ReportSummaryBand Name="ReportSummary1" Width="1172" Height="162">
 
-      <!-- Left half: Received from (x=0, W=360) -->
-      <!-- Right half: Received by  (x=381, W=360) -->
-      <!-- 21-unit gap between halves                -->
-
-      <!-- "Received from:" / "Received by:" headings (H=22) -->
-      <TextObject Name="RecFromLbl" Left="0" Top="0" Width="360" Height="22"
+      <!-- ───────────────────────── LEFT COPY ───────────────────────── -->
+      <TextObject Name="RecFromLblL" Left="0" Top="0" Width="279" Height="22"
         Text="Received from:" VertAlign="Center"
-        Font="Times New Roman, 9pt, style=Bold"
+        Font="Times New Roman, 8pt, style=Bold"
         Border.Lines="13" Border.Width="0.5" Padding="4,0,2,0" />
-      <TextObject Name="RecByLbl" Left="381" Top="0" Width="360" Height="22"
+      <TextObject Name="RecByLblL" Left="295" Top="0" Width="279" Height="22"
         Text="Received by:" VertAlign="Center"
-        Font="Times New Roman, 9pt, style=Bold"
+        Font="Times New Roman, 8pt, style=Bold"
         Border.Lines="13" Border.Width="0.5" Padding="4,0,2,0" />
 
-      <!-- Blank signature space (H=44) with bottom and side borders -->
-      <TextObject Name="RecFromSigSpace" Left="0" Top="22" Width="360" Height="44"
+      <TextObject Name="RecFromSigSpaceL" Left="0" Top="22" Width="279" Height="44"
         Text="" Border.Lines="11" Border.Width="0.5" />
-      <TextObject Name="RecBySigSpace" Left="381" Top="22" Width="360" Height="44"
+      <TextObject Name="RecBySigSpaceL" Left="295" Top="22" Width="279" Height="44"
         Text="" Border.Lines="11" Border.Width="0.5" />
 
-      <!-- Name row (H=18) — printed name, bottom border = signature line -->
-      <TextObject Name="RecFromName" Left="0" Top="66" Width="360" Height="18"
+      <TextObject Name="RecFromNameL" Left="0" Top="66" Width="279" Height="18"
         Text="[IcsDS.IssuedFromName]" HorzAlign="Center" VertAlign="Bottom"
         Font="Times New Roman, 8pt, style=Bold"
         Border.Lines="11" Border.Width="0.5" Padding="2,0,2,0" />
-      <TextObject Name="RecByName" Left="381" Top="66" Width="360" Height="18"
+      <TextObject Name="RecByNameL" Left="295" Top="66" Width="279" Height="18"
         Text="[IcsDS.ReceivedByName]" HorzAlign="Center" VertAlign="Bottom"
         Font="Times New Roman, 8pt, style=Bold"
         Border.Lines="11" Border.Width="0.5" Padding="2,0,2,0" />
 
-      <!-- "Signature Over Printed Name" label (H=14) -->
-      <TextObject Name="RecFromSigLbl" Left="0" Top="84" Width="360" Height="14"
+      <TextObject Name="RecFromSigLblL" Left="0" Top="84" Width="279" Height="14"
         Text="Signature Over Printed Name" HorzAlign="Center" VertAlign="Center"
         Font="Times New Roman, 7pt, style=Italic"
         Border.Lines="11" Border.Width="0.5" />
-      <TextObject Name="RecBySigLbl" Left="381" Top="84" Width="360" Height="14"
+      <TextObject Name="RecBySigLblL" Left="295" Top="84" Width="279" Height="14"
         Text="Signature Over Printed Name" HorzAlign="Center" VertAlign="Center"
         Font="Times New Roman, 7pt, style=Italic"
         Border.Lines="11" Border.Width="0.5" />
 
-      <!-- Position/Office row (H=18) -->
-      <TextObject Name="RecFromPos" Left="0" Top="98" Width="360" Height="18"
+      <TextObject Name="RecFromPosL" Left="0" Top="98" Width="279" Height="18"
         Text="[IcsDS.IssuedFromPosition]" HorzAlign="Center" VertAlign="Bottom"
         Font="Times New Roman, 8pt"
         Border.Lines="11" Border.Width="0.5" Padding="2,0,2,0" />
-      <TextObject Name="RecByPos" Left="381" Top="98" Width="360" Height="18"
+      <TextObject Name="RecByPosL" Left="295" Top="98" Width="279" Height="18"
         Text="[IcsDS.ReceivedByPosition]" HorzAlign="Center" VertAlign="Bottom"
         Font="Times New Roman, 8pt"
         Border.Lines="11" Border.Width="0.5" Padding="2,0,2,0" />
 
-      <!-- "Position/Office" label (H=14) -->
-      <TextObject Name="RecFromPosLbl" Left="0" Top="116" Width="360" Height="14"
+      <TextObject Name="RecFromPosLblL" Left="0" Top="116" Width="279" Height="14"
         Text="Position/Office" HorzAlign="Center" VertAlign="Center"
         Font="Times New Roman, 7pt, style=Italic"
         Border.Lines="11" Border.Width="0.5" />
-      <TextObject Name="RecByPosLbl" Left="381" Top="116" Width="360" Height="14"
+      <TextObject Name="RecByPosLblL" Left="295" Top="116" Width="279" Height="14"
         Text="Position/Office" HorzAlign="Center" VertAlign="Center"
         Font="Times New Roman, 7pt, style=Italic"
         Border.Lines="11" Border.Width="0.5" />
 
-      <!-- Date row (H=18) -->
-      <TextObject Name="RecFromDate" Left="0" Top="130" Width="360" Height="18"
+      <TextObject Name="RecFromDateL" Left="0" Top="130" Width="279" Height="18"
         Text="[IcsDS.ICSDate]" HorzAlign="Center" VertAlign="Bottom"
         Font="Times New Roman, 8pt"
         Border.Lines="15" Border.Width="0.5" Padding="2,0,2,0" />
-      <TextObject Name="RecByDate" Left="381" Top="130" Width="360" Height="18"
+      <TextObject Name="RecByDateL" Left="295" Top="130" Width="279" Height="18"
         Text="" HorzAlign="Center" VertAlign="Bottom"
         Font="Times New Roman, 8pt"
         Border.Lines="15" Border.Width="0.5" Padding="2,0,2,0" />
 
-      <!-- "Date" label (H=14) -->
-      <TextObject Name="RecFromDateLbl" Left="0" Top="148" Width="360" Height="14"
+      <TextObject Name="RecFromDateLblL" Left="0" Top="148" Width="279" Height="14"
         Text="Date" HorzAlign="Center" VertAlign="Center"
         Font="Times New Roman, 7pt, style=Italic"
         Border.Lines="14" Border.Width="0.5" />
-      <TextObject Name="RecByDateLbl" Left="381" Top="148" Width="360" Height="14"
+      <TextObject Name="RecByDateLblL" Left="295" Top="148" Width="279" Height="14"
+        Text="Date" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 7pt, style=Italic"
+        Border.Lines="14" Border.Width="0.5" />
+
+      <!-- ───────────────────────── RIGHT COPY (x + 598) ───────────────────────── -->
+      <TextObject Name="RecFromLblR" Left="598" Top="0" Width="279" Height="22"
+        Text="Received from:" VertAlign="Center"
+        Font="Times New Roman, 8pt, style=Bold"
+        Border.Lines="13" Border.Width="0.5" Padding="4,0,2,0" />
+      <TextObject Name="RecByLblR" Left="893" Top="0" Width="279" Height="22"
+        Text="Received by:" VertAlign="Center"
+        Font="Times New Roman, 8pt, style=Bold"
+        Border.Lines="13" Border.Width="0.5" Padding="4,0,2,0" />
+
+      <TextObject Name="RecFromSigSpaceR" Left="598" Top="22" Width="279" Height="44"
+        Text="" Border.Lines="11" Border.Width="0.5" />
+      <TextObject Name="RecBySigSpaceR" Left="893" Top="22" Width="279" Height="44"
+        Text="" Border.Lines="11" Border.Width="0.5" />
+
+      <TextObject Name="RecFromNameR" Left="598" Top="66" Width="279" Height="18"
+        Text="[IcsDS.IssuedFromName]" HorzAlign="Center" VertAlign="Bottom"
+        Font="Times New Roman, 8pt, style=Bold"
+        Border.Lines="11" Border.Width="0.5" Padding="2,0,2,0" />
+      <TextObject Name="RecByNameR" Left="893" Top="66" Width="279" Height="18"
+        Text="[IcsDS.ReceivedByName]" HorzAlign="Center" VertAlign="Bottom"
+        Font="Times New Roman, 8pt, style=Bold"
+        Border.Lines="11" Border.Width="0.5" Padding="2,0,2,0" />
+
+      <TextObject Name="RecFromSigLblR" Left="598" Top="84" Width="279" Height="14"
+        Text="Signature Over Printed Name" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 7pt, style=Italic"
+        Border.Lines="11" Border.Width="0.5" />
+      <TextObject Name="RecBySigLblR" Left="893" Top="84" Width="279" Height="14"
+        Text="Signature Over Printed Name" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 7pt, style=Italic"
+        Border.Lines="11" Border.Width="0.5" />
+
+      <TextObject Name="RecFromPosR" Left="598" Top="98" Width="279" Height="18"
+        Text="[IcsDS.IssuedFromPosition]" HorzAlign="Center" VertAlign="Bottom"
+        Font="Times New Roman, 8pt"
+        Border.Lines="11" Border.Width="0.5" Padding="2,0,2,0" />
+      <TextObject Name="RecByPosR" Left="893" Top="98" Width="279" Height="18"
+        Text="[IcsDS.ReceivedByPosition]" HorzAlign="Center" VertAlign="Bottom"
+        Font="Times New Roman, 8pt"
+        Border.Lines="11" Border.Width="0.5" Padding="2,0,2,0" />
+
+      <TextObject Name="RecFromPosLblR" Left="598" Top="116" Width="279" Height="14"
+        Text="Position/Office" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 7pt, style=Italic"
+        Border.Lines="11" Border.Width="0.5" />
+      <TextObject Name="RecByPosLblR" Left="893" Top="116" Width="279" Height="14"
+        Text="Position/Office" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 7pt, style=Italic"
+        Border.Lines="11" Border.Width="0.5" />
+
+      <TextObject Name="RecFromDateR" Left="598" Top="130" Width="279" Height="18"
+        Text="[IcsDS.ICSDate]" HorzAlign="Center" VertAlign="Bottom"
+        Font="Times New Roman, 8pt"
+        Border.Lines="15" Border.Width="0.5" Padding="2,0,2,0" />
+      <TextObject Name="RecByDateR" Left="893" Top="130" Width="279" Height="18"
+        Text="" HorzAlign="Center" VertAlign="Bottom"
+        Font="Times New Roman, 8pt"
+        Border.Lines="15" Border.Width="0.5" Padding="2,0,2,0" />
+
+      <TextObject Name="RecFromDateLblR" Left="598" Top="148" Width="279" Height="14"
+        Text="Date" HorzAlign="Center" VertAlign="Center"
+        Font="Times New Roman, 7pt, style=Italic"
+        Border.Lines="14" Border.Width="0.5" />
+      <TextObject Name="RecByDateLblR" Left="893" Top="148" Width="279" Height="14"
         Text="Date" HorzAlign="Center" VertAlign="Center"
         Font="Times New Roman, 7pt, style=Italic"
         Border.Lines="14" Border.Width="0.5" />

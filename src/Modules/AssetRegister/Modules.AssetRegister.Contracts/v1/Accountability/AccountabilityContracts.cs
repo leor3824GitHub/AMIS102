@@ -54,7 +54,8 @@ public sealed record PropertyAccountabilityDto(
     Guid? SupersedesAccountabilityId,
     EmployeeRefDto IssuedBy,
     EmployeeRefDto ReceivedBy,
-    IReadOnlyCollection<PropertyAccountabilityLineDto> Lines);
+    IReadOnlyCollection<PropertyAccountabilityLineDto> Lines,
+    DateOnly? AcceptedOn = null);
 
 public sealed record PropertyAccountabilitySummaryDto(
     Guid Id,
@@ -104,6 +105,28 @@ public sealed record ReturnAccountabilityLinesCommand(
     AssetCondition ConditionAtReturn) : ICommand<PropertyAccountabilityDto>;
 
 public sealed record CancelAccountabilityCommand(Guid AccountabilityId, string Reason) : ICommand<PropertyAccountabilityDto>;
+
+/// <summary>
+/// Edits a still-pending (not yet accepted) ICS/PAR: header fields plus the full line set.
+/// The handler reconciles assets — lines added reserve their asset, lines removed release it.
+/// AccountabilityType and DocumentNo are immutable. Rejected once the document is accepted.
+/// </summary>
+public sealed record UpdateAccountabilityCommand(
+    Guid AccountabilityId,
+    string FundCluster,
+    EmployeeRefDto ReceivedBy,
+    DateOnly IssuedOn,
+    DateOnly? ExpiresOn,
+    IReadOnlyList<IssueAccountabilityLineRequest> Lines) : ICommand<PropertyAccountabilityDto>;
+
+/// <summary>Hard-deletes a still-pending ICS/PAR and releases its reserved assets back to Available.</summary>
+public sealed record DeleteAccountabilityCommand(Guid AccountabilityId) : ICommand<Unit>;
+
+/// <summary>
+/// The accountable (ReceivedBy) employee accepts a pending issuance, moving it to Active.
+/// Server-scoped to the current employee in the self-service flow.
+/// </summary>
+public sealed record AcceptAccountabilityCommand(Guid AccountabilityId, DateOnly AcceptedOn) : ICommand<PropertyAccountabilityDto>;
 
 // ── Queries ────────────────────────────────────────────────────────────────
 

@@ -375,7 +375,8 @@ internal sealed record ArAccountabilityDto(
     Guid? SupersedesAccountabilityId,
     ArEmployeeRefDto IssuedBy,
     ArEmployeeRefDto ReceivedBy,
-    IReadOnlyCollection<ArAccountabilityLineDto> Lines);
+    IReadOnlyCollection<ArAccountabilityLineDto> Lines,
+    DateOnly? AcceptedOn = null);
 
 internal sealed record IssueAccountabilityLineRequest(
     Guid AssetRegistryId,
@@ -407,6 +408,16 @@ internal sealed record CancelAccountabilityRequest(string Reason);
 
 internal sealed record RenewAccountabilityRequest(DateOnly NewIssuedOn, DateOnly? NewExpiresOn);
 
+internal sealed record UpdateAccountabilityRequest(
+    Guid AccountabilityId,
+    string FundCluster,
+    ArEmployeeRefDto ReceivedBy,
+    DateOnly IssuedOn,
+    DateOnly? ExpiresOn,
+    IReadOnlyList<IssueAccountabilityLineRequest> Lines);
+
+internal sealed record AcceptAccountabilityRequest(Guid AccountabilityId, DateOnly AcceptedOn);
+
 internal interface IArAccountabilityClient
 {
     Task<ArPagedResponse<ArAccountabilitySummaryDto>> SearchAsync(string? keyword = null, AccountabilityType? type = null, AccountabilityStatus? status = null, Guid? receivedByEmployeeId = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
@@ -414,6 +425,9 @@ internal interface IArAccountabilityClient
     Task<ArAccountabilityDto?> GetMineDetailAsync(Guid id, CancellationToken ct = default);
     Task<ArAccountabilityDto?> GetAsync(Guid id, CancellationToken ct = default);
     Task<ArAccountabilityDto> IssueAsync(IssueAccountabilityRequest request, CancellationToken ct = default);
+    Task<ArAccountabilityDto> UpdateAsync(Guid id, UpdateAccountabilityRequest request, CancellationToken ct = default);
+    Task DeleteAsync(Guid id, CancellationToken ct = default);
+    Task<ArAccountabilityDto> AcceptAsync(Guid id, DateOnly acceptedOn, CancellationToken ct = default);
     Task<ArAccountabilityDto> ReturnLinesAsync(Guid id, ReturnAccountabilityLinesRequest request, CancellationToken ct = default);
     Task<ArAccountabilityDto> CancelAsync(Guid id, string reason, CancellationToken ct = default);
     Task<ArAccountabilityDto> RenewAsync(Guid id, DateOnly newIssuedOn, DateOnly? newExpiresOn, CancellationToken ct = default);
@@ -464,6 +478,29 @@ internal sealed class ArAccountabilityClient(HttpClient http) : IArAccountabilit
     {
         var resp = await http.PostAsJsonAsync(Base, request, ArJsonOptions.Default, ct);
         resp.EnsureSuccessStatusCode();
+        return (await resp.Content.ReadFromJsonAsync<ArAccountabilityDto>(ArJsonOptions.Default, cancellationToken: ct))!;
+    }
+
+    public async Task<ArAccountabilityDto> UpdateAsync(Guid id, UpdateAccountabilityRequest request, CancellationToken ct = default)
+    {
+        var resp = await http.PutAsJsonAsync($"{Base}/{id}", request, ArJsonOptions.Default, ct);
+        if (!resp.IsSuccessStatusCode)
+            throw new InvalidOperationException(await ArErrorReader.ExtractAsync(resp, ct));
+        return (await resp.Content.ReadFromJsonAsync<ArAccountabilityDto>(ArJsonOptions.Default, cancellationToken: ct))!;
+    }
+
+    public async Task DeleteAsync(Guid id, CancellationToken ct = default)
+    {
+        var resp = await http.DeleteAsync($"{Base}/{id}", ct);
+        if (!resp.IsSuccessStatusCode)
+            throw new InvalidOperationException(await ArErrorReader.ExtractAsync(resp, ct));
+    }
+
+    public async Task<ArAccountabilityDto> AcceptAsync(Guid id, DateOnly acceptedOn, CancellationToken ct = default)
+    {
+        var resp = await http.PostAsJsonAsync($"{Base}/mine/{id}/accept", new AcceptAccountabilityRequest(id, acceptedOn), ArJsonOptions.Default, ct);
+        if (!resp.IsSuccessStatusCode)
+            throw new InvalidOperationException(await ArErrorReader.ExtractAsync(resp, ct));
         return (await resp.Content.ReadFromJsonAsync<ArAccountabilityDto>(ArJsonOptions.Default, cancellationToken: ct))!;
     }
 

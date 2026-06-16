@@ -32,6 +32,8 @@ public class AssetRegisterModule : IModule
 
         new("View Accountability",   "View",   "AssetRegister.Accountability", IsBasic: true),
         new("Issue Accountability",  "Issue",  "AssetRegister.Accountability"),
+        new("Update Accountability", "Update", "AssetRegister.Accountability"),
+        new("Delete Accountability", "Delete", "AssetRegister.Accountability"),
         new("Return Accountability", "Return", "AssetRegister.Accountability"),
         new("Cancel Accountability", "Cancel", "AssetRegister.Accountability"),
 
@@ -172,6 +174,8 @@ public class AssetRegisterModule : IModule
         // Accountability (ICS / PAR)
         var accountability = moduleGroup.MapGroup("/accountability");
         Features.v1.Accountability.IssueAccountability.IssueAccountabilityEndpoint.Map(accountability);
+        Features.v1.Accountability.UpdateAccountability.UpdateAccountabilityEndpoint.Map(accountability);
+        Features.v1.Accountability.DeleteAccountability.DeleteAccountabilityEndpoint.Map(accountability);
         Features.v1.Accountability.RenewAccountability.RenewAccountabilityEndpoint.Map(accountability);
         Features.v1.Accountability.ReturnAccountabilityLines.ReturnAccountabilityLinesEndpoint.Map(accountability);
         Features.v1.Accountability.CancelAccountability.CancelAccountabilityEndpoint.Map(accountability);
@@ -180,6 +184,7 @@ public class AssetRegisterModule : IModule
         // Employee self-service (My Accountability) — server-scoped to the current employee.
         Features.v1.Accountability.GetMyAccountabilities.GetMyAccountabilitiesEndpoint.Map(accountability);
         Features.v1.Accountability.GetMyAccountabilityDetail.GetMyAccountabilityDetailEndpoint.Map(accountability);
+        Features.v1.Accountability.AcceptAccountability.AcceptAccountabilityEndpoint.Map(accountability);
 
         // Issuance reports (SMIR / PPEIR) — atomic transfer document
         var issuance = moduleGroup.MapGroup("/issuance");

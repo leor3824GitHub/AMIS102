@@ -108,12 +108,44 @@
 @code {
     [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
 
+    /// <summary>When set, the dialog opens pre-scoped to this accountability (e.g. launched from a My Accountability row).</summary>
+    [Parameter] public Guid? PreselectedAccountabilityId { get; set; }
+
     private ArAccountabilityDto? _accountability;
     private bool _busy;
 
     private ReturnForm _form = new();
 
-    protected override void OnInitialized() => _form.Items.Add(new ReturnItemRow());
+    protected override async Task OnInitializedAsync()
+    {
+        _form.Items.Add(new ReturnItemRow());
+
+        if (PreselectedAccountabilityId is Guid id)
+        {
+            try
+            {
+                _accountability = await AccountabilityClient.GetAsync(id);
+                if (_accountability is not null)
+                {
+                    _form.ReceiptType = _accountability.AccountabilityType == AccountabilityType.SE_ICS
+                        ? ReturnedPropertyReceiptType.RRSP
+                        : ReturnedPropertyReceiptType.RRP;
+                    _form.SelectedAccountability = new ArAccountabilitySummaryDto(
+                        _accountability.Id,
+                        _accountability.DocumentNo,
+                        _accountability.AccountabilityType,
+                        _accountability.Status,
+                        _accountability.IssuedOn,
+                        _accountability.ExpiresOn,
+                        _accountability.Lines.Count);
+                }
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Could not load accountability detail: {ex.Message}", Severity.Error);
+            }
+        }
+    }
 
     private List<ArAccountabilityLineDto> ActiveLines =>
         _accountability?.Lines.Where(l => l.LineStatus == AccountabilityLineStatus.Active).ToList() ?? [];

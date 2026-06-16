@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
 {
     [DbContext(typeof(AssetRegisterDbContext))]
-    [Migration("20260616014628_AssetRegister_AddLocations")]
-    partial class AssetRegister_AddLocations
+    [Migration("20260616045920_AssetRegister_Initial")]
+    partial class AssetRegister_Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -30,6 +30,9 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
+
+                    b.Property<DateOnly?>("AcceptedOn")
+                        .HasColumnType("date");
 
                     b.Property<int>("AccountabilityType")
                         .HasColumnType("integer");

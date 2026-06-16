@@ -28,6 +28,9 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<DateOnly?>("AcceptedOn")
+                        .HasColumnType("date");
+
                     b.Property<int>("AccountabilityType")
                         .HasColumnType("integer");
 

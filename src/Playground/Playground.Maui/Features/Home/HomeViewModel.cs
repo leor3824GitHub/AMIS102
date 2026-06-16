@@ -32,7 +32,8 @@ public sealed partial class HomeViewModel(
 
     [ObservableProperty] private int _icsCount;
     [ObservableProperty] private int _parCount;
-    [ObservableProperty] private int _totalItems;
+    [ObservableProperty] private int _icsItemCount;
+    [ObservableProperty] private int _parItemCount;
 
     [ObservableProperty] private int _activeSessionCount;
     [ObservableProperty] private bool _hasActiveSession;
@@ -71,7 +72,8 @@ public sealed partial class HomeViewModel(
 
             IcsCount = icsList.Count;
             ParCount = parList.Count;
-            TotalItems = icsList.Sum(i => i.ItemCount) + parList.Sum(p => p.ItemCount);
+            IcsItemCount = icsList.Sum(i => i.ItemCount);
+            ParItemCount = parList.Sum(p => p.ItemCount);
 
             ApplyActiveSession(sessions);
             ApplyRecent(icsList, parList);

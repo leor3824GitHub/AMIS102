@@ -6,6 +6,8 @@
 @inject IArAccountabilityClient Client
 @inject ISnackbar Snackbar
 @inject IUserProfileState UserProfileState
+@inject IDialogService DialogService
+@inject IJSRuntime JS
 
 <AMISPageHeader Title="My Accountability (ICS / PAR)"
                Description="Property issued to you — Inventory Custodian Slips (ICS) and Property Acknowledgement Receipts (PAR) where you are the accountable person." />
@@ -46,7 +48,7 @@ else
                     <AMISEnumChips TEnum="AccountabilityType" Value="_typeFilter" ValueChanged="OnTypeChanged"
                                    Label="Type" LabelFunc="AccountabilityTypeLabel" Class="mt-3" />
                     <AMISEnumChips TEnum="AccountabilityStatus" Value="_statusFilter" ValueChanged="OnStatusChanged"
-                                   Label="Status" />
+                                   Label="Status" LabelFunc="FormatStatus" />
                 </MudCardContent>
             </MudCard>
         </MudItem>
@@ -74,6 +76,7 @@ else
                                 <MudTh>Issued On</MudTh>
                                 <MudTh>Expires On</MudTh>
                                 <MudTh Style="text-align:right">Lines</MudTh>
+                                <MudTh Style="text-align:center">Actions</MudTh>
                             </HeaderContent>
                             <RowTemplate>
                                 <MudTd><strong>@context.DocumentNo</strong></MudTd>
@@ -94,6 +97,34 @@ else
                                 <MudTd>@context.IssuedOn.ToString("yyyy-MM-dd")</MudTd>
                                 <MudTd>@(context.ExpiresOn?.ToString("yyyy-MM-dd") ?? "—")</MudTd>
                                 <MudTd Style="text-align:right">@context.LineCount</MudTd>
+                                <MudTd DataLabel="Actions" Style="text-align:center" @onclick:stopPropagation="true">
+                                    <MudStack Row="true" Spacing="0" Justify="Justify.Center">
+                                        <MudTooltip Text="View">
+                                            <AMISIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small"
+                                                            Color="Color.Default" OnClick="@(() => OpenDetailDialogAsync(context.Id))" />
+                                        </MudTooltip>
+                                        <MudTooltip Text="@($"Print {(context.AccountabilityType == AccountabilityType.SE_ICS ? "ICS" : "PAR")}")">
+                                            <AMISIconButton Icon="@Icons.Material.Filled.PictureAsPdf" Size="Size.Small"
+                                                            Color="Color.Secondary" OnClick="@(() => PrintRowAsync(context))"
+                                                            Disabled="@(_printingId == context.Id)" />
+                                        </MudTooltip>
+                                        @if (context.Status == AccountabilityStatus.PendingAcceptance && _canAcknowledge)
+                                        {
+                                            <MudTooltip Text="@($"Accept {(context.AccountabilityType == AccountabilityType.SE_ICS ? "ICS" : "PAR")}")">
+                                                <AMISIconButton Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small"
+                                                                Color="Color.Success" OnClick="@(() => AcceptRowAsync(context))"
+                                                                Disabled="@(_acceptingId == context.Id)" />
+                                            </MudTooltip>
+                                        }
+                                        @if (context.Status == AccountabilityStatus.Active && _canRequestReturn)
+                                        {
+                                            <MudTooltip Text="Request Return">
+                                                <AMISIconButton Icon="@Icons.Material.Filled.AssignmentReturn" Size="Size.Small"
+                                                                Color="Color.Warning" OnClick="@(() => OpenReturnDialogAsync(context))" />
+                                            </MudTooltip>
+                                        }
+                                    </MudStack>
+                                </MudTd>
                             </RowTemplate>
                             <NoRecordsContent>
                                 <MudText Color="Color.Secondary">No property is currently issued to you.</MudText>
@@ -116,91 +147,13 @@ else
             </MudCard>
         </MudItem>
 
-        <!-- Detail panel -->
-        @if (_selected is not null)
-        {
-            <MudItem xs="12">
-                <MudCard Elevation="2">
-                    <MudCardHeader>
-                        <CardHeaderContent>
-                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
-                                <MudText Typo="Typo.h6">
-                                    @(_selected.AccountabilityType == AccountabilityType.SE_ICS ? "ICS" : "PAR") — @_selected.DocumentNo
-                                </MudText>
-                                <MudChip T="string" Size="Size.Small" Color="@StatusColor(_selected.Status)" Variant="Variant.Filled">
-                                    @FormatStatus(_selected.Status)
-                                </MudChip>
-                            </MudStack>
-                        </CardHeaderContent>
-                        <CardHeaderActions>
-                            <AMISIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small"
-                                            OnClick="@(() => _selected = null)" />
-                        </CardHeaderActions>
-                    </MudCardHeader>
-                    <MudCardContent>
-                        <MudGrid Class="mb-3">
-                            <MudItem xs="6" md="3">
-                                <MudText Typo="Typo.caption" Color="Color.Secondary">Issued On</MudText>
-                                <MudText Typo="Typo.body2">@_selected.IssuedOn.ToString("yyyy-MM-dd")</MudText>
-                            </MudItem>
-                            <MudItem xs="6" md="3">
-                                <MudText Typo="Typo.caption" Color="Color.Secondary">Expires On</MudText>
-                                <MudText Typo="Typo.body2">@(_selected.ExpiresOn?.ToString("yyyy-MM-dd") ?? "—")</MudText>
-                            </MudItem>
-                            <MudItem xs="6" md="3">
-                                <MudText Typo="Typo.caption" Color="Color.Secondary">Fund Cluster</MudText>
-                                <MudText Typo="Typo.body2">@_selected.FundCluster</MudText>
-                            </MudItem>
-                            <MudItem xs="12" md="6">
-                                <MudText Typo="Typo.caption" Color="Color.Secondary">Issued By</MudText>
-                                <MudText Typo="Typo.body2">@_selected.IssuedBy.PrintedName (@(_selected.IssuedBy.Designation ?? "—"))</MudText>
-                            </MudItem>
-                            <MudItem xs="12" md="6">
-                                <MudText Typo="Typo.caption" Color="Color.Secondary">Received By</MudText>
-                                <MudText Typo="Typo.body2">@_selected.ReceivedBy.PrintedName (@(_selected.ReceivedBy.Designation ?? "—"))</MudText>
-                            </MudItem>
-                            @if (!string.IsNullOrEmpty(_selected.CancellationReason))
-                            {
-                                <MudItem xs="12">
-                                    <MudAlert Severity="Severity.Warning" Dense="true">
-                                        Cancellation reason: @_selected.CancellationReason
-                                    </MudAlert>
-                                </MudItem>
-                            }
-                        </MudGrid>
-
-                        <MudText Typo="Typo.subtitle2" Class="mb-2">Line Items</MudText>
-                        <MudTable Items="_selected.Lines" Dense="true" Striped="true">
-                            <HeaderContent>
-                                <MudTh>Property No.</MudTh>
-                                <MudTh>Description</MudTh>
-                                <MudTh>Unit</MudTh>
-                                <MudTh Style="text-align:right">Issued</MudTh>
-                                <MudTh Style="text-align:right">Returned</MudTh>
-                                <MudTh Style="text-align:right">Unit Cost (@Money.Symbol)</MudTh>
-                                <MudTh>Status</MudTh>
-                                <MudTh>Returned On</MudTh>
-                            </HeaderContent>
-                            <RowTemplate>
-                                <MudTd>@context.Snapshot.PropertyNo</MudTd>
-                                <MudTd>@context.Snapshot.Description</MudTd>
-                                <MudTd>@context.Snapshot.Unit</MudTd>
-                                <MudTd Style="text-align:right">@context.IssuedQty</MudTd>
-                                <MudTd Style="text-align:right">@context.ReturnedQty</MudTd>
-                                <MudTd Style="text-align:right">@context.Snapshot.UnitCost.ToString("N2")</MudTd>
-                                <MudTd>@FormatLineStatus(context.LineStatus)</MudTd>
-                                <MudTd>@(context.ReturnedOn?.ToString("yyyy-MM-dd") ?? "—")</MudTd>
-                            </RowTemplate>
-                        </MudTable>
-                    </MudCardContent>
-                </MudCard>
-            </MudItem>
-        }
     </MudGrid>
 }
 
 @code {
     private bool _busy;
+    private Guid? _printingId;
+    private Guid? _acceptingId;
     private string? _error;
     private string? _keyword;
     private AccountabilityType? _typeFilter;
@@ -210,9 +163,10 @@ else
     private int _totalCount;
     private const int PageSize = 15;
     private IReadOnlyList<ArAccountabilitySummaryDto> _items = [];
-    private ArAccountabilityDto? _selected;
 
     private bool _canView => UserProfileState.Permissions.Contains(AssetRegisterPermissions.MyAccountability.View);
+    private bool _canAcknowledge => UserProfileState.Permissions.Contains(AssetRegisterPermissions.MyAccountability.Acknowledge);
+    private bool _canRequestReturn => UserProfileState.Permissions.Contains(AssetRegisterPermissions.ReturnedProperty.Create);
 
     protected override async Task OnInitializedAsync()
     {
@@ -252,12 +206,35 @@ else
         await LoadAsync();
     }
 
-    private async Task OnRowClick(TableRowClickEventArgs<ArAccountabilitySummaryDto> args)
+    private Task OnRowClick(TableRowClickEventArgs<ArAccountabilitySummaryDto> args)
+        => OpenDetailDialogAsync(args.Item.Id);
+
+    private async Task OpenDetailDialogAsync(Guid id)
     {
-        _busy = true;
+        var parameters = new DialogParameters<MyAccountabilityDetailDialog> { { x => x.Id, id } };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true, CloseButton = true };
+        var dialog = await DialogService.ShowAsync<MyAccountabilityDetailDialog>("Accountability Detail", parameters, options);
+        var result = await dialog.Result;
+        // Accept inside the dialog mutates the record — reload the list if anything changed.
+        if (result is not null && !result.Canceled && result.Data is true)
+            await LoadAsync();
+    }
+
+    private async Task AcceptRowAsync(ArAccountabilitySummaryDto item)
+    {
+        var label = item.AccountabilityType == AccountabilityType.SE_ICS ? "ICS" : "PAR";
+        var confirmed = await DialogService.ShowMessageBox(
+            $"Accept {label}?",
+            $"Accept {label} {item.DocumentNo}? This confirms you have received the property listed.",
+            yesText: "Accept", cancelText: "Cancel");
+        if (confirmed != true) return;
+
+        _acceptingId = item.Id;
         try
         {
-            _selected = await Client.GetMineDetailAsync(args.Item.Id);
+            await Client.AcceptAsync(item.Id, DateOnly.FromDateTime(DateTime.Today));
+            Snackbar.Add($"{label} {item.DocumentNo} accepted.", Severity.Success);
+            await LoadAsync();
         }
         catch (Exception ex)
         {
@@ -265,7 +242,39 @@ else
         }
         finally
         {
-            _busy = false;
+            _acceptingId = null;
+        }
+    }
+
+    private async Task OpenReturnDialogAsync(ArAccountabilitySummaryDto item)
+    {
+        var parameters = new DialogParameters<ReturnedPropertyFormDialog>
+        {
+            { x => x.PreselectedAccountabilityId, item.Id }
+        };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<ReturnedPropertyFormDialog>("Request a Return", parameters, options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
+            await LoadAsync();
+    }
+
+    private async Task PrintRowAsync(ArAccountabilitySummaryDto item)
+    {
+        _printingId = item.Id;
+        try
+        {
+            var bytes = await Client.GetFastReportPdfAsync(item.Id, item.AccountabilityType, pageWidth: "longbond");
+            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
+            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"PDF generation failed: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _printingId = null;
         }
     }
 
@@ -292,6 +301,7 @@ else
         AccountabilityStatus.Renewed => "Renewed",
         AccountabilityStatus.Returned => "Returned",
         AccountabilityStatus.Cancelled => "Cancelled",
+        AccountabilityStatus.PendingAcceptance => "Pending Acceptance",
         _ => v.ToString()
     };
     private static Color StatusColor(AccountabilityStatus v) => v switch
@@ -300,13 +310,7 @@ else
         AccountabilityStatus.Renewed => Color.Warning,
         AccountabilityStatus.Returned => Color.Info,
         AccountabilityStatus.Cancelled => Color.Error,
+        AccountabilityStatus.PendingAcceptance => Color.Warning,
         _ => Color.Default
-    };
-    private static string FormatLineStatus(AccountabilityLineStatus v) => v switch
-    {
-        AccountabilityLineStatus.Active => "Active",
-        AccountabilityLineStatus.Returned => "Returned",
-        AccountabilityLineStatus.Lost => "Lost",
-        _ => v.ToString()
     };
 }

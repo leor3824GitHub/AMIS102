@@ -13,6 +13,8 @@ public static class AssetRegisterPermissions
     {
         public const string View     = "Permissions.AssetRegister.Accountability.View";
         public const string Issue    = "Permissions.AssetRegister.Accountability.Issue";
+        public const string Update   = "Permissions.AssetRegister.Accountability.Update";
+        public const string Delete   = "Permissions.AssetRegister.Accountability.Delete";
         public const string Return   = "Permissions.AssetRegister.Accountability.Return";
         public const string Cancel   = "Permissions.AssetRegister.Accountability.Cancel";
     }

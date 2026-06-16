@@ -114,13 +114,22 @@
                                     <Label Grid.Column="1"
                                            Text="{Binding TotalCost, StringFormat='Total ₱{0:N2}'}"
                                            FontFamily="InterSemiBold" FontSize="13"
-                                           VerticalOptions="Center" />
+                                           VerticalOptions="Center"
+                                           IsVisible="{Binding ShowTotal}" />
                                 </Grid>
                             </VerticalStackLayout>
                         </Border>
                     </DataTemplate>
                 </BindableLayout.ItemTemplate>
             </VerticalStackLayout>
+
+            <!-- Accept action — shown only while awaiting the accountable person's acknowledgement -->
+            <Button Text="Accept PAR"
+                    Style="{StaticResource PrimaryActionButtonStyle}"
+                    Command="{Binding AcceptCommand}"
+                    IsEnabled="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}"
+                    IsVisible="{Binding CanAccept}"
+                    Margin="16,0,16,24" />
 
         </VerticalStackLayout>
     </ScrollView>

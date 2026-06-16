@@ -8,6 +8,7 @@
     <converters:IsNotZeroConverter xmlns:converters="clr-namespace:Playground.Maui.Converters" x:Key="IsNotZeroConverter" />
     <converters:InvertedBoolConverter xmlns:converters="clr-namespace:Playground.Maui.Converters" x:Key="InvertedBoolConverter" />
     <converters:KindToColorConverter xmlns:converters="clr-namespace:Playground.Maui.Converters" x:Key="KindToColorConverter" />
+    <converters:StringEqualsConverter xmlns:converters="clr-namespace:Playground.Maui.Converters" x:Key="StringEqualsConverter" />
 
     <Style TargetType="ActivityIndicator">
         <Setter Property="Color" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource White}}" />

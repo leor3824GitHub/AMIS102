@@ -70,7 +70,7 @@
                 </Border>
 
                 <!-- ── Zone B: KPI tiles ── -->
-                <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12" Margin="16,20,16,0">
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="12" Margin="16,20,16,0">
 
                     <Border Grid.Column="0" Style="{StaticResource CardBorderStyle}" Padding="12,16">
                         <Border.GestureRecognizers>
@@ -80,6 +80,8 @@
                             <Label Text="{Binding IcsCount}" Style="{StaticResource DisplayStyle}" HorizontalOptions="Center"
                                    TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
                             <Label Text="ICS" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
+                            <Label Text="{Binding IcsItemCount, StringFormat='{0} items'}"
+                                   Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
                         </VerticalStackLayout>
                     </Border>
 
@@ -91,14 +93,8 @@
                             <Label Text="{Binding ParCount}" Style="{StaticResource DisplayStyle}" HorizontalOptions="Center"
                                    TextColor="{StaticResource Teal}" />
                             <Label Text="PAR" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
-                        </VerticalStackLayout>
-                    </Border>
-
-                    <Border Grid.Column="2" Style="{StaticResource CardBorderStyle}" Padding="12,16">
-                        <VerticalStackLayout Spacing="2" HorizontalOptions="Center">
-                            <Label Text="{Binding TotalItems}" Style="{StaticResource DisplayStyle}" HorizontalOptions="Center"
-                                   TextColor="{StaticResource Info}" />
-                            <Label Text="Items" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
+                            <Label Text="{Binding ParItemCount, StringFormat='{0} items'}"
+                                   Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
                         </VerticalStackLayout>
                     </Border>
 

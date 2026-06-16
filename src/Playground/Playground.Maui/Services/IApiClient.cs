@@ -47,6 +47,7 @@ public sealed record PARDetailDto(
     string PARNo,
     string Date,
     string PARType,
+    string Status,
     string FundCluster,
     List<PARItemDto> Items);
 
@@ -66,6 +67,10 @@ public sealed record PARItemDto(
 
     // "2 unit" / "1 piece" — pairs the issued quantity with its unit of measure.
     public string QuantityDisplay => $"{Quantity} {Unit}".TrimEnd();
+
+    // Only show the extended total when it differs from the unit cost shown above
+    // (i.e. quantity > 1). For single-quantity lines it's redundant with UnitCost.
+    public bool ShowTotal => Quantity > 1;
 }
 
 public sealed record TangibleInventoryItemDetailDto(
@@ -161,6 +166,10 @@ public interface IApiClient
     Task<ICSDetailDto> GetICSByIdAsync(Guid id, CancellationToken ct = default);
     Task<List<PARSummaryDto>> GetMyPARListAsync(Guid employeeId, CancellationToken ct = default);
     Task<PARDetailDto> GetPARByIdAsync(Guid id, CancellationToken ct = default);
+
+    /// <summary>Accepts a pending ICS/PAR issued to the current employee (PendingAcceptance → Active).</summary>
+    Task AcceptAccountabilityAsync(Guid id, CancellationToken ct = default);
+
     Task<TangibleInventoryItemDetailDto> GetItemByPropertyNoAsync(string propertyNo, CancellationToken ct = default);
 
     Task<List<CatalogItemDto>> SearchCatalogItemsAsync(string keyword, CancellationToken ct = default);

@@ -29,6 +29,6 @@ internal static class AccountabilityMapper
         new(a.Id, a.DocumentNo, a.AccountabilityType, a.FundCluster, a.IssuedOn, a.ExpiresOn,
             a.Status, a.CancellationReason, a.SupersededByAccountabilityId, a.SupersedesAccountabilityId,
             ToDto(a.IssuedBy), ToDto(a.ReceivedBy),
-            a.Lines.Select(ToDto).ToList());
+            a.Lines.Select(ToDto).ToList(), a.AcceptedOn);
 }
 

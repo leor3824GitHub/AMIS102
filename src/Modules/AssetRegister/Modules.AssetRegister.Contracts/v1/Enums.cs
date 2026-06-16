@@ -51,7 +51,11 @@ public enum AccountabilityStatus
     Active = 0,
     Renewed = 1,
     Returned = 2,
-    Cancelled = 3
+    Cancelled = 3,
+    /// <summary>Issued but not yet accepted by the receiving employee. Editable/deletable by the
+    /// issuer; assets are reserved (Assigned) but the document is not yet legally in force.
+    /// Becomes <see cref="Active"/> once the accountable person accepts.</summary>
+    PendingAcceptance = 4
 }
 
 public enum AccountabilityLineStatus
