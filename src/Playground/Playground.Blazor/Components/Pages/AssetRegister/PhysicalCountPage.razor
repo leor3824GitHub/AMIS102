@@ -40,12 +40,12 @@
                     }
                 </MudStack>
 
-                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3" Class="mt-3 flex-wrap">
+                <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Class="mt-3">
                     <AMISEnumChips TEnum="PhysicalCountStatus" Value="_statusFilter" ValueChanged="OnStatusChanged"
-                                   Label="Status" LabelFunc="FormatCountStatus" />
-                    <MudDivider Vertical="true" FlexItem="true" />
+                                   Label="Status" LabelFunc="FormatCountStatus" Class="mb-0" />
+                    <MudDivider Vertical="true" FlexItem="true" Class="mx-1" />
                     <AMISEnumChips TEnum="PhysicalCountScope" Value="_scopeFilter" ValueChanged="OnScopeChanged"
-                                   Label="Scope" LabelFunc="FormatScope" />
+                                   Label="Scope" LabelFunc="FormatScope" Class="mb-0" />
                 </MudStack>
             </MudCardContent>
         </MudCard>
@@ -260,19 +260,15 @@
                             Freezing locks all covered asset movements (issue / transfer / return / disposal) for fund
                             cluster <strong>@_selected.FundCluster</strong> (@FormatScope(_selected.Scope)) until the count is closed.
                         </MudAlert>
-                        <MudGrid Spacing="2" AlignItems="AlignItems.Center">
-                            <MudItem xs="12" md="6">
-                                <MudTextField @bind-Value="_freezeOfficeOrderNo" Label="Office Order No." Variant="Variant.Outlined"
-                                              Dense="true" Margin="Margin.Dense" MaxLength="100" Required="true"
-                                              Placeholder="@(_selected.OfficeOrderNo ?? "e.g. OO-2026-014")" />
-                            </MudItem>
-                            <MudItem xs="12" md="3">
-                                <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Error" FullWidth="true"
-                                            StartIcon="@Icons.Material.Outlined.AcUnit" OnClick="FreezeAsync" Disabled="_busy">
-                                    Freeze Ledger
-                                </AMISButton>
-                            </MudItem>
-                        </MudGrid>
+                        <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+                            <MudTextField @bind-Value="_freezeOfficeOrderNo" Label="Office Order No." Variant="Variant.Outlined"
+                                          Dense="true" Margin="Margin.Dense" MaxLength="100" Required="true"
+                                          Placeholder="@(_selected.OfficeOrderNo ?? "e.g. OO-2026-014")" Style="flex:1;" />
+                            <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Error"
+                                        StartIcon="@Icons.Material.Outlined.AcUnit" OnClick="FreezeAsync" Disabled="_busy">
+                                Freeze Ledger
+                            </AMISButton>
+                        </MudStack>
                     }
 
                     <!-- Ongoing → record counted assets / add found-at-station + move to reconciliation -->
@@ -283,21 +279,17 @@
                         <!-- Record a known registry asset by Property No. -->
                         <MudExpansionPanels Elevation="0" Class="mb-2">
                             <MudExpansionPanel Text="Record Counted Asset (by Property No.)" Expanded="true">
-                                <MudGrid Spacing="2" AlignItems="AlignItems.Center">
-                                    <MudItem xs="12" sm="8">
-                                        <MudTextField @bind-Value="_recordPropertyNo" Label="Property No." Variant="Variant.Outlined"
-                                                      Dense="true" Margin="Margin.Dense" MaxLength="64" Immediate="true"
-                                                      Placeholder="Scan or type, then Look Up"
-                                                      Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Outlined.Search"
-                                                      OnAdornmentClick="LookupAssetAsync" OnKeyUp="OnRecordPropertyKeyUp" />
-                                    </MudItem>
-                                    <MudItem xs="12" sm="4">
-                                        <AMISButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary" FullWidth="true"
-                                                    StartIcon="@Icons.Material.Outlined.Search" OnClick="LookupAssetAsync" Disabled="_busy">
-                                            Look Up
-                                        </AMISButton>
-                                    </MudItem>
-                                </MudGrid>
+                                <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+                                    <MudTextField @bind-Value="_recordPropertyNo" Label="Property No." Variant="Variant.Outlined"
+                                                  Dense="true" Margin="Margin.Dense" MaxLength="64" Immediate="true"
+                                                  Placeholder="Scan or type, then Look Up"
+                                                  Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Outlined.Search"
+                                                  OnAdornmentClick="LookupAssetAsync" OnKeyUp="OnRecordPropertyKeyUp" Style="flex:1;" />
+                                    <AMISButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary"
+                                                StartIcon="@Icons.Material.Outlined.Search" OnClick="LookupAssetAsync" Disabled="_busy">
+                                        Look Up
+                                    </AMISButton>
+                                </MudStack>
 
                                 @if (_recordLookupTried && _recordedAsset is null)
                                 {

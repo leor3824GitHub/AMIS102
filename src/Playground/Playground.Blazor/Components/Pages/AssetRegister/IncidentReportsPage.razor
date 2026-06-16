@@ -28,10 +28,13 @@
                     </AMISButton>
                 </MudStack>
 
-                <AMISEnumChips TEnum="PropertyIncidentType" Value="_typeFilter" ValueChanged="OnTypeChanged"
-                               Label="Incident Type" Class="mt-3" />
-                <AMISEnumChips TEnum="PropertyIncidentStatus" Value="_statusFilter" ValueChanged="OnStatusChanged"
-                               Label="Status" />
+                <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Class="mt-3">
+                    <AMISEnumChips TEnum="PropertyIncidentType" Value="_typeFilter" ValueChanged="OnTypeChanged"
+                                   Label="Incident Type" Class="mb-0" />
+                    <MudDivider Vertical="true" FlexItem="true" Class="mx-1" />
+                    <AMISEnumChips TEnum="PropertyIncidentStatus" Value="_statusFilter" ValueChanged="OnStatusChanged"
+                                   Label="Status" Class="mb-0" />
+                </MudStack>
             </MudCardContent>
         </MudCard>
     </MudItem>

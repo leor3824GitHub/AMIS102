@@ -26,10 +26,12 @@ internal sealed class ReturnedPropertyReceiptConfiguration : IEntityTypeConfigur
         builder.Property(x => x.Status).HasConversion<int>();
         builder.Property(x => x.AccountabilityDocumentNo).IsRequired().HasMaxLength(64);
         builder.Property(x => x.Remarks).HasMaxLength(1000);
+        builder.Property(x => x.InspectionRemarks).HasMaxLength(1000);
         builder.Property(x => x.RejectionReason).HasMaxLength(1000);
         builder.Property(x => x.CancellationReason).HasMaxLength(1000);
 
         builder.OwnsOne(x => x.ReturnedBy, n => n.ConfigureEmployeeRef("ReturnedBy"));
+        builder.OwnsOne(x => x.InspectedBy, n => n.ConfigureEmployeeRef("InspectedBy"));
         builder.OwnsOne(x => x.ReceivedBy, n => n.ConfigureEmployeeRef("ReceivedBy"));
         builder.Navigation(x => x.ReturnedBy).IsRequired();
 
@@ -56,6 +58,7 @@ internal sealed class ReturnedPropertyReceiptItemConfiguration : IEntityTypeConf
 
         builder.HasKey(x => x.Id);
         builder.Property(x => x.TenantId).IsRequired().HasMaxLength(50);
+        builder.Property(x => x.InspectedCondition).HasConversion<int>();
 
         builder.OwnsOne(x => x.Snapshot, n => n.ConfigureSnapshot());
         builder.Navigation(x => x.Snapshot).IsRequired();

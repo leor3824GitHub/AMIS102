@@ -258,6 +258,8 @@ internal static class ApiClientRegistration
             new ArReceivingReportClient(ResolveClient(sp)));
         services.AddTransient<IArReturnedPropertyClient>(sp =>
             new ArReturnedPropertyClient(ResolveClient(sp)));
+        services.AddTransient<IArSignedDocumentClient>(sp =>
+            new ArSignedDocumentClient(ResolveClient(sp)));
         services.AddTransient<ILocationLookupClient>(sp =>
             new LocationLookupClient(ResolveClient(sp)));
         services.AddTransient<ILocationClient>(sp =>

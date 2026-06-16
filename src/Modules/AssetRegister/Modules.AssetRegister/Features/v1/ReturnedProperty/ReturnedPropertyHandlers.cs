@@ -96,6 +96,29 @@ public sealed class CreateReturnedPropertyReceiptCommandHandler(AssetRegisterDbC
     }
 }
 
+public sealed class InspectReturnedPropertyReceiptCommandHandler(AssetRegisterDbContext db)
+    : ICommandHandler<InspectReturnedPropertyReceiptCommand, ReturnedPropertyReceiptDto>
+{
+    public async ValueTask<ReturnedPropertyReceiptDto> Handle(
+        InspectReturnedPropertyReceiptCommand cmd, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(cmd);
+
+        var receipt = await db.ReturnedPropertyReceipts
+            .Include(r => r.Items)
+            .FirstOrDefaultAsync(r => r.Id == cmd.Id, cancellationToken).ConfigureAwait(false)
+            ?? throw new KeyNotFoundException($"Return request '{cmd.Id}' not found.");
+
+        var conditionsByItemId = cmd.ItemConditions.ToDictionary(i => i.ItemId, i => i.Condition);
+        var inspectedBy = EmployeeRef.Create(cmd.InspectedBy.EmployeeId, cmd.InspectedBy.PrintedName, cmd.InspectedBy.Designation);
+
+        receipt.Inspect(inspectedBy, conditionsByItemId, cmd.Remarks);
+
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return ReturnedPropertyMapper.ToDto(receipt);
+    }
+}
+
 public sealed class AcceptReturnedPropertyReceiptCommandHandler(
     AssetRegisterDbContext db,
     Domain.Services.ICountFreezeGuard freezeGuard)
@@ -111,9 +134,9 @@ public sealed class AcceptReturnedPropertyReceiptCommandHandler(
             .FirstOrDefaultAsync(r => r.Id == cmd.Id, cancellationToken).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Return request '{cmd.Id}' not found.");
 
-        if (receipt.Status != ReturnedPropertyReceiptStatus.Pending)
+        if (receipt.Status != ReturnedPropertyReceiptStatus.Inspected)
             throw new InvalidOperationException(
-                $"Return request is {receipt.Status}. Only Pending requests can be accepted.");
+                $"Return request is {receipt.Status}. Only Inspected requests can be accepted.");
 
         // Load the accountability with lines so we can flip assets back to Available now.
         var accountability = await db.PropertyAccountabilities
@@ -121,7 +144,11 @@ public sealed class AcceptReturnedPropertyReceiptCommandHandler(
             .FirstOrDefaultAsync(a => a.Id == receipt.AccountabilityId, cancellationToken).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Accountability '{receipt.AccountabilityId}' not found.");
 
-        var lineIds = receipt.Items.Select(i => i.AccountabilityLineId).ToHashSet();
+        // Each item carries the condition the inspector assessed it at; carry that through to the asset and the line.
+        var conditionByLine = receipt.Items.ToDictionary(
+            i => i.AccountabilityLineId,
+            i => i.InspectedCondition ?? AssetCondition.InGoodCondition);
+        var lineIds = conditionByLine.Keys.ToHashSet();
         var lines = accountability.Lines.Where(l => lineIds.Contains(l.Id)).ToList();
 
         var notActive = lines.Where(l => l.LineStatus != AccountabilityLineStatus.Active).ToList();
@@ -129,7 +156,7 @@ public sealed class AcceptReturnedPropertyReceiptCommandHandler(
             throw new InvalidOperationException(
                 "One or more items are no longer Active on the accountability (they may have been returned through another document). Reject this request and raise a new one.");
 
-        // Flip assets back to Available.
+        // Flip assets back to Available at their inspected condition.
         var assetIds = lines.Select(l => l.AssetRegistryId).ToList();
         var assets = await db.AssetRegistries
             .Where(a => assetIds.Contains(a.Id))
@@ -138,14 +165,16 @@ public sealed class AcceptReturnedPropertyReceiptCommandHandler(
         foreach (var line in lines)
         {
             if (assets.TryGetValue(line.AssetRegistryId, out var asset))
+            {
                 asset.ReturnToAvailable();
+                asset.UpdateCondition(conditionByLine[line.Id]);
+            }
         }
 
-        // Close the accountability lines (and the accountability if fully returned).
+        // Close the accountability lines (and the accountability if fully returned), each at its inspected condition.
         accountability.ReturnLines(
-            lines.Select(l => (l.Id, (int?)null)),
-            receipt.Date,
-            AssetCondition.InGoodCondition);
+            lines.Select(l => (l.Id, conditionByLine[l.Id], (int?)null)),
+            receipt.Date);
 
         // Assign the official receipt number and capture the receiver.
         var receiptNo = await GenerateReceiptNoAsync(receipt.ReceiptType, receipt.Date.Year, cancellationToken).ConfigureAwait(false);

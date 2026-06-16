@@ -9,7 +9,8 @@ internal static class ReturnedPropertyMapper
 {
     public static ReturnedPropertyReceiptItemDto ToDto(ReturnedPropertyReceiptItem i) =>
         new(i.Id, i.ReceiptId, i.AccountabilityLineId, i.AssetRegistryId, i.ItemNo,
-            AccountabilityMapper.ToDto(i.Snapshot));
+            AccountabilityMapper.ToDto(i.Snapshot),
+            i.InspectedCondition);
 
     public static ReturnedPropertyReceiptDto ToDto(ReturnedPropertyReceipt r) =>
         new(r.Id, r.ReceiptNo, r.ReceiptType, r.Status, r.Date,
@@ -19,7 +20,9 @@ internal static class ReturnedPropertyMapper
             r.Remarks,
             r.RejectionReason,
             r.CancellationReason,
-            r.Items.OrderBy(i => i.ItemNo).Select(ToDto).ToList());
+            r.Items.OrderBy(i => i.ItemNo).Select(ToDto).ToList(),
+            r.InspectedBy is null ? null : AccountabilityMapper.ToDto(r.InspectedBy),
+            r.InspectionRemarks);
 
     public static ReturnedPropertyReceiptSummaryDto ToSummaryDto(ReturnedPropertyReceipt r) =>
         new(r.Id, r.ReceiptNo, r.ReceiptType, r.Status, r.Date,

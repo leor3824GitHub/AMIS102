@@ -12,6 +12,7 @@ using AMIS.Modules.AssetRegister.Domain.Issuance;
 using AMIS.Modules.AssetRegister.Domain.Locations;
 using AMIS.Modules.AssetRegister.Domain.Receiving;
 using AMIS.Modules.AssetRegister.Domain.ReturnedProperty;
+using AMIS.Modules.AssetRegister.Domain.SignedDocuments;
 using AMIS.Modules.AssetRegister.Domain.Unserviceable;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
@@ -33,6 +34,7 @@ public class AssetRegisterDbContext : BaseDbContext
     public DbSet<ReceivingReport> ReceivingReports => Set<ReceivingReport>();
     public DbSet<PPERRFormSeries> PPERRFormSeries => Set<PPERRFormSeries>();
     public DbSet<ReturnedPropertyReceipt> ReturnedPropertyReceipts => Set<ReturnedPropertyReceipt>();
+    public DbSet<SignedDocument> SignedDocuments => Set<SignedDocument>();
     public DbSet<Location> Locations => Set<Location>();
 
     public AssetRegisterDbContext(

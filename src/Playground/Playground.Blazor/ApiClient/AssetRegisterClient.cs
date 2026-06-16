@@ -1433,7 +1433,8 @@ internal sealed record ArReturnedPropertyReceiptItemDto(
     Guid AccountabilityLineId,
     Guid AssetRegistryId,
     int ItemNo,
-    ArAssetSnapshotDto Snapshot);
+    ArAssetSnapshotDto Snapshot,
+    ArContracts.AssetCondition? InspectedCondition = null);
 
 internal sealed record ArReturnedPropertyReceiptDto(
     Guid Id,
@@ -1448,7 +1449,9 @@ internal sealed record ArReturnedPropertyReceiptDto(
     string? Remarks,
     string? RejectionReason,
     string? CancellationReason,
-    IReadOnlyCollection<ArReturnedPropertyReceiptItemDto> Items);
+    IReadOnlyCollection<ArReturnedPropertyReceiptItemDto> Items,
+    ArEmployeeRefDto? InspectedBy = null,
+    string? InspectionRemarks = null);
 
 internal sealed record ArReturnedPropertyReceiptSummaryDto(
     Guid Id,
@@ -1472,6 +1475,11 @@ internal sealed record CreateReturnedPropertyReceiptRequest(
     ArEmployeeRefDto ReturnedBy,
     string? Remarks);
 
+internal sealed record ArReturnedPropertyInspectionItemDto(Guid ItemId, ArContracts.AssetCondition Condition);
+internal sealed record InspectReturnedPropertyReceiptRequest(
+    ArEmployeeRefDto InspectedBy,
+    IReadOnlyList<ArReturnedPropertyInspectionItemDto> ItemConditions,
+    string? Remarks);
 internal sealed record AcceptReturnedPropertyReceiptRequest(ArEmployeeRefDto ReceivedBy);
 internal sealed record RejectReturnedPropertyReceiptRequest(string Reason);
 internal sealed record CancelReturnedPropertyReceiptRequest(string? Reason);
@@ -1500,6 +1508,7 @@ internal interface IArReturnedPropertyClient
     Task<ArReturnedPropertyReceiptDto> CreateAsync(
         CreateReturnedPropertyReceiptRequest request, CancellationToken ct = default);
 
+    Task<ArReturnedPropertyReceiptDto> InspectAsync(Guid id, InspectReturnedPropertyReceiptRequest request, CancellationToken ct = default);
     Task<ArReturnedPropertyReceiptDto> AcceptAsync(Guid id, ArEmployeeRefDto receivedBy, CancellationToken ct = default);
     Task<ArReturnedPropertyReceiptDto> RejectAsync(Guid id, string reason, CancellationToken ct = default);
     Task<ArReturnedPropertyReceiptDto> CancelAsync(Guid id, string? reason, CancellationToken ct = default);
@@ -1562,10 +1571,19 @@ internal sealed class ArReturnedPropertyClient(HttpClient http) : IArReturnedPro
         return (await resp.Content.ReadFromJsonAsync<ArReturnedPropertyReceiptDto>(ArJsonOptions.Default, cancellationToken: ct))!;
     }
 
+    public async Task<ArReturnedPropertyReceiptDto> InspectAsync(Guid id, InspectReturnedPropertyReceiptRequest request, CancellationToken ct = default)
+    {
+        var resp = await http.PostAsJsonAsync($"{Base}/{id}/inspect", request, ArJsonOptions.Default, ct);
+        if (!resp.IsSuccessStatusCode)
+            throw new InvalidOperationException(await ArErrorReader.ExtractAsync(resp, ct));
+        return (await resp.Content.ReadFromJsonAsync<ArReturnedPropertyReceiptDto>(ArJsonOptions.Default, cancellationToken: ct))!;
+    }
+
     public async Task<ArReturnedPropertyReceiptDto> AcceptAsync(Guid id, ArEmployeeRefDto receivedBy, CancellationToken ct = default)
     {
         var resp = await http.PostAsJsonAsync($"{Base}/{id}/accept", new AcceptReturnedPropertyReceiptRequest(receivedBy), ArJsonOptions.Default, ct);
-        resp.EnsureSuccessStatusCode();
+        if (!resp.IsSuccessStatusCode)
+            throw new InvalidOperationException(await ArErrorReader.ExtractAsync(resp, ct));
         return (await resp.Content.ReadFromJsonAsync<ArReturnedPropertyReceiptDto>(ArJsonOptions.Default, cancellationToken: ct))!;
     }
 

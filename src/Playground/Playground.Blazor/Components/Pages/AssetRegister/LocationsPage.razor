@@ -12,15 +12,15 @@
             <MudTextField @bind-Value="_searchKeyword" Label="Search" Placeholder="Search locations..."
                           DebounceInterval="300" OnDebounceIntervalElapsed="@(async () => await LoadAsync())"
                           Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
-            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" OnClick="LoadAsync" Disabled="_isLoading">
+            <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" OnClick="LoadAsync" Disabled="_isLoading">
                 Search
-            </MudButton>
+            </AMISButton>
             @if (_canCreate)
             {
-                <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Secondary"
-                           StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateDialog">
+                <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Secondary"
+                            StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateDialog">
                     New
-                </MudButton>
+                </AMISButton>
             }
         </MudStack>
     </ActionContent>
@@ -65,15 +65,15 @@
                                             @if (_canUpdate)
                                             {
                                                 <MudTooltip Text="Edit location">
-                                                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
-                                                                   Color="Color.Primary" OnClick="@(() => OpenEditDialog(loc))" />
+                                                    <AMISIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                                                    Color="Color.Primary" OnClick="@(() => OpenEditDialog(loc))" />
                                                 </MudTooltip>
                                             }
                                             @if (_canDelete)
                                             {
                                                 <MudTooltip Text="Delete location">
-                                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
-                                                                   Color="Color.Error" OnClick="@(() => DeleteAsync(loc))" />
+                                                    <AMISIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                                                    Color="Color.Error" OnClick="@(() => DeleteAsync(loc))" />
                                                 </MudTooltip>
                                             }
                                         </MudStack>

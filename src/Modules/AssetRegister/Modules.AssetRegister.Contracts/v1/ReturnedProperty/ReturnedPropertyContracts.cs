@@ -10,7 +10,8 @@ public sealed record ReturnedPropertyReceiptItemDto(
     Guid AccountabilityLineId,
     Guid AssetRegistryId,
     int ItemNo,
-    AssetSnapshotDto Snapshot);
+    AssetSnapshotDto Snapshot,
+    AssetCondition? InspectedCondition = null);
 
 public sealed record ReturnedPropertyReceiptDto(
     Guid Id,
@@ -25,7 +26,9 @@ public sealed record ReturnedPropertyReceiptDto(
     string? Remarks,
     string? RejectionReason,
     string? CancellationReason,
-    IReadOnlyCollection<ReturnedPropertyReceiptItemDto> Items);
+    IReadOnlyCollection<ReturnedPropertyReceiptItemDto> Items,
+    EmployeeRefDto? InspectedBy = null,
+    string? InspectionRemarks = null);
 
 public sealed record ReturnedPropertyReceiptSummaryDto(
     Guid Id,
@@ -53,8 +56,21 @@ public sealed record CreateReturnedPropertyReceiptCommand(
     EmployeeRefDto ReturnedBy,
     string? Remarks) : ICommand<ReturnedPropertyReceiptDto>;
 
-/// <summary>Property custodian receives/accepts a pending return. Flips each returned asset back to Available,
-/// closes the accountability lines, assigns the official receipt number, and captures the receiver.</summary>
+/// <summary>One inspected line: the returned item and the condition the inspector assessed it at.</summary>
+public sealed record ReturnedPropertyInspectionItemDto(
+    Guid ItemId,
+    AssetCondition Condition);
+
+/// <summary>Inspector assesses a pending return, recording each returned item's actual condition.
+/// Moves the request to <see cref="ReturnedPropertyReceiptStatus.Inspected"/>; no asset state changes yet.</summary>
+public sealed record InspectReturnedPropertyReceiptCommand(
+    Guid Id,
+    EmployeeRefDto InspectedBy,
+    IReadOnlyList<ReturnedPropertyInspectionItemDto> ItemConditions,
+    string? Remarks) : ICommand<ReturnedPropertyReceiptDto>;
+
+/// <summary>Property custodian receives/accepts an inspected return. Flips each returned asset back to Available
+/// at its inspected condition, closes the accountability lines, assigns the official receipt number, and captures the receiver.</summary>
 public sealed record AcceptReturnedPropertyReceiptCommand(
     Guid Id,
     EmployeeRefDto ReceivedBy) : ICommand<ReturnedPropertyReceiptDto>;

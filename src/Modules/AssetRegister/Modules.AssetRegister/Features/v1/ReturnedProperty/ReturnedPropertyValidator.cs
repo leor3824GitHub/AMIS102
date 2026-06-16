@@ -21,6 +21,28 @@ public sealed class CreateReturnedPropertyReceiptCommandValidator
     }
 }
 
+public sealed class InspectReturnedPropertyReceiptCommandValidator
+    : AbstractValidator<InspectReturnedPropertyReceiptCommand>
+{
+    public InspectReturnedPropertyReceiptCommandValidator()
+    {
+        RuleFor(x => x.Id).NotEqual(Guid.Empty);
+        RuleFor(x => x.InspectedBy).NotNull();
+        RuleFor(x => x.InspectedBy.PrintedName).NotEmpty().MaximumLength(200)
+            .When(x => x.InspectedBy is not null);
+        RuleFor(x => x.InspectedBy.Designation).MaximumLength(200)
+            .When(x => x.InspectedBy is not null);
+        RuleFor(x => x.ItemConditions).NotEmpty()
+            .WithMessage("At least one item condition must be recorded.");
+        RuleForEach(x => x.ItemConditions).ChildRules(ic =>
+        {
+            ic.RuleFor(i => i.ItemId).NotEqual(Guid.Empty);
+            ic.RuleFor(i => i.Condition).IsInEnum();
+        });
+        RuleFor(x => x.Remarks).MaximumLength(1000);
+    }
+}
+
 public sealed class AcceptReturnedPropertyReceiptCommandValidator
     : AbstractValidator<AcceptReturnedPropertyReceiptCommand>
 {

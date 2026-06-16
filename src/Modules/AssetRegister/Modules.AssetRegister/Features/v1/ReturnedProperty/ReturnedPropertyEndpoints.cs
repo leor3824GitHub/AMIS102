@@ -23,6 +23,15 @@ internal static class ReturnedPropertyEndpoints
             .WithSummary("Request a return of property (RRSP / RRP) — creates a Pending request")
             .RequirePermission(AssetRegisterPermissions.ReturnedProperty.Create);
 
+        group.MapPost("/{id:guid}/inspect", async (Guid id, InspectReturnedPropertyReceiptCommand body, IMediator mediator, CancellationToken ct) =>
+        {
+            var result = await mediator.Send(body with { Id = id }, ct);
+            return TypedResults.Ok(result);
+        })
+            .WithModuleName<InspectReturnedPropertyReceiptCommand>()
+            .WithSummary("Inspector records each returned item's condition — moves the request to Inspected")
+            .RequirePermission(AssetRegisterPermissions.ReturnedProperty.Inspect);
+
         group.MapPost("/{id:guid}/accept", async (Guid id, AcceptReturnedPropertyReceiptCommand body, IMediator mediator, CancellationToken ct) =>
         {
             var result = await mediator.Send(body with { Id = id }, ct);

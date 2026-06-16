@@ -1,4 +1,5 @@
 using AMIS.Framework.Core.Domain;
+using AMIS.Modules.AssetRegister.Contracts.v1;
 using AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
 
 namespace AMIS.Modules.AssetRegister.Domain.ReturnedProperty;
@@ -13,7 +14,13 @@ public sealed class ReturnedPropertyReceiptItem : IHasTenant
     public int ItemNo { get; private set; }
     public AssetSnapshot Snapshot { get; private set; } = default!;
 
+    /// <summary>The condition the inspector assessed this item at. Null until the receipt is inspected.</summary>
+    public AssetCondition? InspectedCondition { get; private set; }
+
     private ReturnedPropertyReceiptItem() { }
+
+    /// <summary>Records the inspector's condition assessment for this returned item.</summary>
+    internal void SetInspectedCondition(AssetCondition condition) => InspectedCondition = condition;
 
     internal static ReturnedPropertyReceiptItem Create(
         string tenantId,

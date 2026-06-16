@@ -41,10 +41,13 @@ else
                         </AMISButton>
                     </MudStack>
 
-                    <AMISEnumChips TEnum="AccountabilityType" Value="_typeFilter" ValueChanged="OnTypeChanged"
-                                   Label="Type" LabelFunc="AccountabilityTypeLabel" Class="mt-3" />
-                    <AMISEnumChips TEnum="AccountabilityStatus" Value="_statusFilter" ValueChanged="OnStatusChanged"
-                                   Label="Status" LabelFunc="FormatStatus" />
+                    <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Class="mt-3">
+                        <AMISEnumChips TEnum="AccountabilityType" Value="_typeFilter" ValueChanged="OnTypeChanged"
+                                       Label="Type" LabelFunc="AccountabilityTypeLabel" Class="mb-0" />
+                        <MudDivider Vertical="true" FlexItem="true" Class="mx-1" />
+                        <AMISEnumChips TEnum="AccountabilityStatus" Value="_statusFilter" ValueChanged="OnStatusChanged"
+                                       Label="Status" LabelFunc="FormatStatus" Class="mb-0" />
+                    </MudStack>
                 </MudCardContent>
             </MudCard>
         </MudItem>

@@ -21,11 +21,14 @@ public sealed class ReturnedPropertyReceipt : AggregateRoot<Guid>, IHasTenant, I
     public string AccountabilityDocumentNo { get; private set; } = default!;
 
     public EmployeeRef ReturnedBy { get; private set; } = default!;
+    public EmployeeRef? InspectedBy { get; private set; }
     public EmployeeRef? ReceivedBy { get; private set; }
     public string? Remarks { get; private set; }
+    public string? InspectionRemarks { get; private set; }
 
     public string? RejectionReason { get; private set; }
     public string? CancellationReason { get; private set; }
+    public DateTimeOffset? InspectedOnUtc { get; private set; }
     public DateTimeOffset? AcceptedOnUtc { get; private set; }
     public DateTimeOffset? ResolvedOnUtc { get; private set; }
 
@@ -78,15 +81,38 @@ public sealed class ReturnedPropertyReceipt : AggregateRoot<Guid>, IHasTenant, I
         _items.Add(ReturnedPropertyReceiptItem.Create(TenantId, Id, accountabilityLineId, assetRegistryId, itemNo, snapshot));
     }
 
-    /// <summary>Custodian accepts the return. Assigns the official receipt number and the receiver.
+    /// <summary>Inspector assesses a Pending return, recording each item's condition. Moves the request to
+    /// <see cref="ReturnedPropertyReceiptStatus.Inspected"/> so the custodian can accept it. No asset state changes here.</summary>
+    public void Inspect(EmployeeRef inspectedBy, IReadOnlyDictionary<Guid, AssetCondition> conditionsByItemId, string? remarks)
+    {
+        ArgumentNullException.ThrowIfNull(inspectedBy);
+        ArgumentNullException.ThrowIfNull(conditionsByItemId);
+        if (Status != ReturnedPropertyReceiptStatus.Pending)
+            throw new InvalidOperationException($"Only Pending return requests can be inspected. Current status: {Status}.");
+
+        foreach (var item in _items)
+        {
+            if (!conditionsByItemId.TryGetValue(item.Id, out var condition))
+                throw new InvalidOperationException($"Inspection is missing a condition for item #{item.ItemNo} ({item.Snapshot.PropertyNo}).");
+            item.SetInspectedCondition(condition);
+        }
+
+        InspectedBy = inspectedBy;
+        InspectionRemarks = string.IsNullOrWhiteSpace(remarks) ? null : remarks.Trim();
+        Status = ReturnedPropertyReceiptStatus.Inspected;
+        InspectedOnUtc = DateTimeOffset.UtcNow;
+        LastModifiedOnUtc = InspectedOnUtc;
+    }
+
+    /// <summary>Custodian accepts the inspected return. Assigns the official receipt number and the receiver.
     /// The asset/accountability state changes are performed by the handler, which owns those aggregates.</summary>
     public void Accept(string receiptNo, EmployeeRef receivedBy)
     {
         if (string.IsNullOrWhiteSpace(receiptNo))
             throw new InvalidOperationException("A receipt number is required to accept a return.");
         ArgumentNullException.ThrowIfNull(receivedBy);
-        if (Status != ReturnedPropertyReceiptStatus.Pending)
-            throw new InvalidOperationException($"Only Pending return requests can be accepted. Current status: {Status}.");
+        if (Status != ReturnedPropertyReceiptStatus.Inspected)
+            throw new InvalidOperationException($"Only Inspected return requests can be accepted. Current status: {Status}.");
 
         ReceiptNo = receiptNo;
         ReceivedBy = receivedBy;
@@ -100,8 +126,8 @@ public sealed class ReturnedPropertyReceipt : AggregateRoot<Guid>, IHasTenant, I
     {
         if (string.IsNullOrWhiteSpace(reason))
             throw new InvalidOperationException("A reason is required to reject a return request.");
-        if (Status != ReturnedPropertyReceiptStatus.Pending)
-            throw new InvalidOperationException($"Only Pending return requests can be rejected. Current status: {Status}.");
+        if (Status is not (ReturnedPropertyReceiptStatus.Pending or ReturnedPropertyReceiptStatus.Inspected))
+            throw new InvalidOperationException($"Only Pending or Inspected return requests can be rejected. Current status: {Status}.");
 
         Status = ReturnedPropertyReceiptStatus.Rejected;
         RejectionReason = reason.Trim();
@@ -111,8 +137,8 @@ public sealed class ReturnedPropertyReceipt : AggregateRoot<Guid>, IHasTenant, I
 
     public void Cancel(string? reason)
     {
-        if (Status != ReturnedPropertyReceiptStatus.Pending)
-            throw new InvalidOperationException($"Only Pending return requests can be cancelled. Current status: {Status}.");
+        if (Status is not (ReturnedPropertyReceiptStatus.Pending or ReturnedPropertyReceiptStatus.Inspected))
+            throw new InvalidOperationException($"Only Pending or Inspected return requests can be cancelled. Current status: {Status}.");
 
         Status = ReturnedPropertyReceiptStatus.Cancelled;
         CancellationReason = string.IsNullOrWhiteSpace(reason) ? null : reason.Trim();

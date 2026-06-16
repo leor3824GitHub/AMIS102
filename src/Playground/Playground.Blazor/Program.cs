@@ -65,8 +65,25 @@ builder.Services.AddAuthentication("Cookies")
 
 builder.Services.AddAuthorization();
 
-// Distributed Cache (required by theme state factory)
-builder.Services.AddDistributedMemoryCache();
+// Distributed Cache (required by theme state factory).
+// HA-ready: when a Redis connection string is configured (CachingOptions:Redis — same key the API
+// uses), the distributed cache is backed by Redis so session/theme state is shared across UI nodes.
+// With no Redis configured it falls back to in-memory, which is correct for a single UI node.
+var distributedCacheRedis = builder.Configuration["CachingOptions:Redis"];
+if (string.IsNullOrWhiteSpace(distributedCacheRedis))
+{
+    builder.Services.AddDistributedMemoryCache();
+}
+else
+{
+    builder.Services.AddStackExchangeRedisCache(options =>
+    {
+        var config = StackExchange.Redis.ConfigurationOptions.Parse(distributedCacheRedis);
+        // UI tier stays available if Redis briefly drops — don't hard-fail the connection.
+        config.AbortOnConnectFail = false;
+        options.ConfigurationOptions = config;
+    });
+}
 
 // Simple cookie-based authentication
 builder.Services.AddScoped<AuthenticationStateProvider, CookieAuthenticationStateProvider>();

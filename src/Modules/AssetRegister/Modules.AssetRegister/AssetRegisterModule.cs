@@ -72,9 +72,13 @@ public class AssetRegisterModule : IModule
         new("Create Receiving Reports", "Create", "AssetRegister.Receiving"),
         new("Delete Receiving Reports", "Delete", "AssetRegister.Receiving"),
 
-        new("View Returned Property Receipts",   "View",   "AssetRegister.ReturnedProperty", IsBasic: true),
-        new("Create Returned Property Receipts", "Create", "AssetRegister.ReturnedProperty"),
-        new("Accept Returned Property Receipts", "Accept", "AssetRegister.ReturnedProperty"),
+        new("View Returned Property Receipts",    "View",    "AssetRegister.ReturnedProperty", IsBasic: true),
+        new("Create Returned Property Receipts",  "Create",  "AssetRegister.ReturnedProperty"),
+        new("Inspect Returned Property Receipts", "Inspect", "AssetRegister.ReturnedProperty"),
+        new("Accept Returned Property Receipts",  "Accept",  "AssetRegister.ReturnedProperty"),
+
+        new("View Signed Document Copies",   "View",   "AssetRegister.SignedDocuments", IsBasic: true),
+        new("Upload Signed Document Copies", "Upload", "AssetRegister.SignedDocuments"),
 
         new("View Locations",   "View",   "AssetRegister.Locations", IsBasic: true),
         new("Create Locations", "Create", "AssetRegister.Locations"),
@@ -240,6 +244,12 @@ public class AssetRegisterModule : IModule
         // Returned property receipts (RRSP / RRP)
         var returnedProperty = moduleGroup.MapGroup("/returned-property");
         Features.v1.ReturnedProperty.ReturnedPropertyEndpoints.MapReturnedPropertyEndpoints(returnedProperty);
+
+        // Signed document copies (scanned wet-signed RRSP / RRP)
+        var signedDocuments = moduleGroup.MapGroup("/signed-documents");
+        Features.v1.SignedDocuments.UploadSignedDocument.UploadSignedDocumentEndpoint.Map(signedDocuments);
+        Features.v1.SignedDocuments.GetSignedDocument.GetSignedDocumentEndpoint.Map(signedDocuments);
+        Features.v1.SignedDocuments.DownloadSignedDocument.DownloadSignedDocumentEndpoint.Map(signedDocuments);
 
         // Locations (asset placement + accountability)
         var locations = moduleGroup.MapGroup("/locations");

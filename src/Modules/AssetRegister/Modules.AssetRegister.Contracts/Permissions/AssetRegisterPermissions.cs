@@ -81,9 +81,16 @@ public static class AssetRegisterPermissions
 
     public static class ReturnedProperty
     {
-        public const string View   = "Permissions.AssetRegister.ReturnedProperty.View";
-        public const string Create = "Permissions.AssetRegister.ReturnedProperty.Create";
-        public const string Accept = "Permissions.AssetRegister.ReturnedProperty.Accept";
+        public const string View    = "Permissions.AssetRegister.ReturnedProperty.View";
+        public const string Create  = "Permissions.AssetRegister.ReturnedProperty.Create";
+        public const string Inspect = "Permissions.AssetRegister.ReturnedProperty.Inspect";
+        public const string Accept  = "Permissions.AssetRegister.ReturnedProperty.Accept";
+    }
+
+    public static class SignedDocuments
+    {
+        public const string View   = "Permissions.AssetRegister.SignedDocuments.View";
+        public const string Upload = "Permissions.AssetRegister.SignedDocuments.Upload";
     }
 
     public static class Locations

@@ -213,13 +213,15 @@ public enum ReturnedPropertyReceiptType
 
 public enum ReturnedPropertyReceiptStatus
 {
-    /// <summary>Return requested by the end-user; awaiting the property custodian to receive/accept.</summary>
+    /// <summary>Return requested by the end-user; awaiting an inspector to assess the returned items' condition.</summary>
     Pending = 0,
+    /// <summary>Inspector recorded each item's condition; awaiting the property custodian to receive/accept.</summary>
+    Inspected = 1,
     /// <summary>Custodian accepted the return — assets flipped back to Available and the official receipt number assigned.</summary>
-    Accepted = 1,
+    Accepted = 2,
     /// <summary>Custodian rejected the return request. No asset state changed.</summary>
-    Rejected = 2,
-    /// <summary>Requester withdrew the pending request before the custodian acted.</summary>
-    Cancelled = 3
+    Rejected = 3,
+    /// <summary>Requester withdrew the request before the custodian acted.</summary>
+    Cancelled = 4
 }
 

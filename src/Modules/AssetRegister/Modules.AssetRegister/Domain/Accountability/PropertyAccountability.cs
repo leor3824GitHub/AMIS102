@@ -227,13 +227,23 @@ public sealed class PropertyAccountability : AggregateRoot<Guid>, IHasTenant, IA
         AssetCondition conditionAtReturn)
     {
         ArgumentNullException.ThrowIfNull(returns);
+        ReturnLines(returns.Select(r => (r.LineId, conditionAtReturn, r.OdometerAtReturn)), returnedOn);
+    }
+
+    /// <summary>Return lines where each line carries its own condition (e.g. assessed individually at inspection).</summary>
+    public void ReturnLines(
+        IEnumerable<(Guid LineId, AssetCondition ConditionAtReturn, int? OdometerAtReturn)> returns,
+        DateOnly returnedOn)
+    {
+        ArgumentNullException.ThrowIfNull(returns);
         if (Status != AccountabilityStatus.Active)
             throw new InvalidOperationException($"Only Active accountabilities may have lines returned (current: {Status}).");
 
-        var byId = returns.ToDictionary(r => r.LineId, r => r.OdometerAtReturn);
+        var byId = returns.ToDictionary(r => r.LineId, r => (r.ConditionAtReturn, r.OdometerAtReturn));
         foreach (var line in _lines.Where(l => byId.ContainsKey(l.Id)))
         {
-            line.MarkReturned(returnedOn, conditionAtReturn, byId[line.Id]);
+            var (condition, odometer) = byId[line.Id];
+            line.MarkReturned(returnedOn, condition, odometer);
             AddDomainEvent(new AssetReturnedEvent(line.AssetRegistryId, Id, TenantId));
         }
 
