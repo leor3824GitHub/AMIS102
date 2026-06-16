@@ -40,13 +40,13 @@
                     <Grid WidthRequest="{StaticResource AvatarSize}"
                           HeightRequest="{StaticResource AvatarSize}"
                           HorizontalOptions="Center">
-                        <Ellipse Fill="{StaticResource OnGradientOverlay}"
+                        <Ellipse Fill="{StaticResource White}"
                                  WidthRequest="{StaticResource AvatarSize}"
                                  HeightRequest="{StaticResource AvatarSize}" />
                         <Label Text="{Binding Initials}"
                                FontSize="{StaticResource InitialsFontSize}"
                                FontAttributes="Bold"
-                               TextColor="{StaticResource White}"
+                               TextColor="{StaticResource Primary}"
                                HorizontalOptions="Center"
                                VerticalOptions="Center" />
                     </Grid>
@@ -62,13 +62,13 @@
                     <!-- Department badge (pill) -->
                     <Border StrokeShape="RoundRectangle 20"
                             Stroke="Transparent"
-                            BackgroundColor="{StaticResource OnGradientOverlay}"
+                            BackgroundColor="{StaticResource White}"
                             Padding="14,5"
                             HorizontalOptions="Center"
                             IsVisible="{Binding Department, Converter={StaticResource IsNotNullConverter}}">
                         <Label Text="{Binding Department}"
                                FontSize="{StaticResource BadgeFontSize}"
-                               TextColor="{StaticResource White}" />
+                               TextColor="{StaticResource Primary}" />
                     </Border>
 
                     <!-- Loading indicator -->

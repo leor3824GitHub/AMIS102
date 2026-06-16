@@ -34,13 +34,13 @@
                            IsVisible="{Binding Item.Description, Converter={StaticResource IsNotNullConverter}}" />
                     <Border Stroke="Transparent"
                             StrokeShape="RoundRectangle 10"
-                            BackgroundColor="{StaticResource OnGradientOverlay}"
+                            BackgroundColor="{StaticResource White}"
                             Padding="10,4"
                             HorizontalOptions="Start"
                             IsVisible="{Binding Item.AssetType, Converter={StaticResource IsNotNullConverter}}">
                         <Label Text="{Binding Item.AssetType}"
                                FontFamily="InterSemiBold" FontSize="12"
-                               TextColor="{StaticResource White}" />
+                               TextColor="{StaticResource Primary}" />
                     </Border>
                 </VerticalStackLayout>
             </Border>

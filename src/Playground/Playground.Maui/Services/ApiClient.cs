@@ -45,10 +45,12 @@ public sealed class ApiClient(HttpClient httpClient) : IApiClient
             $"api/v1/asset-register/accountability/mine/{id}", ct);
         return new ICSDetailDto(
             a!.Id, a.DocumentNo, a.IssuedOn.ToString("yyyy-MM-dd"), a.Status,
-            a.ExpiresOn?.ToString("yyyy-MM-dd"),
+            a.ExpiresOn?.ToString("yyyy-MM-dd"), a.FundCluster,
             a.Lines.Select(l => new ICSItemDto(
                 l.Id, l.Snapshot.PropertyNo, l.Snapshot.Description,
-                l.Snapshot.UnitCost, l.Snapshot.EstimatedUsefulLifeYears)).ToList());
+                l.Snapshot.AssetType, l.Snapshot.Unit, l.Snapshot.UnitCost,
+                l.Snapshot.EstimatedUsefulLifeYears,
+                l.Snapshot.AcquisitionDate.ToString("yyyy-MM-dd"))).ToList());
     }
 
     public async Task<List<PARSummaryDto>> GetMyPARListAsync(Guid employeeId, CancellationToken ct = default)
@@ -64,9 +66,10 @@ public sealed class ApiClient(HttpClient httpClient) : IApiClient
         var a = await httpClient.GetFromJsonAsync<ArAccountabilityDetail>(
             $"api/v1/asset-register/accountability/mine/{id}", ct);
         return new PARDetailDto(
-            a!.Id, a.DocumentNo, a.IssuedOn.ToString("yyyy-MM-dd"), "PPE",
+            a!.Id, a.DocumentNo, a.IssuedOn.ToString("yyyy-MM-dd"), "PPE", a.FundCluster,
             a.Lines.Select(l => new PARItemDto(
-                l.Id, l.Snapshot.PropertyNo, l.Snapshot.Description, l.Snapshot.UnitCost,
+                l.Id, l.Snapshot.PropertyNo, l.Snapshot.Description,
+                l.Snapshot.AssetType, l.Snapshot.Unit, l.Snapshot.UnitCost,
                 l.IssuedQty, l.Snapshot.EstimatedUsefulLifeYears,
                 l.Snapshot.AcquisitionDate.ToString("yyyy-MM-dd"))).ToList());
     }

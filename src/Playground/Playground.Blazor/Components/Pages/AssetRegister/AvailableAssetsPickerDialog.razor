@@ -14,7 +14,7 @@
                 <MudTextField @bind-Value="_keyword" Label="Keyword / Property No." Variant="Variant.Outlined"
                               Dense="true" Margin="Margin.Dense" Class="flex-grow-1"
                               Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Outlined.Search"
-                              OnKeyDown="OnSearchKeyDown" Immediate="false" />
+                              OnKeyDown="OnSearchKeyDown" Immediate="true" />
                 <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary"
                             StartIcon="@Icons.Material.Outlined.Search" OnClick="SearchAsync" Disabled="_busy">
                     Search

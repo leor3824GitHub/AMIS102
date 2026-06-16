@@ -29,30 +29,44 @@ public sealed record ICSDetailDto(
     string Date,
     string Status,
     string? ExpiresOn,
+    string FundCluster,
     List<ICSItemDto> Items);
 
 public sealed record ICSItemDto(
     Guid Id,
     string PropertyNo,
     string? Description,
+    string AssetType,
+    string Unit,
     decimal UnitCost,
-    int? EstimatedUsefulLifeYears);
+    int EstimatedUsefulLifeYears,
+    string DateAcquired);
 
 public sealed record PARDetailDto(
     Guid Id,
     string PARNo,
     string Date,
     string PARType,
+    string FundCluster,
     List<PARItemDto> Items);
 
 public sealed record PARItemDto(
     Guid Id,
     string PropertyNo,
     string ItemDescription,
+    string AssetType,
+    string Unit,
     decimal UnitCost,
     int Quantity,
     int EstimatedUsefulLifeYears,
-    string DateAcquired);
+    string DateAcquired)
+{
+    // Extended-line value (unit cost × quantity issued) — computed for display only.
+    public decimal TotalCost => UnitCost * Quantity;
+
+    // "2 unit" / "1 piece" — pairs the issued quantity with its unit of measure.
+    public string QuantityDisplay => $"{Quantity} {Unit}".TrimEnd();
+}
 
 public sealed record TangibleInventoryItemDetailDto(
     Guid Id,
