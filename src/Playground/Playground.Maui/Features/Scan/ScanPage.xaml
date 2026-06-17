@@ -4,17 +4,18 @@
              xmlns:vm="clr-namespace:Playground.Maui.Features.Scan"
              xmlns:zxing="clr-namespace:ZXing.Net.Maui.Controls;assembly=ZXing.Net.MAUI.Controls"
              xmlns:zxingcore="clr-namespace:ZXing.Net.Maui;assembly=ZXing.Net.MAUI"
+             xmlns:cam="clr-namespace:CommunityToolkit.Maui.Views;assembly=CommunityToolkit.Maui.Camera"
              x:DataType="vm:ScanViewModel"
              x:Class="Playground.Maui.Features.Scan.ScanPage"
              Title="Scan Asset">
 
     <Grid RowDefinitions="*,Auto">
 
-        <!-- Camera viewfinder fills available space -->
+        <!-- Barcode viewfinder (default mode) -->
         <zxing:CameraBarcodeReaderView Grid.Row="0"
                                        x:Name="BarcodeReader"
-                                       IsVisible="{Binding IsCameraAvailable}"
-                                       IsDetecting="True"
+                                       IsVisible="{Binding IsBarcodeMode}"
+                                       IsDetecting="{Binding IsBarcodeMode}"
                                        BarcodesDetected="OnBarcodeDetected">
             <zxing:CameraBarcodeReaderView.Options>
                 <zxingcore:BarcodeReaderOptions Formats="QrCode,Code128,Code39,DataMatrix"
@@ -22,6 +23,33 @@
                                                 Multiple="False" />
             </zxing:CameraBarcodeReaderView.Options>
         </zxing:CameraBarcodeReaderView>
+
+        <!-- Live text viewfinder (text mode) — frames are auto-captured and OCR'd by the page -->
+        <cam:CameraView Grid.Row="0"
+                        x:Name="TextCamera"
+                        IsVisible="{Binding IsTextMode}" />
+
+        <!-- Text-mode overlay: hint + live activity, no shutter button -->
+        <VerticalStackLayout Grid.Row="0"
+                             IsVisible="{Binding IsTextMode}"
+                             VerticalOptions="Start" HorizontalOptions="Center"
+                             Spacing="8" Padding="20,24"
+                             InputTransparent="True">
+            <ActivityIndicator IsRunning="{Binding IsTextMode}"
+                               Color="{StaticResource White}"
+                               HorizontalOptions="Center" />
+            <Label Text="Point at the printed property number"
+                   FontFamily="InterSemiBold"
+                   FontSize="14"
+                   TextColor="{StaticResource White}"
+                   HorizontalOptions="Center"
+                   HorizontalTextAlignment="Center" />
+            <Label Text="Hold steady — it reads automatically."
+                   FontSize="12"
+                   TextColor="{StaticResource Gray200}"
+                   HorizontalOptions="Center"
+                   HorizontalTextAlignment="Center" />
+        </VerticalStackLayout>
 
         <!-- No camera placeholder -->
         <VerticalStackLayout Grid.Row="0"
@@ -69,16 +97,18 @@
                     <Button Grid.Column="1"
                             Text="Search"
                             Command="{Binding SearchManualCommand}" />
+                    <!-- Enter live text scan -->
                     <Button Grid.Column="2"
                             Text="Scan Text"
-                            IsVisible="{Binding IsOcrSupported}"
-                            IsEnabled="{Binding IsOcrBusy, Converter={StaticResource InvertedBoolConverter}}"
-                            Command="{Binding ScanTextCommand}" />
+                            IsVisible="{Binding IsTextMode, Converter={StaticResource InvertedBoolConverter}}"
+                            IsEnabled="{Binding IsOcrSupported}"
+                            Command="{Binding StartTextScanCommand}" />
+                    <!-- Exit live text scan (returns to barcode mode) -->
+                    <Button Grid.Column="2"
+                            Text="Stop"
+                            IsVisible="{Binding IsTextMode}"
+                            Command="{Binding StopTextScanCommand}" />
                 </Grid>
-
-                <ActivityIndicator IsRunning="{Binding IsOcrBusy}"
-                                   IsVisible="{Binding IsOcrBusy}"
-                                   HorizontalOptions="Center" />
 
                 <Label Text="{Binding ErrorMessage}"
                        IsVisible="{Binding ErrorMessage, Converter={StaticResource IsNotNullConverter}}"

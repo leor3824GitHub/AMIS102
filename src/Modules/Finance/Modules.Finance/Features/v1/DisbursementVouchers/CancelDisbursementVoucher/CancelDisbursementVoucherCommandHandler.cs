@@ -1,3 +1,5 @@
+using System.Net;
+using AMIS.Framework.Core.Exceptions;
 using AMIS.Modules.Finance.Contracts.v1.DisbursementVouchers;
 using AMIS.Modules.Finance.Data;
 using Mediator;
@@ -15,9 +17,13 @@ public sealed class CancelDisbursementVoucherCommandHandler(
         var dv = await dbContext.DisbursementVouchers
             .FirstOrDefaultAsync(x => x.Id == command.Id, cancellationToken)
             .ConfigureAwait(false)
-            ?? throw new KeyNotFoundException($"Disbursement voucher '{command.Id}' not found.");
+            ?? throw new NotFoundException($"Disbursement voucher '{command.Id}' not found.");
 
-        dv.Cancel(command.Remarks);
+        try { dv.Cancel(command.Remarks); }
+        catch (InvalidOperationException ex)
+        {
+            throw new CustomException(ex.Message, [], HttpStatusCode.BadRequest);
+        }
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
         logger.LogInformation("Cancelled disbursement voucher {DvNumber}", dv.DvNumber);

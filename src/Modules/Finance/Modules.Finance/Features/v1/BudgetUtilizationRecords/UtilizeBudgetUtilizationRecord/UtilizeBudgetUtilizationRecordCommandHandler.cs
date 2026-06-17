@@ -1,3 +1,5 @@
+using System.Net;
+using AMIS.Framework.Core.Exceptions;
 using AMIS.Modules.Finance.Contracts.v1.BudgetUtilizationRecords;
 using AMIS.Modules.Finance.Data;
 using Mediator;
@@ -15,9 +17,13 @@ public sealed class UtilizeBudgetUtilizationRecordCommandHandler(
         var bur = await dbContext.BudgetUtilizationRecords
             .FirstOrDefaultAsync(x => x.Id == command.Id, cancellationToken)
             .ConfigureAwait(false)
-            ?? throw new KeyNotFoundException($"Budget utilization record '{command.Id}' not found.");
+            ?? throw new NotFoundException($"Budget utilization record '{command.Id}' not found.");
 
-        bur.Utilize(command.DisbursementVoucherId, command.DisbursementVoucherNumber);
+        try { bur.Utilize(command.DisbursementVoucherId, command.DisbursementVoucherNumber); }
+        catch (InvalidOperationException ex)
+        {
+            throw new CustomException(ex.Message, [], HttpStatusCode.BadRequest);
+        }
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
         logger.LogInformation("Utilized budget utilization record {BurNumber}", bur.BurNumber);

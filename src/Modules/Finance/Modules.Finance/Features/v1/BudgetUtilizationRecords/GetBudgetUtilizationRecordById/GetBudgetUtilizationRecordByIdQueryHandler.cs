@@ -1,3 +1,4 @@
+using AMIS.Framework.Core.Exceptions;
 using AMIS.Modules.Finance.Contracts.v1.BudgetUtilizationRecords;
 using AMIS.Modules.Finance.Data;
 using Mediator;
@@ -14,7 +15,7 @@ public sealed class GetBudgetUtilizationRecordByIdQueryHandler(
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == query.Id, cancellationToken)
             .ConfigureAwait(false)
-            ?? throw new KeyNotFoundException($"Budget utilization record '{query.Id}' not found.");
+            ?? throw new NotFoundException($"Budget utilization record '{query.Id}' not found.");
 
         return new BudgetUtilizationRecordDto(
             bur.Id,

@@ -53,6 +53,7 @@
 
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Maui" />
+    <PackageReference Include="CommunityToolkit.Maui.Camera" />
     <PackageReference Include="CommunityToolkit.Mvvm" />
     <PackageReference Include="ZXing.Net.Maui.Controls" />
     <PackageReference Include="sqlite-net-pcl" />

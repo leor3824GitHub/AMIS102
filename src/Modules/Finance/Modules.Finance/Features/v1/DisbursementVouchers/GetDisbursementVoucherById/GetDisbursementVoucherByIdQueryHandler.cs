@@ -1,3 +1,4 @@
+using AMIS.Framework.Core.Exceptions;
 using AMIS.Modules.Finance.Contracts.v1.DisbursementVouchers;
 using AMIS.Modules.Finance.Data;
 using Mediator;
@@ -14,7 +15,7 @@ public sealed class GetDisbursementVoucherByIdQueryHandler(
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == query.Id, cancellationToken)
             .ConfigureAwait(false)
-            ?? throw new KeyNotFoundException($"Disbursement voucher '{query.Id}' not found.");
+            ?? throw new NotFoundException($"Disbursement voucher '{query.Id}' not found.");
 
         return new DisbursementVoucherDto(
             dv.Id,
