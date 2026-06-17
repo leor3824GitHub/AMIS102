@@ -3,6 +3,7 @@
 @using AMIS.Playground.Blazor.ApiClient
 @using AMIS.Playground.Blazor.Components.Pages.Procurement
 @using AMIS.Modules.AssetRegister.Contracts.Permissions
+@using AMIS.Modules.AssetRegister.Contracts.v1.SignedDocuments
 @using IssuanceReportType = AMIS.Modules.AssetRegister.Contracts.v1.IssuanceReportType
 @using IssuanceNature = AMIS.Modules.AssetRegister.Contracts.v1.IssuanceNature
 @inject IArIssuanceReportClient Client
@@ -274,6 +275,14 @@
                                         </MudMenuItem>
                                     </MudMenu>
                                 }
+                                @if (context.HasSignedCopy ? _canViewSigned : _canUploadSigned)
+                                {
+                                    <MudTooltip Text="@(context.HasSignedCopy ? "Signed copy uploaded — click to view" : "Upload signed copy")">
+                                        <AMISIconButton Icon="@Icons.Material.Filled.Draw" Size="Size.Small"
+                                                        Color="@(context.HasSignedCopy ? Color.Success : Color.Secondary)"
+                                                        OnClick="@(() => OpenSignedCopyAsync(context))" />
+                                    </MudTooltip>
+                                }
                             </MudTd>
                         </RowTemplate>
                         <NoRecordsContent>
@@ -470,6 +479,23 @@
     }
 
     private bool _canCreate => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Issuance.Create);
+    private bool _canViewSigned   => UserProfileState.Permissions.Contains(AssetRegisterPermissions.SignedDocuments.View);
+    private bool _canUploadSigned => UserProfileState.Permissions.Contains(AssetRegisterPermissions.SignedDocuments.Upload);
+
+    // PPEIR/SMIR is created atomically (the act of creating it issues the assets) — a document of record on existence.
+    private async Task OpenSignedCopyAsync(ArIssuanceReportSummaryDto item)
+    {
+        // Fully-qualified: this page also imports the Procurement namespace, which has its own SignedCopyDialog.
+        var parameters = new DialogParameters<AMIS.Playground.Blazor.Components.Pages.AssetRegister.SignedCopyDialog>
+        {
+            { x => x.DocumentType, AssetRegisterDocumentType.IssuanceReport },
+            { x => x.DocumentId, item.Id },
+            { x => x.DocumentNumber, string.IsNullOrWhiteSpace(item.ReportNo) ? "(no report number)" : item.ReportNo },
+            { x => x.IsTerminalState, true }
+        };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        await DialogService.ShowAsync<AMIS.Playground.Blazor.Components.Pages.AssetRegister.SignedCopyDialog>("Signed Copy", parameters, options);
+    }
 
     protected override async Task OnInitializedAsync()
     {

@@ -17,7 +17,8 @@ public sealed record AssetSnapshotDto(
     string? UacsObjectCode,
     string? SerialNo,
     string? Brand,
-    string? Model);
+    string? Model,
+    decimal NetBookValue = 0m);
 
 public sealed record VehicleAccountabilityProfileDto(
     int? OdometerAtIssue,
@@ -64,7 +65,8 @@ public sealed record PropertyAccountabilitySummaryDto(
     AccountabilityStatus Status,
     DateOnly IssuedOn,
     DateOnly? ExpiresOn,
-    int LineCount);
+    int LineCount,
+    bool HasSignedCopy = false);
 
 // ── Commands ───────────────────────────────────────────────────────────────
 

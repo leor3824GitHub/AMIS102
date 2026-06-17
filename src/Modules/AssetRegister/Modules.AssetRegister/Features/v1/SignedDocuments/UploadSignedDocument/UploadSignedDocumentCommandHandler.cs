@@ -101,6 +101,56 @@ public sealed class UploadSignedDocumentCommandHandler(
                     throw new InvalidOperationException("A signed copy can only be uploaded once the return has been Accepted.");
                 break;
 
+            case AssetRegisterDocumentType.PropertyAccountability:
+                var accountability = await db.PropertyAccountabilities.AsNoTracking()
+                    .FirstOrDefaultAsync(x => x.Id == id, ct).ConfigureAwait(false)
+                    ?? throw new KeyNotFoundException($"Property accountability '{id}' not found.");
+                // The ICS/PAR is wet-signed when the accountable employee accepts it; AcceptedOn is stamped then.
+                if (!accountability.AcceptedOn.HasValue)
+                    throw new InvalidOperationException("A signed copy can only be uploaded once the ICS/PAR has been accepted.");
+                break;
+
+            case AssetRegisterDocumentType.IssuanceReport:
+                // PPEIR/SMIR is created atomically (creating it issues the assets) — a document of record on existence.
+                _ = await db.PropertyIssuanceReports.AsNoTracking()
+                    .FirstOrDefaultAsync(x => x.Id == id, ct).ConfigureAwait(false)
+                    ?? throw new KeyNotFoundException($"Issuance report '{id}' not found.");
+                break;
+
+            case AssetRegisterDocumentType.ReceivingReport:
+                // PPERR/SMRR is created atomically — a document of record on existence.
+                _ = await db.ReceivingReports.AsNoTracking()
+                    .FirstOrDefaultAsync(x => x.Id == id, ct).ConfigureAwait(false)
+                    ?? throw new KeyNotFoundException($"Receiving report '{id}' not found.");
+                break;
+
+            case AssetRegisterDocumentType.UnserviceableReport:
+                var unserviceable = await db.UnserviceablePropertyReports.AsNoTracking()
+                    .FirstOrDefaultAsync(x => x.Id == id, ct).ConfigureAwait(false)
+                    ?? throw new KeyNotFoundException($"Unserviceable-property report '{id}' not found.");
+                // Fully signed once the inspection/disposal is recorded (or the report is closed).
+                if (unserviceable.Status is not (UnserviceableReportStatus.DisposalRecorded or UnserviceableReportStatus.Closed))
+                    throw new InvalidOperationException("A signed copy can only be uploaded once disposal has been recorded.");
+                break;
+
+            case AssetRegisterDocumentType.IncidentReport:
+                var incident = await db.PropertyIncidentReports.AsNoTracking()
+                    .FirstOrDefaultAsync(x => x.Id == id, ct).ConfigureAwait(false)
+                    ?? throw new KeyNotFoundException($"Incident report '{id}' not found.");
+                // The notarised RLSDDSP of record exists once the incident is resolved/closed.
+                if (incident.Status is not (PropertyIncidentStatus.Resolved or PropertyIncidentStatus.Closed))
+                    throw new InvalidOperationException("A signed copy can only be uploaded once the incident is Resolved or Closed.");
+                break;
+
+            case AssetRegisterDocumentType.PhysicalCountReport:
+                var session = await db.PhysicalCountSessions.AsNoTracking()
+                    .FirstOrDefaultAsync(x => x.Id == id, ct).ConfigureAwait(false)
+                    ?? throw new KeyNotFoundException($"Physical-count session '{id}' not found.");
+                // The RPCPPE/RPCSE is signed off when the count is closed.
+                if (session.Status != PhysicalCountStatus.Closed)
+                    throw new InvalidOperationException("A signed copy can only be uploaded once the physical count is Closed.");
+                break;
+
             default:
                 throw new InvalidOperationException($"Unsupported document type '{type}'.");
         }

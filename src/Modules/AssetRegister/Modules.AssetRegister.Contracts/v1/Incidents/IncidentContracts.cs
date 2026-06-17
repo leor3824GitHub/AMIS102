@@ -53,7 +53,8 @@ public sealed record PropertyIncidentReportSummaryDto(
     PropertyIncidentType IncidentType,
     PropertyIncidentStatus Status,
     DateOnly IncidentDate,
-    int ItemCount);
+    int ItemCount,
+    bool HasSignedCopy = false);
 
 // ── Commands ───────────────────────────────────────────────────────────────
 

@@ -54,7 +54,8 @@ public sealed record PhysicalCountSessionSummaryDto(
     DateOnly? ClosedOn,
     int EntryCount,
     string? OfficeOrderNo,
-    DateTimeOffset? FrozenOnUtc);
+    DateTimeOffset? FrozenOnUtc,
+    bool HasSignedCopy = false);
 
 // ── Reconciliation read model ──────────────────────────────────────────────
 

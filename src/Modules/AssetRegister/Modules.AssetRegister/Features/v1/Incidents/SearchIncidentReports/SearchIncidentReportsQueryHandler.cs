@@ -1,5 +1,6 @@
 using AMIS.Framework.Shared.Persistence;
 using AMIS.Modules.AssetRegister.Contracts.v1.Incidents;
+using AMIS.Modules.AssetRegister.Contracts.v1.SignedDocuments;
 using AMIS.Modules.AssetRegister.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
@@ -32,7 +33,8 @@ public sealed class SearchIncidentReportsQueryHandler(AssetRegisterDbContext db)
         var items = await q.OrderByDescending(r => r.IncidentDate)
             .Skip((pageNumber - 1) * pageSize).Take(pageSize)
             .Select(r => new PropertyIncidentReportSummaryDto(
-                r.Id, r.IncidentNo, r.IncidentType, r.Status, r.IncidentDate, r.Items.Count))
+                r.Id, r.IncidentNo, r.IncidentType, r.Status, r.IncidentDate, r.Items.Count,
+                db.SignedDocuments.Any(sd => sd.DocumentType == AssetRegisterDocumentType.IncidentReport && sd.DocumentId == r.Id)))
             .ToListAsync(cancellationToken).ConfigureAwait(false);
 
         return new PagedResponse<PropertyIncidentReportSummaryDto>

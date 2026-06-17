@@ -5,6 +5,7 @@
 @using AMIS.Modules.AssetRegister.Contracts.Permissions
 @using ReceivingDocumentKind = AMIS.Modules.AssetRegister.Contracts.v1.ReceivingDocumentKind
 @using ReceiptType = AMIS.Modules.AssetRegister.Contracts.v1.ReceiptType
+@using AMIS.Modules.AssetRegister.Contracts.v1.SignedDocuments
 @inject IArReceivingReportClient Client
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
@@ -112,6 +113,13 @@
                                                 Fast Report – Page Setup…
                                             </MudMenuItem>
                                         </MudMenu>
+                                        @if (r.HasSignedCopy ? _canViewSigned : _canUploadSigned)
+                                        {
+                                            <AMISIconButton Icon="@Icons.Material.Filled.Draw" Size="Size.Small"
+                                                            Color="@(r.HasSignedCopy ? Color.Success : Color.Secondary)"
+                                                            Title="@(r.HasSignedCopy ? "Signed copy uploaded — click to view" : "Upload signed copy")"
+                                                            OnClick="@(() => OpenSignedCopyAsync(r))" />
+                                        }
                                         @if (_canDelete)
                                         {
                                             <AMISIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
@@ -145,6 +153,23 @@
 
     private bool _canCreate => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Receiving.Create);
     private bool _canDelete => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Receiving.Delete);
+    private bool _canViewSigned   => UserProfileState.Permissions.Contains(AssetRegisterPermissions.SignedDocuments.View);
+    private bool _canUploadSigned => UserProfileState.Permissions.Contains(AssetRegisterPermissions.SignedDocuments.Upload);
+
+    // PPERR is created atomically — a document of record on existence.
+    private async Task OpenSignedCopyAsync(ArReceivingReportSummaryDto item)
+    {
+        // Fully-qualified: this page also imports the Procurement namespace, which has its own SignedCopyDialog.
+        var parameters = new DialogParameters<AMIS.Playground.Blazor.Components.Pages.AssetRegister.SignedCopyDialog>
+        {
+            { x => x.DocumentType, AssetRegisterDocumentType.ReceivingReport },
+            { x => x.DocumentId, item.Id },
+            { x => x.DocumentNumber, string.IsNullOrWhiteSpace(item.ReportNo) ? "(no report number)" : item.ReportNo },
+            { x => x.IsTerminalState, true }
+        };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        await DialogService.ShowAsync<AMIS.Playground.Blazor.Components.Pages.AssetRegister.SignedCopyDialog>("Signed Copy", parameters, options);
+    }
 
     protected override async Task OnInitializedAsync()
     {

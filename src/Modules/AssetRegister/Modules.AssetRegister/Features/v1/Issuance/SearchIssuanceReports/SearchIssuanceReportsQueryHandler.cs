@@ -1,5 +1,6 @@
 using AMIS.Framework.Shared.Persistence;
 using AMIS.Modules.AssetRegister.Contracts.v1.Issuance;
+using AMIS.Modules.AssetRegister.Contracts.v1.SignedDocuments;
 using AMIS.Modules.AssetRegister.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
@@ -34,7 +35,8 @@ public sealed class SearchIssuanceReportsQueryHandler(AssetRegisterDbContext db)
             .Skip((pageNumber - 1) * pageSize).Take(pageSize)
             .Select(r => new PropertyIssuanceReportSummaryDto(
                 r.Id, r.ReportNo, r.ReportType, r.Nature, r.Date,
-                r.Lines.Count, r.Lines.Sum(l => l.SnapshotAmount)))
+                r.Lines.Count, r.Lines.Sum(l => l.SnapshotAmount),
+                db.SignedDocuments.Any(sd => sd.DocumentType == AssetRegisterDocumentType.IssuanceReport && sd.DocumentId == r.Id)))
             .ToListAsync(cancellationToken).ConfigureAwait(false);
 
         return new PagedResponse<PropertyIssuanceReportSummaryDto>

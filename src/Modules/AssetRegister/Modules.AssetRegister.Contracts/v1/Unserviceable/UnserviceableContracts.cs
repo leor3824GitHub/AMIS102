@@ -44,7 +44,8 @@ public sealed record UnserviceablePropertyReportSummaryDto(
     UnserviceableReportType ReportType,
     UnserviceableReportStatus Status,
     DateOnly AsAt,
-    int ItemCount);
+    int ItemCount,
+    bool HasSignedCopy = false);
 
 // ── Commands ───────────────────────────────────────────────────────────────
 

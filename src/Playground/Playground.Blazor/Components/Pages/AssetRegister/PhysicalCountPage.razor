@@ -6,6 +6,7 @@
 @using PhysicalCountScope = AMIS.Modules.AssetRegister.Contracts.v1.PhysicalCountScope
 @using PhysicalCountCondition = AMIS.Modules.AssetRegister.Contracts.v1.PhysicalCountCondition
 @using AssetCondition = AMIS.Modules.AssetRegister.Contracts.v1.AssetCondition
+@using AMIS.Modules.AssetRegister.Contracts.v1.SignedDocuments
 @inject IArPhysicalCountClient Client
 @inject IArCatalogClient CatalogClient
 @inject IAssetRegistryClient AssetClient
@@ -13,6 +14,7 @@
 @inject ISnackbar Snackbar
 @inject IUserProfileState UserProfileState
 @inject IJSRuntime JS
+@inject IDialogService DialogService
 
 <AMISPageHeader Title="Physical Count Sessions (RPCSEMEX / RPCPPE)"
                Description="Manage physical count sessions per COA 2022-004. Produces RPCSEMEX (SE) and RPCPPE (PPE) reports." />
@@ -119,6 +121,7 @@
                             <MudTh>Started On</MudTh>
                             <MudTh>Closed On</MudTh>
                             <MudTh Style="text-align:right">Entries</MudTh>
+                            <MudTh Style="text-align:center">Actions</MudTh>
                         </HeaderContent>
                         <RowTemplate>
                             <MudTd><strong>@context.Code</strong></MudTd>
@@ -134,6 +137,16 @@
                             <MudTd>@context.StartedOn.ToString("yyyy-MM-dd")</MudTd>
                             <MudTd>@(context.ClosedOn?.ToString("yyyy-MM-dd") ?? "—")</MudTd>
                             <MudTd Style="text-align:right">@context.EntryCount</MudTd>
+                            <MudTd Style="text-align:center" @onclick:stopPropagation="true">
+                                @if (IsSigned(context.Status) && (context.HasSignedCopy ? _canViewSigned : _canUploadSigned))
+                                {
+                                    <MudTooltip Text="@(context.HasSignedCopy ? "Signed copy uploaded — click to view" : "Upload signed copy")">
+                                        <AMISIconButton Icon="@Icons.Material.Filled.Draw" Size="Size.Small"
+                                                        Color="@(context.HasSignedCopy ? Color.Success : Color.Secondary)"
+                                                        OnClick="@(() => OpenSignedCopyAsync(context))" />
+                                    </MudTooltip>
+                                }
+                            </MudTd>
                         </RowTemplate>
                         <NoRecordsContent>
                             <MudText Color="Color.Secondary">No physical count sessions found.</MudText>
@@ -575,6 +588,24 @@
     private bool _canRecord => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Count.Record);
     private bool _canSubmit => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Count.Submit);
     private bool _canClose  => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Count.Close);
+    private bool _canViewSigned   => UserProfileState.Permissions.Contains(AssetRegisterPermissions.SignedDocuments.View);
+    private bool _canUploadSigned => UserProfileState.Permissions.Contains(AssetRegisterPermissions.SignedDocuments.Upload);
+
+    // The RPCPPE/RPCSE is signed off when the count is Closed.
+    private static bool IsSigned(PhysicalCountStatus s) => s == PhysicalCountStatus.Closed;
+
+    private async Task OpenSignedCopyAsync(ArPhysicalCountSummaryDto item)
+    {
+        var parameters = new DialogParameters<SignedCopyDialog>
+        {
+            { x => x.DocumentType, AssetRegisterDocumentType.PhysicalCountReport },
+            { x => x.DocumentId, item.Id },
+            { x => x.DocumentNumber, string.IsNullOrWhiteSpace(item.Code) ? "(no count code)" : item.Code },
+            { x => x.IsTerminalState, IsSigned(item.Status) }
+        };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        await DialogService.ShowAsync<SignedCopyDialog>("Signed Copy", parameters, options);
+    }
 
     protected override async Task OnInitializedAsync()
     {

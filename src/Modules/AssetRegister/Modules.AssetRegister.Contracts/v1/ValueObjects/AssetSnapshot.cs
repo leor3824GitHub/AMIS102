@@ -19,6 +19,13 @@ public sealed class AssetSnapshot
     public string? Brand { get; private set; }
     public string? Model { get; private set; }
 
+    /// <summary>
+    /// Net book value (carrying amount) of the asset frozen at the moment the snapshot was taken —
+    /// <c>UnitCost − AccumulatedDepreciation − AccumulatedImpairmentLosses</c> as sourced from the
+    /// depreciation ledger on <c>AssetRegistry</c>. Equals <see cref="UnitCost"/> for SE assets (never depreciated).
+    /// </summary>
+    public decimal NetBookValue { get; private set; }
+
     private AssetSnapshot() { }
 
     public static AssetSnapshot Create(
@@ -32,7 +39,8 @@ public sealed class AssetSnapshot
         string? uacsObjectCode,
         string? serialNo,
         string? brand,
-        string? model) =>
+        string? model,
+        decimal netBookValue) =>
         new()
         {
             PropertyNo = propertyNo,
@@ -45,7 +53,8 @@ public sealed class AssetSnapshot
             UacsObjectCode = uacsObjectCode,
             SerialNo = serialNo,
             Brand = brand,
-            Model = model
+            Model = model,
+            NetBookValue = netBookValue
         };
 }
 

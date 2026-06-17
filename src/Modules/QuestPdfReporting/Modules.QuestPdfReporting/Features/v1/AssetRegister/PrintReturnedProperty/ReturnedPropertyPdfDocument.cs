@@ -147,8 +147,9 @@ internal sealed class ReturnedPropertyPdfDocument(
                 table.Cell().Border(0.5f).Padding(2).AlignCenter().Text(qty.ToString()).FontSize(7);
                 table.Cell().Border(0.5f).Padding(2).AlignRight().Text(snap.UnitCost.ToString("N2")).FontSize(7);
                 table.Cell().Border(0.5f).Padding(2).AlignRight().Text(total.ToString("N2")).FontSize(7);
-                // Net book value is not carried on the snapshot — left blank for manual entry.
-                table.Cell().Border(0.5f).Padding(2).Text(string.Empty);
+                // Net book value frozen at return time from the asset's depreciation ledger
+                // (UnitCost − accumulated depreciation − impairment; equals UnitCost for SE).
+                table.Cell().Border(0.5f).Padding(2).AlignRight().Text(snap.NetBookValue.ToString("N2")).FontSize(7);
             }
 
             // Pad with empty rows so the form keeps its fixed-grid appearance.
@@ -158,9 +159,10 @@ internal sealed class ReturnedPropertyPdfDocument(
 
             // Totals row.
             var grandTotal = receipt.Items.Sum(i => i.Snapshot.UnitCost);
+            var nbvTotal = receipt.Items.Sum(i => i.Snapshot.NetBookValue);
             table.Cell().ColumnSpan(6).Border(0.5f).Padding(2).AlignRight().Text("TOTAL").Bold().FontSize(7);
             table.Cell().Border(0.5f).Padding(2).AlignRight().Text(grandTotal.ToString("N2")).Bold().FontSize(7);
-            table.Cell().Border(0.5f).Padding(2).Text(string.Empty);
+            table.Cell().Border(0.5f).Padding(2).AlignRight().Text(nbvTotal.ToString("N2")).Bold().FontSize(7);
         });
     }
 

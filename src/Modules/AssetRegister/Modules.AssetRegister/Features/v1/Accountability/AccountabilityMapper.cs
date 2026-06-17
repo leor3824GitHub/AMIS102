@@ -9,7 +9,7 @@ internal static class AccountabilityMapper
     public static AssetSnapshotDto ToDto(AssetSnapshot s) =>
         new(s.PropertyNo, s.Description, s.AssetType, s.UnitCost, s.Unit,
             s.EstimatedUsefulLifeYears, s.AcquisitionDate, s.UacsObjectCode,
-            s.SerialNo, s.Brand, s.Model);
+            s.SerialNo, s.Brand, s.Model, s.NetBookValue);
 
     public static EmployeeRefDto ToDto(EmployeeRef e) =>
         new(e.EmployeeId, e.PrintedName, e.Designation);

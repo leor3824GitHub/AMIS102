@@ -346,7 +346,8 @@ internal sealed record ArAccountabilitySummaryDto(
     AccountabilityStatus Status,
     DateOnly IssuedOn,
     DateOnly? ExpiresOn,
-    int LineCount);
+    int LineCount,
+    bool HasSignedCopy = false);
 
 internal sealed record ArAccountabilityLineDto(
     Guid Id,
@@ -551,7 +552,8 @@ internal sealed record ArPhysicalCountSummaryDto(
     DateOnly? ClosedOn,
     int EntryCount,
     string? OfficeOrderNo = null,
-    DateTimeOffset? FrozenOnUtc = null);
+    DateTimeOffset? FrozenOnUtc = null,
+    bool HasSignedCopy = false);
 
 internal sealed record ArPhysicalCountEntryDto(
     Guid Id,
@@ -805,7 +807,8 @@ internal sealed record ArIncidentReportSummaryDto(
     ArContracts.PropertyIncidentType IncidentType,
     PropertyIncidentStatus Status,
     DateOnly IncidentDate,
-    int ItemCount);
+    int ItemCount,
+    bool HasSignedCopy = false);
 
 internal sealed record ArIncidentReportItemDto(
     Guid Id,
@@ -922,7 +925,8 @@ internal sealed record ArIssuanceReportSummaryDto(
     IssuanceNature Nature,
     DateOnly Date,
     int LineCount,
-    decimal TotalAmount);
+    decimal TotalAmount,
+    bool HasSignedCopy = false);
 
 internal sealed record ArIssuanceReportLineDto(
     Guid Id,
@@ -1053,7 +1057,8 @@ internal sealed record ArUnserviceableReportSummaryDto(
     UnserviceableReportType ReportType,
     UnserviceableReportStatus Status,
     DateOnly AsAt,
-    int ItemCount);
+    int ItemCount,
+    bool HasSignedCopy = false);
 
 internal sealed record ArUnserviceableReportItemDto(
     Guid Id,
@@ -1158,7 +1163,8 @@ public sealed record ArReceivingReportSummaryDto(
     string ReceivedFrom,
     ArContracts.ReceiptType ReceiptType,
     int ItemCount,
-    decimal TotalAmount);
+    decimal TotalAmount,
+    bool HasSignedCopy = false);
 
 public sealed record ArReceivingReportItemDto(
     Guid Id,

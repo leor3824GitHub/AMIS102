@@ -1,5 +1,6 @@
 using AMIS.Framework.Shared.Persistence;
 using AMIS.Modules.AssetRegister.Contracts.v1.Receiving;
+using AMIS.Modules.AssetRegister.Contracts.v1.SignedDocuments;
 using AMIS.Modules.AssetRegister.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
@@ -35,7 +36,8 @@ public sealed class SearchReceivingReportsQueryHandler(AssetRegisterDbContext db
             .Select(r => new ReceivingReportSummaryDto(
                 r.Id, r.DocumentKind, r.ReportNo, r.Date, r.ReceivedFrom, r.ReceiptType,
                 r.Items.Count,
-                r.Items.Sum(i => i.Quantity * i.UnitCost)))
+                r.Items.Sum(i => i.Quantity * i.UnitCost),
+                db.SignedDocuments.Any(sd => sd.DocumentType == AssetRegisterDocumentType.ReceivingReport && sd.DocumentId == r.Id)))
             .ToListAsync(cancellationToken).ConfigureAwait(false);
 
         return new PagedResponse<ReceivingReportSummaryDto>

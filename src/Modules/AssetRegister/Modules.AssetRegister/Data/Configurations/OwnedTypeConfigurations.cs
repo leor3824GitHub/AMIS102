@@ -22,6 +22,7 @@ internal static class OwnedTypeConfigurations
         builder.Property(x => x.SerialNo).HasMaxLength(200).HasColumnName($"{columnPrefix}_SerialNo");
         builder.Property(x => x.Brand).HasMaxLength(200).HasColumnName($"{columnPrefix}_Brand");
         builder.Property(x => x.Model).HasMaxLength(200).HasColumnName($"{columnPrefix}_Model");
+        builder.Property(x => x.NetBookValue).HasPrecision(18, 2).HasColumnName($"{columnPrefix}_NetBookValue");
         return builder;
     }
 

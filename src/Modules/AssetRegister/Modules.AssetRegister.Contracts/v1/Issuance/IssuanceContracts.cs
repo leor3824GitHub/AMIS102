@@ -40,7 +40,8 @@ public sealed record PropertyIssuanceReportSummaryDto(
     IssuanceNature Nature,
     DateOnly Date,
     int LineCount,
-    decimal TotalAmount);
+    decimal TotalAmount,
+    bool HasSignedCopy = false);
 
 // ── Commands ───────────────────────────────────────────────────────────────
 

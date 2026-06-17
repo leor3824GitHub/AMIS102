@@ -5,9 +5,11 @@
 @using UnserviceableReportType = AMIS.Modules.AssetRegister.Contracts.v1.UnserviceableReportType
 @using UnserviceableReportStatus = AMIS.Modules.AssetRegister.Contracts.v1.UnserviceableReportStatus
 @using DisposalMethod = AMIS.Modules.AssetRegister.Contracts.v1.DisposalMethod
+@using AMIS.Modules.AssetRegister.Contracts.v1.SignedDocuments
 @inject IArUnserviceableReportClient Client
 @inject ISnackbar Snackbar
 @inject IUserProfileState UserProfileState
+@inject IDialogService DialogService
 
 <AMISPageHeader Title="Unserviceable Property Reports (IIRUSP / IIRUP)"
                Description="Report, inspect, and dispose of unserviceable property per COA 2022-004 Annex A.10." />
@@ -101,6 +103,7 @@
                             <MudTh>Status</MudTh>
                             <MudTh>As At</MudTh>
                             <MudTh Style="text-align:right">Items</MudTh>
+                            <MudTh Style="text-align:center">Actions</MudTh>
                         </HeaderContent>
                         <RowTemplate>
                             <MudTd><strong>@context.ReportNo</strong></MudTd>
@@ -120,6 +123,16 @@
                             </MudTd>
                             <MudTd>@context.AsAt.ToString("yyyy-MM-dd")</MudTd>
                             <MudTd Style="text-align:right">@context.ItemCount</MudTd>
+                            <MudTd Style="text-align:center" @onclick:stopPropagation="true">
+                                @if (IsSigned(context.Status) && (context.HasSignedCopy ? _canViewSigned : _canUploadSigned))
+                                {
+                                    <MudTooltip Text="@(context.HasSignedCopy ? "Signed copy uploaded — click to view" : "Upload signed copy")">
+                                        <AMISIconButton Icon="@Icons.Material.Filled.Draw" Size="Size.Small"
+                                                        Color="@(context.HasSignedCopy ? Color.Success : Color.Secondary)"
+                                                        OnClick="@(() => OpenSignedCopyAsync(context))" />
+                                    </MudTooltip>
+                                }
+                            </MudTd>
                         </RowTemplate>
                         <NoRecordsContent>
                             <MudText Color="Color.Secondary">No unserviceable reports found.</MudText>
@@ -294,6 +307,25 @@
     }
 
     private bool _canFile => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Unserviceable.File);
+    private bool _canViewSigned   => UserProfileState.Permissions.Contains(AssetRegisterPermissions.SignedDocuments.View);
+    private bool _canUploadSigned => UserProfileState.Permissions.Contains(AssetRegisterPermissions.SignedDocuments.Upload);
+
+    // The IIRUP/IIRUSP is fully signed once the inspection/disposal is recorded (or the report is closed).
+    private static bool IsSigned(UnserviceableReportStatus s) =>
+        s is UnserviceableReportStatus.DisposalRecorded or UnserviceableReportStatus.Closed;
+
+    private async Task OpenSignedCopyAsync(ArUnserviceableReportSummaryDto item)
+    {
+        var parameters = new DialogParameters<SignedCopyDialog>
+        {
+            { x => x.DocumentType, AssetRegisterDocumentType.UnserviceableReport },
+            { x => x.DocumentId, item.Id },
+            { x => x.DocumentNumber, string.IsNullOrWhiteSpace(item.ReportNo) ? "(no report number)" : item.ReportNo },
+            { x => x.IsTerminalState, IsSigned(item.Status) }
+        };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        await DialogService.ShowAsync<SignedCopyDialog>("Signed Copy", parameters, options);
+    }
 
     protected override async Task OnInitializedAsync()
     {

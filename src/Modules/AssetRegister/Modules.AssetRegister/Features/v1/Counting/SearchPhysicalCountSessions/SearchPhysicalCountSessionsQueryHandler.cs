@@ -1,5 +1,6 @@
 using AMIS.Framework.Shared.Persistence;
 using AMIS.Modules.AssetRegister.Contracts.v1.Counting;
+using AMIS.Modules.AssetRegister.Contracts.v1.SignedDocuments;
 using AMIS.Modules.AssetRegister.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
@@ -33,7 +34,8 @@ public sealed class SearchPhysicalCountSessionsQueryHandler(AssetRegisterDbConte
             .Skip((pageNumber - 1) * pageSize).Take(pageSize)
             .Select(s => new PhysicalCountSessionSummaryDto(
                 s.Id, s.Code, s.Scope, s.Status, s.AsAt, s.StartedOn, s.ClosedOn, s.Entries.Count,
-                s.OfficeOrderNo, s.FrozenOnUtc))
+                s.OfficeOrderNo, s.FrozenOnUtc,
+                db.SignedDocuments.Any(sd => sd.DocumentType == AssetRegisterDocumentType.PhysicalCountReport && sd.DocumentId == s.Id)))
             .ToListAsync(cancellationToken).ConfigureAwait(false);
 
         return new PagedResponse<PhysicalCountSessionSummaryDto>

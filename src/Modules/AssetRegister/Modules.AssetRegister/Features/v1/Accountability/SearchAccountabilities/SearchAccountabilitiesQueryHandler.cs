@@ -1,5 +1,6 @@
 using AMIS.Framework.Shared.Persistence;
 using AMIS.Modules.AssetRegister.Contracts.v1.Accountability;
+using AMIS.Modules.AssetRegister.Contracts.v1.SignedDocuments;
 using AMIS.Modules.AssetRegister.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
@@ -34,7 +35,8 @@ public sealed class SearchAccountabilitiesQueryHandler(AssetRegisterDbContext db
         var items = await q.OrderByDescending(a => a.IssuedOn)
             .Skip((pageNumber - 1) * pageSize).Take(pageSize)
             .Select(a => new PropertyAccountabilitySummaryDto(
-                a.Id, a.DocumentNo, a.AccountabilityType, a.Status, a.IssuedOn, a.ExpiresOn, a.Lines.Count))
+                a.Id, a.DocumentNo, a.AccountabilityType, a.Status, a.IssuedOn, a.ExpiresOn, a.Lines.Count,
+                db.SignedDocuments.Any(sd => sd.DocumentType == AssetRegisterDocumentType.PropertyAccountability && sd.DocumentId == a.Id)))
             .ToListAsync(cancellationToken).ConfigureAwait(false);
 
         return new PagedResponse<PropertyAccountabilitySummaryDto>

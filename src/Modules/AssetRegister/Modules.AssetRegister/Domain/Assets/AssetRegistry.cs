@@ -393,7 +393,8 @@ public sealed class AssetRegistry : AggregateRoot<Guid>, IHasTenant, IAuditableE
             UacsObjectCode,
             SerialNo,
             Brand,
-            Model);
+            Model,
+            CarryingAmount);
 
     private void EnsureNotDisposed()
     {

@@ -14,7 +14,7 @@ public static class UploadSignedDocumentEndpoint
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapPost("/", Upload)
             .WithModuleName<UploadSignedDocumentCommand>()
-            .WithSummary("Upload the scanned wet-signed copy of an Asset Register document of record (RRSP / RRP)")
+            .WithSummary("Upload the scanned wet-signed copy of an Asset Register document of record (ICS/PAR, PPEIR/SMIR, PPERR/SMRR, IIRUP/IIRUSP, RLSDDSP, RPCPPE/RPCSE, RRSP/RRP)")
             .DisableAntiforgery()
             .Produces<SignedDocumentDto>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status400BadRequest)

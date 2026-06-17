@@ -5,9 +5,11 @@
 @using PropertyIncidentType = AMIS.Modules.AssetRegister.Contracts.v1.PropertyIncidentType
 @using PropertyIncidentStatus = AMIS.Modules.AssetRegister.Contracts.v1.PropertyIncidentStatus
 @using IncidentItemResolution = AMIS.Modules.AssetRegister.Contracts.v1.IncidentItemResolution
+@using AMIS.Modules.AssetRegister.Contracts.v1.SignedDocuments
 @inject IArIncidentReportClient Client
 @inject ISnackbar Snackbar
 @inject IUserProfileState UserProfileState
+@inject IDialogService DialogService
 
 <AMISPageHeader Title="Property Incident Reports (RLSDDSP)"
                Description="File and track loss/damage incidents per COA 2022-004. Notarization required before resolution." />
@@ -61,6 +63,7 @@
                             <MudTh>Status</MudTh>
                             <MudTh>Incident Date</MudTh>
                             <MudTh Style="text-align:right">Items</MudTh>
+                            <MudTh Style="text-align:center">Actions</MudTh>
                         </HeaderContent>
                         <RowTemplate>
                             <MudTd><strong>@context.IncidentNo</strong></MudTd>
@@ -80,6 +83,16 @@
                             </MudTd>
                             <MudTd>@context.IncidentDate.ToString("yyyy-MM-dd")</MudTd>
                             <MudTd Style="text-align:right">@context.ItemCount</MudTd>
+                            <MudTd Style="text-align:center" @onclick:stopPropagation="true">
+                                @if (IsSigned(context.Status) && (context.HasSignedCopy ? _canViewSigned : _canUploadSigned))
+                                {
+                                    <MudTooltip Text="@(context.HasSignedCopy ? "Signed copy uploaded — click to view" : "Upload signed copy")">
+                                        <AMISIconButton Icon="@Icons.Material.Filled.Draw" Size="Size.Small"
+                                                        Color="@(context.HasSignedCopy ? Color.Success : Color.Secondary)"
+                                                        OnClick="@(() => OpenSignedCopyAsync(context))" />
+                                    </MudTooltip>
+                                }
+                            </MudTd>
                         </RowTemplate>
                         <NoRecordsContent>
                             <MudText Color="Color.Secondary">No incident reports found.</MudText>
@@ -247,6 +260,25 @@
     private string? _policeBlotterRef;
 
     private bool _canResolve => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Incident.Resolve);
+    private bool _canViewSigned   => UserProfileState.Permissions.Contains(AssetRegisterPermissions.SignedDocuments.View);
+    private bool _canUploadSigned => UserProfileState.Permissions.Contains(AssetRegisterPermissions.SignedDocuments.Upload);
+
+    // The notarised RLSDDSP of record exists once the incident is Resolved or Closed.
+    private static bool IsSigned(PropertyIncidentStatus s) =>
+        s is PropertyIncidentStatus.Resolved or PropertyIncidentStatus.Closed;
+
+    private async Task OpenSignedCopyAsync(ArIncidentReportSummaryDto item)
+    {
+        var parameters = new DialogParameters<SignedCopyDialog>
+        {
+            { x => x.DocumentType, AssetRegisterDocumentType.IncidentReport },
+            { x => x.DocumentId, item.Id },
+            { x => x.DocumentNumber, string.IsNullOrWhiteSpace(item.IncidentNo) ? "(no incident number)" : item.IncidentNo },
+            { x => x.IsTerminalState, IsSigned(item.Status) }
+        };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        await DialogService.ShowAsync<SignedCopyDialog>("Signed Copy", parameters, options);
+    }
 
     protected override async Task OnInitializedAsync()
     {

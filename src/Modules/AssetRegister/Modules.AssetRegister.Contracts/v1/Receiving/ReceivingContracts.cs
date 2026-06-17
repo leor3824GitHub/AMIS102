@@ -47,7 +47,8 @@ public sealed record ReceivingReportSummaryDto(
     string ReceivedFrom,
     ReceiptType ReceiptType,
     int ItemCount,
-    decimal TotalAmount);
+    decimal TotalAmount,
+    bool HasSignedCopy = false);
 
 // ── Commands ───────────────────────────────────────────────────────────────
 

@@ -1,6 +1,7 @@
 @page "/asset-register/accountability"
 @implements IDisposable
 @using AMIS.Modules.AssetRegister.Contracts.v1
+@using AMIS.Modules.AssetRegister.Contracts.v1.SignedDocuments
 @using AMIS.Modules.AssetRegister.Contracts.Permissions
 @using AMIS.Playground.Blazor.ApiClient
 @inject IArAccountabilityClient Client
@@ -113,6 +114,14 @@
                                                             Color="Color.Error" OnClick="@(() => DeleteRowAsync(context))" />
                                         </MudTooltip>
                                     }
+                                    @if (IsAccepted(context.Status) && (context.HasSignedCopy ? _canViewSigned : _canUploadSigned))
+                                    {
+                                        <MudTooltip Text="@(context.HasSignedCopy ? "Signed copy uploaded — click to view" : "Upload signed copy")">
+                                            <AMISIconButton Icon="@Icons.Material.Filled.Draw" Size="Size.Small"
+                                                            Color="@(context.HasSignedCopy ? Color.Success : Color.Secondary)"
+                                                            OnClick="@(() => OpenSignedCopyAsync(context))" />
+                                        </MudTooltip>
+                                    }
                                 </MudStack>
                             </MudTd>
                         </RowTemplate>
@@ -156,6 +165,13 @@
     private bool _canIssue  => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Accountability.Issue);
     private bool _canUpdate => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Accountability.Update);
     private bool _canDelete => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Accountability.Delete);
+    private bool _canViewSigned   => UserProfileState.Permissions.Contains(AssetRegisterPermissions.SignedDocuments.View);
+    private bool _canUploadSigned => UserProfileState.Permissions.Contains(AssetRegisterPermissions.SignedDocuments.Upload);
+
+    // The ICS/PAR is wet-signed once the accountable employee accepts it — i.e. any post-PendingAcceptance,
+    // non-Cancelled state. Mirrors the server's AcceptedOn guard.
+    private static bool IsAccepted(AccountabilityStatus s) =>
+        s is AccountabilityStatus.Active or AccountabilityStatus.Renewed or AccountabilityStatus.Returned;
 
     protected override async Task OnInitializedAsync()
     {
@@ -265,6 +281,20 @@
         {
             _printingId = null;
         }
+    }
+
+    private async Task OpenSignedCopyAsync(ArAccountabilitySummaryDto item)
+    {
+        var label = item.AccountabilityType == AccountabilityType.SE_ICS ? "ICS" : "PAR";
+        var parameters = new DialogParameters<SignedCopyDialog>
+        {
+            { x => x.DocumentType, AssetRegisterDocumentType.PropertyAccountability },
+            { x => x.DocumentId, item.Id },
+            { x => x.DocumentNumber, string.IsNullOrWhiteSpace(item.DocumentNo) ? $"(no {label} number)" : item.DocumentNo },
+            { x => x.IsTerminalState, IsAccepted(item.Status) }
+        };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        await DialogService.ShowAsync<SignedCopyDialog>("Signed Copy", parameters, options);
     }
 
     private async Task PrevPage() { _page--; await LoadAsync(); }
