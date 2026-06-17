@@ -88,6 +88,19 @@ public sealed class ReturnedPropertyReceipt : AggregateRoot<Guid>, IHasTenant, I
         _items.Add(ReturnedPropertyReceiptItem.Create(TenantId, Id, accountabilityLineId, assetRegistryId, itemNo, snapshot));
     }
 
+    /// <summary>Replaces the nominated inspector while the request is still <see cref="ReturnedPropertyReceiptStatus.Pending"/>
+    /// (i.e. before anyone has inspected it). Mirrors the IAR reassign-inspector capability.</summary>
+    public void ReassignInspector(EmployeeRef newInspector)
+    {
+        ArgumentNullException.ThrowIfNull(newInspector);
+        if (Status != ReturnedPropertyReceiptStatus.Pending)
+            throw new InvalidOperationException(
+                $"Only Pending return requests can have their inspector reassigned. Current status: {Status}.");
+
+        AssignedInspector = newInspector;
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;
+    }
+
     /// <summary>Inspector assesses a Pending return, recording each item's condition. Moves the request to
     /// <see cref="ReturnedPropertyReceiptStatus.Inspected"/> so the custodian can accept it. No asset state changes here.</summary>
     public void Inspect(EmployeeRef inspectedBy, IReadOnlyDictionary<Guid, AssetCondition> conditionsByItemId, string? remarks)
@@ -96,6 +109,12 @@ public sealed class ReturnedPropertyReceipt : AggregateRoot<Guid>, IHasTenant, I
         ArgumentNullException.ThrowIfNull(conditionsByItemId);
         if (Status != ReturnedPropertyReceiptStatus.Pending)
             throw new InvalidOperationException($"Only Pending return requests can be inspected. Current status: {Status}.");
+
+        // The inspection may only be performed by the inspector the requester nominated.
+        // The handler resolves the actor from the authenticated identity and translates this to a 403.
+        if (inspectedBy.EmployeeId != AssignedInspector.EmployeeId)
+            throw new UnauthorizedAccessException(
+                $"Only the assigned inspector ({AssignedInspector.PrintedName}) may inspect this return.");
 
         foreach (var item in _items)
         {

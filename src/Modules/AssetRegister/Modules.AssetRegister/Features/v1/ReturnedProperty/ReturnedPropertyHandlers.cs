@@ -1,10 +1,13 @@
 using System.Globalization;
+using AMIS.Framework.Core.Context;
+using AMIS.Framework.Core.Exceptions;
 using AMIS.Framework.Shared.Persistence;
 using AMIS.Modules.AssetRegister.Contracts.v1;
 using AMIS.Modules.AssetRegister.Contracts.v1.ReturnedProperty;
 using AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
 using AMIS.Modules.AssetRegister.Data;
 using AMIS.Modules.AssetRegister.Domain.ReturnedProperty;
+using AMIS.Modules.AssetRegister.Features.v1.Shared;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
@@ -97,7 +100,10 @@ public sealed class CreateReturnedPropertyReceiptCommandHandler(AssetRegisterDbC
     }
 }
 
-public sealed class InspectReturnedPropertyReceiptCommandHandler(AssetRegisterDbContext db)
+public sealed class InspectReturnedPropertyReceiptCommandHandler(
+    AssetRegisterDbContext db,
+    ICurrentUser currentUser,
+    IMediator mediator)
     : ICommandHandler<InspectReturnedPropertyReceiptCommand, ReturnedPropertyReceiptDto>
 {
     public async ValueTask<ReturnedPropertyReceiptDto> Handle(
@@ -108,12 +114,49 @@ public sealed class InspectReturnedPropertyReceiptCommandHandler(AssetRegisterDb
         var receipt = await db.ReturnedPropertyReceipts
             .Include(r => r.Items)
             .FirstOrDefaultAsync(r => r.Id == cmd.Id, cancellationToken).ConfigureAwait(false)
-            ?? throw new KeyNotFoundException($"Return request '{cmd.Id}' not found.");
+            ?? throw new NotFoundException($"Return request '{cmd.Id}' not found.");
+
+        // The inspector is the authenticated user — resolved from identity, never trusted from the payload.
+        var employee = await CurrentEmployeeResolver.TryResolveAsync(currentUser, mediator, cancellationToken).ConfigureAwait(false)
+            ?? throw new ForbiddenException("No employee profile is linked to your account, so you cannot be recorded as the inspector.");
+
+        var inspectedBy = EmployeeRef.Create(
+            employee.Id,
+            $"{employee.FirstName} {employee.LastName}".Trim(),
+            string.IsNullOrWhiteSpace(employee.PositionName) ? null : employee.PositionName);
 
         var conditionsByItemId = cmd.ItemConditions.ToDictionary(i => i.ItemId, i => i.Condition);
-        var inspectedBy = EmployeeRef.Create(cmd.InspectedBy.EmployeeId, cmd.InspectedBy.PrintedName, cmd.InspectedBy.Designation);
 
-        receipt.Inspect(inspectedBy, conditionsByItemId, cmd.Remarks);
+        try
+        {
+            receipt.Inspect(inspectedBy, conditionsByItemId, cmd.Remarks);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            // Authenticated, but not the inspector the requester nominated → 403.
+            throw new ForbiddenException(ex.Message);
+        }
+
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return ReturnedPropertyMapper.ToDto(receipt);
+    }
+}
+
+public sealed class ReassignReturnedPropertyInspectorCommandHandler(AssetRegisterDbContext db)
+    : ICommandHandler<ReassignReturnedPropertyInspectorCommand, ReturnedPropertyReceiptDto>
+{
+    public async ValueTask<ReturnedPropertyReceiptDto> Handle(
+        ReassignReturnedPropertyInspectorCommand cmd, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(cmd);
+
+        var receipt = await db.ReturnedPropertyReceipts
+            .Include(r => r.Items)
+            .FirstOrDefaultAsync(r => r.Id == cmd.Id, cancellationToken).ConfigureAwait(false)
+            ?? throw new NotFoundException($"Return request '{cmd.Id}' not found.");
+
+        var newInspector = EmployeeRef.Create(cmd.Inspector.EmployeeId, cmd.Inspector.PrintedName, cmd.Inspector.Designation);
+        receipt.ReassignInspector(newInspector);
 
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return ReturnedPropertyMapper.ToDto(receipt);
@@ -298,7 +341,8 @@ public sealed class SearchReturnedPropertyReceiptsQueryHandler(AssetRegisterDbCo
                 r.Date,
                 r.AccountabilityDocumentNo,
                 r.Items.Count,
-                r.Items.Sum(i => i.Snapshot.UnitCost)))
+                r.Items.Sum(i => i.Snapshot.UnitCost),
+                r.AssignedInspector.EmployeeId))
             .ToListAsync(cancellationToken).ConfigureAwait(false);
 
         return new PagedResponse<ReturnedPropertyReceiptSummaryDto>

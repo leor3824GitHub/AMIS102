@@ -39,7 +39,8 @@ public sealed record ReturnedPropertyReceiptSummaryDto(
     DateOnly Date,
     string AccountabilityDocumentNo,
     int ItemCount,
-    decimal TotalUnitCost);
+    decimal TotalUnitCost,
+    Guid AssignedInspectorEmployeeId = default);
 
 public sealed record ReturnedPropertyStatusCountDto(
     ReturnedPropertyReceiptStatus Status,
@@ -64,10 +65,11 @@ public sealed record ReturnedPropertyInspectionItemDto(
     AssetCondition Condition);
 
 /// <summary>Inspector assesses a pending return, recording each returned item's actual condition.
-/// Moves the request to <see cref="ReturnedPropertyReceiptStatus.Inspected"/>; no asset state changes yet.</summary>
+/// Moves the request to <see cref="ReturnedPropertyReceiptStatus.Inspected"/>; no asset state changes yet.
+/// The inspector is resolved server-side from the authenticated identity (never client-supplied) and must
+/// match the inspector nominated on the request.</summary>
 public sealed record InspectReturnedPropertyReceiptCommand(
     Guid Id,
-    EmployeeRefDto InspectedBy,
     IReadOnlyList<ReturnedPropertyInspectionItemDto> ItemConditions,
     string? Remarks) : ICommand<ReturnedPropertyReceiptDto>;
 
@@ -76,6 +78,12 @@ public sealed record InspectReturnedPropertyReceiptCommand(
 public sealed record AcceptReturnedPropertyReceiptCommand(
     Guid Id,
     EmployeeRefDto ReceivedBy) : ICommand<ReturnedPropertyReceiptDto>;
+
+/// <summary>Requester replaces the inspector they nominated, while the request is still Pending
+/// (before anyone inspects it). Uses the same permission as creating/withdrawing a request.</summary>
+public sealed record ReassignReturnedPropertyInspectorCommand(
+    Guid Id,
+    EmployeeRefDto Inspector) : ICommand<ReturnedPropertyReceiptDto>;
 
 public sealed record RejectReturnedPropertyReceiptCommand(
     Guid Id,

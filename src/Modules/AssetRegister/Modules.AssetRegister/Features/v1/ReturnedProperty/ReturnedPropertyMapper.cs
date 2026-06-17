@@ -29,5 +29,6 @@ internal static class ReturnedPropertyMapper
         new(r.Id, r.ReceiptNo, r.ReceiptType, r.Status, r.Date,
             r.AccountabilityDocumentNo,
             r.Items.Count,
-            r.Items.Sum(i => i.Snapshot.UnitCost));
+            r.Items.Sum(i => i.Snapshot.UnitCost),
+            r.AssignedInspector.EmployeeId);
 }

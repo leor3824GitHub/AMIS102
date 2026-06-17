@@ -94,7 +94,7 @@
                                                 <AMISIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small"
                                                                 Color="Color.Default" OnClick="@(() => ViewAsync(r.Id))" />
                                             </MudTooltip>
-                                            @if (r.Status == ReturnedPropertyReceiptStatus.Pending && _canInspect)
+                                            @if (r.Status == ReturnedPropertyReceiptStatus.Pending && _canInspect && CanInspectRow(r))
                                             {
                                                 <MudTooltip Text="Inspect">
                                                     <AMISIconButton Icon="@Icons.Material.Filled.FactCheck" Size="Size.Small"
@@ -110,6 +110,13 @@
                                                 <MudTooltip Text="Reject">
                                                     <AMISIconButton Icon="@Icons.Material.Filled.Cancel" Size="Size.Small"
                                                                     Color="Color.Error" OnClick="@(() => RejectAsync(r.Id))" />
+                                                </MudTooltip>
+                                            }
+                                            @if (r.Status == ReturnedPropertyReceiptStatus.Pending && _canCreate)
+                                            {
+                                                <MudTooltip Text="Reassign Inspector">
+                                                    <AMISIconButton Icon="@Icons.Material.Filled.SwapHoriz" Size="Size.Small"
+                                                                    Color="Color.Primary" OnClick="@(() => ReassignInspectorAsync(r.Id))" />
                                                 </MudTooltip>
                                             }
                                             @if (r.Status is ReturnedPropertyReceiptStatus.Pending or ReturnedPropertyReceiptStatus.Inspected && _canCreate)
@@ -278,6 +285,10 @@
     private bool _canAccept => UserProfileState.Permissions.Contains(AssetRegisterPermissions.ReturnedProperty.Accept);
     private bool _canViewSigned => UserProfileState.Permissions.Contains(AssetRegisterPermissions.SignedDocuments.View);
 
+    // The inspection is restricted to the inspector nominated on the request (enforced server-side too).
+    private bool CanInspectRow(ArReturnedPropertyReceiptSummaryDto r) =>
+        UserProfileState.EmployeeId != Guid.Empty && r.AssignedInspectorEmployeeId == UserProfileState.EmployeeId;
+
     protected override async Task OnInitializedAsync()
     {
         UserProfileState.OnProfileChanged += OnProfileChanged;
@@ -399,6 +410,24 @@
         var parameters = new DialogParameters<ReturnedPropertyInspectDialog> { { x => x.ReceiptId, id } };
         var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
         var dialog = await DialogService.ShowAsync<ReturnedPropertyInspectDialog>("Inspect Returned Items", parameters, options);
+        var result = await dialog.Result;
+        if (result is null || result.Canceled) return;
+
+        if (result.Data is ArReturnedPropertyReceiptDto updated)
+            _detail = updated;
+
+        await RefreshAsync();
+    }
+
+    private async Task ReassignInspectorAsync(Guid id)
+    {
+        var parameters = new DialogParameters<ReturnedPropertyReassignInspectorDialog>
+        {
+            { x => x.ReceiptId, id },
+            { x => x.CurrentInspectorName, _detail?.Id == id ? _detail.AssignedInspector?.PrintedName : null }
+        };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<ReturnedPropertyReassignInspectorDialog>("Reassign Inspector", parameters, options);
         var result = await dialog.Result;
         if (result is null || result.Canceled) return;
 

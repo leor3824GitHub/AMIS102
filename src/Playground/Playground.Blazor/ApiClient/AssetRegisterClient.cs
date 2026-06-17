@@ -1468,7 +1468,8 @@ internal sealed record ArReturnedPropertyReceiptSummaryDto(
     DateOnly Date,
     string AccountabilityDocumentNo,
     int ItemCount,
-    decimal TotalUnitCost);
+    decimal TotalUnitCost,
+    Guid AssignedInspectorEmployeeId = default);
 
 internal sealed record ArReturnedPropertyStatusCountDto(
     ArContracts.ReturnedPropertyReceiptStatus Status,
@@ -1485,10 +1486,10 @@ internal sealed record CreateReturnedPropertyReceiptRequest(
 
 internal sealed record ArReturnedPropertyInspectionItemDto(Guid ItemId, ArContracts.AssetCondition Condition);
 internal sealed record InspectReturnedPropertyReceiptRequest(
-    ArEmployeeRefDto InspectedBy,
     IReadOnlyList<ArReturnedPropertyInspectionItemDto> ItemConditions,
     string? Remarks);
 internal sealed record AcceptReturnedPropertyReceiptRequest(ArEmployeeRefDto ReceivedBy);
+internal sealed record ReassignReturnedPropertyInspectorRequest(ArEmployeeRefDto Inspector);
 internal sealed record RejectReturnedPropertyReceiptRequest(string Reason);
 internal sealed record CancelReturnedPropertyReceiptRequest(string? Reason);
 
@@ -1517,6 +1518,7 @@ internal interface IArReturnedPropertyClient
         CreateReturnedPropertyReceiptRequest request, CancellationToken ct = default);
 
     Task<ArReturnedPropertyReceiptDto> InspectAsync(Guid id, InspectReturnedPropertyReceiptRequest request, CancellationToken ct = default);
+    Task<ArReturnedPropertyReceiptDto> ReassignInspectorAsync(Guid id, ArEmployeeRefDto inspector, CancellationToken ct = default);
     Task<ArReturnedPropertyReceiptDto> AcceptAsync(Guid id, ArEmployeeRefDto receivedBy, CancellationToken ct = default);
     Task<ArReturnedPropertyReceiptDto> RejectAsync(Guid id, string reason, CancellationToken ct = default);
     Task<ArReturnedPropertyReceiptDto> CancelAsync(Guid id, string? reason, CancellationToken ct = default);
@@ -1585,6 +1587,14 @@ internal sealed class ArReturnedPropertyClient(HttpClient http) : IArReturnedPro
     public async Task<ArReturnedPropertyReceiptDto> InspectAsync(Guid id, InspectReturnedPropertyReceiptRequest request, CancellationToken ct = default)
     {
         var resp = await http.PostAsJsonAsync($"{Base}/{id}/inspect", request, ArJsonOptions.Default, ct);
+        if (!resp.IsSuccessStatusCode)
+            throw new InvalidOperationException(await ArErrorReader.ExtractAsync(resp, ct));
+        return (await resp.Content.ReadFromJsonAsync<ArReturnedPropertyReceiptDto>(ArJsonOptions.Default, cancellationToken: ct))!;
+    }
+
+    public async Task<ArReturnedPropertyReceiptDto> ReassignInspectorAsync(Guid id, ArEmployeeRefDto inspector, CancellationToken ct = default)
+    {
+        var resp = await http.PostAsJsonAsync($"{Base}/{id}/reassign-inspector", new ReassignReturnedPropertyInspectorRequest(inspector), ArJsonOptions.Default, ct);
         if (!resp.IsSuccessStatusCode)
             throw new InvalidOperationException(await ArErrorReader.ExtractAsync(resp, ct));
         return (await resp.Content.ReadFromJsonAsync<ArReturnedPropertyReceiptDto>(ArJsonOptions.Default, cancellationToken: ct))!;

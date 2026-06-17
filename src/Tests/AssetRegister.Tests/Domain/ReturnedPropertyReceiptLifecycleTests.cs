@@ -73,6 +73,46 @@ public sealed class ReturnedPropertyReceiptLifecycleTests
     }
 
     [Fact]
+    public void Inspect_BySomeoneOtherThanAssignedInspector_Throws()
+    {
+        var receipt = NewReceiptWith(out var items, "001");
+        var conditions = new Dictionary<Guid, AssetCondition> { [items[0].Id] = AssetCondition.InGoodCondition };
+        var someoneElse = EmployeeRef.Create(Guid.NewGuid(), "Other Person", "Clerk");
+
+        // Authorization failure (not the assigned inspector) — the handler maps this to a 403.
+        Should.Throw<UnauthorizedAccessException>(() => receipt.Inspect(someoneElse, conditions, null));
+        receipt.Status.ShouldBe(ReturnedPropertyReceiptStatus.Pending);
+    }
+
+    [Fact]
+    public void ReassignInspector_WhilePending_ReplacesNominatedInspectorAndLetsNewInspectorProceed()
+    {
+        var receipt = NewReceiptWith(out var items, "001");
+        var newInspector = EmployeeRef.Create(Guid.NewGuid(), "New Inspector", "Senior Inspector");
+
+        receipt.ReassignInspector(newInspector);
+
+        receipt.AssignedInspector.EmployeeId.ShouldBe(newInspector.EmployeeId);
+        receipt.AssignedInspector.PrintedName.ShouldBe("New Inspector");
+
+        // The originally-nominated inspector can no longer inspect; the new one can.
+        var conditions = new Dictionary<Guid, AssetCondition> { [items[0].Id] = AssetCondition.InGoodCondition };
+        Should.Throw<UnauthorizedAccessException>(() => receipt.Inspect(Inspector(), conditions, null));
+        Should.NotThrow(() => receipt.Inspect(newInspector, conditions, null));
+        receipt.Status.ShouldBe(ReturnedPropertyReceiptStatus.Inspected);
+    }
+
+    [Fact]
+    public void ReassignInspector_AfterInspected_Throws()
+    {
+        var receipt = NewReceiptWith(out var items, "001");
+        receipt.Inspect(Inspector(), new Dictionary<Guid, AssetCondition> { [items[0].Id] = AssetCondition.InGoodCondition }, null);
+
+        Should.Throw<InvalidOperationException>(() =>
+            receipt.ReassignInspector(EmployeeRef.Create(Guid.NewGuid(), "Late Inspector", null)));
+    }
+
+    [Fact]
     public void Accept_FromInspected_AssignsNumberAndReceiverAndStamps()
     {
         var receipt = NewReceiptWith(out var items, "001");
@@ -170,7 +210,11 @@ public sealed class ReturnedPropertyReceiptLifecycleTests
         Should.Throw<InvalidOperationException>(() => receipt.Cancel("changed my mind"));
     }
 
-    private static EmployeeRef Inspector() => EmployeeRef.Create(Guid.NewGuid(), "Property Inspector", "Inspector");
+    // The inspector nominated on the receipt and the one who performs the inspection must be the
+    // same person — share one id so the assigned-inspector guard is satisfied in the happy-path tests.
+    private static readonly Guid AssignedInspectorId = Guid.NewGuid();
+
+    private static EmployeeRef Inspector() => EmployeeRef.Create(AssignedInspectorId, "Property Inspector", "Inspector");
 
     private static ReturnedPropertyReceipt NewReceiptWith(
         out List<ReturnedPropertyReceiptItem> items, params string[] propertyNoSuffixes)
@@ -182,7 +226,7 @@ public sealed class ReturnedPropertyReceiptLifecycleTests
             accountabilityId: Guid.NewGuid(),
             accountabilityDocumentNo: "PAR-2026-06-0001",
             returnedBy: EmployeeRef.Create(Guid.NewGuid(), "End User", "Engineer"),
-            assignedInspector: EmployeeRef.Create(Guid.NewGuid(), "Property Inspector", "Inspector"),
+            assignedInspector: EmployeeRef.Create(AssignedInspectorId, "Property Inspector", "Inspector"),
             remarks: null);
 
         var itemNo = 1;

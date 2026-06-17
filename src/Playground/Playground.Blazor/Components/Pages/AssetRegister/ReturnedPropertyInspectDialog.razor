@@ -64,7 +64,7 @@
                               Lines="2" MaxLength="1000" Dense="true" Margin="Margin.Dense" />
 
                 <MudAlert Severity="Severity.Info" Dense="true">
-                    Inspected by: <b>@UserProfileState.EmployeeFullName</b>@(string.IsNullOrWhiteSpace(UserProfileState.EmployeePositionName) ? "" : $" — {UserProfileState.EmployeePositionName}") — captured automatically as the currently logged-in user.
+                    Inspected by: <b>@UserProfileState.EmployeeFullName</b>@(string.IsNullOrWhiteSpace(UserProfileState.EmployeePositionName) ? "" : $" — {UserProfileState.EmployeePositionName}") — the server records the authenticated user and only the assigned inspector may proceed.
                 </MudAlert>
             </MudStack>
         }
@@ -138,16 +138,11 @@
         _busy = true;
         try
         {
-            var inspectedBy = new ArEmployeeRefDto(
-                UserProfileState.EmployeeId,
-                UserProfileState.EmployeeFullName.Trim(),
-                string.IsNullOrWhiteSpace(UserProfileState.EmployeePositionName) ? null : UserProfileState.EmployeePositionName.Trim());
-
             var conditions = _rows
                 .Select(r => new ArReturnedPropertyInspectionItemDto(r.ItemId, r.Condition))
                 .ToList();
 
-            var result = await Client.InspectAsync(ReceiptId, new InspectReturnedPropertyReceiptRequest(inspectedBy, conditions, _remarks?.Trim()));
+            var result = await Client.InspectAsync(ReceiptId, new InspectReturnedPropertyReceiptRequest(conditions, _remarks?.Trim()));
             Snackbar.Add("Inspection recorded. The return is now awaiting custodian acceptance.", Severity.Success);
             MudDialog.Close(DialogResult.Ok(result));
         }

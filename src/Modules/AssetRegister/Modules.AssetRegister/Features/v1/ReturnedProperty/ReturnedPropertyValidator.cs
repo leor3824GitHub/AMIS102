@@ -33,11 +33,6 @@ public sealed class InspectReturnedPropertyReceiptCommandValidator
     public InspectReturnedPropertyReceiptCommandValidator()
     {
         RuleFor(x => x.Id).NotEqual(Guid.Empty);
-        RuleFor(x => x.InspectedBy).NotNull();
-        RuleFor(x => x.InspectedBy.PrintedName).NotEmpty().MaximumLength(200)
-            .When(x => x.InspectedBy is not null);
-        RuleFor(x => x.InspectedBy.Designation).MaximumLength(200)
-            .When(x => x.InspectedBy is not null);
         RuleFor(x => x.ItemConditions).NotEmpty()
             .WithMessage("At least one item condition must be recorded.");
         RuleForEach(x => x.ItemConditions).ChildRules(ic =>
@@ -60,6 +55,21 @@ public sealed class AcceptReturnedPropertyReceiptCommandValidator
             .When(x => x.ReceivedBy is not null);
         RuleFor(x => x.ReceivedBy.Designation).MaximumLength(200)
             .When(x => x.ReceivedBy is not null);
+    }
+}
+
+public sealed class ReassignReturnedPropertyInspectorCommandValidator
+    : AbstractValidator<ReassignReturnedPropertyInspectorCommand>
+{
+    public ReassignReturnedPropertyInspectorCommandValidator()
+    {
+        RuleFor(x => x.Id).NotEqual(Guid.Empty);
+        RuleFor(x => x.Inspector).NotNull()
+            .WithMessage("A new inspector must be selected.");
+        RuleFor(x => x.Inspector.PrintedName).NotEmpty().MaximumLength(200)
+            .When(x => x.Inspector is not null);
+        RuleFor(x => x.Inspector.Designation).MaximumLength(200)
+            .When(x => x.Inspector is not null);
     }
 }
 

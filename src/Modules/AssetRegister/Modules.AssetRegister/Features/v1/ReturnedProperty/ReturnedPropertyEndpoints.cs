@@ -32,6 +32,15 @@ internal static class ReturnedPropertyEndpoints
             .WithSummary("Inspector records each returned item's condition — moves the request to Inspected")
             .RequirePermission(AssetRegisterPermissions.ReturnedProperty.Inspect);
 
+        group.MapPost("/{id:guid}/reassign-inspector", async (Guid id, ReassignReturnedPropertyInspectorCommand body, IMediator mediator, CancellationToken ct) =>
+        {
+            var result = await mediator.Send(body with { Id = id }, ct);
+            return TypedResults.Ok(result);
+        })
+            .WithModuleName<ReassignReturnedPropertyInspectorCommand>()
+            .WithSummary("Reassign the nominated inspector while the return request is still Pending")
+            .RequirePermission(AssetRegisterPermissions.ReturnedProperty.Create);
+
         group.MapPost("/{id:guid}/accept", async (Guid id, AcceptReturnedPropertyReceiptCommand body, IMediator mediator, CancellationToken ct) =>
         {
             var result = await mediator.Send(body with { Id = id }, ct);
