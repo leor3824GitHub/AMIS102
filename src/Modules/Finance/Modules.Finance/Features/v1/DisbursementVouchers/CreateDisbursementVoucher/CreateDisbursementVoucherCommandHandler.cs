@@ -4,6 +4,7 @@ using AMIS.Framework.Core.Exceptions;
 using AMIS.Modules.Finance.Contracts.v1.DisbursementVouchers;
 using AMIS.Modules.Finance.Data;
 using AMIS.Modules.Finance.Domain.DisbursementVouchers;
+using AMIS.Modules.Finance.Features.v1.Shared;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
@@ -43,51 +44,55 @@ public sealed class CreateDisbursementVoucherCommandHandler(
                 "A disbursement voucher already exists for this purchase order.",
                 [], HttpStatusCode.BadRequest);
 
-        var dvNumber = await GenerateDvNumberAsync(command.DvDate.Year, cancellationToken).ConfigureAwait(false);
-
-        var dv = DisbursementVoucher.Create(
-            dvNumber,
-            command.PurchaseOrderId,
-            command.PurchaseOrderNumber,
-            command.DvDate,
-            command.FundCluster,
-            command.Payee,
-            command.TinNo,
-            command.PayeeAddress,
-            command.Particulars,
-            command.Amount,
-            command.ModeOfPayment,
-            command.Remarks);
-
-        dv.CreatedBy = currentUser.GetUserId().ToString();
-
-        dbContext.DisbursementVouchers.Add(dv);
-        await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-
-        logger.LogInformation("Created disbursement voucher {DvNumber} for PO {PoNumber}", dvNumber, command.PurchaseOrderNumber);
-
-        return dv.Id;
-    }
-
-    private async Task<string> GenerateDvNumberAsync(int year, CancellationToken ct)
-    {
-        var prefix = $"DV-{year}-";
-
-        var lastNumber = await dbContext.DisbursementVouchers
-            .IgnoreQueryFilters()
-            .Where(x => x.DvNumber.StartsWith(prefix))
-            .Select(x => x.DvNumber)
-            .OrderByDescending(x => x)
-            .FirstOrDefaultAsync(ct)
-            .ConfigureAwait(false);
-
-        var next = 1;
-        if (lastNumber != null && int.TryParse(lastNumber[prefix.Length..], out var last))
+        // Atomic number allocation: increment a per-year counter row guarded by xmin, retrying if a
+        // concurrent create advanced the counter or collided on the unique DvNumber index.
+        for (var attempt = 0; attempt < FinanceSequenceAllocation.MaxAttempts; attempt++)
         {
-            next = last + 1;
+            var year = command.DvDate.Year;
+
+            var sequence = await dbContext.DvNumberSequences
+                .FirstOrDefaultAsync(x => x.Year == year, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (sequence is null)
+            {
+                sequence = DvNumberSequence.Create(year);
+                dbContext.DvNumberSequences.Add(sequence);
+            }
+
+            var serial = sequence.NextSerial();
+            var dvNumber = $"DV-{year}-{serial:00000}";
+
+            var dv = DisbursementVoucher.Create(
+                dvNumber,
+                command.PurchaseOrderId,
+                command.PurchaseOrderNumber,
+                command.DvDate,
+                command.FundCluster,
+                command.Payee,
+                command.TinNo,
+                command.PayeeAddress,
+                command.Particulars,
+                command.Amount,
+                command.ModeOfPayment,
+                command.Remarks);
+
+            dv.CreatedBy = currentUser.GetUserId().ToString();
+            dbContext.DisbursementVouchers.Add(dv);
+
+            try
+            {
+                await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                logger.LogInformation("Created disbursement voucher {DvNumber} for PO {PoNumber}", dvNumber, command.PurchaseOrderNumber);
+                return dv.Id;
+            }
+            catch (DbUpdateException ex) when (FinanceSequenceAllocation.IsRetryableAllocationConflict(ex))
+            {
+                dbContext.ChangeTracker.Clear();
+            }
         }
 
-        return $"{prefix}{next:00000}";
+        throw new CustomException("Failed to allocate a unique DV number. Please try again.", [], HttpStatusCode.Conflict);
     }
 }
 
