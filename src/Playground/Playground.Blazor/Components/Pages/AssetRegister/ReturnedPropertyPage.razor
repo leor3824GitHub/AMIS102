@@ -179,6 +179,13 @@
                             <MudText Typo="Typo.caption">Returned By</MudText>
                             <MudText Typo="Typo.body2">@_detail.ReturnedBy.PrintedName@(!string.IsNullOrWhiteSpace(_detail.ReturnedBy.Designation) ? $" — {_detail.ReturnedBy.Designation}" : "")</MudText>
                         </MudItem>
+                        @if (_detail.AssignedInspector is not null)
+                        {
+                            <MudItem xs="6">
+                                <MudText Typo="Typo.caption">Assigned Inspector</MudText>
+                                <MudText Typo="Typo.body2">@_detail.AssignedInspector.PrintedName@(!string.IsNullOrWhiteSpace(_detail.AssignedInspector.Designation) ? $" — {_detail.AssignedInspector.Designation}" : "")</MudText>
+                            </MudItem>
+                        }
                         @if (_detail.InspectedBy is not null)
                         {
                             <MudItem xs="6">

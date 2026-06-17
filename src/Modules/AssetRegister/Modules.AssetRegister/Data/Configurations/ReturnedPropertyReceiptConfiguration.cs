@@ -31,9 +31,11 @@ internal sealed class ReturnedPropertyReceiptConfiguration : IEntityTypeConfigur
         builder.Property(x => x.CancellationReason).HasMaxLength(1000);
 
         builder.OwnsOne(x => x.ReturnedBy, n => n.ConfigureEmployeeRef("ReturnedBy"));
+        builder.OwnsOne(x => x.AssignedInspector, n => n.ConfigureEmployeeRef("AssignedInspector"));
         builder.OwnsOne(x => x.InspectedBy, n => n.ConfigureEmployeeRef("InspectedBy"));
         builder.OwnsOne(x => x.ReceivedBy, n => n.ConfigureEmployeeRef("ReceivedBy"));
         builder.Navigation(x => x.ReturnedBy).IsRequired();
+        builder.Navigation(x => x.AssignedInspector).IsRequired();
 
         builder.HasMany(x => x.Items)
             .WithOne()

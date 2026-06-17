@@ -21,6 +21,10 @@ public sealed class ReturnedPropertyReceipt : AggregateRoot<Guid>, IHasTenant, I
     public string AccountabilityDocumentNo { get; private set; } = default!;
 
     public EmployeeRef ReturnedBy { get; private set; } = default!;
+
+    /// <summary>The inspector the requester nominated to assess the returned items. Captured at request time;
+    /// the person who actually performs the inspection is recorded separately in <see cref="InspectedBy"/>.</summary>
+    public EmployeeRef AssignedInspector { get; private set; } = default!;
     public EmployeeRef? InspectedBy { get; private set; }
     public EmployeeRef? ReceivedBy { get; private set; }
     public string? Remarks { get; private set; }
@@ -51,9 +55,11 @@ public sealed class ReturnedPropertyReceipt : AggregateRoot<Guid>, IHasTenant, I
         Guid accountabilityId,
         string accountabilityDocumentNo,
         EmployeeRef returnedBy,
+        EmployeeRef assignedInspector,
         string? remarks)
     {
         ArgumentNullException.ThrowIfNull(returnedBy);
+        ArgumentNullException.ThrowIfNull(assignedInspector);
         return new ReturnedPropertyReceipt
         {
             Id = Guid.NewGuid(),
@@ -65,6 +71,7 @@ public sealed class ReturnedPropertyReceipt : AggregateRoot<Guid>, IHasTenant, I
             AccountabilityId = accountabilityId,
             AccountabilityDocumentNo = accountabilityDocumentNo,
             ReturnedBy = returnedBy,
+            AssignedInspector = assignedInspector,
             ReceivedBy = null,
             Remarks = remarks,
             CreatedOnUtc = DateTimeOffset.UtcNow

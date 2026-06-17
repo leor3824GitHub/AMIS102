@@ -22,7 +22,8 @@ internal static class ReturnedPropertyMapper
             r.CancellationReason,
             r.Items.OrderBy(i => i.ItemNo).Select(ToDto).ToList(),
             r.InspectedBy is null ? null : AccountabilityMapper.ToDto(r.InspectedBy),
-            r.InspectionRemarks);
+            r.InspectionRemarks,
+            AccountabilityMapper.ToDto(r.AssignedInspector));
 
     public static ReturnedPropertyReceiptSummaryDto ToSummaryDto(ReturnedPropertyReceipt r) =>
         new(r.Id, r.ReceiptNo, r.ReceiptType, r.Status, r.Date,

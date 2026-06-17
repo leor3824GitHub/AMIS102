@@ -28,7 +28,8 @@ public sealed record ReturnedPropertyReceiptDto(
     string? CancellationReason,
     IReadOnlyCollection<ReturnedPropertyReceiptItemDto> Items,
     EmployeeRefDto? InspectedBy = null,
-    string? InspectionRemarks = null);
+    string? InspectionRemarks = null,
+    EmployeeRefDto? AssignedInspector = null);
 
 public sealed record ReturnedPropertyReceiptSummaryDto(
     Guid Id,
@@ -54,6 +55,7 @@ public sealed record CreateReturnedPropertyReceiptCommand(
     Guid AccountabilityId,
     IReadOnlyList<Guid> AccountabilityLineIds,
     EmployeeRefDto ReturnedBy,
+    EmployeeRefDto Inspector,
     string? Remarks) : ICommand<ReturnedPropertyReceiptDto>;
 
 /// <summary>One inspected line: the returned item and the condition the inspector assessed it at.</summary>

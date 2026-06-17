@@ -1457,7 +1457,8 @@ internal sealed record ArReturnedPropertyReceiptDto(
     string? CancellationReason,
     IReadOnlyCollection<ArReturnedPropertyReceiptItemDto> Items,
     ArEmployeeRefDto? InspectedBy = null,
-    string? InspectionRemarks = null);
+    string? InspectionRemarks = null,
+    ArEmployeeRefDto? AssignedInspector = null);
 
 internal sealed record ArReturnedPropertyReceiptSummaryDto(
     Guid Id,
@@ -1479,6 +1480,7 @@ internal sealed record CreateReturnedPropertyReceiptRequest(
     Guid AccountabilityId,
     IReadOnlyList<Guid> AccountabilityLineIds,
     ArEmployeeRefDto ReturnedBy,
+    ArEmployeeRefDto Inspector,
     string? Remarks);
 
 internal sealed record ArReturnedPropertyInspectionItemDto(Guid ItemId, ArContracts.AssetCondition Condition);

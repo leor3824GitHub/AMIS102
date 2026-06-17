@@ -72,11 +72,12 @@ public sealed class CreateReturnedPropertyReceiptCommandHandler(AssetRegisterDbC
         // 5. Create the pending request — NO asset/accountability mutation yet.
         var tenantId = db.TenantInfo?.Identifier ?? string.Empty;
         var returnedBy = EmployeeRef.Create(cmd.ReturnedBy.EmployeeId, cmd.ReturnedBy.PrintedName, cmd.ReturnedBy.Designation);
+        var assignedInspector = EmployeeRef.Create(cmd.Inspector.EmployeeId, cmd.Inspector.PrintedName, cmd.Inspector.Designation);
 
         var receipt = ReturnedPropertyReceipt.Create(
             tenantId, cmd.ReceiptType, cmd.Date,
             cmd.AccountabilityId, accountability.DocumentNo,
-            returnedBy, cmd.Remarks);
+            returnedBy, assignedInspector, cmd.Remarks);
 
         db.ReturnedPropertyReceipts.Add(receipt);
 

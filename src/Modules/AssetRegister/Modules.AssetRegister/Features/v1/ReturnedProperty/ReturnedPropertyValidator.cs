@@ -17,6 +17,12 @@ public sealed class CreateReturnedPropertyReceiptCommandValidator
             .When(x => x.ReturnedBy is not null);
         RuleFor(x => x.ReturnedBy.Designation).MaximumLength(200)
             .When(x => x.ReturnedBy is not null);
+        RuleFor(x => x.Inspector).NotNull()
+            .WithMessage("An inspector must be selected for the return request.");
+        RuleFor(x => x.Inspector.PrintedName).NotEmpty().MaximumLength(200)
+            .When(x => x.Inspector is not null);
+        RuleFor(x => x.Inspector.Designation).MaximumLength(200)
+            .When(x => x.Inspector is not null);
         RuleFor(x => x.Remarks).MaximumLength(1000);
     }
 }

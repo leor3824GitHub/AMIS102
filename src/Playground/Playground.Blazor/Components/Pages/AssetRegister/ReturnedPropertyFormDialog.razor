@@ -5,6 +5,7 @@
 @using AccountabilityLineStatus = AMIS.Modules.AssetRegister.Contracts.v1.AccountabilityLineStatus
 @inject IArReturnedPropertyClient Client
 @inject IArAccountabilityClient AccountabilityClient
+@inject ILookupClient LookupClient
 @inject ISnackbar Snackbar
 @inject IUserProfileState UserProfileState
 @inject IDialogService DialogService
@@ -89,6 +90,15 @@
             <MudAlert Severity="Severity.Info" Dense="true">
                 Returned by: <b>@UserProfileState.EmployeeFullName</b>@(string.IsNullOrWhiteSpace(UserProfileState.EmployeePositionName) ? "" : $" — {UserProfileState.EmployeePositionName}") — captured automatically as the currently logged-in user.
             </MudAlert>
+
+            <MudAutocomplete T="EmployeeReferenceDto"
+                             @bind-Value="_form.Inspector"
+                             SearchFunc="SearchEmployees"
+                             ToStringFunc="FormatEmployee"
+                             Label="Inspector" Variant="Variant.Outlined"
+                             Required="true" Clearable="true" ResetValueOnEmptyText="true" CoerceValue="true"
+                             Dense="true" Margin="Margin.Dense"
+                             HelperText="Who will inspect the returned items' condition." />
 
             <MudTextField @bind-Value="_form.Remarks" Label="Remarks" Variant="Variant.Outlined"
                           Lines="2" MaxLength="1000" Dense="true" Margin="Margin.Dense" />
@@ -276,6 +286,12 @@
             return;
         }
 
+        if (_form.Inspector is null)
+        {
+            Snackbar.Add("Select an inspector for this return request.", Severity.Warning);
+            return;
+        }
+
         var lineIds = _form.Items.Where(i => i.Selected is not null).Select(i => i.Selected!.Id).Distinct().ToList();
         if (lineIds.Count == 0)
         {
@@ -291,12 +307,18 @@
                 UserProfileState.EmployeeFullName.Trim(),
                 string.IsNullOrWhiteSpace(UserProfileState.EmployeePositionName) ? null : UserProfileState.EmployeePositionName.Trim());
 
+            var inspector = new ArEmployeeRefDto(
+                _form.Inspector.Id,
+                $"{_form.Inspector.FirstName} {_form.Inspector.LastName}".Trim(),
+                string.IsNullOrWhiteSpace(_form.Inspector.PositionName) ? null : _form.Inspector.PositionName);
+
             var result = await Client.CreateAsync(new CreateReturnedPropertyReceiptRequest(
                 _form.ReceiptType,
                 DateOnly.FromDateTime(_form.DateNullable!.Value),
                 _form.SelectedAccountability.Id,
                 lineIds,
                 returnedBy,
+                inspector,
                 _form.Remarks?.Trim()));
 
             Snackbar.Add($"Return request submitted ({result.Items.Count} item(s)). Awaiting custodian acceptance.", Severity.Success);
@@ -311,11 +333,30 @@
 
     private void Cancel() => MudDialog.Cancel();
 
+    private async Task<IEnumerable<EmployeeReferenceDto>> SearchEmployees(string? value, CancellationToken ct)
+    {
+        try
+        {
+            var result = await LookupClient.EmployeesGetAsync(
+                keyword: string.IsNullOrWhiteSpace(value) ? null : value,
+                isActive: true,
+                pageNumber: 1,
+                pageSize: 20,
+                cancellationToken: ct);
+            return result?.Items ?? [];
+        }
+        catch { return []; }
+    }
+
+    private static string FormatEmployee(EmployeeReferenceDto? e) =>
+        e is null ? "" : $"{e.FirstName} {e.LastName} ({e.EmployeeNumber})";
+
     private sealed class ReturnForm
     {
         public ReturnedPropertyReceiptType ReceiptType { get; set; } = ReturnedPropertyReceiptType.RRSP;
         public DateTime? DateNullable { get; set; } = DateTime.Today;
         public ArAccountabilitySummaryDto? SelectedAccountability { get; set; }
+        public EmployeeReferenceDto? Inspector { get; set; }
         public string? Remarks { get; set; }
         public List<ReturnItemRow> Items { get; set; } = [];
     }

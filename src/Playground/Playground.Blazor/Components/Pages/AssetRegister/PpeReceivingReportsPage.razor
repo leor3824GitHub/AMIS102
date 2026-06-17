@@ -90,41 +90,43 @@
                                     <td><MudChip T="string" Size="Size.Small" Color="Color.Info">@r.ItemCount lines</MudChip></td>
                                     <td class="text-right">@r.TotalAmount.ToString("N2")</td>
                                     <td>
-                                        <AMISIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small"
-                                                        Color="Color.Primary" Title="View" OnClick="@(() => ViewAsync(r.Id))" />
-                                        <MudMenu Icon="@Icons.Material.Filled.Print"
-                                                 Color="Color.Secondary"
-                                                 Size="Size.Small"
-                                                 Dense="true"
-                                                 AnchorOrigin="Origin.BottomLeft"
-                                                 TransformOrigin="Origin.TopLeft"
-                                                 ToolTip="Print">
-                                            <MudMenuItem Icon="@Icons.Material.Filled.PictureAsPdf"
-                                                         OnClick="@(() => DownloadFastReportPdfAsync(r.Id))">
-                                                Download PDF
-                                            </MudMenuItem>
-                                            <MudMenuItem Icon="@Icons.Material.Filled.Layers"
-                                                         OnClick="@(() => PrintDataOnlyAsync(r.Id))">
-                                                Print – data only (pre-printed form)…
-                                            </MudMenuItem>
-                                            <MudDivider />
-                                            <MudMenuItem Icon="@Icons.Material.Filled.Settings"
-                                                         OnClick="@(() => OpenFastReportSetupAsync(r.Id))">
-                                                Fast Report – Page Setup…
-                                            </MudMenuItem>
-                                        </MudMenu>
-                                        @if (r.HasSignedCopy ? _canViewSigned : _canUploadSigned)
-                                        {
-                                            <AMISIconButton Icon="@Icons.Material.Filled.Draw" Size="Size.Small"
-                                                            Color="@(r.HasSignedCopy ? Color.Success : Color.Secondary)"
-                                                            Title="@(r.HasSignedCopy ? "Signed copy uploaded — click to view" : "Upload signed copy")"
-                                                            OnClick="@(() => OpenSignedCopyAsync(r))" />
-                                        }
-                                        @if (_canDelete)
-                                        {
-                                            <AMISIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
-                                                            Color="Color.Error" Title="Delete" OnClick="@(() => DeleteAsync(r.Id, r.ReportNo))" />
-                                        }
+                                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Justify="Justify.FlexEnd">
+                                            <AMISIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small"
+                                                            Color="Color.Primary" Title="View" OnClick="@(() => ViewAsync(r.Id))" />
+                                            <MudMenu Icon="@Icons.Material.Filled.Print"
+                                                     Color="Color.Secondary"
+                                                     Size="Size.Small"
+                                                     Dense="true"
+                                                     AnchorOrigin="Origin.BottomLeft"
+                                                     TransformOrigin="Origin.TopLeft"
+                                                     ToolTip="Print">
+                                                <MudMenuItem Icon="@Icons.Material.Filled.PictureAsPdf"
+                                                             OnClick="@(() => DownloadFastReportPdfAsync(r.Id))">
+                                                    Download PDF
+                                                </MudMenuItem>
+                                                <MudMenuItem Icon="@Icons.Material.Filled.Layers"
+                                                             OnClick="@(() => PrintDataOnlyAsync(r.Id))">
+                                                    Print – data only (pre-printed form)…
+                                                </MudMenuItem>
+                                                <MudDivider />
+                                                <MudMenuItem Icon="@Icons.Material.Filled.Settings"
+                                                             OnClick="@(() => OpenFastReportSetupAsync(r.Id))">
+                                                    Fast Report – Page Setup…
+                                                </MudMenuItem>
+                                            </MudMenu>
+                                            @if (r.HasSignedCopy ? _canViewSigned : _canUploadSigned)
+                                            {
+                                                <AMISIconButton Icon="@Icons.Material.Filled.Draw" Size="Size.Small"
+                                                                Color="@(r.HasSignedCopy ? Color.Success : Color.Secondary)"
+                                                                Title="@(r.HasSignedCopy ? "Signed copy uploaded — click to view" : "Upload signed copy")"
+                                                                OnClick="@(() => OpenSignedCopyAsync(r))" />
+                                            }
+                                            @if (_canDelete)
+                                            {
+                                                <AMISIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                                                Color="Color.Error" Title="Delete" OnClick="@(() => DeleteAsync(r.Id, r.ReportNo))" />
+                                            }
+                                        </MudStack>
                                     </td>
                                 </tr>
                             }

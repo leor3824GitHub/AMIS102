@@ -25,6 +25,10 @@
                 <MudStack Row="true" Spacing="4">
                     <MudText Typo="Typo.body2"><b>Accountability:</b> @_detail.AccountabilityDocumentNo</MudText>
                     <MudText Typo="Typo.body2"><b>Returned by:</b> @_detail.ReturnedBy.PrintedName</MudText>
+                    @if (_detail.AssignedInspector is not null)
+                    {
+                        <MudText Typo="Typo.body2"><b>Assigned inspector:</b> @_detail.AssignedInspector.PrintedName</MudText>
+                    }
                 </MudStack>
 
                 <MudDivider />

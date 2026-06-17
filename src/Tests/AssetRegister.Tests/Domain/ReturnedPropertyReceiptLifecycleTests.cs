@@ -22,6 +22,9 @@ public sealed class ReturnedPropertyReceiptLifecycleTests
         receipt.ReceiptNo.ShouldBeNull();
         receipt.ReceivedBy.ShouldBeNull();
         receipt.InspectedBy.ShouldBeNull();
+        // The inspector nominated by the requester is captured up front, distinct from who actually inspects.
+        receipt.AssignedInspector.ShouldNotBeNull();
+        receipt.AssignedInspector.PrintedName.ShouldBe("Property Inspector");
         receipt.Items.Count.ShouldBe(1);
     }
 
@@ -179,6 +182,7 @@ public sealed class ReturnedPropertyReceiptLifecycleTests
             accountabilityId: Guid.NewGuid(),
             accountabilityDocumentNo: "PAR-2026-06-0001",
             returnedBy: EmployeeRef.Create(Guid.NewGuid(), "End User", "Engineer"),
+            assignedInspector: EmployeeRef.Create(Guid.NewGuid(), "Property Inspector", "Inspector"),
             remarks: null);
 
         var itemNo = 1;
