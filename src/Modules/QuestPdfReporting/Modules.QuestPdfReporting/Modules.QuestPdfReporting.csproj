@@ -16,6 +16,13 @@
 		<PackageReference Include="QuestPDF" />
 	</ItemGroup>
 
+	<!-- Static report assets (e.g. the agency logo printed on government forms).
+	     Drop raster images (PNG/JPG) under ReportAssets\ and they are embedded automatically. -->
+	<ItemGroup>
+		<EmbeddedResource Include="ReportAssets\**\*.png" />
+		<EmbeddedResource Include="ReportAssets\**\*.jpg" />
+	</ItemGroup>
+
 	<ItemGroup>
 		<ProjectReference Include="..\..\..\BuildingBlocks\Web\Web.csproj" />
 		<ProjectReference Include="..\Modules.QuestPdfReporting.Contracts\Modules.QuestPdfReporting.Contracts.csproj" />
@@ -24,6 +31,7 @@
 		<ProjectReference Include="..\..\Vehicle\Modules.Vehicle.Contracts\Modules.Vehicle.Contracts.csproj" />
 		<ProjectReference Include="..\..\AssetManagement\Modules.AssetManagement.Contracts\Modules.AssetManagement.Contracts.csproj" />
 		<ProjectReference Include="..\..\AssetRegister\Modules.AssetRegister.Contracts\Modules.AssetRegister.Contracts.csproj" />
+		<ProjectReference Include="..\..\Finance\Modules.Finance.Contracts\Modules.Finance.Contracts.csproj" />
 	</ItemGroup>
 
 </Project>

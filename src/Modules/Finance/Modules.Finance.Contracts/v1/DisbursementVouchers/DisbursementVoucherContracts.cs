@@ -56,6 +56,20 @@ public sealed record CreateDisbursementVoucherCommand(
     string ModeOfPayment,
     string? Remarks) : ICommand<Guid>;
 
+public sealed record UpdateDisbursementVoucherCommand(
+    Guid Id,
+    Guid PurchaseOrderId,
+    string PurchaseOrderNumber,
+    DateOnly DvDate,
+    string FundCluster,
+    string Payee,
+    string? TinNo,
+    string? PayeeAddress,
+    string Particulars,
+    decimal Amount,
+    string ModeOfPayment,
+    string? Remarks) : ICommand;
+
 public sealed record ApproveDisbursementVoucherCommand(Guid Id) : ICommand;
 
 public sealed record PayDisbursementVoucherCommand(

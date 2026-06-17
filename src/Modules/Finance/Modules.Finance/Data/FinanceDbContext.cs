@@ -15,6 +15,7 @@ public class FinanceDbContext : BaseDbContext
 {
     public DbSet<DisbursementVoucher> DisbursementVouchers => Set<DisbursementVoucher>();
     public DbSet<BudgetUtilizationRecord> BudgetUtilizationRecords => Set<BudgetUtilizationRecord>();
+    public DbSet<Domain.SignedDocuments.SignedDocument> SignedDocuments => Set<Domain.SignedDocuments.SignedDocument>();
 
     public FinanceDbContext(
         IMultiTenantContextAccessor<AppTenantInfo> multiTenantContextAccessor,

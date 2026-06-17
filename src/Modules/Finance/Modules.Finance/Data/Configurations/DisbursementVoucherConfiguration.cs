@@ -31,7 +31,10 @@ public sealed class DisbursementVoucherConfiguration : IEntityTypeConfiguration<
         builder.Property(x => x.IsDeleted).HasDefaultValue(false);
         builder.HasQueryFilter(x => !x.IsDeleted);
 
-        builder.Property(x => x.Version).IsRowVersion();
+        // Client-supplied concurrency token. NOT IsRowVersion(): on PostgreSQL/Npgsql a rowversion
+        // byte[] is treated as store-generated, so EF omits it on INSERT and the NOT NULL bytea
+        // column is rejected. IsConcurrencyToken keeps the column non-generated so EF sends the value.
+        builder.Property(x => x.Version).IsConcurrencyToken();
     }
 }
 

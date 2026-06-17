@@ -66,6 +66,38 @@ public sealed class DisbursementVoucher : AggregateRoot<Guid>, IAuditableEntity
         };
     }
 
+    /// <summary>Edits the voucher's contents. Only allowed while still in Draft — once submitted for
+    /// approval the figures are locked. The DV number is immutable (assigned at creation).</summary>
+    public void Update(
+        Guid purchaseOrderId,
+        string purchaseOrderNumber,
+        DateOnly dvDate,
+        string fundCluster,
+        string payee,
+        string? tinNo,
+        string? payeeAddress,
+        string particulars,
+        decimal amount,
+        string modeOfPayment,
+        string? remarks)
+    {
+        if (Status != DisbursementVoucherStatus.Draft)
+            throw new InvalidOperationException("Only Draft disbursement vouchers can be edited.");
+
+        PurchaseOrderId = purchaseOrderId;
+        PurchaseOrderNumber = purchaseOrderNumber;
+        DvDate = dvDate;
+        FundCluster = fundCluster;
+        Payee = payee;
+        TinNo = tinNo;
+        PayeeAddress = payeeAddress;
+        Particulars = particulars;
+        Amount = amount;
+        ModeOfPayment = modeOfPayment;
+        Remarks = remarks;
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;
+    }
+
     public void Approve()
     {
         if (Status != DisbursementVoucherStatus.Draft && Status != DisbursementVoucherStatus.ForApproval)

@@ -1,9 +1,22 @@
 using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Web;
 using AMIS.Modules.Finance.Contracts.v1.BudgetUtilizationRecords;
 using AMIS.Modules.Finance.Contracts.v1.DisbursementVouchers;
 
 namespace AMIS.Playground.Blazor.ApiClient;
+
+// Shared JSON options that mirror the API's ConfigureHttpJsonOptions: enums are serialized as
+// strings ("Draft", not 0). Without this converter, GetFromJsonAsync uses the Web defaults (which
+// read enums as numbers) and fails on status fields — e.g. "could not convert ... $.items[0].status".
+file static class FinanceJsonOptions
+{
+    internal static readonly JsonSerializerOptions Default = new(JsonSerializerDefaults.Web)
+    {
+        Converters = { new JsonStringEnumConverter() }
+    };
+}
 
 // ── Disbursement Vouchers ─────────────────────────────────────────────────────
 
@@ -12,9 +25,11 @@ internal interface IDisbursementVoucherClient
     Task<DisbursementVoucherSearchResult> SearchAsync(string? keyword = null, DisbursementVoucherStatus? status = null, Guid? purchaseOrderId = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
     Task<DisbursementVoucherDto?> GetAsync(Guid id, CancellationToken ct = default);
     Task<Guid> CreateAsync(CreateDisbursementVoucherCommand command, CancellationToken ct = default);
+    Task UpdateAsync(Guid id, UpdateDisbursementVoucherCommand command, CancellationToken ct = default);
     Task ApproveAsync(Guid id, CancellationToken ct = default);
     Task PayAsync(Guid id, DateOnly paidDate, string? remarks, CancellationToken ct = default);
     Task CancelAsync(Guid id, string remarks, CancellationToken ct = default);
+    Task<byte[]> GetPdfAsync(Guid id, string? pageWidth = null, CancellationToken ct = default);
 }
 
 internal sealed class DisbursementVoucherClient(HttpClient http) : IDisbursementVoucherClient
@@ -29,18 +44,24 @@ internal sealed class DisbursementVoucherClient(HttpClient http) : IDisbursement
         if (purchaseOrderId.HasValue) q["PurchaseOrderId"] = purchaseOrderId.Value.ToString();
         q["PageNumber"] = page.ToString();
         q["PageSize"] = pageSize.ToString();
-        return http.GetFromJsonAsync<DisbursementVoucherSearchResult>($"{Base}?{q}", ct)!;
+        return http.GetFromJsonAsync<DisbursementVoucherSearchResult>($"{Base}?{q}", FinanceJsonOptions.Default, ct)!;
     }
 
     public Task<DisbursementVoucherDto?> GetAsync(Guid id, CancellationToken ct = default) =>
-        http.GetFromJsonAsync<DisbursementVoucherDto>($"{Base}/{id}", ct);
+        http.GetFromJsonAsync<DisbursementVoucherDto>($"{Base}/{id}", FinanceJsonOptions.Default, ct);
 
     public async Task<Guid> CreateAsync(CreateDisbursementVoucherCommand command, CancellationToken ct = default)
     {
-        using var r = await http.PostAsJsonAsync(Base, command, ct);
+        using var r = await http.PostAsJsonAsync(Base, command, FinanceJsonOptions.Default, ct);
         r.EnsureSuccessStatusCode();
         var body = await r.Content.ReadFromJsonAsync<CreateIdResponse>(ct);
         return body!.Id;
+    }
+
+    public async Task UpdateAsync(Guid id, UpdateDisbursementVoucherCommand command, CancellationToken ct = default)
+    {
+        using var r = await http.PutAsJsonAsync($"{Base}/{id}", command, FinanceJsonOptions.Default, ct);
+        r.EnsureSuccessStatusCode();
     }
 
     public async Task ApproveAsync(Guid id, CancellationToken ct = default)
@@ -59,6 +80,14 @@ internal sealed class DisbursementVoucherClient(HttpClient http) : IDisbursement
     {
         using var r = await http.PostAsJsonAsync($"{Base}/{id}/cancel", new RemarksBody(remarks), ct);
         r.EnsureSuccessStatusCode();
+    }
+
+    public Task<byte[]> GetPdfAsync(Guid id, string? pageWidth = null, CancellationToken ct = default)
+    {
+        var url = string.IsNullOrWhiteSpace(pageWidth)
+            ? $"api/v1/quest-pdf-reporting/finance/disbursement-vouchers/{id}/pdf"
+            : $"api/v1/quest-pdf-reporting/finance/disbursement-vouchers/{id}/pdf?pageWidth={pageWidth}";
+        return http.GetByteArrayAsync(url, ct);
     }
 
     private sealed record PayBody(DateOnly PaidDate, string? Remarks);
@@ -90,15 +119,15 @@ internal sealed class BudgetUtilizationRecordClient(HttpClient http) : IBudgetUt
         if (!string.IsNullOrWhiteSpace(allotmentClass)) q["AllotmentClass"] = allotmentClass;
         q["PageNumber"] = page.ToString();
         q["PageSize"] = pageSize.ToString();
-        return http.GetFromJsonAsync<BudgetUtilizationRecordSearchResult>($"{Base}?{q}", ct)!;
+        return http.GetFromJsonAsync<BudgetUtilizationRecordSearchResult>($"{Base}?{q}", FinanceJsonOptions.Default, ct)!;
     }
 
     public Task<BudgetUtilizationRecordDto?> GetAsync(Guid id, CancellationToken ct = default) =>
-        http.GetFromJsonAsync<BudgetUtilizationRecordDto>($"{Base}/{id}", ct);
+        http.GetFromJsonAsync<BudgetUtilizationRecordDto>($"{Base}/{id}", FinanceJsonOptions.Default, ct);
 
     public async Task<Guid> CreateAsync(CreateBudgetUtilizationRecordCommand command, CancellationToken ct = default)
     {
-        using var r = await http.PostAsJsonAsync(Base, command, ct);
+        using var r = await http.PostAsJsonAsync(Base, command, FinanceJsonOptions.Default, ct);
         r.EnsureSuccessStatusCode();
         var body = await r.Content.ReadFromJsonAsync<CreateIdResponse>(ct);
         return body!.Id;

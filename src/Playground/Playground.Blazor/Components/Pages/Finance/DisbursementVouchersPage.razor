@@ -2,267 +2,220 @@
 @implements IDisposable
 @using AMIS.Modules.Finance.Contracts.v1.DisbursementVouchers
 @using AMIS.Modules.Finance.Contracts.Permissions
-@using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders
 @using AMIS.Playground.Blazor.ApiClient
 @inject IDisbursementVoucherClient Client
-@inject IPurchaseOrderClient PurchaseOrderClient
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 @inject IUserProfileState UserProfileState
+@inject IJSRuntime JS
 
 <AMISPageHeader Title="Disbursement Vouchers" Description="Create and manage disbursement vouchers (DV)" />
 
-<MudGrid Spacing="3">
-    <!-- Form Panel -->
-    @if (_canCreate)
-    {
-    <MudItem xs="12" md="4">
-        <MudCard Elevation="1">
-            <MudCardContent>
-                <MudText Typo="Typo.h6" Class="mb-3">@(_editing is null ? "New Disbursement Voucher" : $"Edit {_editing.DvNumber}")</MudText>
-                <MudStack Spacing="2">
-                    <MudAutocomplete T="PurchaseOrderSummaryDto"
-                                     Value="_selectedPurchaseOrder"
-                                     ValueChanged="OnPurchaseOrderChanged"
-                                     SearchFunc="SearchPurchaseOrders"
-                                     ToStringFunc="FormatPurchaseOrder"
-                                     Label="Purchase Order"
-                                     Variant="Variant.Outlined"
-                                     Placeholder="Search PO number..."
-                                     Required="true"
-                                     Clearable="true"
-                                     CoerceValue="true"
-                                     ResetValueOnEmptyText="true" />
-                    <MudDatePicker @bind-Date="_form.DvDateNullable" Label="DV Date" Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" Required="true" />
-                    <MudTextField @bind-Value="_form.FundCluster" Label="Fund Cluster" Variant="Variant.Outlined" Required="true" />
-                    <MudDivider Class="my-1" />
-                    <MudText Typo="Typo.subtitle2">Payee Information</MudText>
-                    <MudTextField @bind-Value="_form.Payee" Label="Payee" Variant="Variant.Outlined" Required="true" />
-                    <MudTextField @bind-Value="_form.TinNo" Label="TIN (optional)" Variant="Variant.Outlined" />
-                    <MudTextField @bind-Value="_form.PayeeAddress" Label="Payee Address (optional)" Variant="Variant.Outlined" Lines="2" />
-                    <MudDivider Class="my-1" />
-                    <MudText Typo="Typo.subtitle2">Payment Details</MudText>
-                    <MudTextField @bind-Value="_form.Particulars" Label="Particulars" Variant="Variant.Outlined" Required="true" Lines="3" />
-                    <MudNumericField @bind-Value="_form.Amount" Label="@($"Amount ({Money.Symbol})")" Variant="Variant.Outlined" Required="true" Min="0.01m" Format="N2" />
-                    <MudSelect @bind-Value="_form.ModeOfPayment" Label="Mode of Payment" Variant="Variant.Outlined" T="string">
-                        <MudSelectItem Value="@("Cash")">Cash</MudSelectItem>
-                        <MudSelectItem Value="@("Check")">Check</MudSelectItem>
-                        <MudSelectItem Value="@("Bank Transfer")">Bank Transfer</MudSelectItem>
-                        <MudSelectItem Value="@("LDDAP-ADA")">LDDAP-ADA</MudSelectItem>
-                        <MudSelectItem Value="@("MDS Check")">MDS Check</MudSelectItem>
-                    </MudSelect>
-                    <MudTextField @bind-Value="_form.Remarks" Label="Remarks (optional)" Variant="Variant.Outlined" Lines="2" />
+<MudCard Elevation="1">
+    <MudCardContent>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
+            <MudText Typo="Typo.h6" Class="flex-grow-1">Disbursement Vouchers</MudText>
+            <MudTextField @bind-Value="_keyword" Label="Search" Variant="Variant.Outlined" Size="Size.Small"
+                          Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
+                          Style="max-width:220px" DebounceInterval="400"
+                          OnDebounceIntervalElapsed="@(async () => await LoadAsync())" />
+            @if (_canCreate)
+            {
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+                           OnClick="OpenCreateDialog">New Disbursement Voucher</MudButton>
+            }
+        </MudStack>
 
-                    <MudStack Row="true" Spacing="2" Class="mt-2">
-                        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
-                                   OnClick="SaveAsync" Disabled="_busy">
-                            @if (_busy) { <MudProgressCircular Size="Size.Small" Class="mr-1" Indeterminate="true" /> }
-                            @(_editing is null ? "Create DV" : "Save Changes")
-                        </MudButton>
-                        @if (_editing is not null)
-                        {
-                            <MudButton Variant="Variant.Outlined" Color="Color.Default" OnClick="CancelEdit">Cancel</MudButton>
-                        }
-                    </MudStack>
-                </MudStack>
-            </MudCardContent>
-        </MudCard>
-    </MudItem>
-    }
+        <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap" Class="mb-3">
+            @foreach (var s in _statusFilters)
+            {
+                <MudChip T="string" Size="Size.Small"
+                         Color="@(_statusFilter == s ? Color.Primary : Color.Default)"
+                         OnClick="@(() => SetStatusFilter(s))">@s</MudChip>
+            }
+        </MudStack>
 
-    <!-- List Panel -->
-    <MudItem xs="12" md="8">
-        <MudCard Elevation="1">
-            <MudCardContent>
-                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
-                    <MudText Typo="Typo.h6" Class="flex-grow-1">Disbursement Vouchers</MudText>
-                    <MudTextField @bind-Value="_keyword" Label="Search" Variant="Variant.Outlined" Size="Size.Small"
-                                  Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
-                                  Style="max-width:220px" DebounceInterval="400"
-                                  OnDebounceIntervalElapsed="@(async () => await LoadAsync())" />
-                </MudStack>
-
-                <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap" Class="mb-3">
-                    @foreach (var s in _statusFilters)
-                    {
-                        <MudChip T="string" Size="Size.Small"
-                                 Color="@(_statusFilter == s ? Color.Primary : Color.Default)"
-                                 OnClick="@(() => SetStatusFilter(s))">@s</MudChip>
-                    }
-                </MudStack>
-
-                @if (!_loaded)
-                {
-                    <MudProgressLinear Indeterminate="true" />
-                }
-                else if (_items.Count == 0)
-                {
-                    <MudAlert Severity="Severity.Info">No disbursement vouchers found.</MudAlert>
-                }
-                else
-                {
-                    <MudSimpleTable Dense="true" Hover="true" Striped="true">
-                        <thead>
-                            <tr>
-                                <th>DV #</th>
-                                <th>Date</th>
-                                <th>PO #</th>
-                                <th>Payee</th>
-                                <th style="text-align:right">Amount</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var item in _items)
-                            {
-                                <tr>
-                                    <td><b>@item.DvNumber</b></td>
-                                    <td>@item.DvDate.ToString("MM/dd/yyyy")</td>
-                                    <td><MudText Typo="Typo.caption">@item.PurchaseOrderNumber</MudText></td>
-                                    <td>@item.Payee</td>
-                                    <td style="text-align:right">@Money.Symbol@item.Amount.ToString("N2")</td>
-                                    <td>@DvStatusChip(item.Status)</td>
-                                    <td>
-                                        <MudStack Row="true" Spacing="0">
-                                            @if (item.Status == DisbursementVoucherStatus.Draft)
-                                            {
-                                                @if (_canCreate)
-                                                {
-                                                    <MudTooltip Text="Edit">
-                                                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary"
-                                                                       OnClick="@(async () => await BeginEditAsync(item.Id))" />
-                                                    </MudTooltip>
-                                                }
-                                                @if (_canApprove)
-                                                {
-                                                    <MudTooltip Text="Submit for Approval">
-                                                        <MudIconButton Icon="@Icons.Material.Filled.TaskAlt" Size="Size.Small" Color="Color.Info"
-                                                                       OnClick="@(async () => await ApproveAsync(item.Id))" />
-                                                    </MudTooltip>
-                                                }
-                                            }
-                                            @if (item.Status == DisbursementVoucherStatus.Approved && _canPay)
-                                            {
-                                                <MudTooltip Text="Mark as Paid">
-                                                    <MudIconButton Icon="@Icons.Material.Filled.Payments" Size="Size.Small" Color="Color.Success"
-                                                                   OnClick="@(async () => await PayAsync(item.Id))" />
-                                                </MudTooltip>
-                                            }
-                                            @if ((item.Status == DisbursementVoucherStatus.Draft || item.Status == DisbursementVoucherStatus.ForApproval) && _canCancel)
-                                            {
-                                                <MudTooltip Text="Cancel">
-                                                    <MudIconButton Icon="@Icons.Material.Filled.Cancel" Size="Size.Small" Color="Color.Error"
-                                                                   OnClick="@(async () => await CancelDvAsync(item.Id))" />
-                                                </MudTooltip>
-                                            }
-                                            <MudTooltip Text="View Details">
-                                                <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" Color="Color.Default"
-                                                               OnClick="@(async () => await ViewDetailsAsync(item.Id))" />
-                                            </MudTooltip>
-                                        </MudStack>
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </MudSimpleTable>
-
-                    @if (_totalCount > _pageSize)
-                    {
-                        <MudStack Row="true" JustifyContent="JustifyContent.Center" Class="mt-3">
-                            <MudPagination Count="@((_totalCount + _pageSize - 1) / _pageSize)"
-                                           Selected="_page" SelectedChanged="@(async p => { _page = p; await LoadAsync(); })" />
-                        </MudStack>
-                    }
-                }
-            </MudCardContent>
-        </MudCard>
-
-        <!-- DV Detail View -->
-        @if (_detail is not null)
+        @if (!_loaded)
         {
-            <MudCard Elevation="1" Class="mt-3">
-                <MudCardContent>
-                    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3">
-                        <MudText Typo="Typo.h6" Class="flex-grow-1">@_detail.DvNumber � Details</MudText>
-                        <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="@(() => _detail = null)" />
-                    </MudStack>
-                    <MudGrid Spacing="2">
-                        <MudItem xs="6" sm="3">
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">DV Date</MudText>
-                            <MudText Typo="Typo.body2">@_detail.DvDate.ToString("MMMM dd, yyyy")</MudText>
-                        </MudItem>
-                        <MudItem xs="6" sm="3">
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">Purchase Order</MudText>
-                            <MudText Typo="Typo.body2">@_detail.PurchaseOrderNumber</MudText>
-                        </MudItem>
-                        <MudItem xs="6" sm="3">
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">Fund Cluster</MudText>
-                            <MudText Typo="Typo.body2">@_detail.FundCluster</MudText>
-                        </MudItem>
-                        <MudItem xs="6" sm="3">
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">Mode of Payment</MudText>
-                            <MudText Typo="Typo.body2">@_detail.ModeOfPayment</MudText>
-                        </MudItem>
-                        <MudItem xs="6" sm="3">
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">Payee</MudText>
-                            <MudText Typo="Typo.body2">@_detail.Payee</MudText>
-                            @if (!string.IsNullOrWhiteSpace(_detail.TinNo))
-                            {
-                                <MudText Typo="Typo.caption">TIN: @_detail.TinNo</MudText>
-                            }
-                        </MudItem>
-                        <MudItem xs="6" sm="3">
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">Status</MudText>
-                            <MudText Typo="Typo.body2">@DvStatusChip(_detail.Status)</MudText>
-                        </MudItem>
-                        @if (_detail.PaidDate.HasValue)
-                        {
-                            <MudItem xs="6" sm="3">
-                                <MudText Typo="Typo.caption" Color="Color.Secondary">Paid Date</MudText>
-                                <MudText Typo="Typo.body2">@_detail.PaidDate.Value.ToString("MMMM dd, yyyy")</MudText>
-                            </MudItem>
-                        }
-                        <MudItem xs="12">
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">Particulars</MudText>
-                            <MudText Typo="Typo.body2">@_detail.Particulars</MudText>
-                        </MudItem>
-                        @if (!string.IsNullOrWhiteSpace(_detail.Remarks))
-                        {
-                            <MudItem xs="12">
-                                <MudText Typo="Typo.caption" Color="Color.Secondary">Remarks</MudText>
-                                <MudText Typo="Typo.body2">@_detail.Remarks</MudText>
-                            </MudItem>
-                        }
-                        <MudItem xs="12">
-                            <MudDivider />
-                            <MudStack Row="true" JustifyContent="JustifyContent.FlexEnd" Class="mt-2">
-                                <MudText Typo="Typo.h6">Total Amount: <b>@Money.Symbol@_detail.Amount.ToString("N2")</b></MudText>
-                            </MudStack>
-                        </MudItem>
-                    </MudGrid>
-                </MudCardContent>
-            </MudCard>
+            <MudProgressLinear Indeterminate="true" />
         }
-    </MudItem>
-</MudGrid>
+        else if (_items.Count == 0)
+        {
+            <MudAlert Severity="Severity.Info">No disbursement vouchers found.</MudAlert>
+        }
+        else
+        {
+            <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                <thead>
+                    <tr>
+                        <th>DV #</th>
+                        <th>Date</th>
+                        <th>PO #</th>
+                        <th>Payee</th>
+                        <th style="text-align:right">Amount</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in _items)
+                    {
+                        <tr>
+                            <td><b>@item.DvNumber</b></td>
+                            <td>@item.DvDate.ToString("MM/dd/yyyy")</td>
+                            <td><MudText Typo="Typo.caption">@item.PurchaseOrderNumber</MudText></td>
+                            <td>@item.Payee</td>
+                            <td style="text-align:right">@Money.Symbol@item.Amount.ToString("N2")</td>
+                            <td>@DvStatusChip(item.Status)</td>
+                            <td>
+                                <MudStack Row="true" Spacing="0">
+                                    @if (item.Status == DisbursementVoucherStatus.Draft && _canCreate)
+                                    {
+                                        <MudTooltip Text="Edit">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary"
+                                                           OnClick="@(async () => await OpenEditDialog(item.Id))" />
+                                        </MudTooltip>
+                                    }
+                                    @if (item.Status == DisbursementVoucherStatus.Draft && _canApprove)
+                                    {
+                                        <MudTooltip Text="Submit for Approval">
+                                            <MudIconButton Icon="@Icons.Material.Filled.TaskAlt" Size="Size.Small" Color="Color.Info"
+                                                           OnClick="@(async () => await ApproveAsync(item.Id))" />
+                                        </MudTooltip>
+                                    }
+                                    @if (item.Status == DisbursementVoucherStatus.Approved && _canPay)
+                                    {
+                                        <MudTooltip Text="Mark as Paid">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Payments" Size="Size.Small" Color="Color.Success"
+                                                           OnClick="@(async () => await PayAsync(item.Id))" />
+                                        </MudTooltip>
+                                    }
+                                    @if ((item.Status == DisbursementVoucherStatus.Draft || item.Status == DisbursementVoucherStatus.ForApproval) && _canCancel)
+                                    {
+                                        <MudTooltip Text="Cancel">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Cancel" Size="Size.Small" Color="Color.Error"
+                                                           OnClick="@(async () => await CancelDvAsync(item.Id))" />
+                                        </MudTooltip>
+                                    }
+                                    @if ((item.Status == DisbursementVoucherStatus.Approved || item.Status == DisbursementVoucherStatus.Paid) && _canViewSigned)
+                                    {
+                                        <MudTooltip Text="Signed Copy">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Approval" Size="Size.Small" Color="Color.Primary"
+                                                           OnClick="@(async () => await OpenSignedCopyAsync(item))" />
+                                        </MudTooltip>
+                                    }
+                                    @if (_canView)
+                                    {
+                                        <MudTooltip Text="Print / Download PDF">
+                                            <MudIconButton Icon="@Icons.Material.Filled.PictureAsPdf" Size="Size.Small" Color="Color.Error"
+                                                           OnClick="@(async () => await PrintPdfAsync(item.Id))" />
+                                        </MudTooltip>
+                                    }
+                                    <MudTooltip Text="View Details">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" Color="Color.Default"
+                                                       OnClick="@(async () => await ViewDetailsAsync(item.Id))" />
+                                    </MudTooltip>
+                                </MudStack>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </MudSimpleTable>
+
+            @if (_totalCount > _pageSize)
+            {
+                <MudStack Row="true" JustifyContent="JustifyContent.Center" Class="mt-3">
+                    <MudPagination Count="@((_totalCount + _pageSize - 1) / _pageSize)"
+                                   Selected="_page" SelectedChanged="@(async p => { _page = p; await LoadAsync(); })" />
+                </MudStack>
+            }
+        }
+    </MudCardContent>
+</MudCard>
+
+<!-- DV Detail View -->
+@if (_detail is not null)
+{
+    <MudCard Elevation="1" Class="mt-3">
+        <MudCardContent>
+            <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3">
+                <MudText Typo="Typo.h6" Class="flex-grow-1">@_detail.DvNumber — Details</MudText>
+                <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="@(() => _detail = null)" />
+            </MudStack>
+            <MudGrid Spacing="2">
+                <MudItem xs="6" sm="3">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">DV Date</MudText>
+                    <MudText Typo="Typo.body2">@_detail.DvDate.ToString("MMMM dd, yyyy")</MudText>
+                </MudItem>
+                <MudItem xs="6" sm="3">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Purchase Order</MudText>
+                    <MudText Typo="Typo.body2">@_detail.PurchaseOrderNumber</MudText>
+                </MudItem>
+                <MudItem xs="6" sm="3">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Fund Cluster</MudText>
+                    <MudText Typo="Typo.body2">@_detail.FundCluster</MudText>
+                </MudItem>
+                <MudItem xs="6" sm="3">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Mode of Payment</MudText>
+                    <MudText Typo="Typo.body2">@_detail.ModeOfPayment</MudText>
+                </MudItem>
+                <MudItem xs="6" sm="3">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Payee</MudText>
+                    <MudText Typo="Typo.body2">@_detail.Payee</MudText>
+                    @if (!string.IsNullOrWhiteSpace(_detail.TinNo))
+                    {
+                        <MudText Typo="Typo.caption">TIN: @_detail.TinNo</MudText>
+                    }
+                </MudItem>
+                <MudItem xs="6" sm="3">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Status</MudText>
+                    <MudText Typo="Typo.body2">@DvStatusChip(_detail.Status)</MudText>
+                </MudItem>
+                @if (_detail.PaidDate.HasValue)
+                {
+                    <MudItem xs="6" sm="3">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Paid Date</MudText>
+                        <MudText Typo="Typo.body2">@_detail.PaidDate.Value.ToString("MMMM dd, yyyy")</MudText>
+                    </MudItem>
+                }
+                <MudItem xs="12">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Particulars</MudText>
+                    <MudText Typo="Typo.body2">@_detail.Particulars</MudText>
+                </MudItem>
+                @if (!string.IsNullOrWhiteSpace(_detail.Remarks))
+                {
+                    <MudItem xs="12">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Remarks</MudText>
+                        <MudText Typo="Typo.body2">@_detail.Remarks</MudText>
+                    </MudItem>
+                }
+                <MudItem xs="12">
+                    <MudDivider />
+                    <MudStack Row="true" JustifyContent="JustifyContent.FlexEnd" Class="mt-2">
+                        <MudText Typo="Typo.h6">Total Amount: <b>@Money.Symbol@_detail.Amount.ToString("N2")</b></MudText>
+                    </MudStack>
+                </MudItem>
+            </MudGrid>
+        </MudCardContent>
+    </MudCard>
+}
 
 @code {
     private List<DisbursementVoucherListItemDto> _items = [];
-    private DisbursementVoucherDto? _editing, _detail;
-    private DvForm _form = new();
-    private bool _busy, _loaded;
+    private DisbursementVoucherDto? _detail;
+    private bool _loaded;
     private string _keyword = string.Empty;
     private string _statusFilter = "All";
     private int _page = 1, _pageSize = 15, _totalCount;
-    private PurchaseOrderSummaryDto? _selectedPurchaseOrder;
 
     private static readonly string[] _statusFilters = ["All", "Draft", "ForApproval", "Approved", "Paid", "Returned", "Cancelled"];
 
+    private bool _canView => UserProfileState.Permissions.Contains(FinancePermissions.DisbursementVouchers.View);
     private bool _canCreate => UserProfileState.Permissions.Contains(FinancePermissions.DisbursementVouchers.Create);
     private bool _canApprove => UserProfileState.Permissions.Contains(FinancePermissions.DisbursementVouchers.Approve);
     private bool _canPay => UserProfileState.Permissions.Contains(FinancePermissions.DisbursementVouchers.Pay);
     private bool _canCancel => UserProfileState.Permissions.Contains(FinancePermissions.DisbursementVouchers.Cancel);
+    private bool _canViewSigned => UserProfileState.Permissions.Contains(FinancePermissions.SignedDocuments.View);
 
     protected override async Task OnInitializedAsync()
     {
@@ -274,40 +227,43 @@
 
     public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
 
-    private async Task<IEnumerable<PurchaseOrderSummaryDto>> SearchPurchaseOrders(string value, CancellationToken ct)
+    private async Task OpenSignedCopyAsync(DisbursementVoucherListItemDto item)
     {
-        try
+        var parameters = new DialogParameters<SignedCopyDialog>
         {
-            var result = await PurchaseOrderClient.SearchAsync(
-                keyword: string.IsNullOrWhiteSpace(value) ? null : value,
-                status: null,
-                page: 1,
-                pageSize: 20,
-                ct: ct);
-            return result.Items ?? Enumerable.Empty<PurchaseOrderSummaryDto>();
-        }
-        catch
+            { x => x.DocumentType, AMIS.Modules.Finance.Contracts.v1.SignedDocuments.FinanceDocumentType.DisbursementVoucher },
+            { x => x.DocumentId, item.Id },
+            { x => x.DocumentNumber, string.IsNullOrWhiteSpace(item.DvNumber) ? "(no DV number)" : item.DvNumber },
+            { x => x.IsTerminalState, true }
+        };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        await DialogService.ShowAsync<SignedCopyDialog>("Signed Copy", parameters, options);
+    }
+
+    private async Task OpenCreateDialog()
+    {
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true };
+        var dialog = await DialogService.ShowAsync<DisbursementVoucherFormDialog>("New Disbursement Voucher", options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
         {
-            return Enumerable.Empty<PurchaseOrderSummaryDto>();
+            await LoadAsync();
         }
     }
 
-    private Task OnPurchaseOrderChanged(PurchaseOrderSummaryDto? po)
+    private async Task OpenEditDialog(Guid id)
     {
-        _selectedPurchaseOrder = po;
-        if (po is not null && string.IsNullOrWhiteSpace(_form.Payee))
-        {
-            _form.Payee = po.SupplierName;
-        }
-        return Task.CompletedTask;
-    }
+        var dv = await Client.GetAsync(id);
+        if (dv is null) { Snackbar.Add("DV not found.", Severity.Error); return; }
 
-    private static string FormatPurchaseOrder(PurchaseOrderSummaryDto? po)
-    {
-        if (po is null) return string.Empty;
-        return string.IsNullOrWhiteSpace(po.SupplierName)
-            ? po.PoNumber
-            : $"{po.PoNumber} � {po.SupplierName}";
+        var parameters = new DialogParameters<DisbursementVoucherFormDialog> { { x => x.Editing, dv } };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true };
+        var dialog = await DialogService.ShowAsync<DisbursementVoucherFormDialog>($"Edit {dv.DvNumber}", parameters, options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
+        {
+            await LoadAsync();
+        }
     }
 
     private async Task LoadAsync()
@@ -326,85 +282,28 @@
 
     private async Task SetStatusFilter(string s) { _statusFilter = s; _page = 1; await LoadAsync(); }
 
-    private async Task SaveAsync()
-    {
-        if (!IsFormValid()) { Snackbar.Add("Fill in all required fields.", Severity.Warning); return; }
-        _busy = true;
-        try
-        {
-            if (_editing is null)
-            {
-                await Client.CreateAsync(new CreateDisbursementVoucherCommand(
-                    _selectedPurchaseOrder!.Id,
-                    _selectedPurchaseOrder.PoNumber,
-                    ToDateOnly(_form.DvDateNullable)!.Value,
-                    _form.FundCluster,
-                    _form.Payee,
-                    string.IsNullOrWhiteSpace(_form.TinNo) ? null : _form.TinNo,
-                    string.IsNullOrWhiteSpace(_form.PayeeAddress) ? null : _form.PayeeAddress,
-                    _form.Particulars,
-                    _form.Amount,
-                    _form.ModeOfPayment,
-                    string.IsNullOrWhiteSpace(_form.Remarks) ? null : _form.Remarks));
-                Snackbar.Add("Disbursement voucher created.", Severity.Success);
-            }
-            ResetForm();
-            await LoadAsync();
-        }
-        catch (Exception ex) { Snackbar.Add($"Save failed: {ex.Message}", Severity.Error); }
-        finally { _busy = false; }
-    }
-
-    private async Task BeginEditAsync(Guid id)
-    {
-        var dv = await Client.GetAsync(id);
-        if (dv is null) { Snackbar.Add("DV not found.", Severity.Error); return; }
-        _editing = dv;
-        _selectedPurchaseOrder = new PurchaseOrderSummaryDto(
-            dv.PurchaseOrderId, dv.PurchaseOrderNumber, DateOnly.MinValue,
-            string.Empty, string.Empty, default, default, 0, DateTimeOffset.MinValue);
-        _form = new DvForm
-        {
-            DvDateNullable = dv.DvDate.ToDateTime(TimeOnly.MinValue),
-            FundCluster = dv.FundCluster,
-            Payee = dv.Payee,
-            TinNo = dv.TinNo,
-            PayeeAddress = dv.PayeeAddress,
-            Particulars = dv.Particulars,
-            Amount = dv.Amount,
-            ModeOfPayment = dv.ModeOfPayment,
-            Remarks = dv.Remarks
-        };
-    }
-
     private async Task ApproveAsync(Guid id)
     {
         var ok = await DialogService.ShowMessageBox("Approve DV", "Submit this DV for approval?", "Approve", cancelText: "Cancel");
         if (ok is not true) return;
-        _busy = true;
         try { await Client.ApproveAsync(id); Snackbar.Add("DV submitted for approval.", Severity.Success); await LoadAsync(); }
         catch (Exception ex) { Snackbar.Add($"Approve failed: {ex.Message}", Severity.Error); }
-        finally { _busy = false; }
     }
 
     private async Task PayAsync(Guid id)
     {
         var ok = await DialogService.ShowMessageBox("Mark as Paid", "Mark this DV as paid today?", "Mark Paid", cancelText: "Cancel");
         if (ok is not true) return;
-        _busy = true;
         try { await Client.PayAsync(id, DateOnly.FromDateTime(DateTime.Today), null); Snackbar.Add("DV marked as paid.", Severity.Success); await LoadAsync(); }
         catch (Exception ex) { Snackbar.Add($"Pay failed: {ex.Message}", Severity.Error); }
-        finally { _busy = false; }
     }
 
     private async Task CancelDvAsync(Guid id)
     {
         var ok = await DialogService.ShowMessageBox("Cancel DV", "Cancel this disbursement voucher?", "Yes, Cancel", cancelText: "No");
         if (ok is not true) return;
-        _busy = true;
         try { await Client.CancelAsync(id, "Cancelled by user."); Snackbar.Add("DV cancelled.", Severity.Info); await LoadAsync(); }
         catch (Exception ex) { Snackbar.Add($"Cancel failed: {ex.Message}", Severity.Error); }
-        finally { _busy = false; }
     }
 
     private async Task ViewDetailsAsync(Guid id)
@@ -412,19 +311,16 @@
         _detail = await Client.GetAsync(id);
     }
 
-    private void CancelEdit() { _editing = null; _selectedPurchaseOrder = null; _form = new(); }
-    private void ResetForm() { _editing = null; _selectedPurchaseOrder = null; _form = new(); }
-
-    private bool IsFormValid() =>
-        _selectedPurchaseOrder is not null &&
-        _form.DvDateNullable.HasValue &&
-        !string.IsNullOrWhiteSpace(_form.FundCluster) &&
-        !string.IsNullOrWhiteSpace(_form.Payee) &&
-        !string.IsNullOrWhiteSpace(_form.Particulars) &&
-        _form.Amount > 0 &&
-        !string.IsNullOrWhiteSpace(_form.ModeOfPayment);
-
-    private static DateOnly? ToDateOnly(DateTime? d) => d.HasValue ? DateOnly.FromDateTime(d.Value) : null;
+    private async Task PrintPdfAsync(Guid id)
+    {
+        try
+        {
+            var bytes = await Client.GetPdfAsync(id, "a4");
+            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
+            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+        }
+        catch (Exception ex) { Snackbar.Add($"PDF generation failed: {ex.Message}", Severity.Error); }
+    }
 
     private static RenderFragment DvStatusChip(DisbursementVoucherStatus status) => __builder =>
     {
@@ -445,18 +341,4 @@
         __builder.AddAttribute(4, "ChildContent", (RenderFragment)(b => b.AddContent(0, status.ToString())));
         __builder.CloseComponent();
     };
-
-    private sealed class DvForm
-    {
-        public DateTime? DvDateNullable { get; set; } = DateTime.Today;
-        public string FundCluster { get; set; } = string.Empty;
-        public string Payee { get; set; } = string.Empty;
-        public string? TinNo { get; set; }
-        public string? PayeeAddress { get; set; }
-        public string Particulars { get; set; } = string.Empty;
-        public decimal Amount { get; set; }
-        public string ModeOfPayment { get; set; } = "Check";
-        public string? Remarks { get; set; }
-    }
 }
-

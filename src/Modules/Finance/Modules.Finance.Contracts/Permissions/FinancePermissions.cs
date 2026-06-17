@@ -20,4 +20,10 @@ public static class FinancePermissions
         public const string Utilize = "Permissions.Finance.BudgetUtilizationRecords.Utilize";
         public const string Cancel = "Permissions.Finance.BudgetUtilizationRecords.Cancel";
     }
+
+    public static class SignedDocuments
+    {
+        public const string View = "Permissions.Finance.SignedDocuments.View";
+        public const string Upload = "Permissions.Finance.SignedDocuments.Upload";
+    }
 }

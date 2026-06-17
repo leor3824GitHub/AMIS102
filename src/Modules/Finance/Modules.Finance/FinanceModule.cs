@@ -4,6 +4,7 @@ using AMIS.Framework.Shared.Constants;
 using AMIS.Framework.Web.Modules;
 using AMIS.Modules.Finance.Data;
 using AMIS.Modules.Finance.Features.v1.DisbursementVouchers.CreateDisbursementVoucher;
+using AMIS.Modules.Finance.Features.v1.DisbursementVouchers.UpdateDisbursementVoucher;
 using AMIS.Modules.Finance.Features.v1.DisbursementVouchers.GetDisbursementVoucherById;
 using AMIS.Modules.Finance.Features.v1.DisbursementVouchers.SearchDisbursementVouchers;
 using AMIS.Modules.Finance.Features.v1.DisbursementVouchers.ApproveDisbursementVoucher;
@@ -16,6 +17,9 @@ using AMIS.Modules.Finance.Features.v1.BudgetUtilizationRecords.SearchBudgetUtil
 using AMIS.Modules.Finance.Features.v1.BudgetUtilizationRecords.ObligateBudgetUtilizationRecord;
 using AMIS.Modules.Finance.Features.v1.BudgetUtilizationRecords.UtilizeBudgetUtilizationRecord;
 using AMIS.Modules.Finance.Features.v1.BudgetUtilizationRecords.CancelBudgetUtilizationRecord;
+using AMIS.Modules.Finance.Features.v1.SignedDocuments.UploadSignedDocument;
+using AMIS.Modules.Finance.Features.v1.SignedDocuments.GetSignedDocument;
+using AMIS.Modules.Finance.Features.v1.SignedDocuments.DownloadSignedDocument;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -39,7 +43,10 @@ public class FinanceModule : IModule
         new("Create Budget Utilization Records", "Create", "Finance.BudgetUtilizationRecords"),
         new("Obligate Budget Utilization Records", "Obligate", "Finance.BudgetUtilizationRecords"),
         new("Utilize Budget Utilization Records", "Utilize", "Finance.BudgetUtilizationRecords"),
-        new("Cancel Budget Utilization Records", "Cancel", "Finance.BudgetUtilizationRecords")
+        new("Cancel Budget Utilization Records", "Cancel", "Finance.BudgetUtilizationRecords"),
+
+        new("View Signed Document Copies", "View", "Finance.SignedDocuments", IsBasic: true),
+        new("Upload Signed Document Copies", "Upload", "Finance.SignedDocuments")
     ];
 
     public void ConfigureServices(IHostApplicationBuilder builder)
@@ -67,9 +74,11 @@ public class FinanceModule : IModule
 
         var dvGroup = moduleGroup.MapGroup("/disbursement-vouchers");
         var burGroup = moduleGroup.MapGroup("/budget-utilization-records");
+        var signedDocumentsGroup = moduleGroup.MapGroup("/signed-documents");
 
         // Disbursement Vouchers
         CreateDisbursementVoucherEndpoint.Map(dvGroup);
+        UpdateDisbursementVoucherEndpoint.Map(dvGroup);
         GetDisbursementVoucherByIdEndpoint.Map(dvGroup);
         SearchDisbursementVouchersEndpoint.Map(dvGroup);
         ApproveDisbursementVoucherEndpoint.Map(dvGroup);
@@ -84,6 +93,11 @@ public class FinanceModule : IModule
         ObligateBudgetUtilizationRecordEndpoint.Map(burGroup);
         UtilizeBudgetUtilizationRecordEndpoint.Map(burGroup);
         CancelBudgetUtilizationRecordEndpoint.Map(burGroup);
+
+        // Signed Documents (wet-signed scanned copies of records)
+        UploadSignedDocumentEndpoint.Map(signedDocumentsGroup);
+        GetSignedDocumentEndpoint.Map(signedDocumentsGroup);
+        DownloadSignedDocumentEndpoint.Map(signedDocumentsGroup);
     }
 }
 

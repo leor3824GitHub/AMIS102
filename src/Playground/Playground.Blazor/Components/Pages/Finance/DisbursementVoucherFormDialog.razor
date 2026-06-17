@@ -1,0 +1,208 @@
+@using AMIS.Modules.Finance.Contracts.v1.DisbursementVouchers
+@using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders
+@using AMIS.Playground.Blazor.ApiClient
+@inject IDisbursementVoucherClient Client
+@inject IPurchaseOrderClient PurchaseOrderClient
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="2">
+            <MudAutocomplete T="PurchaseOrderSummaryDto"
+                             Value="_selectedPurchaseOrder"
+                             ValueChanged="OnPurchaseOrderChanged"
+                             SearchFunc="SearchPurchaseOrders"
+                             ToStringFunc="FormatPurchaseOrder"
+                             Label="Purchase Order"
+                             Variant="Variant.Outlined"
+                             Placeholder="Search PO number..."
+                             Required="true"
+                             Clearable="true"
+                             CoerceValue="true"
+                             ResetValueOnEmptyText="true"
+                             Dense="true" Margin="Margin.Dense"
+                             HelperText="Only issued or delivered POs can be paid" />
+            <MudDatePicker @bind-Date="_form.DvDateNullable" Label="DV Date" Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" Required="true" Dense="true" Margin="Margin.Dense" />
+            <MudTextField @bind-Value="_form.FundCluster" Label="Fund Cluster" Variant="Variant.Outlined" Required="true" Dense="true" Margin="Margin.Dense" />
+            <MudDivider Class="my-1" />
+            <MudText Typo="Typo.subtitle2">Payee Information</MudText>
+            <MudTextField @bind-Value="_form.Payee" Label="Payee" Variant="Variant.Outlined" Required="true" Dense="true" Margin="Margin.Dense" />
+            <MudTextField @bind-Value="_form.TinNo" Label="TIN (optional)" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudTextField @bind-Value="_form.PayeeAddress" Label="Payee Address (optional)" Variant="Variant.Outlined" Lines="2" Dense="true" Margin="Margin.Dense" />
+            <MudDivider Class="my-1" />
+            <MudText Typo="Typo.subtitle2">Payment Details</MudText>
+            <MudTextField @bind-Value="_form.Particulars" Label="Particulars" Variant="Variant.Outlined" Required="true" Lines="3" Dense="true" Margin="Margin.Dense" />
+            <MudNumericField @bind-Value="_form.Amount" Label="@($"Amount ({Money.Symbol})")" Variant="Variant.Outlined" Required="true" Min="0.01m" Format="N2" Dense="true" Margin="Margin.Dense" />
+            <MudSelect @bind-Value="_form.ModeOfPayment" Label="Mode of Payment" Variant="Variant.Outlined" T="string" Dense="true" Margin="Margin.Dense">
+                <MudSelectItem Value="@("Cash")">Cash</MudSelectItem>
+                <MudSelectItem Value="@("Check")">Check</MudSelectItem>
+                <MudSelectItem Value="@("Bank Transfer")">Bank Transfer</MudSelectItem>
+                <MudSelectItem Value="@("LDDAP-ADA")">LDDAP-ADA</MudSelectItem>
+                <MudSelectItem Value="@("MDS Check")">MDS Check</MudSelectItem>
+            </MudSelect>
+            <MudTextField @bind-Value="_form.Remarks" Label="Remarks (optional)" Variant="Variant.Outlined" Lines="2" Dense="true" Margin="Margin.Dense" />
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync" Disabled="_busy">
+            @if (_busy) { <MudProgressCircular Size="Size.Small" Class="mr-1" Indeterminate="true" /> }
+            @(Editing is null ? "Create DV" : "Save Changes")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance Dialog { get; set; } = default!;
+
+    /// <summary>When set, the dialog edits this existing (Draft) voucher instead of creating a new one.</summary>
+    [Parameter] public DisbursementVoucherDto? Editing { get; set; }
+
+    private readonly DvForm _form = new();
+    private PurchaseOrderSummaryDto? _selectedPurchaseOrder;
+    private bool _busy;
+
+    protected override void OnInitialized()
+    {
+        if (Editing is null) return;
+
+        // Edit mode: seed the form and a stand-in PO summary (the picker only needs Id + number to
+        // round-trip the selection; full PO details aren't required to re-save).
+        _selectedPurchaseOrder = new PurchaseOrderSummaryDto(
+            Editing.PurchaseOrderId, Editing.PurchaseOrderNumber, DateOnly.MinValue,
+            string.Empty, string.Empty, default, default, 0m, DateTimeOffset.MinValue);
+
+        _form.DvDateNullable = Editing.DvDate.ToDateTime(TimeOnly.MinValue);
+        _form.FundCluster = Editing.FundCluster;
+        _form.Payee = Editing.Payee;
+        _form.TinNo = Editing.TinNo;
+        _form.PayeeAddress = Editing.PayeeAddress;
+        _form.Particulars = Editing.Particulars;
+        _form.Amount = Editing.Amount;
+        _form.ModeOfPayment = Editing.ModeOfPayment;
+        _form.Remarks = Editing.Remarks;
+    }
+
+    // A DV can only be raised against a PO that has at least been Issued (COD/advance payments are
+    // allowed before delivery). The server enforces this too; this just keeps non-payable POs out
+    // of the picker. SearchAsync takes a single status, so filter the returned page client-side.
+    private static readonly PurchaseOrderStatus[] _voucherableStatuses =
+        [PurchaseOrderStatus.Issued, PurchaseOrderStatus.PartiallyDelivered, PurchaseOrderStatus.Fulfilled];
+
+    private async Task<IEnumerable<PurchaseOrderSummaryDto>> SearchPurchaseOrders(string value, CancellationToken ct)
+    {
+        try
+        {
+            var result = await PurchaseOrderClient.SearchAsync(
+                keyword: string.IsNullOrWhiteSpace(value) ? null : value,
+                status: null,
+                page: 1,
+                pageSize: 20,
+                ct: ct);
+            return (result.Items ?? Enumerable.Empty<PurchaseOrderSummaryDto>())
+                .Where(po => _voucherableStatuses.Contains(po.Status));
+        }
+        catch
+        {
+            return Enumerable.Empty<PurchaseOrderSummaryDto>();
+        }
+    }
+
+    private async Task OnPurchaseOrderChanged(PurchaseOrderSummaryDto? po)
+    {
+        _selectedPurchaseOrder = po;
+        if (po is null) return;
+
+        // Pre-fill the voucher from the selected PO. Only fill empty fields so a re-selection never
+        // clobbers values the user has already typed. All fields remain editable.
+        try
+        {
+            var detail = await PurchaseOrderClient.GetAsync(po.Id);
+            if (detail is not null)
+            {
+                if (string.IsNullOrWhiteSpace(_form.Payee)) _form.Payee = detail.SupplierName;
+                if (string.IsNullOrWhiteSpace(_form.PayeeAddress)) _form.PayeeAddress = detail.SupplierAddress;
+                if (string.IsNullOrWhiteSpace(_form.TinNo)) _form.TinNo = detail.SupplierTin;
+                if (string.IsNullOrWhiteSpace(_form.FundCluster) && !string.IsNullOrWhiteSpace(detail.FundCluster))
+                    _form.FundCluster = detail.FundCluster;
+                if (_form.Amount <= 0) _form.Amount = detail.TotalAmount;
+                if (string.IsNullOrWhiteSpace(_form.Particulars))
+                    _form.Particulars = $"Payment for {detail.PoNumber}";
+                return;
+            }
+        }
+        catch
+        {
+            // Fall through to the summary-only pre-fill below.
+        }
+
+        if (string.IsNullOrWhiteSpace(_form.Payee)) _form.Payee = po.SupplierName;
+    }
+
+    private static string FormatPurchaseOrder(PurchaseOrderSummaryDto? po)
+    {
+        if (po is null) return string.Empty;
+        return string.IsNullOrWhiteSpace(po.SupplierName)
+            ? po.PoNumber
+            : $"{po.PoNumber} — {po.SupplierName}";
+    }
+
+    private async Task SaveAsync()
+    {
+        if (!IsFormValid()) { Snackbar.Add("Fill in all required fields.", Severity.Warning); return; }
+        _busy = true;
+        try
+        {
+            var tinNo = string.IsNullOrWhiteSpace(_form.TinNo) ? null : _form.TinNo;
+            var payeeAddress = string.IsNullOrWhiteSpace(_form.PayeeAddress) ? null : _form.PayeeAddress;
+            var remarks = string.IsNullOrWhiteSpace(_form.Remarks) ? null : _form.Remarks;
+            var dvDate = ToDateOnly(_form.DvDateNullable)!.Value;
+
+            if (Editing is null)
+            {
+                await Client.CreateAsync(new CreateDisbursementVoucherCommand(
+                    _selectedPurchaseOrder!.Id, _selectedPurchaseOrder.PoNumber, dvDate,
+                    _form.FundCluster, _form.Payee, tinNo, payeeAddress,
+                    _form.Particulars, _form.Amount, _form.ModeOfPayment, remarks));
+                Snackbar.Add("Disbursement voucher created.", Severity.Success);
+            }
+            else
+            {
+                await Client.UpdateAsync(Editing.Id, new UpdateDisbursementVoucherCommand(
+                    Editing.Id, _selectedPurchaseOrder!.Id, _selectedPurchaseOrder.PoNumber, dvDate,
+                    _form.FundCluster, _form.Payee, tinNo, payeeAddress,
+                    _form.Particulars, _form.Amount, _form.ModeOfPayment, remarks));
+                Snackbar.Add("Disbursement voucher updated.", Severity.Success);
+            }
+            Dialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex) { Snackbar.Add($"Save failed: {ex.Message}", Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    private void Cancel() => Dialog.Cancel();
+
+    private bool IsFormValid() =>
+        _selectedPurchaseOrder is not null &&
+        _form.DvDateNullable.HasValue &&
+        !string.IsNullOrWhiteSpace(_form.FundCluster) &&
+        !string.IsNullOrWhiteSpace(_form.Payee) &&
+        !string.IsNullOrWhiteSpace(_form.Particulars) &&
+        _form.Amount > 0 &&
+        !string.IsNullOrWhiteSpace(_form.ModeOfPayment);
+
+    private static DateOnly? ToDateOnly(DateTime? d) => d.HasValue ? DateOnly.FromDateTime(d.Value) : null;
+
+    private sealed class DvForm
+    {
+        public DateTime? DvDateNullable { get; set; } = DateTime.Today;
+        public string FundCluster { get; set; } = string.Empty;
+        public string Payee { get; set; } = string.Empty;
+        public string? TinNo { get; set; }
+        public string? PayeeAddress { get; set; }
+        public string Particulars { get; set; } = string.Empty;
+        public decimal Amount { get; set; }
+        public string ModeOfPayment { get; set; } = "Check";
+        public string? Remarks { get; set; }
+    }
+}

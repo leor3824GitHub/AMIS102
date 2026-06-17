@@ -153,6 +153,9 @@ internal static class ApiClientRegistration
         services.AddTransient<IBudgetUtilizationRecordClient>(sp =>
             new BudgetUtilizationRecordClient(ResolveClient(sp)));
 
+        services.AddTransient<IFinanceSignedDocumentClient>(sp =>
+            new FinanceSignedDocumentClient(ResolveClient(sp)));
+
         // Asset Management module manual clients
         services.AddTransient<IPropertyItemCatalogClient>(sp =>
             new PropertyItemCatalogClient(ResolveClient(sp)));
