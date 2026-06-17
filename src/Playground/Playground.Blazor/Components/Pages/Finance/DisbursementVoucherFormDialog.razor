@@ -1,27 +1,44 @@
+@using AMIS.Modules.Finance.Contracts.v1.BudgetUtilizationRecords
 @using AMIS.Modules.Finance.Contracts.v1.DisbursementVouchers
 @using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders
 @using AMIS.Playground.Blazor.ApiClient
 @inject IDisbursementVoucherClient Client
+@inject IBudgetUtilizationRecordClient BurClient
 @inject IPurchaseOrderClient PurchaseOrderClient
 @inject ISnackbar Snackbar
 
 <MudDialog>
     <DialogContent>
         <MudStack Spacing="2">
-            <MudAutocomplete T="PurchaseOrderSummaryDto"
-                             Value="_selectedPurchaseOrder"
-                             ValueChanged="OnPurchaseOrderChanged"
-                             SearchFunc="SearchPurchaseOrders"
-                             ToStringFunc="FormatPurchaseOrder"
-                             Label="Purchase Order"
-                             Variant="Variant.Outlined"
-                             Placeholder="Search PO number..."
-                             Required="true"
-                             Clearable="true"
-                             CoerceValue="true"
-                             ResetValueOnEmptyText="true"
-                             Dense="true" Margin="Margin.Dense"
-                             HelperText="Only issued or delivered POs can be paid" />
+            @if (Editing is null)
+            {
+                <MudAutocomplete T="BudgetUtilizationRecordListItemDto"
+                                 Value="_selectedBur"
+                                 ValueChanged="OnBurChanged"
+                                 SearchFunc="SearchBudgetUtilizationRecords"
+                                 ToStringFunc="FormatBur"
+                                 Label="Budget Utilization Record"
+                                 Variant="Variant.Outlined"
+                                 Placeholder="Search obligated BUR number..."
+                                 Required="true"
+                                 Clearable="true"
+                                 CoerceValue="true"
+                                 ResetValueOnEmptyText="true"
+                                 Dense="true" Margin="Margin.Dense"
+                                 HelperText="Only obligated BURs can be disbursed" />
+                @if (_selectedBur is not null)
+                {
+                    <MudTextField Value="@_selectedBur.PurchaseOrderNumber" Label="Purchase Order" Variant="Variant.Outlined"
+                                  ReadOnly="true" Dense="true" Margin="Margin.Dense" />
+                }
+            }
+            else
+            {
+                <MudTextField Value="@Editing.BurNumber" Label="Budget Utilization Record" Variant="Variant.Outlined"
+                              ReadOnly="true" Dense="true" Margin="Margin.Dense" />
+                <MudTextField Value="@Editing.PurchaseOrderNumber" Label="Purchase Order" Variant="Variant.Outlined"
+                              ReadOnly="true" Dense="true" Margin="Margin.Dense" />
+            }
             <MudDatePicker @bind-Date="_form.DvDateNullable" Label="DV Date" Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" Required="true" Dense="true" Margin="Margin.Dense" />
             <MudTextField @bind-Value="_form.FundCluster" Label="Fund Cluster" Variant="Variant.Outlined" Required="true" Dense="true" Margin="Margin.Dense" />
             <MudDivider Class="my-1" />
@@ -59,19 +76,15 @@
     [Parameter] public DisbursementVoucherDto? Editing { get; set; }
 
     private readonly DvForm _form = new();
-    private PurchaseOrderSummaryDto? _selectedPurchaseOrder;
+    private BudgetUtilizationRecordListItemDto? _selectedBur;
     private bool _busy;
 
     protected override void OnInitialized()
     {
         if (Editing is null) return;
 
-        // Edit mode: seed the form and a stand-in PO summary (the picker only needs Id + number to
-        // round-trip the selection; full PO details aren't required to re-save).
-        _selectedPurchaseOrder = new PurchaseOrderSummaryDto(
-            Editing.PurchaseOrderId, Editing.PurchaseOrderNumber, DateOnly.MinValue,
-            string.Empty, string.Empty, default, default, 0m, DateTimeOffset.MinValue);
-
+        // Edit mode: the BUR/PO link is fixed at creation and shown read-only — only the editable
+        // voucher fields are seeded here.
         _form.DvDateNullable = Editing.DvDate.ToDateTime(TimeOnly.MinValue);
         _form.FundCluster = Editing.FundCluster;
         _form.Payee = Editing.Payee;
@@ -83,68 +96,63 @@
         _form.Remarks = Editing.Remarks;
     }
 
-    // A DV can only be raised against a PO that has at least been Issued (COD/advance payments are
-    // allowed before delivery). The server enforces this too; this just keeps non-payable POs out
-    // of the picker. SearchAsync takes a single status, so filter the returned page client-side.
-    private static readonly PurchaseOrderStatus[] _voucherableStatuses =
-        [PurchaseOrderStatus.Issued, PurchaseOrderStatus.PartiallyDelivered, PurchaseOrderStatus.Fulfilled];
-
-    private async Task<IEnumerable<PurchaseOrderSummaryDto>> SearchPurchaseOrders(string value, CancellationToken ct)
+    // BUR first, then DV: a voucher is raised against an obligated Budget Utilization Record. Only
+    // Obligated BURs are offered — a BUR that already has a DV has moved to Utilized and is excluded.
+    private async Task<IEnumerable<BudgetUtilizationRecordListItemDto>> SearchBudgetUtilizationRecords(string value, CancellationToken ct)
     {
         try
         {
-            var result = await PurchaseOrderClient.SearchAsync(
+            var result = await BurClient.SearchAsync(
                 keyword: string.IsNullOrWhiteSpace(value) ? null : value,
-                status: null,
+                status: BudgetUtilizationRecordStatus.Obligated,
                 page: 1,
                 pageSize: 20,
                 ct: ct);
-            return (result.Items ?? Enumerable.Empty<PurchaseOrderSummaryDto>())
-                .Where(po => _voucherableStatuses.Contains(po.Status));
+            return result.Items ?? Enumerable.Empty<BudgetUtilizationRecordListItemDto>();
         }
         catch
         {
-            return Enumerable.Empty<PurchaseOrderSummaryDto>();
+            return Enumerable.Empty<BudgetUtilizationRecordListItemDto>();
         }
     }
 
-    private async Task OnPurchaseOrderChanged(PurchaseOrderSummaryDto? po)
+    private async Task OnBurChanged(BudgetUtilizationRecordListItemDto? bur)
     {
-        _selectedPurchaseOrder = po;
-        if (po is null) return;
+        _selectedBur = bur;
+        if (bur is null) return;
 
-        // Pre-fill the voucher from the selected PO. Only fill empty fields so a re-selection never
-        // clobbers values the user has already typed. All fields remain editable.
+        // Pre-fill the voucher from the BUR and its purchase order. Only fill empty fields so a
+        // re-selection never clobbers values the user already typed. All fields remain editable.
+        if (_form.Amount <= 0) _form.Amount = bur.Amount;
+
         try
         {
-            var detail = await PurchaseOrderClient.GetAsync(po.Id);
-            if (detail is not null)
+            var burDetail = await BurClient.GetAsync(bur.Id);
+            if (burDetail is null) return;
+
+            if (string.IsNullOrWhiteSpace(_form.Particulars))
+                _form.Particulars = $"Payment for {burDetail.PurchaseOrderNumber}";
+
+            var po = await PurchaseOrderClient.GetAsync(burDetail.PurchaseOrderId);
+            if (po is not null)
             {
-                if (string.IsNullOrWhiteSpace(_form.Payee)) _form.Payee = detail.SupplierName;
-                if (string.IsNullOrWhiteSpace(_form.PayeeAddress)) _form.PayeeAddress = detail.SupplierAddress;
-                if (string.IsNullOrWhiteSpace(_form.TinNo)) _form.TinNo = detail.SupplierTin;
-                if (string.IsNullOrWhiteSpace(_form.FundCluster) && !string.IsNullOrWhiteSpace(detail.FundCluster))
-                    _form.FundCluster = detail.FundCluster;
-                if (_form.Amount <= 0) _form.Amount = detail.TotalAmount;
-                if (string.IsNullOrWhiteSpace(_form.Particulars))
-                    _form.Particulars = $"Payment for {detail.PoNumber}";
-                return;
+                if (string.IsNullOrWhiteSpace(_form.Payee)) _form.Payee = po.SupplierName;
+                if (string.IsNullOrWhiteSpace(_form.PayeeAddress)) _form.PayeeAddress = po.SupplierAddress;
+                if (string.IsNullOrWhiteSpace(_form.TinNo)) _form.TinNo = po.SupplierTin;
+                if (string.IsNullOrWhiteSpace(_form.FundCluster) && !string.IsNullOrWhiteSpace(po.FundCluster))
+                    _form.FundCluster = po.FundCluster;
             }
         }
         catch
         {
-            // Fall through to the summary-only pre-fill below.
+            // Pre-fill is a convenience; leave fields for manual entry if the lookup fails.
         }
-
-        if (string.IsNullOrWhiteSpace(_form.Payee)) _form.Payee = po.SupplierName;
     }
 
-    private static string FormatPurchaseOrder(PurchaseOrderSummaryDto? po)
+    private static string FormatBur(BudgetUtilizationRecordListItemDto? bur)
     {
-        if (po is null) return string.Empty;
-        return string.IsNullOrWhiteSpace(po.SupplierName)
-            ? po.PoNumber
-            : $"{po.PoNumber} — {po.SupplierName}";
+        if (bur is null) return string.Empty;
+        return $"{bur.BurNumber} — PO {bur.PurchaseOrderNumber}";
     }
 
     private async Task SaveAsync()
@@ -161,15 +169,16 @@
             if (Editing is null)
             {
                 await Client.CreateAsync(new CreateDisbursementVoucherCommand(
-                    _selectedPurchaseOrder!.Id, _selectedPurchaseOrder.PoNumber, dvDate,
+                    _selectedBur!.Id, _selectedBur.BurNumber, dvDate,
                     _form.FundCluster, _form.Payee, tinNo, payeeAddress,
                     _form.Particulars, _form.Amount, _form.ModeOfPayment, remarks));
                 Snackbar.Add("Disbursement voucher created.", Severity.Success);
             }
             else
             {
+                // The BUR/PO link is immutable after creation; re-send the existing PO unchanged.
                 await Client.UpdateAsync(Editing.Id, new UpdateDisbursementVoucherCommand(
-                    Editing.Id, _selectedPurchaseOrder!.Id, _selectedPurchaseOrder.PoNumber, dvDate,
+                    Editing.Id, Editing.PurchaseOrderId, Editing.PurchaseOrderNumber, dvDate,
                     _form.FundCluster, _form.Payee, tinNo, payeeAddress,
                     _form.Particulars, _form.Amount, _form.ModeOfPayment, remarks));
                 Snackbar.Add("Disbursement voucher updated.", Severity.Success);
@@ -183,7 +192,7 @@
     private void Cancel() => Dialog.Cancel();
 
     private bool IsFormValid() =>
-        _selectedPurchaseOrder is not null &&
+        (Editing is not null || _selectedBur is not null) &&
         _form.DvDateNullable.HasValue &&
         !string.IsNullOrWhiteSpace(_form.FundCluster) &&
         !string.IsNullOrWhiteSpace(_form.Payee) &&

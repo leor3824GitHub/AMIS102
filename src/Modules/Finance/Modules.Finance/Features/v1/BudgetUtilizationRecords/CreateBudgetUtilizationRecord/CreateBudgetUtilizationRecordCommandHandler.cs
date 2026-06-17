@@ -20,18 +20,10 @@ public sealed class CreateBudgetUtilizationRecordCommandHandler(
 {
     public async ValueTask<Guid> Handle(CreateBudgetUtilizationRecordCommand command, CancellationToken cancellationToken)
     {
-        // The BUR obligates budget against a real purchase order — reject a bogus PO reference.
+        // The BUR obligates budget against a real purchase order — reject a bogus PO reference. The
+        // disbursement voucher is not referenced here: it is raised later against this BUR (BUR first, then DV).
         _ = await mediator.Send(new GetPurchaseOrderQuery(command.PurchaseOrderId), cancellationToken).ConfigureAwait(false)
             ?? throw new CustomException("Purchase order not found.", [], HttpStatusCode.NotFound);
-
-        // When the BUR is linked to a disbursement voucher, that voucher must exist.
-        if (command.DisbursementVoucherId is { } dvId && dvId != Guid.Empty)
-        {
-            var dvExists = await dbContext.DisbursementVouchers
-                .AnyAsync(d => d.Id == dvId, cancellationToken).ConfigureAwait(false);
-            if (!dvExists)
-                throw new CustomException("Linked disbursement voucher not found.", [], HttpStatusCode.NotFound);
-        }
 
         // Atomic number allocation: increment a per-year counter row guarded by xmin, retrying on conflict.
         for (var attempt = 0; attempt < FinanceSequenceAllocation.MaxAttempts; attempt++)
@@ -44,7 +36,21 @@ public sealed class CreateBudgetUtilizationRecordCommandHandler(
 
             if (sequence is null)
             {
-                sequence = BurNumberSequence.Create(year);
+                // No counter row for this year yet (fresh year, or the table was reset while records
+                // remained). Seed it from the highest BUR number already issued — including soft-deleted
+                // rows, which the global unique index still enforces — so we never re-issue an existing one.
+                var prefix = $"BUR-{year}-";
+                var issuedNumbers = await dbContext.BudgetUtilizationRecords
+                    .IgnoreQueryFilters()
+                    .Where(b => b.BurNumber.StartsWith(prefix))
+                    .Select(b => b.BurNumber)
+                    .ToListAsync(cancellationToken)
+                    .ConfigureAwait(false);
+                var lastSerial = issuedNumbers.Count == 0
+                    ? 0
+                    : issuedNumbers.Max(FinanceSequenceAllocation.ParseSerial);
+
+                sequence = BurNumberSequence.Create(year, lastSerial);
                 dbContext.BurNumberSequences.Add(sequence);
             }
 
@@ -55,8 +61,6 @@ public sealed class CreateBudgetUtilizationRecordCommandHandler(
                 burNumber,
                 command.PurchaseOrderId,
                 command.PurchaseOrderNumber,
-                command.DisbursementVoucherId,
-                command.DisbursementVoucherNumber,
                 command.BurDate,
                 command.AllotmentClass,
                 command.UacsObjectCode,

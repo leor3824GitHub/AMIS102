@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using CommunityToolkit.Maui.Views;
 using Microsoft.Extensions.DependencyInjection;
 using ZXing.Net.Maui;
 
@@ -12,6 +13,7 @@ public partial class ScanPage : ContentPage
 
     private readonly ScanViewModel _vm;
     private CancellationTokenSource? _textScanCts;
+    private CameraView? _textCamera;
 
     public ScanPage()
         : this(ResolveViewModel())
@@ -59,7 +61,11 @@ public partial class ScanPage : ContentPage
 
         try
         {
-            await TextCamera.StartCameraPreview(ct);
+            // Realize the camera only now — on a device without one this throws here (caught) instead
+            // of crashing the whole page at load time.
+            _textCamera = new CameraView();
+            TextCameraHost.Add(_textCamera);
+            await _textCamera.StartCameraPreview(ct);
         }
         catch (OperationCanceledException)
         {
@@ -67,7 +73,10 @@ public partial class ScanPage : ContentPage
         }
         catch (Exception)
         {
-            // Preview may not be ready yet; the capture loop retries each frame regardless.
+            // No usable camera on this device — surface a hint and fall back to manual entry.
+            _vm.OnTextScanUnavailable();
+            StopTextScanLoop();
+            return;
         }
 
         await RunTextScanLoopAsync(ct);
@@ -77,11 +86,14 @@ public partial class ScanPage : ContentPage
     {
         while (!ct.IsCancellationRequested)
         {
+            var camera = _textCamera;
+            if (camera is null) break;
+
             try
             {
                 // CaptureImage touches the camera control, so it must run on the UI thread — earlier
                 // iterations can resume on a thread-pool thread after the OCR step's ConfigureAwait(false).
-                using var frame = await MainThread.InvokeOnMainThreadAsync(() => TextCamera.CaptureImage(ct));
+                using var frame = await MainThread.InvokeOnMainThreadAsync(() => camera.CaptureImage(ct));
                 await _vm.ProcessTextFrameAsync(frame, ct);
             }
             catch (OperationCanceledException)
@@ -113,13 +125,20 @@ public partial class ScanPage : ContentPage
             _textScanCts = null;
         }
 
-        try
+        if (_textCamera is not null)
         {
-            TextCamera.StopCameraPreview();
-        }
-        catch (Exception)
-        {
-            // Preview may already be stopped/torn down — safe to ignore.
+            try
+            {
+                _textCamera.StopCameraPreview();
+            }
+            catch (Exception)
+            {
+                // Preview may already be stopped/torn down — safe to ignore.
+            }
+
+            TextCameraHost.Remove(_textCamera);
+            _textCamera.Handler?.DisconnectHandler();
+            _textCamera = null;
         }
     }
 

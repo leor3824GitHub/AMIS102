@@ -16,6 +16,7 @@ namespace AMIS.Modules.QuestPdfReporting.Features.v1.Finance.PrintDisbursementVo
 internal sealed class DisbursementVoucherPdfDocument(
     DisbursementVoucherDto  dv,
     OrganizationProfileDto? org,
+    string?                 responsibilityCenter = null,
     string                  paperSize   = "a4",
     string                  orientation = "portrait",
     float                   marginMm    = 14f) : IDocument
@@ -183,7 +184,7 @@ internal sealed class DisbursementVoucherPdfDocument(
                     r.RelativeItem().Padding(3).MinHeight(40).Column(c =>
                     {
                         c.Item().Text("Code").FontSize(7);
-                        c.Item().PaddingTop(2).Text(dv.FundCluster ?? string.Empty).FontSize(8);
+                        c.Item().PaddingTop(2).Text(responsibilityCenter ?? string.Empty).FontSize(8);
                     });
                 });
             });
@@ -230,6 +231,8 @@ internal sealed class DisbursementVoucherPdfDocument(
         container.BorderTop(1).Padding(6).MinHeight(60).Column(col =>
         {
             col.Item().Text("List of Supporting Documents").SemiBold().FontSize(9);
+            if (!string.IsNullOrWhiteSpace(dv.BurNumber))
+                col.Item().PaddingLeft(20).Text($"Budget Utilization Record — {dv.BurNumber}").FontSize(8);
             if (!string.IsNullOrWhiteSpace(dv.PurchaseOrderNumber))
                 col.Item().PaddingLeft(20).Text($"Purchase Order — {dv.PurchaseOrderNumber}").FontSize(8);
             if (!string.IsNullOrWhiteSpace(dv.Remarks))

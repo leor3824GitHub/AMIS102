@@ -9,6 +9,10 @@ public sealed class DisbursementVoucher : AggregateRoot<Guid>, IAuditableEntity
     public DateOnly DvDate { get; private set; }
     public Guid PurchaseOrderId { get; private set; }
     public string PurchaseOrderNumber { get; private set; } = default!;
+    // The DV is raised against an obligated Budget Utilization Record (BUR). The PO above is inherited
+    // from that BUR — the BUR is the entry point of the disburse flow (BUR first, then DV).
+    public Guid BudgetUtilizationRecordId { get; private set; }
+    public string BurNumber { get; private set; } = default!;
     public string FundCluster { get; private set; } = default!;
     public string Payee { get; private set; } = default!;
     public string? TinNo { get; private set; }
@@ -36,6 +40,8 @@ public sealed class DisbursementVoucher : AggregateRoot<Guid>, IAuditableEntity
         string dvNumber,
         Guid purchaseOrderId,
         string purchaseOrderNumber,
+        Guid budgetUtilizationRecordId,
+        string burNumber,
         DateOnly dvDate,
         string fundCluster,
         string payee,
@@ -52,6 +58,8 @@ public sealed class DisbursementVoucher : AggregateRoot<Guid>, IAuditableEntity
             DvNumber = dvNumber,
             PurchaseOrderId = purchaseOrderId,
             PurchaseOrderNumber = purchaseOrderNumber,
+            BudgetUtilizationRecordId = budgetUtilizationRecordId,
+            BurNumber = burNumber,
             DvDate = dvDate,
             FundCluster = fundCluster,
             Payee = payee,

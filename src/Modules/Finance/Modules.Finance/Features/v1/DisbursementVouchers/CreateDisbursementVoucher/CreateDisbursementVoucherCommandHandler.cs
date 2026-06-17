@@ -1,6 +1,7 @@
 using System.Net;
 using AMIS.Framework.Core.Context;
 using AMIS.Framework.Core.Exceptions;
+using AMIS.Modules.Finance.Contracts.v1.BudgetUtilizationRecords;
 using AMIS.Modules.Finance.Contracts.v1.DisbursementVouchers;
 using AMIS.Modules.Finance.Data;
 using AMIS.Modules.Finance.Domain.DisbursementVouchers;
@@ -27,7 +28,20 @@ public sealed class CreateDisbursementVoucherCommandHandler(
 
     public async ValueTask<Guid> Handle(CreateDisbursementVoucherCommand command, CancellationToken cancellationToken)
     {
-        var po = await mediator.Send(new GetPurchaseOrderQuery(command.PurchaseOrderId), cancellationToken).ConfigureAwait(false)
+        // BUR first, then DV: the voucher is raised against an obligated Budget Utilization Record. The
+        // BUR is the single source of truth for the purchase order — we don't trust a client-supplied PO.
+        var bur = await dbContext.BudgetUtilizationRecords
+            .FirstOrDefaultAsync(b => b.Id == command.BudgetUtilizationRecordId, cancellationToken).ConfigureAwait(false)
+            ?? throw new CustomException("Budget utilization record not found.", [], HttpStatusCode.NotFound);
+
+        // Budget must be obligated before it can be disbursed. A BUR that already has a DV is Utilized,
+        // so this status gate also enforces one DV per BUR.
+        if (bur.Status != BudgetUtilizationRecordStatus.Obligated)
+            throw new CustomException(
+                "The budget utilization record must be obligated before a disbursement voucher can be raised against it.",
+                [], HttpStatusCode.BadRequest);
+
+        var po = await mediator.Send(new GetPurchaseOrderQuery(bur.PurchaseOrderId), cancellationToken).ConfigureAwait(false)
             ?? throw new CustomException("Purchase order not found.", [], HttpStatusCode.NotFound);
 
         if (!VoucherableStatuses.Contains(po.Status))
@@ -36,7 +50,7 @@ public sealed class CreateDisbursementVoucherCommandHandler(
                 [], HttpStatusCode.BadRequest);
 
         var hasExistingVoucher = await dbContext.DisbursementVouchers
-            .AnyAsync(d => d.PurchaseOrderId == command.PurchaseOrderId
+            .AnyAsync(d => d.PurchaseOrderId == bur.PurchaseOrderId
                            && d.Status != DisbursementVoucherStatus.Cancelled, cancellationToken)
             .ConfigureAwait(false);
         if (hasExistingVoucher)
@@ -45,7 +59,8 @@ public sealed class CreateDisbursementVoucherCommandHandler(
                 [], HttpStatusCode.BadRequest);
 
         // Atomic number allocation: increment a per-year counter row guarded by xmin, retrying if a
-        // concurrent create advanced the counter or collided on the unique DvNumber index.
+        // concurrent create advanced the counter or collided on the unique DvNumber index. The BUR is
+        // utilized in the same transaction so it can never be left Obligated with an orphaned voucher.
         for (var attempt = 0; attempt < FinanceSequenceAllocation.MaxAttempts; attempt++)
         {
             var year = command.DvDate.Year;
@@ -56,7 +71,21 @@ public sealed class CreateDisbursementVoucherCommandHandler(
 
             if (sequence is null)
             {
-                sequence = DvNumberSequence.Create(year);
+                // No counter row for this year yet (fresh year, or the table was reset while vouchers
+                // remained). Seed it from the highest DV number already issued — including soft-deleted
+                // rows, which the global unique index still enforces — so we never re-issue an existing one.
+                var prefix = $"DV-{year}-";
+                var issuedNumbers = await dbContext.DisbursementVouchers
+                    .IgnoreQueryFilters()
+                    .Where(d => d.DvNumber.StartsWith(prefix))
+                    .Select(d => d.DvNumber)
+                    .ToListAsync(cancellationToken)
+                    .ConfigureAwait(false);
+                var lastSerial = issuedNumbers.Count == 0
+                    ? 0
+                    : issuedNumbers.Max(FinanceSequenceAllocation.ParseSerial);
+
+                sequence = DvNumberSequence.Create(year, lastSerial);
                 dbContext.DvNumberSequences.Add(sequence);
             }
 
@@ -65,8 +94,10 @@ public sealed class CreateDisbursementVoucherCommandHandler(
 
             var dv = DisbursementVoucher.Create(
                 dvNumber,
-                command.PurchaseOrderId,
-                command.PurchaseOrderNumber,
+                bur.PurchaseOrderId,
+                bur.PurchaseOrderNumber,
+                bur.Id,
+                bur.BurNumber,
                 command.DvDate,
                 command.FundCluster,
                 command.Payee,
@@ -80,19 +111,27 @@ public sealed class CreateDisbursementVoucherCommandHandler(
             dv.CreatedBy = currentUser.GetUserId().ToString();
             dbContext.DisbursementVouchers.Add(dv);
 
+            // Link the voucher back to its BUR and mark the obligation Utilized.
+            bur.Utilize(dv.Id, dv.DvNumber);
+
             try
             {
                 await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-                logger.LogInformation("Created disbursement voucher {DvNumber} for PO {PoNumber}", dvNumber, command.PurchaseOrderNumber);
+                logger.LogInformation("Created disbursement voucher {DvNumber} for BUR {BurNumber} (PO {PoNumber})",
+                    dvNumber, bur.BurNumber, bur.PurchaseOrderNumber);
                 return dv.Id;
             }
             catch (DbUpdateException ex) when (FinanceSequenceAllocation.IsRetryableAllocationConflict(ex))
             {
                 dbContext.ChangeTracker.Clear();
+
+                // Re-fetch the BUR so it is tracked again for the next attempt (the clear detached it).
+                bur = await dbContext.BudgetUtilizationRecords
+                    .FirstOrDefaultAsync(b => b.Id == command.BudgetUtilizationRecordId, cancellationToken).ConfigureAwait(false)
+                    ?? throw new CustomException("Budget utilization record not found.", [], HttpStatusCode.NotFound);
             }
         }
 
         throw new CustomException("Failed to allocate a unique DV number. Please try again.", [], HttpStatusCode.Conflict);
     }
 }
-

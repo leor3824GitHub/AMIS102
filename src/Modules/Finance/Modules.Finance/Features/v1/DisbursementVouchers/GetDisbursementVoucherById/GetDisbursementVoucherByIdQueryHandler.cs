@@ -23,6 +23,8 @@ public sealed class GetDisbursementVoucherByIdQueryHandler(
             dv.DvDate,
             dv.PurchaseOrderId,
             dv.PurchaseOrderNumber,
+            dv.BudgetUtilizationRecordId,
+            dv.BurNumber,
             dv.FundCluster,
             dv.Payee,
             dv.TinNo,

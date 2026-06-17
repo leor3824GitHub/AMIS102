@@ -1,9 +1,7 @@
 @using AMIS.Modules.Finance.Contracts.v1.BudgetUtilizationRecords
-@using AMIS.Modules.Finance.Contracts.v1.DisbursementVouchers
 @using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders
 @using AMIS.Playground.Blazor.ApiClient
 @inject IBudgetUtilizationRecordClient Client
-@inject IDisbursementVoucherClient DvClient
 @inject IPurchaseOrderClient PurchaseOrderClient
 @inject IPurchaseRequestClient PurchaseRequestClient
 @inject ISnackbar Snackbar
@@ -24,26 +22,15 @@
                              CoerceValue="true"
                              ResetValueOnEmptyText="true"
                              Dense="true" Margin="Margin.Dense" />
-            <MudAutocomplete T="DisbursementVoucherListItemDto"
-                             Value="_selectedDv"
-                             ValueChanged="OnDvChanged"
-                             SearchFunc="SearchDisbursementVouchers"
-                             ToStringFunc="FormatDv"
-                             Label="Disbursement Voucher (optional)"
-                             Variant="Variant.Outlined"
-                             Placeholder="Search DV number..."
-                             Clearable="true"
-                             CoerceValue="true"
-                             ResetValueOnEmptyText="true"
-                             Dense="true" Margin="Margin.Dense" />
             <MudDatePicker @bind-Date="_form.BurDateNullable" Label="BUR Date" Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" Required="true" Dense="true" Margin="Margin.Dense" />
             <MudDivider Class="my-1" />
             <MudText Typo="Typo.subtitle2">Budget Classification</MudText>
+            @* Stores the standard allotment-class code (PS/MOOE/FE/CO); the full label is shown to the user. *@
             <MudSelect @bind-Value="_form.AllotmentClass" Label="Allotment Class" Variant="Variant.Outlined" T="string" Required="true" Dense="true" Margin="Margin.Dense">
-                <MudSelectItem Value="@("Personnel Services")">Personnel Services</MudSelectItem>
-                <MudSelectItem Value="@("Maintenance and Other Operating Expenses")">Maintenance and Other Operating Expenses</MudSelectItem>
-                <MudSelectItem Value="@("Financial Expenses")">Financial Expenses</MudSelectItem>
-                <MudSelectItem Value="@("Capital Outlay")">Capital Outlay</MudSelectItem>
+                <MudSelectItem Value="@("PS")">Personnel Services (PS)</MudSelectItem>
+                <MudSelectItem Value="@("MOOE")">Maintenance and Other Operating Expenses (MOOE)</MudSelectItem>
+                <MudSelectItem Value="@("FE")">Financial Expenses (FE)</MudSelectItem>
+                <MudSelectItem Value="@("CO")">Capital Outlay (CO)</MudSelectItem>
             </MudSelect>
             <MudTextField @bind-Value="_form.UacsObjectCode" Label="UACS Object Code" Variant="Variant.Outlined" Required="true"
                           HelperText="e.g. 5-02-03-010" Dense="true" Margin="Margin.Dense" />
@@ -69,7 +56,6 @@
 
     private readonly BurForm _form = new();
     private PurchaseOrderSummaryDto? _selectedPurchaseOrder;
-    private DisbursementVoucherListItemDto? _selectedDv;
     private bool _busy;
 
     private async Task<IEnumerable<PurchaseOrderSummaryDto>> SearchPurchaseOrders(string value, CancellationToken ct)
@@ -90,29 +76,9 @@
         }
     }
 
-    private async Task<IEnumerable<DisbursementVoucherListItemDto>> SearchDisbursementVouchers(string value, CancellationToken ct)
-    {
-        try
-        {
-            var result = await DvClient.SearchAsync(
-                keyword: string.IsNullOrWhiteSpace(value) ? null : value,
-                status: null,
-                purchaseOrderId: _selectedPurchaseOrder?.Id,
-                page: 1,
-                pageSize: 20,
-                ct: ct);
-            return result.Items ?? Enumerable.Empty<DisbursementVoucherListItemDto>();
-        }
-        catch
-        {
-            return Enumerable.Empty<DisbursementVoucherListItemDto>();
-        }
-    }
-
     private async Task OnPurchaseOrderChanged(PurchaseOrderSummaryDto? po)
     {
         _selectedPurchaseOrder = po;
-        _selectedDv = null;
         if (po is null) return;
 
         // Pre-fill what the PO can supply. Allotment Class and UACS Object Code are NOT carried as a
@@ -145,42 +111,12 @@
         }
     }
 
-    private async Task OnDvChanged(DisbursementVoucherListItemDto? dv)
-    {
-        _selectedDv = dv;
-        if (dv is null) return;
-
-        // A chosen DV is more specific than the PO, so prefer its amount/particulars. Still only fill
-        // empty fields so the user's own edits are preserved.
-        if (_form.Amount <= 0) _form.Amount = dv.Amount;
-        if (string.IsNullOrWhiteSpace(_form.Particulars))
-        {
-            try
-            {
-                var detail = await DvClient.GetAsync(dv.Id);
-                _form.Particulars = !string.IsNullOrWhiteSpace(detail?.Particulars)
-                    ? detail!.Particulars
-                    : $"Payment per {dv.DvNumber}";
-            }
-            catch
-            {
-                _form.Particulars = $"Payment per {dv.DvNumber}";
-            }
-        }
-    }
-
     private static string FormatPurchaseOrder(PurchaseOrderSummaryDto? po)
     {
         if (po is null) return string.Empty;
         return string.IsNullOrWhiteSpace(po.SupplierName)
             ? po.PoNumber
             : $"{po.PoNumber} — {po.SupplierName}";
-    }
-
-    private static string FormatDv(DisbursementVoucherListItemDto? dv)
-    {
-        if (dv is null) return string.Empty;
-        return $"{dv.DvNumber} — {dv.Payee}";
     }
 
     private async Task SaveAsync()
@@ -192,8 +128,6 @@
             await Client.CreateAsync(new CreateBudgetUtilizationRecordCommand(
                 _selectedPurchaseOrder!.Id,
                 _selectedPurchaseOrder.PoNumber,
-                _selectedDv?.Id,
-                _selectedDv?.DvNumber,
                 ToDateOnly(_form.BurDateNullable)!.Value,
                 _form.AllotmentClass,
                 _form.UacsObjectCode,

@@ -20,6 +20,8 @@ public sealed record DisbursementVoucherDto(
     DateOnly DvDate,
     Guid PurchaseOrderId,
     string PurchaseOrderNumber,
+    Guid BudgetUtilizationRecordId,
+    string BurNumber,
     string FundCluster,
     string Payee,
     string? TinNo,
@@ -43,9 +45,11 @@ public sealed record DisbursementVoucherListItemDto(
     DisbursementVoucherStatus Status);
 
 // Commands
+// A DV is raised against an obligated Budget Utilization Record. The purchase order, payee and amount
+// are derived server-side from that BUR — the client only identifies the BUR (BUR first, then DV).
 public sealed record CreateDisbursementVoucherCommand(
-    Guid PurchaseOrderId,
-    string PurchaseOrderNumber,
+    Guid BudgetUtilizationRecordId,
+    string BurNumber,
     DateOnly DvDate,
     string FundCluster,
     string Payee,

@@ -1,9 +1,10 @@
 using AMIS.Framework.Core.Context;
 using AMIS.Framework.Shared.Multitenancy;
 using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.Finance.Contracts.v1.BudgetUtilizationRecords;
 using AMIS.Modules.Finance.Contracts.v1.DisbursementVouchers;
 using AMIS.Modules.Finance.Data;
-using AMIS.Modules.Finance.Domain.DisbursementVouchers;
+using AMIS.Modules.Finance.Domain.BudgetUtilizationRecords;
 using AMIS.Modules.Finance.Features.v1.DisbursementVouchers.CreateDisbursementVoucher;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
@@ -22,13 +23,28 @@ using Xunit;
 namespace Finance.Tests.Handlers;
 
 /// <summary>
-/// Guards the cross-module gate added so a Disbursement Voucher can only be raised against a Purchase
-/// Order that has at least been Issued (COD/advance payments allowed pre-delivery), and never more than
-/// once per PO. The PO lookup is an in-process Mediator query, mocked here.
+/// Guards the BUR-first disburse flow: a Disbursement Voucher can only be raised against a Budget
+/// Utilization Record that is Obligated, whose Purchase Order has at least been Issued (COD/advance
+/// payments allowed pre-delivery), and never more than once per PO. Creating the DV utilizes the BUR.
+/// The PO lookup is an in-process Mediator query, mocked here.
 /// </summary>
 public sealed class CreateDisbursementVoucherCommandHandlerTests
 {
     private const string Tenant = "test-tenant";
+
+    [Fact]
+    public async Task Handle_BurNotObligated_IsRejected()
+    {
+        using var ctx = new FinanceTestContext(Tenant);
+        var poId = Guid.NewGuid();
+        var bur = await SeedBur(ctx.Db, poId, obligate: false);
+        var handler = CreateHandler(ctx.Db, PurchaseOrder(poId, PurchaseOrderStatus.Issued));
+
+        var act = async () => await handler.Handle(Command(bur), CancellationToken.None);
+
+        await act.ShouldThrowAsync<AMIS.Framework.Core.Exceptions.CustomException>();
+        (await ctx.Db.DisbursementVouchers.CountAsync()).ShouldBe(0);
+    }
 
     [Theory]
     [InlineData(PurchaseOrderStatus.Draft)]
@@ -39,9 +55,10 @@ public sealed class CreateDisbursementVoucherCommandHandlerTests
     {
         using var ctx = new FinanceTestContext(Tenant);
         var poId = Guid.NewGuid();
+        var bur = await SeedBur(ctx.Db, poId, obligate: true);
         var handler = CreateHandler(ctx.Db, PurchaseOrder(poId, status));
 
-        var act = async () => await handler.Handle(Command(poId), CancellationToken.None);
+        var act = async () => await handler.Handle(Command(bur), CancellationToken.None);
 
         await act.ShouldThrowAsync<AMIS.Framework.Core.Exceptions.CustomException>();
         (await ctx.Db.DisbursementVouchers.CountAsync()).ShouldBe(0);
@@ -51,16 +68,22 @@ public sealed class CreateDisbursementVoucherCommandHandlerTests
     [InlineData(PurchaseOrderStatus.Issued)]
     [InlineData(PurchaseOrderStatus.PartiallyDelivered)]
     [InlineData(PurchaseOrderStatus.Fulfilled)]
-    public async Task Handle_PoIssuedOrLater_CreatesVoucher(PurchaseOrderStatus status)
+    public async Task Handle_PoIssuedOrLater_CreatesVoucherAndUtilizesBur(PurchaseOrderStatus status)
     {
         using var ctx = new FinanceTestContext(Tenant);
         var poId = Guid.NewGuid();
+        var bur = await SeedBur(ctx.Db, poId, obligate: true);
         var handler = CreateHandler(ctx.Db, PurchaseOrder(poId, status));
 
-        var id = await handler.Handle(Command(poId), CancellationToken.None);
+        var id = await handler.Handle(Command(bur), CancellationToken.None);
 
         id.ShouldNotBe(Guid.Empty);
         (await ctx.Db.DisbursementVouchers.CountAsync()).ShouldBe(1);
+
+        // Creating the DV moves its BUR to Utilized and links the voucher back.
+        var updated = await ctx.Db.BudgetUtilizationRecords.FindAsync(bur.Id);
+        updated!.Status.ShouldBe(BudgetUtilizationRecordStatus.Utilized);
+        updated.DisbursementVoucherId.ShouldBe(id);
     }
 
     [Fact]
@@ -68,13 +91,36 @@ public sealed class CreateDisbursementVoucherCommandHandlerTests
     {
         using var ctx = new FinanceTestContext(Tenant);
         var poId = Guid.NewGuid();
+        // Two obligated BURs against the same PO; only one voucher may ever be raised for that PO.
+        var bur1 = await SeedBur(ctx.Db, poId, obligate: true, burNumber: "BUR-2026-00001");
+        var bur2 = await SeedBur(ctx.Db, poId, obligate: true, burNumber: "BUR-2026-00002");
         var handler = CreateHandler(ctx.Db, PurchaseOrder(poId, PurchaseOrderStatus.Issued));
 
-        await handler.Handle(Command(poId), CancellationToken.None);
+        await handler.Handle(Command(bur1), CancellationToken.None);
 
-        var act = async () => await handler.Handle(Command(poId), CancellationToken.None);
+        var act = async () => await handler.Handle(Command(bur2), CancellationToken.None);
         await act.ShouldThrowAsync<AMIS.Framework.Core.Exceptions.CustomException>();
         (await ctx.Db.DisbursementVouchers.CountAsync()).ShouldBe(1);
+    }
+
+    private static async Task<BudgetUtilizationRecord> SeedBur(
+        FinanceDbContext db, Guid poId, bool obligate, string burNumber = "BUR-2026-00001")
+    {
+        var bur = BudgetUtilizationRecord.Create(
+            burNumber: burNumber,
+            purchaseOrderId: poId,
+            purchaseOrderNumber: "PO-2025-001",
+            burDate: DateOnly.FromDateTime(DateTime.UtcNow),
+            allotmentClass: "MOOE",
+            uacsObjectCode: "5-02-99-990",
+            responsibilityCenter: null,
+            particulars: "Office supplies",
+            amount: 5000m,
+            remarks: null);
+        if (obligate) bur.Obligate();
+        db.BudgetUtilizationRecords.Add(bur);
+        await db.SaveChangesAsync();
+        return bur;
     }
 
     private static CreateDisbursementVoucherCommandHandler CreateHandler(FinanceDbContext db, PurchaseOrderDto? po)
@@ -94,10 +140,10 @@ public sealed class CreateDisbursementVoucherCommandHandlerTests
             NullLogger<CreateDisbursementVoucherCommandHandler>.Instance, db, mediator, currentUser);
     }
 
-    private static CreateDisbursementVoucherCommand Command(Guid poId) =>
+    private static CreateDisbursementVoucherCommand Command(BudgetUtilizationRecord bur) =>
         new(
-            PurchaseOrderId: poId,
-            PurchaseOrderNumber: "PO-2025-001",
+            BudgetUtilizationRecordId: bur.Id,
+            BurNumber: bur.BurNumber,
             DvDate: DateOnly.FromDateTime(DateTime.UtcNow),
             FundCluster: "101",
             Payee: "Acme Supplies Inc.",

@@ -114,6 +114,12 @@ public sealed partial class ScanViewModel : ObservableObject
         ErrorMessage = "Camera permission is needed to scan text. Enter the property number manually instead.";
     }
 
+    public void OnTextScanUnavailable()
+    {
+        IsTextMode = false;
+        ErrorMessage = "Live text scan couldn't start — no camera on this device. Enter the property number manually instead.";
+    }
+
     private static async Task NavigateToAssetAsync(string propertyNo) =>
         await Shell.Current.GoToAsync($"{nameof(AssetDetailPage)}?PropertyNo={Uri.EscapeDataString(propertyNo)}");
 

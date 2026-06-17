@@ -14,6 +14,7 @@ public sealed class DisbursementVoucherConfiguration : IEntityTypeConfiguration<
         builder.HasKey(x => x.Id);
         builder.Property(x => x.DvNumber).HasMaxLength(32).IsRequired();
         builder.Property(x => x.PurchaseOrderNumber).HasMaxLength(32).IsRequired();
+        builder.Property(x => x.BurNumber).HasMaxLength(32).IsRequired();
         builder.Property(x => x.FundCluster).HasMaxLength(16).IsRequired();
         builder.Property(x => x.Payee).HasMaxLength(256).IsRequired();
         builder.Property(x => x.TinNo).HasMaxLength(32);
@@ -26,6 +27,7 @@ public sealed class DisbursementVoucherConfiguration : IEntityTypeConfiguration<
 
         builder.HasIndex(x => x.DvNumber).IsUnique();
         builder.HasIndex(x => x.PurchaseOrderId);
+        builder.HasIndex(x => x.BudgetUtilizationRecordId);
         builder.HasIndex(x => x.Status);
 
         builder.Property(x => x.IsDeleted).HasDefaultValue(false);

@@ -101,6 +101,8 @@ public sealed class DisbursementVoucherDomainTests
             dvNumber: "DV-2025-001",
             purchaseOrderId: Guid.NewGuid(),
             purchaseOrderNumber: "PO-2025-001",
+            budgetUtilizationRecordId: Guid.NewGuid(),
+            burNumber: "BUR-2025-001",
             dvDate: DateOnly.FromDateTime(DateTime.UtcNow),
             fundCluster: "101",
             payee: "Acme Supplies Inc.",

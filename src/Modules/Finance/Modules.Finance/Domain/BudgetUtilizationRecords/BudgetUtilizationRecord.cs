@@ -35,8 +35,6 @@ public sealed class BudgetUtilizationRecord : AggregateRoot<Guid>, IAuditableEnt
         string burNumber,
         Guid purchaseOrderId,
         string purchaseOrderNumber,
-        Guid? disbursementVoucherId,
-        string? disbursementVoucherNumber,
         DateOnly burDate,
         string allotmentClass,
         string uacsObjectCode,
@@ -45,14 +43,14 @@ public sealed class BudgetUtilizationRecord : AggregateRoot<Guid>, IAuditableEnt
         decimal amount,
         string? remarks)
     {
+        // A BUR is the first step of the disburse flow: it obligates budget against a PO. The linked
+        // disbursement voucher is assigned later, when the DV is raised against this BUR (see Utilize).
         return new BudgetUtilizationRecord
         {
             Id = Guid.NewGuid(),
             BurNumber = burNumber,
             PurchaseOrderId = purchaseOrderId,
             PurchaseOrderNumber = purchaseOrderNumber,
-            DisbursementVoucherId = disbursementVoucherId,
-            DisbursementVoucherNumber = disbursementVoucherNumber,
             BurDate = burDate,
             AllotmentClass = allotmentClass,
             UacsObjectCode = uacsObjectCode,

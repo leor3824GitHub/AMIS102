@@ -7,8 +7,8 @@ public sealed class CreateDisbursementVoucherCommandValidator : AbstractValidato
 {
     public CreateDisbursementVoucherCommandValidator()
     {
-        RuleFor(x => x.PurchaseOrderId).NotEmpty();
-        RuleFor(x => x.PurchaseOrderNumber).NotEmpty().MaximumLength(32);
+        RuleFor(x => x.BudgetUtilizationRecordId).NotEmpty();
+        RuleFor(x => x.BurNumber).NotEmpty().MaximumLength(32);
         RuleFor(x => x.FundCluster).NotEmpty().MaximumLength(16);
         RuleFor(x => x.Payee).NotEmpty().MaximumLength(256);
         RuleFor(x => x.TinNo).MaximumLength(32);

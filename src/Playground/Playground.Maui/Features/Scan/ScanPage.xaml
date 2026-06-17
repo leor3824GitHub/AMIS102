@@ -4,7 +4,6 @@
              xmlns:vm="clr-namespace:Playground.Maui.Features.Scan"
              xmlns:zxing="clr-namespace:ZXing.Net.Maui.Controls;assembly=ZXing.Net.MAUI.Controls"
              xmlns:zxingcore="clr-namespace:ZXing.Net.Maui;assembly=ZXing.Net.MAUI"
-             xmlns:cam="clr-namespace:CommunityToolkit.Maui.Views;assembly=CommunityToolkit.Maui.Camera"
              x:DataType="vm:ScanViewModel"
              x:Class="Playground.Maui.Features.Scan.ScanPage"
              Title="Scan Asset">
@@ -24,10 +23,12 @@
             </zxing:CameraBarcodeReaderView.Options>
         </zxing:CameraBarcodeReaderView>
 
-        <!-- Live text viewfinder (text mode) — frames are auto-captured and OCR'd by the page -->
-        <cam:CameraView Grid.Row="0"
-                        x:Name="TextCamera"
-                        IsVisible="{Binding IsTextMode}" />
+        <!-- Live text viewfinder host (text mode). The CameraView is created in code-behind on demand
+             so its platform handler is never realized on devices without a camera (e.g. desktops) —
+             realizing it eagerly crashes the page, unlike ZXing which degrades gracefully. -->
+        <Grid Grid.Row="0"
+              x:Name="TextCameraHost"
+              IsVisible="{Binding IsTextMode}" />
 
         <!-- Text-mode overlay: hint + live activity, no shutter button -->
         <VerticalStackLayout Grid.Row="0"

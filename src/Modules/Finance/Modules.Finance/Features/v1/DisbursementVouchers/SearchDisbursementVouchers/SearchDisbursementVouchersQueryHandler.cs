@@ -19,6 +19,7 @@ public sealed class SearchDisbursementVouchersQueryHandler(
                 x.DvNumber.ToLower().Contains(kw) ||
                 x.Payee.ToLower().Contains(kw) ||
                 x.PurchaseOrderNumber.ToLower().Contains(kw) ||
+                x.BurNumber.ToLower().Contains(kw) ||
                 x.Particulars.ToLower().Contains(kw));
         }
 

@@ -21,14 +21,14 @@ public sealed class CreateDisbursementVoucherCommandValidatorTests
     }
 
     [Fact]
-    public void Validate_EmptyPurchaseOrderId_Fails()
+    public void Validate_EmptyBudgetUtilizationRecordId_Fails()
     {
-        var command = ValidCommand() with { PurchaseOrderId = Guid.Empty };
+        var command = ValidCommand() with { BudgetUtilizationRecordId = Guid.Empty };
 
         var result = _sut.Validate(command);
 
         result.IsValid.ShouldBeFalse();
-        result.Errors.ShouldContain(e => e.PropertyName == nameof(command.PurchaseOrderId));
+        result.Errors.ShouldContain(e => e.PropertyName == nameof(command.BudgetUtilizationRecordId));
     }
 
     [Fact]
@@ -88,8 +88,8 @@ public sealed class CreateDisbursementVoucherCommandValidatorTests
 
     private static CreateDisbursementVoucherCommand ValidCommand() =>
         new(
-            PurchaseOrderId: Guid.NewGuid(),
-            PurchaseOrderNumber: "PO-2025-001",
+            BudgetUtilizationRecordId: Guid.NewGuid(),
+            BurNumber: "BUR-2025-001",
             DvDate: DateOnly.FromDateTime(DateTime.UtcNow),
             FundCluster: "101",
             Payee: "Acme Supplies Inc.",

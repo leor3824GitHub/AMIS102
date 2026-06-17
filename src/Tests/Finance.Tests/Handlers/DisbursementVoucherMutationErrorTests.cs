@@ -55,6 +55,8 @@ public sealed class DisbursementVoucherMutationErrorTests
             dvNumber: "DV-2026-00001",
             purchaseOrderId: Guid.NewGuid(),
             purchaseOrderNumber: "PO-2026-001",
+            budgetUtilizationRecordId: Guid.NewGuid(),
+            burNumber: "BUR-2026-00001",
             dvDate: DateOnly.FromDateTime(DateTime.UtcNow),
             fundCluster: "01",
             payee: "Acme Supplies Inc.",

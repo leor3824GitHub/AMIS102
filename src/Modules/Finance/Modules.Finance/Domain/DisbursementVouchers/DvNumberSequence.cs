@@ -18,8 +18,13 @@ public sealed class DvNumberSequence : BaseEntity<Guid>
 
     private DvNumberSequence() { }
 
-    public static DvNumberSequence Create(int year) =>
-        new() { Id = Guid.NewGuid(), Year = year, LastSerial = 0 };
+    /// <summary>
+    /// Creates a counter row for <paramref name="year"/>. <paramref name="lastSerial"/> seeds the starting
+    /// point — pass the highest serial already issued that year so a missing/desynced counter never
+    /// re-issues an existing number (which the global unique index would reject).
+    /// </summary>
+    public static DvNumberSequence Create(int year, int lastSerial = 0) =>
+        new() { Id = Guid.NewGuid(), Year = year, LastSerial = lastSerial };
 
     /// <summary>Increments and returns the next serial number.</summary>
     public int NextSerial()

@@ -1,3 +1,4 @@
+using AMIS.Modules.Finance.Contracts.v1.BudgetUtilizationRecords;
 using AMIS.Modules.Finance.Contracts.v1.DisbursementVouchers;
 using AMIS.Modules.MasterData.Contracts.v1.OrganizationProfile;
 using Mediator;
@@ -17,7 +18,23 @@ public sealed class PrintDisbursementVoucherQueryHandler(IMediator mediator)
 
         var org = await mediator.Send(new GetOrganizationProfileQuery(), cancellationToken).ConfigureAwait(false);
 
+        // The Responsibility Center code printed on the voucher is captured on the obligating BUR, not on
+        // the DV itself. Resolve it from the linked BUR; if that lookup fails the form simply prints blank.
+        string? responsibilityCenter = null;
+        if (dv.BudgetUtilizationRecordId != Guid.Empty)
+        {
+            try
+            {
+                var bur = await mediator.Send(new GetBudgetUtilizationRecordByIdQuery(dv.BudgetUtilizationRecordId), cancellationToken).ConfigureAwait(false);
+                responsibilityCenter = bur?.ResponsibilityCenter;
+            }
+            catch (KeyNotFoundException)
+            {
+                // Legacy/orphaned voucher with no resolvable BUR — leave the Responsibility Center blank.
+            }
+        }
+
         return new DisbursementVoucherPdfDocument(
-            dv, org, query.PaperSize, query.Orientation, (float)query.Margin).GeneratePdf();
+            dv, org, responsibilityCenter, query.PaperSize, query.Orientation, (float)query.Margin).GeneratePdf();
     }
 }

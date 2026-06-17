@@ -40,11 +40,11 @@ public sealed record BudgetUtilizationRecordListItemDto(
     BudgetUtilizationRecordStatus Status);
 
 // Commands
+// A BUR is created up front against a purchase order to obligate budget. The disbursement voucher is
+// linked later, when a DV is raised against this BUR — so no DV reference is supplied at creation.
 public sealed record CreateBudgetUtilizationRecordCommand(
     Guid PurchaseOrderId,
     string PurchaseOrderNumber,
-    Guid? DisbursementVoucherId,
-    string? DisbursementVoucherNumber,
     DateOnly BurDate,
     string AllotmentClass,
     string UacsObjectCode,

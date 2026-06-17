@@ -26,8 +26,6 @@ public sealed class BudgetUtilizationRecordQueryTests
             burNumber: "BUR-0001",
             purchaseOrderId: Guid.NewGuid(),
             purchaseOrderNumber: "PO-ABC-001",
-            disbursementVoucherId: null,
-            disbursementVoucherNumber: null,
             burDate: new DateOnly(2026, 4, 9),
             allotmentClass: "MOOE",
             uacsObjectCode: "5-02-99-990",
@@ -40,8 +38,6 @@ public sealed class BudgetUtilizationRecordQueryTests
             burNumber: "BUR-0002",
             purchaseOrderId: Guid.NewGuid(),
             purchaseOrderNumber: "PO-XYZ-002",
-            disbursementVoucherId: null,
-            disbursementVoucherNumber: null,
             burDate: new DateOnly(2026, 4, 8),
             allotmentClass: "CO",
             uacsObjectCode: "1-07-05-010",
@@ -76,7 +72,7 @@ public sealed class BudgetUtilizationRecordQueryTests
     }
 
     [Fact]
-    public async Task GetByIdQueryHandler_WhenRecordNotFound_ThrowsKeyNotFoundException()
+    public async Task GetByIdQueryHandler_WhenRecordNotFound_ThrowsNotFoundException()
     {
         // Arrange
         await using var dbContext = CreateDbContext();
@@ -85,8 +81,8 @@ public sealed class BudgetUtilizationRecordQueryTests
         // Act
         var action = async () => await handler.Handle(new GetBudgetUtilizationRecordByIdQuery(Guid.NewGuid()), CancellationToken.None);
 
-        // Assert
-        await action.ShouldThrowAsync<KeyNotFoundException>();
+        // Assert — the handler surfaces a framework NotFoundException (HTTP 404), not a bare BCL exception.
+        await action.ShouldThrowAsync<AMIS.Framework.Core.Exceptions.NotFoundException>();
     }
 
     [Fact]
@@ -99,8 +95,6 @@ public sealed class BudgetUtilizationRecordQueryTests
             burNumber: "BUR-GET-01",
             purchaseOrderId: Guid.NewGuid(),
             purchaseOrderNumber: "PO-GET-01",
-            disbursementVoucherId: null,
-            disbursementVoucherNumber: null,
             burDate: new DateOnly(2026, 4, 7),
             allotmentClass: "PS",
             uacsObjectCode: "5-01-01-010",
