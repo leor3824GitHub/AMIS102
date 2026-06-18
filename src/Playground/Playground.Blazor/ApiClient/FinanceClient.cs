@@ -104,6 +104,7 @@ internal interface IBudgetUtilizationRecordClient
     Task<Guid> CreateAsync(CreateBudgetUtilizationRecordCommand command, CancellationToken ct = default);
     Task ObligateAsync(Guid id, CancellationToken ct = default);
     Task CancelAsync(Guid id, string remarks, CancellationToken ct = default);
+    Task<byte[]> GetPdfAsync(Guid id, string? pageWidth = null, CancellationToken ct = default);
 }
 
 internal sealed class BudgetUtilizationRecordClient(HttpClient http) : IBudgetUtilizationRecordClient
@@ -143,6 +144,14 @@ internal sealed class BudgetUtilizationRecordClient(HttpClient http) : IBudgetUt
     {
         using var r = await http.PostAsJsonAsync($"{Base}/{id}/cancel", new RemarksBody(remarks), ct);
         r.EnsureSuccessStatusCode();
+    }
+
+    public Task<byte[]> GetPdfAsync(Guid id, string? pageWidth = null, CancellationToken ct = default)
+    {
+        var url = string.IsNullOrWhiteSpace(pageWidth)
+            ? $"api/v1/quest-pdf-reporting/finance/budget-utilization-records/{id}/pdf"
+            : $"api/v1/quest-pdf-reporting/finance/budget-utilization-records/{id}/pdf?pageWidth={pageWidth}";
+        return http.GetByteArrayAsync(url, ct);
     }
 
     private sealed record RemarksBody(string Remarks);

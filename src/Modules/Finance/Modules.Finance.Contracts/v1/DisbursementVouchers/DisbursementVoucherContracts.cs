@@ -13,6 +13,29 @@ public enum DisbursementVoucherStatus
     Cancelled = 5
 }
 
+// How a deduction line's amount is derived from the voucher's gross amount.
+public enum DvDeductionType
+{
+    // Value is a percentage (e.g. 5 = 5%) applied to the gross Amount.
+    Percentage = 0,
+    // Value is a flat peso figure deducted as-is.
+    FixedAmount = 1
+}
+
+// A configurable deduction line on a voucher (e.g. "5% Withholding Tax", "1% Tax").
+// Value is interpreted per Type: a percentage of the gross Amount, or a fixed peso figure.
+public sealed record DvDeductionInput(
+    string Name,
+    DvDeductionType Type,
+    decimal Value);
+
+// A deduction line as returned to the client, with its computed peso Amount resolved server-side.
+public sealed record DvDeductionDto(
+    string Name,
+    DvDeductionType Type,
+    decimal Value,
+    decimal Amount);
+
 // DTOs
 public sealed record DisbursementVoucherDto(
     Guid Id,
@@ -33,7 +56,10 @@ public sealed record DisbursementVoucherDto(
     string? Remarks,
     DateOnly? PaidDate,
     DateTime CreatedOn,
-    DateTime? LastModifiedOn);
+    DateTime? LastModifiedOn,
+    IReadOnlyList<DvDeductionDto> Deductions,
+    decimal TotalDeductions,
+    decimal AmountDue);
 
 public sealed record DisbursementVoucherListItemDto(
     Guid Id,
@@ -58,7 +84,8 @@ public sealed record CreateDisbursementVoucherCommand(
     string Particulars,
     decimal Amount,
     string ModeOfPayment,
-    string? Remarks) : ICommand<Guid>;
+    string? Remarks,
+    IReadOnlyList<DvDeductionInput>? Deductions = null) : ICommand<Guid>;
 
 public sealed record UpdateDisbursementVoucherCommand(
     Guid Id,
@@ -72,7 +99,8 @@ public sealed record UpdateDisbursementVoucherCommand(
     string Particulars,
     decimal Amount,
     string ModeOfPayment,
-    string? Remarks) : ICommand;
+    string? Remarks,
+    IReadOnlyList<DvDeductionInput>? Deductions = null) : ICommand;
 
 public sealed record ApproveDisbursementVoucherCommand(Guid Id) : ICommand;
 

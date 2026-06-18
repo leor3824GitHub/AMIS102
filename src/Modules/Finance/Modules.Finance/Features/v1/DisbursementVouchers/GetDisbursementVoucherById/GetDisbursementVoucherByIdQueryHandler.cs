@@ -36,7 +36,12 @@ public sealed class GetDisbursementVoucherByIdQueryHandler(
             dv.Remarks,
             dv.PaidDate,
             dv.CreatedOnUtc.DateTime,
-            dv.LastModifiedOnUtc?.DateTime);
+            dv.LastModifiedOnUtc?.DateTime,
+            dv.Deductions
+                .Select(d => new DvDeductionDto(d.Name, d.Type, d.Value, d.ComputeAmount(dv.Amount)))
+                .ToList(),
+            dv.TotalDeductions,
+            dv.AmountDue);
     }
 }
 

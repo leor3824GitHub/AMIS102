@@ -33,6 +33,25 @@ public sealed class DisbursementVoucherConfiguration : IEntityTypeConfiguration<
         builder.Property(x => x.IsDeleted).HasDefaultValue(false);
         builder.HasQueryFilter(x => !x.IsDeleted);
 
+        // Computed read-only projections — not persisted.
+        builder.Ignore(x => x.TotalDeductions);
+        builder.Ignore(x => x.AmountDue);
+
+        // Configurable deduction lines owned by the voucher. Stored in a child table; always
+        // eager-loaded with the aggregate (owned-type behaviour). The navigation binds to the
+        // private _deductions backing field.
+        builder.OwnsMany(x => x.Deductions, d =>
+        {
+            d.ToTable("DisbursementVoucherDeductions", FinanceModuleConstants.SchemaName);
+            d.WithOwner().HasForeignKey("DisbursementVoucherId");
+            d.HasKey(x => x.Id);
+            d.Property(x => x.Id).ValueGeneratedNever();
+            d.Property(x => x.Name).HasMaxLength(128).IsRequired();
+            d.Property(x => x.Type).HasConversion<string>().HasMaxLength(16).IsRequired();
+            d.Property(x => x.Value).HasPrecision(18, 4).IsRequired();
+        });
+        builder.Navigation(x => x.Deductions).UsePropertyAccessMode(PropertyAccessMode.Field);
+
         // Client-supplied concurrency token. NOT IsRowVersion(): on PostgreSQL/Npgsql a rowversion
         // byte[] is treated as store-generated, so EF omits it on INSERT and the NOT NULL bytea
         // column is rejected. IsConcurrencyToken keeps the column non-generated so EF sends the value.

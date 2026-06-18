@@ -17,6 +17,12 @@ public sealed class CreateDisbursementVoucherCommandValidator : AbstractValidato
         RuleFor(x => x.Amount).GreaterThan(0);
         RuleFor(x => x.ModeOfPayment).NotEmpty().MaximumLength(64);
         RuleFor(x => x.Remarks).MaximumLength(500);
+
+        RuleForEach(x => x.Deductions).SetValidator(new DvDeductionInputValidator());
+        RuleFor(x => x)
+            .Must(x => DvDeductionRules.TotalWithinAmount(x.Deductions, x.Amount))
+            .WithName(nameof(CreateDisbursementVoucherCommand.Deductions))
+            .WithMessage("Total deductions cannot exceed the gross amount.");
     }
 }
 

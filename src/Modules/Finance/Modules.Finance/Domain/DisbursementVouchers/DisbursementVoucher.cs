@@ -20,6 +20,17 @@ public sealed class DisbursementVoucher : AggregateRoot<Guid>, IAuditableEntity
     public string Particulars { get; private set; } = default!;
     public decimal Amount { get; private set; }
     public string ModeOfPayment { get; private set; } = default!;
+
+    // Configurable deduction lines (tax, withholding, fees). Owned by the aggregate — replaced
+    // wholesale on edit. The EF navigation binds to this backing field.
+    private readonly List<DvDeduction> _deductions = [];
+    public IReadOnlyCollection<DvDeduction> Deductions => _deductions.AsReadOnly();
+
+    /// <summary>Sum of every deduction line resolved against the gross <see cref="Amount"/>.</summary>
+    public decimal TotalDeductions => _deductions.Sum(d => d.ComputeAmount(Amount));
+
+    /// <summary>Net payable after deductions — the "Amount Due" printed on the voucher.</summary>
+    public decimal AmountDue => Amount - TotalDeductions;
     public DisbursementVoucherStatus Status { get; private set; }
     public string? Remarks { get; private set; }
     public DateOnly? PaidDate { get; private set; }
@@ -50,9 +61,10 @@ public sealed class DisbursementVoucher : AggregateRoot<Guid>, IAuditableEntity
         string particulars,
         decimal amount,
         string modeOfPayment,
-        string? remarks)
+        string? remarks,
+        IEnumerable<DvDeduction>? deductions = null)
     {
-        return new DisbursementVoucher
+        var dv = new DisbursementVoucher
         {
             Id = Guid.NewGuid(),
             DvNumber = dvNumber,
@@ -72,6 +84,8 @@ public sealed class DisbursementVoucher : AggregateRoot<Guid>, IAuditableEntity
             Status = DisbursementVoucherStatus.Draft,
             CreatedOnUtc = DateTimeOffset.UtcNow
         };
+        dv.ReplaceDeductions(deductions);
+        return dv;
     }
 
     /// <summary>Edits the voucher's contents. Only allowed while still in Draft — once submitted for
@@ -87,7 +101,8 @@ public sealed class DisbursementVoucher : AggregateRoot<Guid>, IAuditableEntity
         string particulars,
         decimal amount,
         string modeOfPayment,
-        string? remarks)
+        string? remarks,
+        IEnumerable<DvDeduction>? deductions = null)
     {
         if (Status != DisbursementVoucherStatus.Draft)
             throw new InvalidOperationException("Only Draft disbursement vouchers can be edited.");
@@ -103,7 +118,17 @@ public sealed class DisbursementVoucher : AggregateRoot<Guid>, IAuditableEntity
         Amount = amount;
         ModeOfPayment = modeOfPayment;
         Remarks = remarks;
+        ReplaceDeductions(deductions);
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
+    }
+
+    /// <summary>Replaces the voucher's deduction lines wholesale. EF deletes the removed rows and
+    /// inserts the new ones when the aggregate is saved.</summary>
+    public void ReplaceDeductions(IEnumerable<DvDeduction>? deductions)
+    {
+        _deductions.Clear();
+        if (deductions is not null)
+            _deductions.AddRange(deductions);
     }
 
     public void Approve()

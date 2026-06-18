@@ -24,7 +24,8 @@ public sealed class UpsertOrganizationProfileCommandHandler(MasterDataDbContext 
                 command.ApprovingOfficialId, command.ApprovingOfficialName, command.ApprovingOfficialDesignation,
                 command.AssistantRegionalManagerId, command.AssistantRegionalManagerName, command.AssistantRegionalManagerDesignation,
                 command.AccountantId, command.AccountantName, command.AccountantDesignation,
-                command.SupervisingAdminOfficerId, command.SupervisingAdminOfficerName, command.SupervisingAdminOfficerDesignation);
+                command.SupervisingAdminOfficerId, command.SupervisingAdminOfficerName, command.SupervisingAdminOfficerDesignation,
+                command.BudgetOfficerId, command.BudgetOfficerName, command.BudgetOfficerDesignation);
             existing.CreatedBy = currentUser.GetUserId().ToString();
             db.OrganizationProfiles.Add(existing);
         }
@@ -34,7 +35,8 @@ public sealed class UpsertOrganizationProfileCommandHandler(MasterDataDbContext 
                 command.ApprovingOfficialId, command.ApprovingOfficialName, command.ApprovingOfficialDesignation,
                 command.AssistantRegionalManagerId, command.AssistantRegionalManagerName, command.AssistantRegionalManagerDesignation,
                 command.AccountantId, command.AccountantName, command.AccountantDesignation,
-                command.SupervisingAdminOfficerId, command.SupervisingAdminOfficerName, command.SupervisingAdminOfficerDesignation);
+                command.SupervisingAdminOfficerId, command.SupervisingAdminOfficerName, command.SupervisingAdminOfficerDesignation,
+                command.BudgetOfficerId, command.BudgetOfficerName, command.BudgetOfficerDesignation);
             existing.LastModifiedBy = currentUser.GetUserId().ToString();
         }
 
@@ -45,7 +47,8 @@ public sealed class UpsertOrganizationProfileCommandHandler(MasterDataDbContext 
             existing.ApprovingOfficialId, existing.ApprovingOfficialName, existing.ApprovingOfficialDesignation,
             existing.AssistantRegionalManagerId, existing.AssistantRegionalManagerName, existing.AssistantRegionalManagerDesignation,
             existing.AccountantId, existing.AccountantName, existing.AccountantDesignation,
-            existing.SupervisingAdminOfficerId, existing.SupervisingAdminOfficerName, existing.SupervisingAdminOfficerDesignation);
+            existing.SupervisingAdminOfficerId, existing.SupervisingAdminOfficerName, existing.SupervisingAdminOfficerDesignation,
+            existing.BudgetOfficerId, existing.BudgetOfficerName, existing.BudgetOfficerDesignation);
     }
 }
 

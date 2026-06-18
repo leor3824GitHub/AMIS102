@@ -26,6 +26,9 @@ public sealed class OrganizationProfile : AggregateRoot<Guid>, IHasTenant, IAudi
     public Guid? SupervisingAdminOfficerId { get; private set; }
     public string? SupervisingAdminOfficerName { get; private set; }
     public string? SupervisingAdminOfficerDesignation { get; private set; }
+    public Guid? BudgetOfficerId { get; private set; }
+    public string? BudgetOfficerName { get; private set; }
+    public string? BudgetOfficerDesignation { get; private set; }
 
     public byte[] Version { get; set; } = [];
 
@@ -52,7 +55,10 @@ public sealed class OrganizationProfile : AggregateRoot<Guid>, IHasTenant, IAudi
         string? accountantDesignation = null,
         Guid? supervisingAdminOfficerId = null,
         string? supervisingAdminOfficerName = null,
-        string? supervisingAdminOfficerDesignation = null)
+        string? supervisingAdminOfficerDesignation = null,
+        Guid? budgetOfficerId = null,
+        string? budgetOfficerName = null,
+        string? budgetOfficerDesignation = null)
     {
         return new OrganizationProfile
         {
@@ -75,6 +81,9 @@ public sealed class OrganizationProfile : AggregateRoot<Guid>, IHasTenant, IAudi
             SupervisingAdminOfficerId = supervisingAdminOfficerId,
             SupervisingAdminOfficerName = supervisingAdminOfficerName,
             SupervisingAdminOfficerDesignation = supervisingAdminOfficerDesignation,
+            BudgetOfficerId = budgetOfficerId,
+            BudgetOfficerName = budgetOfficerName,
+            BudgetOfficerDesignation = budgetOfficerDesignation,
             CreatedOnUtc = DateTimeOffset.UtcNow,
             Version = NewVersion()
         };
@@ -97,7 +106,10 @@ public sealed class OrganizationProfile : AggregateRoot<Guid>, IHasTenant, IAudi
         string? accountantDesignation = null,
         Guid? supervisingAdminOfficerId = null,
         string? supervisingAdminOfficerName = null,
-        string? supervisingAdminOfficerDesignation = null)
+        string? supervisingAdminOfficerDesignation = null,
+        Guid? budgetOfficerId = null,
+        string? budgetOfficerName = null,
+        string? budgetOfficerDesignation = null)
     {
         Name = name;
         ShortName = shortName;
@@ -116,6 +128,9 @@ public sealed class OrganizationProfile : AggregateRoot<Guid>, IHasTenant, IAudi
         SupervisingAdminOfficerId = supervisingAdminOfficerId;
         SupervisingAdminOfficerName = supervisingAdminOfficerName;
         SupervisingAdminOfficerDesignation = supervisingAdminOfficerDesignation;
+        BudgetOfficerId = budgetOfficerId;
+        BudgetOfficerName = budgetOfficerName;
+        BudgetOfficerDesignation = budgetOfficerDesignation;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
         Version = NewVersion();
     }

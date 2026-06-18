@@ -58,6 +58,53 @@
                 <MudSelectItem Value="@("MDS Check")">MDS Check</MudSelectItem>
             </MudSelect>
             <MudTextField @bind-Value="_form.Remarks" Label="Remarks (optional)" Variant="Variant.Outlined" Lines="2" Dense="true" Margin="Margin.Dense" />
+            <MudDivider Class="my-1" />
+            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                <MudText Typo="Typo.subtitle2">Deductions (tax, withholding, fees)</MudText>
+                <MudButton Size="Size.Small" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Add" OnClick="AddDeduction">Add</MudButton>
+            </MudStack>
+            @if (_form.Deductions.Count == 0)
+            {
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">No deductions. Amount Due equals the gross amount.</MudText>
+            }
+            @foreach (var d in _form.Deductions)
+            {
+                <MudGrid Spacing="1" AlignItems="AlignItems.Center">
+                    <MudItem xs="4">
+                        <MudTextField @bind-Value="d.Name" Label="Name" Placeholder="e.g. Withholding Tax"
+                                      Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+                    </MudItem>
+                    <MudItem xs="3">
+                        <MudSelect @bind-Value="d.Type" Label="Type" T="DvDeductionType"
+                                   Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense">
+                            <MudSelectItem Value="DvDeductionType.Percentage">Percentage (%)</MudSelectItem>
+                            <MudSelectItem Value="DvDeductionType.FixedAmount">@($"Fixed ({Money.Symbol})")</MudSelectItem>
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="2">
+                        <MudNumericField @bind-Value="d.Value" Label="@(d.Type == DvDeductionType.Percentage ? "%" : Money.Symbol)"
+                                         Variant="Variant.Outlined" Min="0" Format="N2" Dense="true" Margin="Margin.Dense" />
+                    </MudItem>
+                    <MudItem xs="2" Class="d-flex align-center justify-end">
+                        <MudText Typo="Typo.body2">@($"{Money.Symbol}{ComputeDeduction(d):N2}")</MudText>
+                    </MudItem>
+                    <MudItem xs="1">
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
+                                       OnClick="@(() => RemoveDeduction(d))" />
+                    </MudItem>
+                </MudGrid>
+            }
+            @if (_form.Deductions.Count > 0)
+            {
+                <MudStack Row="true" Justify="Justify.SpaceBetween">
+                    <MudText Typo="Typo.body2">Total Deductions</MudText>
+                    <MudText Typo="Typo.body2">@($"{Money.Symbol}{TotalDeductions:N2}")</MudText>
+                </MudStack>
+                <MudStack Row="true" Justify="Justify.SpaceBetween">
+                    <MudText Typo="Typo.subtitle2">Amount Due</MudText>
+                    <MudText Typo="Typo.subtitle2" Color="@(AmountDue < 0 ? Color.Error : Color.Default)">@($"{Money.Symbol}{AmountDue:N2}")</MudText>
+                </MudStack>
+            }
         </MudStack>
     </DialogContent>
     <DialogActions>
@@ -94,7 +141,31 @@
         _form.Amount = Editing.Amount;
         _form.ModeOfPayment = Editing.ModeOfPayment;
         _form.Remarks = Editing.Remarks;
+        _form.Deductions = Editing.Deductions
+            .Select(d => new DeductionRow { Name = d.Name, Type = d.Type, Value = d.Value })
+            .ToList();
     }
+
+    private void AddDeduction() => _form.Deductions.Add(new DeductionRow());
+
+    private void RemoveDeduction(DeductionRow row) => _form.Deductions.Remove(row);
+
+    // Mirrors DvDeduction.ComputeAmount server-side so the previewed figure matches the saved one.
+    private decimal ComputeDeduction(DeductionRow row) =>
+        row.Type == DvDeductionType.Percentage
+            ? Math.Round(_form.Amount * (row.Value / 100m), 2, MidpointRounding.AwayFromZero)
+            : row.Value;
+
+    private decimal TotalDeductions => _form.Deductions.Sum(ComputeDeduction);
+
+    private decimal AmountDue => _form.Amount - TotalDeductions;
+
+    // Only well-formed lines are persisted; blank/zero rows the user added but didn't fill are dropped.
+    private List<DvDeductionInput> CollectDeductions() =>
+        _form.Deductions
+            .Where(d => !string.IsNullOrWhiteSpace(d.Name) && d.Value > 0)
+            .Select(d => new DvDeductionInput(d.Name.Trim(), d.Type, d.Value))
+            .ToList();
 
     // BUR first, then DV: a voucher is raised against an obligated Budget Utilization Record. Only
     // Obligated BURs are offered — a BUR that already has a DV has moved to Utilized and is excluded.
@@ -165,13 +236,14 @@
             var payeeAddress = string.IsNullOrWhiteSpace(_form.PayeeAddress) ? null : _form.PayeeAddress;
             var remarks = string.IsNullOrWhiteSpace(_form.Remarks) ? null : _form.Remarks;
             var dvDate = ToDateOnly(_form.DvDateNullable)!.Value;
+            var deductions = CollectDeductions();
 
             if (Editing is null)
             {
                 await Client.CreateAsync(new CreateDisbursementVoucherCommand(
                     _selectedBur!.Id, _selectedBur.BurNumber, dvDate,
                     _form.FundCluster, _form.Payee, tinNo, payeeAddress,
-                    _form.Particulars, _form.Amount, _form.ModeOfPayment, remarks));
+                    _form.Particulars, _form.Amount, _form.ModeOfPayment, remarks, deductions));
                 Snackbar.Add("Disbursement voucher created.", Severity.Success);
             }
             else
@@ -180,7 +252,7 @@
                 await Client.UpdateAsync(Editing.Id, new UpdateDisbursementVoucherCommand(
                     Editing.Id, Editing.PurchaseOrderId, Editing.PurchaseOrderNumber, dvDate,
                     _form.FundCluster, _form.Payee, tinNo, payeeAddress,
-                    _form.Particulars, _form.Amount, _form.ModeOfPayment, remarks));
+                    _form.Particulars, _form.Amount, _form.ModeOfPayment, remarks, deductions));
                 Snackbar.Add("Disbursement voucher updated.", Severity.Success);
             }
             Dialog.Close(DialogResult.Ok(true));
@@ -213,5 +285,13 @@
         public decimal Amount { get; set; }
         public string ModeOfPayment { get; set; } = "Check";
         public string? Remarks { get; set; }
+        public List<DeductionRow> Deductions { get; set; } = [];
+    }
+
+    private sealed class DeductionRow
+    {
+        public string Name { get; set; } = string.Empty;
+        public DvDeductionType Type { get; set; } = DvDeductionType.Percentage;
+        public decimal Value { get; set; }
     }
 }

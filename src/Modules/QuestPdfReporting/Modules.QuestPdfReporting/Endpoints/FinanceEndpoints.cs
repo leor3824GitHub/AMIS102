@@ -1,3 +1,4 @@
+using AMIS.Modules.QuestPdfReporting.Features.v1.Finance.PrintBudgetUtilizationRecord;
 using AMIS.Modules.QuestPdfReporting.Features.v1.Finance.PrintDisbursementVoucher;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
@@ -11,6 +12,7 @@ internal static class FinanceEndpoints
         var finance = group.MapGroup("finance");
 
         PrintDisbursementVoucherEndpoint.Map(finance);
+        PrintBudgetUtilizationRecordEndpoint.Map(finance);
 
         return group;
     }

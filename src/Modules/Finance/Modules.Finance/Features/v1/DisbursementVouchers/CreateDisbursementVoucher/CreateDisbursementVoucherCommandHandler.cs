@@ -106,7 +106,8 @@ public sealed class CreateDisbursementVoucherCommandHandler(
                 command.Particulars,
                 command.Amount,
                 command.ModeOfPayment,
-                command.Remarks);
+                command.Remarks,
+                command.Deductions?.Select(x => DvDeduction.Create(x.Name, x.Type, x.Value)));
 
             dv.CreatedBy = currentUser.GetUserId().ToString();
             dbContext.DisbursementVouchers.Add(dv);

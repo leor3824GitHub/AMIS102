@@ -23,7 +23,8 @@ public sealed class GetOrganizationProfileQueryHandler(MasterDataDbContext db)
                 entity.ApprovingOfficialId, entity.ApprovingOfficialName, entity.ApprovingOfficialDesignation,
                 entity.AssistantRegionalManagerId, entity.AssistantRegionalManagerName, entity.AssistantRegionalManagerDesignation,
                 entity.AccountantId, entity.AccountantName, entity.AccountantDesignation,
-                entity.SupervisingAdminOfficerId, entity.SupervisingAdminOfficerName, entity.SupervisingAdminOfficerDesignation);
+                entity.SupervisingAdminOfficerId, entity.SupervisingAdminOfficerName, entity.SupervisingAdminOfficerDesignation,
+                entity.BudgetOfficerId, entity.BudgetOfficerName, entity.BudgetOfficerDesignation);
     }
 }
 

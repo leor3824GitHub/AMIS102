@@ -20,7 +20,10 @@ public sealed record OrganizationProfileDto(
     string? AccountantDesignation = null,
     Guid? SupervisingAdminOfficerId = null,
     string? SupervisingAdminOfficerName = null,
-    string? SupervisingAdminOfficerDesignation = null);
+    string? SupervisingAdminOfficerDesignation = null,
+    Guid? BudgetOfficerId = null,
+    string? BudgetOfficerName = null,
+    string? BudgetOfficerDesignation = null);
 
 public sealed record GetOrganizationProfileQuery() : IQuery<OrganizationProfileDto?>;
 
@@ -41,5 +44,8 @@ public sealed record UpsertOrganizationProfileCommand(
     string? AccountantDesignation = null,
     Guid? SupervisingAdminOfficerId = null,
     string? SupervisingAdminOfficerName = null,
-    string? SupervisingAdminOfficerDesignation = null) : ICommand<OrganizationProfileDto>;
+    string? SupervisingAdminOfficerDesignation = null,
+    Guid? BudgetOfficerId = null,
+    string? BudgetOfficerName = null,
+    string? BudgetOfficerDesignation = null) : ICommand<OrganizationProfileDto>;
 

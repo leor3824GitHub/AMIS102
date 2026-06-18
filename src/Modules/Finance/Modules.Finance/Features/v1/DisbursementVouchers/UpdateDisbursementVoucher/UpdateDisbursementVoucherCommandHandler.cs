@@ -2,6 +2,7 @@ using System.Net;
 using AMIS.Framework.Core.Exceptions;
 using AMIS.Modules.Finance.Contracts.v1.DisbursementVouchers;
 using AMIS.Modules.Finance.Data;
+using AMIS.Modules.Finance.Domain.DisbursementVouchers;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
@@ -58,7 +59,8 @@ public sealed class UpdateDisbursementVoucherCommandHandler(
             command.Particulars,
             command.Amount,
             command.ModeOfPayment,
-            command.Remarks);
+            command.Remarks,
+            command.Deductions?.Select(x => DvDeduction.Create(x.Name, x.Type, x.Value)));
 
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
