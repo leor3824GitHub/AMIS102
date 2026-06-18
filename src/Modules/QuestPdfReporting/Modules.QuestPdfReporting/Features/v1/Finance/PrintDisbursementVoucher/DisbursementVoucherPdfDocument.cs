@@ -65,27 +65,27 @@ internal sealed class DisbursementVoucherPdfDocument(
 
     private void ComposeHeader(IContainer container)
     {
-        container.BorderBottom(1).Padding(4).Row(row =>
+        container.BorderBottom(1).Padding(2).Row(row =>
         {
             // Logo on the left; an equal-width spacer on the right keeps the agency text optically
             // centered on the page. When no logo asset is bundled, both sides collapse to nothing.
             var logo = LogoBytes.Value;
             if (logo is not null)
-                row.ConstantItem(60).AlignMiddle().Height(48).Image(logo).FitArea();
+                row.ConstantItem(40).AlignMiddle().Height(32).Image(logo).FitArea();
             else
-                row.ConstantItem(60);
+                row.ConstantItem(40);
 
             row.RelativeItem().AlignMiddle().Column(col =>
             {
-                col.Item().AlignCenter().Text("Republic of the Philippines").FontSize(8);
-                col.Item().AlignCenter().Text("NATIONAL FOOD AUTHORITY").Bold().FontSize(11);
+                col.Item().AlignCenter().Text("Republic of the Philippines").FontSize(7);
+                col.Item().AlignCenter().Text("NATIONAL FOOD AUTHORITY").Bold().FontSize(9);
                 if (!string.IsNullOrWhiteSpace(org?.Name))
-                    col.Item().AlignCenter().Text(org!.Name).Bold().FontSize(9);
+                    col.Item().AlignCenter().Text(org!.Name).Bold().FontSize(8);
                 if (!string.IsNullOrWhiteSpace(org?.Address))
-                    col.Item().AlignCenter().Text(org!.Address).FontSize(8);
+                    col.Item().AlignCenter().Text(org!.Address).FontSize(7);
             });
 
-            row.ConstantItem(60);
+            row.ConstantItem(40);
         });
     }
 
@@ -121,13 +121,13 @@ internal sealed class DisbursementVoucherPdfDocument(
     {
         container.BorderBottom(1).Row(row =>
         {
-            row.RelativeItem().BorderRight(1).PaddingVertical(8).PaddingHorizontal(6).AlignCenter().AlignMiddle()
-                .Text("DISBURSEMENT VOUCHER").Bold().FontSize(15);
+            row.RelativeItem().BorderRight(1).PaddingVertical(4).PaddingHorizontal(3).AlignCenter().AlignMiddle()
+                .Text("DISBURSEMENT VOUCHER").Bold().FontSize(12);
 
-            row.ConstantItem(180).Padding(6).AlignMiddle().Row(r =>
+            row.ConstantItem(150).Padding(3).AlignMiddle().Row(r =>
             {
-                r.AutoItem().Text("DV No. :").FontSize(9);
-                r.RelativeItem().PaddingLeft(4).AlignBottom().Text(dv.DvNumber).Bold().FontSize(9);
+                r.AutoItem().Text("DV No. :").FontSize(8);
+                r.RelativeItem().PaddingLeft(2).AlignBottom().Text(dv.DvNumber).Bold().FontSize(8);
             });
         });
     }
@@ -136,16 +136,16 @@ internal sealed class DisbursementVoucherPdfDocument(
     {
         container.BorderBottom(1).Row(row =>
         {
-            row.ConstantItem(70).BorderRight(1).Padding(4).AlignMiddle().Text("Mode of\nPayment").FontSize(8);
-            row.RelativeItem().Padding(4).AlignMiddle().Row(modes =>
+            row.ConstantItem(65).BorderRight(1).Padding(2).AlignMiddle().Text("Mode of\nPayment").FontSize(7);
+            row.RelativeItem().Padding(2).AlignMiddle().Row(modes =>
             {
                 CheckBox(modes, "MDS Check", IsMdsCheck);
-                modes.ConstantItem(14);
+                modes.ConstantItem(10);
                 CheckBox(modes, "Commercial Check", IsCommercialCheck);
-                modes.ConstantItem(14);
+                modes.ConstantItem(10);
                 CheckBox(modes, "ADA", IsAda);
-                modes.ConstantItem(14);
-                CheckBox(modes, "Others (Please specify)", IsOthers);
+                modes.ConstantItem(10);
+                CheckBox(modes, "Others", IsOthers);
             });
         });
     }
@@ -157,25 +157,25 @@ internal sealed class DisbursementVoucherPdfDocument(
             // Payee + TIN/Employee No. + ORS/BURS No.
             col.Item().BorderBottom(1).Row(row =>
             {
-                row.ConstantItem(70).BorderRight(1).Padding(4).AlignMiddle().Text("Payee").FontSize(8);
-                row.RelativeItem(3).BorderRight(1).Padding(4).AlignMiddle().Text(dv.Payee).Bold().FontSize(10);
-                row.RelativeItem(2).BorderRight(1).Padding(4).Column(c =>
+                row.ConstantItem(65).BorderRight(1).Padding(2).AlignMiddle().Text("Payee").FontSize(7);
+                row.RelativeItem(3).BorderRight(1).Padding(2).AlignMiddle().Text(dv.Payee).Bold().FontSize(8);
+                row.RelativeItem(2).BorderRight(1).Padding(2).Column(c =>
                 {
-                    c.Item().Text("TIN/Employee No.:").FontSize(8);
-                    c.Item().PaddingTop(2).Text(dv.TinNo ?? string.Empty).Bold().FontSize(9);
+                    c.Item().Text("TIN/Employee No.:").FontSize(7);
+                    c.Item().Text(dv.TinNo ?? string.Empty).Bold().FontSize(7);
                 });
-                row.RelativeItem(2).Padding(4).Column(c =>
+                row.RelativeItem(2).Padding(2).Column(c =>
                 {
-                    c.Item().Text("ORS/BURS No.:").FontSize(8);
-                    c.Item().PaddingTop(2).Text(dv.BurNumber ?? string.Empty).Bold().FontSize(9);
+                    c.Item().Text("ORS/BURS No.:").FontSize(7);
+                    c.Item().Text(dv.BurNumber ?? string.Empty).Bold().FontSize(7);
                 });
             });
 
             // Address
             col.Item().Row(row =>
             {
-                row.ConstantItem(70).BorderRight(1).Padding(4).AlignMiddle().Text("Address").FontSize(8);
-                row.RelativeItem().Padding(4).MinHeight(24).AlignMiddle().Text(dv.PayeeAddress ?? string.Empty).Bold().FontSize(9);
+                row.ConstantItem(65).BorderRight(1).Padding(2).AlignMiddle().Text("Address").FontSize(7);
+                row.RelativeItem().Padding(2).MinHeight(18).AlignMiddle().Text(dv.PayeeAddress ?? string.Empty).Bold().FontSize(8);
             });
         });
     }
@@ -187,24 +187,24 @@ internal sealed class DisbursementVoucherPdfDocument(
             // Header row — Particulars | Responsibility Center | MFO/PAP | Amount
             col.Item().BorderBottom(1).Row(row =>
             {
-                row.RelativeItem(6).BorderRight(1).Padding(3).AlignCenter().Text("Particulars").Bold().FontSize(9);
-                row.RelativeItem(2).BorderRight(1).Padding(3).AlignCenter().Text("Responsibility\nCenter").Bold().FontSize(8);
-                row.RelativeItem(2).BorderRight(1).Padding(3).AlignCenter().Text("MFO/PAP").Bold().FontSize(8);
-                row.RelativeItem(3).Padding(3).AlignCenter().Text("Amount").Bold().FontSize(9);
+                row.RelativeItem(6).BorderRight(1).Padding(2).AlignCenter().Text("Particulars").Bold().FontSize(8);
+                row.RelativeItem(2).BorderRight(1).Padding(2).AlignCenter().Text("Responsibility\nCenter").Bold().FontSize(7);
+                row.RelativeItem(2).BorderRight(1).Padding(2).AlignCenter().Text("MFO/PAP").Bold().FontSize(7);
+                row.RelativeItem(3).Padding(2).AlignCenter().Text("Amount").Bold().FontSize(8);
             });
 
             // Body row — compact height to fit on one page
             col.Item().BorderBottom(1).Row(row =>
             {
-                row.RelativeItem(6).BorderRight(1).Padding(6).MinHeight(60).Text(dv.Particulars).FontSize(9);
-                row.RelativeItem(2).BorderRight(1).Padding(4).Text(responsibilityCenter ?? string.Empty).FontSize(8);
-                row.RelativeItem(2).BorderRight(1).Padding(4);
+                row.RelativeItem(6).BorderRight(1).Padding(3).MinHeight(40).Text(dv.Particulars).FontSize(8);
+                row.RelativeItem(2).BorderRight(1).Padding(2).Text(responsibilityCenter ?? string.Empty).FontSize(7);
+                row.RelativeItem(2).BorderRight(1).Padding(2);
                 row.RelativeItem(3).Column(amt =>
                 {
-                    amt.Item().Padding(4).Row(a =>
+                    amt.Item().Padding(2).Row(a =>
                     {
-                        a.ConstantItem(14).Text("P").FontSize(9);
-                        a.RelativeItem().AlignRight().Text(dv.Amount.ToString("N2")).FontSize(9);
+                        a.ConstantItem(12).Text("P").FontSize(8);
+                        a.RelativeItem().AlignRight().Text(dv.Amount.ToString("N2")).FontSize(8);
                     });
 
                     // Configurable deductions (tax, withholding, fees). Each line prints its label —
@@ -212,12 +212,12 @@ internal sealed class DisbursementVoucherPdfDocument(
                     // there are no deductions the breakdown collapses and Amount Due equals the gross.
                     if (dv.Deductions.Count > 0)
                     {
-                        amt.Item().PaddingHorizontal(4).PaddingTop(2).Text("Less:").FontSize(8);
+                        amt.Item().PaddingHorizontal(2).PaddingTop(1).Text("Less:").FontSize(7);
                         foreach (var d in dv.Deductions)
                             DeductionLine(amt, DeductionLabel(d), d.Amount);
-                        amt.Item().PaddingHorizontal(4).PaddingTop(2).AlignRight().Width(80).LineHorizontal(0.4f);
-                        amt.Item().PaddingHorizontal(4).PaddingTop(2).AlignRight()
-                            .Text(dv.TotalDeductions.ToString("N2")).FontSize(8);
+                        amt.Item().PaddingHorizontal(2).PaddingTop(1).AlignRight().Width(70).LineHorizontal(0.4f);
+                        amt.Item().PaddingHorizontal(2).PaddingTop(1).AlignRight()
+                            .Text(dv.TotalDeductions.ToString("N2")).FontSize(7);
                     }
                 });
             });
@@ -225,11 +225,11 @@ internal sealed class DisbursementVoucherPdfDocument(
             // Amount Due row
             col.Item().Row(row =>
             {
-                row.RelativeItem(10).BorderRight(1).Padding(4).AlignRight().AlignMiddle().Text("Amount Due").Bold().FontSize(10);
-                row.RelativeItem(3).Padding(4).Row(a =>
+                row.RelativeItem(10).BorderRight(1).Padding(2).AlignRight().AlignMiddle().Text("Amount Due").Bold().FontSize(9);
+                row.RelativeItem(3).Padding(2).Row(a =>
                 {
-                    a.ConstantItem(14).Text("P").Bold().FontSize(9);
-                    a.RelativeItem().AlignRight().Text(dv.AmountDue.ToString("N2")).Bold().FontSize(9);
+                    a.ConstantItem(12).Text("P").Bold().FontSize(8);
+                    a.RelativeItem().AlignRight().Text(dv.AmountDue.ToString("N2")).Bold().FontSize(8);
                 });
             });
         });
@@ -238,20 +238,20 @@ internal sealed class DisbursementVoucherPdfDocument(
     // A. CERTIFIED — by the supervisor (Assistant Regional Manager)
     private void ComposeCertifiedBySupervisor(IContainer container)
     {
-        container.BorderTop(1).Padding(6).Column(col =>
+        container.BorderTop(1).Padding(2).Column(col =>
         {
             col.Item().Row(r =>
             {
-                r.ConstantItem(16).Border(1).AlignCenter().Text("A").Bold().FontSize(9);
-                r.RelativeItem().PaddingLeft(6).AlignMiddle()
+                r.ConstantItem(14).Border(1).AlignCenter().Text("A").Bold().FontSize(8);
+                r.RelativeItem().PaddingLeft(3).AlignMiddle()
                     .Text("Certified: Expenses/Cash Advance necessary, lawful and incurred under my direct supervision.")
-                    .FontSize(8);
+                    .FontSize(7);
             });
-            col.Item().PaddingTop(18).AlignCenter().Column(c =>
+            col.Item().PaddingTop(8).AlignCenter().Column(c =>
             {
-                c.Item().AlignCenter().Text(org?.AssistantRegionalManagerName ?? string.Empty).Bold().Underline().FontSize(10);
-                c.Item().AlignCenter().Text(org?.AssistantRegionalManagerDesignation ?? string.Empty).FontSize(8);
-                c.Item().PaddingTop(2).AlignCenter().Text("Printed Name, Designation and Signature of Supervisor").FontSize(7);
+                c.Item().AlignCenter().Text(org?.AssistantRegionalManagerName ?? string.Empty).Bold().Underline().FontSize(8);
+                c.Item().AlignCenter().Text(org?.AssistantRegionalManagerDesignation ?? string.Empty).FontSize(7);
+                c.Item().PaddingTop(1).AlignCenter().Text("Printed Name, Designation and Signature of Supervisor").FontSize(6);
             });
         });
     }
@@ -265,36 +265,36 @@ internal sealed class DisbursementVoucherPdfDocument(
         {
             table.ColumnsDefinition(c =>
             {
-                c.ConstantColumn(58);   // B label column
+                c.ConstantColumn(50);   // B label column
                 c.RelativeColumn();     // B value column
-                c.ConstantColumn(58);   // C label column
+                c.ConstantColumn(50);   // C label column
                 c.RelativeColumn();     // C value column
             });
 
             // ── Header band: B (Certified + checkboxes) | C (Approved for Payment) ──
-            table.Cell().ColumnSpan(2).Border(0.5f).Padding(6).Column(col =>
+            table.Cell().ColumnSpan(2).Border(0.5f).Padding(2).Column(col =>
             {
                 col.Item().Row(r =>
                 {
-                    r.ConstantItem(16).Border(1).AlignCenter().AlignMiddle().Text("B").Bold().FontSize(9);
-                    r.RelativeItem().PaddingLeft(6).AlignMiddle().Text("Certified:").Bold().FontSize(9);
+                    r.ConstantItem(14).Border(1).AlignCenter().AlignMiddle().Text("B").Bold().FontSize(8);
+                    r.RelativeItem().PaddingLeft(3).AlignMiddle().Text("Certified:").Bold().FontSize(8);
                 });
-                col.Item().PaddingTop(4).Column(c =>
+                col.Item().PaddingTop(2).Column(c =>
                 {
                     CertCheck(c, "Cash available");
-                    CertCheck(c, "Subject to Authority to Debit Account (when applicable)");
-                    CertCheck(c, "Supporting documents complete and amount claimed proper");
+                    CertCheck(c, "Subject to Authority to Debit Account");
+                    CertCheck(c, "Supporting documents complete and proper");
                 });
             });
 
-            table.Cell().ColumnSpan(2).Border(0.5f).Padding(6).Column(col =>
+            table.Cell().ColumnSpan(2).Border(0.5f).Padding(2).Column(col =>
             {
                 col.Item().Row(r =>
                 {
-                    r.ConstantItem(16).Border(1).AlignCenter().AlignMiddle().Text("C").Bold().FontSize(9);
-                    r.RelativeItem().PaddingLeft(6).AlignMiddle().Text("Approved for Payment").Bold().FontSize(9);
+                    r.ConstantItem(14).Border(1).AlignCenter().AlignMiddle().Text("C").Bold().FontSize(8);
+                    r.RelativeItem().PaddingLeft(3).AlignMiddle().Text("Approved for Payment").Bold().FontSize(8);
                 });
-                col.Item().MinHeight(48);
+                col.Item().MinHeight(30);
             });
 
             // ── Signatory grid (B and C share aligned rows) ──
@@ -318,40 +318,40 @@ internal sealed class DisbursementVoucherPdfDocument(
     {
         // Signature
         LabelCell(table, "Signature");
-        table.Cell().Border(0.5f).MinHeight(24);
+        table.Cell().Border(0.5f).MinHeight(14);
         LabelCell(table, "Signature");
-        table.Cell().Border(0.5f).MinHeight(24);
+        table.Cell().Border(0.5f).MinHeight(14);
 
         // Printed Name
         LabelCell(table, "Printed Name");
-        ValueCell(table, nameB, bold: true, size: 9);
+        ValueCell(table, nameB, bold: true, size: 8);
         LabelCell(table, "Printed Name");
-        ValueCell(table, nameC, bold: true, size: 9);
+        ValueCell(table, nameC, bold: true, size: 8);
 
         // Position (designation)
         LabelCell(table, "Position");
-        ValueCell(table, designationB, bold: false, size: 8);
+        ValueCell(table, designationB, bold: false, size: 7);
         LabelCell(table, "Position");
-        ValueCell(table, designationC, bold: false, size: 8);
+        ValueCell(table, designationC, bold: false, size: 7);
 
         // Role (unlabeled continuation of Position)
         table.Cell().Border(0.5f);
-        ValueCell(table, roleB, bold: false, size: 8);
+        ValueCell(table, roleB, bold: false, size: 7);
         table.Cell().Border(0.5f);
-        ValueCell(table, roleC, bold: false, size: 8);
+        ValueCell(table, roleC, bold: false, size: 7);
 
         // Date
         LabelCell(table, "Date");
-        table.Cell().Border(0.5f).MinHeight(16);
+        table.Cell().Border(0.5f).MinHeight(10);
         LabelCell(table, "Date");
-        table.Cell().Border(0.5f).MinHeight(16);
+        table.Cell().Border(0.5f).MinHeight(10);
     }
 
     private static void LabelCell(TableDescriptor table, string text) =>
-        table.Cell().Border(0.5f).Padding(3).AlignMiddle().Text(text).FontSize(7);
+        table.Cell().Border(0.5f).Padding(2).AlignMiddle().Text(text).FontSize(6);
 
     private static void ValueCell(TableDescriptor table, string? text, bool bold, float size) =>
-        table.Cell().Border(0.5f).Padding(3).AlignCenter().AlignMiddle().Text(t =>
+        table.Cell().Border(0.5f).Padding(2).AlignCenter().AlignMiddle().Text(t =>
         {
             var span = t.Span(text ?? string.Empty).FontSize(size);
             if (bold) span.Bold();
@@ -364,38 +364,38 @@ internal sealed class DisbursementVoucherPdfDocument(
         {
             table.ColumnsDefinition(c =>
             {
-                c.ConstantColumn(70);   // labels (Check/ADA No., Signature)
+                c.ConstantColumn(60);   // labels (Check/ADA No., Signature)
                 c.RelativeColumn(2);    // value box
-                c.ConstantColumn(42);   // "Date :" label
+                c.ConstantColumn(35);   // "Date :" label
                 c.RelativeColumn(3);    // Bank Name & Account Number / Printed Name
                 c.RelativeColumn(2);    // JEV No. / Date value
             });
 
             // Header row: D. Receipt of Payment | JEV No.
-            table.Cell().ColumnSpan(4).Padding(4).Row(r =>
+            table.Cell().ColumnSpan(4).Padding(2).Row(r =>
             {
-                r.ConstantItem(16).Border(1).AlignCenter().AlignMiddle().Text("D").Bold().FontSize(9);
-                r.RelativeItem().PaddingLeft(6).AlignMiddle().Text("Receipt of Payment").Bold().FontSize(9);
+                r.ConstantItem(14).Border(1).AlignCenter().AlignMiddle().Text("D").Bold().FontSize(8);
+                r.RelativeItem().PaddingLeft(3).AlignMiddle().Text("Receipt of Payment").Bold().FontSize(8);
             });
-            table.Cell().BorderLeft(0.5f).Padding(4).Text("JEV  No.").FontSize(8);
+            table.Cell().BorderLeft(0.5f).Padding(2).Text("JEV No.").FontSize(7);
 
             // Row 1: Check/ADA No. | value | Date | Bank Name & Account Number | value
-            table.Cell().Border(0.5f).Padding(4).Text("Check/\nADA No. :").FontSize(8);
-            table.Cell().Border(0.5f).MinHeight(26);
-            table.Cell().Border(0.5f).Padding(4).Text("Date :").FontSize(8);
-            table.Cell().Border(0.5f).Padding(4).Text("Bank Name & Account Number:").FontSize(8);
-            table.Cell().Border(0.5f).MinHeight(26);
+            table.Cell().Border(0.5f).Padding(2).Text("Check/ADA No. :").FontSize(7);
+            table.Cell().Border(0.5f).MinHeight(14);
+            table.Cell().Border(0.5f).Padding(2).Text("Date :").FontSize(7);
+            table.Cell().Border(0.5f).Padding(2).Text("Bank Name & Account Number:").FontSize(7);
+            table.Cell().Border(0.5f).MinHeight(14);
 
             // Row 2: Signature | value | Date | Printed Name | Date value
-            table.Cell().Border(0.5f).Padding(4).Text("Signature :").FontSize(8);
-            table.Cell().Border(0.5f).MinHeight(26);
-            table.Cell().Border(0.5f).Padding(4).Text("Date :").FontSize(8);
-            table.Cell().Border(0.5f).Padding(4).Text("Printed Name:").FontSize(8);
-            table.Cell().Border(0.5f).Padding(4).Text("Date").FontSize(8);
+            table.Cell().Border(0.5f).Padding(2).Text("Signature :").FontSize(7);
+            table.Cell().Border(0.5f).MinHeight(14);
+            table.Cell().Border(0.5f).Padding(2).Text("Date :").FontSize(7);
+            table.Cell().Border(0.5f).Padding(2).Text("Printed Name:").FontSize(7);
+            table.Cell().Border(0.5f).Padding(2).Text("Date").FontSize(7);
 
             // Footer spanning the full width — boxed to the same height as the signature cells
-            table.Cell().ColumnSpan(5).Border(0.5f).MinHeight(26).Padding(4)
-                .Text("Official Receipt No. & Date/Other Documents").FontSize(8);
+            table.Cell().ColumnSpan(5).Border(0.5f).MinHeight(14).Padding(2)
+                .Text("Official Receipt No. & Date/Other Documents").FontSize(7);
         });
     }
 
@@ -403,27 +403,27 @@ internal sealed class DisbursementVoucherPdfDocument(
 
     private static void CheckBox(RowDescriptor row, string label, bool on)
     {
-        row.AutoItem().AlignMiddle().Border(1).Width(10).Height(10).AlignCenter().AlignMiddle()
-            .Text(on ? "X" : string.Empty).FontSize(8);
-        row.AutoItem().PaddingLeft(3).AlignMiddle().Text(label).FontSize(8);
+        row.AutoItem().AlignMiddle().Border(1).Width(8).Height(8).AlignCenter().AlignMiddle()
+            .Text(on ? "X" : string.Empty).FontSize(6);
+        row.AutoItem().PaddingLeft(2).AlignMiddle().Text(label).FontSize(7);
     }
 
     private static void CertCheck(ColumnDescriptor col, string text)
     {
-        col.Item().PaddingTop(6).Row(r =>
+        col.Item().PaddingTop(2).Row(r =>
         {
-            r.ConstantItem(20).Border(1).Height(14);
-            r.RelativeItem().PaddingLeft(8).AlignMiddle().Text(text).FontSize(8);
+            r.ConstantItem(16).Border(1).Height(10);
+            r.RelativeItem().PaddingLeft(4).AlignMiddle().Text(text).FontSize(7);
         });
     }
 
     // A deduction breakdown line: label on the left, computed peso amount right-aligned.
     private static void DeductionLine(ColumnDescriptor col, string label, decimal amount)
     {
-        col.Item().PaddingHorizontal(4).PaddingTop(3).Row(r =>
+        col.Item().PaddingHorizontal(2).PaddingTop(1).Row(r =>
         {
-            r.RelativeItem().Text(label).FontSize(8);
-            r.ConstantItem(70).AlignRight().Text(amount.ToString("N2")).FontSize(8);
+            r.RelativeItem().Text(label).FontSize(7);
+            r.ConstantItem(60).AlignRight().Text(amount.ToString("N2")).FontSize(7);
         });
     }
 
