@@ -21,7 +21,7 @@ internal sealed class DisbursementVoucherPdfDocument(
     string?                 responsibilityCenter = null,
     string                  paperSize   = "a4",
     string                  orientation = "portrait",
-    float                   marginMm    = 14f) : IDocument
+    float                   marginMm    = 10f) : IDocument
 {
     private bool IsMdsCheck => dv.ModeOfPayment.Contains("MDS", StringComparison.OrdinalIgnoreCase);
     private bool IsCommercialCheck => dv.ModeOfPayment.Contains("Commercial", StringComparison.OrdinalIgnoreCase);
@@ -46,9 +46,9 @@ internal sealed class DisbursementVoucherPdfDocument(
                 col.Item().Element(ComposeTitleBar);
                 col.Item().Element(ComposeModeOfPayment);
                 col.Item().Element(ComposePayeeAddress);
-                // Particulars absorbs the leftover page height so the form fills a single page
-                // and the A/B/C/D blocks sit flush at the bottom (no empty gap).
-                col.Item().ExtendVertical().Element(ComposeParticulars);
+                // Particulars takes only the height its content needs (a fixed minimum) so the
+                // A/B/C/D blocks follow directly beneath it and the whole form stays on one page.
+                col.Item().Element(ComposeParticulars);
                 col.Item().Element(ComposeCertifiedBySupervisor);
                 col.Item().Element(ComposeCertifyApprove);
                 col.Item().Element(ComposeReceiptOfPayment);
@@ -196,7 +196,7 @@ internal sealed class DisbursementVoucherPdfDocument(
             // Body row — compact height to fit on one page
             col.Item().BorderBottom(1).Row(row =>
             {
-                row.RelativeItem(6).BorderRight(1).Padding(3).MinHeight(40).Text(dv.Particulars).FontSize(8);
+                row.RelativeItem(6).BorderRight(1).Padding(3).MinHeight(380).Text(dv.Particulars).FontSize(8);
                 row.RelativeItem(2).BorderRight(1).Padding(2).Text(responsibilityCenter ?? string.Empty).FontSize(7);
                 row.RelativeItem(2).BorderRight(1).Padding(2);
                 row.RelativeItem(3).Column(amt =>
@@ -247,7 +247,7 @@ internal sealed class DisbursementVoucherPdfDocument(
                     .Text("Certified: Expenses/Cash Advance necessary, lawful and incurred under my direct supervision.")
                     .FontSize(7);
             });
-            col.Item().PaddingTop(8).AlignCenter().Column(c =>
+            col.Item().PaddingTop(5).AlignCenter().Column(c =>
             {
                 c.Item().AlignCenter().Text(org?.AssistantRegionalManagerName ?? string.Empty).Bold().Underline().FontSize(8);
                 c.Item().AlignCenter().Text(org?.AssistantRegionalManagerDesignation ?? string.Empty).FontSize(7);
@@ -294,7 +294,7 @@ internal sealed class DisbursementVoucherPdfDocument(
                     r.ConstantItem(14).Border(1).AlignCenter().AlignMiddle().Text("C").Bold().FontSize(8);
                     r.RelativeItem().PaddingLeft(3).AlignMiddle().Text("Approved for Payment").Bold().FontSize(8);
                 });
-                col.Item().MinHeight(30);
+                col.Item().MinHeight(18);
             });
 
             // ── Signatory grid (B and C share aligned rows) ──
@@ -318,9 +318,9 @@ internal sealed class DisbursementVoucherPdfDocument(
     {
         // Signature
         LabelCell(table, "Signature");
-        table.Cell().Border(0.5f).MinHeight(14);
+        table.Cell().Border(0.5f).MinHeight(10);
         LabelCell(table, "Signature");
-        table.Cell().Border(0.5f).MinHeight(14);
+        table.Cell().Border(0.5f).MinHeight(10);
 
         // Printed Name
         LabelCell(table, "Printed Name");
@@ -381,21 +381,23 @@ internal sealed class DisbursementVoucherPdfDocument(
 
             // Row 1: Check/ADA No. | value | Date | Bank Name & Account Number | value
             table.Cell().Border(0.5f).Padding(2).Text("Check/ADA No. :").FontSize(7);
-            table.Cell().Border(0.5f).MinHeight(14);
+            table.Cell().Border(0.5f).MinHeight(11);
             table.Cell().Border(0.5f).Padding(2).Text("Date :").FontSize(7);
             table.Cell().Border(0.5f).Padding(2).Text("Bank Name & Account Number:").FontSize(7);
-            table.Cell().Border(0.5f).MinHeight(14);
+            table.Cell().Border(0.5f).MinHeight(11);
 
             // Row 2: Signature | value | Date | Printed Name | Date value
             table.Cell().Border(0.5f).Padding(2).Text("Signature :").FontSize(7);
-            table.Cell().Border(0.5f).MinHeight(14);
+            table.Cell().Border(0.5f).MinHeight(11);
             table.Cell().Border(0.5f).Padding(2).Text("Date :").FontSize(7);
             table.Cell().Border(0.5f).Padding(2).Text("Printed Name:").FontSize(7);
             table.Cell().Border(0.5f).Padding(2).Text("Date").FontSize(7);
 
             // Footer spanning the full width — boxed to the same height as the signature cells
-            table.Cell().ColumnSpan(5).Border(0.5f).MinHeight(14).Padding(2)
-                .Text("Official Receipt No. & Date/Other Documents").FontSize(7);
+            // table.Cell().ColumnSpan(5).Border(0.5f).MinHeight(11).Padding(2)
+            //     .Text("Official Receipt No. & Date/Other Documents").FontSize(7);
+            table.Cell().ColumnSpan(5).Border(0.5f).MinHeight(11).ExtendVertical().Padding(2)
+            .Text("Official Receipt No. & Date/Other Documents").FontSize(7);
         });
     }
 

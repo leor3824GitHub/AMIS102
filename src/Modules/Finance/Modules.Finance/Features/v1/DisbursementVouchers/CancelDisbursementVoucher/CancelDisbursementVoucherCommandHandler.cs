@@ -1,5 +1,6 @@
 using System.Net;
 using AMIS.Framework.Core.Exceptions;
+using AMIS.Modules.Finance.Contracts.v1.BudgetUtilizationRecords;
 using AMIS.Modules.Finance.Contracts.v1.DisbursementVouchers;
 using AMIS.Modules.Finance.Data;
 using Mediator;
@@ -24,9 +25,19 @@ public sealed class CancelDisbursementVoucherCommandHandler(
         {
             throw new CustomException(ex.Message, [], HttpStatusCode.BadRequest);
         }
+
+        // Cancelling the DV releases the budget it consumed: the linked BUR reverts from Utilized back
+        // to Obligated (clearing the DV link) so a fresh DV can be raised against it.
+        var bur = await dbContext.BudgetUtilizationRecords
+            .FirstOrDefaultAsync(b => b.Id == dv.BudgetUtilizationRecordId, cancellationToken)
+            .ConfigureAwait(false);
+        if (bur is not null && bur.Status == BudgetUtilizationRecordStatus.Utilized)
+            bur.Release();
+
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-        logger.LogInformation("Cancelled disbursement voucher {DvNumber}", dv.DvNumber);
+        logger.LogInformation("Cancelled disbursement voucher {DvNumber}; released BUR {BurNumber}",
+            dv.DvNumber, dv.BurNumber);
 
         return Unit.Value;
     }

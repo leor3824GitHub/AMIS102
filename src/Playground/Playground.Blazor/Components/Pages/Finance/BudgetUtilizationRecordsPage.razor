@@ -83,6 +83,13 @@
                                                                    OnClick="@(async () => await CancelBurAsync(item.Id))" />
                                                 </MudTooltip>
                                             }
+                                            @if ((item.Status == BudgetUtilizationRecordStatus.Obligated || item.Status == BudgetUtilizationRecordStatus.Utilized) && _canViewSigned)
+                                            {
+                                                <MudTooltip Text="Signed Copy">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.Approval" Size="Size.Small" Color="Color.Primary"
+                                                                   OnClick="@(async () => await OpenSignedCopyAsync(item))" />
+                                                </MudTooltip>
+                                            }
                                             <MudTooltip Text="View Details">
                                                 <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" Color="Color.Default"
                                                                OnClick="@(async () => await ViewDetailsAsync(item.Id))" />
@@ -192,6 +199,7 @@
     private bool _canCreate => UserProfileState.Permissions.Contains(FinancePermissions.BudgetUtilizationRecords.Create);
     private bool _canObligate => UserProfileState.Permissions.Contains(FinancePermissions.BudgetUtilizationRecords.Obligate);
     private bool _canCancel => UserProfileState.Permissions.Contains(FinancePermissions.BudgetUtilizationRecords.Cancel);
+    private bool _canViewSigned => UserProfileState.Permissions.Contains(FinancePermissions.SignedDocuments.View);
 
     protected override async Task OnInitializedAsync()
     {
@@ -253,6 +261,19 @@
     private async Task ViewDetailsAsync(Guid id)
     {
         _detail = await Client.GetAsync(id);
+    }
+
+    private async Task OpenSignedCopyAsync(BudgetUtilizationRecordListItemDto item)
+    {
+        var parameters = new DialogParameters<SignedCopyDialog>
+        {
+            { x => x.DocumentType, AMIS.Modules.Finance.Contracts.v1.SignedDocuments.FinanceDocumentType.BudgetUtilizationRecord },
+            { x => x.DocumentId, item.Id },
+            { x => x.DocumentNumber, string.IsNullOrWhiteSpace(item.BurNumber) ? "(no BUR number)" : item.BurNumber },
+            { x => x.IsTerminalState, true }
+        };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        await DialogService.ShowAsync<SignedCopyDialog>("Signed Copy", parameters, options);
     }
 
     private async Task DownloadPdfAsync(Guid id)

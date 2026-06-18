@@ -1,5 +1,6 @@
 using AMIS.Modules.Finance.Contracts.v1.BudgetUtilizationRecords;
 using AMIS.Modules.MasterData.Contracts.v1.OrganizationProfile;
+using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders;
 using Mediator;
 using QuestPDF.Fluent;
 
@@ -17,7 +18,12 @@ public sealed class PrintBudgetUtilizationRecordQueryHandler(IMediator mediator)
 
         var org = await mediator.Send(new GetOrganizationProfileQuery(), cancellationToken).ConfigureAwait(false);
 
+        // Payee / Address on the BURS band come from the obligated purchase order (the BUR itself is
+        // budget-side and carries no payee data). Office is intentionally left blank.
+        var po = await mediator.Send(new GetPurchaseOrderQuery(bur.PurchaseOrderId), cancellationToken).ConfigureAwait(false);
+
         return new BudgetUtilizationRecordPdfDocument(
-            bur, org, query.PaperSize, query.Orientation, (float)query.Margin).GeneratePdf();
+            bur, org, po?.SupplierName, po?.SupplierAddress,
+            query.PaperSize, query.Orientation, (float)query.Margin).GeneratePdf();
     }
 }

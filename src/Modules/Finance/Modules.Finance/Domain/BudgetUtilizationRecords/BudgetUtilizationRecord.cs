@@ -83,6 +83,19 @@ public sealed class BudgetUtilizationRecord : AggregateRoot<Guid>, IAuditableEnt
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
     }
 
+    /// <summary>Reverses a utilization: when the linked DV is cancelled, the obligation is released
+    /// back to Obligated and the DV link cleared, so a new DV can be raised against this BUR.</summary>
+    public void Release()
+    {
+        if (Status != BudgetUtilizationRecordStatus.Utilized)
+            throw new InvalidOperationException("Only Utilized BURs can be released.");
+
+        Status = BudgetUtilizationRecordStatus.Obligated;
+        DisbursementVoucherId = null;
+        DisbursementVoucherNumber = null;
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;
+    }
+
     public void Cancel(string remarks)
     {
         if (Status == BudgetUtilizationRecordStatus.Utilized || Status == BudgetUtilizationRecordStatus.Cancelled)

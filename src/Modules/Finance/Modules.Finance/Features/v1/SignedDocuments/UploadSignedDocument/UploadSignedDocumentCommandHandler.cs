@@ -5,6 +5,7 @@ using AMIS.Framework.Core.Exceptions;
 using AMIS.Framework.Shared.Storage;
 using AMIS.Framework.Storage;
 using AMIS.Framework.Storage.Services;
+using AMIS.Modules.Finance.Contracts.v1.BudgetUtilizationRecords;
 using AMIS.Modules.Finance.Contracts.v1.DisbursementVouchers;
 using AMIS.Modules.Finance.Contracts.v1.SignedDocuments;
 using AMIS.Modules.Finance.Data;
@@ -101,6 +102,16 @@ public sealed class UploadSignedDocumentCommandHandler(
                 // Signed once approved; remains a signed record through payment.
                 if (dv.Status is not (DisbursementVoucherStatus.Approved or DisbursementVoucherStatus.Paid))
                     throw new CustomException("A signed copy can only be uploaded once the disbursement voucher is Approved.",
+                        Enumerable.Empty<string>(), HttpStatusCode.BadRequest);
+                break;
+
+            case FinanceDocumentType.BudgetUtilizationRecord:
+                var bur = await dbContext.BudgetUtilizationRecords.AsNoTracking()
+                    .FirstOrDefaultAsync(x => x.Id == id, ct).ConfigureAwait(false)
+                    ?? throw new NotFoundException($"Budget utilization record '{id}' not found.");
+                // Signed once the budget officer obligates it; remains a signed record once utilized by a DV.
+                if (bur.Status is not (BudgetUtilizationRecordStatus.Obligated or BudgetUtilizationRecordStatus.Utilized))
+                    throw new CustomException("A signed copy can only be uploaded once the budget utilization record is Obligated.",
                         Enumerable.Empty<string>(), HttpStatusCode.BadRequest);
                 break;
 

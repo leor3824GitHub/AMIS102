@@ -17,6 +17,8 @@ namespace AMIS.Modules.QuestPdfReporting.Features.v1.Finance.PrintBudgetUtilizat
 internal sealed class BudgetUtilizationRecordPdfDocument(
     BudgetUtilizationRecordDto bur,
     OrganizationProfileDto? org,
+    string? payee = null,
+    string? payeeAddress = null,
     string paperSize = "a4",
     string orientation = "portrait",
     float marginMm = 14f) : IDocument
@@ -84,16 +86,16 @@ internal sealed class BudgetUtilizationRecordPdfDocument(
     }
 
     // ── Payee / Office / Address band ───────────────────────────────────────────
-    // The BUR aggregate is budget-side and does not carry payee/office data, so these
-    // labelled rows print blank — matching the blank pre-printed government form.
+    // Payee and Address are sourced from the obligated purchase order (supplier name + address).
+    // Office is left blank — the PO carries no office data.
 
     private void ComposePayeeBand(IContainer container)
     {
         container.BorderBottom(1).Column(col =>
         {
-            BandRow(col, "Payee", string.Empty, borderBottom: true);
-            BandRow(col, "Office", bur.ResponsibilityCenter ?? string.Empty, borderBottom: true);
-            BandRow(col, "Address", string.Empty, borderBottom: false);
+            BandRow(col, "Payee", payee ?? string.Empty, borderBottom: true);
+            BandRow(col, "Office", string.Empty, borderBottom: true);
+            BandRow(col, "Address", payeeAddress ?? string.Empty, borderBottom: false);
         });
     }
 
@@ -133,7 +135,7 @@ internal sealed class BudgetUtilizationRecordPdfDocument(
             // Body row
             col.Item().BorderBottom(1).Row(row =>
             {
-                row.RelativeItem(2).BorderRight(1).Padding(4).MinHeight(110).Text(bur.ResponsibilityCenter ?? string.Empty).FontSize(8);
+                row.RelativeItem(2).BorderRight(1).Padding(4).MinHeight(200).Text(bur.ResponsibilityCenter ?? string.Empty).FontSize(8);
                 row.RelativeItem(4).BorderRight(1).Padding(4).Text(bur.Particulars).FontSize(8);
                 row.RelativeItem(2).BorderRight(1).Padding(4).Text(string.Empty).FontSize(8);
                 row.RelativeItem(2).BorderRight(1).Padding(4).Text(bur.UacsObjectCode).FontSize(8);
@@ -213,7 +215,7 @@ internal sealed class BudgetUtilizationRecordPdfDocument(
                 SignatoryBlock(col,
                     org?.BudgetOfficerName,
                     org?.BudgetOfficerDesignation ?? "Budget Officer",
-                    "Head, Budget Division/Unit/Authorized Representative");
+                    "Head, Budget Division/Authorized Representative");
             });
         });
     }
@@ -226,17 +228,18 @@ internal sealed class BudgetUtilizationRecordPdfDocument(
             {
                 r.ConstantItem(LabelWidth).AlignMiddle().Text("Signature").FontSize(7);
                 r.ConstantItem(ColonWidth).AlignMiddle().Text(":").FontSize(7);
-                r.RelativeItem().PaddingLeft(4).AlignBottom().LineHorizontal(0.5f);
+                r.RelativeItem().PaddingLeft(4).MinHeight(12).BorderBottom(0.5f);
             });
             c.Item().PaddingTop(8).Row(r =>
             {
                 r.ConstantItem(LabelWidth).AlignMiddle().Text("Printed Name").FontSize(7);
                 r.ConstantItem(ColonWidth).AlignMiddle().Text(":").FontSize(7);
-                r.RelativeItem().PaddingLeft(4).Column(nameCol =>
-                {
-                    nameCol.Item().AlignCenter().Text(printedName ?? string.Empty).Bold().FontSize(9);
-                    nameCol.Item().AlignCenter().LineHorizontal(0.5f);
-                });
+                // r.RelativeItem().PaddingLeft(4).Column(nameCol =>
+                // {
+                //     nameCol.Item().AlignCenter().Text(printedName ?? string.Empty).Bold().FontSize(9);
+                //     nameCol.Item().AlignCenter().LineHorizontal(0.5f);
+                // });
+                r.RelativeItem().PaddingLeft(4).MinHeight(12).BorderBottom(0.5f).AlignBottom().AlignCenter().Text(printedName ?? string.Empty).Bold().FontSize(9);
             });
             c.Item().PaddingTop(8).Row(r =>
             {
@@ -244,9 +247,8 @@ internal sealed class BudgetUtilizationRecordPdfDocument(
                 r.ConstantItem(ColonWidth).AlignMiddle().Text(":").FontSize(7);
                 r.RelativeItem().PaddingLeft(4).Column(p =>
                 {
-                    p.Item().AlignCenter().Text(position).FontSize(8);
+                    p.Item().BorderBottom(0.5f).AlignCenter().Text(position).FontSize(8);
                     p.Item().AlignCenter().Text(positionSub).FontSize(7);
-                    p.Item().AlignCenter().LineHorizontal(0.5f);
                 });
             });
             c.Item().PaddingTop(8).Row(r =>

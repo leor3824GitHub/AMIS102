@@ -66,7 +66,7 @@
             else
             {
                 <MudAlert Severity="Severity.Warning" Dense="true">
-                    @(IsTerminalState ? "No signed copy uploaded yet." : "A signed copy can only be uploaded once this voucher is approved or paid.")
+                    @(IsTerminalState ? "No signed copy uploaded yet." : NotReadyMessage)
                 </MudAlert>
             }
 
@@ -99,7 +99,15 @@
     private string FriendlyType => DocumentType switch
     {
         FinanceDocumentType.DisbursementVoucher => "disbursement voucher (DV)",
+        FinanceDocumentType.BudgetUtilizationRecord => "budget utilization record (BUR)",
         _ => "document"
+    };
+
+    private string NotReadyMessage => DocumentType switch
+    {
+        FinanceDocumentType.DisbursementVoucher => "A signed copy can only be uploaded once this voucher is approved or paid.",
+        FinanceDocumentType.BudgetUtilizationRecord => "A signed copy can only be uploaded once this BUR is obligated.",
+        _ => "A signed copy can only be uploaded once this document is in its signed state."
     };
 
     protected override async Task OnInitializedAsync() => await LoadAsync();

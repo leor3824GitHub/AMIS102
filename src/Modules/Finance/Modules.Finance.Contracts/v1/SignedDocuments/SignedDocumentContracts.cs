@@ -9,7 +9,8 @@ namespace AMIS.Modules.Finance.Contracts.v1.SignedDocuments;
 /// <summary>The Finance documents that support an uploaded wet-signed official copy.</summary>
 public enum FinanceDocumentType
 {
-    DisbursementVoucher = 0
+    DisbursementVoucher = 0,
+    BudgetUtilizationRecord = 1
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
