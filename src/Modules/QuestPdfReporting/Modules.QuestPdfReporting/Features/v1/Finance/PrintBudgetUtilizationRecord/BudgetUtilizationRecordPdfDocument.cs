@@ -16,10 +16,10 @@ namespace AMIS.Modules.QuestPdfReporting.Features.v1.Finance.PrintBudgetUtilizat
 /// </summary>
 internal sealed class BudgetUtilizationRecordPdfDocument(
     BudgetUtilizationRecordDto bur,
-    OrganizationProfileDto?    org,
-    string                     paperSize   = "a4",
-    string                     orientation = "portrait",
-    float                      marginMm    = 14f) : IDocument
+    OrganizationProfileDto? org,
+    string paperSize = "a4",
+    string orientation = "portrait",
+    float marginMm = 14f) : IDocument
 {
     public DocumentMetadata GetMetadata() => new()
     {
@@ -100,7 +100,7 @@ internal sealed class BudgetUtilizationRecordPdfDocument(
     // Padding lives inside the cells (not around the row) so the vertical divider runs the full
     // row height and meets the horizontal row separators, matching the pre-printed form.
     private const float PayeeLabelWidth = 70f;
-    private const float PayeeRowHeight  = 26f;
+    private const float PayeeRowHeight = 26f;
 
     private static void BandRow(ColumnDescriptor col, string label, string value, bool borderBottom)
     {
@@ -232,7 +232,11 @@ internal sealed class BudgetUtilizationRecordPdfDocument(
             {
                 r.ConstantItem(LabelWidth).AlignMiddle().Text("Printed Name").FontSize(7);
                 r.ConstantItem(ColonWidth).AlignMiddle().Text(":").FontSize(7);
-                r.RelativeItem().PaddingLeft(4).AlignCenter().Text(printedName ?? string.Empty).Bold().FontSize(9);
+                r.RelativeItem().PaddingLeft(4).Column(nameCol =>
+                {
+                    nameCol.Item().AlignCenter().Text(printedName ?? string.Empty).Bold().FontSize(9);
+                    nameCol.Item().AlignCenter().LineHorizontal(0.5f);
+                });
             });
             c.Item().PaddingTop(8).Row(r =>
             {
@@ -242,6 +246,7 @@ internal sealed class BudgetUtilizationRecordPdfDocument(
                 {
                     p.Item().AlignCenter().Text(position).FontSize(8);
                     p.Item().AlignCenter().Text(positionSub).FontSize(7);
+                    p.Item().AlignCenter().LineHorizontal(0.5f);
                 });
             });
             c.Item().PaddingTop(8).Row(r =>
