@@ -193,10 +193,10 @@ internal sealed class DisbursementVoucherPdfDocument(
                 row.RelativeItem(3).Padding(3).AlignCenter().Text("Amount").Bold().FontSize(9);
             });
 
-            // Body row — extends to fill the section so the column dividers run full height
-            col.Item().ExtendVertical().BorderBottom(1).Row(row =>
+            // Body row — compact height to fit on one page
+            col.Item().BorderBottom(1).Row(row =>
             {
-                row.RelativeItem(6).BorderRight(1).Padding(6).MinHeight(120).Text(dv.Particulars).FontSize(9);
+                row.RelativeItem(6).BorderRight(1).Padding(6).MinHeight(60).Text(dv.Particulars).FontSize(9);
                 row.RelativeItem(2).BorderRight(1).Padding(4).Text(responsibilityCenter ?? string.Empty).FontSize(8);
                 row.RelativeItem(2).BorderRight(1).Padding(4);
                 row.RelativeItem(3).Column(amt =>
@@ -212,10 +212,10 @@ internal sealed class DisbursementVoucherPdfDocument(
                     // there are no deductions the breakdown collapses and Amount Due equals the gross.
                     if (dv.Deductions.Count > 0)
                     {
-                        amt.Item().PaddingHorizontal(4).PaddingTop(4).Text("Less:").FontSize(8);
+                        amt.Item().PaddingHorizontal(4).PaddingTop(2).Text("Less:").FontSize(8);
                         foreach (var d in dv.Deductions)
                             DeductionLine(amt, DeductionLabel(d), d.Amount);
-                        amt.Item().PaddingHorizontal(4).PaddingTop(3).AlignRight().Width(80).LineHorizontal(0.4f);
+                        amt.Item().PaddingHorizontal(4).PaddingTop(2).AlignRight().Width(80).LineHorizontal(0.4f);
                         amt.Item().PaddingHorizontal(4).PaddingTop(2).AlignRight()
                             .Text(dv.TotalDeductions.ToString("N2")).FontSize(8);
                     }
