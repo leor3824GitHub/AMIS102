@@ -30,6 +30,11 @@ public sealed class OrganizationProfile : AggregateRoot<Guid>, IHasTenant, IAudi
     public string? BudgetOfficerName { get; private set; }
     public string? BudgetOfficerDesignation { get; private set; }
 
+    /// <summary>Agency Property/Supply Custodian — report signatory (e.g. ICS/PAR "Received by").</summary>
+    public Guid? PropertyCustodianId { get; private set; }
+    public string? PropertyCustodianName { get; private set; }
+    public string? PropertyCustodianDesignation { get; private set; }
+
     public byte[] Version { get; set; } = [];
 
     public DateTimeOffset CreatedOnUtc { get; set; } = DateTimeOffset.UtcNow;
@@ -58,7 +63,10 @@ public sealed class OrganizationProfile : AggregateRoot<Guid>, IHasTenant, IAudi
         string? supervisingAdminOfficerDesignation = null,
         Guid? budgetOfficerId = null,
         string? budgetOfficerName = null,
-        string? budgetOfficerDesignation = null)
+        string? budgetOfficerDesignation = null,
+        Guid? propertyCustodianId = null,
+        string? propertyCustodianName = null,
+        string? propertyCustodianDesignation = null)
     {
         return new OrganizationProfile
         {
@@ -84,6 +92,9 @@ public sealed class OrganizationProfile : AggregateRoot<Guid>, IHasTenant, IAudi
             BudgetOfficerId = budgetOfficerId,
             BudgetOfficerName = budgetOfficerName,
             BudgetOfficerDesignation = budgetOfficerDesignation,
+            PropertyCustodianId = propertyCustodianId,
+            PropertyCustodianName = propertyCustodianName,
+            PropertyCustodianDesignation = propertyCustodianDesignation,
             CreatedOnUtc = DateTimeOffset.UtcNow,
             Version = NewVersion()
         };
@@ -109,7 +120,10 @@ public sealed class OrganizationProfile : AggregateRoot<Guid>, IHasTenant, IAudi
         string? supervisingAdminOfficerDesignation = null,
         Guid? budgetOfficerId = null,
         string? budgetOfficerName = null,
-        string? budgetOfficerDesignation = null)
+        string? budgetOfficerDesignation = null,
+        Guid? propertyCustodianId = null,
+        string? propertyCustodianName = null,
+        string? propertyCustodianDesignation = null)
     {
         Name = name;
         ShortName = shortName;
@@ -131,6 +145,9 @@ public sealed class OrganizationProfile : AggregateRoot<Guid>, IHasTenant, IAudi
         BudgetOfficerId = budgetOfficerId;
         BudgetOfficerName = budgetOfficerName;
         BudgetOfficerDesignation = budgetOfficerDesignation;
+        PropertyCustodianId = propertyCustodianId;
+        PropertyCustodianName = propertyCustodianName;
+        PropertyCustodianDesignation = propertyCustodianDesignation;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
         Version = NewVersion();
     }

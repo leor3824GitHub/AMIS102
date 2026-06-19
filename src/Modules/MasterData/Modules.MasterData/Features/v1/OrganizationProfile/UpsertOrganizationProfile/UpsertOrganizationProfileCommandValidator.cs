@@ -21,6 +21,8 @@ public sealed class UpsertOrganizationProfileCommandValidator : AbstractValidato
         RuleFor(x => x.SupervisingAdminOfficerDesignation).MaximumLength(200).When(x => x.SupervisingAdminOfficerDesignation is not null);
         RuleFor(x => x.BudgetOfficerName).MaximumLength(200).When(x => x.BudgetOfficerName is not null);
         RuleFor(x => x.BudgetOfficerDesignation).MaximumLength(200).When(x => x.BudgetOfficerDesignation is not null);
+        RuleFor(x => x.PropertyCustodianName).MaximumLength(200).When(x => x.PropertyCustodianName is not null);
+        RuleFor(x => x.PropertyCustodianDesignation).MaximumLength(200).When(x => x.PropertyCustodianDesignation is not null);
     }
 }
 

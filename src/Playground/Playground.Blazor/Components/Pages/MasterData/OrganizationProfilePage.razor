@@ -159,6 +159,24 @@
                           HelperText="Auto-filled from the selected employee's position">
                     @(NullIfEmpty(_form.BudgetOfficerDesignation) ?? "—")
                 </MudField>
+
+                <MudAutocomplete T="EmployeeReferenceDto"
+                                 Value="_form.PropertyCustodian"
+                                 ValueChanged="OnPropertyCustodianChanged"
+                                 Label="Property Custodian — Name"
+                                 Variant="Variant.Outlined"
+                                 SearchFunc="SearchEmployeesAsync"
+                                 ToStringFunc="EmployeeDisplayName"
+                                 ResetValueOnEmptyText="true"
+                                 CoerceText="true"
+                                 MinCharacters="1"
+                                 Clearable="true"
+                                 HelperText="Type to search employees — signs as receiving Property/Supply Custodian (ICS/PAR)" />
+                <MudField Label="Property Custodian — Designation"
+                          Variant="Variant.Outlined"
+                          HelperText="Auto-filled from the selected employee's position">
+                    @(NullIfEmpty(_form.PropertyCustodianDesignation) ?? "—")
+                </MudField>
             </MudStack>
         </MudPaper>
 
@@ -200,7 +218,7 @@
 
                 @if (_form.RegionalManager is not null || _form.AssistantRegionalManager is not null ||
                      _form.Accountant is not null || _form.SupervisingAdminOfficer is not null ||
-                     _form.BudgetOfficer is not null)
+                     _form.BudgetOfficer is not null || _form.PropertyCustodian is not null)
                 {
                     <MudDivider Class="my-3" />
                     <MudText Typo="Typo.subtitle2" Class="mb-2">Key Officers</MudText>
@@ -241,6 +259,13 @@
                                     <td><MudText Typo="Typo.body2"><b>@($"{_form.BudgetOfficer.FirstName} {_form.BudgetOfficer.LastName}")</b></MudText></td>
                                 </tr>
                             }
+                            @if (_form.PropertyCustodian is not null)
+                            {
+                                <tr>
+                                    <td><MudText Typo="Typo.caption" Color="Color.Secondary">@(NullIfEmpty(_form.PropertyCustodianDesignation) ?? "Property Custodian")</MudText></td>
+                                    <td><MudText Typo="Typo.body2"><b>@($"{_form.PropertyCustodian.FirstName} {_form.PropertyCustodian.LastName}")</b></MudText></td>
+                                </tr>
+                            }
                         </tbody>
                     </MudSimpleTable>
                 }
@@ -279,7 +304,8 @@
                     AssistantRegionalManagerDesignation = existing.AssistantRegionalManagerDesignation ?? string.Empty,
                     AccountantDesignation = existing.AccountantDesignation ?? string.Empty,
                     SupervisingAdminOfficerDesignation = existing.SupervisingAdminOfficerDesignation ?? string.Empty,
-                    BudgetOfficerDesignation = existing.BudgetOfficerDesignation ?? string.Empty
+                    BudgetOfficerDesignation = existing.BudgetOfficerDesignation ?? string.Empty,
+                    PropertyCustodianDesignation = existing.PropertyCustodianDesignation ?? string.Empty
                 };
 
                 await LoadOfficersAsync(existing);
@@ -305,6 +331,8 @@
             tasks.Add(LoadEmployeeAsync(profile.SupervisingAdminOfficerId.Value, e => _form.SupervisingAdminOfficer = e));
         if (profile.BudgetOfficerId.HasValue)
             tasks.Add(LoadEmployeeAsync(profile.BudgetOfficerId.Value, e => _form.BudgetOfficer = e));
+        if (profile.PropertyCustodianId.HasValue)
+            tasks.Add(LoadEmployeeAsync(profile.PropertyCustodianId.Value, e => _form.PropertyCustodian = e));
 
         await Task.WhenAll(tasks);
     }
@@ -392,7 +420,10 @@
                 NullIfEmpty(_form.SupervisingAdminOfficerDesignation),
                 _form.BudgetOfficer?.Id,
                 _form.BudgetOfficer is not null ? $"{_form.BudgetOfficer.FirstName} {_form.BudgetOfficer.LastName}" : null,
-                NullIfEmpty(_form.BudgetOfficerDesignation));
+                NullIfEmpty(_form.BudgetOfficerDesignation),
+                _form.PropertyCustodian?.Id,
+                _form.PropertyCustodian is not null ? $"{_form.PropertyCustodian.FirstName} {_form.PropertyCustodian.LastName}" : null,
+                NullIfEmpty(_form.PropertyCustodianDesignation));
 
             var result = await OrgProfileClient.UpsertAsync(command);
             OrgProfileState.SetProfile(result);
@@ -443,6 +474,13 @@
             _form.BudgetOfficerDesignation = employee.PositionName;
     }
 
+    private void OnPropertyCustodianChanged(EmployeeReferenceDto? employee)
+    {
+        _form.PropertyCustodian = employee;
+        if (employee is not null && !string.IsNullOrWhiteSpace(employee.PositionName))
+            _form.PropertyCustodianDesignation = employee.PositionName;
+    }
+
     private static string EmployeeDisplayName(EmployeeReferenceDto? e) =>
         e is null ? string.Empty : $"{e.FirstName} {e.LastName}";
 
@@ -466,5 +504,7 @@
         public string SupervisingAdminOfficerDesignation { get; set; } = string.Empty;
         public EmployeeReferenceDto? BudgetOfficer { get; set; }
         public string BudgetOfficerDesignation { get; set; } = string.Empty;
+        public EmployeeReferenceDto? PropertyCustodian { get; set; }
+        public string PropertyCustodianDesignation { get; set; } = string.Empty;
     }
 }

@@ -34,6 +34,9 @@ public sealed class OrganizationProfileConfiguration : IEntityTypeConfiguration<
         builder.Property(x => x.BudgetOfficerId);
         builder.Property(x => x.BudgetOfficerName).HasMaxLength(200);
         builder.Property(x => x.BudgetOfficerDesignation).HasMaxLength(200);
+        builder.Property(x => x.PropertyCustodianId);
+        builder.Property(x => x.PropertyCustodianName).HasMaxLength(200);
+        builder.Property(x => x.PropertyCustodianDesignation).HasMaxLength(200);
         builder.Property(x => x.Version).IsConcurrencyToken();
 
         builder.HasIndex(x => x.TenantId).IsUnique();

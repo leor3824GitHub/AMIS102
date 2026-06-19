@@ -1,0 +1,824 @@
+# AMIS Dynamic Report Designer — Implementation Plan (AMIS-Corrected, 2nd pass)
+
+> Second-pass rewrite of `AMIS_Dynamic_Report_Designer_Plan(1).md`, now grounded in
+> the **actual** AMIS codebase (verified against `Modules.QuestPdfReporting`,
+> `BuildingBlocks/Core`, `BuildingBlocks/Web`, and the existing reporting rules).
+> Architecture concept is unchanged (serializable AST → recursive QuestPDF
+> interpreter → Blazor canvas). Effort/sequencing lives in
+> `AMIS_Report_Designer_Roadmap.md`.
+
+---
+
+## RULE 0 — The designer is greenfield and independent (scope)
+
+The report designer is a **new, self-contained capability**. It does **not** depend on
+the existing report engines (`QuestPdfReporting`, `RdlcReporting`, `FastReporting`),
+and you are free to design any report layout and any data source you want. Only two
+constraints apply, and both are about correctness — not dependencies:
+
+1. **Don't expose the statutory forms for canvas editing.** ICS, PAR, PO, PR, DV, BUR,
+   RSPI and similar government forms are legally fixed layouts that already exist in
+   code/`.frx`/`.rdlc`. The designer is for **new, ad-hoc, user-defined reports** — it
+   never edits the official forms. (You *may* later let a user *clone* one as a
+   starting point, but the statutory originals stay authoritative.)
+2. **Data stays tenant-scoped.** This system tracks government property under strict
+   accountability and is multi-tenant. However customizable the data source is, a
+   report must only ever read the **current tenant's** data. This is the one hard rule.
+
+Everything else — layout, styling, components, template format, and the data-source
+model — is yours to define. The designer reuses QuestPDF for rendering (and therefore
+`QuestPdfReporting`'s license/`ReportAssets`/paper-size setup), but that's an
+implementation convenience, not a dependency on the existing reports.
+
+---
+
+## Confirmed conventions (verified in repo — no more "confirm-in-repo" guesses)
+
+| Concern | Actual type / namespace | Source |
+|---|---|---|
+| Module contract | `IModule` → `AMIS.Framework.Web.Modules` (`ConfigureServices(IHostApplicationBuilder)`, `MapEndpoints(IEndpointRouteBuilder)`) | `BuildingBlocks/Web/Modules/IModule.cs` |
+| Mediator | `IQueryHandler<,>` / `IQuery<>` / `ICommandHandler<,>` from **`Mediator`** namespace; handlers return `ValueTask<T>` | `QuestPdfReporting` handlers |
+| Entity base | `BaseEntity<TId>` (generic) in `AMIS.Framework.Core.Domain`; `Id` is `protected set` — **never set Id manually** | `BuildingBlocks/Core/Domain/BaseEntity.cs` |
+| Auditing | interface is **`IAuditableEntity`** (not `IAuditable`) | `BuildingBlocks/Core/Domain/IAuditableEntity.cs` |
+| Tenancy | `IMustHaveTenant` (`Guid TenantId`), auto-filtered; `BaseDbContext : MultiTenantDbContext` | `persistence.md`, `BaseDbContext.cs` |
+| Not-found | this module family throws **`KeyNotFoundException`** (not a custom `NotFoundException`) | `PrintBudgetUtilizationRecordQueryHandler.cs` |
+| QuestPDF license | `QuestPDF.Settings.License = LicenseType.Community;` in `ConfigureServices` | `QuestPdfReportingModule.cs` |
+| Permissions | `PermissionConstants.Register(<ModuleConstants>.Permissions)` from `AMIS.Framework.Shared.Constants` | `QuestPdfReportingModule.cs` |
+| Render call | `new MyDoc(...).GeneratePdf()` — `GeneratePdf()` is a QuestPDF **extension on `IDocument`**; do NOT define your own method named `GeneratePdf` (infinite recursion) | `QuestPdfReporting` handlers |
+| Static assets | `<EmbeddedResource Include="ReportAssets\**\*.png" />` for logos | `Modules.QuestPdfReporting.csproj` |
+
+### Module decision
+
+The designer needs **persistence** (saved templates) — which `QuestPdfReporting`
+deliberately lacks. So create a **new module `Modules.ReportDesigner`** with its own
+`ReportDesignerDbContext`. It **renders** like `QuestPdfReporting` (QuestPDF, mediator
+data fetch) and **persists** like `MasterData` (own DbContext, migrations). It must
+**not** add a DbContext into `QuestPdfReporting` (keeps that module stateless).
+
+---
+
+## Phase 1 — The Shared AST (Contracts) + Domain Aggregate
+
+### 1a. AST POCOs — `Modules.ReportDesigner.Contracts` (shared by canvas, persistence, engine)
+
+```csharp
+namespace AMIS.Modules.ReportDesigner.Contracts.v1.Designer.Ast;
+
+public const int CurrentAstSchemaVersion = 1; // bump on breaking AST shape changes
+
+public enum NodeType { Page, Row, Column, Text, Table, Image, Spacer }
+
+/// <summary>Serializable layout node. Persisted as jsonb, rendered by the canvas,
+/// walked by the QuestPDF interpreter. Mutable by design (the editor mutates it).</summary>
+public sealed class ReportNode
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public NodeType Type { get; set; }
+
+    // Layout — stored in POINTS (QuestPDF native), never px. See RULE C2.
+    public string? BackgroundColor { get; set; }   // "#RRGGBB" only — see RULE C3
+    public float? MarginTop { get; set; }
+    public float? MarginBottom { get; set; }
+    public float? MarginLeft { get; set; }
+    public float? MarginRight { get; set; }
+    public float? Padding { get; set; }
+
+    // Text
+    public string? Content { get; set; }            // tokens: "PropertyNo: {{Asset.PropertyNo}}"
+    public int FontSize { get; set; } = 11;
+    public bool IsBold { get; set; }
+    public string Alignment { get; set; } = "Left"; // Left|Center|Right|Justify
+
+    // Table — rows are DATA-BOUND, not child nodes (see RULE C1)
+    public List<TableColumnDefinition> TableColumns { get; set; } = [];
+    public string? BindSourceCollection { get; set; } // e.g. "Assets"
+
+    public List<ReportNode> Children { get; set; } = [];
+}
+
+public sealed class TableColumnDefinition
+{
+    public string HeaderText { get; set; } = string.Empty;
+    public string DataToken { get; set; } = string.Empty; // row-relative: "{{Description}}"
+    public float WidthRatio { get; set; } = 1f;
+}
+```
+
+### 1b. Aggregate — `Modules.ReportDesigner/Domain/ReportTemplate.cs`
+
+```csharp
+using AMIS.Framework.Core.Domain;                 // BaseEntity<TId>
+using AMIS.Framework.Core.Domain.Contracts;       // IAuditableEntity, IMustHaveTenant (verify exact ns)
+using AMIS.Modules.ReportDesigner.Contracts.v1.Designer.Ast;
+
+namespace AMIS.Modules.ReportDesigner.Domain;
+
+public sealed class ReportTemplate : BaseEntity<Guid>, IAuditableEntity, IMustHaveTenant
+{
+    public Guid TenantId { get; set; }                       // Finbuckle auto-filter
+    public string Name { get; private set; } = default!;
+    public string? Description { get; private set; }
+    public string DataSourceKey { get; private set; } = default!; // curated source, e.g. "AssetList"
+    public int SchemaVersion { get; private set; }           // AST schema version at save time
+    public ReportNode RootNode { get; private set; } = default!;
+
+    private ReportTemplate() { }                             // EF
+
+    public static ReportTemplate Create(string name, string dataSourceKey, ReportNode rootNode, string? description = null)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        ArgumentException.ThrowIfNullOrWhiteSpace(dataSourceKey);
+        ArgumentNullException.ThrowIfNull(rootNode);
+        // Id is set by the framework (protected set) — do NOT assign it here.
+        return new ReportTemplate
+        {
+            Name = name.Trim(),
+            DataSourceKey = dataSourceKey.Trim(),
+            Description = description?.Trim(),
+            RootNode = rootNode,
+            SchemaVersion = AstSchema.CurrentAstSchemaVersion
+        };
+    }
+
+    public void Update(string name, string? description, ReportNode rootNode)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        ArgumentNullException.ThrowIfNull(rootNode);
+        Name = name.Trim();
+        Description = description?.Trim();
+        RootNode = rootNode;
+        SchemaVersion = AstSchema.CurrentAstSchemaVersion;
+    }
+}
+```
+
+---
+
+## Phase 1b — The Data Source Designer (admin-defined, runtime) ← your chosen model
+
+Reports bind to **admin-defined data sources**, not hardcoded field lists. An admin
+composes a data source at runtime from **reportable sources that modules publish**; the
+system reads its schema, and that schema becomes the canvas field-picker. Fully
+customizable *and* tenant-safe — every reportable source returns tenant-scoped,
+read-only rows. Below is the implementation-ready shape, ending in a worked `Assets`
+source built on the real `AssetRegister` contracts.
+
+### 1b.1 — Schema vocabulary (`Contracts/v1/DataSources/`)
+
+```csharp
+namespace AMIS.Modules.ReportDesigner.Contracts.v1.DataSources;
+
+public enum ReportFieldType { Text, Number, Money, Date, DateTime, Bool, Enum }
+public enum RelationCardinality { ManyToOne, OneToMany }
+
+/// <summary>One bindable field a source exposes. <c>Name</c> is the token segment used
+/// in templates: a field named "PropertyNo" is bound as {{PropertyNo}}.</summary>
+public sealed record ReportableField(
+    string Name,
+    string DisplayName,
+    ReportFieldType Type,
+    string? DefaultFormat = null,   // token-grammar format key, e.g. "money", "date" (RULE D4)
+    bool IsNullable = false);
+
+/// <summary>A navigable relation to another reportable source.
+/// ManyToOne flattens into the row as "Custodian.FullName"; OneToMany is a child collection.</summary>
+public sealed record ReportableRelation(
+    string Name,                    // token prefix / collection name, e.g. "Custodian"
+    string DisplayName,
+    string TargetSourceKey,         // another IReportableSource.Key, e.g. "Employees"
+    string ForeignKeyField,         // field on THIS source, e.g. "CurrentCustodianId"
+    RelationCardinality Cardinality = RelationCardinality.ManyToOne);
+```
+
+### 1b.2 — Render-time request (what the provider hands a source)
+
+```csharp
+public enum FilterOperator { Equals, NotEquals, Contains, GreaterThan, LessThan, Between, In }
+
+public sealed record DataSourceFilter(string FieldPath, FilterOperator Operator, object? Value, object? Value2 = null);
+public sealed record DataSourceSort(string FieldPath, bool Descending = false);
+
+/// <summary>Derived from the saved spec at render time. Tenant is AMBIENT — resolved
+/// inside the source's owning module — never passed across the boundary (RULE D2).</summary>
+public sealed record ReportSourceRequest(
+    IReadOnlyList<string> SelectedFields,      // root field names to project
+    IReadOnlyList<string> IncludedRelations,   // relation names to resolve/flatten
+    IReadOnlyList<DataSourceFilter> Filters,
+    IReadOnlyList<DataSourceSort> Sorts,
+    int MaxRows = 5000);
+```
+
+### 1b.3 — The source contract (projects to dictionaries → zero reflection downstream)
+
+```csharp
+public interface IReportableSource
+{
+    string Key { get; }                                  // "Assets"
+    string DisplayName { get; }                          // "Asset Registry"
+    IReadOnlyList<ReportableField> Fields { get; }
+    IReadOnlyList<ReportableRelation> Relations { get; }
+
+    /// MUST return TENANT-SCOPED, read-only rows keyed by field name. ManyToOne relation
+    /// fields are flattened as "Relation.Field" (e.g. "Custodian.FullName").
+    ValueTask<IReadOnlyList<IReadOnlyDictionary<string, object?>>> QueryAsync(
+        ReportSourceRequest request, CancellationToken ct);
+}
+```
+
+> **Payoff:** because sources emit plain dictionaries keyed by catalog tokens, the
+> binding resolver becomes a **dictionary lookup + format** — *no reflection over live
+> entities at all*. That single design choice satisfies RULE B4/D3 by construction.
+
+### 1b.4 — The saved definition (`Domain/` aggregate + jsonb spec)
+
+```csharp
+public sealed record SelectedField(string FieldPath, string? Alias = null, string? FormatOverride = null);
+public sealed record IncludedRelation(string RelationName, IReadOnlyList<SelectedField> Fields);
+
+/// <summary>The admin's saved composition — persisted as jsonb on ReportDataSource.
+/// The bindable catalog shown in the canvas is DERIVED from this (1b.5).</summary>
+public sealed record DataSourceSpec(
+    string RootSourceKey,
+    IReadOnlyList<SelectedField> Fields,
+    IReadOnlyList<IncludedRelation> Relations,
+    IReadOnlyList<DataSourceFilter> Filters,
+    IReadOnlyList<DataSourceSort> Sorts,
+    int RowLimit = 5000);
+
+public sealed class ReportDataSource : BaseEntity<Guid>, IAuditableEntity, IMustHaveTenant
+{
+    public Guid TenantId { get; set; }
+    public string Name { get; private set; } = default!;
+    public string RootSourceKey { get; private set; } = default!;
+    public DataSourceSpec Spec { get; private set; } = default!;   // jsonb (same pattern as ReportNode)
+
+    private ReportDataSource() { }
+    public static ReportDataSource Create(string name, DataSourceSpec spec)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        ArgumentNullException.ThrowIfNull(spec);
+        return new ReportDataSource { Name = name.Trim(), RootSourceKey = spec.RootSourceKey, Spec = spec };
+    }
+    public void Update(string name, DataSourceSpec spec)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        ArgumentNullException.ThrowIfNull(spec);
+        Name = name.Trim(); RootSourceKey = spec.RootSourceKey; Spec = spec;
+    }
+}
+```
+
+`ReportTemplate.DataSourceKey` holds the `ReportDataSource.Id`. The "allow-list" is the
+admin's selection — generated, never hand-written.
+
+### 1b.5 — Deriving the catalog (the allow-list = what the admin chose)
+
+```csharp
+public sealed record CatalogEntry(string Token, string DisplayName, ReportFieldType Type, string? Format);
+
+public static class DataSourceCatalog
+{
+    /// Tokens the field-picker offers and the resolver enforces (RULE D3).
+    public static IReadOnlyList<CatalogEntry> Build(
+        DataSourceSpec spec, IReportableSource root, Func<string, IReportableSource> resolve)
+    {
+        var entries = new List<CatalogEntry>();
+
+        foreach (var sel in spec.Fields)
+        {
+            var f = root.Fields.First(x => x.Name == sel.FieldPath);
+            entries.Add(new(sel.Alias ?? f.Name, f.DisplayName, f.Type, sel.FormatOverride ?? f.DefaultFormat));
+        }
+
+        foreach (var rel in spec.Relations)
+        {
+            var relDef = root.Relations.First(r => r.Name == rel.RelationName);
+            var target = resolve(relDef.TargetSourceKey);
+            foreach (var sel in rel.Fields)
+            {
+                var f = target.Fields.First(x => x.Name == sel.FieldPath);
+                entries.Add(new(
+                    $"{relDef.Name}.{sel.Alias ?? f.Name}",          // "Custodian.FullName"
+                    $"{relDef.DisplayName} → {f.DisplayName}",
+                    f.Type, sel.FormatOverride ?? f.DefaultFormat));
+            }
+        }
+        return entries;
+    }
+}
+```
+
+### 1b.6 — Worked example: the `Assets` source (real `AssetRegister` contracts)
+
+```csharp
+using AMIS.Modules.AssetRegister.Contracts.v1.Assets;     // AssetRegistrySummaryDto, SearchAssetsQuery
+using AMIS.Modules.ReportDesigner.Contracts.v1.DataSources;
+using Mediator;
+
+namespace AMIS.Modules.ReportDesigner.Sources;
+
+/// <summary>Publishes the Asset Registry as a reportable source. Fetches ONLY through
+/// AssetRegister.Contracts via mediator — tenant scoping is applied by that module's
+/// SearchAssetsQuery handler, so reports are tenant-safe by construction (RULE D2/A2).</summary>
+public sealed class AssetsReportableSource(IMediator mediator) : IReportableSource
+{
+    public string Key => "Assets";
+    public string DisplayName => "Asset Registry";
+
+    public IReadOnlyList<ReportableField> Fields { get; } =
+    [
+        new("PropertyNo",       "Property No",      ReportFieldType.Text),
+        new("Description",      "Description",      ReportFieldType.Text),
+        new("AssetType",        "Asset Type",       ReportFieldType.Enum),
+        new("UnitCost",         "Unit Cost",        ReportFieldType.Money, DefaultFormat: "money"),
+        new("AcquisitionDate",  "Acquisition Date", ReportFieldType.Date,  DefaultFormat: "date"),
+        new("LifecycleState",   "Lifecycle State",  ReportFieldType.Enum),
+        new("CurrentCondition", "Condition",        ReportFieldType.Enum),
+    ];
+
+    public IReadOnlyList<ReportableRelation> Relations { get; } =
+    [
+        // Each asset has one custodian → flattened tokens Custodian.FullName / Custodian.Position.
+        new("Custodian", "Custodian", TargetSourceKey: "Employees",
+            ForeignKeyField: "CurrentCustodianId", RelationCardinality.ManyToOne),
+    ];
+
+    public async ValueTask<IReadOnlyList<IReadOnlyDictionary<string, object?>>> QueryAsync(
+        ReportSourceRequest request, CancellationToken ct)
+    {
+        // 1. Pull tenant-scoped assets via Contracts (page until MaxRows or exhausted).
+        var assets = new List<AssetRegistrySummaryDto>();
+        var page = 1;
+        while (assets.Count < request.MaxRows)
+        {
+            var result = await mediator.Send(new SearchAssetsQuery(PageNumber: page, PageSize: 200), ct);
+            assets.AddRange(result.Items);
+            if (!result.HasNext) break;
+            page++;
+        }
+
+        // 2. Resolve the Custodian relation only if the spec included it (ManyToOne flatten).
+        var custodians = request.IncludedRelations.Contains("Custodian")
+            ? await LoadCustodiansAsync(assets, ct)
+            : new Dictionary<Guid, (string FullName, string Position)>();
+
+        // 3. Project ONLY the selected fields into row dictionaries.
+        return assets.Take(request.MaxRows).Select(a =>
+        {
+            var row = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+            foreach (var field in request.SelectedFields)
+                row[field] = field switch
+                {
+                    "PropertyNo"       => a.PropertyNo,
+                    "Description"      => a.Description,
+                    "AssetType"        => a.AssetType.ToString(),
+                    "UnitCost"         => a.UnitCost,            // decimal → resolver formats as money
+                    "AcquisitionDate"  => a.AcquisitionDate,    // DateOnly → resolver formats as date
+                    "LifecycleState"   => a.LifecycleState.ToString(),
+                    "CurrentCondition" => a.CurrentCondition.ToString(),
+                    _ => null
+                };
+
+            if (custodians.Count > 0 && a.CurrentCustodianId is { } id && custodians.TryGetValue(id, out var c))
+            {
+                row["Custodian.FullName"] = c.FullName;
+                row["Custodian.Position"] = c.Position;
+            }
+            return (IReadOnlyDictionary<string, object?>)row;
+        }).ToList();
+    }
+
+    private async ValueTask<Dictionary<Guid, (string FullName, string Position)>> LoadCustodiansAsync(
+        IReadOnlyList<AssetRegistrySummaryDto> assets, CancellationToken ct)
+    {
+        var ids = assets.Where(a => a.CurrentCustodianId is not null)
+                        .Select(a => a.CurrentCustodianId!.Value).Distinct().ToList();
+        if (ids.Count == 0) return [];
+
+        // Resolve via the owning module's Contracts (e.g. MasterData employees) — tenant-scoped there.
+        // var employees = await mediator.Send(new GetEmployeesByIdsQuery(ids), ct);
+        // return employees.ToDictionary(e => e.Id, e => (e.FullName, e.Position));
+        return [];   // ← wire to the real employee contract when the "Employees" source lands
+    }
+}
+```
+
+### 1b.7 — Provider + DI + how it feeds the engine
+
+```csharp
+public sealed record ReportRenderData(
+    IReadOnlyList<IReadOnlyDictionary<string, object?>> Rows,
+    IReadOnlyList<CatalogEntry> Catalog,
+    string RootSourceKey);     // collection name a Table node binds to (BindSourceCollection)
+
+public sealed class ReportDataSourceProvider(IEnumerable<IReportableSource> sources)
+    : IReportDataSourceProvider
+{
+    private IReportableSource Resolve(string key) =>
+        sources.FirstOrDefault(s => s.Key == key)
+        ?? throw new KeyNotFoundException($"Reportable source '{key}' is not registered.");
+
+    public async ValueTask<ReportRenderData> LoadAsync(DataSourceSpec spec, CancellationToken ct)
+    {
+        var root = Resolve(spec.RootSourceKey);
+        var request = new ReportSourceRequest(
+            SelectedFields:    spec.Fields.Select(f => f.FieldPath).ToList(),
+            IncludedRelations: spec.Relations.Select(r => r.RelationName).ToList(),
+            Filters:           spec.Filters,
+            Sorts:             spec.Sorts,
+            MaxRows:           spec.RowLimit);
+
+        var rows    = await root.QueryAsync(request, ct);
+        var catalog = DataSourceCatalog.Build(spec, root, Resolve);
+        return new ReportRenderData(rows, catalog, spec.RootSourceKey);
+    }
+}
+```
+
+```csharp
+// DI registration — each adapter is one line (ReportDesignerModule.ConfigureServices):
+builder.Services.AddScoped<IReportableSource, AssetsReportableSource>();
+builder.Services.AddScoped<IReportDataSourceProvider, ReportDataSourceProvider>();
+```
+
+Wiring into the render flow (Phase 3 handler / Phase 4 engine):
+
+1. `GenerateReportHandler` loads the template, then its `ReportDataSource`, then calls
+   `provider.LoadAsync(reportDataSource.Spec, ct)`.
+2. Build the engine context: `ctx.Data[renderData.RootSourceKey] = renderData.Rows`
+   (a Table node with `BindSourceCollection = "Assets"` finds them); `ctx.Catalog =
+   renderData.Catalog`.
+3. `ResolveCell(row, token)` is now just `row.TryGetValue(token, out var v)` + format —
+   reflection-free. A token absent from the catalog fails validation on save.
+
+> **Build order:** ship the `Assets` source end-to-end first (publish → Data Source
+> Designer picks fields → template binds → PDF). Adding `Employees`, `Vehicles`, etc.
+> later is one `IReportableSource` + one DI line each — **zero engine/designer changes**.
+
+> **Boundary note:** the adapter lives in `Modules.ReportDesigner` and references only
+> `AssetRegister.Contracts` (the same pattern `QuestPdfReporting` already uses to
+> reference many `*.Contracts`). Alternatively the owning module can publish its own
+> source by referencing `ReportDesigner.Contracts` — pick one convention and keep it.
+
+---
+
+## Phase 2 — Persistence (`BaseDbContext`, jsonb, Npgsql concurrency)
+
+```csharp
+public sealed class ReportDesignerDbContext(/* BaseDbContext ctor deps */ DbContextOptions<ReportDesignerDbContext> options /* + tenant/settings/env per BaseDbContext */)
+    : BaseDbContext(/* pass through */)
+{
+    public DbSet<ReportTemplate> ReportTemplates => Set<ReportTemplate>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.HasDefaultSchema(ReportDesignerModuleConstants.SchemaName);
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(ReportDesignerDbContext).Assembly);
+        base.OnModelCreating(modelBuilder);
+    }
+}
+```
+
+```csharp
+internal sealed class ReportTemplateConfiguration : IEntityTypeConfiguration<ReportTemplate>
+{
+    public void Configure(EntityTypeBuilder<ReportTemplate> builder)
+    {
+        builder.ToTable("report_templates", ReportDesignerModuleConstants.SchemaName);
+        builder.HasKey(t => t.Id);
+
+        builder.Property(t => t.Name).IsRequired().HasMaxLength(200);
+        builder.Property(t => t.Description).HasMaxLength(1000);
+        builder.Property(t => t.DataSourceKey).IsRequired().HasMaxLength(100);
+        builder.Property(t => t.SchemaVersion);
+
+        builder.Property(t => t.RootNode)
+            .HasColumnType("jsonb")
+            .HasConversion(
+                v => JsonSerializer.Serialize(v, ReportJson.Options),
+                v => JsonSerializer.Deserialize<ReportNode>(v, ReportJson.Options)!);
+
+        // ⚠️ Concurrency: use Postgres xmin, NOT a byte[] RowVersion.
+        //    byte[] IsRowVersion() breaks Npgsql INSERTs (NOT NULL violation).
+        builder.UseXminAsConcurrencyToken();
+
+        builder.HasIndex(t => t.TenantId);
+    }
+}
+```
+
+> **Soft-delete caution:** if `ReportTemplate` needs soft delete, rely on whatever
+> `BaseDbContext` already provides. Do **not** implement `ISoftDeletable` *and* add a
+> second named `SoftDelete` query filter — that combination fails EF10 `migrations add`.
+
+```csharp
+public static class ReportDesignerModuleConstants
+{
+    public const string SchemaName = "report_designer";
+
+    public static class Permissions
+    {
+        public const string View     = "reportdesigner.templates.view";
+        public const string Create   = "reportdesigner.templates.create";
+        public const string Update   = "reportdesigner.templates.update";
+        public const string Delete   = "reportdesigner.templates.delete";
+        public const string Generate = "reportdesigner.reports.generate";
+    }
+}
+```
+
+Add `ReportDesignerDbContextFactory` (design-time) and `ReportDesignerDbInitializer`
+(`IDbInitializer`, `MigrateAsync`/`SeedAsync`) under `Data/`, mirroring `MasterData`.
+
+---
+
+## Phase 3 — Application slices (Mediator; `Generate` + curated data fetch)
+
+```csharp
+namespace AMIS.Modules.ReportDesigner.Contracts.v1.Designer.GenerateReport;
+using Mediator;
+public sealed record GenerateReportQuery(Guid TemplateId) : IQuery<byte[]>;
+```
+
+```csharp
+namespace AMIS.Modules.ReportDesigner.Features.v1.Designer.GenerateReport;
+using Mediator;
+
+public sealed class GenerateReportHandler(
+    ReportDesignerDbContext db,                 // own templates: direct read is fine
+    IReportDataSourceProvider dataSources,      // curated, mediator-backed (RULE D1)
+    IReportBindingResolver resolver)
+    : IQueryHandler<GenerateReportQuery, byte[]>
+{
+    public async ValueTask<byte[]> Handle(GenerateReportQuery request, CancellationToken ct)
+    {
+        var template = await db.ReportTemplates
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Id == request.TemplateId, ct)   // tenant auto-filtered
+            ?? throw new KeyNotFoundException($"Report template '{request.TemplateId}' not found.");
+
+        ReportAstValidator.EnsureValid(template.RootNode, template.DataSourceKey); // RULE C/D re-check on render
+
+        var data = await dataSources.LoadAsync(template.DataSourceKey, ct);        // fetch via Contracts
+        var engine = new QuestReportEngine(template.RootNode, data, resolver);
+        return engine.GeneratePdf();    // QuestPDF extension on IDocument
+    }
+}
+```
+
+```csharp
+public sealed class GenerateReportValidator : AbstractValidator<GenerateReportQuery>
+{
+    public GenerateReportValidator() => RuleFor(x => x.TemplateId).NotEmpty();
+}
+```
+
+```csharp
+public static class GenerateReportEndpoint
+{
+    public static RouteHandlerBuilder MapGenerateReport(this IEndpointRouteBuilder group) =>
+        group.MapGet("/{templateId:guid}/generate",
+            async (Guid templateId, IMediator mediator, CancellationToken ct) =>
+            {
+                var pdf = await mediator.Send(new GenerateReportQuery(templateId), ct);
+                return Results.File(pdf, "application/pdf", $"report-{templateId}.pdf");
+            })
+        .WithName("ReportDesigner_GenerateReport")          // module-prefixed → globally unique
+        .WithSummary("Render a saved report template to PDF")
+        .Produces(200, null, "application/pdf")
+        .RequirePermission(ReportDesignerModuleConstants.Permissions.Generate);
+}
+```
+
+CRUD slices (`Create/Update/Get/List`) follow the same shape: `ICommand`/`IQuery`,
+a validator, `ReportDesigner_`-prefixed endpoint name, `TypedResults`,
+`.RequirePermission(...)`. A separate `PreviewReport` slice accepts an *unsaved* AST
+in the body (for the live designer loop) and is gated by `Generate`.
+
+---
+
+## Phase 4 — QuestPDF interpreter (`Engine/`)
+
+```csharp
+// Binding resolver — nested paths + formatting, bounded by an allow-list (RULE D)
+public interface IReportBindingResolver
+{
+    string BindText(string? template, IReadOnlyDictionary<string, object> ctx, IFieldCatalog allow);
+    string ResolveCell(object? row, string token, IFieldCatalog allow);
+}
+```
+
+```csharp
+public sealed class QuestReportEngine(
+    ReportNode root,
+    ReportRenderContext ctx,                  // data + DataSourceKey + page settings
+    IReportBindingResolver resolver) : IDocument
+{
+    public void Compose(IDocumentContainer container)
+    {
+        container.Page(page =>
+        {
+            page.Size(ctx.PageSize);          // reuse GovernmentPaperSizes mapping
+            page.MarginPoint(ctx.Margin);
+            page.PageColor(QuestPDF.Helpers.Colors.White);
+            page.DefaultTextStyle(x => x.FontFamily("Arial").FontSize(11));
+
+            page.Content().Column(col =>
+            {
+                foreach (var child in root.Children)
+                    RenderNode(col.Item(), child);
+            });
+
+            page.Footer().AlignCenter().Text(t => { t.CurrentPageNumber(); t.Span(" / "); t.TotalPages(); });
+        });
+    }
+
+    private void RenderNode(IContainer c, ReportNode node)
+    {
+        if (node.Padding is { } p) c = c.Padding(p);
+        if (!string.IsNullOrWhiteSpace(node.BackgroundColor)) c = c.Background(node.BackgroundColor);
+
+        switch (node.Type)
+        {
+            case NodeType.Row:    c.Row(r => { foreach (var ch in node.Children) RenderNode(r.RelativeItem(), ch); }); break;
+            case NodeType.Column: c.Column(x => { foreach (var ch in node.Children) RenderNode(x.Item(), ch); }); break;
+            case NodeType.Spacer: c.Height(node.MarginTop ?? 10); break;
+            case NodeType.Text:
+                c.Text(text =>
+                {
+                    var span = text.Span(resolver.BindText(node.Content, ctx.Data, ctx.Catalog)).FontSize(node.FontSize);
+                    if (node.IsBold) span.Bold();
+                    ApplyAlignment(text, node.Alignment);
+                });
+                break;
+            case NodeType.Table: RenderTable(c, node); break;
+        }
+    }
+
+    private void RenderTable(IContainer c, ReportNode node)
+    {
+        if (node.BindSourceCollection is null ||
+            !ctx.Data.TryGetValue(node.BindSourceCollection, out var raw) ||
+            raw is not IEnumerable<object> rows) return;
+
+        c.Table(table =>
+        {
+            table.ColumnsDefinition(cols => { foreach (var col in node.TableColumns) cols.RelativeColumn(col.WidthRatio); });
+            table.Header(h => { foreach (var col in node.TableColumns) h.Cell().Background(Colors.Grey.Lighten3).Padding(5).Text(col.HeaderText).Bold(); });
+            foreach (var rowObj in rows)
+                foreach (var col in node.TableColumns)
+                    table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(5)
+                         .Text(resolver.ResolveCell(rowObj, col.DataToken, ctx.Catalog));
+        });
+    }
+
+    private static void ApplyAlignment(TextDescriptor t, string a)
+    {
+        switch (a) { case "Center": t.AlignCenter(); break; case "Right": t.AlignRight(); break; case "Justify": t.Justify(); break; default: t.AlignLeft(); break; }
+    }
+}
+```
+
+---
+
+## Phase 5 — Module wiring (`IModule`) + host registration
+
+```csharp
+using AMIS.Framework.Shared.Constants;            // PermissionConstants
+using AMIS.Framework.Web.Modules;                 // IModule
+using QuestPDF.Infrastructure;
+
+public sealed class ReportDesignerModule : IModule
+{
+    public void ConfigureServices(IHostApplicationBuilder builder)
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+        PermissionConstants.Register(ReportDesignerModuleConstants.Permissions);
+        QuestPDF.Settings.License = LicenseType.Community;       // same as QuestPdfReporting
+
+        builder.Services.AddHeroDbContext<ReportDesignerDbContext>();
+        builder.Services.AddScoped<IDbInitializer, ReportDesignerDbInitializer>();
+        builder.Services.AddSingleton<IReportBindingResolver, ReportBindingResolver>();
+        builder.Services.AddScoped<IReportDataSourceProvider, ReportDataSourceProvider>();
+    }
+
+    public void MapEndpoints(IEndpointRouteBuilder endpoints)
+    {
+        var versionSet = endpoints.NewApiVersionSet().HasApiVersion(new ApiVersion(1)).ReportApiVersions().Build();
+        var group = endpoints.MapGroup("api/v{version:apiVersion}/report-designer/templates")
+            .WithTags("ReportDesigner").WithApiVersionSet(versionSet);
+
+        group.MapGenerateReport();
+        // group.MapCreate/Update/Get/List/Preview...
+    }
+}
+```
+
+Host wiring (`Playground.Api/Program.cs`): add `typeof(ReportDesignerModule)`,
+`typeof(ReportDesignerContractsMarker)`, and a representative query to the Mediator
+`Assemblies` list; add `typeof(ReportDesignerModule).Assembly` to `moduleAssemblies`;
+register both projects in `AMIS.Framework.slnx` and `Playground.Api.csproj`.
+
+---
+
+## Phase 6 — Blazor designer (see DETAILED RULES F)
+
+Recursive `ReportCanvasNode.razor` per the original concept, but the drag-drop and
+state bodies are the real work (roadmap Phases 3–4). All AMIS Blazor rules apply
+(AMIS*/Mud components, permission-gated buttons, UTF-8 saves).
+
+---
+
+# DETAILED IMPLEMENTATION RULES
+
+These are the specific rules that keep a WYSIWYG report maker from collapsing under
+its own edge cases. Treat them as MUST unless marked SHOULD.
+
+## A. Boundary & module rules
+- **A1 (MUST)** New module `Modules.ReportDesigner` (Contracts + impl). Do not add persistence to `Modules.QuestPdfReporting`.
+- **A2 (MUST)** The ReportDesigner reads bindable data **only** through registered `IReportableSource`s (published by the owning modules, tenant-scoped). It never references another module's DbContext, Domain, or Features directly. A source implementation may itself fetch via that module's `.Contracts`/`IMediator`.
+- **A3 (MUST)** The designer's own templates persist in `ReportDesignerDbContext`; reads of *own* templates may use the DbContext directly.
+- **A4 (MUST)** Statutory forms (ICS/PAR/PO/PR/DV/BUR/RSPI) are **out of scope** — they remain code/`.frx`/`.rdlc`. The designer never edits them.
+
+## B. Permissions, tenancy, security
+- **B1 (MUST)** Register permissions via `PermissionConstants.Register(...)`; gate every endpoint with `.RequirePermission(...)` and every Blazor action with `UserProfileState.Permissions.Contains(...)`.
+- **B2 (MUST)** `ReportTemplate : IMustHaveTenant` → templates are tenant-isolated automatically. Never load a template across tenants, including in preview.
+- **B3 (MUST)** Re-validate permission **and** re-validate the AST **on render**, server-side. Never trust a client-supplied AST blindly (preview slice included).
+- **B4 (MUST)** Binding is a **data lookup, never code execution.** No expression eval, no `DataTable.Compute`, no reflection method invocation — property reads only, through the allow-list (D1).
+
+## C. AST schema rules
+- **C1 (MUST)** Containment matrix — enforce in `ReportAstValidator`:
+  | Node | May contain |
+  |---|---|
+  | Page | Row, Column, Table, Text, Image, Spacer |
+  | Row | Column (each child is a relative-width cell) |
+  | Column | any node |
+  | Table | **no child nodes** — rows are data-bound; only `TableColumns` |
+  | Text, Image, Spacer | **leaf** — no children |
+- **C2 (MUST)** All sizes stored in **points** (QuestPDF native). The canvas converts pt→px for display (`px ≈ pt × 96/72 = pt × 1.333`). Never persist px.
+- **C3 (MUST)** Colors are `#RRGGBB` strings; validate on save; reject anything else.
+- **C4 (MUST)** Persist `SchemaVersion`; provide an AST upgrader when bumping `CurrentAstSchemaVersion`. Old templates must still render.
+- **C5 (SHOULD)** Guardrails: max depth 32, max node count 500, max template jsonb size ~256 KB. Reject on save with a clear message.
+- **C6 (MUST)** Node `Id`s are stable GUIDs and unique within a template — the selection/undo/drag systems key off them.
+
+## D. Data-source & binding rules (admin-defined model — your chosen direction)
+- **D1 (MUST)** Data sources are **admin-defined at runtime** via the Data Source Designer (Phase 1b), composed from module-published `IReportableSource`s. There is **no hardcoded field list** — the bindable catalog is *derived* from the saved `ReportDataSource.Spec`. This is what makes the data source fully customizable.
+- **D2 (MUST — the hard rule)** Every `IReportableSource.QueryAsync` returns **tenant-scoped, read-only** data. Tenant filtering lives inside the source implementation (in the owning module, using the tenant context); the designer can never widen it. A report cannot read another tenant's data no matter how the template is authored.
+- **D3 (MUST)** The resolver binds **only** to fields present in the chosen `ReportDataSource.Spec`. A token referencing a field not in the spec → validation error on save, empty string on render. No open `GetProperty(arbitraryString)` over live entities, no expression eval.
+- **D4 (MUST)** Token grammar: `{{Path}}` / `{{Path:format}}`. Formats: `date`, `datetime`, `money` (₱ + thousands + 2dp), `int`, `pct`. Unknown format → raw value, never throw. Null anywhere in a path → empty string; max path depth 4.
+- **D5 (MUST)** Tables bind to one collection (a relation declared on the root source); cell tokens are **row-relative** (`{{Description}}`), resolved per row through the same derived catalog.
+- **D6 (SHOULD)** Caps: max rows per query (e.g. 5,000) + a render-time budget; exceed → friendly error, not a hang. Cache compiled accessors per (source, path) — reflection per cell is too slow at scale.
+- **D7 (MUST)** Adding a new bindable area = a module registering one more `IReportableSource`. The engine and designer never change. This is how "fully customizable" stays maintainable.
+- **D8 (SHOULD)** Cross-source composition (Assets + Custodian + Category) is modeled through explicit `IReportableSource.Relations`, **not** arbitrary user SQL. Keeps joins safe and tenant-scoped while still feeling open to the admin.
+
+## E. QuestPDF rendering rules
+- **E1 (MUST)** Set `QuestPDF.Settings.License = LicenseType.Community;` once in `ConfigureServices` (already done by `QuestPdfReporting`; set it here too since this is a separate module init path).
+- **E2 (MUST)** Never name an instance method `GeneratePdf` on an `IDocument` — call the QuestPDF **extension** `document.GeneratePdf()`. (The 1st-pass plan had an infinite-recursion shim; removed.)
+- **E3 (MUST)** Wrap rendering; catch `DocumentLayoutException` (content that can't fit / infinite layout) → return a 422 with "layout doesn't fit; adjust column widths/margins," not a 500.
+- **E4 (SHOULD)** Set a max-page guard (e.g. `Settings.DocumentLayoutExceptionThreshold`) to fail fast on runaway templates.
+- **E5 (MUST)** Reuse `PaperSize`/`Orientation`/`Margin` parameters and the `GovernmentPaperSizes` presets (A4, LongBond, etc.) — same UX as existing reports.
+- **E6 (MUST)** Logos/static images via `ReportAssets/**` embedded resources (already wired in the csproj pattern) — not file paths.
+- **E7 (MUST)** `table.Header()` for repeating headers across pages; totals/footers computed in the handler/provider and passed as bound values (don't compute in the view tree).
+- **E8 (SHOULD)** Keep render deterministic for golden tests — no `DateTime.Now` inside `Compose`; "printed on" is a bound field supplied by the handler.
+
+## F. Blazor WYSIWYG designer rules
+- **F1 (MUST)** **Single source of truth:** one mutable AST held in a scoped state container; the recursive canvas renders from it. Put `@key="node.Id"` on every rendered child so Blazor diffing stays stable during reorders.
+- **F2 (MUST)** **Selection model:** track `SelectedNodeId`; the properties panel two-way-binds to the selected node, then calls a single `StateHasChanged`/notify. Don't pass mutable nodes through deep `[Parameter]` chains without a notify-up callback.
+- **F3 (MUST)** **Drag-drop safety:** validate every drop against the containment matrix (C1) **and** reject dropping a node into its own descendant (cycle). Track the dragged node by Id in a state pointer — do **not** serialize whole nodes into `DataTransfer`.
+- **F4 (SHOULD)** Provide explicit move/indent controls (move up/down, in/out) in addition to drag — they're the accessible fallback and cover Phase-3 (structured editor) before full drag lands.
+- **F5 (MUST)** **Undo/redo** via a bounded snapshot stack of serialized AST (cap ~50). Debounce snapshots (e.g. on commit, not per keystroke).
+- **F6 (MUST)** **Live preview is debounced** (≥500 ms idle) and uses **capped sample data** — never re-render the PDF on every keystroke. The PDF preview (via the `Preview` slice) is the **authoritative fidelity check**; the canvas is approximate.
+- **F7 (MUST)** **Concurrency:** templates carry the xmin token (Phase 2). On save conflict, show "edited elsewhere; reload" — don't silently overwrite.
+- **F8 (MUST)** Dirty tracking + explicit Save; warn on navigate-away with unsaved changes.
+- **F9 (MUST)** Save all `.razor`/`.cs` as **UTF-8** (₱, —, … appear in templates); prefer `AMISButton`/`AMISTextField`/Mud over raw HTML controls; permission-gate every action (B1).
+
+## G. Persistence & migration rules
+- **G1 (MUST)** AST stored as one `jsonb` column with stable `JsonSerializerOptions` (`ReportJson.Options`) shared by engine + persistence + API so round-trips are byte-stable.
+- **G2 (MUST)** Concurrency via `UseXminAsConcurrencyToken()` — **not** a `byte[]` RowVersion (breaks Npgsql inserts).
+- **G3 (MUST)** Don't combine `ISoftDeletable` with a second named `SoftDelete` filter (EF10 `migrations add` fails).
+- **G4 (MUST)** Migrations live in `Migrations.PostgreSQL` against `ReportDesignerDbContext`; schema `report_designer`.
+
+## H. Testing rules
+- **H1 (MUST)** Golden-file PDF tests: fixed template + fixed data → assert a stable hash (deterministic per E8).
+- **H2 (MUST)** AST validator tests: containment violations, depth/size caps, cyclic drops all rejected.
+- **H3 (MUST)** Binding tests: nested path, each format, missing field, null chain, collection rows.
+- **H4 (MUST)** Security tests: token outside the catalog is rejected; cross-tenant template id returns not-found; preview re-validates permission + AST.
+- **H5 (MUST)** Architecture test: `Modules.ReportDesigner` references no other module's internals (Contracts only).
+
+## I. Decision log (fill in before coding)
+- [ ] I1 — Confirmed greenfield scope: ad-hoc reports only; statutory forms not canvas-editable (RULE 0).
+- [ ] I2 — Confirmed tenant-scoping enforcement point lives in each `IReportableSource` (RULE D2).
+- [ ] I3 — Chosen first reportable source(s) to publish + Data Source Designer v1 scope (RULE D, Phase 1b).
+- [ ] I4 — Paper sizes / orientation supported at launch (RULE E5).
+- [ ] I5 — Roadmap cut-line targeted for v1 (see `AMIS_Report_Designer_Roadmap.md`; recommend Cut-line 2).
+
+---
+
+## What changed vs. the 1st-pass revised plan
+
+- Grounded every namespace/type against the repo (table above) — removed all "confirm-in-repo" guesses except `IMustHaveTenant`'s exact namespace.
+- **RULE 0 reframed** — the designer is greenfield and independent of the existing engines; the only constraints are "don't canvas-edit statutory forms" and "data stays tenant-scoped."
+- **Data source is admin-defined (runtime Data Source Designer, Phase 1b)** — modules publish tenant-scoped `IReportableSource`s; the binding catalog is *derived* from what the admin selects (fully customizable **and** safe), replacing the hardcoded allow-list.
+- Switched module from `Modules/Reporting` to **`Modules.ReportDesigner`** and clarified it renders like `QuestPdfReporting` but persists on its own.
+- Fixed real bugs: the recursive `GeneratePdf()` shim, `IAuditable`→`IAuditableEntity`, `BaseEntity`→`BaseEntity<Guid>` (protected-set Id), `NotFoundException`→`KeyNotFoundException`, Mediator namespace, license setup, xmin concurrency (not byte[] RowVersion).
+- Added the full **DETAILED IMPLEMENTATION RULES** (A–I): containment matrix, points-not-px, allow-listed binding catalog, drag-drop cycle/containment safety, debounced preview, golden-file tests, and a pre-coding decision log.

@@ -25,7 +25,8 @@ public sealed class UpsertOrganizationProfileCommandHandler(MasterDataDbContext 
                 command.AssistantRegionalManagerId, command.AssistantRegionalManagerName, command.AssistantRegionalManagerDesignation,
                 command.AccountantId, command.AccountantName, command.AccountantDesignation,
                 command.SupervisingAdminOfficerId, command.SupervisingAdminOfficerName, command.SupervisingAdminOfficerDesignation,
-                command.BudgetOfficerId, command.BudgetOfficerName, command.BudgetOfficerDesignation);
+                command.BudgetOfficerId, command.BudgetOfficerName, command.BudgetOfficerDesignation,
+                command.PropertyCustodianId, command.PropertyCustodianName, command.PropertyCustodianDesignation);
             existing.CreatedBy = currentUser.GetUserId().ToString();
             db.OrganizationProfiles.Add(existing);
         }
@@ -36,7 +37,8 @@ public sealed class UpsertOrganizationProfileCommandHandler(MasterDataDbContext 
                 command.AssistantRegionalManagerId, command.AssistantRegionalManagerName, command.AssistantRegionalManagerDesignation,
                 command.AccountantId, command.AccountantName, command.AccountantDesignation,
                 command.SupervisingAdminOfficerId, command.SupervisingAdminOfficerName, command.SupervisingAdminOfficerDesignation,
-                command.BudgetOfficerId, command.BudgetOfficerName, command.BudgetOfficerDesignation);
+                command.BudgetOfficerId, command.BudgetOfficerName, command.BudgetOfficerDesignation,
+                command.PropertyCustodianId, command.PropertyCustodianName, command.PropertyCustodianDesignation);
             existing.LastModifiedBy = currentUser.GetUserId().ToString();
         }
 
@@ -48,7 +50,8 @@ public sealed class UpsertOrganizationProfileCommandHandler(MasterDataDbContext 
             existing.AssistantRegionalManagerId, existing.AssistantRegionalManagerName, existing.AssistantRegionalManagerDesignation,
             existing.AccountantId, existing.AccountantName, existing.AccountantDesignation,
             existing.SupervisingAdminOfficerId, existing.SupervisingAdminOfficerName, existing.SupervisingAdminOfficerDesignation,
-            existing.BudgetOfficerId, existing.BudgetOfficerName, existing.BudgetOfficerDesignation);
+            existing.BudgetOfficerId, existing.BudgetOfficerName, existing.BudgetOfficerDesignation,
+            existing.PropertyCustodianId, existing.PropertyCustodianName, existing.PropertyCustodianDesignation);
     }
 }
 
