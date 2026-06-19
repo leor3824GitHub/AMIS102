@@ -15,6 +15,7 @@ internal interface IInspectionAcceptanceReportClient
     Task<PagedResponse<InspectionAcceptanceReportSummaryDto>> SearchAsync(
         string? keyword = null, InspectionAcceptanceReportStatus? status = null,
         int page = 1, int pageSize = 20, DateOnly? fromDate = null, DateOnly? toDate = null, CancellationToken ct = default);
+    Task<IReadOnlyList<IARStatusCountDto>> GetStatusCountsAsync(DateOnly? fromDate = null, DateOnly? toDate = null, CancellationToken ct = default);
     Task<InspectionAcceptanceReportDto?> GetAsync(Guid id, CancellationToken ct = default);
     Task<byte[]> GetFastReportPdfAsync(Guid id, string? pageWidth = null, string? orientation = null, int? minRows = null, CancellationToken ct = default);
     Task<InspectionAcceptanceReportDto> CreateAsync(CreateInspectionAcceptanceReportCommand command, CancellationToken ct = default);
@@ -48,6 +49,17 @@ internal sealed class InspectionAcceptanceReportClient(HttpClient http) : IInspe
         q["PageNumber"] = page.ToString(CultureInfo.InvariantCulture);
         q["PageSize"] = pageSize.ToString(CultureInfo.InvariantCulture);
         return http.GetFromJsonAsync<PagedResponse<InspectionAcceptanceReportSummaryDto>>($"{Base}?{q}", JsonOptions, ct)!;
+    }
+
+    public async Task<IReadOnlyList<IARStatusCountDto>> GetStatusCountsAsync(DateOnly? fromDate = null, DateOnly? toDate = null, CancellationToken ct = default)
+    {
+        var q = HttpUtility.ParseQueryString(string.Empty);
+        if (fromDate.HasValue) q["FromDate"] = fromDate.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        if (toDate.HasValue) q["ToDate"] = toDate.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        var qs = q.ToString();
+        var url = string.IsNullOrEmpty(qs) ? $"{Base}/status-counts" : $"{Base}/status-counts?{qs}";
+        var result = await http.GetFromJsonAsync<List<IARStatusCountDto>>(url, JsonOptions, ct).ConfigureAwait(false);
+        return result ?? [];
     }
 
     public Task<InspectionAcceptanceReportDto?> GetAsync(Guid id, CancellationToken ct = default) =>

@@ -68,7 +68,8 @@ public sealed record DisbursementVoucherListItemDto(
     string PurchaseOrderNumber,
     string Payee,
     decimal Amount,
-    DisbursementVoucherStatus Status);
+    DisbursementVoucherStatus Status,
+    bool HasSignedCopy = false);
 
 // Commands
 // A DV is raised against an obligated Budget Utilization Record. The purchase order, payee and amount

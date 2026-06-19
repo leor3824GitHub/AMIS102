@@ -1469,7 +1469,8 @@ internal sealed record ArReturnedPropertyReceiptSummaryDto(
     string AccountabilityDocumentNo,
     int ItemCount,
     decimal TotalUnitCost,
-    Guid AssignedInspectorEmployeeId = default);
+    Guid AssignedInspectorEmployeeId = default,
+    bool HasSignedCopy = false);
 
 internal sealed record ArReturnedPropertyStatusCountDto(
     ArContracts.ReturnedPropertyReceiptStatus Status,

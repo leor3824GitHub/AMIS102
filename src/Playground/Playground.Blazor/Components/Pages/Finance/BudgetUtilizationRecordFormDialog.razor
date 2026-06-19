@@ -135,7 +135,7 @@
                 _form.Particulars,
                 _form.Amount,
                 string.IsNullOrWhiteSpace(_form.Remarks) ? null : _form.Remarks));
-            Snackbar.Add("Budget utilization record created.", Severity.Success);
+            Snackbar.Add("Budget utilization request and status created.", Severity.Success);
             Dialog.Close(DialogResult.Ok(true));
         }
         catch (Exception ex) { Snackbar.Add($"Save failed: {ex.Message}", Severity.Error); }

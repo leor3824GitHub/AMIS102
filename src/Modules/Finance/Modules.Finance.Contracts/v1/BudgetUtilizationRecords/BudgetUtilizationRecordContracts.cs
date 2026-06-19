@@ -37,7 +37,8 @@ public sealed record BudgetUtilizationRecordListItemDto(
     string PurchaseOrderNumber,
     string AllotmentClass,
     decimal Amount,
-    BudgetUtilizationRecordStatus Status);
+    BudgetUtilizationRecordStatus Status,
+    bool HasSignedCopy = false);
 
 // Commands
 // A BUR is created up front against a purchase order to obligate budget. The disbursement voucher is

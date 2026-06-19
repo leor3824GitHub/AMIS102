@@ -1,4 +1,5 @@
 using AMIS.Modules.Finance.Contracts.v1.DisbursementVouchers;
+using AMIS.Modules.Finance.Contracts.v1.SignedDocuments;
 using AMIS.Modules.Finance.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
@@ -43,7 +44,9 @@ public sealed class SearchDisbursementVouchersQueryHandler(
                 x.PurchaseOrderNumber,
                 x.Payee,
                 x.Amount,
-                x.Status))
+                x.Status,
+                dbContext.SignedDocuments.Any(s =>
+                    s.DocumentType == FinanceDocumentType.DisbursementVoucher && s.DocumentId == x.Id)))
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 

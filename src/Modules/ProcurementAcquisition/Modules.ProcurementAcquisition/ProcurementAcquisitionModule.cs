@@ -20,6 +20,7 @@ using AMIS.Modules.ProcurementAcquisition.Features.v1.Canvass.UpdateQuotation;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.Canvass.AwardCanvass;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.Canvass.GetCanvassRequest;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.Canvass.SearchCanvassRequests;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.Canvass.GetStatusCounts;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.Canvass.GetCanvassablePrLines;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.Canvass.GetAwardedPrLines;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.CreatePurchaseOrder;
@@ -37,6 +38,7 @@ using AMIS.Modules.ProcurementAcquisition.Features.v1.InspectionAcceptanceReport
 using AMIS.Modules.ProcurementAcquisition.Features.v1.InspectionAcceptanceReports.CancelInspectionAcceptanceReport;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.InspectionAcceptanceReports.GetInspectionAcceptanceReport;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.InspectionAcceptanceReports.SearchInspectionAcceptanceReports;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.InspectionAcceptanceReports.GetStatusCounts;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.InspectionAcceptanceReports.SearchAcceptedIARLineItems;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.InspectionAcceptanceReports.SubmitForInspection;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.InspectionAcceptanceReports.ReassignInspector;
@@ -148,6 +150,7 @@ public class ProcurementAcquisitionModule : IModule
         AwardCanvassEndpoint.Map(canvassRequestsGroup);
         GetCanvassRequestEndpoint.Map(canvassRequestsGroup);
         SearchCanvassRequestsEndpoint.Map(canvassRequestsGroup);
+        GetCanvassRequestStatusCountsEndpoint.Map(canvassRequestsGroup);
         GetCanvassablePrLinesEndpoint.Map(canvassRequestsGroup);
         GetAwardedPrLinesEndpoint.Map(canvassRequestsGroup);
 
@@ -169,6 +172,7 @@ public class ProcurementAcquisitionModule : IModule
         CancelInspectionAcceptanceReportEndpoint.Map(iarGroup);
         GetInspectionAcceptanceReportEndpoint.Map(iarGroup);
         SearchInspectionAcceptanceReportsEndpoint.Map(iarGroup);
+        GetIARStatusCountsEndpoint.Map(iarGroup);
         SearchAcceptedIARLineItemsEndpoint.Map(iarGroup);
         SubmitIARForInspectionEndpoint.Map(iarGroup);
         ReassignInspectorEndpoint.Map(iarGroup);

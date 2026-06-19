@@ -1,4 +1,5 @@
 using AMIS.Modules.Finance.Contracts.v1.BudgetUtilizationRecords;
+using AMIS.Modules.Finance.Contracts.v1.SignedDocuments;
 using AMIS.Modules.Finance.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
@@ -45,7 +46,9 @@ public sealed class SearchBudgetUtilizationRecordsQueryHandler(
                 x.PurchaseOrderNumber,
                 x.AllotmentClass,
                 x.Amount,
-                x.Status))
+                x.Status,
+                dbContext.SignedDocuments.Any(s =>
+                    s.DocumentType == FinanceDocumentType.BudgetUtilizationRecord && s.DocumentId == x.Id)))
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 

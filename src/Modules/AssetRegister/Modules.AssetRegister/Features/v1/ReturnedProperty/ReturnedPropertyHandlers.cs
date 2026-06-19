@@ -4,6 +4,7 @@ using AMIS.Framework.Core.Exceptions;
 using AMIS.Framework.Shared.Persistence;
 using AMIS.Modules.AssetRegister.Contracts.v1;
 using AMIS.Modules.AssetRegister.Contracts.v1.ReturnedProperty;
+using AMIS.Modules.AssetRegister.Contracts.v1.SignedDocuments;
 using AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
 using AMIS.Modules.AssetRegister.Data;
 using AMIS.Modules.AssetRegister.Domain.ReturnedProperty;
@@ -342,7 +343,9 @@ public sealed class SearchReturnedPropertyReceiptsQueryHandler(AssetRegisterDbCo
                 r.AccountabilityDocumentNo,
                 r.Items.Count,
                 r.Items.Sum(i => i.Snapshot.UnitCost),
-                r.AssignedInspector.EmployeeId))
+                r.AssignedInspector.EmployeeId,
+                db.SignedDocuments.Any(sd =>
+                    sd.DocumentType == AssetRegisterDocumentType.ReturnedPropertyReceipt && sd.DocumentId == r.Id)))
             .ToListAsync(cancellationToken).ConfigureAwait(false);
 
         return new PagedResponse<ReturnedPropertyReceiptSummaryDto>

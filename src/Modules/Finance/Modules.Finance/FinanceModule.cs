@@ -39,11 +39,11 @@ public class FinanceModule : IModule
         new("Return Disbursement Vouchers", "Return", "Finance.DisbursementVouchers"),
         new("Cancel Disbursement Vouchers", "Cancel", "Finance.DisbursementVouchers"),
 
-        new("View Budget Utilization Records", "View", "Finance.BudgetUtilizationRecords", IsBasic: false),
-        new("Create Budget Utilization Records", "Create", "Finance.BudgetUtilizationRecords"),
-        new("Obligate Budget Utilization Records", "Obligate", "Finance.BudgetUtilizationRecords"),
-        new("Utilize Budget Utilization Records", "Utilize", "Finance.BudgetUtilizationRecords"),
-        new("Cancel Budget Utilization Records", "Cancel", "Finance.BudgetUtilizationRecords"),
+        new("View Budget Utilization Request and Status", "View", "Finance.BudgetUtilizationRecords", IsBasic: false),
+        new("Create Budget Utilization Request and Status", "Create", "Finance.BudgetUtilizationRecords"),
+        new("Obligate Budget Utilization Request and Status", "Obligate", "Finance.BudgetUtilizationRecords"),
+        new("Utilize Budget Utilization Request and Status", "Utilize", "Finance.BudgetUtilizationRecords"),
+        new("Cancel Budget Utilization Request and Status", "Cancel", "Finance.BudgetUtilizationRecords"),
 
         new("View Signed Document Copies", "View", "Finance.SignedDocuments", IsBasic: true),
         new("Upload Signed Document Copies", "Upload", "Finance.SignedDocuments")

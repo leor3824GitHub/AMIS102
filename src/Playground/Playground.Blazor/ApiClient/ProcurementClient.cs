@@ -182,6 +182,7 @@ internal sealed class PurchaseRequestClient(HttpClient http) : IPurchaseRequestC
 internal interface ICanvassRequestClient
 {
     Task<PagedResponse<CanvassRequestSummaryDto>> SearchAsync(string? keyword = null, CanvassRequestStatus? status = null, int page = 1, int pageSize = 20, DateOnly? fromDate = null, DateOnly? toDate = null, CancellationToken ct = default);
+    Task<IReadOnlyList<CanvassRequestStatusCountDto>> GetStatusCountsAsync(DateOnly? fromDate = null, DateOnly? toDate = null, CancellationToken ct = default);
     Task<CanvassRequestDto?> GetAsync(Guid id, CancellationToken ct = default);
     Task<IReadOnlyList<CanvassablePrLineDto>> GetCanvassablePrLinesAsync(Guid purchaseRequestId, CancellationToken ct = default);
     Task<IReadOnlyList<AwardedPrLineDto>> GetAwardedPrLinesAsync(Guid purchaseRequestId, CancellationToken ct = default);
@@ -206,6 +207,17 @@ internal sealed class CanvassRequestClient(HttpClient http) : ICanvassRequestCli
         q["PageNumber"] = page.ToString(CultureInfo.InvariantCulture);
         q["PageSize"] = pageSize.ToString(CultureInfo.InvariantCulture);
         return http.GetFromJsonAsync<PagedResponse<CanvassRequestSummaryDto>>($"{Base}?{q}", ProcurementJson.Options, ct)!;
+    }
+
+    public async Task<IReadOnlyList<CanvassRequestStatusCountDto>> GetStatusCountsAsync(DateOnly? fromDate = null, DateOnly? toDate = null, CancellationToken ct = default)
+    {
+        var q = HttpUtility.ParseQueryString(string.Empty);
+        if (fromDate.HasValue) q["FromDate"] = fromDate.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        if (toDate.HasValue) q["ToDate"] = toDate.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        var qs = q.ToString();
+        var url = string.IsNullOrEmpty(qs) ? $"{Base}/status-counts" : $"{Base}/status-counts?{qs}";
+        var result = await http.GetFromJsonAsync<List<CanvassRequestStatusCountDto>>(url, ProcurementJson.Options, ct).ConfigureAwait(false);
+        return result ?? [];
     }
 
     public Task<CanvassRequestDto?> GetAsync(Guid id, CancellationToken ct = default) =>

@@ -9,12 +9,12 @@
 @inject IUserProfileState UserProfileState
 @inject IJSRuntime JS
 
-<AMISPageHeader Title="Budget Utilization Records" Description="Create and manage budget utilization records (BUR)" />
+<AMISPageHeader Title="Budget Utilization Request and Status" Description="Create and manage budget utilization request and status (BUR)" />
 
 <MudCard Elevation="1">
     <MudCardContent>
         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
-            <MudText Typo="Typo.h6" Class="flex-grow-1">Budget Utilization Records</MudText>
+            <MudText Typo="Typo.h6" Class="flex-grow-1">Budget Utilization Request and Status</MudText>
             <MudTextField @bind-Value="_keyword" Label="Search" Variant="Variant.Outlined" Size="Size.Small"
                           Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
                           Style="max-width:220px" DebounceInterval="400"
@@ -22,7 +22,7 @@
             @if (_canCreate)
             {
                 <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
-                           OnClick="OpenCreateDialog">New Budget Utilization Record</MudButton>
+                           OnClick="OpenCreateDialog">New BUR</MudButton>
             }
         </MudStack>
 
@@ -41,7 +41,7 @@
                 }
                 else if (_items.Count == 0)
                 {
-                    <MudAlert Severity="Severity.Info">No budget utilization records found.</MudAlert>
+                    <MudAlert Severity="Severity.Info">No budget utilization request and status records found.</MudAlert>
                 }
                 else
                 {
@@ -85,8 +85,9 @@
                                             }
                                             @if ((item.Status == BudgetUtilizationRecordStatus.Obligated || item.Status == BudgetUtilizationRecordStatus.Utilized) && _canViewSigned)
                                             {
-                                                <MudTooltip Text="Signed Copy">
-                                                    <MudIconButton Icon="@Icons.Material.Filled.Approval" Size="Size.Small" Color="Color.Primary"
+                                                <MudTooltip Text="@(item.HasSignedCopy ? "Signed Copy (uploaded)" : "Signed Copy")">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.Draw" Size="Size.Small"
+                                                                   Color="@(item.HasSignedCopy ? Color.Success : Color.Secondary)"
                                                                    OnClick="@(async () => await OpenSignedCopyAsync(item))" />
                                                 </MudTooltip>
                                             }
@@ -94,8 +95,8 @@
                                                 <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" Color="Color.Default"
                                                                OnClick="@(async () => await ViewDetailsAsync(item.Id))" />
                                             </MudTooltip>
-                                            <MudTooltip Text="Print BURS (PDF)">
-                                                <MudIconButton Icon="@Icons.Material.Filled.PictureAsPdf" Size="Size.Small" Color="Color.Error"
+                                            <MudTooltip Text="Print">
+                                                <MudIconButton Icon="@Icons.Material.Filled.Print" Size="Size.Small" Color="Color.Secondary"
                                                                Disabled="@_busy"
                                                                OnClick="@(async () => await DownloadPdfAsync(item.Id))" />
                                             </MudTooltip>
@@ -124,9 +125,6 @@
                 <MudCardContent>
                     <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3">
                         <MudText Typo="Typo.h6" Class="flex-grow-1">@_detail.BurNumber — Details</MudText>
-                        <MudButton Variant="Variant.Filled" Color="Color.Error" Size="Size.Small"
-                                   StartIcon="@Icons.Material.Filled.PictureAsPdf" Disabled="@_busy"
-                                   OnClick="@(async () => await DownloadPdfAsync(_detail.Id))">Print BURS</MudButton>
                         <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="@(() => _detail = null)" />
                     </MudStack>
                     <MudGrid Spacing="2">
@@ -214,7 +212,7 @@
     private async Task OpenCreateDialog()
     {
         var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true };
-        var dialog = await DialogService.ShowAsync<BudgetUtilizationRecordFormDialog>("New Budget Utilization Record", options);
+        var dialog = await DialogService.ShowAsync<BudgetUtilizationRecordFormDialog>("New Budget Utilization Request and Status", options);
         var result = await dialog.Result;
         if (result is not null && !result.Canceled)
         {
@@ -240,7 +238,7 @@
 
     private async Task ObligateAsync(Guid id)
     {
-        var ok = await DialogService.ShowMessageBox("Obligate BUR", "Obligate this budget utilization record?", "Obligate", cancelText: "Cancel");
+        var ok = await DialogService.ShowMessageBox("Obligate BUR", "Obligate this budget utilization request and status?", "Obligate", cancelText: "Cancel");
         if (ok is not true) return;
         _busy = true;
         try { await Client.ObligateAsync(id); Snackbar.Add("BUR obligated.", Severity.Success); await LoadAsync(); }
@@ -250,7 +248,7 @@
 
     private async Task CancelBurAsync(Guid id)
     {
-        var ok = await DialogService.ShowMessageBox("Cancel BUR", "Cancel this budget utilization record?", "Yes, Cancel", cancelText: "No");
+        var ok = await DialogService.ShowMessageBox("Cancel BUR", "Cancel this budget utilization request and status?", "Yes, Cancel", cancelText: "No");
         if (ok is not true) return;
         _busy = true;
         try { await Client.CancelAsync(id, "Cancelled by user."); Snackbar.Add("BUR cancelled.", Severity.Info); await LoadAsync(); }

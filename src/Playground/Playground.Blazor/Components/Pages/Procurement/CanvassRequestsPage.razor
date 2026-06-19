@@ -47,7 +47,7 @@
                         <MudChip T="string" Size="Size.Small"
                                  Color="@(_statusFilter == s ? Color.Primary : Color.Default)"
                                  Variant="@(_statusFilter == s ? Variant.Filled : Variant.Outlined)"
-                                 OnClick="@(() => SetStatusFilter(s))">@s</MudChip>
+                                 OnClick="@(() => SetStatusFilter(s))">@GetChipLabel(s)</MudChip>
                     }
                 </MudStack>
 
@@ -336,6 +336,7 @@
     private DateTime? _toDate;
     private string _statusFilter = "All";
     private int _page = 1, _pageSize = 15, _totalCount;
+    private Dictionary<string, int> _statusCounts = [];
 
     private static readonly string[] _statusFilters = ["All", "Open", "Evaluated", "Awarded", "Cancelled"];
 
@@ -343,6 +344,7 @@
     {
         UserProfileState.OnProfileChanged += OnProfileChanged;
         await LoadAsync();
+        await LoadStatusCountsAsync();
     }
 
     // Permissions load asynchronously in PlaygroundLayout after first render; re-render when they arrive
@@ -360,6 +362,7 @@
         {
             _page = 1;
             await LoadAsync();
+            await LoadStatusCountsAsync();
         }
     }
 
@@ -385,6 +388,7 @@
         {
             await SelectCanvass(_selected.Id);
             await LoadAsync();
+            await LoadStatusCountsAsync();
         }
     }
 
@@ -402,13 +406,30 @@
         finally { _loaded = true; }
     }
 
+    // Single grouped query (GROUP BY Status) backing the chip counts. Scoped to the date range only
+    // (not the keyword/status filter), so each chip shows the total per status in the current range.
+    private async Task LoadStatusCountsAsync()
+    {
+        try
+        {
+            var counts = await Client.GetStatusCountsAsync(ToDateOnly(_fromDate), ToDateOnly(_toDate));
+            var dict = counts.ToDictionary(c => c.Status.ToString(), c => c.Count);
+            dict["All"] = counts.Sum(c => c.Count);
+            _statusCounts = dict;
+        }
+        catch { _statusCounts = []; }
+    }
+
+    private string GetChipLabel(string status) =>
+        _statusCounts.TryGetValue(status, out var count) && count > 0 ? $"{status} ({count})" : status;
+
     private async Task SetStatusFilter(string s) { _statusFilter = s; _page = 1; await LoadAsync(); }
 
     private async Task OnKeywordChanged(string? keyword) { _keyword = keyword ?? string.Empty; _page = 1; await LoadAsync(); }
 
-    private async Task OnFromDateChanged(DateTime? date) { _fromDate = date; _page = 1; await LoadAsync(); }
+    private async Task OnFromDateChanged(DateTime? date) { _fromDate = date; _page = 1; await LoadAsync(); await LoadStatusCountsAsync(); }
 
-    private async Task OnToDateChanged(DateTime? date) { _toDate = date; _page = 1; await LoadAsync(); }
+    private async Task OnToDateChanged(DateTime? date) { _toDate = date; _page = 1; await LoadAsync(); await LoadStatusCountsAsync(); }
 
     private static DateOnly? ToDateOnly(DateTime? value) =>
         value is null ? null : DateOnly.FromDateTime(value.Value);
@@ -469,6 +490,7 @@
             Snackbar.Add("Canvass awarded.", Severity.Success);
             if (_selected?.Id == canvassId) await SelectCanvass(canvassId);
             await LoadAsync();
+            await LoadStatusCountsAsync();
         }
         catch (Exception ex) { Snackbar.Add($"Award failed: {ex.Message}", Severity.Error); }
         finally { _busy = false; }

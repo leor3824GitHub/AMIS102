@@ -40,15 +40,16 @@
                                FromDate="_fromDate" FromDateChanged="OnFromDateChanged"
                                ToDate="_toDate" ToDateChanged="OnToDateChanged" />
 
-                <!-- Status Filter Tabs -->
-                <MudTabs Elevation="0" Rounded="true" PanelClass="pa-0" Class="mb-3" ActivePanelIndex="_activeTab" ActivePanelIndexChanged="OnTabChanged">
-                    <MudTabPanel Text="All" />
-                    <MudTabPanel Text="Draft" />
-                    <MudTabPanel Text="Pending Inspection" />
-                    <MudTabPanel Text="Inspected" />
-                    <MudTabPanel Text="Accepted" />
-                    <MudTabPanel Text="Cancelled" />
-                </MudTabs>
+                <!-- Status filter chips -->
+                <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap" Class="mb-3">
+                    @foreach (var (index, label) in _statusTabs)
+                    {
+                        <MudChip T="string" Size="Size.Small"
+                                 Color="@(_activeTab == index ? Color.Primary : Color.Default)"
+                                 Variant="@(_activeTab == index ? Variant.Filled : Variant.Outlined)"
+                                 OnClick="@(() => OnTabChanged(index))">@GetTabLabel(index, label)</MudChip>
+                    }
+                </MudStack>
 
                 @if (_loading)
                 {
@@ -248,6 +249,18 @@
     private bool _loading;
     private int _activeTab;
     private int _page = 1;
+    private readonly Dictionary<int, int> _statusCounts = [];
+
+    // Status filter chips — index mirrors the switch in OnTabChanged (tab 0 = "All").
+    private static readonly (int Index, string Label)[] _statusTabs =
+    [
+        (0, "All"),
+        (1, "Draft"),
+        (2, "Pending Inspection"),
+        (3, "Inspected"),
+        (4, "Accepted"),
+        (5, "Cancelled"),
+    ];
     private int _totalCount;
     private const int PageSize = 15;
     private int TotalPages => Math.Max(1, (int)Math.Ceiling(_totalCount / (double)PageSize));
@@ -331,7 +344,32 @@
         {
             _loading = false;
         }
+
+        await LoadStatusCountsAsync();
     }
+
+    // Single grouped query (GROUP BY Status) backing the chip counts. Scoped to the date range only
+    // (not keyword/status), so each chip shows the total per status in the current range.
+    private async Task LoadStatusCountsAsync()
+    {
+        try
+        {
+            var counts = await IarClient.GetStatusCountsAsync(ToDateOnly(_fromDate), ToDateOnly(_toDate));
+            var byStatus = counts.ToDictionary(c => c.Status, c => c.Count);
+
+            // Tab index → status mapping mirrors the switch in OnTabChanged (tab 0 = "All").
+            _statusCounts[1] = byStatus.GetValueOrDefault(InspectionAcceptanceReportStatus.Draft);
+            _statusCounts[2] = byStatus.GetValueOrDefault(InspectionAcceptanceReportStatus.PendingInspection);
+            _statusCounts[3] = byStatus.GetValueOrDefault(InspectionAcceptanceReportStatus.Inspected);
+            _statusCounts[4] = byStatus.GetValueOrDefault(InspectionAcceptanceReportStatus.Accepted);
+            _statusCounts[5] = byStatus.GetValueOrDefault(InspectionAcceptanceReportStatus.Cancelled);
+            _statusCounts[0] = byStatus.Values.Sum(); // Tab 0 "All"
+        }
+        catch { _statusCounts.Clear(); }
+    }
+
+    private string GetTabLabel(int tabIndex, string label) =>
+        _statusCounts.TryGetValue(tabIndex, out var count) && count > 0 ? $"{label} ({count})" : label;
 
     private bool IsAssignedInspector(InspectionAcceptanceReportSummaryDto iar) =>
         UserProfileState.EmployeeId != Guid.Empty && iar.AssignedInspectorId == UserProfileState.EmployeeId;

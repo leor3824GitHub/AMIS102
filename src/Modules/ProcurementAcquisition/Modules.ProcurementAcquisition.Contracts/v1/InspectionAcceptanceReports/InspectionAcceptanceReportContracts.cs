@@ -174,6 +174,20 @@ public sealed class SearchInspectionAcceptanceReportsQuery : IQuery<PagedRespons
     public int PageSize { get; set; } = 10;
 }
 
+/// <summary>One status tally returned by <see cref="GetIARStatusCountsQuery"/>.</summary>
+public sealed record IARStatusCountDto(InspectionAcceptanceReportStatus Status, int Count);
+
+/// <summary>
+/// Returns the count of inspection &amp; acceptance reports per status in a single grouped query,
+/// optionally scoped to an IAR-date range. Backs the status-filter chip counts so the UI no longer
+/// fires one search-count request per status.
+/// </summary>
+public sealed class GetIARStatusCountsQuery : IQuery<IReadOnlyList<IARStatusCountDto>>
+{
+    public DateOnly? FromDate { get; set; }
+    public DateOnly? ToDate { get; set; }
+}
+
 /// <summary>
 /// A single line item from an Accepted IAR, exposed for downstream modules (notably
 /// AssetRegister Receiving Reports) to pre-populate forms without re-typing supplier

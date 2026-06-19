@@ -40,7 +40,8 @@ public sealed record ReturnedPropertyReceiptSummaryDto(
     string AccountabilityDocumentNo,
     int ItemCount,
     decimal TotalUnitCost,
-    Guid AssignedInspectorEmployeeId = default);
+    Guid AssignedInspectorEmployeeId = default,
+    bool HasSignedCopy = false);
 
 public sealed record ReturnedPropertyStatusCountDto(
     ReturnedPropertyReceiptStatus Status,

@@ -22,7 +22,7 @@
             @if (_canCreate)
             {
                 <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
-                           OnClick="OpenCreateDialog">New Disbursement Voucher</MudButton>
+                           OnClick="OpenCreateDialog">New DV</MudButton>
             }
         </MudStack>
 
@@ -99,15 +99,16 @@
                                     }
                                     @if ((item.Status == DisbursementVoucherStatus.Approved || item.Status == DisbursementVoucherStatus.Paid) && _canViewSigned)
                                     {
-                                        <MudTooltip Text="Signed Copy">
-                                            <MudIconButton Icon="@Icons.Material.Filled.Approval" Size="Size.Small" Color="Color.Primary"
+                                        <MudTooltip Text="@(item.HasSignedCopy ? "Signed Copy (uploaded)" : "Signed Copy")">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Draw" Size="Size.Small"
+                                                           Color="@(item.HasSignedCopy ? Color.Success : Color.Secondary)"
                                                            OnClick="@(async () => await OpenSignedCopyAsync(item))" />
                                         </MudTooltip>
                                     }
                                     @if (_canView)
                                     {
-                                        <MudTooltip Text="Print / Download PDF">
-                                            <MudIconButton Icon="@Icons.Material.Filled.PictureAsPdf" Size="Size.Small" Color="Color.Error"
+                                        <MudTooltip Text="Print">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Print" Size="Size.Small" Color="Color.Secondary"
                                                            OnClick="@(async () => await PrintPdfAsync(item.Id))" />
                                         </MudTooltip>
                                     }
@@ -148,7 +149,7 @@
                     <MudText Typo="Typo.body2">@_detail.DvDate.ToString("MMMM dd, yyyy")</MudText>
                 </MudItem>
                 <MudItem xs="6" sm="3">
-                    <MudText Typo="Typo.caption" Color="Color.Secondary">Budget Utilization Record</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Budget Utilization Request and Status</MudText>
                     <MudText Typo="Typo.body2">@_detail.BurNumber</MudText>
                 </MudItem>
                 <MudItem xs="6" sm="3">

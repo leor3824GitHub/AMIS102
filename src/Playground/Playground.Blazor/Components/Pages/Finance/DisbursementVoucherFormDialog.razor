@@ -17,7 +17,7 @@
                                  ValueChanged="OnBurChanged"
                                  SearchFunc="SearchBudgetUtilizationRecords"
                                  ToStringFunc="FormatBur"
-                                 Label="Budget Utilization Record"
+                                 Label="Budget Utilization Request and Status"
                                  Variant="Variant.Outlined"
                                  Placeholder="Search obligated BUR number..."
                                  Required="true"
@@ -34,7 +34,7 @@
             }
             else
             {
-                <MudTextField Value="@Editing.BurNumber" Label="Budget Utilization Record" Variant="Variant.Outlined"
+                <MudTextField Value="@Editing.BurNumber" Label="Budget Utilization Request and Status" Variant="Variant.Outlined"
                               ReadOnly="true" Dense="true" Margin="Margin.Dense" />
                 <MudTextField Value="@Editing.PurchaseOrderNumber" Label="Purchase Order" Variant="Variant.Outlined"
                               ReadOnly="true" Dense="true" Margin="Margin.Dense" />

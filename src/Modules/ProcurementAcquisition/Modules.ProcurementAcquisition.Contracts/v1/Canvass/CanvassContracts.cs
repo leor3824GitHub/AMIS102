@@ -198,3 +198,17 @@ public sealed class SearchCanvassRequestsQuery : IQuery<PagedResponse<CanvassReq
     public int PageSize { get; set; } = 10;
 }
 
+/// <summary>One status tally returned by <see cref="GetCanvassRequestStatusCountsQuery"/>.</summary>
+public sealed record CanvassRequestStatusCountDto(CanvassRequestStatus Status, int Count);
+
+/// <summary>
+/// Returns the count of canvass requests per status in a single grouped query, optionally
+/// scoped to a created-date range. Backs the status-filter chip counts so the UI no longer
+/// fires one search-count request per status.
+/// </summary>
+public sealed class GetCanvassRequestStatusCountsQuery : IQuery<IReadOnlyList<CanvassRequestStatusCountDto>>
+{
+    public DateOnly? FromDate { get; set; }
+    public DateOnly? ToDate { get; set; }
+}
+

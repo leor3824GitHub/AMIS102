@@ -35,16 +35,16 @@
                     }
                 </MudStack>
 
-                <!-- Status Filter Tabs -->
-                <MudTabs Elevation="0" Rounded="true" PanelClass="pa-0" Class="mb-3"
-                         ActivePanelIndex="_activeTabIndex" ActivePanelIndexChanged="OnTabChanged">
-                    <MudTabPanel Text="@GetTabLabel(0, "All")" />
-                    <MudTabPanel Text="@GetTabLabel(1, "Pending")" />
-                    <MudTabPanel Text="@GetTabLabel(2, "Inspected")" />
-                    <MudTabPanel Text="@GetTabLabel(3, "Accepted")" />
-                    <MudTabPanel Text="@GetTabLabel(4, "Rejected")" />
-                    <MudTabPanel Text="@GetTabLabel(5, "Cancelled")" />
-                </MudTabs>
+                <!-- Status filter chips -->
+                <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap" Class="mb-3">
+                    @foreach (var (index, label) in _statusTabs)
+                    {
+                        <MudChip T="string" Size="Size.Small"
+                                 Color="@(_activeTabIndex == index ? Color.Primary : Color.Default)"
+                                 Variant="@(_activeTabIndex == index ? Variant.Filled : Variant.Outlined)"
+                                 OnClick="@(() => OnTabChanged(index))">@GetTabLabel(index, label)</MudChip>
+                    }
+                </MudStack>
 
                 @if (_loading)
                 {
@@ -126,11 +126,12 @@
                                                                     Color="Color.Warning" OnClick="@(() => CancelAsync(r.Id))" />
                                                 </MudTooltip>
                                             }
-                                            @if (r.Status == ReturnedPropertyReceiptStatus.Accepted && _canViewSigned)
+                                            @if (r.Status == ReturnedPropertyReceiptStatus.Accepted && (r.HasSignedCopy ? _canViewSigned : _canUploadSigned))
                                             {
-                                                <MudTooltip Text="Signed Copy">
-                                                    <AMISIconButton Icon="@Icons.Material.Filled.UploadFile" Size="Size.Small"
-                                                                    Color="Color.Primary" OnClick="@(() => OpenSignedCopyAsync(r))" />
+                                                <MudTooltip Text="@(r.HasSignedCopy ? "Signed copy uploaded — click to view" : "Upload signed copy")">
+                                                    <AMISIconButton Icon="@Icons.Material.Filled.Draw" Size="Size.Small"
+                                                                    Color="@(r.HasSignedCopy ? Color.Success : Color.Secondary)"
+                                                                    OnClick="@(() => OpenSignedCopyAsync(r))" />
                                                 </MudTooltip>
                                             }
                                         </MudStack>
@@ -275,6 +276,17 @@
     private bool _loading;
     private int _activeTabIndex;
     private int _page = 1;
+
+    // Status filter chips — index mirrors GetStatusFromTabIndex / _statusCounts keys (tab 0 = "All").
+    private static readonly (int Index, string Label)[] _statusTabs =
+    [
+        (0, "All"),
+        (1, "Pending"),
+        (2, "Inspected"),
+        (3, "Accepted"),
+        (4, "Rejected"),
+        (5, "Cancelled"),
+    ];
     private int _totalCount;
     private const int PageSize = 15;
     private int TotalPages => Math.Max(1, (int)Math.Ceiling(_totalCount / (double)PageSize));
@@ -284,6 +296,7 @@
     private bool _canInspect => UserProfileState.Permissions.Contains(AssetRegisterPermissions.ReturnedProperty.Inspect);
     private bool _canAccept => UserProfileState.Permissions.Contains(AssetRegisterPermissions.ReturnedProperty.Accept);
     private bool _canViewSigned => UserProfileState.Permissions.Contains(AssetRegisterPermissions.SignedDocuments.View);
+    private bool _canUploadSigned => UserProfileState.Permissions.Contains(AssetRegisterPermissions.SignedDocuments.Upload);
 
     // The inspection is restricted to the inspector nominated on the request (enforced server-side too).
     private bool CanInspectRow(ArReturnedPropertyReceiptSummaryDto r) =>

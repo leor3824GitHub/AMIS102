@@ -44,18 +44,16 @@
                                FromDate="_fromDate" FromDateChanged="OnFromDateChanged"
                                ToDate="_toDate" ToDateChanged="OnToDateChanged" />
 
-                <!-- Status Filter Tabs -->
-                <MudTabs Elevation="0" Rounded="true" PanelClass="pa-0" Class="mb-3"
-                         ActivePanelIndex="_activeTabIndex" ActivePanelIndexChanged="OnTabChanged">
-                    <MudTabPanel Text="@GetTabLabel(0, "All")" />
-                    <MudTabPanel Text="@GetTabLabel(1, "Draft")" />
-                    <MudTabPanel Text="@GetTabLabel(2, "Pending Funds")" />
-                    <MudTabPanel Text="@GetTabLabel(3, "Pending Approval")" />
-                    <MudTabPanel Text="@GetTabLabel(4, "Approved")" />
-                    <MudTabPanel Text="@GetTabLabel(5, "Rejected")" />
-                    <MudTabPanel Text="@GetTabLabel(6, "Cancelled")" />
-                    <MudTabPanel Text="@GetTabLabel(7, "Completed")" />
-                </MudTabs>
+                <!-- Status filter chips -->
+                <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap" Class="mb-3">
+                    @foreach (var (index, label) in _statusTabs)
+                    {
+                        <MudChip T="string" Size="Size.Small"
+                                 Color="@(_activeTabIndex == index ? Color.Primary : Color.Default)"
+                                 Variant="@(_activeTabIndex == index ? Variant.Filled : Variant.Outlined)"
+                                 OnClick="@(() => OnTabChanged(index))">@GetTabLabel(index, label)</MudChip>
+                    }
+                </MudStack>
 
                 @if (!_loaded)
                 {
@@ -239,6 +237,19 @@
     private DateTime? _toDate;
     private int _activeTabIndex = 0;
     private int _page = 1, _pageSize = 15, _totalCount;
+
+    // Status filter chips — index mirrors GetStatusFromTabIndex / _statusCounts keys (tab 0 = "All").
+    private static readonly (int Index, string Label)[] _statusTabs =
+    [
+        (0, "All"),
+        (1, "Draft"),
+        (2, "Pending Funds"),
+        (3, "Pending Approval"),
+        (4, "Approved"),
+        (5, "Rejected"),
+        (6, "Cancelled"),
+        (7, "Completed"),
+    ];
     private string _currentUserEmployeeName = string.Empty;
     private List<DepartmentReferenceDto> _departments = [];
     private Dictionary<int, int> _statusCounts = [];
