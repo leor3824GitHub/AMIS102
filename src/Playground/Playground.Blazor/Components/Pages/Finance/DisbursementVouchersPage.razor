@@ -18,7 +18,7 @@
             <MudTextField @bind-Value="_keyword" Label="Search" Variant="Variant.Outlined" Size="Size.Small"
                           Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
                           Style="max-width:220px" DebounceInterval="400"
-                          OnDebounceIntervalElapsed="@(async () => await LoadAsync())" />
+                          OnDebounceIntervalElapsed="@(async () => await ReloadAsync())" />
             @if (_canCreate)
             {
                 <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
@@ -31,7 +31,7 @@
             {
                 <MudChip T="string" Size="Size.Small"
                          Color="@(_statusFilter == s ? Color.Primary : Color.Default)"
-                         OnClick="@(() => SetStatusFilter(s))">@s</MudChip>
+                         OnClick="@(() => SetStatusFilter(s))">@GetChipLabel(s)</MudChip>
             }
         </MudStack>
 
@@ -212,6 +212,7 @@
     private string _keyword = string.Empty;
     private string _statusFilter = "All";
     private int _page = 1, _pageSize = 15, _totalCount;
+    private Dictionary<string, int> _statusCounts = [];
 
     private static readonly string[] _statusFilters = ["All", "Draft", "ForApproval", "Approved", "Paid", "Returned", "Cancelled"];
 
@@ -225,7 +226,7 @@
     protected override async Task OnInitializedAsync()
     {
         UserProfileState.OnProfileChanged += OnProfileChanged;
-        await LoadAsync();
+        await ReloadAsync();
     }
 
     private void OnProfileChanged() => InvokeAsync(StateHasChanged);
@@ -252,7 +253,7 @@
         var result = await dialog.Result;
         if (result is not null && !result.Canceled)
         {
-            await LoadAsync();
+            await ReloadAsync();
         }
     }
 
@@ -267,7 +268,7 @@
         var result = await dialog.Result;
         if (result is not null && !result.Canceled)
         {
-            await LoadAsync();
+            await ReloadAsync();
         }
     }
 
@@ -285,13 +286,39 @@
         finally { _loaded = true; }
     }
 
+    // Reloads the list AND the keyword-scoped chip counts. Called when the matched result set can
+    // change: initial load, keyword change, and after mutations. Paging and chip-switch call
+    // LoadAsync alone — they don't change the per-status counts for the current keyword.
+    private async Task ReloadAsync()
+    {
+        await LoadAsync();
+        await LoadStatusCountsAsync();
+    }
+
+    // Grouped query (GROUP BY Status) backing the chip counts, scoped to the current keyword so each
+    // badge matches what selecting that status would return.
+    private async Task LoadStatusCountsAsync()
+    {
+        try
+        {
+            var counts = await Client.GetStatusCountsAsync(_keyword);
+            var dict = counts.ToDictionary(c => c.Status.ToString(), c => c.Count);
+            dict["All"] = counts.Sum(c => c.Count);
+            _statusCounts = dict;
+        }
+        catch { _statusCounts = []; }
+    }
+
+    private string GetChipLabel(string status) =>
+        _statusCounts.TryGetValue(status, out var count) && count > 0 ? $"{status} ({count})" : status;
+
     private async Task SetStatusFilter(string s) { _statusFilter = s; _page = 1; await LoadAsync(); }
 
     private async Task ApproveAsync(Guid id)
     {
         var ok = await DialogService.ShowMessageBox("Approve DV", "Submit this DV for approval?", "Approve", cancelText: "Cancel");
         if (ok is not true) return;
-        try { await Client.ApproveAsync(id); Snackbar.Add("DV submitted for approval.", Severity.Success); await LoadAsync(); }
+        try { await Client.ApproveAsync(id); Snackbar.Add("DV submitted for approval.", Severity.Success); await ReloadAsync(); }
         catch (Exception ex) { Snackbar.Add($"Approve failed: {ex.Message}", Severity.Error); }
     }
 
@@ -299,7 +326,7 @@
     {
         var ok = await DialogService.ShowMessageBox("Mark as Paid", "Mark this DV as paid today?", "Mark Paid", cancelText: "Cancel");
         if (ok is not true) return;
-        try { await Client.PayAsync(id, DateOnly.FromDateTime(DateTime.Today), null); Snackbar.Add("DV marked as paid.", Severity.Success); await LoadAsync(); }
+        try { await Client.PayAsync(id, DateOnly.FromDateTime(DateTime.Today), null); Snackbar.Add("DV marked as paid.", Severity.Success); await ReloadAsync(); }
         catch (Exception ex) { Snackbar.Add($"Pay failed: {ex.Message}", Severity.Error); }
     }
 
@@ -307,7 +334,7 @@
     {
         var ok = await DialogService.ShowMessageBox("Cancel DV", "Cancel this disbursement voucher?", "Yes, Cancel", cancelText: "No");
         if (ok is not true) return;
-        try { await Client.CancelAsync(id, "Cancelled by user."); Snackbar.Add("DV cancelled.", Severity.Info); await LoadAsync(); }
+        try { await Client.CancelAsync(id, "Cancelled by user."); Snackbar.Add("DV cancelled.", Severity.Info); await ReloadAsync(); }
         catch (Exception ex) { Snackbar.Add($"Cancel failed: {ex.Message}", Severity.Error); }
     }
 

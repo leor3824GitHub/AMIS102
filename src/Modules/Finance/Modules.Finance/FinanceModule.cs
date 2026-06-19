@@ -7,6 +7,7 @@ using AMIS.Modules.Finance.Features.v1.DisbursementVouchers.CreateDisbursementVo
 using AMIS.Modules.Finance.Features.v1.DisbursementVouchers.UpdateDisbursementVoucher;
 using AMIS.Modules.Finance.Features.v1.DisbursementVouchers.GetDisbursementVoucherById;
 using AMIS.Modules.Finance.Features.v1.DisbursementVouchers.SearchDisbursementVouchers;
+using AMIS.Modules.Finance.Features.v1.DisbursementVouchers.GetStatusCounts;
 using AMIS.Modules.Finance.Features.v1.DisbursementVouchers.ApproveDisbursementVoucher;
 using AMIS.Modules.Finance.Features.v1.DisbursementVouchers.PayDisbursementVoucher;
 using AMIS.Modules.Finance.Features.v1.DisbursementVouchers.ReturnDisbursementVoucher;
@@ -14,6 +15,7 @@ using AMIS.Modules.Finance.Features.v1.DisbursementVouchers.CancelDisbursementVo
 using AMIS.Modules.Finance.Features.v1.BudgetUtilizationRecords.CreateBudgetUtilizationRecord;
 using AMIS.Modules.Finance.Features.v1.BudgetUtilizationRecords.GetBudgetUtilizationRecordById;
 using AMIS.Modules.Finance.Features.v1.BudgetUtilizationRecords.SearchBudgetUtilizationRecords;
+using AMIS.Modules.Finance.Features.v1.BudgetUtilizationRecords.GetStatusCounts;
 using AMIS.Modules.Finance.Features.v1.BudgetUtilizationRecords.ObligateBudgetUtilizationRecord;
 using AMIS.Modules.Finance.Features.v1.BudgetUtilizationRecords.UtilizeBudgetUtilizationRecord;
 using AMIS.Modules.Finance.Features.v1.BudgetUtilizationRecords.CancelBudgetUtilizationRecord;
@@ -81,6 +83,7 @@ public class FinanceModule : IModule
         UpdateDisbursementVoucherEndpoint.Map(dvGroup);
         GetDisbursementVoucherByIdEndpoint.Map(dvGroup);
         SearchDisbursementVouchersEndpoint.Map(dvGroup);
+        GetDisbursementVoucherStatusCountsEndpoint.Map(dvGroup);
         ApproveDisbursementVoucherEndpoint.Map(dvGroup);
         PayDisbursementVoucherEndpoint.Map(dvGroup);
         ReturnDisbursementVoucherEndpoint.Map(dvGroup);
@@ -90,6 +93,7 @@ public class FinanceModule : IModule
         CreateBudgetUtilizationRecordEndpoint.Map(burGroup);
         GetBudgetUtilizationRecordByIdEndpoint.Map(burGroup);
         SearchBudgetUtilizationRecordsEndpoint.Map(burGroup);
+        GetBudgetUtilizationRecordStatusCountsEndpoint.Map(burGroup);
         ObligateBudgetUtilizationRecordEndpoint.Map(burGroup);
         UtilizeBudgetUtilizationRecordEndpoint.Map(burGroup);
         CancelBudgetUtilizationRecordEndpoint.Map(burGroup);

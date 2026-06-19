@@ -23,6 +23,7 @@ file static class FinanceJsonOptions
 internal interface IDisbursementVoucherClient
 {
     Task<DisbursementVoucherSearchResult> SearchAsync(string? keyword = null, DisbursementVoucherStatus? status = null, Guid? purchaseOrderId = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
+    Task<IReadOnlyList<DisbursementVoucherStatusCountDto>> GetStatusCountsAsync(string? keyword = null, CancellationToken ct = default);
     Task<DisbursementVoucherDto?> GetAsync(Guid id, CancellationToken ct = default);
     Task<Guid> CreateAsync(CreateDisbursementVoucherCommand command, CancellationToken ct = default);
     Task UpdateAsync(Guid id, UpdateDisbursementVoucherCommand command, CancellationToken ct = default);
@@ -45,6 +46,14 @@ internal sealed class DisbursementVoucherClient(HttpClient http) : IDisbursement
         q["PageNumber"] = page.ToString();
         q["PageSize"] = pageSize.ToString();
         return http.GetFromJsonAsync<DisbursementVoucherSearchResult>($"{Base}?{q}", FinanceJsonOptions.Default, ct)!;
+    }
+
+    public async Task<IReadOnlyList<DisbursementVoucherStatusCountDto>> GetStatusCountsAsync(string? keyword = null, CancellationToken ct = default)
+    {
+        var url = $"{Base}/status-counts";
+        if (!string.IsNullOrWhiteSpace(keyword)) url += $"?Keyword={Uri.EscapeDataString(keyword)}";
+        var result = await http.GetFromJsonAsync<List<DisbursementVoucherStatusCountDto>>(url, FinanceJsonOptions.Default, ct).ConfigureAwait(false);
+        return result ?? [];
     }
 
     public Task<DisbursementVoucherDto?> GetAsync(Guid id, CancellationToken ct = default) =>
@@ -100,6 +109,7 @@ internal sealed class DisbursementVoucherClient(HttpClient http) : IDisbursement
 internal interface IBudgetUtilizationRecordClient
 {
     Task<BudgetUtilizationRecordSearchResult> SearchAsync(string? keyword = null, BudgetUtilizationRecordStatus? status = null, Guid? purchaseOrderId = null, string? allotmentClass = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
+    Task<IReadOnlyList<BudgetUtilizationRecordStatusCountDto>> GetStatusCountsAsync(string? keyword = null, CancellationToken ct = default);
     Task<BudgetUtilizationRecordDto?> GetAsync(Guid id, CancellationToken ct = default);
     Task<Guid> CreateAsync(CreateBudgetUtilizationRecordCommand command, CancellationToken ct = default);
     Task ObligateAsync(Guid id, CancellationToken ct = default);
@@ -121,6 +131,14 @@ internal sealed class BudgetUtilizationRecordClient(HttpClient http) : IBudgetUt
         q["PageNumber"] = page.ToString();
         q["PageSize"] = pageSize.ToString();
         return http.GetFromJsonAsync<BudgetUtilizationRecordSearchResult>($"{Base}?{q}", FinanceJsonOptions.Default, ct)!;
+    }
+
+    public async Task<IReadOnlyList<BudgetUtilizationRecordStatusCountDto>> GetStatusCountsAsync(string? keyword = null, CancellationToken ct = default)
+    {
+        var url = $"{Base}/status-counts";
+        if (!string.IsNullOrWhiteSpace(keyword)) url += $"?Keyword={Uri.EscapeDataString(keyword)}";
+        var result = await http.GetFromJsonAsync<List<BudgetUtilizationRecordStatusCountDto>>(url, FinanceJsonOptions.Default, ct).ConfigureAwait(false);
+        return result ?? [];
     }
 
     public Task<BudgetUtilizationRecordDto?> GetAsync(Guid id, CancellationToken ct = default) =>

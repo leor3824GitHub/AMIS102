@@ -134,3 +134,11 @@ public sealed record DisbursementVoucherSearchResult(
     int PageNumber,
     int PageSize);
 
+// One status tally backing the status-filter chip badges.
+public sealed record DisbursementVoucherStatusCountDto(DisbursementVoucherStatus Status, int Count);
+
+// Returns DV counts grouped by status for the filter-chip badges. Keyword-scoped: applies the same
+// keyword filter as the search so each badge matches what selecting that status would actually return.
+public sealed record GetDisbursementVoucherStatusCountsQuery(string? Keyword = null)
+    : IQuery<IReadOnlyList<DisbursementVoucherStatusCountDto>>;
+

@@ -82,3 +82,11 @@ public sealed record BudgetUtilizationRecordSearchResult(
     int PageNumber,
     int PageSize);
 
+// One status tally backing the status-filter chip badges.
+public sealed record BudgetUtilizationRecordStatusCountDto(BudgetUtilizationRecordStatus Status, int Count);
+
+// Returns BUR counts grouped by status for the filter-chip badges. Keyword-scoped: applies the same
+// keyword filter as the search so each badge matches what selecting that status would actually return.
+public sealed record GetBudgetUtilizationRecordStatusCountsQuery(string? Keyword = null)
+    : IQuery<IReadOnlyList<BudgetUtilizationRecordStatusCountDto>>;
+
