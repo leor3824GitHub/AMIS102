@@ -14,6 +14,7 @@
 	<ItemGroup>
 		<PackageReference Include="Mediator.Abstractions" />
 		<PackageReference Include="QuestPDF" />
+		<PackageReference Include="ZXing.Net" />
 	</ItemGroup>
 
 	<!-- Static report assets (e.g. the agency logo printed on government forms).

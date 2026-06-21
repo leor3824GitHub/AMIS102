@@ -8,12 +8,22 @@ public sealed record StickerInfo(string? PropertyNo, string? Item, decimal? Valu
 public static partial class PropertyNumberExtractor
 {
     // SPLV-style: 2-5 letter prefix + 4-digit year + 2-digit segment + 4-digit serial (e.g. SPLV-2026-01-0001)
+    // \b version — used against raw OCR text where word boundaries are reliable.
     [GeneratedRegex(@"\b[A-Z]{2,5}-\d{4}-\d{2}-\d{4}\b", RegexOptions.IgnoreCase)]
     private static partial Regex SplvPropertyNoRegex();
 
     // NFA-style: year + 3-5 dash-separated alnum segments (e.g. 2023-NFA-00B-DP-D-056)
     [GeneratedRegex(@"\b\d{4}(?:-[A-Z0-9]{1,5}){3,5}\b", RegexOptions.IgnoreCase)]
     private static partial Regex NfaPropertyNoRegex();
+
+    // Compact versions (no \b) — used after ALL whitespace is stripped.
+    // Without surrounding spaces the \b boundary at the end fails (e.g. "0001E" — both word chars),
+    // so these patterns rely on the specificity of the format alone.
+    [GeneratedRegex(@"[A-Z]{2,5}-\d{4}-\d{2}-\d{4}", RegexOptions.IgnoreCase)]
+    private static partial Regex SplvCompactRegex();
+
+    [GeneratedRegex(@"\d{4}(?:-[A-Z0-9]{1,5}){3,5}", RegexOptions.IgnoreCase)]
+    private static partial Regex NfaCompactRegex();
 
     // "Item: EPSON PRINTER L5290" — captures the rest of the line
     [GeneratedRegex(@"(?im)^\s*ITEM\s*[:\-]\s*(.+?)\s*$")]
@@ -27,13 +37,18 @@ public static partial class PropertyNumberExtractor
     {
         if (string.IsNullOrWhiteSpace(rawOcrText)) return null;
 
-        // Strip whitespace so OCR line wraps don't break the dash sequence.
-        var compact = rawOcrText.Replace(" ", "").Replace("\t", "").ToUpperInvariant();
+        // Pass 1: raw text — \b word boundaries work correctly when whitespace is preserved.
+        var match = NfaPropertyNoRegex().Match(rawOcrText);
+        if (match.Success) return match.Value.ToUpperInvariant();
+        match = SplvPropertyNoRegex().Match(rawOcrText);
+        if (match.Success) return match.Value.ToUpperInvariant();
 
-        var match = NfaPropertyNoRegex().Match(compact);
+        // Pass 2: compact text — strip ALL whitespace (spaces, tabs, newlines) so OCR line-wraps
+        // can't split the dash sequence, then use the no-\b regexes since word boundaries are gone.
+        var compact = Regex.Replace(rawOcrText, @"\s+", "").ToUpperInvariant();
+        match = NfaCompactRegex().Match(compact);
         if (match.Success) return match.Value;
-
-        match = SplvPropertyNoRegex().Match(compact);
+        match = SplvCompactRegex().Match(compact);
         return match.Success ? match.Value : null;
     }
 

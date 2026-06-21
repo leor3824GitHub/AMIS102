@@ -14,7 +14,7 @@
         <zxing:CameraBarcodeReaderView Grid.Row="0"
                                        x:Name="BarcodeReader"
                                        IsVisible="{Binding IsBarcodeMode}"
-                                       IsDetecting="{Binding IsBarcodeMode}"
+                                       IsDetecting="False"
                                        BarcodesDetected="OnBarcodeDetected">
             <zxing:CameraBarcodeReaderView.Options>
                 <zxingcore:BarcodeReaderOptions Formats="QrCode,Code128,Code39,DataMatrix"

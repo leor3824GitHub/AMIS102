@@ -20,6 +20,8 @@ public interface IAssetRegisterReportsClient
     Task<byte[]> GetUnserviceablePdfAsync(Guid reportId, string? pageWidth = null, CancellationToken cancellationToken = default);
     Task<byte[]> GetIncidentPdfAsync(Guid incidentReportId, string? pageWidth = null, CancellationToken cancellationToken = default);
     Task<byte[]> GetPropertyCardPdfAsync(string propertyNo, string? pageWidth = null, CancellationToken cancellationToken = default);
+    Task<byte[]> GetIcsStickersPdfAsync(Guid accountabilityId, string? pageWidth = null, CancellationToken cancellationToken = default);
+    Task<byte[]> GetParStickersPdfAsync(Guid accountabilityId, string? pageWidth = null, CancellationToken cancellationToken = default);
 }
 
 public sealed class AssetRegisterReportsClient(HttpClient httpClient) : IAssetRegisterReportsClient
@@ -94,6 +96,18 @@ public sealed class AssetRegisterReportsClient(HttpClient httpClient) : IAssetRe
     public Task<byte[]> GetPropertyCardPdfAsync(string propertyNo, string? pageWidth = null, CancellationToken cancellationToken = default)
     {
         var url = BuildUrl($"{PdfBase}/property-card/pdf", new() { ["propertyNo"] = propertyNo, ["pageWidth"] = pageWidth });
+        return httpClient.GetByteArrayAsync(url, cancellationToken);
+    }
+
+    public Task<byte[]> GetIcsStickersPdfAsync(Guid accountabilityId, string? pageWidth = null, CancellationToken cancellationToken = default)
+    {
+        var url = BuildUrl($"{PdfBase}/ics/{accountabilityId}/stickers/pdf", new() { ["pageWidth"] = pageWidth });
+        return httpClient.GetByteArrayAsync(url, cancellationToken);
+    }
+
+    public Task<byte[]> GetParStickersPdfAsync(Guid accountabilityId, string? pageWidth = null, CancellationToken cancellationToken = default)
+    {
+        var url = BuildUrl($"{PdfBase}/par/{accountabilityId}/stickers/pdf", new() { ["pageWidth"] = pageWidth });
         return httpClient.GetByteArrayAsync(url, cancellationToken);
     }
 

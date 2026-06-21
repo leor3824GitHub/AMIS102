@@ -13,7 +13,8 @@ public sealed partial class PhysicalCountScanViewModel : ObservableObject
 
     public PhysicalCountScanViewModel()
     {
-        IsCameraAvailable = DeviceInfo.Current.Platform != DevicePlatform.Unknown;
+        IsCameraAvailable = DeviceInfo.Current.Platform == DevicePlatform.Android
+                         || DeviceInfo.Current.Platform == DevicePlatform.iOS;
     }
 
     public async Task OnBarcodeDetectedAsync(string rawValue)

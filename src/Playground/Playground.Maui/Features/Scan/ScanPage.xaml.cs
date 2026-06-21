@@ -40,9 +40,17 @@ public partial class ScanPage : ContentPage
         if (e.PropertyName != nameof(ScanViewModel.IsTextMode)) return;
 
         if (_vm.IsTextMode)
+        {
+            // Release the camera before the CameraView takes it — one camera at a time.
+            BarcodeReader.IsDetecting = false;
             _ = StartTextScanLoopAsync();
+        }
         else
+        {
             StopTextScanLoop();
+            // Reclaim the camera once the CameraView is torn down.
+            BarcodeReader.IsDetecting = _vm.IsBarcodeMode;
+        }
     }
 
     private async Task StartTextScanLoopAsync()
@@ -142,9 +150,18 @@ public partial class ScanPage : ContentPage
         }
     }
 
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+        // Shell tab pages need an explicit kick to restart ZXing detection after navigating
+        // away and back — the binding-only approach misses the camera lifecycle event on Android.
+        BarcodeReader.IsDetecting = _vm.IsBarcodeMode;
+    }
+
     protected override void OnDisappearing()
     {
         base.OnDisappearing();
+        BarcodeReader.IsDetecting = false;
         StopTextScanLoop();
     }
 

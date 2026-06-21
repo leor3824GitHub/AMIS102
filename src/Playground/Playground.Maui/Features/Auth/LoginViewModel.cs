@@ -11,8 +11,8 @@ public sealed partial class LoginViewModel(
     ApiClientOptions apiOptions) : ObservableObject
 {
     [ObservableProperty] private string _tenant = Preferences.Default.Get(ApiClientOptions.TenantPreferenceKey, "root");
-    [ObservableProperty] private string _email = "";
-    [ObservableProperty] private string _password = "";
+    [ObservableProperty] private string _email = "admin@root.com";
+    [ObservableProperty] private string _password = "123Pa$$word!";
     [ObservableProperty] private bool _isLoading;
     [ObservableProperty] private bool _isPasswordVisible;
     [ObservableProperty] private string? _errorMessage;

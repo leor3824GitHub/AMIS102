@@ -4,7 +4,9 @@
 @using AMIS.Modules.AssetRegister.Contracts.v1.SignedDocuments
 @using AMIS.Modules.AssetRegister.Contracts.Permissions
 @using AMIS.Playground.Blazor.ApiClient
+@using AMIS.Playground.Blazor.Services.AssetRegister
 @inject IArAccountabilityClient Client
+@inject IAssetRegisterReportsClient ReportsClient
 @inject ISnackbar Snackbar
 @inject IUserProfileState UserProfileState
 @inject IDialogService DialogService
@@ -100,6 +102,11 @@
                                                         Color="Color.Secondary" OnClick="@(() => PrintRowAsync(context))"
                                                         Disabled="@(_printingId == context.Id)" />
                                     </MudTooltip>
+                                    <MudTooltip Text="Print property stickers (one per item, 10 per sheet)">
+                                        <AMISIconButton Icon="@Icons.Material.Filled.QrCode2" Size="Size.Small"
+                                                        Color="Color.Default" OnClick="@(() => PrintStickersAsync(context))"
+                                                        Disabled="@(_stickersId == context.Id)" />
+                                    </MudTooltip>
                                     @if (context.Status == AccountabilityStatus.PendingAcceptance && _canUpdate)
                                     {
                                         <MudTooltip Text="Edit">
@@ -149,6 +156,7 @@
 @code {
     private bool _busy;
     private Guid? _printingId;
+    private Guid? _stickersId;
     private string? _error;
     private string? _keyword;
     private AccountabilityType? _typeFilter;
@@ -280,6 +288,27 @@
         finally
         {
             _printingId = null;
+        }
+    }
+
+    private async Task PrintStickersAsync(ArAccountabilitySummaryDto item)
+    {
+        _stickersId = item.Id;
+        try
+        {
+            var bytes = item.AccountabilityType == AccountabilityType.SE_ICS
+                ? await ReportsClient.GetIcsStickersPdfAsync(item.Id)
+                : await ReportsClient.GetParStickersPdfAsync(item.Id);
+            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
+            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Sticker generation failed: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _stickersId = null;
         }
     }
 

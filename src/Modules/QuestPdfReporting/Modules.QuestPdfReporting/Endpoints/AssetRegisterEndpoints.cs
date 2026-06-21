@@ -1,8 +1,11 @@
 using AMIS.Modules.QuestPdfReporting.Features.v1.AssetRegister.PrintAccountability;
 using AMIS.Modules.QuestPdfReporting.Features.v1.AssetRegister.PrintCountAnnexes;
+using AMIS.Modules.QuestPdfReporting.Features.v1.AssetRegister.PrintIcsStickers;
 using AMIS.Modules.QuestPdfReporting.Features.v1.AssetRegister.PrintIncident;
+using AMIS.Modules.QuestPdfReporting.Features.v1.AssetRegister.PrintParStickers;
 using AMIS.Modules.QuestPdfReporting.Features.v1.AssetRegister.PrintPhysicalCountReport;
 using AMIS.Modules.QuestPdfReporting.Features.v1.AssetRegister.PrintPropertyCard;
+using AMIS.Modules.QuestPdfReporting.Features.v1.AssetRegister.PrintPropertySticker;
 using AMIS.Modules.QuestPdfReporting.Features.v1.AssetRegister.PrintRegSpi;
 using AMIS.Modules.QuestPdfReporting.Features.v1.AssetRegister.PrintReturnedProperty;
 using AMIS.Modules.QuestPdfReporting.Features.v1.AssetRegister.PrintUnserviceable;
@@ -24,6 +27,9 @@ internal static class AssetRegisterEndpoints
         PrintUnserviceableEndpoint.Map(assetRegister);
         PrintIncidentEndpoint.Map(assetRegister);
         PrintPropertyCardEndpoint.Map(assetRegister);
+        PrintPropertyStickerEndpoint.Map(assetRegister);
+        PrintIcsStickersEndpoint.Map(assetRegister);
+        PrintParStickersEndpoint.Map(assetRegister);
         PrintReturnedPropertyEndpoint.Map(assetRegister);
 
         return group;

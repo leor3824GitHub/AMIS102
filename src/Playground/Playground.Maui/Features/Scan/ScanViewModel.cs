@@ -28,7 +28,8 @@ public sealed partial class ScanViewModel : ObservableObject
     public ScanViewModel(IOcrService ocr)
     {
         _ocr = ocr;
-        IsCameraAvailable = DeviceInfo.Current.Platform != DevicePlatform.Unknown;
+        IsCameraAvailable = DeviceInfo.Current.Platform == DevicePlatform.Android
+                         || DeviceInfo.Current.Platform == DevicePlatform.iOS;
     }
 
     public bool IsOcrSupported => _ocr.IsSupported;
@@ -41,6 +42,7 @@ public sealed partial class ScanViewModel : ObservableObject
     {
         if (IsDebounced()) return;
         var propertyNo = rawValue.Trim().ToUpperInvariant();
+        if (string.IsNullOrEmpty(propertyNo)) return;
         _ = NavigateToAssetAsync(propertyNo);
     }
 
