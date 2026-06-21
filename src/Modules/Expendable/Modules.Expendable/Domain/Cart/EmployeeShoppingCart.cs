@@ -156,7 +156,7 @@ public class EmployeeShoppingCart : AggregateRoot<Guid>, IHasTenant, IAuditableE
     }
 
     /// <summary>Soft delete the cart</summary>
-    public void SoftDelete(string? deletedBy = null)
+    public void SoftDelete(string deletedBy)
     {
         IsDeleted = true;
         DeletedOnUtc = DateTimeOffset.UtcNow;

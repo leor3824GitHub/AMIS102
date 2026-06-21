@@ -1,4 +1,5 @@
 using AMIS.Framework.Core.Context;
+using AMIS.Framework.Core.Exceptions;
 using AMIS.Modules.MasterData.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
@@ -24,7 +25,7 @@ public sealed class DeleteSupplierCommandHandler : ICommandHandler<DeleteSupplie
 
         if (supplier is null)
         {
-            throw new KeyNotFoundException($"Supplier with ID {command.Id} not found.");
+            throw new NotFoundException($"Supplier with ID {command.Id} not found.");
         }
 
         supplier.SoftDelete(_currentUser.GetUserId().ToString());

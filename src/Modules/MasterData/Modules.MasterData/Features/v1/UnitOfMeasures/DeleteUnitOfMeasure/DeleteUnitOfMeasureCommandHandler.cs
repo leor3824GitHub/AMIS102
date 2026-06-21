@@ -1,4 +1,5 @@
 using AMIS.Framework.Core.Context;
+using AMIS.Framework.Core.Exceptions;
 using AMIS.Modules.MasterData.Contracts.v1.References;
 using AMIS.Modules.MasterData.Data;
 using Mediator;
@@ -22,7 +23,7 @@ public sealed class DeleteUnitOfMeasureCommandHandler : ICommandHandler<DeleteUn
         var unitOfMeasure = await _dbContext.UnitOfMeasures
             .FirstOrDefaultAsync(x => x.Id == command.Id, cancellationToken)
             .ConfigureAwait(false)
-            ?? throw new InvalidOperationException($"UnitOfMeasure {command.Id} not found.");
+            ?? throw new NotFoundException($"UnitOfMeasure {command.Id} not found.");
 
         unitOfMeasure.SoftDelete(_currentUser.GetUserId().ToString());
 

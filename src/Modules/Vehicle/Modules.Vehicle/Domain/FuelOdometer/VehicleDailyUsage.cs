@@ -82,7 +82,7 @@ public sealed class VehicleDailyUsage : AggregateRoot<Guid>, IHasTenant, IAudita
         Version = NewVersion();
     }
 
-    public void SoftDelete(string? deletedBy = null)
+    public void SoftDelete(string deletedBy)
     {
         IsDeleted = true;
         DeletedOnUtc = DateTimeOffset.UtcNow;

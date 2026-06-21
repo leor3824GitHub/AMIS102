@@ -1,7 +1,7 @@
 ﻿---
 paths:
-  - "src/**/Persistence/**"
-  - "src/**/Entities/**"
+  - "src/Modules/**/Data/**"
+  - "src/Modules/**/Domain/**"
 ---
 
 # Persistence Rules
@@ -230,6 +230,41 @@ public interface ISoftDelete
 ```
 
 ## Multi-Tenancy
+
+> ⚠️ **Authoritative repo convention (read this first — the idealized samples below differ).**
+> The interface names `IMustHaveTenant` / `ISoftDelete` shown later are illustrative only. The actual
+> codebase uses:
+>
+> - **Tenant marker:** `IHasTenant` (`string TenantId { get; }`) — from `AMIS.Framework.Core.Domain`.
+>   Declare `public string TenantId { get; private set; } = default!;` on the entity.
+> - **Soft-delete marker:** `ISoftDeletable` (getter-only: `bool IsDeleted`, `DateTimeOffset? DeletedOnUtc`,
+>   `string? DeletedBy`). Expose a domain method `SoftDelete(string deletedBy)`; keep the three fields
+>   `private set`. Do **not** mutate them from handlers.
+> - **Tenant filtering is NOT automatic from the interface.** It activates only when the entity's EF
+>   configuration calls `builder.ToTable(...).IsMultiTenant()` (Finbuckle). Without it, the entity leaks
+>   across tenants. See [#1 in the vulnerability review].
+>
+> ### Multi-tenant + soft-delete query filters (EF Core 10)
+>
+> `.IsMultiTenant()` registers a **named** query filter. EF Core 10 forbids mixing an *anonymous* filter
+> with *named* ones on the same entity. Therefore on any `.IsMultiTenant()` entity the soft-delete filter
+> **must** be the named form — an anonymous one throws `Both anonymous and named query filters cannot be
+> applied simultaneously` at **runtime model build**, taking down the whole module.
+>
+> ```csharp
+> // ✅ Correct — multi-tenant entity with named soft-delete filter
+> builder.ToTable("DisbursementVouchers", SchemaName).IsMultiTenant();
+> builder.Property(x => x.TenantId).HasMaxLength(64).IsRequired();
+> builder.HasIndex(x => x.TenantId);
+> builder.Property(x => x.IsDeleted).HasDefaultValue(false);
+> builder.HasQueryFilter("SoftDelete", x => !x.IsDeleted);   // NAMED — required alongside .IsMultiTenant()
+>
+> // ❌ Wrong — anonymous filter collides with the Finbuckle tenant filter → runtime crash
+> builder.HasQueryFilter(x => !x.IsDeleted);
+> ```
+>
+> Reference-data entities that are **not** `.IsMultiTenant()` (e.g. MasterData `Category`, `Office`) may
+> keep the anonymous `HasQueryFilter(x => !x.IsDeleted)` form.
 
 ### Tenant-Aware Entities
 

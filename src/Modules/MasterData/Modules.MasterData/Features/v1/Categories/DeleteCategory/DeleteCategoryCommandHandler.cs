@@ -1,4 +1,5 @@
 using AMIS.Framework.Core.Context;
+using AMIS.Framework.Core.Exceptions;
 using AMIS.Modules.MasterData.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
@@ -24,7 +25,7 @@ public sealed class DeleteCategoryCommandHandler : ICommandHandler<DeleteCategor
 
         if (category is null)
         {
-            throw new KeyNotFoundException($"Category with ID {command.Id} not found.");
+            throw new NotFoundException($"Category with ID {command.Id} not found.");
         }
 
         category.SoftDelete(_currentUser.GetUserId().ToString());

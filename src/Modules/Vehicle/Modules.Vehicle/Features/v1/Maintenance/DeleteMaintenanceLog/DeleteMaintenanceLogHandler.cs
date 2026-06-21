@@ -1,3 +1,4 @@
+using AMIS.Framework.Core.Context;
 using AMIS.Framework.Core.Exceptions;
 using AMIS.Modules.Vehicle.Data;
 using AMIS.Modules.Vehicle.Domain.Maintenance;
@@ -7,7 +8,8 @@ using Microsoft.EntityFrameworkCore;
 namespace AMIS.Modules.Vehicle.Features.v1.Maintenance.DeleteMaintenanceLog;
 
 public sealed class DeleteMaintenanceLogHandler(
-    VehicleDbContext db) : ICommandHandler<DeleteMaintenanceLogCommand, Unit>
+    VehicleDbContext db,
+    ICurrentUser currentUser) : ICommandHandler<DeleteMaintenanceLogCommand, Unit>
 {
     public async ValueTask<Unit> Handle(
         DeleteMaintenanceLogCommand command,
@@ -16,7 +18,7 @@ public sealed class DeleteMaintenanceLogHandler(
         var log = await db.MaintenanceLogs.FirstOrDefaultAsync(x => x.Id == command.LogId, cancellationToken)
             ?? throw new NotFoundException($"Maintenance log {command.LogId} not found");
 
-        log.SoftDelete();
+        log.SoftDelete(currentUser.GetUserId().ToString());
         db.MaintenanceLogs.Update(log);
         await db.SaveChangesAsync(cancellationToken);
 

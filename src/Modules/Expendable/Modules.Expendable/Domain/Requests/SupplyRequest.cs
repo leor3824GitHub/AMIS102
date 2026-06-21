@@ -216,7 +216,7 @@ public class SupplyRequest : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
     }
 
     /// <summary>Soft delete the request</summary>
-    public void SoftDelete(string? deletedBy = null)
+    public void SoftDelete(string deletedBy)
     {
         IsDeleted = true;
         DeletedOnUtc = DateTimeOffset.UtcNow;

@@ -1,3 +1,4 @@
+using AMIS.Framework.Core.Context;
 using AMIS.Framework.Core.Exceptions;
 using AMIS.Modules.Vehicle.Data;
 using AMIS.Modules.Vehicle.Domain.Maintenance;
@@ -7,7 +8,8 @@ using Microsoft.EntityFrameworkCore;
 namespace AMIS.Modules.Vehicle.Features.v1.Maintenance.DeleteMaintenanceSchedule;
 
 public sealed class DeleteMaintenanceScheduleHandler(
-    VehicleDbContext db) : ICommandHandler<DeleteMaintenanceScheduleCommand, Unit>
+    VehicleDbContext db,
+    ICurrentUser currentUser) : ICommandHandler<DeleteMaintenanceScheduleCommand, Unit>
 {
     public async ValueTask<Unit> Handle(
         DeleteMaintenanceScheduleCommand command,
@@ -16,7 +18,7 @@ public sealed class DeleteMaintenanceScheduleHandler(
         var schedule = await db.MaintenanceSchedules.FirstOrDefaultAsync(x => x.Id == command.ScheduleId, cancellationToken)
             ?? throw new NotFoundException($"Maintenance schedule {command.ScheduleId} not found");
 
-        schedule.SoftDelete();
+        schedule.SoftDelete(currentUser.GetUserId().ToString());
         db.MaintenanceSchedules.Update(schedule);
         await db.SaveChangesAsync(cancellationToken);
 

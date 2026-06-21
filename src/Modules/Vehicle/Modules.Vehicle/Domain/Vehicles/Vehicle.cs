@@ -206,7 +206,7 @@ public class Vehicle : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
         AddDomainEvent(VehicleDecommissionedEvent.Create(Id, TenantId, PlateNumber));
     }
 
-    public void SoftDelete(string? deletedBy = null)
+    public void SoftDelete(string deletedBy)
     {
         IsDeleted = true;
         DeletedOnUtc = DateTimeOffset.UtcNow;

@@ -1,4 +1,5 @@
 using AMIS.Framework.Core.Context;
+using AMIS.Framework.Core.Exceptions;
 using AMIS.Modules.MasterData.Contracts.v1.References;
 using AMIS.Modules.MasterData.Data;
 using Mediator;
@@ -22,7 +23,7 @@ public sealed class DeleteDepartmentCommandHandler : ICommandHandler<DeleteDepar
         var department = await _dbContext.Departments
             .FirstOrDefaultAsync(x => x.Id == command.Id, cancellationToken)
             .ConfigureAwait(false)
-            ?? throw new InvalidOperationException($"Department {command.Id} not found.");
+            ?? throw new NotFoundException($"Department {command.Id} not found.");
 
         department.SoftDelete(_currentUser.GetUserId().ToString());
 

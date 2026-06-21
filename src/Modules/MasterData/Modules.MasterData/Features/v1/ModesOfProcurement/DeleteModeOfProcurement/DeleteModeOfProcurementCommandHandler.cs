@@ -1,4 +1,5 @@
 using AMIS.Framework.Core.Context;
+using AMIS.Framework.Core.Exceptions;
 using AMIS.Modules.MasterData.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
@@ -24,7 +25,7 @@ public sealed class DeleteModeOfProcurementCommandHandler : ICommandHandler<Dele
 
         if (entity is null)
         {
-            throw new KeyNotFoundException($"Mode of procurement with ID {command.Id} not found.");
+            throw new NotFoundException($"Mode of procurement with ID {command.Id} not found.");
         }
 
         entity.SoftDelete(_currentUser.GetUserId().ToString());

@@ -15,9 +15,9 @@ public class Group : ISoftDeletable
     public string? ModifiedBy { get; private set; }
 
     // ISoftDeletable implementation
-    public bool IsDeleted { get; set; }
-    public DateTimeOffset? DeletedOnUtc { get; set; }
-    public string? DeletedBy { get; set; }
+    public bool IsDeleted { get; private set; }
+    public DateTimeOffset? DeletedOnUtc { get; private set; }
+    public string? DeletedBy { get; private set; }
 
     // Navigation properties
     public virtual ICollection<GroupRole> GroupRoles { get; private set; } = [];
@@ -52,6 +52,13 @@ public class Group : ISoftDeletable
         IsDefault = isDefault;
         ModifiedAt = DateTime.UtcNow;
         ModifiedBy = modifiedBy;
+    }
+
+    public void SoftDelete(string deletedBy)
+    {
+        IsDeleted = true;
+        DeletedOnUtc = DateTimeOffset.UtcNow;
+        DeletedBy = deletedBy;
     }
 }
 

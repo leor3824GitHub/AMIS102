@@ -95,7 +95,7 @@ public class MaintenanceSchedule : AggregateRoot<Guid>, IHasTenant, IAuditableEn
         Version = NewVersion();
     }
 
-    public void SoftDelete(string? deletedBy = null)
+    public void SoftDelete(string deletedBy)
     {
         IsDeleted = true;
         DeletedOnUtc = DateTimeOffset.UtcNow;

@@ -66,7 +66,7 @@ public class MaintenanceLog : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
         Version = NewVersion();
     }
 
-    public void SoftDelete(string? deletedBy = null)
+    public void SoftDelete(string deletedBy)
     {
         IsDeleted = true;
         DeletedOnUtc = DateTimeOffset.UtcNow;

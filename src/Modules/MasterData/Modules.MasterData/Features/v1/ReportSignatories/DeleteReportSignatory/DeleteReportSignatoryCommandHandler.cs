@@ -1,4 +1,5 @@
 using AMIS.Framework.Core.Context;
+using AMIS.Framework.Core.Exceptions;
 using AMIS.Modules.MasterData.Contracts.v1.ReportSignatories;
 using AMIS.Modules.MasterData.Data;
 using Mediator;
@@ -14,7 +15,7 @@ public sealed class DeleteReportSignatoryCommandHandler(MasterDataDbContext db, 
         var entity = await db.ReportSignatories
             .FirstOrDefaultAsync(x => x.Id == command.Id, cancellationToken)
             .ConfigureAwait(false)
-            ?? throw new InvalidOperationException($"Report signatory {command.Id} not found.");
+            ?? throw new NotFoundException($"Report signatory {command.Id} not found.");
 
         entity.Delete(currentUser.GetUserId().ToString());
 
