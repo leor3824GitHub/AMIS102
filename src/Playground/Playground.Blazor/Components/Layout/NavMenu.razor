@@ -1,4 +1,4 @@
-@using AMIS.Framework.Shared.Constants
+﻿@using AMIS.Framework.Shared.Constants
 @using AMIS.Framework.Shared.Multitenancy
 @using Microsoft.AspNetCore.Components.Authorization
 @implements IDisposable
@@ -254,15 +254,21 @@
 
         <MudNavGroup Title="Budget & Disbursement" Icon="@Icons.Material.Outlined.AccountBalanceWallet"
                      @bind-Expanded="_financeExpanded">
-            <MudNavLink Href="/finance/budget-utilization-records" Match="NavLinkMatch.Prefix"
+            <MudNavLink Href="/budget-disbursement/budget-utilization-requests" Match="NavLinkMatch.Prefix"
                         Icon="@Icons.Material.Outlined.AccountBalance">
                 Budget Utilization Request and Status
             </MudNavLink>
-            <MudNavLink Href="/finance/disbursement-vouchers" Match="NavLinkMatch.Prefix"
+            <MudNavLink Href="/budget-disbursement/disbursement-vouchers" Match="NavLinkMatch.Prefix"
                         Icon="@Icons.Material.Outlined.Receipt">
                 Disbursement Vouchers
             </MudNavLink>
-
+            @if (UserProfileState.Permissions.Contains("Permissions.BudgetDisbursement.Settings.View"))
+            {
+                <MudNavLink Href="/budget-disbursement/settings" Match="NavLinkMatch.All"
+                            Icon="@Icons.Material.Outlined.Settings">
+                    Budget Disbursement Settings
+                </MudNavLink>
+            }
         </MudNavGroup>
 
         <MudNavGroup Title="Vehicle" Icon="@Icons.Material.Outlined.DirectionsCar" @bind-Expanded="_vehicleExpanded">

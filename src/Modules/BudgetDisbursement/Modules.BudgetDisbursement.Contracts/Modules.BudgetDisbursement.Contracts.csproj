@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<RootNamespace>AMIS.Modules.BudgetDisbursement.Contracts</RootNamespace>
+		<AssemblyName>AMIS.Modules.BudgetDisbursement.Contracts</AssemblyName>
+		<PackageId>AMIS.Modules.BudgetDisbursement.Contracts</PackageId>
+		<NoWarn>$(NoWarn);CA1002;CA1056;CS1572;S2094</NoWarn>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Mediator.Abstractions" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\..\BuildingBlocks\Eventing.Abstractions\Eventing.Abstractions.csproj" />
+		<ProjectReference Include="..\..\..\BuildingBlocks\Shared\Shared.csproj" />
+	</ItemGroup>
+
+</Project>
+

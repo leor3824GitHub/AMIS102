@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 using AMIS.Modules.AssetRegister;
 using Shouldly;
 using Xunit;
@@ -16,7 +16,7 @@ public sealed class ModuleBoundaryTests
             "AMIS.Modules.AssetManagement",
             "AMIS.Modules.ProcurementAcquisition",
             "AMIS.Modules.ProcurementPlanning",
-            "AMIS.Modules.Finance",
+            "AMIS.Modules.BudgetDisbursement",
             "AMIS.Modules.Vehicle",
             "AMIS.Modules.Expendable",
             "AMIS.Modules.MasterData",

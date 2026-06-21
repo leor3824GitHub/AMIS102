@@ -1,7 +1,9 @@
 # AMIS Report Designer — Phased Roadmap
 
 > A pragmatic, value-first sequencing for building a dynamic/WYSIWYG report
-> designer in AMIS. Companion to `AMIS_Dynamic_Report_Designer_Plan(1).md`.
+> designer in AMIS. **Companion to the technical spec
+> [`AMIS_Report_Designer_Plan.md`](AMIS_Report_Designer_Plan.md)** — that file is the
+> "what & how"; this file is the "when, how much, and where to stop."
 
 **Strategy:** renderer first → curated admin templates → structured editor → full
 WYSIWYG. Risk and cost climb with each phase while *value per hour drops*. The
@@ -18,10 +20,10 @@ Finbuckle `IMustHaveTenant`; `BaseDbContext`; endpoints with `.RequirePermission
 **Goal:** Prove the two riskiest things before committing to the full build.
 **Hours: ~24–32**
 
-- Stand up `Modules/Reporting` skeleton (Contracts + impl, `ReportingDbContext : BaseDbContext`, `IModule` wiring, one permission constant).
+- Stand up `Modules.ReportDesigner` skeleton (Contracts + impl, `ReportDesignerDbContext : BaseDbContext`, `IModule` wiring, one permission constant).
 - **Spike the data-binding resolver**: nested paths (`Asset.Description`), a collection, date + ₱ currency formatting. Highest technical risk — prove it cheaply.
 - **Spike multi-page QuestPDF**: a hardcoded AST → PDF with a table that repeats its header across 2+ pages and prints a totals footer.
-- Decide the AST storage shape (`jsonb` column vs. normalized).
+- Confirm the AST storage shape (`jsonb` column per the plan, rule G1) by round-tripping a sample AST.
 
 **Ships:** nothing user-facing. **Gate:** if binding or pagination looks ugly here, re-scope before spending real money.
 
@@ -45,17 +47,18 @@ Finbuckle `IMustHaveTenant`; `BaseDbContext`; endpoints with `.RequirePermission
 
 ---
 
-## Phase 2 — Curated Data Sources + Template Management
-**Goal:** Admins create/manage templates against *safe, pre-wired* data contexts.
+## Phase 2 — Admin-Defined Data Sources + Template Management
+**Goal:** Admins compose safe, tenant-scoped data sources and create/manage templates against them.
 **Hours: ~80–110**  |  cumulative ~175–235
 
-- **Data-source registry**: define bindable report contexts (e.g., *ICS report*, *PAR report*, *Asset list*, *Disbursement Voucher*) with an **allow-listed field catalog** — closes the reflection/injection hole and makes binding pickable, not typed.
+- **First reportable source**: publish one module-backed `IReportableSource` end-to-end — start with `Assets` (built on `AssetRegister.Contracts`). Tenant-scoped, read-only rows projected to dictionaries (no reflection over live entities). Adding more sources later is one class + one DI line each.
+- **Data Source Designer** (plan Phase 1b): an admin composes a `ReportDataSource` at runtime (pick fields/relations/filters); the bindable field catalog is **derived** from that saved spec — closes the reflection/injection hole and makes binding pickable, not typed.
 - Full template CRUD slices (create/update/duplicate/delete/list) + validators + permissions.
 - Basic template-management UI in Blazor (list, duplicate, delete, permission-gated via `UserProfileState.Permissions`).
 - **Live Preview loop** (PDF round-trips into a viewer) — built here because every later phase reuses it.
 - A raw/JSON or form-based property editor (no canvas yet).
 
-**Ships:** an admin/power-user can build and manage real templates against curated data, preview them, and roll them out — without a developer.
+**Ships:** an admin/power-user can define their own data sources, build and manage real templates against them, preview them, and roll them out — without a developer.
 
 > ✅ **CUT-LINE 2 — "Admin-configurable templates." Highest-ROI stopping point.** Most "we need a report designer" requirements are actually satisfied here. Ship this, watch real usage for 4–6 weeks, and let demand decide whether Phases 3–4 are worth it. **Strongly recommend stopping and re-evaluating at this gate.**
 
@@ -67,7 +70,7 @@ Finbuckle `IMustHaveTenant`; `BaseDbContext`; endpoints with `.RequirePermission
 
 - Recursive canvas component that **renders** the template visually with a selection model.
 - Element toolbox/palette (add node into selected container).
-- Per-node-type properties panel with **binding pickers** sourced from Phase 2's field catalog.
+- Per-node-type properties panel with **binding pickers** sourced from the admin-defined data source's *derived* catalog (Phase 2).
 - Tree manipulation via explicit controls: add, delete, **move up/down, indent/outdent** (reparent without drag).
 - Canvas↔PDF fidelity pass #1 (structurally faithful, "preview to confirm").
 
@@ -118,14 +121,31 @@ decide. Phases 3–4 are real work for diminishing returns; the data collected
 after Cut-line 2 reveals whether end-users actually need to *author* reports or
 just *use* a handful of good ones.
 
-## Convention corrections carried from the original plan
+## Conventions
 
-The original `AMIS_Dynamic_Report_Designer_Plan(1).md` is a sound *concept* but
-its code samples must be rewritten before implementation:
+This roadmap covers only *sequencing and effort*. All code-level conventions —
+Mediator (not MediatR) with `ICommand`/`IQuery` + `ValueTask` + validators; modular-
+monolith vertical slices (`Modules.ReportDesigner` with `Domain/`, `Data/`,
+`Features/v1/...`); Finbuckle `IMustHaveTenant`; rich domain with factory methods and
+`private set`; `KeyNotFoundException`; and admin-defined data sources with a *derived*
+binding catalog — are specified in
+[`AMIS_Report_Designer_Plan.md`](AMIS_Report_Designer_Plan.md). See its conventions
+table and detailed rules A–I; the plan is the source of truth for *how*.
 
-- **Mediator, not MediatR** — use `ICommand<T>`/`IQuery<T>`, `ICommandHandler`/`IQueryHandler`, `ValueTask<T>`; every command/query needs a FluentValidation validator.
-- **Modular monolith, not layered** — build `Modules/Reporting` (`Domain/`, `Data/`, `Features/v1/...`), not `AMIS.Domain`/`Application`/`Infrastructure`; no shared `IApplicationDbContext`.
-- **Finbuckle multi-tenancy** — entity implements `IMustHaveTenant` (`Guid TenantId`), automatic global query filter; no manual `string TenantId` filtering.
-- **Rich domain** — factory methods + `private set` + invariants, not public-setter bags.
-- **Framework exceptions** — `NotFoundException`, not `throw new Exception(...)`.
-- **Binding/security** — replace raw reflection token lookup with a nested-path resolver over an **allow-listed field catalog** (Phase 2).
+## Plan-to-Roadmap Mapping
+
+The plan uses "Parts" (internal build order); this roadmap uses "Phases" (delivery
+sequence). They are not 1:1. See the cross-reference table at the bottom of
+[`AMIS_Report_Designer_Plan.md`](AMIS_Report_Designer_Plan.md).
+
+## Phase 0 Spike Targets
+
+The two concrete things the spike must answer before spending real build hours:
+
+| Risk | Spike target | Pass/fail signal |
+|---|---|---|
+| Token binding at scale | 500-row `Assets` table, nested `Custodian.FullName`, ₱ currency, date | < 500 ms render, correct formatting |
+| QuestPDF pagination | Single template, 3-page output, repeating table header, page-number footer | Header appears on every page; page n/N correct |
+| jsonb round-trip | Serialize + deserialize a 50-node AST; assert byte-equal | No field loss, stable across `ReportJson.Options` |
+
+Fail on any of these → re-scope before Phase 1 investment.

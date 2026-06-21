@@ -1,4 +1,4 @@
-<Solution>
+﻿<Solution>
   <Folder Name="/BuildingBlocks/">
     <Project Path="BuildingBlocks/Blazor.UI/Blazor.UI.csproj" Id="b8ed01df-1c7f-4be1-afa4-f41d3ac7208e" />
     <Project Path="BuildingBlocks/Caching/Caching.csproj" />
@@ -33,9 +33,9 @@
     <Project Path="Modules/ProcurementAcquisition/Modules.ProcurementAcquisition.Contracts/Modules.ProcurementAcquisition.Contracts.csproj" />
     <Project Path="Modules/ProcurementAcquisition/Modules.ProcurementAcquisition/Modules.ProcurementAcquisition.csproj" />
   </Folder>
-  <Folder Name="/Modules/Finance/">
-    <Project Path="Modules/Finance/Modules.Finance.Contracts/Modules.Finance.Contracts.csproj" />
-    <Project Path="Modules/Finance/Modules.Finance/Modules.Finance.csproj" />
+  <Folder Name="/Modules/BudgetDisbursement/">
+    <Project Path="Modules/BudgetDisbursement/Modules.BudgetDisbursement.Contracts/Modules.BudgetDisbursement.Contracts.csproj" />
+    <Project Path="Modules/BudgetDisbursement/Modules.BudgetDisbursement/Modules.BudgetDisbursement.csproj" />
   </Folder>
   <Folder Name="/Modules/AssetManagement/">
     <Project Path="Modules/AssetManagement/Modules.AssetManagement.Contracts/Modules.AssetManagement.Contracts.csproj" />
@@ -84,7 +84,7 @@
     <Project Path="Tests/AssetRegister.Tests/AssetRegister.Tests.csproj" />
     <Project Path="Tests/Auditing.Tests/Auditing.Tests.csproj" />
     <Project Path="Tests/Expendable.Tests/Expendable.Tests.csproj" />
-    <Project Path="Tests/Finance.Tests/Finance.Tests.csproj" />
+    <Project Path="Tests/BudgetDisbursement.Tests/BudgetDisbursement.Tests.csproj" />
     <Project Path="Tests/Generic.Tests/Generic.Tests.csproj" />
     <Project Path="Tests/Identity.Tests/Identity.Tests.csproj" />
     <Project Path="Tests/Multitenancy.Tests/Multitenancy.Tests.csproj" Id="985345a2-edb4-4ef9-9a1b-59b704f523b6" />

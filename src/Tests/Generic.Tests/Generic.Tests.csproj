@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <IsPackable>false</IsPackable>
@@ -30,8 +30,8 @@
     <ProjectReference Include="..\..\Modules\Auditing\Modules.Auditing.Contracts\Modules.Auditing.Contracts.csproj" />
     <ProjectReference Include="..\..\Modules\Expendable\Modules.Expendable\Modules.Expendable.csproj" />
     <ProjectReference Include="..\..\Modules\Expendable\Modules.Expendable.Contracts\Modules.Expendable.Contracts.csproj" />
-    <ProjectReference Include="..\..\Modules\Finance\Modules.Finance\Modules.Finance.csproj" />
-    <ProjectReference Include="..\..\Modules\Finance\Modules.Finance.Contracts\Modules.Finance.Contracts.csproj" />
+    <ProjectReference Include="..\..\Modules\BudgetDisbursement\Modules.BudgetDisbursement\Modules.BudgetDisbursement.csproj" />
+    <ProjectReference Include="..\..\Modules\BudgetDisbursement\Modules.BudgetDisbursement.Contracts\Modules.BudgetDisbursement.Contracts.csproj" />
     <ProjectReference Include="..\..\Modules\Identity\Modules.Identity\Modules.Identity.csproj" />
     <ProjectReference Include="..\..\Modules\Identity\Modules.Identity.Contracts\Modules.Identity.Contracts.csproj" />
     <ProjectReference Include="..\..\Modules\MasterData\Modules.MasterData\Modules.MasterData.csproj" />

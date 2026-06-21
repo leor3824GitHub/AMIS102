@@ -1,4 +1,4 @@
-using Asp.Versioning;
+﻿using Asp.Versioning;
 using AMIS.Framework.Shared.Constants;
 using AMIS.Framework.Web.Modules;
 using AMIS.Modules.QuestPdfReporting.Endpoints;
@@ -39,6 +39,6 @@ public sealed class QuestPdfReportingModule : IModule
         moduleGroup.MapVehicleQuestPdfReports();
         moduleGroup.MapAssetManagementQuestPdfReports();
         moduleGroup.MapAssetRegisterQuestPdfReports();
-        moduleGroup.MapFinanceQuestPdfReports();
+        moduleGroup.MapBudgetDisbursementQuestPdfReports();
     }
 }

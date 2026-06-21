@@ -1,4 +1,4 @@
-using System.Net.Http;
+﻿using System.Net.Http;
 using AMIS.Playground.Blazor.ApiClient;
 
 namespace AMIS.Playground.Blazor;
@@ -146,15 +146,18 @@ internal static class ApiClientRegistration
         services.AddTransient<IModeOfProcurementClient>(sp =>
             new ModeOfProcurementClient(ResolveClient(sp)));
 
-        // Finance module manual clients
+        // Budget Disbursement module manual clients
         services.AddTransient<IDisbursementVoucherClient>(sp =>
             new DisbursementVoucherClient(ResolveClient(sp)));
 
-        services.AddTransient<IBudgetUtilizationRecordClient>(sp =>
-            new BudgetUtilizationRecordClient(ResolveClient(sp)));
+        services.AddTransient<IBudgetUtilizationRequestClient>(sp =>
+            new BudgetUtilizationRequestClient(ResolveClient(sp)));
 
-        services.AddTransient<IFinanceSignedDocumentClient>(sp =>
-            new FinanceSignedDocumentClient(ResolveClient(sp)));
+        services.AddTransient<IBudgetDisbursementSignedDocumentClient>(sp =>
+            new BudgetDisbursementSignedDocumentClient(ResolveClient(sp)));
+
+        services.AddTransient<IBudgetDisbursementSettingsClient>(sp =>
+            new BudgetDisbursementSettingsClient(ResolveClient(sp)));
 
         // Asset Management module manual clients
         services.AddTransient<IPropertyItemCatalogClient>(sp =>

@@ -140,6 +140,7 @@
     <PackageVersion Include="RabbitMQ.Client" Version="7.2.1" />
   </ItemGroup>
   <ItemGroup Label="Reporting">
+    <PackageVersion Include="PdfSharp" Version="6.2.0" />
     <PackageVersion Include="QuestPDF" Version="2026.2.4" />
     <PackageVersion Include="ReportViewerCore.NETCore" Version="15.1.33" />
     <PackageVersion Include="FastReport.OpenSource" Version="2025.1.0" />

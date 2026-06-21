@@ -1,0 +1,539 @@
+﻿@page "/budget-disbursement/settings"
+@using AMIS.Modules.BudgetDisbursement.Contracts.Permissions
+@using AMIS.Modules.BudgetDisbursement.Contracts.v1.Settings
+@inject IBudgetDisbursementSettingsClient Client
+@inject ILookupClient LookupClient
+@inject ISnackbar Snackbar
+@inject IUserProfileState UserProfileState
+@inject IOrganizationProfileState OrgProfileState
+
+<AMISPageHeader Title="Budget Disbursement Settings" Description="Configure Budget Disbursement module behaviour for this tenant" />
+
+@if (!_canView)
+{
+    <MudText Color="Color.Error">You do not have permission to view Budget Disbursement settings.</MudText>
+    return;
+}
+
+@if (!_loaded)
+{
+    <MudProgressLinear Indeterminate="true" />
+}
+else
+{
+    <MudStack Spacing="4">
+
+        <MudTabs Elevation="1" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-5" Style="max-width:740px">
+
+            @* ── Tab 1: General ──────────────────────────────── *@
+            <MudTabPanel Text="General" Icon="@Icons.Material.Outlined.Settings">
+                <MudStack Spacing="3">
+                    <MudText Typo="Typo.subtitle1" Class="mb-1">Signed Copy Settings</MudText>
+                    <MudSwitch @bind-Value="_watermarkEnabled"
+                               Color="Color.Primary"
+                               Disabled="@(!_canUpdate || _saving)"
+                               Label="Watermark downloaded signed copies" />
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        When enabled, every signed copy PDF served to users will be stamped with the
+                        downloader's name and access timestamp. This deters unauthorised sharing — any
+                        leaked copy can be traced back to the person who downloaded it.
+                    </MudText>
+                </MudStack>
+            </MudTabPanel>
+
+            @* ── Tab 2: DV Signatories ───────────────────────── *@
+            <MudTabPanel Text="Disbursement Voucher" Icon="@Icons.Material.Outlined.Receipt">
+                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+                    Override the default signatories drawn from the Organization Profile.
+                    Leave the name blank to fall back to the Organization Profile value.
+                </MudText>
+
+                <MudStack Spacing="5">
+
+                    @* ── Section A ── *@
+                    <div>
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-1">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                <MudText Typo="Typo.subtitle2">Section A — Certified by Supervisor</MudText>
+                                @if (SectionAIsOverridden)
+                                {
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Filled">Override active</MudChip>
+                                }
+                            </MudStack>
+                            @if (_canUpdate && SectionAIsOverridden)
+                            {
+                                <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Default"
+                                           StartIcon="@Icons.Material.Outlined.SettingsBackupRestore"
+                                           OnClick="UseDefaultA" Disabled="_saving">
+                                    Use Default
+                                </MudButton>
+                            }
+                        </MudStack>
+                        @if (!SectionAIsOverridden && OrgProfileState.Profile is { } org &&
+                             (!string.IsNullOrWhiteSpace(org.AssistantRegionalManagerName) || !string.IsNullOrWhiteSpace(org.AssistantRegionalManagerDesignation)))
+                        {
+                            <MudText Typo="Typo.caption" Color="Color.Tertiary" Class="mb-2">
+                                Current default: @org.AssistantRegionalManagerName — @(org.AssistantRegionalManagerDesignation ?? "—")
+                            </MudText>
+                        }
+                        <MudGrid Spacing="2">
+                            <MudItem xs="12" sm="6">
+                                <MudAutocomplete T="EmployeeReferenceDto"
+                                                 Value="_sectionAEmployee"
+                                                 ValueChanged="OnSectionAChanged"
+                                                 SearchFunc="SearchEmployeesAsync"
+                                                 ToStringFunc="EmployeeDisplayName"
+                                                 ResetValueOnEmptyText="true"
+                                                 CoerceText="true"
+                                                 MinCharacters="1"
+                                                 Clearable="true"
+                                                 Label="Printed Name"
+                                                 Variant="Variant.Outlined"
+                                                 Dense="true"
+                                                 Margin="Margin.Dense"
+                                                 Disabled="@(!_canUpdate || _saving)"
+                                                 Placeholder="@(OrgProfileState.Profile?.AssistantRegionalManagerName ?? "Search employees…")"
+                                                 HelperText="@(_dvSectionAName is not null && _sectionAEmployee is null ? $"Saved: {_dvSectionAName}" : null)" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                <AMISTextField Label="Designation" @bind-Value="_dvSectionADesignation"
+                                               Disabled="@(!_canUpdate || _saving)"
+                                               Placeholder="@(OrgProfileState.Profile?.AssistantRegionalManagerDesignation ?? string.Empty)" />
+                            </MudItem>
+                        </MudGrid>
+                    </div>
+
+                    <MudDivider />
+
+                    @* ── Section B ── *@
+                    <div>
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-1">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                <MudText Typo="Typo.subtitle2">Section B — Certified (Accountant)</MudText>
+                                @if (SectionBIsOverridden)
+                                {
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Filled">Override active</MudChip>
+                                }
+                            </MudStack>
+                            @if (_canUpdate && SectionBIsOverridden)
+                            {
+                                <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Default"
+                                           StartIcon="@Icons.Material.Outlined.SettingsBackupRestore"
+                                           OnClick="UseDefaultB" Disabled="_saving">
+                                    Use Default
+                                </MudButton>
+                            }
+                        </MudStack>
+                        @if (!SectionBIsOverridden && OrgProfileState.Profile is { } orgB &&
+                             (!string.IsNullOrWhiteSpace(orgB.AccountantName) || !string.IsNullOrWhiteSpace(orgB.AccountantDesignation)))
+                        {
+                            <MudText Typo="Typo.caption" Color="Color.Tertiary" Class="mb-2">
+                                Current default: @orgB.AccountantName — @(orgB.AccountantDesignation ?? "—")
+                            </MudText>
+                        }
+                        <MudGrid Spacing="2">
+                            <MudItem xs="12" sm="6">
+                                <MudAutocomplete T="EmployeeReferenceDto"
+                                                 Value="_sectionBEmployee"
+                                                 ValueChanged="OnSectionBChanged"
+                                                 SearchFunc="SearchEmployeesAsync"
+                                                 ToStringFunc="EmployeeDisplayName"
+                                                 ResetValueOnEmptyText="true"
+                                                 CoerceText="true"
+                                                 MinCharacters="1"
+                                                 Clearable="true"
+                                                 Label="Printed Name"
+                                                 Variant="Variant.Outlined"
+                                                 Dense="true"
+                                                 Margin="Margin.Dense"
+                                                 Disabled="@(!_canUpdate || _saving)"
+                                                 Placeholder="@(OrgProfileState.Profile?.AccountantName ?? "Search employees…")"
+                                                 HelperText="@(_dvSectionBName is not null && _sectionBEmployee is null ? $"Saved: {_dvSectionBName}" : null)" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                <AMISTextField Label="Designation" @bind-Value="_dvSectionBDesignation"
+                                               Disabled="@(!_canUpdate || _saving)"
+                                               Placeholder="@(OrgProfileState.Profile?.AccountantDesignation ?? string.Empty)" />
+                            </MudItem>
+                        </MudGrid>
+                    </div>
+
+                    <MudDivider />
+
+                    @* ── Section C ── *@
+                    <div>
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-1">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                <MudText Typo="Typo.subtitle2">Section C — Approved for Payment</MudText>
+                                @if (SectionCIsOverridden)
+                                {
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Filled">Override active</MudChip>
+                                }
+                            </MudStack>
+                            @if (_canUpdate && SectionCIsOverridden)
+                            {
+                                <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Default"
+                                           StartIcon="@Icons.Material.Outlined.SettingsBackupRestore"
+                                           OnClick="UseDefaultC" Disabled="_saving">
+                                    Use Default
+                                </MudButton>
+                            }
+                        </MudStack>
+                        @if (!SectionCIsOverridden && OrgProfileState.Profile is { } orgC &&
+                             (!string.IsNullOrWhiteSpace(orgC.ApprovingOfficialName) || !string.IsNullOrWhiteSpace(orgC.ApprovingOfficialDesignation)))
+                        {
+                            <MudText Typo="Typo.caption" Color="Color.Tertiary" Class="mb-2">
+                                Current default: @orgC.ApprovingOfficialName — @(orgC.ApprovingOfficialDesignation ?? "—")
+                            </MudText>
+                        }
+                        <MudGrid Spacing="2">
+                            <MudItem xs="12" sm="6">
+                                <MudAutocomplete T="EmployeeReferenceDto"
+                                                 Value="_sectionCEmployee"
+                                                 ValueChanged="OnSectionCChanged"
+                                                 SearchFunc="SearchEmployeesAsync"
+                                                 ToStringFunc="EmployeeDisplayName"
+                                                 ResetValueOnEmptyText="true"
+                                                 CoerceText="true"
+                                                 MinCharacters="1"
+                                                 Clearable="true"
+                                                 Label="Printed Name"
+                                                 Variant="Variant.Outlined"
+                                                 Dense="true"
+                                                 Margin="Margin.Dense"
+                                                 Disabled="@(!_canUpdate || _saving)"
+                                                 Placeholder="@(OrgProfileState.Profile?.ApprovingOfficialName ?? "Search employees…")"
+                                                 HelperText="@(_dvSectionCName is not null && _sectionCEmployee is null ? $"Saved: {_dvSectionCName}" : null)" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                <AMISTextField Label="Designation" @bind-Value="_dvSectionCDesignation"
+                                               Disabled="@(!_canUpdate || _saving)"
+                                               Placeholder="@(OrgProfileState.Profile?.ApprovingOfficialDesignation ?? string.Empty)" />
+                            </MudItem>
+                        </MudGrid>
+                    </div>
+
+                </MudStack>
+            </MudTabPanel>
+
+            @* ── Tab 3: BUR Signatories ──────────────────────── *@
+            <MudTabPanel Text="Budget Utilization Request and Status" Icon="@Icons.Material.Outlined.AccountBalance">
+                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+                    Override the default signatories drawn from the Organization Profile.
+                    Leave the name blank to fall back to the Organization Profile value.
+                </MudText>
+
+                <MudStack Spacing="5">
+
+                    @* ── BUR Section A ── *@
+                    <div>
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-1">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                <MudText Typo="Typo.subtitle2">Section A — Certified (Requesting Office)</MudText>
+                                @if (BurSectionAIsOverridden)
+                                {
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Filled">Override active</MudChip>
+                                }
+                            </MudStack>
+                            @if (_canUpdate && BurSectionAIsOverridden)
+                            {
+                                <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Default"
+                                           StartIcon="@Icons.Material.Outlined.SettingsBackupRestore"
+                                           OnClick="UseDefaultBurA" Disabled="_saving">
+                                    Use Default
+                                </MudButton>
+                            }
+                        </MudStack>
+                        @if (!BurSectionAIsOverridden && OrgProfileState.Profile is { } burOrgA &&
+                             (!string.IsNullOrWhiteSpace(burOrgA.ApprovingOfficialName) || !string.IsNullOrWhiteSpace(burOrgA.ApprovingOfficialDesignation)))
+                        {
+                            <MudText Typo="Typo.caption" Color="Color.Tertiary" Class="mb-2">
+                                Current default: @burOrgA.ApprovingOfficialName — @(burOrgA.ApprovingOfficialDesignation ?? "—")
+                            </MudText>
+                        }
+                        <MudGrid Spacing="2">
+                            <MudItem xs="12" sm="6">
+                                <MudAutocomplete T="EmployeeReferenceDto"
+                                                 Value="_burSectionAEmployee"
+                                                 ValueChanged="OnBurSectionAChanged"
+                                                 SearchFunc="SearchEmployeesAsync"
+                                                 ToStringFunc="EmployeeDisplayName"
+                                                 ResetValueOnEmptyText="true"
+                                                 CoerceText="true"
+                                                 MinCharacters="1"
+                                                 Clearable="true"
+                                                 Label="Printed Name"
+                                                 Variant="Variant.Outlined"
+                                                 Dense="true"
+                                                 Margin="Margin.Dense"
+                                                 Disabled="@(!_canUpdate || _saving)"
+                                                 Placeholder="@(OrgProfileState.Profile?.ApprovingOfficialName ?? "Search employees…")"
+                                                 HelperText="@(_burSectionAName is not null && _burSectionAEmployee is null ? $"Saved: {_burSectionAName}" : null)" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                <AMISTextField Label="Designation" @bind-Value="_burSectionADesignation"
+                                               Disabled="@(!_canUpdate || _saving)"
+                                               Placeholder="@(OrgProfileState.Profile?.ApprovingOfficialDesignation ?? "e.g. Regional Manager II")" />
+                            </MudItem>
+                        </MudGrid>
+                    </div>
+
+                    <MudDivider />
+
+                    @* ── BUR Section B ── *@
+                    <div>
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-1">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                <MudText Typo="Typo.subtitle2">Section B — Certified (Budget Division)</MudText>
+                                @if (BurSectionBIsOverridden)
+                                {
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Filled">Override active</MudChip>
+                                }
+                            </MudStack>
+                            @if (_canUpdate && BurSectionBIsOverridden)
+                            {
+                                <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Default"
+                                           StartIcon="@Icons.Material.Outlined.SettingsBackupRestore"
+                                           OnClick="UseDefaultBurB" Disabled="_saving">
+                                    Use Default
+                                </MudButton>
+                            }
+                        </MudStack>
+                        @if (!BurSectionBIsOverridden && OrgProfileState.Profile is { } burOrgB &&
+                             (!string.IsNullOrWhiteSpace(burOrgB.BudgetOfficerName) || !string.IsNullOrWhiteSpace(burOrgB.BudgetOfficerDesignation)))
+                        {
+                            <MudText Typo="Typo.caption" Color="Color.Tertiary" Class="mb-2">
+                                Current default: @burOrgB.BudgetOfficerName — @(burOrgB.BudgetOfficerDesignation ?? "—")
+                            </MudText>
+                        }
+                        <MudGrid Spacing="2">
+                            <MudItem xs="12" sm="6">
+                                <MudAutocomplete T="EmployeeReferenceDto"
+                                                 Value="_burSectionBEmployee"
+                                                 ValueChanged="OnBurSectionBChanged"
+                                                 SearchFunc="SearchEmployeesAsync"
+                                                 ToStringFunc="EmployeeDisplayName"
+                                                 ResetValueOnEmptyText="true"
+                                                 CoerceText="true"
+                                                 MinCharacters="1"
+                                                 Clearable="true"
+                                                 Label="Printed Name"
+                                                 Variant="Variant.Outlined"
+                                                 Dense="true"
+                                                 Margin="Margin.Dense"
+                                                 Disabled="@(!_canUpdate || _saving)"
+                                                 Placeholder="@(OrgProfileState.Profile?.BudgetOfficerName ?? "Search employees…")"
+                                                 HelperText="@(_burSectionBName is not null && _burSectionBEmployee is null ? $"Saved: {_burSectionBName}" : null)" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                <AMISTextField Label="Designation" @bind-Value="_burSectionBDesignation"
+                                               Disabled="@(!_canUpdate || _saving)"
+                                               Placeholder="@(OrgProfileState.Profile?.BudgetOfficerDesignation ?? "e.g. Budget Officer")" />
+                            </MudItem>
+                        </MudGrid>
+                    </div>
+
+                </MudStack>
+            </MudTabPanel>
+
+        </MudTabs>
+
+        @if (_canUpdate)
+        {
+            <div style="max-width:740px">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                    <AMISButton Variant="Variant.Filled"
+                                Color="Color.Primary"
+                                OnClick="SaveAsync"
+                                Disabled="_saving">
+                        @(_saving ? "Saving…" : "Save Settings")
+                    </AMISButton>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                        Changes across all tabs are saved together.
+                    </MudText>
+                </MudStack>
+            </div>
+        }
+
+    </MudStack>
+}
+
+@code {
+    private bool _loaded;
+    private bool _saving;
+
+    private bool _watermarkEnabled = true;
+
+    // Section A — Certified by Supervisor
+    private EmployeeReferenceDto? _sectionAEmployee;
+    private string?               _dvSectionAName;
+    private string?               _dvSectionADesignation;
+
+    // Section B — Certified (Accountant)
+    private EmployeeReferenceDto? _sectionBEmployee;
+    private string?               _dvSectionBName;
+    private string?               _dvSectionBDesignation;
+
+    // Section C — Approved for Payment
+    private EmployeeReferenceDto? _sectionCEmployee;
+    private string?               _dvSectionCName;
+    private string?               _dvSectionCDesignation;
+
+    // BUR Section A — Certified by Requesting Office
+    private EmployeeReferenceDto? _burSectionAEmployee;
+    private string?               _burSectionAName;
+    private string?               _burSectionADesignation;
+
+    // BUR Section B — Certified by Budget Division
+    private EmployeeReferenceDto? _burSectionBEmployee;
+    private string?               _burSectionBName;
+    private string?               _burSectionBDesignation;
+
+    private bool _canView   => UserProfileState.Permissions.Contains(BudgetDisbursementPermissions.Settings.View);
+    private bool _canUpdate => UserProfileState.Permissions.Contains(BudgetDisbursementPermissions.Settings.Update);
+
+    private bool SectionAIsOverridden => !string.IsNullOrWhiteSpace(_dvSectionAName) || !string.IsNullOrWhiteSpace(_dvSectionADesignation);
+    private bool SectionBIsOverridden => !string.IsNullOrWhiteSpace(_dvSectionBName) || !string.IsNullOrWhiteSpace(_dvSectionBDesignation);
+    private bool SectionCIsOverridden => !string.IsNullOrWhiteSpace(_dvSectionCName) || !string.IsNullOrWhiteSpace(_dvSectionCDesignation);
+
+    private bool BurSectionAIsOverridden => !string.IsNullOrWhiteSpace(_burSectionAName) || !string.IsNullOrWhiteSpace(_burSectionADesignation);
+    private bool BurSectionBIsOverridden => !string.IsNullOrWhiteSpace(_burSectionBName) || !string.IsNullOrWhiteSpace(_burSectionBDesignation);
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!_canView) return;
+        try
+        {
+            var dto = await Client.GetAsync();
+            _watermarkEnabled      = dto.WatermarkSignedCopies;
+            _dvSectionAName        = dto.DvSectionAName;
+            _dvSectionADesignation = dto.DvSectionADesignation;
+            _dvSectionBName        = dto.DvSectionBName;
+            _dvSectionBDesignation = dto.DvSectionBDesignation;
+            _dvSectionCName        = dto.DvSectionCName;
+            _dvSectionCDesignation = dto.DvSectionCDesignation;
+            _burSectionAName        = dto.BurSectionAName;
+            _burSectionADesignation = dto.BurSectionADesignation;
+            _burSectionBName        = dto.BurSectionBName;
+            _burSectionBDesignation = dto.BurSectionBDesignation;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load settings: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loaded = true;
+        }
+    }
+
+    // ── Employee autocomplete ─────────────────────────────────────────────────
+
+    private async Task<IEnumerable<EmployeeReferenceDto>> SearchEmployeesAsync(string value, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return [];
+        try
+        {
+            var result = await LookupClient.EmployeesGetAsync(
+                keyword: value,
+                isActive: true,
+                pageNumber: 1,
+                pageSize: 20,
+                cancellationToken: ct);
+            return result?.Items ?? [];
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    private static string EmployeeDisplayName(EmployeeReferenceDto? e) =>
+        e is null ? string.Empty : $"{e.FirstName} {e.LastName}";
+
+    // ── Section change handlers ───────────────────────────────────────────────
+
+    private void OnSectionAChanged(EmployeeReferenceDto? e)
+    {
+        if (e is null && _sectionAEmployee is null) return;
+        _sectionAEmployee = e;
+        _dvSectionAName   = e is null ? null : EmployeeDisplayName(e);
+        if (e is not null && !string.IsNullOrWhiteSpace(e.PositionName))
+            _dvSectionADesignation = e.PositionName;
+    }
+
+    private void OnSectionBChanged(EmployeeReferenceDto? e)
+    {
+        if (e is null && _sectionBEmployee is null) return;
+        _sectionBEmployee = e;
+        _dvSectionBName   = e is null ? null : EmployeeDisplayName(e);
+        if (e is not null && !string.IsNullOrWhiteSpace(e.PositionName))
+            _dvSectionBDesignation = e.PositionName;
+    }
+
+    private void OnSectionCChanged(EmployeeReferenceDto? e)
+    {
+        if (e is null && _sectionCEmployee is null) return;
+        _sectionCEmployee = e;
+        _dvSectionCName   = e is null ? null : EmployeeDisplayName(e);
+        if (e is not null && !string.IsNullOrWhiteSpace(e.PositionName))
+            _dvSectionCDesignation = e.PositionName;
+    }
+
+    private void OnBurSectionAChanged(EmployeeReferenceDto? e)
+    {
+        if (e is null && _burSectionAEmployee is null) return;
+        _burSectionAEmployee = e;
+        _burSectionAName     = e is null ? null : EmployeeDisplayName(e);
+        if (e is not null && !string.IsNullOrWhiteSpace(e.PositionName))
+            _burSectionADesignation = e.PositionName;
+    }
+
+    private void OnBurSectionBChanged(EmployeeReferenceDto? e)
+    {
+        if (e is null && _burSectionBEmployee is null) return;
+        _burSectionBEmployee = e;
+        _burSectionBName     = e is null ? null : EmployeeDisplayName(e);
+        if (e is not null && !string.IsNullOrWhiteSpace(e.PositionName))
+            _burSectionBDesignation = e.PositionName;
+    }
+
+    // ── Use Default (clear override) ─────────────────────────────────────────
+
+    private void UseDefaultA() { _sectionAEmployee = null; _dvSectionAName = null; _dvSectionADesignation = null; }
+    private void UseDefaultB() { _sectionBEmployee = null; _dvSectionBName = null; _dvSectionBDesignation = null; }
+    private void UseDefaultC() { _sectionCEmployee = null; _dvSectionCName = null; _dvSectionCDesignation = null; }
+    private void UseDefaultBurA() { _burSectionAEmployee = null; _burSectionAName = null; _burSectionADesignation = null; }
+    private void UseDefaultBurB() { _burSectionBEmployee = null; _burSectionBName = null; _burSectionBDesignation = null; }
+
+    // ── Save ─────────────────────────────────────────────────────────────────
+
+    private async Task SaveAsync()
+    {
+        _saving = true;
+        try
+        {
+            await Client.UpdateAsync(new UpdateBudgetDisbursementSettingsCommand(
+                _watermarkEnabled,
+                string.IsNullOrWhiteSpace(_dvSectionAName)        ? null : _dvSectionAName.Trim().ToUpperInvariant(),
+                string.IsNullOrWhiteSpace(_dvSectionADesignation) ? null : _dvSectionADesignation.Trim(),
+                string.IsNullOrWhiteSpace(_dvSectionBName)        ? null : _dvSectionBName.Trim().ToUpperInvariant(),
+                string.IsNullOrWhiteSpace(_dvSectionBDesignation) ? null : _dvSectionBDesignation.Trim(),
+                string.IsNullOrWhiteSpace(_dvSectionCName)        ? null : _dvSectionCName.Trim().ToUpperInvariant(),
+                string.IsNullOrWhiteSpace(_dvSectionCDesignation) ? null : _dvSectionCDesignation.Trim(),
+                string.IsNullOrWhiteSpace(_burSectionAName)        ? null : _burSectionAName.Trim().ToUpperInvariant(),
+                string.IsNullOrWhiteSpace(_burSectionADesignation) ? null : _burSectionADesignation.Trim(),
+                string.IsNullOrWhiteSpace(_burSectionBName)        ? null : _burSectionBName.Trim().ToUpperInvariant(),
+                string.IsNullOrWhiteSpace(_burSectionBDesignation) ? null : _burSectionBDesignation.Trim()));
+            Snackbar.Add("Settings saved.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to save settings: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+}

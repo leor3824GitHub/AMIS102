@@ -1,0 +1,23 @@
+﻿using AMIS.Framework.Shared.Identity.Authorization;
+using AMIS.Modules.BudgetDisbursement.Contracts.v1.DisbursementVouchers;
+using Mediator;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
+using AMIS.Modules.BudgetDisbursement.Contracts.Permissions;
+
+namespace AMIS.Modules.BudgetDisbursement.Features.v1.DisbursementVouchers.CreateDisbursementVoucher;
+
+public static class CreateDisbursementVoucherEndpoint
+{
+    public static RouteHandlerBuilder Map(IEndpointRouteBuilder endpoints) =>
+        endpoints.MapPost("/", async (CreateDisbursementVoucherCommand command, IMediator mediator, CancellationToken ct) =>
+        {
+            var id = await mediator.Send(command, ct);
+            return TypedResults.Created($"/api/v1/budget-disbursement/disbursement-vouchers/{id}", new { id });
+        })
+        .WithName(nameof(CreateDisbursementVoucherCommand))
+        .WithSummary("Create a new disbursement voucher")
+        .RequirePermission(BudgetDisbursementPermissions.DisbursementVouchers.Create);
+}
+

@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
 	<PropertyGroup>
 		<RootNamespace>AMIS.Playground.Api</RootNamespace>
@@ -36,8 +36,8 @@
     <ProjectReference Include="..\..\Modules\Vehicle\Modules.Vehicle\Modules.Vehicle.csproj" />
     <ProjectReference Include="..\..\Modules\ProcurementAcquisition\Modules.ProcurementAcquisition.Contracts\Modules.ProcurementAcquisition.Contracts.csproj" />
     <ProjectReference Include="..\..\Modules\ProcurementAcquisition\Modules.ProcurementAcquisition\Modules.ProcurementAcquisition.csproj" />
-    <ProjectReference Include="..\..\Modules\Finance\Modules.Finance.Contracts\Modules.Finance.Contracts.csproj" />
-    <ProjectReference Include="..\..\Modules\Finance\Modules.Finance\Modules.Finance.csproj" />
+    <ProjectReference Include="..\..\Modules\BudgetDisbursement\Modules.BudgetDisbursement.Contracts\Modules.BudgetDisbursement.Contracts.csproj" />
+    <ProjectReference Include="..\..\Modules\BudgetDisbursement\Modules.BudgetDisbursement\Modules.BudgetDisbursement.csproj" />
     <ProjectReference Include="..\..\Modules\AssetManagement\Modules.AssetManagement.Contracts\Modules.AssetManagement.Contracts.csproj" />
     <ProjectReference Include="..\..\Modules\AssetManagement\Modules.AssetManagement\Modules.AssetManagement.csproj" />
     <ProjectReference Include="..\..\Modules\AssetRegister\Modules.AssetRegister.Contracts\Modules.AssetRegister.Contracts.csproj" />

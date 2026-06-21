@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<RootNamespace>AMIS.Modules.QuestPdfReporting</RootNamespace>
@@ -31,7 +31,7 @@
 		<ProjectReference Include="..\..\Vehicle\Modules.Vehicle.Contracts\Modules.Vehicle.Contracts.csproj" />
 		<ProjectReference Include="..\..\AssetManagement\Modules.AssetManagement.Contracts\Modules.AssetManagement.Contracts.csproj" />
 		<ProjectReference Include="..\..\AssetRegister\Modules.AssetRegister.Contracts\Modules.AssetRegister.Contracts.csproj" />
-		<ProjectReference Include="..\..\Finance\Modules.Finance.Contracts\Modules.Finance.Contracts.csproj" />
+		<ProjectReference Include="..\..\BudgetDisbursement\Modules.BudgetDisbursement.Contracts\Modules.BudgetDisbursement.Contracts.csproj" />
 		<ProjectReference Include="..\..\ProcurementAcquisition\Modules.ProcurementAcquisition.Contracts\Modules.ProcurementAcquisition.Contracts.csproj" />
 	</ItemGroup>
 
