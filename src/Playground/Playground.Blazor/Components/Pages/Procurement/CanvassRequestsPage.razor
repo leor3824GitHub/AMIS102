@@ -303,8 +303,20 @@
             { x => x.DocumentNumber, rivNumber },
             { x => x.IsTerminalState, status == CanvassRequestStatus.Awarded }
         };
-        await DialogService.ShowAsync<SignedCopyDialog>("Signed Copy", parameters,
-            new DialogOptions { MaxWidth = MaxWidth.Small, CloseButton = true });
+        // Footer "Close" is the only exit (no header ×, no backdrop dismiss) so the upload result always reaches us.
+        var dialog = await DialogService.ShowAsync<SignedCopyDialog>("Signed Copy", parameters,
+            new DialogOptions { MaxWidth = MaxWidth.Small, CloseButton = false, BackdropClick = false });
+        var result = await dialog.Result;
+
+        // A signed copy was just uploaded — flip the row's HasSignedCopy so the icon turns green
+        // immediately, without waiting for the next server search (which computes it via EXISTS).
+        if (result is { Canceled: false, Data: true })
+        {
+            _items = _items
+                .Select(x => x.Id == id ? x with { HasSignedCopy = true } : x)
+                .ToList();
+            StateHasChanged();
+        }
     }
 
     private async Task OpenRfqSignedCopyAsync(Guid quotationId, string rivNumber, string supplierName)

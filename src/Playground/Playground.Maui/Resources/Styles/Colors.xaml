@@ -44,6 +44,9 @@
     <!-- Translucent white overlay for chips/avatars sitting on a gradient -->
     <Color x:Key="OnGradientOverlay">#33FFFFFF</Color>
 
+    <!-- Semi-transparent dark pill for controls overlaid on the camera viewfinder -->
+    <Color x:Key="CameraOverlayBg">#99212121</Color>
+
     <!-- ── Reusable gradient brushes ── -->
     <LinearGradientBrush x:Key="HeaderGradient" StartPoint="0,0" EndPoint="1,1">
         <GradientStop Color="#6A3DE8" Offset="0.0" />

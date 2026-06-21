@@ -19,8 +19,7 @@ internal sealed class PropertyStickerPdfDocument(
     OrganizationProfileDto?             org,
     string                              paperSize   = "longbond",
     string                              orientation = "portrait",
-    int                                 columns     = 2,
-    int                                 rows        = 5) : IDocument
+    int                                 columns     = 2) : IDocument
 {
     private const string Blue  = "#1F3C88";
     private const string Red   = "#C81E1E";
@@ -29,15 +28,31 @@ internal sealed class PropertyStickerPdfDocument(
     private const float  SheetMarginMm = 8f;
     private const float  CellGap = 4f;
     // Inner padding of each property box (asymmetric: more space at the top, a larger gap at the bottom).
-    private const float  BoxPadTop    = 9f;
-    private const float  BoxPadBottom = 13f;
+    private const float  BoxPadTop    = 13f;
+    private const float  BoxPadBottom = 20f;
     private const float  BoxPadSide   = 4f;
     private const float  LabelColWidth = 80f; // fixed label column → values align on one edge
+    private const float  FieldFont = 7.5f;    // field label/value/type text size
 
     private const string DefaultCustodianName        = "ROEL D. CAPERIG";
     private const string DefaultCustodianDesignation = "PMO IV";
 
-    private int PerPage => Math.Max(1, columns) * Math.Max(1, rows);
+    // Rows auto-fit to the chosen paper so each property box keeps a consistent height
+    // (≈ TargetRowHeightMm) on any paper size — Long Bond → 4 rows, A4/Letter → 3, Legal → 4.
+    private const float TargetRowHeightMm = 78f;
+
+    private float PageHeightMm
+    {
+        get
+        {
+            var (longMm, shortMm) = QuestPdfPaperSize.Resolve(paperSize);
+            return QuestPdfPaperSize.IsLandscape(orientation) ? shortMm : longMm;
+        }
+    }
+
+    private int Rows => Math.Max(1, (int)((PageHeightMm - (2 * SheetMarginMm)) / TargetRowHeightMm));
+
+    private int PerPage => Math.Max(1, columns) * Rows;
 
     private string CustodianName =>
         string.IsNullOrWhiteSpace(org?.PropertyCustodianName) ? DefaultCustodianName : org!.PropertyCustodianName!;
@@ -80,11 +95,10 @@ internal sealed class PropertyStickerPdfDocument(
 
     private void ComposeSheet(IContainer container, List<PropertyStickerModel> pageStickers)
     {
-        var (longMm, shortMm) = QuestPdfPaperSize.Resolve(paperSize);
-        var pageHeightMm = QuestPdfPaperSize.IsLandscape(orientation) ? shortMm : longMm;
-        // Small per-row slack keeps the 5 rows just under the exact page height so sub-pixel
+        var rows = Rows;
+        // Small per-row slack keeps the rows just under the exact page height so sub-pixel
         // rounding can't spill the last row onto a new page.
-        var rowHeightMm = ((pageHeightMm - (2 * SheetMarginMm)) / Math.Max(1, rows)) - 0.4f;
+        var rowHeightMm = ((PageHeightMm - (2 * SheetMarginMm)) / rows) - 0.4f;
 
         container.Column(col =>
         {
@@ -119,7 +133,7 @@ internal sealed class PropertyStickerPdfDocument(
                 col.Item().PaddingTop(2).LineHorizontal(0.6f).LineColor(Blue);
                 col.Item().PaddingTop(3).Element(c => ComposeBody(c, m));
                 col.Item().PaddingTop(3).LineHorizontal(0.6f).LineColor(Blue);   // line after Type
-                col.Item().PaddingTop(8).Element(ComposeSignature);             // signing space above the name
+                col.Item().PaddingTop(20).Element(ComposeSignature);            // signing space above the name
             });
     }
 
@@ -157,7 +171,7 @@ internal sealed class PropertyStickerPdfDocument(
     {
         container.Column(col =>
         {
-            col.Spacing(1.5f);
+            col.Spacing(2.5f);
 
             LabeledField(col, "Item:", Dash(m.Description));
             LabeledField(col, "Serial No:", Dash(m.SerialNo));
@@ -174,8 +188,8 @@ internal sealed class PropertyStickerPdfDocument(
     {
         container.Column(col =>
         {
-            col.Item().AlignCenter().Text(m.PropertyNo).Bold().FontSize(5.5f).FontColor(Ink);
-            col.Item().PaddingTop(2).AlignCenter().DrawQr(m.PropertyNo, 52f);
+            col.Item().AlignCenter().Text(m.PropertyNo).Bold().FontSize(6f).FontColor(Ink);
+            col.Item().PaddingTop(2).AlignCenter().DrawQr(m.PropertyNo, 58f);
         });
     }
 
@@ -183,11 +197,11 @@ internal sealed class PropertyStickerPdfDocument(
     {
         container.Row(row =>
         {
-            row.ConstantItem(LabelColWidth).AlignMiddle().Text("Type").SemiBold().FontColor(Blue).FontSize(7);
+            row.ConstantItem(LabelColWidth).AlignMiddle().Text("Type").SemiBold().FontColor(Blue).FontSize(FieldFont);
             row.AutoItem().AlignMiddle().Element(c => Checkbox(c, m.AssetType == AssetType.PPE));
-            row.AutoItem().AlignMiddle().PaddingLeft(3).PaddingRight(16).Text("FA").FontSize(7).FontColor(Ink);
+            row.AutoItem().AlignMiddle().PaddingLeft(3).PaddingRight(16).Text("FA").FontSize(FieldFont).FontColor(Ink);
             row.AutoItem().AlignMiddle().Element(c => Checkbox(c, m.AssetType == AssetType.SE));
-            row.AutoItem().AlignMiddle().PaddingLeft(3).Text("SE").FontSize(7).FontColor(Ink);
+            row.AutoItem().AlignMiddle().PaddingLeft(3).Text("SE").FontSize(FieldFont).FontColor(Ink);
         });
     }
 
@@ -207,8 +221,8 @@ internal sealed class PropertyStickerPdfDocument(
     {
         container.Row(row =>
         {
-            row.ConstantItem(labelWidth).AlignTop().Text(label).SemiBold().FontColor(Blue).FontSize(7);
-            row.RelativeItem().AlignTop().Text(value).FontSize(7).FontColor(Ink);
+            row.ConstantItem(labelWidth).AlignTop().Text(label).SemiBold().FontColor(Blue).FontSize(FieldFont);
+            row.RelativeItem().AlignTop().Text(value).FontSize(FieldFont).FontColor(Ink);
         });
     }
 

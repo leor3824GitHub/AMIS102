@@ -165,8 +165,20 @@
             { x => x.DocumentNumber, string.IsNullOrWhiteSpace(item.ReportNo) ? "(no report number)" : item.ReportNo },
             { x => x.IsTerminalState, true }
         };
-        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
-        await DialogService.ShowAsync<AMIS.Playground.Blazor.Components.Pages.AssetRegister.SignedCopyDialog>("Signed Copy", parameters, options);
+        // Footer "Close" is the only exit (no header ×, no backdrop dismiss) so the upload result always reaches us.
+        var options = new DialogOptions { CloseButton = false, BackdropClick = false, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<AMIS.Playground.Blazor.Components.Pages.AssetRegister.SignedCopyDialog>("Signed Copy", parameters, options);
+        var result = await dialog.Result;
+
+        // A signed copy was just uploaded — flip the row's HasSignedCopy so the icon turns green
+        // immediately, without waiting for the next server search (which computes it via EXISTS).
+        if (result is { Canceled: false, Data: true })
+        {
+            _items = _items
+                .Select(x => x.Id == item.Id ? x with { HasSignedCopy = true } : x)
+                .ToList();
+            StateHasChanged();
+        }
     }
 
     protected override async Task OnInitializedAsync()

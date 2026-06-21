@@ -102,11 +102,27 @@
                                                         Color="Color.Secondary" OnClick="@(() => PrintRowAsync(context))"
                                                         Disabled="@(_printingId == context.Id)" />
                                     </MudTooltip>
-                                    <MudTooltip Text="Print property stickers (one per item, 10 per sheet)">
-                                        <AMISIconButton Icon="@Icons.Material.Filled.QrCode2" Size="Size.Small"
-                                                        Color="Color.Default" OnClick="@(() => PrintStickersAsync(context))"
-                                                        Disabled="@(_stickersId == context.Id)" />
-                                    </MudTooltip>
+                                    <MudMenu Icon="@Icons.Material.Filled.QrCode2"
+                                             Color="Color.Default"
+                                             Size="Size.Small"
+                                             Dense="true"
+                                             AnchorOrigin="Origin.BottomLeft"
+                                             TransformOrigin="Origin.TopLeft"
+                                             ToolTip="Print property stickers (choose paper size)"
+                                             Disabled="@(_stickersId == context.Id)">
+                                        <MudMenuItem Icon="@Icons.Material.Filled.PictureAsPdf"
+                                                     OnClick="@(() => PrintStickersAsync(context, "longbond"))">
+                                            Stickers - Long Bond (8.5 x 13)
+                                        </MudMenuItem>
+                                        <MudMenuItem Icon="@Icons.Material.Filled.PictureAsPdf"
+                                                     OnClick="@(() => PrintStickersAsync(context, "a4"))">
+                                            Stickers - A4
+                                        </MudMenuItem>
+                                        <MudMenuItem Icon="@Icons.Material.Filled.PictureAsPdf"
+                                                     OnClick="@(() => PrintStickersAsync(context, "legal"))">
+                                            Stickers - Legal (8.5 x 14)
+                                        </MudMenuItem>
+                                    </MudMenu>
                                     @if (context.Status == AccountabilityStatus.PendingAcceptance && _canUpdate)
                                     {
                                         <MudTooltip Text="Edit">
@@ -291,14 +307,14 @@
         }
     }
 
-    private async Task PrintStickersAsync(ArAccountabilitySummaryDto item)
+    private async Task PrintStickersAsync(ArAccountabilitySummaryDto item, string paperSize)
     {
         _stickersId = item.Id;
         try
         {
             var bytes = item.AccountabilityType == AccountabilityType.SE_ICS
-                ? await ReportsClient.GetIcsStickersPdfAsync(item.Id)
-                : await ReportsClient.GetParStickersPdfAsync(item.Id);
+                ? await ReportsClient.GetIcsStickersPdfAsync(item.Id, paperSize)
+                : await ReportsClient.GetParStickersPdfAsync(item.Id, paperSize);
             var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
             await JS.InvokeVoidAsync("open", dataUrl, "_blank");
         }
@@ -322,8 +338,20 @@
             { x => x.DocumentNumber, string.IsNullOrWhiteSpace(item.DocumentNo) ? $"(no {label} number)" : item.DocumentNo },
             { x => x.IsTerminalState, IsAccepted(item.Status) }
         };
-        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
-        await DialogService.ShowAsync<SignedCopyDialog>("Signed Copy", parameters, options);
+        // Footer "Close" is the only exit (no header ×, no backdrop dismiss) so the upload result always reaches us.
+        var options = new DialogOptions { CloseButton = false, BackdropClick = false, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<SignedCopyDialog>("Signed Copy", parameters, options);
+        var result = await dialog.Result;
+
+        // A signed copy was just uploaded — flip the row's HasSignedCopy so the icon turns green
+        // immediately, without waiting for the next server search (which computes it via EXISTS).
+        if (result is { Canceled: false, Data: true })
+        {
+            _items = _items
+                .Select(x => x.Id == item.Id ? x with { HasSignedCopy = true } : x)
+                .ToList();
+            StateHasChanged();
+        }
     }
 
     private async Task PrevPage() { _page--; await LoadAsync(); }

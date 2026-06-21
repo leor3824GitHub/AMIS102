@@ -77,7 +77,7 @@
         </MudStack>
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="@(() => Dialog.Close())">Close</MudButton>
+        <MudButton OnClick="@(() => Dialog.Close(DialogResult.Ok(_changed)))">Close</MudButton>
     </DialogActions>
 </MudDialog>
 
@@ -95,6 +95,8 @@
     private SignedDocumentDto? _meta;
     private bool _loading = true;
     private bool _busy;
+    /// <summary>Set true once a signed copy is uploaded/replaced, so the caller knows to refresh the row's green indicator.</summary>
+    private bool _changed;
     private bool _canUpload => UserProfileState.Permissions.Contains(BudgetDisbursementPermissions.SignedDocuments.Upload);
     private string FriendlyType => DocumentType switch
     {
@@ -135,6 +137,7 @@
             await using var stream = file.OpenReadStream(MaxUploadBytes);
             _meta = await Client.UploadAsync(DocumentType, DocumentId, stream, file.Name,
                 string.IsNullOrWhiteSpace(file.ContentType) ? "application/pdf" : file.ContentType);
+            _changed = true;
             Snackbar.Add("Signed copy uploaded.", Severity.Success);
         }
         catch (Exception ex)
