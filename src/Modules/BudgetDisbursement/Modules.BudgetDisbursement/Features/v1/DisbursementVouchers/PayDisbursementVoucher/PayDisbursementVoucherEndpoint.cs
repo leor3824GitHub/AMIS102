@@ -16,7 +16,7 @@ public static class PayDisbursementVoucherEndpoint
             await mediator.Send(new PayDisbursementVoucherCommand(id, request.PaidDate, request.Remarks), ct);
             return TypedResults.NoContent();
         })
-        .WithName(nameof(PayDisbursementVoucherCommand))
+        .WithName("BudgetDisbursement_PayDisbursementVoucher")
         .WithSummary("Mark a disbursement voucher as paid")
         .RequirePermission(BudgetDisbursementPermissions.DisbursementVouchers.Pay);
 

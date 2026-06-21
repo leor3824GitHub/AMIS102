@@ -16,7 +16,7 @@ public static class ApproveDisbursementVoucherEndpoint
             await mediator.Send(new ApproveDisbursementVoucherCommand(id), ct);
             return TypedResults.NoContent();
         })
-        .WithName(nameof(ApproveDisbursementVoucherCommand))
+        .WithName("BudgetDisbursement_ApproveDisbursementVoucher")
         .WithSummary("Approve a disbursement voucher")
         .RequirePermission(BudgetDisbursementPermissions.DisbursementVouchers.Approve);
 }

@@ -13,7 +13,7 @@ public static class SearchDisbursementVouchersEndpoint
     public static RouteHandlerBuilder Map(IEndpointRouteBuilder endpoints) =>
         endpoints.MapGet("/", async ([AsParameters] SearchDisbursementVouchersQuery query, IMediator mediator, CancellationToken ct) =>
             TypedResults.Ok(await mediator.Send(query, ct)))
-        .WithName(nameof(SearchDisbursementVouchersQuery))
+        .WithName("BudgetDisbursement_SearchDisbursementVouchers")
         .WithSummary("Search disbursement vouchers")
         .RequirePermission(BudgetDisbursementPermissions.DisbursementVouchers.View);
 }

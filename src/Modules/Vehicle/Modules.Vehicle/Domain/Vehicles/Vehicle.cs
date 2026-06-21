@@ -1,4 +1,4 @@
-using AMIS.Framework.Core.Domain;
+﻿using AMIS.Framework.Core.Domain;
 using AMIS.Modules.Vehicle.Domain.Events;
 using System.Security.Cryptography;
 
@@ -56,7 +56,7 @@ public class Vehicle : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
     public string? AccountableOfficerTitle { get; private set; }  // Driver designation, e.g. Truck Driver
 
     public string? Notes { get; set; }
-    public byte[] Version { get; set; } = [];
+    public byte[] Version { get; private set; } = [];
 
     // IAuditableEntity
     public DateTimeOffset CreatedOnUtc { get; private set; } = DateTimeOffset.UtcNow;

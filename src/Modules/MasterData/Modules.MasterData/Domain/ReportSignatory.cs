@@ -1,4 +1,4 @@
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using AMIS.Framework.Core.Domain;
 
 namespace AMIS.Modules.MasterData.Domain;
@@ -12,7 +12,7 @@ public sealed class ReportSignatory : AggregateRoot<Guid>, IHasTenant, IAuditabl
     public string Name { get; private set; } = default!;
     public string Title { get; private set; } = default!;
     public bool IsActive { get; private set; } = true;
-    public byte[] Version { get; set; } = [];
+    public byte[] Version { get; private set; } = [];
 
     public DateTimeOffset CreatedOnUtc { get; set; } = DateTimeOffset.UtcNow;
     public string? CreatedBy { get; set; }

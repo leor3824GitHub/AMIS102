@@ -107,6 +107,7 @@ public sealed class CreateDisbursementVoucherCommandHandlerTests
         BudgetDisbursementDbContext db, Guid poId, bool obligate, string burNumber = "BUR-2026-00001")
     {
         var bur = BudgetUtilizationRequest.Create(
+            tenantId: "test-tenant",
             burNumber: burNumber,
             purchaseOrderId: poId,
             purchaseOrderNumber: "PO-2025-001",
@@ -135,6 +136,8 @@ public sealed class CreateDisbursementVoucherCommandHandlerTests
 
         var currentUser = Substitute.For<ICurrentUser>();
         currentUser.GetUserId().Returns(Guid.NewGuid());
+        // Stamped onto the new DV; must match the test context's ambient tenant or Finbuckle rejects the insert.
+        currentUser.GetTenant().Returns(Tenant);
 
         return new CreateDisbursementVoucherCommandHandler(
             NullLogger<CreateDisbursementVoucherCommandHandler>.Instance, db, mediator, currentUser);

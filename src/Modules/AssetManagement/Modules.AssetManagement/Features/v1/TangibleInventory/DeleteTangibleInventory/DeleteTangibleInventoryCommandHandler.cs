@@ -20,9 +20,7 @@ public sealed class DeleteTangibleInventoryCommandHandler(
         if (inventory is null)
             throw new KeyNotFoundException($"Tangible Inventory with ID {command.Id} not found.");
 
-        inventory.IsDeleted = true;
-        inventory.DeletedOnUtc = DateTimeOffset.UtcNow;
-        inventory.DeletedBy = currentUser.GetUserId().ToString();
+        inventory.SoftDelete(currentUser.GetUserId().ToString());
 
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 

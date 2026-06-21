@@ -24,9 +24,7 @@ public sealed class DeleteBudgetUtilizationRequestCommandHandler(
         if (bur.Status != BudgetUtilizationRequestStatus.Draft)
             throw new CustomException("Only Draft BURs can be deleted.", [], HttpStatusCode.BadRequest);
 
-        bur.IsDeleted = true;
-        bur.DeletedOnUtc = DateTimeOffset.UtcNow;
-        bur.DeletedBy = currentUser.GetUserId().ToString();
+        bur.SoftDelete(currentUser.GetUserId().ToString());
 
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 

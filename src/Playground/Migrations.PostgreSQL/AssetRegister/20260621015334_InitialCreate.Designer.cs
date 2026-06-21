@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
 {
     [DbContext(typeof(AssetRegisterDbContext))]
-    [Migration("20260617045536_AssetRegister_ReturnedPropertyAssignedInspector")]
-    partial class AssetRegister_ReturnedPropertyAssignedInspector
+    [Migration("20260621015334_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

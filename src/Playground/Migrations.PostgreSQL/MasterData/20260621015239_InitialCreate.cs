@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace AMIS.Playground.Migrations.PostgreSQL.MasterData
 {
     /// <inheritdoc />
-    public partial class MasterData_Initial : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -163,6 +163,12 @@ namespace AMIS.Playground.Migrations.PostgreSQL.MasterData
                     SupervisingAdminOfficerId = table.Column<Guid>(type: "uuid", nullable: true),
                     SupervisingAdminOfficerName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     SupervisingAdminOfficerDesignation = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    BudgetOfficerId = table.Column<Guid>(type: "uuid", nullable: true),
+                    BudgetOfficerName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    BudgetOfficerDesignation = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    PropertyCustodianId = table.Column<Guid>(type: "uuid", nullable: true),
+                    PropertyCustodianName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    PropertyCustodianDesignation = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     Version = table.Column<byte[]>(type: "bytea", nullable: false),
                     CreatedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     CreatedBy = table.Column<string>(type: "text", nullable: true),

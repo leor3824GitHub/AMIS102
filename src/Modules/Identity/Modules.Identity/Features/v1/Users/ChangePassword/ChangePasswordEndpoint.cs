@@ -1,3 +1,5 @@
+using AMIS.Framework.Shared.Identity;
+using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.Identity.Contracts.v1.Users.ChangePassword;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
@@ -19,10 +21,10 @@ public static class ChangePasswordEndpoint
             var result = await mediator.Send(command, cancellationToken);
             return TypedResults.Ok(result);
         })
-        .WithName("ChangePassword")
+        .WithName("Identity_ChangePassword")
         .WithSummary("Change password")
         .WithDescription("Change the current user's password.")
-        .RequireAuthorization();
+        .RequirePermission(IdentityPermissionConstants.Users.ChangeOwnPassword);
     }
 }
 

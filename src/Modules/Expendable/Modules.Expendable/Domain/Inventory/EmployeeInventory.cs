@@ -1,4 +1,4 @@
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using AMIS.Framework.Core.Domain;
 
 namespace AMIS.Modules.Expendable.Domain.Inventory;
@@ -51,7 +51,7 @@ public class EmployeeInventory : AggregateRoot<Guid>, IHasTenant, IAuditableEnti
     public int TotalQuantityConsumed { get; set; }
     public int QuantityOnHand => TotalQuantityReceived - TotalQuantityConsumed;
     public DateTimeOffset LastInventoryDate { get; set; }
-    public byte[] Version { get; set; } = [];
+    public byte[] Version { get; private set; } = [];
 
     private readonly List<InventoryBatch> _batches = [];
     public IReadOnlyCollection<InventoryBatch> Batches => _batches.AsReadOnly();

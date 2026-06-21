@@ -27,9 +27,7 @@ public sealed class DeleteModeOfProcurementCommandHandler : ICommandHandler<Dele
             throw new KeyNotFoundException($"Mode of procurement with ID {command.Id} not found.");
         }
 
-        entity.DeletedOnUtc = DateTimeOffset.UtcNow;
-        entity.DeletedBy = _currentUser.GetUserId().ToString();
-        entity.IsDeleted = true;
+        entity.SoftDelete(_currentUser.GetUserId().ToString());
 
         _dbContext.ModesOfProcurement.Update(entity);
         await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);

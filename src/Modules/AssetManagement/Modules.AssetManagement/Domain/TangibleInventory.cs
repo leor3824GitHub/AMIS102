@@ -1,4 +1,4 @@
-using AMIS.Framework.Core.Domain;
+﻿using AMIS.Framework.Core.Domain;
 
 namespace AMIS.Modules.AssetManagement.Domain;
 
@@ -44,16 +44,16 @@ public sealed class TangibleInventory : AggregateRoot<Guid>, IHasTenant, IAudita
     /// </summary>
     public Guid? NotedByEmployeeId { get; private set; }
 
-    public byte[] Version { get; set; } = [];
+    public byte[] Version { get; private set; } = [];
 
     // IAuditableEntity
     public DateTimeOffset CreatedOnUtc { get; set; } = DateTimeOffset.UtcNow;
     public string? CreatedBy { get; set; }
     public DateTimeOffset? LastModifiedOnUtc { get; set; }
     public string? LastModifiedBy { get; set; }
-    public DateTimeOffset? DeletedOnUtc { get; set; }
-    public string? DeletedBy { get; set; }
-    public bool IsDeleted { get; set; }
+    public DateTimeOffset? DeletedOnUtc { get; private set; }
+    public string? DeletedBy { get; private set; }
+    public bool IsDeleted { get; private set; }
 
     public void Update(
         string reportNo,
@@ -104,6 +104,13 @@ public sealed class TangibleInventory : AggregateRoot<Guid>, IHasTenant, IAudita
             NotedByEmployeeId    = notedByEmployeeId,
             CreatedOnUtc         = DateTimeOffset.UtcNow,
         };
+    }
+
+    public void SoftDelete(string deletedBy)
+    {
+        IsDeleted = true;
+        DeletedOnUtc = DateTimeOffset.UtcNow;
+        DeletedBy = deletedBy;
     }
 }
 

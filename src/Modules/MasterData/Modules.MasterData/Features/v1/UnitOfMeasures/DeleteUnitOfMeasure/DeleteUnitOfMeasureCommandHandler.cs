@@ -24,9 +24,7 @@ public sealed class DeleteUnitOfMeasureCommandHandler : ICommandHandler<DeleteUn
             .ConfigureAwait(false)
             ?? throw new InvalidOperationException($"UnitOfMeasure {command.Id} not found.");
 
-        unitOfMeasure.IsDeleted = true;
-        unitOfMeasure.DeletedOnUtc = DateTimeOffset.UtcNow;
-        unitOfMeasure.DeletedBy = _currentUser.GetUserId().ToString();
+        unitOfMeasure.SoftDelete(_currentUser.GetUserId().ToString());
 
         await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 

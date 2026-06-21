@@ -200,8 +200,8 @@ public sealed class AnnualProcurementPlanWorkflowTests
         originalApp.Supersede();
 
         var deletedApp = AnnualProcurementPlan.Create("APP-DELETED", 2026, AppPhase.Indicative);
-        deletedApp.IsDeleted = true;
         deletedApp.CreatedBy = "deleted-user";
+        deletedApp.SoftDelete("deleted-user");
 
         dbContext.Ppmps.Add(ppmp);
         dbContext.AnnualProcurementPlans.AddRange(originalApp, amendment, deletedApp);

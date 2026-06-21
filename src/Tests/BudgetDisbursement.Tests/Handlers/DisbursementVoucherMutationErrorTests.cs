@@ -52,6 +52,7 @@ public sealed class DisbursementVoucherMutationErrorTests
 
     private static DisbursementVoucher SeedDraft() =>
         DisbursementVoucher.Create(
+            tenantId: "test-tenant",
             dvNumber: "DV-2026-00001",
             purchaseOrderId: Guid.NewGuid(),
             purchaseOrderNumber: "PO-2026-001",

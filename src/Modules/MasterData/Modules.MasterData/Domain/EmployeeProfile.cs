@@ -1,4 +1,4 @@
-using AMIS.Framework.Core.Domain;
+﻿using AMIS.Framework.Core.Domain;
 
 namespace AMIS.Modules.MasterData.Domain;
 
@@ -19,7 +19,7 @@ public sealed class EmployeeProfile : AggregateRoot<Guid>, IAuditableEntity
     public string? OfficeCode { get; private set; }
 
     public bool IsActive { get; private set; } = true;
-    public byte[] Version { get; set; } = [];
+    public byte[] Version { get; private set; } = [];
 
     public Office Office { get; private set; } = default!;
     public Department Department { get; private set; } = default!;
@@ -30,9 +30,9 @@ public sealed class EmployeeProfile : AggregateRoot<Guid>, IAuditableEntity
     public string? CreatedBy { get; set; }
     public DateTimeOffset? LastModifiedOnUtc { get; set; }
     public string? LastModifiedBy { get; set; }
-    public DateTimeOffset? DeletedOnUtc { get; set; }
-    public string? DeletedBy { get; set; }
-    public bool IsDeleted { get; set; }
+    public DateTimeOffset? DeletedOnUtc { get; private set; }
+    public string? DeletedBy { get; private set; }
+    public bool IsDeleted { get; private set; }
 
     public static EmployeeProfile Create(
         string employeeNumber,
@@ -117,6 +117,13 @@ public sealed class EmployeeProfile : AggregateRoot<Guid>, IAuditableEntity
         DefaultUnitOfMeasureId = defaultUnitOfMeasureId;
         IsActive = isActive;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
+    }
+
+    public void SoftDelete(string deletedBy)
+    {
+        IsDeleted = true;
+        DeletedOnUtc = DateTimeOffset.UtcNow;
+        DeletedBy = deletedBy;
     }
 }
 

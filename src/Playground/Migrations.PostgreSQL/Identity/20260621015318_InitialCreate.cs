@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -103,8 +103,6 @@ namespace AMIS.Playground.Migrations.PostgreSQL.Identity
                     LastName = table.Column<string>(type: "text", nullable: true),
                     ImageUrl = table.Column<string>(type: "text", nullable: true),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    RefreshToken = table.Column<string>(type: "text", nullable: true),
-                    RefreshTokenExpiryTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     ObjectId = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     LastPasswordChangeDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     TenantId = table.Column<string>(type: "text", nullable: false),
@@ -546,4 +544,3 @@ namespace AMIS.Playground.Migrations.PostgreSQL.Identity
         }
     }
 }
-

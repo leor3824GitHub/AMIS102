@@ -97,7 +97,7 @@
                                                            OnClick="@(async () => await PayAsync(item.Id))" />
                                         </MudTooltip>
                                     }
-                                    @if ((item.Status == DisbursementVoucherStatus.Draft || item.Status == DisbursementVoucherStatus.ForApproval) && _canCancel)
+                                    @if (item.Status == DisbursementVoucherStatus.ForApproval && _canCancel)
                                     {
                                         <MudTooltip Text="Cancel">
                                             <MudIconButton Icon="@Icons.Material.Filled.Cancel" Size="Size.Small" Color="Color.Error"

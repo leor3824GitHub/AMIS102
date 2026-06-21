@@ -9,11 +9,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace AMIS.Playground.Migrations.PostgreSQL.Migrations.BudgetDisbursement
+namespace AMIS.Playground.Migrations.PostgreSQL.BudgetDisbursement
 {
     [DbContext(typeof(BudgetDisbursementDbContext))]
-    [Migration("20260620130523_AddBudgetDisbursementDvSignatorySettings")]
-    partial class AddBudgetDisbursementDvSignatorySettings
+    [Migration("20260621015303_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -305,6 +305,22 @@ namespace AMIS.Playground.Migrations.PostgreSQL.Migrations.BudgetDisbursement
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
+
+                    b.Property<string>("BurSectionADesignation")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("BurSectionAName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("BurSectionBDesignation")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("BurSectionBName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<string>("DvSectionADesignation")
                         .HasMaxLength(200)

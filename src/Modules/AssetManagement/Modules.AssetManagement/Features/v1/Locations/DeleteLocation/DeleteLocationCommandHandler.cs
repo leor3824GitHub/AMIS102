@@ -30,9 +30,7 @@ public sealed class DeleteLocationCommandHandler(
             throw new InvalidOperationException("Location is currently assigned to one or more assets and cannot be deleted.");
         }
 
-        location.IsDeleted = true;
-        location.DeletedOnUtc = DateTimeOffset.UtcNow;
-        location.DeletedBy = currentUser.GetUserId().ToString();
+        location.SoftDelete(currentUser.GetUserId().ToString());
 
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 

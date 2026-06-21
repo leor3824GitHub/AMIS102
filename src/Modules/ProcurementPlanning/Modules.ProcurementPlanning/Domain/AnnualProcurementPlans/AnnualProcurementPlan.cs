@@ -41,9 +41,9 @@ public sealed class AnnualProcurementPlan : AggregateRoot<Guid>, IAuditableEntit
     public string? CreatedBy { get; set; }
     public DateTimeOffset? LastModifiedOnUtc { get; set; }
     public string? LastModifiedBy { get; set; }
-    public DateTimeOffset? DeletedOnUtc { get; set; }
-    public string? DeletedBy { get; set; }
-    public bool IsDeleted { get; set; }
+    public DateTimeOffset? DeletedOnUtc { get; private set; }
+    public string? DeletedBy { get; private set; }
+    public bool IsDeleted { get; private set; }
 
     private AnnualProcurementPlan() { }
 
@@ -252,5 +252,12 @@ public sealed class AnnualProcurementPlan : AggregateRoot<Guid>, IAuditableEntit
         AppPhase.Updated => ppmpPhase is PpmpPhase.Final or PpmpPhase.Updated,
         _ => false
     };
+
+    public void SoftDelete(string deletedBy)
+    {
+        IsDeleted = true;
+        DeletedOnUtc = DateTimeOffset.UtcNow;
+        DeletedBy = deletedBy;
+    }
 }
 

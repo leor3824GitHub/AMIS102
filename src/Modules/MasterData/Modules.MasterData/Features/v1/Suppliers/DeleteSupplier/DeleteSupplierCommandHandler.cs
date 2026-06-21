@@ -27,9 +27,7 @@ public sealed class DeleteSupplierCommandHandler : ICommandHandler<DeleteSupplie
             throw new KeyNotFoundException($"Supplier with ID {command.Id} not found.");
         }
 
-        supplier.DeletedOnUtc = DateTimeOffset.UtcNow;
-        supplier.DeletedBy = _currentUser.GetUserId().ToString();
-        supplier.IsDeleted = true;
+        supplier.SoftDelete(_currentUser.GetUserId().ToString());
 
         _dbContext.Suppliers.Update(supplier);
         await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);

@@ -24,9 +24,7 @@ public sealed class DeleteOfficeCommandHandler : ICommandHandler<DeleteOfficeCom
             .ConfigureAwait(false)
             ?? throw new InvalidOperationException($"Office {command.Id} not found.");
 
-        office.IsDeleted = true;
-        office.DeletedOnUtc = DateTimeOffset.UtcNow;
-        office.DeletedBy = _currentUser.GetUserId().ToString();
+        office.SoftDelete(_currentUser.GetUserId().ToString());
 
         await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 

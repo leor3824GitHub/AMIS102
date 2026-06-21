@@ -9,6 +9,8 @@ public static class IdentityPermissionConstants
         public const string Update = "Permissions.Users.Update";
         public const string Delete = "Permissions.Users.Delete";
         public const string ManageRoles = "Permissions.Users.ManageRoles";
+        public const string ViewOwnProfile = "Permissions.Users.ViewOwnProfile";
+        public const string ChangeOwnPassword = "Permissions.Users.ChangeOwnPassword";
     }
 
     public static class Roles

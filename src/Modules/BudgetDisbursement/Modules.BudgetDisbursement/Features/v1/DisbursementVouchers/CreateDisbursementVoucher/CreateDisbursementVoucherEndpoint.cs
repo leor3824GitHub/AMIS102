@@ -16,7 +16,7 @@ public static class CreateDisbursementVoucherEndpoint
             var id = await mediator.Send(command, ct);
             return TypedResults.Created($"/api/v1/budget-disbursement/disbursement-vouchers/{id}", new { id });
         })
-        .WithName(nameof(CreateDisbursementVoucherCommand))
+        .WithName("BudgetDisbursement_CreateDisbursementVoucher")
         .WithSummary("Create a new disbursement voucher")
         .RequirePermission(BudgetDisbursementPermissions.DisbursementVouchers.Create);
 }

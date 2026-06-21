@@ -27,9 +27,7 @@ public sealed class DeleteCategoryCommandHandler : ICommandHandler<DeleteCategor
             throw new KeyNotFoundException($"Category with ID {command.Id} not found.");
         }
 
-        category.DeletedOnUtc = DateTimeOffset.UtcNow;
-        category.DeletedBy = _currentUser.GetUserId().ToString();
-        category.IsDeleted = true;
+        category.SoftDelete(_currentUser.GetUserId().ToString());
 
         _dbContext.Categories.Update(category);
         await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);

@@ -16,7 +16,7 @@ public static class CreateBudgetUtilizationRequestEndpoint
             var id = await mediator.Send(command, ct);
             return TypedResults.Created($"/api/v1/budget-disbursement/budget-utilization-requests/{id}", new { id });
         })
-        .WithName(nameof(CreateBudgetUtilizationRequestCommand))
+        .WithName("BudgetDisbursement_CreateBudgetUtilizationRequest")
         .WithSummary("Create a new budget utilization record")
         .RequirePermission(BudgetDisbursementPermissions.BudgetUtilizationRequests.Create);
 }

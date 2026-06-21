@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AMIS.Playground.Migrations.PostgreSQL.Identity
 {
     [DbContext(typeof(IdentityDbContext))]
-    [Migration("20260616122003_RemoveUserRefreshTokenColumns")]
-    partial class RemoveUserRefreshTokenColumns
+    [Migration("20260621015318_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

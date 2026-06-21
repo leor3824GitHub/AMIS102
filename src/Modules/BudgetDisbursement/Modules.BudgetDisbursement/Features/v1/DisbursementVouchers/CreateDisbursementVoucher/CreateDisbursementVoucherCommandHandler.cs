@@ -93,6 +93,7 @@ public sealed class CreateDisbursementVoucherCommandHandler(
             var dvNumber = $"DV-{year}-{serial:00000}";
 
             var dv = DisbursementVoucher.Create(
+                currentUser.GetTenant() ?? string.Empty,
                 dvNumber,
                 bur.PurchaseOrderId,
                 bur.PurchaseOrderNumber,

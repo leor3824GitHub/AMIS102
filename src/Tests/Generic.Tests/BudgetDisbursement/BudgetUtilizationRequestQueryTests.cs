@@ -23,6 +23,7 @@ public sealed class BudgetUtilizationRequestQueryTests
         await using var dbContext = CreateDbContext();
 
         var target = BudgetUtilizationRequest.Create(
+            tenantId: "test-tenant",
             burNumber: "BUR-0001",
             purchaseOrderId: Guid.NewGuid(),
             purchaseOrderNumber: "PO-ABC-001",
@@ -35,6 +36,7 @@ public sealed class BudgetUtilizationRequestQueryTests
             remarks: null);
 
         var other = BudgetUtilizationRequest.Create(
+            tenantId: "test-tenant",
             burNumber: "BUR-0002",
             purchaseOrderId: Guid.NewGuid(),
             purchaseOrderNumber: "PO-XYZ-002",
@@ -92,6 +94,7 @@ public sealed class BudgetUtilizationRequestQueryTests
         await using var dbContext = CreateDbContext();
 
         var bur = BudgetUtilizationRequest.Create(
+            tenantId: "test-tenant",
             burNumber: "BUR-GET-01",
             purchaseOrderId: Guid.NewGuid(),
             purchaseOrderNumber: "PO-GET-01",

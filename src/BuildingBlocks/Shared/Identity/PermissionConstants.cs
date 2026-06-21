@@ -20,6 +20,10 @@ public static class PermissionConstants
         new("Update Users", ActionConstants.Update, ResourceConstants.Users),
         new("Delete Users", ActionConstants.Delete, ResourceConstants.Users),
         new("Export Users", ActionConstants.Export, ResourceConstants.Users),
+        // Self-service: every authenticated user manages their own profile and password.
+        // Marked IsBasic so the Basic role (assigned to all users) is seeded with them.
+        new("View Own Profile", "ViewOwnProfile", ResourceConstants.Users, IsBasic: true),
+        new("Change Own Password", "ChangeOwnPassword", ResourceConstants.Users, IsBasic: true),
         new("View UserRoles", ActionConstants.View, ResourceConstants.UserRoles, IsBasic: true),
         new("Update UserRoles", ActionConstants.Update, ResourceConstants.UserRoles),
         new("View Roles", ActionConstants.View, ResourceConstants.Roles, IsBasic: true),

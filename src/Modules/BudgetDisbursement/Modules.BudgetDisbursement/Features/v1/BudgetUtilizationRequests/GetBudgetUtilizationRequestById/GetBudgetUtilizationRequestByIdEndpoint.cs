@@ -13,7 +13,7 @@ public static class GetBudgetUtilizationRequestByIdEndpoint
     public static RouteHandlerBuilder Map(IEndpointRouteBuilder endpoints) =>
         endpoints.MapGet("/{id:guid}", async (Guid id, IMediator mediator, CancellationToken ct) =>
             TypedResults.Ok(await mediator.Send(new GetBudgetUtilizationRequestByIdQuery(id), ct)))
-        .WithName(nameof(GetBudgetUtilizationRequestByIdQuery))
+        .WithName("BudgetDisbursement_GetBudgetUtilizationRequestById")
         .WithSummary("Get budget utilization record by ID")
         .RequirePermission(BudgetDisbursementPermissions.BudgetUtilizationRequests.View);
 }

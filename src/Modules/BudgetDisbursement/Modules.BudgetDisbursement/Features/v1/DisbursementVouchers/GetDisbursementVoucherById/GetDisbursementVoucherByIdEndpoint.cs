@@ -13,7 +13,7 @@ public static class GetDisbursementVoucherByIdEndpoint
     public static RouteHandlerBuilder Map(IEndpointRouteBuilder endpoints) =>
         endpoints.MapGet("/{id:guid}", async (Guid id, IMediator mediator, CancellationToken ct) =>
             TypedResults.Ok(await mediator.Send(new GetDisbursementVoucherByIdQuery(id), ct)))
-        .WithName(nameof(GetDisbursementVoucherByIdQuery))
+        .WithName("BudgetDisbursement_GetDisbursementVoucherById")
         .WithSummary("Get disbursement voucher by ID")
         .RequirePermission(BudgetDisbursementPermissions.DisbursementVouchers.View);
 }

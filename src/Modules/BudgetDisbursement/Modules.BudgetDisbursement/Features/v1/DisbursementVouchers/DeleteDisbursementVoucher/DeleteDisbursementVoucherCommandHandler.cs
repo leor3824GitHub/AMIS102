@@ -24,9 +24,7 @@ public sealed class DeleteDisbursementVoucherCommandHandler(
         if (dv.Status != DisbursementVoucherStatus.Draft)
             throw new CustomException("Only Draft disbursement vouchers can be deleted.", [], HttpStatusCode.BadRequest);
 
-        dv.IsDeleted = true;
-        dv.DeletedOnUtc = DateTimeOffset.UtcNow;
-        dv.DeletedBy = currentUser.GetUserId().ToString();
+        dv.SoftDelete(currentUser.GetUserId().ToString());
 
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 

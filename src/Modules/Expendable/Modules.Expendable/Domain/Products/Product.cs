@@ -1,4 +1,4 @@
-using AMIS.Framework.Core.Domain;
+﻿using AMIS.Framework.Core.Domain;
 
 namespace AMIS.Modules.Expendable.Domain.Products;
 
@@ -30,7 +30,7 @@ public class Product : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
     public Guid? ParentProductId { get; private set; }
     public string? VariantName { get; private set; } // e.g., "A4", "Long"
     public string? ImageUrl { get; private set; }
-    public byte[] Version { get; set; } = [];
+    public byte[] Version { get; private set; } = [];
 
     // IAuditableEntity
     public DateTimeOffset CreatedOnUtc { get; set; } = DateTimeOffset.UtcNow;

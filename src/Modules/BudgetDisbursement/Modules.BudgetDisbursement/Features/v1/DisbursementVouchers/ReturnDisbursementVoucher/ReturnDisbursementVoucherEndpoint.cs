@@ -16,7 +16,7 @@ public static class ReturnDisbursementVoucherEndpoint
             await mediator.Send(new ReturnDisbursementVoucherCommand(id, request.Remarks), ct);
             return TypedResults.NoContent();
         })
-        .WithName(nameof(ReturnDisbursementVoucherCommand))
+        .WithName("BudgetDisbursement_ReturnDisbursementVoucher")
         .WithSummary("Return a disbursement voucher")
         .RequirePermission(BudgetDisbursementPermissions.DisbursementVouchers.Return);
 

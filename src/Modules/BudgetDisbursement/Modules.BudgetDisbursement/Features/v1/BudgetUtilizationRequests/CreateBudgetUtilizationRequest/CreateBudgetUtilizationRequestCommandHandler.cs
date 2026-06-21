@@ -58,6 +58,7 @@ public sealed class CreateBudgetUtilizationRequestCommandHandler(
             var burNumber = $"BUR-{year}-{serial:00000}";
 
             var bur = BudgetUtilizationRequest.Create(
+                currentUser.GetTenant() ?? string.Empty,
                 burNumber,
                 command.PurchaseOrderId,
                 command.PurchaseOrderNumber,

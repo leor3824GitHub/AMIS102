@@ -1,4 +1,4 @@
-using AMIS.Framework.Core.Domain;
+﻿using AMIS.Framework.Core.Domain;
 
 namespace AMIS.Modules.AssetManagement.Domain;
 
@@ -63,7 +63,7 @@ public sealed class PhysicalCountSession : AggregateRoot<Guid>, IHasTenant, IAud
 
     // ── IAuditableEntity ─────────────────────────────────────────────────────
 
-    public byte[] Version { get; set; } = [];
+    public byte[] Version { get; private set; } = [];
 
     public DateTimeOffset CreatedOnUtc { get; set; } = DateTimeOffset.UtcNow;
     public string? CreatedBy { get; set; }

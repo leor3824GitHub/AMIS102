@@ -1,4 +1,4 @@
-using AMIS.Framework.Core.Domain;
+﻿using AMIS.Framework.Core.Domain;
 
 namespace AMIS.Modules.AssetManagement.Domain;
 
@@ -22,7 +22,7 @@ public sealed class AssetRegistry : AggregateRoot<Guid>, IHasTenant, IAuditableE
     public Guid? CurrentLocationId { get; private set; }
     public Guid? CurrentAssignmentHistoryId { get; private set; }
 
-    public byte[] Version { get; set; } = [];
+    public byte[] Version { get; private set; } = [];
 
     // IAuditableEntity
     public DateTimeOffset CreatedOnUtc { get; set; } = DateTimeOffset.UtcNow;

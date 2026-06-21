@@ -1,4 +1,4 @@
-using AMIS.Framework.Core.Domain;
+﻿using AMIS.Framework.Core.Domain;
 using System.Security.Cryptography;
 
 namespace AMIS.Modules.Vehicle.Domain.Repairs;
@@ -24,7 +24,7 @@ public class RepairRecord : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
     public RepairStatus Status { get; private set; } = RepairStatus.Pending;
     public DateTimeOffset? CompletedDate { get; private set; }
     public string? Notes { get; set; }
-    public byte[] Version { get; set; } = [];
+    public byte[] Version { get; private set; } = [];
 
     // IAuditableEntity
     public DateTimeOffset CreatedOnUtc { get; private set; } = DateTimeOffset.UtcNow;

@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AMIS.Playground.Migrations.PostgreSQL.MasterData
 {
     [DbContext(typeof(MasterDataDbContext))]
-    [Migration("20260619025655_MasterData_AddPropertyCustodian")]
-    partial class MasterData_AddPropertyCustodian
+    [Migration("20260621015239_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

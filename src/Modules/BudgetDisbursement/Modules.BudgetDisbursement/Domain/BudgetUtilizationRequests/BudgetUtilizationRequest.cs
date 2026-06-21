@@ -3,8 +3,9 @@ using AMIS.Modules.BudgetDisbursement.Contracts.v1.BudgetUtilizationRequests;
 
 namespace AMIS.Modules.BudgetDisbursement.Domain.BudgetUtilizationRequests;
 
-public sealed class BudgetUtilizationRequest : AggregateRoot<Guid>, IAuditableEntity
+public sealed class BudgetUtilizationRequest : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 {
+    public string TenantId { get; private set; } = default!;
     public string BurNumber { get; private set; } = default!;
     public DateOnly BurDate { get; private set; }
     public Guid PurchaseOrderId { get; private set; }
@@ -18,20 +19,21 @@ public sealed class BudgetUtilizationRequest : AggregateRoot<Guid>, IAuditableEn
     public decimal Amount { get; private set; }
     public BudgetUtilizationRequestStatus Status { get; private set; }
     public string? Remarks { get; private set; }
-    public byte[] Version { get; set; } = [];
+    public byte[] Version { get; private set; } = [];
 
     // IAuditableEntity
     public DateTimeOffset CreatedOnUtc { get; set; } = DateTimeOffset.UtcNow;
     public string? CreatedBy { get; set; }
     public DateTimeOffset? LastModifiedOnUtc { get; set; }
     public string? LastModifiedBy { get; set; }
-    public DateTimeOffset? DeletedOnUtc { get; set; }
-    public string? DeletedBy { get; set; }
-    public bool IsDeleted { get; set; }
+    public DateTimeOffset? DeletedOnUtc { get; private set; }
+    public string? DeletedBy { get; private set; }
+    public bool IsDeleted { get; private set; }
 
     private BudgetUtilizationRequest() { }
 
     public static BudgetUtilizationRequest Create(
+        string tenantId,
         string burNumber,
         Guid purchaseOrderId,
         string purchaseOrderNumber,
@@ -48,6 +50,7 @@ public sealed class BudgetUtilizationRequest : AggregateRoot<Guid>, IAuditableEn
         return new BudgetUtilizationRequest
         {
             Id = Guid.NewGuid(),
+            TenantId = tenantId,
             BurNumber = burNumber,
             PurchaseOrderId = purchaseOrderId,
             PurchaseOrderNumber = purchaseOrderNumber,
@@ -98,12 +101,19 @@ public sealed class BudgetUtilizationRequest : AggregateRoot<Guid>, IAuditableEn
 
     public void Cancel(string remarks)
     {
-        if (Status == BudgetUtilizationRequestStatus.Utilized || Status == BudgetUtilizationRequestStatus.Cancelled)
+        if (Status == BudgetUtilizationRequestStatus.Draft || Status == BudgetUtilizationRequestStatus.Utilized || Status == BudgetUtilizationRequestStatus.Cancelled)
             throw new InvalidOperationException($"Cannot cancel a BUR with status '{Status}'.");
 
         Status = BudgetUtilizationRequestStatus.Cancelled;
         Remarks = remarks;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
+    }
+
+    public void SoftDelete(string deletedBy)
+    {
+        IsDeleted = true;
+        DeletedOnUtc = DateTimeOffset.UtcNow;
+        DeletedBy = deletedBy;
     }
 }
 

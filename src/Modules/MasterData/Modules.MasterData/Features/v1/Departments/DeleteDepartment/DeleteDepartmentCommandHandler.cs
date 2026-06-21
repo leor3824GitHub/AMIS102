@@ -24,9 +24,7 @@ public sealed class DeleteDepartmentCommandHandler : ICommandHandler<DeleteDepar
             .ConfigureAwait(false)
             ?? throw new InvalidOperationException($"Department {command.Id} not found.");
 
-        department.IsDeleted = true;
-        department.DeletedOnUtc = DateTimeOffset.UtcNow;
-        department.DeletedBy = _currentUser.GetUserId().ToString();
+        department.SoftDelete(_currentUser.GetUserId().ToString());
 
         await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 

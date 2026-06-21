@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
 {
     /// <inheritdoc />
-    public partial class AssetRegister_Initial : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -393,12 +393,20 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                     ReturnedBy_EmployeeId = table.Column<Guid>(type: "uuid", nullable: false),
                     ReturnedBy_PrintedName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     ReturnedBy_Designation = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    AssignedInspector_EmployeeId = table.Column<Guid>(type: "uuid", nullable: false),
+                    AssignedInspector_PrintedName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    AssignedInspector_Designation = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    InspectedBy_EmployeeId = table.Column<Guid>(type: "uuid", nullable: true),
+                    InspectedBy_PrintedName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    InspectedBy_Designation = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     ReceivedBy_EmployeeId = table.Column<Guid>(type: "uuid", nullable: true),
                     ReceivedBy_PrintedName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     ReceivedBy_Designation = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     Remarks = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
+                    InspectionRemarks = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
                     RejectionReason = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
                     CancellationReason = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
+                    InspectedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     AcceptedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     ResolvedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     CreatedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
@@ -410,6 +418,33 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ReturnedPropertyReceipts", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SignedDocuments",
+                schema: "asset_register",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    DocumentType = table.Column<int>(type: "integer", nullable: false),
+                    DocumentId = table.Column<Guid>(type: "uuid", nullable: false),
+                    StorageKey = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: false),
+                    Sha256 = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    FileName = table.Column<string>(type: "character varying(260)", maxLength: 260, nullable: false),
+                    ContentType = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
+                    FileSizeBytes = table.Column<long>(type: "bigint", nullable: false),
+                    UploadedById = table.Column<Guid>(type: "uuid", nullable: true),
+                    UploadedByName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    UploadedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    CreatedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    LastModifiedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    LastModifiedBy = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SignedDocuments", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -470,6 +505,7 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                     Snapshot_SerialNo = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     Snapshot_Brand = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     Snapshot_Model = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    Snapshot_NetBookValue = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: true),
                     SnapshotArticle = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
                     SnapshotUnit = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
                     SnapshotUnitCost = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
@@ -545,6 +581,7 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                     Snapshot_SerialNo = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     Snapshot_Brand = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     Snapshot_Model = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    Snapshot_NetBookValue = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
                     SnapshotItemNo = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
                     SnapshotResponsibilityCenterCode = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
                     IssuedQty = table.Column<int>(type: "integer", nullable: false),
@@ -591,6 +628,7 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                     Snapshot_SerialNo = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     Snapshot_Brand = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     Snapshot_Model = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    Snapshot_NetBookValue = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
                     SnapshotAcquisitionCost = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
                     SnapshotCurrentReplacementCost = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
                     AccountabilityLineId = table.Column<Guid>(type: "uuid", nullable: true),
@@ -630,6 +668,7 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                     Snapshot_SerialNo = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     Snapshot_Brand = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     Snapshot_Model = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    Snapshot_NetBookValue = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
                     SnapshotUnitCost = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
                     SnapshotAmount = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
                     AccumulatedDepreciation = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: true),
@@ -704,7 +743,9 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                     Snapshot_UacsObjectCode = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: true),
                     Snapshot_SerialNo = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     Snapshot_Brand = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
-                    Snapshot_Model = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true)
+                    Snapshot_Model = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    Snapshot_NetBookValue = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
+                    InspectedCondition = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -738,6 +779,7 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                     Snapshot_SerialNo = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     Snapshot_Brand = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     Snapshot_Model = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    Snapshot_NetBookValue = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
                     SnapshotDateAcquired = table.Column<DateOnly>(type: "date", nullable: false),
                     SnapshotAcquisitionCost = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
                     SnapshotAccumulatedDepreciation = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
@@ -1020,6 +1062,13 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                 columns: new[] { "TenantId", "Status" });
 
             migrationBuilder.CreateIndex(
+                name: "IX_SignedDocuments_TenantId_DocumentType_DocumentId",
+                schema: "asset_register",
+                table: "SignedDocuments",
+                columns: new[] { "TenantId", "DocumentType", "DocumentId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_UnserviceablePropertyItems_AssetRegistryId",
                 schema: "asset_register",
                 table: "UnserviceablePropertyItems",
@@ -1098,6 +1147,10 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
 
             migrationBuilder.DropTable(
                 name: "ReturnedPropertyReceiptItems",
+                schema: "asset_register");
+
+            migrationBuilder.DropTable(
+                name: "SignedDocuments",
                 schema: "asset_register");
 
             migrationBuilder.DropTable(

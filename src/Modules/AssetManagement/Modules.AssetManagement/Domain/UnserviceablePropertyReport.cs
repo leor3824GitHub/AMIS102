@@ -1,4 +1,4 @@
-using AMIS.Framework.Core.Domain;
+﻿using AMIS.Framework.Core.Domain;
 
 namespace AMIS.Modules.AssetManagement.Domain;
 
@@ -48,7 +48,7 @@ public sealed class UnserviceablePropertyReport : AggregateRoot<Guid>, IHasTenan
 
     public string? Remarks { get; private set; }
 
-    public byte[] Version { get; set; } = [];
+    public byte[] Version { get; private set; } = [];
 
     // IAuditableEntity
     public DateTimeOffset CreatedOnUtc { get; set; } = DateTimeOffset.UtcNow;

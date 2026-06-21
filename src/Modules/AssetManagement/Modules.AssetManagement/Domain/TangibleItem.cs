@@ -26,9 +26,9 @@ public sealed class TangibleItem : AggregateRoot<Guid>, IHasTenant, IAuditableEn
     public string? CreatedBy { get; set; }
     public DateTimeOffset? LastModifiedOnUtc { get; set; }
     public string? LastModifiedBy { get; set; }
-    public DateTimeOffset? DeletedOnUtc { get; set; }
-    public string? DeletedBy { get; set; }
-    public bool IsDeleted { get; set; }
+    public DateTimeOffset? DeletedOnUtc { get; private set; }
+    public string? DeletedBy { get; private set; }
+    public bool IsDeleted { get; private set; }
 
     public static TangibleItem Create(
         string tenantId,
@@ -67,6 +67,13 @@ public sealed class TangibleItem : AggregateRoot<Guid>, IHasTenant, IAuditableEn
         Remarks = remarks;
         PurchaseOrderId = purchaseOrderId;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
+    }
+
+    public void SoftDelete(string deletedBy)
+    {
+        IsDeleted = true;
+        DeletedOnUtc = DateTimeOffset.UtcNow;
+        DeletedBy = deletedBy;
     }
 }
 

@@ -1,4 +1,4 @@
-using AMIS.Framework.Core.Domain;
+﻿using AMIS.Framework.Core.Domain;
 
 namespace AMIS.Modules.AssetManagement.Domain;
 
@@ -33,7 +33,7 @@ public sealed class PropertyItemCatalog : AggregateRoot<Guid>, IHasTenant, IAudi
     public int? EstimatedUsefulLifeYears { get; private set; }
 
     public bool IsActive { get; private set; } = true;
-    public byte[] Version { get; set; } = [];
+    public byte[] Version { get; private set; } = [];
 
     // IAuditableEntity
     public DateTimeOffset CreatedOnUtc { get; set; } = DateTimeOffset.UtcNow;

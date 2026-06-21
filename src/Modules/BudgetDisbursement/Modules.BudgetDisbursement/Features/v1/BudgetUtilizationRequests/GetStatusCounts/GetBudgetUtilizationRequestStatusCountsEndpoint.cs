@@ -13,7 +13,7 @@ public static class GetBudgetUtilizationRequestStatusCountsEndpoint
     public static RouteHandlerBuilder Map(IEndpointRouteBuilder endpoints) =>
         endpoints.MapGet("/status-counts", async ([AsParameters] GetBudgetUtilizationRequestStatusCountsQuery query, IMediator mediator, CancellationToken ct) =>
             TypedResults.Ok(await mediator.Send(query, ct)))
-        .WithName($"BudgetDisbursement.{nameof(GetBudgetUtilizationRequestStatusCountsQuery)}")
+        .WithName("BudgetDisbursement_GetBudgetUtilizationRequestStatusCounts")
         .WithSummary("Get budget utilization record counts grouped by status")
         .RequirePermission(BudgetDisbursementPermissions.BudgetUtilizationRequests.View);
 }

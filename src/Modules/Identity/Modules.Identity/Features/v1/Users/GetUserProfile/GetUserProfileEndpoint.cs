@@ -1,5 +1,7 @@
 using System.Security.Claims;
 using AMIS.Framework.Core.Exceptions;
+using AMIS.Framework.Shared.Identity;
+using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Framework.Shared.Identity.Claims;
 using AMIS.Modules.Identity.Contracts.v1.Users.GetUserProfile;
 using Mediator;
@@ -22,10 +24,10 @@ public static class GetUserProfileEndpoint
 
             return await mediator.Send(new GetCurrentUserProfileQuery(userId), cancellationToken);
         })
-        .WithName("GetCurrentUserProfile")
+        .WithName("Identity_GetCurrentUserProfile")
         .WithSummary("Get current user profile")
         .WithDescription("Retrieve the authenticated user's profile from the access token.")
-        .RequireAuthorization();
+        .RequirePermission(IdentityPermissionConstants.Users.ViewOwnProfile);
     }
 }
 

@@ -13,7 +13,7 @@ public sealed class BudgetDisbursementDbInitializer(
         if ((await context.Database.GetPendingMigrationsAsync(cancellationToken).ConfigureAwait(false)).Any())
         {
             await context.Database.MigrateAsync(cancellationToken).ConfigureAwait(false);
-            logger.LogInformation("[{Tenant}] applied database migrations for finance module", context.TenantInfo?.Identifier);
+            logger.LogInformation("[{Tenant}] applied database migrations for budget disbursement module", context.TenantInfo?.Identifier);
         }
     }
 

@@ -16,7 +16,7 @@ public static class UpdateDisbursementVoucherEndpoint
             await mediator.Send(command with { Id = id }, ct);
             return TypedResults.NoContent();
         })
-        .WithName(nameof(UpdateDisbursementVoucherCommand))
+        .WithName("BudgetDisbursement_UpdateDisbursementVoucher")
         .WithSummary("Edit a Draft disbursement voucher")
         .RequirePermission(BudgetDisbursementPermissions.DisbursementVouchers.Create);
 }

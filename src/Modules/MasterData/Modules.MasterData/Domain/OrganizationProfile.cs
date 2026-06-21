@@ -1,4 +1,4 @@
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using AMIS.Framework.Core.Domain;
 
 namespace AMIS.Modules.MasterData.Domain;
@@ -35,7 +35,7 @@ public sealed class OrganizationProfile : AggregateRoot<Guid>, IHasTenant, IAudi
     public string? PropertyCustodianName { get; private set; }
     public string? PropertyCustodianDesignation { get; private set; }
 
-    public byte[] Version { get; set; } = [];
+    public byte[] Version { get; private set; } = [];
 
     public DateTimeOffset CreatedOnUtc { get; set; } = DateTimeOffset.UtcNow;
     public string? CreatedBy { get; set; }

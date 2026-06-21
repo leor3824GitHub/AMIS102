@@ -24,9 +24,7 @@ public sealed class DeleteEmployeeCommandHandler : ICommandHandler<DeleteEmploye
             .ConfigureAwait(false)
             ?? throw new InvalidOperationException($"Employee {command.Id} not found.");
 
-        employee.IsDeleted = true;
-        employee.DeletedOnUtc = DateTimeOffset.UtcNow;
-        employee.DeletedBy = _currentUser.GetUserId().ToString();
+        employee.SoftDelete(_currentUser.GetUserId().ToString());
 
         await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 

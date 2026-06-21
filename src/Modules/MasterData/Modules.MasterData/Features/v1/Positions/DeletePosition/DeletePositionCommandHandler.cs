@@ -24,9 +24,7 @@ public sealed class DeletePositionCommandHandler : ICommandHandler<DeletePositio
             .ConfigureAwait(false)
             ?? throw new InvalidOperationException($"Position {command.Id} not found.");
 
-        position.IsDeleted = true;
-        position.DeletedOnUtc = DateTimeOffset.UtcNow;
-        position.DeletedBy = _currentUser.GetUserId().ToString();
+        position.SoftDelete(_currentUser.GetUserId().ToString());
 
         await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 

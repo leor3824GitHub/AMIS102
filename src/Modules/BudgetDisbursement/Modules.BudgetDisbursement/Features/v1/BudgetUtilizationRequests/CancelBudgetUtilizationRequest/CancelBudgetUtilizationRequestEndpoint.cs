@@ -16,7 +16,7 @@ public static class CancelBudgetUtilizationRequestEndpoint
             await mediator.Send(new CancelBudgetUtilizationRequestCommand(id, request.Remarks), ct);
             return TypedResults.NoContent();
         })
-        .WithName(nameof(CancelBudgetUtilizationRequestCommand))
+        .WithName("BudgetDisbursement_CancelBudgetUtilizationRequest")
         .WithSummary("Cancel a budget utilization record")
         .RequirePermission(BudgetDisbursementPermissions.BudgetUtilizationRequests.Cancel);
 

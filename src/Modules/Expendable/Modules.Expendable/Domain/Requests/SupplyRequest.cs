@@ -1,4 +1,4 @@
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using AMIS.Framework.Core.Domain;
 
 namespace AMIS.Modules.Expendable.Domain.Requests;
@@ -51,7 +51,7 @@ public class SupplyRequest : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
     public DateTimeOffset? ApprovedOnUtc { get; set; }
     public DateTimeOffset? FulfilledOnUtc { get; set; }
     public Guid? WarehouseLocationId { get; set; }
-    public byte[] Version { get; set; } = [];
+    public byte[] Version { get; private set; } = [];
 
     private readonly List<SupplyRequestItem> _items = [];
     public IReadOnlyCollection<SupplyRequestItem> Items => _items.AsReadOnly();

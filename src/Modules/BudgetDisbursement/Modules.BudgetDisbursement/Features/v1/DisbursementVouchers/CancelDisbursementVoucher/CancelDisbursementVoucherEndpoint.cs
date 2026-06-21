@@ -16,7 +16,7 @@ public static class CancelDisbursementVoucherEndpoint
             await mediator.Send(new CancelDisbursementVoucherCommand(id, request.Remarks), ct);
             return TypedResults.NoContent();
         })
-        .WithName(nameof(CancelDisbursementVoucherCommand))
+        .WithName("BudgetDisbursement_CancelDisbursementVoucher")
         .WithSummary("Cancel a disbursement voucher")
         .RequirePermission(BudgetDisbursementPermissions.DisbursementVouchers.Cancel);
 

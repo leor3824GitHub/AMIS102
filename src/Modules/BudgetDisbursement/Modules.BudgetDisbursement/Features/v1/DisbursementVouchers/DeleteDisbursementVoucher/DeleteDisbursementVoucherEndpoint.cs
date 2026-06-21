@@ -1,4 +1,4 @@
-using AMIS.Framework.Shared.Identity.Authorization;
+﻿using AMIS.Framework.Shared.Identity.Authorization;
 using AMIS.Modules.BudgetDisbursement.Contracts.Permissions;
 using AMIS.Modules.BudgetDisbursement.Contracts.v1.DisbursementVouchers;
 using Mediator;
@@ -16,7 +16,7 @@ public static class DeleteDisbursementVoucherEndpoint
             await mediator.Send(new DeleteDisbursementVoucherCommand(id), ct);
             return TypedResults.NoContent();
         })
-        .WithName(nameof(DeleteDisbursementVoucherCommand))
+        .WithName("BudgetDisbursement_DeleteDisbursementVoucher")
         .WithSummary("Delete a Draft disbursement voucher")
         .RequirePermission(BudgetDisbursementPermissions.DisbursementVouchers.Delete);
 }

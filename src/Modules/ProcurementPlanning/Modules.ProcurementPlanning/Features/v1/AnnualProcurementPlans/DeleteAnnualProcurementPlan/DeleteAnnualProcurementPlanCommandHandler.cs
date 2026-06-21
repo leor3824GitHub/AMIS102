@@ -39,9 +39,7 @@ public sealed class DeleteAnnualProcurementPlanCommandHandler(
                 ppmp.UnmarkConsolidated();
         }
 
-        app.IsDeleted = true;
-        app.DeletedOnUtc = DateTimeOffset.UtcNow;
-        app.DeletedBy = currentUser.GetUserId().ToString();
+        app.SoftDelete(currentUser.GetUserId().ToString());
 
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return Unit.Value;

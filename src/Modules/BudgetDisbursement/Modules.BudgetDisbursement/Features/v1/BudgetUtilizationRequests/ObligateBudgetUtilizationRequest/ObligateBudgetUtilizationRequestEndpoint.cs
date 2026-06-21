@@ -16,7 +16,7 @@ public static class ObligateBudgetUtilizationRequestEndpoint
             await mediator.Send(new ObligateBudgetUtilizationRequestCommand(id), ct);
             return TypedResults.NoContent();
         })
-        .WithName(nameof(ObligateBudgetUtilizationRequestCommand))
+        .WithName("BudgetDisbursement_ObligateBudgetUtilizationRequest")
         .WithSummary("Obligate a budget utilization record")
         .RequirePermission(BudgetDisbursementPermissions.BudgetUtilizationRequests.Obligate);
 }

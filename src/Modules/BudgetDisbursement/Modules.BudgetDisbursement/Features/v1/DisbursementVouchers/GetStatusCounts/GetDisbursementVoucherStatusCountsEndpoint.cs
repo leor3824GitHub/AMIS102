@@ -13,7 +13,7 @@ public static class GetDisbursementVoucherStatusCountsEndpoint
     public static RouteHandlerBuilder Map(IEndpointRouteBuilder endpoints) =>
         endpoints.MapGet("/status-counts", async ([AsParameters] GetDisbursementVoucherStatusCountsQuery query, IMediator mediator, CancellationToken ct) =>
             TypedResults.Ok(await mediator.Send(query, ct)))
-        .WithName($"BudgetDisbursement.{nameof(GetDisbursementVoucherStatusCountsQuery)}")
+        .WithName("BudgetDisbursement_GetDisbursementVoucherStatusCounts")
         .WithSummary("Get disbursement voucher counts grouped by status")
         .RequirePermission(BudgetDisbursementPermissions.DisbursementVouchers.View);
 }

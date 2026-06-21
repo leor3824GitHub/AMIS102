@@ -1,4 +1,4 @@
-using AMIS.Framework.Core.Domain;
+﻿using AMIS.Framework.Core.Domain;
 using System.Security.Cryptography;
 
 namespace AMIS.Modules.Vehicle.Domain.Maintenance;
@@ -16,7 +16,7 @@ public class MaintenanceSchedule : AggregateRoot<Guid>, IHasTenant, IAuditableEn
     public DateOnly? LastDoneDate { get; private set; }
     public int? LastDoneMileage { get; private set; }
     public bool IsActive { get; private set; } = true;
-    public byte[] Version { get; set; } = [];
+    public byte[] Version { get; private set; } = [];
 
     // IAuditableEntity
     public DateTimeOffset CreatedOnUtc { get; private set; } = DateTimeOffset.UtcNow;

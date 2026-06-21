@@ -1,4 +1,4 @@
-using AMIS.Framework.Core.Domain;
+﻿using AMIS.Framework.Core.Domain;
 
 namespace AMIS.Modules.Expendable.Domain.Cart;
 
@@ -46,7 +46,7 @@ public class EmployeeShoppingCart : AggregateRoot<Guid>, IHasTenant, IAuditableE
     public CartStatus Status { get; set; } = CartStatus.Active;
     public DateTimeOffset? ConvertedOnUtc { get; set; }
     public Guid? ConvertedToRequestId { get; set; }
-    public byte[] Version { get; set; } = [];
+    public byte[] Version { get; private set; } = [];
 
     private readonly List<CartItem> _items = [];
     public IReadOnlyCollection<CartItem> Items => _items.AsReadOnly();

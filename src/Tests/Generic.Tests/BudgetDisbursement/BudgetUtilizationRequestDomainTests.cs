@@ -14,6 +14,7 @@ public sealed class BudgetUtilizationRequestDomainTests
 
         // Act
         var bur = BudgetUtilizationRequest.Create(
+            tenantId: "test-tenant",
             burNumber: "BUR-2026-0001",
             purchaseOrderId: purchaseOrderId,
             purchaseOrderNumber: "PO-2026-0001",
@@ -77,6 +78,7 @@ public sealed class BudgetUtilizationRequestDomainTests
     }
 
     private static BudgetUtilizationRequest CreateDraftBur() => BudgetUtilizationRequest.Create(
+        tenantId: "test-tenant",
         burNumber: "BUR-2026-0002",
         purchaseOrderId: Guid.NewGuid(),
         purchaseOrderNumber: "PO-2026-0002",

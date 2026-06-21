@@ -22,9 +22,7 @@ public sealed class DeleteTangibleItemCommandHandler(
             throw new KeyNotFoundException($"Tangible item with ID {command.Id} not found.");
         }
 
-        tangibleItem.IsDeleted = true;
-        tangibleItem.DeletedOnUtc = DateTimeOffset.UtcNow;
-        tangibleItem.DeletedBy = currentUser.GetUserId().ToString();
+        tangibleItem.SoftDelete(currentUser.GetUserId().ToString());
 
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 

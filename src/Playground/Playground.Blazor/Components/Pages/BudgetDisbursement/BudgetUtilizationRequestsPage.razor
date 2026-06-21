@@ -83,7 +83,7 @@
                                                                    OnClick="@(async () => await ObligateAsync(item.Id))" />
                                                 </MudTooltip>
                                             }
-                                            @if ((item.Status == BudgetUtilizationRequestStatus.Draft || item.Status == BudgetUtilizationRequestStatus.Obligated) && _canCancel)
+                                            @if (item.Status == BudgetUtilizationRequestStatus.Obligated && _canCancel)
                                             {
                                                 <MudTooltip Text="Cancel">
                                                     <MudIconButton Icon="@Icons.Material.Filled.Cancel" Size="Size.Small" Color="Color.Error"

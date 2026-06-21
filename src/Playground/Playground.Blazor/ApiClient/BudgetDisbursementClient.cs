@@ -102,8 +102,8 @@ internal sealed class DisbursementVoucherClient(HttpClient http) : IDisbursement
     public Task<byte[]> GetPdfAsync(Guid id, string? pageWidth = null, CancellationToken ct = default)
     {
         var url = string.IsNullOrWhiteSpace(pageWidth)
-            ? $"api/v1/quest-pdf-reporting/finance/disbursement-vouchers/{id}/pdf"
-            : $"api/v1/quest-pdf-reporting/finance/disbursement-vouchers/{id}/pdf?pageWidth={pageWidth}";
+            ? $"api/v1/quest-pdf-reporting/budgetdisbursement/disbursement-vouchers/{id}/pdf"
+            : $"api/v1/quest-pdf-reporting/budgetdisbursement/disbursement-vouchers/{id}/pdf?pageWidth={pageWidth}";
         return http.GetByteArrayAsync(url, ct);
     }
 
@@ -182,8 +182,8 @@ internal sealed class BudgetUtilizationRequestClient(HttpClient http) : IBudgetU
     public Task<byte[]> GetPdfAsync(Guid id, string? pageWidth = null, CancellationToken ct = default)
     {
         var url = string.IsNullOrWhiteSpace(pageWidth)
-            ? $"api/v1/quest-pdf-reporting/finance/budget-utilization-requests/{id}/pdf"
-            : $"api/v1/quest-pdf-reporting/finance/budget-utilization-requests/{id}/pdf?pageWidth={pageWidth}";
+            ? $"api/v1/quest-pdf-reporting/budgetdisbursement/budget-utilization-requests/{id}/pdf"
+            : $"api/v1/quest-pdf-reporting/budgetdisbursement/budget-utilization-requests/{id}/pdf?pageWidth={pageWidth}";
         return http.GetByteArrayAsync(url, ct);
     }
 

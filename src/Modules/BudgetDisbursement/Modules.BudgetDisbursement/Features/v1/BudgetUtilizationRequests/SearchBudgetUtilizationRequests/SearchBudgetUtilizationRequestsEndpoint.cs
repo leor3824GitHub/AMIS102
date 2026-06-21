@@ -13,7 +13,7 @@ public static class SearchBudgetUtilizationRequestsEndpoint
     public static RouteHandlerBuilder Map(IEndpointRouteBuilder endpoints) =>
         endpoints.MapGet("/", async ([AsParameters] SearchBudgetUtilizationRequestsQuery query, IMediator mediator, CancellationToken ct) =>
             TypedResults.Ok(await mediator.Send(query, ct)))
-        .WithName(nameof(SearchBudgetUtilizationRequestsQuery))
+        .WithName("BudgetDisbursement_SearchBudgetUtilizationRequests")
         .WithSummary("Search budget utilization records")
         .RequirePermission(BudgetDisbursementPermissions.BudgetUtilizationRequests.View);
 }

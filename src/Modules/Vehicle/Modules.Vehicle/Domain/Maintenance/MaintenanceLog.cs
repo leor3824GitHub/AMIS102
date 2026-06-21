@@ -1,4 +1,4 @@
-using AMIS.Framework.Core.Domain;
+﻿using AMIS.Framework.Core.Domain;
 using System.Security.Cryptography;
 
 namespace AMIS.Modules.Vehicle.Domain.Maintenance;
@@ -15,7 +15,7 @@ public class MaintenanceLog : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
     public decimal? Cost { get; private set; }
     public string? PerformedBy { get; private set; }
     public string? Notes { get; set; }
-    public byte[] Version { get; set; } = [];
+    public byte[] Version { get; private set; } = [];
 
     // IAuditableEntity
     public DateTimeOffset CreatedOnUtc { get; private set; } = DateTimeOffset.UtcNow;

@@ -16,7 +16,7 @@ public static class UtilizeBudgetUtilizationRequestEndpoint
             await mediator.Send(new UtilizeBudgetUtilizationRequestCommand(id, request.DisbursementVoucherId, request.DisbursementVoucherNumber), ct);
             return TypedResults.NoContent();
         })
-        .WithName(nameof(UtilizeBudgetUtilizationRequestCommand))
+        .WithName("BudgetDisbursement_UtilizeBudgetUtilizationRequest")
         .WithSummary("Utilize a budget utilization record")
         .RequirePermission(BudgetDisbursementPermissions.BudgetUtilizationRequests.Utilize);
 

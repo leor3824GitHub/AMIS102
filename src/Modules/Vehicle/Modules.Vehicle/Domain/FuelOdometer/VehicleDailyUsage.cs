@@ -1,4 +1,4 @@
-using AMIS.Framework.Core.Domain;
+﻿using AMIS.Framework.Core.Domain;
 using System.Security.Cryptography;
 
 namespace AMIS.Modules.Vehicle.Domain.FuelOdometer;
@@ -17,7 +17,7 @@ public sealed class VehicleDailyUsage : AggregateRoot<Guid>, IHasTenant, IAudita
     public decimal CostPerKm => CalculateCostPerKm(DistanceKm, FuelCost);
     public string? Destination { get; private set; }
     public string? Remarks { get; private set; }
-    public byte[] Version { get; set; } = [];
+    public byte[] Version { get; private set; } = [];
 
     public DateTimeOffset CreatedOnUtc { get; private set; } = DateTimeOffset.UtcNow;
     public string? CreatedBy { get; private set; }

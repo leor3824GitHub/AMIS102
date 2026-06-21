@@ -98,6 +98,7 @@ public sealed class DisbursementVoucherDomainTests
 
     private static DisbursementVoucher CreateDv() =>
         DisbursementVoucher.Create(
+            tenantId: "test-tenant",
             dvNumber: "DV-2025-001",
             purchaseOrderId: Guid.NewGuid(),
             purchaseOrderNumber: "PO-2025-001",
