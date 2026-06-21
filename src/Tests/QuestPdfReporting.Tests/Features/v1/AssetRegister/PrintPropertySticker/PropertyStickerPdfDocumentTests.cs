@@ -22,6 +22,12 @@ public sealed class PropertyStickerPdfDocumentTests
 
         bytes.ShouldNotBeNull();
         bytes.Length.ShouldBeGreaterThan(0);
+
+        // TEMP visual-verification render — remove after inspection.
+        System.IO.Directory.CreateDirectory(@"E:\AMIS102\artifacts");
+        doc.GenerateImages(
+            i => $@"E:\AMIS102\artifacts\sheet-{i}.png",
+            new ImageGenerationSettings { RasterDpi = 130 });
     }
 
     [Fact(Skip = "Preview only — remove Skip and run while QuestPDF Companion is listening.")]

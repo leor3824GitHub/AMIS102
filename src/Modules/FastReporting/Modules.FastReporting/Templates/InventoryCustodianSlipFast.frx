@@ -24,12 +24,12 @@
       LineItemsDS – one row per ICS item (DataTable)
 
     Per-copy column widths (total 574):
-      Quantity          :  52   x=0
-      Unit              :  43   x=52
-      Unit Cost         :  70   x=95
-      Total Cost        :  70   x=165
-      Description       : 193   x=235
-      Inventory Item No.:  75   x=428
+      Qty               :  36   x=0
+      Unit              :  36   x=36
+      Unit Cost         :  70   x=72
+      Total Cost        :  70   x=142
+      Description       : 193   x=212
+      Property No.      :  98   x=405
       Est. Useful Life  :  71   x=503  → 574
 
     Border.Lines bitmap: Left=1, Right=2, Top=4, Bottom=8, All=15
@@ -50,14 +50,14 @@
         Font="Times New Roman, 8pt, style=Italic" />
 
       <TextObject Name="EntityLblL" Left="0" Top="14" Width="74" Height="22"
-        Text="Entity Name:" VertAlign="Center"
+        Text="Entity Name:" VertAlign="Bottom"
         Font="Times New Roman, 8pt" Padding="2,0,2,0" />
       <TextObject Name="EntityValL" Left="74" Top="14" Width="320" Height="22"
         Text="[IcsDS.EntityName]" VertAlign="Bottom"
         Font="Times New Roman, 8pt, style=Bold"
         Border.Lines="8" Border.Width="0.5" Padding="2,0,2,0" />
       <TextObject Name="IcsNoLblL" Left="398" Top="14" Width="56" Height="22"
-        Text="ICS No.:" VertAlign="Center" HorzAlign="Right"
+        Text="ICS No.:" VertAlign="Bottom" HorzAlign="Right"
         Font="Times New Roman, 8pt" Padding="0,0,4,0" />
       <TextObject Name="IcsNoValL" Left="454" Top="14" Width="120" Height="22"
         Text="[IcsDS.ICSNo]" VertAlign="Bottom"
@@ -65,7 +65,7 @@
         Border.Lines="8" Border.Width="0.5" Padding="2,0,2,0" />
 
       <TextObject Name="FundClusterLblL" Left="0" Top="36" Width="74" Height="22"
-        Text="Fund Cluster:" VertAlign="Center"
+        Text="Fund Cluster:" VertAlign="Bottom"
         Font="Times New Roman, 8pt" Padding="2,0,2,0" />
       <TextObject Name="FundClusterValL" Left="74" Top="36" Width="190" Height="22"
         Text="[IcsDS.FundCluster]" VertAlign="Bottom"
@@ -76,35 +76,35 @@
         Text="INVENTORY CUSTODIAN SLIP" HorzAlign="Center" VertAlign="Center"
         Font="Times New Roman, 11pt, style=Bold" />
 
-      <TextObject Name="HQtyL" Left="0" Top="84" Width="52" Height="36"
-        Text="Quantity" HorzAlign="Center" VertAlign="Center"
+      <TextObject Name="HQtyL" Left="0" Top="84" Width="36" Height="36"
+        Text="Qty" HorzAlign="Center" VertAlign="Center"
         Font="Times New Roman, 7pt, style=Bold,Italic"
         Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
-      <TextObject Name="HUnitL" Left="52" Top="84" Width="43" Height="36"
+      <TextObject Name="HUnitL" Left="36" Top="84" Width="36" Height="36"
         Text="Unit" HorzAlign="Center" VertAlign="Center"
         Font="Times New Roman, 7pt, style=Bold,Italic"
         Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
-      <TextObject Name="HAmountL" Left="95" Top="84" Width="140" Height="18"
+      <TextObject Name="HAmountL" Left="72" Top="84" Width="140" Height="18"
         Text="Amount" HorzAlign="Center" VertAlign="Center"
         Font="Times New Roman, 7pt, style=Bold,Italic"
         Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
-      <TextObject Name="HDescL" Left="235" Top="84" Width="193" Height="36"
+      <TextObject Name="HDescL" Left="212" Top="84" Width="193" Height="36"
         Text="Description" HorzAlign="Center" VertAlign="Center"
         Font="Times New Roman, 7pt, style=Bold,Italic"
         Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
-      <TextObject Name="HInvItemNoL" Left="428" Top="84" Width="75" Height="36"
-        Text="Inventory&#10;Item No." HorzAlign="Center" VertAlign="Center"
+      <TextObject Name="HInvItemNoL" Left="405" Top="84" Width="98" Height="36"
+        Text="Property No." HorzAlign="Center" VertAlign="Center"
         Font="Times New Roman, 7pt, style=Bold,Italic"
         Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
       <TextObject Name="HEstLifeL" Left="503" Top="84" Width="71" Height="36"
         Text="Estimated&#10;Useful Life" HorzAlign="Center" VertAlign="Center"
         Font="Times New Roman, 7pt, style=Bold,Italic"
         Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
-      <TextObject Name="HUnitCostL" Left="95" Top="102" Width="70" Height="18"
+      <TextObject Name="HUnitCostL" Left="72" Top="102" Width="70" Height="18"
         Text="Unit Cost" HorzAlign="Center" VertAlign="Center"
         Font="Times New Roman, 7pt, style=Bold,Italic"
         Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
-      <TextObject Name="HTotalCostL" Left="165" Top="102" Width="70" Height="18"
+      <TextObject Name="HTotalCostL" Left="142" Top="102" Width="70" Height="18"
         Text="Total Cost" HorzAlign="Center" VertAlign="Center"
         Font="Times New Roman, 7pt, style=Bold,Italic"
         Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
@@ -115,14 +115,14 @@
         Font="Times New Roman, 8pt, style=Italic" />
 
       <TextObject Name="EntityLblR" Left="598" Top="14" Width="74" Height="22"
-        Text="Entity Name:" VertAlign="Center"
+        Text="Entity Name:" VertAlign="Bottom"
         Font="Times New Roman, 8pt" Padding="2,0,2,0" />
       <TextObject Name="EntityValR" Left="672" Top="14" Width="320" Height="22"
         Text="[IcsDS.EntityName]" VertAlign="Bottom"
         Font="Times New Roman, 8pt, style=Bold"
         Border.Lines="8" Border.Width="0.5" Padding="2,0,2,0" />
       <TextObject Name="IcsNoLblR" Left="992" Top="14" Width="56" Height="22"
-        Text="ICS No.:" VertAlign="Center" HorzAlign="Right"
+        Text="ICS No.:" VertAlign="Bottom" HorzAlign="Right"
         Font="Times New Roman, 8pt" Padding="0,0,4,0" />
       <TextObject Name="IcsNoValR" Left="1048" Top="14" Width="120" Height="22"
         Text="[IcsDS.ICSNo]" VertAlign="Bottom"
@@ -130,7 +130,7 @@
         Border.Lines="8" Border.Width="0.5" Padding="2,0,2,0" />
 
       <TextObject Name="FundClusterLblR" Left="598" Top="36" Width="74" Height="22"
-        Text="Fund Cluster:" VertAlign="Center"
+        Text="Fund Cluster:" VertAlign="Bottom"
         Font="Times New Roman, 8pt" Padding="2,0,2,0" />
       <TextObject Name="FundClusterValR" Left="672" Top="36" Width="190" Height="22"
         Text="[IcsDS.FundCluster]" VertAlign="Bottom"
@@ -141,35 +141,35 @@
         Text="INVENTORY CUSTODIAN SLIP" HorzAlign="Center" VertAlign="Center"
         Font="Times New Roman, 11pt, style=Bold" />
 
-      <TextObject Name="HQtyR" Left="598" Top="84" Width="52" Height="36"
-        Text="Quantity" HorzAlign="Center" VertAlign="Center"
+      <TextObject Name="HQtyR" Left="598" Top="84" Width="36" Height="36"
+        Text="Qty" HorzAlign="Center" VertAlign="Center"
         Font="Times New Roman, 7pt, style=Bold,Italic"
         Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
-      <TextObject Name="HUnitR" Left="650" Top="84" Width="43" Height="36"
+      <TextObject Name="HUnitR" Left="634" Top="84" Width="36" Height="36"
         Text="Unit" HorzAlign="Center" VertAlign="Center"
         Font="Times New Roman, 7pt, style=Bold,Italic"
         Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
-      <TextObject Name="HAmountR" Left="693" Top="84" Width="140" Height="18"
+      <TextObject Name="HAmountR" Left="670" Top="84" Width="140" Height="18"
         Text="Amount" HorzAlign="Center" VertAlign="Center"
         Font="Times New Roman, 7pt, style=Bold,Italic"
         Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
-      <TextObject Name="HDescR" Left="833" Top="84" Width="193" Height="36"
+      <TextObject Name="HDescR" Left="810" Top="84" Width="193" Height="36"
         Text="Description" HorzAlign="Center" VertAlign="Center"
         Font="Times New Roman, 7pt, style=Bold,Italic"
         Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
-      <TextObject Name="HInvItemNoR" Left="1026" Top="84" Width="75" Height="36"
-        Text="Inventory&#10;Item No." HorzAlign="Center" VertAlign="Center"
+      <TextObject Name="HInvItemNoR" Left="1003" Top="84" Width="98" Height="36"
+        Text="Property No." HorzAlign="Center" VertAlign="Center"
         Font="Times New Roman, 7pt, style=Bold,Italic"
         Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
       <TextObject Name="HEstLifeR" Left="1101" Top="84" Width="71" Height="36"
         Text="Estimated&#10;Useful Life" HorzAlign="Center" VertAlign="Center"
         Font="Times New Roman, 7pt, style=Bold,Italic"
         Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
-      <TextObject Name="HUnitCostR" Left="693" Top="102" Width="70" Height="18"
+      <TextObject Name="HUnitCostR" Left="670" Top="102" Width="70" Height="18"
         Text="Unit Cost" HorzAlign="Center" VertAlign="Center"
         Font="Times New Roman, 7pt, style=Bold,Italic"
         Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
-      <TextObject Name="HTotalCostR" Left="763" Top="102" Width="70" Height="18"
+      <TextObject Name="HTotalCostR" Left="740" Top="102" Width="70" Height="18"
         Text="Total Cost" HorzAlign="Center" VertAlign="Center"
         Font="Times New Roman, 7pt, style=Bold,Italic"
         Border.Lines="15" Border.Width="0.5" Padding="1,1,1,1" />
@@ -182,28 +182,28 @@
     <DataBand Name="Data1" DataSource="LineItemsDS" Width="1172" Height="18" CanGrow="true">
 
       <!-- LEFT COPY -->
-      <TextObject Name="DQtyL" Left="0" Top="0" Width="52" Height="18"
+      <TextObject Name="DQtyL" Left="0" Top="0" Width="36" Height="18"
         Text="[LineItemsDS.Quantity]" HorzAlign="Center" VertAlign="Center"
         Font="Times New Roman, 8pt"
         Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" GrowToBottom="true" />
-      <TextObject Name="DUnitL" Left="52" Top="0" Width="43" Height="18"
+      <TextObject Name="DUnitL" Left="36" Top="0" Width="36" Height="18"
         Text="[LineItemsDS.Unit]" HorzAlign="Center" VertAlign="Center"
         Font="Times New Roman, 8pt"
         Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" GrowToBottom="true" />
-      <TextObject Name="DUnitCostL" Left="95" Top="0" Width="70" Height="18"
+      <TextObject Name="DUnitCostL" Left="72" Top="0" Width="70" Height="18"
         Text="[LineItemsDS.UnitCost]" HorzAlign="Right" VertAlign="Center"
         Font="Times New Roman, 8pt"
         Border.Lines="15" Border.Width="0.5" Padding="2,1,4,1" GrowToBottom="true" />
-      <TextObject Name="DTotalCostL" Left="165" Top="0" Width="70" Height="18"
+      <TextObject Name="DTotalCostL" Left="142" Top="0" Width="70" Height="18"
         Text="[LineItemsDS.TotalCost]" HorzAlign="Right" VertAlign="Center"
         Font="Times New Roman, 8pt"
         Border.Lines="15" Border.Width="0.5" Padding="2,1,4,1" GrowToBottom="true" />
-      <TextObject Name="DDescL" Left="235" Top="0" Width="193" Height="18"
+      <TextObject Name="DDescL" Left="212" Top="0" Width="193" Height="18"
         Text="[LineItemsDS.Description]" HorzAlign="Left" VertAlign="Center"
         Font="Times New Roman, 8pt"
         Border.Lines="15" Border.Width="0.5" Padding="4,1,2,1"
         CanGrow="true" GrowToBottom="true" WordWrap="true" />
-      <TextObject Name="DInvItemNoL" Left="428" Top="0" Width="75" Height="18"
+      <TextObject Name="DInvItemNoL" Left="405" Top="0" Width="98" Height="18"
         Text="[LineItemsDS.InventoryItemNo]" HorzAlign="Center" VertAlign="Center"
         Font="Times New Roman, 8pt"
         Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1"
@@ -214,28 +214,28 @@
         Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" GrowToBottom="true" />
 
       <!-- RIGHT COPY (x + 598) -->
-      <TextObject Name="DQtyR" Left="598" Top="0" Width="52" Height="18"
+      <TextObject Name="DQtyR" Left="598" Top="0" Width="36" Height="18"
         Text="[LineItemsDS.Quantity]" HorzAlign="Center" VertAlign="Center"
         Font="Times New Roman, 8pt"
         Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" GrowToBottom="true" />
-      <TextObject Name="DUnitR" Left="650" Top="0" Width="43" Height="18"
+      <TextObject Name="DUnitR" Left="634" Top="0" Width="36" Height="18"
         Text="[LineItemsDS.Unit]" HorzAlign="Center" VertAlign="Center"
         Font="Times New Roman, 8pt"
         Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1" GrowToBottom="true" />
-      <TextObject Name="DUnitCostR" Left="693" Top="0" Width="70" Height="18"
+      <TextObject Name="DUnitCostR" Left="670" Top="0" Width="70" Height="18"
         Text="[LineItemsDS.UnitCost]" HorzAlign="Right" VertAlign="Center"
         Font="Times New Roman, 8pt"
         Border.Lines="15" Border.Width="0.5" Padding="2,1,4,1" GrowToBottom="true" />
-      <TextObject Name="DTotalCostR" Left="763" Top="0" Width="70" Height="18"
+      <TextObject Name="DTotalCostR" Left="740" Top="0" Width="70" Height="18"
         Text="[LineItemsDS.TotalCost]" HorzAlign="Right" VertAlign="Center"
         Font="Times New Roman, 8pt"
         Border.Lines="15" Border.Width="0.5" Padding="2,1,4,1" GrowToBottom="true" />
-      <TextObject Name="DDescR" Left="833" Top="0" Width="193" Height="18"
+      <TextObject Name="DDescR" Left="810" Top="0" Width="193" Height="18"
         Text="[LineItemsDS.Description]" HorzAlign="Left" VertAlign="Center"
         Font="Times New Roman, 8pt"
         Border.Lines="15" Border.Width="0.5" Padding="4,1,2,1"
         CanGrow="true" GrowToBottom="true" WordWrap="true" />
-      <TextObject Name="DInvItemNoR" Left="1026" Top="0" Width="75" Height="18"
+      <TextObject Name="DInvItemNoR" Left="1003" Top="0" Width="98" Height="18"
         Text="[LineItemsDS.InventoryItemNo]" HorzAlign="Center" VertAlign="Center"
         Font="Times New Roman, 8pt"
         Border.Lines="15" Border.Width="0.5" Padding="2,1,2,1"
