@@ -7,7 +7,6 @@ public sealed class CreatePPEIRFormSeriesCommandValidator : AbstractValidator<Cr
 {
     public CreatePPEIRFormSeriesCommandValidator()
     {
-        RuleFor(x => x.Label).NotEmpty().MaximumLength(200);
         RuleFor(x => x.StartSerial).GreaterThan(0);
         RuleFor(x => x.EndSerial).GreaterThanOrEqualTo(x => x.StartSerial);
     }

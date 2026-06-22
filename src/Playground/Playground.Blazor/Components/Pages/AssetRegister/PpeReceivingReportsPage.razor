@@ -32,7 +32,7 @@
                     @if (_canCreate)
                     {
                         <AMISButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Success"
-                                    StartIcon="@Icons.Material.Outlined.Add" OnClick="@(() => _showCreateForm = !_showCreateForm)">
+                                    StartIcon="@Icons.Material.Outlined.Add" OnClick="OpenCreateDialogAsync">
                             New PPERR
                         </AMISButton>
                     }
@@ -43,16 +43,6 @@
             </MudCardContent>
         </MudCard>
     </MudItem>
-
-    @if (_showCreateForm)
-    {
-        <MudItem xs="12">
-            <ReceivingReportForm DocumentKind="PpeDocumentKind"
-                                 Title="Create PPE Receiving Report"
-                                 OnCreated="OnCreatedAsync"
-                                 OnCancel="@(() => _showCreateForm = false)" />
-        </MudItem>
-    }
 
     <MudItem xs="12">
         <MudCard Elevation="1">
@@ -145,7 +135,6 @@
     private string? _keyword;
     private ReceiptType? _receiptTypeFilter;
     private bool _busy;
-    private bool _showCreateForm;
     private int _page = 1;
     private const int PageSize = 20;
     private int _totalCount;
@@ -219,11 +208,21 @@
 
     private async Task OnReceiptTypeChanged(ReceiptType? value) { _receiptTypeFilter = value; _page = 1; await LoadAsync(); }
 
-    private async Task OnCreatedAsync(ArReceivingReportDto created)
+    private async Task OpenCreateDialogAsync()
     {
-        _showCreateForm = false;
-        Snackbar.Add($"Created {created.ReportNo}", Severity.Success);
-        await LoadAsync();
+        var parameters = new DialogParameters<ReceivingReportFormDialog>
+        {
+            { x => x.DocumentKind, PpeDocumentKind },
+            { x => x.Title, "Create PPE Receiving Report" }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true, CloseButton = true, CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<ReceivingReportFormDialog>("Create PPE Receiving Report (PPERR)", parameters, options);
+        var result = await dialog.Result;
+        if (result is { Canceled: false, Data: ArReceivingReportDto created })
+        {
+            Snackbar.Add($"Created {created.ReportNo}", Severity.Success);
+            await LoadAsync();
+        }
     }
 
     private async Task ViewAsync(Guid id)

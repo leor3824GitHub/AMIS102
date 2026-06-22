@@ -65,6 +65,30 @@ internal sealed class IssuanceReportNumberGenerator(AssetRegisterDbContext db, C
         var serial = await allocator.NextSerialAsync(tenantId, periodStart.Year, periodStart.Month, prefix, ct).ConfigureAwait(false);
         return $"{prefix}-{periodStart.Year:D4}-{periodStart.Month:D2}-{serial.ToString("D4", CultureInfo.InvariantCulture)}";
     }
+
+    public async Task<string> PeekAsync(IssuanceReportType type, DateOnly periodStart, CancellationToken ct)
+    {
+        var tenantId = db.TenantInfo?.Identifier ?? string.Empty;
+
+        // For PPEIR: mirror the active pre-printed form series without allocating from it.
+        if (type == IssuanceReportType.PPEIR)
+        {
+            var activeSeries = await db.PPEIRFormSeries
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s => s.TenantId == tenantId && s.IsActive, ct)
+                .ConfigureAwait(false);
+
+            if (activeSeries is not null && !activeSeries.IsExhausted)
+            {
+                var digits = activeSeries.EndSerial.ToString(CultureInfo.InvariantCulture).Length;
+                return activeSeries.NextSerial.ToString($"D{digits}", CultureInfo.InvariantCulture);
+            }
+        }
+
+        var prefix = type == IssuanceReportType.SMIR ? "RSPI" : "PPEIR";
+        var serial = await allocator.PeekSerialAsync(tenantId, periodStart.Year, periodStart.Month, prefix, ct).ConfigureAwait(false);
+        return $"{prefix}-{periodStart.Year:D4}-{periodStart.Month:D2}-{serial.ToString("D4", CultureInfo.InvariantCulture)}";
+    }
 }
 
 internal sealed class ReceivingReportNumberGenerator(AssetRegisterDbContext db, CounterAllocator allocator) : IReceivingReportNumberGenerator
@@ -87,6 +111,30 @@ internal sealed class ReceivingReportNumberGenerator(AssetRegisterDbContext db, 
         // Fall back to date-based auto-generation.
         var prefix = kind == ReceivingDocumentKind.PPERR ? "PPERR" : "SMRR";
         var serial = await allocator.NextSerialAsync(tenantId, date.Year, date.Month, prefix, ct).ConfigureAwait(false);
+        return $"{prefix}-{date.Year:D4}-{date.Month:D2}-{serial.ToString("D4", CultureInfo.InvariantCulture)}";
+    }
+
+    public async Task<string> PeekAsync(ReceivingDocumentKind kind, DateOnly date, CancellationToken ct)
+    {
+        var tenantId = db.TenantInfo?.Identifier ?? string.Empty;
+
+        // For PPERR: mirror the active pre-printed form series without allocating from it.
+        if (kind == ReceivingDocumentKind.PPERR)
+        {
+            var activeSeries = await db.PPERRFormSeries
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s => s.TenantId == tenantId && s.IsActive, ct)
+                .ConfigureAwait(false);
+
+            if (activeSeries is not null && !activeSeries.IsExhausted)
+            {
+                var digits = activeSeries.EndSerial.ToString(CultureInfo.InvariantCulture).Length;
+                return activeSeries.NextSerial.ToString($"D{digits}", CultureInfo.InvariantCulture);
+            }
+        }
+
+        var prefix = kind == ReceivingDocumentKind.PPERR ? "PPERR" : "SMRR";
+        var serial = await allocator.PeekSerialAsync(tenantId, date.Year, date.Month, prefix, ct).ConfigureAwait(false);
         return $"{prefix}-{date.Year:D4}-{date.Month:D2}-{serial.ToString("D4", CultureInfo.InvariantCulture)}";
     }
 }

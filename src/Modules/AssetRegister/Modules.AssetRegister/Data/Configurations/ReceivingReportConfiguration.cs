@@ -78,7 +78,6 @@ internal sealed class PPERRFormSeriesConfiguration : IEntityTypeConfiguration<PP
 
         builder.HasKey(x => x.Id);
         builder.Property(x => x.TenantId).IsRequired().HasMaxLength(50);
-        builder.Property(x => x.Label).IsRequired().HasMaxLength(200);
         builder.Property<uint>("xmin")
             .HasColumnName("xmin")
             .HasColumnType("xid")

@@ -81,7 +81,6 @@ public sealed record SearchIssuanceReportsQuery(
 
 public sealed record PPEIRFormSeriesDto(
     Guid Id,
-    string Label,
     int StartSerial,
     int EndSerial,
     int NextSerial,
@@ -91,13 +90,11 @@ public sealed record PPEIRFormSeriesDto(
     bool IsUnused);
 
 public sealed record CreatePPEIRFormSeriesCommand(
-    string Label,
     int StartSerial,
     int EndSerial) : ICommand<PPEIRFormSeriesDto>;
 
 public sealed record UpdatePPEIRFormSeriesCommand(
     Guid Id,
-    string Label,
     int StartSerial,
     int EndSerial) : ICommand<PPEIRFormSeriesDto>;
 
@@ -112,3 +109,12 @@ public sealed record GetActivePPEIRFormSeriesQuery : IQuery<PPEIRFormSeriesDto?>
 public sealed record SearchPPEIRFormSeriesQuery(
     int PageNumber = 1,
     int PageSize = 20) : IQuery<PagedResponse<PPEIRFormSeriesDto>>;
+
+/// <summary>
+/// Previews the report number that would be assigned to a new issuance report of the given
+/// type/date, WITHOUT consuming it. Scoped to the current tenant. Backs the "next number"
+/// preview on the create dialog. Best-effort — a concurrent create may change it before save.
+/// </summary>
+public sealed record PeekIssuanceReportNumberQuery(
+    IssuanceReportType Type,
+    DateOnly Date) : IQuery<string>;

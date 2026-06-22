@@ -6,5 +6,5 @@ namespace AMIS.Modules.AssetRegister.Features.v1.Issuance;
 internal static class PPEIRFormSeriesMapper
 {
     public static PPEIRFormSeriesDto ToDto(PPEIRFormSeries s) =>
-        new(s.Id, s.Label, s.StartSerial, s.EndSerial, s.NextSerial, s.Remaining, s.IsActive, s.IsExhausted, s.IsUnused);
+        new(s.Id, s.StartSerial, s.EndSerial, s.NextSerial, s.Remaining, s.IsActive, s.IsExhausted, s.IsUnused);
 }

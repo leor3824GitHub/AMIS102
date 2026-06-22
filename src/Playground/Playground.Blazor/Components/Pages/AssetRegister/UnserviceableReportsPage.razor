@@ -31,7 +31,7 @@
                     @if (_canFile)
                     {
                         <AMISButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Success"
-                                    StartIcon="@Icons.Material.Outlined.Add" OnClick="@(() => _showCreateForm = !_showCreateForm)">
+                                    StartIcon="@Icons.Material.Outlined.Add" OnClick="OpenCreateDialogAsync">
                             New Report
                         </AMISButton>
                     }
@@ -47,39 +47,6 @@
             </MudCardContent>
         </MudCard>
     </MudItem>
-
-    <!-- Create Form -->
-    @if (_showCreateForm)
-    {
-        <MudItem xs="12" md="5">
-            <MudCard Elevation="2">
-                <MudCardHeader>
-                    <CardHeaderContent><MudText Typo="Typo.h6">Create Unserviceable Report</MudText></CardHeaderContent>
-                    <CardHeaderActions>
-                        <AMISIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small"
-                                        OnClick="@(() => _showCreateForm = false)" />
-                    </CardHeaderActions>
-                </MudCardHeader>
-                <MudCardContent>
-                    <MudStack Spacing="2">
-                        <MudSelect @bind-Value="_createForm.ReportType" Label="Report Type" Variant="Variant.Outlined" T="UnserviceableReportType" Required="true">
-                            <MudSelectItem T="UnserviceableReportType" Value="@UnserviceableReportType.IIRUSP">IIRUSP (Semi-Expendable)</MudSelectItem>
-                            <MudSelectItem T="UnserviceableReportType" Value="@UnserviceableReportType.IIRUP">IIRUP (PPE)</MudSelectItem>
-                        </MudSelect>
-                        <MudTextField @bind-Value="_createForm.FundCluster" Label="Fund Cluster" Variant="Variant.Outlined" MaxLength="50" Required="true" />
-                        <MudTextField @bind-Value="_createForm.Station" Label="Station / Location" Variant="Variant.Outlined" MaxLength="200" Required="true" />
-                        <MudDatePicker @bind-Date="_createForm.AsAtNullable" Label="As At" Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" Required="true" />
-                        <MudTextField @bind-Value="_createForm.AccountableOfficerName" Label="Accountable Officer (Name)" Variant="Variant.Outlined" MaxLength="100" Required="true" />
-                        <MudTextField @bind-Value="_createForm.AccountableOfficerDesignation" Label="Designation" Variant="Variant.Outlined" MaxLength="100" />
-                        <AMISButton Variant="Variant.Filled" Color="Color.Success" FullWidth="true"
-                                    OnClick="CreateReportAsync" Disabled="_busy">
-                            Create Report
-                        </AMISButton>
-                    </MudStack>
-                </MudCardContent>
-            </MudCard>
-        </MudItem>
-    }
 
     <!-- Results -->
     <MudItem xs="12">
@@ -283,10 +250,6 @@
     private const int PageSize = 15;
     private IReadOnlyList<ArUnserviceableReportSummaryDto> _items = [];
     private ArUnserviceableReportDto? _selected;
-    private bool _showCreateForm;
-
-    // Create form
-    private CreateFormModel _createForm = new();
 
     // Add item
     private string? _addItemAssetId;
@@ -295,16 +258,6 @@
     // Submit
     private string? _submitApprovedByName;
     private string? _submitApprovedByDesignation;
-
-    private sealed class CreateFormModel
-    {
-        public UnserviceableReportType ReportType { get; set; }
-        public string FundCluster { get; set; } = "";
-        public string Station { get; set; } = "";
-        public DateTime? AsAtNullable { get; set; }
-        public string AccountableOfficerName { get; set; } = "";
-        public string? AccountableOfficerDesignation { get; set; }
-    }
 
     private bool _canFile => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Unserviceable.File);
     private bool _canViewSigned   => UserProfileState.Permissions.Contains(AssetRegisterPermissions.SignedDocuments.View);
@@ -391,38 +344,19 @@
         }
     }
 
-    private async Task CreateReportAsync()
+    private async Task OpenCreateDialogAsync()
     {
-        if (string.IsNullOrWhiteSpace(_createForm.AccountableOfficerName) ||
-            string.IsNullOrWhiteSpace(_createForm.Station) || !_createForm.AsAtNullable.HasValue)
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true, CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<CreateUnserviceableReportDialog>("Create Unserviceable Report", options);
+        var result = await dialog.Result;
+        if (result is { Canceled: false, Data: ArUnserviceableReportDto created })
         {
-            Snackbar.Add("All required fields must be filled.", Severity.Warning);
-            return;
-        }
-
-        _busy = true;
-        try
-        {
-            var req = new CreateUnserviceableReportRequest(
-                _createForm.ReportType,
-                _createForm.FundCluster,
-                _createForm.Station.Trim(),
-                DateOnly.FromDateTime(_createForm.AsAtNullable.Value),
-                new ArEmployeeRefDto(Guid.Empty, _createForm.AccountableOfficerName.Trim(), _createForm.AccountableOfficerDesignation));
-
-            _selected = await Client.CreateDraftAsync(req);
-            Snackbar.Add("Report created.", Severity.Success);
-            _showCreateForm = false;
-            _createForm = new();
+            _selected = created;
+            _addItemAssetId = null;
+            _addItemRemarks = null;
+            _submitApprovedByName = null;
+            _submitApprovedByDesignation = null;
             await LoadAsync();
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add(ex.Message, Severity.Error);
-        }
-        finally
-        {
-            _busy = false;
         }
     }
 

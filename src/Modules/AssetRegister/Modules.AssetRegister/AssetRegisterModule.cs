@@ -241,6 +241,7 @@ public class AssetRegisterModule : IModule
         Features.v1.Receiving.GetReceivingReport.GetReceivingReportEndpoint.Map(receiving);
         Features.v1.Receiving.SearchReceivingReports.SearchReceivingReportsEndpoint.Map(receiving);
         Features.v1.Receiving.GetReceivedPropertyNumbers.GetReceivedPropertyNumbersEndpoint.Map(receiving);
+        Features.v1.Receiving.PeekReceivingReportNumber.PeekReceivingReportNumberEndpoint.Map(receiving);
 
         // PPERR Form Series (pre-printed accountable form management)
         var ppErrSeries = moduleGroup.MapGroup("/pperr-series");

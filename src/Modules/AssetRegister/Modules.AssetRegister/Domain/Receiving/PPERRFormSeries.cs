@@ -11,9 +11,6 @@ public sealed class PPERRFormSeries : AggregateRoot<Guid>, IHasTenant, IAuditabl
 {
     public string TenantId { get; private set; } = default!;
 
-    /// <summary>Descriptive label, e.g. "FY 2026 Batch 1".</summary>
-    public string Label { get; private set; } = default!;
-
     /// <summary>First serial number in the batch (inclusive).</summary>
     public int StartSerial { get; private set; }
 
@@ -39,11 +36,9 @@ public sealed class PPERRFormSeries : AggregateRoot<Guid>, IHasTenant, IAuditabl
 
     private PPERRFormSeries() { }
 
-    public static PPERRFormSeries Create(string tenantId, string label, int startSerial, int endSerial)
+    public static PPERRFormSeries Create(string tenantId, int startSerial, int endSerial)
     {
         ArgumentNullException.ThrowIfNull(tenantId);
-        if (string.IsNullOrWhiteSpace(label))
-            throw new InvalidOperationException("Series label is required.");
         if (startSerial <= 0)
             throw new InvalidOperationException("Start serial must be greater than zero.");
         if (endSerial < startSerial)
@@ -53,7 +48,6 @@ public sealed class PPERRFormSeries : AggregateRoot<Guid>, IHasTenant, IAuditabl
         {
             Id = Guid.NewGuid(),
             TenantId = tenantId,
-            Label = label,
             StartSerial = startSerial,
             EndSerial = endSerial,
             NextSerial = startSerial,
@@ -63,23 +57,23 @@ public sealed class PPERRFormSeries : AggregateRoot<Guid>, IHasTenant, IAuditabl
     }
 
     /// <summary>
-    /// Update the descriptive label and serial range. Only allowed while the series is unused
+    /// Update the serial range. Only allowed while the series is unused
     /// (no PPERR numbers have been allocated). Range changes after allocation would invalidate
     /// already-issued report numbers.
     /// </summary>
-    public void UpdateRange(string label, int startSerial, int endSerial)
+    public void UpdateRange(int startSerial, int endSerial)
     {
+        if (IsActive)
+            throw new InvalidOperationException(
+                "Deactivate the series before editing its serial range.");
         if (!IsUnused)
             throw new InvalidOperationException(
-                $"Series '{Label}' has already issued PPERR numbers and cannot be edited.");
-        if (string.IsNullOrWhiteSpace(label))
-            throw new InvalidOperationException("Series label is required.");
+                $"Series {StartSerial}–{EndSerial} has already issued PPERR numbers and cannot be edited.");
         if (startSerial <= 0)
             throw new InvalidOperationException("Start serial must be greater than zero.");
         if (endSerial < startSerial)
             throw new InvalidOperationException("End serial must be greater than or equal to start serial.");
 
-        Label = label;
         StartSerial = startSerial;
         EndSerial = endSerial;
         NextSerial = startSerial;
@@ -89,7 +83,7 @@ public sealed class PPERRFormSeries : AggregateRoot<Guid>, IHasTenant, IAuditabl
     public void Activate()
     {
         if (IsExhausted)
-            throw new InvalidOperationException($"Series '{Label}' is exhausted and cannot be activated.");
+            throw new InvalidOperationException($"Series {StartSerial}–{EndSerial} is exhausted and cannot be activated.");
         IsActive = true;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
     }
@@ -107,7 +101,7 @@ public sealed class PPERRFormSeries : AggregateRoot<Guid>, IHasTenant, IAuditabl
     public string AllocateNext()
     {
         if (IsExhausted)
-            throw new InvalidOperationException($"Series '{Label}' is exhausted. Register a new series.");
+            throw new InvalidOperationException($"Series {StartSerial}–{EndSerial} is exhausted. Register a new series.");
 
         var serial = NextSerial;
         NextSerial++;
@@ -115,6 +109,6 @@ public sealed class PPERRFormSeries : AggregateRoot<Guid>, IHasTenant, IAuditabl
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
 
         var digits = EndSerial.ToString().Length;
-        return $"PPERR-{serial.ToString($"D{digits}")}";
+        return serial.ToString($"D{digits}");
     }
 }

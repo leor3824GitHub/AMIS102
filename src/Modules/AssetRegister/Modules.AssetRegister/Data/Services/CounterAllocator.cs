@@ -44,5 +44,23 @@ public sealed class CounterAllocator(AssetRegisterDbContext db)
         throw new InvalidOperationException(
             $"Failed to allocate next serial for counter '{counterKey}' after {MaxAttempts} attempts.");
     }
+
+    /// <summary>
+    /// Returns the serial that <see cref="NextSerialAsync"/> would allocate next, WITHOUT
+    /// consuming it. Read-only — for previewing a number before the record is saved. Scoped to
+    /// the current tenant via the global query filter. Best-effort: a concurrent allocation
+    /// (or a different date) may change the value before save.
+    /// </summary>
+    public async Task<int> PeekSerialAsync(string tenantId, int year, int month, string counterKey, CancellationToken ct)
+    {
+        var counter = await db.PropertyCodeCounters
+            .AsNoTracking()
+            .FirstOrDefaultAsync(c =>
+                c.Year == year &&
+                c.Month == month &&
+                c.CounterKey == counterKey, ct).ConfigureAwait(false);
+
+        return (counter?.LastSerial ?? 0) + 1;
+    }
 }
 

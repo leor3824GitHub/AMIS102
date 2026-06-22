@@ -26,7 +26,7 @@ public sealed class CreatePPERRFormSeriesCommandHandler(AssetRegisterDbContext d
             throw new InvalidOperationException(
                 $"Serial range {cmd.StartSerial}–{cmd.EndSerial} overlaps with an existing series.");
 
-        var series = PPERRFormSeries.Create(tenantId, cmd.Label, cmd.StartSerial, cmd.EndSerial);
+        var series = PPERRFormSeries.Create(tenantId, cmd.StartSerial, cmd.EndSerial);
         db.PPERRFormSeries.Add(series);
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 

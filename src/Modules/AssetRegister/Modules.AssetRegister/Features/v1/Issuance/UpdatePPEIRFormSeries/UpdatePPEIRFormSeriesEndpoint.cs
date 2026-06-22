@@ -11,7 +11,7 @@ namespace AMIS.Modules.AssetRegister.Features.v1.Issuance.UpdatePPEIRFormSeries;
 
 public static class UpdatePPEIRFormSeriesEndpoint
 {
-    public sealed record UpdatePPEIRFormSeriesRequest(string Label, int StartSerial, int EndSerial);
+    public sealed record UpdatePPEIRFormSeriesRequest(int StartSerial, int EndSerial);
 
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapPut("/{id:guid}", async (
@@ -21,10 +21,10 @@ public static class UpdatePPEIRFormSeriesEndpoint
             CancellationToken ct) =>
         {
             var result = await mediator.Send(
-                new UpdatePPEIRFormSeriesCommand(id, body.Label, body.StartSerial, body.EndSerial), ct);
+                new UpdatePPEIRFormSeriesCommand(id, body.StartSerial, body.EndSerial), ct);
             return TypedResults.Ok(result);
         })
         .WithName("AssetRegister_UpdatePPEIRFormSeries")
-        .WithSummary("Update an unused PPEIR Form Series label and serial range")
+        .WithSummary("Update an unused PPEIR Form Series serial range")
         .RequirePermission(AssetRegisterPermissions.Issuance.Create);
 }

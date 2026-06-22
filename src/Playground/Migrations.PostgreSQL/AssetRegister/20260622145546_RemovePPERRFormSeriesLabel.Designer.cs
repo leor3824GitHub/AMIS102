@@ -3,6 +3,7 @@ using System;
 using AMIS.Modules.AssetRegister.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
 {
     [DbContext(typeof(AssetRegisterDbContext))]
-    partial class AssetRegisterDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260622145546_RemovePPERRFormSeriesLabel")]
+    partial class RemovePPERRFormSeriesLabel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -854,6 +857,11 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<string>("LastModifiedBy")
                         .HasColumnType("text");

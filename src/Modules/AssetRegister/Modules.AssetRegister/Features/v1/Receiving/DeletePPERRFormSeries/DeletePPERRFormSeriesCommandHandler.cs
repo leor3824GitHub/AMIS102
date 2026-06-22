@@ -19,9 +19,13 @@ public sealed class DeletePPERRFormSeriesCommandHandler(AssetRegisterDbContext d
             .ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"PPERR Form Series '{cmd.Id}' not found.");
 
+        if (series.IsActive)
+            throw new InvalidOperationException(
+                "Deactivate the series before deleting it.");
+
         if (!series.IsUnused)
             throw new InvalidOperationException(
-                $"Series '{series.Label}' has already issued PPERR numbers and cannot be deleted.");
+                $"Series {series.StartSerial}–{series.EndSerial} has already issued PPERR numbers and cannot be deleted.");
 
         db.PPERRFormSeries.Remove(series);
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);

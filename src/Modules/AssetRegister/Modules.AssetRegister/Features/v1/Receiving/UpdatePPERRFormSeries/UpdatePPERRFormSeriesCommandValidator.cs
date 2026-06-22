@@ -8,7 +8,6 @@ public sealed class UpdatePPERRFormSeriesCommandValidator : AbstractValidator<Up
     public UpdatePPERRFormSeriesCommandValidator()
     {
         RuleFor(x => x.Id).NotEmpty();
-        RuleFor(x => x.Label).NotEmpty().MaximumLength(200);
         RuleFor(x => x.StartSerial).GreaterThan(0);
         RuleFor(x => x.EndSerial).GreaterThanOrEqualTo(x => x.StartSerial);
     }

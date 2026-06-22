@@ -967,7 +967,6 @@ internal sealed record CreateIssuanceReportRequest(
 
 internal sealed record ArPPEIRFormSeriesDto(
     Guid Id,
-    string Label,
     int StartSerial,
     int EndSerial,
     int NextSerial,
@@ -976,15 +975,17 @@ internal sealed record ArPPEIRFormSeriesDto(
     bool IsExhausted,
     bool IsUnused);
 
-internal sealed record CreateArPPEIRFormSeriesRequest(string Label, int StartSerial, int EndSerial);
+internal sealed record CreateArPPEIRFormSeriesRequest(int StartSerial, int EndSerial);
 
-internal sealed record UpdateArPPEIRFormSeriesRequest(string Label, int StartSerial, int EndSerial);
+internal sealed record UpdateArPPEIRFormSeriesRequest(int StartSerial, int EndSerial);
 
 internal interface IArIssuanceReportClient
 {
     Task<ArPagedResponse<ArIssuanceReportSummaryDto>> SearchAsync(string? keyword = null, IssuanceReportType? reportType = null, IssuanceNature? nature = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
     Task<ArIssuanceReportDto?> GetAsync(Guid id, CancellationToken ct = default);
     Task<ArIssuanceReportDto> CreateAsync(CreateIssuanceReportRequest request, CancellationToken ct = default);
+    /// <summary>Previews the next issuance number (best-effort) without consuming it.</summary>
+    Task<string> PeekNumberAsync(IssuanceReportType type, DateOnly date, CancellationToken ct = default);
     Task<byte[]> GetFastReportPdfAsync(Guid id, string? pageWidth = null, string? orientation = null, int? minRows = null, bool? dataOnly = null, double? offsetX = null, double? offsetY = null, CancellationToken ct = default);
     Task<byte[]> GetSmirFastReportPdfAsync(Guid id, string? pageWidth = null, string? orientation = null, int? minRows = null, CancellationToken ct = default);
 
@@ -1024,6 +1025,16 @@ internal sealed class ArIssuanceReportClient(HttpClient http) : IArIssuanceRepor
         var resp = await http.PostAsJsonAsync(Base, request, ArJsonOptions.Default, ct);
         resp.EnsureSuccessStatusCode();
         return (await resp.Content.ReadFromJsonAsync<ArIssuanceReportDto>(ArJsonOptions.Default, cancellationToken: ct))!;
+    }
+
+    public async Task<string> PeekNumberAsync(IssuanceReportType type, DateOnly date, CancellationToken ct = default)
+    {
+        var url = ArUrlBuilder.Build($"{Base}/next-number", new()
+        {
+            ["type"] = type.ToString(),
+            ["date"] = date.ToString("o", CultureInfo.InvariantCulture),
+        });
+        return await http.GetFromJsonAsync<string>(url, ArJsonOptions.Default, ct) ?? string.Empty;
     }
 
     public Task<byte[]> GetFastReportPdfAsync(
@@ -1319,7 +1330,6 @@ public sealed record CreateReceivingReportRequest(
 
 public sealed record ArPPERRFormSeriesDto(
     Guid Id,
-    string Label,
     int StartSerial,
     int EndSerial,
     int NextSerial,
@@ -1328,9 +1338,9 @@ public sealed record ArPPERRFormSeriesDto(
     bool IsExhausted,
     bool IsUnused);
 
-public sealed record CreateArPPERRFormSeriesRequest(string Label, int StartSerial, int EndSerial);
+public sealed record CreateArPPERRFormSeriesRequest(int StartSerial, int EndSerial);
 
-public sealed record UpdateArPPERRFormSeriesRequest(string Label, int StartSerial, int EndSerial);
+public sealed record UpdateArPPERRFormSeriesRequest(int StartSerial, int EndSerial);
 
 public interface IArReceivingReportClient
 {
@@ -1340,6 +1350,8 @@ public interface IArReceivingReportClient
         int page = 1, int pageSize = 20, CancellationToken ct = default);
     Task<ArReceivingReportDto?> GetAsync(Guid id, CancellationToken ct = default);
     Task<ArReceivingReportDto> CreateAsync(CreateReceivingReportRequest request, CancellationToken ct = default);
+    /// <summary>Previews the next receiving number (best-effort) without consuming it.</summary>
+    Task<string> PeekNumberAsync(ReceivingDocumentKind kind, DateOnly date, CancellationToken ct = default);
     Task DeleteAsync(Guid id, CancellationToken ct = default);
     Task<ArPagedResponse<AcceptedIARLineItemDto>> SearchAcceptedIARItemsAsync(
         string? keyword = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
@@ -1390,6 +1402,16 @@ public sealed class ArReceivingReportClient(HttpClient http) : IArReceivingRepor
         var resp = await http.PostAsJsonAsync(Base, request, ArJsonOptions.Default, ct);
         resp.EnsureSuccessStatusCode();
         return (await resp.Content.ReadFromJsonAsync<ArReceivingReportDto>(ArJsonOptions.Default, cancellationToken: ct))!;
+    }
+
+    public async Task<string> PeekNumberAsync(ReceivingDocumentKind kind, DateOnly date, CancellationToken ct = default)
+    {
+        var url = ArUrlBuilder.Build($"{Base}/next-number", new()
+        {
+            ["kind"] = kind.ToString(),
+            ["date"] = date.ToString("o", CultureInfo.InvariantCulture),
+        });
+        return await http.GetFromJsonAsync<string>(url, ArJsonOptions.Default, ct) ?? string.Empty;
     }
 
     public async Task DeleteAsync(Guid id, CancellationToken ct = default)

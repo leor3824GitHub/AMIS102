@@ -31,7 +31,7 @@ public sealed class UpdatePPEIRFormSeriesCommandHandler(AssetRegisterDbContext d
             throw new InvalidOperationException(
                 $"Serial range {cmd.StartSerial}–{cmd.EndSerial} overlaps with an existing series.");
 
-        series.UpdateRange(cmd.Label, cmd.StartSerial, cmd.EndSerial);
+        series.UpdateRange(cmd.StartSerial, cmd.EndSerial);
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
         return PPEIRFormSeriesMapper.ToDto(series);

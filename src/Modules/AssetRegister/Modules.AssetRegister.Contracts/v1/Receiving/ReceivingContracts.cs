@@ -122,11 +122,19 @@ public sealed record SearchReceivingReportsQuery(
 public sealed record GetReceivedPropertyNumbersQuery(
     IReadOnlyCollection<string> PropertyNumbers) : IQuery<IReadOnlyCollection<string>>;
 
+/// <summary>
+/// Previews the report number that would be assigned to a new receiving report of the given
+/// kind/date, WITHOUT consuming it. Scoped to the current tenant. Backs the "next number"
+/// preview on the create form. Best-effort — a concurrent create may change it before save.
+/// </summary>
+public sealed record PeekReceivingReportNumberQuery(
+    ReceivingDocumentKind Kind,
+    DateOnly Date) : IQuery<string>;
+
 // ── PPERR Form Series ──────────────────────────────────────────────────────
 
 public sealed record PPERRFormSeriesDto(
     Guid Id,
-    string Label,
     int StartSerial,
     int EndSerial,
     int NextSerial,
@@ -136,13 +144,11 @@ public sealed record PPERRFormSeriesDto(
     bool IsUnused);
 
 public sealed record CreatePPERRFormSeriesCommand(
-    string Label,
     int StartSerial,
     int EndSerial) : ICommand<PPERRFormSeriesDto>;
 
 public sealed record UpdatePPERRFormSeriesCommand(
     Guid Id,
-    string Label,
     int StartSerial,
     int EndSerial) : ICommand<PPERRFormSeriesDto>;
 

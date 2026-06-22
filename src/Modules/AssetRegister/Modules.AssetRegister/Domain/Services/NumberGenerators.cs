@@ -28,6 +28,12 @@ public interface IIssuanceReportNumberGenerator
 {
     /// <summary>RSPI-YYYY-MM-NNNN (SMIR) or PPEIR-YYYY-MM-NNNN.</summary>
     Task<string> NextAsync(IssuanceReportType type, DateOnly periodStart, CancellationToken ct);
+
+    /// <summary>
+    /// Previews the number <see cref="NextAsync"/> would assign, WITHOUT consuming it.
+    /// Best-effort — a concurrent create may change the actual number before save.
+    /// </summary>
+    Task<string> PeekAsync(IssuanceReportType type, DateOnly periodStart, CancellationToken ct);
 }
 
 public interface IUnserviceableReportNumberGenerator
@@ -40,6 +46,12 @@ public interface IReceivingReportNumberGenerator
 {
     /// <summary>PPERR-YYYY-MM-NNNN or SMRR-YYYY-MM-NNNN.</summary>
     Task<string> NextAsync(ReceivingDocumentKind kind, DateOnly date, CancellationToken ct);
+
+    /// <summary>
+    /// Previews the number <see cref="NextAsync"/> would assign, WITHOUT consuming it.
+    /// Best-effort — a concurrent create may change the actual number before save.
+    /// </summary>
+    Task<string> PeekAsync(ReceivingDocumentKind kind, DateOnly date, CancellationToken ct);
 }
 
 /// <summary>
