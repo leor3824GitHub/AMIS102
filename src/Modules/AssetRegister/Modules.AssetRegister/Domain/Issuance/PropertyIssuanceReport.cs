@@ -31,12 +31,6 @@ public sealed class PropertyIssuanceReport : AggregateRoot<Guid>, IHasTenant, IA
     public EmployeeRef IssuedTo { get; private set; } = default!;
     public string IssuedToOfficeAddress { get; private set; } = default!;
 
-    /// <summary>Person who physically received and signed (may be external).</summary>
-    public EmployeeRef ReceivedBy { get; private set; } = default!;
-    public DateOnly? DateReceived { get; private set; }
-
-    public string? DriverName { get; private set; }
-    public string? BillOfLadingNo { get; private set; }
     public string? Remarks { get; private set; }
 
     private readonly List<PropertyIssuanceReportLine> _lines = [];
@@ -60,16 +54,11 @@ public sealed class PropertyIssuanceReport : AggregateRoot<Guid>, IHasTenant, IA
         EmployeeRef approvedBy,
         EmployeeRef issuedTo,
         string issuedToOfficeAddress,
-        EmployeeRef receivedBy,
-        DateOnly? dateReceived,
-        string? driverName,
-        string? billOfLadingNo,
         string? remarks)
     {
         ArgumentNullException.ThrowIfNull(issuedBy);
         ArgumentNullException.ThrowIfNull(approvedBy);
         ArgumentNullException.ThrowIfNull(issuedTo);
-        ArgumentNullException.ThrowIfNull(receivedBy);
         if (string.IsNullOrWhiteSpace(issuedToOfficeAddress))
             throw new InvalidOperationException("IssuedToOfficeAddress is required.");
 
@@ -86,10 +75,6 @@ public sealed class PropertyIssuanceReport : AggregateRoot<Guid>, IHasTenant, IA
             ApprovedBy = approvedBy,
             IssuedTo = issuedTo,
             IssuedToOfficeAddress = issuedToOfficeAddress,
-            ReceivedBy = receivedBy,
-            DateReceived = dateReceived,
-            DriverName = driverName,
-            BillOfLadingNo = billOfLadingNo,
             Remarks = remarks,
             CreatedOnUtc = DateTimeOffset.UtcNow
         };

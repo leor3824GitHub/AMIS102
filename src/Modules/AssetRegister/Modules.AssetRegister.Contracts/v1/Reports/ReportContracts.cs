@@ -65,12 +65,6 @@ public sealed record IssuanceReportDocumentDto(
     string IssuedToName,
     string? IssuedToDesignation,
     string IssuedToOfficeAddress,
-    Guid ReceivedByEmployeeId,
-    string ReceivedByName,
-    string? ReceivedByDesignation,
-    DateOnly? DateReceived,
-    string? DriverName,
-    string? BillOfLadingNo,
     string? Remarks,
     IReadOnlyCollection<IssuanceReportLineDocumentDto> Lines,
     decimal TotalAmount);

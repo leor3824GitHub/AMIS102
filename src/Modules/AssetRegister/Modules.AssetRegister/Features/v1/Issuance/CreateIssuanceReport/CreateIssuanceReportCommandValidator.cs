@@ -10,8 +10,6 @@ public sealed class CreateIssuanceReportCommandValidator : AbstractValidator<Cre
         RuleFor(x => x.Date).NotEmpty();
         RuleFor(x => x.FundCluster).NotEmpty().MaximumLength(64);
         RuleFor(x => x.IssuedToOfficeAddress).NotEmpty().MaximumLength(500);
-        RuleFor(x => x.DriverName).MaximumLength(200).When(x => x.DriverName is not null);
-        RuleFor(x => x.BillOfLadingNo).MaximumLength(100).When(x => x.BillOfLadingNo is not null);
         RuleFor(x => x.Remarks).MaximumLength(1000).When(x => x.Remarks is not null);
         RuleFor(x => x.AssetRegistryIds).NotEmpty().WithMessage("At least one asset must be selected.");
 
@@ -25,8 +23,5 @@ public sealed class CreateIssuanceReportCommandValidator : AbstractValidator<Cre
 
         RuleFor(x => x.IssuedTo).NotNull();
         RuleFor(x => x.IssuedTo.PrintedName).NotEmpty().MaximumLength(200).When(x => x.IssuedTo is not null);
-
-        RuleFor(x => x.ReceivedBy).NotNull();
-        RuleFor(x => x.ReceivedBy.PrintedName).NotEmpty().MaximumLength(200).When(x => x.ReceivedBy is not null);
     }
 }

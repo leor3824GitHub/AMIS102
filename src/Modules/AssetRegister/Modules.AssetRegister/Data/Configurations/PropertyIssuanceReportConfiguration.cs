@@ -23,18 +23,14 @@ internal sealed class PropertyIssuanceReportConfiguration : IEntityTypeConfigura
         builder.Property(x => x.ReportNo).IsRequired().HasMaxLength(64);
         builder.Property(x => x.FundCluster).IsRequired().HasMaxLength(64);
         builder.Property(x => x.IssuedToOfficeAddress).IsRequired().HasMaxLength(500);
-        builder.Property(x => x.DriverName).HasMaxLength(200);
-        builder.Property(x => x.BillOfLadingNo).HasMaxLength(100);
         builder.Property(x => x.Remarks).HasMaxLength(1000);
 
         builder.OwnsOne(x => x.IssuedBy, n => n.ConfigureEmployeeRef("IssuedBy"));
         builder.OwnsOne(x => x.ApprovedBy, n => n.ConfigureEmployeeRef("ApprovedBy"));
         builder.OwnsOne(x => x.IssuedTo, n => n.ConfigureEmployeeRef("IssuedTo"));
-        builder.OwnsOne(x => x.ReceivedBy, n => n.ConfigureEmployeeRef("ReceivedBy"));
         builder.Navigation(x => x.IssuedBy).IsRequired();
         builder.Navigation(x => x.ApprovedBy).IsRequired();
         builder.Navigation(x => x.IssuedTo).IsRequired();
-        builder.Navigation(x => x.ReceivedBy).IsRequired();
 
         builder.HasMany(x => x.Lines)
             .WithOne()

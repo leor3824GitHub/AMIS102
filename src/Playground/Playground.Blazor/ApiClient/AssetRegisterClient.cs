@@ -950,10 +950,6 @@ internal sealed record ArIssuanceReportDto(
     ArEmployeeRefDto ApprovedBy,
     ArEmployeeRefDto IssuedTo,
     string IssuedToOfficeAddress,
-    ArEmployeeRefDto ReceivedBy,
-    DateOnly? DateReceived,
-    string? DriverName,
-    string? BillOfLadingNo,
     string? Remarks,
     IReadOnlyCollection<ArIssuanceReportLineDto> Lines);
 
@@ -966,10 +962,6 @@ internal sealed record CreateIssuanceReportRequest(
     ArEmployeeRefDto ApprovedBy,
     ArEmployeeRefDto IssuedTo,
     string IssuedToOfficeAddress,
-    ArEmployeeRefDto ReceivedBy,
-    DateOnly? DateReceived,
-    string? DriverName,
-    string? BillOfLadingNo,
     string? Remarks,
     IReadOnlyList<Guid> AssetRegistryIds);
 

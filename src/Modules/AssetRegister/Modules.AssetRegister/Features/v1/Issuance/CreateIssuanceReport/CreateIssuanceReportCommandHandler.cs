@@ -57,7 +57,6 @@ public sealed class CreateIssuanceReportCommandHandler(
         var issuedBy   = EmployeeRef.Create(cmd.IssuedBy.EmployeeId,   cmd.IssuedBy.PrintedName,   cmd.IssuedBy.Designation);
         var approvedBy = EmployeeRef.Create(cmd.ApprovedBy.EmployeeId, cmd.ApprovedBy.PrintedName, cmd.ApprovedBy.Designation);
         var issuedTo   = EmployeeRef.Create(cmd.IssuedTo.EmployeeId,   cmd.IssuedTo.PrintedName,   cmd.IssuedTo.Designation);
-        var receivedBy = EmployeeRef.Create(cmd.ReceivedBy.EmployeeId, cmd.ReceivedBy.PrintedName, cmd.ReceivedBy.Designation);
 
         var report = PropertyIssuanceReport.Create(
             tenantId,
@@ -70,10 +69,6 @@ public sealed class CreateIssuanceReportCommandHandler(
             approvedBy,
             issuedTo,
             cmd.IssuedToOfficeAddress,
-            receivedBy,
-            cmd.DateReceived,
-            cmd.DriverName,
-            cmd.BillOfLadingNo,
             cmd.Remarks);
 
         foreach (var asset in assets)

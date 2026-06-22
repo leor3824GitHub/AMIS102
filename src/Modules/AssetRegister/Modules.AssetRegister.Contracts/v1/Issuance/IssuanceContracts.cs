@@ -26,10 +26,6 @@ public sealed record PropertyIssuanceReportDto(
     EmployeeRefDto ApprovedBy,
     EmployeeRefDto IssuedTo,
     string IssuedToOfficeAddress,
-    EmployeeRefDto ReceivedBy,
-    DateOnly? DateReceived,
-    string? DriverName,
-    string? BillOfLadingNo,
     string? Remarks,
     IReadOnlyCollection<PropertyIssuanceReportLineDto> Lines);
 
@@ -54,10 +50,6 @@ public sealed record CreateIssuanceReportCommand(
     EmployeeRefDto ApprovedBy,
     EmployeeRefDto IssuedTo,
     string IssuedToOfficeAddress,
-    EmployeeRefDto ReceivedBy,
-    DateOnly? DateReceived,
-    string? DriverName,
-    string? BillOfLadingNo,
     string? Remarks,
     IReadOnlyList<Guid> AssetRegistryIds) : ICommand<PropertyIssuanceReportDto>;
 

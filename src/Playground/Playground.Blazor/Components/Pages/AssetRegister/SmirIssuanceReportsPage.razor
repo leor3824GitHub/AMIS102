@@ -113,18 +113,6 @@
                             <MudTextField @bind-Value="_createForm.IssuedToDesignation" Label="Issued To (Designation)" Variant="Variant.Outlined"
                                           MaxLength="200" Dense="true" Margin="Margin.Dense" />
                         </MudItem>
-                        <MudItem xs="12" md="6">
-                            <MudTextField @bind-Value="_createForm.ReceivedByName" Label="Received By (Name)" Variant="Variant.Outlined"
-                                          MaxLength="200" Required="true" Dense="true" Margin="Margin.Dense" />
-                        </MudItem>
-                        <MudItem xs="12" md="6">
-                            <MudTextField @bind-Value="_createForm.ReceivedByDesignation" Label="Received By (Designation)" Variant="Variant.Outlined"
-                                          MaxLength="200" Dense="true" Margin="Margin.Dense" />
-                        </MudItem>
-                        <MudItem xs="12" md="6">
-                            <MudDatePicker @bind-Date="_createForm.DateReceivedNullable" Label="Date Received" Variant="Variant.Outlined"
-                                           DateFormat="MM/dd/yyyy" Dense="true" />
-                        </MudItem>
                         <MudItem xs="12">
                             <MudTextField @bind-Value="_createForm.Remarks" Label="Remarks (optional)" Variant="Variant.Outlined"
                                           MaxLength="1000" Lines="2" Dense="true" Margin="Margin.Dense" />
@@ -132,42 +120,56 @@
 
                         <!-- Asset selection -->
                         <MudItem xs="12">
-                            <MudText Typo="Typo.subtitle2" Class="mt-1">
-                                Semi-Expendable Assets to Transfer
-                                <MudText Typo="Typo.caption" Color="Color.Secondary" Inline="true">
-                                    — only Available SE assets (no active ICS) may be issued
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mt-1">
+                                <MudText Typo="Typo.subtitle2">
+                                    Semi-Expendable Assets to Transfer
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary" Inline="true">
+                                        — only Available SE assets (no active ICS) may be issued
+                                    </MudText>
                                 </MudText>
-                            </MudText>
-                        </MudItem>
-                        <MudItem xs="12" md="9">
-                            <MudTextField @bind-Value="_assetIdInput" Label="Asset Registry ID (paste Guid)" Variant="Variant.Outlined"
-                                          Dense="true" Margin="Margin.Dense"
-                                          OnKeyDown="OnAssetIdKeyDown"
-                                          Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Outlined.Add"
-                                          OnAdornmentClick="AddAssetId" />
-                        </MudItem>
-                        <MudItem xs="12" md="3" Class="d-flex align-center">
-                            <AMISButton Size="Size.Small" Variant="Variant.Outlined" OnClick="AddAssetId" FullWidth="true">
-                                Add Asset
-                            </AMISButton>
+                                <AMISButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary"
+                                            StartIcon="@Icons.Material.Outlined.Search"
+                                            OnClick="BrowseAssetsAsync">
+                                    Browse Assets…
+                                </AMISButton>
+                            </MudStack>
                         </MudItem>
 
-                        @if (_createForm.AssetIds.Count > 0)
+                        @if (_createForm.SelectedAssets.Count > 0)
                         {
                         <MudItem xs="12">
-                            <MudText Typo="Typo.caption">@_createForm.AssetIds.Count asset(s) queued:</MudText>
-                            @foreach (var aid in _createForm.AssetIds)
-                            {
-                                <MudChip T="Guid" Value="@aid" Text="@aid.ToString()" Size="Size.Small"
-                                          OnClose="@(() => _createForm.AssetIds.Remove(aid))"
-                                          CloseIcon="@Icons.Material.Filled.Close" />
-                            }
+                            <MudText Typo="Typo.caption" Class="mb-1">@_createForm.SelectedAssets.Count asset(s) selected:</MudText>
+                            <MudSimpleTable Dense="true" Hover="true">
+                                <thead>
+                                    <tr>
+                                        <th>Property No.</th>
+                                        <th>Description</th>
+                                        <th class="text-right">Unit Cost (@Money.Symbol)</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var asset in _createForm.SelectedAssets)
+                                    {
+                                        <tr>
+                                            <td><strong>@asset.PropertyNo</strong></td>
+                                            <td>@asset.Description</td>
+                                            <td class="text-right">@asset.UnitCost.ToString("N2")</td>
+                                            <td>
+                                                <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small"
+                                                               Color="Color.Error"
+                                                               OnClick="@(() => _createForm.SelectedAssets.Remove(asset))" />
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </MudSimpleTable>
                         </MudItem>
                         }
 
                         <MudItem xs="12">
                             <AMISButton Variant="Variant.Filled" Color="Color.Error" FullWidth="true"
-                                        OnClick="CreateAsync" Disabled="@(_busy || _createForm.AssetIds.Count == 0)">
+                                        OnClick="CreateAsync" Disabled="@(_busy || _createForm.SelectedAssets.Count == 0)">
                                 Create SMIR — Transfer Assets Out
                             </AMISButton>
                             <MudText Typo="Typo.caption" Color="Color.Warning" Class="mt-1">
@@ -308,7 +310,7 @@
                             <MudText Typo="Typo.caption" Color="Color.Secondary">Issued To — Office/Address</MudText>
                             <MudText Typo="Typo.body2">@_selected.IssuedToOfficeAddress</MudText>
                         </MudItem>
-                        <MudItem xs="6" md="3">
+                        <MudItem xs="6" md="4">
                             <MudText Typo="Typo.caption" Color="Color.Secondary">Issued By</MudText>
                             <MudText Typo="Typo.body2">@_selected.IssuedBy.PrintedName</MudText>
                             @if (!string.IsNullOrWhiteSpace(_selected.IssuedBy.Designation))
@@ -316,7 +318,7 @@
                                 <MudText Typo="Typo.caption">@_selected.IssuedBy.Designation</MudText>
                             }
                         </MudItem>
-                        <MudItem xs="6" md="3">
+                        <MudItem xs="6" md="4">
                             <MudText Typo="Typo.caption" Color="Color.Secondary">Approved By</MudText>
                             <MudText Typo="Typo.body2">@_selected.ApprovedBy.PrintedName</MudText>
                             @if (!string.IsNullOrWhiteSpace(_selected.ApprovedBy.Designation))
@@ -324,20 +326,12 @@
                                 <MudText Typo="Typo.caption">@_selected.ApprovedBy.Designation</MudText>
                             }
                         </MudItem>
-                        <MudItem xs="6" md="3">
+                        <MudItem xs="6" md="4">
                             <MudText Typo="Typo.caption" Color="Color.Secondary">Issued To</MudText>
                             <MudText Typo="Typo.body2">@_selected.IssuedTo.PrintedName</MudText>
                             @if (!string.IsNullOrWhiteSpace(_selected.IssuedTo.Designation))
                             {
                                 <MudText Typo="Typo.caption">@_selected.IssuedTo.Designation</MudText>
-                            }
-                        </MudItem>
-                        <MudItem xs="6" md="3">
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">Received By</MudText>
-                            <MudText Typo="Typo.body2">@_selected.ReceivedBy.PrintedName</MudText>
-                            @if (_selected.DateReceived.HasValue)
-                            {
-                                <MudText Typo="Typo.caption">@_selected.DateReceived.Value.ToString("yyyy-MM-dd")</MudText>
                             }
                         </MudItem>
                         @if (!string.IsNullOrWhiteSpace(_selected.Remarks))
@@ -388,7 +382,6 @@
     private List<ArIssuanceReportSummaryDto> _items = [];
     private ArIssuanceReportDto? _selected;
     private bool _showCreateForm;
-    private string _assetIdInput = "";
 
     private CreateFormModel _createForm = new();
 
@@ -405,11 +398,8 @@
         public string IssuedToName { get; set; } = "";
         public string? IssuedToDesignation { get; set; }
         public string IssuedToOfficeAddress { get; set; } = "";
-        public string ReceivedByName { get; set; } = "";
-        public string? ReceivedByDesignation { get; set; }
-        public DateTime? DateReceivedNullable { get; set; }
         public string? Remarks { get; set; }
-        public List<Guid> AssetIds { get; set; } = [];
+        public List<AssetRegistrySummaryDto> SelectedAssets { get; set; } = [];
     }
 
     private bool _canCreate      => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Issuance.Create);
@@ -507,23 +497,21 @@
         }
     }
 
-    private void AddAssetId()
+    private async Task BrowseAssetsAsync()
     {
-        if (Guid.TryParse(_assetIdInput.Trim(), out var id))
+        var parameters = new DialogParameters<AvailableAssetsPickerDialog>
         {
-            if (!_createForm.AssetIds.Contains(id))
-                _createForm.AssetIds.Add(id);
-            _assetIdInput = "";
-        }
-        else
-        {
-            Snackbar.Add("Invalid Guid format.", Severity.Warning);
-        }
-    }
+            { x => x.AssetType, AMIS.Modules.AssetRegister.Contracts.v1.AssetType.SE },
+            { x => x.ExcludeIds, (IReadOnlyCollection<Guid>)_createForm.SelectedAssets.Select(a => a.Id).ToList() }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseButton = true };
+        var dialog = await DialogService.ShowAsync<AvailableAssetsPickerDialog>("Available Semi-Expendable Assets", parameters, options);
+        var result = await dialog.Result;
+        if (result is null || result.Canceled || result.Data is not List<AssetRegistrySummaryDto> picked || picked.Count == 0)
+            return;
 
-    private void OnAssetIdKeyDown(KeyboardEventArgs e)
-    {
-        if (e.Key == "Enter") AddAssetId();
+        foreach (var asset in picked.Where(a => _createForm.SelectedAssets.All(x => x.Id != a.Id)))
+            _createForm.SelectedAssets.Add(asset);
     }
 
     private async Task CreateAsync()
@@ -533,16 +521,15 @@
             string.IsNullOrWhiteSpace(_createForm.ApprovedByName) ||
             string.IsNullOrWhiteSpace(_createForm.IssuedToName) ||
             string.IsNullOrWhiteSpace(_createForm.IssuedToOfficeAddress) ||
-            string.IsNullOrWhiteSpace(_createForm.ReceivedByName) ||
             !_createForm.DateNullable.HasValue)
         {
             Snackbar.Add("All required fields must be filled.", Severity.Warning);
             return;
         }
 
-        if (_createForm.AssetIds.Count == 0)
+        if (_createForm.SelectedAssets.Count == 0)
         {
-            Snackbar.Add("At least one asset must be added.", Severity.Warning);
+            Snackbar.Add("At least one asset must be selected.", Severity.Warning);
             return;
         }
 
@@ -564,12 +551,8 @@
                 new ArEmployeeRefDto(UserProfileState.EmployeeId, _createForm.ApprovedByName.Trim(), _createForm.ApprovedByDesignation),
                 new ArEmployeeRefDto(Guid.Empty, _createForm.IssuedToName.Trim(), _createForm.IssuedToDesignation),
                 _createForm.IssuedToOfficeAddress.Trim(),
-                new ArEmployeeRefDto(Guid.Empty, _createForm.ReceivedByName.Trim(), _createForm.ReceivedByDesignation),
-                _createForm.DateReceivedNullable.HasValue ? DateOnly.FromDateTime(_createForm.DateReceivedNullable.Value) : null,
-                DriverName: null,
-                BillOfLadingNo: null,
                 _createForm.Remarks?.Trim(),
-                _createForm.AssetIds.ToList());
+                _createForm.SelectedAssets.Select(a => a.Id).ToList());
 
             _selected = await Client.CreateAsync(req);
             Snackbar.Add($"SMIR {_selected.ReportNo} created. Assets transferred out.", Severity.Success);

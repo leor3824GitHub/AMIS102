@@ -1,4 +1,4 @@
-@page "/asset-register/issuance"
+@page "/asset-register/issuance/ppeir"
 @implements IDisposable
 @using AMIS.Playground.Blazor.ApiClient
 @using AMIS.Playground.Blazor.Components.Pages.Procurement
@@ -13,8 +13,8 @@
 @inject IJSRuntime JS
 @inject IUserProfileState UserProfileState
 
-<AMISPageHeader Title="Property Issuance Reports (SMIR / PPEIR)"
-               Description="Semi-Expendable Issuance Records (SMIR) and PPE Issuance Reports (PPEIR). Each report is an atomic transfer document — assets are permanently transferred out upon creation." />
+<AMISPageHeader Title="PPE Issuance Reports (PPEIR)"
+               Description="Record the issuance/transfer of property, plant &amp; equipment. Each report is an atomic transfer document — the listed assets are permanently transferred out of this office upon creation." />
 
 <MudGrid Spacing="3">
     <!-- Filters -->
@@ -34,13 +34,13 @@
                     {
                         <AMISButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Success"
                                     StartIcon="@Icons.Material.Outlined.Add" OnClick="ToggleCreateForm">
-                            New Issuance Report
+                            New PPEIR
                         </AMISButton>
                     }
                 </MudStack>
 
-                <AMISEnumChips TEnum="IssuanceReportType" Value="_typeFilter" ValueChanged="OnTypeChanged"
-                               Label="Report Type" Class="mt-3" />
+                <AMISEnumChips TEnum="IssuanceNature" Value="_natureFilter" ValueChanged="OnNatureChanged"
+                               Label="Nature" Class="mt-3" />
             </MudCardContent>
         </MudCard>
     </MudItem>
@@ -51,7 +51,7 @@
         <MudItem xs="12">
             <MudCard Elevation="2">
                 <MudCardHeader>
-                    <CardHeaderContent><MudText Typo="Typo.h6">Create Issuance Report</MudText></CardHeaderContent>
+                    <CardHeaderContent><MudText Typo="Typo.h6">Create PPEIR (PPE Issuance Report)</MudText></CardHeaderContent>
                     <CardHeaderActions>
                         <AMISIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small"
                                         OnClick="@(() => _showCreateForm = false)" />
@@ -60,14 +60,7 @@
                 <MudCardContent>
                     <MudGrid Spacing="2">
                         <!-- Header fields -->
-                        <MudItem xs="12" md="3">
-                            <MudSelect @bind-Value="_createForm.ReportType" Label="Report Type" Variant="Variant.Outlined"
-                                       T="IssuanceReportType" Required="true" Dense="true" Margin="Margin.Dense">
-                                <MudSelectItem T="IssuanceReportType" Value="@IssuanceReportType.SMIR">SMIR (Semi-Expendable)</MudSelectItem>
-                                <MudSelectItem T="IssuanceReportType" Value="@IssuanceReportType.PPEIR">PPEIR (PPE)</MudSelectItem>
-                            </MudSelect>
-                        </MudItem>
-                        <MudItem xs="12" md="3">
+                        <MudItem xs="12" md="4">
                             <MudSelect @bind-Value="_createForm.Nature" Label="Nature of Issuance" Variant="Variant.Outlined"
                                        T="IssuanceNature" Required="true" Dense="true" Margin="Margin.Dense">
                                 <MudSelectItem T="IssuanceNature" Value="@IssuanceNature.TransferCO">Transfer to C.O.</MudSelectItem>
@@ -80,11 +73,11 @@
                                 <MudSelectItem T="IssuanceNature" Value="@IssuanceNature.Others">Others</MudSelectItem>
                             </MudSelect>
                         </MudItem>
-                        <MudItem xs="12" md="3">
+                        <MudItem xs="12" md="4">
                             <MudTextField @bind-Value="_createForm.FundCluster" Label="Fund Cluster" Variant="Variant.Outlined"
                                           MaxLength="50" Required="true" Dense="true" Margin="Margin.Dense" />
                         </MudItem>
-                        <MudItem xs="12" md="3">
+                        <MudItem xs="12" md="4">
                             <MudDatePicker @bind-Date="_createForm.DateNullable" Label="Date" Variant="Variant.Outlined"
                                            DateFormat="MM/dd/yyyy" Required="true" Dense="true" />
                         </MudItem>
@@ -120,29 +113,6 @@
                             <MudTextField @bind-Value="_createForm.IssuedToDesignation" Label="Issued To (Designation)" Variant="Variant.Outlined"
                                           MaxLength="200" Dense="true" Margin="Margin.Dense" />
                         </MudItem>
-                        <MudItem xs="12" md="6">
-                            <MudTextField @bind-Value="_createForm.ReceivedByName" Label="Received By (Name)" Variant="Variant.Outlined"
-                                          MaxLength="200" Required="true" Dense="true" Margin="Margin.Dense" />
-                        </MudItem>
-                        <MudItem xs="12" md="6">
-                            <MudTextField @bind-Value="_createForm.ReceivedByDesignation" Label="Received By (Designation)" Variant="Variant.Outlined"
-                                          MaxLength="200" Dense="true" Margin="Margin.Dense" />
-                        </MudItem>
-                        <MudItem xs="12" md="6">
-                            <MudDatePicker @bind-Date="_createForm.DateReceivedNullable" Label="Date Received" Variant="Variant.Outlined"
-                                           DateFormat="MM/dd/yyyy" Dense="true" />
-                        </MudItem>
-                        @if (_createForm.ReportType == IssuanceReportType.PPEIR)
-                        {
-                        <MudItem xs="12" md="6">
-                            <MudTextField @bind-Value="_createForm.DriverName" Label="Driver Name" Variant="Variant.Outlined"
-                                          MaxLength="200" Dense="true" Margin="Margin.Dense" />
-                        </MudItem>
-                        <MudItem xs="12" md="6">
-                            <MudTextField @bind-Value="_createForm.BillOfLadingNo" Label="Bill of Lading No." Variant="Variant.Outlined"
-                                          MaxLength="100" Dense="true" Margin="Margin.Dense" />
-                        </MudItem>
-                        }
                         <MudItem xs="12">
                             <MudTextField @bind-Value="_createForm.Remarks" Label="Remarks (optional)" Variant="Variant.Outlined"
                                           MaxLength="1000" Lines="2" Dense="true" Margin="Margin.Dense" />
@@ -150,43 +120,57 @@
 
                         <!-- Asset selection -->
                         <MudItem xs="12">
-                            <MudText Typo="Typo.subtitle2" Class="mt-1">
-                                Assets to Transfer
-                                <MudText Typo="Typo.caption" Color="Color.Secondary" Inline="true">
-                                    — only Available assets (no active ICS/PAR) may be issued
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mt-1">
+                                <MudText Typo="Typo.subtitle2">
+                                    PPE Assets to Transfer
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary" Inline="true">
+                                        — only Available PPE assets (no active PAR) may be issued
+                                    </MudText>
                                 </MudText>
-                            </MudText>
-                        </MudItem>
-                        <MudItem xs="12" md="9">
-                            <MudTextField @bind-Value="_assetIdInput" Label="Asset Registry ID (paste Guid)" Variant="Variant.Outlined"
-                                          Dense="true" Margin="Margin.Dense"
-                                          OnKeyDown="OnAssetIdKeyDown"
-                                          Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Outlined.Add"
-                                          OnAdornmentClick="AddAssetId" />
-                        </MudItem>
-                        <MudItem xs="12" md="3" Class="d-flex align-center">
-                            <AMISButton Size="Size.Small" Variant="Variant.Outlined" OnClick="AddAssetId" FullWidth="true">
-                                Add Asset
-                            </AMISButton>
+                                <AMISButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary"
+                                            StartIcon="@Icons.Material.Outlined.Search"
+                                            OnClick="BrowseAssetsAsync">
+                                    Browse Assets…
+                                </AMISButton>
+                            </MudStack>
                         </MudItem>
 
-                        @if (_createForm.AssetIds.Count > 0)
+                        @if (_createForm.SelectedAssets.Count > 0)
                         {
                         <MudItem xs="12">
-                            <MudText Typo="Typo.caption">@_createForm.AssetIds.Count asset(s) queued:</MudText>
-                            @foreach (var aid in _createForm.AssetIds)
-                            {
-                                <MudChip T="Guid" Value="@aid" Text="@aid.ToString()" Size="Size.Small"
-                                          OnClose="@(() => _createForm.AssetIds.Remove(aid))"
-                                          CloseIcon="@Icons.Material.Filled.Close" />
-                            }
+                            <MudText Typo="Typo.caption" Class="mb-1">@_createForm.SelectedAssets.Count asset(s) selected:</MudText>
+                            <MudSimpleTable Dense="true" Hover="true">
+                                <thead>
+                                    <tr>
+                                        <th>Property No.</th>
+                                        <th>Description</th>
+                                        <th class="text-right">Unit Cost (@Money.Symbol)</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var asset in _createForm.SelectedAssets)
+                                    {
+                                        <tr>
+                                            <td><strong>@asset.PropertyNo</strong></td>
+                                            <td>@asset.Description</td>
+                                            <td class="text-right">@asset.UnitCost.ToString("N2")</td>
+                                            <td>
+                                                <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small"
+                                                               Color="Color.Error"
+                                                               OnClick="@(() => _createForm.SelectedAssets.Remove(asset))" />
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </MudSimpleTable>
                         </MudItem>
                         }
 
                         <MudItem xs="12">
                             <AMISButton Variant="Variant.Filled" Color="Color.Error" FullWidth="true"
-                                        OnClick="CreateAsync" Disabled="@(_busy || _createForm.AssetIds.Count == 0)">
-                                Create Issuance Report — Transfer Assets Out
+                                        OnClick="CreateAsync" Disabled="@(_busy || _createForm.SelectedAssets.Count == 0)">
+                                Create PPEIR — Transfer Assets Out
                             </AMISButton>
                             <MudText Typo="Typo.caption" Color="Color.Warning" Class="mt-1">
                                 This action is irreversible. Assets will be permanently transferred out of this office.
@@ -210,85 +194,70 @@
                 {
                     <MudAlert Severity="Severity.Error" Dense="true">@_error</MudAlert>
                 }
+                else if (_items.Count == 0)
+                {
+                    <MudAlert Severity="Severity.Info">No PPEIR yet.</MudAlert>
+                }
                 else
                 {
-                    <MudTable Items="_items" Dense="true" Hover="true" Striped="true"
-                              OnRowClick="OnRowClick" T="ArIssuanceReportSummaryDto" RowClass="cursor-pointer">
-                        <HeaderContent>
-                            <MudTh>Report No.</MudTh>
-                            <MudTh>Type</MudTh>
-                            <MudTh>Nature</MudTh>
-                            <MudTh>Date</MudTh>
-                            <MudTh Style="text-align:right">Lines</MudTh>
-                            <MudTh Style="text-align:right">Total Amount (@Money.Symbol)</MudTh>
-                            <MudTh Style="text-align:center">Print</MudTh>
-                        </HeaderContent>
-                        <RowTemplate>
-                            <MudTd><strong>@context.ReportNo</strong></MudTd>
-                            <MudTd>
-                                <MudChip T="string" Size="Size.Small"
-                                         Color="@(context.ReportType == IssuanceReportType.SMIR ? Color.Info : Color.Secondary)"
-                                         Variant="Variant.Outlined">
-                                     @(context.ReportType == IssuanceReportType.SMIR ? "SMIR" : "PPEIR")
-                                </MudChip>
-                            </MudTd>
-                            <MudTd>@context.Nature</MudTd>
-                            <MudTd>@context.Date.ToString("yyyy-MM-dd")</MudTd>
-                            <MudTd Style="text-align:right">@context.LineCount</MudTd>
-                            <MudTd Style="text-align:right">@context.TotalAmount.ToString("N2")</MudTd>
-                            <MudTd Style="text-align:center" @onclick:stopPropagation="true">
-                                @if (context.ReportType == IssuanceReportType.PPEIR)
-                                {
-                                    <MudMenu Icon="@Icons.Material.Filled.Print"
-                                             Color="Color.Secondary" Size="Size.Small" Dense="true"
-                                             AnchorOrigin="Origin.BottomLeft" TransformOrigin="Origin.TopLeft"
-                                             ToolTip="Print PPEIR">
-                                        <MudMenuItem Icon="@Icons.Material.Filled.PictureAsPdf"
-                                                     OnClick="@(() => DownloadFastReportPdfAsync(context.Id))">
-                                            Download PDF
-                                        </MudMenuItem>
-                                        <MudMenuItem Icon="@Icons.Material.Filled.Layers"
-                                                     OnClick="@(() => PrintDataOnlyAsync(context.Id))">
-                                            Print – data only (pre-printed form)…
-                                        </MudMenuItem>
-                                        <MudDivider />
-                                        <MudMenuItem Icon="@Icons.Material.Filled.Settings"
-                                                     OnClick="@(() => OpenFastReportSetupAsync(context.Id))">
-                                            Fast Report – Page Setup…
-                                        </MudMenuItem>
-                                    </MudMenu>
-                                }
-                                @if (context.ReportType == IssuanceReportType.SMIR)
-                                {
-                                    <MudMenu Icon="@Icons.Material.Filled.Print"
-                                             Color="Color.Secondary" Size="Size.Small" Dense="true"
-                                             AnchorOrigin="Origin.BottomLeft" TransformOrigin="Origin.TopLeft"
-                                             ToolTip="Print SMIR">
-                                        <MudMenuItem Icon="@Icons.Material.Filled.PictureAsPdf"
-                                                     OnClick="@(() => DownloadSmirFastReportPdfAsync(context.Id))">
-                                            Download PDF
-                                        </MudMenuItem>
-                                        <MudDivider />
-                                        <MudMenuItem Icon="@Icons.Material.Filled.Settings"
-                                                     OnClick="@(() => OpenSmirFastReportSetupAsync(context.Id))">
-                                            Fast Report – Page Setup…
-                                        </MudMenuItem>
-                                    </MudMenu>
-                                }
-                                @if (context.HasSignedCopy ? _canViewSigned : _canUploadSigned)
-                                {
-                                    <MudTooltip Text="@(context.HasSignedCopy ? "Signed copy uploaded — click to view" : "Upload signed copy")">
-                                        <AMISIconButton Icon="@Icons.Material.Filled.Draw" Size="Size.Small"
-                                                        Color="@(context.HasSignedCopy ? Color.Success : Color.Secondary)"
-                                                        OnClick="@(() => OpenSignedCopyAsync(context))" />
-                                    </MudTooltip>
-                                }
-                            </MudTd>
-                        </RowTemplate>
-                        <NoRecordsContent>
-                            <MudText Color="Color.Secondary">No issuance reports found.</MudText>
-                        </NoRecordsContent>
-                    </MudTable>
+                    <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                        <thead>
+                            <tr>
+                                <th>PPEIR No.</th>
+                                <th>Date</th>
+                                <th>Nature</th>
+                                <th>Lines</th>
+                                <th class="text-right">Total Amount (@Money.Symbol)</th>
+                                <th class="text-right"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var r in _items)
+                            {
+                                <tr>
+                                    <td><b>@r.ReportNo</b></td>
+                                    <td>@r.Date.ToString("MM/dd/yyyy")</td>
+                                    <td>@r.Nature</td>
+                                    <td><MudChip T="string" Size="Size.Small" Color="Color.Secondary">@r.LineCount lines</MudChip></td>
+                                    <td class="text-right">@r.TotalAmount.ToString("N2")</td>
+                                    <td>
+                                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Justify="Justify.FlexEnd">
+                                            <AMISIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small"
+                                                            Color="Color.Primary" Title="View" OnClick="@(() => ViewAsync(r.Id))" />
+                                            <MudMenu Icon="@Icons.Material.Filled.Print"
+                                                     Color="Color.Secondary"
+                                                     Size="Size.Small"
+                                                     Dense="true"
+                                                     AnchorOrigin="Origin.BottomLeft"
+                                                     TransformOrigin="Origin.TopLeft"
+                                                     ToolTip="Print PPEIR">
+                                                <MudMenuItem Icon="@Icons.Material.Filled.PictureAsPdf"
+                                                             OnClick="@(() => DownloadFastReportPdfAsync(r.Id))">
+                                                    Download PDF
+                                                </MudMenuItem>
+                                                <MudMenuItem Icon="@Icons.Material.Filled.Layers"
+                                                             OnClick="@(() => PrintDataOnlyAsync(r.Id))">
+                                                    Print – data only (pre-printed form)…
+                                                </MudMenuItem>
+                                                <MudDivider />
+                                                <MudMenuItem Icon="@Icons.Material.Filled.Settings"
+                                                             OnClick="@(() => OpenFastReportSetupAsync(r.Id))">
+                                                    Fast Report – Page Setup…
+                                                </MudMenuItem>
+                                            </MudMenu>
+                                            @if (r.HasSignedCopy ? _canViewSigned : _canUploadSigned)
+                                            {
+                                                <AMISIconButton Icon="@Icons.Material.Filled.Draw" Size="Size.Small"
+                                                                Color="@(r.HasSignedCopy ? Color.Success : Color.Secondary)"
+                                                                Title="@(r.HasSignedCopy ? "Signed copy uploaded — click to view" : "Upload signed copy")"
+                                                                OnClick="@(() => OpenSignedCopyAsync(r))" />
+                                            }
+                                        </MudStack>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </MudSimpleTable>
 
                     <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mt-3">
                         <MudText Typo="Typo.caption">Page @_page of @_totalPages (@_totalCount total)</MudText>
@@ -313,11 +282,7 @@
                     <CardHeaderContent>
                         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
                             <MudText Typo="Typo.h6">@_selected.ReportNo</MudText>
-                            <MudChip T="string" Size="Size.Small"
-                                     Color="@(_selected.ReportType == IssuanceReportType.SMIR ? Color.Info : Color.Secondary)"
-                                     Variant="Variant.Outlined">
-                                @(_selected.ReportType == IssuanceReportType.SMIR ? "SMIR" : "PPEIR")
-                            </MudChip>
+                            <MudChip T="string" Size="Size.Small" Color="Color.Secondary" Variant="Variant.Outlined">PPEIR</MudChip>
                         </MudStack>
                     </CardHeaderContent>
                     <CardHeaderActions>
@@ -349,7 +314,7 @@
                             <MudText Typo="Typo.caption" Color="Color.Secondary">Issued To — Office/Address</MudText>
                             <MudText Typo="Typo.body2">@_selected.IssuedToOfficeAddress</MudText>
                         </MudItem>
-                        <MudItem xs="6" md="3">
+                        <MudItem xs="6" md="4">
                             <MudText Typo="Typo.caption" Color="Color.Secondary">Issued By</MudText>
                             <MudText Typo="Typo.body2">@_selected.IssuedBy.PrintedName</MudText>
                             @if (!string.IsNullOrWhiteSpace(_selected.IssuedBy.Designation))
@@ -357,7 +322,7 @@
                                 <MudText Typo="Typo.caption">@_selected.IssuedBy.Designation</MudText>
                             }
                         </MudItem>
-                        <MudItem xs="6" md="3">
+                        <MudItem xs="6" md="4">
                             <MudText Typo="Typo.caption" Color="Color.Secondary">Approved By</MudText>
                             <MudText Typo="Typo.body2">@_selected.ApprovedBy.PrintedName</MudText>
                             @if (!string.IsNullOrWhiteSpace(_selected.ApprovedBy.Designation))
@@ -365,7 +330,7 @@
                                 <MudText Typo="Typo.caption">@_selected.ApprovedBy.Designation</MudText>
                             }
                         </MudItem>
-                        <MudItem xs="6" md="3">
+                        <MudItem xs="6" md="4">
                             <MudText Typo="Typo.caption" Color="Color.Secondary">Issued To</MudText>
                             <MudText Typo="Typo.body2">@_selected.IssuedTo.PrintedName</MudText>
                             @if (!string.IsNullOrWhiteSpace(_selected.IssuedTo.Designation))
@@ -373,28 +338,6 @@
                                 <MudText Typo="Typo.caption">@_selected.IssuedTo.Designation</MudText>
                             }
                         </MudItem>
-                        <MudItem xs="6" md="3">
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">Received By</MudText>
-                            <MudText Typo="Typo.body2">@_selected.ReceivedBy.PrintedName</MudText>
-                            @if (_selected.DateReceived.HasValue)
-                            {
-                                <MudText Typo="Typo.caption">@_selected.DateReceived.Value.ToString("yyyy-MM-dd")</MudText>
-                            }
-                        </MudItem>
-                        @if (!string.IsNullOrWhiteSpace(_selected.DriverName))
-                        {
-                            <MudItem xs="6" md="3">
-                                <MudText Typo="Typo.caption" Color="Color.Secondary">Driver</MudText>
-                                <MudText Typo="Typo.body2">@_selected.DriverName</MudText>
-                            </MudItem>
-                        }
-                        @if (!string.IsNullOrWhiteSpace(_selected.BillOfLadingNo))
-                        {
-                            <MudItem xs="6" md="3">
-                                <MudText Typo="Typo.caption" Color="Color.Secondary">Bill of Lading</MudText>
-                                <MudText Typo="Typo.body2">@_selected.BillOfLadingNo</MudText>
-                            </MudItem>
-                        }
                         @if (!string.IsNullOrWhiteSpace(_selected.Remarks))
                         {
                             <MudItem xs="12">
@@ -413,11 +356,8 @@
                             <MudTh>Unit</MudTh>
                             <MudTh Style="text-align:right">Unit Cost (@Money.Symbol)</MudTh>
                             <MudTh Style="text-align:right">Amount (@Money.Symbol)</MudTh>
-                            @if (_selected.ReportType == IssuanceReportType.PPEIR)
-                            {
-                                <MudTh Style="text-align:right">Accum. Depr.</MudTh>
-                                <MudTh Style="text-align:right">Book Value</MudTh>
-                            }
+                            <MudTh Style="text-align:right">Accum. Depr.</MudTh>
+                            <MudTh Style="text-align:right">Book Value</MudTh>
                         </HeaderContent>
                         <RowTemplate>
                             <MudTd>@context.ItemNo</MudTd>
@@ -426,11 +366,8 @@
                             <MudTd>@context.Snapshot.Unit</MudTd>
                             <MudTd Style="text-align:right">@context.SnapshotUnitCost.ToString("N2")</MudTd>
                             <MudTd Style="text-align:right">@context.SnapshotAmount.ToString("N2")</MudTd>
-                            @if (_selected.ReportType == IssuanceReportType.PPEIR)
-                            {
-                                <MudTd Style="text-align:right">@(context.AccumulatedDepreciation?.ToString("N2") ?? "—")</MudTd>
-                                <MudTd Style="text-align:right">@(context.BookValue?.ToString("N2") ?? "—")</MudTd>
-                            }
+                            <MudTd Style="text-align:right">@(context.AccumulatedDepreciation?.ToString("N2") ?? "—")</MudTd>
+                            <MudTd Style="text-align:right">@(context.BookValue?.ToString("N2") ?? "—")</MudTd>
                         </RowTemplate>
                     </MudTable>
                 </MudCardContent>
@@ -440,32 +377,24 @@
 </MudGrid>
 
 @code {
+    private const IssuanceReportType PpeirReportType = IssuanceReportType.PPEIR;
+
     private bool _busy;
     private string? _error;
     private string? _keyword;
-    private IssuanceReportType? _typeFilter;
+    private IssuanceNature? _natureFilter;
     private int _page = 1;
     private int _totalPages = 1;
     private int _totalCount;
-    private const int PageSize = 15;
-    private IReadOnlyList<ArIssuanceReportSummaryDto> _items = [];
+    private const int PageSize = 20;
+    private List<ArIssuanceReportSummaryDto> _items = [];
     private ArIssuanceReportDto? _selected;
     private bool _showCreateForm;
-    private string _assetIdInput = "";
 
     private CreateFormModel _createForm = new();
 
-    // Pre-filter by report type when arriving from the "PPEIR" / "SMIR" nav links (?type=PPEIR|SMIR).
-    [Parameter, SupplyParameterFromQuery(Name = "type")]
-    public string? TypeParam { get; set; }
-
-    // Sentinel distinct from any real query value (null or a type name) so the first
-    // OnParametersSetAsync always performs the initial load exactly once.
-    private string? _appliedTypeParam = " ";
-
     private sealed class CreateFormModel
     {
-        public IssuanceReportType ReportType { get; set; }
         public IssuanceNature Nature { get; set; }
         public string FundCluster { get; set; } = "";
         public DateTime? DateNullable { get; set; } = DateTime.Today;
@@ -477,20 +406,15 @@
         public string IssuedToName { get; set; } = "";
         public string? IssuedToDesignation { get; set; }
         public string IssuedToOfficeAddress { get; set; } = "";
-        public string ReceivedByName { get; set; } = "";
-        public string? ReceivedByDesignation { get; set; }
-        public DateTime? DateReceivedNullable { get; set; }
-        public string? DriverName { get; set; }
-        public string? BillOfLadingNo { get; set; }
         public string? Remarks { get; set; }
-        public List<Guid> AssetIds { get; set; } = [];
+        public List<AssetRegistrySummaryDto> SelectedAssets { get; set; } = [];
     }
 
-    private bool _canCreate => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Issuance.Create);
+    private bool _canCreate      => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Issuance.Create);
     private bool _canViewSigned   => UserProfileState.Permissions.Contains(AssetRegisterPermissions.SignedDocuments.View);
     private bool _canUploadSigned => UserProfileState.Permissions.Contains(AssetRegisterPermissions.SignedDocuments.Upload);
 
-    // PPEIR/SMIR is created atomically (the act of creating it issues the assets) — a document of record on existence.
+    // PPEIR is created atomically (the act of creating it issues the assets) — a document of record on existence.
     private async Task OpenSignedCopyAsync(ArIssuanceReportSummaryDto item)
     {
         // Fully-qualified: this page also imports the Procurement namespace, which has its own SignedCopyDialog.
@@ -517,19 +441,9 @@
         }
     }
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         UserProfileState.OnProfileChanged += OnProfileChanged;
-    }
-
-    // Owns the initial load and reacts to nav between ?type=PPEIR and ?type=SMIR.
-    // In-page chip filtering does not change route parameters, so it never triggers here.
-    protected override async Task OnParametersSetAsync()
-    {
-        if (TypeParam == _appliedTypeParam) return;
-        _appliedTypeParam = TypeParam;
-        _typeFilter = Enum.TryParse<IssuanceReportType>(TypeParam, ignoreCase: true, out var t) ? t : null;
-        _page = 1;
         await LoadAsync();
     }
 
@@ -543,8 +457,8 @@
         _error = null;
         try
         {
-            var result = await Client.SearchAsync(_keyword, _typeFilter, page: _page, pageSize: PageSize);
-            _items = result.Items;
+            var result = await Client.SearchAsync(_keyword, PpeirReportType, _natureFilter, page: _page, pageSize: PageSize);
+            _items = result.Items.ToList();
             _totalCount = result.TotalCount;
             _totalPages = result.TotalPages > 0 ? result.TotalPages : 1;
         }
@@ -558,12 +472,13 @@
         }
     }
 
-    private async Task OnRowClick(TableRowClickEventArgs<ArIssuanceReportSummaryDto> args)
+    private async Task ViewAsync(Guid id)
     {
         _busy = true;
         try
         {
-            _selected = await Client.GetAsync(args.Item.Id);
+            _selected = await Client.GetAsync(id);
+            if (_selected is null) Snackbar.Add("Report not found.", Severity.Warning);
         }
         catch (Exception ex)
         {
@@ -590,23 +505,21 @@
         }
     }
 
-    private void AddAssetId()
+    private async Task BrowseAssetsAsync()
     {
-        if (Guid.TryParse(_assetIdInput.Trim(), out var id))
+        var parameters = new DialogParameters<AvailableAssetsPickerDialog>
         {
-            if (!_createForm.AssetIds.Contains(id))
-                _createForm.AssetIds.Add(id);
-            _assetIdInput = "";
-        }
-        else
-        {
-            Snackbar.Add("Invalid Guid format.", Severity.Warning);
-        }
-    }
+            { x => x.AssetType, AMIS.Modules.AssetRegister.Contracts.v1.AssetType.PPE },
+            { x => x.ExcludeIds, (IReadOnlyCollection<Guid>)_createForm.SelectedAssets.Select(a => a.Id).ToList() }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseButton = true };
+        var dialog = await DialogService.ShowAsync<AvailableAssetsPickerDialog>("Available PPE Assets", parameters, options);
+        var result = await dialog.Result;
+        if (result is null || result.Canceled || result.Data is not List<AssetRegistrySummaryDto> picked || picked.Count == 0)
+            return;
 
-    private void OnAssetIdKeyDown(KeyboardEventArgs e)
-    {
-        if (e.Key == "Enter") AddAssetId();
+        foreach (var asset in picked.Where(a => _createForm.SelectedAssets.All(x => x.Id != a.Id)))
+            _createForm.SelectedAssets.Add(asset);
     }
 
     private async Task CreateAsync()
@@ -616,16 +529,15 @@
             string.IsNullOrWhiteSpace(_createForm.ApprovedByName) ||
             string.IsNullOrWhiteSpace(_createForm.IssuedToName) ||
             string.IsNullOrWhiteSpace(_createForm.IssuedToOfficeAddress) ||
-            string.IsNullOrWhiteSpace(_createForm.ReceivedByName) ||
             !_createForm.DateNullable.HasValue)
         {
             Snackbar.Add("All required fields must be filled.", Severity.Warning);
             return;
         }
 
-        if (_createForm.AssetIds.Count == 0)
+        if (_createForm.SelectedAssets.Count == 0)
         {
-            Snackbar.Add("At least one asset must be added.", Severity.Warning);
+            Snackbar.Add("At least one asset must be selected.", Severity.Warning);
             return;
         }
 
@@ -639,7 +551,7 @@
         try
         {
             var req = new CreateIssuanceReportRequest(
-                _createForm.ReportType,
+                PpeirReportType,
                 DateOnly.FromDateTime(_createForm.DateNullable.Value),
                 _createForm.FundCluster,
                 _createForm.Nature,
@@ -647,15 +559,11 @@
                 new ArEmployeeRefDto(UserProfileState.EmployeeId, _createForm.ApprovedByName.Trim(), _createForm.ApprovedByDesignation),
                 new ArEmployeeRefDto(Guid.Empty, _createForm.IssuedToName.Trim(), _createForm.IssuedToDesignation),
                 _createForm.IssuedToOfficeAddress.Trim(),
-                new ArEmployeeRefDto(Guid.Empty, _createForm.ReceivedByName.Trim(), _createForm.ReceivedByDesignation),
-                _createForm.DateReceivedNullable.HasValue ? DateOnly.FromDateTime(_createForm.DateReceivedNullable.Value) : null,
-                _createForm.DriverName?.Trim(),
-                _createForm.BillOfLadingNo?.Trim(),
                 _createForm.Remarks?.Trim(),
-                _createForm.AssetIds.ToList());
+                _createForm.SelectedAssets.Select(a => a.Id).ToList());
 
             _selected = await Client.CreateAsync(req);
-            Snackbar.Add($"Issuance report {_selected.ReportNo} created. Assets transferred out.", Severity.Success);
+            Snackbar.Add($"PPEIR {_selected.ReportNo} created. Assets transferred out.", Severity.Success);
             _showCreateForm = false;
             _createForm = new();
             await LoadAsync();
@@ -672,12 +580,15 @@
 
     private async Task PrevPage() { _page--; await LoadAsync(); }
     private async Task NextPage() { _page++; await LoadAsync(); }
-    private async Task OnTypeChanged(IssuanceReportType? value) { _typeFilter = value; _page = 1; await LoadAsync(); }
+
+    private async Task OnNatureChanged(IssuanceNature? value) { _natureFilter = value; _page = 1; await LoadAsync(); }
 
     private async Task OnSearchKeyDown(KeyboardEventArgs e)
     {
         if (e.Key == "Enter") { _page = 1; await LoadAsync(); }
     }
+
+    private const string FastReportKey = "issuance-report";
 
     private async Task DownloadFastReportPdfAsync(Guid id)
     {
@@ -700,9 +611,6 @@
             Snackbar.Add($"PDF generation failed: {ex.Message}", Severity.Error);
         }
     }
-
-    private const string FastReportKey = "issuance-report";
-    private const string SmirFastReportKey = "issuance-smir";
 
     private Task OpenFastReportSetupAsync(Guid id) => ShowFastReportSetupAsync(id, forceDataOnly: false);
     private Task PrintDataOnlyAsync(Guid id) => ShowFastReportSetupAsync(id, forceDataOnly: true);
@@ -736,56 +644,6 @@
             var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
             await JS.InvokeVoidAsync("open", dataUrl, "_blank");
             Snackbar.Add("PDF ready.", Severity.Success);
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Fast report failed: {ex.Message}", Severity.Error);
-        }
-    }
-
-    private async Task DownloadSmirFastReportPdfAsync(Guid id)
-    {
-        try
-        {
-            var saved = await FastReportSetupPrefs.GetAsync(SmirFastReportKey);
-            var bytes = await Client.GetSmirFastReportPdfAsync(id,
-                pageWidth: saved?.PaperSize ?? "longbond",
-                orientation: saved?.Orientation ?? "portrait",
-                minRows: saved?.MinRows);
-            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
-            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
-            Snackbar.Add("SMIR PDF ready.", Severity.Success);
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"PDF generation failed: {ex.Message}", Severity.Error);
-        }
-    }
-
-    private async Task OpenSmirFastReportSetupAsync(Guid id)
-    {
-        var saved = await FastReportSetupPrefs.GetAsync(SmirFastReportKey);
-        var parameters = new DialogParameters
-        {
-            [nameof(FastReportPageSetupDialog.PaperSize)] = saved?.PaperSize ?? "longbond",
-            [nameof(FastReportPageSetupDialog.Orientation)] = saved?.Orientation ?? "portrait",
-            [nameof(FastReportPageSetupDialog.Copies)] = saved?.Copies ?? 1,
-            [nameof(FastReportPageSetupDialog.MinRows)] = saved?.MinRows ?? 12
-        };
-        var options = new DialogOptions { MaxWidth = MaxWidth.ExtraSmall, FullWidth = false, CloseOnEscapeKey = true };
-        var dialog = await DialogService.ShowAsync<FastReportPageSetupDialog>("Page Setup", parameters, options);
-        var result = await dialog.Result;
-        if (result is null || result.Canceled) return;
-        if (result.Data is not FastReportPageSetupDialog.Result r) return;
-
-        await FastReportSetupPrefs.SaveAsync(SmirFastReportKey, new FastReportSetup(r.PaperSize, r.Orientation, r.Copies, r.MinRows));
-
-        try
-        {
-            var bytes = await Client.GetSmirFastReportPdfAsync(id, pageWidth: r.PaperSize, orientation: r.Orientation, minRows: r.MinRows);
-            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
-            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
-            Snackbar.Add("SMIR PDF ready.", Severity.Success);
         }
         catch (Exception ex)
         {

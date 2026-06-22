@@ -112,12 +112,6 @@ public sealed class GetIssuanceReportDocumentQueryHandler(AssetRegisterDbContext
             report.IssuedTo.PrintedName,
             report.IssuedTo.Designation,
             report.IssuedToOfficeAddress,
-            report.ReceivedBy.EmployeeId,
-            report.ReceivedBy.PrintedName,
-            report.ReceivedBy.Designation,
-            report.DateReceived,
-            report.DriverName,
-            report.BillOfLadingNo,
             report.Remarks,
             lines,
             lines.Sum(l => l.Amount));

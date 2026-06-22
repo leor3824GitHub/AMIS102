@@ -18,7 +18,6 @@ internal static class IssuanceMapper
             AccountabilityMapper.ToDto(r.ApprovedBy),
             AccountabilityMapper.ToDto(r.IssuedTo),
             r.IssuedToOfficeAddress,
-            AccountabilityMapper.ToDto(r.ReceivedBy),
-            r.DateReceived, r.DriverName, r.BillOfLadingNo, r.Remarks,
+            r.Remarks,
             r.Lines.Select(ToDto).ToList());
 }

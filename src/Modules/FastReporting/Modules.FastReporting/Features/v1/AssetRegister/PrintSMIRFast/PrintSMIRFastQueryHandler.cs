@@ -55,7 +55,9 @@ public sealed class PrintSMIRFastQueryHandler(IMediator mediator)
                 IssuedByDesignation:   ir.IssuedBy.Designation ?? string.Empty,
                 ApprovedByName:        ir.ApprovedBy.PrintedName.ToUpperInvariant(),
                 ApprovedByDesignation: ir.ApprovedBy.Designation ?? string.Empty,
-                ReceivedByName:        ir.ReceivedBy.PrintedName.ToUpperInvariant())
+                // Received-by data removed from the issuance model; the SMIR form keeps the static
+                // "RECEIVED BY" signature block but the printed name is left blank.
+                ReceivedByName:        string.Empty)
         };
 
         var lineItemsTable = BuildLineItemsTable(ir, query.MinRows);
