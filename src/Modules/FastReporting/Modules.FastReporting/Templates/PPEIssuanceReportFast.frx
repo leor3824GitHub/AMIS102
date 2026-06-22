@@ -313,16 +313,20 @@
         Border.Lines="15" Border.Width="0.5" Padding="6,1,6,1" />
 
       <!-- Row 1 values -->
-      <TextObject Name="IssuedByVal" Left="0" Top="36" Width="247" Height="32"
-        Text="[IrDS.IssuedByName]" HorzAlign="Center" VertAlign="Center"
+      <TextObject Name="IssuedByVal" Left="0" Top="36" Width="247" Height="18"
+        Text="[IrDS.IssuedByName]" HorzAlign="Center" VertAlign="Bottom"
         Font="Times New Roman, 9pt, style=Bold,Underline"
-        Border.Lines="15" Border.Width="0.5" Padding="4,1,4,1" />
+        Border.Lines="7" Border.Width="0.5" Padding="4,1,4,1" />
+      <TextObject Name="IssuedByDesig" Left="0" Top="54" Width="247" Height="14"
+        Text="[IrDS.IssuedByDesignation]" HorzAlign="Center" VertAlign="Top"
+        Font="Times New Roman, 7pt"
+        Border.Lines="13" Border.Width="0.5" Padding="4,0,4,0" />
       <TextObject Name="ReceivedByVal" Left="247" Top="36" Width="247" Height="32"
         Text="" HorzAlign="Center" VertAlign="Center"
         Font="Times New Roman, 9pt, style=Bold,Underline"
         Border.Lines="15" Border.Width="0.5" Padding="4,1,4,1" />
       <TextObject Name="DateRecvVal" Left="494" Top="36" Width="247" Height="32"
-        Text="[IrDS.Date]" HorzAlign="Center" VertAlign="Center"
+        Text="" HorzAlign="Center" VertAlign="Center"
         Font="Times New Roman, 9pt"
         Border.Lines="15" Border.Width="0.5" Padding="4,1,4,1" />
 
@@ -338,10 +342,14 @@
         Border.Lines="15" Border.Width="0.5" Padding="6,1,6,1" />
 
       <!-- Row 2 values -->
-      <TextObject Name="ApprovedByVal" Left="0" Top="90" Width="247" Height="30"
-        Text="[IrDS.ApprovedByName]" HorzAlign="Center" VertAlign="Center"
+      <TextObject Name="ApprovedByVal" Left="0" Top="90" Width="247" Height="16"
+        Text="[IrDS.ApprovedByName]" HorzAlign="Center" VertAlign="Bottom"
         Font="Times New Roman, 9pt, style=Bold,Underline"
-        Border.Lines="15" Border.Width="0.5" Padding="4,1,4,1" />
+        Border.Lines="7" Border.Width="0.5" Padding="4,1,4,1" />
+      <TextObject Name="ApprovedByDesig" Left="0" Top="106" Width="247" Height="14"
+        Text="[IrDS.ApprovedByDesignation]" HorzAlign="Center" VertAlign="Top"
+        Font="Times New Roman, 7pt"
+        Border.Lines="13" Border.Width="0.5" Padding="4,0,4,0" />
       <TextObject Name="DriverVal" Left="247" Top="90" Width="247" Height="30"
         Text="" HorzAlign="Center" VertAlign="Center"
         Font="Times New Roman, 9pt"

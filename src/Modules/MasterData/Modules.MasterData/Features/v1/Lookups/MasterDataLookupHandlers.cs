@@ -37,8 +37,9 @@ public sealed class GetEmployeeReferenceByIdQueryHandler(MasterDataDbContext dbC
 {
     public async ValueTask<EmployeeReferenceDto?> Handle(GetEmployeeReferenceByIdQuery query, CancellationToken cancellationToken)
     {
-        return await MasterDataLookupQueryBuilder.BuildEmployeeReferenceQuery(dbContext)
-            .FirstOrDefaultAsync(x => x.Id == query.Id, cancellationToken)
+        return await MasterDataLookupQueryBuilder.BuildEmployeeReferenceQuery(
+                dbContext, employeeFilter: e => e.Id == query.Id)
+            .FirstOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false);
     }
 }
