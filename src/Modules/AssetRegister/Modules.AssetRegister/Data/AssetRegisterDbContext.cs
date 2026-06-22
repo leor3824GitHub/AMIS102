@@ -28,6 +28,7 @@ public class AssetRegisterDbContext : BaseDbContext
     public DbSet<DepreciationEntry> DepreciationEntries => Set<DepreciationEntry>();
     public DbSet<PropertyAccountability> PropertyAccountabilities => Set<PropertyAccountability>();
     public DbSet<PropertyIssuanceReport> PropertyIssuanceReports => Set<PropertyIssuanceReport>();
+    public DbSet<PPEIRFormSeries> PPEIRFormSeries => Set<PPEIRFormSeries>();
     public DbSet<PhysicalCountSession> PhysicalCountSessions => Set<PhysicalCountSession>();
     public DbSet<PropertyIncidentReport> PropertyIncidentReports => Set<PropertyIncidentReport>();
     public DbSet<UnserviceablePropertyReport> UnserviceablePropertyReports => Set<UnserviceablePropertyReport>();

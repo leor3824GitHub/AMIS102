@@ -87,29 +87,47 @@
                         Icon="@Icons.Material.Outlined.AssignmentInd">
                 My Accountability
             </MudNavLink>
-            <MudNavLink Href="/asset-register/receiving/ppe" Match="NavLinkMatch.Prefix"
-                        Icon="@Icons.Material.Outlined.MoveToInbox">
-                Receiving — PPE (PPERR)
-            </MudNavLink>
-            <MudNavLink Href="/asset-register/pperr-series" Match="NavLinkMatch.Prefix"
-                        Icon="@Icons.Material.Outlined.FormatListNumbered">
-                PPERR Form Series
-            </MudNavLink>
-            <MudNavLink Href="/asset-register/receiving/smrr" Match="NavLinkMatch.Prefix"
-                        Icon="@Icons.Material.Outlined.MoveToInbox">
-                Receiving — Supplies (SMRR)
+            <MudNavGroup Title="Receiving" Icon="@Icons.Material.Outlined.MoveToInbox">
+                <MudNavLink Href="/asset-register/receiving/ppe" Match="NavLinkMatch.Prefix"
+                            Icon="@Icons.Material.Outlined.MoveToInbox">
+                    PPERR
+                </MudNavLink>
+                <MudNavLink Href="/asset-register/receiving/smrr" Match="NavLinkMatch.Prefix"
+                            Icon="@Icons.Material.Outlined.MoveToInbox">
+                    SMRR
+                </MudNavLink>
+                <MudNavLink Href="/asset-register/pperr-series" Match="NavLinkMatch.Prefix"
+                            Icon="@Icons.Material.Outlined.FormatListNumbered">
+                    PPERR Form Series
+                </MudNavLink>
+            </MudNavGroup>
+            <MudNavGroup Title="Issuance" Icon="@Icons.Material.Outlined.Receipt">
+                <MudNavLink Href="/asset-register/issuance?type=PPEIR" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.Receipt">
+                    PPEIR
+                </MudNavLink>
+                <MudNavLink Href="/asset-register/issuance?type=SMIR" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.Receipt">
+                    SMIR
+                </MudNavLink>
+                <MudNavLink Href="/asset-register/accountability" Match="NavLinkMatch.Prefix"
+                            Icon="@Icons.Material.Outlined.AssignmentInd">
+                    ICS / PAR
+                </MudNavLink>
+                <MudNavLink Href="/asset-register/ppeir-series" Match="NavLinkMatch.Prefix"
+                            Icon="@Icons.Material.Outlined.FormatListNumbered">
+                    PPEIR Form Series
+                </MudNavLink>
+            </MudNavGroup>
+            <MudNavLink Href="/asset-register/returned-property" Match="NavLinkMatch.Prefix"
+                        Icon="@Icons.Material.Outlined.AssignmentReturn">
+                Returned (RRSP / RRP)
             </MudNavLink>
             <MudNavLink Href="/asset-register/assets" Match="NavLinkMatch.Prefix"
                         Icon="@Icons.Material.Outlined.Inventory2">
                 Asset Registry
             </MudNavLink>
-            <MudNavLink Href="/asset-register/accountability" Match="NavLinkMatch.Prefix"
-                        Icon="@Icons.Material.Outlined.AssignmentInd">
-                ICS / PAR
-            </MudNavLink>
             <MudNavLink Href="/asset-register/catalog" Match="NavLinkMatch.Prefix"
                         Icon="@Icons.Material.Outlined.LibraryBooks">
-                Property Catalog
+                Asset Catalog
             </MudNavLink>
             <MudNavLink Href="/asset-register/locations" Match="NavLinkMatch.Prefix"
                         Icon="@Icons.Material.Outlined.Place">
@@ -123,14 +141,7 @@
                         Icon="@Icons.Material.Outlined.ReportProblem">
                 Incident Reports
             </MudNavLink>
-            <MudNavLink Href="/asset-register/issuance" Match="NavLinkMatch.Prefix"
-                        Icon="@Icons.Material.Outlined.Receipt">
-                Issuance Reports
-            </MudNavLink>
-            <MudNavLink Href="/asset-register/returned-property" Match="NavLinkMatch.Prefix"
-                        Icon="@Icons.Material.Outlined.AssignmentReturn">
-                Returned (RRSP / RRP)
-            </MudNavLink>
+
             <MudNavLink Href="/asset-register/unserviceable" Match="NavLinkMatch.Prefix"
                         Icon="@Icons.Material.Outlined.DeleteSweep">
                 Unserviceable Reports

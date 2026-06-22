@@ -37,7 +37,8 @@
       "Bash(grep -v \"/bin/\\\\|/obj/\")",
       "PowerShell(dotnet build src/BuildingBlocks/Blazor.UI/Blazor.UI.csproj --nologo 2>&1)",
       "Bash(git stash *)",
-      "Bash(dotnet restore *)"
+      "Bash(dotnet restore *)",
+      "PowerShell(dotnet ef migrations add AddPPEIRFormSeries --project src/Playground/Migrations.PostgreSQL --startup-project src/Playground/Playground.Api --context AssetRegisterDbContext --output-dir AssetRegister 2>&1)"
     ]
   }
 }

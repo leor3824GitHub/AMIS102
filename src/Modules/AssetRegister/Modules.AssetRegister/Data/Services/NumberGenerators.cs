@@ -47,8 +47,21 @@ internal sealed class IssuanceReportNumberGenerator(AssetRegisterDbContext db, C
 {
     public async Task<string> NextAsync(IssuanceReportType type, DateOnly periodStart, CancellationToken ct)
     {
-        var prefix = type == IssuanceReportType.SMIR ? "RSPI" : "PPEIR";
         var tenantId = db.TenantInfo?.Identifier ?? string.Empty;
+
+        // For PPEIR: use the active pre-printed form series if one exists.
+        if (type == IssuanceReportType.PPEIR)
+        {
+            var activeSeries = await db.PPEIRFormSeries
+                .FirstOrDefaultAsync(s => s.TenantId == tenantId && s.IsActive, ct)
+                .ConfigureAwait(false);
+
+            if (activeSeries is not null)
+                return activeSeries.AllocateNext();
+        }
+
+        // Fall back to date-based auto-generation.
+        var prefix = type == IssuanceReportType.SMIR ? "RSPI" : "PPEIR";
         var serial = await allocator.NextSerialAsync(tenantId, periodStart.Year, periodStart.Month, prefix, ct).ConfigureAwait(false);
         return $"{prefix}-{periodStart.Year:D4}-{periodStart.Month:D2}-{serial.ToString("D4", CultureInfo.InvariantCulture)}";
     }

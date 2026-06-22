@@ -122,7 +122,9 @@
                 {
                     <MudItem xs="12">
                         <MudTable T="AcceptedIARLineItemDto" Items="_availableItems"
-                                  MultiSelection="true" @bind-SelectedItems="_selectedItems"
+                                  MultiSelection="true" SelectedItems="_selectedItems"
+                                  SelectedItemsChanged="OnSelectedItemsChanged"
+                                  RowStyleFunc="RowStyleFunc"
                                   Dense="true" Hover="true" Elevation="0"
                                   Style="background: var(--mud-palette-surface);">
                             <HeaderContent>
@@ -142,6 +144,12 @@
                                     {
                                         <MudChip T="string" Size="Size.Small" Color="Color.Warning" Icon="@Icons.Material.Filled.Warning" Class="mt-1">
                                             @mismatch
+                                        </MudChip>
+                                    }
+                                    @if (IsReceived(context))
+                                    {
+                                        <MudChip T="string" Size="Size.Small" Color="Color.Default" Icon="@Icons.Material.Filled.CheckCircle" Class="mt-1">
+                                            Already received
                                         </MudChip>
                                     }
                                 </MudTd>
@@ -327,6 +335,10 @@
     private readonly List<AcceptedIARLineItemDto> _availableItems = [];
     private HashSet<AcceptedIARLineItemDto> _selectedItems = [];
 
+    // Property numbers (StockPropertyNo) already received on an existing SMRR/PPERR — these rows are
+    // shown greyed-out and cannot be selected, so an item is never received twice.
+    private HashSet<string> _receivedPropertyNos = new(StringComparer.OrdinalIgnoreCase);
+
     // Ad-hoc lines path — used when ReceiptType != Purchase (donations, transfers, other).
     private readonly List<AdhocLine> _adhocLines = [new()];
 
@@ -377,19 +389,52 @@
         try
         {
             var res = await ArReceivingReportClient.SearchAcceptedIARItemsAsync(value, page: 1, pageSize: 100, ct: ct);
-            return (res?.Items ?? [])
+            var items = res?.Items ?? [];
+
+            // Drop suppliers whose every accepted item is already received via an SMRR/PPERR — they
+            // have nothing left to receive, so they shouldn't clutter the picker.
+            var received = await GetReceivedSetAsync(items, ct);
+
+            return items
                 .GroupBy(x => x.SupplierName, StringComparer.OrdinalIgnoreCase)
+                .Where(g => g.Any(x => string.IsNullOrWhiteSpace(x.StockPropertyNo) || !received.Contains(x.StockPropertyNo!)))
                 .Select(g => new SupplierInfo(g.Key, g.First().SupplierAddress))
                 .ToList();
         }
         catch { return []; }
     }
 
+    private async Task<HashSet<string>> GetReceivedSetAsync(IReadOnlyCollection<AcceptedIARLineItemDto> items, CancellationToken ct = default)
+    {
+        var propertyNos = items
+            .Select(x => x.StockPropertyNo)
+            .Where(p => !string.IsNullOrWhiteSpace(p))
+            .Select(p => p!)
+            .ToList();
+        if (propertyNos.Count == 0)
+            return new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        var received = await ArReceivingReportClient.GetReceivedPropertyNumbersAsync(propertyNos, ct);
+        return received.ToHashSet(StringComparer.OrdinalIgnoreCase);
+    }
+
+    private bool IsReceived(AcceptedIARLineItemDto item) =>
+        !string.IsNullOrWhiteSpace(item.StockPropertyNo) && _receivedPropertyNos.Contains(item.StockPropertyNo!);
+
+    private string RowStyleFunc(AcceptedIARLineItemDto item, int _) =>
+        IsReceived(item) ? "opacity:0.5;" : string.Empty;
+
+    // Already-received rows can never be part of the selection — strip them whenever selection changes
+    // (covers both row clicks and the header "select all").
+    private void OnSelectedItemsChanged(HashSet<AcceptedIARLineItemDto> selected) =>
+        _selectedItems = selected.Where(i => !IsReceived(i)).ToHashSet();
+
     private async Task OnSupplierSelectedAsync(SupplierInfo? supplier)
     {
         _selectedSupplier = supplier;
         _availableItems.Clear();
         _selectedItems = [];
+        _receivedPropertyNos = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         if (supplier is null) return;
 
@@ -401,7 +446,9 @@
         {
             var res = await ArReceivingReportClient.SearchAcceptedIARItemsAsync(
                 supplier.Name, page: 1, pageSize: 200);
-            _availableItems.AddRange(res?.Items ?? []);
+            var items = res?.Items ?? [];
+            _availableItems.AddRange(items);
+            _receivedPropertyNos = await GetReceivedSetAsync(items);
         }
         catch
         {

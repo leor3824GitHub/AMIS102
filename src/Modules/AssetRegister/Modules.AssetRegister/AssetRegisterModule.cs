@@ -197,6 +197,16 @@ public class AssetRegisterModule : IModule
         Features.v1.Issuance.GetIssuanceReport.GetIssuanceReportEndpoint.Map(issuance);
         Features.v1.Issuance.SearchIssuanceReports.SearchIssuanceReportsEndpoint.Map(issuance);
 
+        // PPEIR Form Series (pre-printed accountable form management)
+        var ppEirSeries = moduleGroup.MapGroup("/ppeir-series");
+        Features.v1.Issuance.CreatePPEIRFormSeries.CreatePPEIRFormSeriesEndpoint.Map(ppEirSeries);
+        Features.v1.Issuance.UpdatePPEIRFormSeries.UpdatePPEIRFormSeriesEndpoint.Map(ppEirSeries);
+        Features.v1.Issuance.DeletePPEIRFormSeries.DeletePPEIRFormSeriesEndpoint.Map(ppEirSeries);
+        Features.v1.Issuance.SearchPPEIRFormSeries.SearchPPEIRFormSeriesEndpoint.Map(ppEirSeries);
+        Features.v1.Issuance.GetActivePPEIRFormSeries.GetActivePPEIRFormSeriesEndpoint.Map(ppEirSeries);
+        Features.v1.Issuance.ActivatePPEIRFormSeries.ActivatePPEIRFormSeriesEndpoint.Map(ppEirSeries);
+        Features.v1.Issuance.ActivatePPEIRFormSeries.ActivatePPEIRFormSeriesEndpoint.MapDeactivate(ppEirSeries);
+
         // Physical count sessions — Phase 4
         var count = moduleGroup.MapGroup("/count");
         Features.v1.Counting.StartPhysicalCount.StartPhysicalCountEndpoint.Map(count);
@@ -230,6 +240,7 @@ public class AssetRegisterModule : IModule
         Features.v1.Receiving.DeleteReceivingReport.DeleteReceivingReportEndpoint.Map(receiving);
         Features.v1.Receiving.GetReceivingReport.GetReceivingReportEndpoint.Map(receiving);
         Features.v1.Receiving.SearchReceivingReports.SearchReceivingReportsEndpoint.Map(receiving);
+        Features.v1.Receiving.GetReceivedPropertyNumbers.GetReceivedPropertyNumbersEndpoint.Map(receiving);
 
         // PPERR Form Series (pre-printed accountable form management)
         var ppErrSeries = moduleGroup.MapGroup("/pperr-series");

@@ -82,3 +82,39 @@ public sealed record SearchIssuanceReportsQuery(
     DateOnly? ToDate = null,
     int PageNumber = 1,
     int PageSize = 10) : IQuery<PagedResponse<PropertyIssuanceReportSummaryDto>>;
+
+// ── PPEIR Form Series ──────────────────────────────────────────────────────
+
+public sealed record PPEIRFormSeriesDto(
+    Guid Id,
+    string Label,
+    int StartSerial,
+    int EndSerial,
+    int NextSerial,
+    int Remaining,
+    bool IsActive,
+    bool IsExhausted,
+    bool IsUnused);
+
+public sealed record CreatePPEIRFormSeriesCommand(
+    string Label,
+    int StartSerial,
+    int EndSerial) : ICommand<PPEIRFormSeriesDto>;
+
+public sealed record UpdatePPEIRFormSeriesCommand(
+    Guid Id,
+    string Label,
+    int StartSerial,
+    int EndSerial) : ICommand<PPEIRFormSeriesDto>;
+
+public sealed record DeletePPEIRFormSeriesCommand(Guid Id) : ICommand<Unit>;
+
+public sealed record ActivatePPEIRFormSeriesCommand(Guid Id) : ICommand<PPEIRFormSeriesDto>;
+
+public sealed record DeactivatePPEIRFormSeriesCommand(Guid Id) : ICommand<PPEIRFormSeriesDto>;
+
+public sealed record GetActivePPEIRFormSeriesQuery : IQuery<PPEIRFormSeriesDto?>;
+
+public sealed record SearchPPEIRFormSeriesQuery(
+    int PageNumber = 1,
+    int PageSize = 20) : IQuery<PagedResponse<PPEIRFormSeriesDto>>;

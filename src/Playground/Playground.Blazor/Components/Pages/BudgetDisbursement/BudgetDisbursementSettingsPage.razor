@@ -42,7 +42,7 @@ else
             </MudTabPanel>
 
             @* ── Tab 2: DV Signatories ───────────────────────── *@
-            <MudTabPanel Text="Disbursement Voucher" Icon="@Icons.Material.Outlined.Receipt">
+            <MudTabPanel Text="DV" Icon="@Icons.Material.Outlined.Receipt">
                 <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
                     Override the default signatories drawn from the Organization Profile.
                     Leave the name blank to fall back to the Organization Profile value.
@@ -62,11 +62,13 @@ else
                             </MudStack>
                             @if (_canUpdate && SectionAIsOverridden)
                             {
-                                <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Default"
-                                           StartIcon="@Icons.Material.Outlined.SettingsBackupRestore"
-                                           OnClick="UseDefaultA" Disabled="_saving">
-                                    Use Default
-                                </MudButton>
+                                <MudTooltip Text="@DefaultTooltip(OrgProfileState.Profile?.AssistantRegionalManagerName, OrgProfileState.Profile?.AssistantRegionalManagerDesignation)">
+                                    <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Default"
+                                               StartIcon="@Icons.Material.Outlined.SettingsBackupRestore"
+                                               OnClick="UseDefaultA" Disabled="_saving">
+                                        Use Default
+                                    </MudButton>
+                                </MudTooltip>
                             }
                         </MudStack>
                         @if (!SectionAIsOverridden && OrgProfileState.Profile is { } org &&
@@ -117,11 +119,13 @@ else
                             </MudStack>
                             @if (_canUpdate && SectionBIsOverridden)
                             {
-                                <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Default"
-                                           StartIcon="@Icons.Material.Outlined.SettingsBackupRestore"
-                                           OnClick="UseDefaultB" Disabled="_saving">
-                                    Use Default
-                                </MudButton>
+                                <MudTooltip Text="@DefaultTooltip(OrgProfileState.Profile?.AccountantName, OrgProfileState.Profile?.AccountantDesignation)">
+                                    <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Default"
+                                               StartIcon="@Icons.Material.Outlined.SettingsBackupRestore"
+                                               OnClick="UseDefaultB" Disabled="_saving">
+                                        Use Default
+                                    </MudButton>
+                                </MudTooltip>
                             }
                         </MudStack>
                         @if (!SectionBIsOverridden && OrgProfileState.Profile is { } orgB &&
@@ -172,11 +176,13 @@ else
                             </MudStack>
                             @if (_canUpdate && SectionCIsOverridden)
                             {
-                                <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Default"
-                                           StartIcon="@Icons.Material.Outlined.SettingsBackupRestore"
-                                           OnClick="UseDefaultC" Disabled="_saving">
-                                    Use Default
-                                </MudButton>
+                                <MudTooltip Text="@DefaultTooltip(OrgProfileState.Profile?.ApprovingOfficialName, OrgProfileState.Profile?.ApprovingOfficialDesignation)">
+                                    <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Default"
+                                               StartIcon="@Icons.Material.Outlined.SettingsBackupRestore"
+                                               OnClick="UseDefaultC" Disabled="_saving">
+                                        Use Default
+                                    </MudButton>
+                                </MudTooltip>
                             }
                         </MudStack>
                         @if (!SectionCIsOverridden && OrgProfileState.Profile is { } orgC &&
@@ -217,7 +223,7 @@ else
             </MudTabPanel>
 
             @* ── Tab 3: BUR Signatories ──────────────────────── *@
-            <MudTabPanel Text="Budget Utilization Request and Status" Icon="@Icons.Material.Outlined.AccountBalance">
+            <MudTabPanel Text="BURS" Icon="@Icons.Material.Outlined.AccountBalance">
                 <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
                     Override the default signatories drawn from the Organization Profile.
                     Leave the name blank to fall back to the Organization Profile value.
@@ -237,11 +243,13 @@ else
                             </MudStack>
                             @if (_canUpdate && BurSectionAIsOverridden)
                             {
-                                <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Default"
-                                           StartIcon="@Icons.Material.Outlined.SettingsBackupRestore"
-                                           OnClick="UseDefaultBurA" Disabled="_saving">
-                                    Use Default
-                                </MudButton>
+                                <MudTooltip Text="@DefaultTooltip(OrgProfileState.Profile?.ApprovingOfficialName, OrgProfileState.Profile?.ApprovingOfficialDesignation)">
+                                    <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Default"
+                                               StartIcon="@Icons.Material.Outlined.SettingsBackupRestore"
+                                               OnClick="UseDefaultBurA" Disabled="_saving">
+                                        Use Default
+                                    </MudButton>
+                                </MudTooltip>
                             }
                         </MudStack>
                         @if (!BurSectionAIsOverridden && OrgProfileState.Profile is { } burOrgA &&
@@ -292,11 +300,13 @@ else
                             </MudStack>
                             @if (_canUpdate && BurSectionBIsOverridden)
                             {
-                                <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Default"
-                                           StartIcon="@Icons.Material.Outlined.SettingsBackupRestore"
-                                           OnClick="UseDefaultBurB" Disabled="_saving">
-                                    Use Default
-                                </MudButton>
+                                <MudTooltip Text="@DefaultTooltip(OrgProfileState.Profile?.BudgetOfficerName, OrgProfileState.Profile?.BudgetOfficerDesignation)">
+                                    <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Default"
+                                               StartIcon="@Icons.Material.Outlined.SettingsBackupRestore"
+                                               OnClick="UseDefaultBurB" Disabled="_saving">
+                                        Use Default
+                                    </MudButton>
+                                </MudTooltip>
                             }
                         </MudStack>
                         @if (!BurSectionBIsOverridden && OrgProfileState.Profile is { } burOrgB &&
@@ -450,6 +460,16 @@ else
 
     private static string EmployeeDisplayName(EmployeeReferenceDto? e) =>
         e is null ? string.Empty : $"{e.FirstName} {e.LastName}";
+
+    // Tooltip for the "Use Default" button — explains the override is cleared and
+    // the signatory falls back to the value configured in Master Data → Organization Profile.
+    private static string DefaultTooltip(string? name, string? designation)
+    {
+        var who = string.Join(" — ", new[] { name, designation }.Where(s => !string.IsNullOrWhiteSpace(s)));
+        return string.IsNullOrWhiteSpace(who)
+            ? "Clear this override. The signatory will fall back to the value set in Master Data → Organization Profile (none configured yet)."
+            : $"Clear this override and fall back to the Organization Profile default: {who}. Set under Master Data → Organization Profile.";
+    }
 
     // ── Section change handlers ───────────────────────────────────────────────
 

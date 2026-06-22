@@ -113,6 +113,15 @@ public sealed record SearchReceivingReportsQuery(
     int PageNumber = 1,
     int PageSize = 10) : IQuery<PagedResponse<ReceivingReportSummaryDto>>;
 
+/// <summary>
+/// From the supplied candidate property numbers, returns the subset that already appears on an existing
+/// Receiving Report (SMRR or PPERR) line — i.e. items that have already been received and must not be
+/// received again. Backs the Receiving Report "From IAR" picker so already-received rows can be disabled
+/// and suppliers whose every item is already received drop out of the supplier list.
+/// </summary>
+public sealed record GetReceivedPropertyNumbersQuery(
+    IReadOnlyCollection<string> PropertyNumbers) : IQuery<IReadOnlyCollection<string>>;
+
 // ── PPERR Form Series ──────────────────────────────────────────────────────
 
 public sealed record PPERRFormSeriesDto(
