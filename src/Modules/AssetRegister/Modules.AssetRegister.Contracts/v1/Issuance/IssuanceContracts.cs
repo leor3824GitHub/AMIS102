@@ -41,13 +41,15 @@ public sealed record PropertyIssuanceReportSummaryDto(
 
 // ── Commands ───────────────────────────────────────────────────────────────
 
+// ApprovedBy is intentionally not part of the request: the approving authority is the
+// organization's approving official, resolved server-side from the Organization Profile
+// and snapshotted onto the report at creation time.
 public sealed record CreateIssuanceReportCommand(
     IssuanceReportType ReportType,
     DateOnly Date,
     string FundCluster,
     IssuanceNature Nature,
     EmployeeRefDto IssuedBy,
-    EmployeeRefDto ApprovedBy,
     EmployeeRefDto IssuedTo,
     string IssuedToOfficeAddress,
     string? Remarks,

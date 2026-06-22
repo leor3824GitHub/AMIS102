@@ -17,9 +17,7 @@ public sealed class CreateIssuanceReportCommandValidator : AbstractValidator<Cre
         RuleFor(x => x.IssuedBy.EmployeeId).NotEmpty().When(x => x.IssuedBy is not null);
         RuleFor(x => x.IssuedBy.PrintedName).NotEmpty().MaximumLength(200).When(x => x.IssuedBy is not null);
 
-        RuleFor(x => x.ApprovedBy).NotNull();
-        RuleFor(x => x.ApprovedBy.EmployeeId).NotEmpty().When(x => x.ApprovedBy is not null);
-        RuleFor(x => x.ApprovedBy.PrintedName).NotEmpty().MaximumLength(200).When(x => x.ApprovedBy is not null);
+        // ApprovedBy is resolved server-side from the Organization Profile (see handler).
 
         RuleFor(x => x.IssuedTo).NotNull();
         RuleFor(x => x.IssuedTo.PrintedName).NotEmpty().MaximumLength(200).When(x => x.IssuedTo is not null);

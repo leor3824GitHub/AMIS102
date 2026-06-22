@@ -5,6 +5,7 @@ using AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
 using AMIS.Modules.AssetRegister.Data;
 using AMIS.Modules.AssetRegister.Domain.Issuance;
 using AMIS.Modules.AssetRegister.Domain.Services;
+using AMIS.Modules.MasterData.Contracts.v1.OrganizationProfile;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,7 +14,8 @@ namespace AMIS.Modules.AssetRegister.Features.v1.Issuance.CreateIssuanceReport;
 public sealed class CreateIssuanceReportCommandHandler(
     AssetRegisterDbContext db,
     IIssuanceReportNumberGenerator numbers,
-    ICountFreezeGuard freezeGuard)
+    ICountFreezeGuard freezeGuard,
+    IMediator mediator)
     : ICommandHandler<CreateIssuanceReportCommand, PropertyIssuanceReportDto>
 {
     public async ValueTask<PropertyIssuanceReportDto> Handle(CreateIssuanceReportCommand cmd, CancellationToken cancellationToken)
@@ -51,12 +53,23 @@ public sealed class CreateIssuanceReportCommandHandler(
 
         await freezeGuard.EnsureMovementAllowedAsync(assets, cancellationToken).ConfigureAwait(false);
 
+        // The approving authority is the organization's approving official — resolved here
+        // from the Organization Profile and snapshotted onto the report (not entered per report).
+        var org = await mediator.Send(new GetOrganizationProfileQuery(), cancellationToken).ConfigureAwait(false);
+        if (org is null || string.IsNullOrWhiteSpace(org.ApprovingOfficialName))
+            throw new CustomException(
+                "No approving official is set in the Organization Profile. Set it before creating an issuance report.",
+                [], System.Net.HttpStatusCode.UnprocessableEntity);
+
         var reportNo = await numbers.NextAsync(cmd.ReportType, cmd.Date, cancellationToken).ConfigureAwait(false);
         var tenantId = db.TenantInfo?.Identifier ?? string.Empty;
 
-        var issuedBy   = EmployeeRef.Create(cmd.IssuedBy.EmployeeId,   cmd.IssuedBy.PrintedName,   cmd.IssuedBy.Designation);
-        var approvedBy = EmployeeRef.Create(cmd.ApprovedBy.EmployeeId, cmd.ApprovedBy.PrintedName, cmd.ApprovedBy.Designation);
-        var issuedTo   = EmployeeRef.Create(cmd.IssuedTo.EmployeeId,   cmd.IssuedTo.PrintedName,   cmd.IssuedTo.Designation);
+        var issuedBy   = EmployeeRef.Create(cmd.IssuedBy.EmployeeId, cmd.IssuedBy.PrintedName, cmd.IssuedBy.Designation);
+        var approvedBy = EmployeeRef.Create(
+            Guid.Empty,
+            org.ApprovingOfficialName.Trim(),
+            string.IsNullOrWhiteSpace(org.ApprovingOfficialDesignation) ? null : org.ApprovingOfficialDesignation.Trim());
+        var issuedTo   = EmployeeRef.Create(cmd.IssuedTo.EmployeeId, cmd.IssuedTo.PrintedName, cmd.IssuedTo.Designation);
 
         var report = PropertyIssuanceReport.Create(
             tenantId,

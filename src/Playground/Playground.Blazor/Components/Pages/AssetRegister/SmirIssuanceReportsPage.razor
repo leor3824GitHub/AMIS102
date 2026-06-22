@@ -12,6 +12,7 @@
 @inject IFastReportSetupPreferences FastReportSetupPrefs
 @inject IJSRuntime JS
 @inject IUserProfileState UserProfileState
+@inject IOrganizationProfileState OrgProfileState
 
 <AMISPageHeader Title="Semi-Expendable Issuance Reports (SMIR)"
                Description="Record the issuance/transfer of semi-expendable property. Each report is an atomic transfer document — the listed assets are permanently transferred out of this office upon creation." />
@@ -89,21 +90,24 @@
 
                         <!-- Officers row -->
                         <MudItem xs="12"><MudText Typo="Typo.subtitle2" Class="mt-1">Signatories</MudText></MudItem>
-                        <MudItem xs="12" md="6">
-                            <MudTextField @bind-Value="_createForm.IssuedByName" Label="Issued By (Name)" Variant="Variant.Outlined"
-                                          MaxLength="200" Required="true" Dense="true" Margin="Margin.Dense" />
+                        <MudItem xs="12">
+                            <MudAlert Severity="Severity.Info" Dense="true">
+                                Issued from: <b>@UserProfileState.EmployeeFullName</b>@(string.IsNullOrWhiteSpace(UserProfileState.EmployeePositionName) ? "" : $" — {UserProfileState.EmployeePositionName}") — captured automatically as the supply officer.
+                            </MudAlert>
                         </MudItem>
-                        <MudItem xs="12" md="6">
-                            <MudTextField @bind-Value="_createForm.IssuedByDesignation" Label="Issued By (Designation)" Variant="Variant.Outlined"
-                                          MaxLength="200" Dense="true" Margin="Margin.Dense" />
-                        </MudItem>
-                        <MudItem xs="12" md="6">
-                            <MudTextField @bind-Value="_createForm.ApprovedByName" Label="Approved By (Name)" Variant="Variant.Outlined"
-                                          MaxLength="200" Required="true" Dense="true" Margin="Margin.Dense" />
-                        </MudItem>
-                        <MudItem xs="12" md="6">
-                            <MudTextField @bind-Value="_createForm.ApprovedByDesignation" Label="Approved By (Designation)" Variant="Variant.Outlined"
-                                          MaxLength="200" Dense="true" Margin="Margin.Dense" />
+                        <MudItem xs="12">
+                            @if (!string.IsNullOrWhiteSpace(OrgProfileState.Profile?.ApprovingOfficialName))
+                            {
+                                <MudAlert Severity="Severity.Info" Dense="true">
+                                    Approved by: <b>@OrgProfileState.Profile!.ApprovingOfficialName</b>@(string.IsNullOrWhiteSpace(OrgProfileState.Profile!.ApprovingOfficialDesignation) ? "" : $" — {OrgProfileState.Profile!.ApprovingOfficialDesignation}") — captured automatically from the organization profile.
+                                </MudAlert>
+                            }
+                            else
+                            {
+                                <MudAlert Severity="Severity.Warning" Dense="true">
+                                    No approving official is set in the Organization Profile. Set it there before creating this report.
+                                </MudAlert>
+                            }
                         </MudItem>
                         <MudItem xs="12" md="6">
                             <MudTextField @bind-Value="_createForm.IssuedToName" Label="Issued To (Name)" Variant="Variant.Outlined"
@@ -390,11 +394,6 @@
         public IssuanceNature Nature { get; set; }
         public string FundCluster { get; set; } = "";
         public DateTime? DateNullable { get; set; } = DateTime.Today;
-        public string IssuedByName { get; set; } = "";
-        public string? IssuedByDesignation { get; set; }
-        public Guid IssuedByEmployeeId { get; set; }
-        public string ApprovedByName { get; set; } = "";
-        public string? ApprovedByDesignation { get; set; }
         public string IssuedToName { get; set; } = "";
         public string? IssuedToDesignation { get; set; }
         public string IssuedToOfficeAddress { get; set; } = "";
@@ -489,9 +488,6 @@
         {
             _createForm = new CreateFormModel
             {
-                IssuedByName = UserProfileState.EmployeeFullName,
-                IssuedByDesignation = UserProfileState.EmployeePositionName,
-                IssuedByEmployeeId = UserProfileState.EmployeeId,
                 DateNullable = DateTime.Today
             };
         }
@@ -517,13 +513,18 @@
     private async Task CreateAsync()
     {
         if (string.IsNullOrWhiteSpace(_createForm.FundCluster) ||
-            string.IsNullOrWhiteSpace(_createForm.IssuedByName) ||
-            string.IsNullOrWhiteSpace(_createForm.ApprovedByName) ||
             string.IsNullOrWhiteSpace(_createForm.IssuedToName) ||
             string.IsNullOrWhiteSpace(_createForm.IssuedToOfficeAddress) ||
             !_createForm.DateNullable.HasValue)
         {
             Snackbar.Add("All required fields must be filled.", Severity.Warning);
+            return;
+        }
+
+        var approvingOfficialName = OrgProfileState.Profile?.ApprovingOfficialName;
+        if (string.IsNullOrWhiteSpace(approvingOfficialName))
+        {
+            Snackbar.Add("No approving official is set in the Organization Profile. Set it there before creating this report.", Severity.Warning);
             return;
         }
 
@@ -547,8 +548,10 @@
                 DateOnly.FromDateTime(_createForm.DateNullable.Value),
                 _createForm.FundCluster,
                 _createForm.Nature,
-                new ArEmployeeRefDto(_createForm.IssuedByEmployeeId, _createForm.IssuedByName.Trim(), _createForm.IssuedByDesignation),
-                new ArEmployeeRefDto(UserProfileState.EmployeeId, _createForm.ApprovedByName.Trim(), _createForm.ApprovedByDesignation),
+                new ArEmployeeRefDto(
+                    UserProfileState.EmployeeId,
+                    UserProfileState.EmployeeFullName.Trim(),
+                    string.IsNullOrWhiteSpace(UserProfileState.EmployeePositionName) ? null : UserProfileState.EmployeePositionName.Trim()),
                 new ArEmployeeRefDto(Guid.Empty, _createForm.IssuedToName.Trim(), _createForm.IssuedToDesignation),
                 _createForm.IssuedToOfficeAddress.Trim(),
                 _createForm.Remarks?.Trim(),

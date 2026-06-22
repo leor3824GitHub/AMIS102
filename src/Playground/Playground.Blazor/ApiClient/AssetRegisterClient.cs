@@ -953,13 +953,13 @@ internal sealed record ArIssuanceReportDto(
     string? Remarks,
     IReadOnlyCollection<ArIssuanceReportLineDto> Lines);
 
+// ApprovedBy is resolved server-side from the Organization Profile — not sent by the client.
 internal sealed record CreateIssuanceReportRequest(
     IssuanceReportType ReportType,
     DateOnly Date,
     string FundCluster,
     IssuanceNature Nature,
     ArEmployeeRefDto IssuedBy,
-    ArEmployeeRefDto ApprovedBy,
     ArEmployeeRefDto IssuedTo,
     string IssuedToOfficeAddress,
     string? Remarks,
