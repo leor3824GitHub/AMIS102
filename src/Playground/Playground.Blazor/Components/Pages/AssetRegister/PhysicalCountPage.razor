@@ -36,7 +36,7 @@
                     @if (_canCreate)
                     {
                         <AMISButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Success"
-                                    StartIcon="@Icons.Material.Outlined.PlayCircle" OnClick="@(() => _showStartForm = true)">
+                                    StartIcon="@Icons.Material.Outlined.PlayCircle" OnClick="OpenStartDialogAsync">
                             Start Session
                         </AMISButton>
                     }
@@ -52,50 +52,6 @@
             </MudCardContent>
         </MudCard>
     </MudItem>
-
-    <!-- Start Form -->
-    @if (_showStartForm)
-    {
-        <MudItem xs="12" md="5">
-            <MudCard Elevation="2">
-                <MudCardHeader>
-                    <CardHeaderContent><MudText Typo="Typo.h6">Start Physical Count Session</MudText></CardHeaderContent>
-                    <CardHeaderActions>
-                        <AMISIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small"
-                                        OnClick="@(() => _showStartForm = false)" />
-                    </CardHeaderActions>
-                </MudCardHeader>
-                <MudCardContent>
-                    <MudStack Spacing="2">
-                        <MudTextField @bind-Value="_startForm.Code" Label="Session Code" Variant="Variant.Outlined"
-                                      MaxLength="50" Required="true" Placeholder="e.g. PC-2026-Q1-SE" />
-                        <MudSelect @bind-Value="_startForm.Scope" Label="Scope" Variant="Variant.Outlined" T="PhysicalCountScope" Required="true">
-                            <MudSelectItem T="PhysicalCountScope" Value="@PhysicalCountScope.SEOnly">Semi-Expendable (RPCSEMEX)</MudSelectItem>
-                            <MudSelectItem T="PhysicalCountScope" Value="@PhysicalCountScope.PPEOnly">PPE (RPCPPE)</MudSelectItem>
-                            <MudSelectItem T="PhysicalCountScope" Value="@PhysicalCountScope.Both">All Assets</MudSelectItem>
-                        </MudSelect>
-                        <MudTextField @bind-Value="_startForm.FundCluster" Label="Fund Cluster" Variant="Variant.Outlined"
-                                      MaxLength="50" Required="true" />
-                        <MudDatePicker @bind-Date="_startForm.AsAtNullable" Label="As At Date" Variant="Variant.Outlined"
-                                       DateFormat="MM/dd/yyyy" Required="true" />
-                        <MudDatePicker @bind-Date="_startForm.StartedOnNullable" Label="Started On" Variant="Variant.Outlined"
-                                       DateFormat="MM/dd/yyyy" Required="true" />
-                        <MudTextField @bind-Value="_startForm.OfficeOrderNo" Label="Office Order No. (optional)" Variant="Variant.Outlined"
-                                      MaxLength="100" Placeholder="Required later to freeze the ledger" />
-                        <MudTextField @bind-Value="_startForm.Remarks" Label="Remarks (optional)" Variant="Variant.Outlined"
-                                      Lines="2" MaxLength="500" />
-                        <MudText Typo="Typo.caption" Class="mud-text-secondary">
-                            Conducted by: @UserProfileState.EmployeeFullName
-                        </MudText>
-                        <AMISButton Variant="Variant.Filled" Color="Color.Success" FullWidth="true"
-                                    OnClick="StartSessionAsync" Disabled="_busy">
-                            Start Session
-                        </AMISButton>
-                    </MudStack>
-                </MudCardContent>
-            </MudCard>
-        </MudItem>
-    }
 
     <!-- Results -->
     <MudItem xs="12">
@@ -234,9 +190,6 @@
                     <!-- Entries summary -->
                     <MudText Typo="Typo.subtitle2" Class="mb-2">
                         Count Entries (@_selected.Entries.Count)
-                        <MudLink Href="@($"/asset-register/reports?sessionId={_selected.Id}")" Class="ml-2" Typo="Typo.caption">
-                            View Full Report →
-                        </MudLink>
                     </MudText>
 
                     <MudTable Items="_selected.Entries.Take(10)" Dense="true" Striped="true">
@@ -535,21 +488,8 @@
     private const int PageSize = 15;
     private IReadOnlyList<ArPhysicalCountSummaryDto> _items = [];
     private ArPhysicalCountSessionDto? _selected;
-    private bool _showStartForm;
 
-    private StartFormModel _startForm = new();
     private CloseFormModel _closeForm = new();
-
-    private sealed class StartFormModel
-    {
-        public string Code { get; set; } = "";
-        public PhysicalCountScope Scope { get; set; }
-        public string FundCluster { get; set; } = "";
-        public DateTime? AsAtNullable { get; set; }
-        public DateTime? StartedOnNullable { get; set; }
-        public string? OfficeOrderNo { get; set; }
-        public string? Remarks { get; set; }
-    }
 
     private sealed class CloseFormModel
     {
@@ -672,53 +612,13 @@
         }
     }
 
-    private async Task StartSessionAsync()
+    private async Task OpenStartDialogAsync()
     {
-        if (string.IsNullOrWhiteSpace(_startForm.Code) || !_startForm.AsAtNullable.HasValue || !_startForm.StartedOnNullable.HasValue)
-        {
-            Snackbar.Add("Code, As At date, and Started On are required.", Severity.Warning);
-            return;
-        }
-
-        if (UserProfileState.EmployeeId == Guid.Empty)
-        {
-            Snackbar.Add("Your account is not linked to an employee record. Ask an administrator to link it before starting a count.", Severity.Warning);
-            return;
-        }
-
-        _busy = true;
-        try
-        {
-            // The signed-in user conducts the count; the API requires at least one conductor with a real EmployeeId.
-            var conductedBy = new[]
-            {
-                new ArEmployeeRefDto(UserProfileState.EmployeeId, UserProfileState.EmployeeFullName, UserProfileState.EmployeePositionName)
-            };
-
-            var req = new StartPhysicalCountRequest(
-                _startForm.Code.Trim(),
-                _startForm.Scope,
-                _startForm.FundCluster,
-                DateOnly.FromDateTime(_startForm.AsAtNullable.Value),
-                DateOnly.FromDateTime(_startForm.StartedOnNullable.Value),
-                conductedBy,
-                _startForm.Remarks,
-                string.IsNullOrWhiteSpace(_startForm.OfficeOrderNo) ? null : _startForm.OfficeOrderNo.Trim());
-
-            await Client.StartAsync(req);
-            Snackbar.Add("Physical count session started.", Severity.Success);
-            _showStartForm = false;
-            _startForm = new();
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true };
+        var dialog = await DialogService.ShowAsync<StartPhysicalCountDialog>("Start Physical Count Session", options);
+        var result = await dialog.Result;
+        if (result is { Canceled: false, Data: true })
             await LoadAsync();
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add(ex.Message, Severity.Error);
-        }
-        finally
-        {
-            _busy = false;
-        }
     }
 
     private async Task CloseSessionAsync()

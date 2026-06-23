@@ -35,7 +35,7 @@
             </MudItem>
             <MudItem xs="12" md="3">
                 <MudDatePicker @bind-Date="_form.DateNullable" @bind-Date:after="PeekNumberAsync" Label="Date" Variant="Variant.Outlined"
-                               DateFormat="MM/dd/yyyy" Required="true" Dense="true" />
+                               DateFormat="MM/dd/yyyy" Required="true" Dense="true" Margin="Margin.Dense" />
             </MudItem>
             <!-- Office address (full width) -->
             <MudItem xs="12">
@@ -127,19 +127,21 @@
             }
 
             <MudItem xs="12">
-                <AMISButton Variant="Variant.Filled" Color="Color.Error" FullWidth="true"
-                            OnClick="CreateAsync" Disabled="@(_busy || _form.SelectedAssets.Count == 0)">
-                    Create SMIR — Transfer Assets Out
-                </AMISButton>
-                <MudText Typo="Typo.caption" Color="Color.Warning" Class="mt-1">
+                <MudText Typo="Typo.caption" Color="Color.Warning">
                     This action is irreversible. Assets will be permanently transferred out of this office.
                 </MudText>
             </MudItem>
+
+            <MudItem xs="12" Class="d-flex justify-end">
+                <AMISButton OnClick="Cancel" Variant="Variant.Text" Color="Color.Default"
+                            Class="mr-2" Disabled="_busy">Cancel</AMISButton>
+                <AMISButton Variant="Variant.Filled" Color="Color.Error"
+                            OnClick="CreateAsync" Disabled="@(_busy || _form.SelectedAssets.Count == 0)">
+                    Save
+                </AMISButton>
+            </MudItem>
         </MudGrid>
     </DialogContent>
-    <DialogActions>
-        <MudButton OnClick="Cancel" Disabled="_busy">Cancel</MudButton>
-    </DialogActions>
 </MudDialog>
 
 @code {

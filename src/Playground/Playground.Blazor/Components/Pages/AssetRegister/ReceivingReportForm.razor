@@ -47,21 +47,23 @@
             {
                 <MudItem xs="12" md="3">
                     <MudTextField Value="@NextPperrNumber" Label="PPERR No." Variant="Variant.Outlined"
-                                  ReadOnly="true" HelperText="From the active pre-numbered accountable form series" />
+                                  ReadOnly="true" Dense="true" Margin="Margin.Dense"
+                                  HelperText="From the active pre-numbered accountable form series" />
                 </MudItem>
             }
             else
             {
                 <MudItem xs="12" md="3">
                     <MudTextField Value="@SmrrNumberDisplay" Label="SMRR No." Variant="Variant.Outlined"
-                                  ReadOnly="true" HelperText="Next available — assigned on save; may differ if another is saved first" />
+                                  ReadOnly="true" Dense="true" Margin="Margin.Dense"
+                                  HelperText="Next available — assigned on save; may differ if another is saved first" />
                 </MudItem>
             }
             <MudItem xs="12" md="3">
-                <MudDatePicker @bind-Date="_date" @bind-Date:after="OnDateChangedAsync" Label="Date" Variant="Variant.Outlined" Required="true" />
+                <MudDatePicker @bind-Date="_date" @bind-Date:after="OnDateChangedAsync" Label="Date" Variant="Variant.Outlined" Required="true" Dense="true" Margin="Margin.Dense" />
             </MudItem>
             <MudItem xs="12" md="3">
-                <MudSelect @bind-Value="_receiptType" Label="Type" Variant="Variant.Outlined" T="ReceiptType" Required="true">
+                <MudSelect @bind-Value="_receiptType" Label="Type" Variant="Variant.Outlined" T="ReceiptType" Required="true" Dense="true" Margin="Margin.Dense">
                     <MudSelectItem T="ReceiptType" Value="@ReceiptType.Purchase">Purchase</MudSelectItem>
                     <MudSelectItem T="ReceiptType" Value="@ReceiptType.Transfer">Transfer</MudSelectItem>
                     <MudSelectItem T="ReceiptType" Value="@ReceiptType.Donation">Donation</MudSelectItem>
@@ -71,11 +73,11 @@
             @if (_receiptType == ReceiptType.Other)
             {
                 <MudItem xs="12" md="3">
-                    <MudTextField @bind-Value="_otherReceiptType" Label="Specify Other" Variant="Variant.Outlined" Required="true" />
+                    <MudTextField @bind-Value="_otherReceiptType" Label="Specify Other" Variant="Variant.Outlined" Required="true" Dense="true" Margin="Margin.Dense" />
                 </MudItem>
             }
             <MudItem xs="12" md="3">
-                <MudTextField @bind-Value="_fundCluster" Label="Fund Cluster" Variant="Variant.Outlined" />
+                <MudTextField @bind-Value="_fundCluster" Label="Fund Cluster" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
             </MudItem>
             @if (_receiptType == ReceiptType.Purchase)
             {
@@ -86,21 +88,23 @@
                                      SearchFunc="SearchSuppliersAsync"
                                      ToStringFunc="@(s => s?.Name ?? string.Empty)"
                                      CoerceText="false" Required="true"
+                                     Dense="true" Margin="Margin.Dense"
                                      HelperText="Search supplier from accepted IARs" />
                 </MudItem>
                 <MudItem xs="12" md="6">
-                    <MudTextField @bind-Value="_address" Label="Address" Variant="Variant.Outlined" ReadOnly="true" />
+                    <MudTextField @bind-Value="_address" Label="Address" Variant="Variant.Outlined" ReadOnly="true" Dense="true" Margin="Margin.Dense" />
                 </MudItem>
             }
             else
             {
                 <MudItem xs="12" md="6">
                     <MudTextField @bind-Value="_receivedFrom" Label="Received From (Source Office / Donor / Agency)"
-                                  Variant="Variant.Outlined" Required="true"
+                                  Variant="Variant.Outlined" Required="true" Dense="true" Margin="Margin.Dense"
                                   HelperText="e.g. 'NFA Region V' or 'Department of Agriculture' or donor name" />
                 </MudItem>
                 <MudItem xs="12" md="6">
                     <MudTextField @bind-Value="_address" Label="Address" Variant="Variant.Outlined"
+                                  Dense="true" Margin="Margin.Dense"
                                   HelperText="Source office address (optional)" />
                 </MudItem>
             }

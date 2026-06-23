@@ -151,10 +151,6 @@
                     </CardHeaderContent>
                     <CardHeaderActions>
                         <MudStack Row="true" Spacing="1">
-                            <MudTooltip Text="View report in Reports Workspace">
-                                <MudIconButton Icon="@Icons.Material.Outlined.Preview" Size="Size.Small"
-                                               Href="@($"/asset-register/reports?issuanceReportId={_selected.Id}")" />
-                            </MudTooltip>
                             <AMISIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small"
                                             OnClick="@(() => _selected = null)" />
                         </MudStack>

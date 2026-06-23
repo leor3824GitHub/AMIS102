@@ -138,25 +138,6 @@
             </MudCard>
         </MudItem>
     }
-    @if (_canViewReports)
-    {
-        <MudItem xs="12" md="6" lg="4">
-            <MudCard Elevation="1">
-                <MudCardHeader>
-                    <CardHeaderAvatar>
-                        <MudIcon Icon="@Icons.Material.Outlined.Assessment" Color="Color.Dark" />
-                    </CardHeaderAvatar>
-                    <CardHeaderContent>
-                        <MudText Typo="Typo.h6">Reports Workspace</MudText>
-                        <MudText Typo="Typo.caption" Color="Color.Secondary">RegSPI, ICS/PAR, physical count, issuance, incidents, unserviceable</MudText>
-                    </CardHeaderContent>
-                </MudCardHeader>
-                <MudCardActions>
-                    <AMISButton Variant="Variant.Text" Color="Color.Primary" Href="/asset-register/reports">Open</AMISButton>
-                </MudCardActions>
-            </MudCard>
-        </MudItem>
-    }
 </MudGrid>
 
 @code {
@@ -169,8 +150,5 @@
     private bool _canViewIncident => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Incident.View);
     private bool _canViewIssuance => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Issuance.View);
     private bool _canViewUnserviceable => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Unserviceable.View);
-
-    // The reports workspace self-gates each report button, so show the card if the user can view any report area.
-    private bool _canViewReports => _canViewAccountability || _canViewCount || _canViewIssuance || _canViewIncident || _canViewUnserviceable;
 }
 
