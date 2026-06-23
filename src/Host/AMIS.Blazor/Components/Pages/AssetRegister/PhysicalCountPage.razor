@@ -378,6 +378,10 @@
                                             StartIcon="@Icons.Material.Outlined.Refresh" OnClick="LoadReconciliationAsync" Disabled="_busy">
                                     Compute Variances
                                 </AMISButton>
+                                <AMISButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Secondary"
+                                            StartIcon="@Icons.Material.Outlined.PictureAsPdf" OnClick="DownloadIcfAsync" Disabled="_busy">
+                                    ICF
+                                </AMISButton>
                                 <AMISButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Error"
                                             StartIcon="@Icons.Material.Outlined.PictureAsPdf" OnClick="@(() => DownloadAnnexAsync("b"))" Disabled="_busy">
                                     Annex B
@@ -388,6 +392,11 @@
                                 </AMISButton>
                             </MudStack>
                         </MudStack>
+                        <MudAlert Severity="Severity.Info" Dense="true" Class="mb-2">
+                            For PPE items without a Property No., provide in the <strong>Remarks</strong> column other
+                            information such as Serial No. / Model No. / brief description that can be useful during the
+                            reconciliation process.
+                        </MudAlert>
                         @if (_recon is not null)
                         {
                             <MudStack Row="true" Spacing="2" Class="mb-2" Wrap="Wrap.Wrap">
@@ -844,6 +853,21 @@
             Snackbar.Add($"'{row.Article}' flagged for recount.", Severity.Info);
         }
         catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    private async Task DownloadIcfAsync()
+    {
+        if (_selected is null) return;
+        _busy = true;
+        try
+        {
+            var bytes = await Client.GetInventoryCountFormPdfAsync(_selected.Id);
+            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
+            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            Snackbar.Add("Inventory Count Form (Annex A) ready.", Severity.Success);
+        }
+        catch (Exception ex) { Snackbar.Add($"PDF generation failed: {ex.Message}", Severity.Error); }
         finally { _busy = false; }
     }
 

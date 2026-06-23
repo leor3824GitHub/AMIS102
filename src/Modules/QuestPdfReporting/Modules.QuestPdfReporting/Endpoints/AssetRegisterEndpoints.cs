@@ -2,6 +2,7 @@ using AMIS.Modules.QuestPdfReporting.Features.v1.AssetRegister.PrintAccountabili
 using AMIS.Modules.QuestPdfReporting.Features.v1.AssetRegister.PrintCountAnnexes;
 using AMIS.Modules.QuestPdfReporting.Features.v1.AssetRegister.PrintIcsStickers;
 using AMIS.Modules.QuestPdfReporting.Features.v1.AssetRegister.PrintIncident;
+using AMIS.Modules.QuestPdfReporting.Features.v1.AssetRegister.PrintInventoryCountForm;
 using AMIS.Modules.QuestPdfReporting.Features.v1.AssetRegister.PrintParStickers;
 using AMIS.Modules.QuestPdfReporting.Features.v1.AssetRegister.PrintPhysicalCountReport;
 using AMIS.Modules.QuestPdfReporting.Features.v1.AssetRegister.PrintPropertyCard;
@@ -21,6 +22,7 @@ internal static class AssetRegisterEndpoints
         var assetRegister = group.MapGroup("asset-register");
 
         PrintCountAnnexesEndpoint.Map(assetRegister);
+        PrintInventoryCountFormEndpoint.Map(assetRegister);
         PrintPhysicalCountReportEndpoint.Map(assetRegister);
         PrintRegSpiEndpoint.Map(assetRegister);
         PrintAccountabilityEndpoint.Map(assetRegister);

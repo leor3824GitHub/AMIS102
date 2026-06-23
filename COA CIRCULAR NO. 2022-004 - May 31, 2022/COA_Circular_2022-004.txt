@@ -1,0 +1,94 @@
+REPUBLIC OF THE PHILIPPINES
+COMMISSION ON AUDIT
+Commonwealth Avenue, Quezon City
+
+CIRCULAR
+No. : 2022-004
+Date : MAY 31 2022
+TO : All Heads of the National Government Agencies (NGAs) and Government Corporations (GCs); Local Chief Executives; Heads of Finance/Comptrollership/Financial Management Services; Chief Accountants/Heads of Accounting Units; Budget Officers/Heads of Budget Units; Heads of Property and/or Supply Division/Unit; Commission on Audit (COA) Assistant Commissioners, Directors, Auditors; and All Others Concerned
+SUBJECT : Guidelines on the Implementation of Section 23 of the General Provisions of Republic Act (RA) No. 11639 also known as the General Appropriations Act (GAA) for Fiscal Year (FY) 2022 relative to the increase in the capitalization threshold from P15,000.00 to P50,000.00
+1.0 RATIONALE
+1.1 Section 23 of the General Provisions of RA No. 11639 or the FY 2022 GAA provides that tangible items below P50,000.00 shall be accounted as semi-expendable property. The increase in the capitalization threshold was envisioned to lead to a more efficient utilization of funds in the procurement of goods. However, as stated in the President's Veto Message, the implementation of the provision for the increase in the capitalization threshold from below P15,000.00 to below P50,000.00 shall be subject to the issuance by COA of appropriate accounting and auditing rules and regulations. Pending the issuance from COA, the agencies/entities shall still apply the existing accounting and auditing rules and regulations.
+1.2 In view of the abovementioned developments and in consonance with the rule-making function of this Commission as provided under Section 2(2) of Article IX-D of the 1987 Philippine Constitution and Section 25(4), Chapter 2, Title I of Presidential Decree (PD) No. 1445 or the Government Auditing Code of the Philippines, this Circular is issued to prescribe the guidelines on the implementation of Section 23 of the General Provision of FY 2022 GAA.
+2.0 COVERAGE
+This Circular shall be implemented by all NGAs, Local Government Units (LGUs), and GCs.
+3.0 DEFINITION OF TERMS
+For the purpose of this Circular, the following terms shall be construed to mean as follows:
+3.1 Semi-expendable property - tangible items which meet the definition and recognition criteria of Property, Plant and Equipment (PPE), but below the capitalization threshold of P50,000.00.
+3.2 Capitalization threshold - refers to the monetary value at which an entity elects to capitalize tangible assets that are used in operations and that have initial useful lives extending beyond a single reporting period.
+3.3 Current Replacement Cost - is the cost the entity would incur to acquire the asset on the reporting date.
+3.4 Tangible Assets/Items - are identifiable non-monetary assets with physical substance.
+4.0 IMPLEMENTING GUIDELINES
+4.1. Tangible items which meet the definition and recognition criteria of PPE but cost is below Fifty Thousand Pesos (P50,000.00) shall be accounted in the books of accounts of the agencies as semi-expendable property. This shall be supported by the issuance of the Inventory Custodian Slip (ICS) to establish accountability of the end-user. ICS shall be issued to the end-user and shall be renewed every three years or every time there is a change in custodianship/user of the property. The threshold shall be applied on an individual asset or per item basis. Each item within the bulk acquisition such as library books, small equipment, computer peripherals, work animals, and the like, will need to meet the amount of below P50,000.00 to be recognized as semi-expendable property.
+4.2. The increase in the capitalization threshold from P15,000.00 to P50,000.00 shall be considered as a change in accounting policy and shall be applied retrospectively. It means that the new capitalization threshold of P50,000.00 shall be applied for all tangible items purchased in calendar year (CY) 2022 onwards and in the prior years.
+4.3. For issued tangible items acquired prior to CY 2022 with amounts from P15,000.00 to below P50,000.00 previously classified as PPE:
+a. The carrying amount shall be expensed/charged to the following accounts, as applicable:
+i. Accumulated Surplus/(Deficit) for NGAs and GCs classified as Non-Commercial Public Sector Entities;
+ii. Retained Earnings/(Deficit) for GCs classified as Commercial Public Sector Entities; or
+iii. Prior Period Adjustment and Government Equity for LGUs.
+b. The corresponding accumulated depreciation and accumulated impairment loss shall be closed in the books of accounts.
+c. The existing Property Acknowledgment Receipts (PARs) for these items may be retained by the end-users and shall serve as the ICS until their accountabilities for such items are extinguished. Thus, the existing PARs need not be replaced with new ICSs.
+d. For additional control and safeguard, please refer to paragraphs 4.8.b. and 4.9.b of this Circular.
+4.4. For tangible items acquired prior to CY 2022 with amounts from P15,000.00 to below P50,000.00 previously classified as PPE which are still in the custody of the Supply and/or Property Division/Unit:
+a. These items shall be reclassified to the appropriate semi-expendable property account.
+b. The Property Cards being maintained by the Supply and/or Property Division/Unit for these items shall serve as Semi-Expendable Property Card (SPCs) until these items are issued.
+c. The Property, Plant and Equipment Ledger Cards being maintained by the Accounting Division/Unit for these items shall serve as Semi-Expendable Property Ledger Cards (SPLCs) until these items are issued.
+4.5. For tangible items acquired prior to CY 2022 with amounts below P15,000.00 which are already classified as semi-expendable property and are still in the custody of the Supply and/or Property Division/Unit:
+a. The Stock Cards being maintained by the Supply and/or Property Division/Unit for these items shall serve as SPCs until these items are issued.
+b. The Supplies Ledger Cards being maintained by the Accounting Division/Unit for these items shall serve as SPLCs until these items are issued.
+4.6. A change in accounting policy requires retrospective application. The entity shall adjust the opening balance of each affected component of net assets/equity for the earliest period presented, and the other comparative amounts disclosed for each prior period presented as if the new accounting policy had always been applied. It means that the entity shall restate the amounts for prior period/s in the comparative financial statements to reflect the change in accounting policy.
+4.7. To strengthen controls over the semi-expendable property, the following forms, registry, and reports are prescribed as annexes:
+4.7.1. Annex A.1 - Semi-Expendable Property Card (SPC)
+This form shall be maintained in the Supply and/or Property Division/Unit for each class of semi-expendable property to record promptly the acquisition (based on the Inspection and Acceptance Report and other supporting documents), issue/transfer/disposal and the description/ information about the asset.
+4.7.2. Annex A.2 - Semi-Expendable Property Ledger Card (SPLC)
+This form shall be kept in the Accounting Division/Unit to record promptly the acquisition, description, custody, impairment, issue/transfer/disposal, repair history, and other information about the property.
+4.7.3. Annex A.3 - Inventory Custodian Slip (ICS)
+This form is used by the Property and/or Supply Division/Unit to issue tangible items amounting to less than P50,000.00 to end-user to establish accountability over them.
+4.7.4. Annex A.4 - Registry of Semi-Expendable Property Issued (RegSPI)
+This registry shall be maintained in the Property and/or Supply Division/Unit for each class of issued semi-expendable property. The Property and/or Supply Custodian shall record promptly the issue, return, reissue, disposal, and other information about the property if returned and the description/information about the asset. It shall be maintained by fund. ICS shall be maintained continuously and recorded in sequential manner to keep track of any missing ICS. (Note: This functions similarly to SPC, however only a registry is recommended to be maintained since issued semi-expendable property are already derecognized in the books of accounts.)
+4.7.5. Annex A.5 - Inventory Transfer Report (ITR)
+The report shall be used every time there is a transfer of inventory such as donation, reassignment, relocation, and the like, from an outgoing officer to his successor or from one accountable officer/employee to another of the same or another entity, or from one entity/agency to another entity/agency.
+4.7.6. Annex A.6 - Receipt of Returned Semi-Expendable Property (RRSP)
+This form shall be prepared by the Accountable Officer for returned semi-expendable property whether serviceable or unserviceable.
+4.7.7. Annex A.7 - Report of Semi-Expendable Property Issued (RSPI)
+This report shall be prepared by the Property and/or Supply Division/Unit to report/summarize all issued semi-expendable property (by semi-expendable property number) at least weekly. It shall be prepared by the Property and/or Supply Custodian based on the ICS and shall be used by the Accounting Division/Unit as basis in preparing the journal entry voucher to recognize the semi-expendable property issued. In this form, the ICS No. is indicated and the agency can check anytime if there are missing ICS at hand since ICS is the only accountability form for the issuance of semi-expendable property. Proper keeping and monitoring of the ICS by the Property/Supply Officer is recommended. The Property/Supply Officer shall conduct periodic monitoring of all ICS issued to ensure that the accountability of concerned employees is checked.
+4.7.8. Annex A.8 - Report on the Physical Count of Semi-Expendable Property (RPCSP)
+This form shall be used to report the physical count of semi-expendable property, which are owned by the agency/entity, by type of property still in the custody of the Property and/or Supply Division/Unit as at a given date. It shows the balance of semi-expendable items per card and per count and shortage/overage, if any. It shall be prepared annually and by fund by the Inventory Committee.
+4.7.9. Annex A.9 - Report of Lost, Stolen, Damaged or Destroyed Semi-Expendable Property (RLSDDSP)
+This report shall be used by the accountable officer/employee to report or notify within 30 days the officials concerned of the loss, theft, damage or destruction of the semi-expendable property whether issued or unissued. The RLSDDSP shall support the subsequent request for relief from property accountability.
+4.7.10. Annex A.10 - Inventory and Inspection Report of Unserviceable Semi-Expendable Property (IIRUSP)
+This report shall be used to account for all unserviceable semi-expendable property of an entity which is subject to disposal. It shall be prepared by the Property and/or Supply Division/Unit.
+4.8. For additional control and to safeguard the semi-expendable property considering that more valuable items shall be covered by the new capitalization threshold, the semi-expendable property shall be classified into two categories:
+a. Low-valued items - cost of each item is P5,000.00 or less; and
+b. High-valued items - cost of each item is more than P5,000.00 but less than P50,000.00.
+4.9. The accountability for semi-expendable property shall also be segregated based on a categorization, as follows:
+a. Low-valued items - accountability shall be extinguished upon expiration of the estimated useful life, or upon return of the property before the end of its useful life, whether serviceable or non-serviceable, to the Property and/or Supply Division/Unit; and
+b. High-valued items - accountability shall only be extinguished upon return of the item to the Property and/or Supply Division/Unit or in case of loss, upon approval of the request for relief from property accountability, regardless of the expiration of the estimated useful life.
+4.10. Upon expiration of the estimated useful life for low-valued semi-expendable property, the issued ICS to end-user shall be automatically cancelled. The end of its useful life means the end of the accountability of the end-user. However, if the low-valued semi-expendable property is deemed unserviceable before the end of its useful life, it shall be returned to the Property and/or Supply Division/Unit for cancellation of the ICS and proper disposal. The return of low-valued items by the end-user shall be recorded in the IIRUSP. Another/New semi-expendable property of the same nature or use shall not be issued, unless justifiable, before the expiration of the estimated useful life or cancellation of the ICS previously issued to the end-user.
+4.11. For issued high-valued semi-expendable property which have become unserviceable, these shall be reported by the Property/Supply Officer in the IIRUSP upon return by the end-user.
+4.12. The agency shall determine/provide the estimated useful life of each semi-expendable property, subject to post-audit of the COA auditors concerned. The agency is in the best position to estimate the useful life of their semi-expendable property. The agency shall also issue an updated policy/memorandum determining/providing the estimated useful life, as necessary.
+4.13. To serve as a guide, a range of estimated useful life per class is provided, as follows:
+- Semi-Expendable Machinery and Equipment - 5 to 15 years
+- Semi-Expendable Furniture, Fixtures and Books - 2 to 15 years
+The above life span of semi-expendable property may be used unless a more appropriate estimated useful life of semi-expendable property is determined by the agency based on the nature of its operation and mission, among others. Based on the above life spans, the entity shall prepare the specific estimated useful life for each semi-expendable property based on its experience on the life of its asset, and copy furnished the COA auditors.
+4.14. For proper maintenance of ICS, the Property and/or Supply Division/Unit shall assign separate ICS control number for low-valued items and high-valued items. Segregation of ICS for semi-expendable property will ensure proper monitoring of accountability particularly for high-valued items which accountability only expires after the return of the item or in case of loss, upon approval of the request for relief from property accountability.
+4.15. The acquisition of a semi-expendable property shall comply with the prevailing procurement policies and procedures prescribed in RA No. 91847 and its Revised Implementing Rules and Regulations.
+4.16. Semi-expendable property shall be covered by the policies of International Public Sector Accounting Standard (IPSAS) 12-Inventories. Hence, they are not subject to depreciation but subject to impairment.
+4.17. When high-valued semi-expendable property is lost by the end-user, the accountable officer shall apply the existing policies and guidelines for request for relief from property accountability of lost government property.
+4.18. In case of loss of unissued semi-expendable property, the Property/Supply Officer shall notify the Accounting Department thru the RLSDDSP, which serves as the Notice of Loss, as basis for the derecognition in the books of account. The loss shall be charged to account "Loss of Assets" at its carrying amount and credited to the appropriate inventory account - semi-expendable. Should the Property/ Supply Officer fail to file pursuant to Section 73 of the PD No. 1445 and Section 5 of the 2009 Revised Rules of Procedure of the COA a request for relief from accountability within 30 days from date of submission of RLSDDSP, the Chief Accountant shall record a debit to "Due from Officers and Employees" account and a credit to "Other Deferred Credits" account the amount of the loss. Once the request for relief from property accountability is granted, the latter accounting entry shall be reversed.
+4.19. When a semi-expendable property is lost before the end of its useful life in the possession of the official/employee to whom it is issued, the loss shall be recorded by the Chief Accountant upon the receipt of RLSDDSP as debit to "Due from Officers and Employees" and a credit to the account "Other Deferred Credits" at its Current Replacement Cost with the same condition and specifications of the lost semi-expendable property at the time of loss.
+4.20. Annex B of this Circular enumerates the procedures to be followed in the Receipt, Inspection, Acceptance and Recording of Deliveries of Semi-Expendable Property; Procedures in the Requisition and Issue of Semi-Expendable Property; and Procedures on the Transfer, Return, Re-issue and Disposal of Semi-Expendable Property.
+5.0 SAVING CLAUSE
+Any clarification or request for assistance on the implementation of this Circular or cases not covered herein shall be referred to this Commission through the Government Accountancy Sector.
+6.0 REPEALING CLAUSE
+All circulars, memoranda, and other issuances or any parts thereof inconsistent with the provisions of this Circular are hereby amended, modified, or revoked accordingly.
+7.0 EFFECTIVITY
+This Circular shall take effect 15 days after its publication in a newspaper of general circulation.
+COMMISSION ON AUDIT
+OFFICE OF THE COMMISSION SECRETARIAT
+RIZALINA NOVAL JUSTOL
+Chairperson
+ROLAND CAFÉ PONDOC
+Commissioner
+MARIO GONZALES LIPANA
+Commissioner

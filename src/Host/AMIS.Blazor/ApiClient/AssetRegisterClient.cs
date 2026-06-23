@@ -696,6 +696,8 @@ internal interface IArPhysicalCountClient
     Task<ArPhysicalCountSessionDto> CloseAsync(Guid sessionId, ClosePhysicalCountRequest request, CancellationToken ct = default);
     /// <summary>annexKind: "b" = Found at Station, "c" = Non-Existing/Missing. Returns the COA annex PDF bytes.</summary>
     Task<byte[]> GetCountAnnexPdfAsync(Guid sessionId, string annexKind, string? pageWidth = null, CancellationToken ct = default);
+    /// <summary>Returns the COA Inventory Count Form (Annex A) PDF bytes for a session.</summary>
+    Task<byte[]> GetInventoryCountFormPdfAsync(Guid sessionId, string? pageWidth = null, CancellationToken ct = default);
 }
 
 internal sealed class ArPhysicalCountClient(HttpClient http) : IArPhysicalCountClient
@@ -780,6 +782,14 @@ internal sealed class ArPhysicalCountClient(HttpClient http) : IArPhysicalCountC
     public Task<byte[]> GetCountAnnexPdfAsync(Guid sessionId, string annexKind, string? pageWidth = null, CancellationToken ct = default)
     {
         var url = $"api/v1/quest-pdf-reporting/asset-register/physical-count/{sessionId}/annex-{annexKind.ToLowerInvariant()}/pdf";
+        if (!string.IsNullOrWhiteSpace(pageWidth))
+            url += $"?pageWidth={pageWidth}";
+        return http.GetByteArrayAsync(url, ct);
+    }
+
+    public Task<byte[]> GetInventoryCountFormPdfAsync(Guid sessionId, string? pageWidth = null, CancellationToken ct = default)
+    {
+        var url = $"api/v1/quest-pdf-reporting/asset-register/physical-count/{sessionId}/icf/pdf";
         if (!string.IsNullOrWhiteSpace(pageWidth))
             url += $"?pageWidth={pageWidth}";
         return http.GetByteArrayAsync(url, ct);
