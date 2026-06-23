@@ -17,6 +17,7 @@ using AMIS.Framework.Web.Security;
 using AMIS.Framework.Web.Versioning;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -111,6 +112,28 @@ public static class Extensions
                 Directory.CreateDirectory(assetsPath);
             }
 
+            // Block confidential upload subtrees (e.g. wet-signed copies under uploads/protected/...) from
+            // anonymous static serving. MUST run before UseStaticFiles so the static middleware never reaches
+            // them — those files are served only via their authenticated, permission-checked download endpoints.
+            var blockedPrefixes = options.BlockedStaticPathPrefixes;
+            if (blockedPrefixes is { Count: > 0 })
+            {
+                app.Use(async (context, next) =>
+                {
+                    foreach (var prefix in blockedPrefixes)
+                    {
+                        if (context.Request.Path.StartsWithSegments(prefix, StringComparison.OrdinalIgnoreCase))
+                        {
+                            // 404 (not 403) so the resource's existence is not revealed.
+                            context.Response.StatusCode = StatusCodes.Status404NotFound;
+                            return;
+                        }
+                    }
+
+                    await next(context).ConfigureAwait(false);
+                });
+            }
+
             app.UseStaticFiles();
         }
 
@@ -180,5 +203,14 @@ public sealed class AMISPipelineOptions
     public bool UseOpenApi { get; set; } = true;
     public bool ServeStaticFiles { get; set; } = true;
     public bool MapModules { get; set; } = true;
+
+    /// <summary>
+    /// URL path prefixes that must NEVER be served as anonymous static files, even though they live under
+    /// the static web root. Defaults to <c>/uploads/protected</c> — the subtree where confidential uploads
+    /// (e.g. wet-signed copies, per <c>AMIS.Framework.Storage.StoragePaths.ProtectedFolder</c>) are written.
+    /// Those are reachable only through their authenticated, permission-checked download endpoints. Public
+    /// assets (tenant logos, favicons, user avatars under <c>uploads/&lt;type&gt;/</c>) remain served normally.
+    /// </summary>
+    public IReadOnlyList<string> BlockedStaticPathPrefixes { get; set; } = ["/uploads/protected"];
 }
 

@@ -110,7 +110,7 @@ public sealed class TenantThemeService : ITenantThemeService
         if (assets.Logo?.Data is { Count: > 0 })
         {
             var oldLogoUrl = entity.LogoUrl;
-            entity.LogoUrl = await _storageService.UploadAsync<TenantTheme>(assets.Logo, FileType.Image, ct).ConfigureAwait(false);
+            entity.LogoUrl = await _storageService.UploadAsync<TenantTheme>(assets.Logo, FileType.Image, cancellationToken: ct).ConfigureAwait(false);
             if (!string.IsNullOrEmpty(oldLogoUrl))
             {
                 await _storageService.RemoveAsync(oldLogoUrl, ct).ConfigureAwait(false);
@@ -126,7 +126,7 @@ public sealed class TenantThemeService : ITenantThemeService
         if (assets.LogoDark?.Data is { Count: > 0 })
         {
             var oldLogoUrl = entity.LogoDarkUrl;
-            entity.LogoDarkUrl = await _storageService.UploadAsync<TenantTheme>(assets.LogoDark, FileType.Image, ct).ConfigureAwait(false);
+            entity.LogoDarkUrl = await _storageService.UploadAsync<TenantTheme>(assets.LogoDark, FileType.Image, cancellationToken: ct).ConfigureAwait(false);
             if (!string.IsNullOrEmpty(oldLogoUrl))
             {
                 await _storageService.RemoveAsync(oldLogoUrl, ct).ConfigureAwait(false);
@@ -142,7 +142,7 @@ public sealed class TenantThemeService : ITenantThemeService
         if (assets.Favicon?.Data is { Count: > 0 })
         {
             var oldFaviconUrl = entity.FaviconUrl;
-            entity.FaviconUrl = await _storageService.UploadAsync<TenantTheme>(assets.Favicon, FileType.Image, ct).ConfigureAwait(false);
+            entity.FaviconUrl = await _storageService.UploadAsync<TenantTheme>(assets.Favicon, FileType.Image, cancellationToken: ct).ConfigureAwait(false);
             if (!string.IsNullOrEmpty(oldFaviconUrl))
             {
                 await _storageService.RemoveAsync(oldFaviconUrl, ct).ConfigureAwait(false);

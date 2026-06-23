@@ -51,6 +51,17 @@
     <EmbeddedResource Include="appsettings.Production.json" />
   </ItemGroup>
 
+  <!-- NU1903 GHSA-2m69-gcr7-jv3q (numeric-truncation in bundled SQLite). The .NETStandard/Windows path is
+       genuinely patched via the SQLitePCLRaw.lib.e_sqlite3 3.50.3 pin in Directory.Packages.props. The Android
+       native package (SQLitePCLRaw.lib.e_sqlite3.android), pulled in directly by bundle_green for net*-android,
+       has NO patched release (latest is 2.1.11; advisory first_patched_version is null), so it cannot be bumped.
+       Suppressed here: SQLite is used only as a local offline cache of data fetched from the trusted backend
+       API (no untrusted SQL), so this advisory is not exploitable in this app. Revisit if SQLitePCLRaw ships a
+       patched .android package or a 3.x bundle. -->
+  <ItemGroup>
+    <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-2m69-gcr7-jv3q" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Maui" />
     <PackageReference Include="CommunityToolkit.Maui.Camera" />

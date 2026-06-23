@@ -85,7 +85,12 @@ public sealed record TangibleInventoryItemDetailDto(
     string? LinkedDocumentNo,
     Guid? LinkedDocumentId,
     string Unit = "unit",
-    Guid? CurrentLocationId = null);
+    Guid? CurrentLocationId = null,
+    string? SerialNo = null,
+    DateOnly? AcquisitionDate = null,
+    string? LocationName = null,
+    string? AccountableOfficer = null,
+    string? AccountableOfficerDesignation = null);
 
 // ── Physical Count ────────────────────────────────────────────────────────────
 

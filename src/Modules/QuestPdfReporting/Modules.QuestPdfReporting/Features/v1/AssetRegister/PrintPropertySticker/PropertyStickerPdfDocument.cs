@@ -27,9 +27,9 @@ internal sealed class PropertyStickerPdfDocument(
     private const string Slate = "#5B6B8C";   // de-emphasised (address, designation)
     private const float  SheetMarginMm = 8f;
     private const float  CellGap = 4f;
-    // Inner padding of each property box (asymmetric: more space at the top, a larger gap at the bottom).
+    // Inner padding of each property box (asymmetric: a little more space at the top than the bottom).
     private const float  BoxPadTop    = 13f;
-    private const float  BoxPadBottom = 20f;
+    private const float  BoxPadBottom = 8f;
     private const float  BoxPadSide   = 4f;
     private const float  LabelColWidth = 80f; // fixed label column → values align on one edge
     private const float  FieldFont = 7.5f;    // field label/value/type text size
@@ -111,7 +111,9 @@ internal sealed class PropertyStickerPdfDocument(
                         var cell = row.RelativeItem();
                         var index = (r * columns) + c;
                         if (index < pageStickers.Count)
-                            cell.Padding(CellGap).Element(x => ComposeStickerCell(x, pageStickers[index]));
+                            // AlignTop → the box sizes to its content; any slack in the fixed-height
+                            // row slot stays *below* the box (between rows) instead of inflating it.
+                            cell.Padding(CellGap).AlignTop().Element(x => ComposeStickerCell(x, pageStickers[index]));
                     }
                 });
             }
@@ -190,6 +192,7 @@ internal sealed class PropertyStickerPdfDocument(
         {
             col.Item().AlignCenter().Text(m.PropertyNo).Bold().FontSize(6f).FontColor(Ink);
             col.Item().PaddingTop(2).AlignCenter().DrawQr(m.PropertyNo, 58f);
+            col.Item().PaddingTop(2).AlignCenter().Text("Property Code").FontSize(5.5f).FontColor(Slate);
         });
     }
 

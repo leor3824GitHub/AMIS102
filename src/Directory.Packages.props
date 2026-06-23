@@ -161,5 +161,11 @@
     <PackageVersion Include="MessagePack" Version="2.5.302" />
     <!-- NU1903 GHSA-37gx-xxp4-5rgx and GHSA-w3x6-4m5h-cxqf (was 10.0.0 via test deps) -->
     <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.7" />
+    <!-- NU1903 GHSA-2m69-gcr7-jv3q: SQLitePCLRaw.lib.e_sqlite3 <= 2.1.11 bundles a vulnerable SQLite.
+         bundle_green/core/provider stay at 2.1.11 (managed, unaffected); only the native lib is pinned.
+         3.50.3 is the restructured self-contained native package — it carries every platform's runtime
+         (android/ios/win/maccatalyst) directly, so the vulnerable .android/.ios sub-packages drop out
+         of the graph entirely. (Pulled transitively via Playground.Maui -> SQLitePCLRaw.bundle_green.) -->
+    <PackageVersion Include="SQLitePCLRaw.lib.e_sqlite3" Version="3.50.3" />
   </ItemGroup>
 </Project>

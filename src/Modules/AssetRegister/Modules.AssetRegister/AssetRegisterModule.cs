@@ -173,6 +173,7 @@ public class AssetRegisterModule : IModule
         Features.v1.Assets.UpdateAssetDepreciation.UpdateAssetDepreciationEndpoint.Map(assets);
         Features.v1.Assets.GetAssetRegistry.GetAssetRegistryEndpoint.Map(assets);
         Features.v1.Assets.GetAssetByPropertyNo.GetAssetByPropertyNoEndpoint.Map(assets);
+        Features.v1.Assets.GetAssetScanDetailByPropertyNo.GetAssetScanDetailByPropertyNoEndpoint.Map(assets);
         Features.v1.Assets.SearchAssets.SearchAssetsEndpoint.Map(assets);
 
         // Accountability (ICS / PAR)

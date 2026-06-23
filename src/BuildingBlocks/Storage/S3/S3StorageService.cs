@@ -17,8 +17,6 @@ internal sealed class S3StorageService : IStorageService
     private readonly ILogger<S3StorageService> _logger;
     private readonly FileExtensionContentTypeProvider _contentTypeProvider;
 
-    private const string UploadBasePath = "uploads";
-
     public S3StorageService(IAmazonS3 s3, IOptions<S3StorageOptions> options, ILogger<S3StorageService> logger)
     {
         _s3 = s3;
@@ -32,7 +30,7 @@ internal sealed class S3StorageService : IStorageService
         }
     }
 
-    public async Task<string> UploadAsync<T>(FileUploadRequest request, FileType fileType, CancellationToken cancellationToken = default) where T : class
+    public async Task<string> UploadAsync<T>(FileUploadRequest request, FileType fileType, string? folderPath = null, CancellationToken cancellationToken = default) where T : class
     {
         ArgumentNullException.ThrowIfNull(request);
 
@@ -49,7 +47,7 @@ internal sealed class S3StorageService : IStorageService
             throw new InvalidOperationException($"File exceeds max size of {rules.MaxSizeInMB} MB.");
         }
 
-        var key = BuildKey<T>(SanitizeFileName(request.FileName));
+        var key = BuildKey<T>(SanitizeFileName(request.FileName), folderPath);
 
         using var stream = new MemoryStream([.. request.Data]);
 
@@ -162,10 +160,10 @@ internal sealed class S3StorageService : IStorageService
         }
     }
 
-    private string BuildKey<T>(string fileName) where T : class
+    private string BuildKey<T>(string fileName, string? folderPath) where T : class
     {
-        var folder = Regex.Replace(typeof(T).Name.ToLowerInvariant(), @"[^a-z0-9]", "_");
-        var relativePath = Path.Combine(UploadBasePath, folder, $"{Guid.NewGuid():N}_{fileName}").Replace("\\", "/", StringComparison.Ordinal);
+        var folder = StoragePaths.ResolveFolder(folderPath, typeof(T).Name);
+        var relativePath = $"{StoragePaths.UploadBasePath}/{folder}/{Guid.NewGuid():N}_{fileName}";
         if (!string.IsNullOrWhiteSpace(_options.Prefix))
         {
             return $"{_options.Prefix.TrimEnd('/')}/{relativePath}";

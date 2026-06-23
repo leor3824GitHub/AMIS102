@@ -44,6 +44,35 @@ public sealed record AssetRegistrySummaryDto(
     AssetCondition CurrentCondition,
     Guid? CurrentCustodianId);
 
+/// <summary>
+/// Flat, display-ready projection for the mobile "scan an asset" view. Resolves the asset's current
+/// location name and — via its current accountability — the document type/number and the accountable
+/// officer (PrintedName/Designation are denormalized on the accountability), so the client renders the
+/// whole detail screen from a single call. <see cref="DocumentType"/>, <see cref="DocumentNo"/> and the
+/// officer fields are null when the asset is not currently on an accountability document.
+/// </summary>
+public sealed record AssetScanDetailDto(
+    Guid Id,
+    string PropertyNo,
+    AssetType AssetType,
+    string Description,
+    string? SerialNo,
+    string? Brand,
+    string? Model,
+    string Unit,
+    DateOnly AcquisitionDate,
+    decimal UnitCost,
+    LifecycleState LifecycleState,
+    AssetCondition CurrentCondition,
+    Guid? CurrentLocationId,
+    string? LocationName,
+    Guid? CurrentAccountabilityId,
+    AccountabilityType? DocumentType,
+    string? DocumentNo,
+    Guid? AccountableOfficerId,
+    string? AccountableOfficerName,
+    string? AccountableOfficerDesignation);
+
 // ── Commands ───────────────────────────────────────────────────────────────
 
 /// <summary>
@@ -84,6 +113,8 @@ public sealed record UpdateAssetDepreciationCommand(
 public sealed record GetAssetRegistryQuery(Guid Id) : IQuery<AssetRegistryDto?>;
 
 public sealed record GetAssetByPropertyNoQuery(string PropertyNo) : IQuery<AssetRegistryDto?>;
+
+public sealed record GetAssetScanDetailByPropertyNoQuery(string PropertyNo) : IQuery<AssetScanDetailDto?>;
 
 public sealed record SearchAssetsQuery(
     string? Keyword = null,

@@ -86,15 +86,30 @@ public sealed class ApiClient(HttpClient httpClient) : IApiClient
 
     public async Task<TangibleInventoryItemDetailDto> GetItemByPropertyNoAsync(string propertyNo, CancellationToken ct = default)
     {
-        var a = await httpClient.GetFromJsonAsync<ArAssetDetail>(
-            $"api/v1/asset-register/assets/by-property-no/{Uri.EscapeDataString(propertyNo)}", ct);
+        var a = await httpClient.GetFromJsonAsync<ArScanDetail>(
+            $"api/v1/asset-register/assets/by-property-no/{Uri.EscapeDataString(propertyNo)}/scan-detail", ct);
         return new TangibleInventoryItemDetailDto(
             a!.Id, a.PropertyNo, a.Description, a.Description, a.UnitCost, a.AssetType,
             IsIssued: string.Equals(a.LifecycleState, "Assigned", StringComparison.OrdinalIgnoreCase),
-            LinkedDocumentType: null, LinkedDocumentNo: null, LinkedDocumentId: a.CurrentAccountabilityId,
+            LinkedDocumentType: MapAccountabilityType(a.DocumentType),
+            LinkedDocumentNo: a.DocumentNo,
+            LinkedDocumentId: a.CurrentAccountabilityId,
             Unit: string.IsNullOrWhiteSpace(a.Unit) ? "unit" : a.Unit,
-            CurrentLocationId: a.CurrentLocationId);
+            CurrentLocationId: a.CurrentLocationId,
+            SerialNo: a.SerialNo,
+            AcquisitionDate: a.AcquisitionDate,
+            LocationName: a.LocationName,
+            AccountableOfficer: a.AccountableOfficerName,
+            AccountableOfficerDesignation: a.AccountableOfficerDesignation);
     }
+
+    // Server returns the accountability enum (SE_ICS / PPE_PAR); map to the COA form name shown on the sticker.
+    private static string? MapAccountabilityType(string? accountabilityType) => accountabilityType switch
+    {
+        "SE_ICS" => "ICS",
+        "PPE_PAR" => "PAR",
+        _ => null,
+    };
 
     public async Task<List<CatalogItemDto>> SearchCatalogItemsAsync(string keyword, CancellationToken ct = default)
     {
@@ -218,8 +233,13 @@ public sealed class ApiClient(HttpClient httpClient) : IApiClient
         string PropertyNo, string Description, string AssetType, decimal UnitCost,
         string Unit, int EstimatedUsefulLifeYears, DateOnly AcquisitionDate);
 
-    private sealed record ArAssetDetail(
-        Guid Id, string PropertyNo, string Description, decimal UnitCost,
-        string AssetType, string LifecycleState, Guid? CurrentAccountabilityId,
-        string? Unit, Guid? CurrentLocationId);
+    // Mirrors AssetRegister AssetScanDetailDto. Enums (AssetType, DocumentType, LifecycleState,
+    // CurrentCondition) arrive as strings via the global JsonStringEnumConverter.
+    private sealed record ArScanDetail(
+        Guid Id, string PropertyNo, string AssetType, string Description,
+        string? SerialNo, string? Brand, string? Model, string Unit,
+        DateOnly AcquisitionDate, decimal UnitCost, string LifecycleState, string CurrentCondition,
+        Guid? CurrentLocationId, string? LocationName,
+        Guid? CurrentAccountabilityId, string? DocumentType, string? DocumentNo,
+        Guid? AccountableOfficerId, string? AccountableOfficerName, string? AccountableOfficerDesignation);
 }

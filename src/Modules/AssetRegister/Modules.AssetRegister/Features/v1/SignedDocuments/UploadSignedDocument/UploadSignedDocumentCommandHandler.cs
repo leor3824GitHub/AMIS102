@@ -29,14 +29,19 @@ public sealed class UploadSignedDocumentCommandHandler(
 
         var sha256 = Convert.ToHexString(SHA256.HashData(command.Content)).ToLowerInvariant();
 
+        var tenantId = currentUser.GetTenant() ?? db.TenantInfo?.Identifier ?? string.Empty;
+
         var uploadRequest = new FileUploadRequest
         {
             FileName = command.FileName,
             ContentType = command.ContentType,
             Data = [.. command.Content]
         };
+        // Confidential wet-signed copy → uploads/protected/{tenant}/{docType}; a subtree the web pipeline
+        // never serves as static files (reachable only via the authenticated download endpoint).
         var storageKey = await storageService
-            .UploadAsync<SignedDocument>(uploadRequest, FileType.Pdf, cancellationToken)
+            .UploadAsync<SignedDocument>(
+                uploadRequest, FileType.Pdf, StoragePaths.Protected(tenantId, command.DocumentType.ToString()), cancellationToken)
             .ConfigureAwait(false);
 
         var uploaderId = currentUser.GetUserId();
@@ -50,7 +55,6 @@ public sealed class UploadSignedDocumentCommandHandler(
         SignedDocument entity;
         if (existing is null)
         {
-            var tenantId = currentUser.GetTenant() ?? db.TenantInfo?.Identifier ?? string.Empty;
             entity = SignedDocument.Create(
                 tenantId, command.DocumentType, command.DocumentId, storageKey, sha256,
                 command.FileName, command.ContentType, command.Content.LongLength, uploaderId, uploaderName);

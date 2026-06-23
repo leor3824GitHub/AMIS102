@@ -9,7 +9,6 @@ namespace AMIS.Framework.Storage.Local;
 
 public class LocalStorageService : IStorageService
 {
-    private const string UploadBasePath = "uploads";
     private readonly string _rootPath;
     private readonly FileExtensionContentTypeProvider _contentTypeProvider;
 
@@ -22,7 +21,7 @@ public class LocalStorageService : IStorageService
         _contentTypeProvider = new FileExtensionContentTypeProvider();
     }
 
-    public async Task<string> UploadAsync<T>(FileUploadRequest request, FileType fileType, CancellationToken cancellationToken = default)
+    public async Task<string> UploadAsync<T>(FileUploadRequest request, FileType fileType, string? folderPath = null, CancellationToken cancellationToken = default)
         where T : class
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -41,18 +40,16 @@ public class LocalStorageService : IStorageService
             throw new InvalidOperationException($"File exceeds max size of {rules.MaxSizeInMB} MB.");
         }
 
-        #pragma warning disable CA1308 // folder names are intentionally lower-case for URLs/paths
-        var folder = Regex.Replace(typeof(T).Name.ToLowerInvariant(), @"[^a-z0-9]", "_");
-        #pragma warning restore CA1308
+        var folder = StoragePaths.ResolveFolder(folderPath, typeof(T).Name);
         var safeFileName = $"{Guid.NewGuid():N}_{SanitizeFileName(request.FileName)}";
-        var relativePath = Path.Combine(UploadBasePath, folder, safeFileName);
-        var fullPath = Path.Combine(_rootPath, relativePath);
+        var relativePath = $"{StoragePaths.UploadBasePath}/{folder}/{safeFileName}"; // forward-slash key (URL-normalized)
+        var fullPath = Path.Combine(_rootPath, relativePath.Replace('/', Path.DirectorySeparatorChar));
 
         Directory.CreateDirectory(Path.GetDirectoryName(fullPath)!);
 
         await File.WriteAllBytesAsync(fullPath, request.Data.ToArray(), cancellationToken);
 
-        return relativePath.Replace("\\", "/", StringComparison.Ordinal); // Normalize for URLs
+        return relativePath;
     }
 
     public Task<FileDownloadResponse?> DownloadAsync(string path, CancellationToken cancellationToken = default)

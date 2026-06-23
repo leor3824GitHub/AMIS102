@@ -15,16 +15,6 @@
 <AMISPageHeader Title="Property Accountability (ICS / PAR)"
                Description="Unified accountability tracking for Semi-Expendable (ICS) and PPE (PAR) per COA 2022-004." />
 
-@if (_canIssue)
-{
-    <div class="d-flex justify-end mb-3">
-        <AMISButton Variant="Variant.Filled" Color="Color.Primary"
-                    StartIcon="@Icons.Material.Filled.Add" OnClick="OpenIssueDialogAsync">
-            New ICS / PAR
-        </AMISButton>
-    </div>
-}
-
 <!-- Filters + Results -->
 <div>
         <MudCard Elevation="1">
@@ -38,6 +28,13 @@
                                 StartIcon="@Icons.Material.Outlined.Search" OnClick="LoadAsync" Disabled="_busy">
                         Search
                     </AMISButton>
+                    @if (_canIssue)
+                    {
+                        <AMISButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Success"
+                                    StartIcon="@Icons.Material.Outlined.Add" OnClick="OpenIssueDialogAsync">
+                            New ICS / PAR
+                        </AMISButton>
+                    }
                 </MudStack>
 
                 <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Class="mt-3">
