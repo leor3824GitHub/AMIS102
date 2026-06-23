@@ -129,9 +129,13 @@
                         ItemsSource="{Binding Locations}"
                         ItemDisplayBinding="{Binding Name}"
                         SelectedItem="{Binding SelectedLocation}" />
+                <HorizontalStackLayout Spacing="20" RadioButtonGroup.GroupName="CountSearchMode">
+                    <RadioButton Content="Property No" IsChecked="True" />
+                    <RadioButton Content="Serial No" IsChecked="{Binding SearchBySerial, Mode=TwoWay}" />
+                </HorizontalStackLayout>
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
                     <Entry Grid.Column="0"
-                           Placeholder="Property No. (type or scan)"
+                           Placeholder="{Binding ManualEntryPlaceholder}"
                            Text="{Binding ManualPropertyNo}"
                            ReturnCommand="{Binding SearchManualCommand}"
                            AutomationId="PropertyNoEntry" />

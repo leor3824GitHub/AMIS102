@@ -16,25 +16,25 @@ namespace AMIS.Modules.QuestPdfReporting.Features.v1.AssetRegister.PrintProperty
 /// </summary>
 internal sealed class PropertyStickerPdfDocument(
     IReadOnlyList<PropertyStickerModel> stickers,
-    OrganizationProfileDto?             org,
-    string                              paperSize   = "longbond",
-    string                              orientation = "portrait",
-    int                                 columns     = 2) : IDocument
+    OrganizationProfileDto? org,
+    string paperSize = "longbond",
+    string orientation = "portrait",
+    int columns = 2) : IDocument
 {
-    private const string Blue  = "#1F3C88";
-    private const string Red   = "#C81E1E";
-    private const string Ink   = "#1A1A1A";   // value text
+    private const string Blue = "#1F3C88";
+    private const string Red = "#C81E1E";
+    private const string Ink = "#1A1A1A";   // value text
     private const string Slate = "#5B6B8C";   // de-emphasised (address, designation)
-    private const float  SheetMarginMm = 8f;
-    private const float  CellGap = 4f;
+    private const float SheetMarginMm = 8f;
+    private const float CellGap = 4f;
     // Inner padding of each property box (asymmetric: a little more space at the top than the bottom).
-    private const float  BoxPadTop    = 13f;
-    private const float  BoxPadBottom = 8f;
-    private const float  BoxPadSide   = 4f;
-    private const float  LabelColWidth = 80f; // fixed label column → values align on one edge
-    private const float  FieldFont = 7.5f;    // field label/value/type text size
+    private const float BoxPadTop = 13f;
+    private const float BoxPadBottom = 8f;
+    private const float BoxPadSide = 4f;
+    private const float LabelColWidth = 80f; // fixed label column → values align on one edge
+    private const float FieldFont = 7.5f;    // field label/value/type text size
 
-    private const string DefaultCustodianName        = "ROEL D. CAPERIG";
+    private const string DefaultCustodianName = "ROEL D. CAPERIG";
     private const string DefaultCustodianDesignation = "PMO IV";
 
     // Rows auto-fit to the chosen paper so each property box keeps a consistent height
@@ -62,7 +62,7 @@ internal sealed class PropertyStickerPdfDocument(
 
     public DocumentMetadata GetMetadata() => new()
     {
-        Title  = stickers.Count == 1
+        Title = stickers.Count == 1
             ? $"Property Sticker — {stickers[0].PropertyNo}"
             : $"Property Stickers ({stickers.Count})",
         Author = org?.Name ?? "National Food Authority",
@@ -192,7 +192,7 @@ internal sealed class PropertyStickerPdfDocument(
         {
             col.Item().AlignCenter().Text(m.PropertyNo).Bold().FontSize(6f).FontColor(Ink);
             col.Item().PaddingTop(2).AlignCenter().DrawQr(m.PropertyNo, 58f);
-            col.Item().PaddingTop(2).AlignCenter().Text("Property Code").FontSize(5.5f).FontColor(Slate);
+            col.Item().PaddingTop(2).AlignCenter().Text("Property Code").SemiBold().FontSize(FieldFont).FontColor(Slate);
         });
     }
 

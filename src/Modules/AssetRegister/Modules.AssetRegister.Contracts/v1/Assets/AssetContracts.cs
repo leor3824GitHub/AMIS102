@@ -118,6 +118,7 @@ public sealed record GetAssetScanDetailByPropertyNoQuery(string PropertyNo) : IQ
 
 public sealed record SearchAssetsQuery(
     string? Keyword = null,
+    string? SerialNo = null,
     AssetType? AssetType = null,
     LifecycleState? LifecycleState = null,
     Guid? CurrentCustodianId = null,

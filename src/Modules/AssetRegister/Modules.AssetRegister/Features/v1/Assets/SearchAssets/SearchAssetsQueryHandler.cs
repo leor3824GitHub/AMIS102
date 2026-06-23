@@ -25,6 +25,13 @@ public sealed class SearchAssetsQueryHandler(AssetRegisterDbContext db)
                 (a.Brand != null && a.Brand.ToLower().Contains(k)) ||
                 (a.Model != null && a.Model.ToLower().Contains(k)));
         }
+
+        // Serial-only filter — precise lookup used by the mobile "search by serial number" mode.
+        if (!string.IsNullOrWhiteSpace(query.SerialNo))
+        {
+            var serial = query.SerialNo.Trim().ToLowerInvariant();
+            q = q.Where(a => a.SerialNo != null && a.SerialNo.ToLower().Contains(serial));
+        }
         if (query.AssetType.HasValue) q = q.Where(a => a.AssetType == query.AssetType.Value);
         if (query.LifecycleState.HasValue) q = q.Where(a => a.LifecycleState == query.LifecycleState.Value);
         else if (!query.IncludeTransferredOut) q = q.Where(a => a.LifecycleState != LifecycleState.TransferredOut);

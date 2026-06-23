@@ -111,6 +111,15 @@ public sealed class ApiClient(HttpClient httpClient) : IApiClient
         _ => null,
     };
 
+    public async Task<IReadOnlyList<AssetSummaryDto>> SearchAssetsBySerialAsync(string serialNo, CancellationToken ct = default)
+    {
+        var url = $"api/v1/asset-register/assets?serialNo={Uri.EscapeDataString(serialNo)}&pageNumber=1&pageSize=25";
+        var result = await httpClient.GetFromJsonAsync<ArPaged<ArAssetSummary>>(url, ct);
+        return result?.Items?
+            .Select(a => new AssetSummaryDto(a.Id, a.PropertyNo, a.AssetType, a.Description, a.UnitCost))
+            .ToList() ?? [];
+    }
+
     public async Task<List<CatalogItemDto>> SearchCatalogItemsAsync(string keyword, CancellationToken ct = default)
     {
         var url = $"api/v1/asset-register/catalog?isActive=true&pageNumber=1&pageSize=20";
@@ -217,6 +226,11 @@ public sealed class ApiClient(HttpClient httpClient) : IApiClient
     private sealed record ArPaged<T>(List<T>? Items, int TotalCount);
 
     private sealed record ArCatalogItem(Guid Id, string Code, string Description, string DefaultUnit);
+
+    // Subset of AssetRegister AssetRegistrySummaryDto — only the fields the serial picker needs
+    // (extra JSON properties are ignored on deserialization).
+    private sealed record ArAssetSummary(
+        Guid Id, string PropertyNo, string AssetType, string Description, decimal UnitCost);
 
     private sealed record ArAccountabilitySummary(
         Guid Id, string DocumentNo, string AccountabilityType, string Status,

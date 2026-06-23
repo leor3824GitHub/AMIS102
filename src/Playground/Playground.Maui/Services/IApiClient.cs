@@ -143,6 +143,10 @@ public sealed record RecordCountEntryRequest(
 
 public sealed record CatalogItemDto(Guid Id, string Code, string Description, string DefaultUnit);
 
+// Lightweight asset match returned by a serial-number search (serials aren't unique, so a search
+// can return several). PropertyNo lets the caller fall back into the normal property-number flow.
+public sealed record AssetSummaryDto(Guid Id, string PropertyNo, string AssetType, string Description, decimal UnitCost);
+
 public sealed record AddFoundAtStationRequest(
     string PropertyNumber,
     string Description,
@@ -176,6 +180,9 @@ public interface IApiClient
     Task AcceptAccountabilityAsync(Guid id, CancellationToken ct = default);
 
     Task<TangibleInventoryItemDetailDto> GetItemByPropertyNoAsync(string propertyNo, CancellationToken ct = default);
+
+    /// <summary>Finds assets whose serial number matches (case-insensitive). May return 0, 1, or many.</summary>
+    Task<IReadOnlyList<AssetSummaryDto>> SearchAssetsBySerialAsync(string serialNo, CancellationToken ct = default);
 
     Task<List<CatalogItemDto>> SearchCatalogItemsAsync(string keyword, CancellationToken ct = default);
     Task<List<LocationDto>> GetLocationsAsync(CancellationToken ct = default);

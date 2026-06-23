@@ -22,6 +22,7 @@ public static class SearchAssetsEndpoint
     private static async Task<IResult> Handle(
         IMediator mediator,
         string? keyword = null,
+        string? serialNo = null,
         AssetType? assetType = null,
         LifecycleState? lifecycleState = null,
         Guid? currentCustodianId = null,
@@ -31,8 +32,14 @@ public static class SearchAssetsEndpoint
         CancellationToken ct = default)
     {
         var result = await mediator.Send(new SearchAssetsQuery(
-            keyword, assetType, lifecycleState, currentCustodianId,
-            includeTransferredOut, pageNumber, pageSize), ct);
+            Keyword: keyword,
+            SerialNo: serialNo,
+            AssetType: assetType,
+            LifecycleState: lifecycleState,
+            CurrentCustodianId: currentCustodianId,
+            IncludeTransferredOut: includeTransferredOut,
+            PageNumber: pageNumber,
+            PageSize: pageSize), ct);
         return TypedResults.Ok(result);
     }
 }

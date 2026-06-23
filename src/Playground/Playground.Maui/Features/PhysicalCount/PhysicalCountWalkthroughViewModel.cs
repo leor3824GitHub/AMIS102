@@ -28,6 +28,15 @@ public sealed partial class PhysicalCountWalkthroughViewModel : ObservableObject
     [ObservableProperty] private string _searchText = "";
     [ObservableProperty] private string _selectedFilter = "All";
 
+    // Manual-entry mode: false = look up by property number (default), true = search by serial number.
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ManualEntryPlaceholder))]
+    private bool _searchBySerial;
+
+    public string ManualEntryPlaceholder => SearchBySerial
+        ? "Serial number"
+        : "Property No. (type or scan)";
+
     // "Counting at" location — required to record (AssetRegister stores where each item was counted).
     [ObservableProperty] private ObservableCollection<LocationDto> _locations = [];
     [ObservableProperty] private LocationDto? _selectedLocation;
@@ -138,9 +147,49 @@ public sealed partial class PhysicalCountWalkthroughViewModel : ObservableObject
     [RelayCommand]
     private async Task SearchManualAsync(CancellationToken ct = default)
     {
-        var propertyNo = ManualPropertyNo.Trim().ToUpperInvariant();
-        if (string.IsNullOrEmpty(propertyNo)) return;
-        await ProcessPropertyNoAsync(propertyNo);
+        var raw = ManualPropertyNo.Trim();
+        if (string.IsNullOrEmpty(raw)) return;
+
+        if (SearchBySerial)
+        {
+            var propertyNo = await ResolveSerialToPropertyNoAsync(raw, ct);
+            if (propertyNo is not null)
+                await ProcessPropertyNoAsync(propertyNo);
+            return;
+        }
+
+        await ProcessPropertyNoAsync(raw.ToUpperInvariant());
+    }
+
+    // Resolves a serial number to a single property number so the rest of the count flow is unchanged:
+    // none → inline error, one → that asset, many → a tappable action sheet to pick from.
+    private async Task<string?> ResolveSerialToPropertyNoAsync(string serial, CancellationToken ct)
+    {
+        ErrorMessage = null;
+        IReadOnlyList<AssetSummaryDto> matches;
+        try
+        {
+            matches = await _apiClient.SearchAssetsBySerialAsync(serial, ct);
+        }
+        catch (HttpRequestException)
+        {
+            ErrorMessage = "Couldn't search by serial number. Check your connection.";
+            return null;
+        }
+
+        if (matches.Count == 0)
+        {
+            ErrorMessage = $"No asset found with serial number \"{serial}\".";
+            return null;
+        }
+        if (matches.Count == 1)
+            return matches[0].PropertyNo;
+
+        var labels = matches.Select(m => $"{m.PropertyNo} - {m.Description}").ToArray();
+        var choice = await Shell.Current.DisplayActionSheetAsync(
+            $"{matches.Count} assets match this serial", "Cancel", null, labels);
+        var index = string.IsNullOrEmpty(choice) ? -1 : Array.IndexOf(labels, choice);
+        return index >= 0 ? matches[index].PropertyNo : null;
     }
 
     [RelayCommand]
