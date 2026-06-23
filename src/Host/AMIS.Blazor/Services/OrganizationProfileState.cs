@@ -1,6 +1,6 @@
 using AMIS.Modules.MasterData.Contracts.v1.OrganizationProfile;
 
-namespace AMIS.Playground.Blazor.Services;
+namespace AMIS.Blazor.Services;
 
 internal interface IOrganizationProfileState
 {

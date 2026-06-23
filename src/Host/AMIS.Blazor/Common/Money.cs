@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace AMIS.Playground.Blazor.Common;
+namespace AMIS.Blazor.Common;
 
 /// <summary>
 /// Single source of truth for currency display across the Blazor UI.

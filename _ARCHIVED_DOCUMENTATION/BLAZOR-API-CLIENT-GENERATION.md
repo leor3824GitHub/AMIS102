@@ -29,7 +29,7 @@
 
 ```
 ┌────────────────────────────────────────────────────────────────────┐
-│ BACKEND API (Playground.Api on port 7030)                         │
+│ BACKEND API (AMIS.Api on port 7030)                         │
 ├────────────────────────────────────────────────────────────────────┤
 │ • Runs on: https://localhost:7030                                 │
 │ • Exposes OpenAPI spec at: /openapi/v1.json                       │
@@ -52,7 +52,7 @@
 │ • DTO records (CreatePurchaseOrderCommand, etc.)                  │
 │ • HTTP method wrappers (async, with serialization/deserialization)│
 │ • Bearer token support                                            │
-│ • Namespace: AMIS.Playground.Blazor.ApiClient                      │
+│ • Namespace: AMIS.Blazor.ApiClient                      │
 │ • Output: ApiClient/Generated.cs (~1500 lines, single file)       │
 └────────────────────┬─────────────────────────────────────────────┘
                      │
@@ -108,24 +108,24 @@ dotnet tool restore
 ./scripts/openapi/check-openapi-drift.ps1
 
 # 4. Rebuild Blazor project to use new clients
-dotnet build src/Playground/Playground.Blazor/Playground.Blazor.csproj
+dotnet build src/Host/AMIS.Blazor/AMIS.Blazor.csproj
 
 # 5. Commit changes
-git add src/Playground/Playground.Blazor/ApiClient/Generated.cs
+git add src/Host/AMIS.Blazor/ApiClient/Generated.cs
 git commit -m "chore: regenerated API clients from updated spec"
 ```
 
 ### What Gets Generated
-- **File:** `src/Playground/Playground.Blazor/ApiClient/Generated.cs`
+- **File:** `src/Host/AMIS.Blazor/ApiClient/Generated.cs`
 - **Size:** ~1500 lines (single file, multiple client classes)
-- **Namespace:** `AMIS.Playground.Blazor.ApiClient`
+- **Namespace:** `AMIS.Blazor.ApiClient`
 - **Types:** Client interfaces/classes, DTO records, API exceptions
 
 ---
 
 ## Backend Setup (OpenAPI Exposure)
 
-### Configuration in Playground.Api
+### Configuration in AMIS.Api
 
 **Program.cs:**
 ```csharp
@@ -193,8 +193,8 @@ app.UseHeroOpenApi("/openapi/{documentName}.json");
       "httpClientType": "System.Net.Http.HttpClient",
       
       // Output Configuration
-      "namespace": "AMIS.Playground.Blazor.ApiClient",
-      "output": "../../src/Playground/Playground.Blazor/ApiClient/Generated.cs",
+      "namespace": "AMIS.Blazor.ApiClient",
+      "output": "../../src/Host/AMIS.Blazor/ApiClient/Generated.cs",
       
       // Client Organization
       "className": "{controller}Client",
@@ -696,7 +696,7 @@ Ensure that generated clients (`Generated.cs`) stay in sync with the backend Ope
 ./scripts/openapi/generate-api-clients.ps1 -SpecUrl "<url>"
 
 # 2. Check if Generated.cs changed
-git diff --exit-code -- src/Playground/Playground.Blazor/ApiClient/Generated.cs
+git diff --exit-code -- src/Host/AMIS.Blazor/ApiClient/Generated.cs
 
 # 3. If changed: exit 1 (failure) → indicates spec was updated without regenerating
 ```
@@ -734,7 +734,7 @@ dotnet tool restore
 **Solution:**
 ```powershell
 # Terminal 1: Start API
-dotnet run --project src/Playground/Playground.Api
+dotnet run --project src/Host/AMIS.Api
 
 # Terminal 2: Generate clients
 ./scripts/openapi/generate-api-clients.ps1
@@ -752,8 +752,8 @@ dotnet run --project src/Playground/Playground.Api
 ./scripts/openapi/generate-api-clients.ps1
 
 # Rebuild Blazor
-dotnet clean src/Playground/Playground.Blazor
-dotnet build src/Playground/Playground.Blazor
+dotnet clean src/Host/AMIS.Blazor
+dotnet build src/Host/AMIS.Blazor
 ```
 
 ---
@@ -903,11 +903,11 @@ services.AddTransient<ITokenClient>(sp =>
 | Generation Script | `scripts/openapi/generate-api-clients.ps1` |
 | NSwag Config | `scripts/openapi/nswag-playground.json` |
 | Drift Check | `scripts/openapi/check-openapi-drift.ps1` |
-| DI Setup | `src/Playground/Playground.Blazor/Services/Api/ApiClientRegistration.cs` |
-| Auth Handler | `src/Playground/Playground.Blazor/Services/Api/AuthorizationHeaderHandler.cs` |
-| Generated Clients | `src/Playground/Playground.Blazor/ApiClient/Generated.cs` |
+| DI Setup | `src/Host/AMIS.Blazor/Services/Api/ApiClientRegistration.cs` |
+| Auth Handler | `src/Host/AMIS.Blazor/Services/Api/AuthorizationHeaderHandler.cs` |
+| Generated Clients | `src/Host/AMIS.Blazor/ApiClient/Generated.cs` |
 | OpenAPI Backend Setup | `src/BuildingBlocks/Web/OpenApi/Extensions.cs` |
-| Wrapper Clients | `src/Playground/Playground.Blazor/Services/Api/Expendable/` |
+| Wrapper Clients | `src/Host/AMIS.Blazor/Services/Api/Expendable/` |
 
 ---
 

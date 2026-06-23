@@ -79,7 +79,7 @@ at their latest migration are skipped (idempotent).
 - It does **not** touch application code or the build pipeline.
 - It does **not** affect any database except the one in `-ConnectionString`.
 
-It only **applies migrations that already exist** under `src/Playground/Migrations.PostgreSQL/`.
+It only **applies migrations that already exist** under `src/Host/Migrations.PostgreSQL/`.
 
 ## Running a single context manually
 
@@ -88,7 +88,7 @@ If you ever need just one module (e.g. after adding a migration to AssetRegister
 ```powershell
 dotnet ef database update `
     --context AssetRegisterDbContext `
-    --project src/Playground/Migrations.PostgreSQL `
-    --startup-project src/Playground/Playground.Api `
+    --project src/Host/Migrations.PostgreSQL `
+    --startup-project src/Host/AMIS.Api `
     --connection "Host=10.0.0.5;Database=AMIS;Username=AMIS_app;Password=secret"
 ```

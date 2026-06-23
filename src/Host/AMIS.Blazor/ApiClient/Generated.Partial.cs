@@ -1,7 +1,7 @@
 // Extends NSwag-generated partial classes with fields added after the last client generation.
 // Remove this file when the client is next regenerated from the OpenAPI spec.
 
-namespace AMIS.Playground.Blazor.ApiClient
+namespace AMIS.Blazor.ApiClient
 {
     public partial class SupplyRequestDto
     {

@@ -224,7 +224,7 @@ Each phase builds zero-warnings and keeps architecture tests green.
 ### Phase D — Retire internal Expendable Purchase flow (D2)
 1. Remove `Features/v1/Purchases/*`, `Domain/Purchases/{Purchase,PurchaseInspection}.cs`, their EF configs, the Blazor pages, and the generated-client call sites.
 2. EF migration to **drop** `purchases` / `purchase_inspections` (dev-phase — no data migration; per Decision C).
-3. Update `ExpendableModule` registrations + the Mediator assembly type list in `Playground.Api/Program.cs` if any removed type was referenced there.
+3. Update `ExpendableModule` registrations + the Mediator assembly type list in `AMIS.Api/Program.cs` if any removed type was referenced there.
 4. Remove now-unused Expendable purchase permissions + their UI permission gates.
 5. **Keep** `ProductInventory`, `InventoryBatch`, `RejectedInventory`, and all warehouse/issuance features — only the inbound *purchase* path is removed.
 

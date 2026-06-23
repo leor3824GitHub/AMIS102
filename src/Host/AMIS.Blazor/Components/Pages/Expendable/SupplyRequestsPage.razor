@@ -1,8 +1,8 @@
 @page "/expendable/requests"
 @implements IDisposable
 @using AMIS.Framework.Blazor.UI.Components.Cards
-@using AMIS.Playground.Blazor.ApiClient
-@using AMIS.Playground.Blazor.Components.Pages.Procurement
+@using AMIS.Blazor.ApiClient
+@using AMIS.Blazor.Components.Pages.Procurement
 @using AMIS.Modules.Expendable.Contracts.Permissions
 @inherits ComponentBase
 @inject ISnackbar Snackbar
@@ -348,7 +348,7 @@
         await Task.WhenAll(LoadWarehouses(), LoadEmployees(), LoadDepartments());
     }
 
-    // Permissions load asynchronously in PlaygroundLayout after first render; re-render when they arrive
+    // Permissions load asynchronously in AMISLayout after first render; re-render when they arrive
     // so permission-gated controls appear on a hard refresh without requiring a user interaction.
     private void OnProfileChanged() => InvokeAsync(StateHasChanged);
 

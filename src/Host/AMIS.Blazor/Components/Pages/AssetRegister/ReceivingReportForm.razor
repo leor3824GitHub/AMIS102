@@ -1,4 +1,4 @@
-@using AMIS.Playground.Blazor.ApiClient
+@using AMIS.Blazor.ApiClient
 @using AMIS.Modules.AssetRegister.Contracts.v1.Catalog
 @using AMIS.Modules.MasterData.Contracts.v1.CapitalizationThresholds
 @using Microsoft.AspNetCore.Components.Authorization
@@ -669,12 +669,12 @@
     private async Task OpenAdhocCreateCatalogAsync(int idx)
     {
         var line = _adhocLines[idx];
-        var parameters = new DialogParameters<AMIS.Playground.Blazor.Components.Pages.Procurement.CreateCatalogItemDialog>
+        var parameters = new DialogParameters<AMIS.Blazor.Components.Pages.Procurement.CreateCatalogItemDialog>
         {
             { x => x.InitialDescription, line.Description }
         };
         var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true };
-        var dialog = await DialogService.ShowAsync<AMIS.Playground.Blazor.Components.Pages.Procurement.CreateCatalogItemDialog>(
+        var dialog = await DialogService.ShowAsync<AMIS.Blazor.Components.Pages.Procurement.CreateCatalogItemDialog>(
             "Create Catalog Item", parameters, options);
         var result = await dialog.Result;
         if (result is null || result.Canceled || result.Data is not ArCatalogItemDto created)

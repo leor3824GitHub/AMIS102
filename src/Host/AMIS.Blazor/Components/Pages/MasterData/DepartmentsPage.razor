@@ -1,7 +1,7 @@
 @page "/master-data/departments"
 @implements IDisposable
 @using AMIS.Framework.Blazor.UI.Components.Cards
-@using AMIS.Playground.Blazor.ApiClient
+@using AMIS.Blazor.ApiClient
 @using AMIS.Modules.MasterData.Contracts.Permissions
 @inherits ComponentBase
 @inject ISnackbar Snackbar
@@ -110,8 +110,8 @@
 </div>
 
 @code {
-    private List<AMIS.Playground.Blazor.ApiClient.DepartmentReferenceDto> _departments = new();
-    private List<AMIS.Playground.Blazor.ApiClient.DepartmentReferenceDto> _allDepartments = new();
+    private List<AMIS.Blazor.ApiClient.DepartmentReferenceDto> _departments = new();
+    private List<AMIS.Blazor.ApiClient.DepartmentReferenceDto> _allDepartments = new();
     private bool _initialized = false;
     private bool _isLoading = false;
     private string _searchKeyword = string.Empty;
@@ -242,7 +242,7 @@
         }
     }
 
-    private async Task OpenEditDialog(AMIS.Playground.Blazor.ApiClient.DepartmentReferenceDto department)
+    private async Task OpenEditDialog(AMIS.Blazor.ApiClient.DepartmentReferenceDto department)
     {
         var parameters = new DialogParameters { ["Existing"] = department };
         var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true, MaxWidth = MaxWidth.Small };

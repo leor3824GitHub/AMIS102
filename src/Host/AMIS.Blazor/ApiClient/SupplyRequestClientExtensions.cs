@@ -6,7 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using AMIS.Modules.Expendable.Contracts.v1.Requests;
 
-namespace AMIS.Playground.Blazor.ApiClient;
+namespace AMIS.Blazor.ApiClient;
 
 public static class SupplyRequestClientExtensions
 {

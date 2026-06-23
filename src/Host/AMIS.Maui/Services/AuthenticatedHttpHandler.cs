@@ -2,7 +2,7 @@ using System.Net.Http.Json;
 using CommunityToolkit.Mvvm.Messaging;
 using CommunityToolkit.Mvvm.Messaging.Messages;
 
-namespace Playground.Maui.Services;
+namespace AMIS.Maui.Services;
 
 public sealed class SessionExpiredMessage : ValueChangedMessage<string>
 {

@@ -3,12 +3,12 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
 
-    <converters:IsNotNullConverter xmlns:converters="clr-namespace:Playground.Maui.Converters" x:Key="IsNotNullConverter" />
-    <converters:IsNullConverter xmlns:converters="clr-namespace:Playground.Maui.Converters" x:Key="IsNullConverter" />
-    <converters:IsNotZeroConverter xmlns:converters="clr-namespace:Playground.Maui.Converters" x:Key="IsNotZeroConverter" />
-    <converters:InvertedBoolConverter xmlns:converters="clr-namespace:Playground.Maui.Converters" x:Key="InvertedBoolConverter" />
-    <converters:KindToColorConverter xmlns:converters="clr-namespace:Playground.Maui.Converters" x:Key="KindToColorConverter" />
-    <converters:StringEqualsConverter xmlns:converters="clr-namespace:Playground.Maui.Converters" x:Key="StringEqualsConverter" />
+    <converters:IsNotNullConverter xmlns:converters="clr-namespace:AMIS.Maui.Converters" x:Key="IsNotNullConverter" />
+    <converters:IsNullConverter xmlns:converters="clr-namespace:AMIS.Maui.Converters" x:Key="IsNullConverter" />
+    <converters:IsNotZeroConverter xmlns:converters="clr-namespace:AMIS.Maui.Converters" x:Key="IsNotZeroConverter" />
+    <converters:InvertedBoolConverter xmlns:converters="clr-namespace:AMIS.Maui.Converters" x:Key="InvertedBoolConverter" />
+    <converters:KindToColorConverter xmlns:converters="clr-namespace:AMIS.Maui.Converters" x:Key="KindToColorConverter" />
+    <converters:StringEqualsConverter xmlns:converters="clr-namespace:AMIS.Maui.Converters" x:Key="StringEqualsConverter" />
 
     <Style TargetType="ActivityIndicator">
         <Setter Property="Color" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource White}}" />

@@ -1,6 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Playground.Maui.Features.Asset;
+namespace AMIS.Maui.Features.Asset;
 
 public partial class AssetDetailPage : ContentPage
 {

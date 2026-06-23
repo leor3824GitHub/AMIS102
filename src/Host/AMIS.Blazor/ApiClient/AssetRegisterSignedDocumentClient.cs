@@ -5,7 +5,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AMIS.Modules.AssetRegister.Contracts.v1.SignedDocuments;
 
-namespace AMIS.Playground.Blazor.ApiClient;
+namespace AMIS.Blazor.ApiClient;
 
 // Mirrors the Procurement SignedDocumentClient, but targets the Asset Register module's
 // /signed-documents endpoints and its own AssetRegisterDocumentType enum.

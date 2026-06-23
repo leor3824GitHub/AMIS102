@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:vm="clr-namespace:Playground.Maui.Features.Inventory"
-             xmlns:svc="clr-namespace:Playground.Maui.Services"
+             xmlns:vm="clr-namespace:AMIS.Maui.Features.Inventory"
+             xmlns:svc="clr-namespace:AMIS.Maui.Services"
              x:DataType="vm:InventoryViewModel"
-             x:Class="Playground.Maui.Features.Inventory.InventoryPage"
+             x:Class="AMIS.Maui.Features.Inventory.InventoryPage"
              Title="My Inventory"
              BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource OffBlack}}">
 

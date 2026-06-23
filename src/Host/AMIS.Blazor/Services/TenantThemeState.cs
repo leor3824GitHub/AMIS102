@@ -2,7 +2,7 @@ using AMIS.Framework.Blazor.UI.Theme;
 using MudBlazor;
 using System.Text.Json.Serialization;
 
-namespace AMIS.Playground.Blazor.Services;
+namespace AMIS.Blazor.Services;
 
 /// <summary>
 /// Implementation of ITenantThemeState that fetches/saves theme settings via the API.

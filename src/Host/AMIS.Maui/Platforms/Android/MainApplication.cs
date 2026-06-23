@@ -1,7 +1,7 @@
 using Android.App;
 using Android.Runtime;
 
-namespace Playground.Maui;
+namespace AMIS.Maui;
 
 [Application]
 public class MainApplication : MauiApplication

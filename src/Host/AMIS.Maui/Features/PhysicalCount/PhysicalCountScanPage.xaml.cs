@@ -1,6 +1,6 @@
 using ZXing.Net.Maui;
 
-namespace Playground.Maui.Features.PhysicalCount;
+namespace AMIS.Maui.Features.PhysicalCount;
 
 public partial class PhysicalCountScanPage : ContentPage
 {

@@ -1,6 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Playground.Maui.Features.Home;
+namespace AMIS.Maui.Features.Home;
 
 public partial class HomePage : ContentPage
 {

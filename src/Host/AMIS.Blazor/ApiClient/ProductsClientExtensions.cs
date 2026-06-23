@@ -2,7 +2,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace AMIS.Playground.Blazor.ApiClient;
+namespace AMIS.Blazor.ApiClient;
 
 public static class ProductsClientExtensions
 {

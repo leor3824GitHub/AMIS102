@@ -2,7 +2,7 @@ using System.Text.Json;
 using AMIS.Framework.Blazor.UI.Theme;
 using Microsoft.Extensions.Caching.Distributed;
 
-namespace AMIS.Playground.Blazor.Services;
+namespace AMIS.Blazor.Services;
 
 /// <summary>
 /// Factory for loading theme state, optimized for SSR scenarios.

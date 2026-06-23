@@ -18,7 +18,7 @@ dotnet ef migrations add AddExpenableModule -o Data/Migrations
 
 #### 3. Update Database
 ```bash
-dotnet ef database update --startup-project ../../Playground/Playground.Api
+dotnet ef database update --startup-project ../../Host/AMIS.Api
 ```
 
 ### Common Tasks

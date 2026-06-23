@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace Playground.Maui.Converters;
+namespace AMIS.Maui.Converters;
 
 public sealed class IsNotNullConverter : IValueConverter
 {

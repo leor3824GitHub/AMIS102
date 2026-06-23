@@ -23,7 +23,7 @@ using Windows.Media.Ocr;
 using Windows.Storage.Streams;
 #endif
 
-namespace Playground.Maui.Services;
+namespace AMIS.Maui.Services;
 
 public sealed class OcrService : IOcrService
 {

@@ -1,9 +1,9 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Playground.Maui.Features.Asset;
-using Playground.Maui.Services;
+using AMIS.Maui.Features.Asset;
+using AMIS.Maui.Services;
 
-namespace Playground.Maui.Features.Scan;
+namespace AMIS.Maui.Features.Scan;
 
 public sealed partial class ScanViewModel : ObservableObject
 {

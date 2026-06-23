@@ -1,10 +1,10 @@
-using AMIS.Playground.Blazor.ApiClient;
+using AMIS.Blazor.ApiClient;
 using AMIS.Framework.Shared.Multitenancy;
 using Microsoft.AspNetCore.Authentication;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
-namespace AMIS.Playground.Blazor.Services;
+namespace AMIS.Blazor.Services;
 
 #pragma warning disable CA1515 // Extension method classes must be public
 internal static class SimpleBffAuth

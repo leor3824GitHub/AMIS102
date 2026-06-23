@@ -1,7 +1,7 @@
 ﻿using System.Net.Http;
-using AMIS.Playground.Blazor.ApiClient;
+using AMIS.Blazor.ApiClient;
 
-namespace AMIS.Playground.Blazor;
+namespace AMIS.Blazor;
 
 internal static class ApiClientRegistration
 {

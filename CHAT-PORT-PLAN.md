@@ -43,7 +43,7 @@ adaptations called out under "Gotchas."
 
 | Concern | Upstream (FSH) | AMIS102 | Consequence |
 | --- | --- | --- | --- |
-| **Client UI** | React SPA (`@microsoft/signalr`, `realtime-context.tsx`) | **Blazor Server + MudBlazor + cookie auth** ([Playground.Blazor](src/Playground/Playground.Blazor/)), plus MAUI | UI is a **rewrite**, not a port. The SignalR client runs **server-side inside the Blazor circuit**. |
+| **Client UI** | React SPA (`@microsoft/signalr`, `realtime-context.tsx`) | **Blazor Server + MudBlazor + cookie auth** ([AMIS.Blazor](src/Host/AMIS.Blazor/)), plus MAUI | UI is a **rewrite**, not a port. The SignalR client runs **server-side inside the Blazor circuit**. |
 | **Attachments** | dedicated `Files` module + `IFileAccessPolicy` | **No Files module** — only a `Storage` building block ([IStorageService](src/BuildingBlocks/Storage/Services/IStorageService.cs)) | **Deferred to v2** (decision below). Drop `MessageAttachment` from v1. |
 | **Tenant isolation** | added late via a `ChatTenantIsolation` migration | AMIS convention = `.IsMultiTenant()` **+ named** soft-delete query filter from day one ([persistence.md](.claude/rules/persistence.md)) | Bake tenant isolation into the EF config up front. |
 | **Mention notifications** | separate persistent `Notifications` module + bell inbox | none today | **v1 skips persistence** — push the mention straight to the user's SignalR group (decision below). |
@@ -51,7 +51,7 @@ adaptations called out under "Gotchas."
 ## Architecture (target state in AMIS102)
 
 ```
-Blazor Server circuit (Playground.Blazor)            Playground.Api host
+Blazor Server circuit (AMIS.Blazor)            AMIS.Api host
   MudBlazor chat page                                  AppHub  @ /api/v1/realtime/hub   [Authorize]
   ChatHubClient (server-side SignalR client)  ──WS──►   groups: user:{id} tenant:{id} channel:{id}
    • AccessTokenProvider = existing JWT flow                 ▲
@@ -110,7 +110,7 @@ New folder `src/BuildingBlocks/Web/Realtime/`:
   `Directory.Packages.props`; reference it + `Microsoft.AspNetCore.SignalR` from `Web.csproj`.
   ⚠️ Watch the NU1015 CPM trap noted in memory — keep `Directory.Packages.props` well-formed.
 
-**Host wiring** ([Playground.Api/Program.cs](src/Playground/Playground.Api/Program.cs)): call
+**Host wiring** ([AMIS.Api/Program.cs](src/Host/AMIS.Api/Program.cs)): call
 `AddHeroRealtime` during service config and `MapHeroRealtime` after build (either inside
 `AddHeroPlatform`/`UseHeroPlatform` in the Web BB, or directly in `Program.cs`).
 
@@ -180,10 +180,10 @@ endpoint-names memory, `.WithName(...)` must be globally unique — prefix every
 e.g. `"Chat_SendMessage"`. Do **not** use `nameof(SendMessageCommand)` (the command lives in the
 shared Contracts assembly).
 
-**Host registration** ([Program.cs](src/Playground/Playground.Api/Program.cs)): add representative
+**Host registration** ([Program.cs](src/Host/AMIS.Api/Program.cs)): add representative
 Chat types to the Mediator `Assemblies` list, add `typeof(ChatModule).Assembly` to `moduleAssemblies`,
 add both `.csproj` to [AMIS.Framework.slnx](src/AMIS.Framework.slnx) and as refs in
-[Playground.Api.csproj](src/Playground/Playground.Api/Playground.Api.csproj).
+[AMIS.Api.csproj](src/Host/AMIS.Api/AMIS.Api.csproj).
 
 ### Phase 2 — Migrations
 
@@ -201,18 +201,18 @@ can subscribe without changing Chat. Add that module later if a durable inbox is
 
 ### Phase 4 — Blazor UI (the bulk of the work)
 
-In [Playground.Blazor](src/Playground/Playground.Blazor/):
+In [AMIS.Blazor](src/Host/AMIS.Blazor/):
 
 - **`ChatHubClient`** — a circuit-scoped service wrapping `Microsoft.AspNetCore.SignalR.Client`.
   `HubConnectionBuilder().WithUrl(apiBase + "/api/v1/realtime/hub", o => o.AccessTokenProvider = …)`,
   feeding the **existing JWT** the REST `ApiClient` already uses (decision below — reuse
-  [AuthorizationHeaderHandler.cs](src/Playground/Playground.Blazor/Services/Api/AuthorizationHeaderHandler.cs)
-  / [TokenRefreshService.cs](src/Playground/Playground.Blazor/Services/Api/TokenRefreshService.cs)).
+  [AuthorizationHeaderHandler.cs](src/Host/AMIS.Blazor/Services/Api/AuthorizationHeaderHandler.cs)
+  / [TokenRefreshService.cs](src/Host/AMIS.Blazor/Services/Api/TokenRefreshService.cs)).
   Exposes C# events (`ChatMessageCreated`, `PresenceChanged`, `ChatTypingStarted`, `ChatMentioned`)
   and `JoinChannel`/`Typing` invokes. `IAsyncDisposable`, tied to the circuit lifetime; reconnect
   with backoff. `InvokeAsync(StateHasChanged)` to marshal hub callbacks onto the render thread.
 - **ApiClient methods** for the chat REST endpoints (follow the existing
-  [ApiClient/Generated.cs](src/Playground/Playground.Blazor/ApiClient/Generated.cs) pattern).
+  [ApiClient/Generated.cs](src/Host/AMIS.Blazor/ApiClient/Generated.cs) pattern).
 - **MudBlazor components** under `Components/Pages/Chat/`: channel rail, message list
   (`MudVirtualize`), composer, typing indicator, mention picker, pinned panel, search. Follow
   [blazor.md](.claude/rules/blazor.md): prefer `AMISTextField`/`AMISButton`/`AMISSelect`; gate

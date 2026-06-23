@@ -1,6 +1,6 @@
 using System.Net;
 
-namespace AMIS.Playground.Blazor.Services.Api;
+namespace AMIS.Blazor.Services.Api;
 
 /// <summary>
 /// Retries transient failures for idempotent requests.

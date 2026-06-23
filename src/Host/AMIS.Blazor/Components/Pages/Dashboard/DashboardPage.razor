@@ -6,8 +6,8 @@
 @using System.Linq
 @using AMIS.Framework.Blazor.UI.Components.Cards
 @inherits ComponentBase
-@inject AMIS.Playground.Blazor.ApiClient.IV1Client V1Client
-@inject AMIS.Playground.Blazor.ApiClient.IIdentityClient IdentityClient
+@inject AMIS.Blazor.ApiClient.IV1Client V1Client
+@inject AMIS.Blazor.ApiClient.IIdentityClient IdentityClient
 @inject ISnackbar Snackbar
 
 <AMISPageHeader Title="Dashboard"
@@ -62,7 +62,7 @@
 
 @code {
     private SummaryDto _summary = new();
-    private List<AMIS.Playground.Blazor.ApiClient.AuditSummaryDto> _recentAudits = new();
+    private List<AMIS.Blazor.ApiClient.AuditSummaryDto> _recentAudits = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -77,12 +77,12 @@
             var result = await V1Client.AuditsGetAsync(pageNumber: 1, pageSize: 5);
             if (result is null)
             {
-                _recentAudits = new List<AMIS.Playground.Blazor.ApiClient.AuditSummaryDto>();
+                _recentAudits = new List<AMIS.Blazor.ApiClient.AuditSummaryDto>();
                 _summary.RecentAudits = 0;
                 return;
             }
 
-            _recentAudits = result.Items?.ToList() ?? new List<AMIS.Playground.Blazor.ApiClient.AuditSummaryDto>();
+            _recentAudits = result.Items?.ToList() ?? new List<AMIS.Blazor.ApiClient.AuditSummaryDto>();
             _summary.RecentAudits = (int)result.TotalCount;
         }
         catch (Exception ex)

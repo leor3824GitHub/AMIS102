@@ -3,7 +3,7 @@ using System.Web;
 using System.Globalization;
 using AMIS.Modules.MasterData.Contracts.v1.ModesOfProcurement;
 
-namespace AMIS.Playground.Blazor.ApiClient;
+namespace AMIS.Blazor.ApiClient;
 
 internal sealed record ModeOfProcurementPagedResponse(
     ICollection<ModeOfProcurementDto>? Items,

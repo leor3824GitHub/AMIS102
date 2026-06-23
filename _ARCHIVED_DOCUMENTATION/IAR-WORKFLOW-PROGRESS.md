@@ -66,13 +66,13 @@ Companion to [IAR-WORKFLOW-PLAN.md](IAR-WORKFLOW-PLAN.md).
 - [x] **Blazor IAR client methods** added in `AssetProcurementClient.cs`:
   - `SubmitForInspectionAsync`, `ReassignInspectorAsync`, `RecordInspectionAsync`
   - plus staged methods already needed downstream (`AssignPropertyNoAsync`, `ExpandLineByQuantityAsync`, `CancelAsync`).
-- [x] **Focused UI compile validation**: `dotnet build src/Playground/Playground.Blazor/Playground.Blazor.csproj` passes (warnings remain pre-existing).
+- [x] **Focused UI compile validation**: `dotnet build src/Host/AMIS.Blazor/AMIS.Blazor.csproj` passes (warnings remain pre-existing).
 
 ### Remaining for Phase 2
 
 - [x] Add/confirm Identity seed for explicit `Inspector` role in default role provisioning.
 - [x] Manual flow validation (custodian -> submit -> inspector -> record -> list transitions) completed via workflow-focused validation pass:
-  - `dotnet build src/Playground/Playground.Blazor/Playground.Blazor.csproj` succeeded.
+  - `dotnet build src/Host/AMIS.Blazor/AMIS.Blazor.csproj` succeeded.
   - `dotnet test src/Tests/AssetProcurement.Tests/AssetProcurement.Tests.csproj` passed (46/46).
   - `dotnet test src/AMIS.Framework.slnx` still shows 2 unrelated, pre-existing failures in `Generic.Tests.ProcurementPlanning.PpmpHandlerTests` (exception-type expectation mismatch), with AssetProcurement workflow tests passing.
 
@@ -95,7 +95,7 @@ Companion to [IAR-WORKFLOW-PLAN.md](IAR-WORKFLOW-PLAN.md).
 ### Verification notes
 
 - [x] `dotnet build src/Modules/Identity/Modules.Identity/Modules.Identity.csproj` (0 errors).
-- [x] `dotnet build src/Playground/Playground.Blazor/Playground.Blazor.csproj` (0 errors, 0 warnings).
+- [x] `dotnet build src/Host/AMIS.Blazor/AMIS.Blazor.csproj` (0 errors, 0 warnings).
 - [x] No IDE diagnostics on edited files (`IdentityDbInitializer.cs`, `AssetProcurementClient.cs`, `AssetIARAcceptancePage.razor`).
 - [x] `dotnet test src/Tests/AssetProcurement.Tests/AssetProcurement.Tests.csproj` (46 passed, 0 failed).
 
@@ -113,7 +113,7 @@ Companion to [IAR-WORKFLOW-PLAN.md](IAR-WORKFLOW-PLAN.md).
   - Removed remaining UI reference in `AssetIARsPage.razor` status color mapping.
   - Removed aggregate-level legacy `Reject(...)` method and `RejectionReason` field from `AssetInspectionAcceptanceReport`.
 - [x] **Database cleanup migration**:
-  - Added migration `IAR_DropRejectionReason` in `src/Playground/Migrations.PostgreSQL/Procurement/`.
+  - Added migration `IAR_DropRejectionReason` in `src/Host/Migrations.PostgreSQL/Procurement/`.
   - Migration drops `AssetIARs.RejectionReason` column and restores it in Down().
 - [x] **Documentation pass**:
   - Updated this tracker to reflect final staged workflow state (no whole-IAR reject path).
@@ -121,7 +121,7 @@ Companion to [IAR-WORKFLOW-PLAN.md](IAR-WORKFLOW-PLAN.md).
 ### Verification notes
 
 - [x] `dotnet build src/Modules/AssetProcurement/Modules.AssetProcurement/Modules.AssetProcurement.csproj` (succeeded).
-- [x] `dotnet build src/Playground/Playground.Blazor/Playground.Blazor.csproj` (succeeded).
+- [x] `dotnet build src/Host/AMIS.Blazor/AMIS.Blazor.csproj` (succeeded).
 - [x] `dotnet test src/Tests/AssetProcurement.Tests/AssetProcurement.Tests.csproj` (46 passed, 0 failed).
 
 ## 2nd Pass — IAR Flow Enhancements (completed)
@@ -140,7 +140,7 @@ Companion to [IAR-WORKFLOW-PLAN.md](IAR-WORKFLOW-PLAN.md).
 
 ### Verification notes
 
-- [x] `dotnet build src/Playground/Playground.Blazor/Playground.Blazor.csproj` (succeeded; no new errors).
+- [x] `dotnet build src/Host/AMIS.Blazor/AMIS.Blazor.csproj` (succeeded; no new errors).
 - [x] `dotnet test src/Tests/AssetProcurement.Tests/AssetProcurement.Tests.csproj` (46 passed, 0 failed).
 
 ## 3rd Pass — Permission-Gated UI Hardening (completed)
@@ -165,7 +165,7 @@ Companion to [IAR-WORKFLOW-PLAN.md](IAR-WORKFLOW-PLAN.md).
 
 ### Verification notes
 
-- [x] `dotnet build src/Playground/Playground.Blazor/Playground.Blazor.csproj` (0 errors, 0 warnings).
+- [x] `dotnet build src/Host/AMIS.Blazor/AMIS.Blazor.csproj` (0 errors, 0 warnings).
 - [x] `dotnet test src/Tests/AssetProcurement.Tests/AssetProcurement.Tests.csproj` (46 passed, 0 failed).
 
 ## 4th Pass — List-Flow Performance Optimization (completed)
@@ -183,5 +183,5 @@ Companion to [IAR-WORKFLOW-PLAN.md](IAR-WORKFLOW-PLAN.md).
 ### Verification notes
 
 - [x] `dotnet build src/Modules/AssetProcurement/Modules.AssetProcurement/Modules.AssetProcurement.csproj` (succeeded).
-- [x] `dotnet build src/Playground/Playground.Blazor/Playground.Blazor.csproj` (succeeded).
+- [x] `dotnet build src/Host/AMIS.Blazor/AMIS.Blazor.csproj` (succeeded).
 - [x] `dotnet test src/Tests/AssetProcurement.Tests/AssetProcurement.Tests.csproj` (46 passed, 0 failed).

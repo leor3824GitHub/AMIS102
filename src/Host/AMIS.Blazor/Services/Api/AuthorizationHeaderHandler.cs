@@ -1,9 +1,9 @@
-using AMIS.Playground.Blazor.Services;
+using AMIS.Blazor.Services;
 using Microsoft.AspNetCore.Authentication;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 
-namespace AMIS.Playground.Blazor.Services.Api;
+namespace AMIS.Blazor.Services.Api;
 
 /// <summary>
 /// Delegating handler that adds the JWT token to API requests and handles 401 responses

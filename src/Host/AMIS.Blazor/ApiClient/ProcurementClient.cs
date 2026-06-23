@@ -10,7 +10,7 @@ using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
 using PurchaseOrderContracts = AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders;
 
-namespace AMIS.Playground.Blazor.ApiClient;
+namespace AMIS.Blazor.ApiClient;
 
 internal sealed class DuplicatePurchaseOrderException(string message) : Exception(message);
 

@@ -123,7 +123,7 @@ app.UseHeroPlatform(p =>
 });
 
 app.MapGet("/", () => Results.Ok(new { message = "hello world!" }))
-   .WithTags("Playground")
+   .WithTags("Host")
    .AllowAnonymous();
 await app.RunAsync();
 

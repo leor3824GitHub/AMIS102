@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
 
-namespace Playground.Maui.Services;
+namespace AMIS.Maui.Services;
 
 public sealed record StickerInfo(string? PropertyNo, string? Item, decimal? Value);
 

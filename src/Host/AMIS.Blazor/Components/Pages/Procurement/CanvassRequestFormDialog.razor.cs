@@ -6,10 +6,10 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.Canvass;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
-using AMIS.Playground.Blazor.ApiClient;
+using AMIS.Blazor.ApiClient;
 using MudBlazor;
 
-namespace AMIS.Playground.Blazor.Components.Pages.Procurement;
+namespace AMIS.Blazor.Components.Pages.Procurement;
 
 public partial class CanvassRequestFormDialog
 {

@@ -1,6 +1,6 @@
-@Playground.Api_HostAddress = http://localhost:5014
+@AMIS.Api_HostAddress = http://localhost:5014
 
-GET {{Playground.Api_HostAddress}}/weatherforecast/
+GET {{AMIS.Api_HostAddress}}/weatherforecast/
 Accept: application/json
 
 ###

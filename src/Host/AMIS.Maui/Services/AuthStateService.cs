@@ -1,4 +1,4 @@
-namespace Playground.Maui.Services;
+namespace AMIS.Maui.Services;
 
 public sealed record EmployeeInfo(
     Guid EmployeeId,

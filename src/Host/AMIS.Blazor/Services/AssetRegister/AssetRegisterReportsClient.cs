@@ -2,7 +2,7 @@ using System.Globalization;
 using System.Net.Http.Json;
 using System.Text;
 
-namespace AMIS.Playground.Blazor.Services.AssetRegister;
+namespace AMIS.Blazor.Services.AssetRegister;
 
 public interface IAssetRegisterReportsClient
 {

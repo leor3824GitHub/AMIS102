@@ -14,8 +14,8 @@ Use NSwag (local dotnet tool) to generate typed C# clients + DTOs from the Playg
 This restores the local tool, ensures the output directory exists, and runs NSwag with the spec URL you provide.
 
 ## Output
-- Clients + DTOs: `src/Playground/Playground.Blazor/ApiClient/Generated.cs` (single file; multiple client types grouped by first path segment after the base path, e.g., `/api/v1/identity/*` -> `IdentityClient`).
-- Namespace: `AMIS.Playground.Blazor.ApiClient`
+- Clients + DTOs: `src/Host/AMIS.Blazor/ApiClient/Generated.cs` (single file; multiple client types grouped by first path segment after the base path, e.g., `/api/v1/identity/*` -> `IdentityClient`).
+- Namespace: `AMIS.Blazor.ApiClient`
 - Client grouping: `MultipleClientsFromPathSegments`; ensure Minimal API routes keep module-specific first segments.
 - Bearer auth: configure `HttpClient` (via DI) with the bearer token; generated clients use injected `HttpClient`. Base URLs are not baked into the generated code (`useBaseUrl: false`), so `HttpClient.BaseAddress` must be set by the app (see `Program.cs`).
 

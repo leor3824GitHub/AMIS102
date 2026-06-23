@@ -1,7 +1,7 @@
-using AMIS.Playground.Blazor.Services;
+using AMIS.Blazor.Services;
 using MudBlazor;
 
-namespace AMIS.Playground.Blazor.Components.Shared;
+namespace AMIS.Blazor.Components.Shared;
 
 /// <summary>
 /// Glue between <see cref="QuestPdfPageSetupDialog"/> and <see cref="IQuestPdfSetupPreferences"/>

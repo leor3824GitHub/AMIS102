@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 
-namespace AMIS.Playground.Blazor.Services;
+namespace AMIS.Blazor.Services;
 
 /// <summary>
 /// Remembers the user's last-used "Date Assumed Accountability" for the Physical Count report,

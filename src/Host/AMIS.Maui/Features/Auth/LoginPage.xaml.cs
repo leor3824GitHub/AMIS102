@@ -1,4 +1,4 @@
-namespace Playground.Maui.Features.Auth;
+namespace AMIS.Maui.Features.Auth;
 
 public partial class LoginPage : ContentPage
 {

@@ -1,13 +1,13 @@
 using System.Globalization;
 using AMIS.Framework.Blazor.UI;
 using AMIS.Framework.Blazor.UI.Theme;
-using AMIS.Playground.Blazor;
-using AMIS.Playground.Blazor.ApiClient;
-using AMIS.Playground.Blazor.Common;
-using AMIS.Playground.Blazor.Components;
-using AMIS.Playground.Blazor.Services;
-using AMIS.Playground.Blazor.Services.AssetRegister;
-using AMIS.Playground.Blazor.Services.Api;
+using AMIS.Blazor;
+using AMIS.Blazor.ApiClient;
+using AMIS.Blazor.Common;
+using AMIS.Blazor.Components;
+using AMIS.Blazor.Services;
+using AMIS.Blazor.Services.AssetRegister;
+using AMIS.Blazor.Services.Api;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server.Circuits;
@@ -95,7 +95,7 @@ builder.Services.AddScoped<IThemeStateFactory, CachedThemeStateFactory>(); // Fo
 // User profile state for syncing across components
 builder.Services.AddScoped<IUserProfileState, UserProfileState>();
 
-// Organization profile state — loaded once per session in PlaygroundLayout, consumed by report pages
+// Organization profile state — loaded once per session in AMISLayout, consumed by report pages
 builder.Services.AddScoped<IOrganizationProfileState, OrganizationProfileState>();
 
 // Capitalization threshold state — loaded once per session, consumed by PR/receiving forms and reports

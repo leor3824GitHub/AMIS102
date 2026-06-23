@@ -1,6 +1,6 @@
 using SQLite;
 
-namespace Playground.Maui.Data.Models;
+namespace AMIS.Maui.Data.Models;
 
 [Table("PendingCountEntries")]
 public sealed class PendingCountEntry

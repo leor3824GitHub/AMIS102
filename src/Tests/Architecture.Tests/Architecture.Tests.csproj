@@ -33,7 +33,7 @@
     <ProjectReference Include="..\..\Modules\Identity\Modules.Identity.Contracts\Modules.Identity.Contracts.csproj" />
     <ProjectReference Include="..\..\Modules\Multitenancy\Modules.Multitenancy\Modules.Multitenancy.csproj" />
     <ProjectReference Include="..\..\Modules\Multitenancy\Modules.Multitenancy.Contracts\Modules.Multitenancy.Contracts.csproj" />
-    <ProjectReference Include="..\..\Playground\Playground.Api\Playground.Api.csproj" />
-    <ProjectReference Include="..\..\Playground\Migrations.PostgreSQL\Migrations.PostgreSQL.csproj" />
+    <ProjectReference Include="..\..\Host\AMIS.Api\AMIS.Api.csproj" />
+    <ProjectReference Include="..\..\Host\Migrations.PostgreSQL\Migrations.PostgreSQL.csproj" />
   </ItemGroup>
 </Project>

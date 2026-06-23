@@ -6,7 +6,7 @@ using AMIS.Modules.BudgetDisbursement.Contracts.v1.BudgetUtilizationRequests;
 using AMIS.Modules.BudgetDisbursement.Contracts.v1.DisbursementVouchers;
 using AMIS.Modules.BudgetDisbursement.Contracts.v1.Settings;
 
-namespace AMIS.Playground.Blazor.ApiClient;
+namespace AMIS.Blazor.ApiClient;
 
 // Shared JSON options that mirror the API's ConfigureHttpJsonOptions: enums are serialized as
 // strings ("Draft", not 0). Without this converter, GetFromJsonAsync uses the Web defaults (which

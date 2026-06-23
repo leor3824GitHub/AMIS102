@@ -1,8 +1,8 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Playground.Maui.Services;
+using AMIS.Maui.Services;
 
-namespace Playground.Maui.Features.Inventory;
+namespace AMIS.Maui.Features.Inventory;
 
 [QueryProperty(nameof(Id), "Id")]
 public sealed partial class ICSDetailViewModel(IApiClient apiClient) : ObservableObject

@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:vm="clr-namespace:Playground.Maui.Features.Scan"
+             xmlns:vm="clr-namespace:AMIS.Maui.Features.Scan"
              xmlns:zxing="clr-namespace:ZXing.Net.Maui.Controls;assembly=ZXing.Net.MAUI.Controls"
              xmlns:zxingcore="clr-namespace:ZXing.Net.Maui;assembly=ZXing.Net.MAUI"
              x:DataType="vm:ScanViewModel"
-             x:Class="Playground.Maui.Features.Scan.ScanPage"
+             x:Class="AMIS.Maui.Features.Scan.ScanPage"
              Title="Scan Asset">
 
     <Grid RowDefinitions="*,Auto">

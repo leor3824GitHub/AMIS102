@@ -1,13 +1,13 @@
 @page "/procurement/canvass-requests"
 @implements IDisposable
-@using AMIS.Playground.Blazor.Components.Pages.Procurement
+@using AMIS.Blazor.Components.Pages.Procurement
 @using AMIS.Modules.ProcurementAcquisition.Contracts.Permissions
 @using AMIS.Modules.ProcurementAcquisition.Contracts.v1.Canvass
 @using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders
 @using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests
 @using AMIS.Modules.ProcurementAcquisition.Contracts.v1.SignedDocuments
 @using AMIS.Framework.Shared.Persistence
-@using AMIS.Playground.Blazor.ApiClient
+@using AMIS.Blazor.ApiClient
 @inject ICanvassRequestClient Client
 @inject IPurchaseOrderClient PoClient
 @inject ISnackbar Snackbar
@@ -359,7 +359,7 @@
         await LoadStatusCountsAsync();
     }
 
-    // Permissions load asynchronously in PlaygroundLayout after first render; re-render when they arrive
+    // Permissions load asynchronously in AMISLayout after first render; re-render when they arrive
     // so permission-gated controls appear on a hard refresh without requiring a user interaction.
     private void OnProfileChanged() => InvokeAsync(StateHasChanged);
 

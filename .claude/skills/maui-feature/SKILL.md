@@ -1,6 +1,6 @@
 # MAUI Feature Skill
 
-> Add a new screen (Page + ViewModel) to `Playground.Maui` following the MVVM pattern used in this project.
+> Add a new screen (Page + ViewModel) to `AMIS.Maui` following the MVVM pattern used in this project.
 
 ---
 
@@ -28,7 +28,7 @@ Before generating, confirm:
 
 ## Step 1: Create the ViewModel
 
-Location: `src/Playground/Playground.Maui/Features/{FeatureName}/{ScreenName}ViewModel.cs`
+Location: `src/Host/AMIS.Maui/Features/{FeatureName}/{ScreenName}ViewModel.cs`
 
 ### Template — List Screen
 
@@ -37,7 +37,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
 
-namespace Playground.Maui.Features.{FeatureName};
+namespace AMIS.Maui.Features.{FeatureName};
 
 public sealed partial class {ScreenName}ViewModel : ObservableObject
 {
@@ -97,7 +97,7 @@ public sealed partial class {ScreenName}ViewModel : ObservableObject
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
-namespace Playground.Maui.Features.{FeatureName};
+namespace AMIS.Maui.Features.{FeatureName};
 
 [QueryProperty(nameof({ParamName}), "{ParamName}")]
 public sealed partial class {ScreenName}ViewModel : ObservableObject
@@ -143,7 +143,7 @@ public sealed partial class {ScreenName}ViewModel : ObservableObject
 
 ## Step 2: Create the Page
 
-Location: `src/Playground/Playground.Maui/Features/{FeatureName}/{ScreenName}Page.xaml`
+Location: `src/Host/AMIS.Maui/Features/{FeatureName}/{ScreenName}Page.xaml`
 
 ### Rules
 
@@ -156,7 +156,7 @@ Location: `src/Playground/Playground.Maui/Features/{FeatureName}/{ScreenName}Pag
 ### Page Code-Behind Template
 
 ```csharp
-namespace Playground.Maui.Features.{FeatureName};
+namespace AMIS.Maui.Features.{FeatureName};
 
 public partial class {ScreenName}Page : ContentPage
 {
@@ -183,10 +183,10 @@ public partial class {ScreenName}Page : ContentPage
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:vm="clr-namespace:Playground.Maui.Features.{FeatureName}"
-             xmlns:dto="clr-namespace:Playground.Maui.Services.Dtos"
+             xmlns:vm="clr-namespace:AMIS.Maui.Features.{FeatureName}"
+             xmlns:dto="clr-namespace:AMIS.Maui.Services.Dtos"
              x:DataType="vm:{ScreenName}ViewModel"
-             x:Class="Playground.Maui.Features.{FeatureName}.{ScreenName}Page"
+             x:Class="AMIS.Maui.Features.{FeatureName}.{ScreenName}Page"
              Title="{ScreenTitle}">
 
     <Grid RowDefinitions="Auto,Auto,*">

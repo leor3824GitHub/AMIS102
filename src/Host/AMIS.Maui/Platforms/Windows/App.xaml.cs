@@ -1,6 +1,6 @@
 using Microsoft.UI.Xaml;
 
-namespace Playground.Maui.WinUI;
+namespace AMIS.Maui.WinUI;
 
 public partial class App : MauiWinUIApplication
 {
@@ -9,5 +9,5 @@ public partial class App : MauiWinUIApplication
         InitializeComponent();
     }
 
-    protected override MauiApp CreateMauiApp() => Playground.Maui.MauiProgram.CreateMauiApp();
+    protected override MauiApp CreateMauiApp() => AMIS.Maui.MauiProgram.CreateMauiApp();
 }

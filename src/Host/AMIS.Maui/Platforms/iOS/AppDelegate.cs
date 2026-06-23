@@ -1,6 +1,6 @@
 using Foundation;
 
-namespace Playground.Maui;
+namespace AMIS.Maui;
 
 [Register("AppDelegate")]
 public class AppDelegate : MauiUIApplicationDelegate

@@ -1,7 +1,7 @@
-using Playground.Maui.Data;
-using Playground.Maui.Data.Models;
+using AMIS.Maui.Data;
+using AMIS.Maui.Data.Models;
 
-namespace Playground.Maui.Services;
+namespace AMIS.Maui.Services;
 
 public interface IPhysicalCountSyncService
 {

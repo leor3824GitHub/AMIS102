@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
 	<PropertyGroup>
-		<RootNamespace>AMIS.Playground.Api</RootNamespace>
-		<AssemblyName>AMIS.Playground.Api</AssemblyName>
+		<RootNamespace>AMIS.Api</RootNamespace>
+		<AssemblyName>AMIS.Api</AssemblyName>
 		<IsPackable>false</IsPackable>
 
 		<!-- Container configuration -->

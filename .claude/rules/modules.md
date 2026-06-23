@@ -18,8 +18,8 @@ When in doubt, follow the repo's working modules instead of older generic exampl
 
 Host wiring lives here:
 
-- `src/Playground/Playground.Api/Program.cs`
-- `src/Playground/Playground.Api/Playground.Api.csproj`
+- `src/Host/AMIS.Api/Program.cs`
+- `src/Host/AMIS.Api/AMIS.Api.csproj`
 
 ## Module Structure
 
@@ -208,7 +208,7 @@ Keep constants minimal. Do not copy Expendable's richer constants structure unle
 
 The host integrates modules through the existing framework pipeline.
 
-In `Playground.Api/Program.cs`, new modules typically require:
+In `AMIS.Api/Program.cs`, new modules typically require:
 
 - representative types added to the Mediator assembly list
 - `typeof({ModuleName}Module).Assembly` added to `moduleAssemblies`
@@ -292,8 +292,8 @@ Follow the Mediator library, not MediatR.
 4. Implement `IModule` with permissions, `AddHeroDbContext`, and endpoint grouping.
 5. Add at least one vertical slice under `Features/v1/...`.
 6. Add both projects to `src/AMIS.Framework.slnx`.
-7. Add both project references to `Playground.Api.csproj`.
-8. Update `Playground.Api/Program.cs` Mediator and `moduleAssemblies` wiring.
+7. Add both project references to `AMIS.Api.csproj`.
+8. Update `AMIS.Api/Program.cs` Mediator and `moduleAssemblies` wiring.
 9. Build and test the full solution.
 
 ## Verification

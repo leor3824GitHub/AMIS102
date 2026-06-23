@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace AMIS.Playground.Blazor.Components.Pages.Procurement;
+namespace AMIS.Blazor.Components.Pages.Procurement;
 
 public sealed class QuotationForm
 {

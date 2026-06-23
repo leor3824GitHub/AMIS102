@@ -1,6 +1,6 @@
 using System.Net.Http.Json;
 
-namespace Playground.Maui.Services;
+namespace AMIS.Maui.Services;
 
 public sealed class ApiClient(HttpClient httpClient) : IApiClient
 {

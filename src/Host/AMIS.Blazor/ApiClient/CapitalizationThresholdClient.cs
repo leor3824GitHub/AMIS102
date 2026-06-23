@@ -1,7 +1,7 @@
 using System.Net.Http.Json;
 using AMIS.Modules.MasterData.Contracts.v1.CapitalizationThresholds;
 
-namespace AMIS.Playground.Blazor.ApiClient;
+namespace AMIS.Blazor.ApiClient;
 
 internal interface ICapitalizationThresholdClient
 {

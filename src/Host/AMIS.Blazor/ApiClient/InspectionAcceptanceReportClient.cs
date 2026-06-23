@@ -6,7 +6,7 @@ using System.Web;
 using AMIS.Framework.Shared.Persistence;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.InspectionAcceptanceReports;
 
-namespace AMIS.Playground.Blazor.ApiClient;
+namespace AMIS.Blazor.ApiClient;
 
 // ── Asset IARs ────────────────────────────────────────────────────────────────
 

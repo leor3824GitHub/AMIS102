@@ -103,7 +103,7 @@ Keep procurement and transfer as two sibling inbound sources:
 
 ## 2. Frontend Changes (COMPLETED ✅)
 
-### File: `src/Playground/Playground.Blazor/Components/Pages/AssetRegister/ReceivingReportForm.razor`
+### File: `src/Host/AMIS.Blazor/Components/Pages/AssetRegister/ReceivingReportForm.razor`
 
 **Changes Made:**
 
@@ -891,7 +891,7 @@ internal static class ReceivingMapper
 ```bash
 dotnet ef migrations add AddIARProvenance \
     --context AssetRegisterDbContext \
-    --project src/Playground/Migrations.PostgreSQL \
+    --project src/Host/Migrations.PostgreSQL \
     --output-dir Migrations/AssetRegister
 ```
 
@@ -1144,17 +1144,17 @@ src/Modules/AssetRegister/Modules.AssetRegister/
   └── Modules.AssetRegister.csproj   ← add references to ProcurementAcquisition.Contracts + MasterData.Contracts
 
 # Blazor
-src/Playground/Playground.Blazor/ApiClient/
+src/Host/AMIS.Blazor/ApiClient/
   └── IArReceivingReportClient.cs
 
-src/Playground/Playground.Blazor/Components/Pages/AssetRegister/
+src/Host/AMIS.Blazor/Components/Pages/AssetRegister/
   └── ReceivingReportForm.razor (ALREADY DONE)
 ```
 
 ### Migration
 
 ```
-src/Playground/Migrations.PostgreSQL/Migrations/AssetRegister/
+src/Host/Migrations.PostgreSQL/Migrations/AssetRegister/
   └── {timestamp}_AddIARProvenance.cs
      — adds SourceIARId + SourceIARItemNo to ReceivingReportItems
      — adds SourceIARId to AssetRegistries

@@ -1,7 +1,7 @@
 using ObjCRuntime;
 using UIKit;
 
-namespace Playground.Maui;
+namespace AMIS.Maui;
 
 public class Program
 {

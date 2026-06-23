@@ -1,8 +1,8 @@
-using AMIS.Playground.Blazor.ApiClient;
-using ApiClient = AMIS.Playground.Blazor.ApiClient;
+using AMIS.Blazor.ApiClient;
+using ApiClient = AMIS.Blazor.ApiClient;
 using System.Net.Http.Json;
 
-namespace AMIS.Playground.Blazor.Services;
+namespace AMIS.Blazor.Services;
 
 /// <summary>
 /// Wrapper service for MasterData API Client operations

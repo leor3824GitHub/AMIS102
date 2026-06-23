@@ -1,9 +1,9 @@
-@using AMIS.Playground.Blazor.Components.Layout
+@using AMIS.Blazor.Components.Layout
 @using Microsoft.AspNetCore.Components.Authorization
 
 <Router AppAssembly="typeof(Program).Assembly">
     <Found Context="routeData">
-        <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(PlaygroundLayout)">
+        <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(AMISLayout)">
             <NotAuthorized>
                 <RedirectToLogin />
             </NotAuthorized>
@@ -14,7 +14,7 @@
         <FocusOnNavigate RouteData="routeData" Selector="h1" />
     </Found>
     <NotFound>
-        <LayoutView Layout="typeof(PlaygroundLayout)">
+        <LayoutView Layout="typeof(AMISLayout)">
             <p>Sorry, there's nothing at this address.</p>
         </LayoutView>
     </NotFound>

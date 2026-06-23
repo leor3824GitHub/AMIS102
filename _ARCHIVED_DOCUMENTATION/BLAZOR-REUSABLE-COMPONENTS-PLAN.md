@@ -328,7 +328,7 @@ Located in `src/BuildingBlocks/Blazor.UI/Components/`:
 
 ## Migration Targets (Wave 1)
 
-Prioritize pages with highest duplication and highest traffic in `src/Playground/Playground.Blazor/Components/Pages/`:
+Prioritize pages with highest duplication and highest traffic in `src/Host/AMIS.Blazor/Components/Pages/`:
 
 - `MasterData/*` list pages: migrate table + status chips + empty states
 - `Expendable/*` list and approval pages: migrate table + status chips + delete flows
@@ -359,7 +359,7 @@ Minimum quality gate per component before rollout:
 - Component created under the correct `BuildingBlocks/Blazor.UI/Components/*` folder
 - API documented in XML comments on public parameters
 - Included in `src/BuildingBlocks/Blazor.UI/_Imports.razor` when namespace is new
-- At least one real page migrated in `Playground.Blazor` as a reference implementation
+- At least one real page migrated in `AMIS.Blazor` as a reference implementation
 - Existing behavior preserved (no regression in paging, filtering, save/delete flows)
 
 ---
@@ -401,8 +401,8 @@ Second-pass execution recommendation:
 ## Files to Update After Each Component
 
 - `src/BuildingBlocks/Blazor.UI/_Imports.razor` — add namespace
-- `src/Playground/Playground.Blazor/_Imports.razor` — verify cascaded imports
-- Replace direct `MudTable`/`MudDialog`/`MudChip` usage in `Playground.Blazor/Components/Pages/**` with the new wrappers
+- `src/Host/AMIS.Blazor/_Imports.razor` — verify cascaded imports
+- Replace direct `MudTable`/`MudDialog`/`MudChip` usage in `AMIS.Blazor/Components/Pages/**` with the new wrappers
 
 ---
 

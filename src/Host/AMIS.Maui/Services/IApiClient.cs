@@ -1,6 +1,6 @@
-using Playground.Maui.Data.Models;
+using AMIS.Maui.Data.Models;
 
-namespace Playground.Maui.Services;
+namespace AMIS.Maui.Services;
 
 // DTOs for API responses
 public sealed record TokenIssueRequest(string Email, string Password);

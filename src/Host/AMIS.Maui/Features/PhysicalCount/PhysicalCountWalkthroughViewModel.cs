@@ -1,10 +1,10 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
-using Playground.Maui.Services;
+using AMIS.Maui.Services;
 using System.Collections.ObjectModel;
 
-namespace Playground.Maui.Features.PhysicalCount;
+namespace AMIS.Maui.Features.PhysicalCount;
 
 [QueryProperty(nameof(SessionId), "SessionId")]
 public sealed partial class PhysicalCountWalkthroughViewModel : ObservableObject

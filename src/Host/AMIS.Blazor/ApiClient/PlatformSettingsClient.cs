@@ -1,7 +1,7 @@
 using System.Net.Http.Json;
 using AMIS.Modules.Multitenancy.Contracts.Dtos;
 
-namespace AMIS.Playground.Blazor.ApiClient;
+namespace AMIS.Blazor.ApiClient;
 
 internal interface IPlatformSettingsClient
 {

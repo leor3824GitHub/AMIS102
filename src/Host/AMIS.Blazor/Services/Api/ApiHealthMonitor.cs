@@ -1,6 +1,6 @@
-using AMIS.Playground.Blazor.ApiClient;
+using AMIS.Blazor.ApiClient;
 
-namespace AMIS.Playground.Blazor.Services.Api;
+namespace AMIS.Blazor.Services.Api;
 
 public interface IApiHealthMonitor
 {

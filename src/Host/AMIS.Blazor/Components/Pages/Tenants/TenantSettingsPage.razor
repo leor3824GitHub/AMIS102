@@ -1,7 +1,7 @@
 @page "/tenants/settings"
 @implements IDisposable
-@using AMIS.Playground.Blazor.ApiClient
-@using AMIS.Playground.Blazor.Services
+@using AMIS.Blazor.ApiClient
+@using AMIS.Blazor.Services
 @using AMIS.Framework.Blazor.UI.Components.Page
 @using AMIS.Framework.Shared.Multitenancy
 @using AMIS.Modules.Multitenancy.Contracts.Dtos
@@ -176,7 +176,7 @@ else
         await LoadSettingsAsync();
     }
 
-    // Permissions load asynchronously in PlaygroundLayout after first render. On a hard refresh the page
+    // Permissions load asynchronously in AMISLayout after first render. On a hard refresh the page
     // first renders with an empty permission set, so the initial load short-circuits on !_canView; re-run
     // it (and re-render) once permissions arrive.
     private void OnProfileChanged() => InvokeAsync(ReloadOnPermissionsAsync);

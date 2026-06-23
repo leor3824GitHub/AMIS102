@@ -372,7 +372,7 @@ WHERE inv."TenantId" = 'your-tenant-id';
 
 For issues or questions about:
 - **MCP Server Setup**: Check VS Code MCP extension documentation
-- **Database Schema**: Refer to migration files in `src/Playground/Migrations.PostgreSQL`
+- **Database Schema**: Refer to migration files in `src/Host/Migrations.PostgreSQL`
 - **Domain Logic**: Review module-specific code in `src/Modules/`
 
 ---

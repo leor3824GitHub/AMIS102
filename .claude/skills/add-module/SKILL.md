@@ -22,8 +22,8 @@ This repo is a modular monolith. Modules do not deploy independently; they load 
 
 - `src/Modules/MasterData/Modules.MasterData`
 - `src/Modules/Expendable/Modules.Expendable`
-- `src/Playground/Playground.Api/Program.cs`
-- `src/Playground/Playground.Api/Playground.Api.csproj`
+- `src/Host/AMIS.Api/Program.cs`
+- `src/Host/AMIS.Api/AMIS.Api.csproj`
 
 ## Project Structure
 
@@ -313,7 +313,7 @@ dotnet sln src/AMIS.Framework.slnx add src/Modules/{Name}/Modules.{Name}.Contrac
 
 ## Step 13: Reference From API
 
-In `src/Playground/Playground.Api/Playground.Api.csproj`:
+In `src/Host/AMIS.Api/AMIS.Api.csproj`:
 
 ```xml
 <ProjectReference Include="..\..\Modules\{Name}\Modules.{Name}.Contracts\Modules.{Name}.Contracts.csproj" />
@@ -326,13 +326,13 @@ New modules need an initial migration for their DbContext:
 
 ```powershell
 dotnet ef migrations add "Initial_{Name}Schema" `
-  --project src/Playground/Migrations.PostgreSQL `
-  --startup-project src/Playground/Playground.Api `
+  --project src/Host/Migrations.PostgreSQL `
+  --startup-project src/Host/AMIS.Api `
   --context {Name}DbContext
 
 dotnet ef database update `
-  --project src/Playground/Migrations.PostgreSQL `
-  --startup-project src/Playground/Playground.Api `
+  --project src/Host/Migrations.PostgreSQL `
+  --startup-project src/Host/AMIS.Api `
   --context {Name}DbContext
 ```
 

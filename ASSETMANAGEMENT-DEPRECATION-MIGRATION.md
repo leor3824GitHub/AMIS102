@@ -28,7 +28,7 @@ ViewModels/pages stay untouched where the semantics match.
 ## Phases
 
 - **Phase 1a — MAUI ICS/PAR/asset-lookup → AssetRegister. ✅ DONE (2026-06-11).**
-  Rewrote `Playground.Maui/Services/ApiClient.cs` ICS/PAR/lookup methods to call AssetRegister
+  Rewrote `AMIS.Maui/Services/ApiClient.cs` ICS/PAR/lookup methods to call AssetRegister
   `accountability/mine` + `assets/by-property-no`, mapping `ArAccountability*`/`ArAssetDetail` (local
   string-enum mirrors — MAUI can't reference `Modules.*`) into the unchanged MAUI DTOs. `IApiClient`,
   ViewModels and pages unchanged.
@@ -75,4 +75,4 @@ ViewModels/pages stay untouched where the semantics match.
 ## Verification per phase
 
 `dotnet build` the affected client project (0 errors) + smoke-test the re-pointed screens against a
-running API (`dotnet run --project src/Playground/AMIS.Playground.AppHost`).
+running API (`dotnet run --project src/Host/AMIS.AppHost`).

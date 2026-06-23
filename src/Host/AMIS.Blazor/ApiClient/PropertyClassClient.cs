@@ -2,7 +2,7 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using AMIS.Modules.MasterData.Contracts.v1.PropertyClasses;
 
-namespace AMIS.Playground.Blazor.ApiClient;
+namespace AMIS.Blazor.ApiClient;
 
 internal interface IPropertyClassClient
 {

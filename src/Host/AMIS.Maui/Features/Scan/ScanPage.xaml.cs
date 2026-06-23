@@ -3,7 +3,7 @@ using CommunityToolkit.Maui.Views;
 using Microsoft.Extensions.DependencyInjection;
 using ZXing.Net.Maui;
 
-namespace Playground.Maui.Features.Scan;
+namespace AMIS.Maui.Features.Scan;
 
 public partial class ScanPage : ContentPage
 {

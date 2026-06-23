@@ -40,9 +40,9 @@ src/Tests/AssetRegister.Tests/         (architecture + value-object tests)
 
 Host wiring updated:
 
-- [Playground.Api/Playground.Api.csproj](src/Playground/Playground.Api/Playground.Api.csproj) — both module project references added
-- [Playground.Api/Program.cs](src/Playground/Playground.Api/Program.cs) — `AssetRegisterModule` assembly added to `moduleAssemblies`
-- [Migrations.PostgreSQL/Migrations.PostgreSQL.csproj](src/Playground/Migrations.PostgreSQL/Migrations.PostgreSQL.csproj) — implementation project referenced for design-time tooling
+- [AMIS.Api/AMIS.Api.csproj](src/Host/AMIS.Api/AMIS.Api.csproj) — both module project references added
+- [AMIS.Api/Program.cs](src/Host/AMIS.Api/Program.cs) — `AssetRegisterModule` assembly added to `moduleAssemblies`
+- [Migrations.PostgreSQL/Migrations.PostgreSQL.csproj](src/Host/Migrations.PostgreSQL/Migrations.PostgreSQL.csproj) — implementation project referenced for design-time tooling
 
 #### Domain — 6 aggregate roots
 
@@ -106,7 +106,7 @@ In [Domain/Services/NumberGenerators.cs](src/Modules/AssetRegister/Modules.Asset
 
 #### Initial migration
 
-[`Migrations.PostgreSQL/AssetRegister/20260512091248_AssetRegister_Initial.cs`](src/Playground/Migrations.PostgreSQL/AssetRegister/) — generates 14 tables under `asset_register.*`:
+[`Migrations.PostgreSQL/AssetRegister/20260512091248_AssetRegister_Initial.cs`](src/Host/Migrations.PostgreSQL/AssetRegister/) — generates 14 tables under `asset_register.*`:
 
 ```
 AssetRegistries                          PropertyAccountabilities
@@ -213,8 +213,8 @@ dotnet test src/Tests/AssetRegister.Tests/AssetRegister.Tests.csproj
 
 # Generate DDL preview for the AssetRegister schema
 dotnet ef migrations script `
-    --project src/Playground/Migrations.PostgreSQL `
-    --startup-project src/Playground/Playground.Api `
+    --project src/Host/Migrations.PostgreSQL `
+    --startup-project src/Host/AMIS.Api `
     --context AssetRegisterDbContext
 
 # Confirm AssetManagement was not touched

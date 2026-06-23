@@ -12,7 +12,7 @@
     survives `clean`. Building all three MAUI TFMs bumps three times (one per build).
     A fully up-to-date no-op build does not bump (the assembly isn't regenerated).
 
-    Imported by Playground.Maui.csproj and Playground.Blazor.csproj.
+    Imported by AMIS.Maui.csproj and AMIS.Blazor.csproj.
   -->
 
   <PropertyGroup>

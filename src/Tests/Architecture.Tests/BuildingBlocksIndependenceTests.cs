@@ -57,15 +57,15 @@ public class BuildingBlocksIndependenceTests
                 .InAssembly(assembly)
                 .ShouldNot()
                 .HaveDependencyOnAny(
-                    "AMIS.Playground",
-                    "Playground.Api",
-                    "Playground.Blazor")
+                    "AMIS.AppHost",
+                    "AMIS.Api",
+                    "AMIS.Blazor")
                 .GetResult();
 
             var failingTypes = result.FailingTypeNames ?? [];
 
             result.IsSuccessful.ShouldBeTrue(
-                $"BuildingBlock '{assembly.GetName().Name}' should not depend on Playground. " +
+                $"BuildingBlock '{assembly.GetName().Name}' should not depend on host projects. " +
                 $"Failing types: {string.Join(", ", failingTypes)}");
         }
     }
@@ -104,8 +104,10 @@ public class BuildingBlocksIndependenceTests
                     violations.Add($"{projectName} -> {referencedName}");
                 }
 
-                // Check if it references Playground
-                if (referencedName.StartsWith("Playground", StringComparison.OrdinalIgnoreCase) ||
+                // Check if it references a host project (AMIS.Api / AMIS.Blazor / AMIS.Maui / AMIS.AppHost)
+                if (referencedName.StartsWith("AMIS.Api", StringComparison.OrdinalIgnoreCase) ||
+                    referencedName.StartsWith("AMIS.Blazor", StringComparison.OrdinalIgnoreCase) ||
+                    referencedName.StartsWith("AMIS.Maui", StringComparison.OrdinalIgnoreCase) ||
                     referencedName.Contains("AppHost", StringComparison.OrdinalIgnoreCase))
                 {
                     violations.Add($"{projectName} -> {referencedName}");
@@ -114,7 +116,7 @@ public class BuildingBlocksIndependenceTests
         }
 
         violations.ShouldBeEmpty(
-            $"BuildingBlocks should not reference Modules or Playground projects. " +
+            $"BuildingBlocks should not reference Modules or host projects. " +
             $"Violations: {string.Join(", ", violations)}");
     }
 

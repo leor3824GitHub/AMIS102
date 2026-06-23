@@ -37,9 +37,9 @@ Employee-facing shopping UI is not fully integrated yet.
 - Supply requests page is placeholder text.
 
 Key files:
-- `src/Playground/Playground.Blazor/Components/Pages/Expendable/ProductsPage.razor`
-- `src/Playground/Playground.Blazor/Components/Pages/Expendable/CartPage.razor`
-- `src/Playground/Playground.Blazor/Components/Pages/Expendable/SupplyRequestsPage.razor`
+- `src/Host/AMIS.Blazor/Components/Pages/Expendable/ProductsPage.razor`
+- `src/Host/AMIS.Blazor/Components/Pages/Expendable/CartPage.razor`
+- `src/Host/AMIS.Blazor/Components/Pages/Expendable/SupplyRequestsPage.razor`
 
 ### API Client Compatibility Gap (Important)
 The generated cart client appears out of sync with backend endpoint routes.
@@ -51,7 +51,7 @@ Examples:
 - Backend maps add item to `POST /{cartId}/items`.
 
 Key files:
-- `src/Playground/Playground.Blazor/ApiClient/Generated.cs`
+- `src/Host/AMIS.Blazor/ApiClient/Generated.cs`
 - `src/Modules/Expendable/Modules.Expendable/Features/v1/Cart/GetOrCreateCart/GetOrCreateCartEndpoint.cs`
 - `src/Modules/Expendable/Modules.Expendable/Features/v1/Cart/AddToCart/AddToCartEndpoint.cs`
 

@@ -1,17 +1,17 @@
 using CommunityToolkit.Maui;
 using Microsoft.Extensions.Configuration;
-using Playground.Maui.Data;
-using Playground.Maui.Features.Asset;
-using Playground.Maui.Features.Auth;
-using Playground.Maui.Features.Home;
-using Playground.Maui.Features.Inventory;
-using Playground.Maui.Features.PhysicalCount;
-using Playground.Maui.Features.Profile;
-using Playground.Maui.Features.Scan;
-using Playground.Maui.Services;
+using AMIS.Maui.Data;
+using AMIS.Maui.Features.Asset;
+using AMIS.Maui.Features.Auth;
+using AMIS.Maui.Features.Home;
+using AMIS.Maui.Features.Inventory;
+using AMIS.Maui.Features.PhysicalCount;
+using AMIS.Maui.Features.Profile;
+using AMIS.Maui.Features.Scan;
+using AMIS.Maui.Services;
 using ZXing.Net.Maui.Controls;
 
-namespace Playground.Maui;
+namespace AMIS.Maui;
 
 public static class MauiProgram
 {
@@ -34,12 +34,12 @@ public static class MauiProgram
         // overlay in Release builds, then environment variables
         // (environment variables override so Aspire can inject Api__BaseUrl at launch time)
         var assembly = typeof(MauiProgram).Assembly;
-        using var stream = assembly.GetManifestResourceStream("Playground.Maui.appsettings.json");
+        using var stream = assembly.GetManifestResourceStream("AMIS.Maui.appsettings.json");
         if (stream is not null)
         {
             var configBuilder = new ConfigurationBuilder().AddJsonStream(stream);
 #if !DEBUG
-            using var productionStream = assembly.GetManifestResourceStream("Playground.Maui.appsettings.Production.json");
+            using var productionStream = assembly.GetManifestResourceStream("AMIS.Maui.appsettings.Production.json");
             if (productionStream is not null)
             {
                 configBuilder.AddJsonStream(productionStream);

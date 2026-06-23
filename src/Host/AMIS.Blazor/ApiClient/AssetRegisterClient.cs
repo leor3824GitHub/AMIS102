@@ -15,7 +15,7 @@ using AMIS.Modules.AssetRegister.Contracts.v1.Depreciation;
 using AMIS.Modules.AssetRegister.Contracts.v1.Reports;
 using ArContracts = AMIS.Modules.AssetRegister.Contracts.v1;
 
-namespace AMIS.Playground.Blazor.ApiClient;
+namespace AMIS.Blazor.ApiClient;
 
 // Shared JSON options that mirror the API's ConfigureHttpJsonOptions:
 // enums are serialized/deserialized as strings ("PPERR", not 0).

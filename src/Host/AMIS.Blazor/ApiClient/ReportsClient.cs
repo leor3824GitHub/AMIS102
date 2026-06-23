@@ -9,7 +9,7 @@ using AMIS.Framework.Shared.Persistence;
 using AMIS.Modules.Expendable.Contracts.v1.Requests;
 using AMIS.Modules.Expendable.Contracts.v1.Warehouse;
 
-namespace AMIS.Playground.Blazor.ApiClient;
+namespace AMIS.Blazor.ApiClient;
 
 public interface IReportsClient
 {

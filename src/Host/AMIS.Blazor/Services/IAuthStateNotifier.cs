@@ -1,4 +1,4 @@
-namespace AMIS.Playground.Blazor.Services;
+namespace AMIS.Blazor.Services;
 
 /// <summary>
 /// Service that notifies Blazor components when authentication state changes

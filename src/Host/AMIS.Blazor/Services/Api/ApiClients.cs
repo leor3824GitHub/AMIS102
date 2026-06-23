@@ -1,4 +1,4 @@
-namespace AMIS.Playground.Blazor.Services.Api;
+namespace AMIS.Blazor.Services.Api;
 
 internal static class ApiClients
 {

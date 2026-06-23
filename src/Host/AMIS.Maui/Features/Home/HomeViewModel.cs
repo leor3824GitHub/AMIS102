@@ -1,14 +1,14 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Playground.Maui.Features.Inventory;
-using Playground.Maui.Features.PhysicalCount;
-using Playground.Maui.Features.Profile;
-using Playground.Maui.Features.Scan;
-using Playground.Maui.Services;
+using AMIS.Maui.Features.Inventory;
+using AMIS.Maui.Features.PhysicalCount;
+using AMIS.Maui.Features.Profile;
+using AMIS.Maui.Features.Scan;
+using AMIS.Maui.Services;
 using System.Collections.ObjectModel;
 using System.Globalization;
 
-namespace Playground.Maui.Features.Home;
+namespace AMIS.Maui.Features.Home;
 
 // Unified card model for the "Recent" zone — maps either an ICS or a PAR onto one row shape.
 public sealed record RecentItem(

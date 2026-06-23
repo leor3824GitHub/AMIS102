@@ -871,10 +871,10 @@ public sealed class ReportDesignerModule : IModule
 }
 ```
 
-Host wiring (`Playground.Api/Program.cs`): add `typeof(ReportDesignerModule)`,
+Host wiring (`AMIS.Api/Program.cs`): add `typeof(ReportDesignerModule)`,
 `typeof(ReportDesignerContractsMarker)`, and a representative query to the Mediator
 `Assemblies` list; add `typeof(ReportDesignerModule).Assembly` to `moduleAssemblies`;
-register both projects in `AMIS.Framework.slnx` and `Playground.Api.csproj`.
+register both projects in `AMIS.Framework.slnx` and `AMIS.Api.csproj`.
 
 ---
 

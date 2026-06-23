@@ -2,7 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 
-namespace Playground.Maui.Features.PhysicalCount;
+namespace AMIS.Maui.Features.PhysicalCount;
 
 public sealed partial class PhysicalCountScanViewModel : ObservableObject
 {

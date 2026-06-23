@@ -1,7 +1,7 @@
 @page "/asset-register/receiving/smrr"
 @implements IDisposable
-@using AMIS.Playground.Blazor.ApiClient
-@using AMIS.Playground.Blazor.Components.Pages.Procurement
+@using AMIS.Blazor.ApiClient
+@using AMIS.Blazor.Components.Pages.Procurement
 @using AMIS.Modules.AssetRegister.Contracts.Permissions
 @using ReceivingDocumentKind = AMIS.Modules.AssetRegister.Contracts.v1.ReceivingDocumentKind
 @using ReceiptType = AMIS.Modules.AssetRegister.Contracts.v1.ReceiptType
@@ -147,7 +147,7 @@
     private async Task OpenSignedCopyAsync(ArReceivingReportSummaryDto item)
     {
         // Fully-qualified: this page also imports the Procurement namespace, which has its own SignedCopyDialog.
-        var parameters = new DialogParameters<AMIS.Playground.Blazor.Components.Pages.AssetRegister.SignedCopyDialog>
+        var parameters = new DialogParameters<AMIS.Blazor.Components.Pages.AssetRegister.SignedCopyDialog>
         {
             { x => x.DocumentType, AssetRegisterDocumentType.ReceivingReport },
             { x => x.DocumentId, item.Id },
@@ -156,7 +156,7 @@
         };
         // Footer "Close" is the only exit (no header ×, no backdrop dismiss) so the upload result always reaches us.
         var options = new DialogOptions { CloseButton = false, BackdropClick = false, MaxWidth = MaxWidth.Small, FullWidth = true };
-        var dialog = await DialogService.ShowAsync<AMIS.Playground.Blazor.Components.Pages.AssetRegister.SignedCopyDialog>("Signed Copy", parameters, options);
+        var dialog = await DialogService.ShowAsync<AMIS.Blazor.Components.Pages.AssetRegister.SignedCopyDialog>("Signed Copy", parameters, options);
         var result = await dialog.Result;
 
         // A signed copy was just uploaded — flip the row's HasSignedCopy so the icon turns green

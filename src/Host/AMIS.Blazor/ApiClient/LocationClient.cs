@@ -3,7 +3,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace AMIS.Playground.Blazor.ApiClient;
+namespace AMIS.Blazor.ApiClient;
 
 // Full CRUD client over the AssetRegister locations endpoint
 // (api/v1/asset-register/locations). Backs the Blazor Locations management page.

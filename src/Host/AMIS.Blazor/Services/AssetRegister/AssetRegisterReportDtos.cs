@@ -1,6 +1,6 @@
 using AMIS.Modules.AssetRegister.Contracts.v1;
 
-namespace AMIS.Playground.Blazor.Services.AssetRegister;
+namespace AMIS.Blazor.Services.AssetRegister;
 
 public sealed record AccountabilityReportLineDto(
     Guid LineId,

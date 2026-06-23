@@ -1,6 +1,6 @@
-using Playground.Maui.Services;
+using AMIS.Maui.Services;
 
-namespace Playground.Maui.Features.PhysicalCount;
+namespace AMIS.Maui.Features.PhysicalCount;
 
 public partial class PhysicalCountSessionListPage : ContentPage
 {

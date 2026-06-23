@@ -172,8 +172,8 @@ Standard endpoint shorthand mapping (copy into each Print endpoint):
 | Handler | [src/Modules/RdlcReporting/Modules.RdlcReporting/Features/v1/PurchaseRequests/PrintPurchaseRequest/PrintPurchaseRequestQueryHandler.cs](src/Modules/RdlcReporting/Modules.RdlcReporting/Features/v1/PurchaseRequests/PrintPurchaseRequest/PrintPurchaseRequestQueryHandler.cs) |
 | Endpoint | [src/Modules/RdlcReporting/Modules.RdlcReporting/Features/v1/PurchaseRequests/PrintPurchaseRequest/PrintPurchaseRequestEndpoint.cs](src/Modules/RdlcReporting/Modules.RdlcReporting/Features/v1/PurchaseRequests/PrintPurchaseRequest/PrintPurchaseRequestEndpoint.cs) |
 | RDLC | [src/Modules/RdlcReporting/Modules.RdlcReporting/Reports/PurchaseRequest.rdlc](src/Modules/RdlcReporting/Modules.RdlcReporting/Reports/PurchaseRequest.rdlc) |
-| Blazor page | [src/Playground/Playground.Blazor/Components/Pages/Procurement/PurchaseRequestPrintPage.razor](src/Playground/Playground.Blazor/Components/Pages/Procurement/PurchaseRequestPrintPage.razor) |
-| API client | [src/Playground/Playground.Blazor/ApiClient/ProcurementClient.cs](src/Playground/Playground.Blazor/ApiClient/ProcurementClient.cs) — `GetPrintPdfAsync` |
+| Blazor page | [src/Host/AMIS.Blazor/Components/Pages/Procurement/PurchaseRequestPrintPage.razor](src/Host/AMIS.Blazor/Components/Pages/Procurement/PurchaseRequestPrintPage.razor) |
+| API client | [src/Host/AMIS.Blazor/ApiClient/ProcurementClient.cs](src/Host/AMIS.Blazor/ApiClient/ProcurementClient.cs) — `GetPrintPdfAsync` |
 
 ---
 

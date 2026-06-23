@@ -1,10 +1,10 @@
-using AMIS.Playground.Blazor.ApiClient;
+using AMIS.Blazor.ApiClient;
 using Microsoft.AspNetCore.Authentication;
 using System.Diagnostics.Metrics;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
-namespace AMIS.Playground.Blazor.Services.Api;
+namespace AMIS.Blazor.Services.Api;
 
 /// <summary>
 /// Service responsible for refreshing expired access tokens using the refresh token.
@@ -26,7 +26,7 @@ internal sealed class TokenRefreshService : ITokenRefreshService, IDisposable
     private static readonly TimeSpan FailedTokenCacheDuration = TimeSpan.FromHours(24);  // Session-long cache to prevent retry spam
 
     // Process-level metrics (safe to aggregate across circuits)
-    private static readonly Meter RefreshMeter = new("AMIS.Playground.Blazor.Auth", "1.0.0");
+    private static readonly Meter RefreshMeter = new("AMIS.Blazor.Auth", "1.0.0");
     private static readonly Counter<long> RefreshAttemptsCounter = RefreshMeter.CreateCounter<long>("blazor_token_refresh_attempts_total");
     private static readonly Counter<long> RefreshSuccessCounter = RefreshMeter.CreateCounter<long>("blazor_token_refresh_success_total");
     private static readonly Counter<long> RefreshFailuresCounter = RefreshMeter.CreateCounter<long>("blazor_token_refresh_failures_total");

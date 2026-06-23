@@ -1,8 +1,8 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Playground.Maui.Services;
+using AMIS.Maui.Services;
 
-namespace Playground.Maui.Features.Auth;
+namespace AMIS.Maui.Features.Auth;
 
 public sealed partial class LoginViewModel(
     IApiClient apiClient,
@@ -50,7 +50,7 @@ public sealed partial class LoginViewModel(
         }
         catch (HttpRequestException)
         {
-            ErrorMessage = "Cannot reach API. Ensure Playground.Api is running and MAUI uses the correct BaseUrl.";
+            ErrorMessage = "Cannot reach API. Ensure AMIS.Api is running and MAUI uses the correct BaseUrl.";
         }
         catch (Exception ex)
         {

@@ -16,7 +16,7 @@ var postgres = builder.AddPostgres("postgres", port: 5432)
 var redis = builder.AddRedis("redis", port: 6379)
     .WithDataVolume("AMIS-redis-data230");
 
-var api = builder.AddProject<Projects.Playground_Api>("playground-api")
+var api = builder.AddProject<Projects.AMIS_Api>("playground-api")
     // Modify the endpoints auto-created from launchSettings.json (http/https profiles).
     // isProxied:false → dashboard shows the real port (5030/7030), no Aspire reverse proxy.
     .WithEndpoint("http", e => { e.Port = ApiHttpPort; e.IsProxied = false; })
@@ -38,7 +38,7 @@ var api = builder.AddProject<Projects.Playground_Api>("playground-api")
     .WithEnvironment("CachingOptions__Redis", redis.Resource.ConnectionStringExpression)
     .WaitFor(redis);
 
-builder.AddProject<Projects.Playground_Blazor>("playground-blazor")
+builder.AddProject<Projects.AMIS_Blazor>("playground-blazor")
     .WithReference(api)
     .WithEnvironment("Api__BaseUrl", localApiBaseUrl)
     .WaitFor(api);
@@ -46,7 +46,7 @@ builder.AddProject<Projects.Playground_Blazor>("playground-blazor")
 builder.AddExecutable(
         "playground-maui",
         "dotnet",
-        Path.Combine("..", "Playground.Maui"),
+        Path.Combine("..", "AMIS.Maui"),
         "run", "--framework", "net10.0-windows10.0.19041.0")
     .WithEnvironment("Api__BaseUrl", localApiBaseUrl)
     .WaitFor(api);
@@ -57,7 +57,7 @@ builder.AddExecutable(
 builder.AddExecutable(
         "playground-maui-android",
         "dotnet",
-        Path.Combine("..", "Playground.Maui"),
+        Path.Combine("..", "AMIS.Maui"),
         "run", "--framework", "net10.0-android")
     .WithEnvironment("Api__BaseUrl", androidApiBaseUrl)
     .WaitFor(api);

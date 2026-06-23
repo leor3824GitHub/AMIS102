@@ -3,7 +3,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.SignedDocuments;
 
-namespace AMIS.Playground.Blazor.ApiClient;
+namespace AMIS.Blazor.ApiClient;
 
 internal interface ISignedDocumentClient
 {

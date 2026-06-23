@@ -1,8 +1,8 @@
 using CommunityToolkit.Mvvm.Messaging;
-using Playground.Maui.Features.Auth;
-using Playground.Maui.Services;
+using AMIS.Maui.Features.Auth;
+using AMIS.Maui.Services;
 
-namespace Playground.Maui;
+namespace AMIS.Maui;
 
 public partial class App : Application
 {

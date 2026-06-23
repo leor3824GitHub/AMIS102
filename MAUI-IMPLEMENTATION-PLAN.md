@@ -2,7 +2,7 @@
 
 ## .NET MAUI Mobile/Desktop Client for AMIS
 
-> Second client UI alongside `Playground.Blazor`, consuming the same existing REST API.
+> Second client UI alongside `AMIS.Blazor`, consuming the same existing REST API.
 > Targets: **Android · iOS · Windows**
 
 ---
@@ -97,8 +97,8 @@ public sealed record TangibleInventoryItemDetailDto(
 ## 4. MAUI Project Structure
 
 ```
-src/Playground/Playground.Maui/
-├── Playground.Maui.csproj          # Targets net10.0-android, net10.0-ios, net10.0-windows10.0.19041.0
+src/Host/AMIS.Maui/
+├── AMIS.Maui.csproj          # Targets net10.0-android, net10.0-ios, net10.0-windows10.0.19041.0
 ├── MauiProgram.cs                  # DI, HTTP, SQLite, Shell registration
 ├── AppShell.xaml / .cs             # Tab bar: Inventory | Scan | Profile
 ├── appsettings.json                # Api:BaseUrl, Api:TenantId
@@ -164,7 +164,7 @@ src/Playground/Playground.Maui/
 
 ### Phase 3 — MAUI Project Setup _(parallel with Phases 1–2)_
 
-9. Create `Playground.Maui.csproj` with multi-platform targets.
+9. Create `AMIS.Maui.csproj` with multi-platform targets.
 10. Add to `src/AMIS.Framework.slnx`.
 11. Install NuGet packages:
     - `CommunityToolkit.Maui` — UI controls, toasts
@@ -443,35 +443,35 @@ private async Task NavigateToAssetDetail(string propertyNo) =>
 
 ### MAUI Project (all new)
 
-- [ ] `src/Playground/Playground.Maui/Playground.Maui.csproj`
-- [ ] `src/Playground/Playground.Maui/MauiProgram.cs`
-- [ ] `src/Playground/Playground.Maui/AppShell.xaml` + `.cs`
-- [ ] `src/Playground/Playground.Maui/appsettings.json`
-- [ ] `src/Playground/Playground.Maui/Services/ApiClientOptions.cs`
-- [ ] `src/Playground/Playground.Maui/Services/ITokenStorageService.cs`
-- [ ] `src/Playground/Playground.Maui/Services/TokenStorageService.cs`
-- [ ] `src/Playground/Playground.Maui/Services/AuthStateService.cs`
-- [ ] `src/Playground/Playground.Maui/Services/AuthenticatedHttpHandler.cs`
-- [ ] `src/Playground/Playground.Maui/Services/ICacheService.cs`
-- [ ] `src/Playground/Playground.Maui/Services/CacheService.cs`
-- [ ] `src/Playground/Playground.Maui/Data/LocalDb.cs`
-- [ ] `src/Playground/Playground.Maui/Data/Models/CachedEmployeeProfile.cs`
-- [ ] `src/Playground/Playground.Maui/Data/Models/CachedICS.cs`
-- [ ] `src/Playground/Playground.Maui/Data/Models/CachedPAR.cs`
-- [ ] `src/Playground/Playground.Maui/Features/Auth/LoginPage.xaml` + `.cs`
-- [ ] `src/Playground/Playground.Maui/Features/Auth/LoginViewModel.cs`
-- [ ] `src/Playground/Playground.Maui/Features/Profile/ProfilePage.xaml` + `.cs`
-- [ ] `src/Playground/Playground.Maui/Features/Profile/ProfileViewModel.cs`
-- [ ] `src/Playground/Playground.Maui/Features/Inventory/InventoryPage.xaml` + `.cs`
-- [ ] `src/Playground/Playground.Maui/Features/Inventory/InventoryViewModel.cs`
-- [ ] `src/Playground/Playground.Maui/Features/Inventory/ICSDetailPage.xaml` + `.cs`
-- [ ] `src/Playground/Playground.Maui/Features/Inventory/ICSDetailViewModel.cs`
-- [ ] `src/Playground/Playground.Maui/Features/Inventory/PARDetailPage.xaml` + `.cs`
-- [ ] `src/Playground/Playground.Maui/Features/Inventory/PARDetailViewModel.cs`
-- [ ] `src/Playground/Playground.Maui/Features/Scan/ScanPage.xaml` + `.cs`
-- [ ] `src/Playground/Playground.Maui/Features/Scan/ScanViewModel.cs`
-- [ ] `src/Playground/Playground.Maui/Features/Asset/AssetDetailPage.xaml` + `.cs`
-- [ ] `src/Playground/Playground.Maui/Features/Asset/AssetDetailViewModel.cs`
+- [ ] `src/Host/AMIS.Maui/AMIS.Maui.csproj`
+- [ ] `src/Host/AMIS.Maui/MauiProgram.cs`
+- [ ] `src/Host/AMIS.Maui/AppShell.xaml` + `.cs`
+- [ ] `src/Host/AMIS.Maui/appsettings.json`
+- [ ] `src/Host/AMIS.Maui/Services/ApiClientOptions.cs`
+- [ ] `src/Host/AMIS.Maui/Services/ITokenStorageService.cs`
+- [ ] `src/Host/AMIS.Maui/Services/TokenStorageService.cs`
+- [ ] `src/Host/AMIS.Maui/Services/AuthStateService.cs`
+- [ ] `src/Host/AMIS.Maui/Services/AuthenticatedHttpHandler.cs`
+- [ ] `src/Host/AMIS.Maui/Services/ICacheService.cs`
+- [ ] `src/Host/AMIS.Maui/Services/CacheService.cs`
+- [ ] `src/Host/AMIS.Maui/Data/LocalDb.cs`
+- [ ] `src/Host/AMIS.Maui/Data/Models/CachedEmployeeProfile.cs`
+- [ ] `src/Host/AMIS.Maui/Data/Models/CachedICS.cs`
+- [ ] `src/Host/AMIS.Maui/Data/Models/CachedPAR.cs`
+- [ ] `src/Host/AMIS.Maui/Features/Auth/LoginPage.xaml` + `.cs`
+- [ ] `src/Host/AMIS.Maui/Features/Auth/LoginViewModel.cs`
+- [ ] `src/Host/AMIS.Maui/Features/Profile/ProfilePage.xaml` + `.cs`
+- [ ] `src/Host/AMIS.Maui/Features/Profile/ProfileViewModel.cs`
+- [ ] `src/Host/AMIS.Maui/Features/Inventory/InventoryPage.xaml` + `.cs`
+- [ ] `src/Host/AMIS.Maui/Features/Inventory/InventoryViewModel.cs`
+- [ ] `src/Host/AMIS.Maui/Features/Inventory/ICSDetailPage.xaml` + `.cs`
+- [ ] `src/Host/AMIS.Maui/Features/Inventory/ICSDetailViewModel.cs`
+- [ ] `src/Host/AMIS.Maui/Features/Inventory/PARDetailPage.xaml` + `.cs`
+- [ ] `src/Host/AMIS.Maui/Features/Inventory/PARDetailViewModel.cs`
+- [ ] `src/Host/AMIS.Maui/Features/Scan/ScanPage.xaml` + `.cs`
+- [ ] `src/Host/AMIS.Maui/Features/Scan/ScanViewModel.cs`
+- [ ] `src/Host/AMIS.Maui/Features/Asset/AssetDetailPage.xaml` + `.cs`
+- [ ] `src/Host/AMIS.Maui/Features/Asset/AssetDetailViewModel.cs`
 
 ---
 

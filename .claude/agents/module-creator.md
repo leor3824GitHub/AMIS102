@@ -40,8 +40,8 @@ The actual repo structure is the source of truth. Follow these existing modules:
 
 The base application wiring lives here:
 
-- `src/Playground/Playground.Api/Program.cs`
-- `src/Playground/Playground.Api/Playground.Api.csproj`
+- `src/Host/AMIS.Api/Program.cs`
+- `src/Host/AMIS.Api/AMIS.Api.csproj`
 
 ## Generation Process
 
@@ -422,7 +422,7 @@ Only create `Provisioning/{Name}DbInitializerHostedService.cs` when the module n
 
 ### Step 8: Register Module in Program.cs
 
-In `src/Playground/Playground.Api/Program.cs`:
+In `src/Host/AMIS.Api/Program.cs`:
 
 ```csharp
 using AMIS.Modules.{Name};
@@ -467,7 +467,7 @@ Do not replace the platform wiring with custom endpoint bootstrapping.
 
 ### Step 9: Add Project References
 
-In `src/Playground/Playground.Api/Playground.Api.csproj`:
+In `src/Host/AMIS.Api/AMIS.Api.csproj`:
 
 ```xml
 <ItemGroup>
@@ -513,7 +513,7 @@ Keep public request/response contracts in `.Contracts/v1/...` when they must be 
 - [ ] Features follow the repo vertical-slice naming and placement
 - [ ] Added to Mediator assemblies in `Program.cs`
 - [ ] Added to `moduleAssemblies` in `Program.cs`
-- [ ] ProjectReferences added to `Playground.Api.csproj`
+- [ ] ProjectReferences added to `AMIS.Api.csproj`
 - [ ] Both projects added to `AMIS.Framework.slnx`
 - [ ] Build passes with 0 warnings
 
@@ -530,7 +530,7 @@ dotnet test src/AMIS.Framework.slnx
 **Permissions:** Define constants in `{Name}ModuleConstants`, register `AMISPermission` instances in the module.  
 **API Versioning:** Use `NewApiVersionSet()` and resource groups under `api/v{version:apiVersion}/...`.  
 **DbContext:** Inherit `BaseDbContext` and register with `AddHeroDbContext<T>()`.  
-**Mediator:** Add representative types from the new module to the Mediator assembly list in `Playground.Api/Program.cs`.  
+**Mediator:** Add representative types from the new module to the Mediator assembly list in `AMIS.Api/Program.cs`.  
 **Host Wiring:** New modules plug into the existing Hero platform and module loader via `AddHeroPlatform`, `AddModules`, `UseHeroMultiTenantDatabases`, and `UseHeroPlatform`.  
 **Contracts:** Use a separate `.Contracts` project with a marker class, Mediator abstractions, Shared, and Eventing.Abstractions references.  
 **Vertical Slices:** Keep each use case self-contained in `Features/v1/...`.  

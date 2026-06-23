@@ -5,7 +5,7 @@ using AMIS.Framework.Shared.Persistence;
 using AMIS.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
 using AMIS.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
 
-namespace AMIS.Playground.Blazor.ApiClient;
+namespace AMIS.Blazor.ApiClient;
 
 file static class HttpExtensions
 {

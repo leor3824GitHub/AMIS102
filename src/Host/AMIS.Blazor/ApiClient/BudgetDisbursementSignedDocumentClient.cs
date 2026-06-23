@@ -5,7 +5,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AMIS.Modules.BudgetDisbursement.Contracts.v1.SignedDocuments;
 
-namespace AMIS.Playground.Blazor.ApiClient;
+namespace AMIS.Blazor.ApiClient;
 
 // Mirrors the Asset Register signed-document client, but targets the Budget Disbursement module's
 // /signed-documents endpoints and its own BudgetDisbursementDocumentType enum (DV wet-signed copies).

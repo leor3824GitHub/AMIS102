@@ -1,7 +1,7 @@
 using System.Net.Http.Json;
 using AMIS.Modules.Expendable.Contracts.v1.Products;
 
-namespace AMIS.Playground.Blazor.ApiClient;
+namespace AMIS.Blazor.ApiClient;
 
 /// <summary>
 /// Manual client for product rating endpoints (pending NSwag regeneration).

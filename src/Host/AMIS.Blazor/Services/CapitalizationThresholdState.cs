@@ -1,7 +1,7 @@
 using AMIS.Modules.MasterData.Contracts.v1.CapitalizationThresholds;
-using AMIS.Playground.Blazor.ApiClient;
+using AMIS.Blazor.ApiClient;
 
-namespace AMIS.Playground.Blazor.Services;
+namespace AMIS.Blazor.Services;
 
 internal interface ICapitalizationThresholdState
 {

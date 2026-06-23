@@ -2,7 +2,7 @@ using Android.App;
 using Android.Content.PM;
 using Android.OS;
 
-namespace Playground.Maui;
+namespace AMIS.Maui;
 
 [Activity(
     Theme = "@style/Maui.SplashTheme",

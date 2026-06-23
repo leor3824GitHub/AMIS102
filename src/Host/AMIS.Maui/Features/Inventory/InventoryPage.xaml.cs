@@ -1,6 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Playground.Maui.Features.Inventory;
+namespace AMIS.Maui.Features.Inventory;
 
 public partial class InventoryPage : ContentPage
 {

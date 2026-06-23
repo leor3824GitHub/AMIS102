@@ -8,7 +8,7 @@ using AMIS.Modules.Vehicle.Contracts.v1.Maintenance;
 using AMIS.Modules.Vehicle.Contracts.v1.Repairs;
 using AMIS.Modules.Vehicle.Contracts.v1.Vehicles;
 
-namespace AMIS.Playground.Blazor.ApiClient;
+namespace AMIS.Blazor.ApiClient;
 
 internal interface IVehicleClient
 {

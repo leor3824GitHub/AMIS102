@@ -14,8 +14,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Playground.Api\Playground.Api.csproj" />
-    <ProjectReference Include="..\Playground.Blazor\Playground.Blazor.csproj" />
+    <ProjectReference Include="..\AMIS.Api\AMIS.Api.csproj" />
+    <ProjectReference Include="..\AMIS.Blazor\AMIS.Blazor.csproj" />
   </ItemGroup>
 
 </Project>

@@ -193,7 +193,7 @@ A new column `SourcePpmpVersionChainId` (`uuid NOT NULL`) must be added to the `
 ```
 dotnet ef migrations add AddAppItemSourcePpmpVersionChainId \
   --project src/Modules/ProcurementPlanning/Modules.ProcurementPlanning \
-  --startup-project src/Playground/AMIS.Playground.AppHost
+  --startup-project src/Host/AMIS.AppHost
 ```
 
 **Backfill for existing data:**
@@ -286,7 +286,7 @@ New column `PpmpFamilyId` (`uuid NOT NULL`) on the `Ppmps` table.
 ```
 dotnet ef migrations add AddPpmpFamilyId \
   --project src/Modules/ProcurementPlanning/Modules.ProcurementPlanning \
-  --startup-project src/Playground/AMIS.Playground.AppHost
+  --startup-project src/Host/AMIS.AppHost
 ```
 
 **Backfill for existing data:**

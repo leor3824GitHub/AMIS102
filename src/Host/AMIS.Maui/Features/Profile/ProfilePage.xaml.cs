@@ -1,6 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Playground.Maui.Features.Profile;
+namespace AMIS.Maui.Features.Profile;
 
 public partial class ProfilePage : ContentPage
 {

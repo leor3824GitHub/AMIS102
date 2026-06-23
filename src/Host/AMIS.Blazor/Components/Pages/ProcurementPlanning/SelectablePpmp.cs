@@ -1,4 +1,4 @@
-namespace AMIS.Playground.Blazor.Components.Pages.ProcurementPlanning;
+namespace AMIS.Blazor.Components.Pages.ProcurementPlanning;
 
 public sealed class SelectablePpmp
 {

@@ -1,4 +1,4 @@
-namespace AMIS.Playground.Blazor.Services.Api;
+namespace AMIS.Blazor.Services.Api;
 
 /// <summary>
 /// Circuit-scoped cache for storing the current access token.

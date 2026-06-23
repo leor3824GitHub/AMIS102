@@ -591,7 +591,7 @@ using Modules.Library.Contracts.v1.Products;
 
 ### 9. Module Registration (Program.cs)
 
-**File:** `src/Playground/Playground.Api/Program.cs`
+**File:** `src/Host/AMIS.Api/Program.cs`
 
 ```csharp
 // Register in dependency order (base → consumers)

@@ -1,8 +1,8 @@
-using Playground.Maui.Features.Asset;
-using Playground.Maui.Features.Inventory;
-using Playground.Maui.Features.PhysicalCount;
+using AMIS.Maui.Features.Asset;
+using AMIS.Maui.Features.Inventory;
+using AMIS.Maui.Features.PhysicalCount;
 
-namespace Playground.Maui;
+namespace AMIS.Maui;
 
 public partial class AppShell : Shell
 {

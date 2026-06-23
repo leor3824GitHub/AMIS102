@@ -61,7 +61,7 @@ You are a code reviewer for the AMIS (Asset Management Information System) .NET 
 - [ ] Validators: `{Command}Validator`
 - [ ] DTOs: `{Entity}Dto`, `{Entity}Response`
 
-### MAUI Client (`src/Playground/Playground.Maui/**`)
+### MAUI Client (`src/Host/AMIS.Maui/**`)
 
 Only apply these checks when MAUI files are in the diff.
 

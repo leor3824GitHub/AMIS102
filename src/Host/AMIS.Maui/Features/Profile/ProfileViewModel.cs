@@ -1,9 +1,9 @@
 using CommunityToolkit.Mvvm.ComponentModel;
-using Playground.Maui.Data;
-using Playground.Maui.Services;
+using AMIS.Maui.Data;
+using AMIS.Maui.Services;
 using System.Reflection;
 
-namespace Playground.Maui.Features.Profile;
+namespace AMIS.Maui.Features.Profile;
 
 public sealed partial class ProfileViewModel(
     IApiClient apiClient,

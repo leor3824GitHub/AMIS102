@@ -1,7 +1,7 @@
-using Playground.Maui.Data.Models;
+using AMIS.Maui.Data.Models;
 using SQLite;
 
-namespace Playground.Maui.Data;
+namespace AMIS.Maui.Data;
 
 public sealed class LocalDb
 {
