@@ -10,10 +10,11 @@
              BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource OffBlack}}">
 
     <RefreshView IsRefreshing="{Binding IsLoading}" Command="{Binding LoadCommand}">
-        <VerticalStackLayout Padding="0,16,0,24" Spacing="0">
+        <Grid RowDefinitions="Auto,Auto,Auto,*" Padding="0,16,0,0">
 
             <!-- Sync banner -->
-            <Border IsVisible="{Binding HasPendingSync}"
+            <Border Grid.Row="0"
+                    IsVisible="{Binding HasPendingSync}"
                     Stroke="Transparent"
                     StrokeShape="RoundRectangle 10"
                     BackgroundColor="{StaticResource Warning}"
@@ -25,18 +26,21 @@
             </Border>
 
             <!-- Error -->
-            <Label Text="{Binding ErrorMessage}"
+            <Label Grid.Row="1"
+                   Text="{Binding ErrorMessage}"
                    IsVisible="{Binding ErrorMessage, Converter={StaticResource IsNotNullConverter}}"
                    TextColor="{StaticResource Danger}"
                    FontSize="13"
                    Margin="20,0,20,12" />
 
             <!-- Section header -->
-            <Label Text="SESSIONS"
+            <Label Grid.Row="2"
+                   Text="SESSIONS"
                    Style="{StaticResource SectionHeaderStyle}" />
 
             <!-- Sessions list -->
-            <CollectionView ItemsSource="{Binding Sessions}"
+            <CollectionView Grid.Row="3"
+                            ItemsSource="{Binding Sessions}"
                             SelectionMode="Single"
                             SelectionChanged="OnSessionSelected"
                             EmptyView="No physical count sessions found.">
@@ -100,6 +104,6 @@
                 </CollectionView.ItemTemplate>
             </CollectionView>
 
-        </VerticalStackLayout>
+        </Grid>
     </RefreshView>
 </ContentPage>

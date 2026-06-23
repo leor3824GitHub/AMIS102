@@ -462,7 +462,7 @@
 
     private async Task DownloadQuestPdfAsync()
     {
-        var r = await QuestPdfSetupPrefs.ShowSetupDialogAsync(DialogService, ReportKey, defaultMarginMm: 15d);
+        var r = await QuestPdfSetupPrefs.ShowSetupDialogAsync(DialogService, ReportKey, defaultOrientation: "portrait", defaultMarginMm: 15d);
         if (r is null) return;
 
         _loading = true;

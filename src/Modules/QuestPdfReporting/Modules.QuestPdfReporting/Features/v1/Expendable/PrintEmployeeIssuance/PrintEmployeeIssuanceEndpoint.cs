@@ -17,7 +17,7 @@ internal static class PrintEmployeeIssuanceEndpoint
             .RequirePermission(QuestPdfReportingPermissions.ViewExpenditureReports);
 
     // ?pageWidth=a4|legal|longbond|letter   (default a4)
-    // ?orientation=landscape|portrait        (default landscape)
+    // ?orientation=landscape|portrait        (default portrait)
     // ?marginMm=<page margin in millimetres>  (default 15)
     private static async Task<IResult> Print(
         IMediator mediator,
@@ -30,7 +30,7 @@ internal static class PrintEmployeeIssuanceEndpoint
         double?         marginMm    = null)
     {
         var paperSize = (pageWidth ?? "a4").ToLowerInvariant();
-        var orient = (orientation ?? "landscape").ToLowerInvariant() == "portrait" ? "portrait" : "landscape";
+        var orient = (orientation ?? "portrait").ToLowerInvariant() == "landscape" ? "landscape" : "portrait";
         var margin = marginMm is > 0 ? marginMm.Value : 15d;
 
         var bytes = await mediator.Send(

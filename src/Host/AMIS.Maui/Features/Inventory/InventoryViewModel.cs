@@ -9,8 +9,7 @@ public sealed partial class InventoryViewModel(
     IApiClient apiClient,
     AuthStateService authState) : ObservableObject
 {
-    [ObservableProperty] private ObservableCollection<ICSSummaryDto> _icsItems = [];
-    [ObservableProperty] private ObservableCollection<PARSummaryDto> _parItems = [];
+    [ObservableProperty] private ObservableCollection<InventoryGroup> _groups = [];
     [ObservableProperty] private bool _isLoading;
     [ObservableProperty] private string? _errorMessage;
 
@@ -27,8 +26,11 @@ public sealed partial class InventoryViewModel(
             var icsList = await apiClient.GetMyICSListAsync(employeeId, ct);
             var parList = await apiClient.GetMyPARListAsync(employeeId, ct);
 
-            IcsItems = new ObservableCollection<ICSSummaryDto>(icsList);
-            ParItems = new ObservableCollection<PARSummaryDto>(parList);
+            Groups =
+            [
+                new InventoryGroup("INVENTORY CUSTODIAN SLIPS", icsList),
+                new InventoryGroup("PROPERTY ACKNOWLEDGEMENT RECEIPTS", parList),
+            ];
         }
         catch (HttpRequestException)
         {

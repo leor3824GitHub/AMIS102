@@ -8,6 +8,74 @@
              Title="My Inventory"
              BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource OffBlack}}">
 
+    <ContentPage.Resources>
+        <!-- ICS card -->
+        <DataTemplate x:Key="IcsTemplate" x:DataType="svc:ICSSummaryDto">
+            <Border Style="{StaticResource CardBorderStyle}" Margin="16,4" Padding="16,14">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer
+                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:InventoryViewModel}}, Path=OpenIcsCommand}"
+                        CommandParameter="{Binding .}" />
+                </Border.GestureRecognizers>
+                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" RowSpacing="4">
+                    <Label Grid.Row="0" Grid.Column="0"
+                           Text="{Binding ICSNo}"
+                           FontFamily="InterSemiBold" FontSize="15" />
+                    <Border Grid.Row="0" Grid.Column="1"
+                            Stroke="Transparent"
+                            StrokeShape="RoundRectangle 10"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource PrimaryLight}, Dark={StaticResource Tertiary}}"
+                            Padding="8,3">
+                        <Label Text="{Binding Status}"
+                               FontFamily="InterSemiBold" FontSize="11"
+                               TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+                    </Border>
+                    <Label Grid.Row="1" Grid.Column="0"
+                           Text="{Binding Date}"
+                           Style="{StaticResource CaptionStyle}" />
+                    <Label Grid.Row="1" Grid.Column="1"
+                           Text="{Binding ItemCount, StringFormat='{0} items'}"
+                           Style="{StaticResource CaptionStyle}" />
+                </Grid>
+            </Border>
+        </DataTemplate>
+
+        <!-- PAR card -->
+        <DataTemplate x:Key="ParTemplate" x:DataType="svc:PARSummaryDto">
+            <Border Style="{StaticResource CardBorderStyle}" Margin="16,4" Padding="16,14">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer
+                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:InventoryViewModel}}, Path=OpenParCommand}"
+                        CommandParameter="{Binding .}" />
+                </Border.GestureRecognizers>
+                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" RowSpacing="4">
+                    <Label Grid.Row="0" Grid.Column="0"
+                           Text="{Binding PARNo}"
+                           FontFamily="InterSemiBold" FontSize="15" />
+                    <Border Grid.Row="0" Grid.Column="1"
+                            Stroke="Transparent"
+                            StrokeShape="RoundRectangle 10"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource TealLight}, Dark={StaticResource Tertiary}}"
+                            Padding="8,3">
+                        <Label Text="{Binding PARType}"
+                               FontFamily="InterSemiBold" FontSize="11"
+                               TextColor="{StaticResource Teal}" />
+                    </Border>
+                    <Label Grid.Row="1" Grid.Column="0"
+                           Text="{Binding Date}"
+                           Style="{StaticResource CaptionStyle}" />
+                    <Label Grid.Row="1" Grid.Column="1"
+                           Text="{Binding ItemCount, StringFormat='{0} items'}"
+                           Style="{StaticResource CaptionStyle}" />
+                </Grid>
+            </Border>
+        </DataTemplate>
+
+        <vm:InventoryItemTemplateSelector x:Key="InventoryItemTemplateSelector"
+                                          IcsTemplate="{StaticResource IcsTemplate}"
+                                          ParTemplate="{StaticResource ParTemplate}" />
+    </ContentPage.Resources>
+
     <Grid RowDefinitions="Auto,*">
 
         <!-- Error banner -->
@@ -24,89 +92,17 @@
         </Border>
 
         <RefreshView Grid.Row="1" IsRefreshing="{Binding IsLoading}" Command="{Binding LoadCommand}">
-            <CollectionView ItemsSource="{Binding IcsItems}"
-                            EmptyView="No ICS records found.">
-                <CollectionView.Header>
-                    <VerticalStackLayout Padding="0,16,0,0">
-                        <Label Text="INVENTORY CUSTODIAN SLIPS"
-                               Style="{StaticResource SectionHeaderStyle}" />
-                    </VerticalStackLayout>
-                </CollectionView.Header>
-                <CollectionView.Footer>
-                    <VerticalStackLayout Padding="0,0,0,16">
-                        <Label Text="PROPERTY ACKNOWLEDGEMENT RECEIPTS"
+            <CollectionView ItemsSource="{Binding Groups}"
+                            IsGrouped="True"
+                            ItemTemplate="{StaticResource InventoryItemTemplateSelector}"
+                            EmptyView="No inventory records found.">
+                <CollectionView.GroupHeaderTemplate>
+                    <DataTemplate x:DataType="vm:InventoryGroup">
+                        <Label Text="{Binding Title}"
                                Style="{StaticResource SectionHeaderStyle}"
-                               Margin="20,20,20,10" />
-                        <CollectionView ItemsSource="{Binding ParItems}"
-                                        EmptyView="No PAR records found."
-                                        HeightRequest="400">
-                            <CollectionView.ItemTemplate>
-                                <DataTemplate x:DataType="svc:PARSummaryDto">
-                                    <Border Style="{StaticResource CardBorderStyle}"
-                                            Margin="16,4" Padding="16,14">
-                                        <Border.GestureRecognizers>
-                                            <TapGestureRecognizer
-                                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:InventoryViewModel}}, Path=OpenParCommand}"
-                                                CommandParameter="{Binding .}" />
-                                        </Border.GestureRecognizers>
-                                        <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" RowSpacing="4">
-                                            <Label Grid.Row="0" Grid.Column="0"
-                                                   Text="{Binding PARNo}"
-                                                   FontFamily="InterSemiBold" FontSize="15" />
-                                            <Border Grid.Row="0" Grid.Column="1"
-                                                    Stroke="Transparent"
-                                                    StrokeShape="RoundRectangle 10"
-                                                    BackgroundColor="{AppThemeBinding Light={StaticResource TealLight}, Dark={StaticResource Tertiary}}"
-                                                    Padding="8,3">
-                                                <Label Text="{Binding PARType}"
-                                                       FontFamily="InterSemiBold" FontSize="11"
-                                                       TextColor="{StaticResource Teal}" />
-                                            </Border>
-                                            <Label Grid.Row="1" Grid.Column="0"
-                                                   Text="{Binding Date}"
-                                                   Style="{StaticResource CaptionStyle}" />
-                                            <Label Grid.Row="1" Grid.Column="1"
-                                                   Text="{Binding ItemCount, StringFormat='{0} items'}"
-                                                   Style="{StaticResource CaptionStyle}" />
-                                        </Grid>
-                                    </Border>
-                                </DataTemplate>
-                            </CollectionView.ItemTemplate>
-                        </CollectionView>
-                    </VerticalStackLayout>
-                </CollectionView.Footer>
-                <CollectionView.ItemTemplate>
-                    <DataTemplate x:DataType="svc:ICSSummaryDto">
-                        <Border Style="{StaticResource CardBorderStyle}"
-                                Margin="16,4" Padding="16,14">
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer
-                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:InventoryViewModel}}, Path=OpenIcsCommand}"
-                                    CommandParameter="{Binding .}" />
-                            </Border.GestureRecognizers>
-                            <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" RowSpacing="4">
-                                <Label Grid.Row="0" Grid.Column="0"
-                                       Text="{Binding ICSNo}"
-                                       FontFamily="InterSemiBold" FontSize="15" />
-                                <Border Grid.Row="0" Grid.Column="1"
-                                        Stroke="Transparent"
-                                        StrokeShape="RoundRectangle 10"
-                                        BackgroundColor="{AppThemeBinding Light={StaticResource PrimaryLight}, Dark={StaticResource Tertiary}}"
-                                        Padding="8,3">
-                                    <Label Text="{Binding Status}"
-                                           FontFamily="InterSemiBold" FontSize="11"
-                                           TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
-                                </Border>
-                                <Label Grid.Row="1" Grid.Column="0"
-                                       Text="{Binding Date}"
-                                       Style="{StaticResource CaptionStyle}" />
-                                <Label Grid.Row="1" Grid.Column="1"
-                                       Text="{Binding ItemCount, StringFormat='{0} items'}"
-                                       Style="{StaticResource CaptionStyle}" />
-                            </Grid>
-                        </Border>
+                               Margin="20,16,20,10" />
                     </DataTemplate>
-                </CollectionView.ItemTemplate>
+                </CollectionView.GroupHeaderTemplate>
             </CollectionView>
         </RefreshView>
 
