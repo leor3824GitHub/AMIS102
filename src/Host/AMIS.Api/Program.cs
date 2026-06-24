@@ -6,6 +6,8 @@ using AMIS.Modules.MasterData;
 using AMIS.Modules.MasterData.Contracts.v1.References;
 using AMIS.Modules.Expendable;
 using AMIS.Modules.Expendable.Contracts.v1.Products;
+using AMIS.Modules.Chat;
+using AMIS.Modules.Chat.Contracts.v1.Messages;
 using AMIS.Modules.Vehicle;
 using AMIS.Modules.Vehicle.Contracts.v1.Vehicles;
 using AMIS.Modules.ProcurementAcquisition;
@@ -72,6 +74,8 @@ builder.Services.AddMediator(o =>
         typeof(SearchEmployeeReferencesQuery),
         typeof(MasterDataModule),
         typeof(ExpendableModule),
+        typeof(ChatModule),
+        typeof(SendMessageCommand),
         typeof(VehicleModule),
         typeof(CreateVehicleCommand),
         typeof(ProcurementAcquisitionModule),
@@ -95,6 +99,7 @@ var moduleAssemblies = new Assembly[]
     typeof(AuditingModule).Assembly,
     typeof(MasterDataModule).Assembly,
     typeof(ExpendableModule).Assembly,
+    typeof(ChatModule).Assembly,
     typeof(VehicleModule).Assembly,
     typeof(ProcurementAcquisitionModule).Assembly,
     typeof(BudgetDisbursementModule).Assembly,

@@ -25,6 +25,10 @@
     <Project Path="Modules/Expendable/Modules.Expendable.Contracts/Modules.Expendable.Contracts.csproj" />
     <Project Path="Modules/Expendable/Modules.Expendable/Modules.Expendable.csproj" />
   </Folder>
+  <Folder Name="/Modules/Chat/">
+    <Project Path="Modules/Chat/Modules.Chat.Contracts/Modules.Chat.Contracts.csproj" />
+    <Project Path="Modules/Chat/Modules.Chat/Modules.Chat.csproj" />
+  </Folder>
   <Folder Name="/Modules/Vehicle/">
     <Project Path="Modules/Vehicle/Modules.Vehicle.Contracts/Modules.Vehicle.Contracts.csproj" />
     <Project Path="Modules/Vehicle/Modules.Vehicle/Modules.Vehicle.csproj" />
